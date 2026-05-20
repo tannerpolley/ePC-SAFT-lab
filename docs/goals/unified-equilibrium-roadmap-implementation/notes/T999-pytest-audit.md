@@ -48,7 +48,7 @@ Recommended actions:
 | `tests/native/cppad` | 5 | 4 | 5 | Keep, move Figiel analysis dependency out | Exact derivative substrate contracts belong in pytest; one file still depends on analysis data. |
 | `tests/native/equilibrium` | 5 | 2 | 5 | Split aggressively | Native equilibrium route tests are necessary, but the monolith and paper-named fixtures make diagnosis hard. |
 | `tests/native/runtime` | 5 | 3 | 5 | Keep, move MIAC analysis dependency out | Runtime cache/density/contribution contracts belong in pytest; analysis-owned Figiel MIAC coverage does not. |
-| `tests/regression/core` | 4 | 4 | 4 | Keep hydrocarbon anchor; merge fixed reaction constant | The hydrocarbon anchor is trusted exact-Hessian/Ceres proof. Fixed reaction constant belongs near reactive API conventions. |
+| `tests/api/regression/test_regression_hydrocarbon_anchor.py` | 5 | 5 | 5 | Keep under the API regression boundary | The hydrocarbon anchor is trusted exact-Hessian/Ceres proof; the duplicate root `tests/regression` folder has been removed. |
 | `tests/regression/electrolyte` | 2 | 1 | 1 | Delete or move to benchmarks | Current deletion matches policy; MIAC parity/regression paper checks should not be pytest. |
 | `tests/regression/literature` | 1 | 1 | 1 | Delete | Current deletion matches policy; paper reproduction belongs in explicit benchmark/analysis workflows. |
 | `tests/fixtures/literature` | 1 | 1 | 1 | Delete or move to analysis data | Literature fixtures should not be package pytest fixtures. |
@@ -151,8 +151,8 @@ Recommended actions:
 | `tests/native/runtime/test_runtime_cache_contracts.py` | 5 | 2 | 5 | Split cache contracts from MIAC variant coverage; move MIAC analysis dependency out. |
 | `tests/native/runtime/test_runtime_contribution_contracts.py` | 5 | 4 | 5 | Keep. |
 | `tests/native/runtime/test_runtime_density_closure.py` | 5 | 4 | 5 | Keep. |
-| `tests/regression/core/test_fixed_reaction_constant_parameter_fit.py` | 4 | 4 | 3 | Merge into `tests/api/reactive/test_reaction_constant_conventions.py`. |
-| `tests/regression/core/test_hydrocarbon.py` | 5 | 5 | 5 | Keep. This is the trusted hydrocarbon regression anchor. |
+| `tests/regression/core/test_fixed_reaction_constant_parameter_fit.py` | 4 | 4 | 3 | Merged into `tests/api/reactive/test_reaction_constant_conventions.py`. |
+| `tests/regression/core/test_hydrocarbon.py` | 5 | 5 | 5 | Moved to `tests/api/regression/test_regression_hydrocarbon_anchor.py`. This remains the trusted hydrocarbon regression anchor. |
 | `tests/workflows/benchmarks/test_benchmark_neutral_equilibrium.py` | 4 | 4 | 4 | Keep as benchmark harness schema smoke. Do not add acceptance timing claims here. |
 | `tests/workflows/benchmarks/test_benchmark_reactive_regression.py` | 4 | 3 | 4 | Keep if it stays schema/CLI focused; move semantic benchmark claims to benchmark command output. |
 | `tests/workflows/build/test_build_backend.py` | 5 | 4 | 4 | Keep. |

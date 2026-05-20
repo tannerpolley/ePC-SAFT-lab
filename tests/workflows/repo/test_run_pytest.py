@@ -232,9 +232,10 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
-    assert "tests/regression/core/test_hydrocarbon.py::test_methane_reference_parameters_keep_native_objective_pinned" in (
-        run_pytest.GENERIC_TEST_TARGETS
-    )
+    assert (
+        "tests/api/regression/test_regression_hydrocarbon_anchor.py::"
+        "test_methane_reference_parameters_keep_native_objective_pinned"
+    ) in run_pytest.GENERIC_TEST_TARGETS
     assert "tests/workflows/repo/test_run_pytest.py" not in run_pytest.GENERIC_TEST_TARGETS
 
 

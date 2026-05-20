@@ -238,7 +238,7 @@ outputs.
 % Derivative backend: Native residual Jacobian for supported target families
 % Solver role: Native least-squares pure-neutral parameter regression
 % Implementation owner: src/epcsaft/regression.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/regression/test_pure_neutral_regression.py
+% Validation: tests/api/regression/test_regression_api_pure_neutral_backend.py
 % Capability key: regression:pure_neutral
 % Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 % Change note: Initial algorithm-registry entry for pure-neutral regression.
@@ -255,7 +255,7 @@ broaden support to every possible pure-component parameter family.
 % Derivative backend: CppAD implicit residual Jacobian for supported pure-ion targets
 % Solver role: Native least-squares pure-ion parameter regression
 % Implementation owner: src/epcsaft/regression.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/regression/test_pure_ion_regression.py
+% Validation: tests/api/regression/test_regression_api_pure_ion_backend.py
 % Capability key: regression:pure_ion
 % Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 % Change note: Initial algorithm-registry entry for pure-ion regression.

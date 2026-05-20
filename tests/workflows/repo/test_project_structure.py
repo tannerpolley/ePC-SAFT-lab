@@ -55,7 +55,6 @@ TEST_SUBGROUP_ROOTS = {
     "tests/native/cppad",
     "tests/native/equilibrium",
     "tests/native/runtime",
-    "tests/regression/core",
     "tests/workflows/benchmarks",
     "tests/workflows/build",
     "tests/workflows/repo",
@@ -67,6 +66,7 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/api/test_reactive_regression.py",
     "tests/api/test_reactive_electrolyte_bubble.py",
     "tests/equilibrium",
+    "tests/regression",
     "tests/native/test_runtime_contracts.py",
     "tests/native/test_chemical_equilibrium_native.py",
 }
