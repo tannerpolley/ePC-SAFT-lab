@@ -1,0 +1,270 @@
+version: 2
+
+goal:
+  title: "Unified Equilibrium Roadmap Implementation"
+  slug: "unified-equilibrium-roadmap-implementation"
+  kind: existing_plan
+  tranche: "continuous execution: implement verified modular slices until remaining unified equilibrium roadmap gaps are complete or blocked by source data"
+  status: active
+  intake:
+    original_request: "Make plans to fully implement the blocked roadmap gaps using the existing modular Ipopt framework."
+    interpreted_outcome: "A GoalBuddy-ready execution plan exists for universal certification, native reactive stability, and reactive LLE/electrolyte LLE production proof without parallel solver architecture."
+    input_shape: existing_plan
+    audience: "ePC-SAFT maintainers and downstream consumers"
+    authority: requested
+    proof_type: artifact
+    completion_proof: "Plan artifact and board exist, validate, and name executable tasks that preserve the current native Ipopt route framework and capability evidence contract."
+    likely_misfire: "Adding new solver surfaces, Python optimizer loops, or capability claims instead of extending the existing route-builder, stability, diagnostics, and benchmark layers."
+    blind_spots_considered:
+      - "Reactive stability needs a native coupled stability NLP, not staged speciation."
+      - "Reactive LLE capability promotion depends on benchmark proof, not route-builder existence."
+      - "Universal certification must not imply stability proof for routes that still lack it."
+      - "Graphify is useful only if targeted source mapping becomes stale; the current plan uses the fresh audit and targeted source reads."
+      - "Native _core rebuilds must be coordinated by the main thread."
+    existing_plan_facts:
+      - "Detailed plan path: docs/superpowers/plans/2026-05-20-unified-equilibrium-roadmap-implementation.md."
+      - "Prior roadmap audit board closed with D001 native coupled reactive stability NLP, D002 reactive LLE production registration, and D003 universal stability certification as larger remaining gaps."
+      - "The current implementation has native Ipopt route builders, stability TPD builders, reactive phase residual surfaces, route metadata, pybind route payloads, and shared native_results diagnostics."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: generated
+    url: "http://127.0.0.1:41737/unified-equilibrium-roadmap-implementation/"
+    command: "pwsh -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/unified-equilibrium-roadmap-implementation"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: T001
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: active
+    reasoning_hint: high
+    objective: "Validate the source plan against the live repo module mesh and decide whether a targeted Graphify refresh or JetBrains semantic pass is needed before implementation."
+    inputs:
+      - "docs/superpowers/plans/2026-05-20-unified-equilibrium-roadmap-implementation.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+      - "docs/goals/roadmap-alignment-full-audit/notes/T001-roadmap-audit.md"
+      - "src/epcsaft/native/equilibrium_nlp/stability_route_builders.*"
+      - "src/epcsaft/native/equilibrium_nlp/route_builders.*"
+      - "src/epcsaft/native/equilibrium/reactive_phase_equilibrium_problem.cpp"
+      - "src/epcsaft/equilibrium.py"
+      - "src/epcsaft/equilibrium_core/native_results.py"
+    constraints:
+      - "Read-only."
+      - "Do not regenerate broad Graphify artifacts unless the current source map is stale or insufficient."
+      - "Label verified facts, inferences, assumptions, and unknowns."
+      - "Prefer current module boundaries over new abstractions."
+    expected_output:
+      - "Confirmed or corrected module ownership map."
+      - "Decision on Graphify or JetBrains need."
+      - "Any plan corrections before Worker execution."
+      - "Recommended first Worker slice."
+    receipt: null
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Review T001 and choose the first largest safe implementation slice from the source plan."
+    inputs:
+      - "T001 receipt"
+      - "Current git diff"
+      - "docs/superpowers/plans/2026-05-20-unified-equilibrium-roadmap-implementation.md"
+    constraints:
+      - "Do not implement."
+      - "Reject any slice that creates a parallel solver, staged fallback, or unsupported capability claim."
+      - "Prefer the shared certification slice unless T001 proves another slice is safer."
+    expected_output:
+      - "Decision"
+      - "Exact Worker objective"
+      - "allowed_files"
+      - "verify"
+      - "stop_if"
+    receipt: null
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Execute the shared certification slice selected by T002, preserving the existing native_results.py diagnostics contract."
+    allowed_files:
+      - "src/epcsaft/equilibrium_core/native_results.py"
+      - "src/epcsaft/equilibrium.py"
+      - "src/epcsaft/electrolyte_bubble.py"
+      - "tests/equilibrium/core/test_native_results.py"
+      - "tests/equilibrium/core/test_vle.py"
+      - "tests/equilibrium/core/test_lle.py"
+      - "tests/equilibrium/electrolyte/test_electrolyte_bubble.py"
+      - "tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py"
+    verify:
+      - "uv run python run_pytest.py tests/equilibrium/core/test_native_results.py -q"
+      - "uv run python run_pytest.py tests/equilibrium/core/test_vle.py tests/equilibrium/core/test_lle.py tests/equilibrium/electrolyte/test_electrolyte_bubble.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py -q"
+    stop_if:
+      - "Need native route-builder changes before certification shape can be honest."
+      - "A route would be marked stable without actual stability evidence."
+      - "Need files outside allowed_files."
+    receipt: null
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Add the native reactive stability contract and route result inside the existing stability_route_builders and pybind surfaces."
+    allowed_files:
+      - "src/epcsaft/native/equilibrium_nlp/stability_route_builders.h"
+      - "src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp"
+      - "src/epcsaft/native/equilibrium_nlp/route_metadata.h"
+      - "src/epcsaft/bindings.cpp"
+      - "tests/native/equilibrium/test_route_builders.py"
+      - "tests/native/equilibrium/test_route_metadata_contracts.py"
+    verify:
+      - "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+      - "uv run python run_pytest.py tests/native/equilibrium/test_route_builders.py tests/native/equilibrium/test_route_metadata_contracts.py -q"
+    stop_if:
+      - "Implementation needs copied reactive residual math instead of shared helper extraction."
+      - "Exact Hessian support cannot be preserved through the existing Ipopt adapter."
+      - "Need a new public result family."
+    receipt: null
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Wire public kind='reactive_stability' through the native route while preserving current facade validation and no staged fallback."
+    allowed_files:
+      - "src/epcsaft/epcsaft.py"
+      - "src/epcsaft/equilibrium.py"
+      - "src/epcsaft/capability_evidence.py"
+      - "tests/native/equilibrium/test_chemical_equilibrium_native_api.py"
+      - "tests/api/runtime/test_runtime_capabilities_dependency_gates.py"
+    verify:
+      - "uv run python run_pytest.py tests/native/equilibrium/test_chemical_equilibrium_native_api.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py -q"
+      - "uv run python run_pytest.py --native-contracts -q"
+    stop_if:
+      - "The route requires Python to own a production optimizer loop."
+      - "The route tries to run homogeneous speciation before the native stability gate."
+      - "Capability evidence would overclaim reactive LLE/electrolyte LLE production support."
+    receipt: null
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Use the shared stability/certification layer to certify reactive LLE and reactive electrolyte LLE accepted routes."
+    allowed_files:
+      - "src/epcsaft/equilibrium.py"
+      - "src/epcsaft/native/equilibrium_nlp/route_builders.h"
+      - "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+      - "src/epcsaft/bindings.cpp"
+      - "tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py"
+      - "tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py"
+    verify:
+      - "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+      - "uv run python run_pytest.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q"
+      - "uv run python run_pytest.py --native-contracts -q"
+    stop_if:
+      - "A stability certificate cannot be generated from existing stability route builders."
+      - "A reactive route would be accepted without residual, constraint, phase eligibility, and stability evidence."
+    receipt: null
+  - id: T007
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Convert reactive LLE and reactive electrolyte LLE literature lanes into input-audited benchmark proof or explicit numeric blockers."
+    allowed_files:
+      - "tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py"
+      - "tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py"
+      - "scripts/validation/equilibrium_core/confidence.py"
+      - "analyses/paper_validation/native/2023_ascani"
+      - "analyses/paper_validation"
+    verify:
+      - "uv run python run_pytest.py tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py -q"
+    stop_if:
+      - "Source data or holdout targets are insufficient to prove production accuracy."
+      - "The benchmark only proves synthetic or monkeypatched behavior."
+      - "The package route fails certification from T006."
+    receipt: null
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Promote reactive LLE and reactive electrolyte LLE capabilities only if T007 provides accepted benchmark proof."
+    allowed_files:
+      - "src/epcsaft/capability_evidence.py"
+      - "src/epcsaft/runtime.py"
+      - "tests/api/runtime/test_runtime_capabilities_dependency_gates.py"
+      - "tests/workflows/repo/test_run_pytest.py"
+    verify:
+      - "uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/workflows/repo/test_run_pytest.py -q"
+    stop_if:
+      - "T007 records numeric blockers instead of accepted production proof."
+      - "Capability claims would exceed executable evidence."
+    receipt: null
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Final audit that the remaining unified equilibrium roadmap gaps are implemented or explicitly source-blocked without architecture forks."
+    inputs:
+      - "All done receipts"
+      - "docs/superpowers/plans/2026-05-20-unified-equilibrium-roadmap-implementation.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "Last validation output"
+      - "Current git diff"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if any safe local implementation slice remains."
+      - "Reject completion if capabilities overclaim beyond benchmark proof."
+      - "Reject completion if generated board artifacts, cleanup, or git status are unresolved."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "remaining blockers"
+      - "next task if not complete"
+    receipt: null
+
+checks:
+  dirty_fingerprint: "plan and GoalBuddy board prepared, not implementation"
+  last_verification:
+    result: passed
+    task: T001
+    commands:
+      - "node <goalbuddy-checker> docs/goals/unified-equilibrium-roadmap-implementation/state.yaml"
+      - "YAML parse: goal active, active_task T001, task_count 9, active_count 1"
+      - "Placeholder and banned-token scan over the plan and goal files"
+      - "uv run python scripts/dev/check_text_gates.py"
+      - "pwsh -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/unified-equilibrium-roadmap-implementation -Once -Json"
