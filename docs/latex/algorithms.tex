@@ -59,7 +59,7 @@ Jacobians remain in their route problem owners.
 % Derivative backend: Native analytic or CppAD-backed residual Jacobians, route dependent
 % Solver role: Maps regression residual/Jacobian evaluators into ceres::CostFunction and ceres::Problem
 % Implementation owner: src/epcsaft/native/epcsaft_regression.cpp
-% Validation: tests/regression/literature/test_literature_binary_kij_regression.py
+% Validation: tests/native/ceres/test_ceres_binary_regression.py
 % Capability key: native_ceres_regression
 % Description: Shared adapter pattern for currently supported native Ceres regression routes.
 % Change note: Initial algorithm-registry entry for native Ceres regression dispatch.
@@ -78,7 +78,7 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 % Derivative backend: Exact native objective gradient and constraint Jacobian
 % Solver role: Native neutral TP flash two-phase EOS constrained NLP
 % Implementation owner: src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/equilibrium/core/test_tp_flash.py
+% Validation: tests/api/equilibrium/core/test_vle.py
 % Capability key: neutral_tp_flash
 % Description: Solves neutral two-phase TP flash through the native Ipopt EOS route.
 % Change note: Initial algorithm-registry entry for neutral TP flash.
@@ -95,7 +95,7 @@ This entry covers the generic neutral TP flash route, including the typed
 % Derivative backend: Exact native objective gradient and constraint Jacobian
 % Solver role: Native neutral liquid-liquid two-phase EOS constrained NLP
 % Implementation owner: src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/equilibrium/core/test_lle.py
+% Validation: tests/api/equilibrium/core/test_lle.py
 % Capability key: neutral_lle_flash
 % Description: Solves neutral LLE through the native Ipopt EOS route.
 % Change note: Initial algorithm-registry entry for neutral LLE.
@@ -112,7 +112,7 @@ This entry covers the generic neutral liquid-liquid split route and its typed
 % Derivative backend: Exact native objective gradient and constraint Jacobian
 % Solver role: Native charge-constrained electrolyte LLE EOS constrained NLP
 % Implementation owner: src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/equilibrium/electrolyte/test_electrolyte_lle_smokes.py
+% Validation: tests/api/equilibrium/electrolyte/test_electrolyte_lle_smokes.py
 % Capability key: electrolyte_lle
 % Description: Solves electrolyte liquid-liquid split routes with charge-constrained phase amounts.
 % Change note: Initial algorithm-registry entry for electrolyte LLE.
@@ -129,7 +129,7 @@ selectivity metrics remain outside the package algorithm.
 % Derivative backend: Exact native objective gradient and constraint Jacobian
 % Solver role: Native fixed-composition bubble/dew constrained NLP routes
 % Implementation owner: src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/bubble_dew_route_builders.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/equilibrium/core/test_bubble_dew.py
+% Validation: tests/api/equilibrium/core/test_bubble_dew.py
 % Capability key: neutral_bubble_dew
 % Description: Solves neutral bubble and dew route variants through native Ipopt.
 % Change note: Initial algorithm-registry entry for neutral bubble/dew routes.
@@ -147,7 +147,7 @@ route-builder family.
 % Derivative backend: Exact native objective gradient and constraint Jacobian
 % Solver role: Native tangent-plane-distance stability route
 % Implementation owner: src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/equilibrium/core/test_stability.py
+% Validation: tests/api/equilibrium/core/test_stability.py
 % Capability key: neutral_stability; electrolyte_stability
 % Description: Solves neutral and electrolyte TPD trial routes through native Ipopt.
 % Change note: Initial algorithm-registry entry for stability routes.
@@ -271,7 +271,7 @@ This entry is limited to the currently implemented pure-ion target surface.
 % Derivative backend: CppAD-backed binary k_ij residual Jacobian
 % Solver role: Native least-squares constant-k_ij binary regression
 % Implementation owner: src/epcsaft/regression.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp
-% Validation: tests/regression/literature/test_literature_binary_kij_regression.py
+% Validation: tests/native/ceres/test_ceres_binary_regression.py
 % Capability key: regression:binary_pair
 % Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 % Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.

@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 import epcsaft
-from tests.equilibrium.core.test_vle import _assert_tp_flash_native_ipopt_gate
-from tests.api.reactive.test_reactive_speciation_options import _native_ipopt_compiled
+from tests.api.equilibrium.core.test_vle import _assert_tp_flash_native_ipopt_gate
+from tests.api.reactive.reactive_speciation_cases import _native_ipopt_compiled
 
 
 def _toy_mixture() -> epcsaft.ePCSAFTMixture:

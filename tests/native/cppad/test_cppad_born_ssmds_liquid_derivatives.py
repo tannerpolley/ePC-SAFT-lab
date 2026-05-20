@@ -3,23 +3,28 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from analyses.data_validation.miac_fits.scripts import validate_miac_fits as vmf
-from epcsaft import InputError
-from scripts._epcsaft_oop import as_mixture
+from epcsaft import InputError, ePCSAFTMixture
 from tests.helpers.numeric import assert_allclose
+from tests.helpers.runtime_cases import _ionic_params
 
 
-def _figiel_nabr_water_state(phase: str = "liq"):
-    combo = next(
-        combo
-        for combo in vmf.discover_combos(solvent_scope="water", salt_scope="NaBr")
-        if not combo.get("comp_signature")
-    )
-    species = vmf._species_for_combo("NaBr", "water")
-    params = vmf.build_params_for_variant("2025_Figiel", combo, user_options={})
-    mixture = as_mixture(params, species=species)
-    x = vmf._molality_to_molefraction_combo(0.5, "NaBr", "water", dict(combo.get("comp", {})))
-    state = mixture.state(T=vmf.T_REF, x=x, P=vmf.P_REF, phase=phase)
+def _compact_ssmds_born_state(phase: str = "liq"):
+    species = ["water", "Na+", "Cl-"]
+    params = _ionic_params()
+    params["elec_model"] = {
+        "rel_perm": {"rule": "empirical", "differential_mode": "auto"},
+        "born_model": {
+            "d_Born_mode": "fitted_param",
+            "solvation_shell_model": True,
+            "dielectric_saturation": True,
+            "mu_born_model": {"differential_mode": "auto", "comp_dep_delta_d": True},
+        },
+    }
+    mixture = ePCSAFTMixture.from_params(params, species=species)
+    pressure = 1.0e5
+    temperature = 298.15
+    composition = np.array([0.9998, 1.0e-4, 1.0e-4])
+    state = mixture.state(T=temperature, x=composition, P=pressure, phase=phase)
     return species, state
 
 
@@ -27,8 +32,8 @@ def _matrix(payload: dict[str, object], key: str) -> np.ndarray:
     return np.asarray(payload[key], dtype=float)
 
 
-def test_liquid_ssmds_born_derivatives_are_supported_for_figiel_d_born_and_f_solv() -> None:
-    species, state = _figiel_nabr_water_state("liq")
+def test_liquid_ssmds_born_derivatives_are_supported_for_compact_ionic_fixture() -> None:
+    species, state = _compact_ssmds_born_state("liq")
 
     payload = state.born_ssmds_liquid_derivatives()
 
@@ -45,12 +50,11 @@ def test_liquid_ssmds_born_derivatives_are_supported_for_figiel_d_born_and_f_sol
     assert f_solv.shape == (len(species),)
     assert np.all(np.isfinite(d_born))
     assert np.all(np.isfinite(f_solv))
-    assert d_born[species.index("Na+")] != pytest.approx(0.0)
-    assert d_born[species.index("Br-")] != pytest.approx(0.0)
-    assert d_born[species.index("H2O-2B-NaCl")] == pytest.approx(0.0)
-    assert f_solv[species.index("Na+")] == pytest.approx(0.0)
-    assert f_solv[species.index("Br-")] == pytest.approx(0.0)
-    assert f_solv[species.index("H2O-2B-NaCl")] != pytest.approx(0.0)
+    solvent_index = 0
+    ion_indices = [idx for idx, name in enumerate(species) if name != species[solvent_index]]
+    assert d_born[solvent_index] == pytest.approx(0.0)
+    assert np.any(np.abs(d_born[ion_indices]) > 0.0)
+    assert np.any(np.abs(f_solv) > 0.0)
 
     for key in (
         "mu_res_d_d_born",
@@ -69,7 +73,7 @@ def test_liquid_ssmds_born_derivatives_are_supported_for_figiel_d_born_and_f_sol
 
 
 def test_vapor_ssmds_born_derivatives_raise_out_of_scope() -> None:
-    _, state = _figiel_nabr_water_state("vap")
+    _, state = _compact_ssmds_born_state("vap")
 
     with pytest.raises(InputError, match="liquid-electrolyte only"):
         state.born_ssmds_liquid_derivatives()

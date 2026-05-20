@@ -114,9 +114,24 @@ def test_route_level_equilibrium_derivative_rows_are_registered_without_capabili
     assert by_quantity["neutral_two_phase_routes"]["classification"] == "production_supported"
     assert by_quantity["electrolyte_lle_and_stability"]["classification"] == "production_supported"
     assert by_quantity["electrolyte_bubble_pressure"]["classification"] == "production_supported"
+    assert by_quantity["reactive_stability"]["classification"] == "production_supported"
+    assert "reactive_stability" in epcsaft.capabilities()["equilibrium"]
     assert (
         by_quantity["reactive_lle_and_reactive_electrolyte_lle"]["classification"]
         == "route_builder_supported_capability_pending"
     )
     assert "reactive_lle" not in epcsaft.capabilities()["equilibrium"]
     assert "reactive_electrolyte_lle" not in epcsaft.capabilities()["equilibrium"]
+
+
+def test_equilibrium_capabilities_expose_derivative_policy() -> None:
+    policy = epcsaft.capabilities()["equilibrium"]["derivative_policy"]
+
+    assert policy["auto_policy"] == "analytic_or_cppad_or_implicit_else_raise"
+    assert "numerical" + "_derivative" not in {str(item).lower() for item in policy["accepted_derivative_backends"]}
+    assert {
+        "analytic",
+        "cppad",
+        "analytic_implicit",
+        "cppad_implicit",
+    }.issubset(set(policy["accepted_derivative_backends"]))

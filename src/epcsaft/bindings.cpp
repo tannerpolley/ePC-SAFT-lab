@@ -948,10 +948,16 @@ py::dict stability_nlp_contract_to_dict(
     py::dict out;
     out["problem_name"] = result.problem_name;
     out["derivative_backend"] = result.derivative_backend;
+    out["variable_model"] = result.variable_model;
+    out["density_backend"] = result.density_backend;
+    out["residual_families"] = result.residual_families;
+    out["constraint_families"] = result.constraint_families;
     out["species_count"] = result.species_count;
     out["variable_count"] = result.variable_count;
     out["constraint_count"] = result.constraint_count;
     out["jacobian_nonzero_count"] = result.jacobian_nonzero_count;
+    out["balance_row_count"] = result.balance_row_count;
+    out["reaction_count"] = result.reaction_count;
     out["parent_phase"] = result.parent_phase;
     out["trial_phase"] = result.trial_phase;
     out["feed_composition"] = result.feed_composition;
@@ -975,10 +981,19 @@ py::dict stability_route_result_to_dict(
 ) {
     py::dict out;
     apply_ipopt_route_status_fields(out, result);
+    out["variable_model"] = result.variable_model;
+    out["density_backend"] = result.density_backend;
+    out["residual_families"] = result.residual_families;
+    out["constraint_families"] = result.constraint_families;
     out["stable"] = result.stable;
+    out["balance_row_count"] = result.balance_row_count;
+    out["reaction_count"] = result.reaction_count;
     out["parent_phase"] = result.parent_phase;
     out["trial_phase"] = result.trial_phase;
     out["min_tpd"] = result.min_tpd;
+    out["conserved_balance_norm"] = result.conserved_balance_norm;
+    out["charge_balance_norm"] = result.charge_balance_norm;
+    out["reaction_stationarity_norm"] = result.reaction_stationarity_norm;
     apply_ipopt_route_solution_fields(out, result);
     out["continuation_state"] = ipopt_continuation_state_to_dict(
         result.variables,
@@ -988,6 +1003,8 @@ py::dict stability_route_result_to_dict(
     );
     out["iteration_history"] = ipopt_iteration_history_to_list(result.iteration_history);
     out["seed_attempts"] = route_seed_attempts_to_list(result.seed_attempts);
+    out["reaction_residuals"] = result.reaction_residuals;
+    out["conserved_balance_residuals"] = result.conserved_balance_residuals;
     out["trial_composition"] = result.trial_composition;
     out["initial_composition"] = result.initial_composition;
     out["parent_reduced_potential"] = result.parent_reduced_potential;
@@ -2469,6 +2486,40 @@ PYBIND11_MODULE(_core, m) {
             )
         );
     });
+    m.def("_native_reactive_stability_tpd_nlp_contract", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        double temperature,
+        double pressure,
+        const std::vector<double>& feed_composition,
+        int balance_rows,
+        const std::vector<double>& balance_matrix_row_major,
+        const std::vector<double>& total_vector,
+        int reaction_rows,
+        const std::vector<double>& reaction_stoichiometry_row_major,
+        const std::vector<double>& log_equilibrium_constants,
+        const std::string& parent_phase,
+        const std::string& trial_phase
+    ) {
+        if (!mixture) {
+            throw ValueError("Reactive stability TPD NLP contract requires a native mixture.");
+        }
+        return stability_nlp_contract_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_reactive_stability_tpd_nlp_contract(
+                mixture->args(),
+                temperature,
+                pressure,
+                feed_composition,
+                balance_rows,
+                balance_matrix_row_major,
+                total_vector,
+                reaction_rows,
+                reaction_stoichiometry_row_major,
+                log_equilibrium_constants,
+                stability_phase_token_to_int(parent_phase),
+                stability_phase_token_to_int(trial_phase)
+            )
+        );
+    });
     m.def("_native_neutral_two_phase_eos_route_result", [](
         const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
         double temperature,
@@ -3219,6 +3270,83 @@ PYBIND11_MODULE(_core, m) {
         py::arg("temperature"),
         py::arg("pressure"),
         py::arg("feed_composition"),
+        py::arg("max_iterations"),
+        py::arg("tolerance"),
+        py::arg("timeout_seconds"),
+        py::arg("hessian_mode"),
+        py::arg("iteration_history_limit"),
+        py::arg("stability_tolerance"),
+        py::arg("trial_initial_composition") = std::vector<double>{},
+        py::arg("continuation_state") = py::none()
+    );
+    m.def("_native_reactive_stability_tpd_route_result", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        double temperature,
+        double pressure,
+        const std::vector<double>& feed_composition,
+        int balance_rows,
+        const std::vector<double>& balance_matrix_row_major,
+        const std::vector<double>& total_vector,
+        int reaction_rows,
+        const std::vector<double>& reaction_stoichiometry_row_major,
+        const std::vector<double>& log_equilibrium_constants,
+        const std::string& parent_phase,
+        const std::string& trial_phase,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double stability_tolerance,
+        const std::vector<double>& trial_initial_composition,
+        const py::object& continuation_state,
+        const py::kwargs& kwargs
+    ) {
+        if (!mixture) {
+            throw ValueError("Reactive stability TPD route result requires a native mixture.");
+        }
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                iteration_history_limit
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        apply_ipopt_continuation_state(options, continuation_state);
+        return stability_route_result_to_dict(
+            epcsaft::native::equilibrium_nlp::solve_reactive_stability_tpd_route(
+                mixture->args(),
+                temperature,
+                pressure,
+                feed_composition,
+                balance_rows,
+                balance_matrix_row_major,
+                total_vector,
+                reaction_rows,
+                reaction_stoichiometry_row_major,
+                log_equilibrium_constants,
+                stability_phase_token_to_int(parent_phase),
+                stability_phase_token_to_int(trial_phase),
+                options,
+                stability_tolerance,
+                trial_initial_composition
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("pressure"),
+        py::arg("feed_composition"),
+        py::arg("balance_rows"),
+        py::arg("balance_matrix_row_major"),
+        py::arg("total_vector"),
+        py::arg("reaction_rows"),
+        py::arg("reaction_stoichiometry_row_major"),
+        py::arg("log_equilibrium_constants"),
+        py::arg("parent_phase"),
+        py::arg("trial_phase"),
         py::arg("max_iterations"),
         py::arg("tolerance"),
         py::arg("timeout_seconds"),

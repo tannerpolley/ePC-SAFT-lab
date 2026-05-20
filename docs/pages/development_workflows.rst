@@ -54,24 +54,24 @@ Command matrix
    * - Native route metadata/result contracts
      - ``uv run python run_pytest.py --native-contracts -q``
      - Fast check for native route ``variable_model``, ``density_backend``, residual-family payloads, and Python route diagnostics. Use this instead of the full route-builder suite for architecture or metadata edits.
-   * - Electrolyte LLE confidence
+   * - Equilibrium route confidence
      - ``uv run python run_pytest.py --equilibrium-confidence -q -s``
-     - Bounded Khudaida fixture plus cached fixed-phase residual contract. Native confidence solving and full report generation remain explicit opt-ins.
+     - Trusted exact-Hessian native Ipopt route ladder anchored on the hydrocarbon bubble workflow plus route diagnostics. Full paper or feed-line validation remains an explicit benchmark or analysis workflow, not pytest.
    * - Docs check
      - ``uv run python scripts/dev/validate_project.py docs``
      - Build Sphinx HTML under ``build/docs-html``.
    * - Quick method-speed check
-     - ``uv run python run_pytest.py --profile -q``
-     - Runtime-only profiling. The wrapper enables the required performance environment flag.
+     - ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``
+     - Runtime benchmark harness for neutral equilibrium; performance evidence is explicit benchmark output, not pytest collection.
    * - Neutral equilibrium benchmark
      - ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``
      - Measure the current neutral state runtime guardrail without any FeOs dependency.
    * - Literature benchmark inventory
      - ``uv run python scripts/benchmarks/benchmark_literature_suite.py``
-     - Review the package-owned literature benchmark scope, including which issue anchors are already supported by tests and which still require follow-up work.
-   * - Full method-speed check
-     - ``uv run python run_pytest.py --profile-full -q -s``
-     - Comprehensive runtime, MIAC, and regression profiling before making broad speed claims. This can take about a minute locally; allow at least 120 seconds.
+     - Review the package-owned literature benchmark scope, including which issue anchors have executable package evidence and which still require follow-up work.
+   * - Reactive regression benchmark
+     - ``uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5``
+     - Explicit benchmark harness for reactive regression objective throughput. Keep benchmark claims outside pytest.
    * - Package boundary
      - ``uv run python scripts/dev/build_dist.py``
      - Wheel/sdist and smoke-import validation. Isolated package builds default to serial native compilation to avoid Windows Ceres memory spikes; use ``--parallel N`` only when the machine has enough headroom.
@@ -171,12 +171,12 @@ The mirror lives at ``C:\Users\Tanner\Documents\git\LaTeX-Projects\ePC-SAFT-LaTe
 Parallel worker safety
 ----------------------
 
-The dev build tree and temp/profile outputs under ``build/`` are shared disposable state. In parallel sessions, coordinate native rebuild, clean, and repair work so only one process owns the native extension at a time.
+The dev build tree and benchmark outputs under ``build/`` are shared disposable state. In parallel sessions, coordinate native rebuild, clean, and repair work so only one process owns the native extension at a time.
 
 - Do not run clean or repair actions while tests, REPLs, IDE run configurations, or other workers may import ``epcsaft._core``.
 - Prefer one native builder at a time for ``build/dev`` and the in-place ``_core`` extension.
 - Let parallel workers run focused test slices for their lane, and reserve full build, doctor, and ``--confidence`` validation for coordinated handoff checks.
-- Use ``uv run python run_pytest.py --profile -q`` for quick runtime-only speed claims. Use ``uv run python run_pytest.py --profile-full -q -s`` before broad method-speed claims, allow at least 120 seconds, then read ``build/runtime_profile/*.md`` before reporting conclusions.
+- Use explicit benchmark scripts for speed claims, for example ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``. Do not route performance claims through pytest.
 
 Project-local Git worktrees
 ---------------------------
@@ -203,12 +203,11 @@ native/equilibrium route tests. If the right target is unclear, run
 
 - Python wrapper/API changes: ``uv run python run_pytest.py --api -q`` first, then ``uv run python run_pytest.py --confidence -q``.
 - Native/equation changes: ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` first, then ``uv run python run_pytest.py --runtime -q``, then ``uv run python run_pytest.py --confidence -q``.
-- Native route metadata, result-adapter diagnostics, or pybind payload-shape changes: run ``uv run python run_pytest.py --native-contracts -q`` first. Do not run the whole ``tests/native/equilibrium/test_route_builders.py`` file for these changes; the wrapper rejects that broad target unless ``--allow-long-native-tests`` or ``EPCSAFT_ALLOW_LONG_NATIVE_TESTS=1`` is set.
+- Native route metadata, result-adapter diagnostics, or pybind payload-shape changes: run ``uv run python run_pytest.py --native-contracts -q`` first. Do not run broad route-builder files under ``tests/native/equilibrium`` for these changes; the wrapper rejects those broad targets unless ``--allow-long-native-tests`` or ``EPCSAFT_ALLOW_LONG_NATIVE_TESTS=1`` is set.
 - Equation traceability changes: ``uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`` then ``uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q``.
-- Performance claims: ``uv run python run_pytest.py --profile -q -s`` is the quick runtime-only profile; use ``uv run python run_pytest.py --profile-full -q -s`` only for broad speed claims. Read the generated ``build/runtime_profile/*.md`` reports. Do not rely on skipped profile tests or code inspection alone.
+- Performance claims: run explicit benchmark scripts such as ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100`` or ``uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5``. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.
 
-``--profile`` is the quick runtime-only profile. ``--profile-full`` runs runtime, MIAC, and regression profiles and is the preferred evidence path for comprehensive speed reviews; use a timeout of at least 120 seconds.
 - Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to ``--parallel 1`` for isolated PEP 517 builds; raise it only after confirming Ceres builds are not memory-bound.
 
 Keep generated plot assets and generated CSV workflows out of normal validation unless the task explicitly asks for them. There is no named plot validation slice; target the owning script or test file directly when plot output work is in scope.
@@ -260,8 +259,9 @@ and benchmark scope rather than runtime speed.
 
 The inventory reports each issue-scope literature anchor with a classification
 such as ``already_supported_with_tests`` or ``blocker_requires_followup`` plus
-the owning package/test surfaces. Use it to keep benchmark claims honest and to
-avoid silently treating blocked literature routes as complete.
+the owning package surfaces. Use it to keep benchmark claims honest and to
+avoid silently treating blocked literature routes as complete. The inventory is
+kept outside pytest so paper-wide validation stays opt-in.
 The JSON payload also records the registered validation lanes and pytest slices
 from ``epcsaft.capability_evidence`` so benchmark inventory output can be read
 against the same executable evidence registry used by the development CLIs.

@@ -336,10 +336,8 @@ with objective
 
 $$
 \Phi_p(u)
-=
-\frac{1}{2}\left\|W_{r,p}\, r_p(u)\right\|_2^2
-+
-\frac{\eta_{\mathrm{seed}}}{2}\left\|W_s \left(u-u^{(0)}\right)\right\|_2^2
+= \frac{1}{2}\left\|W_{r,p}\, r_p(u)\right\|_2^2
++ \frac{\eta_{\mathrm{seed}}}{2}\left\|W_s \left(u-u^{(0)}\right)\right\|_2^2
 $$
 
 where:
@@ -482,8 +480,7 @@ If the EOS state uses hidden closure variables $q_{\alpha}$, they must expose ex
 
 $$
 \frac{\partial q_{\alpha}}{\partial u}
-=
--
+= -
 \left(
 \frac{\partial c_{\alpha}^{\mathrm{eos}}}{\partial q_{\alpha}}
 \right)^{-1}
@@ -526,22 +523,17 @@ The Lagrangian is:
 
 $$
 \mathcal{L}(u,\lambda,z_L,z_U)
-=
-\Phi_p(u) + \lambda^{\top} c_p(u) + z_L^{\top}(u-\ell_p) + z_U^{\top}(u-u_p)
+= \Phi_p(u) + \lambda^{\top} c_p(u) + z_L^{\top}(u-\ell_p) + z_U^{\top}(u-u_p)
 $$
 
 For exact Hessian mode:
 
 $$
 \nabla_{uu}^{2}\mathcal{L}
-=
-J_r^{\top} W_{r,p}^{\top} W_{r,p} J_r
-+
-\sum_{k} \omega_k r_k \nabla_{uu}^{2} r_k
-+
-\sum_{j} \lambda_j \nabla_{uu}^{2} c_j
-+
-\eta_{\mathrm{seed}} W_s^{\top} W_s
+= J_r^{\top} W_{r,p}^{\top} W_{r,p} J_r
++ \sum_{k} \omega_k r_k \nabla_{uu}^{2} r_k
++ \sum_{j} \lambda_j \nabla_{uu}^{2} c_j
++ \eta_{\mathrm{seed}} W_s^{\top} W_s
 $$
 
 Interpretation:
@@ -662,6 +654,7 @@ Any future implementation plan should preserve the following boundaries:
 3. Do not hide phase restrictions or cross-phase reactions in route-specific ad hoc logic if they belong in the generic core contract.
 4. Do not mark exact-Hessian support complete until the route provides the full derivative tier needed by the Lagrangian Hessian.
 5. Do not let bubble/dew or other Tier 3 routes distort the Tier 1 design target.
+6. Do not use pytest to validate whole papers or force many literature feed lines to converge. Pytest should prove generic API-to-native route wiring, exact derivative availability, diagnostics, and certification on trusted representative cases; full paper validation belongs in explicit analysis or benchmark scripts.
 
 ## Practical source links
 

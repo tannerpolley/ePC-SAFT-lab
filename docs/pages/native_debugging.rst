@@ -42,9 +42,9 @@ For method-speed checks:
 
 .. code-block:: powershell
 
-   uv run python run_pytest.py --profile -q
+   uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100
 
-Use ``uv run python run_pytest.py --profile-full -q -s`` when you need the full runtime, MIAC, and regression profile suite before making broad method-speed claims. It can take about a minute locally, so allow at least 120 seconds.
+Use explicit benchmark scripts, not pytest, when making speed claims. For reactive regression throughput, run ``uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5``.
 
 Equation traceability
 ---------------------

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft
-from tests.api.reactive.test_reactive_speciation_options import (
+from tests.api.reactive.reactive_speciation_cases import (
     _assert_reactive_speciation_native_ipopt_dependency_required,
     _native_ipopt_compiled,
 )

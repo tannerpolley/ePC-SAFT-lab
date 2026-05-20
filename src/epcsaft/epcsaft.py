@@ -631,20 +631,31 @@ class ePCSAFTMixture:
             from .equilibrium import (
                 _normalize_parent_phases,
                 _normalize_trial_phases,
-                _raise_native_ipopt_stability_required,
+                reactive_stability_native,
             )
 
             charges = np.asarray(self.parameters.get("z", []), dtype=float).flatten()
             if charges.size and np.any(np.abs(charges) > 1.0e-12):
                 if parent_phase is not None or trial_phases is not None:
                     raise InputError("parent_phase and trial_phases are not supported for ionic reactive_stability.")
-                _raise_native_ipopt_stability_required("reactive_stability")
+                parent_phase_tokens = ("liq",)
+                trial_phase_tokens = ("liq",)
             else:
-                if parent_phase is not None:
-                    _normalize_parent_phases(parent_phase)
-                if trial_phases is not None:
-                    _normalize_trial_phases(trial_phases)
-                _raise_native_ipopt_stability_required("reactive_stability")
+                parent_phase_tokens = _normalize_parent_phases(parent_phase)
+                trial_phase_tokens = _normalize_trial_phases(trial_phases)
+            return reactive_stability_native(
+                self,
+                T=T,
+                P=P,
+                balances=balances,
+                totals=totals,
+                reactions=reactions,
+                initial_x=initial_x,
+                z=z,
+                options=options,
+                parent_phases=parent_phase_tokens,
+                trial_phases=trial_phase_tokens,
+            )
 
         if kind_token in {
             "auto",

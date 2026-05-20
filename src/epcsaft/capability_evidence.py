@@ -67,6 +67,16 @@ IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         },
     },
     {
+        "key": "reactive_stability",
+        "public_routes": ("reactive_stability",),
+        "payload": {
+            "backend": "native_ipopt_equilibrium_nlp",
+            "methods": ("reactive_stability_tp",),
+            "ipopt_formulation": "thermodynamic_constrained_nlp",
+            "route": "coupled_reactive_tangent_plane_distance",
+        },
+    },
+    {
         "key": "neutral_lle_flash",
         "public_routes": ("neutral_lle_flash",),
         "payload": {
@@ -140,7 +150,6 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
         "reason": "validated Ceres route with CppAD and implicit density/association sensitivities",
         "tests": (
             "tests/native/ceres/test_ceres_binary_regression.py",
-            "tests/regression/literature/test_literature_binary_kij_regression.py",
         ),
     },
     {
@@ -167,9 +176,12 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "classification": "production_supported",
         "reason": "neutral TP flash, LLE, stability, bubble, and dew routes require exact gradients/Jacobians and default to exact Hessians",
         "tests": (
-            "tests/equilibrium/core/test_api.py",
-            "tests/equilibrium/core/test_bubble_dew.py",
-            "tests/native/equilibrium/test_route_builders.py",
+            "tests/api/equilibrium/core/test_api.py",
+            "tests/api/equilibrium/core/test_bubble_dew.py",
+            "tests/native/equilibrium/test_route_builders_neutral_flash.py",
+            "tests/native/equilibrium/test_route_builders_neutral_lle.py",
+            "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py",
+            "tests/native/equilibrium/test_route_builders_stability.py",
         ),
     },
     {
@@ -182,9 +194,10 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "classification": "production_supported",
         "reason": "electrolyte LLE and charge-constrained stability routes report exact Hessian metadata and reject non-certified postsolves",
         "tests": (
-            "tests/api/equilibrium/test_electrolyte_lle_problem_native_ipopt.py",
-            "tests/equilibrium/electrolyte/test_electrolyte_lle_solver_contracts.py",
-            "tests/native/equilibrium/test_route_builders.py",
+            "tests/api/equilibrium/electrolyte/test_electrolyte_lle_problem_native_ipopt.py",
+            "tests/api/equilibrium/electrolyte/test_electrolyte_lle_solver_contracts.py",
+            "tests/native/equilibrium/test_route_builders_electrolyte.py",
+            "tests/native/equilibrium/test_route_builders_stability.py",
         ),
     },
     {
@@ -197,8 +210,22 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "classification": "production_supported",
         "reason": "electrolyte bubble pressure is a registered production Ipopt route with exact-Hessian route-builder evidence and public phase-eligibility diagnostics",
         "tests": (
-            "tests/equilibrium/electrolyte/test_electrolyte_bubble.py",
-            "tests/native/equilibrium/test_route_builders.py",
+            "tests/api/equilibrium/electrolyte/test_electrolyte_bubble.py",
+            "tests/native/equilibrium/test_route_builders_electrolyte.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "quantity": "reactive_stability",
+        "derivative": "lagrangian_hessian",
+        "backend": "cppad_explicit_density",
+        "supported": True,
+        "classification": "production_supported",
+        "reason": "reactive stability routes through the native coupled reactive TPD Ipopt route with exact Hessian evidence and shared certification diagnostics",
+        "tests": (
+            "tests/native/equilibrium/test_chemical_equilibrium_native_api.py",
+            "tests/native/equilibrium/test_route_builders_stability.py",
         ),
     },
     {
@@ -212,7 +239,8 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "reason": "native reactive LLE route builders expose exact Hessian paths, while production capability registration still waits for benchmark and acceptance evidence",
         "tests": (
             "tests/native/equilibrium/test_reactive_phase_equilibrium_residual_jacobian.py",
-            "tests/native/equilibrium/test_route_builders.py",
+            "tests/native/equilibrium/test_route_builders_reactive_lle.py",
+            "tests/native/equilibrium/test_route_builders_reactive_electrolyte.py",
             "tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py",
         ),
     },
@@ -235,21 +263,17 @@ NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
 GENERIC_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/package/test_package_main.py::test_python_m_epcsaft_reports_package_and_core_status",
     "tests/api/runtime/test_runtime_exports_and_metadata.py::test_package_exports_are_available",
-    "tests/api/runtime/test_runtime_neutral_methods.py::test_neutral_scalar_methods_return_expected_values",
+    "tests/api/runtime/test_runtime_neutral_scalar_methods.py::test_neutral_scalar_methods_return_expected_values",
     "tests/api/runtime/test_runtime_ionic_methods.py::test_ionic_activity_and_solution_methods_return_expected_values",
     "tests/api/parameters/test_parameter_templates.py::test_runtime_options_accept_cppad_modes_and_preserve_explicit_overrides",
-    "tests/api/regression/test_regression_api_native_backends.py::test_public_pure_neutral_regression_is_robust_to_distinct_initial_guesses",
+    "tests/api/regression/test_regression_api_pure_neutral_backend.py::test_public_pure_neutral_regression_is_robust_to_distinct_initial_guesses",
     "tests/regression/core/test_hydrocarbon.py::test_methane_reference_parameters_keep_native_objective_pinned",
-    "tests/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/equilibrium/core/test_stability.py::test_stability_uses_native_ipopt_route_after_validation",
+    "tests/api/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate",
+    "tests/api/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate",
+    "tests/api/equilibrium/core/test_stability.py::test_stability_uses_native_ipopt_route_after_validation",
     (
-        "tests/equilibrium/electrolyte/test_electrolyte_lle_smokes.py::"
+        "tests/api/equilibrium/electrolyte/test_electrolyte_lle_smokes.py::"
         "test_electrolyte_lle_builds_native_route_before_ipopt_gate"
-    ),
-    (
-        "tests/workflows/validation/equilibrium_core/test_electrolyte_thermo_diagnostics.py::"
-        "test_khudaida_fixture_loads_charge_neutral_explicit_ions"
     ),
     "tests/native/contracts/test_equilibrium_native_contracts.py::test_native_equilibrium_entrypoint_is_exposed",
     "tests/native/runtime/test_runtime_density_closure.py::test_pressure_based_and_density_based_states_match_for_neutral_system",
@@ -267,20 +291,21 @@ CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
 )
 EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     (
-        "tests/workflows/validation/equilibrium_core/test_electrolyte_lle_confidence.py::"
-        "test_khudaida_benchmark_fixture_loads_charge_neutral_cases"
+        "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py::"
+        "test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve"
     ),
     (
-        "tests/workflows/validation/equilibrium_core/test_electrolyte_thermo_diagnostics.py::"
-        "test_khudaida_package_tieline_fixed_phase_residual_is_internally_consistent"
+        "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py::"
+        "test_neutral_fixed_temperature_pressure_route_uses_exact_hessian_when_requested"
     ),
+    "tests/native/equilibrium/test_native_route_diagnostics_contract.py",
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/equilibrium/core/test_stability.py::test_stability_uses_native_ipopt_route_after_validation",
+    "tests/api/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate",
+    "tests/api/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate",
+    "tests/api/equilibrium/core/test_stability.py::test_stability_uses_native_ipopt_route_after_validation",
     (
-        "tests/equilibrium/electrolyte/test_electrolyte_lle_smokes.py::"
+        "tests/api/equilibrium/electrolyte/test_electrolyte_lle_smokes.py::"
         "test_electrolyte_lle_builds_native_route_before_ipopt_gate"
     ),
     "tests/api/runtime/test_runtime_exports_and_metadata.py::test_runtime_build_info_and_capabilities_are_json_like",
@@ -288,8 +313,14 @@ EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
         "tests/api/reactive/test_reactive_speciation_results.py::"
         "test_solve_reactive_speciation_activity_coupled_state_requires_native_ipopt_route"
     ),
-    "tests/api/reactive/test_reactive_speciation_options.py::test_reactive_speciation_options_expose_jacobian_backend_selector",
-    "tests/api/reactive/test_reactive_speciation_options.py::test_reactive_speciation_requested_ipopt_routes_ideal_speciation_when_compiled",
+    (
+        "tests/api/reactive/test_reactive_speciation_option_validation.py::"
+        "test_reactive_speciation_options_public_surface_is_current_fields"
+    ),
+    (
+        "tests/api/reactive/test_reactive_speciation_native_requests.py::"
+        "test_reactive_speciation_requested_ipopt_routes_ideal_speciation_when_compiled"
+    ),
     "tests/api/reactive/test_reactive_electrolyte_bubble_setup.py",
     "tests/api/reactive/test_reactive_electrolyte_bubble_results.py",
     (
@@ -303,7 +334,9 @@ EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
 )
 RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/runtime/test_runtime_exports_and_metadata.py",
-    "tests/api/runtime/test_runtime_neutral_methods.py",
+    "tests/api/runtime/test_runtime_neutral_scalar_methods.py",
+    "tests/api/runtime/test_runtime_neutral_contribution_methods.py",
+    "tests/api/runtime/test_runtime_neutral_density_closure.py",
     "tests/api/runtime/test_runtime_ionic_methods.py",
     "tests/native/runtime/test_runtime_density_closure.py",
     "tests/native/runtime/test_runtime_contribution_contracts.py",
@@ -311,11 +344,15 @@ RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
 )
 API_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/runtime/test_runtime_exports_and_metadata.py",
-    "tests/api/runtime/test_runtime_neutral_methods.py",
+    "tests/api/runtime/test_runtime_neutral_scalar_methods.py",
+    "tests/api/runtime/test_runtime_neutral_contribution_methods.py",
+    "tests/api/runtime/test_runtime_neutral_density_closure.py",
     "tests/api/runtime/test_runtime_ionic_methods.py",
     "tests/api/parameters/test_parameter_templates.py",
     "tests/api/regression/test_regression_api_public_contracts.py",
-    "tests/api/regression/test_regression_api_native_backends.py",
+    "tests/api/regression/test_regression_api_pure_neutral_backend.py",
+    "tests/api/regression/test_regression_api_pure_ion_backend.py",
+    "tests/api/regression/test_regression_api_binary_backend.py",
     "tests/api/regression/test_regression_api_results_and_errors.py",
 )
 NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
@@ -323,13 +360,6 @@ NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/runtime/test_runtime_contribution_contracts.py",
     "tests/native/runtime/test_runtime_cache_contracts.py",
 )
-PROFILE_TEST_TARGETS: Final[tuple[str, ...]] = ("tests/profile/test_runtime_profile.py",)
-FULL_PROFILE_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/profile/test_runtime_profile.py",
-    "tests/profile/test_miac_profile.py",
-    "tests/profile/test_regression_profile.py",
-)
-
 TEST_SLICES: Final[dict[str, dict[str, object]]] = {
     "generic": {"targets": GENERIC_TEST_TARGETS, "cheap_by_default": True},
     "all": {"targets": ("tests",), "cheap_by_default": False},
@@ -340,8 +370,6 @@ TEST_SLICES: Final[dict[str, dict[str, object]]] = {
     "api": {"targets": API_TEST_TARGETS, "cheap_by_default": True},
     "native": {"targets": NATIVE_TEST_TARGETS, "cheap_by_default": True},
     "native-contracts": {"targets": NATIVE_CONTRACT_TEST_TARGETS, "cheap_by_default": True},
-    "profile": {"targets": PROFILE_TEST_TARGETS, "cheap_by_default": False},
-    "profile-full": {"targets": FULL_PROFILE_TEST_TARGETS, "cheap_by_default": False},
 }
 
 VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {

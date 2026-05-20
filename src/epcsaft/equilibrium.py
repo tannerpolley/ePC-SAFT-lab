@@ -1427,6 +1427,7 @@ def _accepted_native_reactive_two_phase_result(
     T: float,
     P: float,
     route: Mapping[str, Any],
+    options: EquilibriumOptions,
     tolerances: tuple[float, float, float, float],
     route_label: str,
     problem_kind: str,
@@ -1486,7 +1487,16 @@ def _accepted_native_reactive_two_phase_result(
                 )
             )
         diagnostics = native_route_diagnostics(
-            route,
+            _reactive_two_phase_route_with_tpd_certificate(
+                mixture,
+                T=T,
+                P=P,
+                route=route,
+                phases=tuple(phases),
+                options=options,
+                problem_kind=problem_kind,
+                stability_tolerance=options.tolerance,
+            ),
             route_status_key="reactive_route_status",
             defaults={
                 "solver_backend": "ipopt",
@@ -1495,6 +1505,8 @@ def _accepted_native_reactive_two_phase_result(
         )
         if continuation_context is not None:
             _stamp_ipopt_continuation_state(diagnostics, route, continuation_context=continuation_context)
+        if not bool(diagnostics["postsolve_certification"]["accepted"]):
+            raise SolutionError(f"Native reactive {route_label} route failed stability certification.", diagnostics)
         return EquilibriumResult(
             backend="native_equilibrium_nlp",
             problem_kind=problem_kind,
@@ -1530,12 +1542,26 @@ def _accepted_native_reactive_two_phase_result(
     )
     diagnostics = native_route_diagnostics(route, route_status_key="reactive_route_status")
     diagnostics.update(result.diagnostics)
+    certificate = _reactive_two_phase_certificate_from_route_or_tpd(
+        mixture,
+        T=T,
+        P=P,
+        route=route,
+        phases=result.phases,
+        options=options,
+        problem_kind=problem_kind,
+        stability_tolerance=options.tolerance,
+    )
+    diagnostics["stability_certificate"] = certificate
+    diagnostics = with_postsolve_certification(diagnostics)
     diagnostics["reactive_postsolve"] = _json_like(route.get("postsolve", {}))
     diagnostics["reactive_route_status"] = str(route.get("status", ""))
     diagnostics["reaction_count"] = int(route.get("reaction_count", 0))
     diagnostics["balance_row_count"] = int(route.get("balance_row_count", 0))
     if continuation_context is not None:
         _stamp_ipopt_continuation_state(diagnostics, route, continuation_context=continuation_context)
+    if not bool(diagnostics["postsolve_certification"]["accepted"]):
+        raise SolutionError(f"Native reactive {route_label} route failed stability certification.", diagnostics)
     return EquilibriumResult(
         backend=result.backend,
         problem_kind=result.problem_kind,
@@ -1866,6 +1892,7 @@ def _native_reactive_two_phase_flash(
         T=T,
         P=P,
         route=route,
+        options=options,
         tolerances=neutral_two_phase_eos_tolerances(P, options),
         route_label="LLE",
         problem_kind=problem_kind,
@@ -2094,6 +2121,309 @@ def _native_electrolyte_stability(
         trial_phase=trial.trial_phase,
         trial_composition=trial.composition,
         trials=(trial,),
+        diagnostics=diagnostics,
+    )
+
+
+def _reactive_stability_route_with_certificate(
+    route: Mapping[str, Any],
+    *,
+    stability_tolerance: float,
+) -> dict[str, Any]:
+    payload = dict(route)
+    min_tpd = float(payload.get("min_tpd", payload.get("objective", np.nan)))
+    route_accepted = bool(payload.get("accepted", False))
+    certificate_accepted = route_accepted and np.isfinite(min_tpd)
+    payload.setdefault(
+        "postsolve",
+        {
+            "accepted": route_accepted,
+            "reaction_stationarity_norm": float(payload.get("reaction_stationarity_norm", 0.0)),
+            "conserved_balance_norm": float(payload.get("conserved_balance_norm", 0.0)),
+        },
+    )
+    payload["stability_certificate"] = {
+        "accepted": certificate_accepted,
+        "status": "accepted" if certificate_accepted else str(payload.get("status", "route_rejected")),
+        "min_tpd": min_tpd,
+        "stable": bool(payload.get("stable", min_tpd >= -abs(stability_tolerance))),
+        "tolerance": float(stability_tolerance),
+    }
+    return payload
+
+
+def _reactive_two_phase_tpd_certificate(
+    mixture: Any,
+    *,
+    T: float,
+    P: float,
+    phases: tuple[EquilibriumPhase, ...],
+    options: EquilibriumOptions,
+    problem_kind: str,
+    stability_tolerance: float,
+) -> dict[str, Any]:
+    from . import _core
+
+    electrolyte_route = "electrolyte" in str(problem_kind)
+    phase_certificates: list[dict[str, Any]] = []
+    for phase in phases:
+        composition = np.asarray(phase.composition, dtype=float)
+        if electrolyte_route:
+            route = _core._native_electrolyte_stability_tpd_route_result(
+                mixture._native,
+                T,
+                P,
+                composition.tolist(),
+                options.max_iterations,
+                options.tolerance,
+                _native_timeout_seconds(options),
+                *_native_ipopt_option_args(options),
+                stability_tolerance,
+                [],
+                None,
+                **_native_ipopt_control_kwargs(options),
+            )
+        else:
+            route = _core._native_neutral_stability_tpd_route_result(
+                mixture._native,
+                T,
+                P,
+                composition.tolist(),
+                "liq",
+                "liq",
+                options.max_iterations,
+                options.tolerance,
+                _native_timeout_seconds(options),
+                *_native_ipopt_option_args(options),
+                stability_tolerance,
+                [],
+                None,
+                **_native_ipopt_control_kwargs(options),
+            )
+        if str(route.get("status", "")) == "ipopt_dependency_required":
+            _raise_native_ipopt_stability_required("reactive_phase_tpd")
+        min_tpd = float(route.get("min_tpd", route.get("objective", np.nan)))
+        accepted = bool(route.get("accepted", False)) and np.isfinite(min_tpd)
+        stable = accepted and min_tpd >= -abs(stability_tolerance)
+        phase_certificates.append(
+            {
+                "phase": phase.label,
+                "accepted": accepted,
+                "stable": stable,
+                "status": str(route.get("status", "")),
+                "solver_status": str(route.get("solver_status", "")),
+                "application_status": str(route.get("application_status", "")),
+                "min_tpd": min_tpd,
+                "tolerance": float(stability_tolerance),
+                "parent_phase": str(route.get("parent_phase", "")),
+                "trial_phase": str(route.get("trial_phase", "")),
+            }
+        )
+    finite_tpd = [float(row["min_tpd"]) for row in phase_certificates if np.isfinite(float(row["min_tpd"]))]
+    accepted = bool(phase_certificates) and all(
+        bool(row["accepted"]) and bool(row["stable"]) for row in phase_certificates
+    )
+    return {
+        "accepted": accepted,
+        "status": "accepted" if accepted else "failed_gate",
+        "stability_source": "reactive_phase_tpd",
+        "phase_certificates": phase_certificates,
+        "minimum_min_tpd": min(finite_tpd) if finite_tpd else np.nan,
+        "tolerance": float(stability_tolerance),
+    }
+
+
+def _reactive_two_phase_certificate_from_route_or_tpd(
+    mixture: Any,
+    *,
+    T: float,
+    P: float,
+    route: Mapping[str, Any],
+    phases: tuple[EquilibriumPhase, ...],
+    options: EquilibriumOptions,
+    problem_kind: str,
+    stability_tolerance: float,
+) -> dict[str, Any]:
+    certificate = route.get("stability_certificate")
+    if isinstance(certificate, Mapping):
+        return dict(certificate)
+    return _reactive_two_phase_tpd_certificate(
+        mixture,
+        T=T,
+        P=P,
+        phases=phases,
+        options=options,
+        problem_kind=problem_kind,
+        stability_tolerance=stability_tolerance,
+    )
+
+
+def _reactive_two_phase_route_with_tpd_certificate(
+    mixture: Any,
+    *,
+    T: float,
+    P: float,
+    route: Mapping[str, Any],
+    phases: tuple[EquilibriumPhase, ...],
+    options: EquilibriumOptions,
+    problem_kind: str,
+    stability_tolerance: float,
+) -> dict[str, Any]:
+    payload = dict(route)
+    payload["stability_certificate"] = _reactive_two_phase_certificate_from_route_or_tpd(
+        mixture,
+        T=T,
+        P=P,
+        route=route,
+        phases=phases,
+        options=options,
+        problem_kind=problem_kind,
+        stability_tolerance=stability_tolerance,
+    )
+    return payload
+
+
+def reactive_stability_native(
+    mixture: Any,
+    *,
+    T: float,
+    P: float,
+    balances: Mapping[str, Mapping[str, float]],
+    totals: Mapping[str, float],
+    reactions: Any,
+    initial_x: Any = None,
+    z: Any = None,
+    options: Any = None,
+    parent_phases: tuple[str, ...] | None = None,
+    trial_phases: tuple[str, ...] | None = None,
+) -> StabilityResult:
+    """Validate a reactive stability request and route it through native Ipopt TPD."""
+    from . import _core
+    from .reactive_speciation import (
+        _normalize_balances as _normalize_reactive_balances,
+    )
+    from .reactive_speciation import (
+        _normalize_options as _normalize_reactive_options,
+    )
+    from .reactive_speciation import (
+        _normalize_reactions,
+    )
+
+    species = [str(label) for label in getattr(mixture, "species", [])]
+    if not species:
+        raise InputError("reactive_stability requires mixture species.")
+    opts = _normalize_reactive_options(options)
+    temperature = _positive_scalar(T, "T", "reactive_stability")
+    pressure = _positive_scalar(P, "P", "reactive_stability")
+    feed_source = z if z is not None else initial_x
+    feed = _normalize_feed(feed_source, int(mixture.ncomp), opts.min_mole_fraction, "reactive_stability")
+    charges = _mixture_charges(mixture)
+    if charges.size and np.any(np.abs(charges) > 1.0e-12):
+        _require_charge_neutral(feed, charges, "reactive_stability feed")
+    balance_matrix, total_vector, _ = _normalize_reactive_balances(species, balances, totals)
+    reaction_defs = _normalize_reactions(species, reactions)
+    request = build_reactive_two_phase_eos_native_request(
+        T=temperature,
+        P=pressure,
+        feed=feed,
+        balance_matrix=balance_matrix,
+        total_vector=total_vector,
+        species=species,
+        reactions=reaction_defs,
+    )
+    parents = parent_phases if parent_phases is not None else ("liq", "vap")
+    trials_to_run = trial_phases if trial_phases is not None else ("liq", "vap")
+    continuation_context = _ipopt_continuation_context(
+        route_kind="reactive_stability",
+        mixture=mixture,
+        fixed_specs={
+            "fixed": ["T", "P", "z", "totals"],
+            "balance_rows": int(balance_matrix.shape[0]),
+            "reaction_rows": len(reaction_defs),
+            "parent_phases": list(parents),
+            "trial_phases": list(trials_to_run),
+        },
+    )
+    continuation_state = _prepare_ipopt_continuation_state(opts, continuation_context=continuation_context)
+
+    route_payloads: list[Mapping[str, Any]] = []
+    for parent in parents:
+        for trial in trials_to_run:
+            route = _core._native_reactive_stability_tpd_route_result(
+                mixture._native,
+                request["T"],
+                request["P"],
+                request["feed_amounts"],
+                request["balance_rows"],
+                request["balance_matrix"],
+                request["total_vector"],
+                request["reaction_rows"],
+                request["reaction_stoichiometry"],
+                request["log_equilibrium_constants"],
+                parent,
+                trial,
+                opts.max_iterations,
+                opts.tolerance,
+                0.0,
+                opts.hessian_mode,
+                opts.ipopt_iteration_history_limit,
+                opts.tolerance,
+                [],
+                continuation_state,
+                **_native_ipopt_control_kwargs(opts),
+            )
+            if str(route.get("status", "")) == "ipopt_dependency_required":
+                _raise_native_ipopt_stability_required("reactive_stability")
+            route_payloads.append(_reactive_stability_route_with_certificate(route, stability_tolerance=opts.tolerance))
+
+    rejected = [route for route in route_payloads if not bool(route.get("accepted", False))]
+    if rejected:
+        diagnostics = {
+            "route_statuses": [str(route.get("status", "")) for route in route_payloads],
+            "solver_statuses": [str(route.get("solver_status", "")) for route in route_payloads],
+            "parent_trial_routes": [
+                [str(route.get("parent_phase", "")), str(route.get("trial_phase", ""))] for route in route_payloads
+            ],
+        }
+        raise SolutionError("Native reactive stability route was rejected.", diagnostics)
+
+    trials = tuple(
+        _native_stability_trial_from_route(
+            route,
+            opts.tolerance,
+            continuation_context=continuation_context,
+        )
+        for route in route_payloads
+    )
+    if not trials:
+        raise SolutionError("Native reactive stability produced no trial routes.")
+    tpd_values = np.asarray([trial.tpd for trial in trials], dtype=float)
+    selected_index = int(np.argmin(tpd_values))
+    selected_route = route_payloads[selected_index]
+    selected = trials[selected_index]
+    stable = selected.tpd >= -abs(opts.tolerance)
+    diagnostics = native_route_diagnostics(selected_route)
+    diagnostics.update(
+        {
+            "backend": "ipopt",
+            "derivative_backend": "cppad_explicit_density",
+            "route_count": len(trials),
+            "selected_trial_index": selected_index,
+            "stability_tolerance": opts.tolerance,
+            "parent_phases": list(parents),
+            "trial_phases": list(trials_to_run),
+        }
+    )
+    _stamp_ipopt_continuation_state(diagnostics, selected_route, continuation_context=continuation_context)
+    return StabilityResult(
+        backend="native_equilibrium_nlp",
+        problem_kind="reactive_stability",
+        stable=stable,
+        min_tpd=selected.tpd,
+        parent_phase=selected.parent_phase,
+        trial_phase=selected.trial_phase,
+        trial_composition=selected.composition,
+        trials=trials,
         diagnostics=diagnostics,
     )
 

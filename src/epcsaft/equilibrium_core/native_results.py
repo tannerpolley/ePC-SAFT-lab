@@ -84,6 +84,12 @@ _ADMISSIBILITY_EVIDENCE_KEYS = (
     "density_recompute_relative_errors",
 )
 
+_PHASE_ELIGIBILITY_EVIDENCE_KEYS = (
+    "phase_eligibility_mask_available",
+    "phase_eligibility_mask",
+    "phase_eligibility_shape",
+)
+
 _STABILITY_EVIDENCE_KEYS = (
     "tpdf_stability",
     "stability_certificate",
@@ -324,6 +330,7 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
         "hard_constraints_reported": bool(diagnostics.get("constraint_families"))
         or _has_any_key(diagnostics, _CONSTRAINT_EVIDENCE_KEYS),
         "physical_admissibility_reported": _has_any_key(diagnostics, _ADMISSIBILITY_EVIDENCE_KEYS),
+        "phase_eligibility_reported": _has_any_key(diagnostics, _PHASE_ELIGIBILITY_EVIDENCE_KEYS),
     }
 
 

@@ -170,6 +170,25 @@ inline RouteMetadata reactive_phase_amount_volume_route_metadata(bool has_charge
     return out;
 }
 
+inline RouteMetadata stability_tpd_route_metadata(bool has_charge_constraints) {
+    RouteMetadata out;
+    out.variable_model = "composition_plus_log_density";
+    out.density_backend = "explicit_log_density_pressure_constraint";
+    out.residual_families = {"stability_tpd"};
+    out.constraint_families = {"composition_sum"};
+    if (has_charge_constraints) {
+        out.constraint_families.push_back("phase_charge");
+    }
+    out.constraint_families.push_back("pressure");
+    return out;
+}
+
+inline RouteMetadata reactive_stability_tpd_route_metadata(bool has_charge_constraints) {
+    RouteMetadata out = stability_tpd_route_metadata(has_charge_constraints);
+    out.residual_families = {"reaction_stationarity", "stability_tpd"};
+    return out;
+}
+
 inline RouteMetadata fixed_temperature_pressure_route_metadata(bool has_charge_constraints) {
     RouteMetadata out;
     out.variable_model = "phase_species_amounts_plus_phase_volume_plus_pressure";

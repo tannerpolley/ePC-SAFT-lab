@@ -6,9 +6,10 @@ import numpy as np
 import pytest
 
 from epcsaft import _core
-from tests.native.equilibrium.test_route_builders import (
+from tests.native.equilibrium.route_builder_cases import (
     _ascani_electrolyte_mixture,
     _neutral_binary_mixture,
+    _reactive_stability_inputs,
 )
 
 pytestmark = pytest.mark.native_contract
@@ -165,3 +166,29 @@ def test_phase_tagged_reactive_liquid_root_contract_declares_reaction_constraint
         "phase_pressure_consistency",
         "phase_distance",
     ]
+
+
+def test_reactive_stability_contract_declares_route_metadata_without_solving() -> None:
+    mix = _neutral_binary_mixture()
+    inputs = _reactive_stability_inputs()
+    contract = _core._native_reactive_stability_tpd_nlp_contract(
+        mix._native,
+        300.0,
+        1.0e5,
+        inputs["feed_composition"],
+        inputs["balance_rows"],
+        inputs["balance_matrix_row_major"],
+        inputs["total_vector"],
+        inputs["reaction_rows"],
+        inputs["reaction_stoichiometry_row_major"],
+        inputs["log_equilibrium_constants"],
+        "vap",
+        "vap",
+    )
+
+    assert contract["variable_model"] == "composition_plus_log_density"
+    assert contract["density_backend"] == "explicit_log_density_pressure_constraint"
+    assert contract["balance_row_count"] == 1
+    assert contract["reaction_count"] == 1
+    assert contract["residual_families"] == ["reaction_stationarity", "stability_tpd"]
+    assert contract["constraint_families"] == ["composition_sum", "pressure"]

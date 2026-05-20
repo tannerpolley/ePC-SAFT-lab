@@ -26,22 +26,22 @@ RUNTIME_TEST_TARGETS = registry_targets("runtime")
 API_TEST_TARGETS = registry_targets("api")
 NATIVE_TEST_TARGETS = registry_targets("native")
 NATIVE_CONTRACT_TEST_TARGETS = registry_targets("native-contracts")
-PROFILE_TEST_TARGETS = registry_targets("profile")
-FULL_PROFILE_TEST_TARGETS = registry_targets("profile-full")
 SLICE_TARGETS = {name: registry_targets(name) for name in TEST_SLICES}
 LONG_NATIVE_TARGETS = {
     "tests/native/equilibrium",
-    "tests/native/equilibrium/test_route_builders.py",
+    "tests/native/equilibrium/test_route_builders_electrolyte.py",
+    "tests/native/equilibrium/test_route_builders_neutral_flash.py",
+    "tests/native/equilibrium/test_route_builders_neutral_lle.py",
+    "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py",
+    "tests/native/equilibrium/test_route_builders_reactive_two_phase.py",
+    "tests/native/equilibrium/test_route_builders_reactive_lle.py",
+    "tests/native/equilibrium/test_route_builders_reactive_electrolyte.py",
+    "tests/native/equilibrium/test_route_builders_stability.py",
 }
 LONG_NATIVE_TARGETS_NOTE = (
     "Broad native equilibrium route-builder targets are intentionally guarded because they can take a long time. "
     "Use `uv run python run_pytest.py --native-contracts -q` for metadata/result-contract checks, "
     "or target a single test node. Pass `--allow-long-native-tests` only when you intentionally need the broad route suite."
-)
-FULL_PROFILE_MIN_TIMEOUT_SECONDS = 120
-FULL_PROFILE_RUNTIME_NOTE = (
-    "--profile-full runs runtime, MIAC, and regression profiling; "
-    f"it can take about a minute locally, so allow at least {FULL_PROFILE_MIN_TIMEOUT_SECONDS} seconds."
 )
 SLICE_SELECTION_NOTE = (
     "Slice flags are mutually exclusive. Developers should normally start with "
@@ -70,7 +70,7 @@ def _pytest_temp(repo_root: Path) -> Path:
     return path
 
 
-def _pytest_env(pytest_temp: Path, profile: bool = False) -> dict[str, str]:
+def _pytest_env(pytest_temp: Path) -> dict[str, str]:
     env = os.environ.copy()
     env["TMP"] = str(pytest_temp.resolve())
     env["TEMP"] = str(pytest_temp.resolve())
@@ -81,9 +81,6 @@ def _pytest_env(pytest_temp: Path, profile: bool = False) -> dict[str, str]:
         apply_native_runtime_env = None
     if apply_native_runtime_env is not None:
         apply_native_runtime_env(env)
-    if profile:
-        env["EPCSAFT_RUN_PERF"] = "1"
-        env["ePCSAFT_RUN_PERF"] = "1"
     return env
 
 
@@ -98,8 +95,6 @@ def _pytest_args(
     api: bool = False,
     native: bool = False,
     native_contracts: bool = False,
-    profile: bool = False,
-    profile_full: bool = False,
     all_tests: bool = False,
     allow_long_native_tests: bool = False,
 ) -> list[str]:
@@ -118,8 +113,6 @@ def _pytest_args(
         or api
         or native
         or native_contracts
-        or profile
-        or profile_full
         or all_tests
     )
     if all_tests:
@@ -140,11 +133,6 @@ def _pytest_args(
         cmd.extend(NATIVE_TEST_TARGETS)
     elif native_contracts:
         cmd.extend(NATIVE_CONTRACT_TEST_TARGETS)
-    elif profile:
-        cmd.extend(PROFILE_TEST_TARGETS)
-    elif profile_full:
-        cmd.extend(FULL_PROFILE_TEST_TARGETS)
-
     if has_predefined_targets:
         cmd.extend(pytest_args)
     else:
@@ -235,7 +223,7 @@ def main() -> int:
     predefined.add_argument(
         "--equilibrium-confidence",
         action="store_true",
-        help="Run electrolyte equilibrium confidence contract tests; full reports remain env opt-in",
+        help="Run trusted equilibrium route-contract checks anchored on exact-Hessian native Ipopt solves",
     )
     predefined.add_argument(
         "--equilibrium-api",
@@ -250,12 +238,6 @@ def main() -> int:
         action="store_true",
         help="Run fast native route metadata/result contract tests without broad solver route suites",
     )
-    predefined.add_argument("--profile", action="store_true", help="Run the opt-in runtime-only profile test")
-    predefined.add_argument(
-        "--profile-full",
-        action="store_true",
-        help="Run all opt-in runtime, MIAC, and regression profile tests",
-    )
     predefined.add_argument(
         "--all",
         dest="all_tests",
@@ -268,7 +250,7 @@ def main() -> int:
     parser.add_argument(
         "--allow-long-native-tests",
         action="store_true",
-        help="Allow broad known-slow native route-builder targets such as the full test_route_builders.py file",
+        help="Allow broad known-slow native route-builder file targets",
     )
     args, pytest_args = parser.parse_known_args()
 
@@ -278,7 +260,7 @@ def main() -> int:
 
     repo_root = _repo_root()
     pytest_temp = _pytest_temp(repo_root)
-    env = _pytest_env(pytest_temp, profile=args.profile or args.profile_full)
+    env = _pytest_env(pytest_temp)
     src_root = repo_root / "src"
     sys.path.insert(0, str(src_root))
     env["PYTHONPATH"] = str(src_root)
@@ -294,14 +276,10 @@ def main() -> int:
         api=args.api,
         native=args.native,
         native_contracts=args.native_contracts,
-        profile=args.profile,
-        profile_full=args.profile_full,
         all_tests=args.all_tests,
         allow_long_native_tests=args.allow_long_native_tests,
     )
     print("Running:", f"{sys.executable} -m pytest", " ".join(cmd), flush=True)
-    if args.profile_full:
-        print(FULL_PROFILE_RUNTIME_NOTE, flush=True)
     os.environ.update(env)
 
     _patch_windows_pytest_temp_acl()

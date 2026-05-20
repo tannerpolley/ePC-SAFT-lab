@@ -68,14 +68,16 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Start every fresh source checkout with this sequence" in development_workflows
     assert "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10" in development_workflows
     assert "uv run python run_pytest.py --runtime -q" in development_workflows
-    assert "uv run python run_pytest.py --profile -q" in development_workflows
-    assert "uv run python run_pytest.py --profile-full -q -s" in development_workflows
+    assert "uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100" in (
+        development_workflows
+    )
+    assert "uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5" in (
+        development_workflows
+    )
     assert "uv run python run_pytest.py --list-slices" in development_workflows
     assert "EPCSAFT_PYTEST_TEMP_ROOT" in development_workflows
     assert "reuse them inside hot loops" in development_workflows
-    assert "``--profile`` is the quick runtime-only profile" in development_workflows
-    assert "``--profile-full`` runs runtime, MIAC, and regression profiles" in development_workflows
-    assert "allow at least 120 seconds" in development_workflows
+    assert "Do not route performance claims through pytest" in development_workflows
     assert "uv run python scripts/dev/build_dist.py" in development_workflows
     assert "Do not use ``--clean`` for routine validation" in development_workflows
 

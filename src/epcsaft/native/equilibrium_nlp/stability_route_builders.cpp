@@ -3,6 +3,8 @@
 #include "epcsaft_core_internal.h"
 #include "ipopt_adapter.h"
 #include "nlp_problem.h"
+#include "reaction_block.h"
+#include "route_metadata.h"
 #include "second_order.h"
 
 #include <algorithm>
@@ -14,7 +16,33 @@
 namespace epcsaft::native::equilibrium_nlp {
 namespace {
 
+void apply_route_metadata(StabilityNlpContract& out, const RouteMetadata& metadata) {
+    out.variable_model = metadata.variable_model;
+    out.density_backend = metadata.density_backend;
+    out.residual_families = metadata.residual_families;
+    out.constraint_families = metadata.constraint_families;
+}
+
+void apply_route_metadata(StabilityRouteResult& out, const RouteMetadata& metadata) {
+    out.variable_model = metadata.variable_model;
+    out.density_backend = metadata.density_backend;
+    out.residual_families = metadata.residual_families;
+    out.constraint_families = metadata.constraint_families;
+}
+
+double max_abs_value(const std::vector<double>& values) {
+    double out = 0.0;
+    for (double value : values) {
+        out = std::max(out, std::abs(value));
+    }
+    return out;
+}
+
 void apply_stability_ipopt_metadata(StabilityRouteResult& out, const IpoptSolveResult& solve) {
+    const RouteMetadata route_metadata = route_metadata_from_diagnostics(solve.diagnostics_string);
+    if (!route_metadata.variable_model.empty()) {
+        apply_route_metadata(out, route_metadata);
+    }
     out.gradient_approximation = solve_diagnostic_string(solve, "gradient_approximation", "exact");
     out.jacobian_approximation = solve_diagnostic_string(solve, "jacobian_approximation", "exact");
     out.hessian_approximation = solve_diagnostic_string(solve, "hessian_approximation", out.hessian_approximation);
@@ -250,6 +278,9 @@ RouteSeedAttempt stability_seed_attempt_from_result(const StabilityRouteResult& 
     out.iteration_count = result.iteration_count;
     out.objective = result.objective;
     out.min_tpd = result.min_tpd;
+    out.conserved_balance_norm = result.conserved_balance_norm;
+    out.charge_balance_norm = result.charge_balance_norm;
+    out.reaction_stationarity_norm = result.reaction_stationarity_norm;
     return out;
 }
 
@@ -379,6 +410,34 @@ std::vector<double> reduced_potential(
     return out;
 }
 
+std::vector<double> matrix_vector_residual(
+    const std::vector<double>& matrix_row_major,
+    int rows,
+    int cols,
+    const std::vector<double>& values,
+    const std::vector<double>& target,
+    const std::string& label
+) {
+    require_size(
+        matrix_row_major,
+        static_cast<std::size_t>(rows) * static_cast<std::size_t>(cols),
+        label + " matrix"
+    );
+    require_size(target, static_cast<std::size_t>(rows), label + " target");
+    require_size(values, static_cast<std::size_t>(cols), label + " values");
+    std::vector<double> residual(static_cast<std::size_t>(rows), 0.0);
+    for (int row = 0; row < rows; ++row) {
+        double value = 0.0;
+        for (int col = 0; col < cols; ++col) {
+            value += matrix_row_major[
+                static_cast<std::size_t>(row) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(col)
+            ] * values[static_cast<std::size_t>(col)];
+        }
+        residual[static_cast<std::size_t>(row)] = value - target[static_cast<std::size_t>(row)];
+    }
+    return residual;
+}
+
 class StabilityTpdProblem final : public NlpProblem {
 public:
     StabilityTpdProblem(
@@ -391,7 +450,13 @@ public:
         std::string problem_name,
         std::vector<double> charges = {},
         bool require_charge_constraint = false,
-        std::vector<double> initial_composition = {}
+        std::vector<double> initial_composition = {},
+        int balance_rows = 0,
+        std::vector<double> balance_matrix_row_major = {},
+        std::vector<double> total_vector = {},
+        int reaction_rows = 0,
+        std::vector<double> reaction_stoichiometry_row_major = {},
+        std::vector<double> log_equilibrium_constants = {}
     )
         : args_(std::move(args)),
           temperature_(temperature),
@@ -403,6 +468,12 @@ public:
           trial_phase_label_(phase_label(trial_phase)),
           problem_name_(std::move(problem_name)),
           charges_(std::move(charges)),
+          balance_rows_(balance_rows),
+          balance_matrix_row_major_(std::move(balance_matrix_row_major)),
+          total_vector_(std::move(total_vector)),
+          reaction_rows_(reaction_rows),
+          reaction_stoichiometry_row_major_(std::move(reaction_stoichiometry_row_major)),
+          log_equilibrium_constants_(std::move(log_equilibrium_constants)),
           initial_composition_(
               initial_composition.empty()
                   ? std::vector<double>{}
@@ -450,6 +521,40 @@ public:
                     throw ValueError("electrolyte stability trial initial composition must be charge neutral.");
                 }
             }
+        }
+        if (is_reactive()) {
+            if (balance_rows_ <= 0) {
+                throw ValueError("reactive stability route requires at least one balance row.");
+            }
+            if (reaction_rows_ <= 0) {
+                throw ValueError("reactive stability route requires at least one reaction.");
+            }
+            require_size(
+                balance_matrix_row_major_,
+                static_cast<std::size_t>(balance_rows_) * static_cast<std::size_t>(species_count_),
+                "reactive stability balance matrix"
+            );
+            require_size(
+                total_vector_,
+                static_cast<std::size_t>(balance_rows_),
+                "reactive stability total vector"
+            );
+            require_size(
+                reaction_stoichiometry_row_major_,
+                static_cast<std::size_t>(reaction_rows_) * static_cast<std::size_t>(species_count_),
+                "reactive stability reaction matrix"
+            );
+            require_size(
+                log_equilibrium_constants_,
+                static_cast<std::size_t>(reaction_rows_),
+                "reactive stability log equilibrium constants"
+            );
+            standard_mu_rt_ = standard_mu_rt_from_reactions(
+                species_count_,
+                reaction_rows_,
+                reaction_stoichiometry_row_major_,
+                log_equilibrium_constants_
+            );
         }
         parent_state_ = phase_state_sensitivity(
             args_,
@@ -752,11 +857,13 @@ public:
     }
 
     std::map<std::string, std::string> diagnostics() const override {
-        return {
-            {"derivative_backend", "cppad_explicit_density"},
-            {"density_backend", "explicit_log_density_pressure_constraint"},
-            {"variable_model", "composition_plus_log_density"},
-        };
+        std::map<std::string, std::string> out = route_metadata_diagnostics(
+            is_reactive()
+                ? reactive_stability_tpd_route_metadata(has_charge_constraint())
+                : stability_tpd_route_metadata(has_charge_constraint())
+        );
+        out["derivative_backend"] = "cppad_explicit_density";
+        return out;
     }
 
     int species_count() const {
@@ -779,9 +886,63 @@ public:
         return parent_reduced_potential_;
     }
 
+    int balance_row_count() const {
+        return balance_rows_;
+    }
+
+    int reaction_count() const {
+        return reaction_rows_;
+    }
+
+    const std::vector<double>& standard_mu_rt() const {
+        return standard_mu_rt_;
+    }
+
+    std::vector<double> reaction_residuals(const std::vector<double>& variables) const {
+        if (!is_reactive()) {
+            return {};
+        }
+        const PhaseStateCompositionSensitivityResult trial = trial_state(variables);
+        const std::vector<double> composition = composition_from_variables(variables);
+        std::vector<double> residuals(static_cast<std::size_t>(reaction_rows_), 0.0);
+        for (int reaction = 0; reaction < reaction_rows_; ++reaction) {
+            double residual = 0.0;
+            for (int species = 0; species < species_count_; ++species) {
+                const std::size_t stoich_index =
+                    static_cast<std::size_t>(reaction) * static_cast<std::size_t>(species_count_)
+                    + static_cast<std::size_t>(species);
+                residual += reaction_stoichiometry_row_major_[stoich_index] * (
+                    std::log(composition[static_cast<std::size_t>(species)])
+                    + trial.ln_fugacity[static_cast<std::size_t>(species)]
+                    + standard_mu_rt_[static_cast<std::size_t>(species)]
+                );
+            }
+            residuals[static_cast<std::size_t>(reaction)] = residual;
+        }
+        return residuals;
+    }
+
+    std::vector<double> conserved_balance_residuals(const std::vector<double>& variables) const {
+        if (!is_reactive()) {
+            return {};
+        }
+        return matrix_vector_residual(
+            balance_matrix_row_major_,
+            balance_rows_,
+            species_count_,
+            composition_from_variables(variables),
+            total_vector_,
+            "reactive stability conserved-balance"
+        );
+    }
+
 private:
     bool has_charge_constraint() const {
         return !charges_.empty();
+    }
+
+    bool is_reactive() const {
+        return reaction_rows_ > 0;
     }
 
     int density_variable_index() const {
@@ -862,6 +1023,13 @@ private:
     std::string trial_phase_label_;
     std::string problem_name_;
     std::vector<double> charges_;
+    int balance_rows_ = 0;
+    std::vector<double> balance_matrix_row_major_;
+    std::vector<double> total_vector_;
+    int reaction_rows_ = 0;
+    std::vector<double> reaction_stoichiometry_row_major_;
+    std::vector<double> log_equilibrium_constants_;
+    std::vector<double> standard_mu_rt_;
     std::vector<double> initial_composition_;
     PhaseStateCompositionSensitivityResult parent_state_;
     std::vector<double> parent_reduced_potential_;
@@ -882,6 +1050,8 @@ StabilityNlpContract make_contract(const StabilityTpdProblem& problem) {
     out.variable_count = problem.variable_count();
     out.constraint_count = problem.constraint_count();
     out.jacobian_nonzero_count = problem.jacobian_nonzero_count();
+    out.balance_row_count = problem.balance_row_count();
+    out.reaction_count = problem.reaction_count();
     out.parent_phase = problem.parent_phase_label();
     out.trial_phase = problem.trial_phase_label();
     out.feed_composition = problem.feed_composition();
@@ -897,6 +1067,7 @@ StabilityNlpContract make_contract(const StabilityTpdProblem& problem) {
     out.jacobian_rows = structure.rows;
     out.jacobian_cols = structure.cols;
     out.jacobian_values_at_initial = problem.jacobian_values(initial);
+    apply_route_metadata(out, route_metadata_from_diagnostics(problem.diagnostics()));
     return out;
 }
 
@@ -911,6 +1082,12 @@ StabilityRouteResult solve_stability_tpd_route(
     const std::string& seed_name,
     std::vector<double> charges,
     bool require_charge_constraint,
+    int balance_rows,
+    std::vector<double> balance_matrix_row_major,
+    std::vector<double> total_vector,
+    int reaction_rows,
+    std::vector<double> reaction_stoichiometry_row_major,
+    std::vector<double> log_equilibrium_constants,
     const IpoptSolveOptions& options,
     double stability_tolerance,
     const std::vector<double>& trial_initial_composition
@@ -927,6 +1104,15 @@ StabilityRouteResult solve_stability_tpd_route(
     out.exact_jacobian_required = adapter.exact_jacobian_required;
     out.parent_phase = phase_label(parent_phase);
     out.trial_phase = phase_label(trial_phase);
+    out.balance_row_count = balance_rows;
+    out.reaction_count = reaction_rows;
+    const bool has_charge_constraints = !charges.empty();
+    apply_route_metadata(
+        out,
+        reaction_rows > 0
+            ? reactive_stability_tpd_route_metadata(has_charge_constraints)
+            : stability_tpd_route_metadata(has_charge_constraints)
+    );
     if (!adapter.compiled) {
         out.status = "ipopt_dependency_required";
         return out;
@@ -942,7 +1128,13 @@ StabilityRouteResult solve_stability_tpd_route(
         problem_name,
         std::move(charges),
         require_charge_constraint,
-        trial_initial_composition
+        trial_initial_composition,
+        balance_rows,
+        std::move(balance_matrix_row_major),
+        std::move(total_vector),
+        reaction_rows,
+        std::move(reaction_stoichiometry_row_major),
+        std::move(log_equilibrium_constants)
     );
     out.parent_reduced_potential = problem.parent_reduced_potential();
     out.initial_composition = problem.initial_point();
@@ -966,6 +1158,14 @@ StabilityRouteResult solve_stability_tpd_route(
         solve.variables.begin(),
         solve.variables.begin() + static_cast<std::ptrdiff_t>(problem.species_count())
     );
+    out.reaction_residuals = problem.reaction_residuals(solve.variables);
+    out.conserved_balance_residuals = problem.conserved_balance_residuals(solve.variables);
+    out.reaction_stationarity_norm = max_abs_value(out.reaction_residuals);
+    out.conserved_balance_norm = max_abs_value(out.conserved_balance_residuals);
+    if (has_charge_constraints) {
+        const std::vector<double> solved_constraints = problem.constraints(solve.variables);
+        out.charge_balance_norm = std::abs(solved_constraints[1]);
+    }
     out.status = "accepted";
     return out;
 }
@@ -1012,6 +1212,41 @@ StabilityNlpContract evaluate_electrolyte_stability_tpd_nlp_contract(
     return make_contract(problem);
 }
 
+StabilityNlpContract evaluate_reactive_stability_tpd_nlp_contract(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<double>& feed_composition,
+    int balance_rows,
+    const std::vector<double>& balance_matrix_row_major,
+    const std::vector<double>& total_vector,
+    int reaction_rows,
+    const std::vector<double>& reaction_stoichiometry_row_major,
+    const std::vector<double>& log_equilibrium_constants,
+    int parent_phase,
+    int trial_phase
+) {
+    StabilityTpdProblem problem(
+        args,
+        temperature,
+        pressure,
+        feed_composition,
+        parent_phase,
+        trial_phase,
+        "reactive_stability_tpd",
+        args.z,
+        !args.z.empty(),
+        {},
+        balance_rows,
+        balance_matrix_row_major,
+        total_vector,
+        reaction_rows,
+        reaction_stoichiometry_row_major,
+        log_equilibrium_constants
+    );
+    return make_contract(problem);
+}
+
 // AlgID: stability_tpd_ipopt
 StabilityRouteResult solve_neutral_stability_tpd_route(
     const add_args& args,
@@ -1047,6 +1282,12 @@ StabilityRouteResult solve_neutral_stability_tpd_route(
             seed_name,
             {},
             false,
+            0,
+            {},
+            {},
+            0,
+            {},
+            {},
             attempt_options,
             stability_tolerance,
             composition
@@ -1119,6 +1360,99 @@ StabilityRouteResult solve_electrolyte_stability_tpd_route(
             seed_name,
             args.z,
             true,
+            0,
+            {},
+            {},
+            0,
+            {},
+            {},
+            attempt_options,
+            stability_tolerance,
+            composition
+        );
+        result.initial_point_strategy = "deterministic_seed_sweep";
+        attempts.push_back(stability_seed_attempt_from_result(result));
+        if (!have_best || stability_attempt_better(result, best)) {
+            best = result;
+            have_best = true;
+        }
+        return result;
+    };
+
+    if (!options.initial_variables.empty()) {
+        const StabilityRouteResult continuation =
+            run_attempt("continuation_state", trial_initial_composition, options);
+        if (continuation.accepted && !continuation.stable) {
+            best.seed_attempts = attempts;
+            return best;
+        }
+    }
+
+    for (const auto& seed : seeds) {
+        IpoptSolveOptions attempt_options = options;
+        attempt_options.initial_variables.clear();
+        attempt_options.initial_bound_lower_multipliers.clear();
+        attempt_options.initial_bound_upper_multipliers.clear();
+        attempt_options.initial_constraint_multipliers.clear();
+        const StabilityRouteResult attempt = run_attempt(seed.seed_name, seed.composition, attempt_options);
+        if (attempt.accepted && !attempt.stable) {
+            break;
+        }
+    }
+
+    best.initial_point_strategy = "deterministic_seed_sweep";
+    best.seed_attempts = attempts;
+    return best;
+}
+
+// AlgID: stability_tpd_ipopt
+StabilityRouteResult solve_reactive_stability_tpd_route(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<double>& feed_composition,
+    int balance_rows,
+    const std::vector<double>& balance_matrix_row_major,
+    const std::vector<double>& total_vector,
+    int reaction_rows,
+    const std::vector<double>& reaction_stoichiometry_row_major,
+    const std::vector<double>& log_equilibrium_constants,
+    int parent_phase,
+    int trial_phase,
+    const IpoptSolveOptions& options,
+    double stability_tolerance,
+    const std::vector<double>& trial_initial_composition
+) {
+    const std::vector<double> charges = args.z;
+    const std::vector<NamedInitialComposition> seeds =
+        stability_seed_candidates(feed_composition, charges, trial_initial_composition);
+    StabilityRouteResult best;
+    bool have_best = false;
+    std::vector<RouteSeedAttempt> attempts;
+    attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
+
+    auto run_attempt = [&](
+        const std::string& seed_name,
+        const std::vector<double>& composition,
+        const IpoptSolveOptions& attempt_options
+    ) {
+        StabilityRouteResult result = solve_stability_tpd_route(
+            args,
+            temperature,
+            pressure,
+            feed_composition,
+            parent_phase,
+            trial_phase,
+            "reactive_stability_tpd",
+            seed_name,
+            charges,
+            !charges.empty(),
+            balance_rows,
+            balance_matrix_row_major,
+            total_vector,
+            reaction_rows,
+            reaction_stoichiometry_row_major,
+            log_equilibrium_constants,
             attempt_options,
             stability_tolerance,
             composition

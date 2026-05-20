@@ -10,7 +10,7 @@ Package Surfaces
     Public Python package code, pure-Python helpers, and native-extension wrappers.
 
 ``tests/``
-    Package/API/native/workflow contracts. Top-level domains stay broad, with second-level subgroup folders such as ``tests/api/runtime/``, ``tests/equilibrium/electrolyte/``, ``tests/native/cppad/``, and ``tests/workflows/repo/`` when a domain gets large. Default tests should stay fast and should not reproduce full scientific studies, regenerate plot galleries, or run long fitting/equilibrium sweeps.
+    Package/API/native/workflow contracts. Top-level domains stay broad, with second-level subgroup folders such as ``tests/api/runtime/``, ``tests/api/equilibrium/electrolyte/``, ``tests/native/cppad/``, and ``tests/workflows/repo/`` when a domain gets large. Default tests should stay fast and should not reproduce full scientific studies, regenerate plot galleries, or run long fitting/equilibrium sweeps.
 
 ``scripts/``
     Repository tooling only: native builds, doctor checks, validation orchestration, packaging, docs, reference-data curation, LaTeX sync, and issue triage. Analysis-specific coordinators may live under ``analyses/<category>/<short_id>/scripts/``, while figure-local generation and rendering scripts belong under ``analyses/<category>/<short_id>/figures/<figure_id>/scripts/``.

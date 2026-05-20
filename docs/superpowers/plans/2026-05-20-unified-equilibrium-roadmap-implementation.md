@@ -6,7 +6,7 @@
 
 **Architecture:** This plan keeps one connected equilibrium implementation. It extends current route builders, typed public dispatch, pybind payloads, `native_results.py` certification, validation lanes, and `capabilities()` evidence instead of adding a parallel solver, Python optimizer loop, or staged fallback route.
 
-**Tech Stack:** C++ native ePC-SAFT, pybind11, Ipopt TNLP adapter, CppAD/analytic derivatives, Python public API wrappers, pytest via `run_pytest.py`, GoalBuddy for execution tracking.
+**Tech Stack:** C++ native ePC-SAFT, pybind11, Ipopt TNLP adapter, CppAD/analytic derivatives, Python public API wrappers, pytest via `run_pytest.py` for package contracts, explicit analysis/benchmark scripts for paper validation, GoalBuddy for execution tracking.
 
 ---
 
@@ -33,16 +33,14 @@ The implementation must keep these modules connected:
   - `src/epcsaft/native/epcsaft_equilibrium.h`
   - `src/epcsaft/bindings.cpp`
 - Current executable evidence:
-  - `tests/equilibrium/core/test_native_results.py`
+  - `tests/api/equilibrium/core/test_native_results.py`
   - `tests/native/equilibrium/test_native_route_diagnostics_contract.py`
   - `tests/native/equilibrium/test_route_metadata_contracts.py`
-  - `tests/native/equilibrium/test_route_builders.py`
+  - `tests/native/equilibrium/test_route_builders_stability.py`
   - `tests/native/equilibrium/test_chemical_equilibrium_native_api.py`
-  - `tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py`
+  - `tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py`
   - `tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py`
   - `tests/api/runtime/test_runtime_capabilities_dependency_gates.py`
-  - `tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py`
-  - `tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py`
 
 ## Non-Negotiable Design Rules
 
@@ -52,13 +50,13 @@ The implementation must keep these modules connected:
 - Do not promote reactive LLE or reactive electrolyte LLE in `capabilities()` until executable benchmark proof passes.
 - Keep `auto` Hessian behavior exact-or-loud for production native Ipopt routes.
 - Treat route-builder convergence as insufficient unless shared postsolve certification accepts.
-- Keep blocked scientific evidence as a failing or blocked benchmark lane, not as a capability claim.
+- Keep blocked scientific evidence as a failing or blocked benchmark/analysis lane, not as a pytest gate or capability claim.
 
 ## Task 1: Strengthen Shared Certification Shape
 
 **Files:**
 - Modify: `src/epcsaft/equilibrium_core/native_results.py`
-- Test: `tests/equilibrium/core/test_native_results.py`
+- Test: `tests/api/equilibrium/core/test_native_results.py`
 
 - [ ] **Step 1: Write failing tests for complete certification evidence**
 
@@ -93,7 +91,7 @@ def test_postsolve_certification_reports_all_evidence_families() -> None:
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/equilibrium/core/test_native_results.py::test_postsolve_certification_reports_all_evidence_families -q
+uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py::test_postsolve_certification_reports_all_evidence_families -q
 ```
 
 Expected: fails because `phase_eligibility_reported` is not present.
@@ -122,7 +120,7 @@ Do not add a new certification class.
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/equilibrium/core/test_native_results.py -q
+uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py -q
 ```
 
 Expected: pass.
@@ -130,7 +128,7 @@ Expected: pass.
 - [ ] **Step 5: Commit**
 
 ```powershell
-git add src/epcsaft/equilibrium_core/native_results.py tests/equilibrium/core/test_native_results.py
+git add src/epcsaft/equilibrium_core/native_results.py tests/api/equilibrium/core/test_native_results.py
 git commit -m "Strengthen shared equilibrium certification diagnostics"
 ```
 
@@ -139,10 +137,10 @@ git commit -m "Strengthen shared equilibrium certification diagnostics"
 **Files:**
 - Modify: `src/epcsaft/equilibrium.py`
 - Modify: `src/epcsaft/electrolyte_bubble.py`
-- Test: `tests/equilibrium/core/test_vle.py`
-- Test: `tests/equilibrium/core/test_lle.py`
-- Test: `tests/equilibrium/electrolyte/test_electrolyte_bubble.py`
-- Test: `tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py`
+- Test: `tests/api/equilibrium/core/test_vle.py`
+- Test: `tests/api/equilibrium/core/test_lle.py`
+- Test: `tests/api/equilibrium/electrolyte/test_electrolyte_bubble.py`
+- Test: `tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py`
 
 - [ ] **Step 1: Write failing public-route diagnostics tests**
 
@@ -176,7 +174,7 @@ assert cert["stability_source"] == "tpdf_stability"
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/equilibrium/core/test_vle.py tests/equilibrium/core/test_lle.py tests/equilibrium/electrolyte/test_electrolyte_bubble.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py -q
+uv run python run_pytest.py tests/api/equilibrium/core/test_vle.py tests/api/equilibrium/core/test_lle.py tests/api/equilibrium/electrolyte/test_electrolyte_bubble.py tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py -q
 ```
 
 Expected: fails only where a wrapper has not preserved certification diagnostics.
@@ -202,7 +200,7 @@ Expected: pass.
 - [ ] **Step 5: Commit**
 
 ```powershell
-git add src/epcsaft/equilibrium.py src/epcsaft/electrolyte_bubble.py tests/equilibrium/core/test_vle.py tests/equilibrium/core/test_lle.py tests/equilibrium/electrolyte/test_electrolyte_bubble.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py
+git add src/epcsaft/equilibrium.py src/epcsaft/electrolyte_bubble.py tests/api/equilibrium/core/test_vle.py tests/api/equilibrium/core/test_lle.py tests/api/equilibrium/electrolyte/test_electrolyte_bubble.py tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py
 git commit -m "Thread shared certification through equilibrium routes"
 ```
 
@@ -214,7 +212,7 @@ git commit -m "Thread shared certification through equilibrium routes"
 - Modify: `src/epcsaft/native/equilibrium_nlp/route_metadata.h`
 - Modify: `src/epcsaft/bindings.cpp`
 - Test: `tests/native/equilibrium/test_route_metadata_contracts.py`
-- Test: `tests/native/equilibrium/test_route_builders.py`
+- Test: `tests/native/equilibrium/test_route_builders_stability.py`
 
 - [ ] **Step 1: Write failing native contract tests**
 
@@ -251,7 +249,7 @@ def test_reactive_stability_tpd_contract_uses_existing_stability_shape() -> None
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/native/equilibrium/test_route_builders.py::test_reactive_stability_tpd_contract_uses_existing_stability_shape -q
+uv run python run_pytest.py tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_contract_uses_existing_stability_shape -q
 ```
 
 Expected: fails because the binding does not exist.
@@ -314,7 +312,7 @@ The dict output must reuse `stability_nlp_contract_to_dict()` after adding the n
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/native/equilibrium/test_route_builders.py::test_reactive_stability_tpd_contract_uses_existing_stability_shape tests/native/equilibrium/test_route_metadata_contracts.py -q
+uv run python run_pytest.py tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_contract_uses_existing_stability_shape tests/native/equilibrium/test_route_metadata_contracts.py -q
 ```
 
 Expected: pass.
@@ -322,7 +320,7 @@ Expected: pass.
 - [ ] **Step 8: Commit**
 
 ```powershell
-git add src/epcsaft/native/equilibrium_nlp/stability_route_builders.h src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp src/epcsaft/native/equilibrium_nlp/route_metadata.h src/epcsaft/bindings.cpp tests/native/equilibrium/test_route_builders.py tests/native/equilibrium/test_route_metadata_contracts.py
+git add src/epcsaft/native/equilibrium_nlp/stability_route_builders.h src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp src/epcsaft/native/equilibrium_nlp/route_metadata.h src/epcsaft/bindings.cpp tests/native/equilibrium/test_route_builders_stability.py tests/native/equilibrium/test_route_metadata_contracts.py
 git commit -m "Add reactive stability native contract"
 ```
 
@@ -332,7 +330,7 @@ git commit -m "Add reactive stability native contract"
 - Modify: `src/epcsaft/native/equilibrium_nlp/stability_route_builders.h`
 - Modify: `src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp`
 - Modify: `src/epcsaft/bindings.cpp`
-- Test: `tests/native/equilibrium/test_route_builders.py`
+- Test: `tests/native/equilibrium/test_route_builders_stability.py`
 
 - [ ] **Step 1: Write failing route-result test**
 
@@ -378,7 +376,7 @@ def test_reactive_stability_tpd_route_result_uses_ipopt_and_exact_hessian() -> N
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/native/equilibrium/test_route_builders.py::test_reactive_stability_tpd_route_result_uses_ipopt_and_exact_hessian -q
+uv run python run_pytest.py tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_route_result_uses_ipopt_and_exact_hessian -q
 ```
 
 Expected: fails because the binding does not exist.
@@ -422,7 +420,7 @@ In `bindings.cpp`, add `_native_reactive_stability_tpd_route_result` next to the
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/native/equilibrium/test_route_builders.py::test_reactive_stability_tpd_route_result_uses_ipopt_and_exact_hessian tests/native/equilibrium/test_route_builders.py::test_neutral_stability_tpd_route_uses_exact_hessian_when_requested tests/native/equilibrium/test_route_builders.py::test_electrolyte_stability_tpd_route_uses_exact_hessian_when_requested -q
+uv run python run_pytest.py tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_route_result_uses_ipopt_and_exact_hessian tests/native/equilibrium/test_route_builders_stability.py::test_neutral_stability_tpd_route_uses_exact_hessian_when_requested tests/native/equilibrium/test_route_builders_stability.py::test_electrolyte_stability_tpd_route_uses_exact_hessian_when_requested -q
 ```
 
 Expected: pass.
@@ -430,7 +428,7 @@ Expected: pass.
 - [ ] **Step 7: Commit**
 
 ```powershell
-git add src/epcsaft/native/equilibrium_nlp/stability_route_builders.h src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp src/epcsaft/bindings.cpp tests/native/equilibrium/test_route_builders.py
+git add src/epcsaft/native/equilibrium_nlp/stability_route_builders.h src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp src/epcsaft/bindings.cpp tests/native/equilibrium/test_route_builders_stability.py
 git commit -m "Implement native reactive stability route"
 ```
 
@@ -526,7 +524,7 @@ git commit -m "Expose native reactive stability route"
 - Modify: `src/epcsaft/native/equilibrium_nlp/route_builders.h`
 - Modify: `src/epcsaft/native/equilibrium_nlp/route_builders.cpp`
 - Modify: `src/epcsaft/bindings.cpp`
-- Test: `tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py`
+- Test: `tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py`
 - Test: `tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py`
 
 - [ ] **Step 1: Write failing certification tests for accepted reactive routes**
@@ -548,7 +546,7 @@ Use monkeypatched `stability_certificate={"accepted": True, "min_tpd": 0.0}` pay
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q
+uv run python run_pytest.py tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q
 ```
 
 Expected: fails because reactive route diagnostics do not carry stability certificate evidence.
@@ -585,7 +583,7 @@ raise SolutionError("Native reactive phase route failed stability certification.
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q
+uv run python run_pytest.py tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q
 ```
 
 Expected: pass.
@@ -593,86 +591,84 @@ Expected: pass.
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add src/epcsaft/equilibrium.py src/epcsaft/native/equilibrium_nlp/route_builders.h src/epcsaft/native/equilibrium_nlp/route_builders.cpp src/epcsaft/bindings.cpp tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py
+git add src/epcsaft/equilibrium.py src/epcsaft/native/equilibrium_nlp/route_builders.h src/epcsaft/native/equilibrium_nlp/route_builders.cpp src/epcsaft/bindings.cpp tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py
 git commit -m "Certify reactive phase route stability"
 ```
 
-## Task 7: Convert Literature Lanes Into Production Proof Gates
+## Task 7: Keep Paper Validation Outside Pytest
 
 **Files:**
-- Modify: `tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py`
-- Modify: `tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py`
+- Modify: `src/epcsaft/capability_evidence.py`
+- Modify: `run_pytest.py`
+- Modify: `docs/pages/development_workflows.rst`
+- Modify: `scripts/benchmarks/helpers/literature.py`
 - Modify: `scripts/validation/equilibrium_core/confidence.py`
 - Modify: analysis scripts under `analyses/paper_validation/native/2023_ascani/`
 - Modify: analysis scripts under the Rezaee 2026 paper-validation directory discovered by `rg -n "Rezaee|reactive_electrolyte_lle" analyses tests scripts`
 
-- [ ] **Step 1: Add input-audit assertions before accuracy assertions**
+- [ ] **Step 1: Remove paper-validation pytest gates**
 
-For every reactive benchmark lane, assert the resolved run contract:
-
-```python
-assert payload["input_audit"]["species_order"] == payload["expected"]["species_order"]
-assert payload["input_audit"]["balance_rows_verified"] is True
-assert payload["input_audit"]["reaction_standard_states_verified"] is True
-assert payload["input_audit"]["phase_labels"] in (["liq1", "liq2"], ["aq", "org"])
-assert payload["input_audit"]["parameter_dataset"] != ""
-```
-
-- [ ] **Step 2: Run the current paper-validation lanes**
-
-Run:
+Remove pytest modules whose job is to validate a paper, reproduce a literature figure/table, or converge many feed lines. Pytest should keep generic package contracts only:
 
 ```powershell
-uv run python run_pytest.py tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py -q
+rg -n "paper_validation|tests/regression/literature|tests/workflows/validation|tests/workflows/data_validation" tests src scripts docs
 ```
 
-Expected: fails because the input-audit payload is not complete yet.
+- [ ] **Step 2: Route equilibrium confidence to the trusted exact-Hessian ladder**
 
-- [ ] **Step 3: Add audit payloads in existing analysis scripts**
+`--equilibrium-confidence` should run the known hydrocarbon bubble native Ipopt exact-Hessian solve and route diagnostics contracts, not Khudaida feed-line or paper-matrix tests:
 
-In each paper-validation script, add:
+```powershell
+uv run python run_pytest.py --equilibrium-confidence -q
+```
+
+Expected: pass without invoking paper-validation tests.
+
+- [ ] **Step 3: Keep benchmark inventory executable through scripts only**
+
+Literature/paper benchmark rows may point to explicit analysis or benchmark scripts, but not to pytest files. A benchmark command should be visibly opt-in:
+
+```powershell
+uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only
+uv run python analyses/paper_validation/<family>/scripts/run_all.py
+```
+
+Do not make `run_pytest.py`, `validate_project.py quick`, or named pytest slices run these paper scripts.
+
+- [ ] **Step 4: Add input-audit payloads in existing analysis scripts**
+
+For paper workflows, put input-contract evidence in the script payload itself:
 
 ```python
 "input_audit": {
     "species_order": list(mix.species),
     "balance_rows_verified": True,
     "reaction_standard_states_verified": True,
-    "phase_labels": [phase.label for phase in result.phases],
+    "phase_labels": phase_labels_from_result,
     "parameter_dataset": dataset_name,
     "public_api": 'mix.equilibrium(kind="reactive_electrolyte_lle")',
 }
 ```
 
-The script must derive these values from the actual mixture/result objects, not from duplicated constants.
+The script must derive these values from actual mixture/result objects, not duplicated constants.
 
-- [ ] **Step 4: Replace blocked-success assertions only when science passes**
-
-For a production proof, tests must assert:
-
-```python
-assert payload["status"] == "accepted_public_native_ipopt"
-assert payload["solve"]["diagnostics"]["postsolve_certification"]["accepted"] is True
-assert payload["accuracy"]["holdout_passed"] is True
-assert payload["accuracy"]["max_abs_error"] <= payload["expected"]["max_abs_error"]
-```
-
-If the real model accuracy does not pass, keep the test expecting blocked status and record the numeric miss in the payload. Do not promote capabilities.
-
-- [ ] **Step 5: Run paper-validation lanes**
+- [ ] **Step 5: Run contract tests plus explicit benchmark inventory**
 
 Run:
 
 ```powershell
-uv run python run_pytest.py tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py -q
+uv run python run_pytest.py --equilibrium-confidence -q
+uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q
+uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only
 ```
 
-Expected: pass with either accepted production proof or explicit numeric blocker.
+Expected: pytest proves package wiring only; the benchmark command renders registry state without requiring paper convergence.
 
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py scripts/validation/equilibrium_core/confidence.py analyses/paper_validation
-git commit -m "Audit reactive phase benchmark proof lanes"
+git add src/epcsaft/capability_evidence.py run_pytest.py docs/pages/development_workflows.rst scripts/benchmarks/helpers/literature.py tests
+git commit -m "Keep paper validation out of pytest"
 ```
 
 ## Task 8: Promote Reactive LLE Capabilities Only After Benchmark Proof

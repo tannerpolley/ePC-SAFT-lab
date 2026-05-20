@@ -7,7 +7,6 @@ import pytest
 
 import epcsaft
 from epcsaft import _core
-from tests.equilibrium.core.test_stability import _assert_stability_native_ipopt_gate
 from tests.helpers.numeric import assert_allclose
 from tests.helpers.runtime_cases import _ionic_params
 
@@ -164,45 +163,161 @@ def test_mixture_equilibrium_auto_routes_ideal_chemical_equilibrium_to_native_ip
     assert result.diagnostics["selected_solver_backend"] == "native_ipopt"
 
 
-def test_reactive_stability_requires_native_ipopt_stability_route_before_speciation(monkeypatch) -> None:
+def test_reactive_stability_routes_to_native_ipopt_before_speciation(monkeypatch) -> None:
     mix = _methanol_cyclohexane_mixture()
 
     def successful_speciation(*_args, **_kwargs):
         pytest.fail("reactive_stability must not run a Python speciation handoff before the native stability gate")
 
+    def accepted_reactive_stability_route(*_args, **_kwargs):
+        return {
+            "backend": "ipopt",
+            "compiled": True,
+            "adapter_available": True,
+            "ran": True,
+            "accepted": True,
+            "stable": True,
+            "status": "accepted",
+            "solver_accepted": True,
+            "solver_status": "success",
+            "application_status": "solve_succeeded",
+            "problem_name": "reactive_stability_tpd",
+            "variable_model": "composition_plus_log_density",
+            "density_backend": "explicit_log_density_pressure_constraint",
+            "residual_families": ["reaction_stationarity", "stability_tpd"],
+            "constraint_families": ["composition_sum", "pressure"],
+            "balance_row_count": 1,
+            "reaction_count": 1,
+            "parent_phase": "liq",
+            "trial_phase": "liq",
+            "seed_name": "canonical_shifted_feed",
+            "min_tpd": 0.0,
+            "objective": 0.0,
+            "trial_composition": [0.5, 0.5],
+            "variables": [0.5, 0.5, 1.0],
+            "constraints": [0.0, 0.0],
+            "reaction_residuals": [0.0],
+            "conserved_balance_residuals": [0.0],
+            "reaction_stationarity_norm": 0.0,
+            "conserved_balance_norm": 0.0,
+            "postsolve": {"accepted": True, "reaction_stationarity_norm": 0.0},
+            "stability_certificate": {"accepted": True, "status": "accepted", "min_tpd": 0.0},
+        }
+
     monkeypatch.setattr(mix, "chemical_equilibrium", successful_speciation)
+    monkeypatch.setattr(_core, "_native_reactive_stability_tpd_route_result", accepted_reactive_stability_route)
 
-    with pytest.raises(epcsaft.InputError) as excinfo:
-        mix.equilibrium(
-            kind="reactive_stability",
-            T=298.15,
-            P=1.013e5,
-            z=[0.5, 0.5],
-            balances={"total": {"Methanol": 1.0, "Cyclohexane": 1.0}},
-            totals={"total": 1.0},
-            reactions=[
-                epcsaft.ReactionDefinition(
-                    {"Methanol": -1.0, "Cyclohexane": 1.0},
-                    0.0,
-                    name="methanol_to_cyclohexane",
-                )
-            ],
-            parent_phase="liq",
-            trial_phases=("liq",),
-            options=epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
-        )
+    result = mix.equilibrium(
+        kind="reactive_stability",
+        T=298.15,
+        P=1.013e5,
+        z=[0.5, 0.5],
+        balances={"total": {"Methanol": 1.0, "Cyclohexane": 1.0}},
+        totals={"total": 1.0},
+        reactions=[
+            epcsaft.ReactionDefinition(
+                {"Methanol": -1.0, "Cyclohexane": 1.0},
+                0.0,
+                name="methanol_to_cyclohexane",
+            )
+        ],
+        parent_phase="liq",
+        trial_phases=("liq",),
+        options=epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
+    )
 
-    _assert_stability_native_ipopt_gate(excinfo, route="reactive_stability")
+    assert result.problem_kind == "reactive_stability"
+    assert result.stable is True
+    assert result.min_tpd == pytest.approx(0.0)
+    assert result.trial_composition == pytest.approx([0.5, 0.5])
+    diagnostics = result.diagnostics
+    assert diagnostics["problem_name"] == "reactive_stability_tpd"
+    assert diagnostics["residual_families"] == ["reaction_stationarity", "stability_tpd"]
+    assert diagnostics["reaction_stationarity_norm"] == pytest.approx(0.0)
+    assert diagnostics["postsolve_certification"]["accepted"] is True
+    assert diagnostics["postsolve_certification"]["stability_checked"] is True
 
 
-def test_ionic_reactive_stability_uses_reactive_route_gate() -> None:
+def test_ionic_reactive_stability_uses_native_liquid_reactive_route(monkeypatch) -> None:
+    params = _ionic_params()
+    params["assoc_scheme"] = [None, None, None]
+    params["e_assoc"] = np.zeros(3)
+    params["vol_a"] = np.zeros(3)
+    mix = epcsaft.ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
+    captured: dict[str, object] = {}
+
+    def accepted_reactive_stability_route(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return {
+            "backend": "ipopt",
+            "compiled": True,
+            "adapter_available": True,
+            "ran": True,
+            "accepted": True,
+            "stable": True,
+            "status": "accepted",
+            "solver_accepted": True,
+            "solver_status": "success",
+            "application_status": "solve_succeeded",
+            "problem_name": "reactive_stability_tpd",
+            "variable_model": "composition_plus_log_density",
+            "density_backend": "explicit_log_density_pressure_constraint",
+            "residual_families": ["reaction_stationarity", "stability_tpd"],
+            "constraint_families": ["composition_sum", "phase_charge", "pressure"],
+            "balance_row_count": 1,
+            "reaction_count": 1,
+            "parent_phase": "liq",
+            "trial_phase": "liq",
+            "seed_name": "canonical_shifted_feed",
+            "min_tpd": 0.0,
+            "objective": 0.0,
+            "trial_composition": [0.9998, 1.0e-4, 1.0e-4],
+            "variables": [0.9998, 1.0e-4, 1.0e-4, 1.0],
+            "constraints": [0.0, 0.0, 0.0],
+            "reaction_residuals": [0.0],
+            "conserved_balance_residuals": [0.0],
+            "reaction_stationarity_norm": 0.0,
+            "conserved_balance_norm": 0.0,
+            "postsolve": {"accepted": True, "reaction_stationarity_norm": 0.0},
+            "stability_certificate": {"accepted": True, "status": "accepted", "min_tpd": 0.0},
+        }
+
+    monkeypatch.setattr(_core, "_native_reactive_stability_tpd_route_result", accepted_reactive_stability_route)
+
+    result = mix.equilibrium(
+        kind="reactive_stability",
+        T=298.15,
+        P=1.0e5,
+        z=[0.9998, 1.0e-4, 1.0e-4],
+        balances={"total": {"water": 1.0, "Na+": 1.0, "Cl-": 1.0}},
+        totals={"total": 1.0},
+        reactions=[
+            epcsaft.ReactionDefinition(
+                {"Na+": -1.0, "Cl-": 1.0},
+                0.0,
+                name="ionic_probe",
+                standard_state="ideal_mole_fraction",
+            )
+        ],
+        options=epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
+    )
+
+    assert result.problem_kind == "reactive_stability"
+    args = captured["args"]
+    assert args[10] == "liq"
+    assert args[11] == "liq"
+    assert result.diagnostics["constraint_families"] == ["composition_sum", "phase_charge", "pressure"]
+
+
+def test_ionic_reactive_stability_rejects_explicit_parent_trial_controls() -> None:
     params = _ionic_params()
     params["assoc_scheme"] = [None, None, None]
     params["e_assoc"] = np.zeros(3)
     params["vol_a"] = np.zeros(3)
     mix = epcsaft.ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
 
-    with pytest.raises(epcsaft.InputError) as excinfo:
+    with pytest.raises(epcsaft.InputError, match="parent_phase and trial_phases are not supported"):
         mix.equilibrium(
             kind="reactive_stability",
             T=298.15,
@@ -218,7 +333,6 @@ def test_ionic_reactive_stability_uses_reactive_route_gate() -> None:
                     standard_state="ideal_mole_fraction",
                 )
             ],
+            parent_phase="liq",
             options=epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
         )
-
-    _assert_stability_native_ipopt_gate(excinfo, route="reactive_stability")

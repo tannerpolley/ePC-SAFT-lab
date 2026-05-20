@@ -104,6 +104,7 @@ def test_reactive_phase_equilibrium_problem_requires_native_ipopt_route(monkeypa
 
 def test_reactive_phase_equilibrium_problem_preserves_native_route_metadata_in_result_diagnostics(monkeypatch) -> None:
     mix, feed, reaction = _toy_reactive_phase_case()
+    stability_calls: list[tuple[tuple[object, ...], dict[str, object]]] = []
 
     def accepted_native_route(*_args, **_kwargs):
         return {
@@ -141,7 +142,30 @@ def test_reactive_phase_equilibrium_problem_preserves_native_route_metadata_in_r
             },
         }
 
+    def accepted_stability_route(*args, **kwargs):
+        stability_calls.append((args, kwargs))
+        return {
+            "backend": "ipopt",
+            "compiled": True,
+            "adapter_available": True,
+            "ran": True,
+            "accepted": True,
+            "stable": True,
+            "status": "accepted",
+            "solver_accepted": True,
+            "solver_status": "success",
+            "application_status": "solve_succeeded",
+            "problem_name": "neutral_stability_tpd",
+            "parent_phase": "liq",
+            "trial_phase": "liq",
+            "min_tpd": 0.0,
+            "objective": 0.0,
+            "trial_composition": list(args[3]),
+            "variables": [*list(args[3]), 1.0],
+        }
+
     monkeypatch.setattr(_core, "_native_reactive_lle_eos_route_result", accepted_native_route)
+    monkeypatch.setattr(_core, "_native_neutral_stability_tpd_route_result", accepted_stability_route)
     problem = epcsaft.ReactivePhaseEquilibriumProblem(
         T=298.15,
         P=1.013e5,
@@ -167,6 +191,12 @@ def test_reactive_phase_equilibrium_problem_preserves_native_route_metadata_in_r
         "phase_pressure_consistency",
         "phase_distance",
     ]
+    assert len(stability_calls) == 2
+    assert result.diagnostics["stability_certificate"]["accepted"] is True
+    assert result.diagnostics["stability_certificate"]["stability_source"] == "reactive_phase_tpd"
+    assert result.diagnostics["postsolve_certification"]["accepted"] is True
+    assert result.diagnostics["postsolve_certification"]["stability_checked"] is True
+    assert result.diagnostics["postsolve_certification"]["phase_eligibility_reported"] is True
 
 
 def test_reactive_phase_equilibrium_problem_rejects_non_lle_production_kind() -> None:

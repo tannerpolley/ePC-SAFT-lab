@@ -61,13 +61,13 @@ visual_board:
     command: "npx goalbuddy extend github-projects"
     missing: []
 
-active_task: T001
+active_task: T999
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     reasoning_hint: high
     objective: "Validate the source plan against the live repo module mesh and decide whether a targeted Graphify refresh or JetBrains semantic pass is needed before implementation."
     inputs:
@@ -90,11 +90,17 @@ tasks:
       - "Decision on Graphify or JetBrains need."
       - "Any plan corrections before Worker execution."
       - "Recommended first Worker slice."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Plan/source validation confirmed the live module mesh: native_results owns shared certification, equilibrium.py owns public dispatch/result diagnostics, stability_route_builders owns neutral/electrolyte stability and should own reactive_stability, route_builders/reactive_phase_equilibrium_problem own reactive route payloads and residual math, and capability_evidence/runtime own public capability claims."
+      evidence:
+        - "Graphify is not needed before implementation because the plan, roadmap, prior audit, and targeted source reads are consistent."
+        - "First safe slice is shared certification shape: add phase_eligibility_reported to native_results.py and focused tests before broad wrapper or native edits."
+        - "JetBrains is optional for later native reactive-stability work if symbol ownership becomes unclear."
   - id: T002
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Review T001 and choose the first largest safe implementation slice from the source plan."
     inputs:
@@ -111,34 +117,51 @@ tasks:
       - "allowed_files"
       - "verify"
       - "stop_if"
-    receipt: null
+    receipt:
+      result: done
+      decision: "Activate T003 as the shared certification-shape slice only."
+      worker_objective: "Add phase-eligibility evidence to the shared postsolve certification summary and prove it with focused native_results tests."
+      allowed_files:
+        - "src/epcsaft/equilibrium_core/native_results.py"
+        - "tests/api/equilibrium/core/test_native_results.py"
+      verify:
+        - "uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py -q"
+      stop_if:
+        - "Certification acceptance would need to imply stability proof for routes without a stability certificate."
+        - "Implementation requires wrapper or native payload changes before the shared summary shape can be tested."
   - id: T003
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
-    objective: "Execute the shared certification slice selected by T002, preserving the existing native_results.py diagnostics contract."
+    objective: "Add phase-eligibility evidence to the shared postsolve certification summary and prove it with focused native_results tests."
     allowed_files:
       - "src/epcsaft/equilibrium_core/native_results.py"
-      - "src/epcsaft/equilibrium.py"
-      - "src/epcsaft/electrolyte_bubble.py"
-      - "tests/equilibrium/core/test_native_results.py"
-      - "tests/equilibrium/core/test_vle.py"
-      - "tests/equilibrium/core/test_lle.py"
-      - "tests/equilibrium/electrolyte/test_electrolyte_bubble.py"
-      - "tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py"
+      - "tests/api/equilibrium/core/test_native_results.py"
     verify:
-      - "uv run python run_pytest.py tests/equilibrium/core/test_native_results.py -q"
-      - "uv run python run_pytest.py tests/equilibrium/core/test_vle.py tests/equilibrium/core/test_lle.py tests/equilibrium/electrolyte/test_electrolyte_bubble.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py -q"
+      - "uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py -q"
     stop_if:
-      - "Need native route-builder changes before certification shape can be honest."
-      - "A route would be marked stable without actual stability evidence."
+      - "Certification acceptance would need to imply stability proof for routes without a stability certificate."
+      - "Implementation requires wrapper or native payload changes before the shared summary shape can be tested."
       - "Need files outside allowed_files."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Added phase_eligibility_reported to the shared postsolve certification summary without changing route acceptance semantics."
+      changed_files:
+        - "src/epcsaft/equilibrium_core/native_results.py"
+        - "tests/api/equilibrium/core/test_native_results.py"
+      commands:
+        - command: "uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py::test_postsolve_certification_reports_phase_eligibility_evidence -q"
+          status: pass
+        - command: "uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py -q"
+          status: pass
+      verification:
+        - "uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py::test_postsolve_certification_reports_phase_eligibility_evidence -q"
+        - "uv run python run_pytest.py tests/api/equilibrium/core/test_native_results.py -q"
   - id: T004
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Add the native reactive stability contract and route result inside the existing stability_route_builders and pybind surfaces."
     allowed_files:
@@ -146,20 +169,40 @@ tasks:
       - "src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp"
       - "src/epcsaft/native/equilibrium_nlp/route_metadata.h"
       - "src/epcsaft/bindings.cpp"
-      - "tests/native/equilibrium/test_route_builders.py"
+      - "tests/native/equilibrium/test_route_builders_stability.py"
       - "tests/native/equilibrium/test_route_metadata_contracts.py"
     verify:
       - "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
-      - "uv run python run_pytest.py tests/native/equilibrium/test_route_builders.py tests/native/equilibrium/test_route_metadata_contracts.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/test_route_builders_stability.py tests/native/equilibrium/test_route_metadata_contracts.py -q"
     stop_if:
       - "Implementation needs copied reactive residual math instead of shared helper extraction."
       - "Exact Hessian support cannot be preserved through the existing Ipopt adapter."
       - "Need a new public result family."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Added native reactive stability TPD contract/result bindings through the existing StabilityNlpContract, StabilityRouteResult, route metadata, seed sweep, Ipopt adapter, and exact-Hessian stability route path."
+      changed_files:
+        - "src/epcsaft/native/equilibrium_nlp/stability_route_builders.h"
+        - "src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp"
+        - "src/epcsaft/native/equilibrium_nlp/route_metadata.h"
+        - "src/epcsaft/bindings.cpp"
+        - "tests/native/equilibrium/test_route_builders_stability.py"
+        - "tests/native/equilibrium/test_route_metadata_contracts.py"
+      commands:
+        - command: "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+          status: pass
+        - command: "uv run python run_pytest.py tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_contract_uses_existing_stability_shape tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_route_result_uses_ipopt_and_exact_hessian tests/native/equilibrium/test_route_builders_stability.py::test_neutral_stability_tpd_route_uses_exact_hessian_when_requested tests/native/equilibrium/test_route_builders_stability.py::test_electrolyte_stability_tpd_route_uses_exact_hessian_when_requested -q"
+          status: pass
+        - command: "uv run python run_pytest.py tests/native/equilibrium/test_route_metadata_contracts.py -q"
+          status: pass
+      verification:
+        - "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+        - "uv run python run_pytest.py tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_contract_uses_existing_stability_shape tests/native/equilibrium/test_route_builders_stability.py::test_reactive_stability_tpd_route_result_uses_ipopt_and_exact_hessian tests/native/equilibrium/test_route_builders_stability.py::test_neutral_stability_tpd_route_uses_exact_hessian_when_requested tests/native/equilibrium/test_route_builders_stability.py::test_electrolyte_stability_tpd_route_uses_exact_hessian_when_requested -q"
+        - "uv run python run_pytest.py tests/native/equilibrium/test_route_metadata_contracts.py -q"
   - id: T005
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Wire public kind='reactive_stability' through the native route while preserving current facade validation and no staged fallback."
     allowed_files:
@@ -175,11 +218,27 @@ tasks:
       - "The route requires Python to own a production optimizer loop."
       - "The route tries to run homogeneous speciation before the native stability gate."
       - "Capability evidence would overclaim reactive LLE/electrolyte LLE production support."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Wired public kind='reactive_stability' through the native coupled reactive stability TPD route and registered only the reactive_stability route evidence without promoting reactive LLE capabilities."
+      changed_files:
+        - "src/epcsaft/epcsaft.py"
+        - "src/epcsaft/equilibrium.py"
+        - "src/epcsaft/capability_evidence.py"
+        - "tests/native/equilibrium/test_chemical_equilibrium_native_api.py"
+        - "tests/api/runtime/test_runtime_capabilities_dependency_gates.py"
+      commands:
+        - command: "uv run python run_pytest.py tests/native/equilibrium/test_chemical_equilibrium_native_api.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py -q"
+          status: pass
+        - command: "uv run python run_pytest.py --native-contracts -q"
+          status: pass
+      verification:
+        - "uv run python run_pytest.py tests/native/equilibrium/test_chemical_equilibrium_native_api.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py -q"
+        - "uv run python run_pytest.py --native-contracts -q"
   - id: T006
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Use the shared stability/certification layer to certify reactive LLE and reactive electrolyte LLE accepted routes."
     allowed_files:
@@ -187,56 +246,135 @@ tasks:
       - "src/epcsaft/native/equilibrium_nlp/route_builders.h"
       - "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
       - "src/epcsaft/bindings.cpp"
-      - "tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py"
+      - "tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py"
       - "tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py"
     verify:
       - "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
-      - "uv run python run_pytest.py tests/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q"
+      - "uv run python run_pytest.py tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q"
       - "uv run python run_pytest.py --native-contracts -q"
     stop_if:
       - "A stability certificate cannot be generated from existing stability route builders."
       - "A reactive route would be accepted without residual, constraint, phase eligibility, and stability evidence."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Accepted reactive LLE and reactive electrolyte LLE route payloads now attach or preserve shared stability_certificate diagnostics before postsolve certification, using the existing native neutral/electrolyte TPD route builders."
+      changed_files:
+        - "src/epcsaft/equilibrium.py"
+        - "tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py"
+        - "tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py"
+      commands:
+        - command: "uv run python run_pytest.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py::test_reactive_phase_equilibrium_problem_preserves_native_route_metadata_in_result_diagnostics tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py::test_reactive_electrolyte_lle_public_route_certifies_accepted_native_split -q"
+          status: pass
+        - command: "uv run python run_pytest.py tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q"
+          status: pass
+      verification:
+        - "uv run python run_pytest.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py::test_reactive_phase_equilibrium_problem_preserves_native_route_metadata_in_result_diagnostics tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py::test_reactive_electrolyte_lle_public_route_certifies_accepted_native_split -q"
+        - "uv run python run_pytest.py tests/api/equilibrium/reactive/test_reactive_electrolyte_lle_coupled_solver.py tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py -q"
   - id: T007
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
-    objective: "Convert reactive LLE and reactive electrolyte LLE literature lanes into input-audited benchmark proof or explicit numeric blockers."
+    objective: "Replace paper-wide pytest proof with a trusted exact-Hessian Ipopt route ladder anchored on the hydrocarbon bubble workflow."
     allowed_files:
-      - "tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py"
-      - "tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py"
-      - "scripts/validation/equilibrium_core/confidence.py"
-      - "analyses/paper_validation/native/2023_ascani"
-      - "analyses/paper_validation"
+      - "src/epcsaft/capability_evidence.py"
+      - "run_pytest.py"
+      - "docs/pages/development_workflows.rst"
+      - "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py"
+      - "tests/native/equilibrium/test_native_route_diagnostics_contract.py"
+      - "tests/workflows/repo/test_run_pytest.py"
+      - "docs/goals/unified-equilibrium-roadmap-implementation/state.yaml"
     verify:
-      - "uv run python run_pytest.py tests/workflows/paper_validation/test_ascani_blocked_literature_lanes.py tests/workflows/paper_validation/test_rezaee_2026_paper_validation.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py::test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py::test_neutral_fixed_temperature_pressure_route_uses_exact_hessian_when_requested tests/native/equilibrium/test_native_route_diagnostics_contract.py -q"
     stop_if:
-      - "Source data or holdout targets are insufficient to prove production accuracy."
-      - "The benchmark only proves synthetic or monkeypatched behavior."
-      - "The package route fails certification from T006."
-    receipt: null
+      - "The trusted hydrocarbon bubble route no longer solves through native Ipopt with exact Hessian evidence."
+      - "The next proof step requires a whole paper-validation workflow or many feed lines."
+      - "The test would only prove a monkeypatched or synthetic paper result."
+    receipt:
+      result: done
+      summary: "Replaced the paper-wide pytest proof path with the trusted hydrocarbon bubble exact-Hessian native Ipopt route ladder and route diagnostics contract."
+      changed_files:
+        - "src/epcsaft/capability_evidence.py"
+        - "run_pytest.py"
+        - "docs/pages/development_workflows.rst"
+        - "tests/workflows/repo/test_run_pytest.py"
+      commands:
+        - command: "uv run python run_pytest.py --equilibrium-confidence -q"
+          status: pass
+        - command: "uv run python run_pytest.py -q"
+          status: pass
+      verification:
+        - "uv run python run_pytest.py --equilibrium-confidence -q"
+        - "uv run python run_pytest.py -q"
   - id: T008
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
-    objective: "Promote reactive LLE and reactive electrolyte LLE capabilities only if T007 provides accepted benchmark proof."
+    objective: "Audit capability evidence and roadmap wording so reactive LLE/electrolyte LLE are not promoted beyond the fast route-contract proof ladder."
     allowed_files:
       - "src/epcsaft/capability_evidence.py"
       - "src/epcsaft/runtime.py"
+      - "run_pytest.py"
+      - "scripts/benchmarks/helpers/literature.py"
       - "tests/api/runtime/test_runtime_capabilities_dependency_gates.py"
+      - "tests/workflows/repo/test_project_structure.py"
       - "tests/workflows/repo/test_run_pytest.py"
+      - "docs/pages/development_workflows.rst"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "docs/latex/algorithms.tex"
+      - "docs/algorithms.md"
+      - "docs/algorithms_registry.yaml"
+      - "tests/workflows/paper_validation/**"
+      - "tests/workflows/validation/**"
+      - "tests/workflows/data_validation/**"
+      - "tests/regression/literature/**"
+      - "tests/regression/electrolyte/test_miac_liquid_electrolyte_*.py"
+      - "tests/**/__init__.py"
+      - "docs/goals/unified-equilibrium-roadmap-implementation/state.yaml"
     verify:
       - "uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/workflows/repo/test_run_pytest.py -q"
     stop_if:
-      - "T007 records numeric blockers instead of accepted production proof."
+      - "A capability claim would depend on a full paper workflow pytest."
       - "Capability claims would exceed executable evidence."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Removed paper/literature validation pytest modules, deleted test package markers and stale test fixtures, kept benchmark evidence on explicit script workflows, and updated docs plus guards so pytest remains API/native-contract focused."
+      changed_files:
+        - "src/epcsaft/capability_evidence.py"
+        - "run_pytest.py"
+        - "scripts/benchmarks/helpers/literature.py"
+        - "docs/pages/development_workflows.rst"
+        - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+        - "docs/latex/algorithms.tex"
+        - "docs/algorithms.md"
+        - "docs/algorithms_registry.yaml"
+        - "tests/workflows/repo/test_project_structure.py"
+        - "tests/workflows/repo/test_run_pytest.py"
+        - "tests/workflows/paper_validation/**"
+        - "tests/workflows/validation/**"
+        - "tests/workflows/data_validation/**"
+        - "tests/regression/literature/**"
+        - "tests/regression/electrolyte/test_miac_liquid_electrolyte_*.py"
+        - "tests/**/__init__.py"
+      commands:
+        - command: "uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only"
+          status: pass
+        - command: "uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+        - command: "uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/workflows/repo/test_run_pytest.py -q"
+          status: pass
+        - command: "uv run python run_pytest.py -q"
+          status: pass
+      verification:
+        - "uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only"
+        - "uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+        - "uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/workflows/repo/test_run_pytest.py -q"
+        - "uv run python run_pytest.py -q"
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: active
     reasoning_hint: high
     objective: "Final audit that the remaining unified equilibrium roadmap gaps are implemented or explicitly source-blocked without architecture forks."
     inputs:
@@ -261,10 +399,10 @@ checks:
   dirty_fingerprint: "plan and GoalBuddy board prepared, not implementation"
   last_verification:
     result: passed
-    task: T001
+    task: T008
     commands:
-      - "node <goalbuddy-checker> docs/goals/unified-equilibrium-roadmap-implementation/state.yaml"
-      - "YAML parse: goal active, active_task T001, task_count 9, active_count 1"
-      - "Placeholder and banned-token scan over the plan and goal files"
-      - "uv run python scripts/dev/check_text_gates.py"
-      - "pwsh -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/unified-equilibrium-roadmap-implementation -Once -Json"
+      - "uv run python run_pytest.py --equilibrium-confidence -q"
+      - "uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only"
+      - "uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+      - "uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/workflows/repo/test_run_pytest.py -q"
+      - "uv run python run_pytest.py -q"

@@ -179,8 +179,6 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
     native_contract_args = run_pytest._pytest_args(["-q"], pytest_temp, native_contracts=True)
     equilibrium_confidence_args = run_pytest._pytest_args(["-q"], pytest_temp, equilibrium_confidence=True)
     equilibrium_api_args = run_pytest._pytest_args(["-q"], pytest_temp, equilibrium_api=True)
-    profile_args = run_pytest._pytest_args(["-q"], pytest_temp, profile=True)
-    profile_full_args = run_pytest._pytest_args(["-q"], pytest_temp, profile_full=True)
 
     assert runtime_args[: len(run_pytest.RUNTIME_TEST_TARGETS)] == list(run_pytest.RUNTIME_TEST_TARGETS)
     assert api_args[: len(run_pytest.API_TEST_TARGETS)] == list(run_pytest.API_TEST_TARGETS)
@@ -194,16 +192,12 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
     assert equilibrium_api_args[: len(run_pytest.EQUILIBRIUM_API_TEST_TARGETS)] == list(
         run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     )
-    assert profile_args[: len(run_pytest.PROFILE_TEST_TARGETS)] == list(run_pytest.PROFILE_TEST_TARGETS)
-    assert profile_full_args[: len(run_pytest.FULL_PROFILE_TEST_TARGETS)] == list(run_pytest.FULL_PROFILE_TEST_TARGETS)
     assert runtime_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert api_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert native_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert native_contract_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert equilibrium_confidence_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert equilibrium_api_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
-    assert profile_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
-    assert profile_full_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
 
 
 def test_plot_output_tests_have_no_named_slice():
@@ -223,18 +217,16 @@ def test_slice_targets_use_grouped_test_subpackages():
         *run_pytest.NATIVE_CONTRACT_TEST_TARGETS,
         *run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS,
         *run_pytest.EQUILIBRIUM_API_TEST_TARGETS,
-        *run_pytest.PROFILE_TEST_TARGETS,
-        *run_pytest.FULL_PROFILE_TEST_TARGETS,
     ]
 
     assert all(target.startswith("tests/") for target in all_targets)
     assert all(target.count("/") >= 2 for target in all_targets)
     assert "tests/api/runtime/test_runtime_exports_and_metadata.py" in run_pytest.API_TEST_TARGETS
     assert (
-        "tests/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate"
+        "tests/api/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate"
     ) in run_pytest.GENERIC_TEST_TARGETS
     assert (
-        "tests/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate"
+        "tests/api/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate"
         in run_pytest.GENERIC_TEST_TARGETS
     )
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
@@ -248,14 +240,15 @@ def test_slice_targets_use_grouped_test_subpackages():
 
 def test_native_contract_slice_uses_small_metadata_files_not_full_route_builder_suite():
     assert "tests/native/equilibrium/test_route_metadata_contracts.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
-    assert "tests/native/equilibrium/test_route_builders.py" not in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
+    assert all("test_route_builders_" not in target for target in run_pytest.NATIVE_CONTRACT_TEST_TARGETS)
 
 
 def test_broad_native_route_builder_targets_require_explicit_opt_in():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
+    route_builder_target = "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py"
 
     try:
-        run_pytest._pytest_args(["tests/native/equilibrium/test_route_builders.py", "-q"], pytest_temp)
+        run_pytest._pytest_args([route_builder_target, "-q"], pytest_temp)
     except SystemExit as exc:
         message = str(exc)
     else:
@@ -263,31 +256,21 @@ def test_broad_native_route_builder_targets_require_explicit_opt_in():
 
     assert "--native-contracts" in message
     allowed = run_pytest._pytest_args(
-        ["tests/native/equilibrium/test_route_builders.py", "-q"],
+        [route_builder_target, "-q"],
         pytest_temp,
         allow_long_native_tests=True,
     )
     single_node = run_pytest._pytest_args(
         [
-            "tests/native/equilibrium/test_route_builders.py::"
-            "test_neutral_two_phase_eos_nlp_contract_uses_phase_system_blocks",
+            f"{route_builder_target}::"
+            "test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve",
             "-q",
         ],
         pytest_temp,
     )
 
-    assert allowed[:2] == ["tests/native/equilibrium/test_route_builders.py", "-q"]
-    assert single_node[0].endswith("::test_neutral_two_phase_eos_nlp_contract_uses_phase_system_blocks")
-
-
-def test_profile_shortcut_sets_perf_environment_flag(monkeypatch):
-    pytest_temp = Path("build") / "pytest-temp" / "run-test"
-    monkeypatch.delenv("EPCSAFT_RUN_PERF", raising=False)
-
-    env = run_pytest._pytest_env(pytest_temp, profile=True)
-
-    assert env["EPCSAFT_RUN_PERF"] == "1"
-    assert env["ePCSAFT_RUN_PERF"] == "1"
+    assert allowed[:2] == [route_builder_target, "-q"]
+    assert single_node[0].endswith("::test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve")
 
 
 def test_equilibrium_slices_are_listed():
@@ -312,6 +295,19 @@ def test_equilibrium_confidence_shortcut_keeps_full_report_env_opt_in():
     assert 'env["EPCSAFT_EQUILIBRIUM_CONFIDENCE"] = "1"' not in source
 
 
+def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pytests():
+    targets = run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+
+    assert (
+        "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py::"
+        "test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve"
+    ) in targets
+    assert "tests/native/equilibrium/test_native_route_diagnostics_contract.py" in targets
+    assert all("paper_validation" not in target for target in targets)
+    assert all("tests/regression/literature" not in target for target in targets)
+    assert all("tests/workflows/validation" not in target for target in targets)
+
+
 def test_pytest_temp_root_prefers_configured_root_and_normalizes_relative_paths(monkeypatch, tmp_path):
     repo_root = tmp_path / "repo"
     repo_root.mkdir()
@@ -324,23 +320,16 @@ def test_pytest_temp_root_prefers_configured_root_and_normalizes_relative_paths(
     shutil.rmtree(repo_root / "external-temp", ignore_errors=True)
 
 
-def test_pytest_env_overrides_perf_flag_only_for_profile_modes(monkeypatch):
+def test_pytest_env_preserves_existing_perf_flags(monkeypatch):
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
     monkeypatch.setenv("EPCSAFT_RUN_PERF", "0")
     monkeypatch.setenv("ePCSAFT_RUN_PERF", "0")
 
-    normal_env = run_pytest._pytest_env(pytest_temp, profile=False)
-    profile_env = run_pytest._pytest_env(pytest_temp, profile=True)
+    normal_env = run_pytest._pytest_env(pytest_temp)
 
-    assert normal_env["EPCSAFT_RUN_PERF"] == "0"
-    assert profile_env["EPCSAFT_RUN_PERF"] == "1"
-    assert profile_env["ePCSAFT_RUN_PERF"] == "1"
-
-
-def test_full_profile_runtime_note_sets_expected_timeout_floor():
-    assert run_pytest.FULL_PROFILE_MIN_TIMEOUT_SECONDS >= 120
-    assert "about a minute" in run_pytest.FULL_PROFILE_RUNTIME_NOTE
-    assert "allow at least 120 seconds" in run_pytest.FULL_PROFILE_RUNTIME_NOTE
+    assert normal_env.get("EPCSAFT_RUN_PERF", normal_env.get("ePCSAFT_RUN_PERF")) == "0"
+    if sys.platform != "win32":
+        assert normal_env["ePCSAFT_RUN_PERF"] == "0"
 
 
 def test_slice_listing_text_names_all_targets():

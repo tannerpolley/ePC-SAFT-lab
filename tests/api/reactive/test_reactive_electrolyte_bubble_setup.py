@@ -6,7 +6,7 @@ import epcsaft
 from epcsaft import reactive_electrolyte
 from epcsaft.electrolyte_bubble import ElectrolyteBubbleResult
 from epcsaft.reactive_speciation import ReactiveSpeciationResult
-from tests.api.reactive.test_reactive_speciation_options import _native_ipopt_compiled
+from tests.api.reactive.reactive_speciation_cases import _native_ipopt_compiled
 
 
 def _salt_mixture(x, T, P):

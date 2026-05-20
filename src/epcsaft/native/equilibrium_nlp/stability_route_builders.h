@@ -12,12 +12,18 @@ namespace epcsaft::native::equilibrium_nlp {
 struct StabilityNlpContract {
     std::string problem_name;
     std::string derivative_backend;
+    std::string variable_model;
+    std::string density_backend;
     int species_count = 0;
     int variable_count = 0;
     int constraint_count = 0;
     int jacobian_nonzero_count = 0;
+    int balance_row_count = 0;
+    int reaction_count = 0;
     std::string parent_phase;
     std::string trial_phase;
+    std::vector<std::string> residual_families;
+    std::vector<std::string> constraint_families;
     std::vector<double> feed_composition;
     std::vector<double> parent_reduced_potential;
     std::vector<double> initial_point;
@@ -46,6 +52,10 @@ struct StabilityRouteResult {
     std::string adapter_kind = "native_tnlp_adapter";
     std::string problem_name = "neutral_stability_tpd";
     std::string derivative_backend = "cppad_implicit";
+    std::string variable_model = "composition_plus_log_density";
+    std::string density_backend = "explicit_log_density_pressure_constraint";
+    std::vector<std::string> residual_families;
+    std::vector<std::string> constraint_families;
     std::string gradient_approximation = "exact";
     std::string jacobian_approximation = "exact";
     std::string hessian_approximation = "unknown";
@@ -62,6 +72,8 @@ struct StabilityRouteResult {
     std::string parent_phase;
     std::string trial_phase;
     std::string seed_name = "canonical_shifted_feed";
+    int balance_row_count = 0;
+    int reaction_count = 0;
     int iteration_count = 0;
     int iteration_history_limit = 0;
     int iteration_history_size = 0;
@@ -82,8 +94,13 @@ struct StabilityRouteResult {
     bool warm_start_used = false;
     double objective = 0.0;
     double min_tpd = 0.0;
+    double conserved_balance_norm = 0.0;
+    double charge_balance_norm = 0.0;
+    double reaction_stationarity_norm = 0.0;
     std::vector<double> variables;
     std::vector<double> constraints;
+    std::vector<double> reaction_residuals;
+    std::vector<double> conserved_balance_residuals;
     std::vector<double> bound_lower_multipliers;
     std::vector<double> bound_upper_multipliers;
     std::vector<double> constraint_multipliers;
@@ -110,6 +127,21 @@ StabilityNlpContract evaluate_electrolyte_stability_tpd_nlp_contract(
     const std::vector<double>& feed_composition
 );
 
+StabilityNlpContract evaluate_reactive_stability_tpd_nlp_contract(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<double>& feed_composition,
+    int balance_rows,
+    const std::vector<double>& balance_matrix_row_major,
+    const std::vector<double>& total_vector,
+    int reaction_rows,
+    const std::vector<double>& reaction_stoichiometry_row_major,
+    const std::vector<double>& log_equilibrium_constants,
+    int parent_phase,
+    int trial_phase
+);
+
 StabilityRouteResult solve_neutral_stability_tpd_route(
     const add_args& args,
     double temperature,
@@ -127,6 +159,24 @@ StabilityRouteResult solve_electrolyte_stability_tpd_route(
     double temperature,
     double pressure,
     const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double stability_tolerance,
+    const std::vector<double>& trial_initial_composition = {}
+);
+
+StabilityRouteResult solve_reactive_stability_tpd_route(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<double>& feed_composition,
+    int balance_rows,
+    const std::vector<double>& balance_matrix_row_major,
+    const std::vector<double>& total_vector,
+    int reaction_rows,
+    const std::vector<double>& reaction_stoichiometry_row_major,
+    const std::vector<double>& log_equilibrium_constants,
+    int parent_phase,
+    int trial_phase,
     const IpoptSolveOptions& options,
     double stability_tolerance,
     const std::vector<double>& trial_initial_composition = {}

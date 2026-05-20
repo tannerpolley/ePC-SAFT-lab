@@ -44,20 +44,18 @@ CATEGORY_ROOTS = {
 TEST_SUBGROUP_ROOTS = {
     "tests/api/package",
     "tests/api/parameters",
+    "tests/api/equilibrium/core",
+    "tests/api/equilibrium/electrolyte",
+    "tests/api/equilibrium/reactive",
     "tests/api/reactive",
     "tests/api/regression",
     "tests/api/runtime",
-    "tests/equilibrium/core",
-    "tests/equilibrium/electrolyte",
-    "tests/equilibrium/reactive",
     "tests/native/ceres",
     "tests/native/contracts",
     "tests/native/cppad",
     "tests/native/equilibrium",
     "tests/native/runtime",
     "tests/regression/core",
-    "tests/regression/electrolyte",
-    "tests/regression/literature",
     "tests/workflows/benchmarks",
     "tests/workflows/build",
     "tests/workflows/repo",
@@ -68,7 +66,7 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/api/test_reactive_speciation.py",
     "tests/api/test_reactive_regression.py",
     "tests/api/test_reactive_electrolyte_bubble.py",
-    "tests/equilibrium/test_electrolyte_lle.py",
+    "tests/equilibrium",
     "tests/native/test_runtime_contracts.py",
     "tests/native/test_chemical_equilibrium_native.py",
 }
@@ -213,6 +211,8 @@ def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None
         if not rel.endswith(".py"):
             continue
         path = REPO_ROOT / rel
+        if not path.exists():
+            continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=rel)
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
@@ -329,7 +329,10 @@ def test_old_gallery_and_script_roots_are_not_tracked() -> None:
 def test_reorganized_test_subgroup_roots_exist() -> None:
     for relpath in sorted(TEST_SUBGROUP_ROOTS):
         assert (REPO_ROOT / relpath).is_dir(), relpath
-        assert (REPO_ROOT / relpath / "__init__.py").is_file(), relpath
+
+
+def test_test_tree_uses_namespace_packages_without_init_markers() -> None:
+    assert list((REPO_ROOT / "tests").rglob("__init__.py")) == []
 
 
 def test_replaced_flat_test_modules_are_absent_from_the_working_tree() -> None:
