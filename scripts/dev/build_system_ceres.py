@@ -221,9 +221,11 @@ def _build_and_install(root: Path, parallel: str, env: dict[str, str]) -> None:
 def _print_usage(root: Path) -> None:
     config_dir = _ceres_config_dir(root / "install")
     print(f"CeresConfigDir: {config_dir}")
-    print("PowerShell:")
+    print("Default source-checkout package builds auto-detect this path when it is compiler-compatible.")
+    print("For a custom Ceres package or another checkout, set:")
     print(f'  $env:EPCSAFT_PEP517_CERES_DIR = "{config_dir}"')
     print('  $env:EPCSAFT_PEP517_USE_SYSTEM_CERES = "1"')
+    print('  # Optional for external/checkout-specific reuse:')
     print('  $env:EPCSAFT_PEP517_BUILD_DIR = "$PWD\\.uv-cache\\epcsaft-build"')
     print("  uv sync --reinstall-package epcsaft")
 

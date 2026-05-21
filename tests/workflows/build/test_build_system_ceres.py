@@ -106,6 +106,8 @@ def test_system_ceres_print_env_mentions_pep517_ceres_dir(tmp_path, capsys) -> N
     script._print_usage(tmp_path)
 
     output = capsys.readouterr().out
+    assert "auto-detect" in output
     assert "EPCSAFT_PEP517_CERES_DIR" in output
+    assert "Optional for external/checkout-specific reuse" in output
     assert "EPCSAFT_PEP517_BUILD_DIR" in output
     assert str(config_dir) in output

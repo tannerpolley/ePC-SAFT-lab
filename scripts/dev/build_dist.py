@@ -99,7 +99,7 @@ def _print_build_env_summary(env: dict[str, str]) -> None:
     elif _truthy_env_value(env.get("EPCSAFT_PEP517_USE_SYSTEM_CERES")):
         print("Using system Ceres from the CMake package search path.", flush=True)
     else:
-        print("Using Ceres FetchContent in a reusable PEP 517 build directory.", flush=True)
+        print("Using Ceres FetchContent; install reusable Ceres to skip compiling Ceres.", flush=True)
     print(f"PEP 517 build directory: {env['EPCSAFT_PEP517_BUILD_DIR']}", flush=True)
 
 
