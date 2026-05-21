@@ -36,6 +36,59 @@ function Resolve-UvCommand {
 
 $uv = Resolve-UvCommand
 
+function Test-CompatibleCeresConfig {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CeresDir
+    )
+
+    $configPath = Join-Path $CeresDir "CeresConfig.cmake"
+    $lowerConfigPath = Join-Path $CeresDir "ceres-config.cmake"
+    if (-not (Test-Path -LiteralPath $configPath) -and -not (Test-Path -LiteralPath $lowerConfigPath)) {
+        return $false
+    }
+
+    $targets = Get-ChildItem -LiteralPath $CeresDir -Filter "CeresTargets*.cmake" -File -ErrorAction SilentlyContinue
+    foreach ($target in $targets) {
+        $text = Get-Content -LiteralPath $target.FullName -Raw -ErrorAction Stop
+        if ($text -match "libceres\.a" -or $text -match "\.dll\.a") {
+            return $false
+        }
+    }
+    return $true
+}
+
+function Resolve-DefaultCeresConfigDir {
+    $defaultRoot = Join-Path $repoRoot "build\system-ceres\2.2.0\install"
+    $candidates = @(
+        (Join-Path $defaultRoot "lib\cmake\Ceres"),
+        (Join-Path $defaultRoot "lib64\cmake\Ceres")
+    )
+
+    foreach ($candidate in $candidates) {
+        if ((Test-Path -LiteralPath $candidate) -and (Test-CompatibleCeresConfig -CeresDir $candidate)) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+    return $null
+}
+
+function Invoke-ReusableCeresBuild {
+    $ceresDir = Resolve-DefaultCeresConfigDir
+    if (-not [string]::IsNullOrWhiteSpace($ceresDir)) {
+        Write-Host "Using reusable Ceres package: $ceresDir"
+        return $ceresDir
+    }
+
+    Write-Host "Building reusable Ceres package for this worktree."
+    Invoke-CheckedNative $uv @("run", "python", "scripts/dev/build_system_ceres.py", "--parallel", "4")
+    $ceresDir = Resolve-DefaultCeresConfigDir
+    if ([string]::IsNullOrWhiteSpace($ceresDir)) {
+        throw "Reusable Ceres build did not produce a compiler-compatible CeresConfig.cmake under build\system-ceres\2.2.0."
+    }
+    return $ceresDir
+}
+
 function Set-NativeIpoptEnvironment {
     $defaultIpoptRoot = Join-Path $env:USERPROFILE "Documents\deps\ipopt-msvc"
     $candidate = $env:EPCSAFT_IPOPT_ROOT
@@ -73,8 +126,16 @@ function Set-NativeIpoptEnvironment {
 }
 
 function Invoke-NativeBuild {
+    $ceresDir = Invoke-ReusableCeresBuild
     Set-NativeIpoptEnvironment
-    Invoke-CheckedNative $uv @("run", "python", "scripts/dev/build_epcsaft.py")
+    Invoke-CheckedNative $uv @(
+        "run",
+        "python",
+        "scripts/dev/build_epcsaft.py",
+        "--use-system-ceres",
+        "--ceres-dir",
+        $ceresDir
+    )
 }
 
 function Invoke-NativeDoctor {
