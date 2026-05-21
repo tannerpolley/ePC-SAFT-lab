@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import epcsaft
-from epcsaft import _core
+import epcsaft._core as _core
 from tests.support.hydrocarbon_cases import (
     HYDROCARBON_BUBBLE_P,
     HYDROCARBON_FLASH_Z,

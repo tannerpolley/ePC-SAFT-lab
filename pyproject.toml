@@ -84,6 +84,7 @@ include = [
     "CMakeLists.txt",
     "build_backend/*.py",
     "src/epcsaft/**/*.py",
+    "src/epcsaft/**/*.pyi",
     "src/epcsaft/**/*.cpp",
     "src/epcsaft/**/*.h",
     "tests/**/*.py",

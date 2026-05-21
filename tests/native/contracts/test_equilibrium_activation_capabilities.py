@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import epcsaft
 import pytest
-from epcsaft import _core
+import epcsaft._core as _core
 
 
 def test_generated_activation_mirror_matches_native_source_of_truth() -> None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from epcsaft import _core
+import epcsaft._core as _core
 
 
 def test_ideal_reaction_smoke_satisfies_q_equals_k_and_stationarity() -> None:

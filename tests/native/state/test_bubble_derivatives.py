@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft
-from epcsaft import _core
+import epcsaft._core as _core
 from tests.support.hydrocarbon_cases import HYDROCARBON_LIQUID_X, HYDROCARBON_T, hydrocarbon_parameter_set
 from tests.support.native_cases import _neutral_state
 

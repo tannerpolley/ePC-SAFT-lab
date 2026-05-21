@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from epcsaft import _core
+import epcsaft._core as _core
 
 
 def test_association_mass_action_block_reports_exact_residual_and_jacobians() -> None:

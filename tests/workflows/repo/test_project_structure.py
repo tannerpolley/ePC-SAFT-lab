@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-ALLOWED_ROOT_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_types.py"}
+ALLOWED_ROOT_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_core.pyi", "_types.py"}
 ALLOWED_NATIVE_DOMAIN_FOLDERS = {
     "autodiff",
     "bindings",

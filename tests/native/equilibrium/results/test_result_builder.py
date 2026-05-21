@@ -5,7 +5,7 @@ import pytest
 
 import epcsaft
 from epcsaft.state.native_adapter import ePCSAFTMixture
-from epcsaft import _core
+import epcsaft._core as _core
 
 
 def _neutral_binary_mixture() -> ePCSAFTMixture:

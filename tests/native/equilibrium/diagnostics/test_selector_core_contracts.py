@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from epcsaft import _core
+import epcsaft._core as _core
 from tests.support.equilibrium_cases import _neutral_binary_mixture
 
 

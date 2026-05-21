@@ -18,7 +18,7 @@ Start every fresh source checkout with this sequence:
 This is the expected healthy baseline. It creates the uv environment, builds the in-place pybind11 ``epcsaft._core`` extension, verifies imports/tool paths and generated-output state through doctor, then runs the fast contract suite. The default test route intentionally samples representative API, native, regression, equilibrium, and workflow contracts instead of running full equilibrium/regression reproductions or generated plot production. Use ``uv run python scripts/dev/validate_project.py confidence`` before release or broad runtime claims when extra native runtime contracts should be included.
 The current development and CI smoke baseline is Python 3.13, while ``pyproject.toml`` still declares package compatibility with Python ``>=3.9``.
 
-Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` works, but the wrapper sets ``src`` on the import path and uses a per-run pytest temp directory that is safer for Windows and parallel local runs.
+Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` and JetBrains pytest runs also work because ``tests/conftest.py`` applies the native runtime DLL setup before test collection, but the wrapper uses a per-run pytest temp directory that is safer for Windows and parallel local runs.
 
 Command matrix
 --------------

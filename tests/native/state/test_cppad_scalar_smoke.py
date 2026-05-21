@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from epcsaft import _core
+import epcsaft._core as _core
 
 
 def test_native_cppad_smoke_reports_exact_cppad_derivative() -> None:

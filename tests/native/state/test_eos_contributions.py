@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from epcsaft import _core
+import epcsaft._core as _core
 from epcsaft.state.native_adapter import create_struct
 
 
