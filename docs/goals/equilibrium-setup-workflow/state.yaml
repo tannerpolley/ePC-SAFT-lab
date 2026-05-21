@@ -5,7 +5,7 @@ goal:
   slug: "equilibrium-setup-workflow"
   kind: existing_plan
   tranche: "Complete the full constructor-configured Equilibrium API reset from the strict handoff."
-  status: active
+  status: done
   intake:
     original_request: "Use the equilibrium constructor-configured API handoff to accomplish the full goal with no assumptions."
     interpreted_outcome: "Equilibrium is configured in the constructor, solve() executes the configured problem, result/structure/capability/docs behavior matches the handoff, validation passes, local commits exist, and branch ipopt is pushed."
@@ -77,7 +77,7 @@ visual_board:
     command: "npx goalbuddy extend github-projects"
     missing: []
 
-active_task: T010
+active_task: null
 
 tasks:
   - id: T001
@@ -615,7 +615,7 @@ tasks:
   - id: T010
     type: pm
     assignee: PM
-    status: active
+    status: done
     reasoning_hint: medium
     objective: "Push branch ipopt after all gates pass and commits exist."
     inputs:
@@ -627,12 +627,20 @@ tasks:
       - "Stop if validation or git status is not clean."
     expected_output:
       - "Branch ipopt pushed."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Pushed branch ipopt to origin after the implementation and GoalBuddy commit receipts were created."
+      branch: "ipopt"
+      pushed_range: "80f330b9..9877be07"
+      commands:
+        - cmd: "git status --short --branch; git push origin ipopt"
+          status: pass
+          result: "origin/ipopt advanced from 80f330b9 to 9877be07"
 
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Final audit against the handoff completion definition."
     inputs:
@@ -649,7 +657,23 @@ tasks:
       - "complete | not_complete"
       - "full_outcome_complete: true | false"
       - "Missing evidence if not complete."
-    receipt: null
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: "Final audit accepts the handoff outcome: constructor-configured equilibrium API implemented, owner-review blockers resolved, validations passed, local commits created, branch ipopt pushed, and no required Worker tasks remain queued."
+      evidence:
+        - "Constructor-configured API is implemented without legacy direct-solve forwarding, route-specific public methods, fake initialize(), or backend-selection flags."
+        - "Problem/result/structure contracts are immutable at the public metadata boundary, with fixed spec arrays deep-frozen and public phases keyed by liquid/vapor."
+        - "Capabilities advertise public route names only and current docs/roadmaps/ADR/context/algorithm registry describe Equilibrium(mixture, route=..., ...).solve()."
+        - "Retained state/reference tests, named run_pytest slices, package wheel smoke, confidence validation, cleanup hook, and git diff --check all passed."
+        - "Historical completed GoalBuddy boards were intentionally retained as historical receipts and excluded from active stale-pattern checks."
+        - "Final board completion state is committed and pushed after this audit receipt."
+      commands:
+        - cmd: "node <goalbuddy-checker> docs/goals/equilibrium-setup-workflow/state.yaml"
+          status: pass
+        - cmd: "git push origin ipopt"
+          status: pass
 
 checks:
   dirty_fingerprint: unknown
