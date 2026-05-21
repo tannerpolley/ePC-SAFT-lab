@@ -1,0 +1,292 @@
+version: 2
+
+goal:
+  title: "Package OOP Layout And Test Mirror Reset"
+  slug: "package-oop-layout-test-mirror-reset"
+  kind: existing_plan
+  tranche: "continuous execution: reset the public OOP interface, source skeleton, mirrored tests, shared support fixtures, and focused proof path"
+  status: done
+  intake:
+    original_request: "PLEASE IMPLEMENT THIS PLAN: Package OOP Layout And Test Mirror Reset"
+    interpreted_outcome: "The package uses direct public workflow constructors, a clean package/test skeleton, state residual property methods, and shared focused test support."
+    input_shape: existing_plan
+    audience: "ePC-SAFT package maintainers and downstream package users"
+    authority: requested
+    proof_type: test
+    completion_proof: "Focused tests prove direct constructors, hydrocarbon State residual properties/contributions, trusted bubble/IPOPT route, hydrocarbon regression anchor, and project quick validation."
+    likely_misfire: "Moving files into a prettier tree while leaving public factory methods, scattered parameter fixtures, or default paper-validation tests behind."
+    blind_spots_considered:
+      - "Mixture must not own thermodynamic state conditions."
+      - "Private skeleton modules must not become public capability promises."
+      - "State docstrings should describe thermodynamic behavior, not implementation internals."
+      - "Shared fixtures must replace hard-coded parameter tables in API tests."
+      - "Broad paper validation is not default pytest proof."
+    existing_plan_facts:
+      - "Direct constructors are canonical: Mixture, State, Equilibrium, Regression."
+      - "State exposes z, ares, hres, sres, gres, and residual Helmholtz contribution access."
+      - "Source and tests should mirror package concepts."
+      - "Future equilibrium types get private skeleton modules until implemented."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: generated
+    url: "http://127.0.0.1:41737/package-oop-layout-test-mirror-reset/"
+    command: "pwsh -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/package-oop-layout-test-mirror-reset"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: medium
+    objective: "Validate goal hygiene and supersede older reset/equilibrium boards for this lane."
+    inputs:
+      - "docs/goals/cppad-api-test-architecture-reset/state.yaml"
+      - "docs/goals/unified-equilibrium-roadmap-implementation/state.yaml"
+    constraints:
+      - "Do not delete historical goal roots."
+      - "Leave this board as the active OOP reset execution lane."
+    expected_output:
+      - "Older boards treated as historical or already superseded."
+    receipt:
+      result: done
+      decision: "This package OOP layout board is the active reset lane; older reset/equilibrium boards remain historical or blocked."
+      summary: "No older package-layout board was active; this board is the active execution lane for the direct-constructor OOP reset."
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Implement direct public constructors and State residual property/contribution methods through a focused red-green slice."
+    allowed_files:
+      - "src/epcsaft/"
+      - "src/epcsaft/frontend/"
+      - "tests/api/"
+      - "tests/api/frontend/test_state_properties.py"
+      - "tests/api/frontend/test_mixture.py"
+      - "tests/support/"
+    verify:
+      - "uv run python run_pytest.py tests/api/frontend/test_state_properties.py -q"
+    stop_if:
+      - "State residual values cannot route through existing native state methods."
+      - "Direct constructors need a public backend option or compatibility factory."
+    expected_output:
+      - "Direct constructors work."
+      - "Mixture public factories are removed."
+      - "State residual aliases and contribution methods work."
+    receipt:
+      result: done
+      summary: "Direct public constructors are implemented, Mixture no longer exposes public workflow factories, and State exposes z/ares/hres/sres/gres plus residual Helmholtz contribution access."
+      changed_files:
+        - "src/epcsaft/frontend/"
+        - "tests/api/frontend/test_state_properties.py"
+        - "tests/api/frontend/test_mixture.py"
+      commands:
+        - command: "uv run python run_pytest.py tests/api/frontend/test_state_properties.py -q"
+          status: pass
+          output: "4 passed"
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Restructure source modules and private skeletons into the planned package tree."
+    allowed_files:
+      - "src/epcsaft/"
+      - "src/epcsaft/frontend/"
+      - "src/epcsaft/model/"
+      - "src/epcsaft/state/"
+      - "src/epcsaft/equilibrium/"
+      - "src/epcsaft/regression/"
+      - "src/epcsaft/runtime/"
+      - "src/epcsaft/native/__init__.py"
+    verify:
+      - "uv run python -m epcsaft"
+      - "uv run python run_pytest.py tests/api -q"
+    stop_if:
+      - "A flat module must remain public to keep focused proof paths working."
+    expected_output:
+      - "Package source skeleton exists."
+      - "Old public flat workflow modules are gone or private implementation details."
+    receipt:
+      result: done
+      summary: "The source tree now has frontend, model, state, equilibrium, regression, runtime, and native package roots with direct-constructor public objects and private route skeletons."
+      changed_files:
+        - "src/epcsaft/frontend/"
+        - "src/epcsaft/model/"
+        - "src/epcsaft/state/"
+        - "src/epcsaft/equilibrium/"
+        - "src/epcsaft/regression/"
+        - "src/epcsaft/runtime/"
+        - "src/epcsaft/native/__init__.py"
+      commands:
+        - command: "uv run python -m epcsaft"
+          status: pass
+          output: "status: ok"
+        - command: "uv run python run_pytest.py tests/api -q"
+          status: pass
+          output: "15 passed"
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Restructure tests into mirrored API/native/workflow/support roots and centralize reusable cases."
+    allowed_files:
+      - "tests/"
+      - "tests/api/frontend/"
+      - "tests/api/package/"
+      - "tests/native/state/"
+      - "tests/native/regression/"
+      - "tests/native/equilibrium/"
+      - "tests/support/"
+      - "run_pytest.py"
+    verify:
+      - "uv run python run_pytest.py tests/api -q"
+      - "uv run python run_pytest.py --list-slices"
+    stop_if:
+      - "A test root cannot be classified as API, native, workflow, or support."
+    expected_output:
+      - "Tests mirror package concepts."
+      - "Hard-coded hydrocarbon parameters are centralized in support fixtures."
+    receipt:
+      result: done
+      summary: "API tests now mirror frontend/package objects, native tests mirror state/regression/equilibrium contracts, and shared hydrocarbon/equilibrium fixtures live under tests/support."
+      changed_files:
+        - "tests/api/frontend/"
+        - "tests/api/package/"
+        - "tests/native/state/"
+        - "tests/native/regression/"
+        - "tests/native/equilibrium/"
+        - "tests/support/"
+        - "run_pytest.py"
+      commands:
+        - command: "uv run python run_pytest.py tests/native/state tests/native/regression tests/native/equilibrium/routes/neutral -q"
+          status: pass
+          output: "88 passed"
+        - command: "uv run python run_pytest.py --list-slices"
+          status: pass
+          output: "listed mirrored slices"
+        - command: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py tests/workflows/repo/test_run_pytest.py -q"
+          status: pass
+          output: "48 passed"
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Update docs and examples for direct constructors and clean package/test structure."
+    allowed_files:
+      - "CONTEXT.md"
+      - "README.md"
+      - "docs/adr/"
+      - "docs/pages/"
+      - "docs/latex/algorithms.tex"
+      - "docs/algorithms.md"
+      - "docs/algorithms_registry.yaml"
+      - "docs/goals/package-oop-layout-test-mirror-reset/"
+      - "src/epcsaft/capability_evidence.py"
+    verify:
+      - "git diff --check"
+    stop_if:
+      - "Docs would describe unimplemented future route support as public capability."
+    expected_output:
+      - "Docs match the reset API."
+      - "Capability language does not overclaim future skeleton modules."
+    receipt:
+      result: done
+      summary: "CONTEXT, ADRs, package docs, README, capability evidence, and generated algorithm registry references now describe the direct-constructor API and mirrored test layout."
+      changed_files:
+        - "CONTEXT.md"
+        - "README.md"
+        - "docs/adr/"
+        - "docs/pages/"
+        - "docs/latex/algorithms.tex"
+        - "docs/algorithms.md"
+        - "docs/algorithms_registry.yaml"
+        - "src/epcsaft/capability_evidence.py"
+      commands:
+        - command: "uv run python scripts/docs/sync_algorithm_registry.py --check"
+          status: pass
+          output: "Algorithm registry outputs are up to date."
+        - command: "git diff --check"
+          status: pass
+          output: "no whitespace errors"
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Audit completion against the original package OOP layout and test mirror reset."
+    inputs:
+      - "All task receipts"
+      - "Focused validation output"
+      - "Current diff"
+    constraints:
+      - "Do not mark complete if any required worker task is queued or active."
+      - "Reject completion if direct constructors, state residual methods, source skeleton, tests, docs, or cleanup are incomplete."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "missing evidence"
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      missing_evidence: []
+      summary: "The reset is implemented through focused API/native/workflow proof and quick validation. Remaining compatibility is internal native/runtime plumbing, not root public API."
+      commands:
+        - command: "uv run python scripts/dev/validate_project.py quick"
+          status: pass
+          output: "doctor passed; 53 passed"
+        - command: "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\hooks\\codex-cleanup.ps1\" -RepoRoot ."
+          status: pass
+          output: "No matching leftover Codex processes under repo root"
+
+checks:
+  dirty_fingerprint: "package-oop-layout-test-mirror-reset-before-commit"
+  last_verification:
+    result: pass
+    task: T999
+    commands:
+      - "uv run python run_pytest.py tests/api/frontend/test_state_properties.py -q"
+      - "uv run python run_pytest.py tests/api -q"
+      - "uv run python run_pytest.py tests/native/state tests/native/regression tests/native/equilibrium/routes/neutral -q"
+      - "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py tests/workflows/repo/test_run_pytest.py -q"
+      - "uv run python run_pytest.py --list-slices"
+      - "uv run python scripts/docs/sync_algorithm_registry.py --check"
+      - "git diff --check"
+      - "uv run python -m epcsaft"
+      - "uv run python scripts/dev/validate_project.py quick"
+      - "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\hooks\\codex-cleanup.ps1\" -RepoRoot ."

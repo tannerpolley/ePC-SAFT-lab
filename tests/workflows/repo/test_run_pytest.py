@@ -15,10 +15,10 @@ def test_confidence_slice_extends_generic_targets_without_changing_generic():
     confidence_args = run_pytest._pytest_args(["-q"], pytest_temp, confidence=True)
 
     assert generic_args[: len(run_pytest.GENERIC_TEST_TARGETS)] == list(run_pytest.GENERIC_TEST_TARGETS)
-    assert "tests/native/runtime/test_runtime_density_closure.py" not in generic_args
-    assert "tests/api/test_cppad_api_reset.py" in generic_args
+    assert "tests/native/state/test_properties.py" not in generic_args
+    assert "tests/api/frontend" in generic_args
     assert confidence_args[: len(run_pytest.CONFIDENCE_TEST_TARGETS)] == list(run_pytest.CONFIDENCE_TEST_TARGETS)
-    assert "tests/native/runtime/test_runtime_contribution_contracts.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract" in confidence_args
+    assert "tests/native/state/test_contributions.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract" in confidence_args
     assert confidence_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
 
 
@@ -81,8 +81,8 @@ def test_validate_project_modes_route_to_standard_validation_bundles():
         ("scripts/dev/build_epcsaft.py", "--profile", "full"),
         (
             "run_pytest.py",
-            "tests/native/ceres/test_ceres_pure_regression.py",
-            "tests/native/ceres/test_ceres_binary_regression.py",
+            "tests/native/regression/test_pure.py",
+            "tests/native/regression/test_binary.py",
             "-q",
         ),
     )
@@ -219,28 +219,28 @@ def test_slice_targets_use_grouped_test_subpackages():
 
     assert all(target.startswith("tests/") for target in all_targets)
     assert all(target.count("/") >= 2 for target in all_targets)
-    assert "tests/api/test_cppad_api_reset.py" in run_pytest.API_TEST_TARGETS
-    assert "tests/api/test_cppad_api_reset.py" in run_pytest.GENERIC_TEST_TARGETS
-    assert "tests/api/test_cppad_api_reset.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route" in (
+    assert "tests/api/frontend" in run_pytest.API_TEST_TARGETS
+    assert "tests/api/frontend" in run_pytest.GENERIC_TEST_TARGETS
+    assert "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route" in (
         run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     )
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
-    assert "tests/api/test_cppad_api_reset.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives" in (
+    assert "tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives" in (
         run_pytest.RUNTIME_TEST_TARGETS
     )
     assert "tests/workflows/repo/test_run_pytest.py" not in run_pytest.GENERIC_TEST_TARGETS
 
 
 def test_native_contract_slice_uses_small_metadata_files_not_full_route_builder_suite():
-    assert "tests/native/equilibrium/test_route_metadata_contracts.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
+    assert "tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     assert all("test_route_builders_" not in target for target in run_pytest.NATIVE_CONTRACT_TEST_TARGETS)
 
 
 def test_broad_native_route_builder_targets_require_explicit_opt_in():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
-    route_builder_target = "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py"
+    route_builder_target = "tests/native/equilibrium/routes/neutral/test_bubble_dew.py"
 
     try:
         run_pytest._pytest_args([route_builder_target, "-q"], pytest_temp)
@@ -294,10 +294,10 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
     targets = run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
 
     assert (
-        "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py::"
+        "tests/native/equilibrium/routes/neutral/test_bubble_dew.py::"
         "test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve"
     ) in targets
-    assert "tests/native/equilibrium/test_native_route_diagnostics_contract.py" in targets
+    assert "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py" in targets
     assert all("paper_validation" not in target for target in targets)
     assert all("tests/regression/literature" not in target for target in targets)
     assert all("tests/workflows/validation" not in target for target in targets)

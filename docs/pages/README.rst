@@ -108,7 +108,7 @@ Quick example
 .. code-block:: python
 
    import numpy as np
-   from epcsaft import Mixture, ParameterSet
+   from epcsaft import Mixture, ParameterSet, State
 
    parameters = ParameterSet.from_dict(
        {
@@ -120,11 +120,11 @@ Quick example
    )
    mixture = Mixture(parameters)
 
-   state = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
+   state = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
 
    print(state.density())
    print(state.pressure())
-   print(state.compressibility_factor())
+   print(state.z())
    print(state.fugacity_coefficients())
 
 Pressure, density, and seeds
@@ -132,22 +132,23 @@ Pressure, density, and seeds
 
 State construction uses exactly one closure variable:
 
-- ``state(..., P=...)`` solves the EOS pressure-density closure.
-- ``state(..., rho=...)`` evaluates properties at the supplied molar density.
-- ``state(..., P=..., rho_guess=...)`` still solves exact pressure closure, but
+- ``State(..., P=...)`` solves the EOS pressure-density closure.
+- ``State(..., rho=...)`` evaluates properties at the supplied molar density.
+- ``State(..., P=..., rho_guess=...)`` still solves exact pressure closure, but
   seeds the density solve with a previous good density.
 
 .. code-block:: python
 
-   base = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
-   next_state = mixture.state(
+   base = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
+   next_state = State(
+       mixture,
        T=321.0,
        x=np.asarray([1.0]),
        P=101325.0,
        rho_guess=base.density(),
    )
 
-   density_state = mixture.state(T=320.0, x=np.asarray([1.0]), rho=base.density())
+   density_state = State(mixture, T=320.0, x=np.asarray([1.0]), rho=base.density())
    print(density_state.pressure())
 
 Parameter data
@@ -165,8 +166,8 @@ Most users should create and own their parameter folders:
    )
 
 After filling in the generated files, construct a ``ParameterSet`` from the
-parameter data and pass workflow defaults to ``Mixture.state(...)``,
-``Mixture.equilibrium(...)``, or ``Mixture.regression(...)``.
+parameter data and pass thermodynamic conditions to ``State(...)`` or workflow
+defaults to ``Equilibrium(...)`` and ``Regression(...)``.
 
 Equilibrium and speciation
 --------------------------

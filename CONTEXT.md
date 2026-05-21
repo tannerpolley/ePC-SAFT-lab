@@ -59,15 +59,15 @@ The Python-facing API that users import directly from `epcsaft`. The reset front
 _Avoid_: legacy lazy export layer, compatibility namespace, root free-function surface
 
 **Mixture**:
-The configured package object that combines a `ParameterSet`, optional component ordering, and `ModelOptions`, then creates workflow objects through `state(...)`, `equilibrium(...)`, and `regression(...)`.
+The configured package object that combines a `ParameterSet`, optional component ordering, and `ModelOptions`. It does not own temperature, pressure, density, composition, phase, or workflow defaults.
 _Avoid_: raw runtime dict, backend selector, parameter container
 
 **Equilibrium Problem**:
-A generic package problem that asks the solver to satisfy phase, chemical, reactive, or electrolyte equilibrium conditions for a declared model system. Non-reactive public requests are normalized into typed `EquilibriumProblem` objects and solved through `mixture.solve_equilibrium(problem)`.
+A generic package problem that asks the solver to satisfy phase, chemical, reactive, or electrolyte equilibrium conditions for a declared model system. Typed problem objects are internal route-adapter inputs until a route is exposed through `Equilibrium(mixture, ...)` with focused public tests.
 _Avoid_: process calculation, downstream metric
 
 **Equilibrium Workflow**:
-A configured workflow object created by `Mixture.equilibrium(...)` that owns equilibrium defaults, route options, and solve methods for a declared mixture without exposing public derivative backend choices.
+A configured workflow object created as `Equilibrium(mixture, ...)` that owns equilibrium defaults, route options, and solve methods for a declared mixture without exposing public derivative backend choices.
 _Avoid_: free bubble/dew function, typed problem root export, standalone optimizer loop
 
 **Electrolyte LLE Problem**:
@@ -83,7 +83,7 @@ A generic package problem that fits supported parameter families to target datas
 _Avoid_: curve-fit script, downstream calibration notebook
 
 **Regression Workflow**:
-A configured workflow object created by `Mixture.regression(...)` that owns regression defaults, target loading, and fit methods for supported parameter families without exposing public derivative backend choices.
+A configured workflow object created as `Regression(mixture, ...)` that owns regression defaults, target loading, and fit methods for supported parameter families without exposing public derivative backend choices.
 _Avoid_: free fit function, paper-specific validator, downstream calibration script
 
 **Target Dataset**:
@@ -121,8 +121,8 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 - The **ePC-SAFT Package** serves one or more **Downstream Consumers** through **Generic Package Workflows**.
 - A **Capability Contract** is valid only when backed by **Completion Evidence**.
 - The **EOS Harness** implements the **Residual Helmholtz Model** through traceable **Contribution Families**.
-- A **Mixture** combines a **Parameter Family** boundary with **Model Options** to create **State**, **Equilibrium Workflow**, and **Regression Workflow** objects.
-- A **State** combines model parameters, model options, composition, phase assumptions, and closure information for the **EOS Harness**.
+- A **Mixture** combines a **Parameter Family** boundary with **Model Options** and is passed into **State**, **Equilibrium Workflow**, and **Regression Workflow** constructors.
+- A **State** combines a **Mixture**, composition, phase assumptions, and closure information for the **EOS Harness**.
 - An **Equilibrium Problem** uses a **Production Solver Path** and a **CppAD-Only Public Derivative Path** to produce generic thermodynamic outputs.
 - An **Electrolyte LLE Problem** and a **Reactive LLE Problem** are specialized **Equilibrium Problems**.
 - A **Regression Problem** fits **Parameter Families** to a **Target Dataset** using a **Production Solver Path** and a **CppAD-Only Public Derivative Path**.
@@ -131,7 +131,8 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 ## Current API Signals
 
 - Use `Mixture(parameters, *, model_options=ModelOptions(...), components=None)` as the configured public frontend object.
-- Use `mixture.state(...)`, `mixture.equilibrium(...)`, and `mixture.regression(...)` to create configured workflow objects.
+- Use `State(mixture, T=..., P=... or rho=..., x=..., phase=...)` for state/property evaluation.
+- Use `Equilibrium(mixture, ...)` and `Regression(mixture, ...)` to create configured workflow objects.
 - Use `ParameterSet.from_dataset(...)`, `ParameterSet.from_records(...)`, and `ParameterSet.to_runtime_dict()` as the canonical parameter-family bridge between source records and runtime payloads.
 - Treat `ParameterSet` as parameter data only; put formulation and workflow choices in `ModelOptions` or workflow defaults.
 - Use configured `Equilibrium` and `Regression` workflow objects instead of root-level free functions.

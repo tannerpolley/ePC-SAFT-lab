@@ -47,7 +47,7 @@ For a one-component example, create a ``ParameterSet`` and pass it to
 .. code-block:: python
 
    import numpy as np
-   from epcsaft import Mixture, ParameterSet
+   from epcsaft import Mixture, ParameterSet, State
 
    parameters = ParameterSet.from_dict(
        {
@@ -59,9 +59,9 @@ For a one-component example, create a ``ParameterSet`` and pass it to
    )
    mixture = Mixture(parameters)
 
-   state = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
+   state = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
    print(state.density())
-   print(state.compressibility_factor())
+   print(state.z())
    print(state.fugacity_coefficients())
 
 Use pressure or density closure
@@ -75,15 +75,16 @@ Every state uses exactly one closure variable:
 
 .. code-block:: python
 
-   base = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
-   nearby = mixture.state(
+   base = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
+   nearby = State(
+       mixture,
        T=321.0,
        x=np.asarray([1.0]),
        P=101325.0,
        rho_guess=base.density(),
    )
 
-   density_state = mixture.state(T=320.0, x=np.asarray([1.0]), rho=base.density())
+   density_state = State(mixture, T=320.0, x=np.asarray([1.0]), rho=base.density())
    print(density_state.pressure())
 
 Create a parameter folder

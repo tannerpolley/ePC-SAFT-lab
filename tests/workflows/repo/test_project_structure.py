@@ -14,9 +14,13 @@ IMPORT_BOUNDARY_WATCHLIST = {
     "epcsaft.eos",
     "epcsaft.equilibrium",
     "epcsaft.frontend",
-    "epcsaft.model_options",
-    "epcsaft.parameter_schema",
-    "epcsaft.parameter_templates",
+    "epcsaft.frontend.equilibrium",
+    "epcsaft.frontend.mixture",
+    "epcsaft.frontend.regression",
+    "epcsaft.frontend.state",
+    "epcsaft.model.options",
+    "epcsaft.model.parameters",
+    "epcsaft.model.templates",
     "epcsaft.properties",
     "epcsaft.reactive_electrolyte",
     "epcsaft.reactive_regression",
@@ -47,12 +51,20 @@ CATEGORY_ROOTS = {
 }
 TEST_SUBGROUP_ROOTS = {
     "tests/api",
+    "tests/api/frontend",
     "tests/api/package",
-    "tests/native/ceres",
     "tests/native/contracts",
-    "tests/native/cppad",
     "tests/native/equilibrium",
-    "tests/native/runtime",
+    "tests/native/equilibrium/blocks",
+    "tests/native/equilibrium/diagnostics",
+    "tests/native/equilibrium/results",
+    "tests/native/equilibrium/routes/electrolyte",
+    "tests/native/equilibrium/routes/neutral",
+    "tests/native/equilibrium/routes/reactive",
+    "tests/native/equilibrium/routes/reactive_electrolyte",
+    "tests/native/equilibrium/routes/stability",
+    "tests/native/regression",
+    "tests/native/state",
     "tests/support",
     "tests/workflows/build",
     "tests/workflows/repo",
@@ -68,9 +80,14 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/api/test_reactive_speciation.py",
     "tests/api/test_reactive_regression.py",
     "tests/api/test_reactive_electrolyte_bubble.py",
+    "tests/api/test_cppad_api_reset.py",
+    "tests/api/frontend/test_cppad_api_reset.py",
     "tests/equilibrium",
     "tests/regression",
     "tests/helpers",
+    "tests/native/ceres",
+    "tests/native/cppad",
+    "tests/native/runtime",
     "tests/native/test_runtime_contracts.py",
     "tests/native/test_chemical_equilibrium_native.py",
     "tests/workflows/benchmarks",
@@ -170,10 +187,12 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
 
 def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> None:
     public_solver_sources = (
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium.py",
+        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "__init__.py",
+        REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
+        REPO_ROOT / "src" / "epcsaft" / "frontend" / "regression.py",
         REPO_ROOT / "src" / "epcsaft" / "reactive_speciation.py",
         REPO_ROOT / "src" / "epcsaft" / "reactive_regression.py",
-        REPO_ROOT / "src" / "epcsaft" / "regression.py",
+        REPO_ROOT / "src" / "epcsaft" / "regression" / "__init__.py",
     )
     blocked_terms = (
         "sci" + "py.optimize",
@@ -266,7 +285,10 @@ def test_custom_scalar_solver_tokens_are_limited_to_density_closure_exception() 
             continue
         if Path(rel).suffix.lower() not in {".py", ".cpp", ".h", ".hpp"}:
             continue
-        text = (REPO_ROOT / rel).read_text(encoding="utf-8", errors="ignore").lower()
+        path = REPO_ROOT / rel
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore").lower()
         for term in blocked_terms:
             if term in text:
                 offenders.append(f"{rel}: {term}")
@@ -277,9 +299,13 @@ def test_package_import_is_lazy_across_equilibrium_and_regression_extensions() -
     loaded = _probe_epcsaft_import_modules("import epcsaft")
     assert {
         "epcsaft.frontend",
-        "epcsaft.model_options",
-        "epcsaft.parameter_schema",
-        "epcsaft.parameter_templates",
+        "epcsaft.frontend.equilibrium",
+        "epcsaft.frontend.mixture",
+        "epcsaft.frontend.regression",
+        "epcsaft.frontend.state",
+        "epcsaft.model.options",
+        "epcsaft.model.parameters",
+        "epcsaft.model.templates",
         "epcsaft.runtime",
     } <= loaded
     assert "epcsaft.epcsaft" not in loaded
@@ -292,7 +318,12 @@ def test_frontend_import_does_not_load_solver_extensions() -> None:
         "from epcsaft import Mixture, ModelOptions, ParameterSet\n"
         "_ = (Mixture, ModelOptions, ParameterSet)"
     )
-    assert {"epcsaft.frontend", "epcsaft.model_options", "epcsaft.parameter_schema"} <= loaded
+    assert {
+        "epcsaft.frontend",
+        "epcsaft.frontend.mixture",
+        "epcsaft.model.options",
+        "epcsaft.model.parameters",
+    } <= loaded
     assert loaded.isdisjoint(
         {
             "epcsaft.epcsaft",

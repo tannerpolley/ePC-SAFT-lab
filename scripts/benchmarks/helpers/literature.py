@@ -119,7 +119,7 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                     "dataset": "tests.support.regression_cases.HYDROCARBON_REFERENCE",
                 },
                 input_records=(
-                    "tests/api/test_cppad_api_reset.py",
+                    "tests/api/frontend",
                     "tests/support/regression_cases.py",
                 ),
                 expected={
@@ -130,13 +130,13 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                     "objective_rel": 2.0e-4,
                     "objective_abs": 0.0,
                 },
-                command="uv run python run_pytest.py tests/api/test_cppad_api_reset.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api -q",
+                command="uv run python run_pytest.py tests/api/frontend/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api -q",
                 status=EXECUTABLE,
                 package_surface=(
-                    "tests/api/test_cppad_api_reset.py",
+                    "tests/api/frontend",
                     "scripts/validation/validate_hydrocarbon_regression.py",
                 ),
-                validation_paths=("tests/api/test_cppad_api_reset.py",),
+                validation_paths=("tests/api/frontend",),
                 notes="Current coverage is executable, numeric, and package-owned, but not yet routed through the issue #119 release-gate suite.",
             ),
         ),
@@ -348,7 +348,7 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                 command="uv run python analyses/paper_validation/native/2022_ascani/scripts/run_all.py",
                 status=EXECUTABLE,
                 package_surface=(
-                    "src/epcsaft/equilibrium.py",
+                    "src/epcsaft/equilibrium/__init__.py",
                     "analyses/paper_validation/native/2022_ascani/scripts/run_all.py",
                 ),
                 validation_paths=(
@@ -462,7 +462,7 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                 status=EXECUTABLE,
                 package_surface=(
                     "analyses/paper_validation/application/2026_rezaee/scripts/run_all.py",
-                    "src/epcsaft/runtime.py",
+                    "src/epcsaft/runtime/__init__.py",
                 ),
                 validation_paths=(
                     "analyses/paper_validation/application/2026_rezaee/results/reaction_equilibrium/summary.json",
@@ -518,7 +518,7 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                     "analyses/data_validation/mea_co2_pressure_speciation/scripts/run_all.py",
                 ),
                 validation_paths=(
-                    "tests/native/cppad/test_phase_state_sensitivities.py",
+                    "tests/native/state/test_phase_state_sensitivities.py",
                     "analyses/data_validation/mea_co2_pressure_speciation/results/pressure_speciation/summary.json",
                 ),
                 notes="Executable package-owned MEA data-validation lane. Passing proves the public native Ipopt homogeneous reactive speciation route and records the ideal-vapor CO2 pressure diagnostic; it does not prove a vapor-corrected pressure match.",

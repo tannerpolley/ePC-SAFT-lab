@@ -3,9 +3,9 @@ Electrolyte LLE Workflow
 
 Electrolyte LLE remains native-route work during the CppAD-only API reset. The
 reset public frontend currently proves the neutral hydrocarbon bubble route;
-electrolyte LLE should be treated as an internal native capability until a
-public ``Mixture.equilibrium(...)`` method is added with CppAD coverage and
-focused API tests.
+electrolyte LLE should be treated as an internal native capability until it is
+ported behind ``Equilibrium(mixture, ...)`` with CppAD coverage and focused API
+tests.
 
 Current Boundary
 ----------------

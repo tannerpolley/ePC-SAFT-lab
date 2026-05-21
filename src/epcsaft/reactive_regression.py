@@ -18,7 +18,7 @@ from . import reactive_electrolyte as reactive_electrolyte_module
 from . import reactive_speciation as reactive_speciation_module
 from ._types import InputError
 from .epcsaft import ePCSAFTMixture
-from .parameter_schema import ParameterSet, ParameterSource
+from .model.parameters import ParameterSet, ParameterSource
 from .reactive_electrolyte import ReactiveElectrolyteBubbleOptions, ReactiveElectrolyteBubbleResult
 from .reactive_speciation import ReactionDefinition, ReactiveSpeciationOptions, ReactiveSpeciationResult
 from .regression import _compile_target_family_summaries

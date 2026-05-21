@@ -33,9 +33,9 @@ State
    :undoc-members:
    :no-index:
 
-``State`` exposes CppAD-backed property values and derivative result helpers for
-the public frontend. Unsupported derivative coverage raises instead of choosing
-an analytic or fallback path.
+``State`` owns temperature, pressure or density closure, composition, and phase.
+It exposes common property names such as ``z()``, ``ares()``, ``hres()``,
+``sres()``, ``gres()``, and residual Helmholtz contribution helpers.
 
 Equilibrium
 -----------
@@ -46,7 +46,7 @@ Equilibrium
    :no-index:
 
 The trusted public equilibrium proof is
-``Mixture(...).equilibrium(...).bubble_pressure(...)`` with native Ipopt and an
+``Equilibrium(mixture, ...).bubble_pressure(...)`` with native Ipopt and an
 exact Hessian.
 
 Regression
@@ -58,7 +58,7 @@ Regression
    :no-index:
 
 The trusted public regression proof is
-``Mixture(...).regression(...).fit_pure_neutral(...)`` for the hydrocarbon
+``Regression(mixture, ...).fit_pure_neutral(...)`` for the hydrocarbon
 Gross/Sadowski anchor.
 
 Parameters And Model Options

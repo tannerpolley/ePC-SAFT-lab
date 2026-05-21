@@ -19,35 +19,37 @@ The target internal shape is:
 .. code-block:: text
 
    src/epcsaft/
-     eos/
+     frontend/
+     model/
+     state/
      equilibrium/
      regression/
+     runtime/
      native/
-     data/
 
 Subsystem Boundaries
 --------------------
 
 EOS harness
-   Owns the reset ``Mixture`` and ``State`` frontend, state construction,
-   CppAD-backed property evaluation wrappers, and the Python-facing
-   equation-of-state contract. It validates user inputs and delegates
-   thermodynamic calculations to the native runtime.
+   Owns the reset ``Mixture`` and ``State`` frontend. ``Mixture`` establishes
+   components, parameters, and model options; ``State`` owns temperature,
+   pressure or density closure, composition, and phase. It validates user inputs
+   and delegates thermodynamic calculations to the native runtime.
 
 Equilibrium
    Owns phase-equilibrium, stability, bubble/dew, electrolyte LLE, and
    chemical-equilibrium orchestration. It may use Python for problem objects,
    request normalization, result shaping, and diagnostics, but production
    thermodynamic evaluations should route through the EOS/native boundary.
-   The public reset frontend is reached through
-   ``Mixture(...).equilibrium(...)`` workflow objects. Legacy string facades and
+   The public reset frontend is reached through direct
+   ``Equilibrium(mixture, ...)`` workflow objects. Legacy string facades and
    typed problem objects are internal transition surfaces until they are ported
    behind reset methods.
 
 Regression
    Owns fitting problem definitions, records, provenance validation, objective
    assembly, derivative diagnostics, and fit-result serialization. Public
-   regression workflows are reached through ``Mixture(...).regression(...)``,
+   regression workflows are reached through ``Regression(mixture, ...)``,
    while expensive objective and derivative work uses native kernels.
 
 Native

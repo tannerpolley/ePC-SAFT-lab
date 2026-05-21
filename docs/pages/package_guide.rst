@@ -14,7 +14,7 @@ Build a ``ParameterSet`` from ePC-SAFT parameter data, then attach
 .. code-block:: python
 
    import numpy as np
-   from epcsaft import Mixture, ModelOptions, ParameterSet
+   from epcsaft import Mixture, ModelOptions, ParameterSet, State
 
    parameters = ParameterSet.from_dict(
        {
@@ -32,26 +32,29 @@ Build a ``ParameterSet`` from ePC-SAFT parameter data, then attach
 Evaluating State Properties
 ---------------------------
 
-Create states from the mixture. Public state values and derivative helpers use
-CppAD-backed coverage:
+Create states from a mixture and thermodynamic conditions:
 
 .. code-block:: python
 
-   state = mixture.state(T=300.0, x=np.asarray([1.0]), P=101325.0, phase="liq")
+   state = State(mixture, T=300.0, x=np.asarray([1.0]), P=101325.0, phase="liq")
    print(state.density())
-   print(state.compressibility_factor())
+   print(state.z())
+   print(state.ares())
    print(state.fugacity_coefficients())
    print(state.pressure_density_derivative()["derivative_backend"])
 
 Equilibrium
 -----------
 
-Use configured workflow factories on ``Mixture``. The trusted equilibrium proof
-is the hydrocarbon bubble-pressure route with native Ipopt and an exact Hessian:
+Construct ``Equilibrium`` directly from a ``Mixture``. The trusted equilibrium
+proof is the hydrocarbon bubble-pressure route with native Ipopt and an exact
+Hessian:
 
 .. code-block:: python
 
-   result = mixture.equilibrium(max_iterations=200).bubble_pressure(
+   from epcsaft import Equilibrium
+
+   result = Equilibrium(mixture, max_iterations=200).bubble_pressure(
        T=233.15,
        x=np.asarray([1.0]),
    )
@@ -59,13 +62,14 @@ is the hydrocarbon bubble-pressure route with native Ipopt and an exact Hessian:
 Regression
 ----------
 
-Use ``Mixture.regression(...)`` for public regression workflows. The current
-public proof is pure-neutral hydrocarbon regression through the CppAD/Ceres
-route:
+Construct ``Regression`` directly from a ``Mixture``. The current public proof
+is pure-neutral hydrocarbon regression through the CppAD/Ceres route:
 
 .. code-block:: python
 
-   result = mixture.regression().fit_pure_neutral(
+   from epcsaft import Regression
+
+   result = Regression(mixture).fit_pure_neutral(
        records,
        component="Methane",
        assoc_scheme="",

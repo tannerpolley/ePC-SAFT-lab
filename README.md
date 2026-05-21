@@ -10,12 +10,11 @@ Use `epcsaft` when you need to build PC-SAFT/ePC-SAFT mixtures, evaluate thermod
 
 The main user objects are:
 
-- `ePCSAFTMixture`: stores species parameters and creates states.
-- `ePCSAFTState`: evaluates density, pressure, residual properties, fugacity coefficients, activity coefficients, and diagnostics.
-- `ParameterSet`, `PureRecord`, and `BinaryRecord`: canonical parameter records that emit the native array payload.
-- `TPFlash`, `ElectrolyteLLEProblem`, `ReactiveSpeciationProblem`, and related problem objects: optional typed wrappers for `mixture.solve_equilibrium(problem)`.
-- `create_parameter_template(...)`: creates a user-owned parameter folder to fill in.
-- `fit_pure_neutral(...)`, `fit_pure_ion(...)`, and related helpers: fit supported parameter sets.
+- `Mixture`: stores components, parameters, and model options.
+- `State`: evaluates density, pressure, residual properties, fugacity coefficients, and derivatives at one thermodynamic condition.
+- `Equilibrium`: owns supported phase-equilibrium workflow defaults and solve methods.
+- `Regression`: owns supported parameter-regression workflow defaults and fit methods.
+- `ParameterSet`, `ModelOptions`, and `create_input_template(...)`: define parameter data, model choices, and user-owned input scaffolds.
 - `capabilities()`: reports which runtime and solver paths are available in the current install.
 
 ## Install
@@ -126,9 +125,9 @@ print(epcsaft.capabilities())
 
 ```python
 import numpy as np
-from epcsaft import ePCSAFTMixture
+from epcsaft import Mixture, ParameterSet, State
 
-mixture = ePCSAFTMixture.from_params(
+parameters = ParameterSet.from_dict(
     {
         "m": np.asarray([2.8149]),
         "s": np.asarray([3.7169]),
@@ -136,28 +135,31 @@ mixture = ePCSAFTMixture.from_params(
     },
     species=["Toluene"],
 )
+mixture = Mixture(parameters)
 
-state = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
+state = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
 
 print(state.density())                  # mol/m^3
 print(state.pressure())                 # Pa
-print(state.compressibility_factor())   # Z
-print(state.fugacity_coefficient())     # ln(phi_i) by default
+print(state.z())                        # Z
+print(state.ares())                     # residual Helmholtz energy
+print(state.fugacity_coefficients())    # phi_i
 ```
 
 ## Pressure, Density, And `rho_guess`
 
 State construction uses exactly one closure variable:
 
-- `state(..., P=...)` solves the EOS pressure-density closure.
-- `state(..., rho=...)` evaluates properties at the supplied molar density.
-- `state(..., P=..., rho_guess=...)` still solves exact pressure closure, but seeds the density solve with a previous good density.
+- `State(..., P=...)` solves the EOS pressure-density closure.
+- `State(..., rho=...)` evaluates properties at the supplied molar density.
+- `State(..., P=..., rho_guess=...)` still solves exact pressure closure, but seeds the density solve with a previous good density.
 
 For repeated calculations at nearby conditions, reuse the previous accepted pressure-state density:
 
 ```python
-base = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
-next_state = mixture.state(
+base = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
+next_state = State(
+    mixture,
     T=321.0,
     x=np.asarray([1.0]),
     P=101325.0,
@@ -168,13 +170,8 @@ next_state = mixture.state(
 To check whether an externally supplied density is pressure-consistent:
 
 ```python
-audit = mixture.check_density(
-    T=320.0,
-    x=np.asarray([1.0]),
-    P=101325.0,
-    rho=base.density(),
-)
-print(audit["within_tolerance"], audit["pressure_residual"])
+density_state = State(mixture, T=320.0, x=np.asarray([1.0]), rho=base.density())
+print(density_state.pressure() - 101325.0)
 ```
 
 ## Parameter Data
@@ -182,24 +179,25 @@ print(audit["within_tolerance"], audit["pressure_residual"])
 Most users should create and own their parameter folders:
 
 ```python
-from epcsaft import create_parameter_template
+from epcsaft import create_input_template
 
-template_root = create_parameter_template(
-    location=r"C:\path\to\my_epcsaft_data",
-    folder_name="water_salt_case",
-    species=["H2O", "Na+", "Cl-"],
+template_root = create_input_template(
+    r"C:\path\to\my_epcsaft_data\water_salt_case",
+    components=["H2O", "Na+", "Cl-"],
 )
 ```
 
-After filling in the generated files, load them:
+After filling in the generated files, load the tables in your own workflow and
+construct a `ParameterSet` from the records, then pass it to `Mixture`:
 
 ```python
 import numpy as np
-from epcsaft import ePCSAFTMixture
+from epcsaft import Mixture, ParameterSet, State
 
 species = ["H2O", "Na+", "Cl-"]
-x = np.asarray([0.9998, 1e-4, 1e-4])
-mixture = ePCSAFTMixture.from_dataset(template_root, species, x, 298.15)
+parameters = ParameterSet.from_records(pure_records=loaded_pure_records, binary_records=loaded_binary_records)
+mixture = Mixture(parameters, components=species)
+state = State(mixture, T=298.15, P=101325.0, x=np.asarray([0.9998, 1e-4, 1e-4]))
 ```
 
 The source checkout contains reference/example datasets under `data/reference/epcsaft_parameters/`. Those folders are useful for comparison, validation, and paper-reproduction workflows. Do not assume every installed wheel contains those source-checkout reference folders.

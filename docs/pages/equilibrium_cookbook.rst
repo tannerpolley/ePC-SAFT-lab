@@ -1,7 +1,7 @@
 Equilibrium Cookbook
 ====================
 
-Public equilibrium runs through ``Mixture.equilibrium(...)``. The reset
+Public equilibrium runs through ``Equilibrium(mixture, ...)``. The reset
 frontend does not expose free bubble/dew functions, typed problem root exports,
 or backend-selection flags.
 
@@ -14,9 +14,10 @@ route through native Ipopt with an exact Hessian:
 .. code-block:: python
 
    import numpy as np
-   from epcsaft import Mixture
+   from epcsaft import Equilibrium, Mixture
 
-   result = Mixture(parameters).equilibrium(
+   result = Equilibrium(
+       Mixture(parameters),
        max_iterations=200,
        tolerance=1.0e-8,
    ).bubble_pressure(

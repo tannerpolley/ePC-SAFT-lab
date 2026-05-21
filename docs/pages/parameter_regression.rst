@@ -1,7 +1,7 @@
 Parameter Regression
 ====================
 
-Public regression runs through ``Mixture.regression(...)``. The reset frontend
+Public regression runs through ``Regression(mixture, ...)``. The reset frontend
 does not expose free ``fit_*`` functions or backend-selection flags.
 
 Current Public Proof
@@ -12,9 +12,9 @@ through the native Ceres route with CppAD-backed Jacobians:
 
 .. code-block:: python
 
-   from epcsaft import Mixture
+   from epcsaft import Mixture, Regression
 
-   result = Mixture(parameters).regression().fit_pure_neutral(
+   result = Regression(Mixture(parameters)).fit_pure_neutral(
        records,
        component="Methane",
        assoc_scheme="",

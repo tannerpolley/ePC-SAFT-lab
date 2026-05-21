@@ -111,7 +111,7 @@ def _relative_permittivity_backend(params):
 
 
 def _canonical_runtime_parameter_payload(params, species=None):
-    from .parameter_schema import ParameterSet, ParameterSource
+    from .model.parameters import ParameterSet, ParameterSource
 
     if isinstance(params, ParameterSet):
         source = ParameterSource(params, species=species)
@@ -141,7 +141,7 @@ class ePCSAFTMixture:
     @classmethod
     def from_dataset(cls, dataset_name, species, x, T, user_options=None):
         """Construct a mixture by resolving packaged dataset parameters."""
-        from .parameter_schema import ParameterSource
+        from .model.parameters import ParameterSource
 
         params = ParameterSource(dataset_name, species=species).to_parameter_set(x=x, T=T, user_options=user_options)
         return cls.from_params(params)
