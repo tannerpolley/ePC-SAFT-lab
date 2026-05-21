@@ -78,7 +78,8 @@ inline RouteMetadata route_metadata_from_diagnostics(
 
 inline RouteMetadata phase_amount_volume_route_metadata(
     bool has_charge_constraints,
-    bool has_phase_distance_constraint
+    bool has_phase_distance_constraint,
+    bool has_phase_equilibrium_constraints = false
 ) {
     RouteMetadata out;
     out.variable_model = "phase_species_amounts_plus_phase_volume";
@@ -99,7 +100,11 @@ inline RouteMetadata phase_amount_volume_route_metadata(
     if (has_charge_constraints) {
         out.constraint_families.push_back("phase_charge");
     }
+    if (has_phase_equilibrium_constraints) {
+        out.constraint_families.push_back("phase_equilibrium");
+    }
     if (has_phase_distance_constraint) {
+        out.constraint_families.push_back("phase_amount_total");
         out.constraint_families.push_back("phase_distance");
     }
     return out;
@@ -107,7 +112,7 @@ inline RouteMetadata phase_amount_volume_route_metadata(
 
 inline RouteMetadata fixed_temperature_pressure_route_metadata(bool has_charge_constraints) {
     RouteMetadata out;
-    out.variable_model = "phase_species_amounts_plus_phase_volume_plus_pressure";
+    out.variable_model = "phase_species_amounts_plus_phase_volume_plus_route_scalar";
     out.density_backend = "explicit_phase_volume_pressure_constraint";
     out.residual_families = {
         "fixed_composition",
@@ -134,7 +139,25 @@ inline RouteMetadata fixed_temperature_pressure_route_metadata(bool has_charge_c
 
 inline RouteMetadata fixed_pressure_temperature_route_metadata() {
     RouteMetadata out = fixed_temperature_pressure_route_metadata(false);
-    out.variable_model = "phase_species_amounts_plus_phase_volume_plus_temperature";
+    return out;
+}
+
+inline RouteMetadata fixed_temperature_pressure_flash_route_metadata() {
+    RouteMetadata out;
+    out.variable_model = "phase_species_amounts_plus_phase_volume";
+    out.density_backend = "explicit_phase_volume_pressure_constraint";
+    out.residual_families = {
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_distance",
+    };
+    out.constraint_families = {
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_volume_gap",
+    };
     return out;
 }
 

@@ -4,21 +4,40 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cctype>
 
 namespace epcsaft::native::equilibrium {
 namespace {
 
-const ProblemFamilyActivation& bubble_dew_activation() {
+std::string normalized_token(std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value;
+}
+
+const ProblemFamilyActivation& activation_row(const std::string& key) {
     const auto& matrix = problem_family_activation_matrix();
     const auto found = std::find_if(
         matrix.begin(),
         matrix.end(),
-        [](const ProblemFamilyActivation& row) { return row.key == "bubble_dew_derived_routes"; }
+        [&](const ProblemFamilyActivation& row) { return row.key == key; }
     );
     if (found == matrix.end()) {
-        throw ValueError("selector-ineligible: bubble_dew_derived_routes activation row is missing.");
+        throw ValueError("selector-ineligible: activation row is missing for " + key + ".");
     }
     return *found;
+}
+
+std::string selector_family_for_route(const std::string& route) {
+    if (route == "bubble_pressure" || route == "bubble_temperature" || route == "dew_pressure"
+        || route == "dew_temperature") {
+        return "bubble_dew_derived_routes";
+    }
+    if (route == "neutral_tp_flash") {
+        return "neutral_tp_flash";
+    }
+    throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 
 bool all_zero_or_empty(const std::vector<double>& values) {
@@ -44,22 +63,99 @@ SelectorInputClassification classify_selector_input(const add_args& args) {
     return out;
 }
 
-void require_production_route(const std::string& route) {
-    if (route == "bubble_pressure") {
-        return;
-    }
-    throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
-}
-
 void require_eligible_input(const SelectorInputClassification& classification) {
     if (classification.neutral && classification.nonreactive && classification.nonelectrolyte
         && classification.nonassociating) {
         return;
     }
     throw ValueError(
-        "selector-ineligible: bubble_pressure supports only neutral, non-reactive, non-electrolyte, "
-        "non-associating mixtures."
+        "selector-ineligible: production VLE selector routes support only neutral, non-reactive, "
+        "non-electrolyte, non-associating mixtures."
     );
+}
+
+void require_positive_finite(double value, const std::string& label) {
+    if (std::isfinite(value) && value > 0.0) {
+        return;
+    }
+    throw ValueError("selector-ineligible: " + label + " must be positive and finite.");
+}
+
+void require_composition(const add_args& args, const std::vector<double>& composition) {
+    const std::size_t expected = args.m.size();
+    if (composition.size() != expected) {
+        throw ValueError("selector-ineligible: composition length must match mixture component count.");
+    }
+    double total = 0.0;
+    for (double value : composition) {
+        require_positive_finite(value, "composition value");
+        total += value;
+    }
+    require_positive_finite(total, "composition total");
+}
+
+void require_present(bool present, const std::string& label, const std::string& route) {
+    if (present) {
+        return;
+    }
+    throw ValueError("selector-ineligible: " + route + " requires " + label + ".");
+}
+
+void require_absent(bool present, const std::string& label, const std::string& route) {
+    if (!present) {
+        return;
+    }
+    throw ValueError("selector-ineligible: " + route + " must not specify " + label + ".");
+}
+
+void require_role(const SelectorRouteRequest& request, const std::string& expected) {
+    if (request.composition_role == expected) {
+        return;
+    }
+    throw ValueError(
+        "selector-ineligible: " + request.route + " requires composition_role='" + expected + "'."
+    );
+}
+
+void require_request_shape(const add_args& args, const SelectorRouteRequest& request) {
+    require_composition(args, request.composition);
+    if (request.route == "bubble_pressure") {
+        require_present(request.has_temperature, "temperature", request.route);
+        require_absent(request.has_pressure, "pressure", request.route);
+        require_positive_finite(request.temperature, "temperature");
+        require_role(request, "liquid");
+        return;
+    }
+    if (request.route == "bubble_temperature") {
+        require_absent(request.has_temperature, "temperature", request.route);
+        require_present(request.has_pressure, "pressure", request.route);
+        require_positive_finite(request.pressure, "pressure");
+        require_role(request, "liquid");
+        return;
+    }
+    if (request.route == "dew_pressure") {
+        require_present(request.has_temperature, "temperature", request.route);
+        require_absent(request.has_pressure, "pressure", request.route);
+        require_positive_finite(request.temperature, "temperature");
+        require_role(request, "vapor");
+        return;
+    }
+    if (request.route == "dew_temperature") {
+        require_absent(request.has_temperature, "temperature", request.route);
+        require_present(request.has_pressure, "pressure", request.route);
+        require_positive_finite(request.pressure, "pressure");
+        require_role(request, "vapor");
+        return;
+    }
+    if (request.route == "neutral_tp_flash") {
+        require_present(request.has_temperature, "temperature", request.route);
+        require_present(request.has_pressure, "pressure", request.route);
+        require_positive_finite(request.temperature, "temperature");
+        require_positive_finite(request.pressure, "pressure");
+        require_role(request, "feed");
+        return;
+    }
+    throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 
 bool exact_derivatives_required(const ProblemFamilyActivation& activation) {
@@ -106,31 +202,153 @@ void require_result_matches_activation(
     }
 }
 
+epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract evaluate_route_contract(
+    const add_args& args,
+    const SelectorRouteRequest& request
+) {
+    if (request.route == "bubble_pressure") {
+        return epcsaft::native::equilibrium_nlp::evaluate_neutral_bubble_p_eos_nlp_contract(
+            args,
+            request.temperature,
+            request.composition
+        );
+    }
+    if (request.route == "bubble_temperature") {
+        return epcsaft::native::equilibrium_nlp::evaluate_neutral_bubble_t_eos_nlp_contract(
+            args,
+            request.pressure,
+            request.composition
+        );
+    }
+    if (request.route == "dew_pressure") {
+        return epcsaft::native::equilibrium_nlp::evaluate_neutral_dew_p_eos_nlp_contract(
+            args,
+            request.temperature,
+            request.composition
+        );
+    }
+    if (request.route == "dew_temperature") {
+        return epcsaft::native::equilibrium_nlp::evaluate_neutral_dew_t_eos_nlp_contract(
+            args,
+            request.pressure,
+            request.composition
+        );
+    }
+    if (request.route == "neutral_tp_flash") {
+        return epcsaft::native::equilibrium_nlp::evaluate_neutral_tp_flash_eos_nlp_contract(
+            args,
+            request.temperature,
+            request.pressure,
+            request.composition
+        );
+    }
+    throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
+}
+
+epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_route(
+    const add_args& args,
+    const SelectorRouteRequest& request,
+    const epcsaft::native::equilibrium_nlp::IpoptSolveOptions& options,
+    double phase_total_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    if (request.route == "bubble_pressure") {
+        return epcsaft::native::equilibrium_nlp::solve_neutral_bubble_p_eos_route(
+            args,
+            request.temperature,
+            request.composition,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+    }
+    if (request.route == "bubble_temperature") {
+        return epcsaft::native::equilibrium_nlp::solve_neutral_bubble_t_eos_route(
+            args,
+            request.pressure,
+            request.composition,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+    }
+    if (request.route == "dew_pressure") {
+        return epcsaft::native::equilibrium_nlp::solve_neutral_dew_p_eos_route(
+            args,
+            request.temperature,
+            request.composition,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+    }
+    if (request.route == "dew_temperature") {
+        return epcsaft::native::equilibrium_nlp::solve_neutral_dew_t_eos_route(
+            args,
+            request.pressure,
+            request.composition,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+    }
+    if (request.route == "neutral_tp_flash") {
+        return epcsaft::native::equilibrium_nlp::solve_neutral_tp_flash_eos_route(
+            args,
+            request.temperature,
+            request.pressure,
+            request.composition,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+    }
+    throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
+}
+
 }  // namespace
 
 // AlgID: bubble_dew_ipopt
 SelectorContract evaluate_selector_contract(
     const add_args& args,
-    const std::string& route,
-    double scalar,
-    const std::vector<double>& composition
+    const SelectorRouteRequest& raw_request
 ) {
-    require_production_route(route);
+    SelectorRouteRequest request = raw_request;
+    request.route = normalized_token(request.route);
+    request.composition_role = normalized_token(request.composition_role);
+    const std::string family = selector_family_for_route(request.route);
+    const ProblemFamilyActivation& activation = activation_row(family);
+    if (!activation.production_exposed || activation.exposure_status != "production_exposed") {
+        throw ValueError("selector-ineligible: activation row is not production exposed.");
+    }
+    require_request_shape(args, request);
+
     SelectorContract out;
-    out.selector_family = "bubble_dew_derived_routes";
-    out.route = route;
-    out.activation = bubble_dew_activation();
+    out.selector_family = family;
+    out.route = request.route;
+    out.composition_role = request.composition_role;
+    out.specified_temperature = request.has_temperature;
+    out.specified_pressure = request.has_pressure;
+    out.activation = activation;
     out.input_classification = classify_selector_input(args);
     require_eligible_input(out.input_classification);
     out.production_exposed = out.activation.production_exposed;
     out.certification_required = out.activation.postsolve_certification == "on";
     out.density_closure_required = true;
     out.exact_derivatives_required = exact_derivatives_required(out.activation);
-    out.nlp_contract = epcsaft::native::equilibrium_nlp::evaluate_neutral_bubble_p_eos_nlp_contract(
-        args,
-        scalar,
-        composition
-    );
+    out.nlp_contract = evaluate_route_contract(args, request);
     require_contract_matches_activation(out.nlp_contract, out.activation);
     return out;
 }
@@ -138,30 +356,29 @@ SelectorContract evaluate_selector_contract(
 // AlgID: bubble_dew_ipopt
 epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(
     const add_args& args,
-    const std::string& route,
-    double scalar,
-    const std::vector<double>& composition,
+    const SelectorRouteRequest& raw_request,
     const epcsaft::native::equilibrium_nlp::IpoptSolveOptions& options,
     double phase_total_tolerance,
     double pressure_tolerance,
     double chemical_potential_tolerance,
     double phase_distance_tolerance
 ) {
-    const SelectorContract contract = evaluate_selector_contract(args, route, scalar, composition);
+    SelectorRouteRequest request = raw_request;
+    request.route = normalized_token(request.route);
+    request.composition_role = normalized_token(request.composition_role);
+    const SelectorContract contract = evaluate_selector_contract(args, request);
     if (!contract.production_exposed || !contract.certification_required || !contract.exact_derivatives_required) {
         throw ValueError("selector-ineligible: activation row is not production certified.");
     }
-    epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult result =
-        epcsaft::native::equilibrium_nlp::solve_neutral_bubble_p_eos_route(
-            args,
-            scalar,
-            composition,
-            options,
-            phase_total_tolerance,
-            pressure_tolerance,
-            chemical_potential_tolerance,
-            phase_distance_tolerance
-        );
+    epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult result = solve_route(
+        args,
+        request,
+        options,
+        phase_total_tolerance,
+        pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance
+    );
     require_result_matches_activation(result, contract.activation);
     return result;
 }

@@ -368,8 +368,22 @@ def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     assert binding_offenders == []
 
 
-def test_python_equilibrium_package_exposes_only_production_bubble_pressure_support() -> None:
+def test_python_equilibrium_package_exposes_only_production_selector_vle_support() -> None:
+    import epcsaft
     import epcsaft.equilibrium as equilibrium
+    import epcsaft.equilibrium.workflows as workflows
+    from epcsaft.state.native_adapter import ePCSAFTMixture
+
+    route_specific_methods = {
+        "bubble_pressure",
+        "bubble_temperature",
+        "dew_pressure",
+        "dew_temperature",
+        "flash",
+    }
+    assert hasattr(epcsaft.Equilibrium, "solve")
+    assert {name for name in route_specific_methods if hasattr(epcsaft.Equilibrium, name)} == set()
+    assert {name for name in {"bubble_p", "bubble_t", "dew_p", "dew_t", "tp_flash"} if hasattr(epcsaft.Equilibrium, name)} == set()
 
     forbidden_exports = {
         "bubble_p",
@@ -396,6 +410,17 @@ def test_python_equilibrium_package_exposes_only_production_bubble_pressure_supp
     leaked = sorted(name for name in forbidden_exports if hasattr(equilibrium, name))
 
     assert leaked == []
+
+    workflow_route_helpers = {
+        "bubble_pressure",
+        "bubble_temperature",
+        "dew_pressure",
+        "dew_temperature",
+        "flash",
+        "solve_selector_vle",
+    }
+    assert [name for name in workflow_route_helpers if hasattr(workflows, name)] == []
+    assert [name for name in route_specific_methods if hasattr(ePCSAFTMixture, name)] == []
 
 
 def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> None:
@@ -427,11 +452,29 @@ def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> N
     assert offenders == []
 
 
+def test_public_vle_workflows_dispatch_only_through_selector_binding() -> None:
+    workflows = (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(
+        encoding="utf-8"
+    )
+    required_selector_calls = workflows.count("_native_equilibrium_selector_route_result")
+    forbidden_direct_route_bindings = (
+        "_native_neutral_bubble_p_eos_route_result",
+        "_native_neutral_bubble_t_eos_route_result",
+        "_native_neutral_dew_p_eos_route_result",
+        "_native_neutral_dew_t_eos_route_result",
+        "_native_neutral_tp_flash_eos_route_result",
+    )
+
+    assert required_selector_calls >= 1
+    assert [token for token in forbidden_direct_route_bindings if token in workflows] == []
+
+
 def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None:
     public_route_names = {
         "equilibrium",
         "equilibrium_curve",
         "electrolyte_lle",
+        "flash",
         "electrolyte_lle_tp",
         "lle_flash",
         "lle_tp",

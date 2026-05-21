@@ -221,9 +221,7 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert all(target.count("/") >= 2 for target in all_targets)
     assert "tests/api/frontend" in run_pytest.API_TEST_TARGETS
     assert "tests/api/frontend" in run_pytest.GENERIC_TEST_TARGETS
-    assert "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route" in (
-        run_pytest.EQUILIBRIUM_API_TEST_TARGETS
-    )
+    assert "tests/api/frontend/test_equilibrium.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
@@ -259,14 +257,14 @@ def test_broad_native_route_builder_targets_require_explicit_opt_in():
     single_node = run_pytest._pytest_args(
         [
             "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py::"
-            "test_selector_core_contract_owns_production_bubble_pressure_metadata",
+            "test_selector_core_contract_owns_production_vle_metadata",
             "-q",
         ],
         pytest_temp,
     )
 
     assert allowed[:2] == [route_builder_target, "-q"]
-    assert single_node[0].endswith("::test_selector_core_contract_owns_production_bubble_pressure_metadata")
+    assert single_node[0].endswith("::test_selector_core_contract_owns_production_vle_metadata")
 
 
 def test_equilibrium_slices_are_listed():
@@ -295,7 +293,7 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
     targets = run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
 
     assert "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py" in targets
-    assert "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route" in targets
+    assert "tests/api/frontend/test_equilibrium.py" in targets
     assert "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py" in targets
     assert all("paper_validation" not in target for target in targets)
     assert all("tests/regression/literature" not in target for target in targets)

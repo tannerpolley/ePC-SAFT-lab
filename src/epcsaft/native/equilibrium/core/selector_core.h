@@ -17,9 +17,22 @@ struct SelectorInputClassification {
     bool nonassociating = false;
 };
 
+struct SelectorRouteRequest {
+    std::string route;
+    bool has_temperature = false;
+    bool has_pressure = false;
+    double temperature = 0.0;
+    double pressure = 0.0;
+    std::vector<double> composition;
+    std::string composition_role;
+};
+
 struct SelectorContract {
     std::string selector_family;
     std::string route;
+    std::string composition_role;
+    bool specified_temperature = false;
+    bool specified_pressure = false;
     bool production_exposed = false;
     bool certification_required = false;
     bool density_closure_required = false;
@@ -31,16 +44,12 @@ struct SelectorContract {
 
 SelectorContract evaluate_selector_contract(
     const add_args& args,
-    const std::string& route,
-    double scalar,
-    const std::vector<double>& composition
+    const SelectorRouteRequest& request
 );
 
 epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(
     const add_args& args,
-    const std::string& route,
-    double scalar,
-    const std::vector<double>& composition,
+    const SelectorRouteRequest& request,
     const epcsaft::native::equilibrium_nlp::IpoptSolveOptions& options,
     double phase_total_tolerance,
     double pressure_tolerance,

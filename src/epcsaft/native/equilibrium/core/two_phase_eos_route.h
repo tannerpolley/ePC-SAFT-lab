@@ -165,6 +165,13 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_dew_t_eos_nlp_contract(
     const std::vector<double>& vapor_composition
 );
 
+NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition
+);
+
 IpoptSolveResult solve_neutral_two_phase_eos_ipopt(
     const add_args& args,
     double temperature,
@@ -249,6 +256,18 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
     const std::vector<double>& vapor_composition,
     const IpoptSolveOptions& options,
     double phase_total_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+);
+
+NeutralTwoPhaseEosRouteResult solve_neutral_tp_flash_eos_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
     double pressure_tolerance,
     double chemical_potential_tolerance,
     double phase_distance_tolerance

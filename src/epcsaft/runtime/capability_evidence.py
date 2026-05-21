@@ -8,7 +8,13 @@ from __future__ import annotations
 
 from typing import Final
 
-IPOPT_PUBLIC_ROUTES: Final[tuple[str, ...]] = ("Equilibrium.bubble_pressure",)
+IPOPT_PUBLIC_ROUTES: Final[tuple[str, ...]] = (
+    "Equilibrium.solve(route='bubble_pressure')",
+    "Equilibrium.solve(route='bubble_temperature')",
+    "Equilibrium.solve(route='dew_pressure')",
+    "Equilibrium.solve(route='dew_temperature')",
+    "Equilibrium.solve(route='flash')",
+)
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES: Final[tuple[str, ...]] = (
 )
@@ -60,9 +66,23 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "backend": "cppad_phase_blocks",
         "supported": True,
         "classification": "production_supported",
-        "reason": "the production selector exposes only neutral bubble-pressure through exact gradient/Jacobian/Hessian Ipopt callbacks",
+        "reason": "the production selector exposes neutral bubble/dew pressure and temperature routes through exact gradient/Jacobian/Hessian Ipopt callbacks",
         "tests": (
-            "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
+            "tests/api/frontend/test_equilibrium.py",
+            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "quantity": "neutral_tp_flash",
+        "derivative": "lagrangian_hessian",
+        "backend": "cppad_phase_blocks",
+        "supported": True,
+        "classification": "production_supported",
+        "reason": "the production selector exposes neutral two-phase TP flash only after native-owned seed generation and postsolve certification",
+        "tests": (
+            "tests/api/frontend/test_equilibrium.py",
             "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
         ),
     },
@@ -96,10 +116,10 @@ CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
 EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
     "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
+    "tests/api/frontend/test_equilibrium.py",
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
+    "tests/api/frontend/test_equilibrium.py",
 )
 RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives",

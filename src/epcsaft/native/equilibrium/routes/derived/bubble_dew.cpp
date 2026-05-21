@@ -17,6 +17,7 @@ namespace {
 constexpr double kInitialPressure = 1.0e5;
 constexpr double kInitialTemperature = 300.0;
 constexpr double kGasConstant = 8.31446261815324;
+constexpr double kTwoPhaseFlashFeedBasis = 2.0;
 constexpr double kSeparatedLiquidDensity = 8000.0;
 constexpr double kMinimumLiquidVolume = 1.0e-6;
 constexpr double kMaximumLiquidVolume = 5.0e-4;
@@ -231,6 +232,23 @@ bool fixed_temperature_pressure_seed_satisfies_volume_bounds(
         && vapor_volume - liquid_volume >= kMinimumPhaseVolumeGap;
 }
 
+bool fixed_temperature_pressure_flash_seed_satisfies_volume_bounds(
+    const std::vector<double>& variables,
+    int species_count
+) {
+    const int local_variable_count = species_count + 1;
+    if (variables.size() != static_cast<std::size_t>(2 * local_variable_count)) {
+        return false;
+    }
+    const double liquid_volume = variables[static_cast<std::size_t>(species_count)];
+    const double vapor_volume = variables[static_cast<std::size_t>(local_variable_count + species_count)];
+    return liquid_volume >= kMinimumLiquidVolume
+        && liquid_volume <= kMaximumLiquidVolume
+        && vapor_volume >= kMinimumVaporVolume
+        && vapor_volume <= kMaximumVaporVolume
+        && vapor_volume - liquid_volume >= kMinimumPhaseVolumeGap;
+}
+
 struct NamedInitialVariables {
     std::string seed_name;
     std::vector<double> variables;
@@ -290,6 +308,187 @@ std::vector<double> build_temperature_route_initial_variables(
     }
     out.push_back(kInitialTemperature);
     return out;
+}
+
+double rachford_rice_value(
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& k_values,
+    double vapor_fraction
+) {
+    double value = 0.0;
+    for (std::size_t index = 0; index < feed_composition.size(); ++index) {
+        const double k_minus_one = k_values[index] - 1.0;
+        const double denominator = 1.0 + vapor_fraction * k_minus_one;
+        require_positive_finite(denominator, "Rachford-Rice denominator");
+        value += feed_composition[index] * k_minus_one / denominator;
+    }
+    return value;
+}
+
+double solve_rachford_rice_vapor_fraction(
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& k_values,
+    const std::string& problem_name
+) {
+    require_size(k_values, feed_composition.size(), problem_name + " K-value");
+    const double f0 = rachford_rice_value(feed_composition, k_values, 0.0);
+    const double f1 = rachford_rice_value(feed_composition, k_values, 1.0);
+    if (!(f0 > 0.0 && f1 < 0.0)) {
+        throw ValueError(problem_name + " K-values do not bracket a two-phase flash split.");
+    }
+    double lower = 0.0;
+    double upper = 1.0;
+    for (int iteration = 0; iteration < 80; ++iteration) {
+        const double mid = 0.5 * (lower + upper);
+        if (rachford_rice_value(feed_composition, k_values, mid) > 0.0) {
+            lower = mid;
+        } else {
+            upper = mid;
+        }
+    }
+    return 0.5 * (lower + upper);
+}
+
+std::vector<double> volatility_ranked_k_values(
+    const add_args& args,
+    const std::vector<double>& feed_composition,
+    const std::string& problem_name,
+    double alpha
+) {
+    if (feed_composition.size() <= 1) {
+        throw ValueError(problem_name + " flash seed requires at least two species.");
+    }
+    std::vector<double> scores;
+    scores.reserve(feed_composition.size());
+    if (args.m.size() == feed_composition.size()) {
+        double mean_m = 0.0;
+        for (double value : args.m) {
+            mean_m += value;
+        }
+        mean_m /= static_cast<double>(args.m.size());
+        double span = 0.0;
+        for (double value : args.m) {
+            span = std::max(span, std::abs(value - mean_m));
+        }
+        if (span <= 0.0) {
+            throw ValueError(problem_name + " flash seed requires non-degenerate segment numbers.");
+        }
+        for (double value : args.m) {
+            scores.push_back((mean_m - value) / span);
+        }
+    } else {
+        const double denominator = static_cast<double>(feed_composition.size() - 1);
+        for (std::size_t index = 0; index < feed_composition.size(); ++index) {
+            scores.push_back(1.0 - 2.0 * static_cast<double>(index) / denominator);
+        }
+    }
+
+    std::vector<double> k_values;
+    k_values.reserve(feed_composition.size());
+    for (double score : scores) {
+        k_values.push_back(std::exp(alpha * score));
+    }
+    return k_values;
+}
+
+std::vector<double> build_flash_route_initial_variables(
+    const add_args& args,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& liquid_composition,
+    const std::vector<double>& vapor_composition,
+    double vapor_fraction,
+    double temperature,
+    double target_pressure,
+    const std::string& problem_name,
+    DensitySeedMode density_seed_mode = DensitySeedMode::PhasePressureRoot
+) {
+    require_size(liquid_composition, feed_composition.size(), problem_name + " flash liquid composition");
+    require_size(vapor_composition, feed_composition.size(), problem_name + " flash vapor composition");
+    if (!(vapor_fraction > 0.0 && vapor_fraction < 1.0)) {
+        throw ValueError(problem_name + " flash vapor fraction must be inside (0, 1).");
+    }
+    std::vector<double> out;
+    out.reserve(2 * (feed_composition.size() + 1));
+    const double liquid_fraction = 1.0 - vapor_fraction;
+    for (int phase = 0; phase < 2; ++phase) {
+        const double phase_fraction = phase == 0 ? liquid_fraction : vapor_fraction;
+        const std::vector<double>& composition = phase == 0 ? liquid_composition : vapor_composition;
+        for (double value : composition) {
+            require_positive_finite(value, problem_name + " flash phase composition");
+            out.push_back(kTwoPhaseFlashFeedBasis * phase_fraction * value);
+        }
+        const double density = density_seed_mode == DensitySeedMode::PhasePressureRoot
+            ? phase_density_root_seed(args, temperature, target_pressure, composition, phase, problem_name)
+            : separated_phase_role_density_seed(temperature, target_pressure, phase, problem_name);
+        out.push_back(kTwoPhaseFlashFeedBasis * phase_fraction / density);
+    }
+    return out;
+}
+
+std::vector<double> build_flash_route_initial_variables_from_k_values(
+    const add_args& args,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& k_values,
+    double temperature,
+    double target_pressure,
+    const std::string& problem_name
+) {
+    const double vapor_fraction = solve_rachford_rice_vapor_fraction(feed_composition, k_values, problem_name);
+    std::vector<double> liquid;
+    std::vector<double> vapor;
+    liquid.reserve(feed_composition.size());
+    vapor.reserve(feed_composition.size());
+    for (std::size_t index = 0; index < feed_composition.size(); ++index) {
+        const double denominator = 1.0 + vapor_fraction * (k_values[index] - 1.0);
+        require_positive_finite(denominator, problem_name + " flash split denominator");
+        const double liquid_value = feed_composition[index] / denominator;
+        const double vapor_value = k_values[index] * liquid_value;
+        liquid.push_back(liquid_value);
+        vapor.push_back(vapor_value);
+    }
+    return build_flash_route_initial_variables(
+        args,
+        feed_composition,
+        liquid,
+        vapor,
+        vapor_fraction,
+        temperature,
+        target_pressure,
+        problem_name
+    );
+}
+
+std::vector<double> build_shifted_flash_route_initial_variables(
+    const add_args& args,
+    const std::vector<double>& feed_composition,
+    double temperature,
+    double target_pressure,
+    const std::string& problem_name,
+    double shift_sign,
+    DensitySeedMode density_seed_mode
+) {
+    constexpr double vapor_fraction = 0.5;
+    const std::vector<double> first = shifted_composition(feed_composition, shift_sign);
+    std::vector<double> second;
+    second.reserve(feed_composition.size());
+    for (std::size_t index = 0; index < feed_composition.size(); ++index) {
+        const double value = (feed_composition[index] - (1.0 - vapor_fraction) * first[index]) / vapor_fraction;
+        require_positive_finite(value, problem_name + " shifted flash partner composition");
+        second.push_back(value);
+    }
+    const std::vector<double>& liquid = shift_sign < 0.0 ? second : first;
+    const std::vector<double>& vapor = shift_sign < 0.0 ? first : second;
+    return build_flash_route_initial_variables(
+        args,
+        feed_composition,
+        liquid,
+        vapor,
+        vapor_fraction,
+        temperature,
+        target_pressure,
+        problem_name,
+        density_seed_mode
+    );
 }
 
 std::vector<NamedInitialVariables> pressure_route_seed_candidates(
@@ -433,6 +632,101 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
     return out;
 }
 
+std::vector<NamedInitialVariables> flash_route_seed_candidates(
+    const add_args& args,
+    const std::vector<double>& feed_composition,
+    double temperature,
+    double target_pressure,
+    const std::string& problem_name
+) {
+    std::vector<NamedInitialVariables> out;
+    auto append_if_feasible = [&](std::string seed_name, std::vector<double> variables) {
+        if (fixed_temperature_pressure_flash_seed_satisfies_volume_bounds(
+                variables,
+                static_cast<int>(feed_composition.size())
+            )) {
+            out.push_back({std::move(seed_name), std::move(variables)});
+        }
+    };
+    for (double alpha : {1.5, 2.0, 2.5, 3.0}) {
+        try {
+            append_if_feasible(
+                "volatility_ranked_rr_alpha_" + std::to_string(static_cast<int>(10.0 * alpha)),
+                build_flash_route_initial_variables_from_k_values(
+                    args,
+                    feed_composition,
+                    volatility_ranked_k_values(args, feed_composition, problem_name, alpha),
+                    temperature,
+                    target_pressure,
+                    problem_name
+                )
+            );
+        } catch (const std::exception&) {
+        }
+    }
+    try {
+        append_if_feasible(
+            "canonical_shifted_feed_density_root",
+            build_shifted_flash_route_initial_variables(
+                args,
+                feed_composition,
+                temperature,
+                target_pressure,
+                problem_name,
+                1.0,
+                DensitySeedMode::PhasePressureRoot
+            )
+        );
+    } catch (const std::exception&) {
+    }
+    try {
+        append_if_feasible(
+            "mirrored_shifted_feed_density_root",
+            build_shifted_flash_route_initial_variables(
+                args,
+                feed_composition,
+                temperature,
+                target_pressure,
+                problem_name,
+                -1.0,
+                DensitySeedMode::PhasePressureRoot
+            )
+        );
+    } catch (const std::exception&) {
+    }
+    try {
+        append_if_feasible(
+            "canonical_shifted_feed_phase_role",
+            build_shifted_flash_route_initial_variables(
+                args,
+                feed_composition,
+                temperature,
+                target_pressure,
+                problem_name,
+                1.0,
+                DensitySeedMode::SeparatedPhaseRole
+            )
+        );
+    } catch (const std::exception&) {
+    }
+    try {
+        append_if_feasible(
+            "mirrored_shifted_feed_phase_role",
+            build_shifted_flash_route_initial_variables(
+                args,
+                feed_composition,
+                temperature,
+                target_pressure,
+                problem_name,
+                -1.0,
+                DensitySeedMode::SeparatedPhaseRole
+            )
+        );
+    } catch (const std::exception&) {
+    }
+    return out;
+}
+
 int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
     if (result.accepted) {
         return 3;
@@ -444,6 +738,15 @@ int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
         return 1;
     }
     return 0;
+}
+
+bool has_finite_complete_variables(const IpoptSolveResult& solve, int variable_count) {
+    if (solve.variables.size() != static_cast<std::size_t>(variable_count)) {
+        return false;
+    }
+    return std::all_of(solve.variables.begin(), solve.variables.end(), [](double value) {
+        return std::isfinite(value);
+    });
 }
 
 RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteResult& result) {
@@ -491,6 +794,40 @@ std::vector<double> pressure_route_phase_volumes(const std::vector<double>& vari
         variables,
         static_cast<std::size_t>(2 * local_variable_count + 1),
         "fixed-temperature pressure route variable"
+    );
+    return {
+        variables[static_cast<std::size_t>(species_count)],
+        variables[static_cast<std::size_t>(local_variable_count + species_count)]
+    };
+}
+
+std::vector<std::vector<double>> flash_route_phase_amounts(
+    const std::vector<double>& variables,
+    int species_count
+) {
+    const int local_variable_count = species_count + 1;
+    require_size(
+        variables,
+        static_cast<std::size_t>(2 * local_variable_count),
+        "fixed-temperature pressure flash variable"
+    );
+    std::vector<std::vector<double>> phase_amounts(2, std::vector<double>(static_cast<std::size_t>(species_count)));
+    for (int phase = 0; phase < 2; ++phase) {
+        const int offset = phase * local_variable_count;
+        for (int species = 0; species < species_count; ++species) {
+            phase_amounts[static_cast<std::size_t>(phase)][static_cast<std::size_t>(species)] =
+                variables[static_cast<std::size_t>(offset + species)];
+        }
+    }
+    return phase_amounts;
+}
+
+std::vector<double> flash_route_phase_volumes(const std::vector<double>& variables, int species_count) {
+    const int local_variable_count = species_count + 1;
+    require_size(
+        variables,
+        static_cast<std::size_t>(2 * local_variable_count),
+        "fixed-temperature pressure flash variable"
     );
     return {
         variables[static_cast<std::size_t>(species_count)],
@@ -1784,6 +2121,418 @@ private:
     int species_count_ = 0;
 };
 
+class NeutralFixedTemperaturePressureFlashProblem final : public NlpProblem {
+public:
+    NeutralFixedTemperaturePressureFlashProblem(
+        add_args args,
+        double temperature,
+        double target_pressure,
+        std::vector<double> feed_composition,
+        std::string problem_name
+    )
+        : args_(std::move(args)),
+          temperature_(temperature),
+          target_pressure_(target_pressure),
+          feed_composition_(normalized_positive_values(feed_composition, problem_name + " feed composition")),
+          problem_name_(std::move(problem_name)) {
+        require_positive_finite(temperature_, problem_name_ + " temperature");
+        require_positive_finite(target_pressure_, problem_name_ + " pressure");
+        species_count_ = static_cast<int>(feed_composition_.size());
+    }
+
+    std::string name() const override {
+        return problem_name_;
+    }
+
+    int variable_count() const override {
+        return phase_count() * local_variable_count();
+    }
+
+    int constraint_count() const override {
+        return species_count_ + phase_count() + species_count_ + 1;
+    }
+
+    int jacobian_nonzero_count() const override {
+        const int material_nonzeros = phase_count() * species_count_;
+        const int pressure_nonzeros = phase_count() * local_variable_count();
+        const int chemical_nonzeros = species_count_ * phase_count() * local_variable_count();
+        const int gap_nonzeros = 2;
+        return material_nonzeros + pressure_nonzeros + chemical_nonzeros + gap_nonzeros;
+    }
+
+    NlpBounds bounds() const override {
+        NlpBounds out;
+        out.variable_lower.reserve(static_cast<std::size_t>(variable_count()));
+        out.variable_upper.reserve(static_cast<std::size_t>(variable_count()));
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            for (int species = 0; species < species_count_; ++species) {
+                out.variable_lower.push_back(1.0e-14);
+                out.variable_upper.push_back(10.0);
+            }
+            if (phase == liquid_phase_index()) {
+                out.variable_lower.push_back(minimum_liquid_volume_);
+                out.variable_upper.push_back(maximum_liquid_volume_);
+            } else if (phase == vapor_phase_index()) {
+                out.variable_lower.push_back(minimum_vapor_volume_);
+                out.variable_upper.push_back(maximum_vapor_volume_);
+            } else {
+                throw ValueError(problem_name_ + " phase role is out of range.");
+            }
+        }
+        out.constraint_lower.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        out.constraint_upper.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        out.constraint_lower.back() = minimum_phase_volume_gap_;
+        out.constraint_upper.back() = 1.0e12;
+        return out;
+    }
+
+    std::vector<double> initial_point() const override {
+        const std::vector<NamedInitialVariables> seeds = flash_route_seed_candidates(
+            args_,
+            feed_composition_,
+            temperature_,
+            target_pressure_,
+            problem_name_
+        );
+        if (seeds.empty()) {
+            throw ValueError(problem_name_ + " could not construct a deterministic flash seed.");
+        }
+        return seeds.front().variables;
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        double value = 0.0;
+        for (const EosPhaseBlockResult& block : phase_blocks(variables)) {
+            value += block.objective;
+        }
+        return value;
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(variable_count()));
+        for (const EosPhaseBlockResult& block : phase_blocks(variables)) {
+            out.insert(out.end(), block.gradient.begin(), block.gradient.end());
+        }
+        return out;
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        const auto amounts = flash_route_phase_amounts(variables, species_count_);
+        const auto blocks = phase_blocks(variables);
+        std::vector<double> out(static_cast<std::size_t>(constraint_count()), 0.0);
+        int row = 0;
+        for (int species = 0; species < species_count_; ++species) {
+            out[static_cast<std::size_t>(row++)] =
+                amounts[0][static_cast<std::size_t>(species)]
+                + amounts[1][static_cast<std::size_t>(species)]
+                - kTwoPhaseFlashFeedBasis * feed_composition_[static_cast<std::size_t>(species)];
+        }
+        for (const EosPhaseBlockResult& block : blocks) {
+            out[static_cast<std::size_t>(row++)] = block.pressure_consistency_residual;
+        }
+        for (int species = 0; species < species_count_; ++species) {
+            out[static_cast<std::size_t>(row++)] =
+                blocks[0].gradient[static_cast<std::size_t>(species)]
+                - blocks[1].gradient[static_cast<std::size_t>(species)];
+        }
+        out[static_cast<std::size_t>(row++)] =
+            variables[static_cast<std::size_t>(vapor_volume_col())]
+            - variables[static_cast<std::size_t>(liquid_volume_col())];
+        return out;
+    }
+
+    NlpJacobianStructure jacobian_structure() const override {
+        NlpJacobianStructure out;
+        out.rows.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        out.cols.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        int row = 0;
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                out.rows.push_back(row);
+                out.cols.push_back(phase * local_variable_count() + species);
+            }
+            ++row;
+        }
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const int offset = phase * local_variable_count();
+            for (int col = 0; col < local_variable_count(); ++col) {
+                out.rows.push_back(row);
+                out.cols.push_back(offset + col);
+            }
+            ++row;
+        }
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const int offset = phase * local_variable_count();
+                for (int col = 0; col < local_variable_count(); ++col) {
+                    out.rows.push_back(row);
+                    out.cols.push_back(offset + col);
+                }
+            }
+            ++row;
+        }
+        out.rows.push_back(row);
+        out.cols.push_back(liquid_volume_col());
+        out.rows.push_back(row);
+        out.cols.push_back(vapor_volume_col());
+        return out;
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        const auto blocks = phase_blocks(variables);
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        int row = 0;
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                out.push_back(1.0);
+            }
+            ++row;
+        }
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const EosPhaseBlockResult& block = blocks[static_cast<std::size_t>(phase)];
+            if (block.pressure_jacobian_row_major.size() != static_cast<std::size_t>(local_variable_count())) {
+                throw ValueError(problem_name_ + " pressure Jacobian size did not match variables.");
+            }
+            for (int col = 0; col < local_variable_count(); ++col) {
+                out.push_back(block.pressure_jacobian_row_major[static_cast<std::size_t>(col)]);
+            }
+            ++row;
+        }
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const EosPhaseBlockResult& block = blocks[static_cast<std::size_t>(phase)];
+                if (block.objective_curvature_rows != local_variable_count()
+                    || block.objective_curvature_cols != local_variable_count()
+                    || block.objective_curvature_row_major.size()
+                        != static_cast<std::size_t>(local_variable_count() * local_variable_count())) {
+                    throw ValueError(problem_name_ + " chemical-potential Jacobian size did not match variables.");
+                }
+                for (int col = 0; col < local_variable_count(); ++col) {
+                    out.push_back((phase == 0 ? 1.0 : -1.0) * block.objective_curvature_row_major[
+                            static_cast<std::size_t>(species * local_variable_count() + col)
+                        ]);
+                }
+            }
+            ++row;
+        }
+        out.push_back(-1.0);
+        out.push_back(1.0);
+        return out;
+    }
+
+    bool has_exact_hessian() const override {
+        return route_supports_exact_phase_derivatives(args_);
+    }
+
+    int hessian_nonzero_count() const override {
+        return LagrangianHessianAssembler(variable_count()).nonzero_count();
+    }
+
+    NlpHessianStructure hessian_structure() const override {
+        return LagrangianHessianAssembler(variable_count()).structure();
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        if (!has_exact_hessian()) {
+            throw ValueError(problem_name_ + " exact Hessian requires direct non-associating phase derivatives.");
+        }
+        if (constraint_multipliers.size() != static_cast<std::size_t>(constraint_count())) {
+            throw ValueError(problem_name_ + " Hessian multiplier vector size does not match the constraint count.");
+        }
+
+        const auto blocks = phase_blocks(variables);
+        const int n = variable_count();
+        ObjectiveSecondOrderData objective;
+        objective.variable_count = n;
+        objective.value = 0.0;
+        objective.gradient.assign(static_cast<std::size_t>(n), 0.0);
+        objective.hessian_row_major.assign(static_cast<std::size_t>(n * n), 0.0);
+        objective.backend = "cppad_phase_flash_route";
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const EosPhaseBlockResult& block = blocks[static_cast<std::size_t>(phase)];
+            require_square_block(
+                block.objective_curvature_row_major,
+                local_variable_count(),
+                problem_name_ + " objective Hessian block"
+            );
+            require_third_derivative_tensor(
+                block.objective_third_derivative_tensor_row_major,
+                local_variable_count(),
+                problem_name_ + " objective third-derivative tensor"
+            );
+            const std::vector<int> phase_indices = fixed_temperature_global_indices(phase, local_variable_count());
+            objective.value += block.objective;
+            for (int local = 0; local < local_variable_count(); ++local) {
+                objective.gradient[static_cast<std::size_t>(phase_indices[static_cast<std::size_t>(local)])] =
+                    block.gradient[static_cast<std::size_t>(local)];
+            }
+            add_local_hessian_to_dense(
+                objective.hessian_row_major,
+                n,
+                phase_indices,
+                block.objective_curvature_row_major,
+                1.0,
+                problem_name_ + " objective Hessian block"
+            );
+        }
+
+        ConstraintSecondOrderData constraints_data;
+        constraints_data.constraint_count = constraint_count();
+        constraints_data.variable_count = n;
+        constraints_data.values = this->constraints(variables);
+        constraints_data.hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(constraint_count() * n * n),
+            0.0
+        );
+        constraints_data.has_hessian.assign(static_cast<std::size_t>(constraint_count()), false);
+        constraints_data.backend = "cppad_phase_flash_route";
+
+        const int pressure_row_start = species_count_;
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const EosPhaseBlockResult& block = blocks[static_cast<std::size_t>(phase)];
+            require_square_block(
+                block.pressure_hessian_row_major,
+                local_variable_count(),
+                problem_name_ + " pressure Hessian block"
+            );
+            const int constraint_row = pressure_row_start + phase;
+            constraints_data.has_hessian[static_cast<std::size_t>(constraint_row)] = true;
+            add_local_hessian_to_constraint_tensor(
+                constraints_data.hessian_tensor_row_major,
+                constraint_row,
+                n,
+                fixed_temperature_global_indices(phase, local_variable_count()),
+                block.pressure_hessian_row_major,
+                1.0,
+                problem_name_ + " pressure Hessian block"
+            );
+        }
+
+        const int chemical_row_start = pressure_row_start + phase_count();
+        for (int species = 0; species < species_count_; ++species) {
+            const int constraint_row = chemical_row_start + species;
+            constraints_data.has_hessian[static_cast<std::size_t>(constraint_row)] = true;
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const EosPhaseBlockResult& block = blocks[static_cast<std::size_t>(phase)];
+                const std::vector<double> chemical_hessian = third_derivative_slice(
+                    block.objective_third_derivative_tensor_row_major,
+                    species,
+                    local_variable_count(),
+                    problem_name_ + " chemical-potential Hessian block"
+                );
+                add_local_hessian_to_constraint_tensor(
+                    constraints_data.hessian_tensor_row_major,
+                    constraint_row,
+                    n,
+                    fixed_temperature_global_indices(phase, local_variable_count()),
+                    chemical_hessian,
+                    phase == 0 ? 1.0 : -1.0,
+                    problem_name_ + " chemical-potential Hessian block"
+                );
+            }
+        }
+
+        return LagrangianHessianAssembler(n).values(
+            objective_factor,
+            objective,
+            constraints_data,
+            constraint_multipliers
+        );
+    }
+
+    std::string hessian_backend() const override {
+        return "cppad_phase_flash_route";
+    }
+
+    NlpScaling scaling() const override {
+        NlpScaling out;
+        out.objective = 1.0;
+        out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
+        out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
+        return out;
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        return route_metadata_diagnostics(fixed_temperature_pressure_flash_route_metadata());
+    }
+
+    int species_count() const {
+        return species_count_;
+    }
+
+    int phase_count() const {
+        return 2;
+    }
+
+    std::vector<double> feed_amounts() const {
+        std::vector<double> out;
+        out.reserve(feed_composition_.size());
+        for (double value : feed_composition_) {
+            out.push_back(kTwoPhaseFlashFeedBasis * value);
+        }
+        return out;
+    }
+
+private:
+    int local_variable_count() const {
+        return species_count_ + 1;
+    }
+
+    int liquid_phase_index() const {
+        return 0;
+    }
+
+    int vapor_phase_index() const {
+        return 1;
+    }
+
+    int liquid_volume_col() const {
+        return liquid_phase_index() * local_variable_count() + species_count_;
+    }
+
+    int vapor_volume_col() const {
+        return vapor_phase_index() * local_variable_count() + species_count_;
+    }
+
+    std::vector<EosPhaseBlockResult> phase_blocks(const std::vector<double>& variables) const {
+        require_size(variables, static_cast<std::size_t>(variable_count()), problem_name_ + " variable");
+        const auto amounts = flash_route_phase_amounts(variables, species_count_);
+        const auto volumes = flash_route_phase_volumes(variables, species_count_);
+        std::vector<EosPhaseBlockResult> blocks;
+        blocks.reserve(static_cast<std::size_t>(phase_count()));
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            blocks.push_back(
+                evaluate_eos_phase_block(
+                    args_,
+                    temperature_,
+                    target_pressure_,
+                    amounts[static_cast<std::size_t>(phase)],
+                    volumes[static_cast<std::size_t>(phase)]
+                )
+            );
+        }
+        return blocks;
+    }
+
+    add_args args_;
+    double temperature_ = 0.0;
+    double target_pressure_ = 0.0;
+    double minimum_liquid_volume_ = kMinimumLiquidVolume;
+    double maximum_liquid_volume_ = kMaximumLiquidVolume;
+    double minimum_vapor_volume_ = kMinimumVaporVolume;
+    double maximum_vapor_volume_ = kMaximumVaporVolume;
+    double minimum_phase_volume_gap_ = kMinimumPhaseVolumeGap;
+    std::vector<double> feed_composition_;
+    std::string problem_name_;
+    int species_count_ = 0;
+};
+
 NeutralTwoPhaseEosNlpContract make_contract(const NlpProblem& problem, int phase_count, int species_count) {
     validate_nlp_problem_shape(problem);
 
@@ -1859,6 +2608,34 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
     return out;
 }
 
+NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_flash_postsolve(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    NeutralTwoPhaseEosPostsolve out = evaluate_neutral_two_phase_eos_postsolve(
+        args,
+        temperature,
+        pressure,
+        phase_amounts,
+        volumes,
+        feed_amounts,
+        material_tolerance,
+        pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance
+    );
+    apply_route_metadata(out, fixed_temperature_pressure_flash_route_metadata());
+    return out;
+}
+
 // AlgID: bubble_dew_ipopt
 NeutralTwoPhaseEosRouteResult solve_pressure_route(
     const add_args& args,
@@ -1923,7 +2700,8 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve = solve.accepted || solve.feasible_point;
+        const bool can_postsolve =
+            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;
@@ -2054,7 +2832,8 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve = solve.accepted || solve.feasible_point;
+        const bool can_postsolve =
+            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;
@@ -2110,6 +2889,146 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         }
     }
 
+    for (const auto& seed : seeds) {
+        IpoptSolveOptions attempt_options = options;
+        attempt_options.initial_variables = seed.variables;
+        attempt_options.initial_bound_lower_multipliers.clear();
+        attempt_options.initial_bound_upper_multipliers.clear();
+        attempt_options.initial_constraint_multipliers.clear();
+        const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
+        if (attempt.accepted) {
+            break;
+        }
+    }
+
+    best.initial_point_strategy = "deterministic_seed_sweep";
+    best.seed_attempts = attempts;
+    return best;
+}
+
+// AlgID: neutral_tp_flash_ipopt
+NeutralTwoPhaseEosRouteResult solve_flash_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    const std::string problem_name = "neutral_tp_flash_eos";
+    const IpoptAdapterInfo adapter = native_ipopt_adapter_info();
+    NeutralTwoPhaseEosRouteResult best;
+    best.compiled = adapter.compiled;
+    best.adapter_available = adapter.adapter_available;
+    best.adapter_kind = adapter.adapter_kind;
+    best.exact_gradient_required = adapter.exact_gradient_required;
+    best.exact_jacobian_required = adapter.exact_jacobian_required;
+    best.problem_name = problem_name;
+    apply_route_metadata(best, fixed_temperature_pressure_flash_route_metadata());
+    if (!adapter.compiled) {
+        best.status = "ipopt_dependency_required";
+        return best;
+    }
+
+    const std::vector<double> normalized_feed =
+        normalized_positive_values(feed_composition, problem_name + " feed composition");
+    const std::vector<double> feed_amounts = [&]() {
+        std::vector<double> out;
+        out.reserve(normalized_feed.size());
+        for (double value : normalized_feed) {
+            out.push_back(kTwoPhaseFlashFeedBasis * value);
+        }
+        return out;
+    }();
+    const std::vector<NamedInitialVariables> seeds = flash_route_seed_candidates(
+        args,
+        normalized_feed,
+        temperature,
+        target_pressure,
+        problem_name
+    );
+    bool have_best = false;
+    std::vector<RouteSeedAttempt> attempts;
+    attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
+
+    auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
+        NeutralFixedTemperaturePressureFlashProblem problem(
+            args,
+            temperature,
+            target_pressure,
+            normalized_feed,
+            problem_name
+        );
+        const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
+        NeutralTwoPhaseEosRouteResult result;
+        result.compiled = adapter.compiled;
+        result.adapter_available = adapter.adapter_available;
+        result.adapter_kind = adapter.adapter_kind;
+        result.exact_gradient_required = adapter.exact_gradient_required;
+        result.exact_jacobian_required = adapter.exact_jacobian_required;
+        result.problem_name = problem_name;
+        result.initial_point_strategy = "deterministic_seed_sweep";
+        result.seed_name = seed_name;
+        result.ran = solve.solver_ran;
+        const bool can_postsolve =
+            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        result.solver_accepted = can_postsolve;
+        result.solver_feasible_point = solve.feasible_point;
+        result.solver_status = solve.solver_status;
+        result.application_status = solve.application_status;
+        apply_ipopt_solve_metadata(result, solve);
+        result.objective = solve.objective;
+        result.variables = solve.variables;
+        result.constraints = solve.constraints;
+        if (!can_postsolve) {
+            result.status = "solver_rejected";
+            attempts.push_back(neutral_seed_attempt_from_result(result));
+            if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+                best = result;
+                have_best = true;
+            }
+            return result;
+        }
+
+        const int species_count = problem.species_count();
+        result.phase_amounts = flash_route_phase_amounts(solve.variables, species_count);
+        result.phase_volumes = flash_route_phase_volumes(solve.variables, species_count);
+        result.postsolve = fixed_temperature_pressure_flash_postsolve(
+            args,
+            temperature,
+            target_pressure,
+            result.phase_amounts,
+            result.phase_volumes,
+            feed_amounts,
+            material_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+        result.accepted = result.postsolve.accepted;
+        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        attempts.push_back(neutral_seed_attempt_from_result(result));
+        if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+            best = result;
+            have_best = true;
+        }
+        return result;
+    };
+
+    if (!options.initial_variables.empty()) {
+        const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
+        if (continuation.accepted) {
+            best.seed_attempts = attempts;
+            return best;
+        }
+    }
+
+    if (seeds.empty()) {
+        throw ValueError(problem_name + " could not construct a deterministic flash seed.");
+    }
     for (const auto& seed : seeds) {
         IpoptSolveOptions attempt_options = options;
         attempt_options.initial_variables = seed.variables;
@@ -2185,6 +3104,22 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_dew_t_eos_nlp_contract(
         vapor_composition,
         1,
         "neutral_dew_t_eos"
+    );
+    return make_contract(problem, problem.phase_count(), problem.species_count());
+}
+
+NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition
+) {
+    NeutralFixedTemperaturePressureFlashProblem problem(
+        args,
+        temperature,
+        target_pressure,
+        feed_composition,
+        "neutral_tp_flash_eos"
     );
     return make_contract(problem, problem.phase_count(), problem.species_count());
 }
@@ -2283,6 +3218,30 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
         "neutral_dew_t_eos",
         options,
         phase_total_tolerance,
+        pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance
+    );
+}
+
+NeutralTwoPhaseEosRouteResult solve_neutral_tp_flash_eos_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    return solve_flash_route(
+        args,
+        temperature,
+        target_pressure,
+        feed_composition,
+        options,
+        material_tolerance,
         pressure_tolerance,
         chemical_potential_tolerance,
         phase_distance_tolerance

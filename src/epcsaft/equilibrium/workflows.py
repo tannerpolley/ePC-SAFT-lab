@@ -15,6 +15,7 @@ from .core.native_results import (
     RouteDiagnosticsView,
     native_route_diagnostics,
     native_route_solved_pressure,
+    native_route_solved_temperature,
     native_route_summed_phase_amounts,
     neutral_two_phase_payload_to_result,
     raise_native_route_rejected,
@@ -152,28 +153,156 @@ class EquilibriumResult:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class _VleRouteSpec:
+    selector_route: str
+    composition_key: str
+    composition_role: str
+    requires_temperature: bool
+    requires_pressure: bool
+    problem_kind: str
+    route_label: str
+    selector_family: str
+
+
+_VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
+    "bubble_pressure": _VleRouteSpec(
+        selector_route="bubble_pressure",
+        composition_key="x",
+        composition_role="liquid",
+        requires_temperature=True,
+        requires_pressure=False,
+        problem_kind="neutral_bubble_p",
+        route_label="bubble_pressure",
+        selector_family="bubble_dew_derived_routes",
+    ),
+    "bubble_temperature": _VleRouteSpec(
+        selector_route="bubble_temperature",
+        composition_key="x",
+        composition_role="liquid",
+        requires_temperature=False,
+        requires_pressure=True,
+        problem_kind="neutral_bubble_t",
+        route_label="bubble_temperature",
+        selector_family="bubble_dew_derived_routes",
+    ),
+    "dew_pressure": _VleRouteSpec(
+        selector_route="dew_pressure",
+        composition_key="y",
+        composition_role="vapor",
+        requires_temperature=True,
+        requires_pressure=False,
+        problem_kind="neutral_dew_p",
+        route_label="dew_pressure",
+        selector_family="bubble_dew_derived_routes",
+    ),
+    "dew_temperature": _VleRouteSpec(
+        selector_route="dew_temperature",
+        composition_key="y",
+        composition_role="vapor",
+        requires_temperature=False,
+        requires_pressure=True,
+        problem_kind="neutral_dew_t",
+        route_label="dew_temperature",
+        selector_family="bubble_dew_derived_routes",
+    ),
+    "flash": _VleRouteSpec(
+        selector_route="neutral_tp_flash",
+        composition_key="z",
+        composition_role="feed",
+        requires_temperature=True,
+        requires_pressure=True,
+        problem_kind="neutral_tp_flash",
+        route_label="flash",
+        selector_family="neutral_tp_flash",
+    ),
+}
+
+
 # AlgID: bubble_dew_ipopt
-def bubble_p(mixture: Any, *, T: float, x: Any, options: EquilibriumOptions | None = None) -> EquilibriumResult:
-    """Solve the production neutral bubble-pressure route through the selector core."""
+def _solve_selector_vle(
+    mixture: Any,
+    *,
+    route: str,
+    T: Any = None,
+    P: Any = None,
+    x: Any = None,
+    y: Any = None,
+    z: Any = None,
+    options: EquilibriumOptions | None = None,
+) -> EquilibriumResult:
+    """Solve one selector-admitted neutral VLE route spec through the shared core."""
 
     opts = _normalize_options(options)
-    composition = _normalize_feed(x, mixture.ncomp, opts.min_composition, "bubble_p")
+    try:
+        spec = _VLE_ROUTE_SPECS[str(route)]
+    except KeyError as exc:
+        allowed = ", ".join(sorted(_VLE_ROUTE_SPECS))
+        raise InputError(f"Unknown equilibrium route '{route}'. Expected one of: {allowed}.") from exc
+
+    composition_value = {"x": x, "y": y, "z": z}[spec.composition_key]
+    provided_compositions = {key for key, value in {"x": x, "y": y, "z": z}.items() if value is not None}
+    if provided_compositions != {spec.composition_key}:
+        expected = spec.composition_key
+        provided = ", ".join(sorted(provided_compositions)) or "none"
+        raise InputError(f"{spec.route_label} requires only composition '{expected}', got {provided}.")
+    if spec.requires_temperature and T is None:
+        raise InputError(f"{spec.route_label} requires T.")
+    if not spec.requires_temperature and T is not None:
+        raise InputError(f"{spec.route_label} must not specify T.")
+    if spec.requires_pressure and P is None:
+        raise InputError(f"{spec.route_label} requires P.")
+    if not spec.requires_pressure and P is not None:
+        raise InputError(f"{spec.route_label} must not specify P.")
+
+    composition = _normalize_feed(composition_value, mixture.ncomp, opts.min_composition, spec.route_label)
     _reject_ion_containing_mixture(mixture)
-    temperature = _positive_scalar(T, "T", "bubble_p")
-    return _native_selector_bubble_pressure(
+    temperature = _positive_scalar(T, "T", spec.route_label) if spec.requires_temperature else None
+    pressure = _positive_scalar(P, "P", spec.route_label) if spec.requires_pressure else None
+    return _native_selector_vle_route(
         mixture,
-        T=temperature,
-        composition=composition,
+        request=_selector_request(
+            route=spec.selector_route,
+            temperature=temperature,
+            pressure=pressure,
+            composition=composition,
+            composition_role=spec.composition_role,
+        ),
         options=opts,
+        problem_kind=spec.problem_kind,
+        route_label=spec.route_label,
+        selector_family=spec.selector_family,
     )
 
 
-def _native_selector_bubble_pressure(
+def _selector_request(
+    *,
+    route: str,
+    composition: np.ndarray,
+    composition_role: str,
+    temperature: float | None = None,
+    pressure: float | None = None,
+) -> dict[str, Any]:
+    request: dict[str, Any] = {
+        "route": route,
+        "composition": composition.tolist(),
+        "composition_role": composition_role,
+    }
+    if temperature is not None:
+        request["temperature"] = float(temperature)
+    if pressure is not None:
+        request["pressure"] = float(pressure)
+    return request
+
+
+def _native_selector_vle_route(
     mixture: Any,
     *,
-    T: float,
-    composition: np.ndarray,
+    request: Mapping[str, Any],
     options: EquilibriumOptions,
+    problem_kind: str,
+    route_label: str,
+    selector_family: str,
 ) -> EquilibriumResult:
     from .. import _core
 
@@ -185,9 +314,7 @@ def _native_selector_bubble_pressure(
     )
     route = _core._native_equilibrium_selector_route_result(
         mixture._native,
-        "bubble_pressure",
-        T,
-        composition.tolist(),
+        dict(request),
         options.max_iterations,
         options.tolerance,
         _native_timeout_seconds(options),
@@ -197,21 +324,27 @@ def _native_selector_bubble_pressure(
         **_native_ipopt_control_kwargs(options),
     )
     if str(route.get("status", "")) == "ipopt_dependency_required":
-        raise InputError("bubble_p requires the native Ipopt selector equilibrium route.")
+        raise InputError(f"{route_label} requires the native Ipopt selector equilibrium route.")
 
-    pressure = native_route_solved_pressure(route, "bubble_p") if bool(route.get("accepted", False)) else 1.0
-    feed = (
-        native_route_summed_phase_amounts(route, mixture.ncomp, "bubble_p")
-        if bool(route.get("accepted", False))
-        else composition
-    )
+    accepted = bool(route.get("accepted", False))
+    temperature = float(request.get("temperature", 0.0))
+    pressure = float(request.get("pressure", 0.0))
+    if accepted and request.get("temperature") is None:
+        temperature = native_route_solved_temperature(route, route_label)
+    if accepted and request.get("pressure") is None:
+        pressure = native_route_solved_pressure(route, route_label)
+    composition = np.asarray(request["composition"], dtype=float)
+    feed = native_route_summed_phase_amounts(route, mixture.ncomp, route_label) if accepted else composition
     return _accepted_native_selector_two_phase_result(
         mixture,
-        T=T,
+        T=temperature,
         P=pressure,
         feed=feed,
         route=route,
         tolerances=neutral_two_phase_eos_tolerances(pressure, options),
+        problem_kind=problem_kind,
+        route_label=route_label,
+        selector_family=selector_family,
     )
 
 
@@ -223,11 +356,14 @@ def _accepted_native_selector_two_phase_result(
     feed: np.ndarray,
     route: Mapping[str, Any],
     tolerances: tuple[float, float, float, float],
+    problem_kind: str,
+    route_label: str,
+    selector_family: str,
 ) -> EquilibriumResult:
     from .. import _core
 
     if not bool(route.get("accepted", False)):
-        raise_native_route_rejected(route, "Native selector bubble_p route was rejected.")
+        raise_native_route_rejected(route, f"Native selector {route_label} route was rejected.")
 
     material_tolerance, pressure_tolerance, chemical_potential_tolerance, phase_distance_tolerance = tolerances
     result_payload = _core._native_neutral_two_phase_eos_result(
@@ -244,16 +380,16 @@ def _accepted_native_selector_two_phase_result(
     )
     result = neutral_two_phase_payload_to_result(
         result_payload,
-        problem_kind="neutral_bubble_p",
+        problem_kind=problem_kind,
         phase_labels=("liq", "vap"),
     )
     diagnostics = native_route_diagnostics(route)
     diagnostics.update(result.diagnostics)
     certification = diagnostics.get("postsolve_certification", {})
-    if str(route.get("selector_family", "")) != "bubble_dew_derived_routes":
-        raise SolutionError("Native selector bubble_p returned an unexpected route family.", diagnostics)
+    if str(route.get("selector_family", "")) != selector_family:
+        raise SolutionError(f"Native selector {route_label} returned an unexpected route family.", diagnostics)
     if not isinstance(certification, Mapping) or not bool(certification.get("accepted", False)):
-        raise SolutionError("Native selector bubble_p route failed postsolve certification.", diagnostics)
+        raise SolutionError(f"Native selector {route_label} route failed postsolve certification.", diagnostics)
     return EquilibriumResult(
         backend=result.backend,
         problem_kind=result.problem_kind,
@@ -450,7 +586,7 @@ def _positive_scalar(value: Any, label: str, kind: str) -> float:
 def _reject_ion_containing_mixture(mixture: Any) -> None:
     charges = np.asarray(mixture.parameters.get("z", []), dtype=float).flatten()
     if charges.size and np.any(np.abs(charges) > 1.0e-12):
-        raise InputError("Production bubble_pressure supports only neutral mixtures.")
+        raise InputError("Production VLE selector routes support only neutral mixtures.")
 
 
 def _json_like(value: Any) -> Any:

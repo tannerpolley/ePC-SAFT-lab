@@ -423,6 +423,9 @@ py::dict selector_contract_to_dict(const epcsaft::native::equilibrium::SelectorC
     py::dict out = neutral_two_phase_eos_nlp_contract_to_dict(contract.nlp_contract);
     out["selector_family"] = contract.selector_family;
     out["route"] = contract.route;
+    out["composition_role"] = contract.composition_role;
+    out["specified_temperature"] = contract.specified_temperature;
+    out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
     out["production_exposed"] = contract.production_exposed;
     out["certification_required"] = contract.certification_required;
@@ -438,6 +441,9 @@ void apply_selector_metadata(
 ) {
     out["selector_family"] = contract.selector_family;
     out["route"] = contract.route;
+    out["composition_role"] = contract.composition_role;
+    out["specified_temperature"] = contract.specified_temperature;
+    out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
     out["production_exposed"] = contract.production_exposed;
     out["certification_required"] = contract.certification_required;
@@ -455,6 +461,34 @@ void apply_selector_metadata(
         }
     }
     out["stability_certificate"] = stability_certificate;
+}
+
+double selector_request_double(const py::dict& payload, const char* key) {
+    if (!payload.contains(key) || payload[key].is_none()) {
+        return 0.0;
+    }
+    return py::cast<double>(payload[key]);
+}
+
+epcsaft::native::equilibrium::SelectorRouteRequest selector_request_from_dict(const py::dict& payload) {
+    epcsaft::native::equilibrium::SelectorRouteRequest out;
+    if (!payload.contains("route")) {
+        throw ValueError("Equilibrium selector request requires route.");
+    }
+    if (!payload.contains("composition")) {
+        throw ValueError("Equilibrium selector request requires composition.");
+    }
+    if (!payload.contains("composition_role")) {
+        throw ValueError("Equilibrium selector request requires composition_role.");
+    }
+    out.route = py::cast<std::string>(payload["route"]);
+    out.composition = py::cast<std::vector<double>>(payload["composition"]);
+    out.composition_role = py::cast<std::string>(payload["composition_role"]);
+    out.has_temperature = payload.contains("temperature") && !payload["temperature"].is_none();
+    out.has_pressure = payload.contains("pressure") && !payload["pressure"].is_none();
+    out.temperature = selector_request_double(payload, "temperature");
+    out.pressure = selector_request_double(payload, "pressure");
+    return out;
 }
 
 py::dict neutral_two_phase_eos_phase_payload_to_dict(
@@ -599,26 +633,21 @@ void register_equilibrium_bindings(pybind11::module_& m) {
     // AlgID: bubble_dew_ipopt
     m.def("_native_equilibrium_selector_contract", [](
         const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
-        const std::string& route,
-        double scalar,
-        const std::vector<double>& composition
+        const py::dict& request_payload
     ) {
         if (!mixture) {
             throw ValueError("Equilibrium selector contract requires a native mixture.");
         }
+        const auto request = selector_request_from_dict(request_payload);
         return selector_contract_to_dict(epcsaft::native::equilibrium::evaluate_selector_contract(
             mixture->args(),
-            route,
-            scalar,
-            composition
+            request
         ));
     });
     // AlgID: bubble_dew_ipopt
     m.def("_native_equilibrium_selector_route_result", [](
         const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
-        const std::string& route,
-        double scalar,
-        const std::vector<double>& composition,
+        const py::dict& request_payload,
         int max_iterations,
         double tolerance,
         double timeout_seconds,
@@ -644,18 +673,15 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             );
         apply_ipopt_control_kwargs(options, kwargs);
         apply_ipopt_continuation_state(options, continuation_state);
+        const auto request = selector_request_from_dict(request_payload);
         const auto contract = epcsaft::native::equilibrium::evaluate_selector_contract(
             mixture->args(),
-            route,
-            scalar,
-            composition
+            request
         );
         py::dict out = neutral_two_phase_eos_route_result_to_dict(
             epcsaft::native::equilibrium::solve_selector_route(
                 mixture->args(),
-                route,
-                scalar,
-                composition,
+                request,
                 options,
                 phase_total_tolerance,
                 pressure_tolerance,

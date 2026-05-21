@@ -11,12 +11,23 @@ pytestmark = pytest.mark.native_contract
 def test_selector_contract_declares_production_route_metadata_without_solving() -> None:
     mix = _neutral_binary_mixture()
 
-    payload = _core._native_equilibrium_selector_contract(mix._native, "bubble_pressure", 300.0, [0.35, 0.65])
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "bubble_pressure",
+            "temperature": 300.0,
+            "composition": [0.35, 0.65],
+            "composition_role": "liquid",
+        },
+    )
 
     assert payload["selector_family"] == "bubble_dew_derived_routes"
     assert payload["route"] == "bubble_pressure"
+    assert payload["composition_role"] == "liquid"
+    assert payload["specified_temperature"] is True
+    assert payload["specified_pressure"] is False
     assert payload["problem_name"] == "neutral_bubble_p_eos"
-    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume_plus_pressure"
+    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume_plus_route_scalar"
     assert payload["density_backend"] == "explicit_phase_volume_pressure_constraint"
     assert payload["exact_derivatives_required"] is True
     assert payload["certification_required"] is True
@@ -73,4 +84,12 @@ def test_selector_rejects_declared_not_exposed_route_family() -> None:
 
     native_value_error = getattr(_core, "NativeValueError", ValueError)
     with pytest.raises(native_value_error, match="selector-ineligible"):
-        _core._native_equilibrium_selector_contract(mix._native, "neutral_lle", 300.0, [0.35, 0.65])
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": "neutral_lle",
+                "temperature": 300.0,
+                "composition": [0.35, 0.65],
+                "composition_role": "feed",
+            },
+        )

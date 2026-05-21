@@ -226,11 +226,6 @@ class ePCSAFTMixture:
             "state": state,
         }
 
-    def bubble_p(self, T, x, *, options=None):
-        """Solve the production neutral bubble pressure route."""
-        from ..equilibrium.workflows import bubble_p
-
-        return bubble_p(self, T=T, x=x, options=options)
     def __repr__(self):
         """Return a short debugging representation of the mixture."""
         return f"ePCSAFTMixture(ncomp={self.ncomp}, species={self._species})"

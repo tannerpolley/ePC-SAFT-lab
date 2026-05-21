@@ -6,8 +6,6 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-import numpy as np
-
 from .._types import InputError
 from .mixture import Mixture
 
@@ -25,17 +23,24 @@ class Equilibrium:
         self.mixture = mixture
         self.defaults = _reject_backend_options(defaults, context="Equilibrium")
 
-    def bubble_pressure(self, *, T: float, x: Sequence[float], **overrides: Any) -> Any:
-        """Solve a bubble-pressure equilibrium at fixed temperature and liquid composition."""
+    def solve(
+        self,
+        *,
+        route: str,
+        T: float | None = None,
+        P: float | None = None,
+        x: Sequence[float] | None = None,
+        y: Sequence[float] | None = None,
+        z: Sequence[float] | None = None,
+        **overrides: Any,
+    ) -> Any:
+        """Solve one selector-admitted neutral VLE route spec."""
+
+        from ..equilibrium.workflows import _solve_selector_vle
 
         options = self._options(overrides)
-        result = self.mixture.native.bubble_p(T=T, x=np.asarray(x, dtype=float), options=options)
-        diagnostics = getattr(result, "diagnostics", {})
-        if str(diagnostics.get("hessian_approximation", "")) != "exact":
-            raise InputError("Equilibrium.bubble_pressure requires the exact Hessian route.")
-        if diagnostics.get("exact_hessian_available") is not True:
-            raise InputError("Equilibrium.bubble_pressure did not report exact Hessian availability.")
-        return result
+        result = _solve_selector_vle(self.mixture.native, route=route, T=T, P=P, x=x, y=y, z=z, options=options)
+        return _require_exact_hessian(result, method=f"Equilibrium.solve(route='{route}')")
 
     def _options(self, overrides: Mapping[str, Any] | None = None) -> Any:
         from ..equilibrium import EquilibriumOptions
@@ -53,3 +58,12 @@ def _reject_backend_options(options: Mapping[str, Any], *, context: str) -> dict
     if blocked:
         raise InputError(f"{context} does not expose backend-selection option(s): {', '.join(blocked)}.")
     return dict(options)
+
+
+def _require_exact_hessian(result: Any, *, method: str) -> Any:
+    diagnostics = getattr(result, "diagnostics", {})
+    if str(diagnostics.get("hessian_approximation", "")) != "exact":
+        raise InputError(f"{method} requires the exact Hessian route.")
+    if diagnostics.get("exact_hessian_available") is not True:
+        raise InputError(f"{method} did not report exact Hessian availability.")
+    return result

@@ -5,6 +5,7 @@ import pytest
 
 import epcsaft
 from epcsaft import _core
+from tests.support.hydrocarbon_cases import HYDROCARBON_LIQUID_X, HYDROCARBON_T, hydrocarbon_parameter_set
 from tests.support.native_cases import _neutral_state
 
 
@@ -19,14 +20,15 @@ def test_cppad_pressure_derivative_api_underpins_bubble_policy() -> None:
 
 
 def test_neutral_bubble_uses_native_ipopt_route_gate() -> None:
-    mix, _species, _pressure, _density, _temperature, composition = _neutral_state()
+    mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
+    equilibrium = epcsaft.Equilibrium(mixture)
 
     if not _core._native_ipopt_smoke()["compiled"]:
-        with pytest.raises(epcsaft.InputError, match=r"bubble_p requires a native Ipopt equilibrium NLP route"):
-            mix.bubble_p(T=220.0, x=composition)
+        with pytest.raises(epcsaft.InputError, match=r"bubble_pressure requires a native Ipopt selector equilibrium route"):
+            equilibrium.solve(route="bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X)
         return
 
-    result = mix.bubble_p(T=220.0, x=composition)
+    result = equilibrium.solve(route="bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X)
 
     assert result.diagnostics["hessian_approximation"] == "exact"
     assert result.diagnostics["exact_hessian_available"] is True

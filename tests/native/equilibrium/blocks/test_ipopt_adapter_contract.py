@@ -23,7 +23,13 @@ def test_runtime_capabilities_report_public_ipopt_routes() -> None:
 
     assert ipopt["adapter_source_available"] is True
     assert ipopt["adapter_kind"] == "native_tnlp_adapter"
-    assert ipopt["public_routes"] == ["Equilibrium.bubble_pressure"]
+    assert ipopt["public_routes"] == [
+        "Equilibrium.solve(route='bubble_pressure')",
+        "Equilibrium.solve(route='bubble_temperature')",
+        "Equilibrium.solve(route='dew_pressure')",
+        "Equilibrium.solve(route='dew_temperature')",
+        "Equilibrium.solve(route='flash')",
+    ]
 
 
 def test_native_ipopt_quadratic_smoke_is_gated_by_compiled_dependency() -> None:
