@@ -18,6 +18,7 @@ Build a ``ParameterSet`` from ePC-SAFT parameter data, then attach
 
    parameters = ParameterSet.from_dict(
        {
+           "MW": np.asarray([16.043e-3]),
            "m": np.asarray([1.0]),
            "s": np.asarray([3.7039]),
            "e": np.asarray([150.03]),

@@ -37,8 +37,25 @@ def test_dist_wheel_audit_rejects_ceres_development_artifacts(tmp_path) -> None:
 
 def test_dist_build_env_sets_conservative_parallel_level(monkeypatch) -> None:
     monkeypatch.delenv("PYTHONPATH", raising=False)
+    monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_ROOT", "C:/ipopt")
+    monkeypatch.setenv("EPCSAFT_RUNTIME_DLL_DIRS", "C:/ipopt/bin")
 
     env = build_dist._env("1")
 
     assert env["CMAKE_BUILD_PARALLEL_LEVEL"] == "1"
     assert env["EPCSAFT_SANDBOX_SAFE_TEMPFILE"] == "1"
+    assert "EPCSAFT_PEP517_IPOPT_ROOT" not in env
+    assert "EPCSAFT_RUNTIME_DLL_DIRS" not in env
+
+
+def test_dist_build_disables_ipopt_for_release_baseline() -> None:
+    cmd = build_dist._uv_build_command(with_local_ipopt=False)
+
+    assert cmd[:2] == ["uv", "build"]
+    assert "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF" in cmd
+    assert "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT=OFF" in cmd
+    assert "cmake.define.EPCSAFT_IPOPT_ROOT=" in cmd
+
+
+def test_dist_build_can_opt_into_local_ipopt() -> None:
+    assert build_dist._uv_build_command(with_local_ipopt=True) == ["uv", "build"]

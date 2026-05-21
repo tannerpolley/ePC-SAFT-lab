@@ -4,9 +4,11 @@
 
 ### Changed
 
-- Reset the independent package release line to `0.2.0` after unforking the project.
-- Reworked GitHub Actions around the current Windows support baseline and current public API names.
-- Updated release installation docs and README wording so PyPI is not claimed as available before the `epcsaft` project exists on PyPI.
+- Documented the current public package surface: `ParameterSet`, `ModelOptions`, `Mixture`, `State`, `Equilibrium`, `Regression`, `create_input_template(...)`, `runtime_build_info()`, and `capabilities()`.
+- Limited release claims to the current production-exposed equilibrium families: constructor-configured neutral bubble/dew routes and neutral TP flash when the native Ipopt dependency is available.
+- Kept native package builds on the Windows Ceres/CppAD baseline and made Ipopt an explicit optional native dependency for source/editable builds and hosted CI.
+- Prepared Windows CPython 3.13 release artifacts and a manual PyPI Trusted Publishing workflow for use after the PyPI pending publisher exists.
+- Updated release installation docs and README wording so GitHub release wheels are the current install path until the `epcsaft` project exists on PyPI.
 
 ## 0.1.2 - 2026-05-10
 
@@ -34,9 +36,9 @@ First official source-release baseline for `epcsaft`.
 - Native C++ runtime exposed through the Python `epcsaft` API.
 - Public mixture/state API with pressure closure, direct-density closure, `rho_guess` continuation, and density-consistency diagnostics.
 - Native-backed fugacity, activity, residual-property, and runtime diagnostic calls.
-- User-owned parameter-folder workflow with `create_parameter_template(...)` and `ePCSAFTMixture.from_dataset(...)`.
-- Supported regression helpers for pure-component, ionic, binary, and scoped electrolyte workflows.
-- Native-backed neutral equilibrium, electrolyte LLE, fixed-liquid electrolyte bubble pressure, reactive speciation, reactive staged equilibrium, and scoped reactive electrolyte bubble workflows.
+- User-owned parameter-folder workflow for source-checkout parameter data.
+- Native-backed regression and equilibrium work that fed the current capability registry.
+- Source-checkout contracts for neutral equilibrium and additional route-family diagnostics that remain controlled by `capabilities()`.
 - Native system Ipopt discovery is explicit build-gate work for the planned constrained-NLP adapter.
 
 ### Distribution

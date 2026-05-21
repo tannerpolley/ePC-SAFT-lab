@@ -12,10 +12,8 @@ The reset public API is intentionally small. Import these names from
 - ``ModelOptions``
 - ``create_input_template``
 
-Legacy root exports such as ``ePCSAFTMixture``, ``ePCSAFTState``,
-``bubble_p``, ``dew_p``, and free regression helpers are no longer public API.
-Internal native bridge modules may still use those names while the remaining
-native routes are ported behind the reset frontend.
+Import user-facing workflows from the package root. Native bridge modules are
+internal implementation details.
 
 Mixture
 -------

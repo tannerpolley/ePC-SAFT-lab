@@ -12,9 +12,10 @@ What the package does
 ---------------------
 
 Use ``epcsaft`` to build PC-SAFT/ePC-SAFT mixtures, evaluate thermodynamic
-states, compute fugacity and activity coefficients, run supported
-phase-equilibrium workflows, and fit supported parameter sets against tabular
-data.
+states, compute fugacity and activity coefficients, use the
+constructor-configured neutral equilibrium API when the package is built with
+optional native Ipopt, and fit supported pure-neutral parameter sets against
+tabular data.
 
 The main user objects are:
 
@@ -31,19 +32,20 @@ The main user objects are:
 Install
 -------
 
-The ``v0.2.0`` GitHub release should be published after final review:
+The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel and source
+archive:
 
 ``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
 
-After that release exists, Windows users can download the wheel matching their
-Python version and install it directly:
+Windows users on Python 3.13 can download the wheel and install it directly:
 
 .. code-block:: powershell
 
    python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 
-PyPI publishing is configured through GitHub Actions. When the project page is
-live at ``https://pypi.org/project/epcsaft/``, install with:
+PyPI publishing is configured through GitHub Actions, but the first upload
+requires the PyPI pending publisher for this repository. When the project page
+is live at ``https://pypi.org/project/epcsaft/``, install with:
 
 .. code-block:: powershell
 
@@ -57,7 +59,8 @@ With ``uv``:
 
 If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above.
 
-After the ``v0.2.0`` tag exists, install from the tagged source:
+The ``v0.2.0`` tag supports source installs that build the native extension
+locally:
 
 .. code-block:: powershell
 
@@ -176,18 +179,18 @@ Equilibrium and speciation
 
 Use ``capabilities()`` and the cookbook before wiring a high-level equilibrium
 workflow. The package includes native-backed paths for neutral phase
-equilibrium, electrolyte LLE, reactive speciation, and sequential reactive
-equilibrium. Fixed-liquid electrolyte bubble pressure uses the native Ipopt
-route when Ipopt is compiled; scoped reactive electrolyte bubble pressure uses
-native speciation followed by that native bubble route for supported staged
-inputs.
+equilibrium through constructor-configured ``Equilibrium(...)`` objects. The
+production-exposed families are neutral bubble/dew routes and neutral TP flash
+when the native Ipopt dependency is compiled.
 
 Important boundaries:
 
-- Electrolyte bubble pressure requires an Ipopt-enabled native build.
-- Scoped reactive electrolyte bubble pressure uses native speciation followed
-  by the native Ipopt fixed-liquid electrolyte bubble route when Ipopt is
-  compiled.
+- Neutral LLE, electrolyte LLE, reactive speciation, reactive LLE, and reactive
+  electrolyte LLE are declared not exposed in ``capabilities()`` for this
+  release.
+- The GitHub release wheel is built without a local Ipopt runtime dependency.
+  Ipopt-backed equilibrium routes require an Ipopt-enabled source or editable
+  build.
 - IPOPT is an optional native dependency; implemented native equilibrium routes
   use exact Hessians by default when it is compiled, with limited-memory
   Hessians available only as an explicit solver opt-out.

@@ -3,11 +3,31 @@ Installation
 
 Current package version: ``0.2.0``
 
+Install from a wheel
+--------------------
+
+The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel and source
+archive:
+
+``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
+
+Windows users on Python 3.13 can download the wheel and install it directly:
+
+.. code-block:: powershell
+
+   python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
+
+This is the simplest install path because the native extension is already
+built for your platform. The GitHub release wheel is built without a local
+Ipopt runtime dependency; build from source when you need optional
+Ipopt-backed equilibrium routes.
+
 Install from PyPI
 -----------------
 
-PyPI publishing is configured through GitHub Actions. When the project page is
-live at ``https://pypi.org/project/epcsaft/``, install with:
+PyPI publishing is configured through GitHub Actions, but the first upload
+requires the PyPI pending publisher for this repository. When the project page
+is live at ``https://pypi.org/project/epcsaft/``, install with:
 
 .. code-block:: powershell
 
@@ -21,27 +41,11 @@ With ``uv``:
 
 If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel instead.
 
-The ``v0.2.0`` GitHub release should be published after final review:
-
-``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
-
-Install from a wheel
---------------------
-
-After that release exists, download the wheel matching your Python version and
-platform and install it directly:
-
-.. code-block:: powershell
-
-   python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
-
-This is the simplest install path because the native extension is already
-built for your platform.
-
 Install from tagged source
 --------------------------
 
-After the ``v0.2.0`` tag exists, install from the tagged Git source:
+The ``v0.2.0`` tag supports source installs that build the native extension
+locally:
 
 .. code-block:: powershell
 

@@ -1,8 +1,10 @@
 Publishing To PyPI
 ==================
 
-Package releases are published by GitHub Actions through PyPI Trusted
-Publishing. This avoids storing a long-lived PyPI API token in GitHub secrets.
+GitHub releases and PyPI uploads are separate steps. A GitHub release can carry
+wheel and sdist assets before the PyPI pending publisher exists. PyPI uploads
+run manually through GitHub Actions and PyPI Trusted Publishing after that
+publisher is configured.
 
 PyPI trusted publisher setup
 ----------------------------
@@ -32,26 +34,30 @@ Publish a release
 1. Update ``pyproject.toml`` and ``uv.lock`` to the new version.
 2. Update ``CHANGELOG.md`` and add ``docs/releases/vX.Y.Z.md``.
 3. Commit and push ``main``.
-4. Create and push tag ``vX.Y.Z``.
-5. Create the GitHub release for ``vX.Y.Z``.
+4. Run ``uv run python scripts/dev/build_dist.py``. The default release
+   baseline disables local Ipopt so the wheel does not require Ipopt runtime
+   DLLs.
+5. Create and push tag ``vX.Y.Z``.
+6. Create the GitHub release for ``vX.Y.Z`` with the files from ``dist/``.
 
-The ``publish-to-pypi`` workflow runs when a GitHub release is published. It
-builds the sdist and Windows CPython 3.13 wheel, then publishes the
-distributions to PyPI through ``pypa/gh-action-pypi-publish`` using OIDC.
-Historical ``v0.1.x`` release receipts are explicitly skipped by the publish
-workflow.
+Creating a GitHub release does not upload to PyPI. Attach the built wheel and
+sdist to the GitHub release so users can install from GitHub while PyPI is not
+published.
 
-Manual publish
---------------
+Publish to PyPI
+---------------
 
-The workflow can also be run manually from GitHub Actions:
+After the PyPI pending publisher exists, run the publish workflow manually from
+GitHub Actions:
 
 .. code-block:: powershell
 
    gh workflow run publish-pypi.yml --repo tannerpolley/ePC-SAFT -f ref=vX.Y.Z
 
-Use manual dispatch only for a tag that already points at the intended release
-commit.
+The workflow builds the sdist and Windows CPython 3.13 wheel from the requested
+tag, then publishes the distributions to PyPI through
+``pypa/gh-action-pypi-publish`` using OIDC. Use manual dispatch only for a tag
+that already points at the intended release commit.
 
 Failure modes
 -------------

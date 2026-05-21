@@ -48,7 +48,7 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "README intentionally stays focused on package users" in readme
     assert "uv run python scripts\\validate_project.py quick" not in readme
     assert "uv run python run_pytest.py --confidence -q" not in readme
-    assert "The `v0.2.0` GitHub release should be published after final review" in readme
+    assert "The `v0.2.0` GitHub release provides a Windows CPython 3.13 wheel" in readme
     assert "If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above." in readme
     assert "python -m pip install epcsaft" in readme
     assert "python -m pip install -e ." in readme
@@ -60,14 +60,17 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "``run_pytest.py -q`` is the default fast contract suite" not in getting_started
     assert "Current package version: ``0.2.0``" in overview
     assert "If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above." in overview
-    assert "After the ``v0.2.0`` tag exists" in overview
+    assert "The ``v0.2.0`` tag supports source installs" in overview
     assert "python -m pip install -e ." in overview
+    assert "For the current release, install the Windows CPython 3.13 wheel from GitHub" in getting_started
     assert "After the package is published on PyPI" in getting_started
-    assert "After the ``v0.2.0`` tag is published" in getting_started
     assert "Current package version: ``0.2.0``" in release_installation
-    assert "After that release exists" in release_installation
-    assert "This release note prepares the `v0.2.0` release" in release_note
-    assert "Publish the GitHub release only after final review" in release_note
+    assert "The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel" in release_installation
+    assert "Public root exports" in release_note
+    assert "neutral bubble/dew routes and neutral TP flash" in release_note
+    assert "Neutral LLE, electrolyte LLE, reactive speciation, reactive LLE, and reactive electrolyte LLE are declared not exposed" in release_note
+    assert "PyPI publishing remains a manual Trusted Publishing action" in release_note
+    assert "production-exposed families are neutral bubble/dew routes and neutral TP flash" in overview
     assert "uv run python run_pytest.py --confidence -q" not in overview
     assert "run_pytest.py tests/test_runtime.py -q" not in overview
     assert "release_installation" in docs_index
@@ -186,7 +189,6 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
 
     for token in (
         "name: publish-to-pypi",
-        "types: [published]",
         "workflow_dispatch:",
         "id-token: write",
         "environment:",
@@ -199,13 +201,15 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
         "uv build --sdist",
         "pypi-preflight:",
         "PyPI trusted publisher preflight",
-        "github.event_name == 'workflow_dispatch' || !startsWith(github.event.release.tag_name, 'v0.1.')",
         "https://pypi.org/pypi/{project}/json",
         "pending publisher",
         "PyPI first-publish preflight",
         "already has {project} {version}",
     ):
         assert token in workflow
+    assert "release:" not in workflow
+    assert "types: [published]" not in workflow
+    assert "github.event.release" not in workflow
     assert "needs: [pypi-preflight]" in workflow
     assert "password:" not in workflow
     assert "username:" not in workflow
@@ -213,7 +217,8 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
     assert "pp*" not in workflow
     assert "Workflow filename: ``publish-pypi.yml``" in publishing_docs
     assert "Environment name: ``pypi``" in publishing_docs
-    assert "Historical ``v0.1.x`` release receipts are explicitly skipped" in publishing_docs
+    assert "GitHub releases and PyPI uploads are separate steps" in publishing_docs
+    assert "Creating a GitHub release does not upload to PyPI" in publishing_docs
 
 
 def test_version_defaults_are_derived_from_pyproject() -> None:

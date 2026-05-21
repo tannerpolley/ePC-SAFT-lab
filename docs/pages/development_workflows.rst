@@ -42,9 +42,9 @@ Command matrix
    * - Python API work
      - ``uv run python run_pytest.py --api -q``
      - Public wrapper, parameter-template, or regression API edits.
-   * - Equilibrium/speciation workflows
+   * - Public equilibrium contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
-     - Fast representative check for neutral equilibrium, electrolyte LLE, reactive speciation, reactive electrolyte bubble contracts, derivative-backend contracts, and capability reporting.
+     - Fast representative check for neutral equilibrium route contracts, derivative-backend contracts, and capability reporting, including route families declared not exposed.
    * - Native or density/equation work
      - ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` then ``uv run python run_pytest.py --runtime -q``
      - C++ iteration after ``build/dev`` is already configured.
@@ -71,7 +71,7 @@ Command matrix
      - Review the package-owned literature benchmark scope, including which issue anchors have executable package evidence and which still require follow-up work.
    * - Package boundary
      - ``uv run python scripts/dev/build_dist.py``
-     - Wheel/sdist and smoke-import validation. Isolated package builds default to serial native compilation to avoid Windows Ceres memory spikes; use ``--parallel N`` only when the machine has enough headroom.
+     - Wheel/sdist and smoke-import validation. The default release baseline disables local Ipopt so wheels do not require Ipopt runtime DLLs. Isolated package builds default to serial native compilation to avoid Windows Ceres memory spikes; use ``--parallel N`` only when the machine has enough headroom.
    * - Installed/source diagnostic
      - ``uv run python -m epcsaft``
      - Confirm package and ``epcsaft._core`` paths.
@@ -205,7 +205,7 @@ native/equilibrium route tests. If the right target is unclear, run
 - Performance claims: run explicit benchmark scripts such as ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.
 
-- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to ``--parallel 1`` for isolated PEP 517 builds; raise it only after confirming Ceres builds are not memory-bound.
+- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to the no-local-Ipopt release baseline and ``--parallel 1`` for isolated PEP 517 builds; raise parallelism only after confirming Ceres builds are not memory-bound. Use ``--with-local-ipopt`` only for an explicit local Ipopt artifact check.
 
 Keep generated plot assets and generated CSV workflows out of normal validation unless the task explicitly asks for them. There is no named plot validation slice; target the owning script or test file directly when plot output work is in scope.
 

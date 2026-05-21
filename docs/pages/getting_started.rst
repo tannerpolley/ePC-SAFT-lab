@@ -4,18 +4,25 @@ Getting Started
 Install
 -------
 
+For the current release, install the Windows CPython 3.13 wheel from GitHub:
+
+.. code-block:: powershell
+
+   python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
+
+The ``v0.2.0`` tag also supports source installs that build the native
+extension locally:
+
+.. code-block:: powershell
+
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+
 After the package is published on PyPI, use the standard package-manager
 command:
 
 .. code-block:: powershell
 
    python -m pip install epcsaft
-
-After the ``v0.2.0`` tag is published, the release is installable from GitHub:
-
-.. code-block:: powershell
-
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 
 For a local editable checkout:
 
@@ -112,5 +119,5 @@ Next steps
 - :doc:`user_parameter_templates` explains the parameter-folder layout.
 - :doc:`user_options` lists supported model options.
 - :doc:`package_guide` gives task-based examples.
-- :doc:`equilibrium_cookbook` shows phase-equilibrium and speciation workflows.
+- :doc:`equilibrium_cookbook` shows public equilibrium workflow examples.
 - :doc:`api_reference` lists the public API.

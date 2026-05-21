@@ -8,8 +8,8 @@ Current package version: `0.2.0`
 
 - Build PC-SAFT/ePC-SAFT mixtures from user-owned parameter data.
 - Evaluate pressure, density, residual properties, fugacity coefficients, activity coefficients, and derivatives.
-- Run supported neutral and electrolyte phase-equilibrium workflows.
-- Run supported parameter-regression workflows.
+- Use the constructor-configured neutral equilibrium API when the package is built with optional native Ipopt.
+- Run supported pure-neutral parameter-regression workflows.
 - Inspect runtime capabilities with `capabilities()` before selecting optional native solver paths.
 
 The main public objects are `ParameterSet`, `ModelOptions`, `Mixture`, `State`, `Equilibrium`, `Regression`, and `create_input_template(...)`.
@@ -18,21 +18,21 @@ The main public objects are `ParameterSet`, `ModelOptions`, `Mixture`, `State`, 
 
 ### GitHub Release
 
-The `v0.2.0` GitHub release should be published after final review:
+The `v0.2.0` GitHub release provides a Windows CPython 3.13 wheel and source archive:
 
 <https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0>
 
-After that release exists, Windows users can download the wheel matching their Python version and install it directly:
+Windows users on Python 3.13 can download the wheel and install it directly:
 
 ```powershell
 python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 ```
 
-The automated wheel baseline is Windows CPython 3.13.
+Use the tagged source install below when you need to build for another supported Python version or enable optional Ipopt-backed equilibrium routes.
 
 ### PyPI
 
-PyPI publishing is configured through GitHub Actions. When the project page is live at <https://pypi.org/project/epcsaft/>, install with:
+PyPI publishing is configured through GitHub Actions, but the first upload requires the PyPI pending publisher for this repository. When the project page is live at <https://pypi.org/project/epcsaft/>, install with:
 
 ```powershell
 python -m pip install epcsaft
@@ -48,7 +48,7 @@ If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above.
 
 ### Tagged Source
 
-After the `v0.2.0` tag exists, source installs build the native extension locally and require Python `>=3.9`, a C++ compiler, CMake, and Ninja or another CMake generator:
+The `v0.2.0` tag supports source installs that build the native extension locally. Source installs require Python `>=3.9`, a C++ compiler, CMake, and Ninja or another CMake generator:
 
 ```powershell
 python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
