@@ -7,13 +7,14 @@ import numpy as np
 import epcsaft
 from epcsaft import _core
 from epcsaft.state.native_adapter import ePCSAFTMixture
+from tests.support.equilibrium_cases import _ascani_electrolyte_mixture
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _electrolyte_mixture() -> ePCSAFTMixture:
-    feed = np.asarray([0.55, 0.40, 0.025, 0.025], dtype=float)
-    return ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
+    mix, _feed = _ascani_electrolyte_mixture()
+    return mix
 
 
 def test_native_equilibrium_entrypoint_is_exposed() -> None:
@@ -78,7 +79,15 @@ def test_native_electrolyte_lle_residual_evaluator_defaults_to_explicit_density_
 
 
 def test_equilibrium_runtime_does_not_import_external_optimizers() -> None:
-    source = (REPO_ROOT / "src" / "epcsaft" / "equilibrium.py").read_text(encoding="utf-8")
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
+            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
+            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_electrolyte.py",
+            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_speciation.py",
+        )
+    )
 
     external_optimizer = "sci" + "py.optimize"
     forbidden = (
@@ -112,8 +121,14 @@ def test_package_runtime_has_no_external_optimizer_dependency_or_imports() -> No
 
 
 def test_public_equilibrium_does_not_expose_python_backend_tokens() -> None:
-    source = (REPO_ROOT / "src" / "epcsaft" / "epcsaft.py").read_text(encoding="utf-8")
-    equilibrium_source = (REPO_ROOT / "src" / "epcsaft" / "equilibrium.py").read_text(encoding="utf-8")
+    source = (REPO_ROOT / "src" / "epcsaft" / "__init__.py").read_text(encoding="utf-8")
+    equilibrium_source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
+            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
+        )
+    )
 
     assert '"python"' not in source
     assert "Python-first" not in equilibrium_source
@@ -121,22 +136,24 @@ def test_public_equilibrium_does_not_expose_python_backend_tokens() -> None:
 
 
 def test_native_route_result_serialization_uses_bridge_module() -> None:
-    bridge = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium_nlp" / "route_result_bridge.h"
-    bindings = (REPO_ROOT / "src" / "epcsaft" / "bindings.cpp").read_text(encoding="utf-8")
+    bridge = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "results" / "route_result_bridge.h"
+    bindings = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
+        encoding="utf-8"
+    )
 
     assert bridge.exists()
-    assert '#include "route_result_bridge.h"' in bindings
+    assert '#include "equilibrium/results/route_result_bridge.h"' in bindings
     assert "apply_eos_route_metadata_fields(out, result);" in bindings
     assert "apply_ipopt_route_status_fields(out, result);" in bindings
     assert "apply_ipopt_route_solution_fields(out, result);" in bindings
 
 
 def test_seeded_route_campaign_selection_has_dedicated_owner() -> None:
-    campaign = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium_nlp" / "route_campaign.h"
-    source = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium_nlp" / "route_builders.cpp").read_text(
-        encoding="utf-8"
-    )
+    campaign = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "route_campaign.h"
+    source = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "routes" / "route_builders.cpp"
+    ).read_text(encoding="utf-8")
 
     assert campaign.exists()
-    assert '#include "route_campaign.h"' in source
+    assert '#include "equilibrium/core/route_campaign.h"' in source
     assert "RouteCampaign<NeutralTwoPhaseEosRouteResult, RouteSeedAttempt>" in source

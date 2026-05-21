@@ -97,8 +97,20 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "derivative-capable package builds require CppAD" in cmake_text
     assert "GIT_SHALLOW TRUE" in cmake_text
     assert 'add_subdirectory("${ceres_solver_SOURCE_DIR}" "${ceres_solver_BINARY_DIR}" EXCLUDE_FROM_ALL)' in cmake_text
-    assert 'src/epcsaft/native/equilibrium_nlp/*.cpp' in cmake_text
-    assert 'src/epcsaft/native/equilibrium_nlp' in cmake_text
+    assert "EPCSAFT_NATIVE_MODEL_SOURCES" in cmake_text
+    assert "EPCSAFT_NATIVE_EOS_SOURCES" in cmake_text
+    assert "EPCSAFT_NATIVE_AUTODIFF_SOURCES" in cmake_text
+    assert "EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES" in cmake_text
+    assert "EPCSAFT_NATIVE_REGRESSION_SOURCES" in cmake_text
+    assert "EPCSAFT_NATIVE_INCLUDE_DIRS" in cmake_text
+    assert "file(GLOB EPCSAFT_NATIVE_SOURCES" not in cmake_text
+    assert "src/epcsaft/native/*.cpp" not in cmake_text
+    assert "src/epcsaft/native/cppad/*.cpp" not in cmake_text
+    assert "src/epcsaft/native/contributions/*.cpp" not in cmake_text
+    assert "src/epcsaft/native/equilibrium_nlp/*.cpp" not in cmake_text
+    assert "src/epcsaft/native/equilibrium_nlp" not in cmake_text
+    assert "pybind11_add_module(_core NO_EXTRAS src/epcsaft/bindings.cpp)" not in cmake_text
+    assert "pybind11_add_module(_core NO_EXTRAS src/epcsaft/native/bindings/module.cpp)" in cmake_text
     assert "unset(Ceres_BINARY_DIR CACHE)" in cmake_text
     assert "unset(Ceres_SOURCE_DIR CACHE)" in cmake_text
     assert "EPCSAFT_ENABLE_CERES" not in pyproject_text

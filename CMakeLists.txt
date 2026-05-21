@@ -249,25 +249,84 @@ if(EPCSAFT_ENABLE_CPPAD)
     set(EPCSAFT_CPPAD_STATUS "enabled_available")
 endif()
 
-file(GLOB EPCSAFT_NATIVE_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/cppad/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/contributions/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium_nlp/*.cpp"
+set(EPCSAFT_NATIVE_MODEL_SOURCES
+    src/epcsaft/native/model/parameter_setup.cpp
+)
+set(EPCSAFT_NATIVE_EOS_SOURCES
+    src/epcsaft/native/eos/activity.cpp
+    src/epcsaft/native/eos/chemical_potential.cpp
+    src/epcsaft/native/eos/compressibility.cpp
+    src/epcsaft/native/eos/density.cpp
+    src/epcsaft/native/eos/derivatives/born_ssmds.cpp
+    src/epcsaft/native/eos/fugacity.cpp
+    src/epcsaft/native/eos/residual_helmholtz.cpp
+    src/epcsaft/native/eos/residual_properties.cpp
+    src/epcsaft/native/eos/state.cpp
+    src/epcsaft/native/eos/contributions/association.cpp
+    src/epcsaft/native/eos/contributions/born.cpp
+    src/epcsaft/native/eos/contributions/dispersion.cpp
+    src/epcsaft/native/eos/contributions/hard_chain.cpp
+    src/epcsaft/native/eos/contributions/ion.cpp
+)
+set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
+    src/epcsaft/native/autodiff/cppad_smoke_checks.cpp
+)
+set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
+    src/epcsaft/native/equilibrium/workflows.cpp
+    src/epcsaft/native/equilibrium/blocks/association_block.cpp
+    src/epcsaft/native/equilibrium/blocks/electrolyte_block.cpp
+    src/epcsaft/native/equilibrium/blocks/eos_phase_block.cpp
+    src/epcsaft/native/equilibrium/blocks/gibbs_blocks.cpp
+    src/epcsaft/native/equilibrium/blocks/reaction_block.cpp
+    src/epcsaft/native/equilibrium/core/helpers.cpp
+    src/epcsaft/native/equilibrium/core/nlp_problem.cpp
+    src/epcsaft/native/equilibrium/core/second_order.cpp
+    src/epcsaft/native/equilibrium/results/result_builder.cpp
+    src/epcsaft/native/equilibrium/routes/route_builders.cpp
+    src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp
+    src/epcsaft/native/equilibrium/routes/reactive/chemical_equilibrium.cpp
+    src/epcsaft/native/equilibrium/routes/reactive/ideal_speciation_problem.cpp
+    src/epcsaft/native/equilibrium/routes/reactive/phase_equilibrium_problem.cpp
+    src/epcsaft/native/equilibrium/routes/stability/stability_route_builders.cpp
+    src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp
+)
+set(EPCSAFT_NATIVE_REGRESSION_SOURCES
+    src/epcsaft/native/regression/ceres_regression.cpp
+)
+set(EPCSAFT_NATIVE_SOURCES
+    ${EPCSAFT_NATIVE_MODEL_SOURCES}
+    ${EPCSAFT_NATIVE_EOS_SOURCES}
+    ${EPCSAFT_NATIVE_AUTODIFF_SOURCES}
+    ${EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES}
+    ${EPCSAFT_NATIVE_REGRESSION_SOURCES}
 )
 if(EPCSAFT_CPPAD_SOURCE_FILE)
     list(APPEND EPCSAFT_NATIVE_SOURCES "${EPCSAFT_CPPAD_SOURCE_FILE}")
 endif()
 
 add_library(epcsaft_native OBJECT ${EPCSAFT_NATIVE_SOURCES})
+set(EPCSAFT_NATIVE_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/autodiff"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/bindings"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos/contributions"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/blocks"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/core"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/results"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/derived"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/reactive"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/stability"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/solvers"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/model"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/regression"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/runtime"
+)
 target_include_directories(epcsaft_native
     PUBLIC
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/cppad"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/contributions"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium_nlp"
+        ${EPCSAFT_NATIVE_INCLUDE_DIRS}
         "${EPCSAFT_EIGEN_INCLUDE}"
 )
 target_compile_features(epcsaft_native PUBLIC cxx_std_17)
@@ -285,20 +344,16 @@ if(EPCSAFT_CPPAD_LIBRARY)
     target_link_libraries(epcsaft_native PUBLIC "${EPCSAFT_CPPAD_LIBRARY}")
 endif()
 
-pybind11_add_module(_core NO_EXTRAS src/epcsaft/bindings.cpp)
+pybind11_add_module(_core NO_EXTRAS src/epcsaft/native/bindings/module.cpp)
 target_link_libraries(_core PRIVATE epcsaft_native)
 target_include_directories(_core
     PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/cppad"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/contributions"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium_nlp"
+        ${EPCSAFT_NATIVE_INCLUDE_DIRS}
         "${EPCSAFT_EIGEN_INCLUDE}"
 )
 target_compile_features(_core PRIVATE cxx_std_17)
 if(MSVC)
-    set_source_files_properties(src/epcsaft/bindings.cpp PROPERTIES COMPILE_OPTIONS "/Od;/Ob0")
+    set_source_files_properties(src/epcsaft/native/bindings/module.cpp PROPERTIES COMPILE_OPTIONS "/Od;/Ob0")
 endif()
 
 set(EPCSAFT_NATIVE_TARGETS epcsaft_native _core)

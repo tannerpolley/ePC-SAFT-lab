@@ -17,7 +17,7 @@ The target is a single equilibrium core with route-owned variableizations and se
 
 The active package architecture is:
 
-- public typed `EquilibriumProblem` objects and the `mixture.equilibrium(kind=...)` facade normalize requests into one route contract;
+- the public `Equilibrium(mixture)` workflow object normalizes supported requests into one route contract;
 - Ipopt route callbacks use explicit density or phase volume variables, while pressure-root density solves are limited to normal `State(T, P, x)` calls and seed construction;
 - exact gradients and exact Jacobians are required for production routes, with exact Lagrangian Hessians as the default when a route is exposed as production native Ipopt;
 - `limited-memory` Hessians are an explicit opt-out mode, not an automatic fallback from `auto`;
@@ -57,14 +57,14 @@ The intended priority order is:
 
 The architecture must still be general enough that Tier 2 and Tier 3 routes are reduced views of the same core rather than separate solver families.
 
-## Current public entrypoints that this architecture must eventually unify
+## Current public entrypoint that this architecture must eventually unify
 
-The current repo already exposes typed problem objects and a string facade. The unified core is expected to sit beneath these interfaces rather than replace them:
+The current repo exposes the direct workflow object. The unified core is expected to sit beneath this interface rather than replace it:
 
-- `mixture.solve_equilibrium(problem)`
-- `mixture.equilibrium(kind=..., ...)`
+- `Equilibrium(mixture)`
+- `Equilibrium(mixture).bubble_pressure(T=..., x=...)`
 
-Current typed problem families already in the package include:
+Problem-family dataclasses and private request payloads should normalize through the workflow object before reaching native route contracts. Planned problem families include:
 
 - `TPFlash`
 - `StabilityAnalysis`
@@ -81,7 +81,7 @@ The architecture below should therefore be read as a unifying backend contract f
 
 ```mermaid
 flowchart TD
-    A["Public API<br/>mixture.equilibrium(...) or mixture.solve_equilibrium(problem)"] --> B["Request normalization<br/>typed problem, options, fixed specs, species metadata"]
+    A["Public API<br/>Equilibrium(mixture) workflow"] --> B["Request normalization<br/>problem, options, fixed specs, species metadata"]
     B --> C["System classification<br/>neutral vs electrolyte vs reactive vs reactive-electrolyte"]
     C --> D["Core problem assembly<br/>phase set, species eligibility, transfer set, reaction set, conservation basis"]
     D --> E["Pretreatment layer<br/>homogeneous chemistry seed, stability checks, split candidate generation"]
@@ -311,6 +311,11 @@ Notes:
 
 - Tier 1 emphasis is electrolyte LLE, reactive electrolyte LLE, and reactive speciation.
 - Bubble/dew remains a lower-priority derived route even though it can fit the same architecture.
+- Native C++ activation metadata is owned by `src/epcsaft/native/equilibrium/core/activation_matrix.h`.
+  The metadata declares all problem families, keeps unproven families declared-not-exposed, and marks only the trusted
+  hydrocarbon bubble/dew Ipopt exact-Hessian route as production-exposed. CMake owns native implementation through
+  explicit source groups under `native/model`, `native/eos`, `native/autodiff`, `native/equilibrium`,
+  `native/regression`, and `native/bindings`.
 
 ## Canonical optimization form
 
@@ -336,8 +341,8 @@ with objective
 
 $$
 \Phi_p(u)
-= \frac{1}{2}\left\|W_{r,p}\, r_p(u)\right\|_2^2
-+ \frac{\eta_{\mathrm{seed}}}{2}\left\|W_s \left(u-u^{(0)}\right)\right\|_2^2
+= \frac{1}{2}\left\|W_{r,p}\, r_p(u)\right\|_2^2 +
+\frac{\eta_{\mathrm{seed}}}{2}\left\|W_s \left(u-u^{(0)}\right)\right\|_2^2
 $$
 
 where:
@@ -530,10 +535,10 @@ For exact Hessian mode:
 
 $$
 \nabla_{uu}^{2}\mathcal{L}
-= J_r^{\top} W_{r,p}^{\top} W_{r,p} J_r
-+ \sum_{k} \omega_k r_k \nabla_{uu}^{2} r_k
-+ \sum_{j} \lambda_j \nabla_{uu}^{2} c_j
-+ \eta_{\mathrm{seed}} W_s^{\top} W_s
+= J_r^{\top} W_{r,p}^{\top} W_{r,p} J_r +
+\sum_{k} \omega_k r_k \nabla_{uu}^{2} r_k +
+\sum_{j} \lambda_j \nabla_{uu}^{2} c_j +
+\eta_{\mathrm{seed}} W_s^{\top} W_s
 $$
 
 Interpretation:
@@ -630,7 +635,7 @@ Check:
 ## Pseudocode skeleton
 
 ```text
-solve_equilibrium(problem, mixture):
+Equilibrium(mixture).solve(problem):
     normalize problem and options
     classify route family
     build phase set, species set, eligibility mask, reaction set, transferable set

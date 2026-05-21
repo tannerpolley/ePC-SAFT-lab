@@ -514,7 +514,7 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                 package_surface=(
                     "src/epcsaft/equilibrium/reactive_speciation.py",
                     "src/epcsaft/state/native_adapter.py",
-                    "src/epcsaft/native/epcsaft_ares.cpp",
+                    "src/epcsaft/native/eos/residual_helmholtz.cpp",
                     "analyses/data_validation/mea_co2_pressure_speciation/scripts/run_all.py",
                 ),
                 validation_paths=(

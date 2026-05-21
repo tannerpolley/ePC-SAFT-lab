@@ -89,6 +89,44 @@ def test_fixed_composition_route_contracts_are_metadata_only_checks() -> None:
     assert dew["constraint_families"] == bubble["constraint_families"]
 
 
+def test_native_activation_matrix_declares_every_roadmap_family() -> None:
+    matrix = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
+
+    assert set(matrix) == {
+        "neutral_tp_flash",
+        "neutral_lle",
+        "electrolyte_lle",
+        "reactive_speciation",
+        "reactive_lle",
+        "reactive_electrolyte_lle",
+        "bubble_dew_derived_routes",
+    }
+    assert [key for key, row in matrix.items() if row["production_exposed"]] == ["bubble_dew_derived_routes"]
+    for key, row in matrix.items():
+        assert row["derivative_requirement"] == "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes"
+        if key != "bubble_dew_derived_routes":
+            assert row["exposure_status"] == "declared_not_exposed"
+            assert row["proof_routes"] == []
+
+
+def test_bubble_dew_activation_matches_native_route_metadata_contract() -> None:
+    mix = _neutral_binary_mixture()
+    route = _core._native_neutral_bubble_p_eos_nlp_contract(mix._native, 300.0, [0.35, 0.65])
+    matrix = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
+    activation = matrix["bubble_dew_derived_routes"]
+
+    assert activation["production_exposed"] is True
+    assert activation["exposure_status"] == "production_exposed"
+    assert activation["direct_transfer"] == "on"
+    assert activation["reaction_equilibrium"] == "off_unless_reactive_route_is_explicitly_modeled"
+    assert activation["split_variables"] == "one_phase_amount_removed_by_spec"
+    assert activation["stability_prelayer"] == "on"
+    assert activation["postsolve_certification"] == "on"
+    assert activation["proof_routes"] == ["neutral_bubble_pressure_hydrocarbon_ipopt_exact_hessian"]
+    assert activation["residual_families"] == route["residual_families"]
+    assert activation["constraint_families"] == route["constraint_families"]
+
+
 def test_liquid_root_contracts_declare_residual_families_without_running_ipopt() -> None:
     electrolyte_mix, electrolyte_feed = _ascani_electrolyte_mixture()
     electrolyte = _core._native_electrolyte_lle_eos_nlp_contract(
@@ -123,7 +161,9 @@ def test_liquid_root_contracts_declare_residual_families_without_running_ipopt()
 
 
 def test_liquid_root_and_nlp_routes_share_metadata_type() -> None:
-    header = (REPO_ROOT / "src" / "epcsaft" / "native" / "epcsaft_equilibrium.h").read_text(encoding="utf-8")
+    header = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
+        encoding="utf-8"
+    )
 
     assert "struct NativeRouteMetadata" not in header
     assert "using NativeRouteMetadata = epcsaft::native::equilibrium_nlp::RouteMetadata;" in header
@@ -131,9 +171,9 @@ def test_liquid_root_and_nlp_routes_share_metadata_type() -> None:
 
 def test_liquid_root_route_metadata_factories_live_with_nlp_metadata() -> None:
     metadata_header = (
-        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium_nlp" / "route_metadata.h"
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "route_metadata.h"
     ).read_text(encoding="utf-8")
-    equilibrium_header = (REPO_ROOT / "src" / "epcsaft" / "native" / "epcsaft_equilibrium.h").read_text(
+    equilibrium_header = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
         encoding="utf-8"
     )
 

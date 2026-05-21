@@ -125,7 +125,7 @@ def test_doctor_tracks_native_symbols_added_by_recent_workflows():
 
 
 def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():
-    source = Path("src/epcsaft/native/epcsaft_regression.cpp").read_text(encoding="utf-8")
+    source = Path("src/epcsaft/native/regression/ceres_regression.cpp").read_text(encoding="utf-8")
 
     blocked_terms = (
         "unsupported/Eigen/" + "Levenberg" + "Marquardt",

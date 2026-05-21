@@ -9,6 +9,15 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ALLOWED_ROOT_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_types.py"}
+ALLOWED_NATIVE_DOMAIN_FOLDERS = {
+    "autodiff",
+    "bindings",
+    "eos",
+    "equilibrium",
+    "model",
+    "regression",
+    "runtime",
+}
 IMPORT_BOUNDARY_WATCHLIST = {
     "epcsaft.equilibrium",
     "epcsaft.equilibrium.core",
@@ -203,6 +212,66 @@ def test_root_package_contains_only_entry_python_files() -> None:
     assert (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core").is_dir()
 
 
+def test_native_cpp_sources_live_under_domain_workflow_modules() -> None:
+    native_root = REPO_ROOT / "src" / "epcsaft" / "native"
+    root_native_impl_files = sorted(
+        path.name for path in native_root.iterdir() if path.is_file() and path.suffix in {".cpp", ".h", ".hpp"}
+    )
+    assert root_native_impl_files == []
+    assert not (REPO_ROOT / "src" / "epcsaft" / "bindings.cpp").exists()
+    assert (native_root / "bindings" / "module.cpp").is_file()
+
+    invalid_native_locations: list[str] = []
+    for path in sorted(native_root.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in {".cpp", ".h", ".hpp"}:
+            continue
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        parts = Path(rel).parts
+        if len(parts) < 5 or parts[3] not in ALLOWED_NATIVE_DOMAIN_FOLDERS:
+            invalid_native_locations.append(rel)
+    assert invalid_native_locations == []
+
+
+def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None:
+    native_root = REPO_ROOT / "src" / "epcsaft" / "native"
+    native_sources = [
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in sorted(native_root.rglob("*"))
+        if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}
+    ]
+    assert native_sources
+
+    legacy_include_tokens = (
+        '#include "../',
+        "equilibrium_nlp/",
+        "native/cppad/",
+        "native/contributions/",
+        "epcsaft_equilibrium.h",
+        "epcsaft_chemical_equilibrium.h",
+        "epcsaft_core_internal.h",
+        "epcsaft_cppad_internal.h",
+        "epcsaft_contrib_internal.h",
+        "epcsaft_electrolyte.h",
+    )
+    pybind_allowed = {
+        "src/epcsaft/native/bindings/module.cpp",
+        "src/epcsaft/native/equilibrium/results/route_result_bridge.h",
+    }
+
+    legacy_offenders: list[str] = []
+    pybind_offenders: list[str] = []
+    for rel in native_sources:
+        text = (REPO_ROOT / rel).read_text(encoding="utf-8", errors="ignore")
+        for token in legacy_include_tokens:
+            if token in text:
+                legacy_offenders.append(f"{rel}: {token}")
+        if "pybind11/" in text and rel not in pybind_allowed:
+            pybind_offenders.append(rel)
+
+    assert legacy_offenders == []
+    assert pybind_offenders == []
+
+
 def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> None:
     public_solver_sources = (
         REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
@@ -279,8 +348,7 @@ def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None
 
 def test_custom_scalar_solver_tokens_are_limited_to_density_closure_exception() -> None:
     allowed_paths = {
-        "src/epcsaft/native/epcsaft_density.cpp",
-        "src/epcsaft/native/epcsaft_electrolyte.h",
+        "src/epcsaft/native/eos/density.cpp",
     }
     blocked_terms = (
         "br" + "ent",

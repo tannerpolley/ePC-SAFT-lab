@@ -68,8 +68,8 @@ ReactivePhaseEquilibriumProblem(...)
 TargetRow(...)
 TargetDataset(...)
 TargetDataset.target_family_summaries()
-mixture.solve_equilibrium(problem)
-mixture.equilibrium(kind="tp_flash", ...)
+Equilibrium(mixture)
+Equilibrium(mixture).bubble_pressure(T=..., x=...)
 fit_pure_parameters(...)
 fit_binary_parameters(...)
 fit_liquid_electrolyte_parameters(...)
@@ -82,8 +82,8 @@ Downstream projects compute application metrics from generic outputs.
 
 Current API orientation for agents:
 
-- Prefer typed equilibrium problems plus `mixture.solve_equilibrium(problem)` for non-reactive route ownership and result contracts.
-- Treat `mixture.equilibrium(kind=...)` as the convenience facade that adapts explicit non-reactive string requests and owns reactive-specialized entrypoints.
+- Prefer the direct `Equilibrium(mixture)` workflow object for public equilibrium calls.
+- Treat problem dataclasses and private native request payloads as normalized implementation details beneath the workflow object, not root public constructors.
 - Treat `ParameterSet` as the canonical parameter-family boundary; runtime payload emission belongs to `ParameterSet.to_runtime_dict()`.
 - Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across generic and reactive regression evidence.
 - Treat `epcsaft.capabilities()` and `capability_evidence` as the authoritative public capability contract.

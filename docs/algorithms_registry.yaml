@@ -11,7 +11,7 @@
   dependency: "None"
   derivative_backend: "Route-provided exact gradient and Jacobian callbacks"
   solver_role: "Shared interface for Ipopt-owned constrained NLP routes"
-  implementation_owner: "src/epcsaft/native/equilibrium_nlp/nlp_problem.h"
+  implementation_owner: "src/epcsaft/native/equilibrium/core/nlp_problem.h"
   validation: "tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py"
   capability_key: "native_nlp_problem_contract"
   description: "Defines the common native NLP shape consumed by the Ipopt adapter."
@@ -23,7 +23,7 @@
     constraint, Jacobian, bounds, scaling, and diagnostics payloads used by
     Ipopt-backed equilibrium and speciation routes.
   owner_refs:
-    - file: "src/epcsaft/native/equilibrium_nlp/nlp_problem.h"
+    - file: "src/epcsaft/native/equilibrium/core/nlp_problem.h"
       line: 33
       comment_line: 32
       context: "class NlpProblem {"
@@ -38,7 +38,7 @@
   dependency: "Ipopt"
   derivative_backend: "Route-provided exact gradient and Jacobian callbacks"
   solver_role: "Maps NlpProblem into Ipopt::TNLP and returns IpoptSolveResult"
-  implementation_owner: "src/epcsaft/native/equilibrium_nlp/ipopt_adapter.cpp"
+  implementation_owner: "src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp"
   validation: "tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py"
   capability_key: "native_ipopt_equilibrium_nlp"
   description: "Bridges the package NLP contract to Ipopt without owning route equations."
@@ -50,7 +50,7 @@
     diagnostic capture for constrained NLP routes. Route-specific residuals and
     Jacobians remain in their route problem owners.
   owner_refs:
-    - file: "src/epcsaft/native/equilibrium_nlp/ipopt_adapter.cpp"
+    - file: "src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp"
       line: 325
       comment_line: 324
       context: "class IpoptTnlpAdapter final : public Ipopt::TNLP {"
@@ -65,7 +65,7 @@
   dependency: "Ceres"
   derivative_backend: "Native analytic or CppAD-backed residual Jacobians, route dependent"
   solver_role: "Maps regression residual/Jacobian evaluators into ceres::CostFunction and ceres::Problem"
-  implementation_owner: "src/epcsaft/native/epcsaft_regression.cpp"
+  implementation_owner: "src/epcsaft/native/regression/ceres_regression.cpp"
   validation: "tests/native/regression/test_binary.py"
   capability_key: "native_ceres_regression"
   description: "Shared adapter pattern for currently supported native Ceres regression routes."
@@ -76,11 +76,11 @@
     The Ceres adapter family owns native least-squares solve setup for supported
     regression routes. It is separate from Ipopt and does not call Ipopt routes.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 3621
-      comment_line: 3618
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 3650
+      comment_line: 3647
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
-    - file: "src/epcsaft/native/epcsaft_regression.cpp"
+    - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 565
       comment_line: 564
       context: "ceres::Solver::Options ceres_regression_options_cpp(int max_num_iterations) {"
@@ -95,7 +95,7 @@
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native neutral TP flash two-phase EOS constrained NLP"
-  implementation_owner: "src/epcsaft/equilibrium/__init__.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/routes/route_builders.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/neutral/test_flash.py"
   capability_key: "neutral_tp_flash"
   description: "Solves neutral two-phase TP flash through the native Ipopt EOS route."
@@ -106,23 +106,23 @@
     This entry covers the internal neutral TP flash route. The hard public API reset
     does not expose typed problem objects or string route facades.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2101
-      comment_line: 2100
-      context: "m.def(\"_native_neutral_tp_flash_eos_nlp_contract\", []("
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2824
-      comment_line: 2823
-      context: "m.def(\"_native_neutral_tp_flash_eos_route_result\", []("
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 304
       comment_line: 303
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2130
+      comment_line: 2129
+      context: "m.def(\"_native_neutral_tp_flash_eos_nlp_contract\", []("
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2853
+      comment_line: 2852
+      context: "m.def(\"_native_neutral_tp_flash_eos_route_result\", []("
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 1779
       comment_line: 1778
       context: "NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_tp_flash_nlp_contract("
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 2660
       comment_line: 2659
       context: "NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_tp_flash_route("
@@ -137,7 +137,7 @@
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native neutral liquid-liquid two-phase EOS constrained NLP"
-  implementation_owner: "src/epcsaft/equilibrium/__init__.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/routes/route_builders.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/neutral/test_lle.py"
   capability_key: "neutral_lle_flash"
   description: "Solves neutral LLE through the native Ipopt EOS route."
@@ -147,23 +147,23 @@
   body: |
     This entry covers the internal neutral liquid-liquid split route.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2120
-      comment_line: 2119
-      context: "m.def(\"_native_neutral_lle_eos_nlp_contract\", []("
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2869
-      comment_line: 2868
-      context: "m.def(\"_native_neutral_lle_eos_route_result\", []("
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 417
       comment_line: 416
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2149
+      comment_line: 2148
+      context: "m.def(\"_native_neutral_lle_eos_nlp_contract\", []("
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2898
+      comment_line: 2897
+      context: "m.def(\"_native_neutral_lle_eos_route_result\", []("
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 1808
       comment_line: 1807
       context: "NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_lle_nlp_contract("
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 2689
       comment_line: 2688
       context: "NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_lle_route("
@@ -178,7 +178,7 @@
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native charge-constrained electrolyte LLE EOS constrained NLP"
-  implementation_owner: "src/epcsaft/equilibrium/__init__.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/routes/route_builders.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/electrolyte/test_route_builders.py"
   capability_key: "electrolyte_lle"
   description: "Solves electrolyte liquid-liquid split routes with charge-constrained phase amounts."
@@ -189,23 +189,23 @@
     This entry covers the generic electrolyte LLE route. Downstream extraction or
     selectivity metrics remain outside the package algorithm.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2139
-      comment_line: 2138
-      context: "m.def(\"_native_electrolyte_lle_eos_nlp_contract\", []("
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2914
-      comment_line: 2913
-      context: "m.def(\"_native_electrolyte_lle_eos_route_result\", []("
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 440
       comment_line: 439
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2168
+      comment_line: 2167
+      context: "m.def(\"_native_electrolyte_lle_eos_nlp_contract\", []("
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2943
+      comment_line: 2942
+      context: "m.def(\"_native_electrolyte_lle_eos_route_result\", []("
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 1837
       comment_line: 1836
       context: "NeutralTwoPhaseEosNlpContract evaluate_electrolyte_lle_eos_nlp_contract("
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 2718
       comment_line: 2717
       context: "NeutralTwoPhaseEosRouteResult solve_electrolyte_lle_eos_route("
@@ -220,7 +220,7 @@
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native fixed-composition bubble/dew constrained NLP routes"
-  implementation_owner: "src/epcsaft/equilibrium/__init__.py; src/epcsaft/native/equilibrium_nlp/bubble_dew_route_builders.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
   capability_key: "neutral_bubble_dew"
   description: "Solves neutral bubble and dew route variants through native Ipopt."
@@ -232,27 +232,27 @@
     frontend. Other bubble/dew variants remain internal until they receive reset
     frontend coverage.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2368
-      comment_line: 2367
-      context: "m.def(\"_native_neutral_bubble_p_eos_nlp_contract\", []("
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2964
-      comment_line: 2963
-      context: "m.def(\"_native_neutral_bubble_p_eos_route_result\", []("
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 365
       comment_line: 364
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 391
       comment_line: 390
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium_nlp/bubble_dew_route_builders.cpp"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2397
+      comment_line: 2396
+      context: "m.def(\"_native_neutral_bubble_p_eos_nlp_contract\", []("
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2993
+      comment_line: 2992
+      context: "m.def(\"_native_neutral_bubble_p_eos_route_result\", []("
+    - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
       line: 1863
       comment_line: 1862
       context: "NeutralTwoPhaseEosRouteResult solve_pressure_route("
-    - file: "src/epcsaft/native/equilibrium_nlp/bubble_dew_route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
       line: 1999
       comment_line: 1998
       context: "NeutralTwoPhaseEosRouteResult solve_temperature_route("
@@ -267,7 +267,7 @@
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native tangent-plane-distance stability route"
-  implementation_owner: "src/epcsaft/equilibrium/__init__.py; src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/routes/stability/stability_route_builders.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/stability/test_route_builders.py"
   capability_key: "neutral_stability; electrolyte_stability"
   description: "Solves neutral and electrolyte TPD trial routes through native Ipopt."
@@ -279,27 +279,27 @@
     It does not describe downstream phase-selection policy beyond the returned
     generic stability payload.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2449
-      comment_line: 2448
-      context: "m.def(\"_native_neutral_stability_tpd_nlp_contract\", []("
-    - file: "src/epcsaft/bindings.cpp"
-      line: 3170
-      comment_line: 3169
-      context: "m.def(\"_native_neutral_stability_tpd_route_result\", []("
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 322
       comment_line: 321
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2478
+      comment_line: 2477
+      context: "m.def(\"_native_neutral_stability_tpd_nlp_contract\", []("
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 3199
+      comment_line: 3198
+      context: "m.def(\"_native_neutral_stability_tpd_route_result\", []("
+    - file: "src/epcsaft/native/equilibrium/routes/stability/stability_route_builders.cpp"
       line: 1251
       comment_line: 1250
       context: "StabilityRouteResult solve_neutral_stability_tpd_route("
-    - file: "src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/stability/stability_route_builders.cpp"
       line: 1331
       comment_line: 1330
       context: "StabilityRouteResult solve_electrolyte_stability_tpd_route("
-    - file: "src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/stability/stability_route_builders.cpp"
       line: 1409
       comment_line: 1408
       context: "StabilityRouteResult solve_reactive_stability_tpd_route("
@@ -314,7 +314,7 @@
   dependency: "Ipopt"
   derivative_backend: "Analytic or CppAD ideal log-amount residual Jacobian"
   solver_role: "Native homogeneous ideal reactive speciation route"
-  implementation_owner: "src/epcsaft/reactive_speciation.py; src/epcsaft/native/equilibrium_nlp/ideal_speciation_problem.cpp; src/epcsaft/native/epcsaft_chemical_equilibrium.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/reactive_speciation.py; src/epcsaft/native/equilibrium/routes/reactive/ideal_speciation_problem.cpp; src/epcsaft/native/equilibrium/routes/reactive/chemical_equilibrium.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/reactive/test_chemical_equilibrium_native_api.py"
   capability_key: "reactive_speciation"
   description: "Solves ideal homogeneous reactive speciation through native Ipopt."
@@ -325,26 +325,26 @@
     This entry covers the ideal-standard-state speciation route. It is a chemical
     equilibrium algorithm, not a phase-equilibrium split.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 3627
-      comment_line: 3625
-      context: "m.def(\"_solve_chemical_equilibrium_native\", &solve_chemical_equilibrium_native_binding);"
-    - file: "src/epcsaft/equilibrium/__init__.py"
-      line: 496
-      comment_line: 494
-      context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium_nlp/ideal_speciation_problem.cpp"
-      line: 699
-      comment_line: 698
-      context: "IdealSpeciationIpoptResult solve_ideal_speciation_ipopt("
-    - file: "src/epcsaft/native/equilibrium_nlp/ideal_speciation_problem.cpp"
-      line: 735
-      comment_line: 734
-      context: "ChemicalEquilibriumResultNative solve_ideal_speciation_chemical_equilibrium_ipopt("
-    - file: "src/epcsaft/reactive_speciation.py"
+    - file: "src/epcsaft/equilibrium/reactive_speciation.py"
       line: 625
       comment_line: 623
       context: "def _solve_reactive_speciation_native("
+    - file: "src/epcsaft/equilibrium/workflows.py"
+      line: 496
+      comment_line: 494
+      context: "@dataclass(frozen=True, slots=True)"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 3656
+      comment_line: 3654
+      context: "m.def(\"_solve_chemical_equilibrium_native\", &solve_chemical_equilibrium_native_binding);"
+    - file: "src/epcsaft/native/equilibrium/routes/reactive/ideal_speciation_problem.cpp"
+      line: 699
+      comment_line: 698
+      context: "IdealSpeciationIpoptResult solve_ideal_speciation_ipopt("
+    - file: "src/epcsaft/native/equilibrium/routes/reactive/ideal_speciation_problem.cpp"
+      line: 735
+      comment_line: 734
+      context: "ChemicalEquilibriumResultNative solve_ideal_speciation_chemical_equilibrium_ipopt("
 - algid: "nonideal_speciation_ipopt"
   section: "Reactive and Speciation Algorithms"
   subsection: ""
@@ -356,7 +356,7 @@
   dependency: "Ipopt"
   derivative_backend: "CppAD implicit phase-state sensitivity path where required"
   solver_role: "Native homogeneous nonideal reactive speciation route"
-  implementation_owner: "src/epcsaft/reactive_speciation.py; src/epcsaft/native/epcsaft_chemical_equilibrium.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/reactive_speciation.py; src/epcsaft/native/equilibrium/routes/reactive/chemical_equilibrium.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/reactive/test_chemical_equilibrium_native_api.py"
   capability_key: "reactive_speciation"
   description: "Solves nonideal homogeneous reactive speciation through native Ipopt."
@@ -367,22 +367,22 @@
     This entry covers nonideal standard-state routes whose residuals require
     package thermodynamic activity/fugacity calculations.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 3627
-      comment_line: 3626
-      context: "m.def(\"_solve_chemical_equilibrium_native\", &solve_chemical_equilibrium_native_binding);"
-    - file: "src/epcsaft/equilibrium/__init__.py"
-      line: 496
-      comment_line: 495
-      context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/epcsaft_chemical_equilibrium.cpp"
-      line: 2419
-      comment_line: 2418
-      context: "ChemicalEquilibriumResultNative solve_nonideal_speciation_chemical_equilibrium_ipopt("
-    - file: "src/epcsaft/reactive_speciation.py"
+    - file: "src/epcsaft/equilibrium/reactive_speciation.py"
       line: 625
       comment_line: 624
       context: "def _solve_reactive_speciation_native("
+    - file: "src/epcsaft/equilibrium/workflows.py"
+      line: 496
+      comment_line: 495
+      context: "@dataclass(frozen=True, slots=True)"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 3656
+      comment_line: 3655
+      context: "m.def(\"_solve_chemical_equilibrium_native\", &solve_chemical_equilibrium_native_binding);"
+    - file: "src/epcsaft/native/equilibrium/routes/reactive/chemical_equilibrium.cpp"
+      line: 2419
+      comment_line: 2418
+      context: "ChemicalEquilibriumResultNative solve_nonideal_speciation_chemical_equilibrium_ipopt("
 - algid: "reactive_lle_liquid_root_ipopt"
   section: "Reactive and Speciation Algorithms"
   subsection: ""
@@ -394,7 +394,7 @@
   dependency: "Ipopt"
   derivative_backend: "Native route residual Jacobian"
   solver_role: "Coupled reactive LLE liquid-root constrained route"
-  implementation_owner: "src/epcsaft/equilibrium/__init__.py; src/epcsaft/native/equilibrium/reactive_phase_equilibrium_problem.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/routes/reactive/phase_equilibrium_problem.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/reactive/test_lle.py"
   capability_key: "reactive_lle_liquid_root"
   description: "Solves coupled neutral reactive LLE through the native liquid-root Ipopt route."
@@ -405,19 +405,19 @@
     This entry is a coupled reactive phase-equilibrium route, not a staged
     speciation-then-split workflow.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2194
-      comment_line: 2193
-      context: "m.def(\"_native_reactive_lle_eos_nlp_contract\", []("
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 634
       comment_line: 632
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium/reactive_phase_equilibrium_problem.cpp"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2223
+      comment_line: 2222
+      context: "m.def(\"_native_reactive_lle_eos_nlp_contract\", []("
+    - file: "src/epcsaft/native/equilibrium/routes/reactive/phase_equilibrium_problem.cpp"
       line: 3011
       comment_line: 3009
       context: "epcsaft::native::equilibrium_nlp::ReactiveTwoPhaseEosRouteResult solve_reactive_phase_liquid_root_route_native("
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 2178
       comment_line: 2177
       context: "ReactiveTwoPhaseEosRouteResult solve_reactive_lle_eos_route("
@@ -432,7 +432,7 @@
   dependency: "Ipopt"
   derivative_backend: "Native route residual Jacobian"
   solver_role: "Coupled reactive electrolyte LLE liquid-root constrained route"
-  implementation_owner: "src/epcsaft/equilibrium/__init__.py; src/epcsaft/native/equilibrium/reactive_phase_equilibrium_problem.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/routes/reactive/phase_equilibrium_problem.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/equilibrium/routes/reactive_electrolyte/test_route_builders.py"
   capability_key: "reactive_electrolyte_lle_liquid_root"
   description: "Solves coupled reactive electrolyte LLE through the native liquid-root Ipopt route."
@@ -444,19 +444,19 @@
     phase outputs; downstream projects compute application metrics from those
     outputs.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 2249
-      comment_line: 2248
-      context: "m.def(\"_native_reactive_electrolyte_lle_eos_nlp_contract\", []("
-    - file: "src/epcsaft/equilibrium/__init__.py"
+    - file: "src/epcsaft/equilibrium/workflows.py"
       line: 634
       comment_line: 633
       context: "@dataclass(frozen=True, slots=True)"
-    - file: "src/epcsaft/native/equilibrium/reactive_phase_equilibrium_problem.cpp"
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 2278
+      comment_line: 2277
+      context: "m.def(\"_native_reactive_electrolyte_lle_eos_nlp_contract\", []("
+    - file: "src/epcsaft/native/equilibrium/routes/reactive/phase_equilibrium_problem.cpp"
       line: 3011
       comment_line: 3010
       context: "epcsaft::native::equilibrium_nlp::ReactiveTwoPhaseEosRouteResult solve_reactive_phase_liquid_root_route_native("
-    - file: "src/epcsaft/native/equilibrium_nlp/route_builders.cpp"
+    - file: "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
       line: 2225
       comment_line: 2224
       context: "ReactiveTwoPhaseEosRouteResult solve_reactive_electrolyte_lle_eos_route("
@@ -471,7 +471,7 @@
   dependency: "Ceres"
   derivative_backend: "Native residual Jacobian for supported target families"
   solver_role: "Native least-squares pure-neutral parameter regression"
-  implementation_owner: "src/epcsaft/regression/__init__.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/regression/core.py; src/epcsaft/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/api/frontend/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api"
   capability_key: "regression:pure_neutral"
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
@@ -482,19 +482,19 @@
     This entry covers the implemented pure-neutral native Ceres route and does not
     broaden support to every possible pure-component parameter family.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 3616
-      comment_line: 3615
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 3645
+      comment_line: 3644
       context: "m.def(\"_fit_pure_neutral_native_ceres\", &fit_pure_neutral_native_ceres_binding);"
-    - file: "src/epcsaft/native/epcsaft_regression.cpp"
+    - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 578
       comment_line: 577
       context: "class PureNeutralCeresCostFunction final : public ceres::CostFunction {"
-    - file: "src/epcsaft/regression/__init__.py"
+    - file: "src/epcsaft/regression/core.py"
       line: 2409
       comment_line: 2408
       context: "def fit_pure_neutral("
-    - file: "src/epcsaft/regression/__init__.py"
+    - file: "src/epcsaft/regression/core.py"
       line: 2744
       comment_line: 2743
       context: "def fit_pure_parameters("
@@ -509,7 +509,7 @@
   dependency: "Ceres"
   derivative_backend: "CppAD implicit residual Jacobian for supported pure-ion targets"
   solver_role: "Native least-squares pure-ion parameter regression"
-  implementation_owner: "src/epcsaft/regression/__init__.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/regression/core.py; src/epcsaft/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/regression/test_liquid_electrolyte.py"
   capability_key: "regression:pure_ion"
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
@@ -519,19 +519,19 @@
   body: |
     This entry is limited to the currently implemented pure-ion target surface.
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 3621
-      comment_line: 3619
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 3650
+      comment_line: 3648
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
-    - file: "src/epcsaft/native/epcsaft_regression.cpp"
+    - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 1537
       comment_line: 1536
       context: "class PureIonCeresCostFunction final : public ceres::CostFunction {"
-    - file: "src/epcsaft/regression/__init__.py"
+    - file: "src/epcsaft/regression/core.py"
       line: 2792
       comment_line: 2791
       context: "def fit_pure_ion("
-    - file: "src/epcsaft/regression/__init__.py"
+    - file: "src/epcsaft/regression/core.py"
       line: 2995
       comment_line: 2994
       context: "def fit_liquid_electrolyte_parameters("
@@ -546,7 +546,7 @@
   dependency: "Ceres"
   derivative_backend: "CppAD-backed binary k_ij residual Jacobian"
   solver_role: "Native least-squares constant-k_ij binary regression"
-  implementation_owner: "src/epcsaft/regression/__init__.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp"
+  implementation_owner: "src/epcsaft/regression/core.py; src/epcsaft/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp"
   validation: "tests/native/regression/test_binary.py"
   capability_key: "regression:binary_pair"
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
@@ -557,15 +557,15 @@
     This entry intentionally does not claim native optimizer support for every
     binary parameter family, including \(l_{ij}\) or \(k^{hb}_{ij}\).
   owner_refs:
-    - file: "src/epcsaft/bindings.cpp"
-      line: 3621
-      comment_line: 3620
+    - file: "src/epcsaft/native/bindings/module.cpp"
+      line: 3650
+      comment_line: 3649
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
-    - file: "src/epcsaft/native/epcsaft_regression.cpp"
+    - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 1660
       comment_line: 1659
       context: "class BinaryKijCeresCostFunction final : public ceres::CostFunction {"
-    - file: "src/epcsaft/regression/__init__.py"
+    - file: "src/epcsaft/regression/core.py"
       line: 2821
       comment_line: 2820
       context: "def fit_binary_parameters("
@@ -580,7 +580,7 @@
   dependency: "None for the context itself"
   derivative_backend: "Not a registered native optimizer derivative path"
   solver_role: "Structured residual/context evaluator, not a production Ceres optimizer"
-  implementation_owner: "src/epcsaft/reactive_regression.py; src/epcsaft/runtime/__init__.py"
+  implementation_owner: "src/epcsaft/regression/reactive.py; src/epcsaft/runtime/__init__.py"
   validation: "tests/native/equilibrium/routes/reactive/test_phase_equilibrium_residual_surface.py"
   capability_key: "reactive_electrolyte_batch_context"
   description: "Evaluates mixed reactive-electrolyte residual contexts without claiming production optimizer support."
@@ -592,11 +592,11 @@
     does not claim native Ceres production optimization for reactive electrolyte
     batch fitting.
   owner_refs:
-    - file: "src/epcsaft/reactive_regression.py"
+    - file: "src/epcsaft/regression/reactive.py"
       line: 759
       comment_line: 758
       context: "def build_reactive_regression_objective("
-    - file: "src/epcsaft/reactive_regression.py"
+    - file: "src/epcsaft/regression/reactive.py"
       line: 790
       comment_line: 789
       context: "def evaluate_reactive_regression_objective("

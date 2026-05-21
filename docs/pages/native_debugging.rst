@@ -11,15 +11,17 @@ The public API starts in ``src/epcsaft/frontend/``. ``Mixture`` normalizes
 runtime bridge. ``State`` validates ``T/x/P`` or ``T/x/rho`` inputs and exposes
 pressure, density, fugacity, and derivative payloads.
 
-The pybind11 boundary is ``src/epcsaft/bindings.cpp``. It exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, contribution-result structs, and native regression helpers through the private ``epcsaft._core`` module.
+The pybind11 boundary is ``src/epcsaft/native/bindings/module.cpp``. It exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, contribution-result structs, and native workflow helpers through the private ``epcsaft._core`` module.
 
-The native implementation lives under ``src/epcsaft/native``. High-traffic files are:
+The native implementation lives under domain folders in ``src/epcsaft/native``. High-traffic files are:
 
-- ``epcsaft_density.cpp`` for pressure-to-density closure.
-- ``epcsaft_ares.cpp`` for residual Helmholtz contribution totals.
-- ``epcsaft_Z.cpp`` for compressibility factor and pressure from density.
-- ``epcsaft_mu.cpp`` and ``epcsaft_fugcoef.cpp`` for residual chemical potential and fugacity.
-- ``epcsaft_activity.cpp`` for activity, osmotic, and solvation outputs.
+- ``eos/density.cpp`` for pressure-to-density closure.
+- ``eos/residual_helmholtz.cpp`` for residual Helmholtz contribution totals.
+- ``eos/compressibility.cpp`` for compressibility factor and pressure from density.
+- ``eos/chemical_potential.cpp`` and ``eos/fugacity.cpp`` for residual chemical potential and fugacity.
+- ``eos/activity.cpp`` for activity, osmotic, and solvation outputs.
+- ``equilibrium/core/activation_matrix.h`` for native route family activation metadata.
+- ``equilibrium/routes/derived/bubble_dew.cpp`` and ``equilibrium/solvers/ipopt_adapter.cpp`` for the trusted bubble/dew Ipopt route.
 
 Validation commands
 -------------------
@@ -68,7 +70,7 @@ Debugging checklist
 
 - Reproduce the behavior through a public ``Mixture`` / ``State`` call before debugging private native functions.
 - Compare pressure-created and density-created states when investigating density closure. Start with the same ``T`` and ``x`` and compare density, pressure, ``z()``, and ``ares()``. Use ``State(mixture, ..., P=..., rho_guess=...)`` to test seeded pressure closure and ``State(mixture, ..., rho=...)`` to audit an externally supplied density against a target pressure.
-- Inspect ``src/epcsaft/native/epcsaft_density.cpp`` and ``src/epcsaft/native/epcsaft_state.cpp`` for pressure-to-density root selection, warm-start behavior, and phase-branch policy before changing contribution code.
+- Inspect ``src/epcsaft/native/eos/density.cpp`` and ``src/epcsaft/native/eos/state.cpp`` for pressure-to-density root selection, warm-start behavior, and phase-branch policy before changing contribution code.
 - Request contribution terms with ``return_contribution_terms=True`` when debugging residual Helmholtz, compressibility factor, chemical potential, or fugacity totals.
 - Request contribution terms and compare ``hc``, ``disp``, ``assoc``, ``ion``, and ``born`` totals before adding temporary native instrumentation.
 - Run ``uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`` before making equation ownership claims. If that check passes but registry entries still show ``cpp_refs: []``, treat those EqIDs as documentation or supplemental equations unless the task proves they should map to implementation code.
