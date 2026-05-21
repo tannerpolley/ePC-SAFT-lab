@@ -114,9 +114,12 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 - After approval, keep automation minimal: launch or focus IntelliJ for this repo, wait for indexing readiness, then use MCP tools.
 - Treat `intellij-index` as an IDE-backed index over open IntelliJ projects, not as a generic filesystem indexer.
 - Call `ide_index_status` at most once near the start of semantic work, pass `project_path`, and fall back without repeated retries if MCP is unavailable or indexing is not ready.
+- For non-trivial code work, public API or native wrapper changes, architecture questions, bug diagnosis, deletion/rename/move work, or review of shared behavior, use at least one relevant `intellij-index` semantic tool before finalizing when the IDE is ready.
 - Prefer IntelliJ-backed semantic navigation and diagnostics when symbol meaning matters:
   - definitions, references, implementations, super methods, call hierarchy, type hierarchy, indexed file/class lookup
   - file analysis, build errors, and test result diagnostics
+- After external file edits, call `ide_sync_files` before asking the IDE for diagnostics or references on changed files.
+- Include a short final note listing the IDE tools used, or state why they were skipped if the task looked semantic but MCP was unavailable or not useful.
 - Safe semantic refactors are encouraged when they are clearly preferable to manual edits:
   - `ide_refactor_rename`
   - `ide_move_file`
