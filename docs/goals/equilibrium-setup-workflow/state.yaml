@@ -77,7 +77,7 @@ visual_board:
     command: "npx goalbuddy extend github-projects"
     missing: []
 
-active_task: T009
+active_task: T010
 
 tasks:
   - id: T001
@@ -582,7 +582,7 @@ tasks:
   - id: T009
     type: pm
     assignee: PM
-    status: active
+    status: done
     reasoning_hint: medium
     objective: "Create logical local commits for board/setup, tests, implementation, docs/capabilities, and validation/guard refinements."
     inputs:
@@ -596,12 +596,26 @@ tasks:
     expected_output:
       - "Local commits exist for the completed work."
       - "Commit hashes are recorded."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Created a local commit for the constructor-configured Equilibrium API reset, including implementation, retained tests, docs, package smoke repair, and the GoalBuddy board."
+      commits:
+        - hash: "314927b6697d"
+          subject: "Implement constructor-configured equilibrium API"
+      evidence:
+        - "Commit includes tracked implementation, tests, docs, script, and docs/goals/equilibrium-setup-workflow board files."
+        - "Ignored local board assets under .goalbuddy-board and generated build/dist artifacts were not staged."
+      commands:
+        - cmd: "git add -u; git add docs/goals/equilibrium-setup-workflow; git status --short"
+          status: pass
+        - cmd: "git commit -m \"Implement constructor-configured equilibrium API\""
+          status: pass
+          result: "314927b6697d"
 
   - id: T010
     type: pm
     assignee: PM
-    status: queued
+    status: active
     reasoning_hint: medium
     objective: "Push branch ipopt after all gates pass and commits exist."
     inputs:
