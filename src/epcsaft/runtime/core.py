@@ -19,12 +19,12 @@ from .capability_evidence import (
     DERIVATIVE_COVERAGE_ROWS,
     EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE,
     EQUILIBRIUM_PROBLEM_OBJECT_CLASSES,
-    IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE,
     REGRESSION_CAPABILITY_KEYS,
     TEST_SLICES,
     VALIDATION_LANES,
     registered_ipopt_public_routes,
 )
+from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
 
 
 def _package_version() -> str:
@@ -285,44 +285,32 @@ def _registered_ipopt_public_routes() -> list[str]:
     return registered_ipopt_public_routes()
 
 
-def _registered_equilibrium_route_capabilities(
-    *,
-    ipopt_route_available: bool,
-    ipopt: dict[str, object],
-) -> dict[str, dict[str, object]]:
-    routes: dict[str, dict[str, object]] = {}
-    for evidence in IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE:
-        payload = _capability_value(evidence["payload"])
-        assert isinstance(payload, dict)
-        route_payload: dict[str, object] = {
-            "available": ipopt_route_available,
-            **payload,
-        }
-        if evidence["key"] == "reactive_speciation":
-            route_payload["sweep_available"] = ipopt_route_available
-            route_payload["ipopt_available"] = bool(ipopt["available"])
-            route_payload["ipopt_routes"] = list(evidence["public_routes"])
-            route_payload["ideal_speciation_nlp_available"] = ipopt_route_available
-            route_payload["nonideal_speciation_nlp_available"] = ipopt_route_available
-            for key in (
-                "sweep_available_from_ipopt",
-                "ideal_speciation_nlp_available_from_ipopt",
-                "nonideal_speciation_nlp_available_from_ipopt",
-            ):
-                route_payload.pop(key, None)
-        elif evidence["key"] == "electrolyte_lle":
-            route_payload["ipopt_available"] = bool(ipopt["available"])
-        routes[str(evidence["key"])] = route_payload
-    return routes
+def _equilibrium_activation_capabilities(*, ipopt_route_available: bool) -> dict[str, object]:
+    rows = [_capability_value(row) for row in EQUILIBRIUM_ACTIVATION_MATRIX]
+    production_families = [str(row["key"]) for row in rows if bool(row["production_exposed"])]
+    declared_not_exposed = [
+        str(row["key"]) for row in rows if str(row["exposure_status"]) == "declared_not_exposed"
+    ]
+    return {
+        "source": "native_cpp",
+        "rows": rows,
+        "production_families": production_families,
+        "declared_not_exposed_families": declared_not_exposed,
+        "ipopt_available": ipopt_route_available,
+    }
 
 
-def _capability_evidence_summary(derivative_coverage: dict[str, object]) -> dict[str, object]:
+def _capability_evidence_summary(
+    derivative_coverage: dict[str, object],
+    activation: dict[str, object],
+) -> dict[str, object]:
     derivative_rows = derivative_coverage.get("rows", [])
     return {
         "source": "registered_capability_evidence",
-        "equilibrium_keys": [str(item["key"]) for item in IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE],
+        "equilibrium_keys": list(activation["production_families"]),
         "equilibrium_route_derivative_row_count": len(EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE),
         "ipopt_public_routes": _registered_ipopt_public_routes(),
+        "declared_not_exposed_equilibrium_keys": list(activation["declared_not_exposed_families"]),
         "problem_object_classes": list(EQUILIBRIUM_PROBLEM_OBJECT_CLASSES),
         "regression_keys": list(REGRESSION_CAPABILITY_KEYS),
         "derivative_row_count": len(derivative_rows) if isinstance(derivative_rows, list) else 0,
@@ -418,13 +406,10 @@ def capabilities() -> dict[str, object]:
     if not ceres_available:
         ceres_capability["reason"] = "required_native_dependency_missing"
     derivative_coverage = _derivative_coverage_capabilities(cppad, ceres)
-    equilibrium_route_capabilities = _registered_equilibrium_route_capabilities(
-        ipopt_route_available=ipopt_route_available,
-        ipopt=ipopt,
-    )
+    equilibrium_activation = _equilibrium_activation_capabilities(ipopt_route_available=ipopt_route_available)
     return {
         "native_extension": bool(build_info["native_extension_available"]),
-        "capability_evidence": _capability_evidence_summary(derivative_coverage),
+        "capability_evidence": _capability_evidence_summary(derivative_coverage, equilibrium_activation),
         "derivatives": {
             "cppad": cppad_capability,
             "coverage_matrix": derivative_coverage,
@@ -500,6 +485,10 @@ def capabilities() -> dict[str, object]:
             },
         },
         "equilibrium": {
+            "activation_matrix": equilibrium_activation,
+            "production_families": list(equilibrium_activation["production_families"]),
+            "declared_not_exposed_families": list(equilibrium_activation["declared_not_exposed_families"]),
+            "public_routes": ipopt_public_routes,
             "derivative_policy": {
                 "accepted_derivative_backends": [
                     "cppad",
@@ -508,7 +497,14 @@ def capabilities() -> dict[str, object]:
                 ],
                 "auto_policy": "public_frontend_forces_cppad_else_raise",
             },
-            **equilibrium_route_capabilities,
+            "bubble_dew_derived_routes": {
+                "available": bool(equilibrium_activation["ipopt_available"]),
+                "production": True,
+                "entrypoint": "Equilibrium(mixture).bubble_pressure",
+                "selector_core": True,
+                "input_scope": "neutral non-reactive non-electrolyte non-associating mixtures",
+                "requires": ["cppad", "ipopt"],
+            },
             "repeated_state_properties": {
                 "available": True,
                 "helpers": ["evaluate_fugacity_coefficients", "evaluate_fugacity_coefficients_batch"],

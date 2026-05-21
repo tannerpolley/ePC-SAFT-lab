@@ -74,11 +74,6 @@ TEST_SUBGROUP_ROOTS = {
     "tests/native/equilibrium/blocks",
     "tests/native/equilibrium/diagnostics",
     "tests/native/equilibrium/results",
-    "tests/native/equilibrium/routes/electrolyte",
-    "tests/native/equilibrium/routes/neutral",
-    "tests/native/equilibrium/routes/reactive",
-    "tests/native/equilibrium/routes/reactive_electrolyte",
-    "tests/native/equilibrium/routes/stability",
     "tests/native/regression",
     "tests/native/state",
     "tests/support",
@@ -255,6 +250,7 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
     )
     pybind_allowed = {
         "src/epcsaft/native/bindings/module.cpp",
+        "src/epcsaft/native/equilibrium/register_bindings.cpp",
         "src/epcsaft/native/equilibrium/results/route_result_bridge.h",
     }
 
@@ -272,15 +268,142 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
     assert pybind_offenders == []
 
 
+def test_native_equilibrium_bindings_are_registered_through_selector_domain_units() -> None:
+    module = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
+        encoding="utf-8"
+    )
+    bindings_root = REPO_ROOT / "src" / "epcsaft" / "native" / "bindings"
+    forbidden_includes = (
+        "equilibrium/blocks/",
+        "equilibrium/routes/",
+        "equilibrium/solvers/",
+        "equilibrium/results/",
+        "equilibrium/core/second_order.h",
+        "equilibrium/core/two_phase_eos_route.h",
+        "equilibrium/core/selector_core.h",
+        "equilibrium/facade.h",
+    )
+    offenders = []
+    for path in sorted(bindings_root.rglob("*")):
+        if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}:
+            text = path.read_text(encoding="utf-8")
+            for token in forbidden_includes:
+                if token in text:
+                    offenders.append(f"{path.relative_to(REPO_ROOT).as_posix()}: {token}")
+
+    assert "register_equilibrium_bindings(m);" in module
+    assert (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "register_bindings.cpp").exists()
+    assert not (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "equilibrium_binding_types.h").exists()
+    assert not (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "equilibrium_bindings.cpp").exists()
+    assert offenders == []
+
+
+def test_equilibrium_facade_does_not_expose_route_builder_types() -> None:
+    facade = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
+        encoding="utf-8"
+    )
+    forbidden = (
+        "equilibrium/routes/route_builders.h",
+        "NativeRouteMetadata",
+        "NeutralTwoPhaseEosNlpContract",
+        "NeutralTwoPhaseEosRouteResult",
+        "ReactiveTwoPhaseEosPostsolve",
+        "ReactiveTwoPhaseEosRouteResult",
+        "route_builders",
+    )
+    offenders = [token for token in forbidden if token in facade]
+
+    assert offenders == []
+
+
+def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
+    deleted_sources = (
+        "src/epcsaft/native/equilibrium/workflows.cpp",
+        "src/epcsaft/native/equilibrium/routes/route_builders.cpp",
+        "src/epcsaft/native/equilibrium/routes/route_builders.h",
+        "src/epcsaft/native/equilibrium/routes/reactive",
+        "src/epcsaft/native/equilibrium/routes/stability",
+    )
+    for relpath in deleted_sources:
+        assert not (REPO_ROOT / relpath).exists(), relpath
+
+    binding_source_paths = [
+        path
+        for path in sorted((REPO_ROOT / "src" / "epcsaft" / "native" / "bindings").rglob("*"))
+        if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}
+    ]
+    binding_source_paths.append(
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "register_bindings.cpp"
+    )
+    binding_sources = "\n".join(
+        path.read_text(encoding="utf-8", errors="ignore")
+        for path in binding_source_paths
+    )
+    forbidden_bindings = (
+        "_native_neutral_tp_flash_eos",
+        "_native_neutral_lle_eos",
+        "_native_electrolyte_lle_eos",
+        "_native_electrolyte_bubble_p_eos",
+        "_native_neutral_stability_tpd",
+        "_native_electrolyte_stability_tpd",
+        "_native_reactive_stability_tpd",
+        "_native_reactive_lle_eos",
+        "_native_reactive_electrolyte_lle_eos",
+        "_native_reactive_two_phase_eos",
+        "_solve_chemical_equilibrium_native",
+        "_evaluate_chemical_equilibrium_residual_native",
+        "_evaluate_reactive_phase_equilibrium_residual_native",
+        "_evaluate_electrolyte_lle_residual_native",
+        "_native_neutral_bubble_p_eos_route_result",
+        "_native_neutral_dew_p_eos_route_result",
+        "_native_neutral_bubble_t_eos_route_result",
+        "_native_neutral_dew_t_eos_route_result",
+        "solve_neutral_bubble_p_eos_route",
+        "solve_neutral_dew_p_eos_route",
+        "solve_neutral_bubble_t_eos_route",
+        "solve_neutral_dew_t_eos_route",
+    )
+    binding_offenders = [name for name in forbidden_bindings if name in binding_sources]
+
+    assert binding_offenders == []
+
+
+def test_python_equilibrium_package_exposes_only_production_bubble_pressure_support() -> None:
+    import epcsaft.equilibrium as equilibrium
+
+    forbidden_exports = {
+        "bubble_p",
+        "bubble_t",
+        "dew_p",
+        "dew_t",
+        "tp_flash",
+        "lle_flash",
+        "neutral_stability",
+        "electrolyte_stability",
+        "electrolyte_lle_flash_native",
+        "electrolyte_bubble_pressure",
+        "reactive_phase_equilibrium",
+        "reactive_stability_native",
+        "ReactiveSpeciationProblem",
+        "ReactiveElectrolyteBubbleProblem",
+        "ReactivePhaseEquilibriumProblem",
+        "TPFlash",
+        "LLEProblem",
+        "ElectrolyteLLEProblem",
+        "ElectrolyteBubblePoint",
+        "StabilityAnalysis",
+    }
+    leaked = sorted(name for name in forbidden_exports if hasattr(equilibrium, name))
+
+    assert leaked == []
+
+
 def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> None:
     public_solver_sources = (
         REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_electrolyte.py",
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_speciation.py",
         REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
         REPO_ROOT / "src" / "epcsaft" / "frontend" / "regression.py",
         REPO_ROOT / "src" / "epcsaft" / "regression" / "core.py",
-        REPO_ROOT / "src" / "epcsaft" / "regression" / "reactive.py",
     )
     blocked_terms = (
         "sci" + "py.optimize",
@@ -349,6 +472,7 @@ def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None
 def test_custom_scalar_solver_tokens_are_limited_to_density_closure_exception() -> None:
     allowed_paths = {
         "src/epcsaft/native/eos/density.cpp",
+        "src/epcsaft/native/model/native_types.h",
     }
     blocked_terms = (
         "br" + "ent",

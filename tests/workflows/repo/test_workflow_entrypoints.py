@@ -71,9 +71,6 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100" in (
         development_workflows
     )
-    assert "uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5" in (
-        development_workflows
-    )
     assert "uv run python run_pytest.py --list-slices" in development_workflows
     assert "EPCSAFT_PYTEST_TEMP_ROOT" in development_workflows
     assert "reuse them inside hot loops" in development_workflows

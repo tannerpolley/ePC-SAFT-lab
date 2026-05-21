@@ -8,112 +8,7 @@ from __future__ import annotations
 
 from typing import Final
 
-REACTIVE_SPECIATION_STANDARD_STATES: Final[tuple[str, ...]] = (
-    "ideal_mole_fraction",
-    "mole_fraction_activity",
-    "concentration",
-)
-
-IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
-    {
-        "key": "reactive_speciation",
-        "public_routes": tuple(
-            f"reactive_speciation:{state}" for state in REACTIVE_SPECIATION_STANDARD_STATES
-        ),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "sweep_available_from_ipopt": True,
-            "activity_output_modes": ("auto", "always", "never"),
-            "jacobian_auto_policy": "cppad_only_else_raise",
-            "jacobian_auto_supported_standard_states": REACTIVE_SPECIATION_STANDARD_STATES,
-            "implemented_standard_states": REACTIVE_SPECIATION_STANDARD_STATES,
-            "auto_request": "implemented_standard_states_route_to_native_ipopt",
-            "solver_backends": ("ipopt",),
-            "explicit_ipopt_request": "implemented_standard_states_route_to_native_ipopt_when_compiled",
-            "ipopt_formulation": "thermodynamic_constrained_nlp",
-            "ideal_speciation_nlp_available_from_ipopt": True,
-            "nonideal_speciation_nlp_available_from_ipopt": True,
-            "nonideal_derivative_backend": "cppad_explicit_density",
-            "mixed_standard_state_policy": "raise_until_single_objective_is_specified",
-        },
-    },
-    {
-        "key": "neutral_tp_flash",
-        "public_routes": (),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "internal_methods": ("tp_flash", "flash_tp"),
-            "ipopt_formulation": "thermodynamic_constrained_nlp",
-        },
-    },
-    {
-        "key": "neutral_stability",
-        "public_routes": (),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "internal_methods": ("stability_tp",),
-            "ipopt_formulation": "thermodynamic_constrained_nlp",
-            "route": "tangent_plane_distance",
-        },
-    },
-    {
-        "key": "electrolyte_stability",
-        "public_routes": (),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "internal_methods": ("electrolyte_stability_tp",),
-            "ipopt_formulation": "thermodynamic_constrained_nlp",
-            "route": "charge_constrained_tangent_plane_distance",
-        },
-    },
-    {
-        "key": "reactive_stability",
-        "public_routes": (),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "internal_methods": ("reactive_stability_tp",),
-            "ipopt_formulation": "thermodynamic_constrained_nlp",
-            "route": "coupled_reactive_tangent_plane_distance",
-        },
-    },
-    {
-        "key": "neutral_lle_flash",
-        "public_routes": (),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "internal_methods": ("lle_flash", "lle_tp"),
-            "ipopt_formulation": "thermodynamic_constrained_nlp",
-        },
-    },
-    {
-        "key": "neutral_bubble_dew",
-        "public_routes": ("Equilibrium.bubble_pressure",),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("bubble_pressure",),
-            "internal_methods": ("bubble_p", "bubble_t", "dew_p", "dew_t"),
-        },
-    },
-    {
-        "key": "electrolyte_lle",
-        "public_routes": (),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "internal_methods": ("electrolyte_lle", "electrolyte_lle_tp"),
-            "solver_backends": ("ipopt",),
-            "explicit_ipopt_request": "routes_to_native_ipopt_when_compiled",
-            "ipopt_formulation": "thermodynamic_constrained_nlp",
-        },
-    },
-    {
-        "key": "electrolyte_bubble_pressure",
-        "public_routes": (),
-        "payload": {
-            "backend": "native_ipopt_equilibrium_nlp",
-            "scope": "fixed liquid composition with neutral vapor species; ions remain liquid-only",
-        },
-    },
-)
+IPOPT_PUBLIC_ROUTES: Final[tuple[str, ...]] = ("Equilibrium.bubble_pressure",)
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES: Final[tuple[str, ...]] = (
 )
@@ -160,76 +55,15 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
     {
         "row_family": "equilibrium",
         "subsystem": "native_ipopt",
-        "quantity": "neutral_two_phase_routes",
+        "quantity": "bubble_dew_derived_routes",
         "derivative": "lagrangian_hessian",
         "backend": "cppad_phase_blocks",
         "supported": True,
         "classification": "production_supported",
-        "reason": "neutral TP flash, LLE, stability, bubble, and dew routes require exact gradients/Jacobians and default to exact Hessians",
+        "reason": "the production selector exposes only neutral bubble-pressure through exact gradient/Jacobian/Hessian Ipopt callbacks",
         "tests": (
             "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
-            "tests/native/equilibrium/routes/neutral/test_flash.py",
-            "tests/native/equilibrium/routes/neutral/test_lle.py",
-            "tests/native/equilibrium/routes/neutral/test_bubble_dew.py",
-            "tests/native/equilibrium/routes/stability/test_route_builders.py",
-        ),
-    },
-    {
-        "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
-        "quantity": "electrolyte_lle_and_stability",
-        "derivative": "lagrangian_hessian",
-        "backend": "cppad_explicit_density",
-        "supported": True,
-        "classification": "production_supported",
-        "reason": "electrolyte LLE and charge-constrained stability routes report exact Hessian metadata and reject non-certified postsolves",
-        "tests": (
-            "tests/native/equilibrium/routes/electrolyte/test_lle_residual_surface.py",
-            "tests/native/equilibrium/routes/electrolyte/test_lle_residual_jacobian.py",
-            "tests/native/equilibrium/routes/electrolyte/test_route_builders.py",
-            "tests/native/equilibrium/routes/stability/test_route_builders.py",
-        ),
-    },
-    {
-        "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
-        "quantity": "electrolyte_bubble_pressure",
-        "derivative": "lagrangian_hessian",
-        "backend": "cppad_explicit_density",
-        "supported": True,
-        "classification": "production_supported",
-        "reason": "electrolyte bubble pressure is a registered production Ipopt route with exact-Hessian route-builder evidence and public phase-eligibility diagnostics",
-        "tests": (
-            "tests/native/equilibrium/routes/electrolyte/test_route_builders.py",
-        ),
-    },
-    {
-        "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
-        "quantity": "reactive_stability",
-        "derivative": "lagrangian_hessian",
-        "backend": "cppad_explicit_density",
-        "supported": True,
-        "classification": "production_supported",
-        "reason": "reactive stability routes through the native coupled reactive TPD Ipopt route with exact Hessian evidence and shared certification diagnostics",
-        "tests": (
-            "tests/native/equilibrium/routes/reactive/test_chemical_equilibrium_native_api.py",
-            "tests/native/equilibrium/routes/stability/test_route_builders.py",
-        ),
-    },
-    {
-        "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
-        "quantity": "reactive_lle_and_reactive_electrolyte_lle",
-        "derivative": "lagrangian_hessian",
-        "backend": "cppad_explicit_density",
-        "supported": True,
-        "classification": "route_builder_supported_capability_pending",
-        "reason": "native reactive LLE route builders expose exact Hessian paths, while production capability registration still waits for benchmark and acceptance evidence",
-        "tests": (
-            "tests/native/equilibrium/routes/reactive/test_phase_equilibrium_residual_jacobian.py",
-            "tests/native/equilibrium/routes/reactive/test_lle.py",
-            "tests/native/equilibrium/routes/reactive_electrolyte/test_route_builders.py",
+            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
         ),
     },
 )
@@ -239,7 +73,8 @@ REGRESSION_CAPABILITY_KEYS: Final[tuple[str, ...]] = (
 )
 
 NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py",
+    "tests/native/contracts/test_equilibrium_activation_capabilities.py",
+    "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
     "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
 )
 
@@ -259,15 +94,9 @@ CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/state/test_contributions.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract",
 )
 EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
-    (
-        "tests/native/equilibrium/routes/neutral/test_bubble_dew.py::"
-        "test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve"
-    ),
-    (
-        "tests/native/equilibrium/routes/neutral/test_bubble_dew.py::"
-        "test_neutral_fixed_temperature_pressure_route_uses_exact_hessian_when_requested"
-    ),
+    "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
     "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
+    "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
@@ -348,10 +177,6 @@ def validation_lane_commands(name: str) -> tuple[tuple[str, ...], ...]:
 
 
 def registered_ipopt_public_routes() -> list[str]:
-    """Return public Ipopt route labels registered by executable route evidence."""
+    """Return public Ipopt route labels registered by activation-driven capability evidence."""
 
-    return [
-        str(route)
-        for evidence in IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE
-        for route in evidence["public_routes"]  # type: ignore[index]
-    ]
+    return list(IPOPT_PUBLIC_ROUTES)

@@ -234,13 +234,14 @@ def test_slice_targets_use_grouped_test_subpackages():
 
 
 def test_native_contract_slice_uses_small_metadata_files_not_full_route_builder_suite():
-    assert "tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
+    assert "tests/native/contracts/test_equilibrium_activation_capabilities.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
+    assert "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     assert all("test_route_builders_" not in target for target in run_pytest.NATIVE_CONTRACT_TEST_TARGETS)
 
 
 def test_broad_native_route_builder_targets_require_explicit_opt_in():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
-    route_builder_target = "tests/native/equilibrium/routes/neutral/test_bubble_dew.py"
+    route_builder_target = "tests/native/equilibrium"
 
     try:
         run_pytest._pytest_args([route_builder_target, "-q"], pytest_temp)
@@ -257,15 +258,15 @@ def test_broad_native_route_builder_targets_require_explicit_opt_in():
     )
     single_node = run_pytest._pytest_args(
         [
-            f"{route_builder_target}::"
-            "test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve",
+            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py::"
+            "test_selector_core_contract_owns_production_bubble_pressure_metadata",
             "-q",
         ],
         pytest_temp,
     )
 
     assert allowed[:2] == [route_builder_target, "-q"]
-    assert single_node[0].endswith("::test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve")
+    assert single_node[0].endswith("::test_selector_core_contract_owns_production_bubble_pressure_metadata")
 
 
 def test_equilibrium_slices_are_listed():
@@ -293,10 +294,8 @@ def test_equilibrium_confidence_shortcut_keeps_full_report_env_opt_in():
 def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pytests():
     targets = run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
 
-    assert (
-        "tests/native/equilibrium/routes/neutral/test_bubble_dew.py::"
-        "test_neutral_bubble_pressure_workbook_accepted_point_runs_postsolve"
-    ) in targets
+    assert "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py" in targets
+    assert "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route" in targets
     assert "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py" in targets
     assert all("paper_validation" not in target for target in targets)
     assert all("tests/regression/literature" not in target for target in targets)

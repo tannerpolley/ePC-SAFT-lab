@@ -27,7 +27,6 @@ TEST_PLOT_CATEGORY_ROOTS = {
     ("contributions", "ionic"): "contribution_outputs",
     ("equilibrium", "vle"): "equilibrium_outputs",
     ("equilibrium", "lle"): "equilibrium_outputs",
-    ("equilibrium", "electrolyte_lle"): "equilibrium_outputs",
     ("equilibrium", "stability"): "equilibrium_outputs",
     ("native", "branches"): "native_outputs",
     ("native", "derivatives"): "native_outputs",

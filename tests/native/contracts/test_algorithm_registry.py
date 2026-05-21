@@ -133,7 +133,8 @@ def test_ceres_and_ipopt_algorithm_ids_are_present_and_distinct() -> None:
 
     assert "ipopt_tnlp_adapter" in algids
     assert "native_ceres_regression_adapter" in algids
-    assert "neutral_tp_flash_ipopt" in algids
+    assert "bubble_dew_ipopt" in algids
+    assert "neutral_tp_flash_ipopt" not in algids
     assert "pure_neutral_ceres_regression" in algids
     for entry in entries:
         if entry["algid"].endswith("_ipopt"):

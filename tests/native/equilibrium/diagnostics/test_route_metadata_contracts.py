@@ -1,234 +1,76 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-import numpy as np
 import pytest
 
 from epcsaft import _core
-from tests.support.equilibrium_cases import (
-    _ascani_electrolyte_mixture,
-    _neutral_binary_mixture,
-    _reactive_stability_inputs,
-)
+from tests.support.equilibrium_cases import _neutral_binary_mixture
 
 pytestmark = pytest.mark.native_contract
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
 
-
-def test_neutral_two_phase_contract_declares_route_metadata_without_solving() -> None:
+def test_selector_contract_declares_production_route_metadata_without_solving() -> None:
     mix = _neutral_binary_mixture()
-    temperature = 300.0
-    phase_amounts = [
-        np.asarray([0.7, 0.3], dtype=float),
-        np.asarray([0.1, 0.9], dtype=float),
-    ]
-    volumes = [float(phase_amounts[0].sum() / 80.0), float(phase_amounts[1].sum() / 140.0)]
-    feed_amounts = phase_amounts[0] + phase_amounts[1]
-    target_pressure = mix.state(
-        T=temperature,
-        rho=phase_amounts[0].sum() / volumes[0],
-        x=phase_amounts[0] / phase_amounts[0].sum(),
-        phase="liquid",
-    ).pressure()
 
-    payload = _core._native_neutral_two_phase_eos_nlp_contract(
-        mix._native,
-        temperature,
-        target_pressure,
-        [phase.tolist() for phase in phase_amounts],
-        volumes,
-        feed_amounts.tolist(),
-    )
+    payload = _core._native_equilibrium_selector_contract(mix._native, "bubble_pressure", 300.0, [0.35, 0.65])
 
-    assert payload["problem_name"] == "neutral_two_phase_eos"
-    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume"
+    assert payload["selector_family"] == "bubble_dew_derived_routes"
+    assert payload["route"] == "bubble_pressure"
+    assert payload["problem_name"] == "neutral_bubble_p_eos"
+    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume_plus_pressure"
     assert payload["density_backend"] == "explicit_phase_volume_pressure_constraint"
+    assert payload["exact_derivatives_required"] is True
+    assert payload["certification_required"] is True
+    assert payload["density_closure_required"] is True
     assert payload["residual_families"] == [
-        "material_balance",
+        "fixed_composition",
+        "phase_amount_total",
         "phase_pressure_consistency",
         "phase_equilibrium",
         "phase_distance",
     ]
-    assert payload["constraint_families"] == ["material_balance", "phase_pressure_consistency"]
-
-
-def test_seeded_lle_contract_declares_phase_distance_constraint_without_solving() -> None:
-    mix = _neutral_binary_mixture()
-    payload = _core._native_neutral_lle_eos_nlp_contract(
-        mix._native,
-        298.15,
-        1.013e5,
-        [0.45, 0.55],
-    )
-
-    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume"
     assert payload["constraint_families"] == [
-        "material_balance",
-        "phase_pressure_consistency",
-        "phase_distance",
-    ]
-
-
-def test_fixed_composition_route_contracts_are_metadata_only_checks() -> None:
-    mix = _neutral_binary_mixture()
-
-    bubble = _core._native_neutral_bubble_p_eos_nlp_contract(mix._native, 300.0, [0.35, 0.65])
-    dew = _core._native_neutral_dew_t_eos_nlp_contract(mix._native, 1.0e5, [0.35, 0.65])
-
-    assert bubble["variable_model"] == "phase_species_amounts_plus_phase_volume_plus_pressure"
-    assert bubble["constraint_families"] == [
         "fixed_composition",
         "phase_amount_total",
         "phase_pressure_consistency",
         "phase_equilibrium",
         "phase_volume_gap",
     ]
-    assert dew["variable_model"] == "phase_species_amounts_plus_phase_volume_plus_temperature"
-    assert dew["constraint_families"] == bubble["constraint_families"]
 
 
-def test_native_activation_matrix_declares_every_roadmap_family() -> None:
-    matrix = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
-
-    assert set(matrix) == {
-        "neutral_tp_flash",
-        "neutral_lle",
-        "electrolyte_lle",
-        "reactive_speciation",
-        "reactive_lle",
-        "reactive_electrolyte_lle",
-        "bubble_dew_derived_routes",
+def test_deleted_native_equilibrium_route_entrypoints_are_absent() -> None:
+    deleted = {
+        "_native_neutral_tp_flash_eos_nlp_contract",
+        "_native_neutral_tp_flash_eos_route_result",
+        "_native_neutral_lle_eos_nlp_contract",
+        "_native_neutral_lle_eos_route_result",
+        "_native_electrolyte_lle_eos_nlp_contract",
+        "_native_electrolyte_lle_eos_route_result",
+        "_native_electrolyte_bubble_p_eos_nlp_contract",
+        "_native_electrolyte_bubble_p_eos_route_result",
+        "_native_neutral_stability_tpd_nlp_contract",
+        "_native_neutral_stability_tpd_route_result",
+        "_native_electrolyte_stability_tpd_nlp_contract",
+        "_native_electrolyte_stability_tpd_route_result",
+        "_native_reactive_lle_eos_nlp_contract",
+        "_native_reactive_lle_eos_route_result",
+        "_native_reactive_electrolyte_lle_eos_nlp_contract",
+        "_native_reactive_electrolyte_lle_eos_route_result",
+        "_native_neutral_bubble_p_eos_route_result",
+        "_native_neutral_dew_p_eos_route_result",
+        "_native_neutral_bubble_t_eos_route_result",
+        "_native_neutral_dew_t_eos_route_result",
+        "_solve_chemical_equilibrium_native",
+        "_evaluate_chemical_equilibrium_residual_native",
+        "_evaluate_reactive_phase_equilibrium_residual_native",
+        "_evaluate_electrolyte_lle_residual_native",
     }
-    assert [key for key, row in matrix.items() if row["production_exposed"]] == ["bubble_dew_derived_routes"]
-    for key, row in matrix.items():
-        assert row["derivative_requirement"] == "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes"
-        if key != "bubble_dew_derived_routes":
-            assert row["exposure_status"] == "declared_not_exposed"
-            assert row["proof_routes"] == []
+
+    assert [name for name in sorted(deleted) if hasattr(_core, name)] == []
 
 
-def test_bubble_dew_activation_matches_native_route_metadata_contract() -> None:
+def test_selector_rejects_declared_not_exposed_route_family() -> None:
     mix = _neutral_binary_mixture()
-    route = _core._native_neutral_bubble_p_eos_nlp_contract(mix._native, 300.0, [0.35, 0.65])
-    matrix = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
-    activation = matrix["bubble_dew_derived_routes"]
 
-    assert activation["production_exposed"] is True
-    assert activation["exposure_status"] == "production_exposed"
-    assert activation["direct_transfer"] == "on"
-    assert activation["reaction_equilibrium"] == "off_unless_reactive_route_is_explicitly_modeled"
-    assert activation["split_variables"] == "one_phase_amount_removed_by_spec"
-    assert activation["stability_prelayer"] == "on"
-    assert activation["postsolve_certification"] == "on"
-    assert activation["proof_routes"] == ["neutral_bubble_pressure_hydrocarbon_ipopt_exact_hessian"]
-    assert activation["residual_families"] == route["residual_families"]
-    assert activation["constraint_families"] == route["constraint_families"]
-
-
-def test_liquid_root_contracts_declare_residual_families_without_running_ipopt() -> None:
-    electrolyte_mix, electrolyte_feed = _ascani_electrolyte_mixture()
-    electrolyte = _core._native_electrolyte_lle_eos_nlp_contract(
-        electrolyte_mix._native,
-        298.15,
-        1.0e5,
-        electrolyte_feed,
-    )
-
-    reactive_mix = _neutral_binary_mixture()
-    reactive = _core._native_reactive_lle_eos_nlp_contract(
-        reactive_mix._native,
-        300.0,
-        1.0e5,
-        [0.3, 0.7],
-        1,
-        [1.0, 1.0],
-        [1.0],
-        1,
-        [-1.0, 1.0],
-        [float(np.log(3.0))],
-    )
-
-    assert electrolyte["variable_model"] == "ascani_transformed_salt_pairs_explicit_density"
-    assert electrolyte["residual_families"] == ["phase_equilibrium", "material_balance"]
-    assert reactive["variable_model"] == "log_phase_species_amounts_plus_log_density"
-    assert reactive["residual_families"] == [
-        "conserved_balance",
-        "reaction_stationarity",
-        "phase_equilibrium",
-    ]
-
-
-def test_liquid_root_and_nlp_routes_share_metadata_type() -> None:
-    header = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
-        encoding="utf-8"
-    )
-
-    assert "struct NativeRouteMetadata" not in header
-    assert "using NativeRouteMetadata = epcsaft::native::equilibrium_nlp::RouteMetadata;" in header
-
-
-def test_liquid_root_route_metadata_factories_live_with_nlp_metadata() -> None:
-    metadata_header = (
-        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "route_metadata.h"
-    ).read_text(encoding="utf-8")
-    equilibrium_header = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
-        encoding="utf-8"
-    )
-
-    assert "inline RouteMetadata electrolyte_liquid_root_route_metadata(" in metadata_header
-    assert "inline RouteMetadata reactive_liquid_root_route_metadata(" in metadata_header
-    assert "NativeRouteMetadata electrolyte_liquid_root_route_metadata" not in equilibrium_header
-    assert "NativeRouteMetadata reactive_liquid_root_route_metadata" not in equilibrium_header
-
-
-def test_phase_tagged_reactive_liquid_root_contract_declares_reaction_constraint() -> None:
-    mix = _neutral_binary_mixture()
-    contract = _core._native_reactive_lle_eos_nlp_contract(
-        mix._native,
-        300.0,
-        1.0e5,
-        [0.3, 0.7],
-        1,
-        [1.0, 1.0],
-        [1.0],
-        1,
-        [-1.0, 1.0],
-        [float(np.log(3.0))],
-        [0],
-        [-1.0, 0.0, 0.0, 1.0],
-    )
-
-    assert contract["constraint_families"] == [
-        "conserved_balance",
-        "reaction_stationarity",
-        "phase_pressure_consistency",
-        "phase_distance",
-    ]
-
-
-def test_reactive_stability_contract_declares_route_metadata_without_solving() -> None:
-    mix = _neutral_binary_mixture()
-    inputs = _reactive_stability_inputs()
-    contract = _core._native_reactive_stability_tpd_nlp_contract(
-        mix._native,
-        300.0,
-        1.0e5,
-        inputs["feed_composition"],
-        inputs["balance_rows"],
-        inputs["balance_matrix_row_major"],
-        inputs["total_vector"],
-        inputs["reaction_rows"],
-        inputs["reaction_stoichiometry_row_major"],
-        inputs["log_equilibrium_constants"],
-        "vap",
-        "vap",
-    )
-
-    assert contract["variable_model"] == "composition_plus_log_density"
-    assert contract["density_backend"] == "explicit_log_density_pressure_constraint"
-    assert contract["balance_row_count"] == 1
-    assert contract["reaction_count"] == 1
-    assert contract["residual_families"] == ["reaction_stationarity", "stability_tpd"]
-    assert contract["constraint_families"] == ["composition_sum", "pressure"]
+    native_value_error = getattr(_core, "NativeValueError", ValueError)
+    with pytest.raises(native_value_error, match="selector-ineligible"):
+        _core._native_equilibrium_selector_contract(mix._native, "neutral_lle", 300.0, [0.35, 0.65])

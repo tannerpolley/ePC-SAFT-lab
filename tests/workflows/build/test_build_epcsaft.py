@@ -110,7 +110,9 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "src/epcsaft/native/equilibrium_nlp/*.cpp" not in cmake_text
     assert "src/epcsaft/native/equilibrium_nlp" not in cmake_text
     assert "pybind11_add_module(_core NO_EXTRAS src/epcsaft/bindings.cpp)" not in cmake_text
-    assert "pybind11_add_module(_core NO_EXTRAS src/epcsaft/native/bindings/module.cpp)" in cmake_text
+    assert "pybind11_add_module(_core NO_EXTRAS" in cmake_text
+    assert "src/epcsaft/native/bindings/module.cpp" in cmake_text
+    assert "src/epcsaft/native/equilibrium/register_bindings.cpp" in cmake_text
     assert "unset(Ceres_BINARY_DIR CACHE)" in cmake_text
     assert "unset(Ceres_SOURCE_DIR CACHE)" in cmake_text
     assert "EPCSAFT_ENABLE_CERES" not in pyproject_text

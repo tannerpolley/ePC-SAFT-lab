@@ -2,80 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
-
-import epcsaft
 from epcsaft import _core
-from epcsaft.state.native_adapter import ePCSAFTMixture
-from tests.support.equilibrium_cases import _ascani_electrolyte_mixture
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def _electrolyte_mixture() -> ePCSAFTMixture:
-    mix, _feed = _ascani_electrolyte_mixture()
-    return mix
-
-
 def test_native_equilibrium_entrypoint_is_exposed() -> None:
-    assert hasattr(_core, "_evaluate_electrolyte_lle_residual_native")
-
-
-def test_native_electrolyte_lle_residual_evaluator_reports_explicit_density_derivatives() -> None:
-    mix = _electrolyte_mixture()
-    aq = np.asarray([0.798324680201737, 0.016320352824141723, 0.09267748348706063, 0.09267748348706063], dtype=float)
-    org = np.asarray([0.37006036048879404, 0.6214918588210971, 0.004223890345054407, 0.004223890345054407], dtype=float)
-    beta_org = 0.613766575013417
-    feed = ((1.0 - beta_org) * aq + beta_org * org).tolist()
-    request = {
-        "T": 298.15,
-        "P": 1.013e5,
-        "z": feed,
-        "species": mix.species,
-        "initial_phases": {"aq": aq.tolist(), "org": org.tolist(), "phase_fraction": beta_org},
-        "options": {
-            "max_iterations": 80,
-            "tolerance": 1.0e-8,
-            "min_composition": 1.0e-12,
-            "jacobian_backend": "auto",
-        },
-    }
-
-    payload = _core._evaluate_electrolyte_lle_residual_native(mix._native, request)
-
-    assert payload["variable_model"] == "ascani_transformed_salt_pairs_explicit_density"
-    assert payload["jacobian_backend"] == "cppad_explicit_density"
-    assert payload["jacobian_row_major"]
-    assert payload["gradient"]
-    assert payload["diagnostics"]["jacobian_available"] is True
-    assert payload["diagnostics"]["derivative_available"] is True
-    jacobian_rows, jacobian_cols = payload["jacobian_shape"]
-    assert len(payload["jacobian_row_major"]) == jacobian_rows * jacobian_cols
-    assert len(payload["gradient"]) == jacobian_cols
-    assert payload["diagnostics"]["residual_surface"] == "native_electrolyte_lle_transformed_variables"
-    assert payload["material_balance_error"] <= 1.0e-10
-    assert payload["charge_balance_error"] <= 1.0e-8
-
-
-def test_native_electrolyte_lle_residual_evaluator_defaults_to_explicit_density_derivatives() -> None:
-    mix = _electrolyte_mixture()
-    aq = np.asarray([0.798324680201737, 0.016320352824141723, 0.09267748348706063, 0.09267748348706063], dtype=float)
-    org = np.asarray([0.37006036048879404, 0.6214918588210971, 0.004223890345054407, 0.004223890345054407], dtype=float)
-    beta_org = 0.613766575013417
-    feed = ((1.0 - beta_org) * aq + beta_org * org).tolist()
-    request = {
-        "T": 298.15,
-        "P": 1.013e5,
-        "z": feed,
-        "species": mix.species,
-        "initial_phases": {"aq": aq.tolist(), "org": org.tolist(), "phase_fraction": beta_org},
-        "options": {"max_iterations": 80, "tolerance": 1.0e-8, "min_composition": 1.0e-12},
-    }
-
-    payload = _core._evaluate_electrolyte_lle_residual_native(mix._native, request)
-
-    assert payload["jacobian_backend"] == "cppad_explicit_density"
-    assert payload["diagnostics"]["derivative_available"] is True
+    assert hasattr(_core, "_native_equilibrium_selector_contract")
+    assert hasattr(_core, "_native_equilibrium_selector_route_result")
+    assert not hasattr(_core, "_evaluate_electrolyte_lle_residual_native")
 
 
 def test_equilibrium_runtime_does_not_import_external_optimizers() -> None:
@@ -84,8 +19,6 @@ def test_equilibrium_runtime_does_not_import_external_optimizers() -> None:
         for path in (
             REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
             REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
-            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_electrolyte.py",
-            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_speciation.py",
         )
     )
 
@@ -140,20 +73,24 @@ def test_native_route_result_serialization_uses_bridge_module() -> None:
     bindings = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
         encoding="utf-8"
     )
-
-    assert bridge.exists()
-    assert '#include "equilibrium/results/route_result_bridge.h"' in bindings
-    assert "apply_eos_route_metadata_fields(out, result);" in bindings
-    assert "apply_ipopt_route_status_fields(out, result);" in bindings
-    assert "apply_ipopt_route_solution_fields(out, result);" in bindings
-
-
-def test_seeded_route_campaign_selection_has_dedicated_owner() -> None:
-    campaign = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "route_campaign.h"
-    source = (
-        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "routes" / "route_builders.cpp"
+    equilibrium_registration = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "register_bindings.cpp"
     ).read_text(encoding="utf-8")
 
-    assert campaign.exists()
-    assert '#include "equilibrium/core/route_campaign.h"' in source
-    assert "RouteCampaign<NeutralTwoPhaseEosRouteResult, RouteSeedAttempt>" in source
+    assert bridge.exists()
+    assert '#include "equilibrium/results/route_result_bridge.h"' not in bindings
+    assert '#include "equilibrium/results/route_result_bridge.h"' in equilibrium_registration
+    assert "apply_eos_route_metadata_fields(out, result);" in equilibrium_registration
+    assert "apply_ipopt_route_status_fields(out, result);" in equilibrium_registration
+    assert "apply_ipopt_route_solution_fields(out, result);" in equilibrium_registration
+
+
+def test_selector_core_and_two_phase_support_have_dedicated_owners() -> None:
+    selector = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "selector_core.cpp"
+    source = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "two_phase_eos_route.cpp"
+    ).read_text(encoding="utf-8")
+
+    assert selector.exists()
+    assert "solve_selector_route" in selector.read_text(encoding="utf-8")
+    assert "solve_seeded_neutral_two_phase_route" not in source

@@ -29,14 +29,6 @@ NATIVE_CONTRACT_TEST_TARGETS = registry_targets("native-contracts")
 SLICE_TARGETS = {name: registry_targets(name) for name in TEST_SLICES}
 LONG_NATIVE_TARGETS = {
     "tests/native/equilibrium",
-    "tests/native/equilibrium/routes/electrolyte/test_route_builders.py",
-    "tests/native/equilibrium/routes/neutral/test_flash.py",
-    "tests/native/equilibrium/routes/neutral/test_lle.py",
-    "tests/native/equilibrium/routes/neutral/test_bubble_dew.py",
-    "tests/native/equilibrium/routes/reactive/test_two_phase.py",
-    "tests/native/equilibrium/routes/reactive/test_lle.py",
-    "tests/native/equilibrium/routes/reactive_electrolyte/test_route_builders.py",
-    "tests/native/equilibrium/routes/stability/test_route_builders.py",
 }
 LONG_NATIVE_TARGETS_NOTE = (
     "Broad native equilibrium route-builder targets are intentionally guarded because they can take a long time. "
