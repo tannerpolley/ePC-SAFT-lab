@@ -29,10 +29,10 @@ jobs:
         run: uv python install 3.13
 
       - name: Build default native profile
-        run: uv run python scripts/dev/build_epcsaft.py --clean
+        run: uv run python scripts/dev/build_epcsaft.py --clean --disable-ipopt
 
-      - name: Validate dependency-gated capabilities
-        run: uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/native/cppad/test_cppad_runtime_contract.py tests/native/contracts/test_ceres_cppad_build_contract.py -q
+      - name: Validate Windows native contracts
+        run: uv run python run_pytest.py tests/api/package/test_root_exports.py tests/native/state/test_derivative_runtime_contract.py tests/native/contracts/test_ceres_cppad_build_contract.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q
 
   cppad-build:
     name: native CppAD build
@@ -51,8 +51,8 @@ jobs:
         run: uv python install 3.13
 
       - name: Build CppAD native profile
-        run: uv run python scripts/dev/build_epcsaft.py --clean --enable-cppad
+        run: uv run python scripts/dev/build_epcsaft.py --clean --enable-cppad --disable-ipopt
 
       - name: Validate CppAD runtime contract
-        run: uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/native/cppad/test_cppad_runtime_contract.py -q
+        run: uv run python run_pytest.py tests/native/state/test_cppad_scalar_smoke.py tests/native/state/test_derivative_runtime_contract.py -q
 

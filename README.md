@@ -1,27 +1,38 @@
 # epcsaft
 
-`epcsaft` is a Python package for electrolyte PC-SAFT thermodynamic calculations. The public interface is Python, while the equation-of-state runtime and package-owned equilibrium/regression kernels are implemented in native C++ through `pybind11`.
+`epcsaft` is a Windows-first Python package for PC-SAFT and electrolyte PC-SAFT thermodynamic calculations. The public API is Python; the equation-of-state runtime and package-owned equilibrium/regression kernels are implemented in native C++ through `pybind11`.
 
-Current release: `1.5.2`
+Current package version: `0.2.0`
 
-## What This Package Does
+## What You Can Use It For
 
-Use `epcsaft` when you need to build PC-SAFT/ePC-SAFT mixtures, evaluate thermodynamic states, compute fugacity and activity coefficients, run supported phase-equilibrium workflows, or fit parameter sets against tabular data.
+- Build PC-SAFT/ePC-SAFT mixtures from user-owned parameter data.
+- Evaluate pressure, density, residual properties, fugacity coefficients, activity coefficients, and derivatives.
+- Run supported neutral and electrolyte phase-equilibrium workflows.
+- Run supported parameter-regression workflows.
+- Inspect runtime capabilities with `capabilities()` before selecting optional native solver paths.
 
-The main user objects are:
-
-- `Mixture`: stores components, parameters, and model options.
-- `State`: evaluates density, pressure, residual properties, fugacity coefficients, and derivatives at one thermodynamic condition.
-- `Equilibrium`: owns supported phase-equilibrium workflow defaults and solve methods.
-- `Regression`: owns supported parameter-regression workflow defaults and fit methods.
-- `ParameterSet`, `ModelOptions`, and `create_input_template(...)`: define parameter data, model choices, and user-owned input scaffolds.
-- `capabilities()`: reports which runtime and solver paths are available in the current install.
+The main public objects are `ParameterSet`, `ModelOptions`, `Mixture`, `State`, `Equilibrium`, `Regression`, and `create_input_template(...)`.
 
 ## Install
 
-### From PyPI
+### GitHub Release
 
-The standard install command is:
+The `v0.2.0` GitHub release should be published after final review:
+
+<https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0>
+
+After that release exists, Windows users can download the wheel matching their Python version and install it directly:
+
+```powershell
+python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
+```
+
+The automated wheel baseline is Windows CPython 3.13.
+
+### PyPI
+
+PyPI publishing is configured through GitHub Actions. When the project page is live at <https://pypi.org/project/epcsaft/>, install with:
 
 ```powershell
 python -m pip install epcsaft
@@ -33,37 +44,25 @@ With `uv`:
 uv add epcsaft
 ```
 
-The current public release is also available from GitHub.
+If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above.
 
-### Install From The GitHub Release
+### Tagged Source
 
-Download the current release from:
-
-<https://github.com/tannerpolley/ePC-SAFT/releases/tag/v1.5.2>
-
-If a wheel matching your Python version and platform is attached to the release, install it directly:
+After the `v0.2.0` tag exists, source installs build the native extension locally and require Python `>=3.9`, a C++ compiler, CMake, and Ninja or another CMake generator:
 
 ```powershell
-python -m pip install C:\path\to\epcsaft-1.5.2-*.whl
-```
-
-If you are installing from the release source archive or from the tagged Git source, a native build is required:
-
-```powershell
-python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 ```
 
 With `uv`:
 
 ```powershell
-uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 ```
 
-Source builds require Python `>=3.9`, a C++ compiler, CMake, and Ninja or another CMake generator. Python 3.13 is the current project smoke-test baseline.
+### Local Clone
 
-### Install From A Local Clone
-
-For a normal local source install:
+For a local source install:
 
 ```powershell
 git clone https://github.com/tannerpolley/ePC-SAFT.git
@@ -71,45 +70,13 @@ cd ePC-SAFT
 python -m pip install .
 ```
 
-For an editable install while changing Python files:
+For editable development:
 
 ```powershell
 python -m pip install -e .
 ```
 
-Editable installs use the same native build backend as wheel installs. Python source changes are picked up from the checkout. If you change C++ sources, pybind bindings, CMake files, or build metadata, rerun:
-
-```powershell
-python -m pip install -e .
-```
-
-With `uv`, use:
-
-```powershell
-uv pip install -e .
-```
-
-### Native IPOPT SDK Support
-
-IPOPT support is a native build dependency for constrained-NLP equilibrium routes. On Windows, the local SDK root `%USERPROFILE%\Documents\deps\ipopt-msvc` is the preferred source. Source and editable installs pick it up automatically when that directory exists; otherwise point the build backend at an Ipopt install root explicitly:
-
-```powershell
-$env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
-```
-
-Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig.cmake` directory. Runtime processes that execute Ipopt on Windows must expose the SDK `bin` directory through both `PATH` and `EPCSAFT_RUNTIME_DLL_DIRS`; repo build scripts do this automatically for the local SDK.
-
-IPOPT is never selected automatically by `solver_backend="auto"`. Use explicit Ipopt-backed routes or explicit solver options when validating native constrained-NLP behavior.
-
-## Architecture And Diagnostics
-
-The documentation includes short reference pages for the package architecture, parameter schema, equilibrium problem objects, and diagnostics:
-
-- `docs/pages/package_architecture.rst`
-- `docs/pages/parameter_schema.rst`
-- `docs/pages/equilibrium_architecture.rst`
-- `docs/pages/diagnostics.rst`
+Editable installs use the same native build backend as wheel installs. If you change C++ sources, pybind bindings, CMake files, or build metadata, rerun the editable install command so the native extension is rebuilt.
 
 ## Verify The Install
 
@@ -129,6 +96,7 @@ from epcsaft import Mixture, ParameterSet, State
 
 parameters = ParameterSet.from_dict(
     {
+        "MW": np.asarray([92.1405e-3]),
         "m": np.asarray([2.8149]),
         "s": np.asarray([3.7169]),
         "e": np.asarray([285.69]),
@@ -141,20 +109,20 @@ state = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
 
 print(state.density())                  # mol/m^3
 print(state.pressure())                 # Pa
-print(state.z())                        # Z
+print(state.z())                        # compressibility factor
 print(state.ares())                     # residual Helmholtz energy
 print(state.fugacity_coefficients())    # phi_i
 ```
 
-## Pressure, Density, And `rho_guess`
+## Pressure And Density
 
-State construction uses exactly one closure variable:
+`State` uses one closure variable:
 
 - `State(..., P=...)` solves the EOS pressure-density closure.
 - `State(..., rho=...)` evaluates properties at the supplied molar density.
-- `State(..., P=..., rho_guess=...)` still solves exact pressure closure, but seeds the density solve with a previous good density.
+- `State(..., P=..., rho_guess=...)` solves pressure closure using a previous good density as the initial guess.
 
-For repeated calculations at nearby conditions, reuse the previous accepted pressure-state density:
+For repeated calculations at nearby conditions:
 
 ```python
 base = State(mixture, T=320.0, x=np.asarray([1.0]), P=101325.0)
@@ -176,7 +144,7 @@ print(density_state.pressure() - 101325.0)
 
 ## Parameter Data
 
-Most users should create and own their parameter folders:
+Most users should own their parameter folders:
 
 ```python
 from epcsaft import create_input_template
@@ -187,35 +155,35 @@ template_root = create_input_template(
 )
 ```
 
-After filling in the generated files, load the tables in your own workflow and
-construct a `ParameterSet` from the records, then pass it to `Mixture`:
+After filling in the generated files, load the tables in your workflow and construct a `ParameterSet`, then pass it to `Mixture`:
 
 ```python
 import numpy as np
 from epcsaft import Mixture, ParameterSet, State
 
 species = ["H2O", "Na+", "Cl-"]
-parameters = ParameterSet.from_records(pure_records=loaded_pure_records, binary_records=loaded_binary_records)
+parameters = ParameterSet.from_records(
+    pure_records=loaded_pure_records,
+    binary_records=loaded_binary_records,
+)
 mixture = Mixture(parameters, components=species)
 state = State(mixture, T=298.15, P=101325.0, x=np.asarray([0.9998, 1e-4, 1e-4]))
 ```
 
-The source checkout contains reference/example datasets under `data/reference/epcsaft_parameters/`. Those folders are useful for comparison, validation, and paper-reproduction workflows. Do not assume every installed wheel contains those source-checkout reference folders.
+The source checkout contains reference/example datasets under `data/reference/epcsaft_parameters/`. Do not assume every installed wheel contains those source-checkout reference folders.
 
-## Equilibrium And Speciation
+## Optional Ipopt Support
 
-Use `capabilities()` and the documentation before wiring a high-level equilibrium workflow. The package includes native-backed paths for neutral phase equilibrium, electrolyte LLE, fixed-liquid electrolyte bubble pressure, reactive speciation, reactive staged equilibrium, and scoped reactive electrolyte bubble pressure.
+Ipopt is an optional native dependency for constrained-NLP equilibrium routes. On Windows, source and editable installs automatically use the local SDK at `%USERPROFILE%\Documents\deps\ipopt-msvc` when that directory exists. Otherwise point the build backend at an Ipopt install root:
 
-Important boundaries:
+```powershell
+$env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+```
 
-- Electrolyte bubble pressure is for fixed liquid composition with neutral vapor species; ions remain liquid-only.
-- Reactive electrolyte bubble pressure is staged: native speciation first, then fixed-liquid electrolyte bubble pressure.
-- IPOPT is an optional native dependency; implemented native equilibrium routes use exact Hessians by default when it is compiled, with limited-memory Hessians available only as an explicit solver opt-out.
-- Full downstream case-study models should own their own data, balances, run matrices, and acceptance criteria.
+Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig.cmake` directory. Runtime processes that execute Ipopt on Windows must expose the SDK `bin` directory through both `PATH` and `EPCSAFT_RUNTIME_DLL_DIRS`; repo build scripts do this automatically for the local SDK.
 
-For examples, see the equilibrium cookbook:
-
-<https://epcsaft.readthedocs.io/en/latest/equilibrium_cookbook.html>
+Ipopt is not selected automatically by `solver_backend="auto"`. Use explicit Ipopt-backed routes or solver options when validating constrained-NLP behavior.
 
 ## Documentation
 

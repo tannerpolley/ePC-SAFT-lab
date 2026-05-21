@@ -1,12 +1,13 @@
 Installation
 ============
 
-Current release: ``1.5.2``
+Current package version: ``0.2.0``
 
 Install from PyPI
 -----------------
 
-The standard install command is:
+PyPI publishing is configured through GitHub Actions. When the project page is
+live at ``https://pypi.org/project/epcsaft/``, install with:
 
 .. code-block:: powershell
 
@@ -18,19 +19,21 @@ With ``uv``:
 
    uv add epcsaft
 
-The current public release is also available from GitHub:
+If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel instead.
 
-``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v1.5.2``
+The ``v0.2.0`` GitHub release should be published after final review:
+
+``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
 
 Install from a wheel
 --------------------
 
-If the release includes a wheel matching your Python version and platform,
-download it and install it directly:
+After that release exists, download the wheel matching your Python version and
+platform and install it directly:
 
 .. code-block:: powershell
 
-   python -m pip install C:\path\to\epcsaft-1.5.2-*.whl
+   python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 
 This is the simplest install path because the native extension is already
 built for your platform.
@@ -38,17 +41,17 @@ built for your platform.
 Install from tagged source
 --------------------------
 
-If no compatible wheel is available, install from the tagged Git source:
+After the ``v0.2.0`` tag exists, install from the tagged Git source:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 
 Source builds require:
 
@@ -67,7 +70,7 @@ Download the release source archive, extract it, then run:
 
 .. code-block:: powershell
 
-   cd C:\path\to\ePC-SAFT-1.5.2
+   cd C:\path\to\ePC-SAFT-0.2.0
    python -m pip install .
 
 Editable source install
@@ -125,7 +128,7 @@ backend at an Ipopt install root explicitly:
 .. code-block:: powershell
 
    $env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 
 Use ``EPCSAFT_PEP517_IPOPT_DIR`` instead when the install provides an
 ``IpoptConfig.cmake`` directory.

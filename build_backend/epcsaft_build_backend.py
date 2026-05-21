@@ -185,6 +185,8 @@ def _apply_system_ipopt_config(config: dict) -> dict:
         or _truthy_env("EPCSAFT_PEP517_USE_SYSTEM_IPOPT")
     )
     if not use_system_ipopt:
+        _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_IPOPT", "OFF")
+        _set_config_default(config, "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT", "OFF")
         return config
 
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_IPOPT", "ON")

@@ -41,13 +41,15 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     getting_started = _read("docs/pages/getting_started.rst")
     overview = _read("docs/pages/README.rst")
     release_installation = _read("docs/pages/release_installation.rst")
+    release_note = _read("docs/releases/v0.2.0.md")
     docs_index = _read("docs/pages/index.rst")
     development_workflows = _read("docs/pages/development_workflows.rst")
 
     assert "README intentionally stays focused on package users" in readme
     assert "uv run python scripts\\validate_project.py quick" not in readme
     assert "uv run python run_pytest.py --confidence -q" not in readme
-    assert "The current public release is also available from GitHub" in readme
+    assert "The `v0.2.0` GitHub release should be published after final review" in readme
+    assert "If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above." in readme
     assert "python -m pip install epcsaft" in readme
     assert "python -m pip install -e ." in readme
     assert "README intentionally stays focused on package users" in readme
@@ -56,8 +58,16 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Source and editable installs build a native C++ extension" in getting_started
     assert "default source-checkout validation sequence" not in getting_started
     assert "``run_pytest.py -q`` is the default fast contract suite" not in getting_started
-    assert "Current release: ``1.5.2``" in overview
+    assert "Current package version: ``0.2.0``" in overview
+    assert "If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above." in overview
+    assert "After the ``v0.2.0`` tag exists" in overview
     assert "python -m pip install -e ." in overview
+    assert "After the package is published on PyPI" in getting_started
+    assert "After the ``v0.2.0`` tag is published" in getting_started
+    assert "Current package version: ``0.2.0``" in release_installation
+    assert "After that release exists" in release_installation
+    assert "This release note prepares the `v0.2.0` release" in release_note
+    assert "Publish the GitHub release only after final review" in release_note
     assert "uv run python run_pytest.py --confidence -q" not in overview
     assert "run_pytest.py tests/test_runtime.py -q" not in overview
     assert "release_installation" in docs_index
@@ -151,16 +161,21 @@ def test_github_full_packaging_remains_manual_only() -> None:
     assert "workflow_dispatch:" in workflow
     assert "if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_wheel_matrix }}" in workflow
     assert 'CIBW_BUILD: "cp313-*"' in workflow
+    assert 'CIBW_ARCHS_WINDOWS: "AMD64"' in workflow
     assert old_cibw not in workflow
+    assert "ubuntu-latest, macos-latest, windows-latest" not in workflow
+    assert "build Windows wheel" in workflow
 
 
-def test_github_default_events_do_not_run_duplicate_heavy_smokes() -> None:
+def test_github_default_events_run_windows_package_boundary_smoke() -> None:
     workflow = _read(".github/workflows/wheels.yml")
 
     assert "fast-pr-smoke:" in workflow
     assert "windows-install-smoke:" in workflow
     assert "if: ${{ github.event_name == 'pull_request' }}" in workflow
-    assert "if: ${{ github.event_name != 'pull_request' }}" in workflow
+    windows_smoke = workflow.split("\n  windows-install-smoke:", 1)[1].split("\n  build:", 1)[0]
+    assert "    if:" not in windows_smoke
+    assert workflow.count("runs-on: windows-latest") >= 3
     assert workflow.count("name: windows install smoke") == 1
     assert workflow.count("name: fast workflow smoke") == 1
 
@@ -180,11 +195,15 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
         "actions/download-artifact@v8.0.1",
         "merge-multiple: true",
         'CIBW_BUILD: "cp313-*"',
+        'CIBW_ARCHS_WINDOWS: "AMD64"',
         "uv build --sdist",
         "pypi-preflight:",
         "PyPI trusted publisher preflight",
-        "https://pypi.org/pypi/${project}/json",
+        "github.event_name == 'workflow_dispatch' || !startsWith(github.event.release.tag_name, 'v0.1.')",
+        "https://pypi.org/pypi/{project}/json",
         "pending publisher",
+        "PyPI first-publish preflight",
+        "already has {project} {version}",
     ):
         assert token in workflow
     assert "needs: [pypi-preflight]" in workflow
@@ -194,6 +213,7 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
     assert "pp*" not in workflow
     assert "Workflow filename: ``publish-pypi.yml``" in publishing_docs
     assert "Environment name: ``pypi``" in publishing_docs
+    assert "Historical ``v0.1.x`` release receipts are explicitly skipped" in publishing_docs
 
 
 def test_version_defaults_are_derived_from_pyproject() -> None:

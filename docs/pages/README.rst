@@ -1,12 +1,12 @@
 Overview
 ========
 
-``epcsaft`` is a Python package for electrolyte PC-SAFT thermodynamic
-calculations. The public interface is Python, while the equation-of-state
-runtime and package-owned equilibrium/regression kernels are implemented in
-native C++ through ``pybind11``.
+``epcsaft`` is a Windows-first Python package for PC-SAFT and electrolyte
+PC-SAFT thermodynamic calculations. The public interface is Python, while the
+equation-of-state runtime and package-owned equilibrium/regression kernels are
+implemented in native C++ through ``pybind11``.
 
-Current release: ``1.5.2``
+Current package version: ``0.2.0``
 
 What the package does
 ---------------------
@@ -31,7 +31,19 @@ The main user objects are:
 Install
 -------
 
-The standard install command is:
+The ``v0.2.0`` GitHub release should be published after final review:
+
+``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
+
+After that release exists, Windows users can download the wheel matching their
+Python version and install it directly:
+
+.. code-block:: powershell
+
+   python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
+
+PyPI publishing is configured through GitHub Actions. When the project page is
+live at ``https://pypi.org/project/epcsaft/``, install with:
 
 .. code-block:: powershell
 
@@ -43,30 +55,19 @@ With ``uv``:
 
    uv add epcsaft
 
-The current public release is also available from GitHub.
+If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above.
 
-Install from the current GitHub release:
-
-``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v1.5.2``
-
-If a wheel matching your platform is attached to the release, install it
-directly:
+After the ``v0.2.0`` tag exists, install from the tagged source:
 
 .. code-block:: powershell
 
-   python -m pip install C:\path\to\epcsaft-1.5.2-*.whl
-
-To install from the tagged source:
-
-.. code-block:: powershell
-
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 
 Source builds require Python ``>=3.9``, a C++ compiler, CMake, and Ninja or
 another CMake generator. Python 3.13 is the current project smoke-test
@@ -112,6 +113,7 @@ Quick example
 
    parameters = ParameterSet.from_dict(
        {
+           "MW": np.asarray([92.1405e-3]),
            "m": np.asarray([2.8149]),
            "s": np.asarray([3.7169]),
            "e": np.asarray([285.69]),

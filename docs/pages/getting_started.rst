@@ -4,17 +4,18 @@ Getting Started
 Install
 -------
 
-For a released package, use the standard package-manager command:
+After the package is published on PyPI, use the standard package-manager
+command:
 
 .. code-block:: powershell
 
    python -m pip install epcsaft
 
-The current release is also installable from GitHub:
+After the ``v0.2.0`` tag is published, the release is installable from GitHub:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v1.5.2"
+   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 
 For a local editable checkout:
 
@@ -51,6 +52,7 @@ For a one-component example, create a ``ParameterSet`` and pass it to
 
    parameters = ParameterSet.from_dict(
        {
+           "MW": np.asarray([92.1405e-3]),
            "m": np.asarray([2.8149]),
            "s": np.asarray([3.7169]),
            "e": np.asarray([285.69]),

@@ -154,10 +154,10 @@ def test_pep517_build_backend_requires_ceres_and_cppad_by_default(monkeypatch) -
 
     assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "ON"
     assert config["cmake.define.EPCSAFT_ENABLE_CPPAD"] == "ON"
+    assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "OFF"
+    assert config["cmake.define.EPCSAFT_USE_SYSTEM_IPOPT"] == "OFF"
     assert "cmake.define.EPCSAFT_USE_SYSTEM_CERES" not in config
     assert "cmake.define.Ceres_DIR" not in config
-    assert "cmake.define.EPCSAFT_ENABLE_IPOPT" not in config
-    assert "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT" not in config
     assert "cmake.define.Ipopt_DIR" not in config
     assert "cmake.define.EPCSAFT_IPOPT_ROOT" not in config
 
@@ -229,13 +229,13 @@ def test_pep660_editable_hook_uses_isolated_build_dir(tmp_path, monkeypatch) -> 
         captured["wheel_directory"] = wheel_directory
         captured["config_settings"] = config_settings
         captured["metadata_directory"] = metadata_directory
-        return "epcsaft-1.5.2-0.editable-py3-none-any.whl"
+        return "epcsaft-0.2.0-0.editable-py3-none-any.whl"
 
     monkeypatch.setattr(backend._scikit_build, "build_editable", fake_build_editable)
 
     result = backend.build_editable(str(wheel_dir), config_settings={"editable.mode": "redirect"})
 
-    assert result == "epcsaft-1.5.2-0.editable-py3-none-any.whl"
+    assert result == "epcsaft-0.2.0-0.editable-py3-none-any.whl"
     assert captured["wheel_directory"] == str(wheel_dir)
     assert captured["metadata_directory"] is None
     assert captured["config_settings"]["editable.mode"] == "redirect"

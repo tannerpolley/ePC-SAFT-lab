@@ -1,6 +1,14 @@
 # Changelog
 
-## 1.5.2 - 2026-05-10
+## 0.2.0 - 2026-05-21
+
+### Changed
+
+- Reset the independent package release line to `0.2.0` after unforking the project.
+- Reworked GitHub Actions around the current Windows support baseline and current public API names.
+- Updated release installation docs and README wording so PyPI is not claimed as available before the `epcsaft` project exists on PyPI.
+
+## 0.1.2 - 2026-05-10
 
 ### Highlights
 
@@ -8,7 +16,7 @@
 - Added release/tag and manual-dispatch publishing paths for PyPI.
 - Updated README and installation docs so PyPI is the primary install path once publishing is live.
 
-## 1.5.1 - 2026-05-10
+## 0.1.1 - 2026-05-10
 
 ### Highlights
 
@@ -17,7 +25,7 @@
 - Simplified the user-facing README and getting-started docs so install, editable install, first calculation, parameter folders, and next steps are easier to find.
 - Moved maintainer and troubleshooting workflows out of the primary quick-start path.
 
-## 1.5.0 - 2026-05-10
+## 0.1.0 - 2026-05-10
 
 First official source-release baseline for `epcsaft`.
 
@@ -35,5 +43,5 @@ First official source-release baseline for `epcsaft`.
 
 - Package metadata is prepared for the `epcsaft` distribution name.
 - Current official install path is GitHub release/tag installation.
-- `README.md` and the Sphinx overview now describe release installation without assuming PyPI is already published.
+- `README.md` and the Sphinx overview describe release installation without assuming PyPI is already published.
 - Source distributions explicitly include `README.md` and `LICENSE`.

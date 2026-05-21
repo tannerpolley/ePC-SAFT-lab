@@ -16,12 +16,15 @@ For the first PyPI publish, configure a PyPI trusted publisher for this project:
 - Environment name: ``pypi``
 
 For a new PyPI project, create this as a pending publisher in PyPI before the
-first GitHub Actions publish run.
+first GitHub Actions publish run. PyPI can still return 404 for
+``https://pypi.org/pypi/epcsaft/json`` until that first upload succeeds, so the
+workflow allows the 404 first-publish case and relies on the trusted-publisher
+exchange to fail loudly if the pending publisher is missing or mismatched.
 
-The workflow checks ``https://pypi.org/pypi/epcsaft/json`` before building
-artifacts. If PyPI returns 404, the workflow fails before wheel builds and
-prints the exact pending-publisher values above. That failure is expected until
-the pending publisher is created in the PyPI account.
+If the PyPI project already exists, the workflow checks the version in
+``pyproject.toml`` and stops before building artifacts when that version has
+already been published. PyPI files are immutable, so duplicate-version retries
+must use a new version.
 
 Publish a release
 -----------------
@@ -33,8 +36,10 @@ Publish a release
 5. Create the GitHub release for ``vX.Y.Z``.
 
 The ``publish-to-pypi`` workflow runs when a GitHub release is published. It
-builds the sdist and CPython 3.13 wheels, then publishes the distributions to
-PyPI through ``pypa/gh-action-pypi-publish`` using OIDC.
+builds the sdist and Windows CPython 3.13 wheel, then publishes the
+distributions to PyPI through ``pypa/gh-action-pypi-publish`` using OIDC.
+Historical ``v0.1.x`` release receipts are explicitly skipped by the publish
+workflow.
 
 Manual publish
 --------------

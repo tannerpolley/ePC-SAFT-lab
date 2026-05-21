@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref to publish, usually a tag such as v1.5.2"
+        description: "Git ref to publish, usually a tag such as v0.2.0"
         required: true
-        default: "v1.5.2"
+        default: "v0.2.0"
         type: string
 
 permissions:
@@ -21,47 +21,58 @@ concurrency:
 jobs:
   pypi-preflight:
     name: PyPI trusted publisher preflight
+    if: ${{ github.event_name == 'workflow_dispatch' || !startsWith(github.event.release.tag_name, 'v0.1.') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
 
     steps:
-      - name: Check PyPI project or pending publisher requirement
+      - uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.ref }}
+
+      - name: Check PyPI project and release version
         shell: bash
         run: |
           set -euo pipefail
-          project="epcsaft"
-          status="$(curl -sS -o /tmp/pypi-project.json -w "%{http_code}" "https://pypi.org/pypi/${project}/json")"
-          if [[ "$status" == "200" ]]; then
-            echo "PyPI project '${project}' exists."
-            exit 0
-          fi
-          if [[ "$status" != "404" ]]; then
-            echo "::error::Unexpected PyPI project lookup status ${status} for '${project}'."
-            cat /tmp/pypi-project.json || true
-            exit 1
-          fi
-          cat <<'EOF' >> "$GITHUB_STEP_SUMMARY"
-          ## PyPI project preflight failed
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import os
+          import sys
+          import tomllib
+          import urllib.error
+          import urllib.request
 
-          PyPI does not have a published project named `epcsaft` yet. Before the
-          first trusted-publishing upload, create a **pending publisher** on PyPI
-          with exactly these values:
-
-          - PyPI project name: `epcsaft`
-          - Owner: `tannerpolley`
-          - Repository name: `ePC-SAFT`
-          - Workflow filename: `publish-pypi.yml`
-          - Environment name: `pypi`
-
-          Then rerun this workflow for the release tag.
-          EOF
-          echo "::error::PyPI project '${project}' does not exist and must have a matching pending publisher before trusted publishing can create it."
-          exit 1
+          project = "epcsaft"
+          version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          url = f"https://pypi.org/pypi/{project}/json"
+          try:
+              with urllib.request.urlopen(url, timeout=30) as response:
+                  payload = json.loads(response.read().decode("utf-8"))
+          except urllib.error.HTTPError as exc:
+              if exc.code == 404:
+                  summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
+                  summary.write_text(
+                      "## PyPI first-publish preflight\n\n"
+                      "PyPI does not have a published `epcsaft` project yet. "
+                      "This is valid only when PyPI has a matching pending publisher "
+                      "for `tannerpolley/ePC-SAFT`, workflow `publish-pypi.yml`, "
+                      "environment `pypi`.\n",
+                      encoding="utf-8",
+                  )
+                  print("PyPI project does not exist yet; continuing for trusted-publisher first publish.")
+                  sys.exit(0)
+              raise
+          releases = payload.get("releases", {})
+          if version in releases:
+              raise SystemExit(f"PyPI already has {project} {version}; bump the version before publishing.")
+          print(f"PyPI project exists and {project} {version} is not published yet.")
+          PY
 
   build-sdist:
     name: build sdist
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [pypi-preflight]
 
     steps:
@@ -87,13 +98,13 @@ jobs:
           path: dist/*.tar.gz
 
   build-wheels:
-    name: build wheels / ${{ matrix.os }}
+    name: build Windows wheel
     runs-on: ${{ matrix.os }}
     needs: [pypi-preflight]
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest]
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -115,9 +126,10 @@ jobs:
         run: uv run --locked cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp313-*"
+          CIBW_ARCHS_WINDOWS: "AMD64"
           CIBW_SKIP: "*-win32 *-musllinux*"
           CIBW_TEST_REQUIRES: "numpy"
-          CIBW_TEST_COMMAND: "python -c \"import numpy as np; import epcsaft; import epcsaft._core; m=epcsaft.ePCSAFTMixture.from_params({'m': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}); s=m.state(T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.compressibility_factor())\""
+          CIBW_TEST_COMMAND: "python -c \"import numpy as np; from epcsaft import Mixture, ParameterSet, State; p=ParameterSet.from_dict({'MW': np.asarray([16.043e-3]), 'm': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}, species=['Methane']); s=State(Mixture(p), T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.z())\""
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7.0.1

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       full_wheel_matrix:
-        description: "Run the full Linux/macOS/Windows wheel and sdist packaging checks"
+        description: "Run the Windows wheel and sdist packaging checks"
         required: false
         default: false
         type: boolean
@@ -20,14 +20,23 @@ jobs:
   fast-pr-smoke:
     name: fast workflow smoke
     if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v6.0.2
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
       - name: Check lightweight package and workflow contracts
+        shell: pwsh
         run: |
-          python - <<'PY'
+          @'
           from pathlib import Path
           import ast
           import re
@@ -62,8 +71,8 @@ jobs:
           ):
               if token not in workflow:
                   raise SystemExit(f"missing workflow contract token: {token}")
-          if not re.search(r"windows-install-smoke:\n(?:.*\n)*?    if: \$\{\{ github\.event_name != 'pull_request' \}\}", workflow):
-              raise SystemExit("windows install smoke must not run on pull_request events")
+          if re.search(r"windows-install-smoke:\n(?:.*\n)*?    if:", workflow):
+              raise SystemExit("windows install smoke must run on pull_request and push events")
           windows_smoke = re.search(
               r"windows-install-smoke:\n(?P<body>.*?)(?:\n  build:|\Z)",
               workflow,
@@ -98,16 +107,36 @@ jobs:
               if isinstance(node, ast.ImportFrom)
               for alias in node.names
           }
-          required_exports = {"ePCSAFTMixture", "InputError", "SolutionError", "fit_pure_neutral"}
+          required_exports = {
+              "Mixture",
+              "State",
+              "Equilibrium",
+              "Regression",
+              "ParameterSet",
+              "ModelOptions",
+              "InputError",
+              "SolutionError",
+              "create_input_template",
+              "capabilities",
+          }
           missing_exports = sorted(required_exports - exported)
           if missing_exports:
               raise SystemExit(f"missing public exports: {missing_exports}")
+          legacy_exports = {
+              "ePC" + "SAFTMixture",
+              "ePC" + "SAFTState",
+              "fit_pure_" + "neutral",
+              "bubble_p",
+              "dew_p",
+          }
+          stale_exports = sorted(legacy_exports & exported)
+          if stale_exports:
+              raise SystemExit(f"stale legacy root exports: {stale_exports}")
           print("fast workflow/package contract smoke passed")
-          PY
+          '@ | uv run --no-project --python 3.13 python -
 
   windows-install-smoke:
     name: windows install smoke
-    if: ${{ github.event_name != 'pull_request' }}
     runs-on: windows-latest
 
     steps:
@@ -148,17 +177,17 @@ jobs:
           Set-Location $downstream
           $env:UV_CACHE_DIR = Join-Path $env:RUNNER_TEMP "uv-cache"
           $env:EPCSAFT_PEP517_BUILD_DIR = Join-Path $env:RUNNER_TEMP "epcsaft-pep517-build"
-          uv run --no-sync python -c "import numpy as np; import epcsaft; import epcsaft._core; m = epcsaft.ePCSAFTMixture.from_params({'m': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}); state = m.state(T=300.0, x=np.asarray([1.0]), rho=100.0); print(state.compressibility_factor())"
+          uv run --no-sync python -c "import numpy as np; from epcsaft import Mixture, ParameterSet, State; p = ParameterSet.from_dict({'MW': np.asarray([16.043e-3]), 'm': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}, species=['Methane']); s = State(Mixture(p), T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.z())"
 
   build:
-    name: build wheels / ${{ matrix.os }}
+    name: build Windows wheel
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_wheel_matrix }}
     runs-on: ${{ matrix.os }}
     needs: windows-install-smoke
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest]
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -178,9 +207,10 @@ jobs:
         run: uv run --locked cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp313-*"
+          CIBW_ARCHS_WINDOWS: "AMD64"
           CIBW_SKIP: "*-win32 *-musllinux*"
           CIBW_TEST_REQUIRES: "numpy"
-          CIBW_TEST_COMMAND: "python -c \"import numpy as np; import epcsaft; import epcsaft._core; m=epcsaft.ePCSAFTMixture.from_params({'m': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}); s=m.state(T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.compressibility_factor())\""
+          CIBW_TEST_COMMAND: "python -c \"import numpy as np; from epcsaft import Mixture, ParameterSet, State; p=ParameterSet.from_dict({'MW': np.asarray([16.043e-3]), 'm': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}, species=['Methane']); s=State(Mixture(p), T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.z())\""
 
       - name: Upload wheels
         uses: actions/upload-artifact@v7.0.1
@@ -191,7 +221,7 @@ jobs:
   sdist:
     name: build sdist
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_wheel_matrix }}
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: windows-install-smoke
 
     steps:
