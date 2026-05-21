@@ -21,6 +21,8 @@ struct ProblemFamilyActivation {
     std::vector<std::string> residual_families;
     std::vector<std::string> constraint_families;
     std::vector<std::string> proof_routes;
+    std::string variable_model;
+    std::string density_backend;
 };
 
 inline const std::vector<ProblemFamilyActivation>& problem_family_activation_matrix() {
@@ -161,6 +163,8 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_volume_gap",
             },
             {"neutral_bubble_pressure_hydrocarbon_ipopt_exact_hessian"},
+            "phase_species_amounts_plus_phase_volume_plus_pressure",
+            "explicit_phase_volume_pressure_constraint",
         },
     };
     return matrix;

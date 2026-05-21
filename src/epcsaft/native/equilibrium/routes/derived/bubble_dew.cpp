@@ -1,4 +1,4 @@
-#include "equilibrium/routes/route_builders.h"
+#include "equilibrium/core/two_phase_eos_route.h"
 
 #include "equilibrium/blocks/eos_phase_block.h"
 #include "eos/core_internal.h"
@@ -2144,22 +2144,6 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_bubble_p_eos_nlp_contract(
     return make_contract(problem, problem.phase_count(), problem.species_count());
 }
 
-NeutralTwoPhaseEosNlpContract evaluate_electrolyte_bubble_p_eos_nlp_contract(
-    const add_args& args,
-    double temperature,
-    const std::vector<double>& liquid_composition
-) {
-    NeutralFixedTemperaturePressureProblem problem(
-        args,
-        temperature,
-        liquid_composition,
-        0,
-        "electrolyte_bubble_p_eos",
-        args.z
-    );
-    return make_contract(problem, problem.phase_count(), problem.species_count());
-}
-
 NeutralTwoPhaseEosNlpContract evaluate_neutral_dew_p_eos_nlp_contract(
     const add_args& args,
     double temperature,
@@ -2226,33 +2210,6 @@ NeutralTwoPhaseEosRouteResult solve_neutral_bubble_p_eos_route(
         phase_total_tolerance,
         pressure_tolerance,
         0.0,
-        chemical_potential_tolerance,
-        phase_distance_tolerance
-    );
-}
-
-NeutralTwoPhaseEosRouteResult solve_electrolyte_bubble_p_eos_route(
-    const add_args& args,
-    double temperature,
-    const std::vector<double>& liquid_composition,
-    const IpoptSolveOptions& options,
-    double phase_total_tolerance,
-    double pressure_tolerance,
-    double charge_tolerance,
-    double chemical_potential_tolerance,
-    double phase_distance_tolerance
-) {
-    return solve_pressure_route(
-        args,
-        temperature,
-        liquid_composition,
-        0,
-        "electrolyte_bubble_p_eos",
-        args.z,
-        options,
-        phase_total_tolerance,
-        pressure_tolerance,
-        charge_tolerance,
         chemical_potential_tolerance,
         phase_distance_tolerance
     );

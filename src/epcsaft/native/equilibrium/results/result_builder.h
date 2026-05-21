@@ -1,6 +1,6 @@
 #pragma once
 
-#include "equilibrium/routes/route_builders.h"
+#include "equilibrium/core/two_phase_eos_route.h"
 
 #include <string>
 #include <vector>

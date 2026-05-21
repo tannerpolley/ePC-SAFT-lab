@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "build" / "generated" / "ipopt_exact_hessian_proofs"
 SUMMARY_PREFIX = "IPOPT_PROOF_SUMMARY "
-CASES = ("vle", "electrolyte_lle")
+CASES = ("bubble_pressure",)
 
 
 def _hydrocarbon_workbook_mixture():
@@ -41,17 +41,6 @@ def _hydrocarbon_workbook_mixture():
     return ePCSAFTMixture.from_params(params, species=["Methane", "Ethane", "Propane"])
 
 
-def _ascani_electrolyte_mixture():
-    from epcsaft.state.native_adapter import ePCSAFTMixture
-
-    aq = np.asarray([0.798324680201737, 0.016320352824141723, 0.09267748348706063, 0.09267748348706063])
-    org = np.asarray([0.37006036048879404, 0.6214918588210971, 0.004223890345054407, 0.004223890345054407])
-    beta_org = 0.613766575013417
-    feed = ((1.0 - beta_org) * aq + beta_org * org).tolist()
-    mix = ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
-    return mix, feed
-
-
 def _summary_from_payload(case: str, payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "case": case,
@@ -68,12 +57,13 @@ def _summary_from_payload(case: str, payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _run_vle_child() -> dict[str, Any]:
+def _run_bubble_pressure_child() -> dict[str, Any]:
     from epcsaft import _core
 
     mix = _hydrocarbon_workbook_mixture()
-    payload = _core._native_neutral_bubble_p_eos_route_result(
+    payload = _core._native_equilibrium_selector_route_result(
         mix._native,
+        "bubble_pressure",
         233.15,
         [0.1, 0.3, 0.6],
         200,
@@ -88,40 +78,13 @@ def _run_vle_child() -> dict[str, Any]:
         None,
         print_level=5,
     )
-    return _summary_from_payload("vle", payload)
-
-
-def _run_electrolyte_lle_child() -> dict[str, Any]:
-    from epcsaft import _core
-
-    mix, feed = _ascani_electrolyte_mixture()
-    payload = _core._native_electrolyte_lle_eos_route_result(
-        mix._native,
-        298.15,
-        1.0e5,
-        feed,
-        500,
-        1.0e-8,
-        0.0,
-        "auto",
-        8,
-        1.0e-8,
-        1.0e-8,
-        1.0e-8,
-        1.0e-7,
-        1.0e-3,
-        None,
-        print_level=5,
-    )
-    return _summary_from_payload("electrolyte_lle", payload)
+    return _summary_from_payload("bubble_pressure", payload)
 
 
 def _run_child(case: str) -> int:
     apply_to_current_process()
-    if case == "vle":
-        summary = _run_vle_child()
-    elif case == "electrolyte_lle":
-        summary = _run_electrolyte_lle_child()
+    if case == "bubble_pressure":
+        summary = _run_bubble_pressure_child()
     else:
         raise SystemExit(f"Unknown proof case: {case}")
     print(SUMMARY_PREFIX + json.dumps(summary, sort_keys=True))

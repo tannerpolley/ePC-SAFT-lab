@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "equilibrium/facade.h"
+#include "model/native_types.h"
 
 namespace epcsaft::native::equilibrium {
 

@@ -272,7 +272,6 @@ set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
     src/epcsaft/native/autodiff/cppad_smoke_checks.cpp
 )
 set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
-    src/epcsaft/native/equilibrium/workflows.cpp
     src/epcsaft/native/equilibrium/blocks/association_block.cpp
     src/epcsaft/native/equilibrium/blocks/electrolyte_block.cpp
     src/epcsaft/native/equilibrium/blocks/eos_phase_block.cpp
@@ -280,14 +279,11 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     src/epcsaft/native/equilibrium/blocks/reaction_block.cpp
     src/epcsaft/native/equilibrium/core/helpers.cpp
     src/epcsaft/native/equilibrium/core/nlp_problem.cpp
+    src/epcsaft/native/equilibrium/core/selector_core.cpp
     src/epcsaft/native/equilibrium/core/second_order.cpp
+    src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp
     src/epcsaft/native/equilibrium/results/result_builder.cpp
-    src/epcsaft/native/equilibrium/routes/route_builders.cpp
     src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp
-    src/epcsaft/native/equilibrium/routes/reactive/chemical_equilibrium.cpp
-    src/epcsaft/native/equilibrium/routes/reactive/ideal_speciation_problem.cpp
-    src/epcsaft/native/equilibrium/routes/reactive/phase_equilibrium_problem.cpp
-    src/epcsaft/native/equilibrium/routes/stability/stability_route_builders.cpp
     src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp
 )
 set(EPCSAFT_NATIVE_REGRESSION_SOURCES
@@ -315,10 +311,7 @@ set(EPCSAFT_NATIVE_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/blocks"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/core"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/results"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/derived"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/reactive"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/stability"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/solvers"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/model"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/regression"
@@ -344,7 +337,10 @@ if(EPCSAFT_CPPAD_LIBRARY)
     target_link_libraries(epcsaft_native PUBLIC "${EPCSAFT_CPPAD_LIBRARY}")
 endif()
 
-pybind11_add_module(_core NO_EXTRAS src/epcsaft/native/bindings/module.cpp)
+pybind11_add_module(_core NO_EXTRAS
+    src/epcsaft/native/bindings/module.cpp
+    src/epcsaft/native/equilibrium/register_bindings.cpp
+)
 target_link_libraries(_core PRIVATE epcsaft_native)
 target_include_directories(_core
     PRIVATE
@@ -353,7 +349,11 @@ target_include_directories(_core
 )
 target_compile_features(_core PRIVATE cxx_std_17)
 if(MSVC)
-    set_source_files_properties(src/epcsaft/native/bindings/module.cpp PROPERTIES COMPILE_OPTIONS "/Od;/Ob0")
+    set_source_files_properties(
+        src/epcsaft/native/bindings/module.cpp
+        src/epcsaft/native/equilibrium/register_bindings.cpp
+        PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
+    )
 endif()
 
 set(EPCSAFT_NATIVE_TARGETS epcsaft_native _core)
