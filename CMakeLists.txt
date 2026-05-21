@@ -27,6 +27,7 @@ option(EPCSAFT_USE_SYSTEM_IPOPT "Use an installed Ipopt package for native equil
 set(EPCSAFT_IPOPT_ROOT "" CACHE PATH "Root directory for an installed Ipopt tree with include/, lib/, and bin/")
 option(EPCSAFT_WARNINGS_AS_ERRORS "Treat native warnings as errors" OFF)
 option(EPCSAFT_ENABLE_SANITIZERS "Enable ASAN/UBSAN in debug builds" OFF)
+set(EPCSAFT_CERES_VERSION "2.2.0")
 
 if(NOT EPCSAFT_ENABLE_CERES)
     message(FATAL_ERROR "EPCSAFT_ENABLE_CERES=OFF is not supported; native regression builds require Ceres.")
@@ -73,7 +74,7 @@ if(EPCSAFT_ENABLE_CERES)
     if(EPCSAFT_USE_SYSTEM_CERES)
         unset(Ceres_BINARY_DIR CACHE)
         unset(Ceres_SOURCE_DIR CACHE)
-        find_package(Ceres CONFIG REQUIRED)
+        find_package(Ceres ${EPCSAFT_CERES_VERSION} CONFIG REQUIRED)
     else()
         include(FetchContent)
         set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -90,7 +91,7 @@ if(EPCSAFT_ENABLE_CERES)
             FetchContent_Declare(
                 ceres_solver
                 GIT_REPOSITORY https://ceres-solver.googlesource.com/ceres-solver
-                GIT_TAG 2.2.0
+                GIT_TAG ${EPCSAFT_CERES_VERSION}
                 GIT_SHALLOW TRUE
                 EXCLUDE_FROM_ALL
             )
@@ -99,7 +100,7 @@ if(EPCSAFT_ENABLE_CERES)
             FetchContent_Declare(
                 ceres_solver
                 GIT_REPOSITORY https://ceres-solver.googlesource.com/ceres-solver
-                GIT_TAG 2.2.0
+                GIT_TAG ${EPCSAFT_CERES_VERSION}
                 GIT_SHALLOW TRUE
             )
             FetchContent_GetProperties(ceres_solver)

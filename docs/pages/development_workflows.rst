@@ -87,7 +87,7 @@ The canonical local native build command is:
 
 That command uses ``--profile fast`` by default: Ceres and CppAD are enabled, and Ipopt is enabled when a native install is available. On Windows, the script first honors explicit ``EPCSAFT_IPOPT_ROOT`` / ``EPCSAFT_PEP517_IPOPT_ROOT`` values and otherwise uses the local SDK default ``%USERPROFILE%\Documents\deps\ipopt-msvc`` when present. Ceres is required for native regression builds, CppAD is required for derivative-capable package builds, and Ipopt-enabled equilibrium routes require an Ipopt-enabled native build.
 
-Wheel/editable/path installs go through the PEP 517/scikit-build backend and use the same required Ceres/CppAD policy. On Windows, the backend also uses the local Ipopt SDK default when it exists; otherwise set ``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` explicitly for Ipopt package builds. Repeated clean builds can still avoid rebuilding Ceres by using a prebuilt system Ceres package.
+Wheel/editable/path installs go through the PEP 517/scikit-build backend and use the same required Ceres/CppAD policy. On Windows, the backend also uses the local Ipopt SDK default when it exists; otherwise set ``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` explicitly for Ipopt package builds. Repeated package builds avoid rebuilding Ceres when the default repo-local Ceres package exists at ``build/system-ceres/2.2.0/install/lib/cmake/Ceres`` or when an explicit ``EPCSAFT_PEP517_CERES_DIR``/``Ceres_DIR`` points at a valid Ceres package config.
 
 .. list-table::
    :header-rows: 1
@@ -126,7 +126,7 @@ For IDE run configurations, keep commands explicit instead of relying on one ove
 
 Do not use ``--clean`` for routine validation. ``uv run python scripts/dev/build_epcsaft.py --clean`` is a repair action for stale CMake state or stale/locked ``_core`` artifacts. A clean dev build deletes the reusable CMake tree, so Ceres source/configuration/build work under ``build/dev/_deps`` may run again unless you use a prebuilt system Ceres package. If Windows reports that ``_core*.pyd`` is locked, stop Python REPLs, tests, IDE run configurations, or parallel workers that imported ``epcsaft._core`` before retrying. If ``--status`` reports a stale Ninja lock, inspect the listed process ids and stop only repo-owned build processes before retrying.
 
-If Ceres becomes part of a repeated local workflow, build or install Ceres once outside ``build/dev`` and use the system-Ceres path instead of vendoring it through ``FetchContent`` on every clean full-profile configure. The supported command shape is:
+If Ceres becomes part of a repeated local workflow, build Ceres once outside ``build/dev`` and use the system-Ceres path instead of vendoring it through ``FetchContent`` on every clean full-profile configure. The default helper output is auto-detected by package builds and can also be used explicitly by the dev build:
 
 .. code-block:: powershell
 
@@ -135,7 +135,9 @@ If Ceres becomes part of a repeated local workflow, build or install Ceres once 
 
 ``--ceres-dir`` should point at the directory containing ``CeresConfig.cmake``. Ceres' own CMake documentation supports consuming either an installed Ceres package or an exported Ceres build directory through ``find_package(Ceres)`` and ``Ceres::ceres``.
 
-The same prebuilt Ceres package can accelerate downstream path installs without changing package defaults:
+On Windows, ``build_system_ceres.py`` prefers the MSVC build environment for the default reusable package. Request ``--generator mingw`` only when you intend to consume that Ceres package from a MinGW build. The package backend ignores a default repo-local Ceres package that exports MinGW ``libceres.a`` so MSVC wheel builds do not link against an incompatible archive.
+
+The same default prebuilt Ceres package is auto-used by local wheel/editable/path installs from this source checkout. Set the environment variables only when the consuming checkout cannot see ``build/system-ceres/2.2.0`` or when you want a custom Ceres package:
 
 .. code-block:: powershell
 
@@ -144,7 +146,9 @@ The same prebuilt Ceres package can accelerate downstream path installs without 
    $env:EPCSAFT_PEP517_BUILD_DIR = "$PWD\.uv-cache\epcsaft-build"
    uv sync --reinstall-package epcsaft
 
-Without those Ceres environment variables, wheel/editable/path installs still build the default Ceres-enabled package through ``FetchContent``. On Windows, Ipopt uses the local SDK default when present; otherwise set ``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` before installing if the package build needs Ipopt.
+``scripts/dev/build_dist.py`` also uses the default prebuilt Ceres package when present and keeps its config-specific PEP 517 build state under ``build/pep517`` for inspection. Strict isolated release builds may still reconfigure and rebuild the package objects; the main speed win is avoiding a repeated Ceres compile.
+
+On Windows, Ipopt uses the local SDK default when present; otherwise set ``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` before installing if the package build needs Ipopt.
 
 LaTeX and Overleaf mirror
 -------------------------

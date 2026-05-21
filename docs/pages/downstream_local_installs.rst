@@ -87,15 +87,17 @@ Reusable Ceres package
 
 Full package installs keep Ceres enabled by default. When repeated local or
 downstream path installs spend most of their time compiling Ceres, build Ceres
-once and point package installs at the prebuilt CMake package:
+once in the ePC-SAFT checkout. Package installs from that checkout auto-detect
+the default helper output:
 
 .. code-block:: powershell
 
    cd C:\path\to\ePC-SAFT
    uv run python scripts\dev\build_system_ceres.py --parallel 4
 
-The helper prints the exact environment variables to reuse the result. The
-manual form is:
+The helper prints the exact environment variables to reuse the result from a
+custom location, from another checkout, or from tooling that cannot see
+``build\system-ceres\2.2.0``. The manual form is:
 
 .. code-block:: powershell
 
@@ -106,9 +108,12 @@ manual form is:
 
 ``EPCSAFT_PEP517_CERES_DIR`` must point at the directory containing
 ``CeresConfig.cmake``. The build backend then passes
-``EPCSAFT_USE_SYSTEM_CERES=ON`` and ``Ceres_DIR=...`` to CMake. If the
-environment variables are not set, package installs still use the package
-default Ceres ``FetchContent`` path.
+``EPCSAFT_USE_SYSTEM_CERES=ON`` and ``Ceres_DIR=...`` to CMake. If neither the
+default helper output nor the environment variables are available, package
+installs still use the package default Ceres ``FetchContent`` path. On Windows,
+the default helper output is built with MSVC when Visual Studio Build Tools are
+available; use a custom ``EPCSAFT_PEP517_CERES_DIR`` only when the downstream
+build is intentionally using another compiler toolchain.
 
 For normal ePC-SAFT source development, keep using the explicit in-place dev build:
 
