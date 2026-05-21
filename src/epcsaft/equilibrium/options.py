@@ -1,5 +1,5 @@
 """Equilibrium workflow options."""
 
-from . import EquilibriumOptions
+from . import EquilibriumSolverOptions
 
-__all__ = ["EquilibriumOptions"]
+__all__ = ["EquilibriumSolverOptions"]

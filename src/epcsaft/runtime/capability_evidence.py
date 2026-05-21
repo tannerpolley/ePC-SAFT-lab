@@ -9,14 +9,16 @@ from __future__ import annotations
 from typing import Final
 
 IPOPT_PUBLIC_ROUTES: Final[tuple[str, ...]] = (
-    "Equilibrium.solve(route='bubble_pressure')",
-    "Equilibrium.solve(route='bubble_temperature')",
-    "Equilibrium.solve(route='dew_pressure')",
-    "Equilibrium.solve(route='dew_temperature')",
-    "Equilibrium.solve(route='flash')",
+    "bubble_pressure",
+    "bubble_temperature",
+    "dew_pressure",
+    "dew_temperature",
+    "flash",
 )
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES: Final[tuple[str, ...]] = (
+    "EquilibriumProblem",
+    "EquilibriumStructure",
 )
 
 DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
@@ -117,9 +119,12 @@ EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
     "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
     "tests/api/frontend/test_equilibrium.py",
+    "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
+    "tests/native/state/test_bubble_derivatives.py",
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/frontend/test_equilibrium.py",
+    "tests/native/state/test_bubble_derivatives.py",
 )
 RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives",

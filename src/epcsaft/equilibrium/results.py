@@ -1,5 +1,5 @@
 """Equilibrium result object exports."""
 
-from . import EquilibriumResult, StabilityResult
+from . import EquilibriumPhase, EquilibriumResult
 
-__all__ = ["EquilibriumResult", "StabilityResult"]
+__all__ = ["EquilibriumPhase", "EquilibriumResult"]

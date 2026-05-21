@@ -222,6 +222,11 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert "tests/api/frontend" in run_pytest.API_TEST_TARGETS
     assert "tests/api/frontend" in run_pytest.GENERIC_TEST_TARGETS
     assert "tests/api/frontend/test_equilibrium.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
+    assert "tests/native/state/test_bubble_derivatives.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
+    assert "tests/native/state/test_bubble_derivatives.py" in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    assert "tests/native/equilibrium/results/test_neutral_vle_reference_values.py" in (
+        run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    )
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )

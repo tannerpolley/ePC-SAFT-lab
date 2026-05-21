@@ -24,11 +24,11 @@ def test_runtime_capabilities_report_public_ipopt_routes() -> None:
     assert ipopt["adapter_source_available"] is True
     assert ipopt["adapter_kind"] == "native_tnlp_adapter"
     assert ipopt["public_routes"] == [
-        "Equilibrium.solve(route='bubble_pressure')",
-        "Equilibrium.solve(route='bubble_temperature')",
-        "Equilibrium.solve(route='dew_pressure')",
-        "Equilibrium.solve(route='dew_temperature')",
-        "Equilibrium.solve(route='flash')",
+        "bubble_pressure",
+        "bubble_temperature",
+        "dew_pressure",
+        "dew_temperature",
+        "flash",
     ]
 
 

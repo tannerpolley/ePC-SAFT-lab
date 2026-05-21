@@ -17,7 +17,7 @@ The target is a single equilibrium core with route-owned variableizations and se
 
 The active package architecture is:
 
-- the public `Equilibrium(mixture)` workflow object normalizes supported requests into one route contract;
+- the public `Equilibrium(mixture, route=..., ...)` workflow object normalizes supported requests into one route contract;
 - Ipopt route callbacks use explicit density or phase volume variables, while pressure-root density solves are limited to normal `State(T, P, x)` calls and seed construction;
 - exact gradients and exact Jacobians are required for production routes, with exact Lagrangian Hessians as the default when a route is exposed as production native Ipopt;
 - `limited-memory` Hessians are an explicit opt-out mode, not an automatic fallback from `auto`;
@@ -60,14 +60,14 @@ The architecture must still be general enough that Tier 2 and Tier 3 routes are 
 ## Current public entrypoint and selector boundary
 
 The current repo exposes selector-backed neutral VLE production routes through
-the direct workflow object. The selector core sits beneath this interface:
+the constructor-configured workflow object. The selector core sits beneath this
+interface:
 
-- `Equilibrium(mixture)`
-- `Equilibrium(mixture).solve(route="bubble_pressure", T=..., x=...)`
-- `Equilibrium(mixture).solve(route="bubble_temperature", P=..., x=...)`
-- `Equilibrium(mixture).solve(route="dew_pressure", T=..., y=...)`
-- `Equilibrium(mixture).solve(route="dew_temperature", P=..., y=...)`
-- `Equilibrium(mixture).solve(route="flash", T=..., P=..., z=...)`
+- `Equilibrium(mixture, route="bubble_pressure", T=..., x=...).solve()`
+- `Equilibrium(mixture, route="bubble_temperature", P=..., x=...).solve()`
+- `Equilibrium(mixture, route="dew_pressure", T=..., y=...).solve()`
+- `Equilibrium(mixture, route="dew_temperature", P=..., y=...).solve()`
+- `Equilibrium(mixture, route="flash", T=..., P=..., z=...).solve()`
 
 The native activation matrix is authoritative for route-family exposure.
 `bubble_dew_derived_routes` and `neutral_tp_flash` are production exposed for
@@ -109,17 +109,17 @@ clarification before writing production code.
 
 | Public route spec | Selector route | Knowns | Unknowns | Composition role | Activation key | Residual rows | Hard constraints | Certification |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `solve(route="bubble_pressure", T, x)` | `bubble_pressure` | `T`, liquid `x` | `P`, vapor `y`, phase volumes | liquid | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed liquid composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
-| `solve(route="bubble_temperature", P, x)` | `bubble_temperature` | `P`, liquid `x` | `T`, vapor `y`, phase volumes | liquid | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed liquid composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
-| `solve(route="dew_pressure", T, y)` | `dew_pressure` | `T`, vapor `y` | `P`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
-| `solve(route="dew_temperature", P, y)` | `dew_temperature` | `P`, vapor `y` | `T`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
-| `solve(route="flash", T, P, z)` | `neutral_tp_flash` | `T`, `P`, feed `z` | liquid `x`, vapor `y`, phase amounts, phase volumes | feed | `neutral_tp_flash` | material-balance, phase-pressure consistency, phase-equilibrium, phase-distance | material balance, common pressure, phase volume gap | exact derivatives, density closure, material closure, phase-equilibrium residual, noncollapsed two-phase split |
+| `Equilibrium(mixture, route="bubble_pressure", T, x).solve()` | `bubble_pressure` | `T`, liquid `x` | `P`, vapor `y`, phase volumes | liquid | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed liquid composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `Equilibrium(mixture, route="bubble_temperature", P, x).solve()` | `bubble_temperature` | `P`, liquid `x` | `T`, vapor `y`, phase volumes | liquid | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed liquid composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `Equilibrium(mixture, route="dew_pressure", T, y).solve()` | `dew_pressure` | `T`, vapor `y` | `P`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `Equilibrium(mixture, route="dew_temperature", P, y).solve()` | `dew_temperature` | `P`, vapor `y` | `T`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `Equilibrium(mixture, route="flash", T, P, z).solve()` | `neutral_tp_flash` | `T`, `P`, feed `z` | liquid `x`, vapor `y`, phase amounts, phase volumes | feed | `neutral_tp_flash` | material-balance, phase-pressure consistency, phase-equilibrium, phase-distance | material balance, common pressure, phase volume gap | exact derivatives, density closure, material closure, phase-equilibrium residual, noncollapsed two-phase split |
 
 ## End-to-end stack
 
 ```mermaid
 flowchart TD
-    A["Public API<br/>Equilibrium(mixture) workflow"] --> B["Request normalization<br/>problem, options, fixed specs, species metadata"]
+    A["Public API<br/>Equilibrium(mixture, route=..., ...) workflow"] --> B["Request normalization<br/>problem, options, fixed specs, species metadata"]
     B --> C["System classification<br/>neutral vs electrolyte vs reactive vs reactive-electrolyte"]
     C --> D["Core problem assembly<br/>phase set, species eligibility, transfer set, reaction set, conservation basis"]
     D --> E["Pretreatment layer<br/>homogeneous chemistry seed, stability checks, split candidate generation"]
@@ -675,7 +675,7 @@ Check:
 ## Pseudocode skeleton
 
 ```text
-Equilibrium(mixture).solve(problem):
+Equilibrium(mixture, route=..., ...).solve():
     normalize problem and options
     classify route family
     build phase set, species set, eligibility mask, reaction set, transferable set

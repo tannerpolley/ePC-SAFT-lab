@@ -1,3 +1,5 @@
-"""No public equilibrium problem-object routes are exported."""
+"""Equilibrium problem metadata exports."""
 
-__all__: list[str] = []
+from . import EquilibriumProblem, EquilibriumStructure
+
+__all__ = ["EquilibriumProblem", "EquilibriumStructure"]

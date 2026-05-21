@@ -3,28 +3,20 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
 from typing import Any
 
 from .._types import InputError
 from .mixture import Mixture
 
 
-@dataclass(slots=True)
 class Equilibrium:
-    """A configured equilibrium workflow for a mixture."""
+    """A constructor-configured equilibrium workflow for a mixture."""
 
-    mixture: Mixture
-    defaults: dict[str, Any] = field(default_factory=dict)
+    __slots__ = ("mixture", "_problem")
 
-    def __init__(self, mixture: Mixture, **defaults: Any) -> None:
-        if not isinstance(mixture, Mixture):
-            raise InputError("Equilibrium requires a Mixture.")
-        self.mixture = mixture
-        self.defaults = _reject_backend_options(defaults, context="Equilibrium")
-
-    def solve(
+    def __init__(
         self,
+        mixture: Mixture,
         *,
         route: str,
         T: float | None = None,
@@ -32,32 +24,35 @@ class Equilibrium:
         x: Sequence[float] | None = None,
         y: Sequence[float] | None = None,
         z: Sequence[float] | None = None,
-        **overrides: Any,
-    ) -> Any:
-        """Solve one selector-admitted neutral VLE route spec."""
+    ) -> None:
+        if not isinstance(mixture, Mixture):
+            raise InputError("Equilibrium requires a Mixture.")
+
+        from ..equilibrium.workflows import configure_equilibrium_problem
+
+        self.mixture = mixture
+        self._problem = configure_equilibrium_problem(mixture.native, route=route, T=T, P=P, x=x, y=y, z=z)
+
+    @property
+    def problem(self) -> Any:
+        """Return read-only configured problem metadata."""
+
+        return self._problem
+
+    def structure(self) -> Any:
+        """Return immutable selector structure metadata for the configured problem."""
+
+        from ..equilibrium.workflows import equilibrium_structure
+
+        return equilibrium_structure(self.mixture.native, self._problem)
+
+    def solve(self, *, solver_options: Mapping[str, Any] | Any = None) -> Any:
+        """Solve the already configured equilibrium problem."""
 
         from ..equilibrium.workflows import _solve_selector_vle
 
-        options = self._options(overrides)
-        result = _solve_selector_vle(self.mixture.native, route=route, T=T, P=P, x=x, y=y, z=z, options=options)
-        return _require_exact_hessian(result, method=f"Equilibrium.solve(route='{route}')")
-
-    def _options(self, overrides: Mapping[str, Any] | None = None) -> Any:
-        from ..equilibrium import EquilibriumOptions
-
-        payload = dict(self.defaults)
-        payload.update(_reject_backend_options(overrides or {}, context="Equilibrium"))
-        payload["jacobian_backend"] = "cppad"
-        payload["solver_backend"] = "ipopt"
-        payload["hessian_mode"] = "exact"
-        return EquilibriumOptions(**payload)
-
-
-def _reject_backend_options(options: Mapping[str, Any], *, context: str) -> dict[str, Any]:
-    blocked = sorted(set(options) & {"backend", "derivative_backend", "jacobian_backend", "solver_backend", "hessian_mode"})
-    if blocked:
-        raise InputError(f"{context} does not expose backend-selection option(s): {', '.join(blocked)}.")
-    return dict(options)
+        result = _solve_selector_vle(self.mixture.native, self._problem, options=solver_options)
+        return _require_exact_hessian(result, method=f"Equilibrium(route='{self._problem.route}').solve()")
 
 
 def _require_exact_hessian(result: Any, *, method: str) -> Any:

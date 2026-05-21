@@ -2,6 +2,10 @@
 
 Created: 2026-05-21
 
+Status: superseded by the in-progress GoalBuddy board at
+`docs/goals/equilibrium-setup-workflow/state.yaml`. Keep this handoff as the
+intake and gate record; active docs and tests own the current public API.
+
 This handoff is for a fresh Codex implementation thread working from
 `C:\Users\Tanner\Documents\git\ePC-SAFT` on branch `ipopt`.
 
@@ -150,8 +154,8 @@ Do not implement any of these:
   `eq.problem("bubble_pressure").at_temperature(...).with_liquid_composition(...)`
 - `equilibrium.setup(...)`
 - Empty `Equilibrium(mixture)` object.
-- Old direct public solve:
-  `Equilibrium(mixture).solve(route="bubble_pressure", T=..., x=...)`
+- Old direct public solve where the route and fixed specs are supplied to
+  `solve()` instead of the constructor.
 - Compatibility wrapper that forwards the old direct solve into the new
   constructor-configured path.
 - Route-specific public wrappers such as `bubble_pressure()`, `flash()`,
@@ -200,8 +204,8 @@ receipt before implementation edits:
 Known stale fact at handoff creation:
 
 - `FULL_ROADMAP.md` and `unified_equilibrium_core_algorithm.md` still describe
-  direct `Equilibrium(mixture).solve(route=..., ...)` as current public API.
-  The implementation must update them.
+  the old direct solve call shape as current public API. The implementation
+  must update them.
 
 ## GoalBuddy Gate
 
@@ -278,8 +282,8 @@ changed:
 
 Add negative tests proving:
 
-- `Equilibrium(mixture).solve(route="bubble_pressure", T=..., x=...)` is not a
-  supported public workflow.
+- Passing the route and fixed specs to `solve()` is not a supported public
+  workflow.
 - `solve()` does not accept `route`, `T`, `P`, `x`, `y`, or `z`.
 - No compatibility wrapper forwards old direct-solve kwargs into the new path.
 - Docs and capability strings no longer advertise direct `solve(route=...)`.
@@ -293,7 +297,7 @@ Add tests proving:
 
 - `result.phases["liquid"]` works.
 - `result.phases["vapor"]` works.
-- `result.phases[0]` and `result.phases[1]` are not the public API.
+- Numeric indexing on `result.phases` is not the public API.
 - `result.phase_labels` returns `["liquid", "vapor"]`.
 - `result.pressure` and `result.temperature` report common phase values.
 - `result.x` is the liquid composition.
@@ -400,11 +404,11 @@ Remove or update stale references intentionally:
 
 Known stale patterns to eliminate from active code/docs/tests:
 
-- `Equilibrium(mixture).solve(route=`
-- `Equilibrium.solve(route=`
-- `result.phases[0]`
-- `result.phases[1]`
-- `Equilibrium(mixture, ...).solve(route=...)`
+- Direct solve calls where route/spec inputs are supplied to `solve()`.
+- Capability strings that describe `Equilibrium.solve` route calls instead of
+  public route names.
+- Numeric indexing into `result.phases`.
+- Constructor examples that still mix old route arguments into `solve()`.
 
 Exclusions must be explicit and justified if any historical archival text is
 left unchanged.

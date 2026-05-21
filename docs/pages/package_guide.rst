@@ -54,11 +54,12 @@ Hessian:
 
    from epcsaft import Equilibrium
 
-   result = Equilibrium(mixture, max_iterations=200).solve(
+   result = Equilibrium(
+       mixture,
        route="bubble_pressure",
        T=233.15,
        x=np.asarray([1.0]),
-   )
+   ).solve(solver_options={"max_iterations": 200})
 
 Regression
 ----------

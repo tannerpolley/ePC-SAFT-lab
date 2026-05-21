@@ -153,15 +153,16 @@ Use ``capabilities()`` before wiring high-level downstream workflows:
        "neutral_tp_flash",
        "bubble_dew_derived_routes",
    ]
-   assert "Equilibrium.solve(route='bubble_pressure')" in caps["equilibrium"]["public_routes"]
-   assert "Equilibrium.solve(route='flash')" in caps["equilibrium"]["public_routes"]
+   assert "bubble_pressure" in caps["equilibrium"]["public_routes"]
+   assert "flash" in caps["equilibrium"]["public_routes"]
 
 Native EOS/property calls and native regression helpers are available. The
-production equilibrium public route is ``Equilibrium.solve(route=..., ...)``
-for selector-backed neutral VLE bubble/dew pressure and temperature specs plus
-certified two-phase flash. Future LLE, electrolyte, reactive, and speciation
-families are declared in the native activation matrix without being advertised
-as callable routes.
+production equilibrium public route list contains route names for
+constructor-configured ``Equilibrium(mixture, route=..., ...).solve()``
+workflows: selector-backed neutral VLE bubble/dew pressure and temperature specs
+plus certified two-phase flash. Future LLE, electrolyte, reactive, and
+speciation families are declared in the native activation matrix without being
+advertised as callable routes.
 
 For routing examples and the production/opt-in solver table, see
 :doc:`equilibrium_cookbook`.
@@ -195,7 +196,7 @@ Capability status summary
      - Requires an Ipopt-enabled build.
    * - Reactive speciation
      - Explicit Ipopt ideal route
-     - ``solver_backend="ipopt"`` supports homogeneous ``ideal_mole_fraction`` when Ipopt is compiled; activity and concentration residual diagnostics use exact CppAD-implicit phase-state derivatives, while production nonideal solves require the native Gibbs/activity NLP route builder.
+     - Native Ipopt support covers homogeneous ``ideal_mole_fraction`` when compiled; activity and concentration residual diagnostics use exact CppAD-implicit phase-state derivatives, while production nonideal solves require the native Gibbs/activity NLP route builder.
    * - Electrolyte bubble pressure
      - Native Ipopt route when compiled
      - Fixed liquid composition with neutral vapor species; ions remain liquid-only.

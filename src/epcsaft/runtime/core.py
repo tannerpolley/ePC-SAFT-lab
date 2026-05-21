@@ -500,7 +500,7 @@ def capabilities() -> dict[str, object]:
             "bubble_dew_derived_routes": {
                 "available": bool(equilibrium_activation["ipopt_available"]),
                 "production": True,
-                "entrypoint": "Equilibrium(mixture).solve(route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature')",
+                "entrypoint": "Equilibrium(mixture, route=..., ...).solve()",
                 "selector_core": True,
                 "input_scope": "neutral non-reactive non-electrolyte non-associating mixtures",
                 "requires": ["cppad", "ipopt"],
@@ -508,7 +508,7 @@ def capabilities() -> dict[str, object]:
             "neutral_tp_flash": {
                 "available": bool(equilibrium_activation["ipopt_available"]),
                 "production": True,
-                "entrypoint": "Equilibrium(mixture).solve(route='flash')",
+                "entrypoint": "Equilibrium(mixture, route='flash', T=..., P=..., z=...).solve()",
                 "selector_core": True,
                 "input_scope": "neutral non-reactive non-electrolyte non-associating two-phase mixtures",
                 "requires": ["cppad", "ipopt"],
@@ -519,10 +519,10 @@ def capabilities() -> dict[str, object]:
                 "density_seed_parameter": "rho_guess",
             },
             "problem_objects": {
-                "available": False,
-                "backend": "superseded_by_reset_frontend",
+                "available": True,
+                "backend": "constructor_configured_frontend",
                 "classes": list(EQUILIBRIUM_PROBLEM_OBJECT_CLASSES),
-                "entrypoint": "Equilibrium(mixture, ...).solve(route=...)",
+                "entrypoint": "Equilibrium(mixture, route=..., ...)",
             },
             "contribution_maps": {
                 "available": True,

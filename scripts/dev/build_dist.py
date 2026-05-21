@@ -8,6 +8,11 @@ import sys
 import zipfile
 from pathlib import Path
 
+try:
+    from native_runtime_env import apply_native_runtime_env
+except ImportError:  # pragma: no cover - supports importing this module as scripts.dev.build_dist
+    from scripts.dev.native_runtime_env import apply_native_runtime_env
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DIST_ROOT = REPO_ROOT / "dist"
 TEMPFILE_SITE = REPO_ROOT / "scripts" / "sandbox_tempfile_site"
@@ -29,6 +34,7 @@ def _env(parallel: str | None = None) -> dict[str, str]:
     existing_pythonpath = env.get("PYTHONPATH")
     site_path = str(TEMPFILE_SITE.resolve())
     env["PYTHONPATH"] = site_path if not existing_pythonpath else os.pathsep.join([site_path, existing_pythonpath])
+    apply_native_runtime_env(env, ipopt_enabled=True)
     if parallel:
         env["CMAKE_BUILD_PARALLEL_LEVEL"] = str(parallel)
     return env
@@ -72,7 +78,8 @@ def _smoke_wheel(wheel: Path) -> None:
     target = REPO_ROOT / "build" / "wheel-smoke-target"
     shutil.rmtree(target, ignore_errors=True)
     target.mkdir(parents=True, exist_ok=True)
-    _run(["uv", "pip", "install", "--target", str(target), str(wheel)])
+    smoke_env = _env()
+    _run(["uv", "pip", "install", "--target", str(target), str(wheel)], env=smoke_env)
     code = f"""
 import sys
 sys.path.insert(0, {str(target)!r})
@@ -81,13 +88,18 @@ import epcsaft
 import epcsaft._core
 from epcsaft import Mixture, ParameterSet, State
 mixture = Mixture(ParameterSet.from_dict(
-    {{"m": np.asarray([1.0]), "s": np.asarray([3.7039]), "e": np.asarray([150.03])}},
+    {{
+        "m": np.asarray([1.0]),
+        "s": np.asarray([3.7039]),
+        "e": np.asarray([150.03]),
+        "MW": np.asarray([16.043e-3]),
+    }},
     species=["Methane"],
 ))
 state = State(mixture, T=300.0, x=np.asarray([1.0]), rho=100.0)
 print("wheel smoke ok", epcsaft.__file__, state.z())
 """
-    _run([sys.executable, "-S", "-c", code])
+    _run([sys.executable, "-S", "-c", code], env=smoke_env)
 
 
 def main() -> int:

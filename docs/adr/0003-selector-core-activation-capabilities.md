@@ -20,8 +20,8 @@ deleted or unproven families looking available.
   owns production route admission, activation checks, exact-derivative
   requirements, density-closure diagnostics, and certification gating.
 - The production public neutral VLE surface is limited to one
-  `Equilibrium(mixture).solve(route=..., ...)` execution method with route specs
-  for bubble pressure, bubble temperature, dew pressure, dew temperature, and
+  `Equilibrium(mixture, route=..., ...).solve()` workflow with route specs for
+  bubble pressure, bubble temperature, dew pressure, dew temperature, and
   two-phase flash, limited to neutral, non-reactive, non-electrolyte,
   non-associating mixtures.
 - Bubble/dew and flash requests are route specs admitted by the selector over

@@ -1,0 +1,659 @@
+version: 2
+
+goal:
+  title: "Constructor-Configured Equilibrium API"
+  slug: "equilibrium-setup-workflow"
+  kind: existing_plan
+  tranche: "Complete the full constructor-configured Equilibrium API reset from the strict handoff."
+  status: active
+  intake:
+    original_request: "Use the equilibrium constructor-configured API handoff to accomplish the full goal with no assumptions."
+    interpreted_outcome: "Equilibrium is configured in the constructor, solve() executes the configured problem, result/structure/capability/docs behavior matches the handoff, validation passes, local commits exist, and branch ipopt is pushed."
+    input_shape: existing_plan
+    audience: "epcsaft maintainers and downstream package consumers"
+    authority: requested
+    proof_type: test
+    completion_proof: "Every handoff gate has a receipt, required tests and confidence validation pass, GoalBuddy checker passes, local commits exist, branch ipopt is pushed, and git status is clean."
+    likely_misfire: "Preserving legacy direct-solve compatibility or only reshaping tests/docs while the public API, native selector boundary, capabilities, or active roadmaps still contradict the constructor-configured workflow."
+    blind_spots_considered:
+      - "Implementation files must not be edited before this board passes the checker."
+      - "Owner files must be proven from actual repo files before edits."
+      - "All five current VLE route specs need constructor-contract coverage."
+      - "Legacy direct-solve kwargs must die without compatibility forwarding."
+      - "Result phases must be immutable and keyed by public labels."
+      - "Structure metadata must be generally owned or explicitly unavailable."
+      - "Initialization must be real native-selector-backed behavior or absent."
+      - "Capabilities must advertise public route names only and must not overclaim future route families."
+      - "Stale durable docs must be updated, while temporary contradictory receipts may be removed only when clearly temporary."
+      - "Owner-agent review, full confidence validation, local commits, push, cleanup, and clean status are completion gates."
+    existing_plan_facts:
+      - "Handoff: docs/handoffs/equilibrium-constructor-configured-api-handoff.md."
+      - "Goal title: Constructor-Configured Equilibrium API."
+      - "Goal slug: equilibrium-setup-workflow."
+      - "Current branch must be ipopt."
+      - "Local live board should be attempted by default."
+      - "Required owner files are listed in the handoff and must be inspected before implementation edits."
+      - "Solver controls live on solve(solver_options=...), not in the constructor."
+      - "solver_options accepts a dict or EquilibriumSolverOptions dataclass."
+      - "Normal examples still require only Equilibrium and Mixture imports."
+      - "Public phase labels are liquid and vapor."
+      - "Production constructor routes are bubble_pressure, bubble_temperature, dew_pressure, dew_temperature, and flash."
+      - "Constructor routes map to selector routes and activation keys exactly as in the handoff matrix."
+      - "Do not add wrappers, aliases, route-specific public methods, broad public escape hatches, fake initialize(), or Python-owned route shortcuts."
+      - "If any action is ambiguous, stop and ask instead of guessing."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: "http://127.0.0.1:41737/equilibrium-setup-workflow/"
+    command: "C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/equilibrium-setup-workflow"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: T009
+
+tasks:
+  - id: T001
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: medium
+    objective: "Create the required GoalBuddy board, run the checker, attempt the local live board, and record starting branch/worktree state."
+    inputs:
+      - "docs/handoffs/equilibrium-constructor-configured-api-handoff.md"
+      - "C:\\Users\\Tanner\\.codex\\GOALBUDDY.md"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+    constraints:
+      - "Only write GoalBuddy control files and generated local-board artifacts for this task."
+      - "Do not edit implementation files before the board checker passes."
+      - "If the local board launch fails, record the exact failure instead of silently downgrading."
+    expected_output:
+      - "goal.md and state.yaml exist."
+      - "GoalBuddy checker passes."
+      - "Local visual board is live or the exact blocker is recorded."
+      - "Starting git branch and dirty state are recorded."
+    receipt:
+      result: done
+      summary: "Created the required v2 GoalBuddy board before implementation edits, passed the GoalBuddy checker, and confirmed the local board URL responds."
+      evidence:
+        - "Starting branch state: ipopt tracking origin/ipopt, ahead by 3 before this goal's commits."
+        - "Starting dirty state after board creation: only docs/goals/equilibrium-setup-workflow/ was untracked."
+        - "GoalBuddy checker passed with version 2, active task T001, 11 tasks, and no warnings."
+        - "Local board probe returned HTTP 200 for http://127.0.0.1:41737/equilibrium-setup-workflow/."
+        - "Board artifacts were generated under docs/goals/equilibrium-setup-workflow/.goalbuddy-board."
+      commands:
+        - cmd: "node <goalbuddy-checker> docs/goals/equilibrium-setup-workflow/state.yaml"
+          status: pass
+        - cmd: "start-goalbuddy-board.ps1 -Goal docs/goals/equilibrium-setup-workflow"
+          status: pass_with_timeout
+          result: "Launcher timed out after leaving a live board server on 127.0.0.1:41737; HTTP probe passed."
+        - cmd: "Invoke-WebRequest http://127.0.0.1:41737/equilibrium-setup-workflow/ -TimeoutSec 3"
+          status: pass
+        - cmd: "git status --short --branch"
+          status: pass
+
+  - id: T002
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: high
+    objective: "Perform read-only owner-file proof and route/spec matrix proof before implementation edits."
+    inputs:
+      - "src/epcsaft/frontend/equilibrium.py"
+      - "src/epcsaft/equilibrium/workflows.py"
+      - "src/epcsaft/native/equilibrium/core/selector_core.cpp"
+      - "src/epcsaft/runtime/capability_evidence.py"
+      - "src/epcsaft/runtime/core.py"
+      - "tests/api/frontend/test_equilibrium.py"
+      - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+      - "tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py"
+      - "tests/workflows/repo/test_project_structure.py"
+      - "tests/native/equilibrium/results/test_neutral_vle_reference_values.py"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "docs/pages/api_reference.rst"
+      - "docs/pages/equilibrium_cookbook.rst"
+      - "docs/pages/equilibrium_architecture.rst"
+      - "docs/pages/diagnostics.rst"
+      - "docs/pages/downstream_local_installs.rst"
+    constraints:
+      - "Read-only except for board receipt or a note under this goal."
+      - "Record actual file ownership evidence before editing implementation files."
+      - "Record the five-route constructor matrix from verified owner files and handoff facts."
+      - "Stop and ask if the owner file or route/spec matrix is ambiguous."
+    expected_output:
+      - "Owner-file proof receipt."
+      - "Route/spec matrix receipt for all five production constructor routes."
+      - "Implementation/test/docs risk map."
+    receipt:
+      result: done
+      summary: "Read-only owner proof completed from actual repo files before implementation edits."
+      evidence:
+        - "Public frontend owner verified: src/epcsaft/frontend/equilibrium.py:14-43 defines Equilibrium with mixture/defaults constructor and solve(route, T, P, x, y, z, **overrides)."
+        - "Current frontend mismatch verified: solve() owns route/spec inputs and method text at src/epcsaft/frontend/equilibrium.py:26-43; constructor does not own problem spec."
+        - "Python route-spec owner verified: src/epcsaft/equilibrium/workflows.py:168-219 defines all five public route specs and maps flash to selector route neutral_tp_flash."
+        - "Route input validation owner verified: src/epcsaft/equilibrium/workflows.py:223-275 validates required composition, T, and P before building selector requests."
+        - "Result-shape owner verified: src/epcsaft/equilibrium/workflows.py:111-153 returns EquilibriumResult with tuple phases and phase_labels list; no pressure/temperature/x/y/z/fraction helpers yet."
+        - "Current phase-label mismatch verified: src/epcsaft/equilibrium/workflows.py:381-385 converts native payloads with labels liq and vap, not liquid and vapor."
+        - "Native selector owner verified: src/epcsaft/native/equilibrium/core/selector_core.cpp:32-40 maps selector families; lines 120-158 enforce route-specific required/forbidden inputs and roles."
+        - "Native dispatch owner verified: src/epcsaft/native/equilibrium/core/selector_core.cpp:205-245 evaluates route contracts and lines 248-318 dispatches the five selector routes through native route solvers."
+        - "Activation metadata verified: src/epcsaft/native/equilibrium/core/activation_matrix.h:30-53 exposes neutral_tp_flash and lines 145-175 expose bubble_dew_derived_routes."
+        - "Structure metadata source verified: route_metadata.h:10-15 defines variable/density/residual/constraint families; no general DOF field found in inspected route metadata."
+        - "Capability mismatch verified: src/epcsaft/runtime/capability_evidence.py:11-17 and src/epcsaft/runtime/core.py:500-525 advertise method-call strings and old entrypoint text."
+        - "Test mismatch verified: tests/api/frontend/test_equilibrium.py:19-33 constructs Equilibrium with solver defaults and tests solve(route=...); lines 39-46 use positional result.phases."
+        - "Reference-result proof verified: tests/native/equilibrium/results/test_neutral_vle_reference_values.py:24-55 already contains the five-route hydrocarbon matrix."
+        - "Active docs mismatch verified by rg in FULL_ROADMAP, unified_equilibrium_core_algorithm, diagnostics, downstream_local_installs, equilibrium_architecture, and equilibrium_cookbook."
+      route_matrix:
+        - "bubble_pressure: constructor route bubble_pressure; required T,x; forbidden P,y,z; composition role liquid; selector route bubble_pressure; activation key bubble_dew_derived_routes."
+        - "bubble_temperature: constructor route bubble_temperature; required P,x; forbidden T,y,z; composition role liquid; selector route bubble_temperature; activation key bubble_dew_derived_routes."
+        - "dew_pressure: constructor route dew_pressure; required T,y; forbidden P,x,z; composition role vapor; selector route dew_pressure; activation key bubble_dew_derived_routes."
+        - "dew_temperature: constructor route dew_temperature; required P,y; forbidden T,x,z; composition role vapor; selector route dew_temperature; activation key bubble_dew_derived_routes."
+        - "flash: constructor route flash; required T,P,z; forbidden x,y; composition role feed; selector route neutral_tp_flash; activation key neutral_tp_flash."
+      uncertainty:
+        - "verified: owner files, current public API mismatch, current route matrix, activation keys, and stale docs/capability strings."
+        - "unknown: general DOF ownership; current route/native metadata inspected here does not expose a general DOF field, so implementation must report DOF unavailable unless later evidence proves ownership."
+        - "unknown: real public initialize() support; inspected frontend/workflow/native selector surfaces expose seed diagnostics but no constructor-configured public initialization contract."
+      commands:
+        - cmd: "rg -n <owner patterns> src/epcsaft/frontend/equilibrium.py src/epcsaft/equilibrium/workflows.py"
+          status: pass
+        - cmd: "rg -n <selector/capability patterns> src/epcsaft/runtime src/epcsaft/native/equilibrium/core"
+          status: pass
+        - cmd: "rg -n <test/doc stale patterns> tests docs"
+          status: pass
+
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Add failing constructor API, solver-options, and legacy-direct-solve rejection tests before implementation code changes."
+    allowed_files:
+      - "tests/api/frontend/test_equilibrium.py"
+      - "tests/support/**"
+      - "tests/workflows/repo/test_project_structure.py"
+      - "docs/goals/equilibrium-setup-workflow/**"
+    verify:
+      - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+    stop_if:
+      - "A test requires a compatibility wrapper to pass."
+      - "A route-specific public method seems necessary."
+      - "The desired public failure mode is ambiguous."
+    expected_output:
+      - "Red tests for constructor-configured solves on all five routes."
+      - "Red tests that constructor missing route fails."
+      - "Red tests that route-specific required and forbidden constructor inputs are enforced."
+      - "Red tests that constructor solver options fail and solve(solver_options=...) succeeds."
+      - "Red tests that legacy direct-solve kwargs are unsupported."
+    receipt:
+      result: done
+      summary: "Added contract-first tests for constructor-configured route setup, constructor input validation, solver-options placement, and legacy solve signature removal."
+      changed_files:
+        - "tests/api/frontend/test_equilibrium.py"
+      evidence:
+        - "Frontend red run failed in the intended old-contract places: constructor route solves still require solve(route=...), bare Equilibrium(mixture) still succeeds, constructor route/spec validation is absent, constructor solver_options is accepted as a default, and solve signature still exposes route/T/P/x/y/z."
+        - "Project-structure guard still passed before implementation changes."
+      commands:
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+          status: pass
+          result: "expected_red: 13 failed, 6 passed"
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+          result: "36 passed"
+
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Add failing result-shape, structure, capability, and no-wrapper guard tests before implementation code changes."
+    allowed_files:
+      - "tests/api/frontend/test_equilibrium.py"
+      - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+      - "tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py"
+      - "tests/workflows/repo/test_project_structure.py"
+      - "tests/native/equilibrium/results/test_neutral_vle_reference_values.py"
+      - "docs/goals/equilibrium-setup-workflow/**"
+    verify:
+      - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/workflows/repo/test_project_structure.py -q"
+    stop_if:
+      - "structure() or DOF ownership is unclear."
+      - "Capability shape would overclaim future routes."
+      - "A guard test can pass only by weakening existing architecture guards."
+    expected_output:
+      - "Red tests for immutable result phases keyed by liquid and vapor."
+      - "Red tests for public result helpers."
+      - "Red tests for read-only problem metadata and immutable structure().to_dict()."
+      - "Red tests for route-name capabilities."
+      - "Guard tests rejecting wrappers, aliases, route-specific public methods, and legacy public paths."
+    receipt:
+      result: done
+      summary: "Added failing result-shape, structure/problem metadata, capability route-name, and no-wrapper/broad-kwargs guard tests."
+      changed_files:
+        - "tests/api/frontend/test_equilibrium.py"
+        - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+        - "tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py"
+        - "tests/workflows/repo/test_project_structure.py"
+      evidence:
+        - "Combined T004 verifier failed in intended old-contract areas: constructor-configured route calls, result phase mapping/helpers, missing problem/structure metadata, stale capability public route strings, and frontend broad **kwargs/public method guard."
+        - "Focused Ipopt public-route test failed because capabilities still returned old direct-solve route strings instead of route names."
+      commands:
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+          result: "expected_red: 19 failed, 42 passed"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py::test_runtime_capabilities_report_public_ipopt_routes -q"
+          status: pass
+          result: "expected_red: 1 failed"
+
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Implement constructor-configured Equilibrium, solver-options handling, public result shape, structure metadata, and legacy direct-solve removal without wrappers or fake defaults."
+    allowed_files:
+      - "src/epcsaft/frontend/equilibrium.py"
+      - "src/epcsaft/equilibrium/**"
+      - "src/epcsaft/runtime/**"
+      - "src/epcsaft/__init__.py"
+      - "tests/api/frontend/test_equilibrium.py"
+      - "tests/support/**"
+      - "tests/workflows/repo/test_project_structure.py"
+      - "docs/goals/equilibrium-setup-workflow/**"
+    verify:
+      - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+    stop_if:
+      - "A compatibility bridge, hidden alias, route-specific public method, broad keyword escape hatch, or Python-owned route shortcut seems necessary."
+      - "initialize() seems desirable but native selector initialization evidence is not cleanly available."
+      - "Any route would bypass the selector-owned native NLP core."
+      - "Any route needs one-off frontend special-casing."
+    expected_output:
+      - "Constructor validates route and fixed specs."
+      - "solve() only executes the configured problem and accepts solver_options."
+      - "problem metadata is read-only."
+      - "structure() returns immutable programmatic metadata."
+      - "Result phases and helpers match the handoff."
+      - "No fake initialize() is added unless real native-owned initialization is proven."
+    receipt:
+      result: done
+      summary: "Implemented the constructor-configured Equilibrium API, immutable problem/structure/result surfaces, solver_options on solve(), and public route-name capability evidence."
+      changed_files:
+        - "src/epcsaft/frontend/equilibrium.py"
+        - "src/epcsaft/equilibrium/__init__.py"
+        - "src/epcsaft/equilibrium/options.py"
+        - "src/epcsaft/equilibrium/problems.py"
+        - "src/epcsaft/equilibrium/results.py"
+        - "src/epcsaft/equilibrium/workflows.py"
+        - "src/epcsaft/runtime/capability_evidence.py"
+        - "src/epcsaft/runtime/core.py"
+        - "tests/api/frontend/test_equilibrium.py"
+        - "tests/workflows/repo/test_project_structure.py"
+      evidence:
+        - "Equilibrium now requires route/spec inputs in the constructor and solve() only accepts solver_options."
+        - "All five public VLE routes configure through the shared selector route spec table and native selector request path."
+        - "EquilibriumProblem and EquilibriumStructure are frozen/read-only metadata objects; structure DOF is explicitly unavailable because no general DOF owner was found in route metadata."
+        - "EquilibriumResult phases are immutable and keyed by public liquid/vapor labels with pressure, temperature, x, y, z, and phase-fraction helpers."
+        - "Capabilities now advertise public route names rather than old direct-solve route strings."
+        - "No public initialize(), route-specific methods, legacy direct-solve forwarding, broad solve kwargs, or route aliases were added."
+      commands:
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+          status: pass
+          result: "22 passed in 42.76s"
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+          result: "37 passed in 14.30s"
+
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Align capability evidence, active docs, roadmaps, and stale temporary receipts with the constructor-configured API."
+    allowed_files:
+      - "src/epcsaft/runtime/capability_evidence.py"
+      - "src/epcsaft/runtime/core.py"
+      - "CONTEXT.md"
+      - "docs/agents/domain.md"
+      - "docs/adr/0003-selector-core-activation-capabilities.md"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "docs/pages/api_reference.rst"
+      - "docs/pages/equilibrium_cookbook.rst"
+      - "docs/pages/equilibrium_architecture.rst"
+      - "docs/pages/diagnostics.rst"
+      - "docs/pages/downstream_local_installs.rst"
+      - "docs/pages/package_guide.rst"
+      - "docs/algorithms.md"
+      - "docs/algorithms_registry.yaml"
+      - "docs/latex/algorithms.tex"
+      - "docs/handoffs/**"
+      - "docs/goals/**"
+    verify:
+      - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q"
+      - "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+      - "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+      - "if (rg -n \"Equilibrium\\(mixture\\).*solve\\(route=|Equilibrium\\.solve\\(route=|result\\.phases\\[[01]\\]\" CONTEXT.md docs src --glob '!docs/goals/neutral-vle-selector-expansion/**') { exit 1 } elseif ($LASTEXITCODE -eq 1) { exit 0 } else { exit $LASTEXITCODE }"
+    stop_if:
+      - "A capability claim is not activation-matrix backed."
+      - "A stale document may be a durable roadmap, ADR, or source of truth rather than a temporary receipt."
+      - "Removing a handoff or goal could erase non-temporary decision history."
+    expected_output:
+      - "Capabilities list public route names only."
+      - "Active docs and roadmaps describe the constructor-configured API."
+      - "Temporary contradictory receipts are removed or explicitly superseded."
+      - "Any intentionally retained historical stale text is justified."
+    receipt:
+      result: done
+      summary: "Aligned current capability/docs/roadmap/context/ADR/algorithm surfaces with constructor-configured Equilibrium and explicitly retained older completed-goal history as historical evidence."
+      changed_files:
+        - "CONTEXT.md"
+        - "docs/agents/domain.md"
+        - "docs/adr/0003-selector-core-activation-capabilities.md"
+        - "docs/roadmaps/FULL_ROADMAP.md"
+        - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+        - "docs/pages/api_reference.rst"
+        - "docs/pages/equilibrium_cookbook.rst"
+        - "docs/pages/equilibrium_architecture.rst"
+        - "docs/pages/diagnostics.rst"
+        - "docs/pages/downstream_local_installs.rst"
+        - "docs/pages/package_guide.rst"
+        - "docs/latex/algorithms.tex"
+        - "docs/algorithms.md"
+        - "docs/algorithms_registry.yaml"
+        - "docs/handoffs/equilibrium-constructor-configured-api-handoff.md"
+        - "docs/goals/equilibrium-setup-workflow/state.yaml"
+      evidence:
+        - "Current durable docs now describe Equilibrium(mixture, route=..., ...).solve() instead of direct solve(route=...) configuration."
+        - "Capability examples now assert public route names such as bubble_pressure and flash."
+        - "Algorithm registry outputs were regenerated from docs/latex/algorithms.tex and are up to date."
+        - "The current handoff is marked superseded by this GoalBuddy board while preserving it as the intake/gate record."
+        - "The older docs/goals/neutral-vle-selector-expansion board was intentionally excluded from stale scans because it is a completed historical receipt for the prior API state, not current package guidance."
+        - "Current source/docs stale scan excluding that historical board found no direct solve(route=...) or numeric result.phases examples."
+      commands:
+        - cmd: "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q"
+          status: pass
+          result: "2 passed in 0.03s"
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+          result: "37 passed in 4.09s"
+        - cmd: "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+          status: pass
+          result: "Algorithm registry outputs are up to date; all implementation algorithms have owner comments."
+        - cmd: "if (rg -n \"Equilibrium\\(mixture\\).*solve\\(route=|Equilibrium\\.solve\\(route=|result\\.phases\\[[01]\\]\" CONTEXT.md docs src --glob '!docs/goals/neutral-vle-selector-expansion/**') { exit 1 } elseif ($LASTEXITCODE -eq 1) { exit 0 } else { exit $LASTEXITCODE }"
+          status: pass
+          result: "no matches"
+
+  - id: T007
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Run owner-agent review for Python API/test, native solver/backend, build/packaging, and validation-command concerns."
+    inputs:
+      - "Current diff after implementation and docs/capability cleanup."
+      - "All task receipts through T006."
+    constraints:
+      - "Do not implement during review."
+      - "Record blocker versus non-blocker findings."
+      - "Stop if any owner review says the reset is mechanical rather than architecture-complete."
+    expected_output:
+      - "python_api_test_owner review receipt."
+      - "native_solver_backend_owner review receipt."
+      - "build_packaging_owner review receipt."
+      - "command_runner validation plan receipt."
+    receipt:
+      result: done
+      decision: not_complete
+      summary: "Owner review found blockers in retained tests, run_pytest slice coverage, active roadmap text, configured-problem deep immutability, and ignored backend/derivative solver knobs."
+      evidence:
+        - "python_api_test_owner blocker: tests/native/equilibrium/results/test_neutral_vle_reference_values.py and tests/native/state/test_bubble_derivatives.py still use the removed direct solve(route=...) API."
+        - "python_api_test_owner blocker: tests/native/contracts/test_algorithm_registry.py still asserts the old generated public API strings."
+        - "python_api_test_owner blocker: run_pytest equilibrium slices omit retained equilibrium result/state tests, allowing stale contracts to remain outside named validation."
+        - "python_api_test_owner blocker: docs/roadmaps/unified_equilibrium_core_algorithm.md still contains old solve(route=...) route-matrix and pseudocode wording."
+        - "native_solver_backend_owner blocker: EquilibriumProblem.fixed_specs wraps the mapping but does not deep-freeze stored NumPy arrays, so constructor-fixed specs can be mutated before solve()."
+        - "native_solver_backend_owner blocker: EquilibriumSolverOptions accepts jacobian_backend and solver_backend even though the native selector route does not honor those knobs."
+        - "build_packaging_owner blocker: retained tests and generated-registry guard are stale; active docs still had old API wording in several roadmap/source-of-truth locations."
+        - "Non-blocker: public Python frontend shape and route/spec mapping were judged coherent; structure metadata underclaims DOF rather than overclaiming native ownership."
+      commands:
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+          status: pass
+          result: "22 passed per python_api_test_owner review"
+        - cmd: "uv run python run_pytest.py tests/native/state/test_bubble_derivatives.py -q"
+          status: fail_expected
+          result: "fails on old Equilibrium(mixture)/solve(route=...) contract per python_api_test_owner review"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/results/test_neutral_vle_reference_values.py -q"
+          status: fail_expected
+          result: "fails on old constructor solver options and stale direct solve/result access per python_api_test_owner review"
+        - cmd: "uv run python run_pytest.py tests/native/contracts/test_algorithm_registry.py -q"
+          status: fail_expected
+          result: "fails on old public API string assertions per python_api_test_owner review"
+
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Address owner-review blockers and run the full required validation command set."
+    allowed_files:
+      - "CONTEXT.md"
+      - "src/**"
+      - "tests/**"
+      - "docs/**"
+      - "scripts/**"
+      - "CMakeLists.txt"
+      - "pyproject.toml"
+      - "docs/goals/equilibrium-setup-workflow/**"
+    verify:
+      - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/results/test_neutral_vle_reference_values.py -q"
+      - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py -q"
+      - "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+      - "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+      - "uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability"
+      - "uv run python scripts/dev/validate_project.py confidence"
+      - "node <goalbuddy-checker> docs/goals/equilibrium-setup-workflow/state.yaml"
+      - "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\hooks\\codex-cleanup.ps1\" -RepoRoot ."
+      - "git diff --check"
+      - "git status --short"
+    stop_if:
+      - "A required validation command cannot run twice for the same unresolved environment or implementation blocker."
+      - "A fix would weaken architecture guards."
+      - "A clarification is needed to decide whether to retain or delete a stale durable document."
+    expected_output:
+      - "Owner-review blockers resolved."
+      - "Required validation results recorded with exact commands and outcomes."
+      - "Skipped validation, if any, is recorded as an explicit blocker or residual risk."
+    receipt:
+      result: done
+      summary: "Resolved owner-review blockers, updated retained tests and run_pytest slices, hardened configured-problem immutability, rejected ignored backend-selection knobs, fixed package wheel smoke, and passed the full validation set."
+      changed_files:
+        - "CONTEXT.md"
+        - "docs/roadmaps/FULL_ROADMAP.md"
+        - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+        - "docs/pages/downstream_local_installs.rst"
+        - "scripts/dev/build_dist.py"
+        - "src/epcsaft/equilibrium/workflows.py"
+        - "src/epcsaft/runtime/capability_evidence.py"
+        - "tests/api/frontend/test_equilibrium.py"
+        - "tests/native/contracts/test_algorithm_registry.py"
+        - "tests/native/equilibrium/results/test_neutral_vle_reference_values.py"
+        - "tests/native/state/test_bubble_derivatives.py"
+        - "tests/workflows/repo/test_run_pytest.py"
+        - "docs/goals/equilibrium-setup-workflow/state.yaml"
+      evidence:
+        - "Retained equilibrium state/reference tests now use constructor-configured Equilibrium(..., route=..., ...).solve()."
+        - "Algorithm-registry guard tests now assert constructor-configured generated API text."
+        - "Equilibrium confidence/API slices include retained stale-contract tests."
+        - "EquilibriumProblem.fixed_specs stores read-only copies of array specs and result phase/feed arrays are read-only."
+        - "EquilibriumSolverOptions no longer exposes jacobian_backend or solver_backend; mapping solver_options containing those ignored knobs fail loudly as unknown keys."
+        - "Current docs/source stale scan excluding historical GoalBuddy/handoff receipts has no old direct solve(route=...) public examples except the deliberate negative result.phases[0] API test."
+        - "Package wheel smoke now applies native runtime DLL directories and uses a complete ParameterSet payload."
+        - "Failed pytest temp directories created during this goal's red/triage runs were removed."
+      commands:
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py::test_equilibrium_problem_fixed_specs_are_deeply_read_only tests/api/frontend/test_equilibrium.py::test_solver_options_reject_ignored_backend_selection_knobs -q"
+          status: pass
+          result: "2 passed in 0.05s after implementation"
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+          status: pass
+          result: "24 passed in 36.03s"
+        - cmd: "uv run python run_pytest.py tests/native/state/test_bubble_derivatives.py -q"
+          status: pass
+          result: "2 passed in 8.06s"
+        - cmd: "uv run python run_pytest.py tests/native/contracts/test_algorithm_registry.py -q"
+          status: pass
+          result: "10 passed in 1.05s"
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py -q"
+          status: pass
+          result: "26 passed in 2.77s"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/results/test_neutral_vle_reference_values.py -q"
+          status: pass
+          result: "1 passed in 11.66s"
+        - cmd: "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q"
+          status: pass
+          result: "2 passed in 0.03s"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py -q"
+          status: pass
+          result: "8 passed in 0.19s"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py -q"
+          status: pass
+          result: "9 passed in 0.10s"
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+          result: "37 passed in 4.21s"
+        - cmd: "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+          status: pass
+          result: "Algorithm registry outputs are up to date; all implementation algorithms have owner comments."
+        - cmd: "uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability"
+          status: pass
+          result: "Equation registry outputs are up to date; all implementation equations have C++ owner comments."
+        - cmd: "uv run python run_pytest.py --equilibrium-confidence -q"
+          status: pass
+          result: "37 passed in 46.32s"
+        - cmd: "uv run python scripts/dev/build_epcsaft.py --status"
+          status: pass
+          result: "native core present; Ceres ON, CppAD ON, Ipopt ON; no live build processes"
+        - cmd: "uv run python scripts/dev/validate_project.py confidence"
+          status: pass
+          result: "doctor passed; confidence pytest passed 93 tests in 36.85s"
+        - cmd: "uv run python scripts/dev/build_dist.py"
+          status: pass
+          result: "sdist and wheel built; wheel smoke ok with native runtime DLL dirs"
+        - cmd: "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\hooks\\codex-cleanup.ps1\" -RepoRoot ."
+          status: pass
+          result: "No matching leftover Codex processes under repo root."
+        - cmd: "git diff --check"
+          status: pass
+          result: "no whitespace errors"
+        - cmd: "git status --short"
+          status: pass
+          result: "tracked changes and docs/goals/equilibrium-setup-workflow/ remain to commit"
+
+  - id: T009
+    type: pm
+    assignee: PM
+    status: active
+    reasoning_hint: medium
+    objective: "Create logical local commits for board/setup, tests, implementation, docs/capabilities, and validation/guard refinements."
+    inputs:
+      - "Current diff."
+      - "Task receipts."
+      - "Git status."
+    constraints:
+      - "Do not commit local-only ignored agent files."
+      - "Use logical commits where feasible."
+      - "Stop if unrelated user changes create an ambiguous commit boundary."
+    expected_output:
+      - "Local commits exist for the completed work."
+      - "Commit hashes are recorded."
+    receipt: null
+
+  - id: T010
+    type: pm
+    assignee: PM
+    status: queued
+    reasoning_hint: medium
+    objective: "Push branch ipopt after all gates pass and commits exist."
+    inputs:
+      - "Committed branch ipopt."
+      - "Validation receipt."
+    constraints:
+      - "Push only branch ipopt."
+      - "Do not open a PR unless separately requested."
+      - "Stop if validation or git status is not clean."
+    expected_output:
+      - "Branch ipopt pushed."
+    receipt: null
+
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Final audit against the handoff completion definition."
+    inputs:
+      - "All task receipts."
+      - "Final validation results."
+      - "Commit and push receipts."
+      - "Final git status."
+    constraints:
+      - "Do not implement."
+      - "Reject completion if any handoff gate lacks evidence."
+      - "Reject completion if queued required Worker work remains."
+      - "Reject completion if branch ipopt is not pushed or status is not clean."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "Missing evidence if not complete."
+    receipt: null
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: pass
+    task: T008
+    commands:
+      - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/results/test_neutral_vle_reference_values.py -q"
+      - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py -q"
+      - "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+      - "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+      - "uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability"
+      - "uv run python run_pytest.py --equilibrium-confidence -q"
+      - "uv run python scripts/dev/validate_project.py confidence"
+      - "uv run python scripts/dev/build_dist.py"
+      - "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\hooks\\codex-cleanup.ps1\" -RepoRoot ."
+      - "git diff --check"
+      - "git status --short"

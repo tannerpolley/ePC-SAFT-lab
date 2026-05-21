@@ -46,7 +46,7 @@ Equilibrium
    :no-index:
 
 The trusted public neutral VLE proof set is
-``Equilibrium(mixture, ...).solve(route=..., ...)`` with route specs
+``Equilibrium(mixture, route=..., ...).solve()`` with route specs
 ``bubble_pressure``, ``bubble_temperature``, ``dew_pressure``,
 ``dew_temperature``, and certified two-phase ``flash`` with native Ipopt and
 exact Hessian callbacks.

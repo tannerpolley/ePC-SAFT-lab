@@ -98,13 +98,16 @@ ROUTE_REPORT_SPECS: Mapping[str, Mapping[str, str]] = {
 }
 
 
-def _equilibrium() -> epcsaft.Equilibrium:
-    return epcsaft.Equilibrium(
-        epcsaft.Mixture(hydrocarbon_parameter_set()),
-        max_iterations=200,
-        tolerance=1.0e-8,
-        ipopt_iteration_history_limit=4,
-    )
+def _mixture() -> epcsaft.Mixture:
+    return epcsaft.Mixture(hydrocarbon_parameter_set())
+
+
+def _solver_options() -> dict[str, object]:
+    return {
+        "max_iterations": 200,
+        "tolerance": 1.0e-8,
+        "ipopt_iteration_history_limit": 4,
+    }
 
 
 def _format_vector(values: Sequence[object]) -> str:
@@ -303,7 +306,7 @@ def _print_route_report(report: Mapping[str, Any]) -> None:
     _print_key_values(
         "Request and fixed values",
         (
-            ("public call", f'Equilibrium.solve(route="{route}", ...)'),
+            ("public call", f'Equilibrium(mixture, route="{route}", ...).solve()'),
             ("T input / K", kwargs.get("T", "solved by route")),
             ("P input / Pa", kwargs.get("P", "solved by route")),
             (f"{composition_key} input", composition_value),
@@ -420,13 +423,14 @@ def test_neutral_vle_reference_values_are_reported_and_verified(capsys: pytest.C
     expected_x = tuple(float(value) for value in HYDROCARBON_LIQUID_X)
     expected_y = tuple(float(value) for value in HYDROCARBON_VAPOR_Y)
     reports: list[dict[str, object]] = []
-    equilibrium = _equilibrium()
+    mixture = _mixture()
 
     for route, kwargs, problem_kind, selector_family in ROUTE_CASES:
         started_at = perf_counter()
-        result = equilibrium.solve(route=route, **kwargs)
+        result = epcsaft.Equilibrium(mixture, route=route, **kwargs).solve(solver_options=_solver_options())
         elapsed_seconds = perf_counter() - started_at
-        liquid, vapor = result.phases
+        liquid = result.phases["liquid"]
+        vapor = result.phases["vapor"]
         diagnostics = result.diagnostics
         certification = diagnostics["postsolve_certification"]
 

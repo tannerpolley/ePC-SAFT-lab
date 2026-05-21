@@ -63,12 +63,12 @@ State(...)
 TargetRow(...)
 TargetDataset(...)
 TargetDataset.target_family_summaries()
-Equilibrium(mixture)
-Equilibrium(mixture).solve(route="bubble_pressure", T=..., x=...)
-Equilibrium(mixture).solve(route="bubble_temperature", P=..., x=...)
-Equilibrium(mixture).solve(route="dew_pressure", T=..., y=...)
-Equilibrium(mixture).solve(route="dew_temperature", P=..., y=...)
-Equilibrium(mixture).solve(route="flash", T=..., P=..., z=...)
+Equilibrium(mixture, route=..., ...)
+Equilibrium(mixture, route="bubble_pressure", T=..., x=...).solve()
+Equilibrium(mixture, route="bubble_temperature", P=..., x=...).solve()
+Equilibrium(mixture, route="dew_pressure", T=..., y=...).solve()
+Equilibrium(mixture, route="dew_temperature", P=..., y=...).solve()
+Equilibrium(mixture, route="flash", T=..., P=..., z=...).solve()
 fit_pure_parameters(...)
 fit_binary_parameters(...)
 fit_liquid_electrolyte_parameters(...)
@@ -79,9 +79,9 @@ Downstream projects compute application metrics from generic outputs.
 
 Current API orientation for agents:
 
-- Prefer the direct `Equilibrium(mixture)` workflow object for public equilibrium calls.
+- Prefer the constructor-configured `Equilibrium(mixture, route=..., ...)` workflow object for public equilibrium calls.
 - The current production neutral VLE equilibrium surface is one
-  `Equilibrium(mixture).solve(route=..., ...)` method with route specs
+  `Equilibrium(mixture, route=..., ...).solve()` workflow with route specs
   `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature`,
   and `flash`; route-specific public methods, route-family dataclasses, and
   private native request payloads are not exported compatibility surfaces.

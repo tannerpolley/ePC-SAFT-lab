@@ -33,20 +33,22 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     ]
     assert capabilities["production_families"] == ["neutral_tp_flash", "bubble_dew_derived_routes"]
     assert capabilities["public_routes"] == [
-        "Equilibrium.solve(route='bubble_pressure')",
-        "Equilibrium.solve(route='bubble_temperature')",
-        "Equilibrium.solve(route='dew_pressure')",
-        "Equilibrium.solve(route='dew_temperature')",
-        "Equilibrium.solve(route='flash')",
+        "bubble_pressure",
+        "bubble_temperature",
+        "dew_pressure",
+        "dew_temperature",
+        "flash",
     ]
     assert capabilities["bubble_dew_derived_routes"]["entrypoint"] == (
-        "Equilibrium(mixture).solve(route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature')"
+        "Equilibrium(mixture, route=..., ...).solve()"
     )
     assert capabilities["bubble_dew_derived_routes"]["available"] is capabilities["activation_matrix"][
         "ipopt_available"
     ]
-    assert capabilities["neutral_tp_flash"]["entrypoint"] == "Equilibrium(mixture).solve(route='flash')"
+    assert capabilities["neutral_tp_flash"]["entrypoint"] == "Equilibrium(mixture, route='flash', T=..., P=..., z=...).solve()"
     assert capabilities["neutral_tp_flash"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
+    assert capabilities["problem_objects"]["available"] is True
+    assert capabilities["problem_objects"]["entrypoint"] == "Equilibrium(mixture, route=..., ...)"
 
     deleted_route_keys = {
         "neutral_lle_flash",

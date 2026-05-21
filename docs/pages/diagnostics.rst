@@ -53,11 +53,11 @@ Selector Neutral VLE Diagnostics
 The production equilibrium diagnostic paths are the native selector-backed
 neutral VLE routes:
 
-* ``Equilibrium(mixture).solve(route="bubble_pressure", T=..., x=...)``
-* ``Equilibrium(mixture).solve(route="bubble_temperature", P=..., x=...)``
-* ``Equilibrium(mixture).solve(route="dew_pressure", T=..., y=...)``
-* ``Equilibrium(mixture).solve(route="dew_temperature", P=..., y=...)``
-* ``Equilibrium(mixture).solve(route="flash", T=..., P=..., z=...)``
+* ``Equilibrium(mixture, route="bubble_pressure", T=..., x=...).solve()``
+* ``Equilibrium(mixture, route="bubble_temperature", P=..., x=...).solve()``
+* ``Equilibrium(mixture, route="dew_pressure", T=..., y=...).solve()``
+* ``Equilibrium(mixture, route="dew_temperature", P=..., y=...).solve()``
+* ``Equilibrium(mixture, route="flash", T=..., P=..., z=...).solve()``
 
 Accepted results include enough route diagnostics to prove that the native
 activation row, exact Ipopt derivative path, density closure, residual rows,

@@ -598,9 +598,34 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
     ]
 
     assert offenders == []
-    assert public_methods == ["solve"]
+    assert public_methods == ["problem", "solve", "structure"]
     assert len(solve_calls) == 1
     assert len(workflow_helpers) == 1
+
+
+def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_helpers() -> None:
+    frontend_path = REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py"
+    tree = ast.parse(frontend_path.read_text(encoding="utf-8"), filename=frontend_path.relative_to(REPO_ROOT).as_posix())
+    equilibrium_class = next(
+        node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Equilibrium"
+    )
+    methods = {node.name: node for node in equilibrium_class.body if isinstance(node, ast.FunctionDef)}
+
+    assert {"setup", "initialize"}.isdisjoint(methods)
+    assert "__getattr__" not in methods
+    assert {"bubble_pressure", "bubble_temperature", "dew_pressure", "dew_temperature", "flash"}.isdisjoint(methods)
+
+    constructor = methods["__init__"]
+    solve = methods["solve"]
+    constructor_kwargs = [arg.arg for arg in constructor.args.kwonlyargs]
+    solve_kwargs = [arg.arg for arg in solve.args.kwonlyargs]
+
+    assert constructor.args.vararg is None
+    assert constructor.args.kwarg is None
+    assert constructor_kwargs == ["route", "T", "P", "x", "y", "z"]
+    assert solve.args.vararg is None
+    assert solve.args.kwarg is None
+    assert solve_kwargs == ["solver_options"]
 
 
 def test_python_equilibrium_package_exposes_only_production_selector_solve_support() -> None:
@@ -742,7 +767,7 @@ def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None
                 for keyword in node.keywords:
                     if keyword.arg in blocked_route_keywords:
                         offenders.append(f"{rel}:{node.lineno}: public route keyword {keyword.arg}")
-            if name == "EquilibriumOptions":
+            if name == "EquilibriumSolverOptions":
                 for keyword in node.keywords:
                     if keyword.arg in blocked_option_keywords:
                         offenders.append(f"{rel}:{node.lineno}: removed option keyword {keyword.arg}")

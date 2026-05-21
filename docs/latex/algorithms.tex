@@ -72,7 +72,7 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 % AlgID: bubble_dew_ipopt
 % Family: Phase equilibrium
 % Status: Implemented
-% Public API: Equilibrium(mixture, ...).solve(route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature', ...)
+% Public API: Equilibrium(mixture, route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature', ...).solve()
 % Backend: Native C++ Ipopt equilibrium NLP
 % Dependency: Ipopt
 % Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
@@ -84,7 +84,8 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 % Change note: Neutral VLE selector expansion promotes bubble/dew pressure and temperature routes through the shared residual core.
 
 This entry exposes the trusted neutral bubble/dew proof set through route specs
-on \texttt{Equilibrium(mixture).solve}. The selector core reads the
+configured by \texttt{Equilibrium(mixture, route=..., ...)} and executed by
+\texttt{solve()}. The selector core reads the
 native activation matrix, admits only neutral non-reactive non-electrolyte
 non-associating mixtures for the production contract, and requires exact
 derivatives plus postsolve certification.
@@ -92,7 +93,7 @@ derivatives plus postsolve certification.
 % AlgID: neutral_tp_flash_ipopt
 % Family: Phase equilibrium
 % Status: Implemented
-% Public API: Equilibrium(mixture, ...).solve(route='flash', ...)
+% Public API: Equilibrium(mixture, route='flash', ...).solve()
 % Backend: Native C++ Ipopt equilibrium NLP
 % Dependency: Ipopt
 % Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
@@ -104,8 +105,9 @@ derivatives plus postsolve certification.
 % Change note: Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification.
 
 This entry exposes the trusted neutral two-phase TP flash proof through the
-\texttt{flash} route spec on \texttt{Equilibrium(mixture).solve}. Flash is a
-route spec over the same native
+\texttt{flash} route spec configured by
+\texttt{Equilibrium(mixture, route="flash", ...)} and executed by
+\texttt{solve()}. Flash is a route spec over the same native
 VLE residual and hard-constraint core as bubble and dew routes. The native
 selector owns deterministic seed generation, activation checks, exact
 derivative requirements, and postsolve certification. Gibbs/free-energy terms

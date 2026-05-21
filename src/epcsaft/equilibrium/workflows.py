@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from numbers import Integral, Real
+from types import MappingProxyType
 from typing import Any, Literal
 
 import numpy as np
@@ -23,14 +24,12 @@ from .core.native_results import (
 
 
 @dataclass(frozen=True, slots=True)
-class EquilibriumOptions:
+class EquilibriumSolverOptions:
     """Numerical controls for the production selector equilibrium route."""
 
     max_iterations: int = 180
     tolerance: float = 1.0e-6
     min_composition: float = 1.0e-12
-    jacobian_backend: Literal["auto", "analytic", "cppad"] = "auto"
-    solver_backend: Literal["auto", "ipopt"] = "auto"
     timeout_seconds: float | None = None
     hessian_mode: Literal["auto", "exact", "limited-memory"] = "auto"
     ipopt_iteration_history_limit: int = 20
@@ -40,6 +39,18 @@ class EquilibriumOptions:
     ipopt_dual_infeasibility_tolerance: float | None = None
     ipopt_complementarity_tolerance: float | None = None
     continuation_state: Mapping[str, Any] | None = None
+
+
+def _readonly_float_array(value: Any) -> np.ndarray:
+    array = np.array(value, dtype=float, copy=True)
+    array.setflags(write=False)
+    return array
+
+
+def _freeze_fixed_spec_value(value: Any) -> Any:
+    if isinstance(value, np.ndarray):
+        return _readonly_float_array(value)
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,13 +84,13 @@ class EquilibriumPhase:
             else:
                 ln_fugacity_coefficient = np.log(np.asarray(fugacity_coefficient, dtype=float))
         object.__setattr__(self, "label", str(label))
-        object.__setattr__(self, "composition", np.asarray(composition, dtype=float))
+        object.__setattr__(self, "composition", _readonly_float_array(composition))
         object.__setattr__(self, "density", float(density))
         object.__setattr__(self, "temperature", float(temperature))
         object.__setattr__(self, "pressure", float(pressure))
         object.__setattr__(self, "phase_fraction", float(phase_fraction))
         if ln_fugacity_coefficient is not None:
-            ln_fugacity_coefficient = np.asarray(ln_fugacity_coefficient, dtype=float)
+            ln_fugacity_coefficient = _readonly_float_array(ln_fugacity_coefficient)
         object.__setattr__(self, "ln_fugacity_coefficient", ln_fugacity_coefficient)
         object.__setattr__(self, "diagnostics", None if diagnostics is None else dict(diagnostics))
 
@@ -108,30 +119,92 @@ class EquilibriumPhase:
         }
 
 
+def _phase_mapping(phases: Mapping[str, EquilibriumPhase] | Sequence[EquilibriumPhase]) -> Mapping[str, EquilibriumPhase]:
+    if isinstance(phases, Mapping):
+        return MappingProxyType({str(label): phase for label, phase in phases.items()})
+    return MappingProxyType({phase.label: phase for phase in phases})
+
+
 @dataclass(frozen=True, slots=True)
 class EquilibriumResult:
     """Structured result returned by the production equilibrium route."""
 
     backend: str
     problem_kind: str
-    phases: tuple[EquilibriumPhase, ...]
+    phases: Mapping[str, EquilibriumPhase] | Sequence[EquilibriumPhase]
     stable: bool
     split_detected: bool
     diagnostics: dict[str, Any]
+    route: str = ""
+    selector_route: str = ""
+    composition_role: str = ""
+    feed_composition: Any = None
 
     def __post_init__(self) -> None:
+        phases = _phase_mapping(self.phases)
         object.__setattr__(self, "backend", str(self.backend))
         object.__setattr__(self, "problem_kind", str(self.problem_kind))
-        object.__setattr__(self, "phases", tuple(self.phases))
+        object.__setattr__(self, "phases", phases)
         object.__setattr__(self, "stable", bool(self.stable))
         object.__setattr__(self, "split_detected", bool(self.split_detected))
         object.__setattr__(self, "diagnostics", dict(self.diagnostics))
+        object.__setattr__(self, "route", str(self.route))
+        object.__setattr__(self, "selector_route", str(self.selector_route))
+        object.__setattr__(self, "composition_role", str(self.composition_role))
+        if self.feed_composition is None:
+            object.__setattr__(self, "feed_composition", None)
+        else:
+            object.__setattr__(self, "feed_composition", _readonly_float_array(self.feed_composition))
 
     @property
     def phase_labels(self) -> list[str]:
         """Return phase labels in result order."""
 
-        return [phase.label for phase in self.phases]
+        return list(self.phases.keys())
+
+    @property
+    def pressure(self) -> float:
+        """Return the common phase pressure."""
+
+        return float(self.phases["liquid"].pressure)
+
+    @property
+    def temperature(self) -> float:
+        """Return the common phase temperature."""
+
+        return float(self.phases["liquid"].temperature)
+
+    @property
+    def x(self) -> np.ndarray:
+        """Return the liquid composition."""
+
+        return np.asarray(self.phases["liquid"].composition, dtype=float)
+
+    @property
+    def y(self) -> np.ndarray:
+        """Return the vapor composition."""
+
+        return np.asarray(self.phases["vapor"].composition, dtype=float)
+
+    @property
+    def z(self) -> np.ndarray:
+        """Return the feed composition for feed routes."""
+
+        if self.feed_composition is None:
+            raise AttributeError("z is available only for feed routes.")
+        return np.asarray(self.feed_composition, dtype=float)
+
+    @property
+    def liquid_fraction(self) -> float:
+        """Return the liquid phase fraction."""
+
+        return float(self.phases["liquid"].phase_fraction)
+
+    @property
+    def vapor_fraction(self) -> float:
+        """Return the vapor phase fraction."""
+
+        return float(self.phases["vapor"].phase_fraction)
 
     @property
     def route_diagnostics(self) -> RouteDiagnosticsView:
@@ -145,10 +218,17 @@ class EquilibriumResult:
         return {
             "backend": self.backend,
             "problem_kind": self.problem_kind,
+            "route": self.route,
+            "selector_route": self.selector_route,
             "phase_labels": self.phase_labels,
-            "phases": [phase.to_dict() for phase in self.phases],
+            "phases": {label: phase.to_dict() for label, phase in self.phases.items()},
             "stable": self.stable,
             "split_detected": self.split_detected,
+            "x": self.x.tolist(),
+            "y": self.y.tolist(),
+            "z": None if self.feed_composition is None else self.z.tolist(),
+            "liquid_fraction": self.liquid_fraction,
+            "vapor_fraction": self.vapor_fraction,
             "diagnostics": _json_like(self.diagnostics),
         }
 
@@ -160,9 +240,98 @@ class _VleRouteSpec:
     composition_role: str
     requires_temperature: bool
     requires_pressure: bool
+    knowns: tuple[str, ...]
+    unknowns: tuple[str, ...]
     problem_kind: str
     route_label: str
     selector_family: str
+    expected_phase_keys: tuple[str, ...] = ("liquid", "vapor")
+
+
+@dataclass(frozen=True, slots=True)
+class EquilibriumProblem:
+    """Read-only configured equilibrium problem metadata."""
+
+    route: str
+    selector_route: str
+    knowns: tuple[str, ...]
+    unknowns: tuple[str, ...]
+    composition_role: str
+    activation_key: str
+    expected_phase_keys: tuple[str, ...]
+    fixed_specs: Mapping[str, Any]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "knowns", tuple(str(item) for item in self.knowns))
+        object.__setattr__(self, "unknowns", tuple(str(item) for item in self.unknowns))
+        object.__setattr__(self, "expected_phase_keys", tuple(str(item) for item in self.expected_phase_keys))
+        object.__setattr__(
+            self,
+            "fixed_specs",
+            MappingProxyType({str(key): _freeze_fixed_spec_value(value) for key, value in self.fixed_specs.items()}),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-like configured-problem payload."""
+
+        return {
+            "route": self.route,
+            "selector_route": self.selector_route,
+            "knowns": list(self.knowns),
+            "unknowns": list(self.unknowns),
+            "composition_role": self.composition_role,
+            "activation_key": self.activation_key,
+            "expected_phase_keys": list(self.expected_phase_keys),
+            "fixed_specs": _json_like(dict(self.fixed_specs)),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class EquilibriumStructure:
+    """Immutable programmatic selector structure metadata."""
+
+    route: str
+    selector_route: str
+    knowns: tuple[str, ...]
+    unknowns: tuple[str, ...]
+    composition_role: str
+    activation_key: str
+    residual_families: tuple[str, ...]
+    hard_constraint_families: tuple[str, ...]
+    expected_phase_keys: tuple[str, ...]
+    dof: Mapping[str, Any]
+    variable_model: str = ""
+    density_backend: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "knowns", tuple(str(item) for item in self.knowns))
+        object.__setattr__(self, "unknowns", tuple(str(item) for item in self.unknowns))
+        object.__setattr__(self, "residual_families", tuple(str(item) for item in self.residual_families))
+        object.__setattr__(
+            self,
+            "hard_constraint_families",
+            tuple(str(item) for item in self.hard_constraint_families),
+        )
+        object.__setattr__(self, "expected_phase_keys", tuple(str(item) for item in self.expected_phase_keys))
+        object.__setattr__(self, "dof", MappingProxyType(dict(self.dof)))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-like structure payload."""
+
+        return {
+            "route": self.route,
+            "selector_route": self.selector_route,
+            "knowns": list(self.knowns),
+            "unknowns": list(self.unknowns),
+            "composition_role": self.composition_role,
+            "activation_key": self.activation_key,
+            "residual_families": list(self.residual_families),
+            "hard_constraint_families": list(self.hard_constraint_families),
+            "expected_phase_keys": list(self.expected_phase_keys),
+            "dof": dict(self.dof),
+            "variable_model": self.variable_model,
+            "density_backend": self.density_backend,
+        }
 
 
 _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
@@ -172,6 +341,8 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         composition_role="liquid",
         requires_temperature=True,
         requires_pressure=False,
+        knowns=("T", "x"),
+        unknowns=("P", "y", "phase_volumes"),
         problem_kind="neutral_bubble_p",
         route_label="bubble_pressure",
         selector_family="bubble_dew_derived_routes",
@@ -182,6 +353,8 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         composition_role="liquid",
         requires_temperature=False,
         requires_pressure=True,
+        knowns=("P", "x"),
+        unknowns=("T", "y", "phase_volumes"),
         problem_kind="neutral_bubble_t",
         route_label="bubble_temperature",
         selector_family="bubble_dew_derived_routes",
@@ -192,6 +365,8 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         composition_role="vapor",
         requires_temperature=True,
         requires_pressure=False,
+        knowns=("T", "y"),
+        unknowns=("P", "x", "phase_volumes"),
         problem_kind="neutral_dew_p",
         route_label="dew_pressure",
         selector_family="bubble_dew_derived_routes",
@@ -202,6 +377,8 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         composition_role="vapor",
         requires_temperature=False,
         requires_pressure=True,
+        knowns=("P", "y"),
+        unknowns=("T", "x", "phase_volumes"),
         problem_kind="neutral_dew_t",
         route_label="dew_temperature",
         selector_family="bubble_dew_derived_routes",
@@ -212,6 +389,8 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         composition_role="feed",
         requires_temperature=True,
         requires_pressure=True,
+        knowns=("T", "P", "z"),
+        unknowns=("x", "y", "phase_amounts", "phase_volumes"),
         problem_kind="neutral_tp_flash",
         route_label="flash",
         selector_family="neutral_tp_flash",
@@ -219,8 +398,7 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
 }
 
 
-# AlgID: bubble_dew_ipopt
-def _solve_selector_vle(
+def configure_equilibrium_problem(
     mixture: Any,
     *,
     route: str,
@@ -229,11 +407,9 @@ def _solve_selector_vle(
     x: Any = None,
     y: Any = None,
     z: Any = None,
-    options: EquilibriumOptions | None = None,
-) -> EquilibriumResult:
-    """Solve one selector-admitted neutral VLE route spec through the shared core."""
+) -> EquilibriumProblem:
+    """Validate and freeze a constructor-configured equilibrium problem."""
 
-    opts = _normalize_options(options)
     try:
         spec = _VLE_ROUTE_SPECS[str(route)]
     except KeyError as exc:
@@ -255,23 +431,53 @@ def _solve_selector_vle(
     if not spec.requires_pressure and P is not None:
         raise InputError(f"{spec.route_label} must not specify P.")
 
-    composition = _normalize_feed(composition_value, mixture.ncomp, opts.min_composition, spec.route_label)
+    composition = _normalize_feed(
+        composition_value,
+        mixture.ncomp,
+        EquilibriumSolverOptions().min_composition,
+        spec.route_label,
+    )
     _reject_ion_containing_mixture(mixture)
     temperature = _positive_scalar(T, "T", spec.route_label) if spec.requires_temperature else None
     pressure = _positive_scalar(P, "P", spec.route_label) if spec.requires_pressure else None
+    fixed_specs: dict[str, Any] = {spec.composition_key: composition}
+    if temperature is not None:
+        fixed_specs["T"] = temperature
+    if pressure is not None:
+        fixed_specs["P"] = pressure
+    return EquilibriumProblem(
+        route=spec.route_label,
+        selector_route=spec.selector_route,
+        knowns=spec.knowns,
+        unknowns=spec.unknowns,
+        composition_role=spec.composition_role,
+        activation_key=spec.selector_family,
+        expected_phase_keys=spec.expected_phase_keys,
+        fixed_specs=fixed_specs,
+    )
+
+
+# AlgID: bubble_dew_ipopt
+def _solve_selector_vle(
+    mixture: Any,
+    problem: EquilibriumProblem,
+    *,
+    options: EquilibriumSolverOptions | Mapping[str, Any] | None = None,
+) -> EquilibriumResult:
+    """Solve one configured selector-admitted neutral VLE route spec through the shared core."""
+
+    opts = _normalize_options(options)
+    spec = _VLE_ROUTE_SPECS[problem.route]
     return _native_selector_vle_route(
         mixture,
-        request=_selector_request(
-            route=spec.selector_route,
-            temperature=temperature,
-            pressure=pressure,
-            composition=composition,
-            composition_role=spec.composition_role,
-        ),
+        request=_selector_request_from_problem(problem),
         options=opts,
+        public_route=problem.route,
         problem_kind=spec.problem_kind,
         route_label=spec.route_label,
         selector_family=spec.selector_family,
+        composition_role=spec.composition_role,
+        feed_composition=problem.fixed_specs.get("z"),
     )
 
 
@@ -295,14 +501,54 @@ def _selector_request(
     return request
 
 
+def _selector_request_from_problem(problem: EquilibriumProblem) -> dict[str, Any]:
+    composition_key = _VLE_ROUTE_SPECS[problem.route].composition_key
+    return _selector_request(
+        route=problem.selector_route,
+        temperature=problem.fixed_specs.get("T"),
+        pressure=problem.fixed_specs.get("P"),
+        composition=np.asarray(problem.fixed_specs[composition_key], dtype=float),
+        composition_role=problem.composition_role,
+    )
+
+
+def equilibrium_structure(mixture: Any, problem: EquilibriumProblem) -> EquilibriumStructure:
+    """Return immutable native selector structure metadata for a configured problem."""
+
+    from .. import _core
+
+    contract = _core._native_equilibrium_selector_contract(mixture._native, _selector_request_from_problem(problem))
+    activation = contract["activation"]
+    return EquilibriumStructure(
+        route=problem.route,
+        selector_route=problem.selector_route,
+        knowns=problem.knowns,
+        unknowns=problem.unknowns,
+        composition_role=problem.composition_role,
+        activation_key=problem.activation_key,
+        residual_families=tuple(str(item) for item in activation["residual_families"]),
+        hard_constraint_families=tuple(str(item) for item in activation["constraint_families"]),
+        expected_phase_keys=problem.expected_phase_keys,
+        dof={
+            "available": False,
+            "reason": "not_generally_owned_by_route_metadata",
+        },
+        variable_model=str(activation["variable_model"]),
+        density_backend=str(activation["density_backend"]),
+    )
+
+
 def _native_selector_vle_route(
     mixture: Any,
     *,
     request: Mapping[str, Any],
-    options: EquilibriumOptions,
+    options: EquilibriumSolverOptions,
+    public_route: str,
     problem_kind: str,
     route_label: str,
     selector_family: str,
+    composition_role: str,
+    feed_composition: Any = None,
 ) -> EquilibriumResult:
     from .. import _core
 
@@ -342,9 +588,12 @@ def _native_selector_vle_route(
         feed=feed,
         route=route,
         tolerances=neutral_two_phase_eos_tolerances(pressure, options),
+        public_route=public_route,
         problem_kind=problem_kind,
         route_label=route_label,
         selector_family=selector_family,
+        composition_role=composition_role,
+        feed_composition=feed_composition,
     )
 
 
@@ -356,9 +605,12 @@ def _accepted_native_selector_two_phase_result(
     feed: np.ndarray,
     route: Mapping[str, Any],
     tolerances: tuple[float, float, float, float],
+    public_route: str,
     problem_kind: str,
     route_label: str,
     selector_family: str,
+    composition_role: str,
+    feed_composition: Any = None,
 ) -> EquilibriumResult:
     from .. import _core
 
@@ -381,7 +633,7 @@ def _accepted_native_selector_two_phase_result(
     result = neutral_two_phase_payload_to_result(
         result_payload,
         problem_kind=problem_kind,
-        phase_labels=("liq", "vap"),
+        phase_labels=("liquid", "vapor"),
     )
     diagnostics = native_route_diagnostics(route)
     diagnostics.update(result.diagnostics)
@@ -397,20 +649,22 @@ def _accepted_native_selector_two_phase_result(
         stable=result.stable,
         split_detected=result.split_detected,
         diagnostics=diagnostics,
+        route=public_route,
+        selector_route=str(route.get("route", "")),
+        composition_role=composition_role,
+        feed_composition=feed_composition,
     )
 
 
-def _normalize_options(options: EquilibriumOptions | Mapping[str, Any] | None) -> EquilibriumOptions:
+def _normalize_options(options: EquilibriumSolverOptions | Mapping[str, Any] | None) -> EquilibriumSolverOptions:
     if options is None:
-        return EquilibriumOptions()
+        return EquilibriumSolverOptions()
     if isinstance(options, Mapping):
         raw = dict(options)
         allowed = {
             "max_iterations",
             "tolerance",
             "min_composition",
-            "jacobian_backend",
-            "solver_backend",
             "timeout_seconds",
             "hessian_mode",
             "ipopt_iteration_history_limit",
@@ -424,9 +678,9 @@ def _normalize_options(options: EquilibriumOptions | Mapping[str, Any] | None) -
         unknown = sorted(set(raw) - allowed)
         if unknown:
             raise InputError("Unknown equilibrium option key(s): {}.".format(", ".join(unknown)))
-        options = EquilibriumOptions(**raw)
-    if not isinstance(options, EquilibriumOptions):
-        raise InputError("options must be an EquilibriumOptions instance.")
+        options = EquilibriumSolverOptions(**raw)
+    if not isinstance(options, EquilibriumSolverOptions):
+        raise InputError("solver_options must be an EquilibriumSolverOptions instance or mapping.")
     if isinstance(options.max_iterations, bool) or not isinstance(options.max_iterations, Integral):
         raise InputError("options.max_iterations must be an integer greater than zero.")
     max_iterations = int(options.max_iterations)
@@ -438,12 +692,6 @@ def _normalize_options(options: EquilibriumOptions | Mapping[str, Any] | None) -
     min_composition = _finite_float_option(options.min_composition, "min_composition")
     if min_composition <= 0.0:
         raise InputError("options.min_composition must be positive.")
-    jacobian_backend = str(options.jacobian_backend).strip().lower()
-    if jacobian_backend not in {"auto", "analytic", "cppad"}:
-        raise InputError("options.jacobian_backend must be 'auto', 'analytic', or 'cppad'.")
-    solver_backend = str(options.solver_backend).strip().lower()
-    if solver_backend not in {"auto", "ipopt"}:
-        raise InputError("options.solver_backend must be 'auto' or 'ipopt'.")
     timeout_seconds = _optional_positive_float_option(options.timeout_seconds, "timeout_seconds")
     hessian_mode = str(options.hessian_mode).strip().lower().replace("_", "-")
     if hessian_mode not in {"auto", "exact", "limited-memory"}:
@@ -477,12 +725,10 @@ def _normalize_options(options: EquilibriumOptions | Mapping[str, Any] | None) -
     continuation_state = options.continuation_state
     if continuation_state is not None and not isinstance(continuation_state, Mapping):
         raise InputError("options.continuation_state must be a mapping when provided.")
-    return EquilibriumOptions(
+    return EquilibriumSolverOptions(
         max_iterations=max_iterations,
         tolerance=tolerance,
         min_composition=min_composition,
-        jacobian_backend=jacobian_backend,  # type: ignore[arg-type]
-        solver_backend=solver_backend,  # type: ignore[arg-type]
         timeout_seconds=timeout_seconds,
         hessian_mode=hessian_mode,  # type: ignore[arg-type]
         ipopt_iteration_history_limit=ipopt_iteration_history_limit,
@@ -513,39 +759,39 @@ def _optional_positive_float_option(value: Any, label: str) -> float | None:
     return out
 
 
-def _native_timeout_seconds(options: EquilibriumOptions) -> float:
+def _native_timeout_seconds(options: EquilibriumSolverOptions) -> float:
     return 0.0 if options.timeout_seconds is None else float(options.timeout_seconds)
 
 
-def _resolved_ipopt_acceptable_tolerance(options: EquilibriumOptions) -> float:
+def _resolved_ipopt_acceptable_tolerance(options: EquilibriumSolverOptions) -> float:
     if options.ipopt_acceptable_tolerance is not None:
         return float(options.ipopt_acceptable_tolerance)
     return max(100.0 * float(options.tolerance), 1.0e-10)
 
 
-def _resolved_ipopt_constraint_violation_tolerance(options: EquilibriumOptions) -> float:
+def _resolved_ipopt_constraint_violation_tolerance(options: EquilibriumSolverOptions) -> float:
     if options.ipopt_constraint_violation_tolerance is not None:
         return float(options.ipopt_constraint_violation_tolerance)
     return float(options.tolerance)
 
 
-def _resolved_ipopt_dual_infeasibility_tolerance(options: EquilibriumOptions) -> float:
+def _resolved_ipopt_dual_infeasibility_tolerance(options: EquilibriumSolverOptions) -> float:
     if options.ipopt_dual_infeasibility_tolerance is not None:
         return float(options.ipopt_dual_infeasibility_tolerance)
     return float(options.tolerance)
 
 
-def _resolved_ipopt_complementarity_tolerance(options: EquilibriumOptions) -> float:
+def _resolved_ipopt_complementarity_tolerance(options: EquilibriumSolverOptions) -> float:
     if options.ipopt_complementarity_tolerance is not None:
         return float(options.ipopt_complementarity_tolerance)
     return float(options.tolerance)
 
 
-def _native_ipopt_option_args(options: EquilibriumOptions) -> tuple[str, int]:
+def _native_ipopt_option_args(options: EquilibriumSolverOptions) -> tuple[str, int]:
     return options.hessian_mode, int(options.ipopt_iteration_history_limit)
 
 
-def _native_ipopt_control_kwargs(options: EquilibriumOptions) -> dict[str, Any]:
+def _native_ipopt_control_kwargs(options: EquilibriumSolverOptions) -> dict[str, Any]:
     return {
         "linear_solver": str(options.ipopt_linear_solver),
         "acceptable_tolerance": _resolved_ipopt_acceptable_tolerance(options),

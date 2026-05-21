@@ -90,7 +90,7 @@
   subsubsection: ""
   family: "Phase equilibrium"
   status: "Implemented"
-  public_api: "Equilibrium(mixture, ...).solve(route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature', ...)"
+  public_api: "Equilibrium(mixture, route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature', ...).solve()"
   backend: "Native C++ Ipopt equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient, constraint Jacobian, and Hessian callbacks"
@@ -104,14 +104,15 @@
   tex_line: 72
   body: |
     This entry exposes the trusted neutral bubble/dew proof set through route specs
-    on \texttt{Equilibrium(mixture).solve}. The selector core reads the
+    configured by \texttt{Equilibrium(mixture, route=..., ...)} and executed by
+    \texttt{solve()}. The selector core reads the
     native activation matrix, admits only neutral non-reactive non-electrolyte
     non-associating mixtures for the production contract, and requires exact
     derivatives plus postsolve certification.
   owner_refs:
     - file: "src/epcsaft/equilibrium/workflows.py"
-      line: 223
-      comment_line: 222
+      line: 461
+      comment_line: 460
       context: "def _solve_selector_vle("
     - file: "src/epcsaft/native/equilibrium/core/selector_core.cpp"
       line: 324
@@ -143,7 +144,7 @@
   subsubsection: ""
   family: "Phase equilibrium"
   status: "Implemented"
-  public_api: "Equilibrium(mixture, ...).solve(route='flash', ...)"
+  public_api: "Equilibrium(mixture, route='flash', ...).solve()"
   backend: "Native C++ Ipopt equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient, constraint Jacobian, and Hessian callbacks"
@@ -154,11 +155,12 @@
   description: "Solves certified neutral two-phase TP flash through the native selector core."
   change_note: "Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 92
+  tex_line: 93
   body: |
     This entry exposes the trusted neutral two-phase TP flash proof through the
-    \texttt{flash} route spec on \texttt{Equilibrium(mixture).solve}. Flash is a
-    route spec over the same native
+    \texttt{flash} route spec configured by
+    \texttt{Equilibrium(mixture, route="flash", ...)} and executed by
+    \texttt{solve()}. Flash is a route spec over the same native
     VLE residual and hard-constraint core as bubble and dew routes. The native
     selector owns deterministic seed generation, activation checks, exact
     derivative requirements, and postsolve certification. Gibbs/free-energy terms
@@ -186,7 +188,7 @@
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 117
+  tex_line: 119
   body: |
     This entry covers the implemented pure-neutral native Ceres route and does not
     broaden support to every possible pure-component parameter family.
@@ -224,7 +226,7 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 134
+  tex_line: 136
   body: |
     This entry is limited to the currently implemented pure-ion target surface.
   owner_refs:
@@ -261,7 +263,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 150
+  tex_line: 152
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)
