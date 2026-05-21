@@ -5,7 +5,7 @@ goal:
   slug: "native-topology-activation-matrix-completion"
   kind: existing_plan
   tranche: "Complete the selector-core, route-deletion, activation-capability, docs, validation, commit, and push tranche from the approved plan."
-  status: active
+  status: done
   intake:
     original_request: "Implement the Native Topology Activation Matrix Completion Plan in full."
     interpreted_outcome: "The production bubble-pressure native path is selector-core and activation-matrix driven, stale non-production route surfaces are removed, capabilities and docs are current, strict gates pass, and branch ipopt is pushed."
@@ -64,7 +64,7 @@ visual_board:
     command: "npx goalbuddy extend github-projects"
     missing: []
 
-active_task: T010
+active_task: null
 
 tasks:
   - id: T001
@@ -439,7 +439,7 @@ tasks:
   - id: T010
     type: pm
     assignee: PM
-    status: active
+    status: done
     reasoning_hint: high
     objective: "Run updated Gate 10, commit logical changes, push ipopt, and record final evidence."
     inputs:
@@ -453,11 +453,58 @@ tasks:
       - "Commit hashes."
       - "Push result."
       - "Clean worktree status."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Gate 10 passed, logical local commits were created, and origin/ipopt was pushed without opening a PR."
+      commands:
+        - cmd: "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+          result: "29 passed"
+        - cmd: "uv run python run_pytest.py tests/workflows/build/test_build_epcsaft.py::test_package_and_dev_defaults_require_ceres_and_cppad -q"
+          status: pass
+          result: "1 passed"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route --allow-long-native-tests -q"
+          status: pass
+          result: "6 passed"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics tests/native/contracts -q"
+          status: pass
+          result: "47 passed"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py -q"
+          status: pass
+          result: "9 passed"
+        - cmd: "uv run python run_pytest.py tests/native/state tests/native/regression -q"
+          status: pass
+          result: "57 passed"
+        - cmd: "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+          status: pass
+        - cmd: "uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability"
+          status: pass
+        - cmd: "uv run python scripts/dev/validate_project.py quick"
+          status: pass
+          result: "56 passed"
+        - cmd: "node C:\\Users\\Tanner\\.codex\\plugins\\cache\\goalbuddy\\goalbuddy\\0.3.6\\skills\\goalbuddy\\scripts\\check-goal-state.mjs docs\\goals\\native-topology-activation-matrix-completion\\state.yaml"
+          status: pass
+        - cmd: "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\hooks\\codex-cleanup.ps1\" -RepoRoot ."
+          status: pass
+        - cmd: "git diff --check"
+          status: pass
+        - cmd: "git push origin ipopt"
+          status: pass
+          result: "4262c5b2..061153ca"
+      commits:
+        - "a1f04446 Complete native selector topology"
+        - "bb8b1810 Contract equilibrium API and tests"
+        - "fda2aa95 Document selector activation contract"
+        - "061153ca Record selector completion goalboard"
+      stale_path_gate:
+        status: pass
+        note: "Only retained hit was neutral_tp_flash in declared_not_exposed_families documentation."
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Audit whether the full user-requested outcome is complete."
     inputs:
@@ -473,13 +520,21 @@ tasks:
       - "full_outcome_complete: true | false"
       - "missing evidence"
       - "next task if not complete"
-    receipt: null
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      summary: "The approved plan outcome is complete: selector-core/activation topology is implemented, non-production route surfaces are deleted, capabilities/docs/tests are aligned, strict Gate 10 passed, commits exist, and ipopt was pushed."
+      evidence:
+        - "Role-owner re-review approved proceeding after Gate 2/Gate 4A blocker fixes."
+        - "T010 records full Gate 10 command evidence."
+        - "Branch ipopt was pushed to origin without opening a PR."
 
 checks:
   dirty_fingerprint: "initial: branch ipopt ahead 6; modified docs/handoffs/native-topology-activation-matrix-completion-handoff.md; new docs/goals/native-topology-activation-matrix-completion/"
   last_verification:
     result: pass
-    task: T001
+    task: T010
     commands:
       - "node <goalbuddy-checker> docs/goals/native-topology-activation-matrix-completion/state.yaml"
       - "python -m graphify update ."
