@@ -1,0 +1,486 @@
+version: 2
+
+goal:
+  title: "Native Topology Activation Matrix Completion"
+  slug: "native-topology-activation-matrix-completion"
+  kind: existing_plan
+  tranche: "Complete the selector-core, route-deletion, activation-capability, docs, validation, commit, and push tranche from the approved plan."
+  status: active
+  intake:
+    original_request: "Implement the Native Topology Activation Matrix Completion Plan in full."
+    interpreted_outcome: "The production bubble-pressure native path is selector-core and activation-matrix driven, stale non-production route surfaces are removed, capabilities and docs are current, strict gates pass, and branch ipopt is pushed."
+    input_shape: existing_plan
+    audience: "epcsaft maintainers and downstream package consumers"
+    authority: requested
+    proof_type: test
+    completion_proof: "Updated Gate 10 passes, GoalBuddy checker passes, role-owner review is recorded, local commits exist, ipopt is pushed, and git status is clean."
+    likely_misfire: "Completing only mechanical moves or documentation while route internals, capabilities, or public API claims still drift from the activation matrix."
+    blind_spots_considered:
+      - "Deleted-route blast radius across Python wrappers, bindings, generated docs, and tests."
+      - "Python activation mirror drift from the C++ source of truth."
+      - "Accidentally preserving hidden route shells or compatibility stubs."
+      - "Certification diagnostics existing without hard acceptance gating."
+    existing_plan_facts:
+      - "Use contract-test-first sequencing for structure, capability mirror, selector certification, and deleted-route absence."
+      - "Keep only Equilibrium.bubble_pressure as the public production equilibrium path."
+      - "Delete TP flash, LLE, stability, electrolyte, reactive, reactive speciation, and electrolyte/reactive bubble route surfaces."
+      - "Production bubble-pressure inputs are neutral, non-reactive, non-electrolyte, non-associating mixtures."
+      - "Selector certification is a hard acceptance gate."
+      - "Generated Graphify artifacts remain untracked."
+      - "Stay on ipopt, commit locally, push branch, and do not open a PR."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: "http://127.0.0.1:41737/native-topology-activation-matrix-completion/"
+    command: "C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/native-topology-activation-matrix-completion"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: T010
+
+tasks:
+  - id: T001
+    type: pm
+    assignee: PM
+    status: done
+    reasoning_hint: medium
+    objective: "Initialize the board, launch or generate the local visual board, refresh architecture context, and record the exact starting state."
+    inputs:
+      - "User-approved implementation plan"
+      - "docs/handoffs/native-topology-activation-matrix-completion-handoff.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+    constraints:
+      - "Only write GoalBuddy control files, generated local board artifacts, and read-only context notes."
+      - "Keep Graphify generated artifacts untracked."
+    expected_output:
+      - "GoalBuddy board files exist and checker passes."
+      - "Local visual board launched or generated."
+      - "Starting branch, dirty state, and graph context recorded."
+    receipt:
+      result: done
+      summary: "Initialized v2 GoalBuddy board, generated Graphify code graph, started the local board hub, and recorded the starting branch state."
+      commands:
+        - cmd: "node <goalbuddy-checker> docs/goals/native-topology-activation-matrix-completion/state.yaml"
+          status: pass
+        - cmd: "python -m graphify update ."
+          status: pass
+        - cmd: "start-goalbuddy-board.ps1 -Goal docs/goals/native-topology-activation-matrix-completion"
+          status: pass
+      evidence:
+        - "http://127.0.0.1:41737/native-topology-activation-matrix-completion/"
+        - "graphify-out/GRAPH_REPORT.md"
+        - "branch ipopt ahead of origin/ipopt by 6 before implementation"
+  - id: T002
+    type: scout
+    assignee: Scout
+    status: done
+    reasoning_hint: medium
+    objective: "Perform the required read-only gap audit against the handoff, baseline commit 3889de77, current C++ includes, runtime capabilities, tests, and docs."
+    inputs:
+      - "3889de77"
+      - "docs/handoffs/native-topology-activation-matrix-completion-handoff.md"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "Current source tree"
+    constraints:
+      - "Read-only except for the audit note and board receipt."
+      - "Map each current violation to a later task."
+    expected_output:
+      - "docs/goals/native-topology-activation-matrix-completion/notes/T002-gap-audit.md"
+      - "Receipt listing current violations and task mapping."
+    receipt:
+      result: done
+      summary: "Read-only audit found binding/facade leakage, missing selector core, handwritten capability drift, broad Python route exports/dispatch, explicit CMake ownership of deleted route sources, and stale tests/docs/AlgIDs."
+      artifacts:
+        - "docs/goals/native-topology-activation-matrix-completion/notes/T002-gap-audit.md"
+      evidence:
+        - "module.cpp still includes route/block/solver internals and exports non-production route bindings."
+        - "facade.h still includes route_builders.h and exposes route-builder aliases/results."
+        - "_core activation matrix marks only bubble_dew_derived_routes production-exposed, while runtime capabilities still claim non-production route keys."
+        - "equilibrium/__init__.py, workflows.py, and state/native_adapter.py still expose or dispatch old route surfaces."
+        - "CMakeLists.txt still lists workflows.cpp, route_builders.cpp, reactive, stability, and bubble/dew route sources explicitly."
+        - "Algorithm registry outputs still contain active AlgIDs for routes scheduled for deletion."
+      owner_receipts:
+        - "build_packaging_owner: CMake/source topology, generated .py mirror packaging, and algorithm registry traceability risks."
+        - "python_api_test_owner: public export leakage, legacy dispatch, capability drift, workflow-test coupling, and missing mirror contract."
+        - "native_solver_backend_owner: no bounded receipt before shutdown; main-thread native audit captured the gap evidence."
+  - id: T003
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Validate that the implementation sequence fully covers the handoff gates before edits begin."
+    inputs:
+      - "T002 gap audit"
+      - "Approved implementation plan"
+      - "Non-negotiable gates in handoff"
+    constraints:
+      - "Read-only."
+      - "Approve, amend, or block implementation slices before production files are edited."
+    expected_output:
+      - "Decision"
+      - "Approved task sequence"
+      - "Any blockers or amendments"
+    receipt:
+      result: done
+      decision: approved
+      summary: "Implementation may proceed without sequence amendment; T004 failing contract tests may begin."
+      evidence:
+        - "T002 maps the current seam, selector, capability, API, CMake, test, and docs gaps to T004-T008."
+        - "The board preserves contract-test-first sequencing before production edits."
+        - "T004 is limited to tests, scripts, and GoalBuddy notes."
+      risks:
+        - "Tests that prove only docs changed instead of callable-route deletion."
+        - "Hidden callable route shells left in module.cpp, facade.h, workflows.py, or native_adapter.py."
+        - "Capability claims drifting from C++ activation metadata."
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Write failing contract tests for binding seam contraction, activation-driven capabilities, selector-core certification, and deleted route absence."
+    allowed_files:
+      - "tests/**"
+      - "scripts/**"
+      - "docs/goals/native-topology-activation-matrix-completion/**"
+    verify:
+      - "uv run python run_pytest.py <new focused contract tests> -q"
+    stop_if:
+      - "The desired contract is ambiguous."
+      - "A test cannot fail for the expected missing behavior."
+    receipt:
+      result: done
+      summary: "Added failing contract tests for native binding/facade contraction, deleted route absence, Python equilibrium export contraction, generated activation mirror/runtime capabilities, and selector-core metadata/rejection."
+      changed_files:
+        - "tests/workflows/repo/test_project_structure.py"
+        - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+        - "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
+      commands:
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py::test_native_equilibrium_bindings_are_registered_through_selector_domain_units tests/workflows/repo/test_project_structure.py::test_equilibrium_facade_does_not_expose_route_builder_types tests/workflows/repo/test_project_structure.py::test_deleted_equilibrium_route_sources_and_bindings_are_absent tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_bubble_pressure_support tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py -q"
+          status: pass
+          result: "expected_red: 8 focused contract failures before implementation"
+      evidence:
+        - "8 focused failures: missing register_equilibrium_bindings seam, facade route-builder leakage, old native route files/bindings present, leaked Python exports, missing generated activation mirror, missing capabilities activation_matrix, and missing selector binding."
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Implement the selector core, migrate the trusted neutral bubble/dew production path through it, and make selector certification a hard gate."
+    allowed_files:
+      - "src/epcsaft/native/equilibrium/**"
+      - "src/epcsaft/native/bindings/**"
+      - "src/epcsaft/equilibrium/**"
+      - "src/epcsaft/frontend/equilibrium.py"
+      - "src/epcsaft/state/native_adapter.py"
+      - "CMakeLists.txt"
+      - "tests/**"
+      - "docs/goals/native-topology-activation-matrix-completion/**"
+    verify:
+      - "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+      - "uv run python run_pytest.py <new selector-core bubble/dew tests> --allow-long-native-tests -q"
+      - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route -q"
+    stop_if:
+      - "Solver scaling, variables, constraints, continuation, or convergence behavior would need non-mechanical tuning."
+      - "The trusted bubble-pressure route regresses numerically."
+    receipt:
+      result: done
+      summary: "Added a native selector core, exposed selector contract/route bindings, routed public bubble_pressure through selector dispatch, and made selector postsolve certification a hard Python acceptance gate."
+      changed_files:
+        - "CMakeLists.txt"
+        - "src/epcsaft/native/equilibrium/core/selector_core.h"
+        - "src/epcsaft/native/equilibrium/core/selector_core.cpp"
+        - "src/epcsaft/native/bindings/module.cpp"
+        - "src/epcsaft/equilibrium/workflows.py"
+      commands:
+        - cmd: "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route --allow-long-native-tests -q"
+          status: pass
+      evidence:
+        - "3 selector/public bubble-pressure tests passed."
+        - "Native build completed and imported _core successfully."
+  - id: T006
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Delete non-production equilibrium route surfaces and contract native/Python/public API boundaries around the surviving bubble-pressure path."
+    allowed_files:
+      - "src/epcsaft/native/equilibrium/**"
+      - "src/epcsaft/native/bindings/**"
+      - "src/epcsaft/equilibrium/**"
+      - "src/epcsaft/state/native_adapter.py"
+      - "src/epcsaft/frontend/**"
+      - "tests/**"
+      - "CMakeLists.txt"
+      - "docs/goals/native-topology-activation-matrix-completion/**"
+    verify:
+      - "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/diagnostics tests/native/contracts -q"
+    stop_if:
+      - "A non-route package feature depends on a removed route and needs a product decision."
+      - "A hidden compatibility route would be required to pass tests."
+    receipt:
+      result: done
+      summary: "Deleted obsolete native workflow/reactive/stability route source paths, moved the surviving two-phase support into core ownership, cleaned facade/module seams, stripped non-production native route declarations/bindings, and constrained the Python equilibrium package namespace to production result/options types."
+      changed_files:
+        - "CMakeLists.txt"
+        - "src/epcsaft/native/bindings/module.cpp"
+        - "src/epcsaft/native/bindings/equilibrium_bindings.h"
+        - "src/epcsaft/native/bindings/equilibrium_bindings.cpp"
+        - "src/epcsaft/native/bindings/equilibrium_binding_types.h"
+        - "src/epcsaft/native/equilibrium/facade.h"
+        - "src/epcsaft/native/equilibrium/core/helpers.h"
+        - "src/epcsaft/native/equilibrium/core/route_metadata.h"
+        - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.h"
+        - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+        - "src/epcsaft/native/equilibrium/results/result_builder.h"
+        - "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
+        - "src/epcsaft/equilibrium/__init__.py"
+        - "src/epcsaft/state/native_adapter.py"
+      removed_files:
+        - "src/epcsaft/native/equilibrium/workflows.cpp"
+        - "src/epcsaft/native/equilibrium/routes/route_builders.h"
+        - "src/epcsaft/native/equilibrium/routes/route_builders.cpp"
+        - "src/epcsaft/native/equilibrium/routes/reactive/**"
+        - "src/epcsaft/native/equilibrium/routes/stability/**"
+        - "src/epcsaft/equilibrium/electrolyte_bubble.py"
+        - "src/epcsaft/equilibrium/reactive_electrolyte.py"
+        - "src/epcsaft/equilibrium/reactive_speciation.py"
+        - "src/epcsaft/equilibrium/reactive_staged.py"
+        - "src/epcsaft/equilibrium/routes/**"
+        - "src/epcsaft/regression/reactive.py"
+        - "tests/native/equilibrium/routes/**"
+      commands:
+        - cmd: "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py::test_native_equilibrium_bindings_are_registered_through_selector_domain_units tests/workflows/repo/test_project_structure.py::test_equilibrium_facade_does_not_expose_route_builder_types tests/workflows/repo/test_project_structure.py::test_deleted_equilibrium_route_sources_and_bindings_are_absent tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_bubble_pressure_support tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route --allow-long-native-tests -q"
+          status: pass
+      evidence:
+        - "Native build completed and imported _core successfully after source deletion."
+        - "7 focused seam/deletion/selector/public bubble-pressure tests passed."
+  - id: T007
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Generate and commit the Python activation-matrix mirror from C++ metadata and update runtime capabilities."
+    allowed_files:
+      - "src/epcsaft/runtime/**"
+      - "src/epcsaft/native/equilibrium/core/activation_matrix.h"
+      - "run_pytest.py"
+      - "scripts/**"
+      - "tests/**"
+      - "docs/goals/native-topology-activation-matrix-completion/**"
+    verify:
+      - "uv run python run_pytest.py tests/native/contracts tests/workflows/repo/test_run_pytest.py -q"
+    stop_if:
+      - "The mirror cannot be verified against C++ activation metadata."
+    receipt:
+      result: done
+      summary: "Added a generated Python activation mirror from native C++ metadata, wired runtime capabilities to activation rows instead of handwritten route evidence, and updated pytest slice metadata around selector/native contracts."
+      changed_files:
+        - "scripts/dev/generate_equilibrium_activation.py"
+        - "src/epcsaft/runtime/equilibrium_activation.py"
+        - "src/epcsaft/runtime/core.py"
+        - "src/epcsaft/runtime/capability_evidence.py"
+        - "run_pytest.py"
+        - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+        - "tests/native/contracts/test_equilibrium_native_contracts.py"
+        - "tests/workflows/repo/test_run_pytest.py"
+      commands:
+        - cmd: "uv run python scripts/dev/generate_equilibrium_activation.py --check"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/contracts/test_equilibrium_native_contracts.py tests/workflows/repo/test_run_pytest.py -q"
+          status: pass
+      evidence:
+        - "Activation mirror equals _core._native_equilibrium_activation_matrix()."
+        - "Runtime capabilities report activation_matrix, production_families=['bubble_dew_derived_routes'], declared-not-exposed future families, and public_routes=['Equilibrium.bubble_pressure']."
+        - "34 focused activation/native-contract/run_pytest tests passed."
+  - id: T008
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: medium
+    objective: "Update roadmaps, native debugging docs, algorithm registry outputs, CONTEXT glossary, ADR, and the active handoff for the new contract."
+    allowed_files:
+      - "CONTEXT.md"
+      - "docs/adr/**"
+      - "docs/handoffs/native-topology-activation-matrix-completion-handoff.md"
+      - "docs/pages/**"
+      - "docs/roadmaps/**"
+      - "docs/latex/algorithms.tex"
+      - "docs/algorithms.md"
+      - "docs/algorithms_registry.yaml"
+      - "scripts/benchmarks/helpers/literature.py"
+      - "scripts/dev/run_ipopt_exact_hessian_proofs.py"
+      - "scripts/validation/**"
+      - "scripts/plot_outputs.py"
+      - "src/epcsaft/equilibrium/core/**"
+      - "tests/**"
+      - "docs/goals/native-topology-activation-matrix-completion/**"
+    verify:
+      - "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+      - "uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability"
+    stop_if:
+      - "Generated registry outputs require an implementation owner for a deleted route."
+    receipt:
+      result: done
+      summary: "Updated the active roadmaps, native/debugging and workflow docs, ADRs, CONTEXT glossary, active handoff, algorithm registry source/outputs, and stale script/doc references for the selector-core production contract."
+      changed_files:
+        - "CONTEXT.md"
+        - "docs/adr/0003-selector-core-activation-capabilities.md"
+        - "docs/adr/README.md"
+        - "docs/handoffs/native-topology-activation-matrix-completion-handoff.md"
+        - "docs/pages/**"
+        - "docs/roadmaps/FULL_ROADMAP.md"
+        - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+        - "docs/latex/algorithms.tex"
+        - "docs/algorithms.md"
+        - "docs/algorithms_registry.yaml"
+        - "scripts/benchmarks/helpers/literature.py"
+        - "scripts/dev/run_ipopt_exact_hessian_proofs.py"
+        - "scripts/plot_outputs.py"
+      removed_files:
+        - "scripts/validation/equilibrium_core/**"
+        - "scripts/validation/validate_electrolyte_lle_confidence.py"
+        - "scripts/benchmarks/benchmark_reactive_regression.py"
+        - "scripts/benchmarks/helpers/reactive_regression.py"
+        - "docs/pages/electrolyte_lle_workflow.rst"
+        - "docs/pages/electrolyte_vle_reactive_workflow.rst"
+      commands:
+        - cmd: "uv run python scripts/docs/sync_algorithm_registry.py"
+          status: pass
+        - cmd: "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py tests/workflows/repo/test_workflow_entrypoints.py tests/workflows/repo/test_run_pytest.py -q"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics tests/native/contracts -q"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route --allow-long-native-tests -q"
+          status: pass
+      evidence:
+        - "Algorithm registry now keeps only bubble_dew_ipopt as an active equilibrium AlgID."
+        - "ADR 0003 records selector-core ownership, route deletion, and activation-driven capabilities."
+        - "Active source/docs stale route search is clean except declared-not-exposed activation row names."
+  - id: T009
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Run role-owner independent review before final commit."
+    inputs:
+      - "Baseline commit 3889de77"
+      - "Current diff"
+      - "All completed receipts"
+      - "Exact validation commands already run"
+    constraints:
+      - "Do not implement."
+      - "Find ways the work could still be only a mechanical move rather than full architecture completion."
+    expected_output:
+      - "Critical and important findings."
+      - "Whether final validation may proceed."
+    receipt:
+      result: done
+      decision: approved
+      summary: "Role-owner re-review initially blocked on cosmetic seam movement, direct route shells, activation parity, stale docs, and diff hygiene; fixes moved equilibrium bindings to a domain registrar, deleted hidden route-result shells, enforced activation parity in selector_core, tightened source guards, and received judge approval to proceed."
+      commands:
+        - cmd: "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10"
+          status: pass
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py tests/native/equilibrium/diagnostics tests/native/contracts tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py -q"
+          status: pass
+          result: "85 passed"
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py::test_deleted_equilibrium_route_sources_and_bindings_are_absent tests/workflows/repo/test_project_structure.py::test_native_equilibrium_bindings_are_registered_through_selector_domain_units -q"
+          status: pass
+          result: "2 passed after registrar source-guard tightening"
+      evidence:
+        - "Judge re-review approved T010 after Gate 2 and Gate 4A fixes."
+        - "src/epcsaft/native/bindings/module.cpp calls register_equilibrium_bindings(m) without route/block/solver/result internals."
+        - "src/epcsaft/native/equilibrium/register_bindings.cpp owns equilibrium pybind registration under the equilibrium domain."
+        - "src/epcsaft/native/equilibrium/core/selector_core.cpp checks activation contract metadata before dispatch and route result metadata after solve."
+        - "Direct _native_neutral_*_eos_route_result entrypoints are absent and source-guarded."
+      owner_receipts:
+        - "native_solver_backend_owner: initial no-proceed findings fixed by real registrar move, selector metadata derivation, direct shell deletion, and activation parity enforcement."
+        - "python_api_test_owner: retained route-list test fixed; final guard finding fixed by scanning register_bindings.cpp in source-level deleted-shell test."
+        - "build_packaging_owner: CMake/source ownership coherent; remaining concerns deferred to T010 staging and diff-check cleanliness."
+        - "goal_judge: approved proceeding to T010."
+  - id: T010
+    type: pm
+    assignee: PM
+    status: active
+    reasoning_hint: high
+    objective: "Run updated Gate 10, commit logical changes, push ipopt, and record final evidence."
+    inputs:
+      - "All completed implementation receipts"
+      - "T009 review receipt"
+    constraints:
+      - "Do not skip validation silently."
+      - "Do not open a PR."
+    expected_output:
+      - "Updated Gate 10 command results."
+      - "Commit hashes."
+      - "Push result."
+      - "Clean worktree status."
+    receipt: null
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Audit whether the full user-requested outcome is complete."
+    inputs:
+      - "All done task receipts"
+      - "Final validation"
+      - "Git status"
+      - "Push result"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if any required Worker or PM task remains queued or active."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "missing evidence"
+      - "next task if not complete"
+    receipt: null
+
+checks:
+  dirty_fingerprint: "initial: branch ipopt ahead 6; modified docs/handoffs/native-topology-activation-matrix-completion-handoff.md; new docs/goals/native-topology-activation-matrix-completion/"
+  last_verification:
+    result: pass
+    task: T001
+    commands:
+      - "node <goalbuddy-checker> docs/goals/native-topology-activation-matrix-completion/state.yaml"
+      - "python -m graphify update ."
+      - "start-goalbuddy-board.ps1 -Goal docs/goals/native-topology-activation-matrix-completion"
