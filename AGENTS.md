@@ -32,6 +32,7 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 ## Repo Workflow
 - Current backend: uv-managed Python, direct CMake dev builds, pybind11 `_core`, native C++ equations, pure Python public API wrappers.
 - Public repo tools intentionally use developer-neutral names. Do not add new tracked files, tests, scripts, or docs with Codex-specific names unless they are local-only agent instructions.
+- Before adding any new file, inspect the nearest existing directory structure, name the intended category, list the candidate folders, and choose the path that matches existing tests. Do not write the file until that placement is justified.
 - Best new-agent workflow: `uv sync --no-install-project`, then `uv run python scripts/dev/build_epcsaft.py`, then `uv run python scripts/dev/doctor.py`, then `uv run python scripts/dev/validate_project.py quick`.
 - Setup or uncertain state: `uv sync --no-install-project`, then `uv run python scripts/dev/build_epcsaft.py`, then `uv run python scripts/dev/doctor.py`.
 - Standard fast validation: `uv run python scripts/dev/validate_project.py quick`.
