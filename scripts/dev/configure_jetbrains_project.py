@@ -22,9 +22,11 @@ TRANSIENT_PATHS: tuple[str, ...] = (
     "docs/latex/out",
     "results/runs",
 )
-UNIVERSAL_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (
+# Keep tests under the module content root, not as a source root. Marking
+# tests as a source root makes tests/api, tests/native, and tests/support look
+# like top-level namespace packages in IntelliJ.
+CANONICAL_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (
     ("src", False),
-    ("tests", True),
 )
 
 
@@ -158,6 +160,10 @@ def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...]
     existing_source_folders = list(content.findall("sourceFolder"))
     existing_exclude_folders = list(content.findall("excludeFolder"))
     preserved_children = [child for child in list(content) if child.tag not in {"sourceFolder", "excludeFolder"}]
+    canonical_source_keys = {
+        (_module_url(relative_path), "true" if is_test else "false")
+        for relative_path, is_test in CANONICAL_SOURCE_ROOTS
+    }
 
     desired_sources: dict[tuple[str, str], ET.Element] = {}
     for source in existing_source_folders:
@@ -167,6 +173,9 @@ def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...]
             actions.append(f"remove transient sourceFolder {url}")
             continue
         key = (url or "", is_test)
+        if key not in canonical_source_keys:
+            actions.append(f"remove noncanonical sourceFolder {url} (isTestSource={is_test})")
+            continue
         if key in desired_sources:
             actions.append(f"remove duplicate sourceFolder {url} (isTestSource={is_test})")
             continue
@@ -175,7 +184,7 @@ def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...]
             {"url": url or "", "isTestSource": is_test},
         )
 
-    for relative_path, is_test in UNIVERSAL_SOURCE_ROOTS:
+    for relative_path, is_test in CANONICAL_SOURCE_ROOTS:
         url = _module_url(relative_path)
         key = (url, "true" if is_test else "false")
         if key not in desired_sources:
