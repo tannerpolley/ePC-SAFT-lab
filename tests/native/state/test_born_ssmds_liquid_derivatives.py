@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from epcsaft import InputError
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from tests.support.numeric import assert_allclose
 from tests.support.runtime_cases import _ionic_params
 

@@ -15,7 +15,7 @@ and implemented package workflows. The important backend labels are:
 
 The static evidence behind route names, derivative coverage rows, pytest
 slices, and ``scripts/dev/validate_project.py`` modes lives in
-``epcsaft.capability_evidence``. ``capabilities()`` adapts that registry to the
+``epcsaft.runtime.capability_evidence``. ``capabilities()`` adapts that registry to the
 currently installed native dependencies instead of duplicating route lists in
 CLI wrappers. This keeps public command names stable while still tying
 capability claims to executable checks.
@@ -36,7 +36,7 @@ payload.
 EOS state diagnostics keep the same JSON-like ``state.state_diagnostics()``
 dictionary for serialization. Code that wants a typed view over the stable
 payload can use ``state.state_diagnostics_view()`` or
-``epcsaft.eos.StateDiagnosticsView``. The view exposes temperature, phase,
+``epcsaft.state.eos_views.StateDiagnosticsView``. The view exposes temperature, phase,
 composition, pressure, molar density, compressibility factor, ionic-output
 presence, and fugacity-contribution terms while leaving the serialized
 ``state_diagnostics()`` keys unchanged.

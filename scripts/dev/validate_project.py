@@ -17,7 +17,7 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft.capability_evidence import VALIDATION_LANES, validation_lane_commands
+from epcsaft.runtime.capability_evidence import VALIDATION_LANES, validation_lane_commands
 
 CHECK_COMMANDS: dict[str, tuple[tuple[str, ...], ...]] = {
     name: validation_lane_commands(name) for name in VALIDATION_LANES

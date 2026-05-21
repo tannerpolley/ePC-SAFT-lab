@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from ._types import InputError, SolutionError, vector_to_array
+from .._types import InputError, SolutionError, vector_to_array
 
 STATE_METHOD_ALIAS_MAP = {
     "pressure": "p",

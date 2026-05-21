@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from epcsaft import _core
-from epcsaft.epcsaft import create_struct, ePCSAFTMixture
+from epcsaft.state.native_adapter import create_struct, ePCSAFTMixture
 from tests.support.native_cases import _ionic_state, _neutral_state
 from tests.support.numeric import assert_allclose
 from tests.support.runtime_cases import _ionic_params

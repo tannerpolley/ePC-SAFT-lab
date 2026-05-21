@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from epcsaft.capability_evidence import TEST_SLICES, VALIDATION_LANES
+from epcsaft.runtime.capability_evidence import TEST_SLICES, VALIDATION_LANES
 from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
@@ -512,8 +512,8 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                 command="uv run python analyses/data_validation/mea_co2_pressure_speciation/scripts/run_all.py",
                 status=EXECUTABLE,
                 package_surface=(
-                    "src/epcsaft/reactive_speciation.py",
-                    "src/epcsaft/epcsaft.py",
+                    "src/epcsaft/equilibrium/reactive_speciation.py",
+                    "src/epcsaft/state/native_adapter.py",
                     "src/epcsaft/native/epcsaft_ares.cpp",
                     "analyses/data_validation/mea_co2_pressure_speciation/scripts/run_all.py",
                 ),
@@ -589,7 +589,7 @@ def run_literature_benchmarks(
         "run_mode": EXECUTE_EXECUTABLE_CASES if execute_commands else REGISTRY_ONLY,
         "execution_summary": execution_summary,
         "all_executable_commands_passed": execution_summary["failed"] == 0,
-        "capability_evidence_source": "epcsaft.capability_evidence",
+        "capability_evidence_source": "epcsaft.runtime.capability_evidence",
         "registered_validation_lanes": list(VALIDATION_LANES),
         "registered_pytest_slices": list(TEST_SLICES),
         "status_counts": dict(status_counts),

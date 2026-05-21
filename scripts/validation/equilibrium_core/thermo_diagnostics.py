@@ -10,9 +10,9 @@ from typing import Any
 import numpy as np
 
 from epcsaft._types import SolutionError
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft.equilibrium import EquilibriumOptions, _json_like
-from epcsaft.equilibrium_core.electrolyte_basis import build_electrolyte_basis
+from epcsaft.equilibrium.core.electrolyte_basis import build_electrolyte_basis
 from scripts.validation.equilibrium_core.phase_state import phase_state
 
 REPO_ROOT = Path(__file__).resolve().parents[3]

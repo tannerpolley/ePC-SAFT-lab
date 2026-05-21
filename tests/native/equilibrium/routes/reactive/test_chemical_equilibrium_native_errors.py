@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 import epcsaft
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft import _core
-from epcsaft.epcsaft import create_struct
+from epcsaft.state.native_adapter import create_struct
 
 
 def _toy_mixture() -> ePCSAFTMixture:

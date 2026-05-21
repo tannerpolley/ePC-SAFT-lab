@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from ._types import InputError
+from .._types import InputError
 from .reactive_speciation import (
     ReactiveSpeciationOptions,
     ReactiveSpeciationResult,

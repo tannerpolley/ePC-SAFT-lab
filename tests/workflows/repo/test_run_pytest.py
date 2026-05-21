@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import epcsaft.capability_evidence as capability_evidence
+import epcsaft.runtime.capability_evidence as capability_evidence
 import run_pytest
 from scripts.dev import doctor, validate_project
 

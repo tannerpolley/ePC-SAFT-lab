@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from ._types import InputError, SolutionError
+from .._types import InputError, SolutionError
 from .electrolyte_bubble import ElectrolyteBubbleOptions, electrolyte_bubble_pressure
 from .reactive_speciation import ReactiveSpeciationOptions, ReactiveSpeciationResult, solve_reactive_speciation
 

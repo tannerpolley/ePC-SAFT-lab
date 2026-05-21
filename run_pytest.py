@@ -14,7 +14,7 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft.capability_evidence import TEST_SLICES, registry_targets
+from epcsaft.runtime.capability_evidence import TEST_SLICES, registry_targets
 
 GENERIC_TEST_TARGETS = registry_targets("generic")
 FAST_TEST_TARGETS = GENERIC_TEST_TARGETS

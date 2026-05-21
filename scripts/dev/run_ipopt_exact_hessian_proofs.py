@@ -23,7 +23,7 @@ CASES = ("vle", "electrolyte_lle")
 
 
 def _hydrocarbon_workbook_mixture():
-    from epcsaft.epcsaft import ePCSAFTMixture
+    from epcsaft.state.native_adapter import ePCSAFTMixture
 
     params = {
         "m": np.asarray([1.0, 1.6069, 2.0020]),
@@ -42,7 +42,7 @@ def _hydrocarbon_workbook_mixture():
 
 
 def _ascani_electrolyte_mixture():
-    from epcsaft.epcsaft import ePCSAFTMixture
+    from epcsaft.state.native_adapter import ePCSAFTMixture
 
     aq = np.asarray([0.798324680201737, 0.016320352824141723, 0.09267748348706063, 0.09267748348706063])
     org = np.asarray([0.37006036048879404, 0.6214918588210971, 0.004223890345054407, 0.004223890345054407])

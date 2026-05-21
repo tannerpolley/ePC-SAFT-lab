@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from .._types import SolutionError
+from ..._types import SolutionError
 
 _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "solver_status",
@@ -468,7 +468,7 @@ def raise_with_equilibrium_route_diagnostics(exc: SolutionError, route: Mapping[
 
 
 def _phase_payload_to_public(phase: Mapping[str, Any], *, label: str | None = None):
-    from ..equilibrium import EquilibriumPhase
+    from ..workflows import EquilibriumPhase
 
     ln_fugacity = phase.get("ln_fugacity_coefficient")
     fugacity = phase.get("fugacity_coefficient")
@@ -492,7 +492,7 @@ def neutral_two_phase_payload_to_result(
     phase_labels: Sequence[str] | None = None,
 ):
     """Convert an accepted native neutral two-phase payload into public dataclasses."""
-    from ..equilibrium import EquilibriumResult
+    from ..workflows import EquilibriumResult
 
     diagnostics = _diagnostics(payload)
     if not bool(payload.get("accepted", False)):

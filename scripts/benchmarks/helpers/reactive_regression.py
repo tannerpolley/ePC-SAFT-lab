@@ -15,19 +15,19 @@ from typing import Any
 import numpy as np
 
 import epcsaft
-from epcsaft.epcsaft import ePCSAFTMixture
-from epcsaft.reactive_electrolyte import (
+from epcsaft.state.native_adapter import ePCSAFTMixture
+from epcsaft.equilibrium.reactive_electrolyte import (
     ReactiveElectrolyteBubbleOptions,
     solve_reactive_electrolyte_bubble_sweep,
 )
-from epcsaft.reactive_regression import (
+from epcsaft.regression.reactive import (
     ReactiveElectrolyteBatch,
     ReactiveElectrolyteBatchOptions,
     ReactiveElectrolyteRegressionContext,
     ReactiveElectrolyteRow,
     build_reactive_regression_objective,
 )
-from epcsaft.reactive_speciation import ReactiveSpeciationOptions, solve_reactive_speciation
+from epcsaft.equilibrium.reactive_speciation import ReactiveSpeciationOptions, solve_reactive_speciation
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

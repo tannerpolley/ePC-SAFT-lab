@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from epcsaft.equilibrium_core.native_results import native_route_diagnostics
+from epcsaft.equilibrium.core.native_results import native_route_diagnostics
 
 
 def test_native_route_diagnostics_normalizes_solver_route_and_seed_contract() -> None:

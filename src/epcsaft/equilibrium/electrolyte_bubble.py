@@ -9,7 +9,7 @@ from typing import Any
 
 import numpy as np
 
-from ._types import InputError, SolutionError
+from .._types import InputError, SolutionError
 
 _CANONICAL_PRESSURE_SCALE = 1.0e5
 
@@ -79,12 +79,12 @@ def electrolyte_bubble_pressure(
     options: ElectrolyteBubbleOptions | None = None,
 ) -> ElectrolyteBubbleResult:
     """Solve fixed-liquid electrolyte bubble pressure through the native Ipopt route."""
-    from .equilibrium import (
+    from .workflows import (
         _ipopt_continuation_context,
         _prepare_ipopt_continuation_state,
         _stamp_ipopt_continuation_state,
     )
-    from .equilibrium_core.native_results import native_route_diagnostics, with_postsolve_certification
+    from .core.native_results import native_route_diagnostics, with_postsolve_certification
 
     if options is None:
         options = ElectrolyteBubbleOptions()
@@ -186,7 +186,7 @@ def electrolyte_bubble_pressure(
         continuation_context=continuation_context,
     )
 
-    from . import _core
+    from .. import _core
 
     try:
         route = _core._native_electrolyte_bubble_p_eos_route_result(
@@ -265,8 +265,8 @@ def _accepted_native_electrolyte_bubble_result(
     route: Mapping[str, Any],
     continuation_context: Mapping[str, Any] | None = None,
 ) -> ElectrolyteBubbleResult:
-    from .equilibrium import _stamp_ipopt_continuation_state
-    from .equilibrium_core.native_results import native_route_diagnostics
+    from .workflows import _stamp_ipopt_continuation_state
+    from .core.native_results import native_route_diagnostics
 
     species = list(getattr(mixture, "species", []))
     phase_amounts = np.asarray(route.get("phase_amounts"), dtype=float)

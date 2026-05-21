@@ -9,9 +9,9 @@ from typing import Any
 
 import numpy as np
 
-from ._types import InputError, SolutionError
-from .equilibrium_core.native_requests import build_reactive_speciation_native_request
-from .implicit_sensitivity import (
+from .._types import InputError, SolutionError
+from .core.native_requests import build_reactive_speciation_native_request
+from ..state.implicit_sensitivity import (
     ImplicitSolveResult,
     implicit_backend_for_residual_backend,
 )
@@ -639,7 +639,7 @@ def _solve_reactive_speciation_native(
 ) -> ReactiveSpeciationResult:
     if options.solver_backend != "ipopt":
         _raise_native_ipopt_reactive_speciation_required()
-    from . import _core
+    from .. import _core
 
     mixture = mixture_factory(initial_x, T, P)
     native = getattr(mixture, "_native", None)

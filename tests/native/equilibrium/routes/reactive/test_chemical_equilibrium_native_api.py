@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 
 import epcsaft
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.equilibrium.reactive_speciation import ReactiveSpeciationOptions
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft import _core
 from tests.support.numeric import assert_allclose
 from tests.support.runtime_cases import _ionic_params
@@ -149,7 +150,7 @@ def test_mixture_equilibrium_auto_routes_ideal_chemical_equilibrium_to_native_ip
                 standard_state="ideal_mole_fraction",
             )
         ],
-        "options": epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
+        "options": ReactiveSpeciationOptions(tolerance=1.0e-10),
     }
 
     if not _core._native_ipopt_smoke()["compiled"]:
@@ -224,7 +225,7 @@ def test_reactive_stability_routes_to_native_ipopt_before_speciation(monkeypatch
         ],
         parent_phase="liq",
         trial_phases=("liq",),
-        options=epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
+        options=ReactiveSpeciationOptions(tolerance=1.0e-10),
     )
 
     assert result.problem_kind == "reactive_stability"
@@ -301,7 +302,7 @@ def test_ionic_reactive_stability_uses_native_liquid_reactive_route(monkeypatch)
                 standard_state="ideal_mole_fraction",
             )
         ],
-        options=epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
+        options=ReactiveSpeciationOptions(tolerance=1.0e-10),
     )
 
     assert result.problem_kind == "reactive_stability"
@@ -335,5 +336,5 @@ def test_ionic_reactive_stability_rejects_explicit_parent_trial_controls() -> No
                 )
             ],
             parent_phase="liq",
-            options=epcsaft.ReactiveSpeciationOptions(tolerance=1.0e-10),
+            options=ReactiveSpeciationOptions(tolerance=1.0e-10),
         )

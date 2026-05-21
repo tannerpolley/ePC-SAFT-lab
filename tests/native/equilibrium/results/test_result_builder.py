@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft import _core
 
 

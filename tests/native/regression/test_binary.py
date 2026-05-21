@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from epcsaft._types import InputError
-from epcsaft.epcsaft import _fit_generic_native_ceres
+from epcsaft.regression.native_adapter import _fit_generic_native_ceres
 
 
 def test_ceres_binary_kij_regression_uses_native_cppad_implicit_jacobian() -> None:

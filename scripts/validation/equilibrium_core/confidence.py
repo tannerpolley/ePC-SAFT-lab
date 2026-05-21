@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from epcsaft._types import SolutionError
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft.equilibrium import EquilibriumOptions
 from scripts.validation.equilibrium_core.phase_state import phase_state
 

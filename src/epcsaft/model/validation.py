@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from .model.datasets import get_prop_dict
+from .datasets import get_prop_dict
 
 
 def validate_dataset_bundle(

@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from epcsaft import InputError
-from epcsaft.epcsaft import ePCSAFTMixture, ePCSAFTState
+from epcsaft.state.native_adapter import ePCSAFTMixture, ePCSAFTState
 
 
 def _as_array(values) -> np.ndarray:

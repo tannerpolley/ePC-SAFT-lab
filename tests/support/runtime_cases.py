@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 
 
 def _neutral_state():

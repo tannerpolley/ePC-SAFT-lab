@@ -8,11 +8,15 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+ALLOWED_ROOT_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_types.py"}
 IMPORT_BOUNDARY_WATCHLIST = {
-    "epcsaft.electrolyte_bubble",
-    "epcsaft.epcsaft",
-    "epcsaft.eos",
     "epcsaft.equilibrium",
+    "epcsaft.equilibrium.core",
+    "epcsaft.equilibrium.electrolyte_bubble",
+    "epcsaft.equilibrium.reactive_electrolyte",
+    "epcsaft.equilibrium.reactive_speciation",
+    "epcsaft.equilibrium.reactive_staged",
+    "epcsaft.equilibrium.workflows",
     "epcsaft.frontend",
     "epcsaft.frontend.equilibrium",
     "epcsaft.frontend.mixture",
@@ -21,12 +25,15 @@ IMPORT_BOUNDARY_WATCHLIST = {
     "epcsaft.model.options",
     "epcsaft.model.parameters",
     "epcsaft.model.templates",
-    "epcsaft.properties",
-    "epcsaft.reactive_electrolyte",
-    "epcsaft.reactive_regression",
-    "epcsaft.reactive_speciation",
     "epcsaft.regression",
+    "epcsaft.regression.core",
+    "epcsaft.regression.reactive",
     "epcsaft.runtime",
+    "epcsaft.runtime.capability_evidence",
+    "epcsaft.runtime.core",
+    "epcsaft.state.eos_views",
+    "epcsaft.state.native_adapter",
+    "epcsaft.state.properties",
 }
 ANALYSIS_ROOTS = {
     "2012_held": REPO_ROOT / "analyses" / "paper_validation" / "native" / "2012_held",
@@ -185,14 +192,26 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
     assert not removed_ipopt_helper.exists()
 
 
+def test_root_package_contains_only_entry_python_files() -> None:
+    root_files = {
+        path.name
+        for path in (REPO_ROOT / "src" / "epcsaft").iterdir()
+        if path.is_file() and path.suffix in {".py", ".pyi"}
+    }
+    assert root_files == ALLOWED_ROOT_PYTHON_ENTRY_FILES
+    assert not (REPO_ROOT / "src" / "epcsaft" / "equilibrium_core").exists()
+    assert (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core").is_dir()
+
+
 def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> None:
     public_solver_sources = (
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "__init__.py",
+        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
+        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_electrolyte.py",
+        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "reactive_speciation.py",
         REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
         REPO_ROOT / "src" / "epcsaft" / "frontend" / "regression.py",
-        REPO_ROOT / "src" / "epcsaft" / "reactive_speciation.py",
-        REPO_ROOT / "src" / "epcsaft" / "reactive_regression.py",
-        REPO_ROOT / "src" / "epcsaft" / "regression" / "__init__.py",
+        REPO_ROOT / "src" / "epcsaft" / "regression" / "core.py",
+        REPO_ROOT / "src" / "epcsaft" / "regression" / "reactive.py",
     )
     blocked_terms = (
         "sci" + "py.optimize",
@@ -307,10 +326,26 @@ def test_package_import_is_lazy_across_equilibrium_and_regression_extensions() -
         "epcsaft.model.parameters",
         "epcsaft.model.templates",
         "epcsaft.runtime",
+        "epcsaft.runtime.capability_evidence",
+        "epcsaft.runtime.core",
+        "epcsaft.state.eos_views",
     } <= loaded
-    assert "epcsaft.epcsaft" not in loaded
-    assert "epcsaft.equilibrium" not in loaded
-    assert "epcsaft.regression" not in loaded
+    assert loaded.isdisjoint(
+        {
+            "epcsaft.equilibrium",
+            "epcsaft.equilibrium.core",
+            "epcsaft.equilibrium.electrolyte_bubble",
+            "epcsaft.equilibrium.reactive_electrolyte",
+            "epcsaft.equilibrium.reactive_speciation",
+            "epcsaft.equilibrium.reactive_staged",
+            "epcsaft.equilibrium.workflows",
+            "epcsaft.regression",
+            "epcsaft.regression.core",
+            "epcsaft.regression.reactive",
+            "epcsaft.state.native_adapter",
+            "epcsaft.state.properties",
+        }
+    )
 
 
 def test_frontend_import_does_not_load_solver_extensions() -> None:
@@ -326,14 +361,18 @@ def test_frontend_import_does_not_load_solver_extensions() -> None:
     } <= loaded
     assert loaded.isdisjoint(
         {
-            "epcsaft.epcsaft",
-            "epcsaft.electrolyte_bubble",
             "epcsaft.equilibrium",
-            "epcsaft.properties",
-            "epcsaft.reactive_electrolyte",
-            "epcsaft.reactive_regression",
-            "epcsaft.reactive_speciation",
+            "epcsaft.equilibrium.core",
+            "epcsaft.equilibrium.electrolyte_bubble",
+            "epcsaft.equilibrium.reactive_electrolyte",
+            "epcsaft.equilibrium.reactive_speciation",
+            "epcsaft.equilibrium.reactive_staged",
+            "epcsaft.equilibrium.workflows",
             "epcsaft.regression",
+            "epcsaft.regression.core",
+            "epcsaft.regression.reactive",
+            "epcsaft.state.native_adapter",
+            "epcsaft.state.properties",
         }
     )
 
@@ -343,7 +382,7 @@ def test_top_level_public_exports_load_only_the_requested_extension() -> None:
     assert "epcsaft.frontend" in loaded
     assert "epcsaft.equilibrium" not in loaded
     assert "epcsaft.regression" not in loaded
-    assert "epcsaft.reactive_regression" not in loaded
+    assert "epcsaft.regression.reactive" not in loaded
 
 
 def test_reference_data_root_is_canonical() -> None:

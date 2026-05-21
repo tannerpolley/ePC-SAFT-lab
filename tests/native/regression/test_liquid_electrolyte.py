@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 import epcsaft
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft.regression import fit_liquid_electrolyte_parameters
 
 

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from epcsaft import _core
-from epcsaft.epcsaft import create_struct
+from epcsaft.state.native_adapter import create_struct
 
 
 def _neutral_args():

@@ -214,7 +214,7 @@ Keep generated plot assets and generated CSV workflows out of normal validation 
 
 Use ``uv run python run_pytest.py --list-slices`` when you need to inspect what each named slice runs before choosing a validation command.
 The named slices and ``scripts/dev/validate_project.py`` modes are adapted from
-``epcsaft.capability_evidence``. Add new executable evidence there first, then
+``epcsaft.runtime.capability_evidence``. Add new executable evidence there first, then
 let the CLI wrappers expose it through the existing command surfaces.
 
 For parallel sessions, leave the default repo-local temp behavior alone unless it causes contention. When running concurrent pytest lanes, set ``EPCSAFT_PYTEST_TEMP_ROOT`` to an external temp root for the extra lanes so each run gets an isolated ``pytest-temp`` child.
@@ -263,7 +263,7 @@ the owning package surfaces. Use it to keep benchmark claims honest and to
 avoid silently treating blocked literature routes as complete. The inventory is
 kept outside pytest so paper-wide validation stays opt-in.
 The JSON payload also records the registered validation lanes and pytest slices
-from ``epcsaft.capability_evidence`` so benchmark inventory output can be read
+from ``epcsaft.runtime.capability_evidence`` so benchmark inventory output can be read
 against the same executable evidence registry used by the development CLIs.
 
 Troubleshooting

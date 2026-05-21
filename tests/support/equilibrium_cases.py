@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from tests.support.runtime_cases import _ionic_params
 
 

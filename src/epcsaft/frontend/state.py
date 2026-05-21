@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 
 from .._types import InputError
-from ..eos_views import CONTRIBUTION_PUBLIC_NAMES
+from ..state.eos_views import CONTRIBUTION_PUBLIC_NAMES
 from ..model.options import as_float_array, require_cppad_backend
 from .mixture import Mixture
 

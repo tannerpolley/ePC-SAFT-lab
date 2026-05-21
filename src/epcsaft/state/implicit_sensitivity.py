@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from ._types import InputError
+from .._types import InputError
 
 _IMPLICIT_BACKENDS = {"analytic_implicit", "cppad_implicit"}
 _EXPLICIT_TO_IMPLICIT_BACKEND = {

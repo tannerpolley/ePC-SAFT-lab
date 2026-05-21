@@ -46,7 +46,7 @@ class Mixture:
         """Return the internal native mixture adapter."""
 
         if self._runtime is None:
-            from ..epcsaft import ePCSAFTMixture as _RuntimeMixture
+            from ..state.native_adapter import ePCSAFTMixture as _RuntimeMixture
 
             self._runtime = _RuntimeMixture.from_params(self._runtime_parameters, species=self.components)
         return self._runtime
