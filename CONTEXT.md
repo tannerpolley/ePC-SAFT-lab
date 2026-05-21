@@ -70,6 +70,18 @@ _Avoid_: process calculation, downstream metric
 A configured workflow object created as `Equilibrium(mixture, ...)` that owns equilibrium defaults, route options, and solve methods for a declared mixture without exposing public derivative backend choices.
 _Avoid_: free bubble/dew function, typed problem root export, standalone optimizer loop
 
+**Selector Core**:
+The native equilibrium dispatcher that admits only production-exposed route families, checks input topology against the native activation matrix, dispatches the supported route, and enforces exact-derivative and certification gates.
+_Avoid_: compatibility router, string route facade, Python fallback dispatcher
+
+**Native Activation Matrix**:
+The C++ metadata table that declares each equilibrium family, its active residual and constraint topology, exposure status, derivative requirement, and proof-route evidence. It is mirrored to Python for runtime capabilities but remains authored in native code.
+_Avoid_: handwritten Python capability list, route availability guess, stale docs table
+
+**Declared-Not-Exposed Route Family**:
+An equilibrium family recorded in the native activation matrix for roadmap and topology continuity but intentionally not callable as a production route. It must not be exported, bound, tested as runnable, or advertised as available until selector-core production evidence exists.
+_Avoid_: disabled route stub, hidden callable route, soft capability claim
+
 **Electrolyte LLE Problem**:
 An equilibrium problem for liquid-liquid phase split calculations with distributed ions and phase electroneutrality constraints.
 _Avoid_: extraction efficiency calculator, brine-specific script
@@ -123,7 +135,7 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 - The **EOS Harness** implements the **Residual Helmholtz Model** through traceable **Contribution Families**.
 - A **Mixture** combines a **Parameter Family** boundary with **Model Options** and is passed into **State**, **Equilibrium Workflow**, and **Regression Workflow** constructors.
 - A **State** combines a **Mixture**, composition, phase assumptions, and closure information for the **EOS Harness**.
-- An **Equilibrium Problem** uses a **Production Solver Path** and a **CppAD-Only Public Derivative Path** to produce generic thermodynamic outputs.
+- An **Equilibrium Problem** becomes public only after the **Selector Core** marks its family production-exposed in the **Native Activation Matrix** and the route has a **Production Solver Path** with derivative and certification evidence.
 - An **Electrolyte LLE Problem** and a **Reactive LLE Problem** are specialized **Equilibrium Problems**.
 - A **Regression Problem** fits **Parameter Families** to a **Target Dataset** using a **Production Solver Path** and a **CppAD-Only Public Derivative Path**.
 - A **Literature Benchmark** is a high-confidence **Validation Lane** for package behavior.
@@ -132,12 +144,13 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 
 - Use `Mixture(parameters, *, model_options=ModelOptions(...), components=None)` as the configured public frontend object.
 - Use `State(mixture, T=..., P=... or rho=..., x=..., phase=...)` for state/property evaluation.
-- Use `Equilibrium(mixture, ...)` and `Regression(mixture, ...)` to create configured workflow objects.
+- Use `Equilibrium(mixture, ...)` and `Regression(mixture, ...)` to create configured workflow objects. The current production equilibrium call is `Equilibrium(mixture).bubble_pressure(T=..., x=...)`.
 - Use `ParameterSet.from_dataset(...)`, `ParameterSet.from_records(...)`, and `ParameterSet.to_runtime_dict()` as the canonical parameter-family bridge between source records and runtime payloads.
 - Treat `ParameterSet` as parameter data only; put formulation and workflow choices in `ModelOptions` or workflow defaults.
 - Use configured `Equilibrium` and `Regression` workflow objects instead of root-level free functions.
 - Use `TargetDataset.target_family_summaries()` when agent output needs the shared target-family summary shape that generic and reactive regression diagnostics both expose.
 - Treat `epcsaft.capabilities()` and `capability_evidence` as the authoritative package capability surface. Capability text elsewhere must agree with that payload.
+- Treat declared-not-exposed activation rows as roadmap metadata, not callable route support.
 
 ## Example Dialogue
 

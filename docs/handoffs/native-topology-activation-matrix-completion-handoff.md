@@ -4,6 +4,20 @@ Created: 2026-05-21
 
 This handoff is for a brand-new Codex thread. Its first job is to create a GoalBuddy board that forces full completion of the native C++ topology and activation-matrix refactor. The previous commit is useful, but it is not satisfactory against the full plan.
 
+## Implementation Update
+
+Updated: 2026-05-21
+
+This handoff has now been executed on branch `ipopt` through the
+`docs/goals/native-topology-activation-matrix-completion/state.yaml` board.
+The implementation adds the native selector core, routes public
+`Equilibrium(mixture).bubble_pressure(T=..., x=...)` through the selector,
+generates the Python capability mirror from native activation metadata, deletes
+non-production route source/tests/docs instead of preserving stubs, and records
+the decision in ADR 0003. Treat the remaining sections as historical acceptance
+context; the current source of truth is the code, ADR, updated roadmaps,
+algorithm registry, and GoalBuddy receipts from this implementation run.
+
 ## Copy-Paste Prompt For The New Thread
 
 Paste the following into a fresh Codex thread from `C:\Users\Tanner\Documents\git\ePC-SAFT`:
@@ -18,6 +32,7 @@ Context:
 - Current branch: ipopt.
 - Baseline commit to audit from: 3889de77 Refactor native topology around activation matrix.
 - That commit successfully moved native C++ files into domain folders and passed focused tests, but it did not fully satisfy the architecture plan.
+- It also did not complete the unified equilibrium-core roadmap: the current code has shared `NlpProblem`/Ipopt plumbing and native activation metadata, but route construction remains mostly route-specific instead of being driven by a canonical residual/constraint selector core.
 - The work must finish the actual plan, not merely make tests pass.
 
 Required skills/policies:
@@ -44,6 +59,8 @@ Create the GoalBuddy board first:
 
 The first active task must be a read-only gap audit against this handoff and commit 3889de77. The second task must be a Judge/PM acceptance-gate decision that confirms the planned implementation slices and guard tests before edits.
 
+Before adding new route families, new route tests, or broad validation, the board must resolve Gate 4A: whether this follow-up implements the full selector-driven residual core or a guarded intermediate where existing route-specific `NlpProblem` classes remain constrained by activation metadata.
+
 Do not commit until all required validation commands in this handoff have passed and repo cleanup has passed.
 ```
 
@@ -63,6 +80,48 @@ It did not fully satisfy the plan because:
 - runtime capability reporting still uses the Python registry in `src/epcsaft/runtime/capability_evidence.py` as the production source instead of native activation metadata;
 - `src/epcsaft/native/equilibrium/facade.h` still leaks route-builder/internal `equilibrium_nlp` result types across the facade boundary;
 - the new guard tests catch stale paths and CMake globs, but do not catch the binding seam leak or activation-matrix/capability divergence.
+
+## Critical Equilibrium-Core Gap Against The Roadmap
+
+This follow-up must not treat the native topology move as equivalent to the unified equilibrium-core architecture.
+
+Verified roadmap contract from `docs/roadmaps/unified_equilibrium_core_algorithm.md`:
+
+- The final equilibrium core is one residual-based constrained NLP, not a family of disconnected route solvers.
+- Route differences are represented by route-owned variableizations plus selectors/masks over a master residual stack and a master hard-constraint stack:
+  - `r_p(u) = S_p r_bar(u)`
+  - `c_p(u) = H_p c_bar(u)`
+- The activation matrix is supposed to define which problem-family features are active: direct transfer, reaction equilibrium, conservation basis, phase charge, split variables, stability prelayer, postsolve certification, residual families, constraint families, and derivative requirements.
+- Gibbs-style minimization may be used as a soft-start, feasibility, pretreatment, or globalization layer, but it is not the final simultaneous residual-core truth condition.
+- Final certification must be tied to active residuals, active hard constraints, exact derivative coverage, density/closure diagnostics, and stability/certification checks.
+
+Current implementation status that the next agent must treat as a gap, not as completion:
+
+- `src/epcsaft/native/equilibrium/core/nlp_problem.h` provides a shared `NlpProblem` ABI for Ipopt callbacks.
+- `src/epcsaft/native/equilibrium/core/second_order.h` provides shared second-order carriers, including `ResidualSecondOrderData`, `residual_quadratic_objective_second_order`, and `LagrangianHessianAssembler`.
+- `src/epcsaft/native/equilibrium/core/activation_matrix.h` declares the problem-family activation metadata and currently marks only `bubble_dew_derived_routes` as production-exposed.
+- The activation matrix is exposed through `_core._native_equilibrium_activation_matrix()` and tested as metadata.
+- However, the activation matrix does not currently drive route construction, variable-model selection, residual-family activation, hard-constraint activation, seed recipes, or production capability truth end-to-end.
+- Current route assembly still lives in separate concrete `NlpProblem` classes, including but not limited to:
+  - `LiquidRootElectrolyteLleProblem` in `src/epcsaft/native/equilibrium/workflows.cpp`;
+  - `NeutralTwoPhaseEosProblem` and `ReactiveTwoPhaseEosProblem` in `src/epcsaft/native/equilibrium/routes/route_builders.cpp`;
+  - `NeutralFixedTemperaturePressureProblem` and `NeutralFixedPressureTemperatureProblem` in `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`;
+  - `NonidealSpeciationResidualProblem` and `IdealSpeciationProblem` in `src/epcsaft/native/equilibrium/routes/reactive/`;
+  - `ReactiveLiquidRootTwoPhaseProblem` in `src/epcsaft/native/equilibrium/routes/reactive/phase_equilibrium_problem.cpp`;
+  - `StabilityTpdProblem` in `src/epcsaft/native/equilibrium/routes/stability/stability_route_builders.cpp`.
+- Some route code uses the shared residual-quadratic second-order helper, but the package does not yet have one canonical `r_bar/c_bar` residual/constraint representation selected by the activation matrix.
+- Gibbs behavior is fragmented:
+  - ideal speciation uses a reduced Gibbs objective as its route objective;
+  - electrolyte LLE records a Gibbs proxy/diagnostic;
+  - many routes use deterministic seed sweeps and continuation warm starts;
+  - the Ipopt adapter supports warm-start inputs;
+  - there is not yet a shared roadmap-style pretreatment ladder that runs homogeneous chemistry/Gibbs-style seeds, stability/split detection, relaxed polish, lift into true-species state, continuation residual solve, and final exact-route solve with seed penalty removed.
+
+Implementation implication:
+
+- Before adding new route families, new route tests, or broader paper-validation tests, the next agent must first decide and implement how the activation matrix becomes the native source of truth for route assembly and capability exposure.
+- If a full selector-driven master residual stack is too large for this follow-up, the GoalBuddy board must record the explicit blocker and still add guard tests that prevent new route families from being exposed as production through route-local ad hoc logic.
+- The trusted hydrocarbon bubble/IPOPT exact-Hessian route remains the tracer bullet; it should be routed through the cleaned facade/activation/capability path without changing its numerical behavior.
 
 ## Non-Negotiable Completion Gates
 
@@ -223,6 +282,63 @@ uv run python scripts/dev/validate_project.py quick
 Failure condition:
 
 - If runtime capabilities can drift from native activation metadata without a failing test, this gate is not complete.
+
+### Gate 4A: Activation Matrix Drives Equilibrium-Core Assembly Decisions
+
+Current bad state:
+
+- The activation matrix is present as native metadata, but route construction still primarily occurs through route-specific `NlpProblem` classes.
+- The current code has a shared `NlpProblem` callback ABI and shared second-order helpers, but not a canonical master residual/hard-constraint stack selected by activation-matrix rows.
+- Existing route tests can pass while new route families remain ad hoc, disconnected from the roadmap's `S_p r_bar(u)` and `H_p c_bar(u)` selector model.
+- Gibbs-style behavior is not a shared pretreatment/globalization ladder; it is split across ideal speciation objectives, Gibbs proxy diagnostics, deterministic seed sweeps, and Ipopt continuation warm starts.
+
+Required outcome:
+
+- Add a read-only gap-audit note before implementation that maps every current equilibrium route to:
+  - activation matrix family key;
+  - variable model;
+  - density backend;
+  - active residual families;
+  - active hard-constraint families;
+  - seed or warm-start strategy;
+  - Hessian mode and derivative coverage;
+  - production exposure status.
+- Implement or explicitly block the first architecture slice that makes activation metadata drive route assembly decisions rather than merely describing them after the fact.
+- At minimum, production-exposed route construction must be checked against its activation row before solve dispatch, and the trusted bubble/dew route must fail loudly if its route metadata diverges from the activation matrix.
+- New route-family tests must not be added as production proof until the route family is connected to the activation/capability contract and declared production-exposed in native metadata.
+- The board must state whether the follow-up implements the full selector-driven `r_bar/c_bar` core or a guarded intermediate where current route-specific `NlpProblem` classes remain but are constrained by activation metadata.
+- Gibbs-style warm starts must be documented as one of:
+  - not implemented for the route;
+  - seed/continuation only;
+  - diagnostic proxy only;
+  - actual Gibbs objective route;
+  - shared pretreatment layer.
+  The final accepted production route must still certify the simultaneous residual/hard-constraint truth conditions.
+
+Required guard tests:
+
+- Add or strengthen native equilibrium diagnostics/contract tests that assert production route metadata matches the activation matrix for:
+  - `variable_model`;
+  - `density_backend`;
+  - residual-family names and order;
+  - hard-constraint-family names and order;
+  - `production_exposed`;
+  - proof-route identifier.
+- Add a guard that fails if a route capability is marked production without a matching production-exposed activation row.
+- Add a guard that fails if a new production route family is introduced without declaring its activation metadata and diagnostics.
+
+Required proof:
+
+```powershell
+uv run python run_pytest.py tests/native/equilibrium/diagnostics tests/native/contracts -q
+uv run python run_pytest.py tests/native/equilibrium/routes/neutral/test_bubble_dew.py --allow-long-native-tests -q
+uv run python scripts/dev/validate_project.py quick
+```
+
+Failure condition:
+
+- If route-specific classes can bypass activation metadata and still appear as production-supported, this gate is not complete.
+- If the final report implies the package has the unified residual selector core when only metadata checks were added, this gate is not complete.
 
 ### Gate 5: CMake And Source Topology Guards Stay Strict
 
@@ -391,6 +507,11 @@ T005 Activation matrix capability integration
 Owner: Worker or PM
 Allowed files: src/epcsaft/runtime/**, src/epcsaft/native/equilibrium/core/activation_matrix.h only if metadata shape needs fields, tests/native/**, tests/api/**.
 Done when: epcsaft.capabilities() reports native activation rows and production claims cannot drift from native metadata.
+
+T005A Activation-driven equilibrium-core assembly
+Owner: PM, native_solver_backend_owner, or Worker
+Allowed files: src/epcsaft/native/equilibrium/**, src/epcsaft/runtime/**, tests/native/equilibrium/**, tests/native/contracts/**, docs/goals/native-topology-activation-matrix-completion/notes/**
+Done when: every production route is checked against the activation matrix before solve dispatch, new production exposure cannot bypass activation metadata, and the board records whether the full selector-driven `r_bar/c_bar` core was implemented or which exact blocker keeps the guarded intermediate in place.
 
 T006 Topology and docs guard hardening
 Owner: Worker or PM

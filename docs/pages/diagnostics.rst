@@ -47,38 +47,24 @@ diagnostic residual context, its supported target families, and the fact that it
 is not a production optimizer. Reactive electrolyte parameter fitting is not
 public until native Ceres owns the optimizer route with exact derivatives.
 
-Reactive Speciation And Bubble Diagnostics
-------------------------------------------
+Selector Bubble-Pressure Diagnostics
+------------------------------------
 
-Native reactive speciation returns enough diagnostics to prove that the explicit
-Ipopt ideal route and exact derivative path were actually used. Activity- and
-concentration-coupled reaction constants remain route-gated until their EOS NLP
-blocks exist. For accepted ideal routes, check:
+The production equilibrium diagnostic path is the native selector-backed
+``Equilibrium(mixture).bubble_pressure(T=..., x=...)`` route. Accepted results
+include enough route diagnostics to prove that the native activation row, exact
+Ipopt derivative path, density closure, and postsolve certification were used:
 
-* ``solver_language`` is ``c++``.
-* ``native_entrypoint`` is ``_solve_chemical_equilibrium_native``.
-* ``selected_solver_backend`` is ``native_ipopt``.
-* ``problem_class`` is ``homogeneous_ideal_gibbs_speciation``.
-* ``reaction_standard_states`` records the public reaction-constant convention.
-* ``derivative_backend`` reports ``analytic``.
-* ``ipopt_solver_ran`` and ``ipopt_accepted`` describe the native NLP solve.
+* ``selector_family`` is ``bubble_dew_derived_routes``.
+* ``route`` is ``bubble_pressure``.
+* ``activation`` is copied from the native activation matrix row.
+* ``residual_families`` and ``constraint_families`` match that activation row.
+* ``gradient_approximation`` and ``jacobian_approximation`` are exact.
+* ``stability_certificate`` is present and accepted.
 
-Reactive electrolyte bubble result fields are the staged native diagnostics
-shape. When the homogeneous speciation stage and the native Ipopt fixed-liquid
-electrolyte bubble route are both available, results contain nested
-dictionaries:
-
-* ``diagnostics["speciation"]`` is the homogeneous reactive speciation result.
-* ``diagnostics["bubble"]`` is the native Ipopt electrolyte bubble-pressure
-  result.
-* ``partial_pressures`` maps volatile neutral species to pressure contributions.
-* ``fugacity_residual_norm`` measures the volatile-neutral fugacity equality
-  residual for the bubble solve.
-
-Use these fields together when validating a CO2 + amine + water pressure and
-speciation benchmark: reaction, charge, and material residual norms come from
-the speciation result; CO2 partial pressure and vapor composition come from the
-bubble result.
+Reactive, electrolyte, TP-flash, LLE, and stability route families are declared
+for roadmap context only. They are not callable production diagnostics until a
+future ADR re-exposes them through the activation matrix and selector core.
 
 Contribution Maps
 -----------------
@@ -99,22 +85,3 @@ Activity coefficients are available through ``state.activity_coefficient(...)``.
 Additive activity-coefficient term decomposition is not currently exposed by
 the native activity API, so ``state.activity_coefficient_contributions()``
 raises ``InputError`` instead of returning invented terms.
-
-Reactive Regression Benchmarks
-------------------------------
-
-Use the benchmark script when changing the reactive batch/context layer:
-
-.. code-block:: powershell
-
-   uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 3 --repeat 10 --json build/benchmarks/reactive_regression_main.json
-   uv run python scripts/benchmarks/benchmark_reactive_regression.py --case reactive_regression_objective_tiny --warmup 3 --repeat 20 --json build/benchmarks/reactive_regression_objective_main.json
-   uv run python scripts/benchmarks/benchmark_reactive_regression.py --case reactive_regression_pressure_speciation_35_row_surrogate --warmup 0 --repeat 1 --json build/benchmarks/reactive_regression_pressure_speciation_35row_smoke.json
-
-Benchmark JSON excludes failed repeats from timing statistics, records the
-number of measured successful repeats, and carries failure messages separately.
-The 35-row pressure/speciation surrogate is an opt-in smoke for mixed residual
-coverage; it reports ``target_family_counts`` so CI or release notes can prove
-that pressure and speciation residual families both ran. It is intentionally
-excluded from the default all-case benchmark command because it is a slower
-end-to-end mixed residual check.

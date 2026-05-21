@@ -57,25 +57,22 @@ The intended priority order is:
 
 The architecture must still be general enough that Tier 2 and Tier 3 routes are reduced views of the same core rather than separate solver families.
 
-## Current public entrypoint that this architecture must eventually unify
+## Current public entrypoint and selector boundary
 
-The current repo exposes the direct workflow object. The unified core is expected to sit beneath this interface rather than replace it:
+The current repo exposes one production equilibrium route through the direct workflow object. The selector core sits beneath this interface:
 
 - `Equilibrium(mixture)`
 - `Equilibrium(mixture).bubble_pressure(T=..., x=...)`
 
-Problem-family dataclasses and private request payloads should normalize through the workflow object before reaching native route contracts. Planned problem families include:
+The native activation matrix is authoritative for route-family exposure. Only
+`bubble_dew_derived_routes` is production exposed; TP flash, LLE, electrolyte,
+reactive, and speciation families are declared-not-exposed future families and
+must not be advertised as callable public routes until a selector-owned
+production implementation and focused public tests exist.
 
-- `TPFlash`
-- `StabilityAnalysis`
-- `BubblePoint`
-- `DewPoint`
-- `LLEProblem`
-- `ElectrolyteLLEProblem`
-- `ReactiveSpeciationProblem`
-- `ReactivePhaseEquilibriumProblem`
-
-The architecture below should therefore be read as a unifying backend contract for these public problem shapes.
+The architecture below should therefore be read as a unifying backend contract
+for future route families, not as a claim that those families are presently
+available.
 
 ## End-to-end stack
 
@@ -309,8 +306,8 @@ flowchart TD
 
 Notes:
 
-- Tier 1 emphasis is electrolyte LLE, reactive electrolyte LLE, and reactive speciation.
-- Bubble/dew remains a lower-priority derived route even though it can fit the same architecture.
+- Long-term Tier 1 emphasis remains electrolyte LLE, reactive electrolyte LLE, and reactive speciation.
+- Current production exposure is intentionally narrower: only the selector-dispatched neutral bubble-pressure proof is active.
 - Native C++ activation metadata is owned by `src/epcsaft/native/equilibrium/core/activation_matrix.h`.
   The metadata declares all problem families, keeps unproven families declared-not-exposed, and marks only the trusted
   hydrocarbon bubble/dew Ipopt exact-Hessian route as production-exposed. CMake owns native implementation through

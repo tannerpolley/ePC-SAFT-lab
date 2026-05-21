@@ -69,9 +69,6 @@ Command matrix
    * - Literature benchmark inventory
      - ``uv run python scripts/benchmarks/benchmark_literature_suite.py``
      - Review the package-owned literature benchmark scope, including which issue anchors have executable package evidence and which still require follow-up work.
-   * - Reactive regression benchmark
-     - ``uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5``
-     - Explicit benchmark harness for reactive regression objective throughput. Keep benchmark claims outside pytest.
    * - Package boundary
      - ``uv run python scripts/dev/build_dist.py``
      - Wheel/sdist and smoke-import validation. Isolated package builds default to serial native compilation to avoid Windows Ceres memory spikes; use ``--parallel N`` only when the machine has enough headroom.
@@ -103,7 +100,7 @@ Wheel/editable/path installs go through the PEP 517/scikit-build backend and use
    * - ``fast``
      - Ceres ON, CppAD ON, Ipopt ON when available
      - ``4``
-     - Normal source-checkout setup, C++ iteration, reactive/speciation work, and most validation.
+     - Normal source-checkout setup, C++ iteration, and most validation.
    * - ``full``
      - Ceres ON, CppAD ON, Ipopt ON when available
      - ``4``
@@ -205,7 +202,7 @@ native/equilibrium route tests. If the right target is unclear, run
 - Native/equation changes: ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` first, then ``uv run python run_pytest.py --runtime -q``, then ``uv run python run_pytest.py --confidence -q``.
 - Native route metadata, result-adapter diagnostics, or pybind payload-shape changes: run ``uv run python run_pytest.py --native-contracts -q`` first. Do not run broad route-builder files under ``tests/native/equilibrium`` for these changes; the wrapper rejects those broad targets unless ``--allow-long-native-tests`` or ``EPCSAFT_ALLOW_LONG_NATIVE_TESTS=1`` is set.
 - Equation traceability changes: ``uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`` then ``uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q``.
-- Performance claims: run explicit benchmark scripts such as ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100`` or ``uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5``. Do not rely on pytest, skipped tests, or code inspection for speed claims.
+- Performance claims: run explicit benchmark scripts such as ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.
 
 - Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to ``--parallel 1`` for isolated PEP 517 builds; raise it only after confirming Ceres builds are not memory-bound.
@@ -232,7 +229,6 @@ Use the package-owned benchmark harness when the claim is specifically about neu
 .. code-block:: powershell
 
    uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100
-   uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --case tp_flash --warmup 20 --repeat 200
    uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100 --json build/benchmarks/neutral_equilibrium.json
    uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100 --baseline-json build/benchmarks/neutral_equilibrium_baseline_issue43.json
 

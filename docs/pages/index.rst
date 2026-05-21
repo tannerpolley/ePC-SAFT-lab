@@ -49,8 +49,6 @@ Reference
    :maxdepth: 1
    :caption: API and Background
 
-   electrolyte_lle_workflow
-   electrolyte_vle_reactive_workflow
    diagnostics
    api_reference
    references

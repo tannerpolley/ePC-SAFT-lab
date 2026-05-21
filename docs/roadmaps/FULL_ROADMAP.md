@@ -60,11 +60,6 @@ ParameterSet.from_records(...)
 ParameterSet.from_dataset(...)
 ParameterSet.to_runtime_dict()
 State(...)
-TPFlash(...)
-LLEProblem(...)
-ElectrolyteLLEProblem(...)
-ReactiveSpeciationProblem(...)
-ReactivePhaseEquilibriumProblem(...)
 TargetRow(...)
 TargetDataset(...)
 TargetDataset.target_family_summaries()
@@ -73,8 +68,6 @@ Equilibrium(mixture).bubble_pressure(T=..., x=...)
 fit_pure_parameters(...)
 fit_binary_parameters(...)
 fit_liquid_electrolyte_parameters(...)
-build_reactive_regression_objective(...)
-evaluate_reactive_regression_objective(...)
 epcsaft.capabilities()
 ```
 
@@ -83,9 +76,10 @@ Downstream projects compute application metrics from generic outputs.
 Current API orientation for agents:
 
 - Prefer the direct `Equilibrium(mixture)` workflow object for public equilibrium calls.
-- Treat problem dataclasses and private native request payloads as normalized implementation details beneath the workflow object, not root public constructors.
+- The current production equilibrium surface is only `Equilibrium(mixture).bubble_pressure(T=..., x=...)`; route-family dataclasses and private native request payloads are not exported compatibility surfaces.
+- Treat the native activation matrix and selector core as the source of truth for which route families are production exposed versus declared-not-exposed.
 - Treat `ParameterSet` as the canonical parameter-family boundary; runtime payload emission belongs to `ParameterSet.to_runtime_dict()`.
-- Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across generic and reactive regression evidence.
+- Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across retained regression evidence.
 - Treat `epcsaft.capabilities()` and `capability_evidence` as the authoritative public capability contract.
 
 ---
@@ -358,7 +352,7 @@ Required regression result fields:
 
 Current claim boundary:
 
-- Reactive regression is currently exposed as structured residual evaluation through `build_reactive_regression_objective(...)` and `evaluate_reactive_regression_objective(...)`. Do not describe that surface as a production optimizer until native optimizer ownership and capability evidence say so.
+- Reactive regression is not a current public production optimizer or residual-evaluator surface. Reintroduce it only after native optimizer ownership, public API shape, and capability evidence are complete.
 
 ## Equilibrium
 

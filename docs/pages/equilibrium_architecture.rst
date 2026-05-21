@@ -5,27 +5,14 @@ The reset public API is workflow-object based:
 
 * ``Equilibrium(mixture, ...).bubble_pressure(...)`` for the trusted neutral
   bubble-pressure proof.
-* Additional equilibrium families remain private route modules until they have
-  focused public tests and capability evidence.
+* Additional equilibrium families are declared in the native activation matrix
+  as not exposed until they have production selector support, focused public
+  tests, and capability evidence.
 
 Old public mixture route methods such as ``mixture.bubble_p(...)`` and
 ``mixture.equilibrium(kind=...)`` are no longer part of the reset public
-frontend. Internal native adapters may still use typed problem objects and
-route builders while those routes are ported behind the direct workflow object.
-
-For internal route builders that need a serializable problem object, use the
-private equilibrium problem objects with one of:
-
-* ``TPFlash``
-* ``StabilityAnalysis``
-* ``BubblePoint``
-* ``DewPoint``
-* ``LLEProblem``
-* ``ElectrolyteLLEProblem``
-* ``ElectrolyteBubblePoint``
-* ``ReactiveSpeciationProblem``
-* ``ReactivePhaseEquilibriumProblem``
-* ``ReactiveElectrolyteBubbleProblem``
+frontend. Deleted route families are not retained as compatibility stubs,
+hidden route modules, or typed problem-object shells.
 
 Example
 -------
@@ -41,15 +28,10 @@ Request Normalization
 ---------------------
 
 Public request normalization lives at ``Equilibrium(mixture, ...)``. The
-workflow object owns user-facing defaults and delegates to private route
-adapters that stamp diagnostics and results consistently.
-
-Reactive convenience routes remain explicit. ``chemical_equilibrium``,
-``reactive_staged_equilibrium``, ``reactive_lle``,
-``reactive_electrolyte_lle``, ``reactive_stability``, and
-``reactive_electrolyte_bubble_pressure`` are selected before non-reactive
-normalization so their specialized option checks and native route boundaries do
-not become implicit fallback behavior.
+workflow object owns user-facing defaults and delegates only to the selector
+core for production bubble pressure. Selector-ineligible inputs fail before
+solver dispatch; solver or certification failures after dispatch raise with
+diagnostics.
 
 Solver Selection
 ----------------
@@ -57,10 +39,10 @@ Solver Selection
 The reset public frontend does not expose a solver-backend selector. Public
 equilibrium workflows choose the required native route directly and raise at the
 route boundary when the compiled dependency or CppAD coverage is missing. The
-trusted public proof is the hydrocarbon bubble-pressure route through native
-Ipopt with an exact Hessian. Other native route builders remain implementation
-evidence until they are ported behind reset ``Equilibrium(mixture, ...)``
-methods and focused API tests.
+trusted public proof is the hydrocarbon bubble-pressure route through the
+native selector core, Ipopt, and exact Hessian callbacks. Other native route
+families are declared-not-exposed activation rows until they are ported behind
+the selector and reset ``Equilibrium(mixture, ...)`` methods.
 
 The convex Gibbs formulation is limited to homogeneous ideal reaction or
 speciation subkernels and validation tests. Full ePC-SAFT multiphase,

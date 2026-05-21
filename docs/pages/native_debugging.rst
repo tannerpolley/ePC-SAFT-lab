@@ -11,7 +11,12 @@ The public API starts in ``src/epcsaft/frontend/``. ``Mixture`` normalizes
 runtime bridge. ``State`` validates ``T/x/P`` or ``T/x/rho`` inputs and exposes
 pressure, density, fugacity, and derivative payloads.
 
-The pybind11 boundary is ``src/epcsaft/native/bindings/module.cpp``. It exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, contribution-result structs, and native workflow helpers through the private ``epcsaft._core`` module.
+The pybind11 boundary starts in ``src/epcsaft/native/bindings/module.cpp``. It
+exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, and contribution
+result structs through the private ``epcsaft._core`` module. Equilibrium
+bindings are registered by the domain-owned
+``src/epcsaft/native/equilibrium/register_bindings.cpp`` unit so the generic
+binding file does not include route, block, solver, or result internals.
 
 The native implementation lives under domain folders in ``src/epcsaft/native``. High-traffic files are:
 
@@ -49,7 +54,7 @@ For method-speed checks:
 
    uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100
 
-Use explicit benchmark scripts, not pytest, when making speed claims. For reactive regression throughput, run ``uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 1 --repeat 5``.
+Use explicit benchmark scripts, not pytest, when making speed claims.
 
 Equation traceability
 ---------------------

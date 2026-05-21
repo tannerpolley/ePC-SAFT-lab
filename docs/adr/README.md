@@ -15,3 +15,4 @@ Accepted ADRs:
 
 - `0001-architecture-deepening-public-api-boundaries.md`: records the current public API boundaries for typed equilibrium problems, canonical parameter sets, shared regression target-family summaries, and evidence-backed capability claims.
 - `0002-hard-public-api-reset-cppad-only-frontend.md`: records the hard public API cutoff, `ModelOptions` boundary, and CppAD-only public derivative policy.
+- `0003-selector-core-activation-capabilities.md`: records selector-core ownership, activation-matrix capability reporting, and deletion of non-production equilibrium routes.
