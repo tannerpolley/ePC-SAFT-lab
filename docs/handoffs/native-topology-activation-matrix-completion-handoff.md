@@ -10,13 +10,16 @@ Updated: 2026-05-21
 
 This handoff has now been executed on branch `ipopt` through the
 `docs/goals/native-topology-activation-matrix-completion/state.yaml` board.
-The implementation adds the native selector core, routes public
-`Equilibrium(mixture).bubble_pressure(T=..., x=...)` through the selector,
-generates the Python capability mirror from native activation metadata, deletes
-non-production route source/tests/docs instead of preserving stubs, and records
-the decision in ADR 0003. Treat the remaining sections as historical acceptance
-context; the current source of truth is the code, ADR, updated roadmaps,
-algorithm registry, and GoalBuddy receipts from this implementation run.
+The implementation added the native selector core, routed the then-current
+public bubble-pressure path through the selector, generated the Python
+capability mirror from native activation metadata, deleted non-production route
+source/tests/docs instead of preserving stubs, and recorded the decision in ADR
+0003. That public call shape has since been superseded by the
+constructor-configured route API,
+`Equilibrium(mixture, route="bubble_pressure", T=..., x=...).solve()`. Treat
+the remaining sections as historical acceptance context; the current source of
+truth is the code, ADR, updated roadmaps, algorithm registry, and GoalBuddy
+receipts from this implementation run.
 
 ## Copy-Paste Prompt For The New Thread
 
@@ -260,7 +263,9 @@ Required outcome:
   - `capabilities()["equilibrium"]["declared_not_exposed_families"]`
 - Production capability claims must be derived from or checked against `production_exposed` rows.
 - Unproven families may be listed as internal, experimental, planned, or declared-not-exposed, but must not be marked production.
-- The trusted public proof remains `Equilibrium.bubble_pressure` through the hydrocarbon bubble/IPOPT exact-Hessian route.
+- The trusted public proof remains the constructor-configured
+  `bubble_pressure` route through the hydrocarbon bubble/IPOPT exact-Hessian
+  path.
 
 Required tests:
 
@@ -268,7 +273,8 @@ Required tests:
   - runtime activation rows match native activation rows for keys and `production_exposed`;
   - `production_families == ["bubble_dew_derived_routes"]`;
   - every non-production native row is absent from production capability claims;
-  - `Equilibrium.bubble_pressure` remains associated with the production bubble/dew row;
+  - the constructor-configured `bubble_pressure` route remains associated with
+    the production bubble/dew row;
   - no capability evidence row can say `classification == "production_supported"` for a non-production native activation family unless the board records a deliberate renamed mapping and a test enforces that mapping.
 
 Required proof:

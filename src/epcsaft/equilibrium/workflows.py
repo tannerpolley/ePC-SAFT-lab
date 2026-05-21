@@ -53,6 +53,20 @@ def _freeze_fixed_spec_value(value: Any) -> Any:
     return value
 
 
+def _freeze_metadata_value(value: Any) -> Any:
+    if isinstance(value, np.ndarray):
+        array = np.array(value, copy=True)
+        array.setflags(write=False)
+        return array
+    if isinstance(value, Mapping):
+        return MappingProxyType({str(key): _freeze_metadata_value(item) for key, item in value.items()})
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_metadata_value(item) for item in value)
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class EquilibriumPhase:
     """One phase returned by a production equilibrium calculation."""
@@ -64,7 +78,7 @@ class EquilibriumPhase:
     pressure: float
     phase_fraction: float
     ln_fugacity_coefficient: np.ndarray | None = None
-    diagnostics: dict[str, Any] | None = None
+    diagnostics: Mapping[str, Any] | None = None
 
     def __init__(
         self,
@@ -76,7 +90,7 @@ class EquilibriumPhase:
         phase_fraction: float,
         ln_fugacity_coefficient: Any = None,
         fugacity_coefficient: Any = None,
-        diagnostics: dict[str, Any] | None = None,
+        diagnostics: Mapping[str, Any] | None = None,
     ) -> None:
         if ln_fugacity_coefficient is None:
             if fugacity_coefficient is None:
@@ -92,7 +106,7 @@ class EquilibriumPhase:
         if ln_fugacity_coefficient is not None:
             ln_fugacity_coefficient = _readonly_float_array(ln_fugacity_coefficient)
         object.__setattr__(self, "ln_fugacity_coefficient", ln_fugacity_coefficient)
-        object.__setattr__(self, "diagnostics", None if diagnostics is None else dict(diagnostics))
+        object.__setattr__(self, "diagnostics", None if diagnostics is None else _freeze_metadata_value(diagnostics))
 
     @property
     def fugacity_coefficient(self) -> np.ndarray | None:
@@ -134,7 +148,7 @@ class EquilibriumResult:
     phases: Mapping[str, EquilibriumPhase] | Sequence[EquilibriumPhase]
     stable: bool
     split_detected: bool
-    diagnostics: dict[str, Any]
+    diagnostics: Mapping[str, Any]
     route: str = ""
     selector_route: str = ""
     composition_role: str = ""
@@ -147,7 +161,7 @@ class EquilibriumResult:
         object.__setattr__(self, "phases", phases)
         object.__setattr__(self, "stable", bool(self.stable))
         object.__setattr__(self, "split_detected", bool(self.split_detected))
-        object.__setattr__(self, "diagnostics", dict(self.diagnostics))
+        object.__setattr__(self, "diagnostics", _freeze_metadata_value(self.diagnostics))
         object.__setattr__(self, "route", str(self.route))
         object.__setattr__(self, "selector_route", str(self.selector_route))
         object.__setattr__(self, "composition_role", str(self.composition_role))
@@ -313,7 +327,7 @@ class EquilibriumStructure:
             tuple(str(item) for item in self.hard_constraint_families),
         )
         object.__setattr__(self, "expected_phase_keys", tuple(str(item) for item in self.expected_phase_keys))
-        object.__setattr__(self, "dof", MappingProxyType(dict(self.dof)))
+        object.__setattr__(self, "dof", _freeze_metadata_value(self.dof))
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-like structure payload."""
@@ -838,7 +852,7 @@ def _reject_ion_containing_mixture(mixture: Any) -> None:
 def _json_like(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         return value.tolist()
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
         return {str(key): _json_like(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
         return [_json_like(item) for item in value]

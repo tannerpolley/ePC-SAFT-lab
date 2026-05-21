@@ -637,6 +637,84 @@ tasks:
           status: pass
           result: "origin/ipopt advanced from 80f330b9 to 9877be07"
 
+  - id: T011
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Resolve post-completion owner-review findings from the no-assumptions audit."
+    allowed_files:
+      - "src/epcsaft/equilibrium/workflows.py"
+      - "tests/api/frontend/test_equilibrium.py"
+      - "docs/algorithms_registry.yaml"
+      - "docs/algorithms.md"
+      - "docs/goals/equilibrium-setup-workflow/state.yaml"
+      - "docs/goals/native-topology-activation-matrix-completion/goal.md"
+      - "docs/goals/native-topology-activation-matrix-completion/state.yaml"
+      - "docs/handoffs/native-topology-activation-matrix-completion-handoff.md"
+    verify:
+      - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python run_pytest.py tests/native/state/test_bubble_derivatives.py tests/native/contracts/test_algorithm_registry.py tests/workflows/repo/test_run_pytest.py tests/native/equilibrium/results/test_neutral_vle_reference_values.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py tests/workflows/repo/test_project_structure.py -q"
+      - "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+      - "uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability"
+      - "uv run python run_pytest.py --equilibrium-confidence -q"
+      - "uv run python scripts/dev/validate_project.py confidence"
+      - "uv run python scripts/dev/build_dist.py"
+    stop_if:
+      - "Any owner-review finding requires a product/API decision."
+      - "A fix would weaken constructor-configured API guards."
+      - "Validation fails twice for the same unresolved blocker."
+    expected_output:
+      - "Diagnostics metadata is deeply read-only."
+      - "Historical receipt docs no longer advertise stale public method calls."
+      - "Generated algorithm registry is synced after line-number changes."
+      - "Fresh validation covers tests, confidence, and package smoke."
+    receipt:
+      result: done
+      summary: "Post-completion audit found mutable diagnostics dictionaries and stale historical native-topology receipt wording; both were corrected and revalidated."
+      changed_files:
+        - "src/epcsaft/equilibrium/workflows.py"
+        - "tests/api/frontend/test_equilibrium.py"
+        - "docs/algorithms.md"
+        - "docs/algorithms_registry.yaml"
+        - "docs/goals/equilibrium-setup-workflow/state.yaml"
+        - "docs/goals/native-topology-activation-matrix-completion/goal.md"
+        - "docs/goals/native-topology-activation-matrix-completion/state.yaml"
+        - "docs/handoffs/native-topology-activation-matrix-completion-handoff.md"
+      evidence:
+        - "Added a red-then-green regression test proving EquilibriumResult.diagnostics and EquilibriumPhase.diagnostics are deeply read-only, including nested mappings and list-like history payloads."
+        - "Equilibrium result metadata now freezes diagnostic mappings with MappingProxyType, freezes diagnostic sequences as tuples, and keeps to_dict() returning JSON-like mutable copies."
+        - "Historical native-topology GoalBuddy/handoff receipts now refer to the constructor-configured bubble_pressure route instead of stale Equilibrium.bubble_pressure method wording."
+        - "Algorithm registry was regenerated after helper insertion shifted workflows.py owner-reference line numbers."
+      commands:
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py::test_result_diagnostics_are_deeply_read_only -q"
+          status: pass
+          result: "1 failed before implementation because result.diagnostics was a dict."
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py::test_result_diagnostics_are_deeply_read_only -q"
+          status: pass
+          result: "1 passed in 0.05s after implementation."
+        - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
+          status: pass
+          result: "25 passed in 32.42s"
+        - cmd: "uv run python run_pytest.py tests/native/state/test_bubble_derivatives.py tests/native/contracts/test_algorithm_registry.py tests/workflows/repo/test_run_pytest.py tests/native/equilibrium/results/test_neutral_vle_reference_values.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py tests/workflows/repo/test_project_structure.py -q"
+          status: pass
+          result: "95 passed in 22.34s after regenerating the algorithm registry."
+        - cmd: "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
+          status: pass
+          result: "Algorithm registry outputs are up to date; all implementation algorithms have owner comments."
+        - cmd: "uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability"
+          status: pass
+          result: "Equation registry outputs are up to date; all implementation equations have C++ owner comments."
+        - cmd: "uv run python run_pytest.py --equilibrium-confidence -q"
+          status: pass
+          result: "38 passed in 46.39s"
+        - cmd: "uv run python scripts/dev/validate_project.py confidence"
+          status: pass
+          result: "doctor passed; confidence pytest passed 94 tests in 41.06s"
+        - cmd: "uv run python scripts/dev/build_dist.py"
+          status: pass
+          result: "sdist and wheel built; wheel smoke ok."
+
   - id: T999
     type: judge
     assignee: Judge
@@ -661,13 +739,13 @@ tasks:
       result: done
       decision: complete
       full_outcome_complete: true
-      summary: "Final audit accepts the handoff outcome: constructor-configured equilibrium API implemented, owner-review blockers resolved, validations passed, local commits created, branch ipopt pushed, and no required Worker tasks remain queued."
+      summary: "Final audit accepts the handoff outcome after the post-completion owner review: constructor-configured equilibrium API implemented, owner-review blockers resolved, diagnostics immutability fixed, validations passed, local commits created, branch ipopt pushed, and no required Worker tasks remain queued."
       evidence:
         - "Constructor-configured API is implemented without legacy direct-solve forwarding, route-specific public methods, fake initialize(), or backend-selection flags."
-        - "Problem/result/structure contracts are immutable at the public metadata boundary, with fixed spec arrays deep-frozen and public phases keyed by liquid/vapor."
+        - "Problem/result/structure contracts are immutable at the public metadata boundary, with fixed spec arrays, result arrays, diagnostic mappings, and structure metadata frozen and public phases keyed by liquid/vapor."
         - "Capabilities advertise public route names only and current docs/roadmaps/ADR/context/algorithm registry describe Equilibrium(mixture, route=..., ...).solve()."
         - "Retained state/reference tests, named run_pytest slices, package wheel smoke, confidence validation, cleanup hook, and git diff --check all passed."
-        - "Historical completed GoalBuddy boards were intentionally retained as historical receipts and excluded from active stale-pattern checks."
+        - "Historical completed GoalBuddy boards were intentionally retained as historical receipts; stale native-topology public-method wording was updated to point to the constructor-configured bubble_pressure route."
         - "Final board completion state is committed and pushed after this audit receipt."
       commands:
         - cmd: "node <goalbuddy-checker> docs/goals/equilibrium-setup-workflow/state.yaml"
@@ -679,7 +757,7 @@ checks:
   dirty_fingerprint: unknown
   last_verification:
     result: pass
-    task: T008
+    task: T011
     commands:
       - "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
       - "uv run python run_pytest.py tests/native/equilibrium/results/test_neutral_vle_reference_values.py -q"

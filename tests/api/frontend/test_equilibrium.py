@@ -169,6 +169,57 @@ def test_constructor_configured_result_exposes_named_phase_helpers() -> None:
         _ = result.z
 
 
+def test_result_diagnostics_are_deeply_read_only() -> None:
+    liquid = equilibrium_module.EquilibriumPhase(
+        label="liquid",
+        composition=[1.0],
+        density=100.0,
+        temperature=300.0,
+        pressure=101325.0,
+        phase_fraction=0.5,
+        diagnostics={"inner": {"status": "accepted"}, "history": [{"iteration": 1}]},
+    )
+    vapor = equilibrium_module.EquilibriumPhase(
+        label="vapor",
+        composition=[1.0],
+        density=1.0,
+        temperature=300.0,
+        pressure=101325.0,
+        phase_fraction=0.5,
+    )
+    result = equilibrium_module.EquilibriumResult(
+        backend="native",
+        problem_kind="neutral_bubble_p",
+        phases={"liquid": liquid, "vapor": vapor},
+        stable=True,
+        split_detected=True,
+        diagnostics={"postsolve_certification": {"accepted": True}, "history": [{"iteration": 1}]},
+        route="bubble_pressure",
+        selector_route="bubble_pressure",
+        composition_role="liquid",
+    )
+
+    assert isinstance(result.diagnostics, MappingProxyType)
+    assert isinstance(result.diagnostics["postsolve_certification"], MappingProxyType)
+    assert isinstance(result.diagnostics["history"], tuple)
+    assert isinstance(result.diagnostics["history"][0], MappingProxyType)
+    assert isinstance(result.phases["liquid"].diagnostics, MappingProxyType)
+    assert isinstance(result.phases["liquid"].diagnostics["inner"], MappingProxyType)
+
+    with pytest.raises(TypeError):
+        result.diagnostics["mutated"] = True  # type: ignore[index]
+    with pytest.raises(TypeError):
+        result.diagnostics["postsolve_certification"]["accepted"] = False  # type: ignore[index]
+    with pytest.raises(TypeError):
+        result.diagnostics["history"][0]["iteration"] = 2  # type: ignore[index]
+    with pytest.raises(AttributeError):
+        result.diagnostics["history"].append({"iteration": 2})  # type: ignore[attr-defined]
+    with pytest.raises(TypeError):
+        result.phases["liquid"].diagnostics["mutated"] = True  # type: ignore[index]
+    with pytest.raises(TypeError):
+        result.phases["liquid"].diagnostics["inner"]["status"] = "mutated"  # type: ignore[index]
+
+
 def test_flash_result_exposes_feed_composition_helper() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())

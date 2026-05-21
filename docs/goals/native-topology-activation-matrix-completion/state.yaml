@@ -22,7 +22,7 @@ goal:
       - "Certification diagnostics existing without hard acceptance gating."
     existing_plan_facts:
       - "Use contract-test-first sequencing for structure, capability mirror, selector certification, and deleted-route absence."
-      - "Keep only Equilibrium.bubble_pressure as the public production equilibrium path."
+      - "Keep only the production bubble-pressure route, now exposed through Equilibrium(mixture, route=\"bubble_pressure\", T=..., x=...).solve(), as the public production equilibrium path."
       - "Delete TP flash, LLE, stability, electrolyte, reactive, reactive speciation, and electrolyte/reactive bubble route surfaces."
       - "Production bubble-pressure inputs are neutral, non-reactive, non-electrolyte, non-associating mixtures."
       - "Selector certification is a hard acceptance gate."
@@ -327,7 +327,7 @@ tasks:
           status: pass
       evidence:
         - "Activation mirror equals _core._native_equilibrium_activation_matrix()."
-        - "Runtime capabilities report activation_matrix, production_families=['bubble_dew_derived_routes'], declared-not-exposed future families, and public_routes=['Equilibrium.bubble_pressure']."
+        - "Runtime capabilities report activation_matrix, production_families=['bubble_dew_derived_routes'], declared-not-exposed future families, and public_routes=['bubble_pressure'] after the later constructor-configured API reset."
         - "34 focused activation/native-contract/run_pytest tests passed."
   - id: T008
     type: worker

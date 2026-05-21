@@ -17,7 +17,13 @@ Implement the Native Topology Activation Matrix Completion Plan in full, start t
 - Completion proof: updated Gate 10 passes, GoalBuddy checker passes, independent role-owner review is recorded, local commits exist, `ipopt` is pushed, and the worktree is clean
 - Likely misfire: treating this as a mechanical file move or documentation cleanup while capabilities, bindings, route deletion, and selector-core certification still drift
 - Blind spots considered: route deletion blast radius, C++/Python capability mirror drift, public API compatibility, stale generated algorithm docs, and non-production route tests hiding removed behavior
-- Existing plan facts: use contract-test-first sequencing; keep only `Equilibrium.bubble_pressure`; delete electrolyte/reactive bubble routes; support only neutral non-associating production bubble inputs; use selector certification as a hard gate; commit the generated activation mirror; add one ADR and concise glossary terms; run updated Gate 10; push only, no PR
+- Existing plan facts: use contract-test-first sequencing; keep only the
+  production bubble-pressure route, now exposed through
+  `Equilibrium(mixture, route="bubble_pressure", T=..., x=...).solve()`; delete
+  electrolyte/reactive bubble routes; support only neutral non-associating
+  production bubble inputs; use selector certification as a hard gate; commit
+  the generated activation mirror; add one ADR and concise glossary terms; run
+  updated Gate 10; push only, no PR
 
 ## Goal Kind
 
