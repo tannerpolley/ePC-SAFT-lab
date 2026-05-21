@@ -29,7 +29,7 @@ When output names a domain concept in an issue title, refactor proposal, hypothe
 
 If the needed concept is not in the glossary yet, either reconsider whether the language belongs in this repo or note the gap for `grill-with-docs`.
 
-When suggesting or documenting package entrypoints, prefer the current public seams recorded in `CONTEXT.md` and the ADRs: `Equilibrium(mixture).bubble_pressure(T=..., x=...)` for production equilibrium, canonical parameter families through `ParameterSet`, shared regression summaries through `TargetDataset.target_family_summaries()`, and capability claims through `epcsaft.capabilities()`.
+When suggesting or documenting package entrypoints, prefer the current public seams recorded in `CONTEXT.md` and the ADRs: `Equilibrium(mixture).solve(route=..., ...)` for production neutral VLE equilibrium, canonical parameter families through `ParameterSet`, shared regression summaries through `TargetDataset.target_family_summaries()`, and capability claims through `epcsaft.capabilities()`.
 
 ## Flag ADR conflicts
 

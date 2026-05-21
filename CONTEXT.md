@@ -67,11 +67,11 @@ A generic package problem that asks the solver to satisfy phase, chemical, react
 _Avoid_: process calculation, downstream metric
 
 **Equilibrium Workflow**:
-A configured workflow object created as `Equilibrium(mixture, ...)` that owns equilibrium defaults, route options, and solve methods for a declared mixture without exposing public derivative backend choices.
+A configured workflow object created as `Equilibrium(mixture, ...)` that owns equilibrium defaults, route options, and one public `solve(route=..., ...)` execution method for a declared mixture without exposing public derivative backend choices.
 _Avoid_: free bubble/dew function, typed problem root export, standalone optimizer loop
 
 **Selector Core**:
-The native equilibrium dispatcher that admits only production-exposed route families, checks input topology against the native activation matrix, dispatches the supported route, and enforces exact-derivative and certification gates.
+The native equilibrium dispatcher that admits only production-exposed route families, checks input topology against the native activation matrix, dispatches the supported route spec into the shared native residual/constraint core, and enforces exact-derivative and certification gates.
 _Avoid_: compatibility router, string route facade, Python fallback dispatcher
 
 **Native Activation Matrix**:
@@ -81,6 +81,10 @@ _Avoid_: handwritten Python capability list, route availability guess, stale doc
 **Declared-Not-Exposed Route Family**:
 An equilibrium family recorded in the native activation matrix for roadmap and topology continuity but intentionally not callable as a production route. It must not be exported, bound, tested as runnable, or advertised as available until selector-core production evidence exists.
 _Avoid_: disabled route stub, hidden callable route, soft capability claim
+
+**Neutral VLE Route Spec**:
+A selector-admitted route specification for the production neutral VLE core, passed through `Equilibrium(mixture).solve(route=..., ...)`, such as bubble pressure, bubble temperature, dew pressure, dew temperature, or two-phase TP flash. The route spec changes knowns, unknowns, residual rows, hard constraints, and certification checks without creating a separate public route family, public route method, or Python-owned optimizer loop.
+_Avoid_: wrapper fix, standalone flash route, ad hoc method alias
 
 **Electrolyte LLE Problem**:
 An equilibrium problem for liquid-liquid phase split calculations with distributed ions and phase electroneutrality constraints.
@@ -136,6 +140,7 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 - A **Mixture** combines a **Parameter Family** boundary with **Model Options** and is passed into **State**, **Equilibrium Workflow**, and **Regression Workflow** constructors.
 - A **State** combines a **Mixture**, composition, phase assumptions, and closure information for the **EOS Harness**.
 - An **Equilibrium Problem** becomes public only after the **Selector Core** marks its family production-exposed in the **Native Activation Matrix** and the route has a **Production Solver Path** with derivative and certification evidence.
+- A **Neutral VLE Route Spec** is a route-level view over the **Selector Core** and **Native Activation Matrix**, not a compatibility wrapper.
 - An **Electrolyte LLE Problem** and a **Reactive LLE Problem** are specialized **Equilibrium Problems**.
 - A **Regression Problem** fits **Parameter Families** to a **Target Dataset** using a **Production Solver Path** and a **CppAD-Only Public Derivative Path**.
 - A **Literature Benchmark** is a high-confidence **Validation Lane** for package behavior.
@@ -144,7 +149,7 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 
 - Use `Mixture(parameters, *, model_options=ModelOptions(...), components=None)` as the configured public frontend object.
 - Use `State(mixture, T=..., P=... or rho=..., x=..., phase=...)` for state/property evaluation.
-- Use `Equilibrium(mixture, ...)` and `Regression(mixture, ...)` to create configured workflow objects. The current production equilibrium call is `Equilibrium(mixture).bubble_pressure(T=..., x=...)`.
+- Use `Equilibrium(mixture, ...)` and `Regression(mixture, ...)` to create configured workflow objects. The current production neutral VLE equilibrium call is `Equilibrium(mixture).solve(route=..., ...)` with route specs `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature`, and two-phase `flash`.
 - Use `ParameterSet.from_dataset(...)`, `ParameterSet.from_records(...)`, and `ParameterSet.to_runtime_dict()` as the canonical parameter-family bridge between source records and runtime payloads.
 - Treat `ParameterSet` as parameter data only; put formulation and workflow choices in `ModelOptions` or workflow defaults.
 - Use configured `Equilibrium` and `Regression` workflow objects instead of root-level free functions.

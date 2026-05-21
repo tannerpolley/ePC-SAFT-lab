@@ -54,7 +54,8 @@ Hessian:
 
    from epcsaft import Equilibrium
 
-   result = Equilibrium(mixture, max_iterations=200).bubble_pressure(
+   result = Equilibrium(mixture, max_iterations=200).solve(
+       route="bubble_pressure",
        T=233.15,
        x=np.asarray([1.0]),
    )

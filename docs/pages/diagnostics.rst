@@ -47,23 +47,32 @@ diagnostic residual context, its supported target families, and the fact that it
 is not a production optimizer. Reactive electrolyte parameter fitting is not
 public until native Ceres owns the optimizer route with exact derivatives.
 
-Selector Bubble-Pressure Diagnostics
-------------------------------------
+Selector Neutral VLE Diagnostics
+--------------------------------
 
-The production equilibrium diagnostic path is the native selector-backed
-``Equilibrium(mixture).bubble_pressure(T=..., x=...)`` route. Accepted results
-include enough route diagnostics to prove that the native activation row, exact
-Ipopt derivative path, density closure, and postsolve certification were used:
+The production equilibrium diagnostic paths are the native selector-backed
+neutral VLE routes:
 
-* ``selector_family`` is ``bubble_dew_derived_routes``.
-* ``route`` is ``bubble_pressure``.
+* ``Equilibrium(mixture).solve(route="bubble_pressure", T=..., x=...)``
+* ``Equilibrium(mixture).solve(route="bubble_temperature", P=..., x=...)``
+* ``Equilibrium(mixture).solve(route="dew_pressure", T=..., y=...)``
+* ``Equilibrium(mixture).solve(route="dew_temperature", P=..., y=...)``
+* ``Equilibrium(mixture).solve(route="flash", T=..., P=..., z=...)``
+
+Accepted results include enough route diagnostics to prove that the native
+activation row, exact Ipopt derivative path, density closure, residual rows,
+hard constraints, and postsolve certification were used:
+
+* ``selector_family`` is ``bubble_dew_derived_routes`` for bubble/dew specs or
+  ``neutral_tp_flash`` for TP flash.
+* ``route`` is the admitted selector route spec.
 * ``activation`` is copied from the native activation matrix row.
 * ``residual_families`` and ``constraint_families`` match that activation row.
 * ``gradient_approximation`` and ``jacobian_approximation`` are exact.
-* ``stability_certificate`` is present and accepted.
+* ``postsolve_certification`` is present and accepted.
 
-Reactive, electrolyte, TP-flash, LLE, and stability route families are declared
-for roadmap context only. They are not callable production diagnostics until a
+Reactive, electrolyte, LLE, and stability route families are declared for
+roadmap context only. They are not callable production diagnostics until a
 future ADR re-exposes them through the activation matrix and selector core.
 
 Contribution Maps

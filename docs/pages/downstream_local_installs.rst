@@ -149,14 +149,19 @@ Use ``capabilities()`` before wiring high-level downstream workflows:
    import epcsaft
 
    caps = epcsaft.capabilities()
-   assert caps["equilibrium"]["production_families"] == ["bubble_dew_derived_routes"]
-   assert caps["equilibrium"]["public_routes"] == ["Equilibrium.bubble_pressure"]
-   assert "neutral_tp_flash" in caps["equilibrium"]["declared_not_exposed_families"]
+   assert caps["equilibrium"]["production_families"] == [
+       "neutral_tp_flash",
+       "bubble_dew_derived_routes",
+   ]
+   assert "Equilibrium.solve(route='bubble_pressure')" in caps["equilibrium"]["public_routes"]
+   assert "Equilibrium.solve(route='flash')" in caps["equilibrium"]["public_routes"]
 
-Native EOS/property calls and native regression helpers are available. The only
-production equilibrium public route is ``Equilibrium.bubble_pressure``. Future
-equilibrium families are declared in the native activation matrix without being
-advertised as callable routes.
+Native EOS/property calls and native regression helpers are available. The
+production equilibrium public route is ``Equilibrium.solve(route=..., ...)``
+for selector-backed neutral VLE bubble/dew pressure and temperature specs plus
+certified two-phase flash. Future LLE, electrolyte, reactive, and speciation
+families are declared in the native activation matrix without being advertised
+as callable routes.
 
 For routing examples and the production/opt-in solver table, see
 :doc:`equilibrium_cookbook`.
@@ -170,9 +175,12 @@ Capability status summary
    * - Area
      - Status
      - Notes
-   * - Neutral TP flash and LLE
-     - Native Ipopt route when compiled
-     - Requires an Ipopt-enabled build; Python does not provide an alternate solve loop.
+   * - Neutral TP flash
+     - Production selector-backed native Ipopt route when compiled
+     - Certified two-phase flash only; Python does not provide an alternate solve loop.
+   * - Neutral LLE
+     - Declared-not-exposed
+     - Future route family until selector-owned production evidence exists.
    * - Neutral bubble/dew pressure and temperature
      - Native Ipopt route when compiled
      - Requires an Ipopt-enabled build; Python does not provide an alternate solve loop.

@@ -59,20 +59,61 @@ The architecture must still be general enough that Tier 2 and Tier 3 routes are 
 
 ## Current public entrypoint and selector boundary
 
-The current repo exposes one production equilibrium route through the direct workflow object. The selector core sits beneath this interface:
+The current repo exposes selector-backed neutral VLE production routes through
+the direct workflow object. The selector core sits beneath this interface:
 
 - `Equilibrium(mixture)`
-- `Equilibrium(mixture).bubble_pressure(T=..., x=...)`
+- `Equilibrium(mixture).solve(route="bubble_pressure", T=..., x=...)`
+- `Equilibrium(mixture).solve(route="bubble_temperature", P=..., x=...)`
+- `Equilibrium(mixture).solve(route="dew_pressure", T=..., y=...)`
+- `Equilibrium(mixture).solve(route="dew_temperature", P=..., y=...)`
+- `Equilibrium(mixture).solve(route="flash", T=..., P=..., z=...)`
 
-The native activation matrix is authoritative for route-family exposure. Only
-`bubble_dew_derived_routes` is production exposed; TP flash, LLE, electrolyte,
-reactive, and speciation families are declared-not-exposed future families and
-must not be advertised as callable public routes until a selector-owned
-production implementation and focused public tests exist.
+The native activation matrix is authoritative for route-family exposure.
+`bubble_dew_derived_routes` and `neutral_tp_flash` are production exposed for
+neutral, non-reactive, non-electrolyte, non-associating mixtures. LLE,
+electrolyte, reactive, and speciation families remain declared-not-exposed
+future families and must not be advertised as callable public routes until a
+selector-owned production implementation and focused public tests exist.
 
 The architecture below should therefore be read as a unifying backend contract
 for future route families, not as a claim that those families are presently
 available.
+
+## Architecture preflight gate for route additions
+
+Every equilibrium route addition must pass this gate before implementation
+edits begin:
+
+1. Prove the owner file for the closest production route. For neutral VLE, the
+   owner is `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`,
+   reached through `src/epcsaft/native/equilibrium/core/selector_core.cpp`.
+   New neutral VLE specs extend that core; they do not create a sibling
+   production route family.
+2. Write the route-spec matrix: route, knowns, unknowns, composition role,
+   active residual rows, hard constraints, certification rows, activation key,
+   and public entrypoint.
+3. Add negative tests before implementation for direct pybind route exposure,
+   Python dispatch around the selector, standalone flash/bubble/dew routes, and
+   optimizer success without residual/certification acceptance.
+4. Treat activation metadata as admission control. An activation key declares
+   residual and constraint topology that the selector may expose after proof; it
+   is not permission to invent an independent public route.
+5. Get route-owner review before design lock when there are multiple plausible
+   implementation paths.
+
+If the owner file or route-spec matrix is ambiguous, stop and ask for
+clarification before writing production code.
+
+### Current neutral VLE route-spec matrix
+
+| Public route spec | Selector route | Knowns | Unknowns | Composition role | Activation key | Residual rows | Hard constraints | Certification |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `solve(route="bubble_pressure", T, x)` | `bubble_pressure` | `T`, liquid `x` | `P`, vapor `y`, phase volumes | liquid | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed liquid composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `solve(route="bubble_temperature", P, x)` | `bubble_temperature` | `P`, liquid `x` | `T`, vapor `y`, phase volumes | liquid | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed liquid composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `solve(route="dew_pressure", T, y)` | `dew_pressure` | `T`, vapor `y` | `P`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `solve(route="dew_temperature", P, y)` | `dew_temperature` | `P`, vapor `y` | `T`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
+| `solve(route="flash", T, P, z)` | `neutral_tp_flash` | `T`, `P`, feed `z` | liquid `x`, vapor `y`, phase amounts, phase volumes | feed | `neutral_tp_flash` | material-balance, phase-pressure consistency, phase-equilibrium, phase-distance | material balance, common pressure, phase volume gap | exact derivatives, density closure, material closure, phase-equilibrium residual, noncollapsed two-phase split |
 
 ## End-to-end stack
 
@@ -307,10 +348,12 @@ flowchart TD
 Notes:
 
 - Long-term Tier 1 emphasis remains electrolyte LLE, reactive electrolyte LLE, and reactive speciation.
-- Current production exposure is intentionally narrower: only the selector-dispatched neutral bubble-pressure proof is active.
+- Current production exposure is intentionally neutral VLE only: selector-dispatched
+  bubble/dew pressure and temperature routes plus selector-dispatched two-phase
+  TP flash are active.
 - Native C++ activation metadata is owned by `src/epcsaft/native/equilibrium/core/activation_matrix.h`.
   The metadata declares all problem families, keeps unproven families declared-not-exposed, and marks only the trusted
-  hydrocarbon bubble/dew Ipopt exact-Hessian route as production-exposed. CMake owns native implementation through
+  neutral VLE hydrocarbon Ipopt exact-Hessian routes as production-exposed. CMake owns native implementation through
   explicit source groups under `native/model`, `native/eos`, `native/autodiff`, `native/equilibrium`,
   `native/regression`, and `native/bindings`.
 

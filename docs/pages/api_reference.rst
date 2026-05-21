@@ -45,9 +45,11 @@ Equilibrium
    :undoc-members:
    :no-index:
 
-The trusted public equilibrium proof is
-``Equilibrium(mixture, ...).bubble_pressure(...)`` with native Ipopt and an
-exact Hessian.
+The trusted public neutral VLE proof set is
+``Equilibrium(mixture, ...).solve(route=..., ...)`` with route specs
+``bubble_pressure``, ``bubble_temperature``, ``dew_pressure``,
+``dew_temperature``, and certified two-phase ``flash`` with native Ipopt and
+exact Hessian callbacks.
 
 Regression
 ----------

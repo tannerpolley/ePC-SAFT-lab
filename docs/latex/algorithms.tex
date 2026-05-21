@@ -72,25 +72,45 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 % AlgID: bubble_dew_ipopt
 % Family: Phase equilibrium
 % Status: Implemented
-% Public API: Equilibrium(mixture, ...).bubble_pressure(...)
+% Public API: Equilibrium(mixture, ...).solve(route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature', ...)
 % Backend: Native C++ Ipopt equilibrium NLP
 % Dependency: Ipopt
 % Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
-% Solver role: Production selector-dispatched neutral bubble-pressure constrained NLP
+% Solver role: Production selector-dispatched neutral bubble/dew constrained NLP route specs
 % Implementation owner: src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/core/selector_core.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp
 % Validation: tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; tests/native/contracts/test_equilibrium_activation_capabilities.py
 % Capability key: bubble_dew_derived_routes
-% Description: Solves the production neutral bubble-pressure route through the native selector core.
-% Change note: Selector-core completion makes the activation matrix authoritative and removes non-production route AlgIDs.
+% Description: Solves production neutral bubble/dew pressure and temperature route specs through the native selector core.
+% Change note: Neutral VLE selector expansion promotes bubble/dew pressure and temperature routes through the shared residual core.
 
-This entry exposes the trusted neutral bubble-pressure proof through
-\texttt{Equilibrium(mixture).bubble_pressure}. The selector core reads the native
-activation matrix, admits only neutral non-reactive non-electrolyte
+This entry exposes the trusted neutral bubble/dew proof set through route specs
+on \texttt{Equilibrium(mixture).solve}. The selector core reads the
+native activation matrix, admits only neutral non-reactive non-electrolyte
 non-associating mixtures for the production contract, and requires exact
-derivatives plus postsolve certification. TP flash, LLE, stability, electrolyte,
-reactive, and speciation families are declared-not-exposed future families in
-the activation matrix; they are not active algorithm-registry entries and they
-do not imply public route availability.
+derivatives plus postsolve certification.
+
+% AlgID: neutral_tp_flash_ipopt
+% Family: Phase equilibrium
+% Status: Implemented
+% Public API: Equilibrium(mixture, ...).solve(route='flash', ...)
+% Backend: Native C++ Ipopt equilibrium NLP
+% Dependency: Ipopt
+% Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
+% Solver role: Production selector-dispatched neutral two-phase TP flash route spec
+% Implementation owner: src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/core/selector_core.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp
+% Validation: tests/api/frontend/test_equilibrium.py::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; tests/native/contracts/test_equilibrium_activation_capabilities.py
+% Capability key: neutral_tp_flash
+% Description: Solves certified neutral two-phase TP flash through the native selector core.
+% Change note: Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification.
+
+This entry exposes the trusted neutral two-phase TP flash proof through the
+\texttt{flash} route spec on \texttt{Equilibrium(mixture).solve}. Flash is a
+route spec over the same native
+VLE residual and hard-constraint core as bubble and dew routes. The native
+selector owns deterministic seed generation, activation checks, exact
+derivative requirements, and postsolve certification. Gibbs/free-energy terms
+may shape the NLP or seed ranking, but solver success alone is not the
+acceptance criterion.
 
 \section{Regression Algorithms}
 

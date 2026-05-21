@@ -90,56 +90,85 @@
   subsubsection: ""
   family: "Phase equilibrium"
   status: "Implemented"
-  public_api: "Equilibrium(mixture, ...).bubble_pressure(...)"
+  public_api: "Equilibrium(mixture, ...).solve(route='bubble_pressure'|'bubble_temperature'|'dew_pressure'|'dew_temperature', ...)"
   backend: "Native C++ Ipopt equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient, constraint Jacobian, and Hessian callbacks"
-  solver_role: "Production selector-dispatched neutral bubble-pressure constrained NLP"
+  solver_role: "Production selector-dispatched neutral bubble/dew constrained NLP route specs"
   implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/core/selector_core.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp"
   validation: "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; tests/native/contracts/test_equilibrium_activation_capabilities.py"
   capability_key: "bubble_dew_derived_routes"
-  description: "Solves the production neutral bubble-pressure route through the native selector core."
-  change_note: "Selector-core completion makes the activation matrix authoritative and removes non-production route AlgIDs."
+  description: "Solves production neutral bubble/dew pressure and temperature route specs through the native selector core."
+  change_note: "Neutral VLE selector expansion promotes bubble/dew pressure and temperature routes through the shared residual core."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 72
   body: |
-    This entry exposes the trusted neutral bubble-pressure proof through
-    \texttt{Equilibrium(mixture).bubble_pressure}. The selector core reads the native
-    activation matrix, admits only neutral non-reactive non-electrolyte
+    This entry exposes the trusted neutral bubble/dew proof set through route specs
+    on \texttt{Equilibrium(mixture).solve}. The selector core reads the
+    native activation matrix, admits only neutral non-reactive non-electrolyte
     non-associating mixtures for the production contract, and requires exact
-    derivatives plus postsolve certification. TP flash, LLE, stability, electrolyte,
-    reactive, and speciation families are declared-not-exposed future families in
-    the activation matrix; they are not active algorithm-registry entries and they
-    do not imply public route availability.
+    derivatives plus postsolve certification.
   owner_refs:
     - file: "src/epcsaft/equilibrium/workflows.py"
-      line: 156
-      comment_line: 155
-      context: "def bubble_p(mixture: Any, *, T: float, x: Any, options: EquilibriumOptions | None = None) -> EquilibriumResult:"
+      line: 223
+      comment_line: 222
+      context: "def _solve_selector_vle("
     - file: "src/epcsaft/native/equilibrium/core/selector_core.cpp"
-      line: 112
-      comment_line: 111
+      line: 324
+      comment_line: 323
       context: "SelectorContract evaluate_selector_contract("
     - file: "src/epcsaft/native/equilibrium/core/selector_core.cpp"
-      line: 139
-      comment_line: 138
+      line: 357
+      comment_line: 356
       context: "epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 600
-      comment_line: 599
+      line: 634
+      comment_line: 633
       context: "m.def(\"_native_equilibrium_selector_contract\", []("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 617
-      comment_line: 616
+      line: 648
+      comment_line: 647
       context: "m.def(\"_native_equilibrium_selector_route_result\", []("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 1863
-      comment_line: 1862
+      line: 2640
+      comment_line: 2639
       context: "NeutralTwoPhaseEosRouteResult solve_pressure_route("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 1999
-      comment_line: 1998
+      line: 2777
+      comment_line: 2776
       context: "NeutralTwoPhaseEosRouteResult solve_temperature_route("
+- algid: "neutral_tp_flash_ipopt"
+  section: "Equilibrium Algorithms"
+  subsection: ""
+  subsubsection: ""
+  family: "Phase equilibrium"
+  status: "Implemented"
+  public_api: "Equilibrium(mixture, ...).solve(route='flash', ...)"
+  backend: "Native C++ Ipopt equilibrium NLP"
+  dependency: "Ipopt"
+  derivative_backend: "Exact native objective gradient, constraint Jacobian, and Hessian callbacks"
+  solver_role: "Production selector-dispatched neutral two-phase TP flash route spec"
+  implementation_owner: "src/epcsaft/equilibrium/workflows.py; src/epcsaft/native/equilibrium/core/selector_core.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp"
+  validation: "tests/api/frontend/test_equilibrium.py::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; tests/native/contracts/test_equilibrium_activation_capabilities.py"
+  capability_key: "neutral_tp_flash"
+  description: "Solves certified neutral two-phase TP flash through the native selector core."
+  change_note: "Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification."
+  tex_file: "docs/latex/algorithms.tex"
+  tex_line: 92
+  body: |
+    This entry exposes the trusted neutral two-phase TP flash proof through the
+    \texttt{flash} route spec on \texttt{Equilibrium(mixture).solve}. Flash is a
+    route spec over the same native
+    VLE residual and hard-constraint core as bubble and dew routes. The native
+    selector owns deterministic seed generation, activation checks, exact
+    derivative requirements, and postsolve certification. Gibbs/free-energy terms
+    may shape the NLP or seed ranking, but solver success alone is not the
+    acceptance criterion.
+  owner_refs:
+    - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
+      line: 2910
+      comment_line: 2909
+      context: "NeutralTwoPhaseEosRouteResult solve_flash_route("
 - algid: "pure_neutral_ceres_regression"
   section: "Regression Algorithms"
   subsection: ""
@@ -157,7 +186,7 @@
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 97
+  tex_line: 117
   body: |
     This entry covers the implemented pure-neutral native Ceres route and does not
     broaden support to every possible pure-component parameter family.
@@ -195,7 +224,7 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 114
+  tex_line: 134
   body: |
     This entry is limited to the currently implemented pure-ion target surface.
   owner_refs:
@@ -232,7 +261,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 130
+  tex_line: 150
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)
