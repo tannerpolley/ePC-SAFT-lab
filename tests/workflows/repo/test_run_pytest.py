@@ -16,11 +16,9 @@ def test_confidence_slice_extends_generic_targets_without_changing_generic():
 
     assert generic_args[: len(run_pytest.GENERIC_TEST_TARGETS)] == list(run_pytest.GENERIC_TEST_TARGETS)
     assert "tests/native/runtime/test_runtime_density_closure.py" not in generic_args
+    assert "tests/api/test_cppad_api_reset.py" in generic_args
     assert confidence_args[: len(run_pytest.CONFIDENCE_TEST_TARGETS)] == list(run_pytest.CONFIDENCE_TEST_TARGETS)
-    assert (
-        "tests/native/runtime/test_runtime_density_closure.py::"
-        "test_pressure_based_and_density_based_states_match_for_ionic_system"
-    ) in confidence_args
+    assert "tests/native/runtime/test_runtime_contribution_contracts.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract" in confidence_args
     assert confidence_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
 
 
@@ -221,21 +219,17 @@ def test_slice_targets_use_grouped_test_subpackages():
 
     assert all(target.startswith("tests/") for target in all_targets)
     assert all(target.count("/") >= 2 for target in all_targets)
-    assert "tests/api/runtime/test_runtime_exports_and_metadata.py" in run_pytest.API_TEST_TARGETS
-    assert (
-        "tests/api/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate"
-    ) in run_pytest.GENERIC_TEST_TARGETS
-    assert (
-        "tests/api/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate"
-        in run_pytest.GENERIC_TEST_TARGETS
+    assert "tests/api/test_cppad_api_reset.py" in run_pytest.API_TEST_TARGETS
+    assert "tests/api/test_cppad_api_reset.py" in run_pytest.GENERIC_TEST_TARGETS
+    assert "tests/api/test_cppad_api_reset.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route" in (
+        run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     )
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
-    assert (
-        "tests/api/regression/test_regression_hydrocarbon_anchor.py::"
-        "test_methane_reference_parameters_keep_native_objective_pinned"
-    ) in run_pytest.GENERIC_TEST_TARGETS
+    assert "tests/api/test_cppad_api_reset.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives" in (
+        run_pytest.RUNTIME_TEST_TARGETS
+    )
     assert "tests/workflows/repo/test_run_pytest.py" not in run_pytest.GENERIC_TEST_TARGETS
 
 
@@ -372,4 +366,4 @@ def test_help_mentions_slice_append_semantics():
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Slice flags are mutually exclusive" in result.stdout
     assert "Extra positional pytest targets" in result.stdout
-    assert "exhaustive historical test suite" in result.stdout
+    assert "every retained pytest contract" in result.stdout

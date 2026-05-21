@@ -15,6 +15,19 @@ from typing import Any
 import numpy as np
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
+from epcsaft.reactive_electrolyte import (
+    ReactiveElectrolyteBubbleOptions,
+    solve_reactive_electrolyte_bubble_sweep,
+)
+from epcsaft.reactive_regression import (
+    ReactiveElectrolyteBatch,
+    ReactiveElectrolyteBatchOptions,
+    ReactiveElectrolyteRegressionContext,
+    ReactiveElectrolyteRow,
+    build_reactive_regression_objective,
+)
+from epcsaft.reactive_speciation import ReactiveSpeciationOptions, solve_reactive_speciation
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -85,7 +98,7 @@ def _to_float(value: Any) -> float:
         return float("nan")
 
 
-def _runtime_cache_stats(mix: epcsaft.ePCSAFTMixture | None = None) -> dict[str, int]:
+def _runtime_cache_stats(mix: ePCSAFTMixture | None = None) -> dict[str, int]:
     if mix is None:
         return {
             "reference_state_cache_hits": 0,
@@ -140,11 +153,11 @@ def _mapping_value(payload: Mapping[str, Any] | None, key: str) -> Mapping[str, 
 
 
 def _mixture_factory_and_instance() -> (
-    tuple[Callable[[Any, float, float | None], epcsaft.ePCSAFTMixture], epcsaft.ePCSAFTMixture]
+    tuple[Callable[[Any, float, float | None], ePCSAFTMixture], ePCSAFTMixture]
 ):
-    mix = epcsaft.ePCSAFTMixture.from_params(_ionic_mix_params(), species=SPECIES)
+    mix = ePCSAFTMixture.from_params(_ionic_mix_params(), species=SPECIES)
 
-    def _factory(_x: Any, _t: float, _p: float | None = None) -> epcsaft.ePCSAFTMixture:
+    def _factory(_x: Any, _t: float, _p: float | None = None) -> ePCSAFTMixture:
         return mix
 
     return _factory, mix
@@ -168,7 +181,7 @@ def _run_solve_reactive_speciation(points: Sequence[Mapping[str, Any]]) -> Calla
 
         for point in points:
             try:
-                result = epcsaft.solve_reactive_speciation(
+                result = solve_reactive_speciation(
                     species=list(SPECIES),
                     mixture_factory=factory,
                     T=float(point["T"]),
@@ -177,7 +190,7 @@ def _run_solve_reactive_speciation(points: Sequence[Mapping[str, Any]]) -> Calla
                     totals=dict(point["totals"]),
                     reactions=REACTIONS,
                     initial_x=point["initial_x"],
-                    options=epcsaft.ReactiveSpeciationOptions(error_mode="result"),
+                    options=ReactiveSpeciationOptions(error_mode="result"),
                 )
                 speciation_solves += 1
                 success_count += 1 if result.success else 0
@@ -250,14 +263,14 @@ def _run_solve_reactive_bubble(points: Sequence[Mapping[str, Any]]) -> Callable[
         residual_count = 0
 
         try:
-            results = epcsaft.solve_reactive_electrolyte_bubble_sweep(
+            results = solve_reactive_electrolyte_bubble_sweep(
                 species=list(SPECIES),
                 mixture_factory=factory,
                 points=points,
                 balances=BALANCES,
                 reactions=REACTIONS,
                 vapor_species=VAPOR_SPECIES,
-                options=epcsaft.ReactiveElectrolyteBubbleOptions(error_mode="result"),
+                options=ReactiveElectrolyteBubbleOptions(error_mode="result"),
             )
         except Exception as exc:
             results = []
@@ -359,9 +372,9 @@ def _compile_objective_context(
     *,
     pressure_weight: float,
     speciation_weight: float,
-) -> epcsaft.ReactiveElectrolyteRegressionContext:
+) -> ReactiveElectrolyteRegressionContext:
     batch_rows = [
-        epcsaft.ReactiveElectrolyteRow(
+        ReactiveElectrolyteRow(
             row_id=str(row["row_id"]),
             T=float(row["T"]),
             P=float(row["P"]),
@@ -375,20 +388,20 @@ def _compile_objective_context(
         )
         for row in rows
     ]
-    batch = epcsaft.ReactiveElectrolyteBatch(
+    batch = ReactiveElectrolyteBatch(
         species=SPECIES,
         rows=batch_rows,
         balances=BALANCES,
         reactions=REACTIONS,
         vapor_species=VAPOR_SPECIES,
         base_parameters=_ionic_mix_params(),
-        options=epcsaft.ReactiveElectrolyteBatchOptions(
+        options=ReactiveElectrolyteBatchOptions(
             include_state_outputs=False,
             penalty_value=8.0,
         ),
-        reactive_bubble_options=epcsaft.ReactiveElectrolyteBubbleOptions(error_mode="result"),
+        reactive_bubble_options=ReactiveElectrolyteBubbleOptions(error_mode="result"),
     )
-    objective = epcsaft.build_reactive_regression_objective(
+    objective = build_reactive_regression_objective(
         batch,
         residual_weights={
             "partial_pressure": float(pressure_weight),
@@ -397,7 +410,7 @@ def _compile_objective_context(
         },
         failure_penalty=8.0,
     )
-    return epcsaft.ReactiveElectrolyteRegressionContext.from_batch(
+    return ReactiveElectrolyteRegressionContext.from_batch(
         species=batch.species,
         rows=batch.rows,
         balances=batch.balances,
@@ -507,9 +520,9 @@ def _mixed_pressure_speciation_surrogate_rows(row_count: int = 35) -> tuple[dict
 
 def _compile_speciation_surrogate_context(
     rows: Sequence[Mapping[str, Any]],
-) -> epcsaft.ReactiveElectrolyteRegressionContext:
+) -> ReactiveElectrolyteRegressionContext:
     batch_rows = [
-        epcsaft.ReactiveElectrolyteRow(
+        ReactiveElectrolyteRow(
             row_id=str(row["row_id"]),
             T=float(row["T"]),
             P=float(row["P"]),
@@ -526,23 +539,23 @@ def _compile_speciation_surrogate_context(
         )
         for row in rows
     ]
-    batch = epcsaft.ReactiveElectrolyteBatch(
+    batch = ReactiveElectrolyteBatch(
         species=SPECIES,
         rows=batch_rows,
         balances=BALANCES,
         reactions=REACTIONS,
         base_parameters=_ionic_mix_params(),
-        options=epcsaft.ReactiveElectrolyteBatchOptions(
+        options=ReactiveElectrolyteBatchOptions(
             include_state_outputs=False,
             penalty_value=8.0,
         ),
     )
-    objective = epcsaft.build_reactive_regression_objective(
+    objective = build_reactive_regression_objective(
         batch,
         residual_weights={"speciation": 1.0, "activity": 1.0, "reaction": 0.0},
         failure_penalty=8.0,
     )
-    return epcsaft.ReactiveElectrolyteRegressionContext.from_batch(
+    return ReactiveElectrolyteRegressionContext.from_batch(
         species=batch.species,
         rows=batch.rows,
         balances=batch.balances,
@@ -555,13 +568,13 @@ def _compile_speciation_surrogate_context(
 
 def _compile_mixed_pressure_speciation_surrogate_context(
     rows: Sequence[Mapping[str, Any]],
-) -> epcsaft.ReactiveElectrolyteRegressionContext:
-    batch_rows: list[epcsaft.ReactiveElectrolyteRow] = []
+) -> ReactiveElectrolyteRegressionContext:
+    batch_rows: list[ReactiveElectrolyteRow] = []
     for row in rows:
         mode = str(row.get("mode", "speciation"))
         if mode == "bubble":
             batch_rows.append(
-                epcsaft.ReactiveElectrolyteRow(
+                ReactiveElectrolyteRow(
                     row_id=str(row["row_id"]),
                     T=float(row["T"]),
                     P=float(row["P"]),
@@ -580,7 +593,7 @@ def _compile_mixed_pressure_speciation_surrogate_context(
             )
             continue
         batch_rows.append(
-            epcsaft.ReactiveElectrolyteRow(
+            ReactiveElectrolyteRow(
                 row_id=str(row["row_id"]),
                 T=float(row["T"]),
                 P=float(row["P"]),
@@ -596,20 +609,20 @@ def _compile_mixed_pressure_speciation_surrogate_context(
                 mode="speciation",
             )
         )
-    batch = epcsaft.ReactiveElectrolyteBatch(
+    batch = ReactiveElectrolyteBatch(
         species=SPECIES,
         rows=batch_rows,
         balances=BALANCES,
         reactions=REACTIONS,
         vapor_species=VAPOR_SPECIES,
         base_parameters=_ionic_mix_params(),
-        options=epcsaft.ReactiveElectrolyteBatchOptions(
+        options=ReactiveElectrolyteBatchOptions(
             include_state_outputs=False,
             penalty_value=8.0,
         ),
-        reactive_bubble_options=epcsaft.ReactiveElectrolyteBubbleOptions(error_mode="result"),
+        reactive_bubble_options=ReactiveElectrolyteBubbleOptions(error_mode="result"),
     )
-    objective = epcsaft.build_reactive_regression_objective(
+    objective = build_reactive_regression_objective(
         batch,
         residual_weights={
             "partial_pressure": 1.0,
@@ -619,7 +632,7 @@ def _compile_mixed_pressure_speciation_surrogate_context(
         },
         failure_penalty=8.0,
     )
-    return epcsaft.ReactiveElectrolyteRegressionContext.from_batch(
+    return ReactiveElectrolyteRegressionContext.from_batch(
         species=batch.species,
         rows=batch.rows,
         balances=batch.balances,
@@ -988,7 +1001,7 @@ def run_reactive_regression_benchmarks(
         "repeat": int(repeat),
         "selected_cases": selected,
         "package_version": str(epcsaft.__version__),
-        "git_commit": _git_commit() or str(epcsaft.__git_commit__),
+        "git_commit": _git_commit() or str(build_info.get("source_git_commit", "unknown")),
         "build_info": build_info,
         "cases": rows,
     }

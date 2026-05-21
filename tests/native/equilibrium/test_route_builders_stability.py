@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
 from tests.native.equilibrium.route_builder_cases import (
     WORKBOOK_BUBBLE_PRESSURE,
@@ -353,7 +354,7 @@ def test_electrolyte_stability_exact_hessian_dilute_salt_route_keeps_callback_fi
     formula = np.asarray([*(neutrals * (1.0 - salt)), salt], dtype=float)
     feed = np.asarray([formula[0], formula[1], formula[2], formula[3], formula[3]], dtype=float)
     feed = feed / float(np.sum(feed))
-    mix = epcsaft.ePCSAFTMixture.from_dataset(
+    mix = ePCSAFTMixture.from_dataset(
         "2026_Khudaida",
         ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"],
         feed,

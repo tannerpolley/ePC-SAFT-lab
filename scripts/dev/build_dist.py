@@ -79,11 +79,11 @@ sys.path.insert(0, {str(target)!r})
 import numpy as np
 import epcsaft
 import epcsaft._core
-from epcsaft import ePCSAFTMixture
-mixture = ePCSAFTMixture.from_params(
+from epcsaft import Mixture, ParameterSet
+mixture = Mixture(ParameterSet.from_dict(
     {{"m": np.asarray([1.0]), "s": np.asarray([3.7039]), "e": np.asarray([150.03])}},
     species=["Methane"],
-)
+))
 state = mixture.state(T=300.0, x=np.asarray([1.0]), rho=100.0)
 print("wheel smoke ok", epcsaft.__file__, state.compressibility_factor())
 """

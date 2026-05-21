@@ -147,8 +147,8 @@ def test_generated_markdown_names_public_api_backend_and_dependencies() -> None:
     math_map = sync_algorithm_registry.build_algorithm_math_map(entries)
     markdown = sync_algorithm_registry.render_markdown(entries, math_map)
 
-    assert 'mix.equilibrium(kind="tp_flash", ...)' in markdown
-    assert "mix.solve_equilibrium(TPFlash(...))" in markdown
+    assert "Mixture(...).equilibrium(...).bubble_pressure(...)" in markdown
+    assert "Mixture(...).regression(...).fit_pure_neutral(...)" in markdown
     assert "Native C++ Ipopt equilibrium NLP" in markdown
     assert "Dependency: Ipopt" in markdown
     assert "Native C++ Ceres regression" in markdown

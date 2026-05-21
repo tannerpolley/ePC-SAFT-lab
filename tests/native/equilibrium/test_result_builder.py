@@ -4,17 +4,18 @@ import numpy as np
 import pytest
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
 
 
-def _neutral_binary_mixture() -> epcsaft.ePCSAFTMixture:
+def _neutral_binary_mixture() -> ePCSAFTMixture:
     params = {
         "m": np.asarray([1.0, 1.6069]),
         "s": np.asarray([3.7039, 3.5206]),
         "e": np.asarray([150.03, 191.42]),
         "k_ij": np.asarray([[0.0, 3.0e-4], [3.0e-4, 0.0]]),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methane", "Ethane"])
+    return ePCSAFTMixture.from_params(params, species=["Methane", "Ethane"])
 
 
 def test_neutral_two_phase_eos_result_builder_translates_accepted_candidate() -> None:

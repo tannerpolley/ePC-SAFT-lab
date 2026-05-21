@@ -366,7 +366,7 @@ def _derivative_coverage_capabilities(cppad: dict[str, object], ceres: dict[str,
         "speciation_implicit_sensitivities": {
             "available": True,
             "production": True,
-            "scope": "ideal analytic/CppAD and nonideal CppAD-implicit solved-state sensitivities",
+            "scope": "public frontend requires CppAD-backed solved-state sensitivities; analytic kernels are internal only",
         },
         "born_ssmds_liquid_derivatives": {
             "available": True,
@@ -377,7 +377,7 @@ def _derivative_coverage_capabilities(cppad: dict[str, object], ceres: dict[str,
         "regression_ceres_jacobians": {
             "available": bool(cppad_available and ceres_available),
             "production": bool(cppad_available and ceres_available),
-            "routes": ["pure_neutral_parameters", "binary_kij"],
+            "routes": ["pure_neutral_parameters"],
             "backends": ["cppad_implicit"],
             "requires": ["ceres", "cppad"],
         },
@@ -411,9 +411,9 @@ def capabilities() -> dict[str, object]:
     ceres_capability: dict[str, object] = {
         **ceres,
         "production": ceres_available,
-        "scope": "native optimizer backend for explicitly supported regression paths",
+        "scope": "native optimizer backend behind the reset Regression workflow",
         "native_hot_loop": ceres_available,
-        "production_routes": ["regression:pure_neutral", "regression:pure_ion", "regression:binary_pair"],
+        "production_routes": ["regression:pure_neutral"],
     }
     if not ceres_available:
         ceres_capability["reason"] = "required_native_dependency_missing"
@@ -432,7 +432,7 @@ def capabilities() -> dict[str, object]:
             "ssmds_born_derivatives": {
                 "available": True,
                 "production": True,
-                "backend": "analytic",
+                "backend": "cppad",
                 "phase_scope": "liquid_electrolyte_only",
                 "parameters": ["d_born", "f_solv"],
                 "vapor_support": False,
@@ -451,9 +451,7 @@ def capabilities() -> dict[str, object]:
                     "shape",
                 ],
                 "backend_labels": [
-                    "analytic",
                     "cppad",
-                    "analytic_implicit",
                     "cppad_implicit",
                     "cppad_explicit_density",
                 ],
@@ -504,13 +502,11 @@ def capabilities() -> dict[str, object]:
         "equilibrium": {
             "derivative_policy": {
                 "accepted_derivative_backends": [
-                    "auto",
-                    "analytic",
                     "cppad",
-                    "analytic_implicit",
                     "cppad_implicit",
+                    "cppad_explicit_density",
                 ],
-                "auto_policy": "analytic_or_cppad_or_implicit_else_raise",
+                "auto_policy": "public_frontend_forces_cppad_else_raise",
             },
             **equilibrium_route_capabilities,
             "repeated_state_properties": {
@@ -519,10 +515,10 @@ def capabilities() -> dict[str, object]:
                 "density_seed_parameter": "rho_guess",
             },
             "problem_objects": {
-                "available": True,
-                "backend": "public_python_facade",
+                "available": False,
+                "backend": "superseded_by_reset_frontend",
                 "classes": list(EQUILIBRIUM_PROBLEM_OBJECT_CLASSES),
-                "entrypoint": "mixture.solve_equilibrium(problem)",
+                "entrypoint": "Mixture.equilibrium(...).bubble_pressure(...)",
             },
             "contribution_maps": {
                 "available": True,
@@ -537,54 +533,11 @@ def capabilities() -> dict[str, object]:
             },
         },
         "regression": {
-            "pure_neutral": {"available": True, "backend": "native_ceres"},
-            "pure_ion": {"available": True, "backend": "native_ceres"},
-            "binary_pair": {"available": True, "backend": "native_ceres"},
-            "mea_co2_h2o_electrolyte_benchmark": {
+            "pure_neutral": {
                 "available": True,
-                "backend": "native",
-                "scope": "fixed-composition benchmark, not reactive bubble-pressure fitting",
-            },
-            "reactive_electrolyte_residuals": {
-                "available": True,
-                "backend": "structured_residual_evaluation",
-                "scope": "fixed-shape residual evaluator for native thermodynamic calls, not a production optimizer",
-            },
-            # AlgID: reactive_electrolyte_batch_residual_context
-            "reactive_electrolyte_batch_context": {
-                "available": True,
-                "backend": "batch_residual_evaluation_context",
-                "mixed_pressure_speciation_residual_context": {
-                    "available": True,
-                    "production_optimizer": False,
-                    "optimizer": None,
-                    "fit_role": "diagnostic residual context, not a production optimizer",
-                    "supports_pressure_targets": True,
-                    "supports_speciation_targets": True,
-                    "supports_activity_targets": True,
-                    "supports_fugacity_targets": True,
-                    "supports_density_targets": True,
-                    "supports_relative_permittivity_targets": True,
-                    "validates_parameter_bounds": True,
-                    "native_hot_loop": False,
-                    "ceres": {
-                        "available": bool(ceres["available"]),
-                        "production": False,
-                        "reason": "native Ceres reactive batch optimizer not registered",
-                    },
-                    "thermodynamic_backend": "native",
-                    "python_role": "row orchestration and diagnostics",
-                },
-                "classes": [
-                    "ReactiveElectrolyteBatch",
-                    "ReactiveElectrolyteRegressionContext",
-                    "ReactiveRegressionObjective",
-                ],
-                "methods": ["evaluate_objective"],
-                "benchmark_commands": [
-                    "uv run python scripts/benchmarks/benchmark_reactive_regression.py --warmup 3 --repeat 10 --json build/benchmarks/reactive_regression_main.json",
-                    "uv run python scripts/benchmarks/benchmark_reactive_regression.py --case reactive_regression_objective_tiny --warmup 3 --repeat 20 --json build/benchmarks/reactive_regression_objective_main.json",
-                ],
+                "backend": "native_ceres",
+                "entrypoint": "Mixture(...).regression(...).fit_pure_neutral(...)",
+                "jacobian_backend": "cppad_implicit",
             },
         },
     }

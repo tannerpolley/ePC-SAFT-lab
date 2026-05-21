@@ -4,8 +4,7 @@ import numpy as np
 import pytest
 
 from epcsaft import _core
-from epcsaft import ePCSAFTMixture
-from epcsaft.epcsaft import create_struct
+from epcsaft.epcsaft import create_struct, ePCSAFTMixture
 
 
 def _single_component_args():

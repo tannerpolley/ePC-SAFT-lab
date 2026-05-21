@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 from epcsaft import _core
-from tests.helpers.numeric import assert_allclose
+from tests.support.numeric import assert_allclose
 from tests.native.equilibrium.test_reactive_phase_equilibrium_residual_surface import (
     _neutral_reactive_lle_mixture,
 )

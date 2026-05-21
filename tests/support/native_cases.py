@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from epcsaft import ePCSAFTMixture
+from epcsaft.epcsaft import ePCSAFTMixture
 
 
 def _neutral_state() -> tuple[object, list[str], float, float, float, np.ndarray]:

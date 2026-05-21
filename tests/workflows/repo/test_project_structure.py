@@ -13,6 +13,10 @@ IMPORT_BOUNDARY_WATCHLIST = {
     "epcsaft.epcsaft",
     "epcsaft.eos",
     "epcsaft.equilibrium",
+    "epcsaft.frontend",
+    "epcsaft.model_options",
+    "epcsaft.parameter_schema",
+    "epcsaft.parameter_templates",
     "epcsaft.properties",
     "epcsaft.reactive_electrolyte",
     "epcsaft.reactive_regression",
@@ -42,24 +46,23 @@ CATEGORY_ROOTS = {
     REPO_ROOT / "analyses" / "package_validation",
 }
 TEST_SUBGROUP_ROOTS = {
+    "tests/api",
     "tests/api/package",
-    "tests/api/parameters",
-    "tests/api/equilibrium/core",
-    "tests/api/equilibrium/electrolyte",
-    "tests/api/equilibrium/reactive",
-    "tests/api/reactive",
-    "tests/api/regression",
-    "tests/api/runtime",
     "tests/native/ceres",
     "tests/native/contracts",
     "tests/native/cppad",
     "tests/native/equilibrium",
     "tests/native/runtime",
-    "tests/workflows/benchmarks",
+    "tests/support",
     "tests/workflows/build",
     "tests/workflows/repo",
 }
 REPLACED_FLAT_TEST_FILES = {
+    "tests/api/equilibrium",
+    "tests/api/parameters",
+    "tests/api/reactive",
+    "tests/api/regression",
+    "tests/api/runtime",
     "tests/api/test_runtime.py",
     "tests/api/test_regression_api.py",
     "tests/api/test_reactive_speciation.py",
@@ -67,8 +70,10 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/api/test_reactive_electrolyte_bubble.py",
     "tests/equilibrium",
     "tests/regression",
+    "tests/helpers",
     "tests/native/test_runtime_contracts.py",
     "tests/native/test_chemical_equilibrium_native.py",
+    "tests/workflows/benchmarks",
 }
 
 
@@ -270,21 +275,30 @@ def test_custom_scalar_solver_tokens_are_limited_to_density_closure_exception() 
 
 def test_package_import_is_lazy_across_equilibrium_and_regression_extensions() -> None:
     loaded = _probe_epcsaft_import_modules("import epcsaft")
-    assert loaded == set()
+    assert {
+        "epcsaft.frontend",
+        "epcsaft.model_options",
+        "epcsaft.parameter_schema",
+        "epcsaft.parameter_templates",
+        "epcsaft.runtime",
+    } <= loaded
+    assert "epcsaft.epcsaft" not in loaded
+    assert "epcsaft.equilibrium" not in loaded
+    assert "epcsaft.regression" not in loaded
 
 
-def test_eos_and_property_imports_do_not_load_equilibrium_or_regression_extensions() -> None:
+def test_frontend_import_does_not_load_solver_extensions() -> None:
     loaded = _probe_epcsaft_import_modules(
-        "from epcsaft import ePCSAFTMixture\n"
-        "import epcsaft.eos\n"
-        "import epcsaft.properties\n"
-        "_ = ePCSAFTMixture"
+        "from epcsaft import Mixture, ModelOptions, ParameterSet\n"
+        "_ = (Mixture, ModelOptions, ParameterSet)"
     )
-    assert {"epcsaft.epcsaft", "epcsaft.eos", "epcsaft.properties"} <= loaded
+    assert {"epcsaft.frontend", "epcsaft.model_options", "epcsaft.parameter_schema"} <= loaded
     assert loaded.isdisjoint(
         {
+            "epcsaft.epcsaft",
             "epcsaft.electrolyte_bubble",
             "epcsaft.equilibrium",
+            "epcsaft.properties",
             "epcsaft.reactive_electrolyte",
             "epcsaft.reactive_regression",
             "epcsaft.reactive_speciation",
@@ -294,8 +308,9 @@ def test_eos_and_property_imports_do_not_load_equilibrium_or_regression_extensio
 
 
 def test_top_level_public_exports_load_only_the_requested_extension() -> None:
-    loaded = _probe_epcsaft_import_modules("import epcsaft\n_ = epcsaft.EquilibriumOptions")
-    assert "epcsaft.equilibrium" in loaded
+    loaded = _probe_epcsaft_import_modules("import epcsaft\n_ = epcsaft.Equilibrium")
+    assert "epcsaft.frontend" in loaded
+    assert "epcsaft.equilibrium" not in loaded
     assert "epcsaft.regression" not in loaded
     assert "epcsaft.reactive_regression" not in loaded
 

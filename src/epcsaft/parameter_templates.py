@@ -26,6 +26,23 @@ PURE_TEMPLATE_COLUMNS = [
 MATRIX_TEMPLATE_COLUMNS = ["component"]
 REL_PERM_TEMPLATE_COLUMNS = ["organic", "a", "b", "c"]
 SUPPORTED_SCHEMAS = {"legacy", "canonical"}
+INPUT_TEMPLATE_WORKFLOWS = {"state", "equilibrium", "regression"}
+INPUT_PURE_COLUMNS = [
+    "component",
+    "molar_mass_kg_per_mol",
+    "m",
+    "sigma",
+    "epsilon_k",
+    "charge",
+    "epsilon_k_ab",
+    "kappa_ab",
+    "association_scheme",
+    "relative_permittivity",
+    "born_diameter",
+    "solvation_factor",
+]
+INPUT_BINARY_COLUMNS = ["component_i", "component_j", "k_ij", "l_ij", "k_hb_ij"]
+INPUT_PERMITTIVITY_COLUMNS = ["component", "epsilon_i_model", "epsilon_i_value", "epsilon_i_units"]
 
 
 def _prompt(prompt: str) -> str:
@@ -162,9 +179,9 @@ def create_parameter_template(
     """Create a user-owned dataset scaffold and return its root path.
 
     If any of the inputs are omitted, the function prompts for them.
-    ``schema="legacy"`` preserves the CSV layout consumed by
-    ``ePCSAFTMixture.from_dataset(...)``. ``schema="canonical"`` writes a
-    JSON scaffold aligned to ``PureRecord`` and ``BinaryRecord`` fields.
+    ``schema="legacy"`` preserves the older CSV layout consumed by the internal
+    runtime bridge. ``schema="canonical"`` writes a JSON scaffold aligned to
+    ``PureRecord`` and ``BinaryRecord`` fields.
     """
 
     if location is None:
@@ -190,3 +207,80 @@ def create_parameter_template(
         _write_legacy_template(root, species_list)
 
     return root
+
+
+def create_input_template(
+    path: str | Path,
+    *,
+    components: Iterable[str] | str,
+    workflows: Iterable[str] = ("state", "equilibrium", "regression"),
+) -> Path:
+    """Create the reset API input scaffold.
+
+    The scaffold separates parameter tables from workflow/model options so that
+    ``ParameterSet`` owns only ePC-SAFT parameter data.
+    """
+
+    root = Path(path).expanduser()
+    if root.exists():
+        raise FileExistsError(f"Input template folder already exists: {root}")
+    component_list = _normalize_species(components)
+    workflow_list = _normalize_workflows(workflows)
+    root.mkdir(parents=True, exist_ok=False)
+
+    _write_csv(root / "pure_parameters.csv", INPUT_PURE_COLUMNS, _input_pure_rows(component_list))
+    _write_csv(root / "binary_parameters.csv", INPUT_BINARY_COLUMNS, _input_binary_rows(component_list))
+    _write_csv(root / "permittivity_parameters.csv", INPUT_PERMITTIVITY_COLUMNS, _input_permittivity_rows(component_list))
+    _write_json(
+        root / "model_options.json",
+        {
+            "relative_permittivity_rule": "component_linear",
+            "born_formulation": "disabled",
+        },
+    )
+    if "state" in workflow_list:
+        _write_json(root / "state_options.json", {"phase": "liq", "closure": "pressure"})
+    if "equilibrium" in workflow_list:
+        _write_json(
+            root / "equilibrium_options.json",
+            {
+                "max_iterations": 180,
+                "tolerance": 1.0e-8,
+                "ipopt_iteration_history_limit": 20,
+            },
+        )
+    if "regression" in workflow_list:
+        _write_json(
+            root / "regression_options.json",
+            {
+                "optimizer": "ceres",
+                "jacobian": "cppad",
+            },
+        )
+    return root
+
+
+def _normalize_workflows(workflows: Iterable[str]) -> tuple[str, ...]:
+    normalized = tuple(str(item).strip().lower() for item in workflows if str(item).strip())
+    if not normalized:
+        raise ValueError("At least one workflow must be provided.")
+    unknown = sorted(set(normalized) - INPUT_TEMPLATE_WORKFLOWS)
+    if unknown:
+        raise ValueError(f"Unsupported workflow(s): {', '.join(unknown)}.")
+    return normalized
+
+
+def _input_pure_rows(components: list[str]) -> list[list[str | float | int | None]]:
+    return [[component] + [None] * (len(INPUT_PURE_COLUMNS) - 1) for component in components]
+
+
+def _input_binary_rows(components: list[str]) -> list[list[str | float | int | None]]:
+    rows: list[list[str | float | int | None]] = []
+    for i, left in enumerate(components):
+        for right in components[i + 1 :]:
+            rows.append([left, right, 0.0, 0.0, 0.0])
+    return rows
+
+
+def _input_permittivity_rows(components: list[str]) -> list[list[str | float | int | None]]:
+    return [[component, "constant", None, "dimensionless"] for component in components]

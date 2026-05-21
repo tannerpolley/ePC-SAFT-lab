@@ -23,7 +23,7 @@ CASES = ("vle", "electrolyte_lle")
 
 
 def _hydrocarbon_workbook_mixture():
-    import epcsaft
+    from epcsaft.epcsaft import ePCSAFTMixture
 
     params = {
         "m": np.asarray([1.0, 1.6069, 2.0020]),
@@ -38,17 +38,17 @@ def _hydrocarbon_workbook_mixture():
             dtype=float,
         ),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methane", "Ethane", "Propane"])
+    return ePCSAFTMixture.from_params(params, species=["Methane", "Ethane", "Propane"])
 
 
 def _ascani_electrolyte_mixture():
-    import epcsaft
+    from epcsaft.epcsaft import ePCSAFTMixture
 
     aq = np.asarray([0.798324680201737, 0.016320352824141723, 0.09267748348706063, 0.09267748348706063])
     org = np.asarray([0.37006036048879404, 0.6214918588210971, 0.004223890345054407, 0.004223890345054407])
     beta_org = 0.613766575013417
     feed = ((1.0 - beta_org) * aq + beta_org * org).tolist()
-    mix = epcsaft.ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
+    mix = ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
     return mix, feed
 
 

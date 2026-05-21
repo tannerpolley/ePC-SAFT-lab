@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
 from tests.native.equilibrium.route_builder_cases import (
     WORKBOOK_BUBBLE_PRESSURE,
@@ -30,7 +31,7 @@ pytestmark = [pytest.mark.native_solver, pytest.mark.ipopt, pytest.mark.slow]
 def test_reactive_electrolyte_lle_eos_route_builder_uses_liquid_root_residual_route() -> None:
     species = ["A", "B", "C+", "D-"]
     feed = np.asarray([0.535, 0.25, 0.1075, 0.1075], dtype=float)
-    mix = epcsaft.ePCSAFTMixture.from_params(
+    mix = ePCSAFTMixture.from_params(
         {
             "MW": np.asarray([18.0e-3, 74.0e-3, 23.0e-3, 35.5e-3]),
             "m": np.asarray([1.1, 1.4, 1.0, 1.0]),
@@ -180,7 +181,7 @@ def test_reactive_electrolyte_lle_eos_route_builder_uses_liquid_root_residual_ro
 def test_reactive_electrolyte_lle_eos_route_uses_exact_hessian_when_requested() -> None:
     species = ["A", "B", "C+", "D-"]
     feed = np.asarray([0.535, 0.25, 0.1075, 0.1075], dtype=float)
-    mix = epcsaft.ePCSAFTMixture.from_params(
+    mix = ePCSAFTMixture.from_params(
         {
             "MW": np.asarray([18.0e-3, 74.0e-3, 23.0e-3, 35.5e-3]),
             "m": np.asarray([1.1, 1.4, 1.0, 1.0]),

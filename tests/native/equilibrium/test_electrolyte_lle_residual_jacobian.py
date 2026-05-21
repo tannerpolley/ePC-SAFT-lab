@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from epcsaft import _core
-from tests.helpers.numeric import assert_allclose
+from tests.support.numeric import assert_allclose
 from tests.native.equilibrium.test_electrolyte_lle_residual_surface import _electrolyte_mixture, _initial_request
 
 

@@ -26,13 +26,13 @@ EQUATION_FAMILY_COVERAGE = {
     "residual chemical potential": ["test_public_methods_expose_eqid_owned_contribution_groups"],
     "fugacity coefficient": ["test_public_methods_expose_eqid_owned_contribution_groups"],
     "Debye-Huckel / Born / ionic activity coefficient": [
-        "test_miac_electrolyte_variants_cover_water_nonaqueous_and_mixed_solvents",
+        "test_ionic_runtime_surface_uses_compact_package_fixture",
         "test_nonionic_state_rejects_electrolyte_only_activity_methods",
     ],
     "reference-state and density cache behavior": [
         "test_runtime_cache_stats_track_density_and_reference_state_reuse",
         "test_activity_coefficient_cache_behavior_distinguishes_aux_cache_from_solvent_override",
-        "test_miac_activity_cache_reuse_keeps_results_stable",
+        "test_ionic_activity_cache_reuse_keeps_results_stable",
     ],
 }
 

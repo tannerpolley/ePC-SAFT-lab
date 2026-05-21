@@ -5,7 +5,8 @@ from pathlib import Path
 import numpy as np
 
 import epcsaft
-from epcsaft import _core, ePCSAFTMixture
+from epcsaft import _core
+from epcsaft.epcsaft import ePCSAFTMixture
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

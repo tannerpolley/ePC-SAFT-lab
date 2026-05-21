@@ -1,0 +1,301 @@
+version: 2
+
+goal:
+  title: "CppAD-Only API And Test Architecture Reset"
+  slug: "cppad-api-test-architecture-reset"
+  kind: existing_plan
+  tranche: "continuous execution: close competing boards, prove CppAD-only hydrocarbon engine, reset the public API, then rebuild focused tests around the new frontend"
+  status: done
+  intake:
+    original_request: "PLEASE IMPLEMENT THIS PLAN: CppAD-Only API And Test Reset Goal"
+    interpreted_outcome: "The package exposes a clean Mixture/State/Equilibrium/Regression frontend backed by CppAD-only production evaluation and focused hydrocarbon proof tests."
+    input_shape: existing_plan
+    audience: "ePC-SAFT package maintainers and downstream package users"
+    authority: requested
+    proof_type: test
+    completion_proof: "Focused hydrocarbon State, Regression, and VLE bubble/IPOPT tests pass through the new API; old public exports are gone; test roots are separated by Interface, native Implementation, workflows, and support; quick validation and cleanup pass."
+    likely_misfire: "Adding new wrapper names while old public exports, analytic backend choices, or mixed pytest roots remain reachable."
+    blind_spots_considered:
+      - "CppAD-only evaluation must be proved before the new public API wraps it."
+      - "State values such as Z and fugacity-related quantities must not route through old analytic public state methods in the final API."
+      - "Regression and equilibrium exact derivatives are blockers, not optional backend choices."
+      - "Hydrocarbon proof is the completion line for this goal; electrolyte/reactive validation is intentionally deferred."
+      - "Old GoalBuddy boards must not remain active and confuse execution state."
+      - "Native _core rebuilds must be coordinated by the main thread."
+    existing_plan_facts:
+      - "New public names: Mixture, State, Equilibrium, Regression, ParameterSet, ModelOptions."
+      - "ParameterSet stores parameters only; ModelOptions belongs to Mixture."
+      - "Relative permittivity is a two-layer model: component data in ParameterSet, mixture rule in ModelOptions."
+      - "SSM/DS/Born variants are explicit ModelOptions formulation choices with clear missing-parameter errors."
+      - "CppAD is required everywhere for public State, Equilibrium, and Regression property/derivative evaluation."
+      - "Final state has a hard cutoff and no legacy import layer."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: generated
+    url: "http://127.0.0.1:41737/cppad-api-test-architecture-reset/"
+    command: "pwsh -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/cppad-api-test-architecture-reset"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: null
+
+tasks:
+  - id: T001
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Close or supersede active old GoalBuddy boards before this reset becomes the active execution track."
+    inputs:
+      - "docs/goals/ipopt-tranche1/state.yaml"
+      - "docs/goals/unified-equilibrium-roadmap-implementation/state.yaml"
+    constraints:
+      - "Preserve historical receipts."
+      - "Do not delete old goal roots."
+      - "Leave only this reset goal active."
+    expected_output:
+      - "Old active boards marked done with supersession receipts."
+      - "New reset board active."
+    receipt:
+      result: done
+      decision: "Old active boards are blocked as superseded historical inputs; this reset board is the only active GoalBuddy board."
+      summary: "ipopt-tranche1 and unified-equilibrium-roadmap-implementation were closed as superseded historical inputs before this reset board became active."
+  - id: T002
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Update glossary and ADRs for the hard API cutoff, ModelOptions boundary, configured workflow objects, and CppAD-only derivative policy."
+    allowed_files:
+      - "CONTEXT.md"
+      - "docs/adr/"
+      - "docs/adr/0002-hard-public-api-reset-cppad-only-frontend.md"
+      - "docs/adr/README.md"
+      - "docs/goals/cppad-api-test-architecture-reset/state.yaml"
+    verify:
+      - "git diff --check"
+    stop_if:
+      - "The glossary needs implementation details instead of domain terms."
+      - "The ADR would contradict the accepted hard cutoff."
+    receipt:
+      result: done
+      summary: "Added reset glossary terms to CONTEXT.md and ADR 0002 for the hard public API cutoff, ModelOptions boundary, relative-permittivity model split, configured workflows, and CppAD-only public derivative policy."
+      changed_files:
+        - "CONTEXT.md"
+        - "docs/adr/0002-hard-public-api-reset-cppad-only-frontend.md"
+        - "docs/adr/README.md"
+      commands:
+        - command: "git diff --check"
+          status: pass
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Add failing focused tests for the new public API and CppAD-only hydrocarbon proof path."
+    allowed_files:
+      - "tests/api/"
+      - "tests/api/test_cppad_api_reset.py"
+      - "tests/support/"
+      - "tests/support/hydrocarbon_cases.py"
+      - "docs/goals/cppad-api-test-architecture-reset/state.yaml"
+    verify:
+      - "uv run python run_pytest.py tests/api -q"
+    stop_if:
+      - "The right hydrocarbon anchor cannot be found locally."
+      - "A test would require broad paper validation instead of the trusted hydrocarbon route ladder."
+    receipt:
+      result: done
+      summary: "Added a focused reset API test slice and shared hydrocarbon support fixture covering root frontend exports, ModelOptions ownership, CppAD state derivatives, the trusted hydrocarbon bubble route, the regression anchor, and create_input_template."
+      changed_files:
+        - "tests/api/test_cppad_api_reset.py"
+        - "tests/support/hydrocarbon_cases.py"
+      commands:
+        - command: "uv run python run_pytest.py tests/api/test_cppad_api_reset.py -q"
+          status: pass
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Implement the CppAD-only frontend engine and public Mixture/State/Equilibrium/Regression/ModelOptions API."
+    allowed_files:
+      - "src/epcsaft/"
+      - "src/epcsaft/frontend.py"
+      - "src/epcsaft/model_options.py"
+      - "src/epcsaft/__init__.py"
+      - "src/epcsaft/__init__.pyi"
+      - "src/epcsaft/__main__.py"
+      - "src/epcsaft/eos.py"
+      - "src/epcsaft/parameter_templates.py"
+      - "src/epcsaft/runtime.py"
+      - "src/epcsaft/capability_evidence.py"
+      - "tests/api/"
+      - "tests/support/"
+      - "docs/goals/cppad-api-test-architecture-reset/state.yaml"
+    verify:
+      - "uv run python run_pytest.py tests/api -q"
+      - "uv run python -m epcsaft"
+    stop_if:
+      - "CppAD cannot supply a required State value or derivative without native changes."
+      - "Equilibrium or regression would need a non-CppAD derivative fallback."
+    receipt:
+      result: done
+      summary: "Implemented the reset public frontend with Mixture, State, Equilibrium, Regression, and ModelOptions; public State/Equilibrium/Regression routes require CppAD derivative payloads and expose the trusted hydrocarbon property, regression, and exact-Hessian bubble proof paths."
+      changed_files:
+        - "src/epcsaft/frontend.py"
+        - "src/epcsaft/model_options.py"
+        - "src/epcsaft/__init__.py"
+        - "src/epcsaft/__init__.pyi"
+        - "src/epcsaft/__main__.py"
+        - "src/epcsaft/eos.py"
+        - "src/epcsaft/parameter_templates.py"
+        - "src/epcsaft/runtime.py"
+        - "src/epcsaft/capability_evidence.py"
+      commands:
+        - command: "uv run python run_pytest.py tests/api/test_cppad_api_reset.py -q"
+          status: pass
+          summary: "6 passed"
+        - command: "uv run python -m epcsaft"
+          status: pass
+          summary: "status: ok"
+  - id: T005
+    type: worker
+    assignee: Worker
+    status: done
+    reasoning_hint: high
+    objective: "Remove the old public API exports, legacy tests, stale roots, and mixed Interface/Implementation pytest structure."
+    allowed_files:
+      - "src/epcsaft/"
+      - "tests/"
+      - "tests/api/test_cppad_api_reset.py"
+      - "tests/support/"
+      - "tests/native/"
+      - "tests/workflows/repo/test_project_structure.py"
+      - "tests/workflows/repo/test_run_pytest.py"
+      - "docs/"
+      - "docs/pages/"
+      - "run_pytest.py"
+      - "scripts/"
+      - "docs/goals/cppad-api-test-architecture-reset/state.yaml"
+    verify:
+      - "uv run python run_pytest.py tests/api tests/native/contracts tests/workflows/repo -q"
+      - "uv run python run_pytest.py --list-slices"
+    stop_if:
+      - "A public old API import remains necessary for the focused proof path."
+      - "A test root cannot be classified as API, native, workflow, or support."
+    receipt:
+      result: done
+      summary: "Removed legacy public API test roots and stale helper/benchmark roots, moved reusable fixtures under tests/support, updated native tests to use the internal bridge explicitly, and aligned retained slices/docs/scripts with the reset API boundary."
+      changed_files:
+        - "tests/api/test_cppad_api_reset.py"
+        - "tests/support/"
+        - "tests/native/"
+        - "tests/workflows/repo/test_project_structure.py"
+        - "tests/workflows/repo/test_run_pytest.py"
+        - "run_pytest.py"
+        - "docs/pages/"
+        - "scripts/"
+      removed_roots:
+        - "tests/api/equilibrium/"
+        - "tests/api/parameters/"
+        - "tests/api/reactive/"
+        - "tests/api/regression/"
+        - "tests/api/runtime/"
+        - "tests/helpers/"
+        - "tests/workflows/benchmarks/"
+        - "src/epcsaft/benchmarks/"
+      commands:
+        - command: "uv run python run_pytest.py tests/api tests/native/contracts tests/workflows/repo -q"
+          status: pass
+          summary: "113 passed"
+        - command: "uv run python run_pytest.py --list-slices"
+          status: pass
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: done
+    reasoning_hint: high
+    objective: "Final audit that the reset is complete against the accepted plan."
+    inputs:
+      - "All receipts"
+      - "Focused test output"
+      - "quick validation output"
+      - "Current git diff"
+    constraints:
+      - "Do not complete if old public imports remain."
+      - "Do not complete if any public path still exposes derivative backend choices."
+      - "Do not complete if hydrocarbon State, Regression, and VLE bubble proof are not all present."
+    expected_output:
+      - "complete | not_complete"
+      - "missing evidence"
+      - "residual risks"
+    receipt:
+      result: done
+      decision: complete
+      full_outcome_complete: true
+      missing_evidence: []
+      residual_risks:
+        - "Electrolyte, reactive, SSM+DS, and universal stability certification remain intentionally outside this hydrocarbon reset proof and should be handled by later roadmap goals."
+      summary: "The reset goal is complete: old active boards are blocked as superseded, the public API exposes the new frontend names only, CppAD-only public derivative routes are enforced for State/Equilibrium/Regression, the trusted hydrocarbon property/regression/bubble proof passes, legacy API test roots and stale helper/benchmark roots are removed, and quick validation plus cleanup pass."
+      commands:
+        - command: "uv run python run_pytest.py tests/api/test_cppad_api_reset.py -q"
+          status: pass
+          summary: "6 passed"
+        - command: "uv run python run_pytest.py -q"
+          status: pass
+          summary: "47 passed"
+        - command: "uv run python run_pytest.py tests/api tests/native/contracts tests/workflows/repo -q"
+          status: pass
+          summary: "113 passed"
+        - command: "uv run python scripts/dev/validate_project.py quick"
+          status: pass
+          summary: "doctor passed; retained pytest slice passed with 47 tests"
+        - command: "uv run python -m epcsaft"
+          status: pass
+          summary: "status: ok"
+        - command: "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\hooks\\codex-cleanup.ps1\" -RepoRoot ."
+          status: pass
+          summary: "No matching leftover Codex processes"
+        - command: "git diff --check"
+          status: pass
+
+checks:
+  dirty_fingerprint: "new reset goal created; old active boards superseded before implementation"
+  last_verification:
+    result: pass
+    task: T005
+    commands:
+      - "uv run python run_pytest.py tests/api/test_cppad_api_reset.py -q"
+      - "uv run python run_pytest.py -q"
+      - "uv run python scripts/dev/validate_project.py quick"
+      - "uv run python -m epcsaft"
+      - "uv run python run_pytest.py tests/api tests/native/contracts tests/workflows/repo -q"

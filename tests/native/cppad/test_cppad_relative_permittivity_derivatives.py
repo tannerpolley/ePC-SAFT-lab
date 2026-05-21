@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from tests.helpers.native_cases import _ionic_state
-from tests.helpers.numeric import assert_allclose
+from tests.support.native_cases import _ionic_state
+from tests.support.numeric import assert_allclose
 
 
 def _state():

@@ -5,7 +5,7 @@ import pytest
 
 from epcsaft import _core
 from epcsaft.epcsaft import create_struct
-from tests.helpers.native_cases import _ionic_state
+from tests.support.native_cases import _ionic_state
 
 
 def _state():

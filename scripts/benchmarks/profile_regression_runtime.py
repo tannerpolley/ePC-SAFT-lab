@@ -23,8 +23,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from epcsaft import fit_pure_neutral
-from tests.helpers.regression_cases import (
+import epcsaft
+from tests.support.hydrocarbon_cases import hydrocarbon_parameter_set
+from tests.support.regression_cases import (
     _load_workbook_reference_rows,
     _neutral_fixed_parameters,
     _real_saturation_records,
@@ -62,15 +63,12 @@ def _benchmark_kwargs(component: str) -> dict[str, Any]:
 
 def _benchmark_current_case(component: str, backend: str) -> dict[str, Any]:
     kwargs = _benchmark_kwargs(component)
-    if backend == "public_default":
-        solve = fit_pure_neutral
-    elif backend == "ceres":
-        solve = lambda **call_kwargs: fit_pure_neutral(**call_kwargs, optimizer_backend="ceres")
-    else:
+    if backend not in {"public_default", "ceres"}:
         raise ValueError(f"Unsupported benchmark backend {backend!r}")
+    regression = epcsaft.Mixture(hydrocarbon_parameter_set()).regression()
 
     t0 = time.perf_counter()
-    result = solve(**kwargs)
+    result = regression.fit_pure_neutral(**kwargs)
     elapsed = time.perf_counter() - t0
 
     workflow = {"selected": backend}

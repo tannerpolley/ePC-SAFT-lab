@@ -6,12 +6,13 @@ import numpy as np
 import pytest
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
-from tests.helpers.numeric import assert_allclose
-from tests.helpers.runtime_cases import _ionic_params
+from tests.support.numeric import assert_allclose
+from tests.support.runtime_cases import _ionic_params
 
 
-def _methanol_cyclohexane_mixture(kij: float = 0.051) -> epcsaft.ePCSAFTMixture:
+def _methanol_cyclohexane_mixture(kij: float = 0.051) -> ePCSAFTMixture:
     params = {
         "MW": np.asarray([32.042e-3, 84.147e-3]),
         "m": np.asarray([1.5255, 2.5303]),
@@ -24,14 +25,14 @@ def _methanol_cyclohexane_mixture(kij: float = 0.051) -> epcsaft.ePCSAFTMixture:
         "z": np.asarray([0.0, 0.0]),
         "dielc": np.asarray([33.05, 2.02]),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
+    return ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
 
 def test_native_chemical_equilibrium_entrypoint_is_exposed() -> None:
     assert hasattr(_core, "_solve_chemical_equilibrium_native")
     assert hasattr(_core, "_evaluate_chemical_equilibrium_residual_native")
 
 def test_native_chemical_equilibrium_residual_evaluator_uses_analytic_jacobian_by_default() -> None:
-    mix = epcsaft.ePCSAFTMixture.from_params(
+    mix = ePCSAFTMixture.from_params(
         {
             "m": np.asarray([1.0, 1.0]),
             "s": np.asarray([3.0, 3.0]),
@@ -86,7 +87,7 @@ def test_native_chemical_equilibrium_residual_evaluator_uses_analytic_jacobian_b
 
 
 def test_native_chemical_equilibrium_residual_evaluator_uses_cppad_when_requested() -> None:
-    mix = epcsaft.ePCSAFTMixture.from_params(
+    mix = ePCSAFTMixture.from_params(
         {
             "m": np.asarray([1.0, 1.0]),
             "s": np.asarray([3.0, 3.0]),
@@ -126,7 +127,7 @@ def test_native_chemical_equilibrium_residual_evaluator_uses_cppad_when_requeste
     )
 
 def test_mixture_equilibrium_auto_routes_ideal_chemical_equilibrium_to_native_ipopt_when_compiled() -> None:
-    mix = epcsaft.ePCSAFTMixture.from_params(
+    mix = ePCSAFTMixture.from_params(
         {
             "m": np.asarray([1.0, 1.0]),
             "s": np.asarray([3.0, 3.0]),
@@ -243,7 +244,7 @@ def test_ionic_reactive_stability_uses_native_liquid_reactive_route(monkeypatch)
     params["assoc_scheme"] = [None, None, None]
     params["e_assoc"] = np.zeros(3)
     params["vol_a"] = np.zeros(3)
-    mix = epcsaft.ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
+    mix = ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
     captured: dict[str, object] = {}
 
     def accepted_reactive_stability_route(*args, **kwargs):
@@ -315,7 +316,7 @@ def test_ionic_reactive_stability_rejects_explicit_parent_trial_controls() -> No
     params["assoc_scheme"] = [None, None, None]
     params["e_assoc"] = np.zeros(3)
     params["vol_a"] = np.zeros(3)
-    mix = epcsaft.ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
+    mix = ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
 
     with pytest.raises(epcsaft.InputError, match="parent_phase and trial_phases are not supported"):
         mix.equilibrium(

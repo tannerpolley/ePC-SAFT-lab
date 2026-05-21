@@ -2,31 +2,31 @@ from __future__ import annotations
 
 import numpy as np
 
-import epcsaft
-from tests.helpers.runtime_cases import _ionic_params
+from epcsaft.epcsaft import ePCSAFTMixture
+from tests.support.runtime_cases import _ionic_params
 
 
-def _neutral_binary_mixture() -> epcsaft.ePCSAFTMixture:
+def _neutral_binary_mixture() -> ePCSAFTMixture:
     params = {
         "m": np.asarray([1.0, 1.6069]),
         "s": np.asarray([3.7039, 3.5206]),
         "e": np.asarray([150.03, 191.42]),
         "k_ij": np.asarray([[0.0, 3.0e-4], [3.0e-4, 0.0]]),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methane", "Ethane"])
+    return ePCSAFTMixture.from_params(params, species=["Methane", "Ethane"])
 
 
-def _nonideal_lle_binary_mixture() -> epcsaft.ePCSAFTMixture:
+def _nonideal_lle_binary_mixture() -> ePCSAFTMixture:
     params = {
         "m": np.asarray([1.0, 2.0]),
         "s": np.asarray([3.5, 4.0]),
         "e": np.asarray([150.0, 250.0]),
         "k_ij": np.asarray([[0.0, 0.5], [0.5, 0.0]]),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["A", "B"])
+    return ePCSAFTMixture.from_params(params, species=["A", "B"])
 
 
-def _methanol_cyclohexane_mixture() -> epcsaft.ePCSAFTMixture:
+def _methanol_cyclohexane_mixture() -> ePCSAFTMixture:
     params = {
         "MW": np.asarray([32.042e-3, 84.147e-3]),
         "m": np.asarray([1.5255, 2.5303]),
@@ -39,7 +39,7 @@ def _methanol_cyclohexane_mixture() -> epcsaft.ePCSAFTMixture:
         "z": np.asarray([0.0, 0.0]),
         "dielc": np.asarray([33.05, 2.02]),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
+    return ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
 
 
 def _methanol_cyclohexane_lle_feed() -> list[float]:
@@ -74,17 +74,17 @@ WORKBOOK_LIQUID_DENSITY = 14_330.417109760687
 WORKBOOK_VAPOR_DENSITY = 728.5617203262267
 
 
-def _hydrocarbon_workbook_mixture() -> epcsaft.ePCSAFTMixture:
+def _hydrocarbon_workbook_mixture() -> ePCSAFTMixture:
     params = _hydrocarbon_workbook_params()
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methane", "Ethane", "Propane"])
+    return ePCSAFTMixture.from_params(params, species=["Methane", "Ethane", "Propane"])
 
 
-def _ionic_mixture() -> epcsaft.ePCSAFTMixture:
+def _ionic_mixture() -> ePCSAFTMixture:
     params = _ionic_params()
     params["assoc_scheme"] = [None, None, None]
     params["e_assoc"] = np.zeros(3)
     params["vol_a"] = np.zeros(3)
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
+    return ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
 
 
 def _reactive_stability_inputs() -> dict[str, object]:
@@ -99,12 +99,12 @@ def _reactive_stability_inputs() -> dict[str, object]:
     }
 
 
-def _ascani_electrolyte_mixture() -> tuple[epcsaft.ePCSAFTMixture, list[float]]:
+def _ascani_electrolyte_mixture() -> tuple[ePCSAFTMixture, list[float]]:
     aq = np.asarray([0.798324680201737, 0.016320352824141723, 0.09267748348706063, 0.09267748348706063])
     org = np.asarray([0.37006036048879404, 0.6214918588210971, 0.004223890345054407, 0.004223890345054407])
     beta_org = 0.613766575013417
     feed = ((1.0 - beta_org) * aq + beta_org * org).tolist()
-    mix = epcsaft.ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
+    mix = ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
     return mix, feed
 
 

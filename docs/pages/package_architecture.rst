@@ -29,26 +29,26 @@ Subsystem Boundaries
 --------------------
 
 EOS harness
-   Owns ``ePCSAFTMixture``, ``ePCSAFTState``, state construction, property
-   evaluation wrappers, and the Python-facing equation-of-state contract. It
-   validates user inputs and delegates thermodynamic calculations to the native
-   runtime.
+   Owns the reset ``Mixture`` and ``State`` frontend, state construction,
+   CppAD-backed property evaluation wrappers, and the Python-facing
+   equation-of-state contract. It validates user inputs and delegates
+   thermodynamic calculations to the native runtime.
 
 Equilibrium
    Owns phase-equilibrium, stability, bubble/dew, electrolyte LLE, and
    chemical-equilibrium orchestration. It may use Python for problem objects,
    request normalization, result shaping, and diagnostics, but production
    thermodynamic evaluations should route through the EOS/native boundary.
-   The public ``mixture.equilibrium(kind=...)`` facade adapts non-reactive
-   string requests into typed problem objects and shared route diagnostics;
-   reactive-specialized routes remain explicit entrypoints with their own
-   option checks.
+   The public reset frontend is reached through
+   ``Mixture(...).equilibrium(...)`` workflow objects. Legacy string facades and
+   typed problem objects are internal transition surfaces until they are ported
+   behind reset methods.
 
 Regression
    Owns fitting problem definitions, records, provenance validation, objective
    assembly, derivative diagnostics, and fit-result serialization. Public
-   regression helpers remain Python-facing while expensive objective and
-   derivative work should use native kernels when available.
+   regression workflows are reached through ``Mixture(...).regression(...)``,
+   while expensive objective and derivative work uses native kernels.
 
 Native
    Owns C++ kernels, pybind11 bindings, native capability reporting, and
@@ -76,20 +76,18 @@ Core Surfaces
 
 Use these imports for new code:
 
-* ``epcsaft.eos`` for ``ePCSAFTMixture`` and ``ePCSAFTState``. It also exports
-  ``Mixture`` and ``State`` aliases for shorter new-user examples.
-* ``epcsaft.equilibrium`` for neutral and electrolyte equilibrium helpers.
-* ``epcsaft.electrolyte`` for electrolyte LLE and fixed-liquid bubble pressure.
-* ``epcsaft.reactive`` for reactive speciation, reactive electrolyte bubble
-  pressure, and reactive regression batch/context objects.
-* ``epcsaft.regression`` for public fitting helpers.
-* ``epcsaft.parameters`` for packaged parameter dataset loading.
+* ``from epcsaft import Mixture, State, Equilibrium, Regression`` for workflow
+  construction.
+* ``from epcsaft import ParameterSet, ModelOptions`` for parameter data and
+  model formulation choices.
+* ``from epcsaft import create_input_template`` for reset input scaffolds.
 * ``scripts/benchmarks`` for package-owned timing and smoke benchmarks.
-* ``epcsaft.diagnostics`` for ``capabilities()`` and ``runtime_build_info()``.
+* ``epcsaft.capabilities()`` and ``epcsaft.runtime_build_info()`` for runtime
+  capability metadata.
 
-Top-level imports remain stable for existing users. Benchmark execution helpers
-are validation assets, not runtime thermodynamic APIs; import them from
-``scripts.benchmarks`` rather than from the runtime package.
+Benchmark execution helpers are validation assets, not runtime thermodynamic
+APIs; import them from ``scripts.benchmarks`` rather than from the runtime
+package.
 
 Import Policy
 -------------
@@ -98,9 +96,8 @@ Public user code should import from the top-level package or from documented
 subsystem modules:
 
 * ``import epcsaft``
-* ``from epcsaft import ePCSAFTMixture``
-* ``from epcsaft.equilibrium import ...``
-* ``from epcsaft.regression import ...``
+* ``from epcsaft import Mixture, ParameterSet, ModelOptions``
+* ``from epcsaft import Equilibrium, Regression``
 
 Internal modules may share package-owned helpers when that keeps behavior
 centralized, but subsystem code should avoid circular ownership. In particular,
@@ -110,20 +107,18 @@ not depend on benchmark entrypoints or generated analysis artifacts.
 Compatibility Policy
 --------------------
 
-Current public imports must continue working across boundary cleanups:
+The hard reset intentionally cuts off legacy root imports:
 
 .. code-block:: python
 
    import epcsaft
 
-   epcsaft.ePCSAFTMixture
-   epcsaft.solve_reactive_speciation
-   epcsaft.fit_pure_neutral
+   epcsaft.Mixture
+   epcsaft.ParameterSet
+   epcsaft.ModelOptions
 
-Cleaner subsystem imports may be added over time, but large module moves must
-land in small refactor PRs with stable facade imports and focused API tests.
-Do not use package-boundary work as a reason to break downstream notebooks,
-MEA/Li extraction consumers, or existing documented imports.
+Legacy runtime classes may remain in internal bridge modules while the native
+routes are ported, but they are not top-level public imports.
 
 Optional Dependency Policy
 --------------------------

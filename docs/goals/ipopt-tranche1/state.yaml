@@ -5,7 +5,7 @@ goal:
   slug: "ipopt-tranche1"
   kind: existing_plan
   tranche: "Implement per-iteration diagnostics, scaling diagnostics, warm-start continuation state, and Hessian-mode behavior for native Ipopt equilibrium routes."
-  status: active
+  status: blocked
   intake:
     original_request: "PLEASE IMPLEMENT THIS PLAN: Ipopt Tranche 1 Shipshape Prep"
     interpreted_outcome: "The score >= 9.0 Ipopt improvements are implemented, tested, and locally committed without branch-prune side effects."
@@ -38,8 +38,8 @@ rules:
   no_completion_without_judge_or_pm_audit: true
   planning_is_not_completion: true
   queued_required_worker_blocks_completion: true
-  continuous_until_full_outcome: true
-  missing_input_or_credentials_do_not_stop_goal: true
+  continuous_until_full_outcome: false
+  missing_input_or_credentials_do_not_stop_goal: false
   preserve_and_validate_existing_plan: true
   intake_misfire_must_be_audited: true
   slice_policy:
@@ -65,7 +65,7 @@ visual_board:
     command: "npx goalbuddy extend github-projects"
     missing: []
 
-active_task: T010
+active_task: null
 
 tasks:
   - id: T001
@@ -100,7 +100,7 @@ tasks:
   - id: T010
     type: worker
     assignee: Worker
-    status: active
+    status: queued
     reasoning_hint: high
     objective: "Implement adapter-level Ipopt iteration diagnostics, scaling diagnostics, warm-start state, and Hessian-mode behavior with focused tests."
     allowed_files:
@@ -191,7 +191,7 @@ tasks:
     receipt: null
 
 checks:
-  dirty_fingerprint: "ipopt ahead of origin/ipopt by algorithm-registry handoff; unrelated concurrent .codex/docs/script edits are out of scope."
+  dirty_fingerprint: "blocked as superseded by docs/goals/cppad-api-test-architecture-reset; historical receipts preserved"
   last_verification:
     result: unknown
     task: null

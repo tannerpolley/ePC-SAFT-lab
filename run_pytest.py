@@ -46,7 +46,7 @@ LONG_NATIVE_TARGETS_NOTE = (
 SLICE_SELECTION_NOTE = (
     "Slice flags are mutually exclusive. Developers should normally start with "
     "`uv run python scripts/dev/validate_project.py quick` or `uv run python run_pytest.py -q`. "
-    "Use `--all` only when you explicitly need the exhaustive historical suite. "
+    "Use `--all` only when you explicitly need every retained pytest contract. "
     "Extra positional pytest targets after a slice are appended and will run in addition to that slice."
 )
 
@@ -242,7 +242,7 @@ def main() -> int:
         "--all",
         dest="all_tests",
         action="store_true",
-        help="Run the exhaustive historical test suite under tests/; this is intentionally opt-in",
+        help="Run every retained pytest contract under tests/; this is intentionally opt-in",
     )
     parser.add_argument(
         "--list-slices", action="store_true", help="Print named test slices and exit without running pytest"

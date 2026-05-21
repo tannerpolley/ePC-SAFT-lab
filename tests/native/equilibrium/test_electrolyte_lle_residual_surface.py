@@ -5,8 +5,9 @@ import math
 import numpy as np
 import pytest
 
-from epcsaft import _core, ePCSAFTMixture
-from tests.helpers.numeric import assert_allclose
+from epcsaft import _core
+from epcsaft.epcsaft import ePCSAFTMixture
+from tests.support.numeric import assert_allclose
 
 
 def _electrolyte_mixture() -> ePCSAFTMixture:

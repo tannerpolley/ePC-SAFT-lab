@@ -4,21 +4,22 @@ import numpy as np
 import pytest
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
-from tests.helpers.runtime_cases import _ionic_params
+from tests.support.runtime_cases import _ionic_params
 
 
-def _neutral_binary_mixture() -> epcsaft.ePCSAFTMixture:
+def _neutral_binary_mixture() -> ePCSAFTMixture:
     params = {
         "m": np.asarray([1.0, 1.6069]),
         "s": np.asarray([3.7039, 3.5206]),
         "e": np.asarray([150.03, 191.42]),
         "k_ij": np.asarray([[0.0, 3.0e-4], [3.0e-4, 0.0]]),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methane", "Ethane"])
+    return ePCSAFTMixture.from_params(params, species=["Methane", "Ethane"])
 
 
-def _methanol_cyclohexane_mixture() -> epcsaft.ePCSAFTMixture:
+def _methanol_cyclohexane_mixture() -> ePCSAFTMixture:
     params = {
         "MW": np.asarray([32.042e-3, 84.147e-3]),
         "m": np.asarray([1.5255, 2.5303]),
@@ -31,19 +32,19 @@ def _methanol_cyclohexane_mixture() -> epcsaft.ePCSAFTMixture:
         "z": np.asarray([0.0, 0.0]),
         "dielc": np.asarray([33.05, 2.02]),
     }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
+    return ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
 
 
-def _ionic_mixture() -> epcsaft.ePCSAFTMixture:
+def _ionic_mixture() -> ePCSAFTMixture:
     params = _ionic_params()
     params["assoc_scheme"] = [None, None, None]
     params["e_assoc"] = np.zeros(3)
     params["vol_a"] = np.zeros(3)
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
+    return ePCSAFTMixture.from_params(params, species=["water", "Na+", "Cl-"])
 
 
 def _two_phase_binary_case() -> tuple[
-    epcsaft.ePCSAFTMixture,
+    ePCSAFTMixture,
     float,
     list[np.ndarray],
     list[float],

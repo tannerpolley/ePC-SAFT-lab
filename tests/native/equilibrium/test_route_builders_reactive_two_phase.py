@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
 from tests.native.equilibrium.route_builder_cases import (
     WORKBOOK_BUBBLE_PRESSURE,
@@ -196,7 +197,7 @@ def test_reactive_two_phase_eos_postsolve_accepts_candidate_under_declared_toler
 def test_reactive_electrolyte_two_phase_eos_postsolve_rejects_phase_charge_imbalance() -> None:
     species = ["A", "B", "C+", "D-"]
     feed = np.asarray([0.5, 0.3, 0.1, 0.1], dtype=float)
-    mix = epcsaft.ePCSAFTMixture.from_params(
+    mix = ePCSAFTMixture.from_params(
         {
             "MW": np.asarray([18.0e-3, 74.0e-3, 23.0e-3, 35.5e-3]),
             "m": np.asarray([1.1, 1.4, 1.0, 1.0]),

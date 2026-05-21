@@ -36,6 +36,6 @@ def test_ceres_cppad_capability_claims_require_enabled_native_dependencies() -> 
     jacobians = coverage["regression_ceres_jacobians"]
     assert jacobians["available"] is True
     assert jacobians["production"] is True
-    assert jacobians["routes"] == ["pure_neutral_parameters", "binary_kij"]
-    assert {row["quantity"] for row in coverage["rows"]}.issuperset({"pure_neutral_parameters", "binary_kij"})
+    assert jacobians["routes"] == ["pure_neutral_parameters"]
+    assert {row["quantity"] for row in coverage["rows"]}.issuperset({"pure_neutral_parameters"})
     assert "numerical" + "_derivative" not in json.dumps({"ceres": ceres, "cppad": cppad, "coverage": coverage}).lower()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 
 
 def _write_ssmds_dataset(tmp_path):
@@ -51,7 +52,7 @@ def test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives(tmp_p
     x = [0.98, 0.01, 0.01]
     temperature = 298.15
     pressure = 101325.0
-    mixture = epcsaft.ePCSAFTMixture.from_dataset(dataset, species, x, temperature)
+    mixture = ePCSAFTMixture.from_dataset(dataset, species, x, temperature)
     state = mixture.state(T=temperature, x=x, P=pressure, phase="liq")
     epsilon_r, _ = state.relative_permittivity()
     miac = state.activity_coefficient(mean_ionic_form=True, basis="mole")["Cat+An-"]

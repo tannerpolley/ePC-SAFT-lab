@@ -6,12 +6,13 @@ import numpy as np
 import pytest
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
 from epcsaft.epcsaft import create_struct
 
 
-def _toy_mixture() -> epcsaft.ePCSAFTMixture:
-    return epcsaft.ePCSAFTMixture.from_params(
+def _toy_mixture() -> ePCSAFTMixture:
+    return ePCSAFTMixture.from_params(
         {
             "m": np.asarray([1.0, 1.0]),
             "s": np.asarray([3.0, 3.0]),

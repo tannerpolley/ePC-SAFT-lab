@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tests.helpers.native_cases import _ionic_state
+from tests.support.native_cases import _ionic_state
 
 
 def _state():

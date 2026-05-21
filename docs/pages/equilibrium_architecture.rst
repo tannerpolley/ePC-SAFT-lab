@@ -62,17 +62,13 @@ not become implicit fallback behavior.
 Solver Selection
 ----------------
 
-``solver_backend="auto"`` is conservative: it may use a validated native
-default only where one exists, and otherwise raises at the route boundary.
-``ipopt`` is the explicit native constrained-NLP backend for production
-equilibrium routes as they land. Current implemented native Ipopt capability
-entries cover homogeneous ideal, activity, and concentration reactive
-speciation, neutral TP flash, neutral LLE, neutral stability, fixed-temperature
-and fixed-pressure neutral bubble/dew routes, electrolyte LLE, and fixed-liquid
-electrolyte bubble pressure when Ipopt is compiled. Reactive phase-equilibrium
-solves remain route-builder work. Use
-``epcsaft.capabilities()`` to check implemented solver paths in the current
-install.
+The reset public frontend does not expose a solver-backend selector. Public
+equilibrium methods choose the required native route directly and raise at the
+route boundary when the compiled dependency or CppAD coverage is missing. The
+trusted public proof is the hydrocarbon bubble-pressure route through native
+Ipopt with an exact Hessian. Other native route builders remain implementation
+evidence until they are ported behind reset ``Mixture.equilibrium(...)``
+methods and focused API tests.
 
 The convex Gibbs formulation is limited to homogeneous ideal reaction or
 speciation subkernels and validation tests. Full ePC-SAFT multiphase,

@@ -24,11 +24,11 @@ IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
             "backend": "native_ipopt_equilibrium_nlp",
             "sweep_available_from_ipopt": True,
             "activity_output_modes": ("auto", "always", "never"),
-            "jacobian_auto_policy": "ideal_analytic_nonideal_cppad_explicit_density_else_raise",
+            "jacobian_auto_policy": "cppad_only_else_raise",
             "jacobian_auto_supported_standard_states": REACTIVE_SPECIATION_STANDARD_STATES,
             "implemented_standard_states": REACTIVE_SPECIATION_STANDARD_STATES,
             "auto_request": "implemented_standard_states_route_to_native_ipopt",
-            "solver_backends": ("auto", "ipopt"),
+            "solver_backends": ("ipopt",),
             "explicit_ipopt_request": "implemented_standard_states_route_to_native_ipopt_when_compiled",
             "ipopt_formulation": "thermodynamic_constrained_nlp",
             "ideal_speciation_nlp_available_from_ipopt": True,
@@ -39,74 +39,75 @@ IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
     },
     {
         "key": "neutral_tp_flash",
-        "public_routes": ("neutral_tp_flash",),
+        "public_routes": (),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("tp_flash", "flash_tp"),
+            "internal_methods": ("tp_flash", "flash_tp"),
             "ipopt_formulation": "thermodynamic_constrained_nlp",
         },
     },
     {
         "key": "neutral_stability",
-        "public_routes": ("neutral_stability",),
+        "public_routes": (),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("stability_tp",),
+            "internal_methods": ("stability_tp",),
             "ipopt_formulation": "thermodynamic_constrained_nlp",
             "route": "tangent_plane_distance",
         },
     },
     {
         "key": "electrolyte_stability",
-        "public_routes": ("electrolyte_stability",),
+        "public_routes": (),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("electrolyte_stability_tp",),
+            "internal_methods": ("electrolyte_stability_tp",),
             "ipopt_formulation": "thermodynamic_constrained_nlp",
             "route": "charge_constrained_tangent_plane_distance",
         },
     },
     {
         "key": "reactive_stability",
-        "public_routes": ("reactive_stability",),
+        "public_routes": (),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("reactive_stability_tp",),
+            "internal_methods": ("reactive_stability_tp",),
             "ipopt_formulation": "thermodynamic_constrained_nlp",
             "route": "coupled_reactive_tangent_plane_distance",
         },
     },
     {
         "key": "neutral_lle_flash",
-        "public_routes": ("neutral_lle_flash",),
+        "public_routes": (),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("lle_flash", "lle_tp"),
+            "internal_methods": ("lle_flash", "lle_tp"),
             "ipopt_formulation": "thermodynamic_constrained_nlp",
         },
     },
     {
         "key": "neutral_bubble_dew",
-        "public_routes": ("neutral_bubble_p", "neutral_bubble_t", "neutral_dew_p", "neutral_dew_t"),
+        "public_routes": ("Equilibrium.bubble_pressure",),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("bubble_p", "bubble_t", "dew_p", "dew_t"),
+            "methods": ("bubble_pressure",),
+            "internal_methods": ("bubble_p", "bubble_t", "dew_p", "dew_t"),
         },
     },
     {
         "key": "electrolyte_lle",
-        "public_routes": ("electrolyte_lle",),
+        "public_routes": (),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
-            "methods": ("electrolyte_lle", "electrolyte_lle_tp"),
-            "solver_backends": ("auto", "ipopt"),
+            "internal_methods": ("electrolyte_lle", "electrolyte_lle_tp"),
+            "solver_backends": ("ipopt",),
             "explicit_ipopt_request": "routes_to_native_ipopt_when_compiled",
             "ipopt_formulation": "thermodynamic_constrained_nlp",
         },
     },
     {
         "key": "electrolyte_bubble_pressure",
-        "public_routes": ("electrolyte_bubble_pressure",),
+        "public_routes": (),
         "payload": {
             "backend": "native_ipopt_equilibrium_nlp",
             "scope": "fixed liquid composition with neutral vapor species; ions remain liquid-only",
@@ -115,16 +116,6 @@ IPOPT_EQUILIBRIUM_ROUTE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
 )
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES: Final[tuple[str, ...]] = (
-    "TPFlash",
-    "StabilityAnalysis",
-    "BubblePoint",
-    "DewPoint",
-    "LLEProblem",
-    "ElectrolyteLLEProblem",
-    "ElectrolyteBubblePoint",
-    "ReactiveSpeciationProblem",
-    "ReactivePhaseEquilibriumProblem",
-    "ReactiveElectrolyteBubbleProblem",
 )
 
 DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
@@ -157,11 +148,11 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
         "subsystem": "electrolyte",
         "quantity": "ssmds_born_liquid",
         "derivative": "parameter_sensitivity",
-        "backend": "analytic",
+        "backend": "cppad",
         "supported": True,
         "classification": "production_supported",
-        "reason": "liquid electrolyte SSM+DS Born derivatives are analytic; vapor Born derivatives are not claimed",
-        "tests": ("tests/api/runtime/test_runtime_ionic_methods.py",),
+        "reason": "public derivative reporting is CppAD-only; native analytic kernels may remain internal transition details",
+        "tests": ("tests/native/cppad/test_cppad_born_ssmds_liquid_derivatives.py",),
     },
 )
 
@@ -176,8 +167,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "classification": "production_supported",
         "reason": "neutral TP flash, LLE, stability, bubble, and dew routes require exact gradients/Jacobians and default to exact Hessians",
         "tests": (
-            "tests/api/equilibrium/core/test_api.py",
-            "tests/api/equilibrium/core/test_bubble_dew.py",
+            "tests/api/test_cppad_api_reset.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
             "tests/native/equilibrium/test_route_builders_neutral_flash.py",
             "tests/native/equilibrium/test_route_builders_neutral_lle.py",
             "tests/native/equilibrium/test_route_builders_neutral_bubble_dew.py",
@@ -194,8 +184,8 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "classification": "production_supported",
         "reason": "electrolyte LLE and charge-constrained stability routes report exact Hessian metadata and reject non-certified postsolves",
         "tests": (
-            "tests/api/equilibrium/electrolyte/test_electrolyte_lle_problem_native_ipopt.py",
-            "tests/api/equilibrium/electrolyte/test_electrolyte_lle_solver_contracts.py",
+            "tests/native/equilibrium/test_electrolyte_lle_residual_surface.py",
+            "tests/native/equilibrium/test_electrolyte_lle_residual_jacobian.py",
             "tests/native/equilibrium/test_route_builders_electrolyte.py",
             "tests/native/equilibrium/test_route_builders_stability.py",
         ),
@@ -210,7 +200,6 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "classification": "production_supported",
         "reason": "electrolyte bubble pressure is a registered production Ipopt route with exact-Hessian route-builder evidence and public phase-eligibility diagnostics",
         "tests": (
-            "tests/api/equilibrium/electrolyte/test_electrolyte_bubble.py",
             "tests/native/equilibrium/test_route_builders_electrolyte.py",
         ),
     },
@@ -241,18 +230,12 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
             "tests/native/equilibrium/test_reactive_phase_equilibrium_residual_jacobian.py",
             "tests/native/equilibrium/test_route_builders_reactive_lle.py",
             "tests/native/equilibrium/test_route_builders_reactive_electrolyte.py",
-            "tests/api/reactive/test_reactive_phase_equilibrium_problem_routes_native.py",
         ),
     },
 )
 
 REGRESSION_CAPABILITY_KEYS: Final[tuple[str, ...]] = (
     "pure_neutral",
-    "pure_ion",
-    "binary_pair",
-    "mea_co2_h2o_electrolyte_benchmark",
-    "reactive_electrolyte_residuals",
-    "reactive_electrolyte_batch_context",
 )
 
 NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
@@ -262,24 +245,9 @@ NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
 
 GENERIC_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/package/test_package_main.py::test_python_m_epcsaft_reports_package_and_core_status",
-    "tests/api/runtime/test_runtime_exports_and_metadata.py::test_package_exports_are_available",
-    "tests/api/runtime/test_runtime_neutral_scalar_methods.py::test_neutral_scalar_methods_return_expected_values",
-    "tests/api/runtime/test_runtime_ionic_methods.py::test_ionic_activity_and_solution_methods_return_expected_values",
-    "tests/api/parameters/test_parameter_templates.py::test_runtime_options_accept_cppad_modes_and_preserve_explicit_overrides",
-    "tests/api/regression/test_regression_api_pure_neutral_backend.py::test_public_pure_neutral_regression_is_robust_to_distinct_initial_guesses",
-    (
-        "tests/api/regression/test_regression_hydrocarbon_anchor.py::"
-        "test_methane_reference_parameters_keep_native_objective_pinned"
-    ),
-    "tests/api/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/api/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/api/equilibrium/core/test_stability.py::test_stability_uses_native_ipopt_route_after_validation",
-    (
-        "tests/api/equilibrium/electrolyte/test_electrolyte_lle_smokes.py::"
-        "test_electrolyte_lle_builds_native_route_before_ipopt_gate"
-    ),
-    "tests/native/contracts/test_equilibrium_native_contracts.py::test_native_equilibrium_entrypoint_is_exposed",
-    "tests/native/runtime/test_runtime_density_closure.py::test_pressure_based_and_density_based_states_match_for_neutral_system",
+    "tests/api/test_cppad_api_reset.py",
+    "tests/native/cppad/test_cppad_pressure_density.py",
+    "tests/native/cppad/test_phase_state_sensitivities.py",
     "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced",
     *NATIVE_CONTRACT_TEST_TARGETS,
     "tests/workflows/repo/test_project_structure.py",
@@ -288,9 +256,7 @@ GENERIC_TEST_TARGETS: Final[tuple[str, ...]] = (
 )
 CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     *GENERIC_TEST_TARGETS,
-    "tests/native/runtime/test_runtime_density_closure.py::test_pressure_based_and_density_based_states_match_for_ionic_system",
     "tests/native/runtime/test_runtime_contribution_contracts.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract",
-    "tests/native/contracts/test_equilibrium_native_contracts.py::test_public_tp_flash_requires_native_ipopt_route",
 )
 EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     (
@@ -304,62 +270,19 @@ EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/equilibrium/test_native_route_diagnostics_contract.py",
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/equilibrium/core/test_vle.py::test_tp_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/api/equilibrium/core/test_lle.py::test_lle_flash_builds_one_native_route_request_before_ipopt_gate",
-    "tests/api/equilibrium/core/test_stability.py::test_stability_uses_native_ipopt_route_after_validation",
-    (
-        "tests/api/equilibrium/electrolyte/test_electrolyte_lle_smokes.py::"
-        "test_electrolyte_lle_builds_native_route_before_ipopt_gate"
-    ),
-    "tests/api/runtime/test_runtime_exports_and_metadata.py::test_runtime_build_info_and_capabilities_are_json_like",
-    (
-        "tests/api/reactive/test_reactive_speciation_results.py::"
-        "test_solve_reactive_speciation_activity_coupled_state_requires_native_ipopt_route"
-    ),
-    (
-        "tests/api/reactive/test_reactive_speciation_option_validation.py::"
-        "test_reactive_speciation_options_public_surface_is_current_fields"
-    ),
-    (
-        "tests/api/reactive/test_reactive_speciation_native_requests.py::"
-        "test_reactive_speciation_requested_ipopt_routes_ideal_speciation_when_compiled"
-    ),
-    "tests/api/reactive/test_reactive_electrolyte_bubble_setup.py",
-    "tests/api/reactive/test_reactive_electrolyte_bubble_results.py",
-    (
-        "tests/native/equilibrium/test_chemical_equilibrium_native_api.py::"
-        "test_native_chemical_equilibrium_residual_evaluator_uses_analytic_jacobian_by_default"
-    ),
-    (
-        "tests/native/equilibrium/test_chemical_equilibrium_native_errors.py::"
-        "test_native_chemical_equilibrium_residual_evaluator_rejects_removed_backend"
-    ),
+    "tests/api/test_cppad_api_reset.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route",
 )
 RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/runtime/test_runtime_exports_and_metadata.py",
-    "tests/api/runtime/test_runtime_neutral_scalar_methods.py",
-    "tests/api/runtime/test_runtime_neutral_contribution_methods.py",
-    "tests/api/runtime/test_runtime_neutral_density_closure.py",
-    "tests/api/runtime/test_runtime_ionic_methods.py",
-    "tests/native/runtime/test_runtime_density_closure.py",
-    "tests/native/runtime/test_runtime_contribution_contracts.py",
-    "tests/native/runtime/test_runtime_cache_contracts.py",
+    "tests/api/test_cppad_api_reset.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives",
+    "tests/native/cppad/test_cppad_pressure_density.py",
+    "tests/native/cppad/test_phase_state_sensitivities.py",
 )
 API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/runtime/test_runtime_exports_and_metadata.py",
-    "tests/api/runtime/test_runtime_neutral_scalar_methods.py",
-    "tests/api/runtime/test_runtime_neutral_contribution_methods.py",
-    "tests/api/runtime/test_runtime_neutral_density_closure.py",
-    "tests/api/runtime/test_runtime_ionic_methods.py",
-    "tests/api/parameters/test_parameter_templates.py",
-    "tests/api/regression/test_regression_api_public_contracts.py",
-    "tests/api/regression/test_regression_api_pure_neutral_backend.py",
-    "tests/api/regression/test_regression_api_pure_ion_backend.py",
-    "tests/api/regression/test_regression_api_binary_backend.py",
-    "tests/api/regression/test_regression_api_results_and_errors.py",
+    "tests/api/test_cppad_api_reset.py",
 )
 NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/native/runtime/test_runtime_density_closure.py",
+    "tests/native/cppad/test_cppad_pressure_density.py",
+    "tests/native/cppad/test_phase_state_sensitivities.py",
     "tests/native/runtime/test_runtime_contribution_contracts.py",
     "tests/native/runtime/test_runtime_cache_contracts.py",
 )
@@ -394,7 +317,7 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
     "full": {
         "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--all", "-q")),
         "cheap_by_default": False,
-        "evidence": "doctor plus exhaustive historical pytest suite",
+        "evidence": "doctor plus every retained pytest contract",
     },
     "ceres-cppad": {
         "commands": (

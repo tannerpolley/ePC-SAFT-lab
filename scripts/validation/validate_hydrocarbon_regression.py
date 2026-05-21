@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import argparse
 
-from epcsaft import fit_pure_neutral
-from tests.helpers.regression_cases import _load_workbook_reference_rows
-from tests.helpers.regression_cases import _neutral_fixed_parameters
-from tests.helpers.regression_cases import _real_saturation_records
+import epcsaft
+from tests.support.hydrocarbon_cases import hydrocarbon_parameter_set
+from tests.support.regression_cases import _load_workbook_reference_rows
+from tests.support.regression_cases import _neutral_fixed_parameters
+from tests.support.regression_cases import _real_saturation_records
 
 
 def _print_benchmark_table(rows: list[dict[str, float]]) -> None:
@@ -29,13 +30,14 @@ def _print_benchmark_table(rows: list[dict[str, float]]) -> None:
 
 def run_full_validation() -> list[dict[str, float]]:
     csv_rows = _load_workbook_reference_rows()
+    regression = epcsaft.Mixture(hydrocarbon_parameter_set()).regression()
     benchmark_rows: list[dict[str, float]] = []
     for component in ("Methane", "Ethane", "Propane"):
         records = _real_saturation_records(component)
         reference = csv_rows[component]
-        result = fit_pure_neutral(
+        result = regression.fit_pure_neutral(
             records,
-            component,
+            component=component,
             assoc_scheme="",
             fixed_parameters=_neutral_fixed_parameters(component),
             initial_guess={

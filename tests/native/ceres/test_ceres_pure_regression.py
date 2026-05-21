@@ -5,7 +5,8 @@ import json
 import pytest
 
 import epcsaft
-from tests.helpers.regression_cases import _methane_like_records, _minimal_neutral_metadata
+from epcsaft.regression import fit_pure_neutral
+from tests.support.regression_cases import _methane_like_records, _minimal_neutral_metadata
 
 
 def test_ceres_pure_neutral_regression_owns_optimizer_loop() -> None:
@@ -13,7 +14,7 @@ def test_ceres_pure_neutral_regression_owns_optimizer_loop() -> None:
     assert ceres["compiled"], "Ceres must be compiled for native regression tests."
     initial_guess = {"m": 1.08, "s": 3.55, "e": 155.0}
 
-    result = epcsaft.fit_pure_neutral(
+    result = fit_pure_neutral(
         _methane_like_records(),
         "Methane",
         assoc_scheme="",

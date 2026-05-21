@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft
-from tests.helpers.native_cases import _neutral_state
+from tests.support.native_cases import _neutral_state
 
 
 def test_cppad_pressure_derivative_api_underpins_bubble_policy() -> None:

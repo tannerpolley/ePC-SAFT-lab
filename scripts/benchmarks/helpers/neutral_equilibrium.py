@@ -13,6 +13,7 @@ from typing import Any
 import numpy as np
 
 import epcsaft
+from tests.support.hydrocarbon_cases import hydrocarbon_parameter_set
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -30,20 +31,8 @@ class PreparedBenchmarkCase:
     runner: Callable[[], BenchmarkObservation]
 
 
-def _hydrocarbon_mixture() -> epcsaft.ePCSAFTMixture:
-    params = {
-        "m": np.asarray([1.0, 1.6069, 2.0020]),
-        "s": np.asarray([3.7039, 3.5206, 3.6184]),
-        "e": np.asarray([150.03, 191.42, 208.11]),
-        "k_ij": np.asarray(
-            [
-                [0.0, 3.0e-4, 1.15e-2],
-                [3.0e-4, 0.0, 5.10e-3],
-                [1.15e-2, 5.10e-3, 0.0],
-            ]
-        ),
-    }
-    return epcsaft.ePCSAFTMixture.from_params(params, species=["Methane", "Ethane", "Propane"])
+def _hydrocarbon_mixture() -> epcsaft.Mixture:
+    return epcsaft.Mixture(hydrocarbon_parameter_set())
 
 
 def _round_scalar(value: Any, digits: int = 10) -> float:
@@ -70,13 +59,13 @@ def _git_commit() -> str | None:
     return commit or None
 
 
-def _state_observation(state: epcsaft.ePCSAFTState) -> BenchmarkObservation:
+def _state_observation(state: epcsaft.State) -> BenchmarkObservation:
     diagnostics = dict(getattr(state, "diagnostics", lambda: {})() or {})
     fingerprint = {
         "density": _round_scalar(state.density()),
         "pressure": _round_scalar(state.pressure()),
         "compressibility_factor": _round_scalar(state.compressibility_factor()),
-        "ln_phi": _round_array(state.fugacity_coefficient()),
+        "ln_phi": _round_array(state.fugacity_coefficients()),
     }
     return BenchmarkObservation(
         fingerprint=fingerprint,

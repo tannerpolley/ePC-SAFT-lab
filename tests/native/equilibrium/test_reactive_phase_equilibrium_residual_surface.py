@@ -5,7 +5,8 @@ import math
 import numpy as np
 import pytest
 
-from epcsaft import _core, ePCSAFTMixture
+from epcsaft import _core
+from epcsaft.epcsaft import ePCSAFTMixture
 
 
 def _neutral_reactive_lle_mixture() -> ePCSAFTMixture:

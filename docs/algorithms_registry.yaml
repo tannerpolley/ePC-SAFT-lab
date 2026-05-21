@@ -90,21 +90,21 @@
   subsubsection: ""
   family: "Phase equilibrium"
   status: "Implemented"
-  public_api: "mix.equilibrium(kind=\"tp_flash\", ...); mix.solve_equilibrium(TPFlash(...))"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native neutral TP flash two-phase EOS constrained NLP"
   implementation_owner: "src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/equilibrium/core/test_vle.py"
+  validation: "tests/native/equilibrium/test_route_builders_neutral_flash.py"
   capability_key: "neutral_tp_flash"
   description: "Solves neutral two-phase TP flash through the native Ipopt EOS route."
   change_note: "Initial algorithm-registry entry for neutral TP flash."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 72
   body: |
-    This entry covers the generic neutral TP flash route, including the typed
-    \texttt{TPFlash} problem object and the string facade that adapts to it.
+    This entry covers the internal neutral TP flash route. The hard public API reset
+    does not expose typed problem objects or string route facades.
   owner_refs:
     - file: "src/epcsaft/bindings.cpp"
       line: 2101
@@ -132,21 +132,20 @@
   subsubsection: ""
   family: "Phase equilibrium"
   status: "Implemented"
-  public_api: "mix.equilibrium(kind=\"lle_flash\", ...); mix.solve_equilibrium(LLEProblem(...))"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native neutral liquid-liquid two-phase EOS constrained NLP"
   implementation_owner: "src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/equilibrium/core/test_lle.py"
+  validation: "tests/native/equilibrium/test_route_builders_neutral_lle.py"
   capability_key: "neutral_lle_flash"
   description: "Solves neutral LLE through the native Ipopt EOS route."
   change_note: "Initial algorithm-registry entry for neutral LLE."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 89
   body: |
-    This entry covers the generic neutral liquid-liquid split route and its typed
-    \texttt{LLEProblem} public problem object.
+    This entry covers the internal neutral liquid-liquid split route.
   owner_refs:
     - file: "src/epcsaft/bindings.cpp"
       line: 2120
@@ -174,18 +173,18 @@
   subsubsection: ""
   family: "Electrolyte phase equilibrium"
   status: "Implemented"
-  public_api: "mix.equilibrium(kind=\"electrolyte_lle\", ...); mix.solve_equilibrium(ElectrolyteLLEProblem(...))"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native charge-constrained electrolyte LLE EOS constrained NLP"
   implementation_owner: "src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/route_builders.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/equilibrium/electrolyte/test_electrolyte_lle_smokes.py"
+  validation: "tests/native/equilibrium/test_route_builders_electrolyte.py"
   capability_key: "electrolyte_lle"
   description: "Solves electrolyte liquid-liquid split routes with charge-constrained phase amounts."
   change_note: "Initial algorithm-registry entry for electrolyte LLE."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 106
+  tex_line: 105
   body: |
     This entry covers the generic electrolyte LLE route. Downstream extraction or
     selectivity metrics remain outside the package algorithm.
@@ -216,22 +215,22 @@
   subsubsection: ""
   family: "Phase equilibrium"
   status: "Implemented"
-  public_api: "mix.equilibrium(kind=\"bubble_p\"|\"bubble_t\"|\"dew_p\"|\"dew_t\", ...); mix.solve_equilibrium(BubblePoint(...) or DewPoint(...))"
+  public_api: "Mixture(...).equilibrium(...).bubble_pressure(...)"
   backend: "Native C++ Ipopt equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native fixed-composition bubble/dew constrained NLP routes"
   implementation_owner: "src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/bubble_dew_route_builders.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/equilibrium/core/test_bubble_dew.py"
+  validation: "tests/api/test_cppad_api_reset.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
   capability_key: "neutral_bubble_dew"
   description: "Solves neutral bubble and dew route variants through native Ipopt."
   change_note: "Initial algorithm-registry entry for neutral bubble/dew routes."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 123
+  tex_line: 122
   body: |
-    This entry groups the neutral bubble-pressure, bubble-temperature,
-    dew-pressure, and dew-temperature routes because they share the same native
-    route-builder family.
+    This entry exposes the trusted neutral bubble-pressure proof through the reset
+    frontend. Other bubble/dew variants remain internal until they receive reset
+    frontend coverage.
   owner_refs:
     - file: "src/epcsaft/bindings.cpp"
       line: 2368
@@ -263,18 +262,18 @@
   subsubsection: ""
   family: "Stability analysis"
   status: "Implemented"
-  public_api: "mix.equilibrium(kind=\"stability\", ...); mix.equilibrium(kind=\"electrolyte_stability\", ...)"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt stability NLP"
   dependency: "Ipopt"
   derivative_backend: "Exact native objective gradient and constraint Jacobian"
   solver_role: "Native tangent-plane-distance stability route"
   implementation_owner: "src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium_nlp/stability_route_builders.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/equilibrium/core/test_stability.py"
+  validation: "tests/native/equilibrium/test_route_builders_stability.py"
   capability_key: "neutral_stability; electrolyte_stability"
   description: "Solves neutral and electrolyte TPD trial routes through native Ipopt."
   change_note: "Initial algorithm-registry entry for stability routes."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 141
+  tex_line: 140
   body: |
     This entry covers neutral and electrolyte tangent-plane-distance trial routes.
     It does not describe downstream phase-selection policy beyond the returned
@@ -310,18 +309,18 @@
   subsubsection: ""
   family: "Chemical equilibrium"
   status: "Implemented"
-  public_api: "mix.chemical_equilibrium(...); ReactiveSpeciationProblem"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt ideal Gibbs speciation NLP"
   dependency: "Ipopt"
   derivative_backend: "Analytic or CppAD ideal log-amount residual Jacobian"
   solver_role: "Native homogeneous ideal reactive speciation route"
   implementation_owner: "src/epcsaft/reactive_speciation.py; src/epcsaft/native/equilibrium_nlp/ideal_speciation_problem.cpp; src/epcsaft/native/epcsaft_chemical_equilibrium.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/reactive/test_reactive_speciation.py"
+  validation: "tests/native/equilibrium/test_chemical_equilibrium_native_api.py"
   capability_key: "reactive_speciation"
   description: "Solves ideal homogeneous reactive speciation through native Ipopt."
   change_note: "Initial algorithm-registry entry for ideal speciation."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 161
+  tex_line: 160
   body: |
     This entry covers the ideal-standard-state speciation route. It is a chemical
     equilibrium algorithm, not a phase-equilibrium split.
@@ -352,18 +351,18 @@
   subsubsection: ""
   family: "Chemical equilibrium"
   status: "Implemented"
-  public_api: "mix.chemical_equilibrium(...); ReactiveSpeciationProblem"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt nonideal residual speciation NLP"
   dependency: "Ipopt"
   derivative_backend: "CppAD implicit phase-state sensitivity path where required"
   solver_role: "Native homogeneous nonideal reactive speciation route"
   implementation_owner: "src/epcsaft/reactive_speciation.py; src/epcsaft/native/epcsaft_chemical_equilibrium.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/reactive/test_reactive_speciation.py"
+  validation: "tests/native/equilibrium/test_chemical_equilibrium_native_api.py"
   capability_key: "reactive_speciation"
   description: "Solves nonideal homogeneous reactive speciation through native Ipopt."
   change_note: "Initial algorithm-registry entry for nonideal speciation."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 178
+  tex_line: 177
   body: |
     This entry covers nonideal standard-state routes whose residuals require
     package thermodynamic activity/fugacity calculations.
@@ -390,18 +389,18 @@
   subsubsection: ""
   family: "Reactive phase equilibrium"
   status: "Implemented"
-  public_api: "mix.equilibrium(kind=\"reactive_lle\", ...); ReactivePhaseEquilibriumProblem"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt reactive liquid-root phase-equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Native route residual Jacobian"
   solver_role: "Coupled reactive LLE liquid-root constrained route"
   implementation_owner: "src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium/reactive_phase_equilibrium_problem.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/reactive/test_reactive_phase_equilibrium.py"
+  validation: "tests/native/equilibrium/test_route_builders_reactive_lle.py"
   capability_key: "reactive_lle_liquid_root"
   description: "Solves coupled neutral reactive LLE through the native liquid-root Ipopt route."
   change_note: "Initial algorithm-registry entry for reactive LLE."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 195
+  tex_line: 194
   body: |
     This entry is a coupled reactive phase-equilibrium route, not a staged
     speciation-then-split workflow.
@@ -428,18 +427,18 @@
   subsubsection: ""
   family: "Reactive electrolyte phase equilibrium"
   status: "Implemented"
-  public_api: "mix.equilibrium(kind=\"reactive_electrolyte_lle\", ...); ReactivePhaseEquilibriumProblem"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ipopt reactive electrolyte liquid-root phase-equilibrium NLP"
   dependency: "Ipopt"
   derivative_backend: "Native route residual Jacobian"
   solver_role: "Coupled reactive electrolyte LLE liquid-root constrained route"
   implementation_owner: "src/epcsaft/equilibrium.py; src/epcsaft/native/equilibrium/reactive_phase_equilibrium_problem.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/reactive/test_reactive_phase_equilibrium.py"
+  validation: "tests/native/equilibrium/test_route_builders_reactive_electrolyte.py"
   capability_key: "reactive_electrolyte_lle_liquid_root"
   description: "Solves coupled reactive electrolyte LLE through the native liquid-root Ipopt route."
   change_note: "Initial algorithm-registry entry for reactive electrolyte LLE."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 212
+  tex_line: 211
   body: |
     This entry preserves the boundary that the package returns generic reactive
     phase outputs; downstream projects compute application metrics from those
@@ -467,18 +466,18 @@
   subsubsection: ""
   family: "Regression"
   status: "Implemented"
-  public_api: "fit_pure_parameters(...); fit_pure_neutral(...)"
+  public_api: "Mixture(...).regression(...).fit_pure_neutral(...)"
   backend: "Native C++ Ceres regression"
   dependency: "Ceres"
   derivative_backend: "Native residual Jacobian for supported target families"
   solver_role: "Native least-squares pure-neutral parameter regression"
   implementation_owner: "src/epcsaft/regression.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/regression/test_regression_api_pure_neutral_backend.py"
+  validation: "tests/api/test_cppad_api_reset.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api"
   capability_key: "regression:pure_neutral"
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 232
+  tex_line: 231
   body: |
     This entry covers the implemented pure-neutral native Ceres route and does not
     broaden support to every possible pure-component parameter family.
@@ -505,18 +504,18 @@
   subsubsection: ""
   family: "Regression"
   status: "Implemented"
-  public_api: "fit_liquid_electrolyte_parameters(...); fit_pure_ion(...)"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ceres regression"
   dependency: "Ceres"
   derivative_backend: "CppAD implicit residual Jacobian for supported pure-ion targets"
   solver_role: "Native least-squares pure-ion parameter regression"
   implementation_owner: "src/epcsaft/regression.py; src/epcsaft/native/epcsaft_regression.cpp; src/epcsaft/bindings.cpp"
-  validation: "tests/api/regression/test_regression_api_pure_ion_backend.py"
+  validation: "tests/native/ceres/test_ceres_liquid_electrolyte_regression.py"
   capability_key: "regression:pure_ion"
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 249
+  tex_line: 248
   body: |
     This entry is limited to the currently implemented pure-ion target surface.
   owner_refs:
@@ -542,7 +541,7 @@
   subsubsection: ""
   family: "Regression"
   status: "Implemented with caveat"
-  public_api: "fit_binary_parameters(...)"
+  public_api: "Internal native route only; no reset public frontend method yet"
   backend: "Native C++ Ceres regression"
   dependency: "Ceres"
   derivative_backend: "CppAD-backed binary k_ij residual Jacobian"
@@ -553,7 +552,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 265
+  tex_line: 264
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family, including \(l_{ij}\) or \(k^{hb}_{ij}\).
@@ -576,18 +575,18 @@
   subsubsection: ""
   family: "Reactive regression context"
   status: "Implemented residual evaluator"
-  public_api: "build_reactive_regression_objective(...); evaluate_reactive_regression_objective(...)"
+  public_api: "Internal residual context only; no reset public frontend method yet"
   backend: "Python orchestration over package thermodynamic calls"
   dependency: "None for the context itself"
   derivative_backend: "Not a registered native optimizer derivative path"
   solver_role: "Structured residual/context evaluator, not a production Ceres optimizer"
   implementation_owner: "src/epcsaft/reactive_regression.py; src/epcsaft/runtime.py"
-  validation: "tests/api/reactive/test_reactive_regression.py"
+  validation: "tests/native/equilibrium/test_reactive_phase_equilibrium_residual_surface.py"
   capability_key: "reactive_electrolyte_batch_context"
   description: "Evaluates mixed reactive-electrolyte residual contexts without claiming production optimizer support."
   change_note: "Initial algorithm-registry entry preserves the current residual-evaluator claim boundary."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 282
+  tex_line: 281
   body: |
     This entry records the implemented residual/context evaluator and explicitly
     does not claim native Ceres production optimization for reactive electrolyte
@@ -601,7 +600,3 @@
       line: 790
       comment_line: 789
       context: "def evaluate_reactive_regression_objective("
-    - file: "src/epcsaft/runtime.py"
-      line: 554
-      comment_line: 553
-      context: "\"reactive_electrolyte_batch_context\": {"

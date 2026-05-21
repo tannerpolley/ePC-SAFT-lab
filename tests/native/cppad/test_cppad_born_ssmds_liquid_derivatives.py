@@ -3,9 +3,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from epcsaft import InputError, ePCSAFTMixture
-from tests.helpers.numeric import assert_allclose
-from tests.helpers.runtime_cases import _ionic_params
+from epcsaft import InputError
+from epcsaft.epcsaft import ePCSAFTMixture
+from tests.support.numeric import assert_allclose
+from tests.support.runtime_cases import _ionic_params
 
 
 def _compact_ssmds_born_state(phase: str = "liq"):

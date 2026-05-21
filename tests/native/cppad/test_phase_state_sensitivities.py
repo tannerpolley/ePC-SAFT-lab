@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from epcsaft import ePCSAFTMixture
 from epcsaft import _core
-from epcsaft.epcsaft import create_struct
-from tests.helpers.native_cases import _ionic_state, _neutral_state
-from tests.helpers.numeric import assert_allclose
-from tests.helpers.runtime_cases import _ionic_params
+from epcsaft.epcsaft import create_struct, ePCSAFTMixture
+from tests.support.native_cases import _ionic_state, _neutral_state
+from tests.support.numeric import assert_allclose
+from tests.support.runtime_cases import _ionic_params
 
 
 def _neutral_pressure_state():

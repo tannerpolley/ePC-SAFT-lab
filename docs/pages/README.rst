@@ -18,11 +18,14 @@ data.
 
 The main user objects are:
 
-- ``ePCSAFTMixture``: stores species parameters and creates states.
-- ``ePCSAFTState``: evaluates density, pressure, residual properties, fugacity
-  coefficients, activity coefficients, and diagnostics.
-- ``create_parameter_template(...)``: creates a user-owned parameter folder.
-- ``fit_pure_neutral(...)`` and related helpers: fit supported parameter sets.
+- ``ParameterSet``: stores ePC-SAFT parameter data.
+- ``ModelOptions``: selects model formulation choices for a ``Mixture``.
+- ``Mixture``: stores parameters/options and creates workflow objects.
+- ``State``: evaluates CppAD-backed density, pressure, fugacity, and derivative
+  payloads.
+- ``Equilibrium`` and ``Regression``: configured workflow objects created from
+  ``Mixture``.
+- ``create_input_template(...)``: creates reset CSV/JSON input scaffolds.
 - ``capabilities()``: reports available runtime and solver paths.
 
 Install
@@ -105,9 +108,9 @@ Quick example
 .. code-block:: python
 
    import numpy as np
-   from epcsaft import ePCSAFTMixture
+   from epcsaft import Mixture, ParameterSet
 
-   mixture = ePCSAFTMixture.from_params(
+   parameters = ParameterSet.from_dict(
        {
            "m": np.asarray([2.8149]),
            "s": np.asarray([3.7169]),
@@ -115,13 +118,14 @@ Quick example
        },
        species=["Toluene"],
    )
+   mixture = Mixture(parameters)
 
    state = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
 
    print(state.density())
    print(state.pressure())
    print(state.compressibility_factor())
-   print(state.fugacity_coefficient())
+   print(state.fugacity_coefficients())
 
 Pressure, density, and seeds
 ----------------------------
@@ -143,13 +147,8 @@ State construction uses exactly one closure variable:
        rho_guess=base.density(),
    )
 
-   audit = mixture.check_density(
-       T=320.0,
-       x=np.asarray([1.0]),
-       P=101325.0,
-       rho=base.density(),
-   )
-   print(audit["within_tolerance"], audit["pressure_residual"])
+   density_state = mixture.state(T=320.0, x=np.asarray([1.0]), rho=base.density())
+   print(density_state.pressure())
 
 Parameter data
 --------------
@@ -158,19 +157,16 @@ Most users should create and own their parameter folders:
 
 .. code-block:: python
 
-   from epcsaft import create_parameter_template
+   from epcsaft import create_input_template
 
-   template_root = create_parameter_template(
-       location=r"C:\path\to\my_epcsaft_data",
-       folder_name="water_salt_case",
-       species=["H2O", "Na+", "Cl-"],
+   template_root = create_input_template(
+       r"C:\path\to\my_epcsaft_data\water_salt_case",
+       components=["H2O", "Na+", "Cl-"],
    )
 
-After filling in the generated files, load them with
-``ePCSAFTMixture.from_dataset(...)``. The source checkout contains
-reference/example datasets under ``data/reference/epcsaft_parameters/`` for
-comparison and validation, but users should not assume every installed wheel
-contains those source-checkout reference folders.
+After filling in the generated files, construct a ``ParameterSet`` from the
+parameter data and pass workflow defaults to ``Mixture.state(...)``,
+``Mixture.equilibrium(...)``, or ``Mixture.regression(...)``.
 
 Equilibrium and speciation
 --------------------------

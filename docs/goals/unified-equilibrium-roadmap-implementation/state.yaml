@@ -5,7 +5,7 @@ goal:
   slug: "unified-equilibrium-roadmap-implementation"
   kind: existing_plan
   tranche: "continuous execution: implement verified modular slices until remaining unified equilibrium roadmap gaps are complete or blocked by source data"
-  status: active
+  status: blocked
   intake:
     original_request: "Make plans to fully implement the blocked roadmap gaps using the existing modular Ipopt framework."
     interpreted_outcome: "A GoalBuddy-ready execution plan exists for universal certification, native reactive stability, and reactive LLE/electrolyte LLE production proof without parallel solver architecture."
@@ -34,8 +34,8 @@ rules:
   no_completion_without_judge_or_pm_audit: true
   planning_is_not_completion: true
   queued_required_worker_blocks_completion: true
-  continuous_until_full_outcome: true
-  missing_input_or_credentials_do_not_stop_goal: true
+  continuous_until_full_outcome: false
+  missing_input_or_credentials_do_not_stop_goal: false
   preserve_and_validate_existing_plan: true
   intake_misfire_must_be_audited: true
   slice_policy:
@@ -61,13 +61,13 @@ visual_board:
     command: "npx goalbuddy extend github-projects"
     missing: []
 
-active_task: T999
+active_task: null
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: done
+    status: queued
     reasoning_hint: high
     objective: "Validate the source plan against the live repo module mesh and decide whether a targeted Graphify refresh or JetBrains semantic pass is needed before implementation."
     inputs:
@@ -374,7 +374,7 @@ tasks:
   - id: T999
     type: judge
     assignee: Judge
-    status: active
+    status: queued
     reasoning_hint: high
     objective: "Final audit that the remaining unified equilibrium roadmap gaps are implemented or explicitly source-blocked without architecture forks."
     inputs:
@@ -396,7 +396,7 @@ tasks:
     receipt: null
 
 checks:
-  dirty_fingerprint: "plan and GoalBuddy board prepared, not implementation"
+  dirty_fingerprint: "blocked as superseded by docs/goals/cppad-api-test-architecture-reset; completed receipts preserved as historical inputs"
   last_verification:
     result: passed
     task: T008

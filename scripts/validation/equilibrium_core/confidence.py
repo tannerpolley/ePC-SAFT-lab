@@ -1,6 +1,6 @@
 """Opt-in electrolyte LLE confidence validation helpers.
 
-These helpers intentionally call the public ``ePCSAFTMixture.equilibrium`` facade
+These helpers intentionally call the internal native equilibrium bridge
 so the confidence suite validates the same route a user exercises.
 """
 

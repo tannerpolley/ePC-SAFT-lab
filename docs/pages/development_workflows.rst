@@ -192,7 +192,7 @@ Use ``scripts/dev/create_dev_worktree.ps1`` from the primary checkout instead of
 Test selection rules
 --------------------
 
-Use the smallest relevant test first, then run ``uv run python scripts/dev/validate_project.py confidence`` before release, merge, or broad runtime claims. Use ``uv run python run_pytest.py --all -q`` only when you explicitly need the exhaustive historical suite.
+Use the smallest relevant test first, then run ``uv run python scripts/dev/validate_project.py confidence`` before release, merge, or broad runtime claims. Use ``uv run python run_pytest.py --all -q`` only when you explicitly need every retained pytest contract.
 
 Before running ``run_pytest.py``, direct ``pytest``, or any ``validate_project.py``
 mode that runs pytest, read this command matrix and the test-selection rules in
@@ -222,7 +222,7 @@ For parallel sessions, leave the default repo-local temp behavior alone unless i
 Runtime speed rule
 ------------------
 
-For repeated runtime calls, build ``ePCSAFTMixture`` and ``ePCSAFTState`` once and reuse them inside hot loops. The quick profile report compares reused-state activity-coefficient calls against full rebuild calls and flags the ratio when rebuilds dominate runtime.
+For repeated runtime calls, build ``Mixture`` and ``State`` objects once and reuse them inside hot loops. The quick profile report compares reused-state property calls against full rebuild calls and flags the ratio when rebuilds dominate runtime.
 
 Neutral equilibrium benchmark
 -----------------------------

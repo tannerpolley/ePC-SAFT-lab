@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 from epcsaft._core import NativeValueError
 
-from tests.helpers.native_cases import _ionic_state, _neutral_state
-from tests.helpers.numeric import assert_allclose
+from tests.support.native_cases import _ionic_state, _neutral_state
+from tests.support.numeric import assert_allclose
 
 
 def _assert_close_terms(observed: dict[str, float], expected: dict[str, float]) -> None:

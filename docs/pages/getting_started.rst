@@ -41,14 +41,15 @@ Verify the install
 Create a mixture
 ----------------
 
-For a one-component example, pass a parameter dictionary directly:
+For a one-component example, create a ``ParameterSet`` and pass it to
+``Mixture``:
 
 .. code-block:: python
 
    import numpy as np
-   from epcsaft import ePCSAFTMixture
+   from epcsaft import Mixture, ParameterSet
 
-   mixture = ePCSAFTMixture.from_params(
+   parameters = ParameterSet.from_dict(
        {
            "m": np.asarray([2.8149]),
            "s": np.asarray([3.7169]),
@@ -56,11 +57,12 @@ For a one-component example, pass a parameter dictionary directly:
        },
        species=["Toluene"],
    )
+   mixture = Mixture(parameters)
 
    state = mixture.state(T=320.0, x=np.asarray([1.0]), P=101325.0)
    print(state.density())
    print(state.compressibility_factor())
-   print(state.fugacity_coefficient())
+   print(state.fugacity_coefficients())
 
 Use pressure or density closure
 -------------------------------
@@ -82,13 +84,7 @@ Every state uses exactly one closure variable:
    )
 
    density_state = mixture.state(T=320.0, x=np.asarray([1.0]), rho=base.density())
-   audit = mixture.check_density(
-       T=320.0,
-       x=np.asarray([1.0]),
-       P=101325.0,
-       rho=density_state.density(),
-   )
-   print(audit["within_tolerance"], audit["pressure_residual"])
+   print(density_state.pressure())
 
 Create a parameter folder
 -------------------------
@@ -97,24 +93,15 @@ For real systems, keep your parameter data in a folder you control:
 
 .. code-block:: python
 
-   from epcsaft import create_parameter_template
+   from epcsaft import create_input_template
 
-   template_root = create_parameter_template(
-       location=r"C:\path\to\my_epcsaft_data",
-       folder_name="water_salt_case",
-       species=["H2O", "Na+", "Cl-"],
+   template_root = create_input_template(
+       r"C:\path\to\my_epcsaft_data\water_salt_case",
+       components=["H2O", "Na+", "Cl-"],
    )
 
-Fill in the generated files, then load the folder:
-
-.. code-block:: python
-
-   import numpy as np
-   from epcsaft import ePCSAFTMixture
-
-   species = ["H2O", "Na+", "Cl-"]
-   x = np.asarray([0.9998, 1e-4, 1e-4])
-   mixture = ePCSAFTMixture.from_dataset(template_root, species, x, 298.15)
+Fill in the generated parameter CSV files and workflow option JSON files, then
+construct a ``ParameterSet`` for the case you want to run.
 
 Next steps
 ----------

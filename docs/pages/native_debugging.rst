@@ -6,7 +6,10 @@ Use this page when a change crosses the Python wrapper, pybind11 seam, or native
 Runtime flow
 ------------
 
-The public API starts in ``src/epcsaft/epcsaft.py``. ``ePCSAFTMixture`` normalizes parameter payloads and owns a native ``NativeMixture``. ``ePCSAFTState`` validates ``T/x/P`` or ``T/x/rho`` inputs, constructs ``NativeState``, and delegates pressure, density, residual Helmholtz, fugacity, and activity-coefficient calls to the native extension.
+The public API starts in ``src/epcsaft/frontend.py``. ``Mixture`` normalizes
+``ParameterSet`` and ``ModelOptions`` inputs and owns the internal native
+runtime bridge. ``State`` validates ``T/x/P`` or ``T/x/rho`` inputs and exposes
+CppAD-backed pressure, density, fugacity, and derivative payloads.
 
 The pybind11 boundary is ``src/epcsaft/bindings.cpp``. It exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, contribution-result structs, and native regression helpers through the private ``epcsaft._core`` module.
 
@@ -63,7 +66,7 @@ See :doc:`equation_traceability` for the EqID classification and owner-comment c
 Debugging checklist
 -------------------
 
-- Reproduce the behavior through a public ``ePCSAFTMixture`` / ``ePCSAFTState`` call before debugging private native functions.
+- Reproduce the behavior through a public ``Mixture`` / ``State`` call before debugging private native functions.
 - Compare pressure-created and density-created states when investigating density closure. Start with the same ``T`` and ``x`` and compare density, pressure, ``z()``, and ``ares()``. Use ``state(..., P=..., rho_guess=...)`` to test seeded pressure closure and ``check_density(...)`` to audit an externally supplied density against a target pressure.
 - Inspect ``src/epcsaft/native/epcsaft_density.cpp`` and ``src/epcsaft/native/epcsaft_state.cpp`` for pressure-to-density root selection, warm-start behavior, and phase-branch policy before changing contribution code.
 - Request contribution terms with ``return_contribution_terms=True`` when debugging residual Helmholtz, compressibility factor, chemical potential, or fugacity totals.

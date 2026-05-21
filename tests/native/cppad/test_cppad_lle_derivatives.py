@@ -3,12 +3,13 @@ from __future__ import annotations
 import numpy as np
 
 import epcsaft
+from epcsaft.epcsaft import ePCSAFTMixture
 from epcsaft import _core
 
 
-def _electrolyte_mixture() -> epcsaft.ePCSAFTMixture:
+def _electrolyte_mixture() -> ePCSAFTMixture:
     feed = np.asarray([0.55, 0.40, 0.025, 0.025], dtype=float)
-    return epcsaft.ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
+    return ePCSAFTMixture.from_dataset("2022_Ascani", ["H2O", "Butanol", "Na+", "Cl-"], feed, 298.15)
 
 
 def test_electrolyte_lle_residual_surface_reports_cppad_explicit_density_jacobian() -> None:

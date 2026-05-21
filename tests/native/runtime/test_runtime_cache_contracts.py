@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from epcsaft import SolutionError
-from tests.helpers.native_cases import _ionic_state
+from tests.support.native_cases import _ionic_state
 
 
 def _assert_finite_mapping_values(values: dict[str, float]) -> None:

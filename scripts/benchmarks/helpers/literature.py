@@ -116,11 +116,11 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                 source="Gross, Sadowski 2001 Table 2 neutral hydrocarbon reference",
                 model_setup={
                     "route": "native neutral pure-parameter objective contract",
-                    "dataset": "tests.helpers.regression_cases.HYDROCARBON_REFERENCE",
+                    "dataset": "tests.support.regression_cases.HYDROCARBON_REFERENCE",
                 },
                 input_records=(
-                    "tests/regression/core/test_hydrocarbon.py",
-                    "tests/helpers/regression_cases.py",
+                    "tests/api/test_cppad_api_reset.py",
+                    "tests/support/regression_cases.py",
                 ),
                 expected={
                     "objective_reference": 9.701615164740784e-06,
@@ -130,13 +130,13 @@ LITERATURE_CASES: OrderedDict[str, BenchmarkCase] = OrderedDict(
                     "objective_rel": 2.0e-4,
                     "objective_abs": 0.0,
                 },
-                command="uv run python run_pytest.py tests/regression/core/test_hydrocarbon.py -q",
+                command="uv run python run_pytest.py tests/api/test_cppad_api_reset.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api -q",
                 status=EXECUTABLE,
                 package_surface=(
-                    "tests/regression/core/test_hydrocarbon.py",
+                    "tests/api/test_cppad_api_reset.py",
                     "scripts/validation/validate_hydrocarbon_regression.py",
                 ),
-                validation_paths=("tests/regression/core/test_hydrocarbon.py",),
+                validation_paths=("tests/api/test_cppad_api_reset.py",),
                 notes="Current coverage is executable, numeric, and package-owned, but not yet routed through the issue #119 release-gate suite.",
             ),
         ),
