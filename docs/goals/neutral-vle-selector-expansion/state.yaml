@@ -125,7 +125,7 @@ tasks:
         - "Focused red test run produced 16 failures and 5 passes."
       - "Failures include old selector scalar/composition signature, missing VLE route specs through Equilibrium.solve(...), stale neutral_tp_flash activation, and stale public route capabilities."
       commands:
-        - "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_vle_support tests/workflows/repo/test_project_structure.py::test_public_vle_workflows_dispatch_only_through_selector_binding -q"
+        - "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_solve_support tests/workflows/repo/test_project_structure.py::test_public_equilibrium_workflows_dispatch_only_through_selector_binding -q"
   - id: T003
     type: worker
     assignee: Worker
@@ -172,7 +172,7 @@ tasks:
         - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q"
           status: pass
           result: "13 passed"
-        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_vle_support tests/workflows/repo/test_project_structure.py::test_public_vle_workflows_dispatch_only_through_selector_binding tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py::test_runtime_capabilities_report_public_ipopt_routes tests/native/state/test_bubble_derivatives.py -q"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_solve_support tests/workflows/repo/test_project_structure.py::test_public_equilibrium_workflows_dispatch_only_through_selector_binding tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py::test_runtime_capabilities_report_public_ipopt_routes tests/native/state/test_bubble_derivatives.py -q"
           status: pass
           result: "24 passed"
   - id: T004
@@ -213,7 +213,7 @@ tasks:
         - cmd: "uv run python run_pytest.py tests/api/frontend/test_equilibrium.py -q"
           status: pass
           result: "6 passed"
-        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_vle_support tests/workflows/repo/test_project_structure.py::test_public_vle_workflows_dispatch_only_through_selector_binding tests/api/package/test_root_exports.py -q"
+        - cmd: "uv run python run_pytest.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_solve_support tests/workflows/repo/test_project_structure.py::test_public_equilibrium_workflows_dispatch_only_through_selector_binding tests/api/package/test_root_exports.py -q"
           status: pass
           result: "4 passed"
   - id: T005
@@ -318,7 +318,7 @@ tasks:
         - "python_api_test_owner: blocked on Mixture.native route methods and importable workflow route functions; both bypass lanes were removed, Equilibrium.solve(route=..., ...) became the only public execution method, and focused API/structure tests pass."
         - "build_packaging_owner: no CMake/package blocker; stale algorithm registry, downstream docs, and architecture diagnostics were updated and registry checks pass."
       commands:
-        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_vle_support tests/workflows/repo/test_project_structure.py::test_public_vle_workflows_dispatch_only_through_selector_binding tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py::test_runtime_capabilities_report_public_ipopt_routes tests/native/state/test_bubble_derivatives.py -q"
+        - cmd: "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_solve_support tests/workflows/repo/test_project_structure.py::test_public_equilibrium_workflows_dispatch_only_through_selector_binding tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py::test_runtime_capabilities_report_public_ipopt_routes tests/native/state/test_bubble_derivatives.py -q"
           status: pass
           result: "24 passed after owner-review fixes"
         - cmd: "uv run python scripts/docs/sync_algorithm_registry.py --check --strict-traceability"
@@ -419,4 +419,4 @@ checks:
     result: expected_fail
     task: T002
     commands:
-      - "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_vle_support tests/workflows/repo/test_project_structure.py::test_public_vle_workflows_dispatch_only_through_selector_binding -q"
+      - "uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/api/frontend/test_equilibrium.py tests/workflows/repo/test_project_structure.py::test_python_equilibrium_package_exposes_only_production_selector_solve_support tests/workflows/repo/test_project_structure.py::test_public_equilibrium_workflows_dispatch_only_through_selector_binding -q"

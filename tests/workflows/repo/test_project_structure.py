@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -138,6 +139,56 @@ def _tracked_files(*paths: str) -> list[str]:
         check=True,
     )
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def _equilibrium_activation_rows() -> list[dict[str, object]]:
+    mirror = REPO_ROOT / "src" / "epcsaft" / "runtime" / "equilibrium_activation.py"
+    tree = ast.parse(mirror.read_text(encoding="utf-8"), filename=mirror.relative_to(REPO_ROOT).as_posix())
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if any(isinstance(target, ast.Name) and target.id == "EQUILIBRIUM_ACTIVATION_MATRIX" for target in node.targets):
+            rows = ast.literal_eval(node.value)
+            assert isinstance(rows, list)
+            return rows
+    raise AssertionError("EQUILIBRIUM_ACTIVATION_MATRIX was not found in the generated runtime mirror.")
+
+
+def _workflow_route_specs() -> dict[str, dict[str, str]]:
+    workflow_path = REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py"
+    tree = ast.parse(workflow_path.read_text(encoding="utf-8"), filename=workflow_path.relative_to(REPO_ROOT).as_posix())
+    specs: dict[str, dict[str, str]] = {}
+    spec_tables = 0
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+            value = node.value
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+            value = node.value
+        else:
+            continue
+        if not isinstance(value, ast.Dict):
+            continue
+        if not any(isinstance(target, ast.Name) and target.id.endswith("ROUTE_SPECS") for target in targets):
+            continue
+        spec_tables += 1
+        for route_node, spec_node in zip(value.keys, value.values):
+            route = ast.literal_eval(route_node)
+            assert isinstance(route, str)
+            assert isinstance(spec_node, ast.Call)
+            spec: dict[str, str] = {}
+            for keyword in spec_node.keywords:
+                if keyword.arg is None:
+                    continue
+                if isinstance(keyword.value, ast.Constant) and isinstance(keyword.value.value, str):
+                    spec[keyword.arg] = keyword.value.value
+            specs[route] = spec
+
+    assert spec_tables == 1
+    assert specs
+    return specs
 
 
 def test_strict_solver_derivative_text_gate_passes() -> None:
@@ -368,18 +419,200 @@ def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     assert binding_offenders == []
 
 
-def test_python_equilibrium_package_exposes_only_production_selector_vle_support() -> None:
+def test_equilibrium_activation_families_cannot_create_ad_hoc_native_route_files() -> None:
+    native_equilibrium_root = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium"
+    shared_owner = native_equilibrium_root / "routes" / "derived" / "bubble_dew.cpp"
+    route_file_allowlist = {
+        "src/epcsaft/native/equilibrium/core/activation_matrix.h",
+        "src/epcsaft/native/equilibrium/core/selector_core.cpp",
+        "src/epcsaft/native/equilibrium/core/selector_core.h",
+        "src/epcsaft/native/equilibrium/core/two_phase_eos_route.h",
+        "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp",
+    }
+
+    assert shared_owner.is_file()
+
+    activation_rows = _equilibrium_activation_rows()
+    activation_key_tokens = {str(row["key"]).lower() for row in activation_rows}
+    route_specific_filename_tokens = (
+        *sorted(activation_key_tokens),
+        "bubble",
+        "dew",
+        "flash",
+        "lle",
+        "speciation",
+        "stability",
+        "vle",
+        "bubble_pressure",
+        "bubble_temperature",
+        "dew_pressure",
+        "dew_temperature",
+        "tp_flash",
+        "hydrocarbon",
+    )
+    route_file_offenders: list[str] = []
+    for path in sorted(native_equilibrium_root.rglob("*")):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if rel in route_file_allowlist:
+            continue
+        name = path.name.lower()
+        if path.is_dir():
+            if any(token in name for token in route_specific_filename_tokens):
+                route_file_offenders.append(rel)
+            continue
+        if not path.is_file() or path.suffix.lower() not in {".cpp", ".h", ".hpp"}:
+            continue
+        if any(token in name for token in route_specific_filename_tokens):
+            route_file_offenders.append(rel)
+    assert route_file_offenders == []
+
+
+def test_equilibrium_activation_production_rows_must_enter_through_selector_route_specs() -> None:
+    rows = _equilibrium_activation_rows()
+    activation_keys = {str(row["key"]) for row in rows}
+    production_keys = {str(row["key"]) for row in rows if row["production_exposed"] is True}
+    declared_not_exposed_keys = {str(row["key"]) for row in rows if row["production_exposed"] is False}
+    route_specs = _workflow_route_specs()
+    selector_families = {spec["selector_family"] for spec in route_specs.values()}
+    selector_routes = {spec["selector_route"] for spec in route_specs.values()}
+
+    assert production_keys
+    assert selector_families == production_keys
+    assert selector_families <= activation_keys
+    assert selector_routes.isdisjoint(declared_not_exposed_keys)
+    for row in rows:
+        if row["production_exposed"] is not True:
+            continue
+        assert row["exposure_status"] == "production_exposed", row["key"]
+        assert row["postsolve_certification"] == "on", row["key"]
+        assert row["derivative_requirement"] == "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes", row["key"]
+        assert row["residual_families"], row["key"]
+        assert row["constraint_families"], row["key"]
+        assert row["proof_routes"], row["key"]
+        assert row["variable_model"], row["key"]
+        assert row["density_backend"], row["key"]
+
+    selector_core = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "selector_core.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
+    missing_selector_admission = sorted(key for key in production_keys if key not in selector_core)
+    assert missing_selector_admission == []
+
+
+def test_activation_matrix_families_do_not_gain_direct_pybind_route_entrypoints() -> None:
+    activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
+    binding_source_paths = [
+        path
+        for path in sorted((REPO_ROOT / "src" / "epcsaft" / "native" / "bindings").rglob("*"))
+        if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}
+    ]
+    binding_source_paths.append(
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "register_bindings.cpp"
+    )
+
+    direct_binding_tokens = {f"_native_{key}" for key in activation_keys}
+    binding_offenders: list[str] = []
+    for path in binding_source_paths:
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for token in sorted(direct_binding_tokens):
+            if token in text:
+                binding_offenders.append(f"{rel}: {token}")
+    assert binding_offenders == []
+
+
+def test_equilibrium_route_solve_and_contract_owners_stay_in_shared_core_files() -> None:
+    native_equilibrium_root = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium"
+    allowed_route_owner_files = {
+        "src/epcsaft/native/equilibrium/core/selector_core.cpp",
+        "src/epcsaft/native/equilibrium/core/selector_core.h",
+        "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp",
+        "src/epcsaft/native/equilibrium/core/two_phase_eos_route.h",
+        "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp",
+    }
+    route_api_pattern = re.compile(
+        r"(?m)^\s*(?!return\b)(?:[\w:<>]+[\s*&]+)+(?<!::)"
+        r"(?:solve|evaluate)_[a-z0-9_]+_(?:route|nlp_contract)\s*\("
+    )
+
+    route_api_offenders: list[str] = []
+    for path in sorted(native_equilibrium_root.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in {".cpp", ".h", ".hpp"}:
+            continue
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        if rel in allowed_route_owner_files:
+            continue
+        matches = sorted(set(route_api_pattern.findall(path.read_text(encoding="utf-8", errors="ignore"))))
+        if matches:
+            route_api_offenders.append(f"{rel}: {', '.join(matches)}")
+    assert route_api_offenders == []
+
+
+def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpers() -> None:
+    route_specs = _workflow_route_specs()
+    activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
+    legacy_route_aliases = {"bubble_p", "bubble_t", "dew_p", "dew_t", "tp_flash", "lle_flash"}
+    route_specific_names = set(route_specs) | activation_keys | legacy_route_aliases
+    forbidden_helper_names = route_specific_names | {f"_solve_{name}" for name in route_specific_names}
+    inspected_paths = (
+        REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
+        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
+        REPO_ROOT / "src" / "epcsaft" / "state" / "native_adapter.py",
+    )
+
+    offenders: list[str] = []
+    for path in inspected_paths:
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=rel)
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in forbidden_helper_names:
+                offenders.append(f"{rel}:{node.lineno}: def {node.name}")
+
+    frontend_tree = ast.parse(
+        (REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py").read_text(encoding="utf-8"),
+        filename="src/epcsaft/frontend/equilibrium.py",
+    )
+    equilibrium_class = next(
+        node for node in frontend_tree.body if isinstance(node, ast.ClassDef) and node.name == "Equilibrium"
+    )
+    public_methods = sorted(
+        node.name
+        for node in equilibrium_class.body
+        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+    )
+    solve_calls = [
+        node
+        for node in ast.walk(equilibrium_class)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id.startswith("_solve_selector")
+    ]
+    workflow_tree = ast.parse(
+        (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(encoding="utf-8"),
+        filename="src/epcsaft/equilibrium/workflows.py",
+    )
+    workflow_helpers = [
+        node.name
+        for node in workflow_tree.body
+        if isinstance(node, ast.FunctionDef) and node.name.startswith("_solve_selector")
+    ]
+
+    assert offenders == []
+    assert public_methods == ["solve"]
+    assert len(solve_calls) == 1
+    assert len(workflow_helpers) == 1
+
+
+def test_python_equilibrium_package_exposes_only_production_selector_solve_support() -> None:
     import epcsaft
     import epcsaft.equilibrium as equilibrium
     import epcsaft.equilibrium.workflows as workflows
     from epcsaft.state.native_adapter import ePCSAFTMixture
 
-    route_specific_methods = {
-        "bubble_pressure",
-        "bubble_temperature",
-        "dew_pressure",
-        "dew_temperature",
-        "flash",
+    route_specific_methods = set(_workflow_route_specs())
+    activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
+    declared_not_exposed_keys = {
+        str(row["key"]) for row in _equilibrium_activation_rows() if row["production_exposed"] is False
     }
     assert hasattr(epcsaft.Equilibrium, "solve")
     assert {name for name in route_specific_methods if hasattr(epcsaft.Equilibrium, name)} == set()
@@ -406,18 +639,18 @@ def test_python_equilibrium_package_exposes_only_production_selector_vle_support
         "ElectrolyteLLEProblem",
         "ElectrolyteBubblePoint",
         "StabilityAnalysis",
+        *activation_keys,
+        *declared_not_exposed_keys,
     }
     leaked = sorted(name for name in forbidden_exports if hasattr(equilibrium, name))
 
     assert leaked == []
 
     workflow_route_helpers = {
-        "bubble_pressure",
-        "bubble_temperature",
-        "dew_pressure",
-        "dew_temperature",
-        "flash",
+        *route_specific_methods,
         "solve_selector_vle",
+        "solve_selector_equilibrium",
+        *(f"solve_{key}" for key in activation_keys),
     }
     assert [name for name in workflow_route_helpers if hasattr(workflows, name)] == []
     assert [name for name in route_specific_methods if hasattr(ePCSAFTMixture, name)] == []
@@ -452,10 +685,12 @@ def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> N
     assert offenders == []
 
 
-def test_public_vle_workflows_dispatch_only_through_selector_binding() -> None:
+def test_public_equilibrium_workflows_dispatch_only_through_selector_binding() -> None:
     workflows = (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(
         encoding="utf-8"
     )
+    activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
+    selector_routes = {spec["selector_route"] for spec in _workflow_route_specs().values()}
     required_selector_calls = workflows.count("_native_equilibrium_selector_route_result")
     forbidden_direct_route_bindings = (
         "_native_neutral_bubble_p_eos_route_result",
@@ -463,9 +698,11 @@ def test_public_vle_workflows_dispatch_only_through_selector_binding() -> None:
         "_native_neutral_dew_p_eos_route_result",
         "_native_neutral_dew_t_eos_route_result",
         "_native_neutral_tp_flash_eos_route_result",
+        *(f"_native_{key}" for key in activation_keys),
+        *(f"_native_{route}_route_result" for route in selector_routes),
     )
 
-    assert required_selector_calls >= 1
+    assert required_selector_calls == 1
     assert [token for token in forbidden_direct_route_bindings if token in workflows] == []
 
 
@@ -649,6 +886,22 @@ def test_old_gallery_and_script_roots_are_not_tracked() -> None:
 def test_reorganized_test_subgroup_roots_exist() -> None:
     for relpath in sorted(TEST_SUBGROUP_ROOTS):
         assert (REPO_ROOT / relpath).is_dir(), relpath
+
+
+def test_native_equilibrium_tests_stay_in_named_subfolders() -> None:
+    root = REPO_ROOT / "tests" / "native" / "equilibrium"
+    allowed_subdirs = {"blocks", "diagnostics", "results"}
+    direct_python_files = sorted(
+        path.relative_to(REPO_ROOT).as_posix() for path in root.glob("*.py")
+    )
+    actual_subdirs = sorted(
+        path.name
+        for path in root.iterdir()
+        if path.is_dir() and path.name != "__pycache__"
+    )
+
+    assert direct_python_files == []
+    assert actual_subdirs == sorted(allowed_subdirs)
 
 
 def test_test_tree_uses_namespace_packages_without_init_markers() -> None:
