@@ -70,6 +70,22 @@ Production equilibrium routes require exact analytic or CppAD Jacobians. Native
 Ceres owns package regression solves, while CppAD and implicit sensitivities
 provide derivative payloads where the route is validated.
 
+Associating Equilibrium Boundary
+--------------------------------
+
+Associating mixtures remain selector-ineligible for production equilibrium
+routes. Association site fractions are solved internal variables, and direct
+CppAD recording through the association fixed-point iteration is forbidden.
+State and Regression routes eliminate the site fractions and apply implicit
+sensitivities.
+
+Future associating equilibrium must choose one complete architecture before any
+public exposure: either eliminate site fractions and provide complete implicit
+first- and second-order derivatives for all Ipopt objective and constraint
+residuals, or lift site fractions as explicit NLP variables with exact
+mass-action constraints, true site topology, and exact Lagrangian Hessian rows.
+See ``docs/adr/0004-associating-equilibrium-architecture.md``.
+
 Repeated State Work
 -------------------
 
