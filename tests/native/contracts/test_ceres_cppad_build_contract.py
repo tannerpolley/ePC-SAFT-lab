@@ -97,6 +97,13 @@ def test_property_derivative_parameter_families_scope_active_association_lij_out
         "parameter_families"
     ]
 
+    assert "production_supported" not in parameter_families
+    assert {"e_assoc", "vol_a", "l_ij", "k_hb_ij"}.issubset(
+        set(parameter_families["state_property_derivative_supported"])
+    )
+    assert {"e_assoc", "vol_a", "l_ij", "k_hb_ij"}.isdisjoint(
+        set(parameter_families["regression_public_production_supported"])
+    )
     assert parameter_families["production_scope"]["e_assoc"] == "pure_associating_component_parameter_only"
     assert parameter_families["production_scope"]["vol_a"] == "pure_associating_component_parameter_only"
     assert parameter_families["production_scope"]["l_ij"] == "binary_pair_including_active_association"

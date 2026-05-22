@@ -316,7 +316,7 @@ tasks:
       - "src/epcsaft/capability_evidence.py"
       - "src/epcsaft/runtime.py"
       - "run_pytest.py"
-      - "scripts/benchmarks/helpers/literature.py"
+      - "retired literature benchmark helper path (removed)"
       - "tests/api/runtime/test_runtime_capabilities_dependency_gates.py"
       - "tests/workflows/repo/test_project_structure.py"
       - "tests/workflows/repo/test_run_pytest.py"
@@ -343,7 +343,7 @@ tasks:
       changed_files:
         - "src/epcsaft/capability_evidence.py"
         - "run_pytest.py"
-        - "scripts/benchmarks/helpers/literature.py"
+        - "retired literature benchmark helper path (removed)"
         - "docs/pages/development_workflows.rst"
         - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
         - "docs/latex/algorithms.tex"
@@ -358,7 +358,7 @@ tasks:
         - "tests/regression/electrolyte/test_miac_liquid_electrolyte_*.py"
         - "tests/**/__init__.py"
       commands:
-        - command: "uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only"
+        - command: "retired literature benchmark inventory command removed"
           status: pass
         - command: "uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q"
           status: pass
@@ -367,7 +367,7 @@ tasks:
         - command: "uv run python run_pytest.py -q"
           status: pass
       verification:
-        - "uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only"
+        - "retired literature benchmark inventory command removed"
         - "uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q"
         - "uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/workflows/repo/test_run_pytest.py -q"
         - "uv run python run_pytest.py -q"
@@ -402,7 +402,7 @@ checks:
     task: T008
     commands:
       - "uv run python run_pytest.py --equilibrium-confidence -q"
-      - "uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only"
+      - "retired literature benchmark inventory command removed"
       - "uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q"
       - "uv run python run_pytest.py tests/api/runtime/test_runtime_capabilities_dependency_gates.py tests/workflows/repo/test_run_pytest.py -q"
       - "uv run python run_pytest.py -q"

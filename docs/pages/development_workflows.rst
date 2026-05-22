@@ -60,15 +60,9 @@ Command matrix
    * - Docs check
      - ``uv run python scripts/dev/validate_project.py docs``
      - Build Sphinx HTML under ``build/docs-html``.
-   * - Quick method-speed check
-     - ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``
-     - Runtime benchmark harness for neutral equilibrium; performance evidence is explicit benchmark output, not pytest collection.
-   * - Neutral equilibrium benchmark
-     - ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``
-     - Measure the current neutral state runtime guardrail without any FeOs dependency.
-   * - Literature benchmark inventory
-     - ``uv run python scripts/benchmarks/benchmark_literature_suite.py``
-     - Review the package-owned literature benchmark scope, including which issue anchors have executable package evidence and which still require follow-up work.
+   * - Retired local benchmark scripts
+     - No retained command.
+     - The previous local benchmark scripts were removed as obsolete; current performance or literature-coverage claims need a newly owned benchmark or analysis workflow before being cited.
    * - Package boundary
      - ``uv run python scripts/dev/build_dist.py``
      - Wheel/sdist and smoke-import validation. The default release baseline disables local Ipopt so wheels do not require Ipopt runtime DLLs. Isolated package builds default to serial native compilation to avoid Windows Ceres memory spikes; use ``--parallel N`` only when the machine has enough headroom.
@@ -172,12 +166,12 @@ The mirror lives at ``C:\Users\Tanner\Documents\git\LaTeX-Projects\ePC-SAFT-LaTe
 Parallel worker safety
 ----------------------
 
-The dev build tree and benchmark outputs under ``build/`` are shared disposable state. In parallel sessions, coordinate native rebuild, clean, and repair work so only one process owns the native extension at a time.
+The dev build tree and generated outputs under ``build/`` are shared disposable state. In parallel sessions, coordinate native rebuild, clean, and repair work so only one process owns the native extension at a time.
 
 - Do not run clean or repair actions while tests, REPLs, IDE run configurations, or other workers may import ``epcsaft._core``.
 - Prefer one native builder at a time for ``build/dev`` and the in-place ``_core`` extension.
 - Let parallel workers run focused test slices for their lane, and reserve full build, doctor, and ``--confidence`` validation for coordinated handoff checks.
-- Use explicit benchmark scripts for speed claims, for example ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``. Do not route performance claims through pytest.
+- Do not route performance claims through pytest. Add or restore an explicit benchmark or analysis workflow before making speed claims.
 
 Project-local Git worktrees
 ---------------------------
@@ -206,7 +200,7 @@ native/equilibrium route tests. If the right target is unclear, run
 - Native/equation changes: ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` first, then ``uv run python run_pytest.py --runtime -q``, then ``uv run python run_pytest.py --confidence -q``.
 - Native route metadata, result-adapter diagnostics, or pybind payload-shape changes: run ``uv run python run_pytest.py --native-contracts -q`` first. Do not run broad route-builder files under ``tests/native/equilibrium`` for these changes; the wrapper rejects those broad targets unless ``--allow-long-native-tests`` or ``EPCSAFT_ALLOW_LONG_NATIVE_TESTS=1`` is set.
 - Equation traceability changes: ``uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`` then ``uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q``.
-- Performance claims: run explicit benchmark scripts such as ``uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100``. Do not rely on pytest, skipped tests, or code inspection for speed claims.
+- Performance claims: add or restore an explicit benchmark or analysis workflow first. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.
 
 - Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to the no-local-Ipopt release baseline and ``--parallel 1`` for isolated PEP 517 builds; raise parallelism only after confirming Ceres builds are not memory-bound. Use ``--with-local-ipopt`` only for an explicit local Ipopt artifact check.
@@ -223,48 +217,20 @@ For parallel sessions, leave the default repo-local temp behavior alone unless i
 Runtime speed rule
 ------------------
 
-For repeated runtime calls, build ``Mixture`` and ``State`` objects once and reuse them inside hot loops. The quick profile report compares reused-state property calls against full rebuild calls and flags the ratio when rebuilds dominate runtime.
+For repeated runtime calls, build ``Mixture`` and ``State`` objects once and reuse them inside hot loops. If a runtime-speed claim matters, add or restore an explicit benchmark or analysis workflow for that claim.
 
-Neutral equilibrium benchmark
------------------------------
+Retired local benchmark scripts
+-------------------------------
 
-Use the package-owned benchmark harness when the claim is specifically about neutral equilibrium throughput rather than the broader runtime profile suite.
+The previous local neutral-equilibrium timing harness, literature inventory, and
+regression profile scripts were removed as obsolete. They no longer have
+retained workflow entrypoints in this source tree.
 
-.. code-block:: powershell
-
-   uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100
-   uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100 --json build/benchmarks/neutral_equilibrium.json
-   uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100 --baseline-json build/benchmarks/neutral_equilibrium_baseline_issue43.json
-
-The harness benchmarks these package-owned neutral cases:
-
-- ``neutral_state``
-
-Each case reports a deterministic fingerprint plus medians, spread metrics,
-failures, and whether a neutral fast path was used. This harness does not
-require FeOs and should remain the local performance guardrail for
-issue-driven neutral-equilibrium work.
-
-Literature benchmark inventory
-------------------------------
-
-Use the package-owned literature suite inventory when the question is coverage
-and benchmark scope rather than runtime speed.
-
-.. code-block:: powershell
-
-   uv run python scripts/benchmarks/benchmark_literature_suite.py
-   uv run python scripts/benchmarks/benchmark_literature_suite.py --case figiel_2025_ssm_ds_born
-   uv run python scripts/benchmarks/benchmark_literature_suite.py --json build/benchmarks/literature_suite.json
-
-The inventory reports each issue-scope literature anchor with a classification
-such as ``already_supported_with_tests`` or ``blocker_requires_followup`` plus
-the owning package surfaces. Use it to keep benchmark claims honest and to
-avoid silently treating blocked literature routes as complete. The inventory is
-kept outside pytest so paper-wide validation stays opt-in.
-The JSON payload also records the registered validation lanes and pytest slices
-from ``epcsaft.runtime.capability_evidence`` so benchmark inventory output can be read
-against the same executable evidence registry used by the development CLIs.
+Performance, literature-coverage, or paper-wide validation claims still require
+explicit benchmark or analysis evidence, but that evidence must come from a
+current, owned workflow added for the claim being made. Pytest remains limited
+to package contracts, API wiring, native derivative availability, diagnostics,
+and representative solver certification.
 
 Troubleshooting
 ---------------

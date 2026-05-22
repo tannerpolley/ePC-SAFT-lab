@@ -92,6 +92,9 @@ def test_state_exposes_residual_property_aliases_and_contributions() -> None:
 def test_active_association_model_options_emit_implicit_assoc_mode() -> None:
     species = ("water", "Na+", "Cl-")
     assoc_parameters = epcsaft.ParameterSet.from_dict(_ionic_params(), species=species)
+    assoc_options = epcsaft.ModelOptions().to_runtime_options(assoc_parameters)
+
+    assert assoc_options["elec_model"]["assoc_model"]["dadx_differential_mode"] == "auto"
 
     assoc_mixture = epcsaft.Mixture(assoc_parameters, model_options=epcsaft.ModelOptions())
 
@@ -107,6 +110,9 @@ def test_nonassociating_model_options_preserve_explicit_cppad_assoc_mode() -> No
     payload["vol_a"] = np.zeros(3)
     payload["assoc_scheme"] = [None, None, None]
     parameters = epcsaft.ParameterSet.from_dict(payload, species=species)
+    options = epcsaft.ModelOptions().to_runtime_options(parameters)
+
+    assert options["elec_model"]["assoc_model"]["dadx_differential_mode"] == "cppad"
 
     mixture = epcsaft.Mixture(parameters, model_options=epcsaft.ModelOptions())
 

@@ -31,8 +31,8 @@ equilibrium.
     constraints, true site topology, differentiated association-delta
     dependencies or an explicit fixed-delta diagnostic contract, exact
     Jacobian rows, and exact Lagrangian Hessian rows.
-- Finite differences are validation-only checks and are not production
-  derivative backends.
+- Central-difference comparison checks are validation-only and are not
+  production derivative backends.
 - Target-kind registry presence is not optimizer support and must not broaden
   public capability claims.
 

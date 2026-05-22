@@ -476,7 +476,7 @@ def capabilities() -> dict[str, object]:
                     "cppad_explicit_density",
                 ],
                 "parameter_families": {
-                    "production_supported": [
+                    "state_property_derivative_supported": [
                         "m",
                         "sigma",
                         "epsilon",
@@ -488,6 +488,15 @@ def capabilities() -> dict[str, object]:
                         "d_born",
                         "f_solv",
                         "relative_permittivity",
+                    ],
+                    "regression_public_production_supported": list(
+                        regression_target_evidence["production_supported_target_kinds"]
+                    ),
+                    "not_optimizer_support": [
+                        "e_assoc",
+                        "vol_a",
+                        "l_ij",
+                        "k_hb_ij",
                     ],
                     "production_scope": {
                         "e_assoc": "pure_associating_component_parameter_only",

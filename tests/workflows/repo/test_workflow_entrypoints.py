@@ -81,9 +81,9 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Start every fresh source checkout with this sequence" in development_workflows
     assert "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10" in development_workflows
     assert "uv run python run_pytest.py --runtime -q" in development_workflows
-    assert "uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100" in (
-        development_workflows
-    )
+    assert "scripts/benchmarks/" + "benchmark_neutral_equilibrium.py" not in development_workflows
+    assert "scripts/benchmarks/" + "benchmark_literature_suite.py" not in development_workflows
+    assert "The previous local benchmark scripts were removed as obsolete" in development_workflows
     assert "uv run python run_pytest.py --list-slices" in development_workflows
     assert "EPCSAFT_PYTEST_TEMP_ROOT" in development_workflows
     assert "reuse them inside hot loops" in development_workflows

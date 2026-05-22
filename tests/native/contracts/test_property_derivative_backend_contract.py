@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 import epcsaft
@@ -25,6 +27,22 @@ def test_capabilities_expose_property_derivative_result_apis() -> None:
     assert "relative_permittivity_parameter_derivative_result" in payload["state_methods"]
     assert "numerical" + "_derivative" not in str(payload["backend_labels"])
     assert "unsupported" not in str(payload["backend_labels"])
+    parameter_families = payload["parameter_families"]
+    assert "state_property_derivative_supported" in parameter_families
+    assert "regression_public_production_supported" in parameter_families
+    assert "production_supported" not in parameter_families
+    assert {"e_assoc", "vol_a", "l_ij", "k_hb_ij"}.issubset(
+        set(parameter_families["state_property_derivative_supported"])
+    )
+    assert {"e_assoc", "vol_a", "l_ij", "k_hb_ij"}.isdisjoint(
+        set(parameter_families["regression_public_production_supported"])
+    )
+
+
+def test_core_type_stub_declares_association_component_parameter_binding() -> None:
+    stub = Path(epcsaft.__file__).with_name("_core.pyi").read_text(encoding="utf-8")
+
+    assert "def _native_cppad_association_component_parameters" in stub
 
 
 def test_public_derivative_result_methods_share_required_shape() -> None:
