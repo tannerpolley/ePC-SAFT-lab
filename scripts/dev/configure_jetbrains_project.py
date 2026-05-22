@@ -1,14 +1,32 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import io
 from pathlib import Path, PurePosixPath
 import xml.etree.ElementTree as ET
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IDEA_DIR = REPO_ROOT / ".idea"
+RUN_DIR = REPO_ROOT / ".run"
 MODULE_URL_PREFIX = "file://$MODULE_DIR$"
 CONTENT_URL = MODULE_URL_PREFIX
+MODULE_DIR_MACRO = "$MODULE_DIR$"
+MODULE_NAME = "ePC-SAFT"
+PYTHON_CONFIG_TYPE = "PythonConfigurationType"
+SHELL_CONFIG_TYPE = "ShConfigurationType"
+PYTHON_RUNNER = "Python"
+SHELL_RUNNER = "Shell Script"
+PYTHON_SDK_HOME = "$MODULE_DIR$/.venv/Scripts/python.exe"
+PYTHON_SDK_NAME = "uv (ePC-SAFT)"
+POWERSHELL_INTERPRETER = "C:/Program Files/PowerShell/7/pwsh.exe"
+FOLDER_SETUP_HEALTH = "ePC-SAFT - Setup & Health"
+FOLDER_BUILD_NATIVE = "ePC-SAFT - Build & Native"
+FOLDER_VALIDATION = "ePC-SAFT - Validation"
+FOLDER_PYTEST_SLICES = "ePC-SAFT - Pytest Slices"
+FOLDER_DOCS_REGISTRY = "ePC-SAFT - Docs & Registry"
+FOLDER_PACKAGE = "ePC-SAFT - Package"
+FOLDER_ASSOCIATION_ROADMAP = "ePC-SAFT - Association Roadmap"
 TRANSIENT_PATHS: tuple[str, ...] = (
     "build",
     "dist",
@@ -27,6 +45,192 @@ TRANSIENT_PATHS: tuple[str, ...] = (
 # like top-level namespace packages in IntelliJ.
 CANONICAL_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (
     ("src", False),
+)
+
+
+@dataclass(frozen=True)
+class RunConfigSpec:
+    name: str
+    runner: str
+    folder_name: str
+    command: str
+    parameters: str = ""
+
+
+CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
+    RunConfigSpec(
+        name="Sync Environment",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_SETUP_HEALTH,
+        command="uv sync --no-install-project",
+    ),
+    RunConfigSpec(
+        name="Doctor",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_SETUP_HEALTH,
+        command=".codex/environments/setup.ps1",
+        parameters="-Step Doctor",
+    ),
+    RunConfigSpec(
+        name="Build Native Extension",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_BUILD_NATIVE,
+        command=".codex/environments/setup.ps1",
+        parameters="-Step Build",
+    ),
+    RunConfigSpec(
+        name="Build Status",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_BUILD_NATIVE,
+        command="scripts/dev/build_epcsaft.py",
+        parameters="--status",
+    ),
+    RunConfigSpec(
+        name="Build Native Incremental",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_BUILD_NATIVE,
+        command="scripts/dev/build_epcsaft.py",
+        parameters="--build-only --parallel 10",
+    ),
+    RunConfigSpec(
+        name="Validate Quick",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/dev/validate_project.py",
+        parameters="quick",
+    ),
+    RunConfigSpec(
+        name="Validate Confidence",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/dev/validate_project.py",
+        parameters="confidence",
+    ),
+    RunConfigSpec(
+        name="Test List Slices",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_PYTEST_SLICES,
+        command="run_pytest.py",
+        parameters="--list-slices",
+    ),
+    RunConfigSpec(
+        name="Test API",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_PYTEST_SLICES,
+        command="run_pytest.py",
+        parameters="--api -q",
+    ),
+    RunConfigSpec(
+        name="Test Equilibrium API",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_PYTEST_SLICES,
+        command="run_pytest.py",
+        parameters="--equilibrium-api -q",
+    ),
+    RunConfigSpec(
+        name="Test Runtime",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_PYTEST_SLICES,
+        command="run_pytest.py",
+        parameters="--runtime -q",
+    ),
+    RunConfigSpec(
+        name="Test Native",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_PYTEST_SLICES,
+        command="run_pytest.py",
+        parameters="--native -q",
+    ),
+    RunConfigSpec(
+        name="Test Native Contracts",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_PYTEST_SLICES,
+        command="run_pytest.py",
+        parameters="--native-contracts -q",
+    ),
+    RunConfigSpec(
+        name="Build Docs",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_DOCS_REGISTRY,
+        command="scripts/dev/validate_project.py",
+        parameters="docs",
+    ),
+    RunConfigSpec(
+        name="Sync Equation Registry",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_DOCS_REGISTRY,
+        command="scripts/docs/sync_equation_registry.py",
+    ),
+    RunConfigSpec(
+        name="Sync Algorithm Registry",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_DOCS_REGISTRY,
+        command="scripts/docs/sync_algorithm_registry.py",
+    ),
+    RunConfigSpec(
+        name="Build Distribution",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_PACKAGE,
+        command="scripts/dev/build_dist.py",
+    ),
+    RunConfigSpec(
+        name="Association Goal 1+2 Tests",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        command="run_pytest.py",
+        parameters=(
+            "tests/native/contracts/test_association_implicit_derivative_contract.py "
+            "tests/native/state/test_eos_contributions.py "
+            "tests/native/state/test_phase_state_sensitivities.py "
+            "tests/native/equilibrium/blocks/test_eos_phase_block.py "
+            "tests/api/frontend/test_state_properties.py -q"
+        ),
+    ),
+    RunConfigSpec(
+        name="Association Goal 3 Tests",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        command="run_pytest.py",
+        parameters="tests/native/contracts tests/native/regression tests/api/frontend/test_regression.py -q",
+    ),
+    RunConfigSpec(
+        name="Association Goal 4 Tests",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        command="run_pytest.py",
+        parameters=(
+            "tests/native/state/test_fugacity_derivatives.py "
+            "tests/native/state/test_association_parameter_derivative_validation.py "
+            "tests/native/state/test_pressure_derivatives.py "
+            "tests/native/state/test_phase_state_sensitivities.py "
+            "tests/native/contracts/test_association_implicit_derivative_contract.py "
+            "tests/native/contracts/test_ceres_cppad_build_contract.py -q"
+        ),
+    ),
+    RunConfigSpec(
+        name="Association Goal 5 Tests",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        command="run_pytest.py",
+        parameters=(
+            "tests/native/state/test_fugacity_derivatives.py "
+            "tests/native/state/test_association_parameter_derivative_validation.py "
+            "tests/native/state/test_pressure_derivatives.py "
+            "tests/native/regression/test_binary.py "
+            "tests/native/contracts/test_ceres_cppad_build_contract.py -q"
+        ),
+    ),
+    RunConfigSpec(
+        name="Association Goal 6 Tests",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        command="run_pytest.py",
+        parameters=(
+            "tests/native/equilibrium/blocks/test_association_block.py "
+            "tests/native/equilibrium/blocks/test_eos_phase_block.py "
+            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py -q"
+        ),
+    ),
 )
 
 
@@ -257,6 +461,213 @@ def _serialize_tree(tree: ET.ElementTree) -> str:
     return buffer.getvalue().decode("UTF-8")
 
 
+def _run_script_path(relative_path: str) -> str:
+    normalized = relative_path.replace("\\", "/").strip("/")
+    if not normalized:
+        return MODULE_DIR_MACRO
+    return f"{MODULE_DIR_MACRO}/{normalized}"
+
+
+def _add_option(parent: ET.Element, name: str, value: str) -> None:
+    parent.append(ET.Element("option", {"name": name, "value": value}))
+
+
+def _run_component(configuration: ET.Element) -> ET.ElementTree:
+    component = ET.Element("component", {"name": "ProjectRunConfigurationManager"})
+    component.append(configuration)
+    return ET.ElementTree(component)
+
+
+def _run_config_type(spec: RunConfigSpec) -> str:
+    if spec.runner == PYTHON_RUNNER:
+        return PYTHON_CONFIG_TYPE
+    if spec.runner == SHELL_RUNNER:
+        return SHELL_CONFIG_TYPE
+    raise ValueError(f"Unsupported run config runner: {spec.runner}")
+
+
+def _python_configuration(spec: RunConfigSpec) -> ET.Element:
+    config = ET.Element(
+        "configuration",
+        {
+            "default": "false",
+            "name": spec.name,
+            "type": PYTHON_CONFIG_TYPE,
+            "factoryName": PYTHON_RUNNER,
+            "folderName": spec.folder_name,
+        },
+    )
+    config.append(ET.Element("module", {"name": MODULE_NAME}))
+    _add_option(config, "ENV_FILES", "")
+    _add_option(config, "INTERPRETER_OPTIONS", "")
+    _add_option(config, "PARENT_ENVS", "true")
+    envs = ET.Element("envs")
+    envs.append(ET.Element("env", {"name": "PYTHONUNBUFFERED", "value": "1"}))
+    config.append(envs)
+    _add_option(config, "SDK_HOME", PYTHON_SDK_HOME)
+    _add_option(config, "SDK_NAME", PYTHON_SDK_NAME)
+    _add_option(config, "WORKING_DIRECTORY", MODULE_DIR_MACRO)
+    _add_option(config, "IS_MODULE_SDK", "false")
+    _add_option(config, "ADD_CONTENT_ROOTS", "true")
+    _add_option(config, "ADD_SOURCE_ROOTS", "true")
+    _add_option(config, "DEBUG_JUST_MY_CODE", "false")
+    _add_option(config, "RUN_TOOL", "")
+    _add_option(config, "SCRIPT_NAME", _run_script_path(spec.command))
+    _add_option(config, "PARAMETERS", spec.parameters)
+    _add_option(config, "SHOW_COMMAND_LINE", "false")
+    _add_option(config, "EMULATE_TERMINAL", "false")
+    _add_option(config, "MODULE_MODE", "false")
+    _add_option(config, "REDIRECT_INPUT", "false")
+    _add_option(config, "INPUT_FILE", "")
+    config.append(ET.Element("method", {"v": "2"}))
+    return config
+
+
+def _is_powershell_script(command: str) -> bool:
+    return command.lower().endswith(".ps1")
+
+
+def _path_option(parent: ET.Element, name: str, value: str) -> None:
+    _add_option(parent, f"INDEPENDENT_{name}", "true")
+    _add_option(parent, name, value)
+
+
+def _shell_configuration(spec: RunConfigSpec) -> ET.Element:
+    config = ET.Element(
+        "configuration",
+        {
+            "default": "false",
+            "name": spec.name,
+            "type": SHELL_CONFIG_TYPE,
+            "factoryName": SHELL_RUNNER,
+            "folderName": spec.folder_name,
+        },
+    )
+    if _is_powershell_script(spec.command):
+        script_text = ""
+        script_path = _run_script_path(spec.command)
+        script_options = spec.parameters
+        interpreter_options = "-NoProfile -ExecutionPolicy Bypass -File"
+        execute_script_file = "true"
+    else:
+        script_text = spec.command
+        script_path = ""
+        script_options = ""
+        interpreter_options = "-NoProfile -ExecutionPolicy Bypass -Command"
+        execute_script_file = "false"
+
+    _add_option(config, "SCRIPT_TEXT", script_text)
+    _path_option(config, "SCRIPT_PATH", script_path)
+    _add_option(config, "SCRIPT_OPTIONS", script_options)
+    _path_option(config, "SCRIPT_WORKING_DIRECTORY", MODULE_DIR_MACRO)
+    _path_option(config, "INTERPRETER_PATH", POWERSHELL_INTERPRETER)
+    _add_option(config, "INTERPRETER_OPTIONS", interpreter_options)
+    _add_option(config, "EXECUTE_IN_TERMINAL", "false")
+    _add_option(config, "EXECUTE_SCRIPT_FILE", execute_script_file)
+    config.append(ET.Element("method", {"v": "2"}))
+    return config
+
+
+def _run_configuration(spec: RunConfigSpec) -> ET.Element:
+    if spec.runner == PYTHON_RUNNER:
+        return _python_configuration(spec)
+    if spec.runner == SHELL_RUNNER:
+        return _shell_configuration(spec)
+    raise ValueError(f"Unsupported run config runner: {spec.runner}")
+
+
+def _load_shared_run_config_paths() -> tuple[dict[str, list[Path]], list[str]]:
+    configs_by_name: dict[str, list[Path]] = {}
+    warnings: list[str] = []
+    if not RUN_DIR.exists():
+        return configs_by_name, warnings
+
+    for path in sorted(RUN_DIR.glob("*.run.xml")):
+        try:
+            tree = ET.parse(path)
+        except ET.ParseError as exc:
+            warnings.append(f"{path.relative_to(REPO_ROOT).as_posix()}: invalid XML ({exc})")
+            continue
+        config = tree.getroot().find("configuration")
+        name = config.get("name") if config is not None else None
+        if not name:
+            warnings.append(f"{path.relative_to(REPO_ROOT).as_posix()}: missing configuration name")
+            continue
+        configs_by_name.setdefault(name, []).append(path)
+    return configs_by_name, warnings
+
+
+def _option_value(config: ET.Element, name: str) -> str | None:
+    option = _find_child(config, "option", name=name)
+    return option.get("value") if option is not None else None
+
+
+def _expected_option_values(spec: RunConfigSpec) -> dict[str, str]:
+    if spec.runner == PYTHON_RUNNER:
+        return {
+            "WORKING_DIRECTORY": MODULE_DIR_MACRO,
+            "SCRIPT_NAME": _run_script_path(spec.command),
+            "PARAMETERS": spec.parameters,
+        }
+    if spec.runner == SHELL_RUNNER and _is_powershell_script(spec.command):
+        return {
+            "SCRIPT_PATH": _run_script_path(spec.command),
+            "SCRIPT_OPTIONS": spec.parameters,
+            "SCRIPT_WORKING_DIRECTORY": MODULE_DIR_MACRO,
+            "INTERPRETER_PATH": POWERSHELL_INTERPRETER,
+            "EXECUTE_SCRIPT_FILE": "true",
+        }
+    if spec.runner == SHELL_RUNNER:
+        return {
+            "SCRIPT_TEXT": spec.command,
+            "SCRIPT_WORKING_DIRECTORY": MODULE_DIR_MACRO,
+            "INTERPRETER_PATH": POWERSHELL_INTERPRETER,
+            "EXECUTE_SCRIPT_FILE": "false",
+        }
+    raise ValueError(f"Unsupported run config runner: {spec.runner}")
+
+
+def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) -> list[str]:
+    if current_config is None:
+        return [f"create {spec.runner} run configuration in {spec.folder_name}"]
+
+    actions: list[str] = []
+    expected_type = _run_config_type(spec)
+    if current_config.get("type") != expected_type:
+        actions.append(f"set runner type to {spec.runner}")
+    if current_config.get("factoryName") != spec.runner:
+        actions.append(f"set factoryName={spec.runner}")
+    if current_config.get("folderName") != spec.folder_name:
+        actions.append(f"set folderName={spec.folder_name}")
+    for option_name, expected_value in _expected_option_values(spec).items():
+        if _option_value(current_config, option_name) != expected_value:
+            actions.append(f"set {option_name}={expected_value}")
+    return actions
+
+
+def _normalize_run_config(
+    spec: RunConfigSpec,
+    existing_paths: dict[str, list[Path]],
+) -> tuple[Path, list[str], str | None]:
+    path = existing_paths.get(spec.name, [RUN_DIR / f"{spec.name}.run.xml"])[0]
+    original_text = path.read_text(encoding="UTF-8") if path.exists() else ""
+    current_config: ET.Element | None = None
+    if path.exists():
+        try:
+            current_config = ET.parse(path).getroot().find("configuration")
+        except ET.ParseError:
+            current_config = None
+
+    proposed_text = _serialize_tree(_run_component(_run_configuration(spec)))
+    if proposed_text == original_text:
+        return path, [], None
+
+    actions = _run_config_actions(spec, current_config)
+    if not actions:
+        actions = ["normalize run configuration XML"]
+    return path, actions, proposed_text
+
+
 def _load_declared_modules() -> set[str]:
     modules_path = IDEA_DIR / "modules.xml"
     if not modules_path.exists():
@@ -310,9 +721,24 @@ def main(argv: list[str] | None = None) -> int:
     transient_paths = _existing_transient_paths()
     declared_modules = _load_declared_modules()
     iml_files = _discover_iml_files()
+    run_configs_by_name, run_config_warnings = _load_shared_run_config_paths()
 
     pending_changes = 0
     warnings_found = 0
+    for warning in run_config_warnings:
+        warnings_found += 1
+        print(f"WARNING {warning}")
+
+    canonical_names = {spec.name for spec in CANONICAL_RUN_CONFIGS}
+    for name, paths in sorted(run_configs_by_name.items()):
+        if len(paths) > 1:
+            warnings_found += 1
+            joined_paths = ", ".join(path.relative_to(REPO_ROOT).as_posix() for path in paths)
+            print(f"WARNING duplicate shared run configuration '{name}': {joined_paths}")
+        if name not in canonical_names:
+            warnings_found += 1
+            print(f"WARNING .run/{paths[0].name}: shared run configuration is not in the canonical manifest")
+
     for iml_path in iml_files:
         actions, warnings, proposed_text = _normalize_iml(iml_path, transient_paths, declared_modules)
         relative_path = iml_path.relative_to(REPO_ROOT).as_posix()
@@ -330,10 +756,25 @@ def main(argv: list[str] | None = None) -> int:
         if args.apply and proposed_text is not None:
             iml_path.write_text(proposed_text, encoding="UTF-8", newline="\n")
 
+    for spec in CANONICAL_RUN_CONFIGS:
+        path, actions, proposed_text = _normalize_run_config(spec, run_configs_by_name)
+        relative_path = path.relative_to(REPO_ROOT).as_posix()
+        if not actions:
+            print(f"OK {relative_path}: no changes")
+            continue
+
+        pending_changes += 1
+        prefix = "APPLY" if args.apply else "DRY-RUN"
+        for action in actions:
+            print(f"{prefix} {relative_path}: {action}")
+        if args.apply and proposed_text is not None:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(proposed_text, encoding="UTF-8", newline="\n")
+
     if pending_changes == 0:
         print("No pending module metadata changes.")
     if warnings_found == 0:
-        print("No stale module dependency warnings.")
+        print("No metadata warnings.")
     return 0
 
 

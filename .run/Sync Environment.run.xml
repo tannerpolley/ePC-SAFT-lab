@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Build Native Extension" type="ShConfigurationType" factoryName="Shell Script" folderName="ePC-SAFT - Build &amp; Native">
-    <option name="SCRIPT_TEXT" value="" />
+  <configuration default="false" name="Sync Environment" type="ShConfigurationType" factoryName="Shell Script" folderName="ePC-SAFT - Setup &amp; Health">
+    <option name="SCRIPT_TEXT" value="uv sync --no-install-project" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-    <option name="SCRIPT_PATH" value="$MODULE_DIR$/.codex/environments/setup.ps1" />
-    <option name="SCRIPT_OPTIONS" value="-Step Build" />
+    <option name="SCRIPT_PATH" value="" />
+    <option name="SCRIPT_OPTIONS" value="" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
     <option name="SCRIPT_WORKING_DIRECTORY" value="$MODULE_DIR$" />
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
     <option name="INTERPRETER_PATH" value="C:/Program Files/PowerShell/7/pwsh.exe" />
-    <option name="INTERPRETER_OPTIONS" value="-NoProfile -ExecutionPolicy Bypass -File" />
+    <option name="INTERPRETER_OPTIONS" value="-NoProfile -ExecutionPolicy Bypass -Command" />
     <option name="EXECUTE_IN_TERMINAL" value="false" />
-    <option name="EXECUTE_SCRIPT_FILE" value="true" />
+    <option name="EXECUTE_SCRIPT_FILE" value="false" />
     <method v="2" />
   </configuration>
 </component>

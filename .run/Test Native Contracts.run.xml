@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Association Goal 5 Tests" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT - Association Roadmap">
+  <configuration default="false" name="Test Native Contracts" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT - Pytest Slices">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -17,7 +17,7 @@
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
     <option name="SCRIPT_NAME" value="$MODULE_DIR$/run_pytest.py" />
-    <option name="PARAMETERS" value="tests/native/state/test_fugacity_derivatives.py tests/native/state/test_association_parameter_derivative_validation.py tests/native/state/test_pressure_derivatives.py tests/native/regression/test_binary.py tests/native/contracts/test_ceres_cppad_build_contract.py -q" />
+    <option name="PARAMETERS" value="--native-contracts -q" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
