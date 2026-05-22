@@ -16,6 +16,11 @@ struct AssociationMassActionBlockResult {
     int jacobian_cols = 0;
     std::vector<double> site_fraction_jacobian_row_major;
     std::vector<double> site_composition_jacobian_row_major;
+    std::string site_fraction_hessian_backend;
+    int site_fraction_hessian_rows = 0;
+    int site_fraction_hessian_cols = 0;
+    int site_fraction_hessian_depth = 0;
+    std::vector<double> site_fraction_hessian_tensor_row_major;
 };
 
 AssociationMassActionBlockResult evaluate_association_mass_action_block(

@@ -81,15 +81,53 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Start every fresh source checkout with this sequence" in development_workflows
     assert "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10" in development_workflows
     assert "uv run python run_pytest.py --runtime -q" in development_workflows
-    assert "uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100" in (
-        development_workflows
-    )
+    assert "scripts/benchmarks/" + "benchmark_neutral_equilibrium.py" not in development_workflows
+    assert "scripts/benchmarks/" + "benchmark_literature_suite.py" not in development_workflows
+    assert "The previous local benchmark scripts were removed as obsolete" in development_workflows
     assert "uv run python run_pytest.py --list-slices" in development_workflows
     assert "EPCSAFT_PYTEST_TEMP_ROOT" in development_workflows
     assert "reuse them inside hot loops" in development_workflows
     assert "Do not route performance claims through pytest" in development_workflows
     assert "uv run python scripts/dev/build_dist.py" in development_workflows
     assert "Do not use ``--clean`` for routine validation" in development_workflows
+
+
+def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
+    protocol = _read("docs/protocols/build_package_dependency_protocol.rst")
+    docs_index = _read("docs/pages/index.rst")
+    full_roadmap = _read("docs/roadmaps/FULL_ROADMAP.md")
+    development_workflows = _read("docs/pages/development_workflows.rst")
+    native_debugging = _read("docs/pages/native_debugging.rst")
+    workflow = _read(".github/workflows/native-build-profiles.yml")
+
+    assert "../protocols/build_package_dependency_protocol" in docs_index
+    assert "docs/protocols/build_package_dependency_protocol.rst" in full_roadmap
+    assert ":doc:`../protocols/build_package_dependency_protocol`" in development_workflows
+    assert ":doc:`../protocols/build_package_dependency_protocol`" in native_debugging
+
+    for token in (
+        "Build/Package Dependency Protocol",
+        "Ceres is required",
+        "CppAD is required",
+        "Ipopt is required for production equilibrium validation",
+        "Regression and equilibrium are core package capabilities",
+        "not optional add-on examples",
+        "controlled, reproducible friction",
+        "Do not reframe Ceres, CppAD, or Ipopt as greenfield optional dependencies",
+        "smoke/package-boundary exceptions",
+        "Conda or mamba must not be the normal Ipopt CI provisioning path",
+        "Option B is the accepted normal PR CI direction",
+        "no-Ipopt smoke lane",
+        "focused CppAD derivative lane",
+        "Status: Pending workflow",
+    ):
+        assert token in protocol
+
+    assert "--enable-cppad" not in workflow
+    assert "native no-Ipopt smoke" in workflow
+    assert "native CppAD derivative contract" in workflow
+    assert "workflow_dispatch || github.event_name == 'schedule'" not in workflow
+    assert "--profile full --disable-ipopt" in workflow
 
 
 def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> None:

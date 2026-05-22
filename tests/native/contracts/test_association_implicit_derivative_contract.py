@@ -55,6 +55,42 @@ def test_association_composition_derivative_includes_solved_site_fraction_respon
     assert np.all(np.isfinite(public_jacobian))
 
 
+def test_association_site_fraction_nonconvergence_raises_with_diagnostics() -> None:
+    with pytest.raises(
+        _core.NativeSolutionError,
+        match=(
+            "association site-fraction solve did not converge.*"
+            "iteration_count=.*max_iterations=.*update_norm=.*residual_norm=.*min_XA=.*max_XA=.*relaxation_policy="
+        ),
+    ):
+        _core._native_association_site_fraction_solve(
+            [0.0, 1000.0, 1000.0, 0.0],
+            1000.0,
+            [0.5, 0.5],
+            1,
+            1.0e-30,
+            1.0e-30,
+        )
+
+
+def test_association_site_fraction_solve_reports_convergence_diagnostics() -> None:
+    result = _core._native_association_site_fraction_solve(
+        [0.0, 0.0, 0.0, 0.0],
+        1000.0,
+        [0.5, 0.5],
+    )
+
+    assert np.asarray(result["site_fractions"], dtype=float) == pytest.approx([1.0, 1.0])
+    diagnostics = dict(result["diagnostics"])
+    assert diagnostics["converged"] is True
+    assert diagnostics["iteration_count"] < diagnostics["max_iterations"]
+    assert diagnostics["update_norm"] <= diagnostics["update_tolerance"]
+    assert diagnostics["residual_norm"] <= diagnostics["residual_tolerance"]
+    assert diagnostics["min_XA"] > 0.0
+    assert diagnostics["max_XA"] <= 1.0 + 1.0e-12
+    assert diagnostics["relaxation_policy"] == "fixed_under_relaxation"
+
+
 def test_direct_cppad_eos_contribution_recording_rejects_active_association() -> None:
     mix, _species, _pressure, density, temperature, composition = _ionic_state()
     args = create_struct(mix.parameters)

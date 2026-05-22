@@ -276,6 +276,10 @@ SOLVENT_TOKEN_ORDER = {"water": 0, "methanol": 1, "ethanol": 2, "propanol": 3, "
 _DIFF_MODE_ALIASES = {
     "auto": 3,
     "automatic": 3,
+    "implicit": 3,
+    "analytic_implicit": 3,
+    "cppad_implicit": 3,
+    "cppad_implicit_association": 3,
     "analytic": 0,
     "analytical": 0,
     "cppad": 2,

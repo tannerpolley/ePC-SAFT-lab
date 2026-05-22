@@ -3,6 +3,8 @@ Native And Equation Debugging
 
 Use this page when a change crosses the Python wrapper, pybind11 seam, or native ePC-SAFT equations.
 
+For build dependency policy, CMake package-management rules, and native CI lane authority, use :doc:`../protocols/build_package_dependency_protocol`. This page is the debugging guide, not the source of truth for dependency protocol decisions.
+
 Runtime flow
 ------------
 
@@ -48,13 +50,10 @@ For C++ iteration after the build tree is configured:
    uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10
    uv run python run_pytest.py --runtime -q
 
-For method-speed checks:
-
-.. code-block:: powershell
-
-   uv run python scripts/benchmarks/benchmark_neutral_equilibrium.py --warmup 20 --repeat 100
-
-Use explicit benchmark scripts, not pytest, when making speed claims.
+For method-speed checks, add or restore an explicit benchmark or analysis
+workflow before making speed claims. The previous local benchmark scripts were
+removed as obsolete; pytest remains for contracts and diagnostics, not
+performance evidence.
 
 Equation traceability
 ---------------------

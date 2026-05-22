@@ -130,8 +130,10 @@ acceptance criterion.
 % Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 % Change note: Initial algorithm-registry entry for pure-neutral regression.
 
-This entry covers the implemented pure-neutral native Ceres route and does not
-broaden support to every possible pure-component parameter family.
+This entry covers the implemented nonassociating pure-neutral native Ceres route
+for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
+optimizer for association-energy \verb|e_assoc| or association-volume
+\verb|vol_a| targets until the association parameter-sensitivity work lands.
 
 % AlgID: pure_ion_ceres_regression
 % Family: Regression
@@ -147,7 +149,9 @@ broaden support to every possible pure-component parameter family.
 % Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 % Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
 
-This entry is limited to the currently implemented pure-ion target surface.
+This entry is limited to the currently implemented pure-ion target surface. It
+does not claim support for association-affecting target kinds merely because the
+native target-kind registry knows their labels.
 
 % AlgID: binary_kij_ceres_regression
 % Family: Regression
@@ -165,6 +169,7 @@ This entry is limited to the currently implemented pure-ion target surface.
 
 This entry intentionally does not claim native optimizer support for every
 binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)
-or \(k^{hb}_{ij}\).
+or \(k^{hb}_{ij}\), and active-association \(l_{ij}\) remains pending until
+derivative and optimizer evidence both exist.
 
 \end{document}

@@ -97,6 +97,16 @@ def _append_log(text: str) -> None:
         handle.write(text)
 
 
+def _cmake_command() -> list[str]:
+    resolved = shutil.which("cmake")
+    if resolved:
+        cmake_path = Path(resolved).resolve()
+        scripts_dir = Path(sys.executable).resolve().parent
+        if cmake_path.parent == scripts_dir:
+            return [sys.executable, "-m", "cmake"]
+    return ["cmake"]
+
+
 def _pyproject_version() -> str:
     text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', text)
@@ -420,7 +430,7 @@ def _configure(
 ) -> None:
     pybind11_dir = _capture([sys.executable, "-m", "pybind11", "--cmakedir"], env=env)
     cmd = [
-        "cmake",
+        *_cmake_command(),
         "-S",
         str(REPO_ROOT),
         "-B",
@@ -453,7 +463,7 @@ def _configure(
 
 
 def _build(env: dict[str, str], parallel: str | None) -> None:
-    cmd = ["cmake", "--build", str(BUILD_DIR)]
+    cmd = [*_cmake_command(), "--build", str(BUILD_DIR)]
     if parallel:
         cmd.extend(["--parallel", parallel])
     _warn_if_stale_build_lock()

@@ -19,7 +19,10 @@ from .capability_evidence import (
     DERIVATIVE_COVERAGE_ROWS,
     EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE,
     EQUILIBRIUM_PROBLEM_OBJECT_CLASSES,
+    REGRESSION_CAPABILITY_DIMENSIONS,
     REGRESSION_CAPABILITY_KEYS,
+    REGRESSION_CAPABILITY_REVISIT_AFTER,
+    REGRESSION_TARGET_KIND_EVIDENCE,
     TEST_SLICES,
     VALIDATION_LANES,
     registered_ipopt_public_routes,
@@ -303,8 +306,10 @@ def _equilibrium_activation_capabilities(*, ipopt_route_available: bool) -> dict
 def _capability_evidence_summary(
     derivative_coverage: dict[str, object],
     activation: dict[str, object],
+    regression_target_evidence: dict[str, object],
 ) -> dict[str, object]:
     derivative_rows = derivative_coverage.get("rows", [])
+    regression_target_rows = regression_target_evidence.get("rows", [])
     return {
         "source": "registered_capability_evidence",
         "equilibrium_keys": list(activation["production_families"]),
@@ -313,6 +318,8 @@ def _capability_evidence_summary(
         "declared_not_exposed_equilibrium_keys": list(activation["declared_not_exposed_families"]),
         "problem_object_classes": list(EQUILIBRIUM_PROBLEM_OBJECT_CLASSES),
         "regression_keys": list(REGRESSION_CAPABILITY_KEYS),
+        "regression_claim_dimensions": list(REGRESSION_CAPABILITY_DIMENSIONS),
+        "regression_target_kind_row_count": len(regression_target_rows) if isinstance(regression_target_rows, list) else 0,
         "derivative_row_count": len(derivative_rows) if isinstance(derivative_rows, list) else 0,
         "pytest_slices": list(TEST_SLICES),
         "validation_lanes": list(VALIDATION_LANES),
@@ -365,10 +372,32 @@ def _derivative_coverage_capabilities(cppad: dict[str, object], ceres: dict[str,
         "regression_ceres_jacobians": {
             "available": bool(cppad_available and ceres_available),
             "production": bool(cppad_available and ceres_available),
-            "routes": ["pure_neutral_parameters"],
+            "routes": list(REGRESSION_CAPABILITY_KEYS),
             "backends": ["cppad_implicit"],
             "requires": ["ceres", "cppad"],
         },
+    }
+
+
+def _regression_target_kind_evidence() -> dict[str, object]:
+    rows = [_capability_value(row) for row in REGRESSION_TARGET_KIND_EVIDENCE]
+    production_targets = [
+        str(row["target_kind"])
+        for row in rows
+        if bool(row["public_production_supported_target_kind"])
+    ]
+    registry_only_targets = [
+        str(row["target_kind"])
+        for row in rows
+        if bool(row["registry_known_target_kind"]) and not bool(row["public_production_supported_target_kind"])
+    ]
+    return {
+        "source": "registered_capability_evidence",
+        "dimensions": list(REGRESSION_CAPABILITY_DIMENSIONS),
+        "revisit_after": list(REGRESSION_CAPABILITY_REVISIT_AFTER),
+        "production_supported_target_kinds": production_targets,
+        "registry_only_or_pending_target_kinds": registry_only_targets,
+        "rows": rows,
     }
 
 
@@ -407,9 +436,15 @@ def capabilities() -> dict[str, object]:
         ceres_capability["reason"] = "required_native_dependency_missing"
     derivative_coverage = _derivative_coverage_capabilities(cppad, ceres)
     equilibrium_activation = _equilibrium_activation_capabilities(ipopt_route_available=ipopt_route_available)
+    regression_target_evidence = _regression_target_kind_evidence()
+    regression_route_available = bool(ceres_available and cppad_capability.get("available", False))
     return {
         "native_extension": bool(build_info["native_extension_available"]),
-        "capability_evidence": _capability_evidence_summary(derivative_coverage, equilibrium_activation),
+        "capability_evidence": _capability_evidence_summary(
+            derivative_coverage,
+            equilibrium_activation,
+            regression_target_evidence,
+        ),
         "derivatives": {
             "cppad": cppad_capability,
             "coverage_matrix": derivative_coverage,
@@ -441,16 +476,35 @@ def capabilities() -> dict[str, object]:
                     "cppad_explicit_density",
                 ],
                 "parameter_families": {
-                    "production_supported": [
+                    "state_property_derivative_supported": [
                         "m",
                         "sigma",
                         "epsilon",
+                        "e_assoc",
+                        "vol_a",
                         "k_ij",
                         "l_ij",
+                        "k_hb_ij",
                         "d_born",
                         "f_solv",
                         "relative_permittivity",
                     ],
+                    "regression_public_production_supported": list(
+                        regression_target_evidence["production_supported_target_kinds"]
+                    ),
+                    "not_optimizer_support": [
+                        "e_assoc",
+                        "vol_a",
+                        "l_ij",
+                        "k_hb_ij",
+                    ],
+                    "production_scope": {
+                        "e_assoc": "pure_associating_component_parameter_only",
+                        "vol_a": "pure_associating_component_parameter_only",
+                        "l_ij": "binary_pair_including_active_association",
+                        "k_hb_ij": "active_association_binary_pair_only",
+                    },
+                    "association_affecting_nonproduction": {},
                 },
                 "state_methods": [
                     "pressure_density_derivative_result",
@@ -537,11 +591,33 @@ def capabilities() -> dict[str, object]:
             },
         },
         "regression": {
+            "target_kind_evidence": regression_target_evidence,
+            "production_supported_target_kinds": list(
+                regression_target_evidence["production_supported_target_kinds"]
+            ),
             "pure_neutral": {
-                "available": True,
+                "available": regression_route_available,
+                "production": regression_route_available,
                 "backend": "native_ceres",
                 "entrypoint": "Regression(mixture, ...).fit_pure_neutral(...)",
                 "jacobian_backend": "cppad_implicit",
+                "target_kinds": ["m", "s", "e"],
+            },
+            "binary_pair_constant_kij": {
+                "available": regression_route_available,
+                "production": regression_route_available,
+                "backend": "native_ceres",
+                "entrypoint": "fit_binary_parameters(..., parameters_to_fit=('k_ij',))",
+                "jacobian_backend": "cppad_implicit",
+                "target_kinds": ["k_ij"],
+            },
+            "liquid_electrolyte_born": {
+                "available": regression_route_available,
+                "production": regression_route_available,
+                "backend": "native_ceres",
+                "entrypoint": "fit_liquid_electrolyte_parameters(...)",
+                "jacobian_backend": "cppad_implicit",
+                "target_kinds": ["d_born", "f_solv"],
             },
         },
     }

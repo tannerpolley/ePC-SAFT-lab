@@ -24,8 +24,9 @@ BornFormulation = Literal["disabled", "born", "ssm", "ds", "ssm_ds"]
 class ModelOptions:
     """Formulation choices owned by :class:`epcsaft.Mixture`.
 
-    CppAD is the only public derivative substrate in the reset API. This class
-    intentionally has no analytic, automatic, or backend-selection option.
+    The reset API exposes derivative-capable native routes, not per-contribution
+    backend switches. Solved association site fractions use implicit
+    sensitivities instead of direct fixed-point CppAD recording.
     """
 
     relative_permittivity_rule: RelativePermittivityRule = "component_linear"
@@ -65,6 +66,7 @@ class ModelOptions:
             self.validate_parameters(parameters)
         rel_rule = "linear" if self.relative_permittivity_rule in {"component_linear", "linear"} else "constant"
         include_born = self.born_formulation != "disabled"
+        assoc_dadx_mode = "auto" if _has_active_association(parameters) else "cppad"
         return {
             "elec_model": {
                 "rel_perm": {
@@ -73,7 +75,7 @@ class ModelOptions:
                 },
                 "hc_model": {"dadx_differential_mode": "cppad"},
                 "disp_model": {"dadx_differential_mode": "cppad"},
-                "assoc_model": {"dadx_differential_mode": "cppad"},
+                "assoc_model": {"dadx_differential_mode": assoc_dadx_mode},
                 "DH_model": {
                     "d_ion_mode": "t_dep_1",
                     "bjeruum_treatment": False,
@@ -113,6 +115,17 @@ def coerce_model_options(value: ModelOptions | Mapping[str, object] | None) -> M
     if isinstance(value, Mapping):
         return ModelOptions(**dict(value))
     raise InputError("model_options must be a ModelOptions instance or mapping.")
+
+
+def _has_active_association(parameters: ParameterSet | None) -> bool:
+    if parameters is None:
+        return False
+    for record in parameters.pure_records:
+        has_site_schema = record.association_scheme not in (None, "") or bool(record.association_sites)
+        has_association_parameters = float(record.epsilon_k_ab) != 0.0 and float(record.kappa_ab) != 0.0
+        if has_site_schema or has_association_parameters:
+            return True
+    return False
 
 
 def require_cppad_backend(result: Mapping[str, object], *, label: str) -> None:

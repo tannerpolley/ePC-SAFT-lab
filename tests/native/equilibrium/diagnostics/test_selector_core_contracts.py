@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import epcsaft._core as _core
-from tests.support.equilibrium_cases import _neutral_binary_mixture
+from tests.support.equilibrium_cases import _methanol_cyclohexane_mixture, _neutral_binary_mixture
 
 
 @pytest.mark.parametrize(
@@ -135,6 +135,21 @@ def test_selector_core_rejects_invalid_route_family_before_solver_dispatch() -> 
                 "temperature": 300.0,
                 "composition": [0.35, 0.65],
                 "composition_role": "feed",
+            },
+        )
+
+
+def test_selector_core_rejects_active_association_before_solver_dispatch() -> None:
+    mix = _methanol_cyclohexane_mixture()
+
+    with pytest.raises(_core.NativeValueError, match="selector-ineligible"):
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": "bubble_pressure",
+                "temperature": 298.15,
+                "composition": [0.35, 0.65],
+                "composition_role": "liquid",
             },
         )
 

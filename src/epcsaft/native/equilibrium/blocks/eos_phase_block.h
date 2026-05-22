@@ -59,6 +59,8 @@ struct EosPhaseSystemResult {
     std::string derivative_backend;
     int phase_count = 0;
     int species_count = 0;
+    int association_site_count = 0;
+    std::vector<int> association_site_component_index;
     std::vector<std::string> variable_names;
     std::vector<std::string> constraint_names;
     double temperature = 0.0;

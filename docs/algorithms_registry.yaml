@@ -77,8 +77,8 @@
     regression routes. It is separate from Ipopt and does not call Ipopt routes.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 874
-      comment_line: 871
+      line: 1040
+      comment_line: 1037
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 565
@@ -119,24 +119,24 @@
       comment_line: 323
       context: "SelectorContract evaluate_selector_contract("
     - file: "src/epcsaft/native/equilibrium/core/selector_core.cpp"
-      line: 357
-      comment_line: 356
+      line: 371
+      comment_line: 370
       context: "epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 634
-      comment_line: 633
+      line: 725
+      comment_line: 724
       context: "m.def(\"_native_equilibrium_selector_contract\", []("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 648
-      comment_line: 647
+      line: 775
+      comment_line: 774
       context: "m.def(\"_native_equilibrium_selector_route_result\", []("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2640
-      comment_line: 2639
+      line: 2651
+      comment_line: 2650
       context: "NeutralTwoPhaseEosRouteResult solve_pressure_route("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2777
-      comment_line: 2776
+      line: 2788
+      comment_line: 2787
       context: "NeutralTwoPhaseEosRouteResult solve_temperature_route("
 - algid: "neutral_tp_flash_ipopt"
   section: "Equilibrium Algorithms"
@@ -168,8 +168,8 @@
     acceptance criterion.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2910
-      comment_line: 2909
+      line: 2921
+      comment_line: 2920
       context: "NeutralTwoPhaseEosRouteResult solve_flash_route("
 - algid: "pure_neutral_ceres_regression"
   section: "Regression Algorithms"
@@ -190,12 +190,14 @@
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 119
   body: |
-    This entry covers the implemented pure-neutral native Ceres route and does not
-    broaden support to every possible pure-component parameter family.
+    This entry covers the implemented nonassociating pure-neutral native Ceres route
+    for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
+    optimizer for association-energy \verb|e_assoc| or association-volume
+    \verb|vol_a| targets until the association parameter-sensitivity work lands.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 869
-      comment_line: 868
+      line: 1035
+      comment_line: 1034
       context: "m.def(\"_fit_pure_neutral_native_ceres\", &fit_pure_neutral_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 578
@@ -226,13 +228,15 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 136
+  tex_line: 138
   body: |
-    This entry is limited to the currently implemented pure-ion target surface.
+    This entry is limited to the currently implemented pure-ion target surface. It
+    does not claim support for association-affecting target kinds merely because the
+    native target-kind registry knows their labels.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 874
-      comment_line: 872
+      line: 1040
+      comment_line: 1038
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 1537
@@ -263,15 +267,16 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 152
+  tex_line: 156
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)
-    or \(k^{hb}_{ij}\).
+    or \(k^{hb}_{ij}\), and active-association \(l_{ij}\) remains pending until
+    derivative and optimizer evidence both exist.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 874
-      comment_line: 873
+      line: 1040
+      comment_line: 1039
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 1660

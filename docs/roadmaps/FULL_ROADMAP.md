@@ -16,6 +16,10 @@ This document is authoritative over older roadmap language that allowed audit-on
 
 `docs/roadmaps/unified_equilibrium_core_algorithm.md` is the companion architecture contract for shared equilibrium-core implementation. It replaces completed Ipopt tranche handoffs, GoalBuddy receipts, and native-route audit reports as the current source of truth for equilibrium solver structure.
 
+`docs/roadmaps/association_derivative_goal_roadmap.md` is the management document for the post-#130/#131 association-derivative tranche (#132 through #140). Read it before starting association solved-state, implicit-sensitivity, association-parameter regression, associating-equilibrium architecture, or lifted-`X_A` block work.
+
+`docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
+
 ---
 
 # 1. Package identity

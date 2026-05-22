@@ -56,6 +56,11 @@ AssociationMassActionBlockResult evaluate_association_mass_action_block(
     result.jacobian_cols = static_cast<int>(site_count);
     result.site_fraction_jacobian_row_major.assign(site_count * site_count, 0.0);
     result.site_composition_jacobian_row_major.assign(site_count * site_count, 0.0);
+    result.site_fraction_hessian_backend = "analytic_fixed_delta";
+    result.site_fraction_hessian_rows = static_cast<int>(site_count);
+    result.site_fraction_hessian_cols = static_cast<int>(site_count);
+    result.site_fraction_hessian_depth = static_cast<int>(site_count);
+    result.site_fraction_hessian_tensor_row_major.assign(site_count * site_count * site_count, 0.0);
 
     std::vector<double> association_sums(site_count, 0.0);
     for (std::size_t site = 0; site < site_count; ++site) {
@@ -96,6 +101,22 @@ AssociationMassActionBlockResult evaluate_association_mass_action_block(
                 * site_fractions[row]
                 * site_fractions[col]
                 * delta;
+        }
+    }
+    for (std::size_t row = 0; row < site_count; ++row) {
+        for (std::size_t left = 0; left < site_count; ++left) {
+            for (std::size_t right = 0; right < site_count; ++right) {
+                double value = 0.0;
+                if (row == left) {
+                    value += density * site_composition[right] * delta_row_major[row * site_count + right];
+                }
+                if (row == right) {
+                    value += density * site_composition[left] * delta_row_major[row * site_count + left];
+                }
+                result.site_fraction_hessian_tensor_row_major[
+                    row * site_count * site_count + left * site_count + right
+                ] = value;
+            }
         }
     }
     return result;

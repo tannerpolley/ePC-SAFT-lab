@@ -94,6 +94,10 @@ def _state_rel_perm_rule_and_mode(params):
     diff_alias = {
         "auto": 3,
         "automatic": 3,
+        "implicit": 3,
+        "analytic_implicit": 3,
+        "cppad_implicit": 3,
+        "cppad_implicit_association": 3,
         "analytic": 0,
         "analytical": 0,
         "cppad": 2,
@@ -383,6 +387,17 @@ class ePCSAFTState:
             columns.append(np.asarray(raw[f"{name}_{quantity}_derivative"], dtype=float).reshape((nrows, 1)))
         return np.concatenate(columns, axis=1) if columns else np.empty((nrows, 0), dtype=float)
 
+    @staticmethod
+    def _association_sensitivity_payload(raw):
+        if "association_sensitivity_backend" not in raw:
+            return {}
+        return {
+            "association_sensitivity_backend": str(raw["association_sensitivity_backend"]),
+            "association_sensitivity_helper": str(raw["association_sensitivity_helper"]),
+            "association_site_count": int(raw["association_site_count"]),
+            "association_site_sensitivity": np.asarray(raw["association_site_sensitivity_row_major"], dtype=float),
+        }
+
     def _pure_neutral_parameter_derivatives(self):
         if int(self._x.size) != 1:
             return None
@@ -399,6 +414,35 @@ class ePCSAFTState:
     def _pure_neutral_parameter_order(self):
         species = str(self._mixture.species[0])
         return (f"m:{species}", f"sigma:{species}", f"epsilon:{species}")
+
+    def _associating_component_parameter_derivatives(self):
+        if int(self._x.size) != 1:
+            return None
+        assoc_num = np.asarray(self._mixture._params.get("assoc_num", []), dtype=int).flatten()
+        if assoc_num.size != 1 or int(assoc_num[0]) <= 0:
+            return None
+        try:
+            raw = _core._native_cppad_association_component_parameters(
+                self._T,
+                self.molar_density(),
+                np_to_vector_double(self._x),
+                self._native_args_copy(),
+                0,
+            )
+        except _NATIVE_CALL_ERRORS:
+            return None
+        return raw if bool(raw["supported"]) else None
+
+    def _associating_component_parameter_order(self, raw):
+        species = str(self._mixture.species[0])
+        return tuple(f"{name}:{species}" for name in tuple(raw["parameter_names"]))
+
+    @staticmethod
+    def _associating_component_parameter_jacobian(raw, quantity, nrows):
+        columns = []
+        for name in tuple(raw["parameter_names"]):
+            columns.append(np.asarray(raw[f"{name}_{quantity}_derivative"], dtype=float).reshape((nrows, 1)))
+        return np.concatenate(columns, axis=1) if columns else np.empty((nrows, 0), dtype=float)
 
     def pressure_density_derivative_result(self):
         """Return the pressure derivative with respect to density in result-contract form."""
@@ -446,9 +490,29 @@ class ePCSAFTState:
                 parameter_order=self._pure_neutral_parameter_order(),
                 source_equation_ids=("pressure_from_z", "ares_hc", "ares_disp"),
             )
+        raw = self._associating_component_parameter_derivatives()
+        if raw is not None:
+            parameter_order = self._associating_component_parameter_order(raw)
+            return _derivative_result_payload(
+                supported=True,
+                backend=str(raw["backend"]),
+                message=str(raw["message"]),
+                value=[float(raw["e_assoc_pressure"])],
+                jacobian=self._associating_component_parameter_jacobian(raw, "pressure", 1),
+                shape=[1, len(parameter_order)],
+                output_order=("pressure",),
+                parameter_order=parameter_order,
+                component_order=tuple(self._mixture.species),
+                association_sensitivity_backend=str(raw["association_sensitivity_backend"]),
+                association_sensitivity_helper=str(raw["association_sensitivity_helper"]),
+                association_site_count=int(raw["association_site_count"]),
+                association_site_sensitivity=np.asarray(raw["association_site_sensitivity_row_major"], dtype=float),
+                source_equation_ids=("pressure_from_z", "ares_assoc", "association_mass_action_implicit"),
+            )
         raw = self._neutral_binary_kij_property_derivatives()
         if raw is not None:
             parameter_order = self._neutral_binary_pair_parameter_order(raw)
+            association_payload = self._association_sensitivity_payload(raw)
             return _derivative_result_payload(
                 supported=True,
                 backend=str(raw.get("backend", "cppad")),
@@ -458,6 +522,8 @@ class ePCSAFTState:
                 shape=[1, len(parameter_order)],
                 output_order=("pressure",),
                 parameter_order=parameter_order,
+                component_order=tuple(self._mixture.species),
+                **association_payload,
                 source_equation_ids=("pressure_from_z", "ares_disp"),
             )
         _unsupported_derivative("pressure parameter derivatives require an analytic or CppAD route for this state.")
@@ -516,10 +582,31 @@ class ePCSAFTState:
                 value_basis="residual_chemical_potential",
                 source_equation_ids=("mu_res", "ares_hc", "ares_disp"),
             )
+        raw = self._associating_component_parameter_derivatives()
+        if raw is not None:
+            species = tuple(self._mixture.species)
+            parameter_order = self._associating_component_parameter_order(raw)
+            return _derivative_result_payload(
+                supported=True,
+                backend=str(raw["backend"]),
+                message=str(raw["message"]),
+                value=np.asarray(raw["e_assoc_residual_chemical_potential"], dtype=float),
+                jacobian=self._associating_component_parameter_jacobian(raw, "residual_chemical_potential", ncomp),
+                shape=[ncomp, len(parameter_order)],
+                component_order=species,
+                parameter_order=parameter_order,
+                value_basis="residual_chemical_potential",
+                association_sensitivity_backend=str(raw["association_sensitivity_backend"]),
+                association_sensitivity_helper=str(raw["association_sensitivity_helper"]),
+                association_site_count=int(raw["association_site_count"]),
+                association_site_sensitivity=np.asarray(raw["association_site_sensitivity_row_major"], dtype=float),
+                source_equation_ids=("mu_res", "ares_assoc", "association_mass_action_implicit"),
+            )
         raw = self._neutral_binary_kij_property_derivatives()
         if raw is not None:
             species = tuple(self._mixture.species)
             parameter_order = self._neutral_binary_pair_parameter_order(raw)
+            association_payload = self._association_sensitivity_payload(raw)
             return _derivative_result_payload(
                 supported=True,
                 backend=str(raw.get("backend", "cppad")),
@@ -535,6 +622,7 @@ class ePCSAFTState:
                 component_order=species,
                 parameter_order=parameter_order,
                 value_basis="residual_chemical_potential",
+                **association_payload,
                 source_equation_ids=("mu_res", "ares_disp"),
             )
         _unsupported_derivative(
@@ -592,6 +680,17 @@ class ePCSAFTState:
             fixed_density_jacobian=np.asarray(raw.get("fixed_density_jacobian_row_major", []), dtype=float).reshape(
                 (ncomp, ncomp)
             ),
+            association_sensitivity_backend=str(raw.get("association_sensitivity_backend", "")),
+            association_sensitivity_helper=str(raw.get("association_sensitivity_helper", "")),
+            association_site_count=int(raw.get("association_site_count", 0)),
+            association_site_sensitivity=np.asarray(
+                raw.get("association_site_sensitivity_row_major", []),
+                dtype=float,
+            ),
+            association_site_second_sensitivity=np.asarray(
+                raw.get("association_site_second_sensitivity_tensor_row_major", []),
+                dtype=float,
+            ),
             source_equation_ids=("lnphi_total", "pressure_from_z", "density_root_implicit"),
         )
 
@@ -614,10 +713,31 @@ class ePCSAFTState:
                 value_basis="natural_log_fugacity_coefficient",
                 source_equation_ids=("lnphi_total", "ares_hc", "ares_disp"),
             )
+        raw = self._associating_component_parameter_derivatives()
+        if raw is not None:
+            species = tuple(self._mixture.species)
+            parameter_order = self._associating_component_parameter_order(raw)
+            return _derivative_result_payload(
+                supported=True,
+                backend=str(raw["backend"]),
+                message=str(raw["message"]),
+                value=np.asarray(raw["e_assoc_ln_fugacity"], dtype=float),
+                jacobian=self._associating_component_parameter_jacobian(raw, "ln_fugacity", ncomp),
+                shape=[ncomp, len(parameter_order)],
+                component_order=species,
+                parameter_order=parameter_order,
+                value_basis="natural_log_fugacity_coefficient",
+                association_sensitivity_backend=str(raw["association_sensitivity_backend"]),
+                association_sensitivity_helper=str(raw["association_sensitivity_helper"]),
+                association_site_count=int(raw["association_site_count"]),
+                association_site_sensitivity=np.asarray(raw["association_site_sensitivity_row_major"], dtype=float),
+                source_equation_ids=("lnphi_total", "ares_assoc", "association_mass_action_implicit"),
+            )
         raw = self._neutral_binary_kij_property_derivatives()
         if raw is not None:
             species = tuple(self._mixture.species)
             parameter_order = self._neutral_binary_pair_parameter_order(raw)
+            association_payload = self._association_sensitivity_payload(raw)
             return _derivative_result_payload(
                 supported=True,
                 backend=str(raw.get("backend", "cppad")),
@@ -628,6 +748,7 @@ class ePCSAFTState:
                 component_order=species,
                 parameter_order=parameter_order,
                 value_basis="natural_log_fugacity_coefficient",
+                **association_payload,
                 source_equation_ids=("lnphi_total", "ares_disp"),
             )
         born = self.born_ssmds_liquid_derivatives()

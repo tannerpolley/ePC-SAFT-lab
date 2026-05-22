@@ -116,6 +116,23 @@ bool has_active_association_sites(const add_args& args) {
     return false;
 }
 
+std::vector<int> association_site_component_index(const add_args& args, std::size_t species_count) {
+    if (args.assoc_num.size() != species_count) {
+        throw ValueError("EOS phase system association topology must include one assoc_num entry per species.");
+    }
+    std::vector<int> site_component_index;
+    for (std::size_t component = 0; component < args.assoc_num.size(); ++component) {
+        const int site_count = args.assoc_num[component];
+        if (site_count < 0) {
+            throw ValueError("EOS phase system association topology cannot contain negative site counts.");
+        }
+        for (int site = 0; site < site_count; ++site) {
+            site_component_index.push_back(static_cast<int>(component));
+        }
+    }
+    return site_component_index;
+}
+
 add_args without_solved_association(add_args args) {
     args.e_assoc.clear();
     args.vol_a.clear();
@@ -404,17 +421,22 @@ EosPhaseSystemResult evaluate_eos_phase_system(
         association_site_fractions,
         association_delta_row_major
     );
-    const std::size_t association_site_count = include_association ? species_count : 0;
+    const std::vector<int> site_component_index =
+        include_association ? association_site_component_index(args, species_count) : std::vector<int>{};
+    const std::size_t association_site_count = site_component_index.size();
     if (include_association) {
+        if (association_site_count == 0) {
+            throw ValueError("EOS phase system association variables require active association topology.");
+        }
         if (association_site_fractions.size() != phase_count) {
             throw ValueError("EOS phase system association site-fraction phase count must match phase count.");
         }
         if (association_delta_row_major.size() != association_site_count * association_site_count) {
-            throw ValueError("EOS phase system association delta matrix must be square over the species-site count.");
+            throw ValueError("EOS phase system association delta matrix must be square over the association site count.");
         }
         for (const auto& fractions : association_site_fractions) {
             if (fractions.size() != association_site_count) {
-                throw ValueError("EOS phase system association site-fraction size must match species count.");
+                throw ValueError("EOS phase system association site-fraction size must match association site count.");
             }
         }
     }
@@ -424,6 +446,8 @@ EosPhaseSystemResult evaluate_eos_phase_system(
     result.derivative_backend = "analytic_cppad";
     result.phase_count = static_cast<int>(phase_count);
     result.species_count = static_cast<int>(species_count);
+    result.association_site_count = static_cast<int>(association_site_count);
+    result.association_site_component_index = site_component_index;
     result.variable_names = phase_system_variable_names(phase_count, species_count, association_site_count);
     result.constraint_names = phase_system_constraint_names(phase_count, species_count);
     result.temperature = temperature;
@@ -464,11 +488,16 @@ EosPhaseSystemResult evaluate_eos_phase_system(
     std::vector<AssociationMassActionBlockResult> association_blocks;
     association_blocks.reserve(include_association ? phase_count : 0);
     for (std::size_t phase = 0; phase < phase_count && include_association; ++phase) {
+        std::vector<double> site_composition;
+        site_composition.reserve(association_site_count);
+        for (int component_index : site_component_index) {
+            site_composition.push_back(result.phase_blocks[phase].composition[static_cast<std::size_t>(component_index)]);
+        }
         association_blocks.push_back(
             evaluate_association_mass_action_block(
                 result.phase_blocks[phase].density,
                 association_site_fractions[phase],
-                result.phase_blocks[phase].composition,
+                site_composition,
                 association_delta_row_major
             )
         );
@@ -481,10 +510,11 @@ EosPhaseSystemResult evaluate_eos_phase_system(
         const std::size_t col_offset = phase * local_variable_count;
         for (std::size_t site = 0; site < association_site_count; ++site) {
             const double site_fraction = association_site_fractions[phase][site];
-            const double amount = phase_amounts[phase][site];
+            const std::size_t component_index = static_cast<std::size_t>(site_component_index[site]);
+            const double amount = phase_amounts[phase][component_index];
             const double site_objective = std::log(site_fraction) - 0.5 * site_fraction + 0.5;
             phase_association_objective += amount * site_objective;
-            result.gradient[col_offset + site] += site_objective;
+            result.gradient[col_offset + component_index] += site_objective;
             result.gradient[col_offset + base_local_variable_count + site] += amount * (1.0 / site_fraction - 0.5);
         }
         result.phase_association_objectives.push_back(phase_association_objective);
@@ -586,15 +616,28 @@ EosPhaseSystemResult evaluate_eos_phase_system(
         const auto& amounts = phase_amounts[phase];
         const double volume = volumes[phase];
         for (std::size_t site = 0; site < association_site_count; ++site) {
+            const std::size_t component_index = static_cast<std::size_t>(site_component_index[site]);
+            const std::size_t amount_col = col_offset + component_index;
+            const std::size_t site_col = col_offset + base_local_variable_count + site;
+            const double site_fraction = association_site_fractions[phase][site];
+            const double amount_site_value = 1.0 / site_fraction - 0.5;
+            result.objective_hessian_row_major[amount_col * variable_count + site_col] += amount_site_value;
+            result.objective_hessian_row_major[site_col * variable_count + amount_col] += amount_site_value;
+            result.objective_hessian_row_major[site_col * variable_count + site_col] +=
+                -amounts[component_index] / (site_fraction * site_fraction);
+        }
+        for (std::size_t site = 0; site < association_site_count; ++site) {
             const std::size_t target_row = association_row_offset + phase * association_site_count + site;
             const double site_fraction = association_site_fractions[phase][site];
             double amount_weighted_delta_sum = 0.0;
             for (std::size_t col = 0; col < association_site_count; ++col) {
+                const std::size_t component_index = static_cast<std::size_t>(site_component_index[col]);
                 const double col_fraction = association_site_fractions[phase][col];
                 const double delta = association_delta_row_major[site * association_site_count + col];
-                result.constraint_jacobian_row_major[target_row * variable_count + col_offset + col] =
-                    site_fraction * col_fraction * delta / volume;
-                amount_weighted_delta_sum += amounts[col] * col_fraction * delta;
+                result.constraint_jacobian_row_major[
+                    target_row * variable_count + col_offset + component_index
+                ] += site_fraction * col_fraction * delta / volume;
+                amount_weighted_delta_sum += amounts[component_index] * col_fraction * delta;
             }
             result.constraint_jacobian_row_major[
                 target_row * variable_count + col_offset + species_count
@@ -603,6 +646,76 @@ EosPhaseSystemResult evaluate_eos_phase_system(
                 result.constraint_jacobian_row_major[
                     target_row * variable_count + col_offset + base_local_variable_count + col
                 ] = block.site_fraction_jacobian_row_major[site * association_site_count + col];
+            }
+            result.constraint_has_hessian[target_row] = true;
+            for (std::size_t component = 0; component < species_count; ++component) {
+                double component_delta = 0.0;
+                for (std::size_t col = 0; col < association_site_count; ++col) {
+                    if (static_cast<std::size_t>(site_component_index[col]) == component) {
+                        component_delta += association_site_fractions[phase][col]
+                            * association_delta_row_major[site * association_site_count + col];
+                    }
+                }
+                const double amount_volume_value = -site_fraction * component_delta / (volume * volume);
+                const std::size_t amount_col = col_offset + component;
+                const std::size_t volume_col = col_offset + species_count;
+                result.constraint_hessian_tensor_row_major[
+                    target_row * variable_count * variable_count + amount_col * variable_count + volume_col
+                ] = amount_volume_value;
+                result.constraint_hessian_tensor_row_major[
+                    target_row * variable_count * variable_count + volume_col * variable_count + amount_col
+                ] = amount_volume_value;
+                for (std::size_t other_site = 0; other_site < association_site_count; ++other_site) {
+                    double amount_site_value = 0.0;
+                    if (site == other_site) {
+                        amount_site_value += component_delta / volume;
+                    }
+                    if (static_cast<std::size_t>(site_component_index[other_site]) == component) {
+                        amount_site_value += site_fraction
+                            * association_delta_row_major[site * association_site_count + other_site] / volume;
+                    }
+                    const std::size_t site_col = col_offset + base_local_variable_count + other_site;
+                    result.constraint_hessian_tensor_row_major[
+                        target_row * variable_count * variable_count + amount_col * variable_count + site_col
+                    ] = amount_site_value;
+                    result.constraint_hessian_tensor_row_major[
+                        target_row * variable_count * variable_count + site_col * variable_count + amount_col
+                    ] = amount_site_value;
+                }
+            }
+            const std::size_t volume_col = col_offset + species_count;
+            result.constraint_hessian_tensor_row_major[
+                target_row * variable_count * variable_count + volume_col * variable_count + volume_col
+            ] = 2.0 * site_fraction * amount_weighted_delta_sum / (volume * volume * volume);
+            for (std::size_t left_site = 0; left_site < association_site_count; ++left_site) {
+                const std::size_t left_col = col_offset + base_local_variable_count + left_site;
+                const double volume_site_value = -(
+                    (site == left_site ? amount_weighted_delta_sum : 0.0)
+                    + site_fraction
+                        * amounts[static_cast<std::size_t>(site_component_index[left_site])]
+                        * association_delta_row_major[site * association_site_count + left_site]
+                ) / (volume * volume);
+                result.constraint_hessian_tensor_row_major[
+                    target_row * variable_count * variable_count + volume_col * variable_count + left_col
+                ] = volume_site_value;
+                result.constraint_hessian_tensor_row_major[
+                    target_row * variable_count * variable_count + left_col * variable_count + volume_col
+                ] = volume_site_value;
+                for (std::size_t right_site = 0; right_site < association_site_count; ++right_site) {
+                    double site_site_value = 0.0;
+                    if (site == left_site) {
+                        site_site_value += amounts[static_cast<std::size_t>(site_component_index[right_site])]
+                            * association_delta_row_major[site * association_site_count + right_site] / volume;
+                    }
+                    if (site == right_site) {
+                        site_site_value += amounts[static_cast<std::size_t>(site_component_index[left_site])]
+                            * association_delta_row_major[site * association_site_count + left_site] / volume;
+                    }
+                    const std::size_t right_col = col_offset + base_local_variable_count + right_site;
+                    result.constraint_hessian_tensor_row_major[
+                        target_row * variable_count * variable_count + left_col * variable_count + right_col
+                    ] = site_site_value;
+                }
             }
         }
     }

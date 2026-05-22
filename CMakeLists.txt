@@ -271,6 +271,7 @@ set(EPCSAFT_NATIVE_EOS_SOURCES
 )
 set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
     src/epcsaft/native/autodiff/cppad_smoke_checks.cpp
+    src/epcsaft/native/autodiff/implicit_sensitivity.cpp
 )
 set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     src/epcsaft/native/equilibrium/blocks/association_block.cpp

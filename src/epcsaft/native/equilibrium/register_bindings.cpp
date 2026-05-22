@@ -250,6 +250,8 @@ py::dict eos_phase_system_to_dict(const epcsaft::native::equilibrium_nlp::EosPha
     out["derivative_backend"] = result.derivative_backend;
     out["phase_count"] = result.phase_count;
     out["species_count"] = result.species_count;
+    out["association_site_count"] = result.association_site_count;
+    out["association_site_component_index"] = result.association_site_component_index;
     out["variable_names"] = result.variable_names;
     out["constraint_names"] = result.constraint_names;
     out["temperature"] = result.temperature;
@@ -295,6 +297,13 @@ py::dict association_mass_action_block_to_dict(
     out["jacobian_shape"] = py::make_tuple(result.jacobian_rows, result.jacobian_cols);
     out["site_fraction_jacobian_row_major"] = result.site_fraction_jacobian_row_major;
     out["site_composition_jacobian_row_major"] = result.site_composition_jacobian_row_major;
+    out["site_fraction_hessian_backend"] = result.site_fraction_hessian_backend;
+    out["site_fraction_hessian_shape"] = py::make_tuple(
+        result.site_fraction_hessian_rows,
+        result.site_fraction_hessian_cols,
+        result.site_fraction_hessian_depth
+    );
+    out["site_fraction_hessian_tensor_row_major"] = result.site_fraction_hessian_tensor_row_major;
     return out;
 }
 

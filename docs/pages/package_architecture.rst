@@ -66,12 +66,11 @@ Data
 
 Benchmarks
    Owns package-maintained timing, smoke, and regression benchmarks that protect
-   runtime expectations. Benchmark execution lives under ``scripts/benchmarks``,
-   may consume the public package API and packaged/reference data, and should
-   not become a runtime package import dependency for normal users. The
-   package-owned literature benchmark suite inventory also belongs there: it is
-   the canonical classification surface for which literature anchors are already
-   supported by tests versus still blocked on follow-up generic capability work.
+   runtime expectations. The previous local benchmark entrypoints were removed
+   as obsolete, so new performance or literature-coverage claims must add a
+   current owned benchmark or analysis workflow before being cited. Benchmark
+   execution may consume the public package API and packaged/reference data, but
+   should not become a runtime package import dependency for normal users.
 
 Core Surfaces
 -------------
@@ -83,13 +82,12 @@ Use these imports for new code:
 * ``from epcsaft import ParameterSet, ModelOptions`` for parameter data and
   model formulation choices.
 * ``from epcsaft import create_input_template`` for reset input scaffolds.
-* ``scripts/benchmarks`` for package-owned timing and smoke benchmarks.
+* current explicit benchmark or analysis workflows for package-owned timing and smoke claims.
 * ``epcsaft.capabilities()`` and ``epcsaft.runtime_build_info()`` for runtime
   capability metadata.
 
 Benchmark execution helpers are validation assets, not runtime thermodynamic
-APIs; import them from ``scripts.benchmarks`` rather than from the runtime
-package.
+APIs; keep them outside the runtime package.
 
 Import Policy
 -------------

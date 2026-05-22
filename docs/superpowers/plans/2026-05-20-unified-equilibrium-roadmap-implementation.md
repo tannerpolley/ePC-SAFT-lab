@@ -601,7 +601,7 @@ git commit -m "Certify reactive phase route stability"
 - Modify: `src/epcsaft/capability_evidence.py`
 - Modify: `run_pytest.py`
 - Modify: `docs/pages/development_workflows.rst`
-- Modify: `scripts/benchmarks/helpers/literature.py`
+- Modify: retired literature benchmark helper path (removed)
 - Modify: `scripts/validation/equilibrium_core/confidence.py`
 - Modify: analysis scripts under `analyses/paper_validation/native/2023_ascani/`
 - Modify: analysis scripts under the Rezaee 2026 paper-validation directory discovered by `rg -n "Rezaee|reactive_electrolyte_lle" analyses tests scripts`
@@ -629,7 +629,7 @@ Expected: pass without invoking paper-validation tests.
 Literature/paper benchmark rows may point to explicit analysis or benchmark scripts, but not to pytest files. A benchmark command should be visibly opt-in:
 
 ```powershell
-uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only
+Retired literature benchmark inventory command removed; use a current owned benchmark or analysis workflow before citing this evidence.
 uv run python analyses/paper_validation/<family>/scripts/run_all.py
 ```
 
@@ -659,7 +659,7 @@ Run:
 ```powershell
 uv run python run_pytest.py --equilibrium-confidence -q
 uv run python run_pytest.py tests/workflows/repo/test_run_pytest.py tests/workflows/repo/test_project_structure.py -q
-uv run python scripts/benchmarks/benchmark_literature_suite.py --registry-only
+Retired literature benchmark inventory command removed; use a current owned benchmark or analysis workflow before citing this evidence.
 ```
 
 Expected: pytest proves package wiring only; the benchmark command renders registry state without requiring paper convergence.
@@ -667,7 +667,7 @@ Expected: pytest proves package wiring only; the benchmark command renders regis
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add src/epcsaft/capability_evidence.py run_pytest.py docs/pages/development_workflows.rst scripts/benchmarks/helpers/literature.py tests
+git add src/epcsaft/capability_evidence.py run_pytest.py docs/pages/development_workflows.rst tests
 git commit -m "Keep paper validation out of pytest"
 ```
 

@@ -118,6 +118,34 @@ def test_phase_state_sensitivity_supports_active_association_implicit_response()
     assert raw["backend"] == "cppad_implicit"
     assert raw["density_backend"] == "implicit_density_root"
     assert raw["shape"] == (composition.size, composition.size)
+    assert raw["association_sensitivity_backend"] == "cppad_implicit_association"
+    assert raw["association_sensitivity_helper"] == "association_implicit_sensitivity"
+    assert raw["association_site_count"] == 2
+
+    site_shape = raw["association_site_sensitivity_shape"]
+    assert site_shape == (composition.size + 1, 2)
+    site_response = np.asarray(raw["association_site_sensitivity_row_major"], dtype=float).reshape(site_shape)
+    assert np.all(np.isfinite(site_response))
+    assert np.any(np.abs(site_response) > 1.0e-12)
+
+    site_second_shape = raw["association_site_second_sensitivity_shape"]
+    assert site_second_shape == (composition.size + 1, composition.size + 1, 2)
+    site_second_response = np.asarray(
+        raw["association_site_second_sensitivity_tensor_row_major"],
+        dtype=float,
+    ).reshape(site_second_shape)
+    assert np.all(np.isfinite(site_second_response))
+    for site in range(site_second_shape[2]):
+        assert_allclose(
+            site_second_response[:, :, site],
+            site_second_response[:, :, site].T,
+            rtol=1.0e-10,
+            atol=1.0e-10,
+        )
+    public = mix.state(T=temperature, P=pressure, x=composition, phase="liq").ln_fugacity_composition_derivative_result()
+    assert public["association_sensitivity_backend"] == "cppad_implicit_association"
+    assert public["association_sensitivity_helper"] == "association_implicit_sensitivity"
+    assert public["association_site_count"] == 2
 
     dpdrho = float(raw["pressure_density_derivative"])
     drhodx = np.asarray(raw["density_composition_derivative"], dtype=float)
