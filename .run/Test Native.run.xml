@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test Native" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT - Pytest Slices">
+  <configuration default="false" name="Test Native" type="PythonConfigurationType" factoryName="Python" folderName="Pytest Slices">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
