@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   default-build:
-    name: native default build
+    name: native no-Ipopt smoke
     runs-on: windows-latest
 
     steps:
@@ -28,15 +28,14 @@ jobs:
       - name: Install Python
         run: uv python install 3.13
 
-      - name: Build default native profile
+      - name: Build no-Ipopt native smoke profile
         run: uv run python scripts/dev/build_epcsaft.py --clean --disable-ipopt
 
-      - name: Validate Windows native contracts
+      - name: Validate no-Ipopt native smoke contracts
         run: uv run python run_pytest.py tests/api/package/test_root_exports.py tests/native/state/test_derivative_runtime_contract.py tests/native/contracts/test_ceres_cppad_build_contract.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q
 
   cppad-build:
-    name: native CppAD build
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+    name: native CppAD derivative contract
     runs-on: windows-latest
 
     steps:
@@ -51,8 +50,8 @@ jobs:
         run: uv python install 3.13
 
       - name: Build CppAD native profile
-        run: uv run python scripts/dev/build_epcsaft.py --clean --enable-cppad --disable-ipopt
+        run: uv run python scripts/dev/build_epcsaft.py --clean --profile full --disable-ipopt
 
       - name: Validate CppAD runtime contract
-        run: uv run python run_pytest.py tests/native/state/test_cppad_scalar_smoke.py tests/native/state/test_derivative_runtime_contract.py -q
+        run: uv run python run_pytest.py tests/native/state/test_cppad_scalar_smoke.py tests/native/state/test_derivative_runtime_contract.py tests/native/contracts/test_association_implicit_derivative_contract.py tests/native/state/test_association_parameter_derivative_validation.py -q
 

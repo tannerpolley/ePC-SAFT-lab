@@ -92,6 +92,39 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Do not use ``--clean`` for routine validation" in development_workflows
 
 
+def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
+    protocol = _read("docs/protocols/build_package_dependency_protocol.rst")
+    docs_index = _read("docs/pages/index.rst")
+    full_roadmap = _read("docs/roadmaps/FULL_ROADMAP.md")
+    development_workflows = _read("docs/pages/development_workflows.rst")
+    native_debugging = _read("docs/pages/native_debugging.rst")
+    workflow = _read(".github/workflows/native-build-profiles.yml")
+
+    assert "../protocols/build_package_dependency_protocol" in docs_index
+    assert "docs/protocols/build_package_dependency_protocol.rst" in full_roadmap
+    assert ":doc:`../protocols/build_package_dependency_protocol`" in development_workflows
+    assert ":doc:`../protocols/build_package_dependency_protocol`" in native_debugging
+
+    for token in (
+        "Build/Package Dependency Protocol",
+        "Ceres is required",
+        "CppAD is required",
+        "Ipopt is required for production equilibrium validation",
+        "Conda or mamba must not be the normal Ipopt CI provisioning path",
+        "Option B is the accepted normal PR CI direction",
+        "no-Ipopt smoke lane",
+        "focused CppAD derivative lane",
+        "Status: Pending workflow",
+    ):
+        assert token in protocol
+
+    assert "--enable-cppad" not in workflow
+    assert "native no-Ipopt smoke" in workflow
+    assert "native CppAD derivative contract" in workflow
+    assert "workflow_dispatch || github.event_name == 'schedule'" not in workflow
+    assert "--profile full --disable-ipopt" in workflow
+
+
 def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> None:
     agents_md = _read("AGENTS.md")
     env_toml = _read(".codex/environments/environment.toml")

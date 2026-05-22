@@ -3,6 +3,8 @@ Development Workflow Guide
 
 This is the operational guide for maintainers working from this source tree. Use these commands before inventing new build, test, or package workflows.
 
+The build/package dependency authority is :doc:`../protocols/build_package_dependency_protocol`. Update that protocol in the same change as any build, package, dependency, CMake, C++ package-management, or CI-lane behavior change.
+
 Default source-checkout sequence
 --------------------------------
 

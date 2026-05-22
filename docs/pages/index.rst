@@ -60,6 +60,7 @@ Contributor Reference
    :maxdepth: 1
    :caption: Contributor Reference
 
+   ../protocols/build_package_dependency_protocol
    downstream_dependency_protocol
    native_debugging
    equation_traceability

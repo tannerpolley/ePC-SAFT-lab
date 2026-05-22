@@ -3,6 +3,8 @@ Native And Equation Debugging
 
 Use this page when a change crosses the Python wrapper, pybind11 seam, or native ePC-SAFT equations.
 
+For build dependency policy, CMake package-management rules, and native CI lane authority, use :doc:`../protocols/build_package_dependency_protocol`. This page is the debugging guide, not the source of truth for dependency protocol decisions.
+
 Runtime flow
 ------------
 
