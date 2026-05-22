@@ -1,8 +1,8 @@
 # Local Codex Instructions (Machine-Local, Do Not Commit)
 
 ## Startup Reads
-- Read `C:\Users\Tanner\Documents\git\ePC-SAFT\docs\.codex-journal\user_preferences.md`.
-- Read `C:\Users\Tanner\Documents\git\ePC-SAFT\docs\roadmaps\FULL_ROADMAP.md` before planning, coding, reviewing, or merging any new repo task. Treat it as the authoritative package-context and completion-standard roadmap unless the user explicitly narrows scope for the current task.
+- Read `C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\docs\.codex-journal\user_preferences.md`.
+- Read `C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\docs\roadmaps\FULL_ROADMAP.md` before planning, coding, reviewing, or merging any new repo task. Treat it as the authoritative package-context and completion-standard roadmap unless the user explicitly narrows scope for the current task.
 - Use the user-level `chemical-engineer` skill for ePC-SAFT thermodynamics, phase/chemical equilibrium, equation tracing, Python/pybind/native seams, and scientific validation work. Load only the specific user-level chemical-engineer references needed for the task.
 - Use the user-level `jetbrains` skill when IntelliJ-backed semantic navigation, IDE diagnostics, or safe semantic refactors would materially improve correctness or speed for `ePC-SAFT` work.
 
@@ -111,7 +111,7 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 ## IntelliJ-Backed Tooling
 - Load and follow the user-level `jetbrains` skill for semantic code work, public API usage tracing, call/type hierarchy work, safe semantic refactors, or post-edit IDE diagnostics.
 - Propose IntelliJ-backed tooling unprompted when it is clearly the more efficient or safer option for `ePC-SAFT` work.
-- Ask before launching or focusing IntelliJ for `C:\Users\Tanner\Documents\git\ePC-SAFT`.
+- Ask before launching or focusing IntelliJ for `C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT`.
 - After approval, keep automation minimal: launch or focus IntelliJ for this repo, wait for indexing readiness, then use MCP tools.
 - Treat `intellij-index` as an IDE-backed index over open IntelliJ projects, not as a generic filesystem indexer.
 - Call `ide_index_status` at most once near the start of semantic work, pass `project_path`, and fall back without repeated retries if MCP is unavailable or indexing is not ready.
