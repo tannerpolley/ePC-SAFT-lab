@@ -94,6 +94,10 @@ def _state_rel_perm_rule_and_mode(params):
     diff_alias = {
         "auto": 3,
         "automatic": 3,
+        "implicit": 3,
+        "analytic_implicit": 3,
+        "cppad_implicit": 3,
+        "cppad_implicit_association": 3,
         "analytic": 0,
         "analytical": 0,
         "cppad": 2,

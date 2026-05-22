@@ -10,6 +10,7 @@
 #include "bindings/equilibrium_bindings.h"
 #include "autodiff/cppad_smoke_checks.h"
 #include "eos/core_internal.h"
+#include "eos/contributions/contribution_internal.h"
 
 epcsaft::native::cppad_support::CppADDerivativeResult cppad_eos_contribution_derivatives_cpp(
     double t,
@@ -61,6 +62,29 @@ py::dict cppad_smoke_to_dict(const epcsaft::native::cppad_support::CppADDerivati
     out["outputs"] = result.outputs;
     out["variables"] = result.variables;
     out["shape"] = py::make_tuple(result.rows, result.cols);
+    return out;
+}
+
+py::dict association_solve_diagnostics_to_dict(const AssociationSolveDiagnostics& diagnostics) {
+    py::dict out;
+    out["converged"] = diagnostics.converged;
+    out["iteration_count"] = diagnostics.iteration_count;
+    out["max_iterations"] = diagnostics.max_iterations;
+    out["update_norm"] = diagnostics.update_norm;
+    out["update_tolerance"] = diagnostics.update_tolerance;
+    out["residual_norm"] = diagnostics.residual_norm;
+    out["residual_tolerance"] = diagnostics.residual_tolerance;
+    out["min_XA"] = diagnostics.min_XA;
+    out["max_XA"] = diagnostics.max_XA;
+    out["damping_factor"] = diagnostics.damping_factor;
+    out["damping_policy"] = diagnostics.damping_policy;
+    return out;
+}
+
+py::dict association_solve_result_to_dict(const AssociationSolveResult& result) {
+    py::dict out;
+    out["site_fractions"] = result.XA;
+    out["diagnostics"] = association_solve_diagnostics_to_dict(result.diagnostics);
     return out;
 }
 
@@ -672,6 +696,32 @@ PYBIND11_MODULE(_core, m) {
     m.def("_native_cppad_eos_contributions", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
         return cppad_smoke_to_dict(cppad_eos_contribution_derivatives_cpp(t, rho, x, args));
     });
+    m.def(
+        "_native_association_site_fraction_solve",
+        [](const std::vector<double>& delta_ij,
+           double rho,
+           const std::vector<double>& x_assoc,
+           int max_iterations,
+           double update_tolerance,
+           double residual_tolerance) {
+            return association_solve_result_to_dict(
+                association_site_fraction_solve_result_cpp(
+                    delta_ij,
+                    rho,
+                    x_assoc,
+                    max_iterations,
+                    update_tolerance,
+                    residual_tolerance
+                )
+            );
+        },
+        py::arg("delta_ij"),
+        py::arg("rho"),
+        py::arg("x_assoc"),
+        py::arg("max_iterations") = 100,
+        py::arg("update_tolerance") = 1.0e-15,
+        py::arg("residual_tolerance") = 1.0e-10
+    );
     m.def("_native_cppad_pressure_density", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
         return cppad_smoke_to_dict(cppad_pressure_density_derivative_cpp(t, rho, x, args));
     });

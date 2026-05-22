@@ -25,12 +25,32 @@ struct ContributionDadxResult {
     double sum_x_dadx = 0.0;
 };
 
+struct AssociationSolveDiagnostics {
+    bool converged = false;
+    int iteration_count = 0;
+    int max_iterations = 0;
+    double update_norm = std::numeric_limits<double>::infinity();
+    double update_tolerance = 0.0;
+    double residual_norm = std::numeric_limits<double>::infinity();
+    double residual_tolerance = 0.0;
+    double min_XA = std::numeric_limits<double>::infinity();
+    double max_XA = -std::numeric_limits<double>::infinity();
+    double damping_factor = 0.0;
+    std::string damping_policy;
+};
+
+struct AssociationSolveResult {
+    vector<double> XA;
+    AssociationSolveDiagnostics diagnostics;
+};
+
 struct AssociationIntermediateState {
     bool active = false;
     AssociationSetup setup;
     vector<double> XA;
     vector<double> dXA_dt;
     vector<double> dXA_dx;
+    AssociationSolveDiagnostics solve_diagnostics;
 };
 
 struct IonIntermediateState {
@@ -62,6 +82,8 @@ using thermo_detail::HardChainState;
 using thermo_detail::CppADHardChainState;
 #endif
 using thermo_detail::AssociationIntermediateState;
+using thermo_detail::AssociationSolveDiagnostics;
+using thermo_detail::AssociationSolveResult;
 using thermo_detail::BornIntermediateState;
 using thermo_detail::ContributionDadxResult;
 using thermo_detail::IonIntermediateState;
@@ -81,6 +103,14 @@ AssociationIntermediateState association_intermediate_state_cpp(
     bool include_dt,
     bool include_dx,
     const vector<double> *dghs_dt = nullptr
+);
+AssociationSolveResult association_site_fraction_solve_result_cpp(
+    const vector<double> &delta_ij,
+    double den,
+    const vector<double> &x_assoc,
+    int max_iterations = 100,
+    double update_tolerance = 1.0e-15,
+    double residual_tolerance = 1.0e-10
 );
 
 IonIntermediateState ion_intermediate_state_cpp(

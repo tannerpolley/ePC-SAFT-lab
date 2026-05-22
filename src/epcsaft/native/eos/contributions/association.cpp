@@ -1,6 +1,10 @@
 #include "contribution_internal.h"
 
+#include <sstream>
+
 using thermo_detail::AssociationIntermediateState;
+using thermo_detail::AssociationSolveDiagnostics;
+using thermo_detail::AssociationSolveResult;
 using thermo_detail::AssociationSetup;
 using thermo_detail::ContributionDadxResult;
 using thermo_detail::HardChainState;
@@ -9,6 +13,13 @@ using thermo_detail::parameter_setup_detail::association_volume_cpp;
 using thermo_detail::parameter_setup_detail::pair_diameter_cpp;
 
 namespace assoc_detail {
+
+static constexpr int kDefaultMaxIterations = 100;
+static constexpr double kDefaultUpdateTolerance = 1.0e-15;
+static constexpr double kDefaultResidualTolerance = 1.0e-10;
+static constexpr double kDampingFactor = 0.5;
+static constexpr double kSiteFractionUpperTolerance = 1.0e-12;
+static const char *kDampingPolicy = "fixed_under_relaxation";
 
 // EqID: x_assoc_site
 static vector<double> association_site_fractions_cpp(vector<double> XA_guess, vector<double> delta_ij, double den, vector<double> x) {
@@ -26,6 +37,175 @@ static vector<double> association_site_fractions_cpp(vector<double> XA_guess, ve
     }
 
     return XA;
+}
+
+static double initial_site_fraction_cpp(double self_delta, double den) {
+    if (!std::isfinite(self_delta)) {
+        throw ValueError("Association site-fraction solve received non-finite association strength.");
+    }
+    if (self_delta <= 0.0) {
+        return 1.0;
+    }
+    double argument = 1.0 + 8.0 * den * self_delta;
+    if (!std::isfinite(argument) || argument < 0.0) {
+        throw ValueError("Association site-fraction solve generated a non-finite initial site fraction.");
+    }
+    double root = std::sqrt(argument);
+    if (!std::isfinite(root)) {
+        throw ValueError("Association site-fraction solve generated a non-finite initial site fraction.");
+    }
+    return 2.0 / (1.0 + root);
+}
+
+static double association_mass_action_residual_norm_cpp(
+    const vector<double> &XA,
+    const vector<double> &delta_ij,
+    double den,
+    const vector<double> &x_assoc
+) {
+    int num_sites = static_cast<int>(XA.size());
+    double residual_norm = 0.0;
+    int idxij = 0;
+    for (int i = 0; i < num_sites; ++i) {
+        double summ = 0.0;
+        for (int j = 0; j < num_sites; ++j) {
+            double delta = delta_ij[idxij];
+            if (!std::isfinite(delta) || !std::isfinite(XA[j]) || !std::isfinite(x_assoc[j])) {
+                return std::numeric_limits<double>::infinity();
+            }
+            summ += den * x_assoc[j] * XA[j] * delta;
+            ++idxij;
+        }
+        double residual = XA[i] * (1.0 + summ) - 1.0;
+        if (!std::isfinite(residual)) {
+            return std::numeric_limits<double>::infinity();
+        }
+        residual_norm = std::max(residual_norm, std::abs(residual));
+    }
+    return residual_norm;
+}
+
+static void update_site_fraction_bounds_cpp(const vector<double> &XA, AssociationSolveDiagnostics &diagnostics) {
+    diagnostics.min_XA = std::numeric_limits<double>::infinity();
+    diagnostics.max_XA = -std::numeric_limits<double>::infinity();
+    for (double value : XA) {
+        diagnostics.min_XA = std::min(diagnostics.min_XA, value);
+        diagnostics.max_XA = std::max(diagnostics.max_XA, value);
+    }
+    if (XA.empty()) {
+        diagnostics.min_XA = 0.0;
+        diagnostics.max_XA = 0.0;
+    }
+}
+
+static bool site_fractions_are_valid_cpp(const AssociationSolveDiagnostics &diagnostics) {
+    return std::isfinite(diagnostics.min_XA)
+        && std::isfinite(diagnostics.max_XA)
+        && diagnostics.min_XA > 0.0
+        && diagnostics.max_XA <= 1.0 + kSiteFractionUpperTolerance;
+}
+
+static std::string association_solve_diagnostics_message_cpp(const AssociationSolveDiagnostics &diagnostics) {
+    std::ostringstream msg;
+    msg << std::boolalpha
+        << "association site-fraction solve did not converge: "
+        << "converged=" << diagnostics.converged
+        << "; iteration_count=" << diagnostics.iteration_count
+        << "; max_iterations=" << diagnostics.max_iterations
+        << "; update_norm=" << diagnostics.update_norm
+        << "; update_tolerance=" << diagnostics.update_tolerance
+        << "; residual_norm=" << diagnostics.residual_norm
+        << "; residual_tolerance=" << diagnostics.residual_tolerance
+        << "; min_XA=" << diagnostics.min_XA
+        << "; max_XA=" << diagnostics.max_XA
+        << "; damping_factor=" << diagnostics.damping_factor
+        << "; damping_policy=" << diagnostics.damping_policy;
+    return msg.str();
+}
+
+static AssociationSolveResult solve_association_site_fractions_cpp(
+    const vector<double> &delta_ij,
+    double den,
+    const vector<double> &x_assoc,
+    int max_iterations,
+    double update_tolerance,
+    double residual_tolerance
+) {
+    int num_sites = static_cast<int>(x_assoc.size());
+    if (num_sites == 0) {
+        AssociationSolveResult empty;
+        empty.diagnostics.converged = true;
+        empty.diagnostics.max_iterations = max_iterations;
+        empty.diagnostics.update_norm = 0.0;
+        empty.diagnostics.update_tolerance = update_tolerance;
+        empty.diagnostics.residual_norm = 0.0;
+        empty.diagnostics.residual_tolerance = residual_tolerance;
+        empty.diagnostics.min_XA = 0.0;
+        empty.diagnostics.max_XA = 0.0;
+        empty.diagnostics.damping_factor = kDampingFactor;
+        empty.diagnostics.damping_policy = kDampingPolicy;
+        return empty;
+    }
+    if (static_cast<int>(delta_ij.size()) != num_sites * num_sites) {
+        throw ValueError("Association site-fraction solve requires a square delta_ij matrix.");
+    }
+    if (!std::isfinite(den) || den <= 0.0) {
+        throw ValueError("Association site-fraction solve requires a positive finite molar density.");
+    }
+    if (max_iterations <= 0) {
+        throw ValueError("Association site-fraction solve requires max_iterations > 0.");
+    }
+    if (!std::isfinite(update_tolerance) || update_tolerance < 0.0) {
+        throw ValueError("Association site-fraction solve requires a finite non-negative update tolerance.");
+    }
+    if (!std::isfinite(residual_tolerance) || residual_tolerance < 0.0) {
+        throw ValueError("Association site-fraction solve requires a finite non-negative residual tolerance.");
+    }
+    for (double value : x_assoc) {
+        if (!std::isfinite(value) || value < 0.0) {
+            throw ValueError("Association site-fraction solve requires finite non-negative site mole fractions.");
+        }
+    }
+
+    AssociationSolveResult result;
+    AssociationSolveDiagnostics &diagnostics = result.diagnostics;
+    diagnostics.max_iterations = max_iterations;
+    diagnostics.update_tolerance = update_tolerance;
+    diagnostics.residual_tolerance = residual_tolerance;
+    diagnostics.damping_factor = kDampingFactor;
+    diagnostics.damping_policy = kDampingPolicy;
+
+    vector<double> XA(num_sites, 0.0);
+    for (int i = 0; i < num_sites; ++i) {
+        XA[i] = initial_site_fraction_cpp(delta_ij[i * num_sites + i], den);
+    }
+
+    vector<double> XA_old = XA;
+    while (diagnostics.iteration_count < max_iterations) {
+        diagnostics.iteration_count += 1;
+        XA = association_site_fractions_cpp(XA_old, delta_ij, den, x_assoc);
+        diagnostics.update_norm = 0.0;
+        for (int i = 0; i < num_sites; ++i) {
+            diagnostics.update_norm += std::abs(XA[i] - XA_old[i]);
+        }
+        for (int i = 0; i < num_sites; ++i) {
+            XA_old[i] = kDampingFactor * (XA[i] + XA_old[i]);
+        }
+        update_site_fraction_bounds_cpp(XA, diagnostics);
+        diagnostics.residual_norm = association_mass_action_residual_norm_cpp(XA, delta_ij, den, x_assoc);
+        bool converged_before_iteration_limit = diagnostics.iteration_count < diagnostics.max_iterations;
+        diagnostics.converged = converged_before_iteration_limit
+            && diagnostics.update_norm <= diagnostics.update_tolerance
+            && diagnostics.residual_norm <= diagnostics.residual_tolerance
+            && site_fractions_are_valid_cpp(diagnostics);
+        if (diagnostics.converged) {
+            result.XA = XA;
+            return result;
+        }
+    }
+
+    result.XA = XA;
+    throw SolutionError(association_solve_diagnostics_message_cpp(diagnostics));
 }
 
 // EqID: dx_assoc_drho
@@ -91,35 +271,25 @@ static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, ve
     return dXA_dx;
 }
 
-static vector<double> solve_association_site_fractions_cpp(const vector<double> &delta_ij, double den, const vector<double> &x_assoc) {
-    int num_sites = static_cast<int>(x_assoc.size());
-    vector<double> XA(num_sites, 0.0);
-    for (int i = 0; i < num_sites; ++i) {
-        XA[i] = (-1.0 + std::sqrt(1.0 + 8.0 * den * delta_ij[i * num_sites + i]))
-            / (4.0 * den * delta_ij[i * num_sites + i]);
-        if (!std::isfinite(XA[i])) {
-            XA[i] = 0.02;
-        }
-    }
-
-    int ctr = 0;
-    double dif = 1000.0;
-    vector<double> XA_old = XA;
-    while ((ctr < 100) && (dif > 1e-15)) {
-        ctr += 1;
-        XA = association_site_fractions_cpp(XA_old, delta_ij, den, x_assoc);
-        dif = 0.0;
-        for (int i = 0; i < num_sites; ++i) {
-            dif += std::abs(XA[i] - XA_old[i]);
-        }
-        for (int i = 0; i < num_sites; ++i) {
-            XA_old[i] = 0.5 * (XA[i] + XA_old[i]);
-        }
-    }
-    return XA;
-}
-
 }  // namespace assoc_detail
+
+AssociationSolveResult association_site_fraction_solve_result_cpp(
+    const vector<double> &delta_ij,
+    double den,
+    const vector<double> &x_assoc,
+    int max_iterations,
+    double update_tolerance,
+    double residual_tolerance
+) {
+    return assoc_detail::solve_association_site_fractions_cpp(
+        delta_ij,
+        den,
+        x_assoc,
+        max_iterations,
+        update_tolerance,
+        residual_tolerance
+    );
+}
 
 // EqID: rho_j_assoc
 // EqID: delta_assoc
@@ -258,7 +428,16 @@ AssociationIntermediateState association_intermediate_state_cpp(
     int ncomp = static_cast<int>(x.size());
     int num_sites = static_cast<int>(site_component_index.size());
 
-    state.XA = assoc_detail::solve_association_site_fractions_cpp(delta_ij, thermo.den, x_assoc);
+    AssociationSolveResult solve_result = association_site_fraction_solve_result_cpp(
+        delta_ij,
+        thermo.den,
+        x_assoc,
+        assoc_detail::kDefaultMaxIterations,
+        assoc_detail::kDefaultUpdateTolerance,
+        assoc_detail::kDefaultResidualTolerance
+    );
+    state.XA = solve_result.XA;
+    state.solve_diagnostics = solve_result.diagnostics;
 
     if (include_dt) {
         vector<double> ddelta_dt(num_sites * num_sites, 0.0);
