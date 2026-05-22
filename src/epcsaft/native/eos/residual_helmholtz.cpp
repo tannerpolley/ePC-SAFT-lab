@@ -23,7 +23,11 @@ namespace ares_detail {
 
 constexpr int kGenericTargetSLocal = 1;
 constexpr int kGenericTargetELocal = 2;
+constexpr int kGenericTargetEAssocLocal = 3;
+constexpr int kGenericTargetVolALocal = 4;
 constexpr int kGenericTargetDBornLocal = 5;
+constexpr int kGenericTargetLIJLocal = 7;
+constexpr int kGenericTargetKHBLocal = 8;
 constexpr int kGenericTargetFSolvLocal = 9;
 constexpr int kGenericTargetDielcLocal = 10;
 
@@ -552,17 +556,46 @@ static Scalar hs_contact_composition_derivative_scalar_cpp(
 }
 
 template <typename Scalar>
-static Scalar association_volume_scalar_cpp(int comp_i, int comp_j, int ncomp, const vector<Scalar> &s_ij, const add_args &cppargs) {
+static Scalar association_volume_scalar_cpp(
+    int comp_i,
+    int comp_j,
+    int ncomp,
+    const vector<Scalar> &s_ij,
+    const add_args &cppargs,
+    int component_target_kind = -1,
+    int component_target_index = -1,
+    const Scalar *component_target_value = nullptr,
+    int k_hb_override_index = -1,
+    const Scalar *k_hb_override_value = nullptr
+) {
     const int idxi = comp_i * ncomp + comp_i;
     const int idxj = comp_j * ncomp + comp_j;
-    Scalar volume = scalar_constant<Scalar>(std::sqrt(cppargs.vol_a[static_cast<size_t>(comp_i)] * cppargs.vol_a[static_cast<size_t>(comp_j)]))
+    const Scalar vol_i = scalar_component_parameter_cpp(
+        kGenericTargetVolALocal,
+        component_target_index,
+        comp_i,
+        cppargs.vol_a[static_cast<size_t>(comp_i)],
+        component_target_kind == kGenericTargetVolALocal ? component_target_value : nullptr
+    );
+    const Scalar vol_j = scalar_component_parameter_cpp(
+        kGenericTargetVolALocal,
+        component_target_index,
+        comp_j,
+        cppargs.vol_a[static_cast<size_t>(comp_j)],
+        component_target_kind == kGenericTargetVolALocal ? component_target_value : nullptr
+    );
+    Scalar volume = scalar_sqrt(vol_i * vol_j)
         * scalar_pow(
             scalar_sqrt(s_ij[static_cast<size_t>(idxi)] * s_ij[static_cast<size_t>(idxj)])
                 / (0.5 * (s_ij[static_cast<size_t>(idxi)] + s_ij[static_cast<size_t>(idxj)])),
             3.0
         );
     if (!cppargs.k_hb.empty()) {
-        volume *= scalar_constant<Scalar>(1.0 - cppargs.k_hb[static_cast<size_t>(comp_i * ncomp + comp_j)]);
+        const int pair_index = comp_i * ncomp + comp_j;
+        const Scalar k_hb = (k_hb_override_value != nullptr && k_hb_override_index == pair_index)
+            ? *k_hb_override_value
+            : scalar_constant<Scalar>(cppargs.k_hb[static_cast<size_t>(pair_index)]);
+        volume *= (1.0 - k_hb);
     }
     return volume;
 }
@@ -688,7 +721,12 @@ static AssociationImplicitTermsScalar<Scalar> association_implicit_terms_scalar_
     double t,
     const vector<Scalar> &x,
     const add_args &cppargs,
-    const vector<Scalar> &XA
+    const vector<Scalar> &XA,
+    int component_target_kind = -1,
+    int component_target_index = -1,
+    const Scalar *component_target_value = nullptr,
+    int k_hb_override_index = -1,
+    const Scalar *k_hb_override_value = nullptr
 ) {
     const int ncomp = static_cast<int>(x.size());
     AssociationImplicitTermsScalar<Scalar> out;
@@ -718,11 +756,36 @@ static AssociationImplicitTermsScalar<Scalar> association_implicit_terms_scalar_
         for (int j = 0; j < num_sites; ++j) {
             const int comp_j = out.site_component_index[static_cast<size_t>(j)];
             if (cppargs.assoc_matrix[static_cast<size_t>(idxa)] != 0) {
-                const double eABij = 0.5 * (cppargs.e_assoc[static_cast<size_t>(comp_i)] + cppargs.e_assoc[static_cast<size_t>(comp_j)]);
-                const Scalar volABij = association_volume_scalar_cpp(comp_i, comp_j, ncomp, thermo.s_ij, cppargs);
+                const Scalar e_i = scalar_component_parameter_cpp(
+                    kGenericTargetEAssocLocal,
+                    component_target_index,
+                    comp_i,
+                    cppargs.e_assoc[static_cast<size_t>(comp_i)],
+                    component_target_kind == kGenericTargetEAssocLocal ? component_target_value : nullptr
+                );
+                const Scalar e_j = scalar_component_parameter_cpp(
+                    kGenericTargetEAssocLocal,
+                    component_target_index,
+                    comp_j,
+                    cppargs.e_assoc[static_cast<size_t>(comp_j)],
+                    component_target_kind == kGenericTargetEAssocLocal ? component_target_value : nullptr
+                );
+                const Scalar eABij = 0.5 * (e_i + e_j);
+                const Scalar volABij = association_volume_scalar_cpp(
+                    comp_i,
+                    comp_j,
+                    ncomp,
+                    thermo.s_ij,
+                    cppargs,
+                    component_target_kind,
+                    component_target_index,
+                    component_target_value,
+                    k_hb_override_index,
+                    k_hb_override_value
+                );
                 out.delta_ij[static_cast<size_t>(idxa)] =
                     hc_state.ghs[static_cast<size_t>(comp_i * ncomp + comp_j)]
-                    * scalar_constant<Scalar>(std::exp(eABij / t) - 1.0)
+                    * (scalar_exp(eABij / t) - 1.0)
                     * scalar_pow(thermo.s_ij[static_cast<size_t>(comp_i * ncomp + comp_j)], 3.0)
                     * volABij;
             }
@@ -752,11 +815,36 @@ static AssociationImplicitTermsScalar<Scalar> association_implicit_terms_scalar_
             if (cppargs.assoc_matrix[static_cast<size_t>(idxa)] != 0) {
                 const Scalar pair_diameter = thermo.d[static_cast<size_t>(comp_i)] * thermo.d[static_cast<size_t>(comp_j)]
                     / (thermo.d[static_cast<size_t>(comp_i)] + thermo.d[static_cast<size_t>(comp_j)]);
-                const double eABij = 0.5 * (cppargs.e_assoc[static_cast<size_t>(comp_i)] + cppargs.e_assoc[static_cast<size_t>(comp_j)]);
-                const Scalar volABij = association_volume_scalar_cpp(comp_i, comp_j, ncomp, thermo.s_ij, cppargs);
+                const Scalar e_i = scalar_component_parameter_cpp(
+                    kGenericTargetEAssocLocal,
+                    component_target_index,
+                    comp_i,
+                    cppargs.e_assoc[static_cast<size_t>(comp_i)],
+                    component_target_kind == kGenericTargetEAssocLocal ? component_target_value : nullptr
+                );
+                const Scalar e_j = scalar_component_parameter_cpp(
+                    kGenericTargetEAssocLocal,
+                    component_target_index,
+                    comp_j,
+                    cppargs.e_assoc[static_cast<size_t>(comp_j)],
+                    component_target_kind == kGenericTargetEAssocLocal ? component_target_value : nullptr
+                );
+                const Scalar eABij = 0.5 * (e_i + e_j);
+                const Scalar volABij = association_volume_scalar_cpp(
+                    comp_i,
+                    comp_j,
+                    ncomp,
+                    thermo.s_ij,
+                    cppargs,
+                    component_target_kind,
+                    component_target_index,
+                    component_target_value,
+                    k_hb_override_index,
+                    k_hb_override_value
+                );
                 ddelta_weighted[static_cast<size_t>(idxa)] =
                     hs_contact_density_derivative_scalar_cpp(pair_diameter, hc_state.zeta[2], hc_state.zeta[3])
-                    * scalar_constant<Scalar>(std::exp(eABij / t) - 1.0)
+                    * (scalar_exp(eABij / t) - 1.0)
                     * scalar_pow(thermo.s_ij[static_cast<size_t>(comp_i * ncomp + comp_j)], 3.0)
                     * volABij;
             }
@@ -789,11 +877,36 @@ static AssociationImplicitTermsScalar<Scalar> association_implicit_terms_scalar_
                     const Scalar dzeta3_dx = scalar_constant<Scalar>(PI / 6.0 * cppargs.m[static_cast<size_t>(k)])
                         * thermo.den
                         * scalar_pow(thermo.d[static_cast<size_t>(k)], 3.0);
-                    const double eABij = 0.5 * (cppargs.e_assoc[static_cast<size_t>(comp_i)] + cppargs.e_assoc[static_cast<size_t>(comp_j)]);
-                    const Scalar volABij = association_volume_scalar_cpp(comp_i, comp_j, ncomp, thermo.s_ij, cppargs);
+                    const Scalar e_i = scalar_component_parameter_cpp(
+                        kGenericTargetEAssocLocal,
+                        component_target_index,
+                        comp_i,
+                        cppargs.e_assoc[static_cast<size_t>(comp_i)],
+                        component_target_kind == kGenericTargetEAssocLocal ? component_target_value : nullptr
+                    );
+                    const Scalar e_j = scalar_component_parameter_cpp(
+                        kGenericTargetEAssocLocal,
+                        component_target_index,
+                        comp_j,
+                        cppargs.e_assoc[static_cast<size_t>(comp_j)],
+                        component_target_kind == kGenericTargetEAssocLocal ? component_target_value : nullptr
+                    );
+                    const Scalar eABij = 0.5 * (e_i + e_j);
+                    const Scalar volABij = association_volume_scalar_cpp(
+                        comp_i,
+                        comp_j,
+                        ncomp,
+                        thermo.s_ij,
+                        cppargs,
+                        component_target_kind,
+                        component_target_index,
+                        component_target_value,
+                        k_hb_override_index,
+                        k_hb_override_value
+                    );
                     ddelta_dx[static_cast<size_t>(idx_ddelta)] =
                         hs_contact_composition_derivative_scalar_cpp(pair_diameter, hc_state.zeta[2], hc_state.zeta[3], dzeta2_dx, dzeta3_dx)
-                        * scalar_constant<Scalar>(std::exp(eABij / t) - 1.0)
+                        * (scalar_exp(eABij / t) - 1.0)
                         * scalar_pow(thermo.s_ij[static_cast<size_t>(comp_i * ncomp + comp_j)], 3.0)
                         * volABij;
                 }
@@ -2429,6 +2542,321 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
     return out;
 }
 
+NeutralBinaryKijPhaseDerivatives association_parameter_phase_derivatives_cpp(
+    double t,
+    double rho,
+    const vector<double> &x,
+    const add_args &cppargs,
+    int parameter_index,
+    const std::string &parameter_name,
+    int component_target_kind,
+    int component_target_index
+) {
+#ifdef EPCSAFT_HAS_CPPAD
+    using CppADScalar = CppAD::AD<double>;
+    const int ncomp = static_cast<int>(x.size());
+    if (ncomp <= 0 || cppargs.m.size() != x.size() || cppargs.s.size() != x.size() || cppargs.e.size() != x.size()) {
+        throw ValueError("unsupported: association parameter derivatives require aligned neutral component parameters.");
+    }
+    if (!cppargs.z.empty()) {
+        for (double charge : cppargs.z) {
+            if (std::abs(charge) > 1.0e-12) {
+                throw ValueError("unsupported: association parameter derivatives do not support ionic components.");
+            }
+        }
+    }
+    if (!has_association_sites(cppargs)) {
+        throw ValueError("unsupported: association parameter derivatives require active association sites.");
+    }
+    if (!(t > 0.0) || !(rho > 0.0)) {
+        throw ValueError("Native association parameter derivative evaluation requires positive T and rho.");
+    }
+    for (double xi : x) {
+        if (!(xi > 0.0)) {
+            throw ValueError("Native association parameter derivative evaluation requires positive composition values.");
+        }
+    }
+
+    const bool is_component_target = component_target_kind == ares_detail::kGenericTargetEAssocLocal
+        || component_target_kind == ares_detail::kGenericTargetVolALocal;
+    const bool is_lij = parameter_name == "l_ij";
+    const bool is_khb = parameter_name == "k_hb_ij" || parameter_name == "k_hb";
+    if (!is_component_target && !is_lij && !is_khb) {
+        throw ValueError("Native association parameter derivative received an unsupported target kind.");
+    }
+
+    double theta0 = 0.0;
+    if (is_component_target) {
+        if (component_target_index < 0 || component_target_index >= ncomp) {
+            throw ValueError("Native association component-parameter derivative target index is out of range.");
+        }
+        if (component_target_kind == ares_detail::kGenericTargetEAssocLocal) {
+            if (cppargs.e_assoc.size() != x.size()) {
+                throw ValueError("unsupported: e_assoc association derivatives require aligned e_assoc values.");
+            }
+            theta0 = cppargs.e_assoc[static_cast<size_t>(component_target_index)];
+        } else {
+            if (cppargs.vol_a.size() != x.size()) {
+                throw ValueError("unsupported: vol_a association derivatives require aligned vol_a values.");
+            }
+            theta0 = cppargs.vol_a[static_cast<size_t>(component_target_index)];
+        }
+    } else {
+        if (parameter_index < 0 || parameter_index >= ncomp * ncomp) {
+            throw ValueError("Native association binary-parameter derivative index is out of range.");
+        }
+        const vector<double> &parameter_matrix = is_lij ? cppargs.l_ij : cppargs.k_hb;
+        if (parameter_matrix.size() != static_cast<size_t>(ncomp * ncomp)) {
+            throw ValueError("unsupported: native association binary-parameter derivatives require a dense parameter matrix.");
+        }
+        theta0 = parameter_matrix[static_cast<size_t>(parameter_index)];
+    }
+
+    const int rho_index = 0;
+    const int theta_index = 1;
+    const int x_start = 2;
+    const int explicit_count = x_start + ncomp;
+    std::vector<CppADScalar> base_vars(static_cast<size_t>(explicit_count));
+    base_vars[static_cast<size_t>(rho_index)] = rho;
+    base_vars[static_cast<size_t>(theta_index)] = theta0;
+    for (int i = 0; i < ncomp; ++i) {
+        base_vars[static_cast<size_t>(x_start + i)] = x[static_cast<size_t>(i)];
+    }
+    CppAD::Independent(base_vars);
+
+    std::vector<CppADScalar> base_x(static_cast<size_t>(ncomp));
+    for (int i = 0; i < ncomp; ++i) {
+        base_x[static_cast<size_t>(i)] = base_vars[static_cast<size_t>(x_start + i)];
+    }
+    add_args recording_args = cppargs;
+    recording_args.assoc_num.clear();
+    recording_args.assoc_matrix.clear();
+    recording_args.e_assoc.clear();
+    recording_args.vol_a.clear();
+    recording_args.k_hb.clear();
+    const CppADScalar *no_pair_override = nullptr;
+    auto base_contributions = ares_detail::ares_contributions_scalar_cpp(
+        t,
+        base_vars[static_cast<size_t>(rho_index)],
+        base_x,
+        recording_args,
+        -1,
+        no_pair_override,
+        is_lij ? parameter_index : -1,
+        is_lij ? &base_vars[static_cast<size_t>(theta_index)] : nullptr
+    );
+    std::vector<CppADScalar> base_outputs(1);
+    base_outputs[0] = base_contributions.hc + base_contributions.disp + base_contributions.ion + base_contributions.born;
+    CppAD::ADFun<double> base_function(base_vars, base_outputs);
+    std::vector<double> explicit_point(static_cast<size_t>(explicit_count), 0.0);
+    explicit_point[static_cast<size_t>(rho_index)] = rho;
+    explicit_point[static_cast<size_t>(theta_index)] = theta0;
+    for (int i = 0; i < ncomp; ++i) {
+        explicit_point[static_cast<size_t>(x_start + i)] = x[static_cast<size_t>(i)];
+    }
+    auto base_values = base_function.Forward(0, explicit_point);
+    auto base_jacobian = base_function.Jacobian(explicit_point);
+    auto base_hessian = base_function.Hessian(explicit_point, 0);
+    const auto base_h = [&](int row, int col) {
+        return base_hessian[static_cast<size_t>(row * explicit_count + col)];
+    };
+
+    MixtureState thermo = mixture_state_cpp(t, rho, x, cppargs, false);
+    HardChainState hc_state = hard_chain_state_cpp(thermo, x, cppargs);
+    AssociationIntermediateState assoc_state = association_intermediate_state_cpp(
+        thermo,
+        hc_state,
+        t,
+        x,
+        cppargs,
+        false,
+        false
+    );
+    if (!assoc_state.active || assoc_state.XA.empty()) {
+        throw ValueError("Native association parameter derivative expected active association site fractions.");
+    }
+    const int num_sites = static_cast<int>(assoc_state.XA.size());
+    const int var_count = explicit_count + num_sites;
+    std::vector<CppADScalar> avars(static_cast<size_t>(var_count));
+    for (int i = 0; i < explicit_count; ++i) {
+        avars[static_cast<size_t>(i)] = explicit_point[static_cast<size_t>(i)];
+    }
+    for (int i = 0; i < num_sites; ++i) {
+        avars[static_cast<size_t>(explicit_count + i)] = assoc_state.XA[static_cast<size_t>(i)];
+    }
+    CppAD::Independent(avars);
+
+    std::vector<CppADScalar> ax(static_cast<size_t>(ncomp));
+    for (int i = 0; i < ncomp; ++i) {
+        ax[static_cast<size_t>(i)] = avars[static_cast<size_t>(x_start + i)];
+    }
+    ares_detail::MixtureStateScalar<CppADScalar> scalar_thermo = ares_detail::mixture_state_scalar_cpp(
+        t,
+        avars[static_cast<size_t>(rho_index)],
+        ax,
+        cppargs,
+        -1,
+        static_cast<const CppADScalar *>(nullptr),
+        is_lij ? parameter_index : -1,
+        is_lij ? &avars[static_cast<size_t>(theta_index)] : static_cast<const CppADScalar *>(nullptr)
+    );
+    ares_detail::HardChainStateScalar<CppADScalar> scalar_hc = ares_detail::hard_chain_state_scalar_cpp(
+        scalar_thermo,
+        ax,
+        cppargs
+    );
+    std::vector<CppADScalar> site_vars(static_cast<size_t>(num_sites));
+    for (int i = 0; i < num_sites; ++i) {
+        site_vars[static_cast<size_t>(i)] = avars[static_cast<size_t>(explicit_count + i)];
+    }
+    auto assoc_terms = ares_detail::association_implicit_terms_scalar_cpp(
+        scalar_thermo,
+        scalar_hc,
+        t,
+        ax,
+        cppargs,
+        site_vars,
+        component_target_kind,
+        component_target_index,
+        is_component_target ? &avars[static_cast<size_t>(theta_index)] : nullptr,
+        is_khb ? parameter_index : -1,
+        is_khb ? &avars[static_cast<size_t>(theta_index)] : nullptr
+    );
+
+    std::vector<CppADScalar> ay;
+    ay.reserve(static_cast<size_t>(2 + ncomp + num_sites));
+    ay.push_back(assoc_terms.ares);
+    ay.push_back(assoc_terms.zraw);
+    for (int i = 0; i < ncomp; ++i) {
+        ay.push_back(assoc_terms.mu[static_cast<size_t>(i)]);
+    }
+    for (int i = 0; i < num_sites; ++i) {
+        ay.push_back(assoc_terms.residuals[static_cast<size_t>(i)]);
+    }
+
+    CppAD::ADFun<double> function(avars, ay);
+    std::vector<double> point(static_cast<size_t>(var_count), 0.0);
+    for (int i = 0; i < explicit_count; ++i) {
+        point[static_cast<size_t>(i)] = explicit_point[static_cast<size_t>(i)];
+    }
+    for (int i = 0; i < num_sites; ++i) {
+        point[static_cast<size_t>(explicit_count + i)] = assoc_state.XA[static_cast<size_t>(i)];
+    }
+    auto values = function.Forward(0, point);
+    auto jacobian = function.Jacobian(point);
+
+    const int residual_row0 = 2 + ncomp;
+    epcsaft::native::implicit_sensitivity::ImplicitSensitivityProblem problem;
+    problem.explicit_variable_count = explicit_count;
+    problem.solved_variable_count = num_sites;
+    problem.output_count = 2 + ncomp;
+    problem.residual_row0 = residual_row0;
+    problem.backend = "cppad_implicit_association";
+    problem.helper_name = "association_implicit_sensitivity";
+    problem.values = values;
+    problem.jacobian_row_major = jacobian;
+    const auto sensitivity = epcsaft::native::implicit_sensitivity::solve_implicit_sensitivity(problem, false);
+
+    const double base_ares = base_values[0];
+    const double base_da_drho = base_jacobian[static_cast<size_t>(rho_index)];
+    const double base_da_dtheta = base_jacobian[static_cast<size_t>(theta_index)];
+    const double base_d2a_drho2 = base_h(rho_index, rho_index);
+    const double base_d2a_drho_dtheta = base_h(rho_index, theta_index);
+    const double base_zraw = rho * base_da_drho;
+    const double base_dzraw_drho = base_da_drho + rho * base_d2a_drho2;
+    const double base_dzraw_dtheta = rho * base_d2a_drho_dtheta;
+    const double assoc_ares = sensitivity.output_values[0];
+    const double assoc_zraw = sensitivity.output_values[1];
+    const double assoc_dares_drho = sensitivity.output_first_row_major[static_cast<size_t>(0 * explicit_count + rho_index)];
+    const double assoc_dares_dtheta = sensitivity.output_first_row_major[static_cast<size_t>(0 * explicit_count + theta_index)];
+    (void)assoc_dares_drho;
+    const double assoc_dzraw_drho = sensitivity.output_first_row_major[static_cast<size_t>(1 * explicit_count + rho_index)];
+    const double assoc_dzraw_dtheta = sensitivity.output_first_row_major[static_cast<size_t>(1 * explicit_count + theta_index)];
+    const double z_raw = base_zraw + assoc_zraw;
+    const double z = 1.0 + z_raw;
+    if (!(z > 0.0)) {
+        throw ValueError("Native association parameter derivative evaluation produced non-positive Z.");
+    }
+    const double dz_drho = base_dzraw_drho + assoc_dzraw_drho;
+    const double dz_dtheta = base_dzraw_dtheta + assoc_dzraw_dtheta;
+    const double pressure_factor = kb * t * N_AV;
+    NeutralBinaryKijPhaseDerivatives out;
+    out.ares = base_ares + assoc_ares;
+    out.dares_dk_fixed_rho = base_da_dtheta + assoc_dares_dtheta;
+    out.rho = rho;
+    out.z = z;
+    out.pressure = rho * pressure_factor * z;
+    out.dpdrho = pressure_factor * (z + rho * dz_drho);
+    out.dpdk = rho * pressure_factor * dz_dtheta;
+    if (!(std::isfinite(out.dpdrho)) || std::abs(out.dpdrho) <= 0.0) {
+        throw ValueError("Native association parameter derivative evaluation produced invalid dP/drho.");
+    }
+    out.drhodk = -out.dpdk / out.dpdrho;
+    out.mu_res.assign(static_cast<size_t>(ncomp), 0.0);
+    out.dmu_res_dk_fixed_rho.assign(static_cast<size_t>(ncomp), 0.0);
+    out.lnphi.assign(static_cast<size_t>(ncomp), 0.0);
+    out.dlnphi_drho.assign(static_cast<size_t>(ncomp), 0.0);
+    out.dlnphi_dk_fixed_rho.assign(static_cast<size_t>(ncomp), 0.0);
+    out.dlnphi_dk_total.assign(static_cast<size_t>(ncomp), 0.0);
+
+    vector<double> base_dadx(static_cast<size_t>(ncomp), 0.0);
+    vector<double> base_dadx_drho(static_cast<size_t>(ncomp), 0.0);
+    vector<double> base_dadx_dtheta(static_cast<size_t>(ncomp), 0.0);
+    double base_sum_x_dadx = 0.0;
+    double base_sum_x_dadx_drho = 0.0;
+    double base_sum_x_dadx_dtheta = 0.0;
+    for (int i = 0; i < ncomp; ++i) {
+        const int xi = x_start + i;
+        base_dadx[static_cast<size_t>(i)] = base_jacobian[static_cast<size_t>(xi)];
+        base_dadx_drho[static_cast<size_t>(i)] = base_h(xi, rho_index);
+        base_dadx_dtheta[static_cast<size_t>(i)] = base_h(xi, theta_index);
+        base_sum_x_dadx += x[static_cast<size_t>(i)] * base_dadx[static_cast<size_t>(i)];
+        base_sum_x_dadx_drho += x[static_cast<size_t>(i)] * base_dadx_drho[static_cast<size_t>(i)];
+        base_sum_x_dadx_dtheta += x[static_cast<size_t>(i)] * base_dadx_dtheta[static_cast<size_t>(i)];
+    }
+    for (int i = 0; i < ncomp; ++i) {
+        const double base_mu = base_ares + base_zraw + base_dadx[static_cast<size_t>(i)] - base_sum_x_dadx;
+        const double base_dmu_drho =
+            base_da_drho + base_dzraw_drho + base_dadx_drho[static_cast<size_t>(i)] - base_sum_x_dadx_drho;
+        const double base_dmu_dtheta =
+            base_da_dtheta + base_dzraw_dtheta + base_dadx_dtheta[static_cast<size_t>(i)]
+            - base_sum_x_dadx_dtheta;
+        const int output_row = 2 + i;
+        const double assoc_mu = sensitivity.output_values[static_cast<size_t>(output_row)];
+        const double assoc_dmu_drho =
+            sensitivity.output_first_row_major[static_cast<size_t>(output_row * explicit_count + rho_index)];
+        const double assoc_dmu_dtheta =
+            sensitivity.output_first_row_major[static_cast<size_t>(output_row * explicit_count + theta_index)];
+        const double mu = base_mu + assoc_mu;
+        const double dmu_drho = base_dmu_drho + assoc_dmu_drho;
+        const double dmu_dtheta = base_dmu_dtheta + assoc_dmu_dtheta;
+        out.mu_res[static_cast<size_t>(i)] = mu;
+        out.dmu_res_dk_fixed_rho[static_cast<size_t>(i)] = dmu_dtheta;
+        out.lnphi[static_cast<size_t>(i)] = mu - std::log(z);
+        out.dlnphi_drho[static_cast<size_t>(i)] = dmu_drho - dz_drho / z;
+        out.dlnphi_dk_fixed_rho[static_cast<size_t>(i)] = dmu_dtheta - dz_dtheta / z;
+        out.dlnphi_dk_total[static_cast<size_t>(i)] =
+            out.dlnphi_dk_fixed_rho[static_cast<size_t>(i)] + out.dlnphi_drho[static_cast<size_t>(i)] * out.drhodk;
+    }
+    out.backend = "cppad_implicit";
+    out.association_sensitivity_backend = "cppad_implicit_association";
+    out.association_sensitivity_helper = "association_implicit_sensitivity";
+    out.association_site_count = num_sites;
+    out.association_site_sensitivity_row_major = sensitivity.solved_first_row_major;
+    return out;
+#else
+    (void)t;
+    (void)rho;
+    (void)x;
+    (void)cppargs;
+    (void)parameter_index;
+    (void)parameter_name;
+    (void)component_target_kind;
+    (void)component_target_index;
+    throw ValueError("unsupported: CppAD support is not enabled in this native build.");
+#endif
+}
+
 NeutralBinaryKijPhaseDerivatives neutral_binary_kij_phase_derivatives_cpp(
     double t,
     double rho,
@@ -2462,12 +2890,25 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives
     }
     const bool is_kij = parameter_name == "k_ij";
     const bool is_lij = parameter_name == "l_ij";
-    if (!is_kij && !is_lij) {
-        throw ValueError("Native binary pair-parameter derivative supports only k_ij and l_ij.");
+    const bool is_khb = parameter_name == "k_hb_ij" || parameter_name == "k_hb";
+    if (!is_kij && !is_lij && !is_khb) {
+        throw ValueError("Native binary pair-parameter derivative supports only k_ij, l_ij, and k_hb_ij.");
     }
     const bool active_association = has_association_sites(cppargs);
+    if (active_association && (is_lij || is_khb)) {
+        return association_parameter_phase_derivatives_cpp(
+            t,
+            rho,
+            x,
+            cppargs,
+            parameter_index,
+            parameter_name,
+            -1,
+            -1
+        );
+    }
     if (active_association && !is_kij) {
-        throw ValueError("unsupported: associating binary pair-parameter derivatives support k_ij only until l_ij association-size sensitivities are implemented.");
+        throw ValueError("unsupported: associating binary pair-parameter derivatives support k_ij only until association-size sensitivities are implemented.");
     }
     const vector<double> &parameter_matrix = is_kij ? cppargs.k_ij : cppargs.l_ij;
     if (parameter_matrix.size() != static_cast<size_t>(ncomp * ncomp)) {
@@ -2565,6 +3006,8 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives
         dpdrho_for_values = pressure_factor * (z_for_values + rho * (dz_drho + assoc_dzraw_drho_for_values));
     }
     NeutralBinaryKijPhaseDerivatives out;
+    out.ares = ares;
+    out.dares_dk_fixed_rho = da_dk;
     out.rho = rho;
     out.z = z_for_values;
     out.pressure = rho * pressure_factor * z_for_values;
@@ -2605,6 +3048,10 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives
             out.dlnphi_dk_fixed_rho[static_cast<size_t>(i)] + out.dlnphi_drho[static_cast<size_t>(i)] * out.drhodk;
     }
     out.backend = active_association ? "cppad_implicit" : "cppad";
+    if (active_association) {
+        out.association_sensitivity_backend = "cppad_implicit_association";
+        out.association_sensitivity_helper = "association_implicit_sensitivity";
+    }
     return out;
 #else
     (void)t;
@@ -2633,10 +3080,12 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
     }
     if (target_kind != ares_detail::kGenericTargetSLocal
         && target_kind != ares_detail::kGenericTargetELocal
+        && target_kind != ares_detail::kGenericTargetEAssocLocal
+        && target_kind != ares_detail::kGenericTargetVolALocal
         && target_kind != ares_detail::kGenericTargetDBornLocal
         && target_kind != ares_detail::kGenericTargetFSolvLocal
         && target_kind != ares_detail::kGenericTargetDielcLocal) {
-        throw ValueError("unsupported: generic component-parameter CppAD derivatives support s, e, d_born, f_solv, and dielc only.");
+        throw ValueError("unsupported: generic component-parameter CppAD derivatives support s, e, e_assoc, vol_a, d_born, f_solv, and dielc only.");
     }
     if (target_index < 0 || target_index >= ncomp) {
         throw ValueError("Native generic component-parameter derivative target index is out of range.");
@@ -2664,6 +3113,22 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
         if (cppargs.dielc_rule != 1) {
             throw ValueError("unsupported: dielc CppAD derivatives require linear mole-fraction relative-permittivity mixing.");
         }
+    }
+    if (target_kind == ares_detail::kGenericTargetEAssocLocal
+        || target_kind == ares_detail::kGenericTargetVolALocal) {
+        if (!has_association_sites(cppargs)) {
+            throw ValueError("unsupported: association component-parameter derivatives require active association.");
+        }
+        return association_parameter_phase_derivatives_cpp(
+            t,
+            rho,
+            x,
+            cppargs,
+            -1,
+            "",
+            target_kind,
+            target_index
+        );
     }
     if (!(t > 0.0) || !(rho > 0.0)) {
         throw ValueError("Native generic component-parameter derivative evaluation requires positive T and rho.");

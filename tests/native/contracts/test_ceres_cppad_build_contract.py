@@ -77,10 +77,17 @@ def test_association_affecting_regression_targets_remain_nonproduction_until_evi
         for row in epcsaft.capabilities()["regression"]["target_kind_evidence"]["rows"]
     }
 
-    for target in ("e_assoc", "vol_a", "k_hb_ij", "l_ij"):
+    for target in ("e_assoc", "vol_a"):
+        assert rows[target]["derivative_supported_target_kind"] is True
         assert rows[target]["public_production_supported_target_kind"] is False
         assert rows[target]["optimizer_supported_target_kind"] is False
-        assert rows[target]["revisit_after_issue"] in {"#136", "#137"}
+        assert rows[target]["revisit_after_issue"] == "#136"
+
+    for target in ("k_hb_ij", "l_ij"):
+        assert rows[target]["derivative_supported_target_kind"] is True
+        assert rows[target]["public_production_supported_target_kind"] is False
+        assert rows[target]["optimizer_supported_target_kind"] is False
+        assert rows[target]["revisit_after_issue"] == "#137"
 
     assert rows["k_ij"]["public_production_supported_target_kind"] is True
 
@@ -90,10 +97,8 @@ def test_property_derivative_parameter_families_scope_active_association_lij_out
         "parameter_families"
     ]
 
-    assert parameter_families["production_scope"]["l_ij"] == "nonassociating_binary_pair_only"
-    assert parameter_families["association_affecting_nonproduction"] == {
-        "e_assoc": "#136",
-        "vol_a": "#136",
-        "k_hb_ij": "#137",
-        "l_ij_active_association": "#137",
-    }
+    assert parameter_families["production_scope"]["e_assoc"] == "pure_associating_component_parameter_only"
+    assert parameter_families["production_scope"]["vol_a"] == "pure_associating_component_parameter_only"
+    assert parameter_families["production_scope"]["l_ij"] == "binary_pair_including_active_association"
+    assert parameter_families["production_scope"]["k_hb_ij"] == "active_association_binary_pair_only"
+    assert parameter_families["association_affecting_nonproduction"] == {}

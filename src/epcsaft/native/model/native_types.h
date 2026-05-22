@@ -303,6 +303,8 @@ struct GenericRegressionResult {
 };
 
 struct NeutralBinaryKijPhaseDerivatives {
+    double ares = 0.0;
+    double dares_dk_fixed_rho = 0.0;
     double pressure = 0.0;
     double rho = 0.0;
     double z = 0.0;
@@ -316,6 +318,10 @@ struct NeutralBinaryKijPhaseDerivatives {
     vector<double> dlnphi_dk_fixed_rho;
     vector<double> dlnphi_dk_total;
     std::string backend = "cppad_implicit";
+    std::string association_sensitivity_backend;
+    std::string association_sensitivity_helper;
+    int association_site_count = 0;
+    vector<double> association_site_sensitivity_row_major;
 };
 
 struct PhaseStateCompositionSensitivityResult {

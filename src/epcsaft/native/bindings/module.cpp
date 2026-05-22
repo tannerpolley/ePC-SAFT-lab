@@ -44,6 +44,14 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives
     int parameter_index,
     const std::string& parameter_name
 );
+NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_cpp(
+    double t,
+    double rho,
+    const std::vector<double>& x,
+    const add_args& cppargs,
+    int target_kind,
+    int target_index
+);
 
 namespace py = pybind11;
 
@@ -207,17 +215,64 @@ void append_pair_parameter_derivatives(
     }
     out[(prefix + "_pressure").c_str()] = forward.pressure;
     out[(prefix + "_pressure_derivative").c_str()] = forward.dpdk + reverse.dpdk;
+    out[(prefix + "_residual_helmholtz").c_str()] = forward.ares;
+    out[(prefix + "_residual_helmholtz_derivative").c_str()] =
+        forward.dares_dk_fixed_rho + reverse.dares_dk_fixed_rho;
     out[(prefix + "_residual_chemical_potential").c_str()] = forward.mu_res;
     out[(prefix + "_residual_chemical_potential_derivative").c_str()] = dmu;
     out[(prefix + "_ln_fugacity").c_str()] = forward.lnphi;
     out[(prefix + "_ln_fugacity_derivative").c_str()] = dlnphi;
+    if (!forward.association_sensitivity_backend.empty()) {
+        out["association_sensitivity_backend"] = forward.association_sensitivity_backend;
+        out["association_sensitivity_helper"] = forward.association_sensitivity_helper;
+        out["association_site_count"] = forward.association_site_count;
+        out["association_site_sensitivity_row_major"] = forward.association_site_sensitivity_row_major;
+    }
+}
+
+void append_component_parameter_derivatives(
+    py::dict& out,
+    const std::string& prefix,
+    const NeutralBinaryKijPhaseDerivatives& derivative
+) {
+    out[(prefix + "_pressure").c_str()] = derivative.pressure;
+    out[(prefix + "_pressure_derivative").c_str()] = derivative.dpdk;
+    out[(prefix + "_residual_helmholtz").c_str()] = derivative.ares;
+    out[(prefix + "_residual_helmholtz_derivative").c_str()] = derivative.dares_dk_fixed_rho;
+    out[(prefix + "_residual_chemical_potential").c_str()] = derivative.mu_res;
+    out[(prefix + "_residual_chemical_potential_derivative").c_str()] =
+        derivative.dmu_res_dk_fixed_rho;
+    out[(prefix + "_ln_fugacity").c_str()] = derivative.lnphi;
+    out[(prefix + "_ln_fugacity_derivative").c_str()] = derivative.dlnphi_dk_fixed_rho;
+    if (!derivative.association_sensitivity_backend.empty()) {
+        out["association_sensitivity_backend"] = derivative.association_sensitivity_backend;
+        out["association_sensitivity_helper"] = derivative.association_sensitivity_helper;
+        out["association_site_count"] = derivative.association_site_count;
+        out["association_site_sensitivity_row_major"] = derivative.association_site_sensitivity_row_major;
+    }
+}
+
+py::dict association_component_parameter_derivatives_to_dict(
+    const NeutralBinaryKijPhaseDerivatives& e_assoc,
+    const NeutralBinaryKijPhaseDerivatives& vol_a
+) {
+    py::dict out;
+    out["supported"] = true;
+    out["backend"] = "cppad_implicit";
+    out["message"] = "CppAD component association-parameter derivatives with implicit site-fraction sensitivities available";
+    out["parameter_names"] = std::vector<std::string>{"e_assoc", "vol_a"};
+    append_component_parameter_derivatives(out, "e_assoc", e_assoc);
+    append_component_parameter_derivatives(out, "vol_a", vol_a);
+    return out;
 }
 
 py::dict neutral_binary_pair_property_derivatives_to_dict(
     const NeutralBinaryKijPhaseDerivatives& kij_forward,
     const NeutralBinaryKijPhaseDerivatives& kij_reverse,
     const NeutralBinaryKijPhaseDerivatives* lij_forward,
-    const NeutralBinaryKijPhaseDerivatives* lij_reverse
+    const NeutralBinaryKijPhaseDerivatives* lij_reverse,
+    const NeutralBinaryKijPhaseDerivatives* khb_forward,
+    const NeutralBinaryKijPhaseDerivatives* khb_reverse
 ) {
     py::dict out;
     out["supported"] = true;
@@ -226,6 +281,11 @@ py::dict neutral_binary_pair_property_derivatives_to_dict(
         uses_implicit = uses_implicit
             || lij_forward->backend == "cppad_implicit"
             || lij_reverse->backend == "cppad_implicit";
+    }
+    if (khb_forward != nullptr && khb_reverse != nullptr) {
+        uses_implicit = uses_implicit
+            || khb_forward->backend == "cppad_implicit"
+            || khb_reverse->backend == "cppad_implicit";
     }
     out["backend"] = uses_implicit ? "cppad_implicit" : "cppad";
     out["message"] = uses_implicit
@@ -236,6 +296,12 @@ py::dict neutral_binary_pair_property_derivatives_to_dict(
     if (lij_forward != nullptr && lij_reverse != nullptr) {
         append_pair_parameter_derivatives(out, "l_ij", *lij_forward, *lij_reverse);
         out["parameter_names"] = std::vector<std::string>{"k_ij", "l_ij"};
+    }
+    if (khb_forward != nullptr && khb_reverse != nullptr) {
+        append_pair_parameter_derivatives(out, "k_hb_ij", *khb_forward, *khb_reverse);
+        out["parameter_names"] = (lij_forward != nullptr && lij_reverse != nullptr)
+            ? std::vector<std::string>{"k_ij", "l_ij", "k_hb_ij"}
+            : std::vector<std::string>{"k_ij", "k_hb_ij"};
     }
     return out;
 }
@@ -754,6 +820,19 @@ PYBIND11_MODULE(_core, m) {
     m.def("_native_cppad_pure_neutral_parameters", [](double t, double rho, const add_args& args) {
         return cppad_smoke_to_dict(cppad_pure_neutral_parameter_derivatives_cpp(t, rho, args));
     });
+    m.def("_native_cppad_association_component_parameters", [](
+        double t,
+        double rho,
+        const std::vector<double>& x,
+        const add_args& args,
+        int component_index
+    ) {
+        NeutralBinaryKijPhaseDerivatives e_assoc =
+            generic_component_parameter_phase_derivatives_cpp(t, rho, x, args, 3, component_index);
+        NeutralBinaryKijPhaseDerivatives vol_a =
+            generic_component_parameter_phase_derivatives_cpp(t, rho, x, args, 4, component_index);
+        return association_component_parameter_derivatives_to_dict(e_assoc, vol_a);
+    });
     m.def("_native_cppad_neutral_binary_kij_properties", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
         NeutralBinaryKijPhaseDerivatives forward = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "k_ij");
         NeutralBinaryKijPhaseDerivatives reverse = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "k_ij");
@@ -762,12 +841,34 @@ PYBIND11_MODULE(_core, m) {
     m.def("_native_cppad_neutral_binary_pair_properties", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
         NeutralBinaryKijPhaseDerivatives kij_forward = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "k_ij");
         NeutralBinaryKijPhaseDerivatives kij_reverse = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "k_ij");
-        if (args.l_ij.size() != 4) {
-            return neutral_binary_pair_property_derivatives_to_dict(kij_forward, kij_reverse, nullptr, nullptr);
+        std::unique_ptr<NeutralBinaryKijPhaseDerivatives> lij_forward;
+        std::unique_ptr<NeutralBinaryKijPhaseDerivatives> lij_reverse;
+        std::unique_ptr<NeutralBinaryKijPhaseDerivatives> khb_forward;
+        std::unique_ptr<NeutralBinaryKijPhaseDerivatives> khb_reverse;
+        if (args.l_ij.size() == 4) {
+            lij_forward = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "l_ij")
+            );
+            lij_reverse = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "l_ij")
+            );
         }
-        NeutralBinaryKijPhaseDerivatives lij_forward = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "l_ij");
-        NeutralBinaryKijPhaseDerivatives lij_reverse = neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "l_ij");
-        return neutral_binary_pair_property_derivatives_to_dict(kij_forward, kij_reverse, &lij_forward, &lij_reverse);
+        if (args.k_hb.size() == 4) {
+            khb_forward = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 1, "k_hb_ij")
+            );
+            khb_reverse = std::make_unique<NeutralBinaryKijPhaseDerivatives>(
+                neutral_binary_pair_parameter_phase_derivatives_cpp(t, rho, x, args, 2, "k_hb_ij")
+            );
+        }
+        return neutral_binary_pair_property_derivatives_to_dict(
+            kij_forward,
+            kij_reverse,
+            lij_forward.get(),
+            lij_reverse.get(),
+            khb_forward.get(),
+            khb_reverse.get()
+        );
     });
 
     py::class_<add_args>(m, "NativeArgs")
