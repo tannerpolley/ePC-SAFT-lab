@@ -71,13 +71,13 @@ jobs:
           ):
               if token not in workflow:
                   raise SystemExit(f"missing workflow contract token: {token}")
-          if re.search(r"windows-install-smoke:\n(?:.*\n)*?    if:", workflow):
-              raise SystemExit("windows install smoke must run on pull_request and push events")
           windows_smoke = re.search(
               r"windows-install-smoke:\n(?P<body>.*?)(?:\n  build:|\Z)",
               workflow,
               re.S,
           ).group("body")
+          if "    if:" in windows_smoke:
+              raise SystemExit("windows install smoke must run on pull_request and push events")
           old_wheel_command = "uv build --" + "wheel"
           old_wheel_step = "Build Windows " + "wheel"
           if old_wheel_command in windows_smoke:
