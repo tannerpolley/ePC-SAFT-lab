@@ -16,6 +16,8 @@ This document is authoritative over older roadmap language that allowed audit-on
 
 `docs/roadmaps/unified_equilibrium_core_algorithm.md` is the companion architecture contract for shared equilibrium-core implementation. It replaces completed Ipopt tranche handoffs, GoalBuddy receipts, and native-route audit reports as the current source of truth for equilibrium solver structure.
 
+`docs/roadmaps/association_derivative_goal_roadmap.md` is the management document for the post-#130/#131 association-derivative tranche (#132 through #140). Read it before starting association solved-state, implicit-sensitivity, association-parameter regression, associating-equilibrium architecture, or lifted-`X_A` block work.
+
 ---
 
 # 1. Package identity
