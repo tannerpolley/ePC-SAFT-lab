@@ -191,6 +191,11 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert 'RUN_CONFIG_FOLDER = "ePC-SAFT"' in normalizer
     assert "delete stale shared run configuration" in normalizer
     assert "Configure IntelliJ Runs (Dry Run)" in normalizer
+    assert "Hard rule: use IntelliJ MCP first by default for repo work." in agents_md
+    assert "Try the relevant indexed action at least twice" in agents_md
+    assert "Hard rule: use `jetbrains-bundled` run-configuration MCP first by default" in agents_md
+    assert "do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in agents_md
+    assert "Use shell only for one-off probes, raw config reads after MCP lookup, git operations" in agents_md
     assert "Services folders for this repo must use the single-level repo folder `ePC-SAFT`" in agents_md
 
     expected_names = {
@@ -214,6 +219,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         "Test Runtime",
         "Test Native",
         "Test Native Contracts",
+        "Test Workflow Guards",
         "Build Docs",
         "Build Equations PDF",
         "Sync Equation Registry",

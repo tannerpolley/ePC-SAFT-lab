@@ -192,6 +192,13 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="--native-contracts -q",
     ),
     RunConfigSpec(
+        name="Test Workflow Guards",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_TESTS,
+        command="run_pytest.py",
+        parameters="tests/workflows/repo/test_workflow_entrypoints.py tests/workflows/build/test_build_epcsaft.py -q",
+    ),
+    RunConfigSpec(
         name="Build Docs",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_DOCS_REPORTS,
