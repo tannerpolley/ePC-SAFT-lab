@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Build Status" type="PythonConfigurationType" factoryName="Python" folderName="Build &amp; Native">
+  <configuration default="false" name="Build System Ceres" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -16,8 +16,8 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
-    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/dev/build_epcsaft.py" />
-    <option name="PARAMETERS" value="--status" />
+    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/dev/build_system_ceres.py" />
+    <option name="PARAMETERS" value="--parallel 4" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

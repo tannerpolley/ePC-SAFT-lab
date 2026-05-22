@@ -109,11 +109,15 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 - Branch review/change audit: use owner agents by concern area, then have the main thread synthesize findings and decide edits.
 
 ## IntelliJ-Backed Tooling
-- Load and follow the user-level `jetbrains` skill for semantic code work, public API usage tracing, call/type hierarchy work, safe semantic refactors, or post-edit IDE diagnostics.
+- Load and follow the `jetbrains-bridge` plugin, or the compatibility `jetbrains` skill, for semantic code work, public API usage tracing, call/type hierarchy work, safe semantic refactors, post-edit IDE diagnostics, and durable IntelliJ run execution.
 - Propose IntelliJ-backed tooling unprompted when it is clearly the more efficient or safer option for `ePC-SAFT` work.
 - Ask before launching or focusing IntelliJ for `C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT`.
 - After approval, keep automation minimal: launch or focus IntelliJ for this repo, wait for indexing readiness, then use MCP tools.
 - Treat `intellij-index` as an IDE-backed index over open IntelliJ projects, not as a generic filesystem indexer.
+- In the Engineering IntelliJ Workspace, durable scripts, tests, validation commands, build commands, docs/report commands, analysis commands, package commands, and maintenance commands should run through shared IntelliJ run configurations rather than hidden Codex shell sessions.
+- This repo owns its shared IntelliJ dashboard through `scripts/dev/configure_jetbrains_project.py` and `.run/*.run.xml`. Update that manifest, run `--dry-run`, run `--apply`, and verify XML/idempotence when adding, editing, deleting, or grouping durable run configs.
+- Services folders for this repo must use the single-level repo folder `ePC-SAFT` so the shared Engineering workspace dashboard stays separated by repo without top-level workflow-folder clutter.
+- Use Python or Shell Script run configurations for durable pytest/test workflows. Do not add native Pytest configuration types to Services by default, because generated gutter configs clutter the dashboard.
 - Call `ide_index_status` at most once near the start of semantic work, pass `project_path`, and fall back without repeated retries if MCP is unavailable or indexing is not ready.
 - For non-trivial code work, public API or native wrapper changes, architecture questions, bug diagnosis, deletion/rename/move work, or review of shared behavior, use at least one relevant `intellij-index` semantic tool before finalizing when the IDE is ready.
 - Prefer IntelliJ-backed semantic navigation and diagnostics when symbol meaning matters:

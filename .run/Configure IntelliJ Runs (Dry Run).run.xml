@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test Runtime" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT">
+  <configuration default="false" name="Configure IntelliJ Runs (Dry Run)" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -16,8 +16,8 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
-    <option name="SCRIPT_NAME" value="$MODULE_DIR$/run_pytest.py" />
-    <option name="PARAMETERS" value="--runtime -q" />
+    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py" />
+    <option name="PARAMETERS" value="--dry-run" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

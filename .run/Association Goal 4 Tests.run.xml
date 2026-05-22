@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Association Goal 4 Tests" type="PythonConfigurationType" factoryName="Python" folderName="Association Roadmap">
+  <configuration default="false" name="Association Goal 4 Tests" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Doctor" type="ShConfigurationType" factoryName="Shell Script" folderName="ePC-SAFT">
+  <configuration default="false" name="Build Equations PDF" type="ShConfigurationType" factoryName="Shell Script" folderName="ePC-SAFT">
     <option name="SCRIPT_TEXT" value="" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-    <option name="SCRIPT_PATH" value="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT/.codex/environments/setup.ps1" />
-    <option name="SCRIPT_OPTIONS" value="-Step Doctor" />
+    <option name="SCRIPT_PATH" value="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT/scripts/docs/build_equations_pdf.ps1" />
+    <option name="SCRIPT_OPTIONS" value="" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
     <option name="SCRIPT_WORKING_DIRECTORY" value="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT" />
     <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 import tomllib
 
@@ -9,6 +10,14 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 def _read(path: str) -> str:
     return (REPO_ROOT / path).read_text(encoding="utf-8")
+
+
+def _run_config_options(config: ET.Element) -> dict[str, str]:
+    return {
+        option.attrib["name"]: option.attrib.get("value", "")
+        for option in config.findall("option")
+        if "name" in option.attrib
+    }
 
 
 def test_bootstrap_scripts_use_normal_build_and_fast_suite() -> None:
@@ -173,6 +182,99 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert "scripts/dev/build_dist.py auto-detects the default build/system-ceres/2.2.0" in command_runner
     assert "plus EPCSAFT_PEP517_CERES_DIR" not in build_owner
     assert "prefer a persistent EPCSAFT_PEP517_BUILD_DIR and prebuilt Ceres via EPCSAFT_PEP517_CERES_DIR" not in command_runner
+
+
+def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
+    normalizer = _read("scripts/dev/configure_jetbrains_project.py")
+    agents_md = _read("AGENTS.md")
+
+    assert 'RUN_CONFIG_FOLDER = "ePC-SAFT"' in normalizer
+    assert "delete stale shared run configuration" in normalizer
+    assert "Configure IntelliJ Runs (Dry Run)" in normalizer
+    assert "Services folders for this repo must use the single-level repo folder `ePC-SAFT`" in agents_md
+
+    expected_names = {
+        "Sync Environment",
+        "Bootstrap uv",
+        "Doctor",
+        "Doctor Script",
+        "Build Native Extension",
+        "Build Status",
+        "Build Native Incremental",
+        "Build System Ceres",
+        "Clean Build Artifacts",
+        "Validate Quick",
+        "Validate Confidence",
+        "Check Text Gates",
+        "Validate Hydrocarbon Regression",
+        "Run Ipopt Exact Hessian Proofs",
+        "Test List Slices",
+        "Test API",
+        "Test Equilibrium API",
+        "Test Runtime",
+        "Test Native",
+        "Test Native Contracts",
+        "Build Docs",
+        "Build Equations PDF",
+        "Sync Equation Registry",
+        "Sync Algorithm Registry",
+        "Build Parameter Catalog",
+        "Extract Paper Parameter CSVs",
+        "Sync MIAC Variants",
+        "Sync LaTeX Mirror",
+        "Setup LaTeX Mirror",
+        "Install LaTeX Sync Hook",
+        "Build Distribution",
+        "Generate Equilibrium Activation",
+        "Create Dev Worktree",
+        "Configure IntelliJ Runs (Dry Run)",
+        "Configure IntelliJ Runs (Apply)",
+        "Association Goal 1+2 Tests",
+        "Association Goal 3 Tests",
+        "Association Goal 4 Tests",
+        "Association Goal 5 Tests",
+        "Association Goal 6 Tests",
+    }
+
+    run_configs: dict[str, tuple[Path, ET.Element]] = {}
+    for path in sorted((REPO_ROOT / ".run").glob("*.run.xml")):
+        config = ET.parse(path).getroot().find("configuration")
+        assert config is not None, path.name
+        name = config.get("name")
+        assert name, path.name
+        assert name not in run_configs, name
+        run_configs[name] = (path, config)
+
+    assert set(run_configs) == expected_names
+
+    for name, (path, config) in run_configs.items():
+        assert config.get("folderName") == "ePC-SAFT", name
+        assert config.get("type") in {"PythonConfigurationType", "ShConfigurationType"}, name
+        assert config.get("type") != "tests", name
+        options = _run_config_options(config)
+        if config.get("type") == "PythonConfigurationType":
+            assert options["WORKING_DIRECTORY"] == "$MODULE_DIR$", name
+            assert options["SCRIPT_NAME"].startswith("$MODULE_DIR$/"), name
+            script_path = REPO_ROOT / options["SCRIPT_NAME"].removeprefix("$MODULE_DIR$/")
+            assert script_path.exists(), f"{path.name} points at missing {script_path}"
+        else:
+            assert options["INTERPRETER_PATH"].endswith("/pwsh.exe"), name
+            assert options["SCRIPT_WORKING_DIRECTORY"] == REPO_ROOT.as_posix(), name
+            script_path_text = options.get("SCRIPT_PATH", "")
+            if script_path_text:
+                assert Path(script_path_text).exists(), f"{path.name} points at missing {script_path_text}"
+
+    build_native = _run_config_options(run_configs["Build Native Extension"][1])
+    assert build_native["SCRIPT_PATH"].endswith("/.codex/environments/setup.ps1")
+    assert build_native["SCRIPT_OPTIONS"] == "-Step Build"
+
+    dry_run = _run_config_options(run_configs["Configure IntelliJ Runs (Dry Run)"][1])
+    assert dry_run["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"
+    assert dry_run["PARAMETERS"] == "--dry-run"
+
+    apply_run = _run_config_options(run_configs["Configure IntelliJ Runs (Apply)"][1])
+    assert apply_run["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"
+    assert apply_run["PARAMETERS"] == "--apply"
 
 
 def test_repo_local_agent_roster_uses_supported_models_and_expected_scopes() -> None:

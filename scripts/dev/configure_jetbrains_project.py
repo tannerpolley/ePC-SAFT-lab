@@ -9,6 +9,7 @@ from pathlib import Path, PurePosixPath
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IDEA_DIR = REPO_ROOT / ".idea"
 RUN_DIR = REPO_ROOT / ".run"
+RUN_WORKING_DIRECTORY = REPO_ROOT.as_posix()
 MODULE_URL_PREFIX = "file://$MODULE_DIR$"
 CONTENT_URL = MODULE_URL_PREFIX
 MODULE_DIR_MACRO = "$MODULE_DIR$"
@@ -20,13 +21,14 @@ SHELL_RUNNER = "Shell Script"
 PYTHON_SDK_HOME = "$MODULE_DIR$/.venv/Scripts/python.exe"
 PYTHON_SDK_NAME = "uv (ePC-SAFT)"
 POWERSHELL_INTERPRETER = "C:/Program Files/PowerShell/7/pwsh.exe"
+RUN_CONFIG_FOLDER = "ePC-SAFT"
 FOLDER_SETUP_HEALTH = "Setup & Health"
-FOLDER_BUILD_NATIVE = "Build & Native"
+FOLDER_BUILD_PACKAGE = "Build & Package"
 FOLDER_VALIDATION = "Validation"
-FOLDER_PYTEST_SLICES = "Pytest Slices"
-FOLDER_DOCS_REGISTRY = "Docs & Registry"
-FOLDER_PACKAGE = "Package"
-FOLDER_ASSOCIATION_ROADMAP = "Association Roadmap"
+FOLDER_TESTS = "Tests"
+FOLDER_DOCS_REPORTS = "Docs & Reports"
+FOLDER_ANALYSIS_FIGURES = "Analysis & Figures"
+FOLDER_MAINTENANCE = "Maintenance"
 TRANSIENT_PATHS: tuple[str, ...] = (
     "build",
     "dist",
@@ -63,6 +65,12 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="uv sync --no-install-project",
     ),
     RunConfigSpec(
+        name="Bootstrap uv",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_SETUP_HEALTH,
+        command="scripts/dev/bootstrap_uv.ps1",
+    ),
+    RunConfigSpec(
         name="Doctor",
         runner=SHELL_RUNNER,
         folder_name=FOLDER_SETUP_HEALTH,
@@ -70,25 +78,44 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="-Step Doctor",
     ),
     RunConfigSpec(
+        name="Doctor Script",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_SETUP_HEALTH,
+        command="scripts/dev/doctor.py",
+    ),
+    RunConfigSpec(
         name="Build Native Extension",
         runner=SHELL_RUNNER,
-        folder_name=FOLDER_BUILD_NATIVE,
+        folder_name=FOLDER_BUILD_PACKAGE,
         command=".codex/environments/setup.ps1",
         parameters="-Step Build",
     ),
     RunConfigSpec(
         name="Build Status",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_NATIVE,
+        folder_name=FOLDER_BUILD_PACKAGE,
         command="scripts/dev/build_epcsaft.py",
         parameters="--status",
     ),
     RunConfigSpec(
         name="Build Native Incremental",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_NATIVE,
+        folder_name=FOLDER_BUILD_PACKAGE,
         command="scripts/dev/build_epcsaft.py",
         parameters="--build-only --parallel 10",
+    ),
+    RunConfigSpec(
+        name="Build System Ceres",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/build_system_ceres.py",
+        parameters="--parallel 4",
+    ),
+    RunConfigSpec(
+        name="Clean Build Artifacts",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/dev/clean_build.ps1",
     ),
     RunConfigSpec(
         name="Validate Quick",
@@ -105,76 +132,162 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="confidence",
     ),
     RunConfigSpec(
+        name="Check Text Gates",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/dev/check_text_gates.py",
+    ),
+    RunConfigSpec(
+        name="Validate Hydrocarbon Regression",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/validation/validate_hydrocarbon_regression.py",
+    ),
+    RunConfigSpec(
+        name="Run Ipopt Exact Hessian Proofs",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/dev/run_ipopt_exact_hessian_proofs.py",
+    ),
+    RunConfigSpec(
         name="Test List Slices",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_PYTEST_SLICES,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--list-slices",
     ),
     RunConfigSpec(
         name="Test API",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_PYTEST_SLICES,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--api -q",
     ),
     RunConfigSpec(
         name="Test Equilibrium API",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_PYTEST_SLICES,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--equilibrium-api -q",
     ),
     RunConfigSpec(
         name="Test Runtime",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_PYTEST_SLICES,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--runtime -q",
     ),
     RunConfigSpec(
         name="Test Native",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_PYTEST_SLICES,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--native -q",
     ),
     RunConfigSpec(
         name="Test Native Contracts",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_PYTEST_SLICES,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--native-contracts -q",
     ),
     RunConfigSpec(
         name="Build Docs",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REGISTRY,
+        folder_name=FOLDER_DOCS_REPORTS,
         command="scripts/dev/validate_project.py",
         parameters="docs",
     ),
     RunConfigSpec(
+        name="Build Equations PDF",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_DOCS_REPORTS,
+        command="scripts/docs/build_equations_pdf.ps1",
+    ),
+    RunConfigSpec(
         name="Sync Equation Registry",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REGISTRY,
+        folder_name=FOLDER_DOCS_REPORTS,
         command="scripts/docs/sync_equation_registry.py",
     ),
     RunConfigSpec(
         name="Sync Algorithm Registry",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REGISTRY,
+        folder_name=FOLDER_DOCS_REPORTS,
         command="scripts/docs/sync_algorithm_registry.py",
+    ),
+    RunConfigSpec(
+        name="Build Parameter Catalog",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_DOCS_REPORTS,
+        command="scripts/data/build_epcsaft_parameter_catalog.py",
+    ),
+    RunConfigSpec(
+        name="Extract Paper Parameter CSVs",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_DOCS_REPORTS,
+        command="scripts/data/extract_paper_parameter_csvs.py",
+    ),
+    RunConfigSpec(
+        name="Sync MIAC Variants",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_DOCS_REPORTS,
+        command="scripts/data/sync_miac_variants.py",
+    ),
+    RunConfigSpec(
+        name="Sync LaTeX Mirror",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_DOCS_REPORTS,
+        command="scripts/docs/sync_latex_mirror.ps1",
+    ),
+    RunConfigSpec(
+        name="Setup LaTeX Mirror",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/docs/setup_latex_mirror.ps1",
+    ),
+    RunConfigSpec(
+        name="Install LaTeX Sync Hook",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/docs/install_latex_sync_hook.ps1",
     ),
     RunConfigSpec(
         name="Build Distribution",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_PACKAGE,
+        folder_name=FOLDER_BUILD_PACKAGE,
         command="scripts/dev/build_dist.py",
+    ),
+    RunConfigSpec(
+        name="Generate Equilibrium Activation",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_ANALYSIS_FIGURES,
+        command="scripts/dev/generate_equilibrium_activation.py",
+    ),
+    RunConfigSpec(
+        name="Create Dev Worktree",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/dev/create_dev_worktree.ps1",
+    ),
+    RunConfigSpec(
+        name="Configure IntelliJ Runs (Dry Run)",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/dev/configure_jetbrains_project.py",
+        parameters="--dry-run",
+    ),
+    RunConfigSpec(
+        name="Configure IntelliJ Runs (Apply)",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/dev/configure_jetbrains_project.py",
+        parameters="--apply",
     ),
     RunConfigSpec(
         name="Association Goal 1+2 Tests",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters=(
             "tests/native/contracts/test_association_implicit_derivative_contract.py "
@@ -187,14 +300,14 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
     RunConfigSpec(
         name="Association Goal 3 Tests",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="tests/native/contracts tests/native/regression tests/api/frontend/test_regression.py -q",
     ),
     RunConfigSpec(
         name="Association Goal 4 Tests",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters=(
             "tests/native/state/test_fugacity_derivatives.py "
@@ -208,7 +321,7 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
     RunConfigSpec(
         name="Association Goal 5 Tests",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters=(
             "tests/native/state/test_fugacity_derivatives.py "
@@ -221,7 +334,7 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
     RunConfigSpec(
         name="Association Goal 6 Tests",
         runner=PYTHON_RUNNER,
-        folder_name=FOLDER_ASSOCIATION_ROADMAP,
+        folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters=(
             "tests/native/equilibrium/blocks/test_association_block.py "
@@ -470,6 +583,13 @@ def _run_script_path(relative_path: str) -> str:
     return f"{MODULE_DIR_MACRO}/{normalized}"
 
 
+def _shell_script_path(relative_path: str) -> str:
+    normalized = relative_path.replace("\\", "/").strip("/")
+    if not normalized:
+        return RUN_WORKING_DIRECTORY
+    return (REPO_ROOT / normalized).as_posix()
+
+
 def _add_option(parent: ET.Element, name: str, value: str) -> None:
     parent.append(ET.Element("option", {"name": name, "value": value}))
 
@@ -496,7 +616,7 @@ def _python_configuration(spec: RunConfigSpec) -> ET.Element:
             "name": spec.name,
             "type": PYTHON_CONFIG_TYPE,
             "factoryName": PYTHON_RUNNER,
-            "folderName": spec.folder_name,
+            "folderName": RUN_CONFIG_FOLDER,
         },
     )
     config.append(ET.Element("module", {"name": MODULE_NAME}))
@@ -542,12 +662,12 @@ def _shell_configuration(spec: RunConfigSpec) -> ET.Element:
             "name": spec.name,
             "type": SHELL_CONFIG_TYPE,
             "factoryName": SHELL_RUNNER,
-            "folderName": spec.folder_name,
+            "folderName": RUN_CONFIG_FOLDER,
         },
     )
     if _is_powershell_script(spec.command):
         script_text = ""
-        script_path = _run_script_path(spec.command)
+        script_path = _shell_script_path(spec.command)
         script_options = spec.parameters
         interpreter_options = "-NoProfile -ExecutionPolicy Bypass -File"
         execute_script_file = "true"
@@ -561,7 +681,7 @@ def _shell_configuration(spec: RunConfigSpec) -> ET.Element:
     _add_option(config, "SCRIPT_TEXT", script_text)
     _path_option(config, "SCRIPT_PATH", script_path)
     _add_option(config, "SCRIPT_OPTIONS", script_options)
-    _path_option(config, "SCRIPT_WORKING_DIRECTORY", MODULE_DIR_MACRO)
+    _path_option(config, "SCRIPT_WORKING_DIRECTORY", RUN_WORKING_DIRECTORY)
     _path_option(config, "INTERPRETER_PATH", POWERSHELL_INTERPRETER)
     _add_option(config, "INTERPRETER_OPTIONS", interpreter_options)
     _add_option(config, "EXECUTE_IN_TERMINAL", "false")
@@ -613,16 +733,16 @@ def _expected_option_values(spec: RunConfigSpec) -> dict[str, str]:
         }
     if spec.runner == SHELL_RUNNER and _is_powershell_script(spec.command):
         return {
-            "SCRIPT_PATH": _run_script_path(spec.command),
+            "SCRIPT_PATH": _shell_script_path(spec.command),
             "SCRIPT_OPTIONS": spec.parameters,
-            "SCRIPT_WORKING_DIRECTORY": MODULE_DIR_MACRO,
+            "SCRIPT_WORKING_DIRECTORY": RUN_WORKING_DIRECTORY,
             "INTERPRETER_PATH": POWERSHELL_INTERPRETER,
             "EXECUTE_SCRIPT_FILE": "true",
         }
     if spec.runner == SHELL_RUNNER:
         return {
             "SCRIPT_TEXT": spec.command,
-            "SCRIPT_WORKING_DIRECTORY": MODULE_DIR_MACRO,
+            "SCRIPT_WORKING_DIRECTORY": RUN_WORKING_DIRECTORY,
             "INTERPRETER_PATH": POWERSHELL_INTERPRETER,
             "EXECUTE_SCRIPT_FILE": "false",
         }
@@ -631,7 +751,7 @@ def _expected_option_values(spec: RunConfigSpec) -> dict[str, str]:
 
 def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) -> list[str]:
     if current_config is None:
-        return [f"create {spec.runner} run configuration in {spec.folder_name}"]
+        return [f"create {spec.runner} run configuration in {RUN_CONFIG_FOLDER}"]
 
     actions: list[str] = []
     expected_type = _run_config_type(spec)
@@ -639,8 +759,8 @@ def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) 
         actions.append(f"set runner type to {spec.runner}")
     if current_config.get("factoryName") != spec.runner:
         actions.append(f"set factoryName={spec.runner}")
-    if current_config.get("folderName") != spec.folder_name:
-        actions.append(f"set folderName={spec.folder_name}")
+    if current_config.get("folderName") != RUN_CONFIG_FOLDER:
+        actions.append(f"set folderName={RUN_CONFIG_FOLDER}")
     for option_name, expected_value in _expected_option_values(spec).items():
         if _option_value(current_config, option_name) != expected_value:
             actions.append(f"set {option_name}={expected_value}")
@@ -733,13 +853,22 @@ def main(argv: list[str] | None = None) -> int:
 
     canonical_names = {spec.name for spec in CANONICAL_RUN_CONFIGS}
     for name, paths in sorted(run_configs_by_name.items()):
-        if len(paths) > 1:
-            warnings_found += 1
-            joined_paths = ", ".join(path.relative_to(REPO_ROOT).as_posix() for path in paths)
-            print(f"WARNING duplicate shared run configuration '{name}': {joined_paths}")
         if name not in canonical_names:
-            warnings_found += 1
-            print(f"WARNING .run/{paths[0].name}: shared run configuration is not in the canonical manifest")
+            for path in paths:
+                pending_changes += 1
+                relative_path = path.relative_to(REPO_ROOT).as_posix()
+                prefix = "APPLY" if args.apply else "DRY-RUN"
+                print(f"{prefix} {relative_path}: delete stale shared run configuration")
+                if args.apply:
+                    path.unlink()
+            continue
+        for duplicate_path in paths[1:]:
+            pending_changes += 1
+            relative_path = duplicate_path.relative_to(REPO_ROOT).as_posix()
+            prefix = "APPLY" if args.apply else "DRY-RUN"
+            print(f"{prefix} {relative_path}: delete duplicate shared run configuration '{name}'")
+            if args.apply:
+                duplicate_path.unlink()
 
     for iml_path in iml_files:
         actions, warnings, proposed_text = _normalize_iml(iml_path, transient_paths, declared_modules)
