@@ -16,6 +16,7 @@ from scikit_build_core import build as _scikit_build
 try:
     from native_dependency_policy import (
         ipopt_root_prefers_msvc,
+        resolve_default_system_ceres_config_dir,
         resolve_default_windows_ipopt_sdk_root,
         validate_ceres_dir,
         validate_ipopt_dir,
@@ -29,6 +30,7 @@ except ModuleNotFoundError:  # pragma: no cover - import-by-file tests
     _POLICY = importlib.util.module_from_spec(_POLICY_SPEC)
     _POLICY_SPEC.loader.exec_module(_POLICY)
     ipopt_root_prefers_msvc = _POLICY.ipopt_root_prefers_msvc
+    resolve_default_system_ceres_config_dir = _POLICY.resolve_default_system_ceres_config_dir
     resolve_default_windows_ipopt_sdk_root = _POLICY.resolve_default_windows_ipopt_sdk_root
     validate_ceres_dir = _POLICY.validate_ceres_dir
     validate_ipopt_dir = _POLICY.validate_ipopt_dir
@@ -158,14 +160,17 @@ def _apply_required_native_dependency_config(config: dict) -> dict:
 
 def _apply_system_ceres_config(config: dict) -> dict:
     ceres_dir_env = os.environ.get("EPCSAFT_PEP517_CERES_DIR") or os.environ.get("Ceres_DIR")
-    use_system_ceres = bool(ceres_dir_env) or _truthy_env("EPCSAFT_PEP517_USE_SYSTEM_CERES")
+    default_ceres_dir = None if ceres_dir_env else resolve_default_system_ceres_config_dir(_source_root())
+    ceres_dir = Path(ceres_dir_env).expanduser().resolve() if ceres_dir_env else default_ceres_dir
+    use_system_ceres = bool(ceres_dir) or _truthy_env("EPCSAFT_PEP517_USE_SYSTEM_CERES")
     if not use_system_ceres:
         return config
 
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_CERES", "ON")
     _set_config_default(config, "cmake.define.EPCSAFT_USE_SYSTEM_CERES", "ON")
-    if ceres_dir_env:
-        _set_config_default(config, "cmake.define.Ceres_DIR", str(validate_ceres_dir(ceres_dir_env)))
+    if ceres_dir is not None:
+        config_dir = validate_ceres_dir(str(ceres_dir), env_name="Ceres_DIR")
+        _set_config_default(config, "cmake.define.Ceres_DIR", str(config_dir))
     return config
 
 

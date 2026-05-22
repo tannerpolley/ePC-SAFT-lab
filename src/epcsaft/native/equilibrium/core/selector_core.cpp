@@ -303,7 +303,7 @@ epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_route(
         );
     }
     if (request.route == "neutral_tp_flash") {
-        return epcsaft::native::equilibrium_nlp::solve_neutral_tp_flash_eos_route(
+        return epcsaft::native::equilibrium_nlp::solve_activated_neutral_tp_flash_eos_route(
             args,
             request.temperature,
             request.pressure,
@@ -348,7 +348,21 @@ SelectorContract evaluate_selector_contract(
     out.certification_required = out.activation.postsolve_certification == "on";
     out.density_closure_required = true;
     out.exact_derivatives_required = exact_derivatives_required(out.activation);
-    out.nlp_contract = evaluate_route_contract(args, request);
+    if (request.route == "neutral_tp_flash") {
+        out.has_activation_plan = true;
+        out.activation_plan = build_activation_plan(args, request);
+        out.variable_layout = build_variable_layout(
+            out.activation_plan,
+            static_cast<int>(args.m.size())
+        );
+        out.nlp_contract = epcsaft::native::equilibrium_nlp::evaluate_activated_neutral_tp_flash_nlp_contract(
+            args,
+            out.activation_plan,
+            out.variable_layout
+        );
+    } else {
+        out.nlp_contract = evaluate_route_contract(args, request);
+    }
     require_contract_matches_activation(out.nlp_contract, out.activation);
     return out;
 }

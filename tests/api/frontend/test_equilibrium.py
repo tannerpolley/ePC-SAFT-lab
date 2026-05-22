@@ -297,11 +297,13 @@ def test_solver_options_reject_ignored_backend_selection_knobs() -> None:
         x=HYDROCARBON_LIQUID_X,
     )
 
-    for key in ("jacobian_backend", "solver_backend"):
+    for key in ("backend", "derivative_backend", "jacobian_backend", "solver_backend"):
         with pytest.raises(epcsaft.InputError, match=key):
             equilibrium.solve(solver_options={key: "auto"})
 
     solver_options_signature = inspect.signature(equilibrium_module.EquilibriumSolverOptions)
+    assert "backend" not in solver_options_signature.parameters
+    assert "derivative_backend" not in solver_options_signature.parameters
     assert "jacobian_backend" not in solver_options_signature.parameters
     assert "solver_backend" not in solver_options_signature.parameters
 
@@ -381,3 +383,14 @@ def test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point() -> None
     assert result.split_detected is True
     assert result.phases["liquid"].phase_fraction == pytest.approx(0.5, rel=1.0e-4, abs=1.0e-6)
     assert result.phases["vapor"].phase_fraction == pytest.approx(0.5, rel=1.0e-4, abs=1.0e-6)
+    assert result.diagnostics["activation_compiler"] == "activation_plan"
+    assert result.diagnostics["activation_plan"]["family_key"] == "neutral_tp_flash"
+    species_count = len(HYDROCARBON_FLASH_Z)
+    local_variable_count = species_count + 1
+    assert [list(row) for row in result.diagnostics["variable_layout"]["phase_amount_indices"]] == [
+        list(range(phase * local_variable_count, phase * local_variable_count + species_count))
+        for phase in range(2)
+    ]
+    assert list(result.diagnostics["variable_layout"]["phase_volume_indices"]) == [
+        phase * local_variable_count + species_count for phase in range(2)
+    ]

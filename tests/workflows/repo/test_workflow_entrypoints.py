@@ -95,6 +95,10 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
 def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> None:
     agents_md = _read("AGENTS.md")
     env_toml = _read(".codex/environments/environment.toml")
+    env_setup = _read(".codex/environments/setup.ps1")
+    env_readme = _read(".codex/environments/README.md")
+    build_owner = _read(".codex/agents/build_packaging_owner.toml")
+    command_runner = _read(".codex/agents/command_runner.toml")
 
     for token in (
         "uv run python scripts/dev/build_epcsaft.py",
@@ -119,6 +123,18 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         assert stale not in agents_md
 
     assert 'name = "Build Native Extension (Bounded)"' not in env_toml
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build" in env_toml
+    assert "Invoke-ReusableCeresBuild" in env_setup
+    assert "scripts/dev/build_system_ceres.py" in env_setup
+    assert "--use-system-ceres" in env_setup
+    assert "--ceres-dir" in env_setup
+    assert "libceres\\.a" in env_setup
+    assert "Do not set ``EPCSAFT_PEP517_CERES_DIR``" in env_readme
+    assert "build_epcsaft.py --use-system-ceres" in env_readme
+    assert ".codex/environments/setup.ps1 builds or reuses scripts/dev/build_system_ceres.py output" in build_owner
+    assert "scripts/dev/build_dist.py auto-detects the default build/system-ceres/2.2.0" in command_runner
+    assert "plus EPCSAFT_PEP517_CERES_DIR" not in build_owner
+    assert "prefer a persistent EPCSAFT_PEP517_BUILD_DIR and prebuilt Ceres via EPCSAFT_PEP517_CERES_DIR" not in command_runner
 
 
 def test_repo_local_agent_roster_uses_supported_models_and_expected_scopes() -> None:

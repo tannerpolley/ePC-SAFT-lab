@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import shutil
 import subprocess
@@ -8,14 +9,20 @@ import sys
 import zipfile
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DIST_ROOT = REPO_ROOT / "dist"
+TEMPFILE_SITE = REPO_ROOT / "scripts" / "sandbox_tempfile_site"
+
 try:
     from native_runtime_env import apply_native_runtime_env, resolve_default_windows_ipopt_sdk_root
 except ImportError:  # pragma: no cover - supports importing this module as scripts.dev.build_dist
     from scripts.dev.native_runtime_env import apply_native_runtime_env, resolve_default_windows_ipopt_sdk_root
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DIST_ROOT = REPO_ROOT / "dist"
-TEMPFILE_SITE = REPO_ROOT / "scripts" / "sandbox_tempfile_site"
+try:
+    from build_backend.native_dependency_policy import resolve_default_system_ceres_config_dir
+except ModuleNotFoundError:  # pragma: no cover - direct script execution from scripts/dev
+    sys.path.insert(0, str(REPO_ROOT / "build_backend"))
+    from native_dependency_policy import resolve_default_system_ceres_config_dir
 
 
 def _run(cmd: list[str], *, env: dict[str, str] | None = None) -> None:
@@ -52,6 +59,50 @@ def _strip_ipopt_env(env: dict[str, str]) -> None:
     env["PATH"] = _remove_path_entry(env.get("PATH", ""), bin_dir)
 
 
+def _truthy_env_value(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _apply_default_system_ceres_env(env: dict[str, str]) -> Path | None:
+    if (
+        env.get("EPCSAFT_PEP517_CERES_DIR")
+        or env.get("Ceres_DIR")
+        or _truthy_env_value(env.get("EPCSAFT_PEP517_USE_SYSTEM_CERES"))
+    ):
+        return None
+    ceres_dir = resolve_default_system_ceres_config_dir(REPO_ROOT)
+    if ceres_dir is None:
+        return None
+    env["EPCSAFT_PEP517_CERES_DIR"] = str(ceres_dir)
+    env["EPCSAFT_PEP517_USE_SYSTEM_CERES"] = "1"
+    return ceres_dir
+
+
+def _path_token(path: str) -> str:
+    normalized = os.path.normcase(os.path.normpath(path))
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:12]
+
+
+def _apply_persistent_pep517_build_dir(env: dict[str, str], *, ipopt_enabled: bool) -> None:
+    if env.get("EPCSAFT_PEP517_BUILD_DIR"):
+        return
+    profile = "local-ipopt" if ipopt_enabled else "no-ipopt"
+    ceres_dir = env.get("EPCSAFT_PEP517_CERES_DIR") or env.get("Ceres_DIR")
+    ceres_profile = f"system-ceres-{_path_token(ceres_dir)}" if ceres_dir else "fetchcontent-ceres"
+    env["EPCSAFT_PEP517_BUILD_DIR"] = str((REPO_ROOT / "build" / "pep517" / f"{profile}-{ceres_profile}").resolve())
+
+
+def _print_build_env_summary(env: dict[str, str]) -> None:
+    ceres_dir = env.get("EPCSAFT_PEP517_CERES_DIR") or env.get("Ceres_DIR")
+    if ceres_dir:
+        print(f"Using reusable Ceres package: {ceres_dir}", flush=True)
+    elif _truthy_env_value(env.get("EPCSAFT_PEP517_USE_SYSTEM_CERES")):
+        print("Using system Ceres from the CMake package search path.", flush=True)
+    else:
+        print("Using Ceres FetchContent; install reusable Ceres to skip compiling Ceres.", flush=True)
+    print(f"PEP 517 build directory: {env['EPCSAFT_PEP517_BUILD_DIR']}", flush=True)
+
+
 def _env(parallel: str | None = None, *, ipopt_enabled: bool = False) -> dict[str, str]:
     temp_root = REPO_ROOT / "build" / "dist-temp"
     temp_root.mkdir(parents=True, exist_ok=True)
@@ -67,6 +118,8 @@ def _env(parallel: str | None = None, *, ipopt_enabled: bool = False) -> dict[st
         apply_native_runtime_env(env, ipopt_enabled=True)
     else:
         _strip_ipopt_env(env)
+    _apply_default_system_ceres_env(env)
+    _apply_persistent_pep517_build_dir(env, ipopt_enabled=ipopt_enabled)
     if parallel:
         env["CMAKE_BUILD_PARALLEL_LEVEL"] = str(parallel)
     return env
@@ -168,9 +221,11 @@ def main() -> int:
     args = parser.parse_args()
 
     _clean_dist()
+    build_env = _env(args.parallel, ipopt_enabled=args.with_local_ipopt)
+    _print_build_env_summary(build_env)
     _run(
         _uv_build_command(with_local_ipopt=args.with_local_ipopt),
-        env=_env(args.parallel, ipopt_enabled=args.with_local_ipopt),
+        env=build_env,
     )
     wheel = _newest_wheel()
     _assert_wheel_has_no_solver_dev_artifacts(wheel)

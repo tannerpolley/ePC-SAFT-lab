@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 
 DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE = Path("Documents") / "deps" / "ipopt-msvc"
+CERES_VERSION = "2.2.0"
+DEFAULT_SYSTEM_CERES_RELATIVE = Path("build") / "system-ceres" / CERES_VERSION
 
 
 def default_windows_ipopt_sdk_root(home: Path | None = None) -> Path:
@@ -23,6 +25,43 @@ def resolve_default_windows_ipopt_sdk_root(
         return None
     root = default_windows_ipopt_sdk_root(home)
     return root.resolve() if root.is_dir() else None
+
+
+def default_system_ceres_root(source_root: Path | str) -> Path:
+    """Return the repo-local reusable Ceres root for the supported Ceres version."""
+    return Path(source_root).expanduser().resolve() / DEFAULT_SYSTEM_CERES_RELATIVE
+
+
+def default_system_ceres_config_dir(source_root: Path | str) -> Path:
+    """Return the default repo-local Ceres CMake package config directory."""
+    return default_system_ceres_root(source_root) / "install" / "lib" / "cmake" / "Ceres"
+
+
+def resolve_default_system_ceres_config_dir(source_root: Path | str) -> Path | None:
+    """Return the default repo-local Ceres package config directory when it exists."""
+    install_dir = default_system_ceres_root(source_root) / "install"
+    candidates = (
+        install_dir / "lib" / "cmake" / "Ceres",
+        install_dir / "lib64" / "cmake" / "Ceres",
+    )
+    for candidate in candidates:
+        if any((candidate / name).is_file() for name in ("CeresConfig.cmake", "ceres-config.cmake")) and (
+            _default_system_ceres_config_is_compatible(candidate)
+        ):
+            return candidate.resolve()
+    return None
+
+
+def _default_system_ceres_config_is_compatible(ceres_dir: Path, *, platform_name: str | None = None) -> bool:
+    if (os.name if platform_name is None else platform_name) != "nt":
+        return True
+    target_text = "\n".join(
+        target.read_text(encoding="utf-8", errors="ignore").lower()
+        for target in ceres_dir.glob("CeresTargets*.cmake")
+    )
+    if not target_text:
+        return True
+    return "libceres.a" not in target_text and ".dll.a" not in target_text
 
 
 def ipopt_root_prefers_msvc(

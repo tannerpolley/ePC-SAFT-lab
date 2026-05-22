@@ -71,6 +71,61 @@ def test_pep517_build_backend_uses_prebuilt_ceres_env(tmp_path, monkeypatch) -> 
     assert Path(config["cmake.define.Ceres_DIR"]) == ceres_dir.resolve()
 
 
+def test_pep517_build_backend_uses_default_repo_system_ceres(tmp_path, monkeypatch) -> None:
+    backend = _load_backend()
+    ceres_dir = tmp_path / "build" / "system-ceres" / "2.2.0" / "install" / "lib" / "cmake" / "Ceres"
+    ceres_dir.mkdir(parents=True)
+    (ceres_dir / "CeresConfig.cmake").write_text("# test config\n", encoding="utf-8")
+    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
+    monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
+    monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
+    monkeypatch.delenv("Ceres_DIR", raising=False)
+
+    config = backend._isolated_build_config(None)
+
+    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "ON"
+    assert config["cmake.define.EPCSAFT_USE_SYSTEM_CERES"] == "ON"
+    assert Path(config["cmake.define.Ceres_DIR"]) == ceres_dir.resolve()
+
+
+def test_pep517_build_backend_prefers_explicit_ceres_env_over_default(tmp_path, monkeypatch) -> None:
+    backend = _load_backend()
+    default_ceres_dir = tmp_path / "build" / "system-ceres" / "2.2.0" / "install" / "lib" / "cmake" / "Ceres"
+    explicit_ceres_dir = tmp_path / "explicit" / "lib" / "cmake" / "Ceres"
+    default_ceres_dir.mkdir(parents=True)
+    explicit_ceres_dir.mkdir(parents=True)
+    (default_ceres_dir / "CeresConfig.cmake").write_text("# default config\n", encoding="utf-8")
+    (explicit_ceres_dir / "CeresConfig.cmake").write_text("# explicit config\n", encoding="utf-8")
+    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
+    monkeypatch.setenv("EPCSAFT_PEP517_CERES_DIR", str(explicit_ceres_dir))
+
+    config = backend._isolated_build_config(None)
+
+    assert Path(config["cmake.define.Ceres_DIR"]) == explicit_ceres_dir.resolve()
+
+
+def test_pep517_build_backend_skips_mingw_default_ceres_for_windows_wheels(tmp_path, monkeypatch) -> None:
+    backend = _load_backend()
+    policy_os = backend.resolve_default_system_ceres_config_dir.__globals__["os"]
+    ceres_dir = tmp_path / "build" / "system-ceres" / "2.2.0" / "install" / "lib" / "cmake" / "Ceres"
+    ceres_dir.mkdir(parents=True)
+    (ceres_dir / "CeresConfig.cmake").write_text("# test config\n", encoding="utf-8")
+    (ceres_dir / "CeresTargets-release.cmake").write_text(
+        'set_target_properties(Ceres::ceres PROPERTIES IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libceres.a")\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
+    monkeypatch.setattr(policy_os, "name", "nt")
+    monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
+    monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
+    monkeypatch.delenv("Ceres_DIR", raising=False)
+
+    config = backend._isolated_build_config(None)
+
+    assert "cmake.define.EPCSAFT_USE_SYSTEM_CERES" not in config
+    assert "cmake.define.Ceres_DIR" not in config
+
+
 def test_pep517_build_backend_uses_system_ipopt_env(tmp_path, monkeypatch) -> None:
     backend = _load_backend()
     ipopt_dir = tmp_path / "ipopt" / "lib" / "cmake" / "Ipopt"
@@ -138,8 +193,9 @@ def test_pep517_build_backend_uses_local_windows_ipopt_sdk_default(tmp_path, mon
     assert str(bin_dir.resolve()) in os.environ["EPCSAFT_RUNTIME_DLL_DIRS"]
 
 
-def test_pep517_build_backend_requires_ceres_and_cppad_by_default(monkeypatch) -> None:
+def test_pep517_build_backend_requires_ceres_and_cppad_by_default(tmp_path, monkeypatch) -> None:
     backend = _load_backend()
+    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
     monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
     monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
     monkeypatch.delenv("Ceres_DIR", raising=False)

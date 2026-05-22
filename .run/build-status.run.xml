@@ -7,14 +7,15 @@
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
-    <option name="SDK_HOME" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <option name="IS_MODULE_SDK" value="true" />
+    <option name="SDK_HOME" value="$MODULE_DIR$/.venv/Scripts/python.exe" />
+    <option name="SDK_NAME" value="uv (ePC-SAFT)" />
+    <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+    <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/dev/build_epcsaft.py" />
+    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/dev/build_epcsaft.py" />
     <option name="PARAMETERS" value="--status" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />

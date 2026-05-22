@@ -16,6 +16,7 @@ _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "last_callback_exception",
     "problem_name",
     "adapter_kind",
+    "activation_compiler",
     "variable_model",
     "density_backend",
     "gradient_approximation",
@@ -61,6 +62,11 @@ _ROUTE_FLOAT_DIAGNOSTIC_KEYS = (
 _ROUTE_SEQUENCE_DIAGNOSTIC_KEYS = (
     "residual_families",
     "constraint_families",
+)
+
+_ROUTE_MAPPING_DIAGNOSTIC_KEYS = (
+    "activation_plan",
+    "variable_layout",
 )
 
 _RESIDUAL_EVIDENCE_KEYS = (
@@ -368,6 +374,10 @@ def native_route_diagnostics(
     for key in _ROUTE_SEQUENCE_DIAGNOSTIC_KEYS:
         if key in route or key in default_values:
             diagnostics[key] = _diagnostic_sequence(route.get(key, default_values.get(key, ())))
+    for key in _ROUTE_MAPPING_DIAGNOSTIC_KEYS:
+        if key in route or key in default_values:
+            value = route.get(key, default_values.get(key, {}))
+            diagnostics[key] = dict(value) if isinstance(value, Mapping) else value
     if "compiled" in route or "compiled" in default_values:
         diagnostics["compiled"] = bool(route.get("compiled", default_values.get("compiled", False)))
     if "adapter_available" in route or "adapter_available" in default_values:

@@ -67,6 +67,9 @@ hard constraints, and postsolve certification were used:
   ``neutral_tp_flash`` for TP flash.
 * ``route`` is the admitted selector route spec.
 * ``activation`` is copied from the native activation matrix row.
+* ``activation_compiler`` is ``activation_plan`` for the TP flash slice, with
+  ``activation_plan`` and ``variable_layout`` diagnostics showing the native
+  plan and variable lookup used to assemble the Ipopt callbacks.
 * ``residual_families`` and ``constraint_families`` match that activation row.
 * ``gradient_approximation`` and ``jacobian_approximation`` are exact.
 * ``postsolve_certification`` is present and accepted.

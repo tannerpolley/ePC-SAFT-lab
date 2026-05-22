@@ -95,6 +95,8 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert 'option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)' in cmake_text
     assert "native regression builds require Ceres" in cmake_text
     assert "derivative-capable package builds require CppAD" in cmake_text
+    assert 'set(EPCSAFT_CERES_VERSION "2.2.0")' in cmake_text
+    assert "find_package(Ceres ${EPCSAFT_CERES_VERSION} CONFIG REQUIRED)" in cmake_text
     assert "GIT_SHALLOW TRUE" in cmake_text
     assert 'add_subdirectory("${ceres_solver_SOURCE_DIR}" "${ceres_solver_BINARY_DIR}" EXCLUDE_FROM_ALL)' in cmake_text
     assert "EPCSAFT_NATIVE_MODEL_SOURCES" in cmake_text

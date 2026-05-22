@@ -140,9 +140,10 @@ Runtime processes that execute Ipopt on Windows must expose the SDK ``bin``
 directory through both ``PATH`` and ``EPCSAFT_RUNTIME_DLL_DIRS``; repo build
 scripts do this automatically for the local SDK.
 
-When Ipopt is compiled, use explicit Ipopt-backed routes or solver options for
-native constrained-NLP behavior. The automatic backend selector does not claim
-unvalidated Ipopt coverage.
+When Ipopt is compiled, use the certified ``Equilibrium(...)`` route specs and
+ordinary solver tolerances for native constrained-NLP behavior. The public
+equilibrium API does not expose a solver-backend selector or claim unvalidated
+Ipopt coverage.
 
 Verify the install
 ------------------

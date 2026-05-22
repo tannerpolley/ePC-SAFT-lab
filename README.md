@@ -183,7 +183,7 @@ python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.gi
 
 Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig.cmake` directory. Runtime processes that execute Ipopt on Windows must expose the SDK `bin` directory through both `PATH` and `EPCSAFT_RUNTIME_DLL_DIRS`; repo build scripts do this automatically for the local SDK.
 
-Ipopt is not selected automatically by `solver_backend="auto"`. Use explicit Ipopt-backed routes or solver options when validating constrained-NLP behavior.
+The public equilibrium API does not expose a solver-backend selector. Use the certified `Equilibrium(...)` route specs and ordinary solver tolerances when validating constrained-NLP behavior.
 
 ## Documentation
 
