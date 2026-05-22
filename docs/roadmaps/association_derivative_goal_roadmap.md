@@ -261,12 +261,12 @@ Files to inspect:
 - `docs/algorithms_registry.yaml`
 - `tests/native/contracts/`
 - `tests/native/regression/`
-- `tests/api/regression/`
+- `tests/api/frontend/test_regression.py`
 
 Focused validation:
 
 ```powershell
-uv run python run_pytest.py tests/native/contracts tests/api/regression -q
+uv run python run_pytest.py tests/native/contracts tests/native/regression tests/api/frontend/test_regression.py -q
 ```
 
 Definition of done:
@@ -275,6 +275,12 @@ Definition of done:
 - current production claims remain narrow.
 - no derivative formulas or optimizer support are added.
 - the issue notes or PR body state that #135 must be revisited after #136 and #137 land.
+
+Implementation note:
+
+- Goal 3 should add capability evidence only. It must be revisited after #136
+  and #137 land so newly proven association-parameter derivative and optimizer
+  support can be promoted without treating registry presence as support.
 
 ### Goal 4: Pure Association Parameter Sensitivities
 
@@ -476,7 +482,7 @@ Update this table after each issue closes or a branch merges.
 | --- | --- | --- | --- | --- | --- |
 | Goal 1 | #132, #133, #140-lite | Open as of 2026-05-22 verification | Implemented locally on `codex/association-solved-state-reliability`; not closed until merged | Keep the Goal 1 focused State/contract validation in any Goal 2 proof run. | First implementation goal after #130/#131. |
 | Goal 2 | #134, #140-helper | Open as of 2026-05-22 verification | Implemented and validated locally on `codex/association-implicit-sensitivity-helper`; review until merged | Review the helper extraction, focused tests, and IntelliJ validation evidence before PR merge. | Starts after Goal 1. |
-| Goal 3 | #135 baseline | Open as of 2026-05-22 verification | Not started on merged tracker state | Tighten capability evidence vocabulary without adding derivative or optimizer support. | Can run with Goal 1. |
+| Goal 3 | #135 baseline | Open as of 2026-05-22 verification | Implemented locally on `codex/regression-capability-firewall`; review until merged | Review capability evidence rows, algorithm-doc caveats, focused tests, and IntelliJ validation evidence before PR merge. | Must be revisited after #136 and #137 promote proven association-parameter support. |
 | Goal 4 | #136, #135 update | Open as of 2026-05-22 verification | Blocked by Goals 2 and 3 | Add pure association parameter sensitivities only after helper and capability firewall are in place. | Starts after Goal 2 and Goal 3 baseline. |
 | Goal 5 | #137, #135 update | Open as of 2026-05-22 verification | Blocked by Goal 4 | Extend the proven pure-parameter pattern to binary association parameters. | Starts after Goal 4. |
 | Goal 6 | #138, #139 | Open as of 2026-05-22 verification | ADR can start; lifted-block repair waits for stable helper conventions | Document architecture first, then repair the non-production lifted `X_A` block. | ADR may start early; block repair later. |

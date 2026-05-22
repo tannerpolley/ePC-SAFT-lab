@@ -156,6 +156,8 @@ def test_generated_markdown_names_public_api_backend_and_dependencies() -> None:
     assert "Native C++ Ceres regression" in markdown
     assert "Dependency: Ceres" in markdown
     assert "not a production Ceres optimizer" in markdown
+    assert "e_assoc" in markdown
+    assert "vol_a" in markdown
     assert "**LaTeX source**" in markdown
     assert "```tex" in markdown
     assert "**Rendered formulae**" in markdown
