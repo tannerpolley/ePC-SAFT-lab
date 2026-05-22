@@ -23,6 +23,30 @@ native Ipopt install is discoverable. ``--disable-ipopt`` is allowed only for a
 diagnostic or smoke lane that intentionally excludes Ipopt. A no-Ipopt smoke
 lane must not be described as production equilibrium validation.
 
+Regression and equilibrium are core package capabilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Native regression and production native equilibrium are core capabilities of
+this package, not optional add-on examples. Ceres, CppAD, and Ipopt should
+therefore be enabled by default wherever the relevant native dependency can be
+provided with controlled, reproducible friction.
+
+The intended low-friction path is not to make these capabilities optional. The
+intended low-friction path is:
+
+- reuse or auto-detect a local/system Ceres package when repeated builds would
+  otherwise rebuild Ceres;
+- use FetchContent for Ceres/CppAD where that is the simplest reproducible
+  source-checkout route;
+- use a native system Ipopt install or pinned non-Conda Ipopt SDK artifact;
+- keep normal wheels/sdists free from user-local Ipopt runtime coupling unless
+  an explicit Ipopt package artifact is being validated;
+- reserve no-Ipopt builds for smoke, diagnostic, or package-boundary lanes.
+
+A build or CI lane that disables Ipopt must be named and documented as a
+no-Ipopt lane. It must not be used as evidence for production equilibrium
+validation.
+
 CMake and C++ dependency rules
 ------------------------------
 
@@ -41,6 +65,10 @@ Keep the CMake dependency contract explicit and loud:
 Do not hide missing required dependency coverage behind silent defaults. A lane
 that needs production equilibrium proof must configure Ipopt and fail loudly if
 the requested Ipopt root or config package cannot be used.
+
+Do not reframe Ceres, CppAD, or Ipopt as greenfield optional dependencies in
+repo protocol documents; they are required for the native capabilities named
+above, with only explicitly scoped smoke/package-boundary exceptions.
 
 CI lane policy
 --------------
