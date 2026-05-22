@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
 import io
-from pathlib import Path, PurePosixPath
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IDEA_DIR = REPO_ROOT / ".idea"
@@ -43,9 +43,7 @@ TRANSIENT_PATHS: tuple[str, ...] = (
 # Keep tests under the module content root, not as a source root. Marking
 # tests as a source root makes tests/api, tests/native, and tests/support look
 # like top-level namespace packages in IntelliJ.
-CANONICAL_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (
-    ("src", False),
-)
+CANONICAL_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (("src", False),)
 
 
 @dataclass(frozen=True)
@@ -430,7 +428,11 @@ def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...]
     collapsed_excludes: list[ET.Element] = []
     kept_exclude_urls: list[str] = []
     for url in sorted_exclude_urls:
-        if any(_is_under_path(url, kept_url[len(MODULE_URL_PREFIX) + 1 :]) for kept_url in kept_exclude_urls if kept_url.startswith(f"{MODULE_URL_PREFIX}/")):
+        if any(
+            _is_under_path(url, kept_url[len(MODULE_URL_PREFIX) + 1 :])
+            for kept_url in kept_exclude_urls
+            if kept_url.startswith(f"{MODULE_URL_PREFIX}/")
+        ):
             actions.append(f"remove redundant nested excludeFolder {url}")
             continue
         collapsed_excludes.append(desired_excludes[url])
@@ -692,13 +694,13 @@ def _module_dependency_warnings(iml_path: Path, module_root: ET.Element, declare
     for dependency in module_root.findall(".//orderEntry[@type='module']"):
         module_name = dependency.get("module-name")
         if module_name and module_name not in declared_modules:
-            warnings.append(
-                f"stale module dependency '{module_name}' is not declared in .idea/modules.xml"
-            )
+            warnings.append(f"stale module dependency '{module_name}' is not declared in .idea/modules.xml")
     return warnings
 
 
-def _normalize_iml(iml_path: Path, transient_paths: tuple[str, ...], declared_modules: set[str]) -> tuple[list[str], list[str], str | None]:
+def _normalize_iml(
+    iml_path: Path, transient_paths: tuple[str, ...], declared_modules: set[str]
+) -> tuple[list[str], list[str], str | None]:
     original_text = iml_path.read_text(encoding="UTF-8")
     tree = ET.parse(iml_path)
     module_root = tree.getroot()
