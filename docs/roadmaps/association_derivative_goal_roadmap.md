@@ -2,13 +2,44 @@
 
 ## Purpose
 
-This is the coordination document for the association-derivative issue set after
-the public equilibrium contract cleanup and the first activation-driven neutral
-TP flash compiler slice.
+This is the controlling management and tracking document for the
+association-derivative issue set after the public equilibrium contract cleanup
+and the first activation-driven neutral TP flash compiler slice.
 
 Use this document before starting any work on GitHub issues #132 through #140.
 It defines the dependency order, agent-sized goal grouping, guardrails, and
 status tracking for the full association-derivative tranche.
+
+Do not create a parallel roadmap, handoff, or planning ledger for this issue set
+unless it links back here and leaves this document as the source of truth. If an
+issue body and this roadmap disagree, treat the issue body as the acceptance
+source, update this document in the same branch, and call out the discrepancy in
+the PR or handoff.
+
+## How Agents Should Use This Document
+
+For each goal branch, use this file as the workboard:
+
+1. Verify the live GitHub issue state before editing.
+2. Read the target issue body and any blocking issue bodies.
+3. Record the goal number, issue numbers, branch, production workflow, and
+   validation commands in the PR or handoff.
+4. Update the status ledger in this file when the branch changes the state of a
+   goal.
+5. Do not mark an issue complete here unless the GitHub issue is closed or the
+   merged PR explicitly closes it.
+
+Status meanings:
+
+- `Open`: GitHub issue is still open; work may exist locally but is not done.
+- `In progress`: a branch or PR is actively working the goal.
+- `Review`: implementation is ready for review but not merged.
+- `Closed`: GitHub issue is closed by merged work matching acceptance criteria.
+- `Blocked`: next action needs a specific upstream issue, decision, or failing
+  validation result resolved first.
+
+Local commits, unmerged branches, and draft PRs are evidence, not closure.
+Agents must not collapse `In progress` into `Closed`.
 
 ## Current Tracker State
 
@@ -441,14 +472,14 @@ Use waves to avoid dependency collisions:
 
 Update this table after each issue closes or a branch merges.
 
-| Goal | Issues | Status | Tracking Notes |
-| --- | --- | --- | --- |
-| Goal 1 | #132, #133, #140-lite | Not started | First implementation goal after #130/#131. |
-| Goal 2 | #134, #140-helper | Not started | Starts after Goal 1. |
-| Goal 3 | #135 baseline | Not started | Can run with Goal 1. |
-| Goal 4 | #136, #135 update | Not started | Starts after Goal 2 and Goal 3 baseline. |
-| Goal 5 | #137, #135 update | Not started | Starts after Goal 4. |
-| Goal 6 | #138, #139 | Not started | ADR may start early; block repair later. |
+| Goal | Issues | Tracker State | Work State | Next Owner Action | Tracking Notes |
+| --- | --- | --- | --- | --- | --- |
+| Goal 1 | #132, #133, #140-lite | Open as of 2026-05-22 verification | Not started on merged tracker state | Start or verify an active branch, then run the focused State/contract validation. | First implementation goal after #130/#131. |
+| Goal 2 | #134, #140-helper | Open as of 2026-05-22 verification | Blocked until Goal 1 semantics are available on the working branch | Build the reusable implicit-sensitivity helper and parity checks after Goal 1. | Starts after Goal 1. |
+| Goal 3 | #135 baseline | Open as of 2026-05-22 verification | Not started on merged tracker state | Tighten capability evidence vocabulary without adding derivative or optimizer support. | Can run with Goal 1. |
+| Goal 4 | #136, #135 update | Open as of 2026-05-22 verification | Blocked by Goals 2 and 3 | Add pure association parameter sensitivities only after helper and capability firewall are in place. | Starts after Goal 2 and Goal 3 baseline. |
+| Goal 5 | #137, #135 update | Open as of 2026-05-22 verification | Blocked by Goal 4 | Extend the proven pure-parameter pattern to binary association parameters. | Starts after Goal 4. |
+| Goal 6 | #138, #139 | Open as of 2026-05-22 verification | ADR can start; lifted-block repair waits for stable helper conventions | Document architecture first, then repair the non-production lifted `X_A` block. | ADR may start early; block repair later. |
 
 ## Worker Startup Checklist
 
