@@ -35,8 +35,8 @@ struct AssociationSolveDiagnostics {
     double residual_tolerance = 0.0;
     double min_XA = std::numeric_limits<double>::infinity();
     double max_XA = -std::numeric_limits<double>::infinity();
-    double damping_factor = 0.0;
-    std::string damping_policy;
+    double relaxation_factor = 0.0;
+    std::string relaxation_policy;
 };
 
 struct AssociationSolveResult {

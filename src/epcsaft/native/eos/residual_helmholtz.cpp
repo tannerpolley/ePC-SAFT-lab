@@ -1,8 +1,10 @@
 #include "eos/core_internal.h"
 #include "eos/contributions/contribution_internal.h"
+#include "autodiff/implicit_sensitivity.h"
 
 #include <cppad/cppad.hpp>
 
+#include <algorithm>
 #include <map>
 #include <numeric>
 #include <string>
@@ -78,18 +80,27 @@ struct AssociationImplicitTermsScalar {
 };
 
 struct AssociationDensityResponse {
+    std::string backend = "cppad_implicit_association";
+    std::string helper = "association_implicit_sensitivity";
+    int site_count = 0;
     double zraw = 0.0;
     vector<double> mu;
     double dzraw_drho = 0.0;
     vector<double> dmu_drho;
+    vector<double> site_sensitivity_row_major;
 };
 
 struct AssociationPhaseStateResponse {
     bool active = false;
     int ncomp = 0;
     int base_var_count = 0;
+    std::string backend = "cppad_implicit_association";
+    std::string helper = "association_implicit_sensitivity";
+    int site_count = 0;
     double zraw = 0.0;
     vector<double> mu;
+    vector<double> site_sensitivity_row_major;
+    vector<double> site_second_sensitivity_tensor_row_major;
     vector<double> dzraw_dvar;
     vector<double> dmu_dvar_row_major;
     vector<double> d2zraw_dvar2_row_major;
@@ -1230,33 +1241,27 @@ ares_detail::AssociationDensityResponse association_density_response_cppad_cpp(
     }
     auto values = function.Forward(0, point);
     auto jacobian = function.Jacobian(point);
-    const auto jac = [&](int row, int col) {
-        return jacobian[static_cast<size_t>(row * var_count + col)];
-    };
-
-    vector<double> residual_matrix(static_cast<size_t>(num_sites * num_sites), 0.0);
-    vector<double> residual_rhs(static_cast<size_t>(num_sites), 0.0);
     const int residual_row0 = 1 + ncomp;
-    for (int i = 0; i < num_sites; ++i) {
-        residual_rhs[static_cast<size_t>(i)] = -jac(residual_row0 + i, 0);
-        for (int j = 0; j < num_sites; ++j) {
-            residual_matrix[static_cast<size_t>(i * num_sites + j)] = jac(residual_row0 + i, 1 + j);
-        }
-    }
-    vector<double> dXA_drho = ares_detail::solve_linear_system_scalar_cpp(residual_matrix, residual_rhs, num_sites);
+    epcsaft::native::implicit_sensitivity::ImplicitSensitivityProblem problem;
+    problem.explicit_variable_count = 1;
+    problem.solved_variable_count = num_sites;
+    problem.output_count = 1 + ncomp;
+    problem.residual_row0 = residual_row0;
+    problem.backend = out.backend;
+    problem.helper_name = out.helper;
+    problem.values = values;
+    problem.jacobian_row_major = jacobian;
+    const auto sensitivity = epcsaft::native::implicit_sensitivity::solve_implicit_sensitivity(problem, false);
 
-    out.zraw = values[0];
-    out.dzraw_drho = jac(0, 0);
-    for (int j = 0; j < num_sites; ++j) {
-        out.dzraw_drho += jac(0, 1 + j) * dXA_drho[static_cast<size_t>(j)];
-    }
+    out.site_count = num_sites;
+    out.site_sensitivity_row_major = sensitivity.solved_first_row_major;
+    out.zraw = sensitivity.output_values[0];
+    out.dzraw_drho = sensitivity.output_first_row_major[0];
     for (int i = 0; i < ncomp; ++i) {
         const int output_row = 1 + i;
-        out.mu[static_cast<size_t>(i)] = values[static_cast<size_t>(output_row)];
-        out.dmu_drho[static_cast<size_t>(i)] = jac(output_row, 0);
-        for (int j = 0; j < num_sites; ++j) {
-            out.dmu_drho[static_cast<size_t>(i)] += jac(output_row, 1 + j) * dXA_drho[static_cast<size_t>(j)];
-        }
+        out.mu[static_cast<size_t>(i)] = sensitivity.output_values[static_cast<size_t>(output_row)];
+        out.dmu_drho[static_cast<size_t>(i)] =
+            sensitivity.output_first_row_major[static_cast<size_t>(output_row)];
     }
     return out;
 }
@@ -1360,125 +1365,49 @@ ares_detail::AssociationPhaseStateResponse association_phase_state_response_cppa
             static_cast<std::size_t>(output)
         ));
     }
-    const auto jac = [&](int row, int col) {
-        return jacobian[static_cast<size_t>(row * var_count + col)];
-    };
-    const auto hess = [&](int output, int row, int col) {
-        return output_hessians[static_cast<std::size_t>(output)][
-            static_cast<std::size_t>(row * var_count + col)
-        ];
-    };
-
+    std::vector<double> hessian_tensor;
+    hessian_tensor.reserve(static_cast<std::size_t>((1 + ncomp + num_sites) * var_count * var_count));
+    for (const auto& output_hessian : output_hessians) {
+        hessian_tensor.insert(hessian_tensor.end(), output_hessian.begin(), output_hessian.end());
+    }
     const int residual_row0 = 1 + ncomp;
-    vector<double> residual_matrix(static_cast<size_t>(num_sites * num_sites), 0.0);
-    for (int i = 0; i < num_sites; ++i) {
-        for (int j = 0; j < num_sites; ++j) {
-            residual_matrix[static_cast<size_t>(i * num_sites + j)] =
-                jac(residual_row0 + i, base_var_count + j);
-        }
-    }
+    epcsaft::native::implicit_sensitivity::ImplicitSensitivityProblem problem;
+    problem.explicit_variable_count = base_var_count;
+    problem.solved_variable_count = num_sites;
+    problem.output_count = 1 + ncomp;
+    problem.residual_row0 = residual_row0;
+    problem.backend = out.backend;
+    problem.helper_name = out.helper;
+    problem.values = values;
+    problem.jacobian_row_major = jacobian;
+    problem.hessian_tensor_row_major = hessian_tensor;
+    const auto sensitivity = epcsaft::native::implicit_sensitivity::solve_implicit_sensitivity(problem, true);
 
-    out.zraw = values[0];
+    out.site_count = num_sites;
+    out.site_sensitivity_row_major = sensitivity.solved_first_row_major;
+    out.site_second_sensitivity_tensor_row_major = sensitivity.solved_second_tensor_row_major;
+    out.zraw = sensitivity.output_values[0];
+    out.dzraw_dvar.assign(
+        sensitivity.output_first_row_major.begin(),
+        sensitivity.output_first_row_major.begin() + base_var_count
+    );
+    out.d2zraw_dvar2_row_major.assign(
+        sensitivity.output_second_tensor_row_major.begin(),
+        sensitivity.output_second_tensor_row_major.begin() + base_var_count * base_var_count
+    );
     for (int i = 0; i < ncomp; ++i) {
-        out.mu[static_cast<size_t>(i)] = values[static_cast<size_t>(1 + i)];
-    }
-    std::vector<double> dxa_dvar(static_cast<size_t>(base_var_count * num_sites), 0.0);
-    for (int v = 0; v < base_var_count; ++v) {
-        vector<double> rhs(static_cast<size_t>(num_sites), 0.0);
-        for (int i = 0; i < num_sites; ++i) {
-            rhs[static_cast<size_t>(i)] = -jac(residual_row0 + i, v);
-        }
-        vector<double> dxa_dv = ares_detail::solve_linear_system_scalar_cpp(residual_matrix, rhs, num_sites);
-        for (int site = 0; site < num_sites; ++site) {
-            dxa_dvar[static_cast<size_t>(v * num_sites + site)] = dxa_dv[static_cast<size_t>(site)];
-        }
-        out.dzraw_dvar[static_cast<size_t>(v)] = jac(0, v);
-        for (int site = 0; site < num_sites; ++site) {
-            out.dzraw_dvar[static_cast<size_t>(v)] += jac(0, base_var_count + site) * dxa_dv[static_cast<size_t>(site)];
-        }
-        for (int i = 0; i < ncomp; ++i) {
-            double value = jac(1 + i, v);
-            for (int site = 0; site < num_sites; ++site) {
-                value += jac(1 + i, base_var_count + site) * dxa_dv[static_cast<size_t>(site)];
-            }
-            out.dmu_dvar_row_major[static_cast<size_t>(i * base_var_count + v)] = value;
-        }
-    }
-    for (int u = 0; u < base_var_count; ++u) {
-        for (int v = 0; v < base_var_count; ++v) {
-            vector<double> rhs(static_cast<size_t>(num_sites), 0.0);
-            for (int residual = 0; residual < num_sites; ++residual) {
-                double value = -hess(residual_row0 + residual, u, v);
-                for (int site = 0; site < num_sites; ++site) {
-                    const double dy_v = dxa_dvar[static_cast<size_t>(v * num_sites + site)];
-                    const double dy_u = dxa_dvar[static_cast<size_t>(u * num_sites + site)];
-                    value -= hess(residual_row0 + residual, u, base_var_count + site) * dy_v;
-                    value -= hess(residual_row0 + residual, v, base_var_count + site) * dy_u;
-                }
-                for (int site_i = 0; site_i < num_sites; ++site_i) {
-                    const double dy_u = dxa_dvar[static_cast<size_t>(u * num_sites + site_i)];
-                    if (dy_u == 0.0) {
-                        continue;
-                    }
-                    for (int site_j = 0; site_j < num_sites; ++site_j) {
-                        value -= hess(
-                            residual_row0 + residual,
-                            base_var_count + site_i,
-                            base_var_count + site_j
-                        ) * dy_u * dxa_dvar[static_cast<size_t>(v * num_sites + site_j)];
-                    }
-                }
-                rhs[static_cast<size_t>(residual)] = value;
-            }
-            const vector<double> d2xa = ares_detail::solve_linear_system_scalar_cpp(residual_matrix, rhs, num_sites);
-            out.d2zraw_dvar2_row_major[static_cast<size_t>(u * base_var_count + v)] = hess(0, u, v);
-            for (int site = 0; site < num_sites; ++site) {
-                const double dy_v = dxa_dvar[static_cast<size_t>(v * num_sites + site)];
-                const double dy_u = dxa_dvar[static_cast<size_t>(u * num_sites + site)];
-                out.d2zraw_dvar2_row_major[static_cast<size_t>(u * base_var_count + v)] +=
-                    hess(0, u, base_var_count + site) * dy_v
-                    + hess(0, v, base_var_count + site) * dy_u
-                    + jac(0, base_var_count + site) * d2xa[static_cast<size_t>(site)];
-            }
-            for (int site_i = 0; site_i < num_sites; ++site_i) {
-                const double dy_u = dxa_dvar[static_cast<size_t>(u * num_sites + site_i)];
-                if (dy_u == 0.0) {
-                    continue;
-                }
-                for (int site_j = 0; site_j < num_sites; ++site_j) {
-                    out.d2zraw_dvar2_row_major[static_cast<size_t>(u * base_var_count + v)] +=
-                        hess(0, base_var_count + site_i, base_var_count + site_j)
-                        * dy_u
-                        * dxa_dvar[static_cast<size_t>(v * num_sites + site_j)];
-                }
-            }
-            for (int component = 0; component < ncomp; ++component) {
-                double value = hess(1 + component, u, v);
-                for (int site = 0; site < num_sites; ++site) {
-                    const double dy_v = dxa_dvar[static_cast<size_t>(v * num_sites + site)];
-                    const double dy_u = dxa_dvar[static_cast<size_t>(u * num_sites + site)];
-                    value += hess(1 + component, u, base_var_count + site) * dy_v;
-                    value += hess(1 + component, v, base_var_count + site) * dy_u;
-                    value += jac(1 + component, base_var_count + site) * d2xa[static_cast<size_t>(site)];
-                }
-                for (int site_i = 0; site_i < num_sites; ++site_i) {
-                    const double dy_u = dxa_dvar[static_cast<size_t>(u * num_sites + site_i)];
-                    if (dy_u == 0.0) {
-                        continue;
-                    }
-                    for (int site_j = 0; site_j < num_sites; ++site_j) {
-                        value += hess(
-                            1 + component,
-                            base_var_count + site_i,
-                            base_var_count + site_j
-                        ) * dy_u * dxa_dvar[static_cast<size_t>(v * num_sites + site_j)];
-                    }
-                }
-                out.d2mu_dvar2_tensor_row_major[
-                    static_cast<size_t>(component * base_var_count * base_var_count + u * base_var_count + v)
-                ] = value;
-            }
-        }
+        const int output_row = 1 + i;
+        out.mu[static_cast<size_t>(i)] = sensitivity.output_values[static_cast<size_t>(output_row)];
+        std::copy_n(
+            sensitivity.output_first_row_major.begin() + output_row * base_var_count,
+            base_var_count,
+            out.dmu_dvar_row_major.begin() + i * base_var_count
+        );
+        std::copy_n(
+            sensitivity.output_second_tensor_row_major.begin() + output_row * base_var_count * base_var_count,
+            base_var_count * base_var_count,
+            out.d2mu_dvar2_tensor_row_major.begin() + i * base_var_count * base_var_count
+        );
     }
     return out;
 }
@@ -1846,6 +1775,12 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_density_sensitivi
             out.density_backend = apply_pressure_root_chain ? "selected_density_root" : "explicit_density";
             return out;
         }
+        out.association_sensitivity_backend = association_response.backend;
+        out.association_sensitivity_helper = association_response.helper;
+        out.association_site_count = association_response.site_count;
+        out.association_site_sensitivity_row_major = association_response.site_sensitivity_row_major;
+        out.association_site_second_sensitivity_tensor_row_major =
+            association_response.site_second_sensitivity_tensor_row_major;
     }
 
     (void)values;

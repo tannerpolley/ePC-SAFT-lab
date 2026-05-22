@@ -596,6 +596,17 @@ class ePCSAFTState:
             fixed_density_jacobian=np.asarray(raw.get("fixed_density_jacobian_row_major", []), dtype=float).reshape(
                 (ncomp, ncomp)
             ),
+            association_sensitivity_backend=str(raw.get("association_sensitivity_backend", "")),
+            association_sensitivity_helper=str(raw.get("association_sensitivity_helper", "")),
+            association_site_count=int(raw.get("association_site_count", 0)),
+            association_site_sensitivity=np.asarray(
+                raw.get("association_site_sensitivity_row_major", []),
+                dtype=float,
+            ),
+            association_site_second_sensitivity=np.asarray(
+                raw.get("association_site_second_sensitivity_tensor_row_major", []),
+                dtype=float,
+            ),
             source_equation_ids=("lnphi_total", "pressure_from_z", "density_root_implicit"),
         )
 

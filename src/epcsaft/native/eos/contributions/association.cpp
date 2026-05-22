@@ -17,9 +17,9 @@ namespace assoc_detail {
 static constexpr int kDefaultMaxIterations = 100;
 static constexpr double kDefaultUpdateTolerance = 1.0e-15;
 static constexpr double kDefaultResidualTolerance = 1.0e-10;
-static constexpr double kDampingFactor = 0.5;
+static constexpr double kRelaxationFactor = 0.5;
 static constexpr double kSiteFractionUpperTolerance = 1.0e-12;
-static const char *kDampingPolicy = "fixed_under_relaxation";
+static const char *kRelaxationPolicy = "fixed_under_relaxation";
 
 // EqID: x_assoc_site
 static vector<double> association_site_fractions_cpp(vector<double> XA_guess, vector<double> delta_ij, double den, vector<double> x) {
@@ -118,8 +118,8 @@ static std::string association_solve_diagnostics_message_cpp(const AssociationSo
         << "; residual_tolerance=" << diagnostics.residual_tolerance
         << "; min_XA=" << diagnostics.min_XA
         << "; max_XA=" << diagnostics.max_XA
-        << "; damping_factor=" << diagnostics.damping_factor
-        << "; damping_policy=" << diagnostics.damping_policy;
+        << "; relaxation_factor=" << diagnostics.relaxation_factor
+        << "; relaxation_policy=" << diagnostics.relaxation_policy;
     return msg.str();
 }
 
@@ -142,8 +142,8 @@ static AssociationSolveResult solve_association_site_fractions_cpp(
         empty.diagnostics.residual_tolerance = residual_tolerance;
         empty.diagnostics.min_XA = 0.0;
         empty.diagnostics.max_XA = 0.0;
-        empty.diagnostics.damping_factor = kDampingFactor;
-        empty.diagnostics.damping_policy = kDampingPolicy;
+        empty.diagnostics.relaxation_factor = kRelaxationFactor;
+        empty.diagnostics.relaxation_policy = kRelaxationPolicy;
         return empty;
     }
     if (static_cast<int>(delta_ij.size()) != num_sites * num_sites) {
@@ -172,8 +172,8 @@ static AssociationSolveResult solve_association_site_fractions_cpp(
     diagnostics.max_iterations = max_iterations;
     diagnostics.update_tolerance = update_tolerance;
     diagnostics.residual_tolerance = residual_tolerance;
-    diagnostics.damping_factor = kDampingFactor;
-    diagnostics.damping_policy = kDampingPolicy;
+    diagnostics.relaxation_factor = kRelaxationFactor;
+    diagnostics.relaxation_policy = kRelaxationPolicy;
 
     vector<double> XA(num_sites, 0.0);
     for (int i = 0; i < num_sites; ++i) {
@@ -189,7 +189,7 @@ static AssociationSolveResult solve_association_site_fractions_cpp(
             diagnostics.update_norm += std::abs(XA[i] - XA_old[i]);
         }
         for (int i = 0; i < num_sites; ++i) {
-            XA_old[i] = kDampingFactor * (XA[i] + XA_old[i]);
+            XA_old[i] = kRelaxationFactor * (XA[i] + XA_old[i]);
         }
         update_site_fraction_bounds_cpp(XA, diagnostics);
         diagnostics.residual_norm = association_mass_action_residual_norm_cpp(XA, delta_ij, den, x_assoc);

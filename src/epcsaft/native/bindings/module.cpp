@@ -76,8 +76,8 @@ py::dict association_solve_diagnostics_to_dict(const AssociationSolveDiagnostics
     out["residual_tolerance"] = diagnostics.residual_tolerance;
     out["min_XA"] = diagnostics.min_XA;
     out["max_XA"] = diagnostics.max_XA;
-    out["damping_factor"] = diagnostics.damping_factor;
-    out["damping_policy"] = diagnostics.damping_policy;
+    out["relaxation_factor"] = diagnostics.relaxation_factor;
+    out["relaxation_policy"] = diagnostics.relaxation_policy;
     return out;
 }
 
@@ -114,6 +114,21 @@ py::dict phase_state_sensitivity_to_dict(const PhaseStateCompositionSensitivityR
     out["fixed_density_hessian_tensor_row_major"] = result.fixed_density_hessian_tensor_row_major;
     out["jacobian_row_major"] = result.jacobian_row_major;
     out["hessian_tensor_row_major"] = result.hessian_tensor_row_major;
+    out["association_sensitivity_backend"] = result.association_sensitivity_backend;
+    out["association_sensitivity_helper"] = result.association_sensitivity_helper;
+    out["association_site_count"] = result.association_site_count;
+    out["association_site_sensitivity_shape"] = py::make_tuple(
+        result.cols + 1,
+        result.association_site_count
+    );
+    out["association_site_sensitivity_row_major"] = result.association_site_sensitivity_row_major;
+    out["association_site_second_sensitivity_shape"] = py::make_tuple(
+        result.cols + 1,
+        result.cols + 1,
+        result.association_site_count
+    );
+    out["association_site_second_sensitivity_tensor_row_major"] =
+        result.association_site_second_sensitivity_tensor_row_major;
     return out;
 }
 

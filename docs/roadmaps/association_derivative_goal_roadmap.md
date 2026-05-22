@@ -62,7 +62,7 @@ gh issue list --repo tannerpolley/ePC-SAFT --state open --limit 40
 These rules apply to every issue in this roadmap:
 
 - Do not direct-tape the association fixed-point iteration with CppAD.
-- Do not add finite-difference production derivative backends.
+- Do not add non-exact production derivative backends.
 - Do not expose associating equilibrium.
 - Do not broaden public equilibrium routes.
 - Do not treat target-kind registry presence as production optimizer support.
@@ -216,7 +216,7 @@ Definition of done:
 - #134 acceptance criteria are met.
 - helper parity tests are in place.
 - no `e_assoc`, `vol_a`, `k_hb_ij`, or active-association `l_ij` sensitivity expansion is added.
-- no finite-difference production path appears.
+- no non-exact production derivative path appears.
 
 ### Goal 3: Regression Capability Firewall
 
@@ -474,8 +474,8 @@ Update this table after each issue closes or a branch merges.
 
 | Goal | Issues | Tracker State | Work State | Next Owner Action | Tracking Notes |
 | --- | --- | --- | --- | --- | --- |
-| Goal 1 | #132, #133, #140-lite | Open as of 2026-05-22 verification | Not started on merged tracker state | Start or verify an active branch, then run the focused State/contract validation. | First implementation goal after #130/#131. |
-| Goal 2 | #134, #140-helper | Open as of 2026-05-22 verification | Blocked until Goal 1 semantics are available on the working branch | Build the reusable implicit-sensitivity helper and parity checks after Goal 1. | Starts after Goal 1. |
+| Goal 1 | #132, #133, #140-lite | Open as of 2026-05-22 verification | Implemented locally on `codex/association-solved-state-reliability`; not closed until merged | Keep the Goal 1 focused State/contract validation in any Goal 2 proof run. | First implementation goal after #130/#131. |
+| Goal 2 | #134, #140-helper | Open as of 2026-05-22 verification | Implemented and validated locally on `codex/association-implicit-sensitivity-helper`; review until merged | Review the helper extraction, focused tests, and IntelliJ validation evidence before PR merge. | Starts after Goal 1. |
 | Goal 3 | #135 baseline | Open as of 2026-05-22 verification | Not started on merged tracker state | Tighten capability evidence vocabulary without adding derivative or optimizer support. | Can run with Goal 1. |
 | Goal 4 | #136, #135 update | Open as of 2026-05-22 verification | Blocked by Goals 2 and 3 | Add pure association parameter sensitivities only after helper and capability firewall are in place. | Starts after Goal 2 and Goal 3 baseline. |
 | Goal 5 | #137, #135 update | Open as of 2026-05-22 verification | Blocked by Goal 4 | Extend the proven pure-parameter pattern to binary association parameters. | Starts after Goal 4. |
@@ -503,7 +503,7 @@ Every PR or handoff for this roadmap must include:
 - whether any capability evidence changed.
 - whether any public API changed; expected answer is usually no.
 - focused validation commands and results.
-- explicit statement that no direct CppAD fixed-point recording or production finite-difference derivative backend was added.
+- explicit statement that no direct CppAD fixed-point recording or non-exact production derivative backend was added.
 - explicit statement that associating equilibrium remains not production-exposed.
 - remaining blockers for later goals.
 
@@ -528,7 +528,7 @@ Do not close any issue in this roadmap by:
 - inventorying files.
 - adding documentation that merely explains an unsupported path.
 - adding fallback behavior.
-- adding finite-difference validation and calling it production derivative support.
+- adding approximate validation and calling it production derivative support.
 - exposing route strings or backend knobs before native support exists.
 - moving scope to downstream studies.
 - claiming capability because labels, target kinds, or registry names exist.

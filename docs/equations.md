@@ -962,7 +962,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:562`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:416` (template <typename Scalar>)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:427` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -1709,7 +1709,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Mass-action site-fraction relation from SAFT association theory; exact numbered equation unavailable in the local PDF set.
 - LaTeX: `docs/latex/equations.tex:974`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:14` (static vector<double> association_site_fractions_cpp(vector<double> XA_guess, vector<double> delta_ij, double den, vector<double> x) {)
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:25` (static vector<double> association_site_fractions_cpp(vector<double> XA_guess, vector<double> delta_ij, double den, vector<double> x) {)
 
 **LaTeX source**
 
@@ -1744,7 +1744,7 @@ $$
 - Description: Provides a differential relation needed for association contribution calculations.
 - Change note: Site-fraction density derivative closure used in association compressibility calculations; exact numbered reference unavailable locally.
 - LaTeX: `docs/latex/equations.tex:992`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:32` (static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dt, vector<double> x) {)
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:212` (static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dt, vector<double> x) {)
 
 **LaTeX source**
 
@@ -1787,7 +1787,7 @@ $$
 - Description: Provides a differential relation needed for association contribution calculations.
 - Change note: Site-fraction composition derivative closure from SAFT association machinery; local progression PDFs do not provide this as a numbered equation.
 - LaTeX: `docs/latex/equations.tex:1014`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:58` (static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x) {)
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:238` (static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x) {)
 
 **LaTeX source**
 
@@ -1840,7 +1840,7 @@ $$
 - Description: Provides a supporting relation used in association contribution.
 - Change note: Component density relation used with association equations; no directly numbered counterpart found in local Chapman-accessible sources.
 - LaTeX: `docs/latex/equations.tex:1043`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:126` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
 
 **LaTeX source**
 
@@ -1863,7 +1863,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Association strength definition used in SAFT implementations; exact numbered Chapman equation not available in local PDFs.
 - LaTeX: `docs/latex/equations.tex:1057`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:126` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
 
 **LaTeX source**
 
@@ -1884,7 +1884,7 @@ $$
 - Description: Defines the density differential of the association strength term.
 - Change note: Re-homed under the association-strength definition so the \(\Delta^{A_iB_j}\) density derivative stays local to its owning baseline.
 - LaTeX: `docs/latex/equations.tex:1068`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:163` (static vector<double> association_site_fraction_density_terms_cpp()
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:333` (static vector<double> association_site_fraction_density_terms_cpp()
 
 **LaTeX source**
 
@@ -1905,7 +1905,7 @@ $$
 - Description: Defines the composition differential of the association strength term.
 - Change note: Re-homed under the association-strength definition so the \(\Delta^{A_iB_j}\) composition derivative stays local to its owning baseline.
 - LaTeX: `docs/latex/equations.tex:1079`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:196` (static vector<double> association_site_fraction_composition_terms_cpp()
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:366` (static vector<double> association_site_fraction_composition_terms_cpp()
 
 **LaTeX source**
 
@@ -2456,7 +2456,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for residual helmholz energy.
 - Change note: No explicit citation on this equation block in the source file.
 - LaTeX: `docs/latex/equations.tex:1390`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:1506` (AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:1435` (AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2477,7 +2477,7 @@ $$
 - Description: Provides the total temperature differential of the residual Helmholtz energy.
 - Change note: Moved here from the removed standalone temperature-differential section so one downstream total-\(d\tilde a^\mathrm{res}/dT\) summary relation remains available.
 - LaTeX: `docs/latex/equations.tex:1402`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:2893` (ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:2828` (ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2506,7 +2506,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1418`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:427` (template <typename Scalar>)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:438` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2636,7 +2636,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1488`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:438` (template <typename Scalar>)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:449` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2750,7 +2750,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Association Helmholtz form is traced to Chapman/Wertheim SAFT association theory, but the exact numbered equation is not present in the local progression PDFs.
 - LaTeX: `docs/latex/equations.tex:1550`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:486` (template <typename Scalar>)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:497` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2771,7 +2771,7 @@ $$
 - Description: Provides the density differential of the association Helmholtz contribution.
 - Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
 - LaTeX: `docs/latex/equations.tex:1562`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:323` (double dadrho_assoc_cpp()
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:502` (double dadrho_assoc_cpp()
 
 **LaTeX source**
 
@@ -2794,7 +2794,7 @@ $$
 - Description: Provides the composition differential of the association Helmholtz contribution.
 - Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
 - LaTeX: `docs/latex/equations.tex:1574`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:385` (ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:564` (ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2827,7 +2827,7 @@ $$
 - Description: Provides the analytical temperature differential of the association Helmholtz contribution.
 - Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
 - LaTeX: `docs/latex/equations.tex:1591`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:373` (double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {)
+- C++: `src/epcsaft/native/eos/contributions/association.cpp:552` (double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {)
 
 **LaTeX source**
 
@@ -2858,7 +2858,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1609`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:824` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:835` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 
@@ -3002,7 +3002,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for born electrolyte term contribution.
 - Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 - LaTeX: `docs/latex/equations.tex:1686`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:897` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:908` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 

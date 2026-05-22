@@ -60,7 +60,7 @@ def test_association_site_fraction_nonconvergence_raises_with_diagnostics() -> N
         _core.NativeSolutionError,
         match=(
             "association site-fraction solve did not converge.*"
-            "iteration_count=.*max_iterations=.*update_norm=.*residual_norm=.*min_XA=.*max_XA=.*damping_policy="
+            "iteration_count=.*max_iterations=.*update_norm=.*residual_norm=.*min_XA=.*max_XA=.*relaxation_policy="
         ),
     ):
         _core._native_association_site_fraction_solve(
@@ -88,7 +88,7 @@ def test_association_site_fraction_solve_reports_convergence_diagnostics() -> No
     assert diagnostics["residual_norm"] <= diagnostics["residual_tolerance"]
     assert diagnostics["min_XA"] > 0.0
     assert diagnostics["max_XA"] <= 1.0 + 1.0e-12
-    assert diagnostics["damping_policy"] == "fixed_under_relaxation"
+    assert diagnostics["relaxation_policy"] == "fixed_under_relaxation"
 
 
 def test_direct_cppad_eos_contribution_recording_rejects_active_association() -> None:

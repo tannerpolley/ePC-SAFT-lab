@@ -344,6 +344,11 @@ struct PhaseStateCompositionSensitivityResult {
     vector<double> fixed_density_hessian_tensor_row_major;
     vector<double> jacobian_row_major;
     vector<double> hessian_tensor_row_major;
+    std::string association_sensitivity_backend;
+    std::string association_sensitivity_helper;
+    int association_site_count = 0;
+    vector<double> association_site_sensitivity_row_major;
+    vector<double> association_site_second_sensitivity_tensor_row_major;
 };
 
 class ePCSAFTMixtureNative;
