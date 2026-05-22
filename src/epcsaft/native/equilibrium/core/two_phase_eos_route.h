@@ -1,17 +1,25 @@
 #pragma once
 
+#include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 struct add_args;
+
+namespace epcsaft::native::equilibrium {
+struct ActivationPlan;
+struct VariableLayout;
+}  // namespace epcsaft::native::equilibrium
 
 namespace epcsaft::native::equilibrium_nlp {
 
 struct NeutralTwoPhaseEosNlpContract {
     std::string problem_name;
     std::string derivative_backend;
+    std::string activation_compiler;
     std::string variable_model;
     std::string density_backend;
     std::vector<std::string> residual_families;
@@ -23,6 +31,9 @@ struct NeutralTwoPhaseEosNlpContract {
     int variable_count = 0;
     int constraint_count = 0;
     int jacobian_nonzero_count = 0;
+    bool exact_hessian_available = false;
+    int hessian_nonzero_count = 0;
+    std::string hessian_backend;
     std::vector<double> standard_mu_rt;
     std::vector<double> initial_point;
     std::vector<double> variable_lower_bounds;
@@ -80,6 +91,7 @@ struct NeutralTwoPhaseEosRouteResult {
     std::string adapter_kind = "native_tnlp_adapter";
     std::string problem_name = "neutral_two_phase_eos";
     std::string derivative_backend = "analytic_cppad";
+    std::string activation_compiler;
     std::string variable_model;
     std::string density_backend;
     std::vector<std::string> residual_families;
@@ -172,6 +184,20 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
     const std::vector<double>& feed_composition
 );
 
+NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_tp_flash_nlp_contract(
+    const add_args& args,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+);
+
+std::unique_ptr<NlpProblem> make_neutral_tp_flash_eos_problem(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::string& problem_name = "neutral_tp_flash_eos"
+);
+
 IpoptSolveResult solve_neutral_two_phase_eos_ipopt(
     const add_args& args,
     double temperature,
@@ -262,6 +288,18 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
 );
 
 NeutralTwoPhaseEosRouteResult solve_neutral_tp_flash_eos_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+);
+
+NeutralTwoPhaseEosRouteResult solve_activated_neutral_tp_flash_eos_route(
     const add_args& args,
     double temperature,
     double target_pressure,

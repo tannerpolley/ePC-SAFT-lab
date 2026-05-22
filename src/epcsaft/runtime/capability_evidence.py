@@ -82,7 +82,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "backend": "cppad_phase_blocks",
         "supported": True,
         "classification": "production_supported",
-        "reason": "the production selector exposes neutral two-phase TP flash only after native-owned seed generation and postsolve certification",
+        "reason": "the production selector exposes neutral two-phase TP flash through the native activation-plan compiler, native-owned seed generation, and postsolve certification",
         "tests": (
             "tests/api/frontend/test_equilibrium.py",
             "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",

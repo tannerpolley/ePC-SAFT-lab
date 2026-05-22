@@ -419,6 +419,22 @@ def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     assert binding_offenders == []
 
 
+def test_equilibrium_native_facade_does_not_expose_backend_selection_options() -> None:
+    facade = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
+        encoding="utf-8",
+        errors="ignore",
+    )
+    forbidden = (
+        "EquilibriumOptionsNative",
+        "solver_backend",
+        "jacobian_backend",
+        "derivative_backend",
+        "backend",
+    )
+
+    assert [token for token in forbidden if token in facade] == []
+
+
 def test_equilibrium_activation_families_cannot_create_ad_hoc_native_route_files() -> None:
     native_equilibrium_root = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium"
     shared_owner = native_equilibrium_root / "routes" / "derived" / "bubble_dew.cpp"
@@ -524,6 +540,8 @@ def test_activation_matrix_families_do_not_gain_direct_pybind_route_entrypoints(
 def test_equilibrium_route_solve_and_contract_owners_stay_in_shared_core_files() -> None:
     native_equilibrium_root = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium"
     allowed_route_owner_files = {
+        "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp",
+        "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.h",
         "src/epcsaft/native/equilibrium/core/selector_core.cpp",
         "src/epcsaft/native/equilibrium/core/selector_core.h",
         "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp",

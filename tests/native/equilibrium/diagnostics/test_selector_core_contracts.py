@@ -139,6 +139,127 @@ def test_selector_core_rejects_invalid_route_family_before_solver_dispatch() -> 
         )
 
 
+def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
+    mix = _neutral_binary_mixture()
+    request = {
+        "route": "neutral_tp_flash",
+        "temperature": 300.0,
+        "pressure": 1.0e6,
+        "composition": [0.35, 0.65],
+        "composition_role": "feed",
+    }
+
+    payload = _core._native_equilibrium_selector_contract(mix._native, request)
+    activation = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}["neutral_tp_flash"]
+    plan = payload["activation_plan"]
+    layout = payload["variable_layout"]
+
+    assert payload["activation_compiler"] == "activation_plan"
+    assert plan["family_key"] == "neutral_tp_flash"
+    assert plan["route"] == "neutral_tp_flash"
+    assert plan["phase_keys"] == ["liquid", "vapor"]
+    assert plan["phase_kinds"] == ["liquid", "vapor"]
+    assert plan["variable_blocks"] == ["phase_species_amounts", "phase_volumes"]
+    assert plan["constraint_blocks"] == activation["constraint_families"]
+    assert plan["residual_blocks"] == activation["residual_families"]
+    assert plan["postsolve_blocks"] == [
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_distance",
+        "phase_volume_gap",
+    ]
+    assert plan["variable_model"] == activation["variable_model"]
+    assert plan["density_backend"] == activation["density_backend"]
+    assert plan["feed_composition"] == pytest.approx([0.35, 0.65])
+    assert plan["temperature"] == pytest.approx(300.0)
+    assert plan["pressure"] == pytest.approx(1.0e6)
+
+    assert layout["family_key"] == "neutral_tp_flash"
+    assert layout["route"] == "neutral_tp_flash"
+    assert layout["phase_count"] == 2
+    assert layout["species_count"] == 2
+    assert layout["variable_count"] == payload["variable_count"]
+    assert layout["phase_amount_indices"] == [[0, 1], [3, 4]]
+    assert layout["phase_volume_indices"] == [2, 5]
+    assert layout["variable_blocks"] == [
+        {
+            "name": "phase_species_amounts",
+            "offset": 0,
+            "size": 4,
+            "stride": 3,
+        },
+        {
+            "name": "phase_volumes",
+            "offset": 2,
+            "size": 2,
+            "stride": 3,
+        },
+    ]
+
+
+@pytest.mark.parametrize(
+    ("route", "composition_role"),
+    [
+        ("bubble_pressure", "liquid"),
+        ("bubble_temperature", "liquid"),
+        ("dew_pressure", "vapor"),
+        ("dew_temperature", "vapor"),
+        ("neutral_lle", "feed"),
+        ("electrolyte_lle", "feed"),
+        ("reactive_speciation", "feed"),
+        ("reactive_lle", "feed"),
+        ("reactive_electrolyte_lle", "feed"),
+    ],
+)
+def test_activation_plan_builder_rejects_non_flash_routes(route: str, composition_role: str) -> None:
+    mix = _neutral_binary_mixture()
+
+    with pytest.raises(_core.NativeValueError, match="activation-plan-ineligible"):
+        _core._native_equilibrium_activation_plan_contract(
+            mix._native,
+            {
+                "route": route,
+                "temperature": 300.0,
+                "pressure": 1.0e6,
+                "composition": [0.35, 0.65],
+                "composition_role": composition_role,
+            },
+        )
+
+
+def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None:
+    mix = _neutral_binary_mixture()
+    request = {
+        "route": "neutral_tp_flash",
+        "temperature": 300.0,
+        "pressure": 1.0e6,
+        "composition": [0.35, 0.65],
+        "composition_role": "feed",
+    }
+
+    payload = _core._native_activated_neutral_tp_flash_nlp_contract(mix._native, request)
+    activated = payload["activated"]
+    trusted = payload["trusted_reference"]
+
+    assert payload["activation_plan"]["family_key"] == "neutral_tp_flash"
+    assert payload["variable_layout"]["variable_count"] == activated["variable_count"]
+    assert activated["activation_compiler"] == "activation_plan"
+    assert activated["variable_count"] == trusted["variable_count"]
+    assert activated["constraint_count"] == trusted["constraint_count"]
+    assert activated["jacobian_nonzero_count"] == trusted["jacobian_nonzero_count"]
+    assert len(activated["variable_lower_bounds"]) == len(trusted["variable_lower_bounds"])
+    assert len(activated["variable_upper_bounds"]) == len(trusted["variable_upper_bounds"])
+    assert len(activated["constraint_lower_bounds"]) == len(trusted["constraint_lower_bounds"])
+    assert len(activated["constraint_upper_bounds"]) == len(trusted["constraint_upper_bounds"])
+    assert len(activated["initial_point"]) == len(trusted["initial_point"])
+    assert activated["residual_families"] == trusted["residual_families"]
+    assert activated["constraint_families"] == trusted["constraint_families"]
+    assert activated["exact_hessian_available"] is True
+    assert activated["hessian_nonzero_count"] == trusted["hessian_nonzero_count"]
+    assert activated["hessian_backend"] == trusted["hessian_backend"]
+
+
 def test_selector_core_rejects_incompatible_composition_role_before_solver_dispatch() -> None:
     mix = _neutral_binary_mixture()
 

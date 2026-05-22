@@ -1175,6 +1175,9 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
     out.variable_count = problem.variable_count();
     out.constraint_count = problem.constraint_count();
     out.jacobian_nonzero_count = problem.jacobian_nonzero_count();
+    out.exact_hessian_available = problem.has_exact_hessian();
+    out.hessian_nonzero_count = problem.hessian_nonzero_count();
+    out.hessian_backend = problem.hessian_backend();
     out.initial_point = initial;
     out.variable_lower_bounds = bounds.variable_lower;
     out.variable_upper_bounds = bounds.variable_upper;

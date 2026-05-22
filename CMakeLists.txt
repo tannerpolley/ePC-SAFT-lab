@@ -278,11 +278,14 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     src/epcsaft/native/equilibrium/blocks/eos_phase_block.cpp
     src/epcsaft/native/equilibrium/blocks/gibbs_blocks.cpp
     src/epcsaft/native/equilibrium/blocks/reaction_block.cpp
+    src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp
+    src/epcsaft/native/equilibrium/core/activation_plan.cpp
     src/epcsaft/native/equilibrium/core/helpers.cpp
     src/epcsaft/native/equilibrium/core/nlp_problem.cpp
     src/epcsaft/native/equilibrium/core/selector_core.cpp
     src/epcsaft/native/equilibrium/core/second_order.cpp
     src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp
+    src/epcsaft/native/equilibrium/core/variable_layout.cpp
     src/epcsaft/native/equilibrium/results/result_builder.cpp
     src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp
     src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp

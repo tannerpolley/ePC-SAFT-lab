@@ -1,7 +1,9 @@
 #pragma once
 
+#include "equilibrium/core/activation_plan.h"
 #include "equilibrium/core/activation_matrix.h"
 #include "equilibrium/core/two_phase_eos_route.h"
+#include "equilibrium/core/variable_layout.h"
 
 #include <string>
 #include <vector>
@@ -39,6 +41,9 @@ struct SelectorContract {
     bool exact_derivatives_required = false;
     SelectorInputClassification input_classification;
     ProblemFamilyActivation activation;
+    bool has_activation_plan = false;
+    ActivationPlan activation_plan;
+    VariableLayout variable_layout;
     epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract nlp_contract;
 };
 

@@ -1,13 +1,17 @@
 #include "equilibrium/core/two_phase_eos_route.h"
 
 #include "equilibrium/blocks/eos_phase_block.h"
+#include "equilibrium/core/activated_equilibrium_nlp.h"
+#include "equilibrium/core/activation_plan.h"
 #include "eos/core_internal.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
+#include "equilibrium/core/variable_layout.h"
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <numeric>
 #include <utility>
 
@@ -2539,16 +2543,23 @@ NeutralTwoPhaseEosNlpContract make_contract(const NlpProblem& problem, int phase
     const std::vector<double> initial = problem.initial_point();
     const NlpBounds bounds = problem.bounds();
     const NlpJacobianStructure structure = problem.jacobian_structure();
+    const std::map<std::string, std::string> diagnostics = problem.diagnostics();
 
     NeutralTwoPhaseEosNlpContract out;
     out.problem_name = problem.name();
     out.derivative_backend = "analytic_cppad";
-    apply_route_metadata(out, route_metadata_from_diagnostics(problem.diagnostics()));
+    const auto activation_compiler = diagnostics.find("activation_compiler");
+    out.activation_compiler =
+        activation_compiler == diagnostics.end() ? "" : activation_compiler->second;
+    apply_route_metadata(out, route_metadata_from_diagnostics(diagnostics));
     out.phase_count = phase_count;
     out.species_count = species_count;
     out.variable_count = problem.variable_count();
     out.constraint_count = problem.constraint_count();
     out.jacobian_nonzero_count = problem.jacobian_nonzero_count();
+    out.exact_hessian_available = problem.has_exact_hessian();
+    out.hessian_nonzero_count = problem.hessian_nonzero_count();
+    out.hessian_backend = problem.hessian_backend();
     out.initial_point = initial;
     out.variable_lower_bounds = bounds.variable_lower;
     out.variable_upper_bounds = bounds.variable_upper;
@@ -3046,7 +3057,208 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
     return best;
 }
 
+std::vector<std::vector<double>> activated_phase_amounts(
+    const std::vector<double>& variables,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+) {
+    require_size(
+        variables,
+        static_cast<std::size_t>(layout.variable_count),
+        "Activated neutral TP flash variable"
+    );
+    std::vector<std::vector<double>> out(
+        static_cast<std::size_t>(layout.phase_count),
+        std::vector<double>(static_cast<std::size_t>(layout.species_count), 0.0)
+    );
+    for (int phase = 0; phase < layout.phase_count; ++phase) {
+        for (int species = 0; species < layout.species_count; ++species) {
+            out[static_cast<std::size_t>(phase)][static_cast<std::size_t>(species)] =
+                variables[static_cast<std::size_t>(layout.phase_amount_index(phase, species))];
+        }
+    }
+    return out;
+}
+
+std::vector<double> activated_phase_volumes(
+    const std::vector<double>& variables,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+) {
+    require_size(
+        variables,
+        static_cast<std::size_t>(layout.variable_count),
+        "Activated neutral TP flash variable"
+    );
+    std::vector<double> out(static_cast<std::size_t>(layout.phase_count), 0.0);
+    for (int phase = 0; phase < layout.phase_count; ++phase) {
+        out[static_cast<std::size_t>(phase)] =
+            variables[static_cast<std::size_t>(layout.phase_volume_index(phase))];
+    }
+    return out;
+}
+
+NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    const std::string problem_name = "neutral_tp_flash_eos";
+    const epcsaft::native::equilibrium::ActivationPlan plan =
+        epcsaft::native::equilibrium::build_neutral_tp_flash_activation_plan(
+            args,
+            temperature,
+            target_pressure,
+            feed_composition
+        );
+    const epcsaft::native::equilibrium::VariableLayout layout =
+        epcsaft::native::equilibrium::build_variable_layout(
+            plan,
+            static_cast<int>(plan.feed_composition.size())
+        );
+    const IpoptAdapterInfo adapter = native_ipopt_adapter_info();
+    NeutralTwoPhaseEosRouteResult best;
+    best.compiled = adapter.compiled;
+    best.adapter_available = adapter.adapter_available;
+    best.adapter_kind = adapter.adapter_kind;
+    best.exact_gradient_required = adapter.exact_gradient_required;
+    best.exact_jacobian_required = adapter.exact_jacobian_required;
+    best.problem_name = problem_name;
+    best.activation_compiler = "activation_plan";
+    apply_route_metadata(best, fixed_temperature_pressure_flash_route_metadata());
+    if (!adapter.compiled) {
+        best.status = "ipopt_dependency_required";
+        return best;
+    }
+
+    const std::vector<double>& normalized_feed = plan.feed_composition;
+    const std::vector<double> feed_amounts = [&]() {
+        std::vector<double> out;
+        out.reserve(normalized_feed.size());
+        for (double value : normalized_feed) {
+            out.push_back(kTwoPhaseFlashFeedBasis * value);
+        }
+        return out;
+    }();
+    const std::vector<NamedInitialVariables> seeds = flash_route_seed_candidates(
+        args,
+        normalized_feed,
+        temperature,
+        target_pressure,
+        problem_name
+    );
+    bool have_best = false;
+    std::vector<RouteSeedAttempt> attempts;
+    attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
+
+    auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
+        ActivatedEquilibriumNlp problem(args, plan, layout);
+        const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
+        NeutralTwoPhaseEosRouteResult result;
+        result.compiled = adapter.compiled;
+        result.adapter_available = adapter.adapter_available;
+        result.adapter_kind = adapter.adapter_kind;
+        result.exact_gradient_required = adapter.exact_gradient_required;
+        result.exact_jacobian_required = adapter.exact_jacobian_required;
+        result.problem_name = problem_name;
+        result.activation_compiler = "activation_plan";
+        result.initial_point_strategy = "deterministic_seed_sweep";
+        result.seed_name = seed_name;
+        result.ran = solve.solver_ran;
+        const bool can_postsolve =
+            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        result.solver_accepted = can_postsolve;
+        result.solver_feasible_point = solve.feasible_point;
+        result.solver_status = solve.solver_status;
+        result.application_status = solve.application_status;
+        apply_ipopt_solve_metadata(result, solve);
+        result.objective = solve.objective;
+        result.variables = solve.variables;
+        result.constraints = solve.constraints;
+        apply_route_metadata(result, fixed_temperature_pressure_flash_route_metadata());
+        if (!can_postsolve) {
+            result.status = "solver_rejected";
+            attempts.push_back(neutral_seed_attempt_from_result(result));
+            if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+                best = result;
+                have_best = true;
+            }
+            return result;
+        }
+
+        result.phase_amounts = activated_phase_amounts(solve.variables, layout);
+        result.phase_volumes = activated_phase_volumes(solve.variables, layout);
+        result.postsolve = fixed_temperature_pressure_flash_postsolve(
+            args,
+            temperature,
+            target_pressure,
+            result.phase_amounts,
+            result.phase_volumes,
+            feed_amounts,
+            material_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+        result.accepted = result.postsolve.accepted;
+        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        attempts.push_back(neutral_seed_attempt_from_result(result));
+        if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+            best = result;
+            have_best = true;
+        }
+        return result;
+    };
+
+    if (!options.initial_variables.empty()) {
+        const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
+        if (continuation.accepted) {
+            best.seed_attempts = attempts;
+            return best;
+        }
+    }
+
+    if (seeds.empty()) {
+        throw ValueError(problem_name + " could not construct a deterministic flash seed.");
+    }
+    for (const auto& seed : seeds) {
+        IpoptSolveOptions attempt_options = options;
+        attempt_options.initial_variables = seed.variables;
+        attempt_options.initial_bound_lower_multipliers.clear();
+        attempt_options.initial_bound_upper_multipliers.clear();
+        attempt_options.initial_constraint_multipliers.clear();
+        const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
+        if (attempt.accepted) {
+            break;
+        }
+    }
+
+    best.initial_point_strategy = "deterministic_seed_sweep";
+    best.seed_attempts = attempts;
+    return best;
+}
+
 }  // namespace
+
+std::unique_ptr<NlpProblem> make_neutral_tp_flash_eos_problem(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::string& problem_name
+) {
+    return std::make_unique<NeutralFixedTemperaturePressureFlashProblem>(
+        args,
+        temperature,
+        target_pressure,
+        feed_composition,
+        problem_name
+    );
+}
 
 NeutralTwoPhaseEosNlpContract evaluate_neutral_bubble_p_eos_nlp_contract(
     const add_args& args,
@@ -3236,6 +3448,30 @@ NeutralTwoPhaseEosRouteResult solve_neutral_tp_flash_eos_route(
     double phase_distance_tolerance
 ) {
     return solve_flash_route(
+        args,
+        temperature,
+        target_pressure,
+        feed_composition,
+        options,
+        material_tolerance,
+        pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance
+    );
+}
+
+NeutralTwoPhaseEosRouteResult solve_activated_neutral_tp_flash_eos_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    return solve_activated_flash_route(
         args,
         temperature,
         target_pressure,

@@ -304,6 +304,7 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     py::dict out;
     out["problem_name"] = result.problem_name;
     out["derivative_backend"] = result.derivative_backend;
+    out["activation_compiler"] = result.activation_compiler;
     out["variable_model"] = result.variable_model;
     out["density_backend"] = result.density_backend;
     out["residual_families"] = result.residual_families;
@@ -315,6 +316,9 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     out["variable_count"] = result.variable_count;
     out["constraint_count"] = result.constraint_count;
     out["jacobian_nonzero_count"] = result.jacobian_nonzero_count;
+    out["exact_hessian_available"] = result.exact_hessian_available;
+    out["hessian_nonzero_count"] = result.hessian_nonzero_count;
+    out["hessian_backend"] = result.hessian_backend;
     out["standard_mu_rt"] = result.standard_mu_rt;
     out["initial_point"] = result.initial_point;
     out["variable_lower_bounds"] = result.variable_lower_bounds;
@@ -408,6 +412,53 @@ py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyAct
     return out;
 }
 
+py::dict activation_plan_to_dict(const epcsaft::native::equilibrium::ActivationPlan& plan) {
+    py::dict out;
+    out["family_key"] = plan.family_key;
+    out["route"] = plan.route;
+    out["phase_keys"] = plan.phase_keys;
+    out["phase_kinds"] = plan.phase_kinds;
+    out["variable_blocks"] = plan.variable_blocks;
+    out["constraint_blocks"] = plan.constraint_blocks;
+    out["residual_blocks"] = plan.residual_blocks;
+    out["postsolve_blocks"] = plan.postsolve_blocks;
+    out["variable_model"] = plan.variable_model;
+    out["density_backend"] = plan.density_backend;
+    out["feed_composition"] = plan.feed_composition;
+    out["temperature"] = plan.temperature;
+    out["pressure"] = plan.pressure;
+    return out;
+}
+
+py::dict variable_block_layout_to_dict(
+    const epcsaft::native::equilibrium::VariableBlockLayout& block
+) {
+    py::dict out;
+    out["name"] = block.name;
+    out["offset"] = block.offset;
+    out["size"] = block.size;
+    out["stride"] = block.stride;
+    return out;
+}
+
+py::dict variable_layout_to_dict(const epcsaft::native::equilibrium::VariableLayout& layout) {
+    py::dict out;
+    out["family_key"] = layout.family_key;
+    out["route"] = layout.route;
+    out["variable_model"] = layout.variable_model;
+    out["phase_count"] = layout.phase_count;
+    out["species_count"] = layout.species_count;
+    out["variable_count"] = layout.variable_count;
+    py::list blocks;
+    for (const auto& block : layout.variable_blocks) {
+        blocks.append(variable_block_layout_to_dict(block));
+    }
+    out["variable_blocks"] = blocks;
+    out["phase_amount_indices"] = layout.phase_amount_indices;
+    out["phase_volume_indices"] = layout.phase_volume_indices;
+    return out;
+}
+
 py::dict selector_input_classification_to_dict(
     const epcsaft::native::equilibrium::SelectorInputClassification& classification
 ) {
@@ -427,6 +478,11 @@ py::dict selector_contract_to_dict(const epcsaft::native::equilibrium::SelectorC
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
+    if (contract.has_activation_plan) {
+        out["activation_compiler"] = contract.nlp_contract.activation_compiler;
+        out["activation_plan"] = activation_plan_to_dict(contract.activation_plan);
+        out["variable_layout"] = variable_layout_to_dict(contract.variable_layout);
+    }
     out["production_exposed"] = contract.production_exposed;
     out["certification_required"] = contract.certification_required;
     out["density_closure_required"] = contract.density_closure_required;
@@ -445,6 +501,11 @@ void apply_selector_metadata(
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
+    if (contract.has_activation_plan) {
+        out["activation_compiler"] = contract.nlp_contract.activation_compiler;
+        out["activation_plan"] = activation_plan_to_dict(contract.activation_plan);
+        out["variable_layout"] = variable_layout_to_dict(contract.variable_layout);
+    }
     out["production_exposed"] = contract.production_exposed;
     out["certification_required"] = contract.certification_required;
     out["density_closure_required"] = contract.density_closure_required;
@@ -630,6 +691,27 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         }
         return rows;
     });
+    m.def("_native_equilibrium_activation_plan_contract", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::dict& request_payload
+    ) {
+        if (!mixture) {
+            throw ValueError("Equilibrium activation plan contract requires a native mixture.");
+        }
+        const auto request = selector_request_from_dict(request_payload);
+        const auto plan = epcsaft::native::equilibrium::build_activation_plan(
+            mixture->args(),
+            request
+        );
+        const auto layout = epcsaft::native::equilibrium::build_variable_layout(
+            plan,
+            static_cast<int>(plan.feed_composition.size())
+        );
+        py::dict out;
+        out["activation_plan"] = activation_plan_to_dict(plan);
+        out["variable_layout"] = variable_layout_to_dict(layout);
+        return out;
+    });
     // AlgID: bubble_dew_ipopt
     m.def("_native_equilibrium_selector_contract", [](
         const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
@@ -643,6 +725,42 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             mixture->args(),
             request
         ));
+    });
+    m.def("_native_activated_neutral_tp_flash_nlp_contract", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::dict& request_payload
+    ) {
+        if (!mixture) {
+            throw ValueError("Activated neutral TP flash contract requires a native mixture.");
+        }
+        const auto request = selector_request_from_dict(request_payload);
+        const auto plan = epcsaft::native::equilibrium::build_activation_plan(
+            mixture->args(),
+            request
+        );
+        const auto layout = epcsaft::native::equilibrium::build_variable_layout(
+            plan,
+            static_cast<int>(plan.feed_composition.size())
+        );
+        py::dict out;
+        out["activation_plan"] = activation_plan_to_dict(plan);
+        out["variable_layout"] = variable_layout_to_dict(layout);
+        out["activated"] = neutral_two_phase_eos_nlp_contract_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_activated_neutral_tp_flash_nlp_contract(
+                mixture->args(),
+                plan,
+                layout
+            )
+        );
+        out["trusted_reference"] = neutral_two_phase_eos_nlp_contract_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_neutral_tp_flash_eos_nlp_contract(
+                mixture->args(),
+                plan.temperature,
+                plan.pressure,
+                plan.feed_composition
+            )
+        );
+        return out;
     });
     // AlgID: bubble_dew_ipopt
     m.def("_native_equilibrium_selector_route_result", [](

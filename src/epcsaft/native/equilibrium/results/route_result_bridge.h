@@ -13,6 +13,7 @@ void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) 
     out["adapter_kind"] = result.adapter_kind;
     out["problem_name"] = result.problem_name;
     out["derivative_backend"] = result.derivative_backend;
+    out["activation_compiler"] = result.activation_compiler;
     out["ran"] = result.ran;
     out["solver_accepted"] = result.solver_accepted;
     out["accepted"] = result.accepted;
