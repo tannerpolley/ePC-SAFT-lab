@@ -187,6 +187,8 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
 def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     normalizer = _read("scripts/dev/configure_jetbrains_project.py")
     agents_md = _read("AGENTS.md")
+    intellij_guidance = _read("docs/agents/INTELLIJ.md")
+    combined_guidance = agents_md + "\n" + intellij_guidance
 
     assert 'RUN_CONFIG_FOLDER = "ePC-SAFT"' in normalizer
     assert "RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = None" in normalizer
@@ -197,15 +199,20 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "enable Services Run Dashboard for" in normalizer
     assert "delete stale shared run configuration" in normalizer
     assert "Configure IntelliJ Runs (Dry Run)" in normalizer
-    assert "Hard rule: use IntelliJ MCP first by default for repo work." in agents_md
-    assert "Start with the full enabled `intellij-index` toolset" in agents_md
-    assert "call `tool_search` for the missing relevant tool before falling back" in agents_md
-    assert "Try the relevant indexed action at least twice" in agents_md
-    assert "Hard rule: use `jetbrains-bundled` run-configuration MCP first by default" in agents_md
-    assert "do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in agents_md
-    assert "Use shell only for one-off probes, raw config reads after MCP lookup, git operations" in agents_md
-    assert "In the standalone `ePC-SAFT` project, shared `.run` configs must not set `folderName`" in agents_md
-    assert "use every relevant `intellij-index` action family before finalizing" in agents_md
+    assert "docs/agents/INTELLIJ.md" in agents_md
+    assert "IntelliJ MCP Workflow" in intellij_guidance
+    assert "Hard rule: use IntelliJ MCP first by default for repo work" in combined_guidance
+    assert "call `tool_search`" in intellij_guidance
+    assert "Try the relevant indexed action at least twice" in intellij_guidance
+    assert "durable scripts, tests, validation commands, build commands" in combined_guidance
+    assert "Do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in intellij_guidance
+    assert "Use shell only for" in combined_guidance
+    assert "In the standalone `ePC-SAFT` project, shared `.run` configs must not set" in intellij_guidance
+    assert "use every relevant index action family before finalizing" in intellij_guidance
+    assert "Use the `ij-debugger` skill and debugger MCP" in combined_guidance
+    assert "xdebug_start_debugger_session" in intellij_guidance
+    assert "C:\\Program Files\\PowerShell\\7\\pwsh.exe" in intellij_guidance
+    assert "JetBrains MCP exposes VCS root discovery" in combined_guidance
     for tool_name in (
         "ide_read_file",
         "ide_search_text",
@@ -230,8 +237,8 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         "ide_refactor_safe_delete",
         "ide_build_project",
     ):
-        assert tool_name in agents_md
-    assert "prefer shared Services run configs for native build, pytest, docs, package, and validation proof" in agents_md
+        assert tool_name in combined_guidance
+    assert "Use shared run configurations for ordinary validation" in intellij_guidance
 
     expected_names = {
         "Sync Environment",
