@@ -198,11 +198,40 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "delete stale shared run configuration" in normalizer
     assert "Configure IntelliJ Runs (Dry Run)" in normalizer
     assert "Hard rule: use IntelliJ MCP first by default for repo work." in agents_md
+    assert "Start with the full enabled `intellij-index` toolset" in agents_md
+    assert "call `tool_search` for the missing relevant tool before falling back" in agents_md
     assert "Try the relevant indexed action at least twice" in agents_md
     assert "Hard rule: use `jetbrains-bundled` run-configuration MCP first by default" in agents_md
     assert "do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in agents_md
     assert "Use shell only for one-off probes, raw config reads after MCP lookup, git operations" in agents_md
     assert "In the standalone `ePC-SAFT` project, shared `.run` configs must not set `folderName`" in agents_md
+    assert "use every relevant `intellij-index` action family before finalizing" in agents_md
+    for tool_name in (
+        "ide_read_file",
+        "ide_search_text",
+        "ide_find_file",
+        "ide_find_class",
+        "ide_find_symbol",
+        "ide_file_structure",
+        "ide_find_definition",
+        "ide_find_references",
+        "ide_find_implementations",
+        "ide_find_super_methods",
+        "ide_call_hierarchy",
+        "ide_type_hierarchy",
+        "ide_diagnostics",
+        "ide_get_active_file",
+        "ide_open_file",
+        "ide_sync_files",
+        "ide_optimize_imports",
+        "ide_reformat_code",
+        "ide_refactor_rename",
+        "ide_move_file",
+        "ide_refactor_safe_delete",
+        "ide_build_project",
+    ):
+        assert tool_name in agents_md
+    assert "prefer shared Services run configs for native build, pytest, docs, package, and validation proof" in agents_md
 
     expected_names = {
         "Sync Environment",
