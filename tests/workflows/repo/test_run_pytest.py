@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 import epcsaft.runtime.capability_evidence as capability_evidence
 import run_pytest
 from scripts.dev import doctor, validate_project
@@ -196,6 +198,11 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
     assert native_contract_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert equilibrium_confidence_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
     assert equilibrium_api_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
+
+
+def test_pytest_slice_dispatch_rejects_multiple_programmatic_flags():
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        run_pytest._pytest_args(["-q"], Path("build") / "pytest-temp" / "run-test", generic=True, api=True)
 
 
 def test_plot_output_tests_have_no_named_slice():

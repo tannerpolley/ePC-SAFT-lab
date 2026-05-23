@@ -349,26 +349,9 @@ def test_native_equilibrium_bindings_are_registered_through_selector_domain_unit
     assert offenders == []
 
 
-def test_equilibrium_facade_does_not_expose_route_builder_types() -> None:
-    facade = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
-        encoding="utf-8"
-    )
-    forbidden = (
-        "equilibrium/routes/route_builders.h",
-        "NativeRouteMetadata",
-        "NeutralTwoPhaseEosNlpContract",
-        "NeutralTwoPhaseEosRouteResult",
-        "ReactiveTwoPhaseEosPostsolve",
-        "ReactiveTwoPhaseEosRouteResult",
-        "route_builders",
-    )
-    offenders = [token for token in forbidden if token in facade]
-
-    assert offenders == []
-
-
 def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     deleted_sources = (
+        "src/epcsaft/native/equilibrium/facade.h",
         "src/epcsaft/native/equilibrium/workflows.cpp",
         "src/epcsaft/native/equilibrium/routes/route_builders.cpp",
         "src/epcsaft/native/equilibrium/routes/route_builders.h",
@@ -417,22 +400,6 @@ def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     binding_offenders = [name for name in forbidden_bindings if name in binding_sources]
 
     assert binding_offenders == []
-
-
-def test_equilibrium_native_facade_does_not_expose_backend_selection_options() -> None:
-    facade = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
-        encoding="utf-8",
-        errors="ignore",
-    )
-    forbidden = (
-        "EquilibriumOptionsNative",
-        "solver_backend",
-        "jacobian_backend",
-        "derivative_backend",
-        "backend",
-    )
-
-    assert [token for token in forbidden if token in facade] == []
 
 
 def test_equilibrium_activation_families_cannot_create_ad_hoc_native_route_files() -> None:
@@ -621,6 +588,42 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
     assert len(workflow_helpers) == 1
 
 
+def test_regression_package_keeps_downstream_application_benchmarks_out_of_core() -> None:
+    inspected_paths = (
+        REPO_ROOT / "src" / "epcsaft" / "regression" / "core.py",
+        REPO_ROOT / "src" / "epcsaft" / "regression" / "native_adapter.py",
+    )
+    forbidden_tokens = (
+        "fit_mea",
+        "mea_co2_h2o",
+        "MEAH+",
+        "MEACOO-",
+    )
+
+    offenders: list[str] = []
+    for path in inspected_paths:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        offenders.extend(f"{rel}: {token}" for token in forbidden_tokens if token in text)
+
+    assert offenders == []
+
+
+def test_state_native_adapter_does_not_own_regression_native_wrappers() -> None:
+    state_path = REPO_ROOT / "src" / "epcsaft" / "state" / "native_adapter.py"
+    tree = ast.parse(state_path.read_text(encoding="utf-8"), filename=state_path.relative_to(REPO_ROOT).as_posix())
+    regression_wrapper_names = {
+        "_evaluate_generic_native_debug",
+        "_fit_generic_native_ceres",
+        "_fit_pure_neutral_native_debug",
+    }
+    defined_names = {
+        node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    assert regression_wrapper_names.isdisjoint(defined_names)
+
+
 def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_helpers() -> None:
     frontend_path = REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py"
     tree = ast.parse(frontend_path.read_text(encoding="utf-8"), filename=frontend_path.relative_to(REPO_ROOT).as_posix())
@@ -674,6 +677,8 @@ def test_python_equilibrium_package_exposes_only_production_selector_solve_suppo
         "electrolyte_bubble_pressure",
         "reactive_phase_equilibrium",
         "reactive_stability_native",
+        "EquilibriumProblem",
+        "EquilibriumStructure",
         "ReactiveSpeciationProblem",
         "ReactiveElectrolyteBubbleProblem",
         "ReactivePhaseEquilibriumProblem",

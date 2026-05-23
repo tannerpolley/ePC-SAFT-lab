@@ -11,15 +11,14 @@ from typing import Any
 
 import numpy as np
 
+from .. import _core
 from .._types import InputError, phase_to_int
-from ..state.native_adapter import (
-    _core,
+from .._types import vector_to_array
+from ..state.native_adapter import check_association, create_struct
+from .native_adapter import (
     _evaluate_generic_native_debug,
     _fit_generic_native_ceres,
     _fit_pure_neutral_native_debug,
-    check_association,
-    create_struct,
-    vector_to_array,
 )
 from ..model.parameters import ParameterSet, ParameterSource
 from ..model.templates import _infer_pure_template_name
@@ -46,9 +45,6 @@ TERM_MIAC = "mean_ionic_activity"
 TERM_BINARY_VLE = "binary_vle_fugacity_balance"
 TERM_BINARY_LLE = "binary_lle_fugacity_balance"
 TERM_RELATIVE_PERMITTIVITY = "relative_permittivity"
-TERM_MEA_CO2_H2O_DENSITY = "mea_co2_h2o_density"
-TERM_MEA_CO2_H2O_CO2_FUGACITY = "mea_co2_h2o_co2_fugacity"
-TERM_MEA_CO2_H2O_OSMOTIC = "mea_co2_h2o_osmotic_coefficient"
 
 TARGET_ROW_FAMILY_ALIASES = {
     "density": "pure_density",
@@ -146,9 +142,6 @@ NATIVE_TERM_KINDS = {
     TERM_MIAC: 4,
     TERM_BINARY_VLE: 5,
     TERM_RELATIVE_PERMITTIVITY: 7,
-    TERM_MEA_CO2_H2O_DENSITY: 1,
-    TERM_MEA_CO2_H2O_OSMOTIC: 3,
-    TERM_MEA_CO2_H2O_CO2_FUGACITY: 6,
 }
 
 BINARY_CERES_UNSUPPORTED_REASON = (
@@ -3280,227 +3273,10 @@ def _update_matrix_file(
         writer.writerows(rows)
 
 
-def _mea_co2_h2o_species_from_records(
-    records: Sequence[Mapping[str, Any]], species: Iterable[str] | None
-) -> tuple[str, ...]:
-    normalized = _normalize_species_list(species)
-    inferred = _infer_species_union(records, ("x_",))
-    if normalized is None:
-        normalized = inferred
-    required = ("H2O", "MEA", "CO2", "MEAH+", "MEACOO-", "HCO3-")
-    missing_required = [name for name in required if name not in normalized]
-    if missing_required:
-        raise InputError(f"MEA-CO2-H2O benchmark species are missing: {', '.join(missing_required)}.")
-    missing_records = [name for name in normalized if name not in inferred]
-    if missing_records:
-        raise InputError(f"MEA-CO2-H2O benchmark records are missing x_ columns for: {', '.join(missing_records)}.")
-    return normalized
-
-
-def _build_mea_co2_h2o_terms(records: Sequence[dict[str, Any]]) -> tuple[FitTerm, ...]:
-    density_records = [
-        record
-        for record in records
-        if _value_from_record(record, *PURE_DENSITY_KEYS_MOLAR, *PURE_DENSITY_KEYS_MASS, required=False) is not None
-    ]
-    co2_records = [
-        record
-        for record in records
-        if _value_from_record(record, "lnphi_CO2", "ln_fugacity_coefficient_CO2", required=False) is not None
-    ]
-    osmotic_records = [
-        record
-        for record in records
-        if _value_from_record(record, "osmotic_coefficient", "osmotic", required=False) is not None
-    ]
-    if not density_records and not co2_records and not osmotic_records:
-        raise InputError("MEA-CO2-H2O benchmark records require density, CO2 fugacity, and/or osmotic targets.")
-    _require_record_value(density_records, "MEA-CO2-H2O benchmark", "P")
-    _require_record_value(co2_records, "MEA-CO2-H2O benchmark", "P")
-    _require_record_value(osmotic_records, "MEA-CO2-H2O benchmark", "P")
-    terms: list[FitTerm] = []
-    if density_records:
-        terms.append(_term_summary(density_records, TERM_MEA_CO2_H2O_DENSITY, 1.0, len(density_records)))
-    if co2_records:
-        terms.append(_term_summary(co2_records, TERM_MEA_CO2_H2O_CO2_FUGACITY, 1.0, len(co2_records)))
-    if osmotic_records:
-        terms.append(_term_summary(osmotic_records, TERM_MEA_CO2_H2O_OSMOTIC, 1.0, len(osmotic_records)))
-    return tuple(terms)
-
-
 def _target_bounds(
     targets: Sequence[str], bounds: FitBounds | Mapping[str, tuple[float | None, float | None]] | None
 ) -> tuple[np.ndarray, np.ndarray]:
     return _coerce_bounds(bounds).arrays_for(targets)
-
-
-def _benchmark_seed_payloads(
-    dataset: str | Path,
-    species: Sequence[str],
-    T_ref: float,
-    components: Sequence[str],
-) -> tuple[dict[str, dict[str, Any]], dict[str, str | None]]:
-    payloads: dict[str, dict[str, Any]] = {}
-    hints: dict[str, str | None] = {}
-    for component in components:
-        payload, source_key = _pure_seed_payload(component, T_ref, "", dataset, None)
-        payloads[component] = payload
-        hints[component] = f"{source_key}.csv" if source_key is not None else _infer_pure_template_name(list(species))
-    return payloads, hints
-
-
-def _benchmark_vector_map(targets: Sequence[str], theta: Sequence[float]) -> dict[str, float]:
-    return {name: float(value) for name, value in zip(targets, theta)}
-
-
-def _fit_mea_co2_h2o_component(
-    records: Sequence[dict[str, Any]],
-    component: str,
-    *,
-    dataset: str | Path,
-    species: Sequence[str],
-    fit_targets: Sequence[str],
-    seed_payload: Mapping[str, Any],
-    pure_file_hint: str | None,
-    terms: Sequence[FitTerm],
-    initial_guess: Mapping[str, float] | None,
-    bounds: FitBounds | Mapping[str, tuple[float | None, float | None]] | None,
-    user_options: Mapping[str, Any] | None,
-    max_nfev: int,
-) -> FitResult:
-    initial = _copy_mapping(initial_guess)
-    initial_map = {target: _seed_value(target, initial, seed_payload) for target in fit_targets}
-    lower, upper = _target_bounds(fit_targets, bounds)
-    theta0 = np.asarray([initial_map[name] for name in fit_targets], dtype=float)
-
-    native_records: list[dict[str, Any]] = []
-    fixed_payloads: list[dict[str, Any]] = []
-    co2_index = species.index("CO2")
-    for term in terms:
-        scale = _family_scale(term)
-        for record in term.records:
-            T = _float_from_record(record, "T", required=True)
-            P = _float_from_record(record, "P", required=True)
-            assert T is not None and P is not None
-            x = _composition_from_record(record, "x_", species)
-            if term.term_type == TERM_MEA_CO2_H2O_DENSITY:
-                native_record = _native_density_record(term.term_type, record, x, scale)
-                if native_record is None:
-                    continue
-            elif term.term_type == TERM_MEA_CO2_H2O_CO2_FUGACITY:
-                native_record = {
-                    "term_name": term.term_type,
-                    "term": NATIVE_TERM_KINDS[term.term_type],
-                    "T": T,
-                    "P": P,
-                    "phase": phase_to_int(_value_from_record(record, "phase", required=False) or "liq"),
-                    "x": x.tolist(),
-                    "target": _float_from_record(record, "lnphi_CO2", "ln_fugacity_coefficient_CO2", required=True),
-                    "target_index": co2_index,
-                    "scale": scale,
-                }
-            elif term.term_type == TERM_MEA_CO2_H2O_OSMOTIC:
-                native_record = {
-                    "term_name": term.term_type,
-                    "term": NATIVE_TERM_KINDS[term.term_type],
-                    "T": T,
-                    "P": P,
-                    "phase": phase_to_int(_value_from_record(record, "phase", required=False) or "liq"),
-                    "x": x.tolist(),
-                    "target": _float_from_record(record, "osmotic_coefficient", "osmotic", required=True),
-                    "scale": scale,
-                }
-            else:
-                continue
-            fixed_payloads.append(_params_for_native_record(dataset, species, x, T, user_options))
-            native_records.append(native_record)
-
-    result = _run_native_generic_score(
-        fixed_payloads,
-        native_records,
-        fit_targets,
-        species,
-        theta0,
-        lower,
-        upper,
-        component=component,
-        max_nfev=int(max_nfev),
-    )
-    vector_map = _benchmark_vector_map(fit_targets, result["x"])
-    mode = PURE_ION_MODE if abs(float(seed_payload.get("z", 0.0))) > 1.0e-12 else PURE_NEUTRAL_MODE
-    problem = FitProblem(
-        mode=mode,
-        records=tuple(records),
-        component=component,
-        dataset=_source_dataset_label(dataset),
-        fit_targets=tuple(fit_targets),
-        optimization_parameters=tuple(fit_targets),
-        fixed_parameters=seed_payload,
-        initial_guess=initial_map,
-        assoc_scheme=str(seed_payload.get("assoc_scheme", "")),
-        terms=tuple(terms),
-        pure_file_hint=pure_file_hint,
-    )
-    metrics = dict(result["metrics_by_term"])
-    metrics["initial_residual_norm"] = float(result["initial_residual_norm"])
-    return FitResult(
-        problem=problem,
-        fitted_values=vector_map,
-        rendered_values={name: float(vector_map[name]) for name in fit_targets},
-        metrics_by_term=metrics,
-        cost=float(result["cost"]),
-        residual_norm=float(result["residual_norm"]),
-        success=bool(result["success"]),
-        status=int(result["status"]),
-        message=str(result["message"]),
-        nfev=int(result["nfev"]),
-        backend=str(result["backend"]),
-        **_residual_score_metadata(result),
-    )
-
-
-def _fit_mea_co2_h2o_pure_parameter_benchmark(
-    records: Any,
-    *,
-    dataset: str | Path,
-    species: Iterable[str] | None = None,
-    user_options: Mapping[str, Any] | None = None,
-    initial_guess: Mapping[str, Mapping[str, float]] | None = None,
-    bounds: FitBounds | Mapping[str, tuple[float | None, float | None]] | None = None,
-    max_nfev: int = 1,
-) -> dict[str, FitResult]:
-    """Internal opt-in benchmark hook for MEA-CO2-H2O pure-parameter fitting."""
-
-    normalized_records = _normalize_records(records)
-    normalized_species = _mea_co2_h2o_species_from_records(normalized_records, species)
-    terms = _build_mea_co2_h2o_terms(normalized_records)
-    components = ("MEA", "MEAH+", "MEACOO-", "HCO3-")
-    T_ref = float(np.mean([_float_from_record(record, "T", required=True) for record in normalized_records]))
-    seed_payloads, pure_file_hints = _benchmark_seed_payloads(dataset, normalized_species, T_ref, components)
-    fit_targets = {
-        "MEA": ("m", "s", "e", "e_assoc", "vol_a"),
-        "MEAH+": ("s", "e", "d_born"),
-        "MEACOO-": ("s", "e", "d_born"),
-        "HCO3-": ("s", "e", "d_born"),
-    }
-    guesses = initial_guess or {}
-    return {
-        component: _fit_mea_co2_h2o_component(
-            normalized_records,
-            component,
-            dataset=dataset,
-            species=normalized_species,
-            fit_targets=fit_targets[component],
-            seed_payload=seed_payloads[component],
-            pure_file_hint=pure_file_hints[component],
-            terms=terms,
-            initial_guess=guesses.get(component, {}),
-            bounds=bounds,
-            user_options=user_options,
-            max_nfev=max_nfev,
-        )
-        for component in components
-    }
 
 
 def write_fit_result(

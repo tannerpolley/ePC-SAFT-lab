@@ -27,6 +27,17 @@ API_TEST_TARGETS = registry_targets("api")
 NATIVE_TEST_TARGETS = registry_targets("native")
 NATIVE_CONTRACT_TEST_TARGETS = registry_targets("native-contracts")
 SLICE_TARGETS = {name: registry_targets(name) for name in TEST_SLICES}
+PREDEFINED_TARGETS = {
+    "all_tests": ALL_TEST_TARGETS,
+    "confidence": CONFIDENCE_TEST_TARGETS,
+    "equilibrium_confidence": EQUILIBRIUM_CONFIDENCE_TEST_TARGETS,
+    "equilibrium_api": EQUILIBRIUM_API_TEST_TARGETS,
+    "generic": GENERIC_TEST_TARGETS,
+    "runtime": RUNTIME_TEST_TARGETS,
+    "api": API_TEST_TARGETS,
+    "native": NATIVE_TEST_TARGETS,
+    "native_contracts": NATIVE_CONTRACT_TEST_TARGETS,
+}
 LONG_NATIVE_TARGETS = {
     "tests/native/equilibrium",
 }
@@ -95,37 +106,19 @@ def _pytest_args(
         all_tests=all_tests,
         allow_long_native_tests=allow_long_native_tests,
     )
-    cmd: list[str] = []
-    has_predefined_targets = (
-        generic
-        or confidence
-        or equilibrium_confidence
-        or equilibrium_api
-        or runtime
-        or api
-        or native
-        or native_contracts
-        or all_tests
+    selected_targets = _selected_predefined_targets(
+        generic=generic,
+        confidence=confidence,
+        equilibrium_confidence=equilibrium_confidence,
+        equilibrium_api=equilibrium_api,
+        runtime=runtime,
+        api=api,
+        native=native,
+        native_contracts=native_contracts,
+        all_tests=all_tests,
     )
-    if all_tests:
-        cmd.extend(ALL_TEST_TARGETS)
-    elif confidence:
-        cmd.extend(CONFIDENCE_TEST_TARGETS)
-    elif equilibrium_confidence:
-        cmd.extend(EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)
-    elif equilibrium_api:
-        cmd.extend(EQUILIBRIUM_API_TEST_TARGETS)
-    elif generic:
-        cmd.extend(GENERIC_TEST_TARGETS)
-    elif runtime:
-        cmd.extend(RUNTIME_TEST_TARGETS)
-    elif api:
-        cmd.extend(API_TEST_TARGETS)
-    elif native:
-        cmd.extend(NATIVE_TEST_TARGETS)
-    elif native_contracts:
-        cmd.extend(NATIVE_CONTRACT_TEST_TARGETS)
-    if has_predefined_targets:
+    cmd: list[str] = list(selected_targets)
+    if selected_targets:
         cmd.extend(pytest_args)
     else:
         has_positional_target = any(not arg.startswith("-") for arg in pytest_args)
@@ -138,6 +131,15 @@ def _pytest_args(
     if not any(arg == "--basetemp" or arg.startswith("--basetemp=") for arg in cmd):
         cmd.extend(["--basetemp", str(pytest_temp)])
     return cmd
+
+
+def _selected_predefined_targets(**flags: bool) -> tuple[str, ...]:
+    selected = [name for name, enabled in flags.items() if enabled]
+    if len(selected) > 1:
+        raise ValueError(f"pytest slice flags must be mutually exclusive; got {selected}.")
+    if not selected:
+        return ()
+    return PREDEFINED_TARGETS[selected[0]]
 
 
 def _reject_unbounded_native_targets(
