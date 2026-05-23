@@ -10,9 +10,9 @@ The current folder currently reproduces these 2012 validation figures with machi
 
 Resolved by local figure-input mirroring in this folder:
 
-- Figure 2d now stages `ethanol-NaI.csv` and `methanol-NaI.csv` into `figures/figure_2d/source/`.
-- Figure 6 now stages `water-methanol-NaBr.csv` into `figures/figure_6/source/`.
-- Figure 7 already uses figure-local copies of the Hernandez 2007 and dielectric-mixture CSVs under `figures/figure_7/source/`.
+- Figure 2d now stages `ethanol-NaI.csv` and `methanol-NaI.csv` into `figures/figure_02/source/panel_d/`.
+- Figure 6 now stages `water-methanol-NaBr.csv` into `figures/figure_06/source/`.
+- Figure 7 already uses figure-local copies of the Hernandez 2007 and dielectric-mixture CSVs under `figures/figure_07/source/`.
 
 Still missing machine-readable data or dedicated recreation work for full-paper reproduction:
 

@@ -1105,7 +1105,15 @@ def test_paper_validation_docs_are_local_source_snapshots() -> None:
         assert (docs_root / "source_manifest.csv").is_file(), analysis_rel
         assert not (docs_root / "figures").exists(), analysis_rel
         assert not (docs_root / "tables").exists(), analysis_rel
-        assert (shared_source / "figures_manifest.csv").is_file(), analysis_rel
+        figures_manifest = shared_source / "figures_manifest.csv"
+        assert figures_manifest.is_file(), analysis_rel
+        with figures_manifest.open(encoding="utf-8-sig", newline="") as handle:
+            reader = csv.DictReader(handle)
+            assert "sha256_file" not in (reader.fieldnames or []), figures_manifest
+            for row in reader:
+                assert re.fullmatch(r"figure_\d{2,}", row["figure_id"]), row
+                assert row["local_file"].endswith(".png"), row
+                assert (REPO_ROOT / row["local_file"]).is_file(), row
         assert not (shared_source / "tables").exists(), analysis_rel
         assert (tables_root / "tables_manifest.csv").is_file(), analysis_rel
         assert list((docs_root / "md").glob("*.md")), analysis_rel
@@ -1137,16 +1145,19 @@ def test_paper_validation_figures_use_source_scripts_results_layout() -> None:
         assert figures_root.is_dir(), analysis_rel
         figure_roots = sorted(path for path in figures_root.iterdir() if path.is_dir())
         if not figure_roots:
-            assert (figures_root / "_placeholder.md").is_file(), analysis_rel
+            assert [path.name for path in figures_root.iterdir() if path.is_file()] == ["_placeholder.md"], analysis_rel
             continue
         assert not any(path.is_file() for path in figures_root.iterdir()), analysis_rel
+        assert len({path.name for path in figure_roots}) == len(figure_roots), analysis_rel
         for figure_root in figure_roots:
+            assert re.fullmatch(r"figure_\d{2,}", figure_root.name), figure_root
             assert {path.name for path in figure_root.iterdir() if path.is_dir()} == PAPER_VALIDATION_FIGURE_SUBDIRS
             assert not any(path.is_file() for path in figure_root.iterdir()), figure_root
+            assert list(figure_root.rglob("*.sha256")) == [], figure_root
             for subdir in PAPER_VALIDATION_FIGURE_SUBDIRS:
                 assert any((figure_root / subdir).iterdir()), figure_root / subdir
             for source_png in (figure_root / "source").glob("paper_source_*.png"):
-                assert (source_png.with_suffix(source_png.suffix + ".sha256")).is_file(), source_png
+                assert not (source_png.with_suffix(source_png.suffix + ".sha256")).exists(), source_png
             assert list((figure_root / "source").glob("paper_source_*.jpg")) == [], figure_root
 
 
@@ -1226,6 +1237,8 @@ def test_generated_output_roots_are_not_tracked_in_analyses() -> None:
             or shared_source_tables in normalized
             or ("/figures/" in normalized and "/input/" in normalized)
             or ("/figures/" in normalized and "/output/" in normalized)
+            or re.search(r"^analyses/paper_validation/[^/]+/figures/(?!figure_\d{2,}/|_placeholder\.md$)", normalized)
+            or normalized.endswith(".sha256")
             or re.search(r"^analyses/paper_validation/[^/]+/(data|results|diagnostics)/", normalized)
         ):
             stale.append(path)
@@ -1260,6 +1273,8 @@ def test_migrated_analyses_use_complete_figure_owned_roots() -> None:
         figure_roots = sorted(path for path in figures_root.iterdir() if path.is_dir())
         assert figure_roots, analysis_id
         for figure_root in figure_roots:
+            if figure_root.as_posix().startswith((REPO_ROOT / "analyses" / "paper_validation").as_posix()):
+                assert re.fullmatch(r"figure_\d{2,}", figure_root.name), figure_root
             assert (figure_root / "scripts").is_dir(), figure_root
             if figure_root.as_posix().startswith((REPO_ROOT / "analyses" / "paper_validation").as_posix()):
                 optional_roots = (figure_root / "source", figure_root / "results")
@@ -1302,7 +1317,7 @@ def test_figiel_analysis_is_migrated_to_figure_owned_layout() -> None:
     assert "runs: figures/<figure_id>/results/runs" in text
     assert not (root / "data").exists()
     assert (root / "figures").is_dir()
-    for figure_id in ("figure_4", "figure_5", "figure_6", "figure_7", "figure_8", "figure_9"):
+    for figure_id in ("figure_04", "figure_05", "figure_06", "figure_07", "figure_08", "figure_09"):
         figure_root = root / "figures" / figure_id
         assert (figure_root / "source").is_dir(), figure_id
         assert (figure_root / "results").is_dir(), figure_id

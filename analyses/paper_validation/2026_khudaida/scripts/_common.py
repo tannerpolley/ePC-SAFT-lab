@@ -1870,7 +1870,7 @@ def _table_rows_for_png(salt_wt: float) -> list[list[str]]:
     return rows
 
 
-def plot_tables_9_10(fig_dir: Path) -> None:
+def plot_tables_9_10(tables_root: Path) -> None:
     configure_style()
     columns = [
         "T / K",
@@ -1886,9 +1886,11 @@ def plot_tables_9_10(fig_dir: Path) -> None:
         "Grand AAD",
     ]
     for table_number, salt_wt in ((9, 0.05), (10, 0.10)):
+        table_dir = tables_root / f"table_{table_number:03d}" / "results"
+        table_dir.mkdir(parents=True, exist_ok=True)
         rows = _table_rows_for_png(salt_wt)
         csv_rows = [dict(zip(columns, row)) for row in rows]
-        write_csv_rows(out_path(fig_dir, f"table_{table_number}.csv"), columns, csv_rows)
+        write_csv_rows(out_path(table_dir, f"table_{table_number}.csv"), columns, csv_rows)
         fig, ax = plt.subplots(figsize=(13.0, 3.0 + 0.28 * len(rows)))
         ax.axis("off")
         table = ax.table(cellText=rows, colLabels=columns, loc="center", cellLoc="center")
@@ -1898,7 +1900,7 @@ def plot_tables_9_10(fig_dir: Path) -> None:
         ax.set_title(
             f"Table {table_number}: AAD comparison for {int(round(salt_wt * 100))} wt% NaCl", fontsize=11, pad=12
         )
-        save_figure(fig, fig_dir / f"table_{table_number}.png")
+        save_figure(fig, table_dir / f"table_{table_number}.png")
         plt.close(fig)
 
 

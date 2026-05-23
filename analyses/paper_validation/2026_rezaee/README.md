@@ -51,8 +51,8 @@ The lane-level gate summary is `results/reaction_equilibrium/summary.json`.
 
 The figure comparison outputs are package-owned overlays, not downstream screenshots:
 
-- `figures/figure_7/results/figure_7_package_vs_paper.png`
-- `figures/figure_8/results/figure_8_package_vs_paper.png`
+- `figures/figure_07/results/figure_7_package_vs_paper.png`
+- `figures/figure_08/results/figure_8_package_vs_paper.png`
 - `figures/figure_10/results/figure_10_package_vs_paper.png`
 - `figures/figure_11/results/figure_11_package_vs_paper.png`
 

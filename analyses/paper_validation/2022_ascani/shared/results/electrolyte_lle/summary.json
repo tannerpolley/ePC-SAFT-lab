@@ -630,9 +630,9 @@
     "analyses/paper_validation/2022_ascani/shared/results/processed/feed_conversion_table.csv",
     "analyses/paper_validation/2022_ascani/shared/results/processed/source_expected_phase_compositions.csv",
     "analyses/paper_validation/2022_ascani/shared/results/electrolyte_lle/phase_split.csv",
-    "analyses/paper_validation/2022_ascani/figures/stability_summary/stability_summary.csv",
-    "analyses/paper_validation/2022_ascani/figures/density_summary/density_summary.csv",
-    "analyses/paper_validation/2022_ascani/figures/residual_summary/residual_summary.csv"
+    "analyses/paper_validation/2022_ascani/shared/results/stability_summary/stability_summary.csv",
+    "analyses/paper_validation/2022_ascani/shared/results/density_summary/density_summary.csv",
+    "analyses/paper_validation/2022_ascani/shared/results/residual_summary/residual_summary.csv"
   ],
   "blockers": [],
   "claim_boundary": {

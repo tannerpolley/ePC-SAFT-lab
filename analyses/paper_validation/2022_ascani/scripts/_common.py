@@ -557,9 +557,9 @@ def summary_payload(accepted: bool, solve: dict[str, Any], result: Any | None = 
         rel(FEED_CONVERSION_CSV),
         rel(NORMALIZED_SOURCE_CSV),
         "analyses/paper_validation/2022_ascani/shared/results/electrolyte_lle/phase_split.csv",
-        "analyses/paper_validation/2022_ascani/figures/stability_summary/stability_summary.csv",
-        "analyses/paper_validation/2022_ascani/figures/density_summary/density_summary.csv",
-        "analyses/paper_validation/2022_ascani/figures/residual_summary/residual_summary.csv",
+        "analyses/paper_validation/2022_ascani/shared/results/stability_summary/stability_summary.csv",
+        "analyses/paper_validation/2022_ascani/shared/results/density_summary/density_summary.csv",
+        "analyses/paper_validation/2022_ascani/shared/results/residual_summary/residual_summary.csv",
     ]
     return {
         "schema_version": 1,

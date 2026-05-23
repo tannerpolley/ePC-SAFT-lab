@@ -13,9 +13,9 @@ Current reproducible outputs in this folder:
 
 Resolved by local figure-input mirroring in this folder:
 
-- Figure 1 now stages `NaCl.csv` and `KBr.csv` into `figures/figure_1/source/`.
-- Figure 2 now stages `held_2014_figure_2_digitized.csv` and `NaCl.csv` into `figures/figure_2/source/`.
-- Figure 3 now stages `LiAc-NaAc-KAc.csv` into `figures/figure_3/source/`.
+- Figure 1 now stages `NaCl.csv` and `KBr.csv` into `figures/figure_01/source/`.
+- Figure 2 now stages `held_2014_figure_2_digitized.csv` and `NaCl.csv` into `figures/figure_02/source/`.
+- Figure 3 now stages `LiAc-NaAc-KAc.csv` into `figures/figure_03/source/`.
 
 Remaining gap:
 

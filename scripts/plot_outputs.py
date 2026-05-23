@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -89,6 +90,8 @@ def _figure_root_for(source_path: str | Path) -> Path | None:
         return None
     parts = relative.parts
     if len(parts) >= 2 and parts[0] == FIGURES_DIR_NAME:
+        if _uses_paper_validation_analysis_root(analysis_root) and not re.fullmatch(r"figure_\d{2,}", parts[1]):
+            raise ValueError(f"paper-validation figure folders must be named figure_NN: {source}")
         return analysis_root / FIGURES_DIR_NAME / parts[1]
     return None
 
@@ -116,6 +119,8 @@ def _figure_root_for_script(source_path: str | Path) -> Path | None:
     parts = [part for part in relative.parts if part not in ("", ".")]
     if not parts:
         return None
+    if _uses_paper_validation_analysis_root(analysis_root) and not re.fullmatch(r"figure_\d{2,}", parts[0]):
+        return None
     return analysis_root / FIGURES_DIR_NAME / Path(*parts)
 
 
@@ -126,6 +131,14 @@ def _figure_root_for_any(source_path: str | Path) -> Path | None:
 def _uses_paper_validation_figure_layout(figure_root: Path) -> bool:
     try:
         figure_root.resolve().relative_to(PAPER_VALIDATION_SOURCE_ROOT)
+    except ValueError:
+        return False
+    return True
+
+
+def _uses_paper_validation_analysis_root(analysis_root: Path) -> bool:
+    try:
+        analysis_root.resolve().relative_to(PAPER_VALIDATION_SOURCE_ROOT)
     except ValueError:
         return False
     return True

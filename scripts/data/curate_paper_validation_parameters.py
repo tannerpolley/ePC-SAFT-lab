@@ -688,7 +688,7 @@ def pure_record(
     }
 
 
-def default_field(component: str, field: str, fallback: str = "1") -> str:
+def default_field(component: str, field: str, default_value: str = "1") -> str:
     base = base_component(clean_component(component))
     if base in COMPONENT_DEFAULTS and field in COMPONENT_DEFAULTS[base]:
         return COMPONENT_DEFAULTS[base][field]
@@ -704,7 +704,7 @@ def default_field(component: str, field: str, fallback: str = "1") -> str:
         return "1"
     if field == "MW":
         return "0.100"
-    return fallback
+    return default_value
 
 
 def default_if_generic(component: str, field: str, value: str, generic: str) -> str:

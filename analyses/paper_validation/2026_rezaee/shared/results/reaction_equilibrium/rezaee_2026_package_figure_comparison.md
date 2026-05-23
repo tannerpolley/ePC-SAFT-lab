@@ -7,13 +7,13 @@ These figures overlay the digitized Rezaee 2026 paper-model points with the curr
 ## Outputs
 
 - Fig. 7: digitized paper AARD `15.1%`; current package AARD `100%`.
-  Data: `figures\figure_7/results\data\figure_7_package_vs_paper_points.csv`
-  PNG: `figures\figure_7/results\figure_7_package_vs_paper.png`
-  SVG: `figures\figure_7/results\figure_7_package_vs_paper.svg`
+  Data: `figures\figure_07/results\data\figure_7_package_vs_paper_points.csv`
+  PNG: `figures\figure_07/results\figure_7_package_vs_paper.png`
+  SVG: `figures\figure_07/results\figure_7_package_vs_paper.svg`
 - Fig. 8: digitized paper AARD `17.9%`; current package AARD `56.3%`.
-  Data: `figures\figure_8/results\data\figure_8_package_vs_paper_points.csv`
-  PNG: `figures\figure_8/results\figure_8_package_vs_paper.png`
-  SVG: `figures\figure_8/results\figure_8_package_vs_paper.svg`
+  Data: `figures\figure_08/results\data\figure_8_package_vs_paper_points.csv`
+  PNG: `figures\figure_08/results\figure_8_package_vs_paper.png`
+  SVG: `figures\figure_08/results\figure_8_package_vs_paper.svg`
 - Fig. 10: digitized paper AARD `9.2%`; current package AARD `100%`.
   Data: `figures\figure_10/results\data\figure_10_package_vs_paper_points.csv`
   PNG: `figures\figure_10/results\figure_10_package_vs_paper.png`

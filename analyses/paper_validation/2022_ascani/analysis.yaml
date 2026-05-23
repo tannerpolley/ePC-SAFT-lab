@@ -51,15 +51,15 @@ outputs:
     kind: accepted_public_native_ipopt_summary
   - path: analyses/paper_validation/2022_ascani/shared/results/electrolyte_lle/phase_split.csv
     kind: retained_phase_split
-  - path: analyses/paper_validation/2022_ascani/figures/figure_4/results/data/current_phase_compositions.csv
+  - path: analyses/paper_validation/2022_ascani/figures/figure_04/results/data/current_phase_compositions.csv
     kind: figure_4_case2_phase_composition_data
-  - path: analyses/paper_validation/2022_ascani/figures/table_5_fugacity/results/data/table_5_fugacity_comparison.csv
+  - path: analyses/paper_validation/2022_ascani/tables/table_005/results/data/table_5_fugacity_comparison_2.csv
     kind: table_5_fugacity_comparison_data
-  - path: analyses/paper_validation/2022_ascani/figures/stability_summary/stability_summary.csv
+  - path: analyses/paper_validation/2022_ascani/shared/results/stability_summary/stability_summary.csv
     kind: hard_tpdf_stability_summary
-  - path: analyses/paper_validation/2022_ascani/figures/density_summary/density_summary.csv
+  - path: analyses/paper_validation/2022_ascani/shared/results/density_summary/density_summary.csv
     kind: density_root_recompute_summary
-  - path: analyses/paper_validation/2022_ascani/figures/residual_summary/residual_summary.csv
+  - path: analyses/paper_validation/2022_ascani/shared/results/residual_summary/residual_summary.csv
     kind: residual_gate_summary
 claim_boundary:
   note: This lane proves accepted public native Ipopt liquid-root electrolyte LLE execution for full Ascani 2022 Case Study 2 with hard TPDF certification. It does not claim exact paper-match unless the separate source comparison tolerances pass.

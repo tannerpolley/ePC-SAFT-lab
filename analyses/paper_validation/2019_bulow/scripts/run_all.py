@@ -15,17 +15,19 @@ def run_script(path: Path) -> None:
 
 def main() -> None:
     workflows = (
-        ("figure_1", "plot_figure_1.py"),
-        ("figure_2", "plot_figure_2.py"),
-        ("figure_3", "plot_figure_3.py"),
-        ("figure_4", "plot_figure_4.py"),
-        ("figure_5", "plot_figure_5.py"),
-        ("figure_6a", "plot_figure_6a.py"),
-        ("figure_6b", "plot_figure_6b.py"),
-        ("figure_7", "plot_figure_7.py"),
+        ("figure_01", "", "plot_figure_1.py"),
+        ("figure_02", "", "plot_figure_2.py"),
+        ("figure_03", "", "plot_figure_3.py"),
+        ("figure_04", "", "plot_figure_4.py"),
+        ("figure_05", "", "plot_figure_5.py"),
+        ("figure_06", "panel_a", "plot_figure_6a.py"),
+        ("figure_06", "panel_b", "plot_figure_6b.py"),
+        ("figure_07", "", "plot_figure_7.py"),
     )
-    for figure_id, plot_script in workflows:
+    for figure_id, script_subdir, plot_script in workflows:
         figure_scripts = ROOT.parent / "figures" / figure_id / "scripts"
+        if script_subdir:
+            figure_scripts = figure_scripts / script_subdir
         run_script(figure_scripts / "generate_data.py")
         run_script(figure_scripts / plot_script)
     print("[done] 2019 figure scripts completed.")

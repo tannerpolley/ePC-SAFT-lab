@@ -48,9 +48,9 @@ outputs:
     kind: generated_lane_gate_summary
   - path: analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_package_figure_comparison_summary.json
     kind: generated_package_vs_digitized_figure_summary
-  - path: analyses/paper_validation/2026_rezaee/figures/figure_7/results/figure_7_package_vs_paper.png
+  - path: analyses/paper_validation/2026_rezaee/figures/figure_07/results/figure_7_package_vs_paper.png
     kind: generated_package_vs_digitized_figure
-  - path: analyses/paper_validation/2026_rezaee/figures/figure_8/results/figure_8_package_vs_paper.png
+  - path: analyses/paper_validation/2026_rezaee/figures/figure_08/results/figure_8_package_vs_paper.png
     kind: generated_package_vs_digitized_figure
   - path: analyses/paper_validation/2026_rezaee/figures/figure_10/results/figure_10_package_vs_paper.png
     kind: generated_package_vs_digitized_figure
