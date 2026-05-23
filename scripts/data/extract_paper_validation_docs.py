@@ -2,8 +2,8 @@
 
 The script copies matched paper Markdown/PDF sources into each validation
 folder, extracts Markdown image references as PNG source artifacts under the
-owning figure folders, and extracts Markdown table blocks into shared source
-tables as exact snippets plus best-effort CSVs.
+owning figure folders, and extracts Markdown table blocks into top-level table
+folders as exact snippets plus best-effort CSVs.
 """
 
 from __future__ import annotations
@@ -29,7 +29,6 @@ PAPERS_MD_ROOT = REPO_ROOT / "docs" / "papers" / "md"
 PAPERS_PDF_ROOT = REPO_ROOT / "docs" / "papers" / "pdf"
 DOC_SUBDIRS = ("md", "pdf")
 FIGURE_SUBDIRS = ("source", "scripts", "results")
-TEXT_EXTENSIONS = {".csv", ".json", ".md", ".py", ".rst", ".toml", ".txt", ".yaml", ".yml", ".ps1"}
 PLACEHOLDER_NAME = "_placeholder.md"
 ROOT_MARKDOWN_ALLOWLIST = {"README.md"}
 ROOT_DIRS = {"docs", "figures", "parameters", "scripts", "shared", "tables"}
@@ -137,47 +136,6 @@ SOURCE_MAP: dict[str, tuple[PaperSource, ...]] = {
         ),
         PaperSource("rezaee_2026_supplementary", ("rezaee", "2026", "supplementary")),
     ),
-}
-
-_OLD_PAPER_VALIDATION_ROOT = "analyses/paper_validation"
-_OLD_APPLICATION_ROOT = f"{_OLD_PAPER_VALIDATION_ROOT}/application"
-_OLD_NATIVE_ROOT = f"{_OLD_PAPER_VALIDATION_ROOT}/native"
-
-PATH_REWRITES = {
-    f"{_OLD_APPLICATION_ROOT}/2015_baygi": "analyses/paper_validation/2015_baygi",
-    f"{_OLD_APPLICATION_ROOT}/2024_hubach_li_tcb": "analyses/paper_validation/2024_hubach",
-    f"{_OLD_APPLICATION_ROOT}/2024_yu_li_mg_il": "analyses/paper_validation/2024_yu",
-    f"{_OLD_APPLICATION_ROOT}/2026_khudaida": "analyses/paper_validation/2026_khudaida",
-    f"{_OLD_APPLICATION_ROOT}/2026_rezaee": "analyses/paper_validation/2026_rezaee",
-    f"{_OLD_NATIVE_ROOT}/2001_gross": "analyses/paper_validation/2001_gross",
-    f"{_OLD_NATIVE_ROOT}/2002_gross": "analyses/paper_validation/2002_gross",
-    f"{_OLD_NATIVE_ROOT}/2005_cameretti": "analyses/paper_validation/2005_cameretti",
-    f"{_OLD_NATIVE_ROOT}/2008_held": "analyses/paper_validation/2008_held",
-    f"{_OLD_NATIVE_ROOT}/2012_held": "analyses/paper_validation/2012_held",
-    f"{_OLD_NATIVE_ROOT}/2014_held": "analyses/paper_validation/2014_held",
-    f"{_OLD_NATIVE_ROOT}/2019_bulow": "analyses/paper_validation/2019_bulow",
-    f"{_OLD_NATIVE_ROOT}/2020_bulow": "analyses/paper_validation/2020_bulow",
-    f"{_OLD_NATIVE_ROOT}/2021_bulow": "analyses/paper_validation/2021_bulow",
-    f"{_OLD_NATIVE_ROOT}/2022_ascani": "analyses/paper_validation/2022_ascani",
-    f"{_OLD_NATIVE_ROOT}/2023_ascani": "analyses/paper_validation/2023_ascani",
-    f"{_OLD_NATIVE_ROOT}/2025_figiel": "analyses/paper_validation/2025_figiel",
-    "analyses/paper_validation/co2_solubility/2015_baygi": "analyses/paper_validation/2015_baygi",
-    "analyses/paper_validation/eos/2001_gross": "analyses/paper_validation/2001_gross",
-    "analyses/paper_validation/eos/2002_gross": "analyses/paper_validation/2002_gross",
-    "analyses/paper_validation/eos/2005_cameretti": "analyses/paper_validation/2005_cameretti",
-    "analyses/paper_validation/eos/2008_held": "analyses/paper_validation/2008_held",
-    "analyses/paper_validation/eos/2012_held": "analyses/paper_validation/2012_held",
-    "analyses/paper_validation/eos/2014_held": "analyses/paper_validation/2014_held",
-    "analyses/paper_validation/eos/2019_bulow": "analyses/paper_validation/2019_bulow",
-    "analyses/paper_validation/eos/2020_bulow": "analyses/paper_validation/2020_bulow",
-    "analyses/paper_validation/eos/2021_bulow": "analyses/paper_validation/2021_bulow",
-    "analyses/paper_validation/eos/2025_figiel": "analyses/paper_validation/2025_figiel",
-    "analyses/paper_validation/equilibrium/2022_ascani": "analyses/paper_validation/2022_ascani",
-    "analyses/paper_validation/equilibrium/2023_ascani": "analyses/paper_validation/2023_ascani",
-    "analyses/paper_validation/equilibrium/2026_khudaida": "analyses/paper_validation/2026_khudaida",
-    "analyses/paper_validation/extraction/2024_hubach": "analyses/paper_validation/2024_hubach",
-    "analyses/paper_validation/extraction/2024_yu": "analyses/paper_validation/2024_yu",
-    "analyses/paper_validation/extraction/2026_rezaee": "analyses/paper_validation/2026_rezaee",
 }
 
 
@@ -803,127 +761,6 @@ def _check_one(analysis_root: Path) -> list[str]:
     return errors
 
 
-def _iter_rewrite_files() -> Iterable[Path]:
-    roots = ("analyses", "docs", "scripts", "tests")
-    for root_name in roots:
-        root = REPO_ROOT / root_name
-        if not root.exists():
-            continue
-        for path in root.rglob("*"):
-            if not path.is_file() or path.suffix.lower() not in TEXT_EXTENSIONS:
-                continue
-            if path.resolve() == Path(__file__).resolve():
-                continue
-            rel = _rel(path)
-            if rel.startswith("docs/papers/"):
-                continue
-            yield path
-
-
-def _apply_replacements(text: str, replacements: Sequence[tuple[str, str]]) -> str:
-    new_text = text
-    for old, new in replacements:
-        new_text = new_text.replace(old, new)
-    return new_text
-
-
-def _apply_paper_validation_replacements(text: str) -> str:
-    new_text = text
-    new_text = re.sub(r"(figures[/\\][^/\\\s\"'`,]+)[/\\]input\b", r"\1/source", new_text)
-    new_text = re.sub(r"(figures[/\\][^/\\\s\"'`,]+)[/\\]output\b", r"\1/results", new_text)
-    new_text = re.sub(r"(figures[/\\]\{[^}]+\})[/\\]input\b", r"\1/source", new_text)
-    new_text = re.sub(r"(figures[/\\]\{[^}]+\})[/\\]output\b", r"\1/results", new_text)
-    literal_pairs = {
-        'figures: figures/<figure_id>/output': 'figures: figures/<figure_id>/results',
-        'runs: figures/<figure_id>/output/runs': 'runs: figures/<figure_id>/results/runs',
-        'figure-owned `input/`': 'figure-owned `source/`',
-        '`figures/<figure_id>/input/`': '`figures/<figure_id>/source/`',
-        '`figures/<figure_id>/output/`': '`figures/<figure_id>/results/`',
-        '`docs/figures/`': '`shared/source/`',
-        '`docs/tables/`': '`tables/`',
-        '`shared/source/tables/`': '`tables/`',
-        'docs/figures/': 'shared/source/',
-        'docs/tables/': 'tables/',
-        'shared/source/tables/': 'tables/',
-        'data/input/': 'shared/source/',
-        'data/processed/': 'shared/results/processed/',
-        'data\\input\\': 'shared\\source\\',
-        'data\\processed\\': 'shared\\results\\processed\\',
-        'data/input': 'shared/source',
-        'data/processed': 'shared/results/processed',
-        'data\\input': 'shared\\source',
-        'data\\processed': 'shared\\results\\processed',
-        '`data/input`': '`shared/source`',
-        '`data/processed`': '`shared/results/processed`',
-        '`data\\input`': '`shared\\source`',
-        '`data\\processed`': '`shared\\results\\processed`',
-        '`output/data/': '`results/data/',
-        '/output/data/': '/results/data/',
-        '\\output\\data\\': '\\results\\data\\',
-        'kind="input"': 'kind="source"',
-        "kind='input'": "kind='source'",
-        'kind="output"': 'kind="results"',
-        "kind='output'": "kind='results'",
-        ' / "data" / "input"': ' / "shared" / "source"',
-        " / 'data' / 'input'": " / 'shared' / 'source'",
-        ' / "data" / "processed"': ' / "shared" / "results" / "processed"',
-        " / 'data' / 'processed'": " / 'shared' / 'results' / 'processed'",
-        ' / "input"': ' / "source"',
-        " / 'input'": " / 'source'",
-        ' / "output"': ' / "results"',
-        " / 'output'": " / 'results'",
-        "source_image.jpg": "source_image.png",
-    }
-    return _apply_replacements(new_text, list(literal_pairs.items()))
-
-
-def _uses_paper_validation_contract(relpath: str, text: str) -> bool:
-    contract_files = {
-        "analyses/package_validation/package_plot_smokes/tests/plots/test_2015_baygi_outputs.py",
-        "scripts/plot_outputs.py",
-    }
-    return relpath.startswith("analyses/paper_validation/") or relpath in contract_files
-
-
-def _path_replacements() -> list[tuple[str, str]]:
-    replacements: list[tuple[str, str]] = []
-    for old, new in PATH_REWRITES.items():
-        replacements.append((old, new))
-        replacements.append((old.replace("/", "\\"), new.replace("/", "\\")))
-    for rel in sorted(SOURCE_MAP):
-        analysis_rel = f"analyses/paper_validation/{rel}"
-        pairs = {
-            f"{analysis_rel}/data/input": f"{analysis_rel}/shared/source",
-            f"{analysis_rel}/data/processed": f"{analysis_rel}/shared/results/processed",
-            f"{analysis_rel}/data": f"{analysis_rel}/shared/source",
-            f"{analysis_rel}/diagnostics": f"{analysis_rel}/shared/results/diagnostics",
-            f"{analysis_rel}/results": f"{analysis_rel}/shared/results",
-            f"{analysis_rel}/docs/figures": f"{analysis_rel}/shared/source",
-            f"{analysis_rel}/docs/tables": f"{analysis_rel}/tables",
-            f"{analysis_rel}/shared/source/tables": f"{analysis_rel}/tables",
-        }
-        for old, new in pairs.items():
-            replacements.append((old, new))
-            replacements.append((old.replace("/", "\\"), new.replace("/", "\\")))
-    return replacements
-
-
-def _rewrite_text_paths(check: bool) -> list[str]:
-    changed: list[str] = []
-    replacements = _path_replacements()
-    for path in _iter_rewrite_files():
-        rel = _rel(path)
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        new_text = _apply_replacements(text, replacements)
-        if _uses_paper_validation_contract(rel, new_text):
-            new_text = _apply_paper_validation_replacements(new_text)
-        if new_text != text:
-            changed.append(rel)
-            if not check:
-                path.write_text(new_text, encoding="utf-8")
-    return changed
-
-
 def _populate_all() -> list[dict[str, object]]:
     discovered = {path.relative_to(PAPER_VALIDATION_ROOT).as_posix() for path in _analysis_dirs()}
     expected = set(SOURCE_MAP)
@@ -952,18 +789,10 @@ def _check_all() -> list[str]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Verify extracted docs without writing.")
-    parser.add_argument(
-        "--rewrite-stale-paths",
-        action="store_true",
-        help="Rewrite old paper_validation application/native text paths and legacy artifact folder paths.",
-    )
     args = parser.parse_args(argv)
 
     if args.check:
         errors = _check_all()
-        changed = _rewrite_text_paths(check=True) if args.rewrite_stale_paths else []
-        if changed:
-            errors.append("stale text paths remain in: " + ", ".join(changed))
         if errors:
             print(json.dumps({"status": "failed", "errors": errors}, indent=2))
             return 1
@@ -971,8 +800,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     summary = _populate_all()
-    changed = _rewrite_text_paths(check=False) if args.rewrite_stale_paths else []
-    print(json.dumps({"status": "ok", "docs": summary, "rewritten_text_files": changed}, indent=2))
+    print(json.dumps({"status": "ok", "docs": summary}, indent=2))
     return 0
 
 

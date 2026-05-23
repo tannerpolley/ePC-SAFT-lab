@@ -21,6 +21,7 @@ PURE_TEMPLATE_COLUMNS = [
     "d_born",
     "f_solv",
     "MW",
+    "source",
 ]
 
 MATRIX_TEMPLATE_COLUMNS = ["component"]
@@ -98,8 +99,8 @@ def _write_matrix_template(path: Path, species: list[str]) -> None:
     rows: list[list[str | float | int | None]] = []
     for row_species in species:
         row = [row_species]
-        for col_species in species:
-            row.append(0.0 if row_species == col_species else None)
+        for _col_species in species:
+            row.append(0.0)
         rows.append(row)
     _write_csv(path, header, rows)
 

@@ -223,10 +223,10 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/data/build_epcsaft_parameter_catalog.py",
     ),
     RunConfigSpec(
-        name="Extract Paper Parameter CSVs",
+        name="Curate Paper Validation Parameters",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/extract_paper_parameter_csvs.py",
+        command="scripts/data/curate_paper_validation_parameters.py",
     ),
     RunConfigSpec(
         name="Sync MIAC Variants",

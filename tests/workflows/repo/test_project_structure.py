@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import ast
+import csv
 import json
+import math
 import os
 import re
 import subprocess
@@ -59,16 +61,22 @@ ANALYSIS_ROOTS = {
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
 }
 PAPER_VALIDATION_PARAMETER_SNAPSHOTS = {
+    "analyses/paper_validation/2001_gross": "2001_Gross",
+    "analyses/paper_validation/2002_gross": "2002_Gross",
     "analyses/paper_validation/2024_hubach": "2024_Hubach",
+    "analyses/paper_validation/2024_yu": "2024_Yu",
     "analyses/paper_validation/2026_khudaida": "2026_Khudaida",
+    "analyses/paper_validation/2026_rezaee": "2026_Rezaee",
     "analyses/paper_validation/2005_cameretti": "2005_Cameretti",
     "analyses/paper_validation/2008_held": "2008_Held",
     "analyses/paper_validation/2012_held": "2012_Held",
     "analyses/paper_validation/2014_held": "2014_Held",
+    "analyses/paper_validation/2015_baygi": "2015_Baygi",
     "analyses/paper_validation/2019_bulow": "2019_Bulow",
     "analyses/paper_validation/2020_bulow": "2020_Bulow",
     "analyses/paper_validation/2021_bulow": "2021_Bulow",
     "analyses/paper_validation/2022_ascani": "2022_Ascani",
+    "analyses/paper_validation/2023_ascani": "2023_Ascani",
     "analyses/paper_validation/2025_figiel": "2025_Figiel",
 }
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
@@ -99,6 +107,33 @@ PAPER_VALIDATION_DOC_ROOTS = {
 PAPER_VALIDATION_DOC_SUBDIRS = {"md", "pdf"}
 PAPER_VALIDATION_ROOT_DIRS = {"docs", "figures", "parameters", "scripts", "shared", "tables"}
 PAPER_VALIDATION_FIGURE_SUBDIRS = {"source", "scripts", "results"}
+PAPER_VALIDATION_PURE_COLUMNS = [
+    "component",
+    "m",
+    "s",
+    "e",
+    "e_assoc",
+    "vol_a",
+    "assoc_scheme",
+    "z",
+    "dielc",
+    "d_born",
+    "f_solv",
+    "MW",
+    "source",
+]
+PAPER_VALIDATION_BINARY_FILES = {"k_ij.csv", "l_ij.csv", "k_hb_ij.csv"}
+PAPER_VALIDATION_PARAMETER_NUMERIC_COLUMNS = {
+    "m",
+    "e",
+    "e_assoc",
+    "vol_a",
+    "z",
+    "d_born",
+    "f_solv",
+    "MW",
+}
+PAPER_VALIDATION_PARAMETER_REQUIRED_VALUE_COLUMNS = PAPER_VALIDATION_PARAMETER_NUMERIC_COLUMNS | {"s", "dielc"}
 TEST_SUBGROUP_ROOTS = {
     "tests/api",
     "tests/api/frontend",
@@ -971,6 +1006,72 @@ def test_paper_validation_parameter_inputs_are_local_snapshots() -> None:
 
         for relpath, source_path in source_files.items():
             assert input_files[relpath].read_bytes() == source_path.read_bytes(), f"{analysis_rel}: {relpath}"
+
+
+def test_paper_validation_parameter_bundles_are_complete_and_uniform() -> None:
+    for analysis_rel in sorted(PAPER_VALIDATION_DOC_ROOTS):
+        parameter_root = REPO_ROOT / analysis_rel / "parameters"
+        assert parameter_root.is_dir(), analysis_rel
+        assert not list(parameter_root.rglob("_placeholder.md")), analysis_rel
+
+        pure_files = sorted((parameter_root / "pure").glob("*.csv"))
+        assert pure_files, analysis_rel
+        for pure_file in pure_files:
+            with pure_file.open(encoding="utf-8-sig", newline="") as handle:
+                reader = csv.DictReader(handle)
+                rows = list(reader)
+                assert reader.fieldnames == PAPER_VALIDATION_PURE_COLUMNS, pure_file
+            assert rows, pure_file
+            for row in rows:
+                assert row["component"].strip(), pure_file
+                assert row["source"].strip(), f"{pure_file}: {row['component']}"
+                assert "=" not in ",".join(row[column] for column in PAPER_VALIDATION_PARAMETER_REQUIRED_VALUE_COLUMNS), row
+                for column in PAPER_VALIDATION_PARAMETER_REQUIRED_VALUE_COLUMNS:
+                    assert row[column].strip() != "", f"{pure_file}: {row['component']} {column}"
+
+        binary_root = parameter_root / "mixed" / "binary_interaction"
+        assert binary_root.is_dir(), analysis_rel
+        assert {path.name for path in binary_root.glob("*.csv")} >= PAPER_VALIDATION_BINARY_FILES | {
+            "source_manifest.csv"
+        }
+        for filename in sorted(PAPER_VALIDATION_BINARY_FILES):
+            matrix_file = binary_root / filename
+            with matrix_file.open(encoding="utf-8-sig", newline="") as handle:
+                reader = csv.reader(handle)
+                header = next(reader)
+                rows = list(reader)
+            assert header[0] == "component", matrix_file
+            assert rows, matrix_file
+            assert len(rows) == len(header) - 1, matrix_file
+            assert [row[0] for row in rows] == header[1:], matrix_file
+            for row in rows:
+                assert len(row) == len(header), matrix_file
+                assert all(cell.strip() != "" for cell in row[1:]), matrix_file
+
+
+def test_paper_validation_temperature_dependent_parameters_are_preserved() -> None:
+    from epcsaft.model.datasets import get_prop_dict
+
+    temperature = 298.15
+    ascani = get_prop_dict(
+        REPO_ROOT / "analyses" / "paper_validation" / "2023_ascani" / "parameters",
+        ["H2O", "1-Pentanol"],
+        [0.5, 0.5],
+        temperature,
+    )
+    expected_sigma = 2.7927 + 10.11 * math.exp(-0.01775 * temperature) - 1.417 * math.exp(
+        -0.01146 * temperature
+    )
+    assert abs(float(ascani["s"][0]) - expected_sigma) < 1.0e-12
+    assert abs(float(ascani["k_ij"][0, 1]) - (0.00016 * temperature - 0.0461)) < 1.0e-12
+
+    held = get_prop_dict(
+        REPO_ROOT / "analyses" / "paper_validation" / "2012_held" / "parameters",
+        ["Methanol"],
+        [1.0],
+        temperature,
+    )
+    assert abs(float(held["dielc"][0]) - (-53.398 * math.log(temperature) + 336.170)) < 1.0e-12
 
 
 def test_analysis_category_roots_exist() -> None:

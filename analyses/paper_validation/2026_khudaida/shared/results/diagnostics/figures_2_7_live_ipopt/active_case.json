@@ -14,7 +14,7 @@
     0.05613774099003627,
     0.05613774099003627
   ],
-  "feed_source_path": "figures\\figure_7\\input\\feed_compositions_digitized.csv",
+  "feed_source_path": "figures\\figure_7\\source\\feed_compositions_digitized.csv",
   "figure": 7,
   "raw_digitized_feed_row": {
     "point_id": "1",
