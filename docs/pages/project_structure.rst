@@ -38,9 +38,21 @@ Use this layout for new analyses:
      scripts/
      figures/
        <figure_id>/
-         input/
-         output/
+         source/
          scripts/
+         results/
+     tables/
+       table_###/
+         source/
+         scripts/
+         results/
+     parameters/
+       mixed/
+       pure/
+       user_options.json
+     shared/
+       source/
+       results/
      notebooks/
      tests/
 
@@ -55,28 +67,28 @@ Use ``data/reference/`` for stable reusable inputs:
 - equilibrium benchmark fixtures under ``data/reference/equilibrium_benchmarks/``
 - reusable literature data such as ``MIAC``, ``osmotic``, ``pure_component``, and regression tables
 
-Use ``data/reference/`` for stable reusable inputs shared by multiple analyses. Use ``analyses/<category>/<short_id>/figures/<figure_id>/input/`` for hand-curated, digitized, or figure-owned parameter snapshots. Use ``analyses/<category>/<short_id>/figures/<figure_id>/output/`` for generated model tables and the exact plotted data retained with that figure.
+Use ``data/reference/`` for stable reusable inputs shared by multiple analyses. Use ``analyses/<category>/<short_id>/figures/<figure_id>/source/`` for hand-curated, digitized, or figure-owned source assets. Use ``analyses/<category>/<short_id>/figures/<figure_id>/results/`` for generated model tables and the exact plotted data retained with that figure.
 
 For full paper-validation analyses, ePC-SAFT parameter datasets and parameter CSV bundles used to execute the analysis must be analysis-owned input snapshots directly under ``analyses/paper_validation/<short_id>/parameters/``.
 The ``parameters/`` folder should contain ``mixed/``, ``pure/``, and ``user_options.json`` directly; do not add a nested dataset-name folder such as ``parameters/2005_Cameretti/``.
 Root ``data/reference/epcsaft_parameters/`` remains the shared curation/source tree.
 Direct in-code parameter dictionaries are acceptable for focused tests, tiny synthetic fixtures, and smoke checks, but full validation analyses should use the analysis-local dataset snapshot.
 
-Paper-validation source papers are copied under ``docs/md/`` and ``docs/pdf/``. Extracted source figures live under ``figures/<figure_id>/source/`` as PNG files, extracted source tables live under ``tables/table_###/`` as Markdown snippets plus CSV conversions, paper-wide source manifests live under ``shared/source/``, and analysis-wide generated artifacts live under ``shared/results/``.
+Paper-validation source papers are copied under ``docs/md/`` and ``docs/pdf/``. Figure folders must be named ``figure_NN`` and contain only ``source/``, ``scripts/``, and ``results/``. Source paper figures live under ``figures/figure_NN/source/`` as PNG files, extracted source tables live under ``tables/table_###/source/`` as Markdown snippets plus CSV conversions, paper-wide source manifests live under ``shared/source/``, and analysis-wide generated artifacts live under ``shared/results/``.
 
 Output Policy
 -------------
 
-Generated figure outputs use figure-owned ``output/`` folders:
+Generated figure outputs use figure-owned ``results/`` folders:
 
-- ``figures/<figure_id>/output/runs/`` for ignored run-specific payloads, logs, sweeps, and exploratory output
-- ``figures/<figure_id>/output/`` for curated generated tables, exact plotted data snapshots, rendered figures, and editable sidecars that are intentionally retained
+- ``figures/<figure_id>/results/runs/`` for ignored run-specific payloads, logs, sweeps, and exploratory output
+- ``figures/<figure_id>/results/`` for curated generated tables, exact plotted data snapshots, rendered figures, and editable sidecars that are intentionally retained
 
 Each figure-owned output folder keeps the figure, exact plotted data snapshot, and editable Matplotlib sidecar together:
 
 .. code-block:: text
 
-   figures/response_curve/output/
+   figures/response_curve/results/
      response_curve.csv
      response_curve.svg
      response_curve.png

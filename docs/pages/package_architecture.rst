@@ -61,8 +61,8 @@ Native
 Data
    Owns packaged parameter datasets, dataset validation, reference-data loading
    contracts, and reusable package data. Analysis-local inputs belong under the
-   relevant ``analyses/<category>/<id>/figures/<figure_id>/input`` tree instead of becoming hidden package
-   dependencies.
+   relevant analysis ``source`` or ``parameters`` tree instead of becoming
+   hidden package dependencies.
 
 Benchmarks
    Owns package-maintained timing, smoke, and regression benchmarks that protect
@@ -139,8 +139,9 @@ Repository Layout
 
 ``src/epcsaft`` contains the package. ``tests`` contains package/API/native
 contracts. ``data/reference`` is the canonical source-checkout reference-data
-library. ``analyses`` contains paper-validation and analysis workflows, each
-with local ``data`` and ``results`` folders.
+library. ``analyses`` contains paper-validation and analysis workflows with
+analysis-owned ``parameters``, ``figures/<figure_id>/source``,
+``figures/<figure_id>/results``, ``tables``, and ``shared`` artifacts.
 
 Generated benchmark output, run payloads, build trees, and local graph or temp
 outputs are not source artifacts.
