@@ -58,6 +58,18 @@ ANALYSIS_ROOTS = {
     "osmotic_validation": REPO_ROOT / "analyses" / "data_validation" / "osmotic_validation",
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
 }
+PAPER_VALIDATION_PARAMETER_SNAPSHOTS = {
+    "analyses/paper_validation/application/2024_hubach_li_tcb": ("2024_Hubach",),
+    "analyses/paper_validation/application/2026_khudaida": ("2026_Khudaida",),
+    "analyses/paper_validation/native/2005_cameretti": ("2005_Cameretti",),
+    "analyses/paper_validation/native/2008_held": ("2008_Held",),
+    "analyses/paper_validation/native/2012_held": ("2012_Held",),
+    "analyses/paper_validation/native/2014_held": ("2009_Held", "2014_Held"),
+    "analyses/paper_validation/native/2019_bulow": ("2019_Bulow",),
+    "analyses/paper_validation/native/2020_bulow": ("2014_Held", "2020_Bulow"),
+    "analyses/paper_validation/native/2022_ascani": ("2022_Ascani",),
+    "analyses/paper_validation/native/2025_figiel": ("2020_Bulow", "2025_Figiel"),
+}
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
 CATEGORY_ROOTS = {
     REPO_ROOT / "analyses" / "paper_validation",
@@ -908,6 +920,37 @@ def test_top_level_public_exports_load_only_the_requested_extension() -> None:
 def test_reference_data_root_is_canonical() -> None:
     assert (REPO_ROOT / "data" / "reference" / "epcsaft_parameters").is_dir()
     assert not (REPO_ROOT / "data" / "epcsaft_parameters").exists()
+
+
+def test_paper_validation_parameter_inputs_are_local_snapshots() -> None:
+    reference_root = REPO_ROOT / "data" / "reference" / "epcsaft_parameters"
+
+    for analysis_rel, datasets in sorted(PAPER_VALIDATION_PARAMETER_SNAPSHOTS.items()):
+        input_root = REPO_ROOT / analysis_rel / "data" / "input" / "epcsaft_parameters"
+        assert input_root.is_dir(), analysis_rel
+
+        for dataset in datasets:
+            source_dataset = reference_root / dataset
+            input_dataset = input_root / dataset
+            assert source_dataset.is_dir(), dataset
+            assert input_dataset.is_dir(), f"{analysis_rel}: {dataset}"
+
+            source_files = {
+                path.relative_to(source_dataset).as_posix(): path
+                for path in source_dataset.rglob("*")
+                if path.is_file()
+            }
+            input_files = {
+                path.relative_to(input_dataset).as_posix(): path
+                for path in input_dataset.rglob("*")
+                if path.is_file()
+            }
+            assert set(input_files) == set(source_files), f"{analysis_rel}: {dataset}"
+
+            for relpath, source_path in source_files.items():
+                assert input_files[relpath].read_bytes() == source_path.read_bytes(), (
+                    f"{analysis_rel}: {dataset}/{relpath}"
+                )
 
 
 def test_analysis_category_roots_exist() -> None:
