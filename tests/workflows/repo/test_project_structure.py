@@ -46,39 +46,59 @@ IMPORT_BOUNDARY_WATCHLIST = {
     "epcsaft.state.properties",
 }
 ANALYSIS_ROOTS = {
-    "2012_held": REPO_ROOT / "analyses" / "paper_validation" / "native" / "2012_held",
-    "2014_held": REPO_ROOT / "analyses" / "paper_validation" / "native" / "2014_held",
-    "2015_baygi": REPO_ROOT / "analyses" / "paper_validation" / "application" / "2015_baygi",
-    "2019_bulow": REPO_ROOT / "analyses" / "paper_validation" / "native" / "2019_bulow",
-    "2020_bulow": REPO_ROOT / "analyses" / "paper_validation" / "native" / "2020_bulow",
-    "2025_figiel": REPO_ROOT / "analyses" / "paper_validation" / "native" / "2025_figiel",
-    "2026_khudaida": REPO_ROOT / "analyses" / "paper_validation" / "application" / "2026_khudaida",
+    "2012_held": REPO_ROOT / "analyses" / "paper_validation" / "2012_held",
+    "2014_held": REPO_ROOT / "analyses" / "paper_validation" / "2014_held",
+    "2015_baygi": REPO_ROOT / "analyses" / "paper_validation" / "2015_baygi",
+    "2019_bulow": REPO_ROOT / "analyses" / "paper_validation" / "2019_bulow",
+    "2020_bulow": REPO_ROOT / "analyses" / "paper_validation" / "2020_bulow",
+    "2025_figiel": REPO_ROOT / "analyses" / "paper_validation" / "2025_figiel",
+    "2026_khudaida": REPO_ROOT / "analyses" / "paper_validation" / "2026_khudaida",
     "dielectric_fits": REPO_ROOT / "analyses" / "data_validation" / "dielectric_fits",
     "miac_fits": REPO_ROOT / "analyses" / "data_validation" / "miac_fits",
     "osmotic_validation": REPO_ROOT / "analyses" / "data_validation" / "osmotic_validation",
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
 }
 PAPER_VALIDATION_PARAMETER_SNAPSHOTS = {
-    "analyses/paper_validation/application/2024_hubach_li_tcb": "2024_Hubach",
-    "analyses/paper_validation/application/2026_khudaida": "2026_Khudaida",
-    "analyses/paper_validation/native/2005_cameretti": "2005_Cameretti",
-    "analyses/paper_validation/native/2008_held": "2008_Held",
-    "analyses/paper_validation/native/2012_held": "2012_Held",
-    "analyses/paper_validation/native/2014_held": "2014_Held",
-    "analyses/paper_validation/native/2019_bulow": "2019_Bulow",
-    "analyses/paper_validation/native/2020_bulow": "2020_Bulow",
-    "analyses/paper_validation/native/2021_bulow": "2021_Bulow",
-    "analyses/paper_validation/native/2022_ascani": "2022_Ascani",
-    "analyses/paper_validation/native/2025_figiel": "2025_Figiel",
+    "analyses/paper_validation/2024_hubach": "2024_Hubach",
+    "analyses/paper_validation/2026_khudaida": "2026_Khudaida",
+    "analyses/paper_validation/2005_cameretti": "2005_Cameretti",
+    "analyses/paper_validation/2008_held": "2008_Held",
+    "analyses/paper_validation/2012_held": "2012_Held",
+    "analyses/paper_validation/2014_held": "2014_Held",
+    "analyses/paper_validation/2019_bulow": "2019_Bulow",
+    "analyses/paper_validation/2020_bulow": "2020_Bulow",
+    "analyses/paper_validation/2021_bulow": "2021_Bulow",
+    "analyses/paper_validation/2022_ascani": "2022_Ascani",
+    "analyses/paper_validation/2025_figiel": "2025_Figiel",
 }
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
 CATEGORY_ROOTS = {
     REPO_ROOT / "analyses" / "paper_validation",
-    REPO_ROOT / "analyses" / "paper_validation" / "native",
-    REPO_ROOT / "analyses" / "paper_validation" / "application",
     REPO_ROOT / "analyses" / "data_validation",
     REPO_ROOT / "analyses" / "package_validation",
 }
+PAPER_VALIDATION_DOC_ROOTS = {
+    "analyses/paper_validation/2015_baygi",
+    "analyses/paper_validation/2001_gross",
+    "analyses/paper_validation/2002_gross",
+    "analyses/paper_validation/2005_cameretti",
+    "analyses/paper_validation/2008_held",
+    "analyses/paper_validation/2012_held",
+    "analyses/paper_validation/2014_held",
+    "analyses/paper_validation/2019_bulow",
+    "analyses/paper_validation/2020_bulow",
+    "analyses/paper_validation/2021_bulow",
+    "analyses/paper_validation/2025_figiel",
+    "analyses/paper_validation/2022_ascani",
+    "analyses/paper_validation/2023_ascani",
+    "analyses/paper_validation/2026_khudaida",
+    "analyses/paper_validation/2024_hubach",
+    "analyses/paper_validation/2024_yu",
+    "analyses/paper_validation/2026_rezaee",
+}
+PAPER_VALIDATION_DOC_SUBDIRS = {"md", "pdf"}
+PAPER_VALIDATION_ROOT_DIRS = {"docs", "figures", "parameters", "scripts", "shared", "tables"}
+PAPER_VALIDATION_FIGURE_SUBDIRS = {"source", "scripts", "results"}
 TEST_SUBGROUP_ROOTS = {
     "tests/api",
     "tests/api/frontend",
@@ -958,6 +978,85 @@ def test_analysis_category_roots_exist() -> None:
         assert root.is_dir(), root
 
 
+def test_paper_validation_uses_flat_paper_roots() -> None:
+    paper_root = REPO_ROOT / "analyses" / "paper_validation"
+    actual = {
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in paper_root.iterdir()
+        if path.is_dir()
+    }
+    assert actual == PAPER_VALIDATION_DOC_ROOTS
+    assert not (paper_root / "native").exists()
+    assert not (paper_root / "application").exists()
+    for old_domain in ("co2_solubility", "eos", "equilibrium", "extraction"):
+        assert not (paper_root / old_domain).exists()
+
+
+def test_paper_validation_docs_are_local_source_snapshots() -> None:
+    for analysis_rel in sorted(PAPER_VALIDATION_DOC_ROOTS):
+        analysis_root = REPO_ROOT / analysis_rel
+        docs_root = analysis_root / "docs"
+        shared_source = analysis_root / "shared" / "source"
+        tables_root = analysis_root / "tables"
+        assert docs_root.is_dir(), analysis_rel
+        assert {path.name for path in analysis_root.iterdir() if path.is_dir()} == PAPER_VALIDATION_ROOT_DIRS
+        assert {path.name for path in docs_root.iterdir() if path.is_dir()} == PAPER_VALIDATION_DOC_SUBDIRS
+        assert (docs_root / "source_manifest.csv").is_file(), analysis_rel
+        assert not (docs_root / "figures").exists(), analysis_rel
+        assert not (docs_root / "tables").exists(), analysis_rel
+        assert (shared_source / "figures_manifest.csv").is_file(), analysis_rel
+        assert not (shared_source / "tables").exists(), analysis_rel
+        assert (tables_root / "tables_manifest.csv").is_file(), analysis_rel
+        assert list((docs_root / "md").glob("*.md")), analysis_rel
+        assert any(path.is_file() for path in (docs_root / "pdf").iterdir()), analysis_rel
+        assert any(path.is_file() for path in shared_source.iterdir()), analysis_rel
+
+
+def test_paper_validation_tables_use_table_subfolders() -> None:
+    for analysis_rel in sorted(PAPER_VALIDATION_DOC_ROOTS):
+        tables_root = REPO_ROOT / analysis_rel / "tables"
+        assert tables_root.is_dir(), analysis_rel
+        assert (tables_root / "tables_manifest.csv").is_file(), analysis_rel
+        assert not (REPO_ROOT / analysis_rel / "shared" / "source" / "tables").exists(), analysis_rel
+
+        table_roots = sorted(path for path in tables_root.iterdir() if path.is_dir())
+        if not table_roots:
+            assert (tables_root / "_placeholder.md").is_file(), analysis_rel
+            continue
+        assert not (tables_root / "_placeholder.md").exists(), analysis_rel
+        for table_root in table_roots:
+            assert re.fullmatch(r"table_\d{3}", table_root.name), table_root
+            assert any(table_root.glob("*.md")), table_root
+            assert any(table_root.glob("*.csv")), table_root
+
+
+def test_paper_validation_figures_use_source_scripts_results_layout() -> None:
+    for analysis_rel in sorted(PAPER_VALIDATION_DOC_ROOTS):
+        figures_root = REPO_ROOT / analysis_rel / "figures"
+        assert figures_root.is_dir(), analysis_rel
+        figure_roots = sorted(path for path in figures_root.iterdir() if path.is_dir())
+        if not figure_roots:
+            assert (figures_root / "_placeholder.md").is_file(), analysis_rel
+            continue
+        assert not any(path.is_file() for path in figures_root.iterdir()), analysis_rel
+        for figure_root in figure_roots:
+            assert {path.name for path in figure_root.iterdir() if path.is_dir()} == PAPER_VALIDATION_FIGURE_SUBDIRS
+            assert not any(path.is_file() for path in figure_root.iterdir()), figure_root
+            for subdir in PAPER_VALIDATION_FIGURE_SUBDIRS:
+                assert any((figure_root / subdir).iterdir()), figure_root / subdir
+            for source_png in (figure_root / "source").glob("paper_source_*.png"):
+                assert (source_png.with_suffix(source_png.suffix + ".sha256")).is_file(), source_png
+            assert list((figure_root / "source").glob("paper_source_*.jpg")) == [], figure_root
+
+
+def test_paper_validation_has_no_root_data_results_or_diagnostics() -> None:
+    for analysis_rel in sorted(PAPER_VALIDATION_DOC_ROOTS):
+        analysis_root = REPO_ROOT / analysis_rel
+        assert not (analysis_root / "data").exists(), analysis_rel
+        assert not (analysis_root / "results").exists(), analysis_rel
+        assert not (analysis_root / "diagnostics").exists(), analysis_rel
+
+
 def test_migrated_analyses_have_local_contract_files() -> None:
     for analysis_id, root in sorted(ANALYSIS_ROOTS.items()):
         assert (root / "README.md").is_file(), analysis_id
@@ -1006,14 +1105,29 @@ def test_replaced_flat_test_modules_are_absent_from_the_working_tree() -> None:
 
 def test_generated_output_roots_are_not_tracked_in_analyses() -> None:
     tracked = _tracked_files("analyses")
-    stale = [
-        path
-        for path in tracked
-        if "/out/" in path.replace("\\", "/")
-        or "/results/runs/" in path.replace("\\", "/")
-        or "/results/final/" in path.replace("\\", "/")
-        or ("/figures/" in path.replace("\\", "/") and "/output/runs/" in path.replace("\\", "/"))
-    ]
+    stale: list[str] = []
+    docs_figures = "/docs/" + "figures/"
+    docs_tables = "/docs/" + "tables/"
+    shared_source_tables = "/shared/source/" + "tables/"
+    for path in tracked:
+        normalized = path.replace("\\", "/")
+        if (
+            "/out/" in normalized
+            or "/results/runs/" in normalized
+            or "/results/final/" in normalized
+            or ("/figures/" in normalized and "/output/runs/" in normalized)
+        ):
+            stale.append(path)
+            continue
+        if normalized.startswith("analyses/paper_validation/") and (
+            docs_figures in normalized
+            or docs_tables in normalized
+            or shared_source_tables in normalized
+            or ("/figures/" in normalized and "/input/" in normalized)
+            or ("/figures/" in normalized and "/output/" in normalized)
+            or re.search(r"^analyses/paper_validation/[^/]+/(data|results|diagnostics)/", normalized)
+        ):
+            stale.append(path)
     assert stale == []
 
 
@@ -1030,8 +1144,12 @@ def test_migrated_analysis_metadata_uses_figure_owned_outputs() -> None:
     for analysis_id in sorted(MIGRATED_ANALYSIS_IDS):
         path = ANALYSIS_ROOTS[analysis_id] / "analysis.yaml"
         text = path.read_text(encoding="utf-8")
-        assert "figures: figures/<figure_id>/output" in text, path
-        assert "runs: figures/<figure_id>/output/runs" in text, path
+        if path.as_posix().startswith((REPO_ROOT / "analyses" / "paper_validation").as_posix()):
+            assert "figures: figures/<figure_id>/results" in text, path
+            assert "runs: figures/<figure_id>/results/runs" in text, path
+        else:
+            assert "figures: figures/<figure_id>/" + "output" in text, path
+            assert "runs: figures/<figure_id>/" + "output/runs" in text, path
 
 
 def test_migrated_analyses_use_complete_figure_owned_roots() -> None:
@@ -1042,7 +1160,10 @@ def test_migrated_analyses_use_complete_figure_owned_roots() -> None:
         assert figure_roots, analysis_id
         for figure_root in figure_roots:
             assert (figure_root / "scripts").is_dir(), figure_root
-            optional_roots = (figure_root / "input", figure_root / "output")
+            if figure_root.as_posix().startswith((REPO_ROOT / "analyses" / "paper_validation").as_posix()):
+                optional_roots = (figure_root / "source", figure_root / "results")
+            else:
+                optional_roots = (figure_root / "input", figure_root / "output")
             assert any(path.is_dir() for path in optional_roots) or any(
                 (figure_root / "scripts").glob("*.py")
             ), figure_root
@@ -1069,19 +1190,19 @@ def test_selected_figure_scripts_do_not_read_canonical_data_root_directly() -> N
 
 def test_analysis_template_uses_figure_owned_outputs() -> None:
     text = (REPO_ROOT / "analyses" / "_template" / "analysis.yaml").read_text(encoding="utf-8")
-    assert "figures: figures/<figure_id>/output" in text
-    assert "runs: figures/<figure_id>/output/runs" in text
+    assert "figures: figures/<figure_id>/" + "output" in text
+    assert "runs: figures/<figure_id>/" + "output/runs" in text
 
 
 def test_figiel_analysis_is_migrated_to_figure_owned_layout() -> None:
     root = ANALYSIS_ROOTS["2025_figiel"]
     text = (root / "analysis.yaml").read_text(encoding="utf-8")
-    assert "figures: figures/<figure_id>/output" in text
-    assert "runs: figures/<figure_id>/output/runs" in text
+    assert "figures: figures/<figure_id>/results" in text
+    assert "runs: figures/<figure_id>/results/runs" in text
     assert not (root / "data").exists()
     assert (root / "figures").is_dir()
     for figure_id in ("figure_4", "figure_5", "figure_6", "figure_7", "figure_8", "figure_9"):
         figure_root = root / "figures" / figure_id
-        assert (figure_root / "input").is_dir(), figure_id
-        assert (figure_root / "output").is_dir(), figure_id
+        assert (figure_root / "source").is_dir(), figure_id
+        assert (figure_root / "results").is_dir(), figure_id
         assert (figure_root / "scripts").is_dir(), figure_id

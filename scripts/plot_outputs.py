@@ -11,8 +11,6 @@ from matplotlib import colors as mcolors
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ANALYSES_ROOT = REPO_ROOT / "analyses"
 PAPER_VALIDATION_SOURCE_ROOT = ANALYSES_ROOT / "paper_validation"
-PAPER_VALIDATION_NATIVE_ROOT = PAPER_VALIDATION_SOURCE_ROOT / "native"
-PAPER_VALIDATION_APPLICATION_ROOT = PAPER_VALIDATION_SOURCE_ROOT / "application"
 DATA_VALIDATION_ROOT = ANALYSES_ROOT / "data_validation"
 PACKAGE_VALIDATION_ROOT = ANALYSES_ROOT / "package_validation"
 FITS_ANALYSIS_ROOT = DATA_VALIDATION_ROOT / "miac_fits"
@@ -41,6 +39,8 @@ RUNS_DIR_NAME = "runs"
 FIGURES_DIR_NAME = "figures"
 FIGURE_INPUT_DIR_NAME = "input"
 FIGURE_OUTPUT_DIR_NAME = "output"
+FIGURE_SOURCE_DIR_NAME = "source"
+FIGURE_RESULTS_DIR_NAME = "results"
 FIGURE_SCRIPTS_DIR_NAME = "scripts"
 ANALYSIS_METADATA_NAME = "analysis.yaml"
 
@@ -123,6 +123,22 @@ def _figure_root_for_any(source_path: str | Path) -> Path | None:
     return _figure_root_for(source_path) or _figure_root_for_script(source_path)
 
 
+def _uses_paper_validation_figure_layout(figure_root: Path) -> bool:
+    try:
+        figure_root.resolve().relative_to(PAPER_VALIDATION_SOURCE_ROOT)
+    except ValueError:
+        return False
+    return True
+
+
+def _figure_source_dir_name(figure_root: Path) -> str:
+    return FIGURE_SOURCE_DIR_NAME if _uses_paper_validation_figure_layout(figure_root) else FIGURE_INPUT_DIR_NAME
+
+
+def _figure_results_dir_name(figure_root: Path) -> str:
+    return FIGURE_RESULTS_DIR_NAME if _uses_paper_validation_figure_layout(figure_root) else FIGURE_OUTPUT_DIR_NAME
+
+
 def _relative_script_parts(source_path: str | Path) -> list[str]:
     source = Path(source_path).resolve()
     source_dir = source if source.is_dir() else source.parent
@@ -171,7 +187,7 @@ def analysis_plot_set_dir(
 ) -> Path:
     figure_root = _figure_root_for_any(source_path)
     if figure_root is not None:
-        target = figure_root / FIGURE_OUTPUT_DIR_NAME
+        target = figure_root / _figure_results_dir_name(figure_root)
         if category is not None:
             if isinstance(category, (str, Path)):
                 category_parts = [category]
@@ -229,11 +245,11 @@ def analysis_data_dir(
         category_parts = list(category)
 
     if figure_root is not None:
-        if kind_parts and kind_parts[0] == "input":
-            target = figure_root / FIGURE_INPUT_DIR_NAME
+        if kind_parts and kind_parts[0] in ("input", "source"):
+            target = figure_root / _figure_source_dir_name(figure_root)
             kind_tail = kind_parts[1:]
         else:
-            target = figure_root / FIGURE_OUTPUT_DIR_NAME
+            target = figure_root / _figure_results_dir_name(figure_root)
             kind_tail = kind_parts
         if kind_tail:
             target = target.joinpath(*kind_tail)
@@ -283,7 +299,7 @@ def analysis_runs_dir(
 
     figure_root = _figure_root_for_any(source_path)
     if figure_root is not None:
-        target = figure_root / FIGURE_OUTPUT_DIR_NAME / RUNS_DIR_NAME
+        target = figure_root / _figure_results_dir_name(figure_root) / RUNS_DIR_NAME
         if explicit_category and category_parts:
             target = target.joinpath(*[part for part in category_parts if str(part) not in ("", ".")])
         target.mkdir(parents=True, exist_ok=True)
@@ -316,7 +332,7 @@ def figure_input_dir(source_path: str | Path) -> Path:
     figure_root = _figure_root_for_any(source_path)
     if figure_root is None:
         raise ValueError(f"path is not inside analyses/*/figures/*: {Path(source_path).resolve()}")
-    target = figure_root / FIGURE_INPUT_DIR_NAME
+    target = figure_root / _figure_source_dir_name(figure_root)
     target.mkdir(parents=True, exist_ok=True)
     return target
 
@@ -331,7 +347,7 @@ def figure_output_dir(source_path: str | Path) -> Path:
     figure_root = _figure_root_for_any(source_path)
     if figure_root is None:
         raise ValueError(f"path is not inside analyses/*/figures/*: {Path(source_path).resolve()}")
-    target = figure_root / FIGURE_OUTPUT_DIR_NAME
+    target = figure_root / _figure_results_dir_name(figure_root)
     target.mkdir(parents=True, exist_ok=True)
     return target
 
@@ -368,7 +384,8 @@ def paper_validation_output_path(path: str | Path) -> Path:
     source = Path(path).resolve()
     figure_root = _figure_root_for_any(source)
     if figure_root is not None:
-        if FIGURE_OUTPUT_DIR_NAME in source.parts:
+        results_dir_name = _figure_results_dir_name(figure_root)
+        if results_dir_name in source.parts or FIGURE_OUTPUT_DIR_NAME in source.parts:
             target = source
         else:
             target = figure_output_path(source)

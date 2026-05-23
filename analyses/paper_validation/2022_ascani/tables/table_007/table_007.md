@@ -1,0 +1,12 @@
+<!-- source: docs/papers/md/Ascani, Sadowski, Held - 2022 - Supporting Information for Calculation of multiphase equilibria containing mixed solvents and mixed..md lines 62-69 -->
+
+Table S1: Pure-component parameters of the non-charged components used in this work.
+
+| component | $m_{i}^{\text {seg }}$ | $\sigma_{i} / \AA$ | $u_{i} / k_{B} / \mathrm{K}$ | $\varepsilon^{A i B i} / \mathrm{K}$ | $\kappa^{\text {AiBi }}$ | Ref. |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Water | 1.2047 | * | 353.95 | 2425.7 | 0.04509 | S5 |
+| n-hexane | 3.0578 | 3.7983 | 236.77 | - | - | S4 |
+| n-dodecane | 5.3060 | 3.8959 | 249.21 | - | - | S4 |
+| 1-butanol | 2.7510 | 3.6139 | 259.59 | 2544.56 | 0.00669 | S6 |
+| 1-propanol | 3.0000 | 3.2522 | 233.40 | 2276.78 | 0.01527 | S7 |
+| $* \sigma=2.7927+\left(10.11 \cdot \mathrm{e}^{-0.01775 \mathrm{~T}}-1.417 \cdot \mathrm{e}^{-0.01146 \mathrm{~T}}\right)$ |  |  |  |  |  |  |

@@ -1,0 +1,14 @@
+<!-- source: docs/papers/md/Baygi and Pahlavanzadeh - 2015 - Application of the PC-SAFT equation of state for modeling CO2 solub.md lines 179-188 -->
+
+Table 2 - Pure component parameters used in this work.
+
+| Species | Association scheme | $m$ | $\sigma$ | $\varepsilon / k_{\mathrm{B}}$ | $\kappa{ }^{\text {AB }}$ | $\varepsilon^{\mathrm{AB}} / \mathrm{k}_{\mathrm{B}}$ | AAD\% ${ }^{\text {a }}$ |  | Ref. |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+|  |  |  |  |  |  |  | $p^{\text {sat }}$ | $\rho^{\text {L,sat }}$ |  |
+| MEA | 4C | 4.5208 | 2.6574 | 237.6864 | 0.187533 | 989.8984 | 0.24 | 0.23 | This work |
+|  | 3B | 4.5354 | 2.6019 | 204.0438 | 0.118488 | 2383.4744 | 1.75 | 0.43 | This work |
+|  | 2B | 3.0353 | 3.0435 | 277.174 | 0.037470 | 2586.3 | 0.62 | 0.12 | This work |
+| $\mathrm{H}_{2} \mathrm{O}$ | 2B | 1.9599 | 2.362 | 279.42 | 0.1750 | 2059.28 | 1.18 | 3.92 | Diamantonis and Economou (2011) |
+|  | 4C | 2.1945 | 2.229 | 141.66 | 0.2039 | 1804.17 | 1.98 | 0.83 | Diamantonis and Economou (2011) |
+| $\mathrm{CO}_{2}$ | Nonassociating | 2.0729 | 2.7852 | 169.21 | - | - | 2.78 | 2.73 | Gross and Sadowski (2001) |
+| ${ }^{\text {a }}$ AAD $\%=100 / n p \times \Sigma\left\|\psi^{\text {exp }}-\psi^{\text {cal }}\right\| / \psi^{\text {exp }}, \psi$ is $p^{\text {sat }}$ and $\rho^{\text {L,sat }}$. |  |  |  |  |  |  |  |  |  |

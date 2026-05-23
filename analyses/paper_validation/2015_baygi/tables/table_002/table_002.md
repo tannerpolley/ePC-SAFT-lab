@@ -1,0 +1,15 @@
+<!-- source: docs/papers/md/Baygi and Pahlavanzadeh - 2015 - Application of the PC-SAFT equation of state for modeling CO2 solub.md lines 139-149 -->
+
+Table 1 - Gorrelations constants for the saturated vapor pressure ( $p^{\text {sat }}$ ) and saturated liquid density ( $\rho^{\text {L }}$,sat ) of MEA in Eqs. (9) and (10) (from Avlund et al. (2008)).
+
+| Constants | $p^{\text {sat }}$ (Pa) | $\rho^{\mathrm{L}, \text { sat }}\left(\mathrm{mol} \mathrm{L}^{-1}\right)$ |
+| :--- | :--- | :--- |
+| A | 92.624 | 1.0011 |
+| B | -10,367 | 0.22523 |
+| C | -9.4699 | 678.2 |
+| D | $1.9 \times 10^{-18}$ | 0.21515 |
+| E | 6 | 0 |
+| $\mathrm{T}_{\text {min }}(\mathrm{K})$ | 283.65 |  |
+| $\mathrm{T}_{\text {max }}(\mathrm{K})$ | 678.2 |  |
+| Maximum deviation | 8.1\% | 0.3\% |
+| Average deviation | 2.1\% | 0.1\% |

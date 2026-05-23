@@ -1,0 +1,18 @@
+<!-- source: docs/papers/md/Held, Cameretti, Sadowski - 2008 - Modeling aqueous electrolyte solutions. Part 1. Fully dissociated.md lines 485-500 -->
+
+| $\gamma_{i}$ | symmetrical activity coefficient of component $i$ (related to pure component) |
+| :--- | :--- |
+| $\gamma_{i}^{*}$ | asymmetrical activity coefficient of component $i$ (related to infinite dilution) |
+| $\varepsilon$ | dielectric constant of a medium, $\varepsilon_{\mathrm{r}} \varepsilon_{0}(\mathrm{C} / \mathrm{Vm})$ |
+| $\varepsilon_{\mathrm{r}}$ | relative permittivity |
+| $\varepsilon_{0}$ | permittivity in vacuum, $8.85416 \times 10^{-12}(\mathrm{C} / \mathrm{Vm})$ |
+| $\varepsilon_{\mathrm{hb}}^{\mathrm{AiBi}} / k_{\mathrm{B}}$ | association-energy parameter (K) |
+| $\kappa$ | Debye length, defined in Eq. (4) (1/Å) |
+| $\kappa_{\mathrm{hb}}^{\mathrm{AiBi}} / k_{\mathrm{B}}$ | association-volume parameter |
+| $v$ | stoichiometric factor |
+| $\rho$ | density ( $\mathrm{kg} / \mathrm{m}^{3}$ ) |
+| $\rho_{\mathrm{N}}$ | number density (number of particles per volume) ( $1 / \AA^{3}$ ) |
+| $\sigma_{i}$ | temperature-independent segment diameter of molecule $i(\AA)$ |
+| $\sigma_{\mathrm{T}, \mathrm{W}}$ | temperature-dependent segment diameter of water (Å) |
+| $\varphi_{i}$ | fugacity coefficient of component $i$ |
+| $\chi$ | abbreviation for expression in Eq. (3) |

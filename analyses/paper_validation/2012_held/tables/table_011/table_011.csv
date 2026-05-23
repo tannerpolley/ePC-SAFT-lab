@@ -1,0 +1,10 @@
+"An, -",anion
+"Cat, +",cation
+"E, EtOH",ethanol
+"$i, j, k$",component indexes
+M,methanol
+seg,segment
+"W, $\mathrm{H}_{2} \mathrm{O}$",water
+$\pm$,mean ionic
+0,pure substance
+solv,solvent

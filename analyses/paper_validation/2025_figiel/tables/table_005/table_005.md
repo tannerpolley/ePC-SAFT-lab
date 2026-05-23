@@ -1,0 +1,18 @@
+<!-- source: docs/papers/md/Figiel, Yu, Held - 2025 - Predicting Thermodynamic Properties of Ions in Single Solvents and in Mixe.md lines 325-338 -->
+
+Table 5. ePC-SAFT Binary Interaction Parameters $\boldsymbol{k}_{\boldsymbol{i j}}$ between Different Components at 298.15 K Used in This Work ${ }^{\text {a }}$
+
+| $k_{i j}$ | water | methanol | ethanol |
+| :--- | :--- | :--- | :--- |
+| $\mathrm{Cl}^{-}$ | -0.3 | 0.5 | 0.8 |
+| $\mathrm{Br}^{-}$ | -0.3 | 0.15 | 0 |
+| $\mathrm{I}^{-}$ | -0.05 | 0.37 | 0.18 |
+| $\mathrm{SO}_{4}{ }^{2-}$ | -0.1 |  |  |
+| $\mathrm{H}^{+}$ | 0 | -0.3 | -0.6 |
+| $\mathrm{Li}^{+}$ | -0.4 | -0.9 | -0.8 |
+| $\mathrm{Na}^{+}$ | -0.3 | -0.25 | 0.05 |
+| $\mathrm{K}^{+}$ | -0.1 | 0.32 | 0.53 |
+| $\mathrm{VO}^{2+}$ | -0.08 |  |  |
+| $\mathrm{V}^{3+}$ | -0.3 |  |  |
+| methanol | $-0.0878^{65}$ |  |  |
+| ethanol | -0.0617 ${ }^{66}$ |  |  |

@@ -1,0 +1,23 @@
+analysis_id: 2026_khudaida
+title: Khudaida 2026 electrolyte LLE validation
+kind: paper_validation
+status: migrated
+package: epcsaft
+route: public electrolyte_lle
+parameter_dataset: 2026_Khudaida
+born_model: SSM+DS
+commands:
+  run_all: uv run python analyses/paper_validation/2026_khudaida/scripts/run_all.py
+outputs:
+  figures: figures/<figure_id>/results
+  runs: figures/<figure_id>/results/runs
+source_inputs:
+  tables_3_4: shared/source/table_3_4_experimental_tielines.csv
+  table_5: shared/source/table_5_pure_component_parameters.csv
+  table_6: shared/source/table_6_relative_dielectric_constants.csv
+  table_7: shared/source/table_7_epcsaft_kij.csv
+  tables_s1_s2: shared/source/table_s1_s2_distribution_separation.csv
+  table_s3: shared/source/table_s3_enrtl_bips.csv
+  table_s4: shared/source/table_s4_enrtl_aad.csv
+  born_options: shared/source/born_ssm_ds_options.json
+  figure_manifest: shared/source/figure_manifest.csv

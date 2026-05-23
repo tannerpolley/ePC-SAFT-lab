@@ -24,7 +24,7 @@ Package Surfaces
 Analysis Workflows
 ------------------
 
-Scientific reproductions, validation plots, fits, and paper figure workflows live under categorized analysis roots such as ``analyses/paper_validation/native/<short_id>/`` or ``analyses/data_validation/<short_id>/``.
+Scientific reproductions, validation plots, fits, and paper figure workflows live under analysis roots such as ``analyses/paper_validation/<short_id>/`` or ``analyses/data_validation/<short_id>/``.
 
 Use this layout for new analyses:
 
@@ -57,10 +57,12 @@ Use ``data/reference/`` for stable reusable inputs:
 
 Use ``data/reference/`` for stable reusable inputs shared by multiple analyses. Use ``analyses/<category>/<short_id>/figures/<figure_id>/input/`` for hand-curated, digitized, or figure-owned parameter snapshots. Use ``analyses/<category>/<short_id>/figures/<figure_id>/output/`` for generated model tables and the exact plotted data retained with that figure.
 
-For full paper-validation analyses, ePC-SAFT parameter datasets and parameter CSV bundles used to execute the analysis must be analysis-owned input snapshots directly under ``analyses/paper_validation/<category>/<short_id>/parameters/``.
+For full paper-validation analyses, ePC-SAFT parameter datasets and parameter CSV bundles used to execute the analysis must be analysis-owned input snapshots directly under ``analyses/paper_validation/<short_id>/parameters/``.
 The ``parameters/`` folder should contain ``mixed/``, ``pure/``, and ``user_options.json`` directly; do not add a nested dataset-name folder such as ``parameters/2005_Cameretti/``.
 Root ``data/reference/epcsaft_parameters/`` remains the shared curation/source tree.
 Direct in-code parameter dictionaries are acceptable for focused tests, tiny synthetic fixtures, and smoke checks, but full validation analyses should use the analysis-local dataset snapshot.
+
+Paper-validation source papers are copied under ``docs/md/`` and ``docs/pdf/``. Extracted source figures live under ``figures/<figure_id>/source/`` as PNG files, extracted source tables live under ``tables/table_###/`` as Markdown snippets plus CSV conversions, paper-wide source manifests live under ``shared/source/``, and analysis-wide generated artifacts live under ``shared/results/``.
 
 Output Policy
 -------------

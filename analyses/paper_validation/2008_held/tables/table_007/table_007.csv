@@ -1,0 +1,20 @@
+a,Helmholtz free energy per number of particles (J)
+$a_{j}$,distance at closest approach of two ions j (Å)
+A,Helmholtz free energy (J)
+$c_{i}$,molarity (moles solute per liter solution) (mol/l)
+e,"elementary charge, $1.6022 \times 10^{-19}$ (C)"
+$k_{\mathrm{B}}$,"Boltzmann constant, $1.38065 \times 10^{-23}(\mathrm{~J} / \mathrm{K})$"
+$k_{i j}$,binary interaction parameter
+$m$,molality (moles solute $i$ per kg solvent) (mol/kg)
+$m_{\text {seg }}$,number of segments
+M,molecular weight (g/mol)
+N,total number of particles; number of association sites
+NP,number of data points
+$N_{\mathrm{A}}$,"Avogadro's constant, $6.023 \times 10^{-23}\left(\mathrm{~mol}^{-1}\right)$"
+$p$,"pressure (kPa, bar)"
+$q_{j}$,charge of ion $j$ (C)
+T,temperature (K)
+"$T_{\text {dep, } 1.4}$","parameters for the temperature-dependent segment diameter (Å, 1/K)"
+$u / k_{\mathrm{B}}$,dispersion-energy parameter (K)
+$x$,mole fraction
+$z$,charge number

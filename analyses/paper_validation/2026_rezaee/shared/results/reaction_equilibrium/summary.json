@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "stage": "E",
+  "lane_id": "rezaee_2026_reactive_electrolyte_lle",
+  "status": "failed_gate",
+  "status_reason": "source constants were tried first and retained; the native-standard-state fitted public Ipopt route solved the held-out Rezaee rows but failed the requested extraction/selectivity gates",
+  "validation_lane": "rezaee_2026_application_reactive_electrolyte_lle",
+  "public_api": "mix.equilibrium(kind=\"reactive_electrolyte_lle\")",
+  "required_solver_backend": "ipopt",
+  "required_derivative_backend": "cppad_implicit",
+  "required_density_backend": "liquid_pressure_root",
+  "hessian_approximation": "limited-memory",
+  "phase_models_supported": "accepted_public_native_ipopt",
+  "row_count": 26,
+  "source_files": [
+    "analyses/paper_validation/2026_rezaee/shared/source/README.md",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_doe_extraction_responses.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_extraction_equilibrium_mole_fractions.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_headline_extraction_points.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_optimum_neighborhood.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_real_brine_extraction.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2025_screening_extraction.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_epcsaft_species_dataset.json",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_organic_binary_interactions.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_organic_pcsaft_parameters.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_reaction_constants.csv",
+    "analyses/paper_validation/2026_rezaee/shared/source/rezaee_2026_si_density_tables.csv"
+  ],
+  "source_text_mismatch": {
+    "available_si_equilibrium_rows": 26,
+    "paper_text_equilibrium_data_points": 36,
+    "conclusion": "Use the 26 source-backed SI equilibrium rows as the benchmark basis until a 36-row source table is supplied."
+  },
+  "convention_scan": {
+    "status": "source_reference_state_gap",
+    "best_variant": {
+      "variant": "paper_eq14_no_activity_vs_inverse_k",
+      "combined_median_abs_ln_residual": 9.506579080295277,
+      "source_supported": false,
+      "description": "Mole-fraction quotient compared against reciprocal reported constants."
+    },
+    "source_supported_variant": {
+      "variant": "paper_eq14_with_activity_vs_paper_k",
+      "combined_median_abs_ln_residual": 35.244718940438226,
+      "source_supported": true,
+      "description": "Rezaee Eq. 14/15 exactly as implemented from the paper text, with ePC-SAFT/PC-SAFT activity coefficients."
+    },
+    "acceptance": {
+      "closed_by_simple_convention_scan": false,
+      "threshold_combined_median_abs_ln_residual": 2.0
+    }
+  },
+  "option_scan": {
+    "status": "option_scan_complete_no_direct_closure",
+    "best_source_supported_variant": null
+  },
+  "phase_model_public_route_attempt": {
+    "status": "blocked_solver",
+    "attempt_source": "calibrated_native_ipopt_attempt",
+    "phase_models": {
+      "aq_species": [
+        "H2O",
+        "Li+",
+        "Na+",
+        "Cl-",
+        "H+",
+        "OH-",
+        "NH4+"
+      ],
+      "org_species": [
+        "DES",
+        "TOPO",
+        "RLi",
+        "RNa"
+      ],
+      "contract": "phase_models={\"aq\": aqueous_mix, \"org\": organic_mix}"
+    },
+    "experiment_no": 1,
+    "accepted": false,
+    "error_type": "SolutionError",
+    "solver_backend": null,
+    "derivative_backend": null,
+    "density_backend": null,
+    "diagnostics": {
+      "accepted": false,
+      "rejection_reason": "",
+      "derivative_backend": "cppad_implicit",
+      "density_backend": "liquid_pressure_root",
+      "phase_count": 0,
+      "species_count": 0,
+      "balance_row_count": 0,
+      "reaction_count": 0,
+      "conserved_balance_norm": 0.0,
+      "charge_balance_norm": 0.0,
+      "pressure_consistency_norm": 0.0,
+      "phase_equilibrium_norm": 0.0,
+      "reaction_stationarity_norm": 0.0,
+      "phase_distance": 0.0,
+      "objective": 0.0,
+      "standard_mu_rt": [],
+      "constraints": [],
+      "reaction_stationarity_residuals": [],
+      "phase_equilibrium_residuals": [],
+      "phase_charge_residuals": [],
+      "phase_amount_totals": [],
+      "phase_volumes": [],
+      "phase_densities": [],
+      "phase_compositions": [],
+      "phase_ln_fugacity_coefficients": [],
+      "route_status": "solver_rejected",
+      "solver_status": "local_infeasibility"
+    }
+  },
+  "phase_model_fitted_public_route": {
+    "status": "failed_gate",
+    "attempt_source": "native_logk_fit_public_route",
+    "phase_models": {
+      "aq_species": [
+        "H2O",
+        "Li+",
+        "Na+",
+        "Cl-",
+        "H+",
+        "OH-",
+        "NH4+"
+      ],
+      "org_species": [
+        "DES",
+        "TOPO",
+        "RLi",
+        "RNa"
+      ],
+      "contract": "phase_models={\"aq\": aqueous_mix, \"org\": organic_mix}"
+    },
+    "public_api": "mix.equilibrium(kind=\"reactive_electrolyte_lle\")",
+    "fit_method": "mean logK on native x*phi phase-model standard state",
+    "constant_source": "fit_rows_1_16_25_26",
+    "fit_row_count": 18,
+    "holdout_row_count": 8,
+    "all_fit_rows_solve": true,
+    "all_holdout_rows_solve": true,
+    "holdout_metrics": {
+      "li_extraction_aard_pp": 63.999012198725325,
+      "na_extraction_aard_pp": 42.959989491475824,
+      "selectivity_aard_pct": 43.52071566560498
+    },
+    "log_equilibrium_constants": {
+      "Li": 333.12483010617467,
+      "Na": 355.88696689882846
+    },
+    "fit_ln_residual_summary": {
+      "Li_std": 1.3128353309261238,
+      "Na_std": 1.2944860356806007,
+      "holdout_Li_max_abs": 2.488368376337064,
+      "holdout_Na_max_abs": 2.4800232442874517
+    },
+    "outputs": {
+      "logk_fit_rows_csv": "data\\processed\\rezaee_2026_native_logk_fit_rows.csv",
+      "public_route_rows_csv": "data\\processed\\rezaee_2026_native_logk_fit_public_route_rows.csv"
+    }
+  },
+  "paper_basis": {
+    "status": "paper_basis_reaction_coordinate_benchmark_complete",
+    "row_count": 26,
+    "best_mode_by_li_abs_error": {
+      "mode": "2025_born_no_ssm_empirical",
+      "row_count": 26,
+      "mean_li_abs_pct_error": 35.8153846150372,
+      "mean_na_abs_pct_error": 11.756153846066601,
+      "median_li_extraction_pct_calc": 3.4720473594761366e-10,
+      "median_na_extraction_pct_calc": 7.663360786271174e-11,
+      "median_initial_oh_mol": 0.0001,
+      "median_initial_li_mol": 0.1440922190201729,
+      "median_oh_to_li_mol_ratio": 0.0006940000000000001
+    }
+  },
+  "basis_inference": {
+    "status": "section32_basis_inference_complete",
+    "row_count": 26,
+    "interpretation": "The SI aqueous rows are nearly charge balanced and the OH- mole fractions track the reported pH. However, combining Table 5 extraction percentages with SI organic RLi/RNa mole fractions does not produce one consistent organic phase total for one-metal RLi/RNa complexes. This is a source-basis blocker for exact Section 3.2 reproduction until the original initial-mole/reaction-coordinate worksheet or a documented phase-amount convention is available."
+  },
+  "direct_closure": {
+    "supported": false,
+    "direct_case_id": "held_2014_s2_no_born_table9_kij_pH_stoich",
+    "converged_rows": 26,
+    "li_extraction_aard_pct": 99.99999999872658,
+    "selectivity_aard_pct": 56.35551722412048,
+    "paper_reference_aard_pct": {
+      "Li_extraction": 7.89,
+      "selectivity": 8.63
+    }
+  },
+  "fit_holdout_gate": {
+    "status": "failed_gate",
+    "fit_rows": "experiments 1-16 and 25-26",
+    "holdout_rows": "experiments 17-24",
+    "fit_method": "mean logK on native x*phi phase-model standard state",
+    "constant_source": "fit_rows_1_16_25_26",
+    "all_fit_rows_solve": true,
+    "all_holdout_rows_solve": true,
+    "holdout_requirement": {
+      "all_holdout_rows_solve": true,
+      "li_extraction_aard_pp_max": 20.0,
+      "na_extraction_aard_pp_max": 20.0,
+      "selectivity_aard_pct_max": 25.0
+    },
+    "holdout_metrics": {
+      "li_extraction_aard_pp": 63.999012198725325,
+      "na_extraction_aard_pp": 42.959989491475824,
+      "selectivity_aard_pct": 43.52071566560498
+    },
+    "reason": "native-standard-state fitted route solved all held-out rows but failed the extraction/selectivity gate"
+  },
+  "paper_constant_claim": "not_proven",
+  "figure_comparisons": {
+    "status": "package_figure_comparison_rendered",
+    "figure_count": 4,
+    "figures": [
+      {
+        "figure_id": "fig7",
+        "paper_label": "Fig. 7",
+        "caption": "Deviation of calculated extraction percentage from experimental data [17].",
+        "data": "figures\\figure_7\\output\\data\\figure_7_package_vs_paper_points.csv",
+        "png": "figures\\figure_7\\output\\figure_7_package_vs_paper.png",
+        "svg": "figures\\figure_7\\output\\figure_7_package_vs_paper.svg",
+        "package_case_id": "held_2014_s2_no_born_no_kij_pH_stoich",
+        "digitized_paper_points": 34,
+        "package_model_points": 26,
+        "digitized_paper_aard_pct": 15.076734918338135,
+        "current_epcsaft_package_aard_pct": 99.99999999872671
+      },
+      {
+        "figure_id": "fig8",
+        "paper_label": "Fig. 8",
+        "caption": "Deviation of calculated selectivity from experimental data [17].",
+        "data": "figures\\figure_8\\output\\data\\figure_8_package_vs_paper_points.csv",
+        "png": "figures\\figure_8\\output\\figure_8_package_vs_paper.png",
+        "svg": "figures\\figure_8\\output\\figure_8_package_vs_paper.svg",
+        "package_case_id": "held_2014_s2_no_born_no_kij_pH_stoich",
+        "digitized_paper_points": 32,
+        "package_model_points": 26,
+        "digitized_paper_aard_pct": 17.871733495213796,
+        "current_epcsaft_package_aard_pct": 56.342244595778844
+      },
+      {
+        "figure_id": "fig10",
+        "paper_label": "Fig. 10",
+        "caption": "Deviation of calculated lithium extraction percentage from experimental data [17] using k_ij.",
+        "data": "figures\\figure_10\\output\\data\\figure_10_package_vs_paper_points.csv",
+        "png": "figures\\figure_10\\output\\figure_10_package_vs_paper.png",
+        "svg": "figures\\figure_10\\output\\figure_10_package_vs_paper.svg",
+        "package_case_id": "held_2014_s2_no_born_table9_kij_pH_stoich",
+        "digitized_paper_points": 27,
+        "package_model_points": 26,
+        "digitized_paper_aard_pct": 9.204927345864292,
+        "current_epcsaft_package_aard_pct": 99.99999999872658
+      },
+      {
+        "figure_id": "fig11",
+        "paper_label": "Fig. 11",
+        "caption": "Deviation of calculated selectivity from experimental data [17] using k_ij.",
+        "data": "figures\\figure_11\\output\\data\\figure_11_package_vs_paper_points.csv",
+        "png": "figures\\figure_11\\output\\figure_11_package_vs_paper.png",
+        "svg": "figures\\figure_11\\output\\figure_11_package_vs_paper.svg",
+        "package_case_id": "held_2014_s2_no_born_table9_kij_pH_stoich",
+        "digitized_paper_points": 28,
+        "package_model_points": 26,
+        "digitized_paper_aard_pct": 10.475494176274777,
+        "current_epcsaft_package_aard_pct": 56.35551722412048
+      }
+    ]
+  },
+  "residual_metrics": {
+    "max_abs_charge_residual": 8.000012776017418e-07,
+    "max_phase_charge_balance_norm": 4.0000063880282245e-07,
+    "max_element_balance_norm": 5.10702591327572e-15,
+    "source_supported_combined_median_abs_ln_residual": 35.244718940438226
+  },
+  "retained_outputs": [
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2025_extraction_target_summary.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2025_extraction_equilibrium_summary.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_reactive_equilibrium_replay.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_reactive_convention_scan_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_reactive_epcsaft_option_scan_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_calibrated_native_ipopt_attempt_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_calibrated_separate_phase_residual_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_native_logk_fit_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_native_logk_fit_public_route_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_paper_basis_reaction_coordinate_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_section32_basis_inference_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/processed/rezaee_2026_section32_equilibrium_replication_rows.csv",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_reactive_equilibrium_replay_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_reactive_convention_scan_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_reactive_epcsaft_option_scan_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_calibrated_native_ipopt_attempt_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_calibrated_native_ipopt_attempt.md",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_paper_basis_reaction_coordinate_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_section32_basis_inference_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_package_figure_comparison_data_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_package_figure_comparison_summary.json",
+    "analyses/paper_validation/2026_rezaee/shared/results/reaction_equilibrium/rezaee_2026_package_figure_comparison.md",
+    "analyses/paper_validation/2026_rezaee/figures/figure_7/results/figure_7_package_vs_paper.png",
+    "analyses/paper_validation/2026_rezaee/figures/figure_8/results/figure_8_package_vs_paper.png",
+    "analyses/paper_validation/2026_rezaee/figures/figure_10/results/figure_10_package_vs_paper.png",
+    "analyses/paper_validation/2026_rezaee/figures/figure_11/results/figure_11_package_vs_paper.png",
+    "analyses/paper_validation/2026_rezaee/figures/figure_7/results/figure_7_package_vs_paper.svg",
+    "analyses/paper_validation/2026_rezaee/figures/figure_8/results/figure_8_package_vs_paper.svg",
+    "analyses/paper_validation/2026_rezaee/figures/figure_10/results/figure_10_package_vs_paper.svg",
+    "analyses/paper_validation/2026_rezaee/figures/figure_11/results/figure_11_package_vs_paper.svg",
+    "analyses/paper_validation/2026_rezaee/figures/figure_7/results/data/figure_7_package_vs_paper_points.csv",
+    "analyses/paper_validation/2026_rezaee/figures/figure_8/results/data/figure_8_package_vs_paper_points.csv",
+    "analyses/paper_validation/2026_rezaee/figures/figure_10/results/data/figure_10_package_vs_paper_points.csv",
+    "analyses/paper_validation/2026_rezaee/figures/figure_11/results/data/figure_11_package_vs_paper_points.csv"
+  ],
+  "commands": [
+    {
+      "script": "rezaee_des_epcsaft_parameter_smoke.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_2025_target_summary.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_reactive_equilibrium_replay.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_reactive_convention_scan.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_reactive_epcsaft_option_scan.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_calibrated_native_ipopt_attempt.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_paper_basis_reaction_coordinate.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_section32_basis_inference.py",
+      "returncode": 0
+    },
+    {
+      "script": "rezaee_section32_equilibrium_replication.py",
+      "returncode": 0
+    },
+    {
+      "script": "generate_rezaee_2026_figure_comparison_data.py",
+      "returncode": 0
+    },
+    {
+      "script": "render_rezaee_2026_figure_comparisons.py",
+      "returncode": 0
+    }
+  ],
+  "blockers": [
+    {
+      "kind": "failed_gate",
+      "reason": "native-standard-state fitted public Ipopt route solved all held-out rows but failed the requested Li/Na extraction and selectivity gates",
+      "holdout_metrics": {
+        "li_extraction_aard_pp": 63.999012198725325,
+        "na_extraction_aard_pp": 42.959989491475824,
+        "selectivity_aard_pct": 43.52071566560498
+      }
+    },
+    {
+      "kind": "failed_gate",
+      "reason": "published constants do not satisfy the requested extraction/selectivity closure gate",
+      "li_extraction_aard_pct": 99.99999999872658,
+      "selectivity_aard_pct": 56.35551722412048
+    }
+  ],
+  "conclusion": "Direct published-constant closure is not supported by the current source-backed inputs. A native-standard-state fitted public Ipopt route now solves all source rows, but the held-out extraction/selectivity metrics fail the requested gate."
+}
