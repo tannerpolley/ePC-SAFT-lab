@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IDEA_DIR = REPO_ROOT / ".idea"
+WORKSPACE_PATH = IDEA_DIR / "workspace.xml"
 RUN_DIR = REPO_ROOT / ".run"
 RUN_WORKING_DIRECTORY = REPO_ROOT.as_posix()
 MODULE_URL_PREFIX = "file://$MODULE_DIR$"
@@ -16,12 +18,14 @@ MODULE_DIR_MACRO = "$MODULE_DIR$"
 MODULE_NAME = "ePC-SAFT"
 PYTHON_CONFIG_TYPE = "PythonConfigurationType"
 SHELL_CONFIG_TYPE = "ShConfigurationType"
+RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)
 PYTHON_RUNNER = "Python"
 SHELL_RUNNER = "Shell Script"
 PYTHON_SDK_HOME = "$MODULE_DIR$/.venv/Scripts/python.exe"
 PYTHON_SDK_NAME = "uv (ePC-SAFT)"
 POWERSHELL_INTERPRETER = "C:/Program Files/PowerShell/7/pwsh.exe"
 RUN_CONFIG_FOLDER = "ePC-SAFT"
+RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = None
 FOLDER_SETUP_HEALTH = "Setup & Health"
 FOLDER_BUILD_PACKAGE = "Build & Package"
 FOLDER_VALIDATION = "Validation"
@@ -583,6 +587,111 @@ def _serialize_tree(tree: ET.ElementTree) -> str:
     return buffer.getvalue().decode("UTF-8")
 
 
+def _load_workspace_tree() -> tuple[ET.ElementTree, str]:
+    if WORKSPACE_PATH.exists():
+        original_text = WORKSPACE_PATH.read_text(encoding="UTF-8")
+        return ET.ElementTree(ET.fromstring(original_text)), original_text
+    return ET.ElementTree(ET.Element("project", {"version": "4"})), ""
+
+
+def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
+    if not IDEA_DIR.exists():
+        return [], [], None
+
+    try:
+        tree, original_text = _load_workspace_tree()
+    except ET.ParseError as exc:
+        return [], [f".idea/workspace.xml: invalid XML ({exc})"], None
+
+    root = tree.getroot()
+    if root.tag != "project":
+        return [], [".idea/workspace.xml: root element is not <project>"], None
+
+    actions: list[str] = []
+    canonical_names = {spec.name for spec in CANONICAL_RUN_CONFIGS}
+    removed_run_manager_names: list[str] = []
+    run_manager = _find_child(root, "component", name="RunManager")
+    if run_manager is not None:
+        for config in list(run_manager.findall("configuration")):
+            name = config.get("name")
+            if (
+                config.get("temporary") == "true"
+                and config.get("nameIsGenerated") == "true"
+                and config.get("type") in RUN_DASHBOARD_CONFIG_TYPES
+                and name not in canonical_names
+            ):
+                run_manager.remove(config)
+                removed_run_manager_names.append(name or "<unnamed>")
+        for name in removed_run_manager_names:
+            actions.append(f"remove temporary generated run configuration {name}")
+        selected = run_manager.get("selected")
+        if selected and any(selected.endswith(f".{name}") for name in removed_run_manager_names):
+            del run_manager.attrib["selected"]
+            actions.append("clear stale selected temporary run configuration")
+    active_run_manager_names = set(canonical_names)
+    if run_manager is not None:
+        active_run_manager_names.update(
+            name
+            for name in (config.get("name") for config in run_manager.findall("configuration"))
+            if name
+        )
+
+    properties_component = _find_child(root, "component", name="PropertiesComponent")
+    if properties_component is not None:
+        raw_properties = properties_component.text or "{}"
+        try:
+            properties = json.loads(raw_properties)
+        except json.JSONDecodeError:
+            properties = None
+        if isinstance(properties, dict):
+            key_to_string = properties.get("keyToString")
+            if isinstance(key_to_string, dict):
+                for key in list(key_to_string):
+                    if not key.startswith("Python.") or not key.endswith(".executor"):
+                        continue
+                    name = key[len("Python.") : -len(".executor")]
+                    if name in active_run_manager_names:
+                        continue
+                    del key_to_string[key]
+                    actions.append(f"remove stale executor property {key}")
+                properties_component.text = json.dumps(properties, indent=2, sort_keys=False)
+
+    dashboard = _find_child(root, "component", name="RunDashboard")
+    if dashboard is None:
+        dashboard = ET.Element("component", {"name": "RunDashboard"})
+        root.append(dashboard)
+        actions.append("create RunDashboard component")
+
+    config_types = _find_child(dashboard, "option", name="configurationTypes")
+    if config_types is None:
+        config_types = ET.Element("option", {"name": "configurationTypes"})
+        dashboard.append(config_types)
+        actions.append("create RunDashboard configurationTypes option")
+
+    values = config_types.find("set")
+    if values is None:
+        values = ET.Element("set")
+        config_types.append(values)
+        actions.append("create RunDashboard configurationTypes set")
+
+    existing_values = {
+        child.get("value")
+        for child in values.findall("option")
+        if child.get("value")
+    }
+    for config_type in RUN_DASHBOARD_CONFIG_TYPES:
+        if config_type in existing_values:
+            continue
+        values.append(ET.Element("option", {"value": config_type}))
+        actions.append(f"enable Services Run Dashboard for {config_type}")
+
+    if not actions:
+        return [], [], None
+
+    proposed_text = _serialize_tree(tree)
+    return actions, [], proposed_text if proposed_text != original_text else None
+
+
 def _run_script_path(relative_path: str) -> str:
     normalized = relative_path.replace("\\", "/").strip("/")
     if not normalized:
@@ -616,15 +725,17 @@ def _run_config_type(spec: RunConfigSpec) -> str:
 
 
 def _python_configuration(spec: RunConfigSpec) -> ET.Element:
+    attrs = {
+        "default": "false",
+        "name": spec.name,
+        "type": PYTHON_CONFIG_TYPE,
+        "factoryName": PYTHON_RUNNER,
+    }
+    if RUN_CONFIG_FOLDER_ATTRIBUTE:
+        attrs["folderName"] = RUN_CONFIG_FOLDER_ATTRIBUTE
     config = ET.Element(
         "configuration",
-        {
-            "default": "false",
-            "name": spec.name,
-            "type": PYTHON_CONFIG_TYPE,
-            "factoryName": PYTHON_RUNNER,
-            "folderName": RUN_CONFIG_FOLDER,
-        },
+        attrs,
     )
     config.append(ET.Element("module", {"name": MODULE_NAME}))
     _add_option(config, "ENV_FILES", "")
@@ -662,15 +773,17 @@ def _path_option(parent: ET.Element, name: str, value: str) -> None:
 
 
 def _shell_configuration(spec: RunConfigSpec) -> ET.Element:
+    attrs = {
+        "default": "false",
+        "name": spec.name,
+        "type": SHELL_CONFIG_TYPE,
+        "factoryName": SHELL_RUNNER,
+    }
+    if RUN_CONFIG_FOLDER_ATTRIBUTE:
+        attrs["folderName"] = RUN_CONFIG_FOLDER_ATTRIBUTE
     config = ET.Element(
         "configuration",
-        {
-            "default": "false",
-            "name": spec.name,
-            "type": SHELL_CONFIG_TYPE,
-            "factoryName": SHELL_RUNNER,
-            "folderName": RUN_CONFIG_FOLDER,
-        },
+        attrs,
     )
     if _is_powershell_script(spec.command):
         script_text = ""
@@ -758,7 +871,7 @@ def _expected_option_values(spec: RunConfigSpec) -> dict[str, str]:
 
 def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) -> list[str]:
     if current_config is None:
-        return [f"create {spec.runner} run configuration in {RUN_CONFIG_FOLDER}"]
+        return [f"create {spec.runner} run configuration"]
 
     actions: list[str] = []
     expected_type = _run_config_type(spec)
@@ -766,8 +879,11 @@ def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) 
         actions.append(f"set runner type to {spec.runner}")
     if current_config.get("factoryName") != spec.runner:
         actions.append(f"set factoryName={spec.runner}")
-    if current_config.get("folderName") != RUN_CONFIG_FOLDER:
-        actions.append(f"set folderName={RUN_CONFIG_FOLDER}")
+    if RUN_CONFIG_FOLDER_ATTRIBUTE:
+        if current_config.get("folderName") != RUN_CONFIG_FOLDER_ATTRIBUTE:
+            actions.append(f"set folderName={RUN_CONFIG_FOLDER_ATTRIBUTE}")
+    elif current_config.get("folderName") is not None:
+        actions.append("remove folderName")
     for option_name, expected_value in _expected_option_values(spec).items():
         if _option_value(current_config, option_name) != expected_value:
             actions.append(f"set {option_name}={expected_value}")
@@ -876,6 +992,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{prefix} {relative_path}: delete duplicate shared run configuration '{name}'")
             if args.apply:
                 duplicate_path.unlink()
+
+    workspace_actions, workspace_warnings, proposed_workspace_text = _normalize_workspace()
+    for warning in workspace_warnings:
+        warnings_found += 1
+        print(f"WARNING {warning}")
+    if not workspace_actions:
+        print("OK .idea/workspace.xml: no changes")
+    else:
+        pending_changes += 1
+        prefix = "APPLY" if args.apply else "DRY-RUN"
+        for action in workspace_actions:
+            print(f"{prefix} .idea/workspace.xml: {action}")
+        if args.apply and proposed_workspace_text is not None:
+            WORKSPACE_PATH.parent.mkdir(parents=True, exist_ok=True)
+            WORKSPACE_PATH.write_text(proposed_workspace_text, encoding="UTF-8", newline="\n")
 
     for iml_path in iml_files:
         actions, warnings, proposed_text = _normalize_iml(iml_path, transient_paths, declared_modules)

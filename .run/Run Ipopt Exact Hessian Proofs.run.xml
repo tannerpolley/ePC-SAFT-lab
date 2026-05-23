@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Ipopt Exact Hessian Proofs" type="PythonConfigurationType" factoryName="Python" folderName="ePC-SAFT">
+  <configuration default="false" name="Run Ipopt Exact Hessian Proofs" type="PythonConfigurationType" factoryName="Python">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

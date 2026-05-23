@@ -189,6 +189,12 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     agents_md = _read("AGENTS.md")
 
     assert 'RUN_CONFIG_FOLDER = "ePC-SAFT"' in normalizer
+    assert "RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = None" in normalizer
+    assert "RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)" in normalizer
+    assert 'component", {"name": "RunDashboard"}' in normalizer
+    assert "remove temporary generated run configuration" in normalizer
+    assert "remove stale executor property" in normalizer
+    assert "enable Services Run Dashboard for" in normalizer
     assert "delete stale shared run configuration" in normalizer
     assert "Configure IntelliJ Runs (Dry Run)" in normalizer
     assert "Hard rule: use IntelliJ MCP first by default for repo work." in agents_md
@@ -196,7 +202,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "Hard rule: use `jetbrains-bundled` run-configuration MCP first by default" in agents_md
     assert "do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in agents_md
     assert "Use shell only for one-off probes, raw config reads after MCP lookup, git operations" in agents_md
-    assert "Services folders for this repo must use the single-level repo folder `ePC-SAFT`" in agents_md
+    assert "In the standalone `ePC-SAFT` project, shared `.run` configs must not set `folderName`" in agents_md
 
     expected_names = {
         "Sync Environment",
@@ -254,7 +260,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert set(run_configs) == expected_names
 
     for name, (path, config) in run_configs.items():
-        assert config.get("folderName") == "ePC-SAFT", name
+        assert config.get("folderName") is None, name
         assert config.get("type") in {"PythonConfigurationType", "ShConfigurationType"}, name
         assert config.get("type") != "tests", name
         options = _run_config_options(config)
