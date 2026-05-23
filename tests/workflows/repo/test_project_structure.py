@@ -621,6 +621,42 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
     assert len(workflow_helpers) == 1
 
 
+def test_regression_package_keeps_downstream_application_benchmarks_out_of_core() -> None:
+    inspected_paths = (
+        REPO_ROOT / "src" / "epcsaft" / "regression" / "core.py",
+        REPO_ROOT / "src" / "epcsaft" / "regression" / "native_adapter.py",
+    )
+    forbidden_tokens = (
+        "fit_mea",
+        "mea_co2_h2o",
+        "MEAH+",
+        "MEACOO-",
+    )
+
+    offenders: list[str] = []
+    for path in inspected_paths:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        offenders.extend(f"{rel}: {token}" for token in forbidden_tokens if token in text)
+
+    assert offenders == []
+
+
+def test_state_native_adapter_does_not_own_regression_native_wrappers() -> None:
+    state_path = REPO_ROOT / "src" / "epcsaft" / "state" / "native_adapter.py"
+    tree = ast.parse(state_path.read_text(encoding="utf-8"), filename=state_path.relative_to(REPO_ROOT).as_posix())
+    regression_wrapper_names = {
+        "_evaluate_generic_native_debug",
+        "_fit_generic_native_ceres",
+        "_fit_pure_neutral_native_debug",
+    }
+    defined_names = {
+        node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+    assert regression_wrapper_names.isdisjoint(defined_names)
+
+
 def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_helpers() -> None:
     frontend_path = REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py"
     tree = ast.parse(frontend_path.read_text(encoding="utf-8"), filename=frontend_path.relative_to(REPO_ROOT).as_posix())
