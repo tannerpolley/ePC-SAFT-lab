@@ -34,6 +34,7 @@ DATASET_ROOT = Path(__file__).resolve().parents[2] / "data" / "reference" / "epc
 
 BASE_KEYS = ["MW", "m", "s", "e", "e_assoc", "vol_a", "assoc_scheme", "z", "dielc"]
 OPTIONAL_KEYS = ["d_born", "f_solv"]
+METADATA_KEYS = ["source"]
 
 COMPONENT_ALIASES = {
     "H2O-2B-Li": "H2O",
@@ -505,7 +506,7 @@ def _read_csv(path: Path) -> list[dict]:
 def _load_component_rows(path: Path) -> dict[str, dict[str, str]]:
     rows = _read_csv(path)
     if rows:
-        allowed_columns = {"component", *BASE_KEYS, *OPTIONAL_KEYS}
+        allowed_columns = {"component", *BASE_KEYS, *OPTIONAL_KEYS, *METADATA_KEYS}
         forbidden_columns = {"dipm", "dip_num"}
         present_columns = {str(key).strip() for key in rows[0].keys() if key}
         legacy_columns = sorted(present_columns & forbidden_columns)

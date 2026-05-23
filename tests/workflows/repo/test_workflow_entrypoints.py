@@ -58,6 +58,7 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     release_note = _read("docs/releases/v0.2.0.md")
     docs_index = _read("docs/pages/index.rst")
     development_workflows = _read("docs/pages/development_workflows.rst")
+    cmake_protocol = _read("CMAKE.md")
 
     assert "README intentionally stays focused on package users" in readme
     assert "uv run python scripts\\validate_project.py quick" not in readme
@@ -94,6 +95,23 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "native/equation debugging guide" not in getting_started
     assert "Start every fresh source checkout with this sequence" in development_workflows
     assert "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10" in development_workflows
+    assert "Root ``CMAKE.md`` is the source of truth for direct CMake preset operations" in development_workflows
+    assert "Direct CMake preset operations must use ``scripts/dev/cmake_preset.ps1``" in development_workflows
+    assert "Do not call raw ``cmake --preset`` or ``cmake --build``" in development_workflows
+    assert "Strawberry" in development_workflows
+    for token in (
+        "Direct CMake preset work must use",
+        "scripts/dev/cmake_preset.ps1",
+        "CMake Configure dev-native",
+        "CMake Build _core dev-native",
+        ".venv\\Scripts\\cmake.exe",
+        ".venv\\Scripts\\ninja.exe",
+        "Strawberry may remain installed for unrelated tooling",
+        "Do not run raw `cmake --preset`",
+        "IDE-generated `CMake Application` targets",
+        "CMAKE_MAKE_PROGRAM",
+    ):
+        assert token in cmake_protocol
     assert "uv run python run_pytest.py --runtime -q" in development_workflows
     assert "scripts/benchmarks/" + "benchmark_neutral_equilibrium.py" not in development_workflows
     assert "scripts/benchmarks/" + "benchmark_literature_suite.py" not in development_workflows
@@ -118,6 +136,7 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
     assert "docs/protocols/build_package_dependency_protocol.rst" in full_roadmap
     assert ":doc:`../protocols/build_package_dependency_protocol`" in development_workflows
     assert ":doc:`../protocols/build_package_dependency_protocol`" in native_debugging
+    assert "Root ``CMAKE.md`` is the direct CMake execution protocol." in protocol
 
     for token in (
         "Build/Package Dependency Protocol",
@@ -160,6 +179,8 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         "uv run python scripts/dev/validate_project.py docs",
         "uv run python scripts/dev/build_dist.py",
         "native_solver_backend_owner",
+        "Read `CMAKE.md` before changing or running direct CMake preset workflows.",
+        "Direct CMake preset work must use `scripts/dev/cmake_preset.ps1`",
     ):
         assert token in agents_md
 
@@ -200,10 +221,22 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
 
     assert f'RUN_CONFIG_FOLDER = "{manifest_data["RUN_CONFIG_FOLDER"]}"' in manifest
     assert f"RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = {manifest_data['RUN_CONFIG_FOLDER_ATTRIBUTE']!r}" in manifest
+    assert "CMAKE_CONFIG_TYPE = \"CMakeRunConfiguration\"" in normalizer
     assert "RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)" in normalizer
+    assert 'CMAKE_ACTIVE_PROFILE = "dev-native"' in normalizer
+    assert 'CMAKE_EXECUTION_TARGET_PREFIX = "CMakeBuildProfile:"' in normalizer
+    assert 'STALE_CMAKE_PROFILE_NAMES = frozenset({"ePC-SAFT dev MinGW"})' in normalizer
+    assert "remove stale CMake profile" in normalizer
+    assert "ExecutionTargetManager" in normalizer
+    assert "clear stale CMake execution target" in normalizer
+    assert 'action = "enable" if expected_enabled == "true" else "disable"' in normalizer
+    assert 'actions.append(f"{action} CMake profile {profile_name}")' in normalizer
     assert 'component", {"name": "RunDashboard"}' in normalizer
     assert "remove temporary generated run configuration" in normalizer
+    assert 'RUN_CONFIG_EXECUTOR_PREFIXES = ("Python.", "Shell Script.")' in normalizer
     assert "remove stale executor property" in normalizer
+    assert "remove stale run manager item" in normalizer
+    assert "remove stale configuration status" in normalizer
     assert "enable Services Run Dashboard for" in normalizer
     assert "delete stale shared run configuration" in normalizer
     assert "CANONICAL_RUN_CONFIGS" in normalizer
@@ -248,6 +281,11 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     ):
         assert tool_name in combined_guidance
     assert "Use shared run configurations for ordinary validation" in intellij_guidance
+    assert "CMake Configure dev-native" in intellij_guidance
+    assert "CMake Build _core dev-native" in intellij_guidance
+    assert "For direct CMake preset execution, also read root `CMAKE.md`" in intellij_guidance
+    assert "Do not create raw `cmake --preset` or `cmake --build` Services entries" in intellij_guidance
+    assert "Do not use IDE-generated `CMake Application` targets as the repo standard" in intellij_guidance
 
     run_configs: dict[str, tuple[Path, ET.Element]] = {}
     for path in sorted((REPO_ROOT / ".run").glob("*.run.xml")):
@@ -288,6 +326,30 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     build_native = _run_config_options(run_configs["Build Native Extension"][1])
     assert build_native["SCRIPT_PATH"].endswith("/.codex/environments/setup.ps1")
     assert build_native["SCRIPT_OPTIONS"] == "-Step Build"
+
+    cmake_wrapper = _read("scripts/dev/cmake_preset.ps1")
+    assert "Assert-NoNinjaLock" in cmake_wrapper
+    assert "Assert-MsvcEnvironment" in cmake_wrapper
+    assert "Resolve-RepoTool" in cmake_wrapper
+    assert "CMAKE_MAKE_PROGRAM" in cmake_wrapper
+    assert "VsDevCmd.bat" in cmake_wrapper
+    assert "cmd.exe" in cmake_wrapper
+    assert "cmake" in cmake_wrapper
+
+    cmake_configure = _run_config_options(run_configs["CMake Configure dev-native"][1])
+    assert cmake_configure["SCRIPT_TEXT"] == ""
+    assert cmake_configure["SCRIPT_PATH"].endswith("/scripts/dev/cmake_preset.ps1")
+    assert cmake_configure["SCRIPT_OPTIONS"] == "-Action Configure -Preset dev-native"
+
+    cmake_core_build = _run_config_options(run_configs["CMake Build _core dev-native"][1])
+    assert cmake_core_build["SCRIPT_TEXT"] == ""
+    assert cmake_core_build["SCRIPT_PATH"].endswith("/scripts/dev/cmake_preset.ps1")
+    assert cmake_core_build["SCRIPT_OPTIONS"] == "-Action Build -Preset dev-native -Target _core -Parallel 10"
+
+    cmake_build = _run_config_options(run_configs["CMake Build dev-native"][1])
+    assert cmake_build["SCRIPT_TEXT"] == ""
+    assert cmake_build["SCRIPT_PATH"].endswith("/scripts/dev/cmake_preset.ps1")
+    assert cmake_build["SCRIPT_OPTIONS"] == "-Action Build -Preset dev-native -Parallel 10"
 
     dry_run = _run_config_options(run_configs["Configure IntelliJ Runs (Dry Run)"][1])
     assert dry_run["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"

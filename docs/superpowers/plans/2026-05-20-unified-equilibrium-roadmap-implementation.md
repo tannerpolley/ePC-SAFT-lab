@@ -603,7 +603,7 @@ git commit -m "Certify reactive phase route stability"
 - Modify: `docs/pages/development_workflows.rst`
 - Modify: retired literature benchmark helper path (removed)
 - Modify: `scripts/validation/equilibrium_core/confidence.py`
-- Modify: analysis scripts under `analyses/paper_validation/native/2023_ascani/`
+- Modify: analysis scripts under `analyses/paper_validation/2023_ascani/`
 - Modify: analysis scripts under the Rezaee 2026 paper-validation directory discovered by `rg -n "Rezaee|reactive_electrolyte_lle" analyses tests scripts`
 
 - [ ] **Step 1: Remove paper-validation pytest gates**

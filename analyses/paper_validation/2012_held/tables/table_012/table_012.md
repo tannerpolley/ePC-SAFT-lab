@@ -1,0 +1,14 @@
+<!-- source: docs/papers/md/Held, Prinz, Wallmeyer, Sadowski - 2012 - Measuring and modeling alcohol-salt systems.md lines 609-620 -->
+
+| assoc | association |
+| :--- | :--- |
+| calc | calculated |
+| disp | dispersion |
+| exp | experimental |
+| hc | hard chain |
+| ion | ionic |
+| m | based on molality |
+| res | residual |
+| $x$ | based on mole fraction |
+| ,+- | positive or negative charge |
+| $\infty$ | infinitely diluted |

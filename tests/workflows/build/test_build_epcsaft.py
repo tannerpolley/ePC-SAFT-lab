@@ -141,6 +141,7 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert dev_native["generator"] == "Ninja"
     assert dev_native["binaryDir"] == "${sourceDir}/build/dev"
     assert dev_native["cacheVariables"]["CMAKE_BUILD_TYPE"] == "Release"
+    assert dev_native["cacheVariables"]["CMAKE_MAKE_PROGRAM"] == "${sourceDir}/.venv/Scripts/ninja.exe"
     assert dev_native["cacheVariables"]["EPCSAFT_ENABLE_CERES"] == "ON"
     assert dev_native["cacheVariables"]["EPCSAFT_ENABLE_CPPAD"] == "ON"
 

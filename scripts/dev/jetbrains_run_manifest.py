@@ -72,6 +72,27 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="--build-only --parallel 10",
     ),
     RunConfigSpec(
+        name="CMake Configure dev-native",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/cmake_preset.ps1",
+        parameters="-Action Configure -Preset dev-native",
+    ),
+    RunConfigSpec(
+        name="CMake Build _core dev-native",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/cmake_preset.ps1",
+        parameters="-Action Build -Preset dev-native -Target _core -Parallel 10",
+    ),
+    RunConfigSpec(
+        name="CMake Build dev-native",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/cmake_preset.ps1",
+        parameters="-Action Build -Preset dev-native -Parallel 10",
+    ),
+    RunConfigSpec(
         name="Build System Ceres",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_BUILD_PACKAGE,
@@ -163,7 +184,12 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_TESTS,
         command="run_pytest.py",
-        parameters="tests/workflows/repo/test_workflow_entrypoints.py tests/workflows/build/test_build_epcsaft.py -q",
+        parameters=(
+            "tests/workflows/repo/test_workflow_entrypoints.py "
+            "tests/workflows/build/test_build_epcsaft.py "
+            "tests/workflows/build/test_build_epcsaft_script.py "
+            "tests/workflows/build/test_build_system_ceres.py -q"
+        ),
     ),
     RunConfigSpec(
         name="Build Docs",
@@ -197,10 +223,10 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/data/build_epcsaft_parameter_catalog.py",
     ),
     RunConfigSpec(
-        name="Extract Paper Parameter CSVs",
+        name="Curate Paper Validation Parameters",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/extract_paper_parameter_csvs.py",
+        command="scripts/data/curate_paper_validation_parameters.py",
     ),
     RunConfigSpec(
         name="Sync MIAC Variants",

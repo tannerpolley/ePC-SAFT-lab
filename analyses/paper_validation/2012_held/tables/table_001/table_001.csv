@@ -1,0 +1,10 @@
+LiCl,,LiBr,,LiI,,NaBr,
+$m_{\mathrm{LiCl}}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ],$m_{\mathrm{LiBr}}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ],$m_{\text {LiI }}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ],$m_{\mathrm{NaBr}}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ]
+0.6044,805.52,0.2943,805.04,0.193,804.12,0.0884,792.23
+1.2346,823.73,0.6049,823.87,0.3939,823.16,0.1422,795.96
+,,,,,,0.2192,800.77
+NaI,,$\mathrm{NH}_{4} \mathrm{Cl}$,,$\mathrm{NH}_{4} \mathrm{Br}$,,$\mathrm{NH}_{4} \mathrm{I}$,
+$m_{\text {NaI }}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ],$m_{\mathrm{NH} 4 \mathrm{Cl}}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ],$m_{\mathrm{NH} 4 \mathrm{Br}}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ],$m_{\mathrm{NH} 4 \mathrm{I}}$ [mol/kg],$\rho_{\text {solution }}$ [ $\mathrm{kg} / \mathrm{m}^{3}$ ]
+0.1715,803.38,0.0376,786.45,0.1046,791.64,0.1769,800.90
+0.3511,820.99,0.0907,788.09,0.2064,797.58,0.3658,817.06
+,,0.1377,789.06,0.2975,802.71,,

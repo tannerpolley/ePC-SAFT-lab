@@ -57,6 +57,20 @@ def test_system_ceres_helper_does_not_load_msvc_env_for_mingw(monkeypatch) -> No
     assert env == {"PATH": "C:\\old"}
 
 
+def test_system_ceres_helper_pins_repo_local_ninja(monkeypatch) -> None:
+    script = _load_script()
+    ninja = Path("C:/repo/.venv/Scripts/ninja.exe")
+
+    monkeypatch.setattr(script, "_repo_tool_path", lambda name: ninja if name == "ninja" else None)
+    monkeypatch.setattr(script.shutil, "which", lambda name, path=None: "C:/Strawberry/c/bin/ninja.exe")
+
+    assert script._generator_args({"PATH": "C:\\Strawberry\\c\\bin"}, "auto") == [
+        "-G",
+        "Ninja",
+        f"-DCMAKE_MAKE_PROGRAM={ninja.as_posix()}",
+    ]
+
+
 def test_system_ceres_configure_adds_cstdint_workaround_only_for_gnu_windows(tmp_path, monkeypatch) -> None:
     script = _load_script()
     captured: list[list[str]] = []

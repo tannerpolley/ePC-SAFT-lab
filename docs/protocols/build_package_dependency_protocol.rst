@@ -7,6 +7,10 @@ package-boundary validation. Update it in the same change as any build,
 packaging, dependency, or CI behavior change that would otherwise change the
 meaning of the commands in the development workflow guide.
 
+Root ``CMAKE.md`` is the direct CMake execution protocol. Keep it aligned when
+direct preset, Services, wrapper, generator, or local toolchain behavior
+changes.
+
 Current dependency contract
 ---------------------------
 

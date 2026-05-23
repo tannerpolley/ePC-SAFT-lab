@@ -33,9 +33,31 @@ def test_build_script_rejects_explicit_generator_switch_without_clean() -> None:
         build._generator_args({"EPCSAFT_CMAKE_GENERATOR": "ninja"}, configured_generator="MinGW Makefiles")
 
 
+def test_build_script_prefers_repo_local_cmake(monkeypatch) -> None:
+    build = _load_script()
+    cmake = Path("C:/repo/.venv/Scripts/cmake.exe")
+
+    monkeypatch.setattr(build, "_repo_tool_path", lambda name: cmake if name == "cmake" else None)
+
+    assert build._cmake_command() == [str(cmake)]
+
+
+def test_build_script_pins_repo_local_ninja_for_new_tree(monkeypatch) -> None:
+    build = _load_script()
+    ninja = Path("C:/repo/.venv/Scripts/ninja.exe")
+
+    monkeypatch.setattr(build, "_repo_tool_path", lambda name: ninja if name == "ninja" else None)
+    monkeypatch.setattr(build.shutil, "which", lambda name, path=None: "C:/Strawberry/c/bin/ninja.exe")
+
+    args = build._generator_args({"EPCSAFT_CMAKE_GENERATOR": ""}, configured_generator=None)
+
+    assert args == ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={ninja.as_posix()}"]
+
+
 def test_build_script_auto_prefers_ninja_for_new_build_tree(monkeypatch) -> None:
     build = _load_script()
 
+    monkeypatch.setattr(build, "_repo_tool_path", lambda name: None)
     monkeypatch.setattr(build.shutil, "which", lambda name, path=None: "ninja.exe" if name == "ninja" else None)
 
     args = build._generator_args({"EPCSAFT_CMAKE_GENERATOR": ""}, configured_generator=None)
