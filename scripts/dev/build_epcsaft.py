@@ -97,7 +97,23 @@ def _append_log(text: str) -> None:
         handle.write(text)
 
 
+def _repo_tool_path(name: str) -> Path | None:
+    suffix = ".exe" if os.name == "nt" and not name.lower().endswith(".exe") else ""
+    executable_name = f"{name}{suffix}"
+    candidates = [
+        Path(sys.executable).resolve().parent / executable_name,
+        REPO_ROOT / ".venv" / ("Scripts" if os.name == "nt" else "bin") / executable_name,
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def _cmake_command() -> list[str]:
+    repo_cmake = _repo_tool_path("cmake")
+    if repo_cmake is not None:
+        return [str(repo_cmake)]
     resolved = shutil.which("cmake")
     if resolved:
         cmake_path = Path(resolved).resolve()
@@ -403,8 +419,12 @@ def _generator_args(env: dict[str, str], configured_generator: str | None = None
             f"{configured_generator!r}. Use --clean before switching to {target or requested!r}."
         )
 
-    if requested in {"ninja", ""} and shutil.which("ninja", path=env.get("PATH")):
-        return ["-G", "Ninja"]
+    if requested in {"ninja", ""}:
+        repo_ninja = _repo_tool_path("ninja")
+        if repo_ninja is not None:
+            return ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}"]
+        if shutil.which("ninja", path=env.get("PATH")):
+            return ["-G", "Ninja"]
     if (
         requested in {"mingw", "mingw makefiles"}
         and os.name == "nt"

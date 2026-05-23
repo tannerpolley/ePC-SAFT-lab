@@ -31,6 +31,7 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 
 ## Repo Workflow
 - Current backend: uv-managed Python, direct CMake dev builds, pybind11 `_core`, native C++ equations, pure Python public API wrappers.
+- Read `CMAKE.md` before changing or running direct CMake preset workflows.
 - Public repo tools intentionally use developer-neutral names. Do not add new tracked files, tests, scripts, or docs with Codex-specific names unless they are local-only agent instructions.
 - When deleting tracked files, also remove any now-empty parent folders and clearly owned ignored local artifacts unless the folder is an intentional placeholder or documented skeleton.
 - Before adding any new file, inspect the nearest existing directory structure, name the intended category, list the candidate folders, and choose the path that matches existing tests. Do not write the file until that placement is justified.
@@ -43,6 +44,7 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 - Package boundary: `uv run python scripts/dev/build_dist.py`.
 - Preferred setup: `uv sync --no-install-project`.
 - Preferred native build: `uv run python scripts/dev/build_epcsaft.py`, which defaults to `--profile fast` (Ceres ON, CppAD ON, and Ipopt ON when the local SDK or another native Ipopt install is discoverable). Use `uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10` only after `build/dev` is already configured.
+- Direct CMake preset work must use `scripts/dev/cmake_preset.ps1` or the shared JetBrains Services entries (`CMake Configure dev-native`, `CMake Build _core dev-native`, `CMake Build dev-native`). Do not run raw `cmake --preset` or `cmake --build` from ad hoc shells; the wrapper owns Visual Studio environment loading, repo-local `.venv` CMake/Ninja selection, and `build/dev` lock checks.
 - Package install builds default to Ceres ON and CppAD ON through `CMakeLists.txt`; on Windows they use the local Ipopt SDK at `%USERPROFILE%\Documents\deps\ipopt-msvc` when present. Do not change package-install defaults to speed up local Codex iteration.
 - For repeated full Ceres installs, use the reusable local Ceres package: `uv run python scripts/dev/build_system_ceres.py --parallel 4`. The helper prefers MSVC on Windows, the package backend auto-detects the default `build/system-ceres/2.2.0/install/lib/cmake/Ceres` output when it is compatible, and `scripts/dev/build_dist.py` keeps a config-specific PEP 517 build dir under `build/pep517`. Set `EPCSAFT_PEP517_CERES_DIR`, `EPCSAFT_PEP517_USE_SYSTEM_CERES=1`, and `EPCSAFT_PEP517_BUILD_DIR` only for a custom Ceres package or external checkout.
 - Ceres, CppAD, and the local Ipopt SDK are part of the normal native dependency profile. Use `uv run python scripts/dev/validate_project.py ceres-cppad` only for the focused Ceres regression/backend slice.

@@ -26,7 +26,14 @@ MODULE_DIR_MACRO = "$MODULE_DIR$"
 MODULE_NAME = "ePC-SAFT"
 PYTHON_CONFIG_TYPE = "PythonConfigurationType"
 SHELL_CONFIG_TYPE = "ShConfigurationType"
+CMAKE_CONFIG_TYPE = "CMakeRunConfiguration"
 RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)
+RUN_CONFIG_EXECUTOR_PREFIXES = ("Python.", "Shell Script.")
+CMAKE_EXECUTION_TARGET_PREFIX = "CMakeBuildProfile:"
+CMAKE_ACTIVE_PROFILE = "dev-native"
+CMAKE_ACTIVE_PROFILE_DISPLAY_NAME = "IDE dev build (Windows Ninja)"
+CMAKE_ACTIVE_PROFILE_GENERATION_DIR = "$PROJECT_DIR$/build/dev"
+STALE_CMAKE_PROFILE_NAMES = frozenset({"ePC-SAFT dev MinGW"})
 PYTHON_SDK_HOME = "$MODULE_DIR$/.venv/Scripts/python.exe"
 PYTHON_SDK_NAME = "uv (ePC-SAFT)"
 POWERSHELL_INTERPRETER = "C:/Program Files/PowerShell/7/pwsh.exe"
@@ -115,6 +122,55 @@ def _find_child(parent: ET.Element, tag: str, **attrs: str) -> ET.Element | None
         if all(child.get(key) == value for key, value in attrs.items()):
             return child
     return None
+
+
+def _qualified_run_config_name(value: str | None) -> str | None:
+    if value is None:
+        return None
+    for prefix in RUN_CONFIG_EXECUTOR_PREFIXES:
+        if value.startswith(prefix):
+            return value[len(prefix) :]
+    return None
+
+
+def _prune_run_manager_items(
+    run_manager: ET.Element | None,
+    active_run_manager_names: set[str],
+    actions: list[str],
+) -> None:
+    if run_manager is None:
+        return
+    for run_list in run_manager.findall("list"):
+        for item in list(run_list.findall("item")):
+            itemvalue = item.get("itemvalue")
+            name = _qualified_run_config_name(itemvalue)
+            if name is None or name in active_run_manager_names:
+                continue
+            run_list.remove(item)
+            actions.append(f"remove stale run manager item {itemvalue}")
+
+
+def _prune_run_dashboard_statuses(
+    dashboard: ET.Element,
+    active_run_manager_names: set[str],
+    actions: list[str],
+) -> None:
+    statuses = _find_child(dashboard, "option", name="configurationStatuses")
+    if statuses is None:
+        return
+    for type_entry in statuses.findall("./map/entry"):
+        config_type = type_entry.get("key")
+        if config_type not in RUN_DASHBOARD_CONFIG_TYPES:
+            continue
+        status_map = type_entry.find("./value/map")
+        if status_map is None:
+            continue
+        for status_entry in list(status_map.findall("entry")):
+            name = status_entry.get("key")
+            if not name or name in active_run_manager_names:
+                continue
+            status_map.remove(status_entry)
+            actions.append(f"remove stale configuration status {config_type}.{name}")
 
 
 def _ensure_root_manager(module_root: ET.Element, actions: list[str]) -> ET.Element:
@@ -340,9 +396,11 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
             key_to_string = properties.get("keyToString")
             if isinstance(key_to_string, dict):
                 for key in list(key_to_string):
-                    if not key.startswith("Python.") or not key.endswith(".executor"):
+                    if not key.endswith(".executor"):
                         continue
-                    name = key[len("Python.") : -len(".executor")]
+                    name = _qualified_run_config_name(key[: -len(".executor")])
+                    if name is None:
+                        continue
                     if name in active_run_manager_names:
                         continue
                     del key_to_string[key]
@@ -378,11 +436,76 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
         values.append(ET.Element("option", {"value": config_type}))
         actions.append(f"enable Services Run Dashboard for {config_type}")
 
+    _prune_run_manager_items(run_manager, active_run_manager_names, actions)
+    _prune_run_dashboard_statuses(dashboard, active_run_manager_names, actions)
+    _normalize_cmake_workspace(root, actions)
+
     if not actions:
         return [], [], None
 
     proposed_text = _serialize_tree(tree)
     return actions, [], proposed_text if proposed_text != original_text else None
+
+
+def _normalize_cmake_workspace(root: ET.Element, actions: list[str]) -> None:
+    cmake_settings = _find_child(root, "component", name="CMakeSettings")
+    if cmake_settings is None:
+        cmake_settings = ET.Element(
+            "component",
+            {"name": "CMakeSettings", "AUTO_RELOAD": "true"},
+        )
+        root.append(cmake_settings)
+        actions.append("create CMakeSettings component")
+    elif cmake_settings.get("AUTO_RELOAD") != "true":
+        cmake_settings.set("AUTO_RELOAD", "true")
+        actions.append("enable CMake auto reload")
+
+    configurations = cmake_settings.find("configurations")
+    if configurations is None:
+        configurations = ET.Element("configurations")
+        cmake_settings.append(configurations)
+        actions.append("create CMakeSettings configurations")
+
+    active_config = _find_child(configurations, "configuration", PROFILE_NAME=CMAKE_ACTIVE_PROFILE)
+    if active_config is None:
+        active_config = ET.Element(
+            "configuration",
+            {
+                "PROFILE_NAME": CMAKE_ACTIVE_PROFILE,
+                "PROFILE_DISPLAY_NAME": CMAKE_ACTIVE_PROFILE_DISPLAY_NAME,
+                "ENABLED": "true",
+                "FROM_PRESET": "true",
+                "GENERATION_DIR": CMAKE_ACTIVE_PROFILE_GENERATION_DIR,
+            },
+        )
+        configurations.append(active_config)
+        actions.append(f"create CMake profile {CMAKE_ACTIVE_PROFILE}")
+
+    for config in list(configurations.findall("configuration")):
+        profile_name = config.get("PROFILE_NAME")
+        if profile_name in STALE_CMAKE_PROFILE_NAMES:
+            configurations.remove(config)
+            actions.append(f"remove stale CMake profile {profile_name}")
+
+    for config in configurations.findall("configuration"):
+        profile_name = config.get("PROFILE_NAME") or "<unnamed>"
+        expected_enabled = "true" if profile_name == CMAKE_ACTIVE_PROFILE else "false"
+        if config.get("ENABLED") != expected_enabled:
+            config.set("ENABLED", expected_enabled)
+            action = "enable" if expected_enabled == "true" else "disable"
+            actions.append(f"{action} CMake profile {profile_name}")
+
+    execution_target_manager = _find_child(root, "component", name="ExecutionTargetManager")
+    if execution_target_manager is None:
+        return
+    selected_target = execution_target_manager.get("SELECTED_TARGET")
+    stale_targets = {
+        f"{CMAKE_EXECUTION_TARGET_PREFIX}{profile_name}"
+        for profile_name in STALE_CMAKE_PROFILE_NAMES
+    }
+    if selected_target in stale_targets:
+        del execution_target_manager.attrib["SELECTED_TARGET"]
+        actions.append(f"clear stale CMake execution target {selected_target}")
 
 
 def _run_script_path(relative_path: str) -> str:

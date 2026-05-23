@@ -72,6 +72,27 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="--build-only --parallel 10",
     ),
     RunConfigSpec(
+        name="CMake Configure dev-native",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/cmake_preset.ps1",
+        parameters="-Action Configure -Preset dev-native",
+    ),
+    RunConfigSpec(
+        name="CMake Build _core dev-native",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/cmake_preset.ps1",
+        parameters="-Action Build -Preset dev-native -Target _core -Parallel 10",
+    ),
+    RunConfigSpec(
+        name="CMake Build dev-native",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/cmake_preset.ps1",
+        parameters="-Action Build -Preset dev-native -Parallel 10",
+    ),
+    RunConfigSpec(
         name="Build System Ceres",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_BUILD_PACKAGE,
@@ -163,7 +184,12 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_TESTS,
         command="run_pytest.py",
-        parameters="tests/workflows/repo/test_workflow_entrypoints.py tests/workflows/build/test_build_epcsaft.py -q",
+        parameters=(
+            "tests/workflows/repo/test_workflow_entrypoints.py "
+            "tests/workflows/build/test_build_epcsaft.py "
+            "tests/workflows/build/test_build_epcsaft_script.py "
+            "tests/workflows/build/test_build_system_ceres.py -q"
+        ),
     ),
     RunConfigSpec(
         name="Build Docs",

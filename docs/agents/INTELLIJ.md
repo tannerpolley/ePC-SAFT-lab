@@ -15,6 +15,8 @@ The policy applies when IntelliJ is open for:
 It does not replace `docs/protocols/build_package_dependency_protocol.rst`.
 That protocol remains the source of truth for build, package, CMake,
 dependency, and CI policy.
+For direct CMake preset execution, also read root `CMAKE.md`; it is the
+entrypoint protocol for the wrapper-backed Services workflow.
 
 ## Project Targeting
 
@@ -87,6 +89,16 @@ Do not run an equivalent ad hoc `uv run python ...` or PowerShell command for a
 durable repo workflow unless the IntelliJ run-configuration path is unavailable
 after concrete attempts or the command is still being bootstrapped into
 Services.
+
+For direct CMake preset operations, the only durable Services entries are
+`CMake Configure dev-native`, `CMake Build _core dev-native`, and
+`CMake Build dev-native`. They must call `scripts/dev/cmake_preset.ps1`.
+Do not create raw `cmake --preset` or `cmake --build` Services entries; the
+wrapper owns Visual Studio environment loading, repo-local `.venv` CMake/Ninja
+selection, and `build/dev` lock checks.
+Do not use IDE-generated `CMake Application` targets as the repo standard; they
+may exist in IntelliJ's run configuration list, but the Services dashboard
+standard is the wrapper-backed Shell Script entries.
 
 Use shell only for:
 

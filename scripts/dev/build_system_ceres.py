@@ -27,6 +27,24 @@ def _capture(cmd: list[str], *, cwd: Path | None = None, env: dict[str, str] | N
     return subprocess.check_output(cmd, cwd=str(cwd or REPO_ROOT), env=env, text=True).strip()
 
 
+def _repo_tool_path(name: str) -> Path | None:
+    suffix = ".exe" if os.name == "nt" and not name.lower().endswith(".exe") else ""
+    executable_name = f"{name}{suffix}"
+    candidates = [
+        Path(sys.executable).resolve().parent / executable_name,
+        REPO_ROOT / ".venv" / ("Scripts" if os.name == "nt" else "bin") / executable_name,
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _cmake_command() -> list[str]:
+    repo_cmake = _repo_tool_path("cmake")
+    return [str(repo_cmake)] if repo_cmake is not None else ["cmake"]
+
+
 def _find_vsdevcmd() -> Path | None:
     explicit = os.environ.get("EPCSAFT_VSDEVCMD")
     if explicit:
@@ -89,10 +107,16 @@ def _env(*, generator: str) -> dict[str, str]:
 
 
 def _generator_args(env: dict[str, str], requested: str) -> list[str]:
+    repo_ninja = _repo_tool_path("ninja")
     if requested == "ninja":
-        return ["-G", "Ninja"]
+        args = ["-G", "Ninja"]
+        if repo_ninja is not None:
+            args.append(f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}")
+        return args
     if requested == "mingw":
         return ["-G", "MinGW Makefiles"]
+    if repo_ninja is not None:
+        return ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}"]
     if shutil.which("ninja", path=env.get("PATH")):
         return ["-G", "Ninja"]
     if os.name == "nt" and shutil.which("mingw32-make", path=env.get("PATH")):
@@ -182,7 +206,7 @@ def _configure_ceres(root: Path, generator: str, env: dict[str, str]) -> None:
     eigen_config_dir = root / "generated_eigen3_config"
     _write_eigen_config(eigen_config_dir, env)
     cmd = [
-        "cmake",
+        *_cmake_command(),
         "-S",
         str(source_dir),
         "-B",
@@ -215,7 +239,10 @@ def _configure_ceres(root: Path, generator: str, env: dict[str, str]) -> None:
 
 
 def _build_and_install(root: Path, parallel: str, env: dict[str, str]) -> None:
-    _run(["cmake", "--build", str(root / "build"), "--target", "install", "--parallel", parallel], env=env)
+    _run(
+        [*_cmake_command(), "--build", str(root / "build"), "--target", "install", "--parallel", parallel],
+        env=env,
+    )
 
 
 def _print_usage(root: Path) -> None:

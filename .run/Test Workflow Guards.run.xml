@@ -17,7 +17,7 @@
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
     <option name="SCRIPT_NAME" value="$MODULE_DIR$/run_pytest.py" />
-    <option name="PARAMETERS" value="tests/workflows/repo/test_workflow_entrypoints.py tests/workflows/build/test_build_epcsaft.py -q" />
+    <option name="PARAMETERS" value="tests/workflows/repo/test_workflow_entrypoints.py tests/workflows/build/test_build_epcsaft.py tests/workflows/build/test_build_epcsaft_script.py tests/workflows/build/test_build_system_ceres.py -q" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

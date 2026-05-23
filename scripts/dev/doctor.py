@@ -130,6 +130,11 @@ def _cmake_cache_value(name: str, cache_path: Path = DEV_BUILD_CACHE) -> str | N
 
 
 def _tool_path(name: str) -> str:
+    if name in {"cmake", "ninja"}:
+        suffix = ".exe" if sys.platform.startswith("win") else ""
+        candidate = REPO_ROOT / ".venv" / ("Scripts" if sys.platform.startswith("win") else "bin") / f"{name}{suffix}"
+        if candidate.is_file():
+            return str(candidate)
     found = shutil.which(name)
     if found is not None:
         return found

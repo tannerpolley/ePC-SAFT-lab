@@ -97,12 +97,13 @@
     {
       "name": "dev-native",
       "displayName": "IDE dev build (Windows Ninja)",
-      "description": "Current IDE/manual CMake preset for the shared build/dev tree. It matches the canonical local native build shape: Ninja generator, Release build type, in-place extension output, and the required Ceres/CppAD plus system Ipopt flags. The canonical local native build remains uv run python scripts/dev/build_epcsaft.py.",
+      "description": "Current IDE/manual CMake preset for the shared build/dev tree. Direct preset work must go through scripts/dev/cmake_preset.ps1 or the matching JetBrains Services entries so the Visual Studio environment and repo-local CMake/Ninja tools are consistent.",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/dev",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_TRY_COMPILE_TARGET_TYPE": "STATIC_LIBRARY",
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/.venv/Scripts/ninja.exe",
         "EPCSAFT_DEV_INPLACE": "ON",
         "EPCSAFT_ENABLE_CERES": "ON",
         "EPCSAFT_USE_SYSTEM_CERES": "OFF",
