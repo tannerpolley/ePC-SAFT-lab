@@ -4,8 +4,16 @@ import argparse
 import io
 import json
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+
+from jetbrains_run_manifest import (
+    CANONICAL_RUN_CONFIGS,
+    PYTHON_RUNNER,
+    RUN_CONFIG_FOLDER_ATTRIBUTE,
+    SHELL_RUNNER,
+    RunConfigSpec,
+    canonical_run_config_names,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IDEA_DIR = REPO_ROOT / ".idea"
@@ -19,20 +27,9 @@ MODULE_NAME = "ePC-SAFT"
 PYTHON_CONFIG_TYPE = "PythonConfigurationType"
 SHELL_CONFIG_TYPE = "ShConfigurationType"
 RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)
-PYTHON_RUNNER = "Python"
-SHELL_RUNNER = "Shell Script"
 PYTHON_SDK_HOME = "$MODULE_DIR$/.venv/Scripts/python.exe"
 PYTHON_SDK_NAME = "uv (ePC-SAFT)"
 POWERSHELL_INTERPRETER = "C:/Program Files/PowerShell/7/pwsh.exe"
-RUN_CONFIG_FOLDER = "ePC-SAFT"
-RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = None
-FOLDER_SETUP_HEALTH = "Setup & Health"
-FOLDER_BUILD_PACKAGE = "Build & Package"
-FOLDER_VALIDATION = "Validation"
-FOLDER_TESTS = "Tests"
-FOLDER_DOCS_REPORTS = "Docs & Reports"
-FOLDER_ANALYSIS_FIGURES = "Analysis & Figures"
-FOLDER_MAINTENANCE = "Maintenance"
 TRANSIENT_PATHS: tuple[str, ...] = (
     "build",
     "dist",
@@ -50,310 +47,6 @@ TRANSIENT_PATHS: tuple[str, ...] = (
 # tests as a source root makes tests/api, tests/native, and tests/support look
 # like top-level namespace packages in IntelliJ.
 CANONICAL_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (("src", False),)
-
-
-@dataclass(frozen=True)
-class RunConfigSpec:
-    name: str
-    runner: str
-    folder_name: str
-    command: str
-    parameters: str = ""
-
-
-CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
-    RunConfigSpec(
-        name="Sync Environment",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_SETUP_HEALTH,
-        command="uv sync --no-install-project",
-    ),
-    RunConfigSpec(
-        name="Bootstrap uv",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_SETUP_HEALTH,
-        command="scripts/dev/bootstrap_uv.ps1",
-    ),
-    RunConfigSpec(
-        name="Doctor",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_SETUP_HEALTH,
-        command=".codex/environments/setup.ps1",
-        parameters="-Step Doctor",
-    ),
-    RunConfigSpec(
-        name="Doctor Script",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_SETUP_HEALTH,
-        command="scripts/dev/doctor.py",
-    ),
-    RunConfigSpec(
-        name="Build Native Extension",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command=".codex/environments/setup.ps1",
-        parameters="-Step Build",
-    ),
-    RunConfigSpec(
-        name="Build Status",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_epcsaft.py",
-        parameters="--status",
-    ),
-    RunConfigSpec(
-        name="Build Native Incremental",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_epcsaft.py",
-        parameters="--build-only --parallel 10",
-    ),
-    RunConfigSpec(
-        name="Build System Ceres",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_system_ceres.py",
-        parameters="--parallel 4",
-    ),
-    RunConfigSpec(
-        name="Clean Build Artifacts",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/dev/clean_build.ps1",
-    ),
-    RunConfigSpec(
-        name="Validate Quick",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/dev/validate_project.py",
-        parameters="quick",
-    ),
-    RunConfigSpec(
-        name="Validate Confidence",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/dev/validate_project.py",
-        parameters="confidence",
-    ),
-    RunConfigSpec(
-        name="Check Text Gates",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/dev/check_text_gates.py",
-    ),
-    RunConfigSpec(
-        name="Validate Hydrocarbon Regression",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/validation/validate_hydrocarbon_regression.py",
-    ),
-    RunConfigSpec(
-        name="Run Ipopt Exact Hessian Proofs",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/dev/run_ipopt_exact_hessian_proofs.py",
-    ),
-    RunConfigSpec(
-        name="Test List Slices",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="--list-slices",
-    ),
-    RunConfigSpec(
-        name="Test API",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="--api -q",
-    ),
-    RunConfigSpec(
-        name="Test Equilibrium API",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="--equilibrium-api -q",
-    ),
-    RunConfigSpec(
-        name="Test Runtime",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="--runtime -q",
-    ),
-    RunConfigSpec(
-        name="Test Native",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="--native -q",
-    ),
-    RunConfigSpec(
-        name="Test Native Contracts",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="--native-contracts -q",
-    ),
-    RunConfigSpec(
-        name="Test Workflow Guards",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="tests/workflows/repo/test_workflow_entrypoints.py tests/workflows/build/test_build_epcsaft.py -q",
-    ),
-    RunConfigSpec(
-        name="Build Docs",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/dev/validate_project.py",
-        parameters="docs",
-    ),
-    RunConfigSpec(
-        name="Build Equations PDF",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/docs/build_equations_pdf.ps1",
-    ),
-    RunConfigSpec(
-        name="Sync Equation Registry",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/docs/sync_equation_registry.py",
-    ),
-    RunConfigSpec(
-        name="Sync Algorithm Registry",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/docs/sync_algorithm_registry.py",
-    ),
-    RunConfigSpec(
-        name="Build Parameter Catalog",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/build_epcsaft_parameter_catalog.py",
-    ),
-    RunConfigSpec(
-        name="Extract Paper Parameter CSVs",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/extract_paper_parameter_csvs.py",
-    ),
-    RunConfigSpec(
-        name="Sync MIAC Variants",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/sync_miac_variants.py",
-    ),
-    RunConfigSpec(
-        name="Sync LaTeX Mirror",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/docs/sync_latex_mirror.ps1",
-    ),
-    RunConfigSpec(
-        name="Setup LaTeX Mirror",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/docs/setup_latex_mirror.ps1",
-    ),
-    RunConfigSpec(
-        name="Install LaTeX Sync Hook",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/docs/install_latex_sync_hook.ps1",
-    ),
-    RunConfigSpec(
-        name="Build Distribution",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_dist.py",
-    ),
-    RunConfigSpec(
-        name="Generate Equilibrium Activation",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_ANALYSIS_FIGURES,
-        command="scripts/dev/generate_equilibrium_activation.py",
-    ),
-    RunConfigSpec(
-        name="Create Dev Worktree",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/dev/create_dev_worktree.ps1",
-    ),
-    RunConfigSpec(
-        name="Configure IntelliJ Runs (Dry Run)",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/dev/configure_jetbrains_project.py",
-        parameters="--dry-run",
-    ),
-    RunConfigSpec(
-        name="Configure IntelliJ Runs (Apply)",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/dev/configure_jetbrains_project.py",
-        parameters="--apply",
-    ),
-    RunConfigSpec(
-        name="Association Goal 1+2 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/contracts/test_association_implicit_derivative_contract.py "
-            "tests/native/state/test_eos_contributions.py "
-            "tests/native/state/test_phase_state_sensitivities.py "
-            "tests/native/equilibrium/blocks/test_eos_phase_block.py "
-            "tests/api/frontend/test_state_properties.py -q"
-        ),
-    ),
-    RunConfigSpec(
-        name="Association Goal 3 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="tests/native/contracts tests/native/regression tests/api/frontend/test_regression.py -q",
-    ),
-    RunConfigSpec(
-        name="Association Goal 4 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/state/test_fugacity_derivatives.py "
-            "tests/native/state/test_association_parameter_derivative_validation.py "
-            "tests/native/state/test_pressure_derivatives.py "
-            "tests/native/state/test_phase_state_sensitivities.py "
-            "tests/native/contracts/test_association_implicit_derivative_contract.py "
-            "tests/native/contracts/test_ceres_cppad_build_contract.py -q"
-        ),
-    ),
-    RunConfigSpec(
-        name="Association Goal 5 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/state/test_fugacity_derivatives.py "
-            "tests/native/state/test_association_parameter_derivative_validation.py "
-            "tests/native/state/test_pressure_derivatives.py "
-            "tests/native/regression/test_binary.py "
-            "tests/native/contracts/test_ceres_cppad_build_contract.py -q"
-        ),
-    ),
-    RunConfigSpec(
-        name="Association Goal 6 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/equilibrium/blocks/test_association_block.py "
-            "tests/native/equilibrium/blocks/test_eos_phase_block.py "
-            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py -q"
-        ),
-    ),
-)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -608,7 +301,7 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
         return [], [".idea/workspace.xml: root element is not <project>"], None
 
     actions: list[str] = []
-    canonical_names = {spec.name for spec in CANONICAL_RUN_CONFIGS}
+    canonical_names = canonical_run_config_names()
     removed_run_manager_names: list[str] = []
     run_manager = _find_child(root, "component", name="RunManager")
     if run_manager is not None:
@@ -974,7 +667,7 @@ def main(argv: list[str] | None = None) -> int:
         warnings_found += 1
         print(f"WARNING {warning}")
 
-    canonical_names = {spec.name for spec in CANONICAL_RUN_CONFIGS}
+    canonical_names = canonical_run_config_names()
     for name, paths in sorted(run_configs_by_name.items()):
         if name not in canonical_names:
             for path in paths:

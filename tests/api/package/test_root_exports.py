@@ -37,13 +37,23 @@ def test_removed_root_compatibility_modules_are_not_importable() -> None:
         "epcsaft.capability_evidence",
         "epcsaft.diagnostics",
         "epcsaft.electrolyte",
+        "epcsaft.equilibrium.native_adapter",
+        "epcsaft.equilibrium.options",
+        "epcsaft.equilibrium.problems",
+        "epcsaft.equilibrium.results",
         "epcsaft.eos",
         "epcsaft.epcsaft",
+        "epcsaft.regression.electrolyte",
+        "epcsaft.regression.results",
+        "epcsaft.regression.targets",
         "epcsaft.reactive",
         "epcsaft.reactive_electrolyte",
         "epcsaft.reactive_regression",
         "epcsaft.reactive_speciation",
         "epcsaft.reactive_staged",
+        "epcsaft.runtime.build_info",
+        "epcsaft.runtime.capabilities",
+        "epcsaft.runtime.evidence",
     }
     for module_name in removed_modules:
         assert importlib.util.find_spec(module_name) is None

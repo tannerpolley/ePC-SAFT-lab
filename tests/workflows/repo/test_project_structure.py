@@ -349,26 +349,9 @@ def test_native_equilibrium_bindings_are_registered_through_selector_domain_unit
     assert offenders == []
 
 
-def test_equilibrium_facade_does_not_expose_route_builder_types() -> None:
-    facade = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
-        encoding="utf-8"
-    )
-    forbidden = (
-        "equilibrium/routes/route_builders.h",
-        "NativeRouteMetadata",
-        "NeutralTwoPhaseEosNlpContract",
-        "NeutralTwoPhaseEosRouteResult",
-        "ReactiveTwoPhaseEosPostsolve",
-        "ReactiveTwoPhaseEosRouteResult",
-        "route_builders",
-    )
-    offenders = [token for token in forbidden if token in facade]
-
-    assert offenders == []
-
-
 def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     deleted_sources = (
+        "src/epcsaft/native/equilibrium/facade.h",
         "src/epcsaft/native/equilibrium/workflows.cpp",
         "src/epcsaft/native/equilibrium/routes/route_builders.cpp",
         "src/epcsaft/native/equilibrium/routes/route_builders.h",
@@ -417,22 +400,6 @@ def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     binding_offenders = [name for name in forbidden_bindings if name in binding_sources]
 
     assert binding_offenders == []
-
-
-def test_equilibrium_native_facade_does_not_expose_backend_selection_options() -> None:
-    facade = (REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "facade.h").read_text(
-        encoding="utf-8",
-        errors="ignore",
-    )
-    forbidden = (
-        "EquilibriumOptionsNative",
-        "solver_backend",
-        "jacobian_backend",
-        "derivative_backend",
-        "backend",
-    )
-
-    assert [token for token in forbidden if token in facade] == []
 
 
 def test_equilibrium_activation_families_cannot_create_ad_hoc_native_route_files() -> None:
@@ -710,6 +677,8 @@ def test_python_equilibrium_package_exposes_only_production_selector_solve_suppo
         "electrolyte_bubble_pressure",
         "reactive_phase_equilibrium",
         "reactive_stability_native",
+        "EquilibriumProblem",
+        "EquilibriumStructure",
         "ReactiveSpeciationProblem",
         "ReactiveElectrolyteBubbleProblem",
         "ReactivePhaseEquilibriumProblem",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import runpy
 import xml.etree.ElementTree as ET
 
 import tomllib
@@ -18,6 +19,10 @@ def _run_config_options(config: ET.Element) -> dict[str, str]:
         for option in config.findall("option")
         if "name" in option.attrib
     }
+
+
+def _module_script_path(relative_path: str) -> str:
+    return "$MODULE_DIR$/" + relative_path.replace("\\", "/").strip("/")
 
 
 def test_bootstrap_scripts_use_normal_build_and_fast_suite() -> None:
@@ -186,19 +191,23 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
 
 def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     normalizer = _read("scripts/dev/configure_jetbrains_project.py")
+    manifest = _read("scripts/dev/jetbrains_run_manifest.py")
+    manifest_data = runpy.run_path(str(REPO_ROOT / "scripts" / "dev" / "jetbrains_run_manifest.py"))
+    run_config_specs = tuple(manifest_data["CANONICAL_RUN_CONFIGS"])
     agents_md = _read("AGENTS.md")
     intellij_guidance = _read("docs/agents/INTELLIJ.md")
     combined_guidance = agents_md + "\n" + intellij_guidance
 
-    assert 'RUN_CONFIG_FOLDER = "ePC-SAFT"' in normalizer
-    assert "RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = None" in normalizer
+    assert f'RUN_CONFIG_FOLDER = "{manifest_data["RUN_CONFIG_FOLDER"]}"' in manifest
+    assert f"RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = {manifest_data['RUN_CONFIG_FOLDER_ATTRIBUTE']!r}" in manifest
     assert "RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)" in normalizer
     assert 'component", {"name": "RunDashboard"}' in normalizer
     assert "remove temporary generated run configuration" in normalizer
     assert "remove stale executor property" in normalizer
     assert "enable Services Run Dashboard for" in normalizer
     assert "delete stale shared run configuration" in normalizer
-    assert "Configure IntelliJ Runs (Dry Run)" in normalizer
+    assert "CANONICAL_RUN_CONFIGS" in normalizer
+    assert "Configure IntelliJ Runs (Dry Run)" in manifest
     assert "docs/agents/INTELLIJ.md" in agents_md
     assert "IntelliJ MCP Workflow" in intellij_guidance
     assert "Hard rule: use IntelliJ MCP first by default for repo work" in combined_guidance
@@ -240,50 +249,6 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         assert tool_name in combined_guidance
     assert "Use shared run configurations for ordinary validation" in intellij_guidance
 
-    expected_names = {
-        "Sync Environment",
-        "Bootstrap uv",
-        "Doctor",
-        "Doctor Script",
-        "Build Native Extension",
-        "Build Status",
-        "Build Native Incremental",
-        "Build System Ceres",
-        "Clean Build Artifacts",
-        "Validate Quick",
-        "Validate Confidence",
-        "Check Text Gates",
-        "Validate Hydrocarbon Regression",
-        "Run Ipopt Exact Hessian Proofs",
-        "Test List Slices",
-        "Test API",
-        "Test Equilibrium API",
-        "Test Runtime",
-        "Test Native",
-        "Test Native Contracts",
-        "Test Workflow Guards",
-        "Build Docs",
-        "Build Equations PDF",
-        "Sync Equation Registry",
-        "Sync Algorithm Registry",
-        "Build Parameter Catalog",
-        "Extract Paper Parameter CSVs",
-        "Sync MIAC Variants",
-        "Sync LaTeX Mirror",
-        "Setup LaTeX Mirror",
-        "Install LaTeX Sync Hook",
-        "Build Distribution",
-        "Generate Equilibrium Activation",
-        "Create Dev Worktree",
-        "Configure IntelliJ Runs (Dry Run)",
-        "Configure IntelliJ Runs (Apply)",
-        "Association Goal 1+2 Tests",
-        "Association Goal 3 Tests",
-        "Association Goal 4 Tests",
-        "Association Goal 5 Tests",
-        "Association Goal 6 Tests",
-    }
-
     run_configs: dict[str, tuple[Path, ET.Element]] = {}
     for path in sorted((REPO_ROOT / ".run").glob("*.run.xml")):
         config = ET.parse(path).getroot().find("configuration")
@@ -293,24 +258,32 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         assert name not in run_configs, name
         run_configs[name] = (path, config)
 
-    assert set(run_configs) == expected_names
+    assert set(run_configs) == {spec.name for spec in run_config_specs}
 
+    specs_by_name = {spec.name: spec for spec in run_config_specs}
     for name, (path, config) in run_configs.items():
+        spec = specs_by_name[name]
         assert config.get("folderName") is None, name
         assert config.get("type") in {"PythonConfigurationType", "ShConfigurationType"}, name
         assert config.get("type") != "tests", name
         options = _run_config_options(config)
-        if config.get("type") == "PythonConfigurationType":
+        if spec.runner == "Python":
+            assert config.get("type") == "PythonConfigurationType", name
             assert options["WORKING_DIRECTORY"] == "$MODULE_DIR$", name
-            assert options["SCRIPT_NAME"].startswith("$MODULE_DIR$/"), name
+            assert options["SCRIPT_NAME"] == _module_script_path(spec.command), name
+            assert options["PARAMETERS"] == spec.parameters, name
             script_path = REPO_ROOT / options["SCRIPT_NAME"].removeprefix("$MODULE_DIR$/")
             assert script_path.exists(), f"{path.name} points at missing {script_path}"
         else:
+            assert config.get("type") == "ShConfigurationType", name
             assert options["INTERPRETER_PATH"].endswith("/pwsh.exe"), name
             assert options["SCRIPT_WORKING_DIRECTORY"] == REPO_ROOT.as_posix(), name
             script_path_text = options.get("SCRIPT_PATH", "")
             if script_path_text:
+                assert options["SCRIPT_OPTIONS"] == spec.parameters, name
                 assert Path(script_path_text).exists(), f"{path.name} points at missing {script_path_text}"
+            else:
+                assert options["SCRIPT_TEXT"] == spec.command, name
 
     build_native = _run_config_options(run_configs["Build Native Extension"][1])
     assert build_native["SCRIPT_PATH"].endswith("/.codex/environments/setup.ps1")
