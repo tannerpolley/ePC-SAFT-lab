@@ -34,7 +34,7 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 - Public repo tools intentionally use developer-neutral names. Do not add new tracked files, tests, scripts, or docs with Codex-specific names unless they are local-only agent instructions.
 - When deleting tracked files, also remove any now-empty parent folders and clearly owned ignored local artifacts unless the folder is an intentional placeholder or documented skeleton.
 - Before adding any new file, inspect the nearest existing directory structure, name the intended category, list the candidate folders, and choose the path that matches existing tests. Do not write the file until that placement is justified.
-- Full paper-validation analyses that use ePC-SAFT parameter datasets or parameter CSVs must keep the execution snapshot under `analyses/paper_validation/<category>/<short_id>/data/input/epcsaft_parameters/<DatasetName>/`.
+- Full paper-validation analyses that use ePC-SAFT parameter datasets or parameter CSVs must keep the execution snapshot directly under `analyses/paper_validation/<category>/<short_id>/parameters/` with `mixed/`, `pure/`, and `user_options.json` at that level.
   Treat root `data/reference/epcsaft_parameters/` as shared curation/source material, not the direct execution input for full validation analyses.
   Small direct dictionaries remain allowed for focused tests and synthetic smoke checks, but not as the parameter source for full validation analysis.
 - Best new-agent workflow: `uv sync --no-install-project`, then `uv run python scripts/dev/build_epcsaft.py`, then `uv run python scripts/dev/doctor.py`, then `uv run python scripts/dev/validate_project.py quick`.

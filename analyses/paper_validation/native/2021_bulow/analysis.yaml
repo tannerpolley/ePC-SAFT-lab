@@ -1,0 +1,10 @@
+analysis_id: 2021_bulow
+title: Bulow 2021 paper validation
+kind: paper_validation
+status: placeholder
+package: epcsaft
+parameter_datasets:
+  - parameters
+completion_blockers:
+  - Promote source-backed figures or tables into analysis-owned inputs.
+  - Add an executable validation workflow before claiming package validation.

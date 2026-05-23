@@ -59,16 +59,17 @@ ANALYSIS_ROOTS = {
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
 }
 PAPER_VALIDATION_PARAMETER_SNAPSHOTS = {
-    "analyses/paper_validation/application/2024_hubach_li_tcb": ("2024_Hubach",),
-    "analyses/paper_validation/application/2026_khudaida": ("2026_Khudaida",),
-    "analyses/paper_validation/native/2005_cameretti": ("2005_Cameretti",),
-    "analyses/paper_validation/native/2008_held": ("2008_Held",),
-    "analyses/paper_validation/native/2012_held": ("2012_Held",),
-    "analyses/paper_validation/native/2014_held": ("2009_Held", "2014_Held"),
-    "analyses/paper_validation/native/2019_bulow": ("2019_Bulow",),
-    "analyses/paper_validation/native/2020_bulow": ("2014_Held", "2020_Bulow"),
-    "analyses/paper_validation/native/2022_ascani": ("2022_Ascani",),
-    "analyses/paper_validation/native/2025_figiel": ("2020_Bulow", "2025_Figiel"),
+    "analyses/paper_validation/application/2024_hubach_li_tcb": "2024_Hubach",
+    "analyses/paper_validation/application/2026_khudaida": "2026_Khudaida",
+    "analyses/paper_validation/native/2005_cameretti": "2005_Cameretti",
+    "analyses/paper_validation/native/2008_held": "2008_Held",
+    "analyses/paper_validation/native/2012_held": "2012_Held",
+    "analyses/paper_validation/native/2014_held": "2014_Held",
+    "analyses/paper_validation/native/2019_bulow": "2019_Bulow",
+    "analyses/paper_validation/native/2020_bulow": "2020_Bulow",
+    "analyses/paper_validation/native/2021_bulow": "2021_Bulow",
+    "analyses/paper_validation/native/2022_ascani": "2022_Ascani",
+    "analyses/paper_validation/native/2025_figiel": "2025_Figiel",
 }
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
 CATEGORY_ROOTS = {
@@ -925,32 +926,31 @@ def test_reference_data_root_is_canonical() -> None:
 def test_paper_validation_parameter_inputs_are_local_snapshots() -> None:
     reference_root = REPO_ROOT / "data" / "reference" / "epcsaft_parameters"
 
-    for analysis_rel, datasets in sorted(PAPER_VALIDATION_PARAMETER_SNAPSHOTS.items()):
-        input_root = REPO_ROOT / analysis_rel / "data" / "input" / "epcsaft_parameters"
-        assert input_root.is_dir(), analysis_rel
+    for analysis_rel, dataset in sorted(PAPER_VALIDATION_PARAMETER_SNAPSHOTS.items()):
+        parameter_root = REPO_ROOT / analysis_rel / "parameters"
+        assert parameter_root.is_dir(), analysis_rel
+        assert not (parameter_root / dataset).exists(), f"{analysis_rel}: nested dataset folder is not allowed"
+        assert (parameter_root / "mixed").is_dir(), analysis_rel
+        assert (parameter_root / "pure").is_dir(), analysis_rel
+        assert (parameter_root / "user_options.json").is_file(), analysis_rel
 
-        for dataset in datasets:
-            source_dataset = reference_root / dataset
-            input_dataset = input_root / dataset
-            assert source_dataset.is_dir(), dataset
-            assert input_dataset.is_dir(), f"{analysis_rel}: {dataset}"
+        source_dataset = reference_root / dataset
+        assert source_dataset.is_dir(), dataset
 
-            source_files = {
-                path.relative_to(source_dataset).as_posix(): path
-                for path in source_dataset.rglob("*")
-                if path.is_file()
-            }
-            input_files = {
-                path.relative_to(input_dataset).as_posix(): path
-                for path in input_dataset.rglob("*")
-                if path.is_file()
-            }
-            assert set(input_files) == set(source_files), f"{analysis_rel}: {dataset}"
+        source_files = {
+            path.relative_to(source_dataset).as_posix(): path
+            for path in source_dataset.rglob("*")
+            if path.is_file()
+        }
+        input_files = {
+            path.relative_to(parameter_root).as_posix(): path
+            for path in parameter_root.rglob("*")
+            if path.is_file()
+        }
+        assert set(input_files) == set(source_files), f"{analysis_rel}: {dataset}"
 
-            for relpath, source_path in source_files.items():
-                assert input_files[relpath].read_bytes() == source_path.read_bytes(), (
-                    f"{analysis_rel}: {dataset}/{relpath}"
-                )
+        for relpath, source_path in source_files.items():
+            assert input_files[relpath].read_bytes() == source_path.read_bytes(), f"{analysis_rel}: {relpath}"
 
 
 def test_analysis_category_roots_exist() -> None:
