@@ -17,3 +17,4 @@ Accepted ADRs:
 - `0002-hard-public-api-reset-cppad-only-frontend.md`: records the hard public API cutoff, `ModelOptions` boundary, and CppAD-only public derivative policy.
 - `0003-selector-core-activation-capabilities.md`: records selector-core ownership, activation-matrix capability reporting, and deletion of non-production equilibrium routes.
 - `0004-associating-equilibrium-architecture.md`: records the nonassociating production-equilibrium boundary and the required complete implicit or lifted-`X_A` architecture for any future associating route.
+- `0005-narrow-associating-bubble-pressure-admission.md`: amends ADR 0004 with the first allowed associating route gate: a narrow, exact-derivative Gross/Sadowski 2002 `bubble_pressure` proof before broader associating VLE/LLE work.

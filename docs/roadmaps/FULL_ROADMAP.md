@@ -18,6 +18,10 @@ This document is authoritative over older roadmap language that allowed audit-on
 
 `docs/roadmaps/association_derivative_goal_roadmap.md` is the management document for the post-#130/#131 association-derivative tranche (#132 through #140). Read it before starting association solved-state, implicit-sensitivity, association-parameter regression, associating-equilibrium architecture, or lifted-`X_A` block work.
 
+`docs/roadmaps/gross2002_associating_vle_redo_plan.md` is the successor roadmap for the first associating-equilibrium admission after association derivative proof: Gross/Sadowski 2002 EOS validation, explicit association-closure diagnostics, and a narrow one-associating-component `bubble_pressure` route before any associating LLE work.
+
+`docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model.
+
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
 
 ---

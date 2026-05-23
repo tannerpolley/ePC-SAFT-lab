@@ -10,6 +10,14 @@ Use this document before starting any work on GitHub issues #132 through #140.
 It defines the dependency order, agent-sized goal grouping, guardrails, and
 status tracking for the full association-derivative tranche.
 
+Successor status: this roadmap records derivative-build work that kept
+associating equilibrium closed while exact derivative evidence was being built.
+ADR 0005 and `docs/roadmaps/gross2002_associating_vle_redo_plan.md` now define
+the next narrow associating-equilibrium admission path: Gross/Sadowski 2002
+neutral nonelectrolyte `bubble_pressure` only, after exact derivative and
+certification evidence. The guardrails below still apply to this tranche and to
+all routes outside the ADR 0005 exception.
+
 Do not create a parallel roadmap, handoff, or planning ledger for this issue set
 unless it links back here and leaves this document as the source of truth. If an
 issue body and this roadmap disagree, treat the issue body as the acceptance
@@ -59,12 +67,12 @@ gh issue list --repo tannerpolley/ePC-SAFT --state open --limit 40
 
 ## Global Policy
 
-These rules apply to every issue in this roadmap:
+These rules apply to every issue in this association-derivative tranche:
 
 - Do not direct-tape the association fixed-point iteration with CppAD.
 - Do not add non-exact production derivative backends.
-- Do not expose associating equilibrium.
-- Do not broaden public equilibrium routes.
+- Do not expose associating equilibrium from this derivative tranche.
+- Do not broaden public equilibrium routes from this derivative tranche.
 - Do not treat target-kind registry presence as production optimizer support.
 - Do not add SLE, precipitation, Ksp, solid diagnostics, electrolyte LLE, or reactive LLE work in this tranche.
 - Do not claim regression support for `e_assoc`, `vol_a`, `k_hb_ij`, or active-association `l_ij` without derivative evidence and optimizer evidence.
@@ -428,7 +436,7 @@ Required outcome:
 
 - ADR or design document states:
   - State and Regression eliminate `X_A` and differentiate implicitly.
-  - current production Equilibrium remains nonassociating.
+  - current production Equilibrium remains nonassociating for this tranche; ADR 0005 later defines the only narrow successor exception.
   - future associating Equilibrium must use either complete implicit second-order closure or lifted `X_A` variables with exact mass-action constraints and exact Lagrangian Hessian support.
 - lifted block uses true site count, not species count.
 - lifted block carries `site_component_index`.
@@ -460,7 +468,7 @@ Definition of done:
 
 - #138 acceptance criteria are met.
 - #139 acceptance criteria are met.
-- associating mixtures remain rejected by production public equilibrium selector routes.
+- associating mixtures remain rejected by production public equilibrium selector routes outside the later ADR 0005 narrow bubble-pressure exception.
 - no public Python route or backend control is added.
 
 ## Parallelization Plan

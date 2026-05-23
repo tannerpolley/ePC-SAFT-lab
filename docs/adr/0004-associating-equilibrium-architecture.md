@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Accepted. Amended by
+`docs/adr/0005-narrow-associating-bubble-pressure-admission.md`.
 
 ## Context
 
@@ -44,3 +45,9 @@ blocks, but they do not make associating equilibrium public. Any future route
 that uses lifted `X_A` must first prove site count, site-component ownership,
 mass-action residuals, Jacobians, objective Hessian terms, and constraint
 Hessian rows for the exact variable model it exposes.
+
+ADR 0005 narrows this boundary for the next roadmap step: a single
+Gross/Sadowski 2002 associating `bubble_pressure` proof may be admitted after
+exact derivative and certification evidence exists. That amendment does not
+open bubble-temperature, dew, flash, LLE, electrolyte, reactive, or
+cross-associating route families.
