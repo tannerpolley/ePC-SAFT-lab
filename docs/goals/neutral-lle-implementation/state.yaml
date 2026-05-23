@@ -1,0 +1,266 @@
+version: 2
+
+goal:
+  title: "Neutral LLE Implementation"
+  slug: "neutral-lle-implementation"
+  kind: existing_plan
+  tranche: "continuous execution: implement GitHub issue #144, verify neutral nonassociating LLE, then prepare associating neutral LLE follow-up from the proven baseline"
+  status: active
+  intake:
+    original_request: "Use Agentify to read the final ChatGPT response about implementing LLE, create the issue, and begin a goal board to accomplish the full issue and plan to prep for associating neutral LLE."
+    interpreted_outcome: "GitHub issue #144 is implemented as a production neutral nonassociating LLE route, verified through native/API/docs tests, and followed by a prepared associating-neutral-LLE planning artifact."
+    input_shape: existing_plan
+    audience: "ePC-SAFT maintainers, Codex implementation agents, and downstream package consumers"
+    authority: requested
+    proof_type: test
+    completion_proof: "Issue #144 passes its native Ipopt/API/docs validation commands, capability claims are accurate, and a follow-up associating-neutral-LLE plan or issue is prepared without exposing associating LLE in this tranche."
+    likely_misfire: "Marking LLE complete through metadata, docs, or synthetic-only structure proof; or accidentally broadening the route to associating, electrolyte, salting-out, reactive, SLE, precipitation, or Ksp behavior."
+    blind_spots_considered:
+      - "Ipopt-enabled exact-Hessian proof is required before `neutral_lle` can be production-exposed."
+      - "LLE needs composition-distance separation, not `phase_volume_gap`."
+      - "Public result adapters must preserve `liquid1` and `liquid2` and keep VLE `x`/`y` conveniences route-limited."
+      - "Associating neutral LLE must wait for association solved-state and derivative readiness."
+      - "The first proof fixture should be `_nonideal_lle_binary_mixture()`, not methanol/cyclohexane or water/alcohol."
+    existing_plan_facts:
+      - "GitHub issue #144: https://github.com/tannerpolley/ePC-SAFT/issues/144."
+      - "Public route target: `Equilibrium(mixture, route=\"lle\", T=..., P=..., z=[...]).solve()`."
+      - "Native target family: `neutral_lle`."
+      - "First proof fixture: `tests/support/equilibrium_cases.py::_nonideal_lle_binary_mixture()`."
+      - "Suggested validation includes `uv run python scripts/dev/build_epcsaft.py --profile ipopt`, focused route tests, docs validation, and quick validation."
+
+rules:
+  pm_owns_state: true
+  one_active_task: true
+  max_write_workers: 1
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: local
+  local:
+    status: live
+    url: "http://127.0.0.1:41737/neutral-lle-implementation/"
+    command: "pwsh -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Tanner\\Documents\\git\\codex-maintenance\\scripts\\start-goalbuddy-board.ps1 -Goal docs/goals/neutral-lle-implementation"
+  github_projects:
+    status: not_requested
+    url: null
+    command: "npx goalbuddy extend github-projects"
+    missing: []
+
+active_task: T001
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: active
+    reasoning_hint: high
+    objective: "Validate issue #144 against the live repo and produce the module/test ownership map for the first implementation package."
+    inputs:
+      - "https://github.com/tannerpolley/ePC-SAFT/issues/144"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+      - "docs/roadmaps/unified_equilibrium_core_algorithm.md"
+      - "docs/roadmaps/association_derivative_goal_roadmap.md"
+      - "docs/pages/development_workflows.rst"
+      - "src/epcsaft/native/equilibrium/core/activation_matrix.h"
+      - "src/epcsaft/native/equilibrium/core/activation_plan.*"
+      - "src/epcsaft/native/equilibrium/core/variable_layout.*"
+      - "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.*"
+      - "src/epcsaft/native/equilibrium/core/selector_core.cpp"
+      - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      - "src/epcsaft/equilibrium/workflows.py"
+      - "tests/support/equilibrium_cases.py"
+    constraints:
+      - "Read-only."
+      - "Label engineering claims as verified, inference, assumption, or unknown."
+      - "Do not broaden scope beyond neutral nonassociating LLE."
+      - "Do not rebuild `_core` or run clean/repair actions."
+    expected_output:
+      - "Verified current-state map for activation matrix, selector, native route, Python route registry, result adapter, capabilities, and tests."
+      - "Corrections to issue #144 if live repo has drifted."
+      - "Recommended largest safe first Worker package with allowed files and verify commands."
+      - "Associating neutral LLE prerequisites that should be carried into the later planning task."
+    receipt: null
+  - id: T002
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Review T001 and choose the first largest safe implementation package for issue #144."
+    inputs:
+      - "T001 receipt"
+      - "Issue #144 body"
+      - "Current git diff"
+    constraints:
+      - "Do not implement."
+      - "Reject any package that exposes associating, electrolyte, salting-out, reactive, SLE, precipitation, or Ksp behavior."
+      - "Reject any package that marks `neutral_lle` production-exposed without an executable Ipopt proof path."
+      - "Prefer one coherent vertical slice over tiny horizontal edits."
+    expected_output:
+      - "Decision."
+      - "Exact Worker objective."
+      - "Allowed files."
+      - "Verify commands."
+      - "Stop conditions."
+      - "Deferred associating-neutral-LLE prerequisites."
+    receipt: null
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Implement the first safe issue #144 package selected by Judge."
+    allowed_files: []
+    verify: []
+    stop_if:
+      - "Need files outside allowed_files."
+      - "Route semantics would admit associating, electrolyte, salting-out, reactive, SLE, precipitation, or Ksp behavior."
+      - "Implementation requires a route-specific C++ problem class instead of the activation-plan / generic two-phase route path."
+      - "Verification fails twice with the same unresolved cause."
+    receipt: null
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: queued
+    reasoning_hint: high
+    objective: "Complete the remaining issue #144 implementation surface across native route, Python API/result handling, capabilities, tests, and docs."
+    allowed_files:
+      - "src/epcsaft/native/equilibrium/core/activation_matrix.h"
+      - "src/epcsaft/native/equilibrium/core/activation_plan.h"
+      - "src/epcsaft/native/equilibrium/core/activation_plan.cpp"
+      - "src/epcsaft/native/equilibrium/core/variable_layout.h"
+      - "src/epcsaft/native/equilibrium/core/variable_layout.cpp"
+      - "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.h"
+      - "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp"
+      - "src/epcsaft/native/equilibrium/core/selector_core.cpp"
+      - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      - "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
+      - "src/epcsaft/equilibrium/workflows.py"
+      - "src/epcsaft/runtime/core.py"
+      - "src/epcsaft/runtime/equilibrium_activation.py"
+      - "tests/support/equilibrium_cases.py"
+      - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+      - "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
+      - "tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py"
+      - "tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
+      - "tests/api/frontend/test_equilibrium.py"
+      - "docs/pages/equilibrium_architecture.rst"
+      - "docs/pages/api_reference.rst"
+      - "README.md"
+    verify:
+      - "uv run python scripts/dev/build_epcsaft.py --profile ipopt"
+      - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/equilibrium/results/test_neutral_lle_reference_values.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python scripts/dev/validate_project.py docs"
+      - "uv run python scripts/dev/validate_project.py quick"
+    stop_if:
+      - "Ipopt is unavailable and the route would need to be marked production-ready without accepted Ipopt proof."
+      - "Need to expose associating or electrolyte LLE to make the synthetic nonassociating proof pass."
+      - "Native route cannot preserve exact-Hessian support through the current Ipopt adapter."
+      - "Need files outside allowed_files."
+    receipt: null
+  - id: T005
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Audit issue #144 implementation against acceptance criteria and decide whether any repair Worker is needed before associating-LLE prep."
+    inputs:
+      - "Issue #144 acceptance criteria"
+      - "T003 and T004 receipts"
+      - "Latest verification commands"
+      - "Current git diff"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if any issue #144 acceptance criterion is unproven."
+      - "Reject completion if docs or capabilities overclaim associating, electrolyte, salting-out, or reactive LLE."
+    expected_output:
+      - "complete | repair_needed"
+      - "Acceptance criteria coverage map."
+      - "Missing evidence."
+      - "Repair Worker task if needed."
+    receipt: null
+  - id: T006
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Prepare the associating neutral LLE follow-up plan from the verified nonassociating baseline."
+    inputs:
+      - "Issue #144 implementation receipts"
+      - "docs/roadmaps/association_derivative_goal_roadmap.md"
+      - "docs/roadmaps/FULL_ROADMAP.md"
+      - "T001 associating-LLE prerequisite notes"
+    constraints:
+      - "Do not implement associating LLE."
+      - "Do not broaden current capabilities."
+      - "Require association solved-state and derivative readiness evidence before recommending production exposure."
+    expected_output:
+      - "Recommended next issue title or plan title."
+      - "Prerequisites for associating neutral LLE."
+      - "Candidate first proof system and why it is no longer premature."
+      - "Acceptance criteria for the follow-up tranche."
+      - "Decision on whether to create a GitHub issue now or keep a board note."
+    receipt: null
+  - id: T007
+    type: pm
+    assignee: PM
+    status: queued
+    reasoning_hint: medium
+    objective: "Create or record the associating neutral LLE follow-up artifact approved by T006."
+    inputs:
+      - "T006 receipt"
+    constraints:
+      - "If T006 recommends a GitHub issue and tracker/auth are available, create it and record the URL."
+      - "If T006 recommends waiting, record the reason in the receipt instead of publishing premature tracker work."
+      - "Do not edit implementation files."
+    expected_output:
+      - "GitHub issue URL or board-only note."
+      - "Reason the artifact is ready or intentionally deferred."
+    receipt: null
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    reasoning_hint: high
+    objective: "Audit whether the full owner outcome is complete."
+    inputs:
+      - "All done task receipts"
+      - "Issue #144"
+      - "Latest validation commands"
+      - "Associating-neutral-LLE follow-up artifact or deferral receipt"
+      - "Current dirty diff"
+    constraints:
+      - "Do not implement."
+      - "Reject completion if issue #144 implementation is not verified."
+      - "Reject completion if associating neutral LLE prep is missing."
+      - "Reject completion if required Worker tasks are still queued or active."
+    expected_output:
+      - "complete | not_complete"
+      - "full_outcome_complete: true | false"
+      - "Acceptance evidence."
+      - "Missing evidence."
+      - "Next task if not complete."
+    receipt: null
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: unknown
+    task: null
+    commands: []
