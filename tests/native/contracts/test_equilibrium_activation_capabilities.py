@@ -23,30 +23,41 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
 
     assert activation["source"] == "native_cpp"
     assert activation["rows"] == native_rows
-    assert activation["production_families"] == ["neutral_tp_flash", "bubble_dew_derived_routes"]
-    assert activation["declared_not_exposed_families"] == [
+    assert activation["production_families"] == [
+        "neutral_tp_flash",
         "neutral_lle",
+        "bubble_dew_derived_routes",
+    ]
+    assert activation["declared_not_exposed_families"] == [
         "electrolyte_lle",
         "reactive_speciation",
         "reactive_lle",
         "reactive_electrolyte_lle",
     ]
-    assert capabilities["production_families"] == ["neutral_tp_flash", "bubble_dew_derived_routes"]
+    assert capabilities["production_families"] == [
+        "neutral_tp_flash",
+        "neutral_lle",
+        "bubble_dew_derived_routes",
+    ]
     assert capabilities["public_routes"] == [
         "bubble_pressure",
         "bubble_temperature",
         "dew_pressure",
         "dew_temperature",
         "flash",
+        "lle",
     ]
-    assert capabilities["bubble_dew_derived_routes"]["entrypoint"] == (
-        "Equilibrium(mixture, route=..., ...).solve()"
+    assert capabilities["bubble_dew_derived_routes"]["entrypoint"] == ("Equilibrium(mixture, route=..., ...).solve()")
+    assert (
+        capabilities["bubble_dew_derived_routes"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     )
-    assert capabilities["bubble_dew_derived_routes"]["available"] is capabilities["activation_matrix"][
-        "ipopt_available"
-    ]
-    assert capabilities["neutral_tp_flash"]["entrypoint"] == "Equilibrium(mixture, route='flash', T=..., P=..., z=...).solve()"
+    assert (
+        capabilities["neutral_tp_flash"]["entrypoint"]
+        == "Equilibrium(mixture, route='flash', T=..., P=..., z=...).solve()"
+    )
     assert capabilities["neutral_tp_flash"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
+    assert capabilities["neutral_lle"]["entrypoint"] == "Equilibrium(mixture, route='lle', T=..., P=..., z=...).solve()"
+    assert capabilities["neutral_lle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["problem_objects"]["available"] is True
     assert capabilities["problem_objects"]["entrypoint"] == "Equilibrium(mixture, route=..., ...)"
 

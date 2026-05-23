@@ -1,5 +1,7 @@
 #include "equilibrium/core/two_phase_eos_route.h"
 
+#include "equilibrium/core/activated_equilibrium_nlp.h"
+#include "equilibrium/core/activation_plan.h"
 #include "equilibrium/blocks/eos_phase_block.h"
 #include "eos/core_internal.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
@@ -452,6 +454,15 @@ int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
         return 1;
     }
     return 0;
+}
+
+bool has_finite_complete_variables(const IpoptSolveResult& solve, int variable_count) {
+    if (solve.variables.size() != static_cast<std::size_t>(variable_count)) {
+        return false;
+    }
+    return std::all_of(solve.variables.begin(), solve.variables.end(), [](double value) {
+        return std::isfinite(value);
+    });
 }
 
 RouteSeedAttempt neutral_seed_attempt_from_result(
@@ -1206,6 +1217,60 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     return make_nlp_contract(problem, problem.phase_count(), problem.species_count());
 }
 
+std::unique_ptr<NlpProblem> make_neutral_two_phase_eos_problem(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts,
+    const std::string& problem_name,
+    double minimum_phase_distance
+) {
+    return std::make_unique<NeutralTwoPhaseEosProblem>(
+        args,
+        temperature,
+        target_pressure,
+        phase_amounts,
+        volumes,
+        feed_amounts,
+        std::vector<double>{},
+        problem_name,
+        minimum_phase_distance
+    );
+}
+
+std::unique_ptr<NlpProblem> make_neutral_two_phase_eos_problem_from_feed(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    const std::string& problem_name,
+    double minimum_phase_distance
+) {
+    const std::vector<double> feed_amounts =
+        normalized_positive_values(feed_composition, problem_name + " feed composition");
+    const NeutralTwoPhaseEosInitialPoint initial = build_neutral_two_phase_eos_initial_point(
+        args,
+        feed_amounts,
+        temperature,
+        target_pressure,
+        problem_name,
+        phase_kinds
+    );
+    return make_neutral_two_phase_eos_problem(
+        args,
+        temperature,
+        target_pressure,
+        initial.phase_amounts,
+        initial.volumes,
+        feed_amounts,
+        problem_name,
+        minimum_phase_distance
+    );
+}
+
 IpoptSolveResult solve_neutral_two_phase_eos_ipopt(
     const add_args& args,
     double temperature,
@@ -1243,7 +1308,8 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     double pressure_tolerance,
     double chemical_potential_tolerance,
     double phase_distance_tolerance,
-    const std::vector<double>& charges
+    const std::vector<double>& charges,
+    bool phase_distance_constraint
 ) {
     require_positive_finite(material_tolerance, "Neutral EOS postsolve material tolerance");
     require_positive_finite(pressure_tolerance, "Neutral EOS postsolve pressure tolerance");
@@ -1268,7 +1334,7 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
 
     NeutralTwoPhaseEosPostsolve out;
     out.derivative_backend = system.derivative_backend;
-    apply_route_metadata(out, phase_amount_volume_route_metadata(!charges.empty(), false));
+    apply_route_metadata(out, phase_amount_volume_route_metadata(!charges.empty(), phase_distance_constraint));
     out.phase_count = system.phase_count;
     out.species_count = system.species_count;
     out.objective = system.objective;
@@ -1401,7 +1467,8 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         pressure_tolerance,
         chemical_potential_tolerance,
         phase_distance_tolerance,
-        charges
+        charges,
+        minimum_phase_distance > 0.0
     );
     if (!charges.empty()) {
         out.postsolve.charge_balance_norm = phase_charge_inf_norm(out.phase_amounts, charges);
@@ -1413,6 +1480,155 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
     out.accepted = out.postsolve.accepted;
     out.status = out.accepted ? "accepted" : "postsolve_rejected";
     return out;
+}
+
+NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    const std::string problem_name = "neutral_lle_eos";
+    const epcsaft::native::equilibrium::ActivationPlan plan =
+        epcsaft::native::equilibrium::build_neutral_lle_activation_plan(
+            args,
+            temperature,
+            target_pressure,
+            feed_composition
+        );
+    const epcsaft::native::equilibrium::VariableLayout layout =
+        epcsaft::native::equilibrium::build_variable_layout(
+            plan,
+            static_cast<int>(plan.feed_composition.size())
+        );
+    const IpoptAdapterInfo adapter = native_ipopt_adapter_info();
+    NeutralTwoPhaseEosRouteResult best;
+    best.compiled = adapter.compiled;
+    best.adapter_available = adapter.adapter_available;
+    best.adapter_kind = adapter.adapter_kind;
+    best.exact_gradient_required = adapter.exact_gradient_required;
+    best.exact_jacobian_required = adapter.exact_jacobian_required;
+    best.problem_name = problem_name;
+    best.activation_compiler = "activation_plan";
+    apply_route_metadata(best, phase_amount_volume_route_metadata(false, true));
+    if (!adapter.compiled) {
+        best.status = "ipopt_dependency_required";
+        return best;
+    }
+
+    const std::vector<double>& normalized_feed = plan.feed_composition;
+    const std::vector<double> feed_amounts = normalized_feed;
+    const std::vector<NamedInitialVariables> seeds = neutral_two_phase_seed_candidates(
+        args,
+        feed_amounts,
+        {},
+        temperature,
+        target_pressure,
+        problem_name,
+        {0, 0}
+    );
+    bool have_best = false;
+    std::vector<RouteSeedAttempt> attempts;
+    attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
+
+    auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
+        ActivatedEquilibriumNlp problem(args, plan, layout);
+        const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
+        NeutralTwoPhaseEosRouteResult result;
+        result.compiled = adapter.compiled;
+        result.adapter_available = adapter.adapter_available;
+        result.adapter_kind = adapter.adapter_kind;
+        result.exact_gradient_required = adapter.exact_gradient_required;
+        result.exact_jacobian_required = adapter.exact_jacobian_required;
+        result.problem_name = problem_name;
+        result.activation_compiler = "activation_plan";
+        result.initial_point_strategy = "deterministic_seed_sweep";
+        result.seed_name = seed_name;
+        result.ran = solve.solver_ran;
+        const bool can_postsolve =
+            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        result.solver_accepted = can_postsolve;
+        result.solver_feasible_point = solve.feasible_point;
+        result.solver_status = solve.solver_status;
+        result.application_status = solve.application_status;
+        apply_ipopt_solve_metadata(result, solve);
+        result.objective = solve.objective;
+        result.variables = solve.variables;
+        result.constraints = solve.constraints;
+        apply_route_metadata(result, phase_amount_volume_route_metadata(false, true));
+        if (!can_postsolve) {
+            result.status = "solver_rejected";
+            attempts.push_back(neutral_seed_attempt_from_result(result));
+            if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+                best = result;
+                have_best = true;
+            }
+            return result;
+        }
+
+        result.phase_amounts = neutral_phase_amounts_from_route_variables(
+            solve.variables,
+            static_cast<std::size_t>(layout.species_count)
+        );
+        result.phase_volumes = neutral_phase_volumes_from_route_variables(
+            solve.variables,
+            static_cast<std::size_t>(layout.species_count)
+        );
+        result.postsolve = evaluate_neutral_two_phase_eos_postsolve(
+            args,
+            temperature,
+            target_pressure,
+            result.phase_amounts,
+            result.phase_volumes,
+            feed_amounts,
+            material_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance,
+            {},
+            true
+        );
+        result.accepted = result.postsolve.accepted;
+        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        attempts.push_back(neutral_seed_attempt_from_result(result));
+        if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+            best = result;
+            have_best = true;
+        }
+        return result;
+    };
+
+    if (!options.initial_variables.empty()) {
+        const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
+        if (continuation.accepted) {
+            best.seed_attempts = attempts;
+            return best;
+        }
+    }
+
+    if (seeds.empty()) {
+        throw ValueError(problem_name + " could not construct a deterministic LLE seed.");
+    }
+    for (const auto& seed : seeds) {
+        IpoptSolveOptions attempt_options = options;
+        attempt_options.initial_variables = seed.variables;
+        attempt_options.initial_bound_lower_multipliers.clear();
+        attempt_options.initial_bound_upper_multipliers.clear();
+        attempt_options.initial_constraint_multipliers.clear();
+        const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
+        if (attempt.accepted) {
+            break;
+        }
+    }
+
+    best.initial_point_strategy = "deterministic_seed_sweep";
+    best.seed_attempts = attempts;
+    return best;
 }
 
 }  // namespace epcsaft::native::equilibrium_nlp

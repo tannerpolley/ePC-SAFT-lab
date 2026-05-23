@@ -24,14 +24,14 @@ VariableLayout build_variable_layout(
     const ActivationPlan& plan,
     int species_count
 ) {
-    if (plan.family_key != "neutral_tp_flash" || plan.route != "neutral_tp_flash") {
-        throw ValueError("activation-layout-ineligible: first variable layout supports only neutral_tp_flash.");
-    }
     if (plan.variable_model != "phase_species_amounts_plus_phase_volume") {
         throw ValueError("activation-layout-ineligible: unsupported variable model for activation layout.");
     }
+    if (plan.variable_blocks != std::vector<std::string>{"phase_species_amounts", "phase_volumes"}) {
+        throw ValueError("activation-layout-ineligible: unsupported variable blocks for activation layout.");
+    }
     if (static_cast<int>(plan.phase_keys.size()) != 2 || species_count <= 0) {
-        throw ValueError("activation-layout-ineligible: neutral_tp_flash layout requires two phases and species.");
+        throw ValueError("activation-layout-ineligible: two-phase layout requires two phases and species.");
     }
 
     VariableLayout out;

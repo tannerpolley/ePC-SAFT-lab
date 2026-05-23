@@ -37,6 +37,9 @@ std::string selector_family_for_route(const std::string& route) {
     if (route == "neutral_tp_flash") {
         return "neutral_tp_flash";
     }
+    if (route == "neutral_lle") {
+        return "neutral_lle";
+    }
     throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 
@@ -69,7 +72,7 @@ void require_eligible_input(const SelectorInputClassification& classification) {
         return;
     }
     throw ValueError(
-        "selector-ineligible: production VLE selector routes support only neutral, non-reactive, "
+        "selector-ineligible: production selector routes support only neutral, non-reactive, "
         "non-electrolyte, non-associating mixtures."
     );
 }
@@ -147,7 +150,7 @@ void require_request_shape(const add_args& args, const SelectorRouteRequest& req
         require_role(request, "vapor");
         return;
     }
-    if (request.route == "neutral_tp_flash") {
+    if (request.route == "neutral_tp_flash" || request.route == "neutral_lle") {
         require_present(request.has_temperature, "temperature", request.route);
         require_present(request.has_pressure, "pressure", request.route);
         require_positive_finite(request.temperature, "temperature");
@@ -242,6 +245,15 @@ epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract evaluate_route_c
             request.composition
         );
     }
+    if (request.route == "neutral_lle") {
+        const ActivationPlan plan = build_activation_plan(args, request);
+        const VariableLayout layout = build_variable_layout(plan, static_cast<int>(args.m.size()));
+        return epcsaft::native::equilibrium_nlp::evaluate_activated_neutral_lle_nlp_contract(
+            args,
+            plan,
+            layout
+        );
+    }
     throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 
@@ -315,6 +327,19 @@ epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_route(
             phase_distance_tolerance
         );
     }
+    if (request.route == "neutral_lle") {
+        return epcsaft::native::equilibrium_nlp::solve_activated_neutral_lle_eos_route(
+            args,
+            request.temperature,
+            request.pressure,
+            request.composition,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+    }
     throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 
@@ -348,18 +373,24 @@ SelectorContract evaluate_selector_contract(
     out.certification_required = out.activation.postsolve_certification == "on";
     out.density_closure_required = true;
     out.exact_derivatives_required = exact_derivatives_required(out.activation);
-    if (request.route == "neutral_tp_flash") {
+    if (request.route == "neutral_tp_flash" || request.route == "neutral_lle") {
         out.has_activation_plan = true;
         out.activation_plan = build_activation_plan(args, request);
         out.variable_layout = build_variable_layout(
             out.activation_plan,
             static_cast<int>(args.m.size())
         );
-        out.nlp_contract = epcsaft::native::equilibrium_nlp::evaluate_activated_neutral_tp_flash_nlp_contract(
-            args,
-            out.activation_plan,
-            out.variable_layout
-        );
+        out.nlp_contract = request.route == "neutral_lle"
+            ? epcsaft::native::equilibrium_nlp::evaluate_activated_neutral_lle_nlp_contract(
+                args,
+                out.activation_plan,
+                out.variable_layout
+            )
+            : epcsaft::native::equilibrium_nlp::evaluate_activated_neutral_tp_flash_nlp_contract(
+                args,
+                out.activation_plan,
+                out.variable_layout
+            );
     } else {
         out.nlp_contract = evaluate_route_contract(args, request);
     }

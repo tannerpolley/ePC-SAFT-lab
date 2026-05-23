@@ -104,7 +104,6 @@ inline RouteMetadata phase_amount_volume_route_metadata(
         out.constraint_families.push_back("phase_equilibrium");
     }
     if (has_phase_distance_constraint) {
-        out.constraint_families.push_back("phase_amount_total");
         out.constraint_families.push_back("phase_distance");
     }
     return out;

@@ -3,7 +3,12 @@ from __future__ import annotations
 import pytest
 
 import epcsaft._core as _core
-from tests.support.equilibrium_cases import _methanol_cyclohexane_mixture, _neutral_binary_mixture
+from tests.support.equilibrium_cases import (
+    _ionic_mixture,
+    _methanol_cyclohexane_mixture,
+    _neutral_binary_mixture,
+    _nonideal_lle_binary_mixture,
+)
 
 
 @pytest.mark.parametrize(
@@ -75,6 +80,20 @@ from tests.support.equilibrium_cases import _methanol_cyclohexane_mixture, _neut
             True,
             True,
         ),
+        (
+            {
+                "route": "neutral_lle",
+                "temperature": 300.0,
+                "pressure": 1.0e6,
+                "composition": [0.5, 0.5],
+                "composition_role": "feed",
+            },
+            "neutral_lle",
+            "neutral_lle_eos",
+            "feed",
+            True,
+            True,
+        ),
     ],
 )
 def test_selector_core_contract_owns_production_vle_metadata(
@@ -85,7 +104,7 @@ def test_selector_core_contract_owns_production_vle_metadata(
     specified_temperature: bool,
     specified_pressure: bool,
 ) -> None:
-    mix = _neutral_binary_mixture()
+    mix = _nonideal_lle_binary_mixture() if selector_request["route"] == "neutral_lle" else _neutral_binary_mixture()
     payload = _core._native_equilibrium_selector_contract(mix._native, selector_request)
     matrix = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
     activation = matrix[family]
@@ -131,7 +150,7 @@ def test_selector_core_rejects_invalid_route_family_before_solver_dispatch() -> 
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
-                "route": "neutral_lle",
+                "route": "electrolyte_lle",
                 "temperature": 300.0,
                 "composition": [0.35, 0.65],
                 "composition_role": "feed",
@@ -150,6 +169,22 @@ def test_selector_core_rejects_active_association_before_solver_dispatch() -> No
                 "temperature": 298.15,
                 "composition": [0.35, 0.65],
                 "composition_role": "liquid",
+            },
+        )
+
+
+def test_selector_core_rejects_ionic_lle_before_solver_dispatch() -> None:
+    mix = _ionic_mixture()
+
+    with pytest.raises(_core.NativeValueError, match="selector-ineligible"):
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": "neutral_lle",
+                "temperature": 300.0,
+                "pressure": 1.0e5,
+                "composition": [0.8, 0.1, 0.1],
+                "composition_role": "feed",
             },
         )
 
@@ -213,6 +248,56 @@ def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
     ]
 
 
+def test_neutral_lle_activation_plan_contract_matches_matrix() -> None:
+    mix = _nonideal_lle_binary_mixture()
+    request = {
+        "route": "neutral_lle",
+        "temperature": 300.0,
+        "pressure": 1.0e6,
+        "composition": [0.5, 0.5],
+        "composition_role": "feed",
+    }
+
+    payload = _core._native_equilibrium_selector_contract(mix._native, request)
+    activation = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}["neutral_lle"]
+    plan = payload["activation_plan"]
+    layout = payload["variable_layout"]
+
+    assert payload["activation_compiler"] == "activation_plan"
+    assert payload["problem_name"] == "neutral_lle_eos"
+    assert plan["family_key"] == "neutral_lle"
+    assert plan["route"] == "neutral_lle"
+    assert plan["phase_keys"] == ["liquid1", "liquid2"]
+    assert plan["phase_kinds"] == ["liquid", "liquid"]
+    assert plan["variable_blocks"] == ["phase_species_amounts", "phase_volumes"]
+    assert plan["constraint_blocks"] == [
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_distance",
+    ]
+    assert "phase_volume_gap" not in plan["constraint_blocks"]
+    assert plan["residual_blocks"] == activation["residual_families"]
+    assert plan["postsolve_blocks"] == [
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_distance",
+    ]
+    assert plan["variable_model"] == activation["variable_model"]
+    assert plan["density_backend"] == activation["density_backend"]
+    assert plan["feed_composition"] == pytest.approx([0.5, 0.5])
+    assert plan["temperature"] == pytest.approx(300.0)
+    assert plan["pressure"] == pytest.approx(1.0e6)
+
+    assert layout["family_key"] == "neutral_lle"
+    assert layout["route"] == "neutral_lle"
+    assert layout["phase_count"] == 2
+    assert layout["species_count"] == 2
+    assert layout["variable_count"] == payload["variable_count"]
+    assert layout["phase_amount_indices"] == [[0, 1], [3, 4]]
+    assert layout["phase_volume_indices"] == [2, 5]
+
+
 @pytest.mark.parametrize(
     ("route", "composition_role"),
     [
@@ -220,14 +305,13 @@ def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
         ("bubble_temperature", "liquid"),
         ("dew_pressure", "vapor"),
         ("dew_temperature", "vapor"),
-        ("neutral_lle", "feed"),
         ("electrolyte_lle", "feed"),
         ("reactive_speciation", "feed"),
         ("reactive_lle", "feed"),
         ("reactive_electrolyte_lle", "feed"),
     ],
 )
-def test_activation_plan_builder_rejects_non_flash_routes(route: str, composition_role: str) -> None:
+def test_activation_plan_builder_rejects_non_activation_routes(route: str, composition_role: str) -> None:
     mix = _neutral_binary_mixture()
 
     with pytest.raises(_core.NativeValueError, match="activation-plan-ineligible"):

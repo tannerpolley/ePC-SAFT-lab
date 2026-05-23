@@ -49,9 +49,9 @@ class Equilibrium:
     def solve(self, *, solver_options: Mapping[str, Any] | Any = None) -> Any:
         """Solve the already configured equilibrium problem."""
 
-        from ..equilibrium.workflows import _solve_selector_vle
+        from ..equilibrium.workflows import _solve_selector_route
 
-        result = _solve_selector_vle(self.mixture.native, self._problem, options=solver_options)
+        result = _solve_selector_route(self.mixture.native, self._problem, options=solver_options)
         return _require_exact_hessian(result, method=f"Equilibrium(route='{self._problem.route}').solve()")
 
 

@@ -41,4 +41,11 @@ ActivationPlan build_neutral_tp_flash_activation_plan(
     const std::vector<double>& feed_composition
 );
 
+ActivationPlan build_neutral_lle_activation_plan(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<double>& feed_composition
+);
+
 }  // namespace epcsaft::native::equilibrium

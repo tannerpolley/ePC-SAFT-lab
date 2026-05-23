@@ -190,12 +190,39 @@ NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_tp_flash_nlp_contract(
     const epcsaft::native::equilibrium::VariableLayout& layout
 );
 
+NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_lle_nlp_contract(
+    const add_args& args,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+);
+
 std::unique_ptr<NlpProblem> make_neutral_tp_flash_eos_problem(
     const add_args& args,
     double temperature,
     double target_pressure,
     const std::vector<double>& feed_composition,
     const std::string& problem_name = "neutral_tp_flash_eos"
+);
+
+std::unique_ptr<NlpProblem> make_neutral_two_phase_eos_problem(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts,
+    const std::string& problem_name = "neutral_two_phase_eos",
+    double minimum_phase_distance = 0.0
+);
+
+std::unique_ptr<NlpProblem> make_neutral_two_phase_eos_problem_from_feed(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    const std::string& problem_name = "neutral_two_phase_eos",
+    double minimum_phase_distance = 0.0
 );
 
 IpoptSolveResult solve_neutral_two_phase_eos_ipopt(
@@ -222,7 +249,8 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     double pressure_tolerance,
     double chemical_potential_tolerance,
     double phase_distance_tolerance,
-    const std::vector<double>& charges = {}
+    const std::vector<double>& charges = {},
+    bool phase_distance_constraint = false
 );
 
 NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
@@ -300,6 +328,18 @@ NeutralTwoPhaseEosRouteResult solve_neutral_tp_flash_eos_route(
 );
 
 NeutralTwoPhaseEosRouteResult solve_activated_neutral_tp_flash_eos_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+);
+
+NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
     const add_args& args,
     double temperature,
     double target_pressure,

@@ -3,6 +3,7 @@ from __future__ import annotations
 import inspect
 from types import MappingProxyType
 
+import numpy as np
 import pytest
 
 import epcsaft
@@ -39,7 +40,9 @@ ROUTE_CONSTRUCTOR_CASES = (
 
 
 @pytest.mark.parametrize(("route", "kwargs", "problem_kind"), ROUTE_CONSTRUCTOR_CASES)
-def test_equilibrium_constructor_configures_route_before_solve(route: str, kwargs: dict[str, object], problem_kind: str) -> None:
+def test_equilibrium_constructor_configures_route_before_solve(
+    route: str, kwargs: dict[str, object], problem_kind: str
+) -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
@@ -80,7 +83,20 @@ def test_equilibrium_requires_constructor_route() -> None:
             "T",
             HYDROCARBON_T,
         ),
-        ("flash", {"T": HYDROCARBON_T, "P": HYDROCARBON_BUBBLE_P, "z": HYDROCARBON_FLASH_Z}, "z", "x", HYDROCARBON_LIQUID_X),
+        (
+            "flash",
+            {"T": HYDROCARBON_T, "P": HYDROCARBON_BUBBLE_P, "z": HYDROCARBON_FLASH_Z},
+            "z",
+            "x",
+            HYDROCARBON_LIQUID_X,
+        ),
+        (
+            "lle",
+            {"T": HYDROCARBON_T, "P": HYDROCARBON_BUBBLE_P, "z": HYDROCARBON_FLASH_Z},
+            "z",
+            "x",
+            HYDROCARBON_LIQUID_X,
+        ),
     ),
 )
 def test_constructor_enforces_route_required_and_forbidden_specs(
@@ -308,8 +324,97 @@ def test_solver_options_reject_ignored_backend_selection_knobs() -> None:
     assert "solver_backend" not in solver_options_signature.parameters
 
 
+def test_equilibrium_lle_route_configures_neutral_liquid_pair_structure() -> None:
+    mixture = epcsaft.Mixture(_neutral_lle_parameter_set())
+
+    equilibrium = epcsaft.Equilibrium(mixture, route="lle", T=225.0, P=1.0e6, z=[0.5, 0.5])
+    structure = equilibrium.structure()
+
+    assert equilibrium.problem.route == "lle"
+    assert equilibrium.problem.selector_route == "neutral_lle"
+    assert equilibrium.problem.expected_phase_keys == ("liquid1", "liquid2")
+    assert structure.activation_key == "neutral_lle"
+    assert structure.expected_phase_keys == ("liquid1", "liquid2")
+    assert structure.hard_constraint_families == (
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_distance",
+    )
+    assert "phase_volume_gap" not in structure.hard_constraint_families
+
+
+def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
+    _skip_without_ipopt()
+    mixture = epcsaft.Mixture(_neutral_lle_parameter_set())
+
+    result = epcsaft.Equilibrium(mixture, route="lle", T=225.0, P=1.0e6, z=[0.5, 0.5]).solve(
+        solver_options={
+            "max_iterations": 260,
+            "tolerance": 1.0e-6,
+            "ipopt_iteration_history_limit": 8,
+            "ipopt_acceptable_tolerance": 1.0e-7,
+            "ipopt_constraint_violation_tolerance": 1.0e-8,
+            "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+            "ipopt_complementarity_tolerance": 1.0e-8,
+        }
+    )
+
+    assert result.problem_kind == "neutral_lle"
+    assert result.phase_labels == ["liquid1", "liquid2"]
+    assert tuple(result.phases) == ("liquid1", "liquid2")
+    assert set(result.phase_compositions) == {"liquid1", "liquid2"}
+    assert set(result.phase_fractions) == {"liquid1", "liquid2"}
+    assert result.phase("liquid1") is result.phases["liquid1"]
+    assert result.phase("liquid2") is result.phases["liquid2"]
+    assert sum(result.phase_fractions.values()) == pytest.approx(1.0, rel=1.0e-8)
+    assert np.max(np.abs(result.phase_compositions["liquid1"] - result.phase_compositions["liquid2"])) >= 1.0e-6
+    assert result.z == pytest.approx([0.5, 0.5])
+    with pytest.raises(AttributeError):
+        _ = result.x
+    with pytest.raises(AttributeError):
+        _ = result.y
+    with pytest.raises(AttributeError):
+        _ = result.liquid_fraction
+    with pytest.raises(AttributeError):
+        _ = result.vapor_fraction
+    payload = result.to_dict()
+    assert payload["phase_labels"] == ["liquid1", "liquid2"]
+    assert payload["x"] is None
+    assert payload["y"] is None
+    assert payload["liquid_fraction"] is None
+    assert payload["vapor_fraction"] is None
+    assert result.diagnostics["activation_plan"]["family_key"] == "neutral_lle"
+    assert result.route_diagnostics.constraint_families == (
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_distance",
+    )
+
+
+def test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs() -> None:
+    with pytest.raises(epcsaft.InputError, match="non-associating"):
+        epcsaft.Equilibrium(
+            epcsaft.Mixture(_associating_parameter_set()),
+            route="lle",
+            T=300.0,
+            P=1.0e6,
+            z=[0.5, 0.5],
+        )
+
+    with pytest.raises(epcsaft.InputError, match="neutral mixtures"):
+        epcsaft.Equilibrium(
+            epcsaft.Mixture(_ionic_parameter_set()),
+            route="lle",
+            T=300.0,
+            P=1.0e5,
+            z=[0.8, 0.1, 0.1],
+        )
+
+
 def _equilibrium() -> epcsaft.Equilibrium:
-    return epcsaft.Equilibrium(epcsaft.Mixture(hydrocarbon_parameter_set()), route="bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X)
+    return epcsaft.Equilibrium(
+        epcsaft.Mixture(hydrocarbon_parameter_set()), route="bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X
+    )
 
 
 def _configured_equilibrium(route: str, **kwargs: object) -> epcsaft.Equilibrium:
@@ -342,10 +447,59 @@ def _skip_without_ipopt() -> None:
         pytest.skip("native Ipopt is not compiled")
 
 
+def _neutral_lle_parameter_set() -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "m": np.asarray([1.0, 2.0]),
+            "s": np.asarray([3.5, 4.0]),
+            "e": np.asarray([150.0, 250.0]),
+            "MW": np.asarray([0.016, 0.030]),
+            "k_ij": np.asarray([[0.0, 0.5], [0.5, 0.0]]),
+        },
+        species=["A", "B"],
+    )
+
+
+def _associating_parameter_set() -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "MW": np.asarray([32.042e-3, 84.147e-3]),
+            "m": np.asarray([1.5255, 2.5303]),
+            "s": np.asarray([3.2300, 3.8499]),
+            "e": np.asarray([188.90, 278.11]),
+            "e_assoc": np.asarray([2899.5, 0.0]),
+            "vol_a": np.asarray([0.035176, 0.0]),
+            "assoc_scheme": ["2B", None],
+            "k_ij": np.asarray([[0.0, 0.051], [0.051, 0.0]]),
+            "z": np.asarray([0.0, 0.0]),
+            "dielc": np.asarray([33.05, 2.02]),
+        },
+        species=["Methanol", "Cyclohexane"],
+    )
+
+
+def _ionic_parameter_set() -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "MW": np.asarray([18.01528e-3, 22.98e-3, 35.45e-3]),
+            "m": np.asarray([1.2047, 1.0, 1.0]),
+            "s": np.asarray([2.7927, 2.8232, 2.7560]),
+            "e": np.asarray([353.95, 230.0, 170.0]),
+            "z": np.asarray([0.0, 1.0, -1.0]),
+            "dielc": np.asarray([78.09, 8.0, 8.0]),
+            "d_born": np.asarray([0.0, 3.445, 4.1]),
+            "f_solv": np.asarray([1.5, 1.0, 1.0]),
+        },
+        species=["H2O", "Na+", "Cl-"],
+    )
+
+
 def test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route() -> None:
     _skip_without_ipopt()
 
-    result = _configured_equilibrium("bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X).solve(solver_options=_solver_options())
+    result = _configured_equilibrium("bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X).solve(
+        solver_options=_solver_options()
+    )
 
     _assert_hydrocarbon_pair(result, problem_kind="neutral_bubble_p")
 
@@ -353,7 +507,9 @@ def test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route() -> None:
 def test_equilibrium_bubble_temperature_recovers_shared_hydrocarbon_point() -> None:
     _skip_without_ipopt()
 
-    result = _configured_equilibrium("bubble_temperature", P=HYDROCARBON_BUBBLE_P, x=HYDROCARBON_LIQUID_X).solve(solver_options=_solver_options())
+    result = _configured_equilibrium("bubble_temperature", P=HYDROCARBON_BUBBLE_P, x=HYDROCARBON_LIQUID_X).solve(
+        solver_options=_solver_options()
+    )
 
     _assert_hydrocarbon_pair(result, problem_kind="neutral_bubble_t")
 
@@ -361,7 +517,9 @@ def test_equilibrium_bubble_temperature_recovers_shared_hydrocarbon_point() -> N
 def test_equilibrium_dew_pressure_recovers_shared_hydrocarbon_point() -> None:
     _skip_without_ipopt()
 
-    result = _configured_equilibrium("dew_pressure", T=HYDROCARBON_T, y=HYDROCARBON_VAPOR_Y).solve(solver_options=_solver_options())
+    result = _configured_equilibrium("dew_pressure", T=HYDROCARBON_T, y=HYDROCARBON_VAPOR_Y).solve(
+        solver_options=_solver_options()
+    )
 
     _assert_hydrocarbon_pair(result, problem_kind="neutral_dew_p")
 
@@ -369,7 +527,9 @@ def test_equilibrium_dew_pressure_recovers_shared_hydrocarbon_point() -> None:
 def test_equilibrium_dew_temperature_recovers_shared_hydrocarbon_point() -> None:
     _skip_without_ipopt()
 
-    result = _configured_equilibrium("dew_temperature", P=HYDROCARBON_BUBBLE_P, y=HYDROCARBON_VAPOR_Y).solve(solver_options=_solver_options())
+    result = _configured_equilibrium("dew_temperature", P=HYDROCARBON_BUBBLE_P, y=HYDROCARBON_VAPOR_Y).solve(
+        solver_options=_solver_options()
+    )
 
     _assert_hydrocarbon_pair(result, problem_kind="neutral_dew_t")
 
@@ -377,7 +537,9 @@ def test_equilibrium_dew_temperature_recovers_shared_hydrocarbon_point() -> None
 def test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point() -> None:
     _skip_without_ipopt()
 
-    result = _configured_equilibrium("flash", T=HYDROCARBON_T, P=HYDROCARBON_BUBBLE_P, z=HYDROCARBON_FLASH_Z).solve(solver_options=_solver_options())
+    result = _configured_equilibrium("flash", T=HYDROCARBON_T, P=HYDROCARBON_BUBBLE_P, z=HYDROCARBON_FLASH_Z).solve(
+        solver_options=_solver_options()
+    )
 
     _assert_hydrocarbon_pair(result, problem_kind="neutral_tp_flash")
     assert result.split_detected is True
@@ -388,8 +550,7 @@ def test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point() -> None
     species_count = len(HYDROCARBON_FLASH_Z)
     local_variable_count = species_count + 1
     assert [list(row) for row in result.diagnostics["variable_layout"]["phase_amount_indices"]] == [
-        list(range(phase * local_variable_count, phase * local_variable_count + species_count))
-        for phase in range(2)
+        list(range(phase * local_variable_count, phase * local_variable_count + species_count)) for phase in range(2)
     ]
     assert list(result.diagnostics["variable_layout"]["phase_volume_indices"]) == [
         phase * local_variable_count + species_count for phase in range(2)
