@@ -33,6 +33,7 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 P_REF = 1.0e5
 DATASET = "2019_Bulow"
@@ -74,7 +75,7 @@ def build_params(
     model_mode: str = "epc",
 ) -> dict:
     z_feed = np.asarray([0.5, 0.25, 0.25], dtype=float)
-    params = get_prop_dict(DATASET, species, z_feed, t, user_options={})
+    params = get_prop_dict(paper_validation_parameter_path(DATASET), species, z_feed, t, user_options={})
     params["debug"] = False
 
     if not use_kij:

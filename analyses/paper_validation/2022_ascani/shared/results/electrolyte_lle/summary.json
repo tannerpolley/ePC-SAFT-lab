@@ -12,7 +12,7 @@
   "command_list": [
     "uv run python scripts/dev/doctor.py --require-ipopt",
     "uv run python run_pytest.py tests/native/equilibrium/test_route_builders.py tests/native/equilibrium/test_electrolyte_lle_residual_surface.py tests/native/equilibrium/test_electrolyte_lle_residual_jacobian.py tests/equilibrium/electrolyte -q",
-    "uv run python analyses\\paper_validation\\native\\2022_ascani\\scripts\\run_all.py",
+    "uv run python analyses\\paper_validation\\2022_ascani\\scripts\\run_all.py",
     "uv run python run_pytest.py tests/workflows/paper_validation/test_ascani_2022_lle_validation.py tests/workflows/benchmarks/test_benchmark_literature_suite.py -q",
     "uv run python scripts/benchmarks/benchmark_literature_suite.py --case ascani_2022_distributed_ion_lle --json build/validation/ascani_2022_lle.json"
   ],

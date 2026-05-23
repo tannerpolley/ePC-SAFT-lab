@@ -63,7 +63,6 @@ Data Ownership
 
 Use ``data/reference/`` for stable reusable inputs:
 
-- package example parameter datasets under ``data/reference/epcsaft_parameters/``
 - equilibrium benchmark fixtures under ``data/reference/equilibrium_benchmarks/``
 - reusable literature data such as ``MIAC``, ``osmotic``, ``pure_component``, and regression tables
 
@@ -71,7 +70,7 @@ Use ``data/reference/`` for stable reusable inputs shared by multiple analyses. 
 
 For full paper-validation analyses, ePC-SAFT parameter datasets and parameter CSV bundles used to execute the analysis must be analysis-owned input snapshots directly under ``analyses/paper_validation/<short_id>/parameters/``.
 The ``parameters/`` folder should contain ``mixed/``, ``pure/``, and ``user_options.json`` directly; do not add a nested dataset-name folder such as ``parameters/2005_Cameretti/``.
-Root ``data/reference/epcsaft_parameters/`` remains the shared curation/source tree.
+Root ``data/reference/epcsaft_parameters/`` is retained only as a pointer README for the retired shared dataset tree.
 Direct in-code parameter dictionaries are acceptable for focused tests, tiny synthetic fixtures, and smoke checks, but full validation analyses should use the analysis-local dataset snapshot.
 
 Paper-validation source papers are copied under ``docs/md/`` and ``docs/pdf/``. Figure folders must be named ``figure_NN`` and contain only ``source/``, ``scripts/``, and ``results/``. Source paper figures live under ``figures/figure_NN/source/`` as PNG files, extracted source tables live under ``tables/table_###/source/`` as Markdown snippets plus CSV conversions, paper-wide source manifests live under ``shared/source/``, and analysis-wide generated artifacts live under ``shared/results/``.

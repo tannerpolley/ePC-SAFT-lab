@@ -36,6 +36,7 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms, epcsaft_pressure
 import _plot_common as common
 
@@ -82,7 +83,13 @@ def _infinite_dilution_state(ion: str, d_ion_mode: int) -> dict[str, object]:
     species = _species_for_ion(ion)
     x = np.asarray([EPS, EPS, 1.0 - 2.0 * EPS], dtype=float)
     user_options = {"elec_model": {"DH_model": {"d_ion_mode": d_ion_mode}}}
-    params = get_prop_dict("2020_Bulow", species, x, T_REF, user_options=user_options)
+    params = get_prop_dict(
+        paper_validation_parameter_path("2020_Bulow"),
+        species,
+        x,
+        T_REF,
+        user_options=user_options,
+    )
     rho = epcsaft_density(T_REF, P_REF, x, params, phase="liq")
 
     z = np.asarray(params.get("z", []), dtype=float)

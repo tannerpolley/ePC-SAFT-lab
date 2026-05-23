@@ -33,6 +33,7 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import epcsaft_activity_coefficient, epcsaft_density
 import _plot_common as common
 
@@ -124,7 +125,7 @@ def _molality_to_species_molefraction(molality: float, salt: str, solvent: str) 
 
 def _build_params(dataset: str, salt: str, solvent: str) -> dict:
     x_ref = _molality_to_species_molefraction(1e-8, salt, solvent)
-    return get_prop_dict(dataset, _species_for_combo(salt, solvent), x_ref, T_REF)
+    return get_prop_dict(paper_validation_parameter_path(dataset), _species_for_combo(salt, solvent), x_ref, T_REF)
 
 
 def _miac_curve(dataset: str, salt: str, solvent: str, x_grid: np.ndarray) -> np.ndarray:

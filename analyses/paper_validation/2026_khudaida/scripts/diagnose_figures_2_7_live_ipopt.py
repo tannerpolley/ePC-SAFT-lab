@@ -23,6 +23,7 @@ else:
 import epcsaft
 from epcsaft import _core
 from epcsaft.equilibrium import _native_timeout_seconds, neutral_two_phase_eos_tolerances
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 
 FIGURE_CASES: dict[int, tuple[float, float]] = {
@@ -36,7 +37,7 @@ FIGURE_CASES: dict[int, tuple[float, float]] = {
 ANALYSIS_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT_DIR = ANALYSIS_ROOT / "diagnostics" / "figures_2_7_live_ipopt"
 P_REF = 1.0e5
-PARAMETER_DATASET = "2026_Khudaida"
+PARAMETER_DATASET = paper_validation_parameter_path("2026_Khudaida")
 SPECIES = ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
 MW_FORMULA = np.asarray([18.01528e-3, 46.068e-3, 74.1216e-3, 58.43e-3], dtype=float)
 RESIDUAL_LABELS = [

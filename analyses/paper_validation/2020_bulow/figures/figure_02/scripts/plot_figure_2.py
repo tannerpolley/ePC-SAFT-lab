@@ -36,6 +36,7 @@ require_epcsaft_install()
 
 import _plot_common as common
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_solvation_free_energy
 
 DATA_PATH = common.analysis_data_path(__file__, "water_comparisons.csv", kind="source")
@@ -75,7 +76,7 @@ REVISED_CASES = {
 
 def _compute_gsolv(dataset_name: str, species: list[str], ion: str) -> float:
     x = np.asarray([1.0e-8, 1.0e-8, 1.0 - 2.0e-8], dtype=float)
-    params = get_prop_dict(dataset_name, species, x, T_REF, user_options={})
+    params = get_prop_dict(paper_validation_parameter_path(dataset_name), species, x, T_REF, user_options={})
     rho = epcsaft_density(T_REF, P_REF, x, params, phase="liq")
     values = epcsaft_solvation_free_energy(T_REF, rho, x, params, species=species)
     return float(values[ion]) / 1000.0

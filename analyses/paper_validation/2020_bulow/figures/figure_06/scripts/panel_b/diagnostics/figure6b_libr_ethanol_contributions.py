@@ -39,6 +39,7 @@ from scripts.plot_outputs import paper_validation_dir, save_plot_figure
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms, epcsaft_pressure
 
 matplotlib.use("Agg")
@@ -204,7 +205,13 @@ def _load_exp_data(path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 def _build_params(user_options: Dict[str, object] | None = None) -> Dict[str, object]:
     x_ref = _molality_to_species_molefraction(1e-8)
-    return get_prop_dict("2020_Bulow", SPECIES, x_ref, T_REF, user_options=user_options or {})
+    return get_prop_dict(
+        paper_validation_parameter_path("2020_Bulow"),
+        SPECIES,
+        x_ref,
+        T_REF,
+        user_options=user_options or {},
+    )
 
 
 def _inf_dilution_state(x: np.ndarray, rho: float, params: Dict[str, object]) -> Tuple[np.ndarray, float]:

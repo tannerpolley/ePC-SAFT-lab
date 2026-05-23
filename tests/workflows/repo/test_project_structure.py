@@ -60,25 +60,6 @@ ANALYSIS_ROOTS = {
     "osmotic_validation": REPO_ROOT / "analyses" / "data_validation" / "osmotic_validation",
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
 }
-PAPER_VALIDATION_PARAMETER_SNAPSHOTS = {
-    "analyses/paper_validation/2001_gross": "2001_Gross",
-    "analyses/paper_validation/2002_gross": "2002_Gross",
-    "analyses/paper_validation/2024_hubach": "2024_Hubach",
-    "analyses/paper_validation/2024_yu": "2024_Yu",
-    "analyses/paper_validation/2026_khudaida": "2026_Khudaida",
-    "analyses/paper_validation/2026_rezaee": "2026_Rezaee",
-    "analyses/paper_validation/2005_cameretti": "2005_Cameretti",
-    "analyses/paper_validation/2008_held": "2008_Held",
-    "analyses/paper_validation/2012_held": "2012_Held",
-    "analyses/paper_validation/2014_held": "2014_Held",
-    "analyses/paper_validation/2015_baygi": "2015_Baygi",
-    "analyses/paper_validation/2019_bulow": "2019_Bulow",
-    "analyses/paper_validation/2020_bulow": "2020_Bulow",
-    "analyses/paper_validation/2021_bulow": "2021_Bulow",
-    "analyses/paper_validation/2022_ascani": "2022_Ascani",
-    "analyses/paper_validation/2023_ascani": "2023_Ascani",
-    "analyses/paper_validation/2025_figiel": "2025_Figiel",
-}
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
 CATEGORY_ROOTS = {
     REPO_ROOT / "analyses" / "paper_validation",
@@ -974,38 +955,35 @@ def test_top_level_public_exports_load_only_the_requested_extension() -> None:
 
 
 def test_reference_data_root_is_canonical() -> None:
-    assert (REPO_ROOT / "data" / "reference" / "epcsaft_parameters").is_dir()
+    legacy_parameter_root = REPO_ROOT / "data" / "reference" / "epcsaft_parameters"
+    assert legacy_parameter_root.is_dir()
+    assert {path.name for path in legacy_parameter_root.iterdir()} == {"README.md"}
+    readme = (legacy_parameter_root / "README.md").read_text(encoding="utf-8")
+    assert "analyses/paper_validation/<paper_id>/parameters" in readme
     assert not (REPO_ROOT / "data" / "epcsaft_parameters").exists()
 
 
 def test_paper_validation_parameter_inputs_are_local_snapshots() -> None:
-    reference_root = REPO_ROOT / "data" / "reference" / "epcsaft_parameters"
-
-    for analysis_rel, dataset in sorted(PAPER_VALIDATION_PARAMETER_SNAPSHOTS.items()):
+    for analysis_rel in sorted(PAPER_VALIDATION_DOC_ROOTS):
         parameter_root = REPO_ROOT / analysis_rel / "parameters"
         assert parameter_root.is_dir(), analysis_rel
-        assert not (parameter_root / dataset).exists(), f"{analysis_rel}: nested dataset folder is not allowed"
         assert (parameter_root / "mixed").is_dir(), analysis_rel
         assert (parameter_root / "pure").is_dir(), analysis_rel
         assert (parameter_root / "user_options.json").is_file(), analysis_rel
-
-        source_dataset = reference_root / dataset
-        assert source_dataset.is_dir(), dataset
-
-        source_files = {
-            path.relative_to(source_dataset).as_posix(): path
-            for path in source_dataset.rglob("*")
-            if path.is_file()
-        }
-        input_files = {
-            path.relative_to(parameter_root).as_posix(): path
-            for path in parameter_root.rglob("*")
-            if path.is_file()
-        }
-        assert set(input_files) == set(source_files), f"{analysis_rel}: {dataset}"
-
-        for relpath, source_path in source_files.items():
-            assert input_files[relpath].read_bytes() == source_path.read_bytes(), f"{analysis_rel}: {relpath}"
+        dataset_suffixes = (
+            "_Gross",
+            "_Held",
+            "_Baygi",
+            "_Ascani",
+            "_Yu",
+            "_Rezaee",
+            "_Cameretti",
+            "_Bulow",
+            "_Figiel",
+            "_Khudaida",
+            "_Hubach",
+        )
+        assert not any(child.is_dir() for child in parameter_root.iterdir() if child.name.endswith(dataset_suffixes))
 
 
 def test_paper_validation_parameter_bundles_are_complete_and_uniform() -> None:

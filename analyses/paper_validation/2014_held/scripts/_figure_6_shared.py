@@ -28,6 +28,7 @@ if str(REPO_ROOT) not in sys.path:
 
 import _common as common
 from scripts._env import require_epcsaft_install
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 require_epcsaft_install()
 
@@ -110,7 +111,7 @@ def _apply_held_figure6_overrides(params: dict, species: list[str]) -> dict:
 
 
 def _held_figure6_params(feed_x: np.ndarray, user_options: dict = MODEL_USER_OPTIONS) -> dict:
-    params = get_prop_dict("2014_Held", SPECIES, feed_x, T_FIGURE, user_options=user_options)
+    params = get_prop_dict(paper_validation_parameter_path("2014_Held"), SPECIES, feed_x, T_FIGURE, user_options=user_options)
     return _apply_held_figure6_overrides(params, SPECIES)
 
 
@@ -133,7 +134,13 @@ def _solve_lle(
         beta = float(beta_organic)
         feed = (1.0 - beta) * aq0 + beta * org0
         neutral_species = ["H2O", "Butanol"]
-        params = get_prop_dict("2014_Held", neutral_species, feed, T_FIGURE, user_options=MODEL_USER_OPTIONS)
+        params = get_prop_dict(
+            paper_validation_parameter_path("2014_Held"),
+            neutral_species,
+            feed,
+            T_FIGURE,
+            user_options=MODEL_USER_OPTIONS,
+        )
         mixture = epcsaft.ePCSAFTMixture.from_params(
             _apply_held_figure6_overrides(params, neutral_species),
             species=neutral_species,

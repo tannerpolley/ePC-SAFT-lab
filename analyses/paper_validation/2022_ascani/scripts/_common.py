@@ -9,13 +9,14 @@ from typing import Any
 
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.dev.native_runtime_env import apply_to_current_process
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
-ANALYSIS_DIR = REPO_ROOT / "analyses" / "paper_validation" / "native" / "2022_ascani"
+ANALYSIS_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2022_ascani"
 SOURCE_CSV = REPO_ROOT / "data" / "reference" / "multiphase" / "ascani_case2_model_comparison.csv"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
 RESULTS_DIR = ANALYSIS_DIR / "results" / "electrolyte_lle"
@@ -199,7 +200,7 @@ def _current_result():
     import epcsaft
     from epcsaft import ePCSAFTMixture
 
-    mix = ePCSAFTMixture.from_dataset("2022_Ascani", SPECIES, FEED, TEMPERATURE_K)
+    mix = ePCSAFTMixture.from_dataset(paper_validation_parameter_path("2022_Ascani"), SPECIES, FEED, TEMPERATURE_K)
     options = epcsaft.EquilibriumOptions(max_iterations=500, tolerance=1.0e-8, min_composition=1.0e-12)
     result = mix.equilibrium(kind="electrolyte_lle", T=TEMPERATURE_K, P=PRESSURE_PA, z=FEED, options=options)
     return mix, result, epcsaft.runtime_build_info()["native_dependencies"]["ipopt"]

@@ -40,6 +40,7 @@ from scripts.plot_outputs import figure_output_path, save_plot_figure
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import as_mixture
 
 T_REF = 298.15
@@ -266,7 +267,13 @@ def build_params(
     dataset_name: str, salt: str, solvent_system: str, comp: Dict[str, float], user_options: dict | None = None
 ) -> dict:
     x_ref = molality_to_species_molefraction(1e-8, salt, solvent_system, comp)
-    return get_prop_dict(dataset_name, species_for_combo(salt, solvent_system), x_ref, T_REF, user_options=user_options)
+    return get_prop_dict(
+        paper_validation_parameter_path(dataset_name),
+        species_for_combo(salt, solvent_system),
+        x_ref,
+        T_REF,
+        user_options=user_options,
+    )
 
 
 def pair_key_for_salt(salt: str) -> str:
@@ -470,7 +477,13 @@ def _gsolv_ion_cached(
     salt = ION_TO_REFERENCE_SALT[ion]
     species = species_for_combo(salt, solvent_system)
     x = molality_to_species_molefraction(1e-8, salt, solvent_system, comp)
-    params = get_prop_dict(dataset_name, species, x, T_REF, user_options=user_options)
+    params = get_prop_dict(
+        paper_validation_parameter_path(dataset_name),
+        species,
+        x,
+        T_REF,
+        user_options=user_options,
+    )
     mixture = as_mixture(params, species=species)
     state = mixture.state(T=T_REF, x=x, P=P_REF, phase="liq")
     values = state.solvation_free_energy(species=species)

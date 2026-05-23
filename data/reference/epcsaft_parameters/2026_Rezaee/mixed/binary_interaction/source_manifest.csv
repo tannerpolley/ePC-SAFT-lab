@@ -1,9 +1,0 @@
-parameter,component_i,component_j,value,source
-l_ij,*,*,0,default zero for unpublished values
-k_hb_ij,*,*,0,default zero for unpublished values
-k_ij,DES,TOPO,0.0623,Rezaee2026_Table9
-k_ij,DES,RLi,0.0104,Rezaee2026_Table9
-k_ij,DES,RNa,0.0158,Rezaee2026_Table9
-k_ij,TOPO,RLi,0.0115,Rezaee2026_Table9
-k_ij,TOPO,RNa,-0.0139,Rezaee2026_Table9
-k_ij,RLi,RNa,-0.0127,Rezaee2026_Table9

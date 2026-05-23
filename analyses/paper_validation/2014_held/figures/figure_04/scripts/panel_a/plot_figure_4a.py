@@ -30,6 +30,7 @@ if str(REPO_ROOT) not in sys.path:
 
 import _common as common
 from scripts._env import require_epcsaft_install
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 require_epcsaft_install()
 
@@ -89,7 +90,7 @@ def _mole_fraction_from_molalities(m_kcl: float, m_aa: float) -> np.ndarray:
 def _build_strategy2_params(solute_species: str) -> dict:
     species = ["K+", "Cl-", solute_species, "H2O"]
     x_ref = _mole_fraction_from_molalities(1.0, 1e-8)
-    return get_prop_dict("2014_Held", species, x_ref, T_REF, user_options={})
+    return get_prop_dict(paper_validation_parameter_path("2014_Held"), species, x_ref, T_REF, user_options={})
 
 
 def _build_strategy1_like_params(solute_species: str) -> dict:

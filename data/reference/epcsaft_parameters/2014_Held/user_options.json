@@ -1,8 +1,0 @@
-{
-  "elec_model": {
-    "rel_perm": {
-      "rule": "constant"
-    },
-    "include_born_model": false
-  }
-}

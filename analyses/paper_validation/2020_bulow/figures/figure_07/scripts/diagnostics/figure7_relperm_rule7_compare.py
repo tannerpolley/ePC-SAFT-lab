@@ -34,6 +34,7 @@ require_epcsaft_install()
 
 import plot_figure_7 as fig7
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import epcsaft_activity_coefficient, epcsaft_density
 from _plot_common import configure_style, save_figure
 
@@ -88,7 +89,11 @@ def _read_paper_points(panel: dict[str, object]) -> tuple[np.ndarray, np.ndarray
 def _curve(dataset: str, salt: str, solvent: str, x_vals: np.ndarray, user_options: dict | None = None) -> np.ndarray:
     x_ref = fig7._molality_to_species_molefraction(1e-8, salt, solvent)
     params = get_prop_dict(
-        dataset, fig7._species_for_combo(salt, solvent), x_ref, fig7.T_REF, user_options=user_options or {}
+        paper_validation_parameter_path(dataset),
+        fig7._species_for_combo(salt, solvent),
+        x_ref,
+        fig7.T_REF,
+        user_options=user_options or {},
     )
     species = fig7._species_for_combo(salt, solvent)
     pair_key = None

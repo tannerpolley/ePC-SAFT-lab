@@ -1,7 +1,7 @@
 """Dataset-driven MIAC fit validation.
 
-This script validates MIAC datasets using parameter sets from the packaged
-`epcsaft.parameters` datasets.
+This script validates MIAC datasets using analysis-owned paper-validation
+parameter snapshots.
 
 Experimental data source is canonical `data/reference/MIAC/**` with `miac` and `miac_m` values.
 
@@ -45,6 +45,7 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import as_mixture
 from scripts.plot_outputs import fits_plot_path, save_plot_figure
 
@@ -633,7 +634,7 @@ def build_params_for_variant(
         1e-8, str(combo["salt"]), str(combo["solvent_system"]), dict(combo.get("comp", {}))
     )
     species = _species_for_combo(str(combo["salt"]), str(combo["solvent_system"]))
-    return get_prop_dict(dataset_name, species, x_ref, T_REF, user_options=user_options)
+    return get_prop_dict(paper_validation_parameter_path(dataset_name), species, x_ref, T_REF, user_options=user_options)
 
 
 def calc_gamma_m_curve(

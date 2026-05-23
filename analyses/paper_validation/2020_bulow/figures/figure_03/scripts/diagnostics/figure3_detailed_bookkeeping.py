@@ -36,6 +36,7 @@ require_epcsaft_install()
 import _model_overlay as overlay
 import _plot_common as common
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import epcsaft_density, epcsaft_fugacity_coefficient_terms, epcsaft_pressure
 
 DATA_PATH = common.analysis_data_path(FIGURE_DIR, "water_contributions.csv", kind="processed", category="figure_3")
@@ -145,7 +146,7 @@ def _effective_diameters(params: dict[str, object], t: float) -> np.ndarray:
 def _state_for_ion(ion: str) -> dict[str, object]:
     species = overlay._species_for_ion(ion, "water")
     x = np.asarray([EPS, EPS, 1.0 - 2.0 * EPS], dtype=float)
-    params = get_prop_dict("2020_Bulow", species, x, T_REF)
+    params = get_prop_dict(paper_validation_parameter_path("2020_Bulow"), species, x, T_REF)
     rho = epcsaft_density(T_REF, P_REF, x, params, phase="liq")
     z = np.asarray(params.get("z", []), dtype=float)
     idx_ion = np.where(np.abs(z) > 1.0e-12)[0]

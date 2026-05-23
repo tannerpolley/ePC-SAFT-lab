@@ -45,6 +45,7 @@ def _fast_machine() -> str:
 platform.machine = _fast_machine
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import epcsaft_activity_coefficient, epcsaft_density, epcsaft_fugacity_coefficient
 
 T_REF = 298.15
@@ -308,7 +309,11 @@ def build_params(
 ) -> dict:
     x_ref = molality_to_species_molefraction(1e-8, salt, solvent_system, comp)
     return get_prop_dict(
-        dataset, species_for_combo(salt, solvent_system), x_ref, T_REF, user_options=user_options or {}
+        paper_validation_parameter_path(dataset),
+        species_for_combo(salt, solvent_system),
+        x_ref,
+        T_REF,
+        user_options=user_options or {},
     )
 
 

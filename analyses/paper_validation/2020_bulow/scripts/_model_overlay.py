@@ -9,6 +9,7 @@ from scripts._env import require_epcsaft_install
 require_epcsaft_install()
 
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import (
     epcsaft_density,
     epcsaft_solvation_free_energy,
@@ -72,7 +73,13 @@ def gsolv_ion(variant: str, ion: str, solvent: str, d_born_mode: int | None = No
     dataset_name = VARIANT_DATASET[variant]
     species = _species_for_ion(ion, solvent)
     x = np.asarray([EPS, EPS, 1.0 - 2.0 * EPS], dtype=float)
-    params = get_prop_dict(dataset_name, species, x, T_REF, user_options=_user_options_for_overrides(d_born_mode))
+    params = get_prop_dict(
+        paper_validation_parameter_path(dataset_name),
+        species,
+        x,
+        T_REF,
+        user_options=_user_options_for_overrides(d_born_mode),
+    )
     rho = epcsaft_density(T_REF, P_REF, x, params, phase="liq")
     values = epcsaft_solvation_free_energy(T_REF, rho, x, params, species=species)
     return float(values[ion]) / 1000.0
@@ -83,7 +90,13 @@ def _infinite_dilution_terms(variant: str, ion: str, solvent: str, d_born_mode: 
     dataset_name = VARIANT_DATASET[variant]
     species = _species_for_ion(ion, solvent)
     x = np.asarray([EPS, EPS, 1.0 - 2.0 * EPS], dtype=float)
-    params = get_prop_dict(dataset_name, species, x, T_REF, user_options=_user_options_for_overrides(d_born_mode))
+    params = get_prop_dict(
+        paper_validation_parameter_path(dataset_name),
+        species,
+        x,
+        T_REF,
+        user_options=_user_options_for_overrides(d_born_mode),
+    )
     rho = epcsaft_density(T_REF, P_REF, x, params, phase="liq")
 
     z = np.asarray(params.get("z", []), dtype=float)

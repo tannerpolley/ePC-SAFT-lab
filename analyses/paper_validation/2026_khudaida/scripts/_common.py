@@ -52,10 +52,11 @@ import epcsaft
 from scripts.validation.equilibrium_core.confidence import explicit_to_formula
 from scripts.validation.equilibrium_core.confidence import formula_to_explicit
 from epcsaft.parameters import get_prop_dict
+from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 P_REF = 1.0e5
 MODEL_SOLVE_MAX_ITERATIONS = 30
-PARAMETER_DATASET = "2026_Khudaida"
+PARAMETER_DATASET = paper_validation_parameter_path("2026_Khudaida")
 SPECIES = ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
 FORMULA_SPECIES = ["H2O", "Ethanol", "Isobutanol", "NaCl"]
 IDX5 = {name: i for i, name in enumerate(SPECIES)}

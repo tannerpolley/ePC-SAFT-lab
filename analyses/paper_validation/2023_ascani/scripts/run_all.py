@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -18,7 +18,7 @@ apply_to_current_process()
 
 import epcsaft
 
-ANALYSIS_DIR = REPO_ROOT / "analyses" / "paper_validation" / "native" / "2023_ascani"
+ANALYSIS_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2023_ascani"
 SOURCE_MD = (
     REPO_ROOT
     / "docs"

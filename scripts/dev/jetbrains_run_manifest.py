@@ -217,12 +217,6 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/docs/sync_algorithm_registry.py",
     ),
     RunConfigSpec(
-        name="Build Parameter Catalog",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/build_epcsaft_parameter_catalog.py",
-    ),
-    RunConfigSpec(
         name="Curate Paper Validation Parameters",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_DOCS_REPORTS,

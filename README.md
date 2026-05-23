@@ -170,7 +170,7 @@ mixture = Mixture(parameters, components=species)
 state = State(mixture, T=298.15, P=101325.0, x=np.asarray([0.9998, 1e-4, 1e-4]))
 ```
 
-The source checkout contains reference/example datasets under `data/reference/epcsaft_parameters/`. Do not assume every installed wheel contains those source-checkout reference folders.
+Full paper-validation parameter snapshots live under `analyses/paper_validation/<paper_id>/parameters/`. The old `data/reference/epcsaft_parameters/` path is retained only as a pointer for agents or users looking for the retired shared dataset tree.
 
 ## Optional Ipopt Support
 

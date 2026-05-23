@@ -1,8 +1,9 @@
 """Dataset-driven parameter loader for the ePC-SAFT runtime.
 
-This module reads repository-owned parameter sets from
-``data/reference/epcsaft_parameters/<dataset>/`` and also accepts external dataset
-directories with the same on-disk layout.
+This module reads external parameter dataset directories with the expected
+on-disk layout. The historical ``data/reference/epcsaft_parameters`` source
+tree is now a pointer-only location; full paper-validation bundles live under
+``analyses/paper_validation/<paper_id>/parameters``.
 
 Public API:
     - get_prop_dict(dataset_name, species, x, T, user_options=None)
@@ -30,7 +31,7 @@ from .sources import (
     load_canonical_user_options as _load_canonical_user_options,
 )
 
-DATASET_ROOT = Path(__file__).resolve().parents[2] / "data" / "reference" / "epcsaft_parameters"
+DATASET_ROOT = Path(__file__).resolve().parents[3] / "data" / "reference" / "epcsaft_parameters"
 
 BASE_KEYS = ["MW", "m", "s", "e", "e_assoc", "vol_a", "assoc_scheme", "z", "dielc"]
 OPTIONAL_KEYS = ["d_born", "f_solv"]
