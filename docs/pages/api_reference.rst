@@ -43,11 +43,13 @@ Equilibrium
    :undoc-members:
    :no-index:
 
-The trusted public neutral VLE proof set is
+The trusted public neutral two-phase proof set is
 ``Equilibrium(mixture, route=..., ...).solve()`` with route specs
 ``bubble_pressure``, ``bubble_temperature``, ``dew_pressure``,
-``dew_temperature``, and certified two-phase ``flash`` with native Ipopt and
-exact Hessian callbacks.
+``dew_temperature``, certified two-phase ``flash``, and neutral nonassociating
+``lle`` with native Ipopt and exact Hessian callbacks. ``route="lle"`` returns
+``liquid1`` and ``liquid2`` phases; the VLE ``x`` and ``y`` conveniences remain
+limited to liquid/vapor routes.
 
 Regression
 ----------

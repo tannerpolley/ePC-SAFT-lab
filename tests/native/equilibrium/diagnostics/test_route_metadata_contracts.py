@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import epcsaft._core as _core
-from tests.support.equilibrium_cases import _neutral_binary_mixture
+from tests.support.equilibrium_cases import _neutral_binary_mixture, _nonideal_lle_binary_mixture
 
 pytestmark = pytest.mark.native_contract
 
@@ -79,17 +79,40 @@ def test_deleted_native_equilibrium_route_entrypoints_are_absent() -> None:
     assert [name for name in sorted(deleted) if hasattr(_core, name)] == []
 
 
-def test_selector_rejects_declared_not_exposed_route_family() -> None:
-    mix = _neutral_binary_mixture()
+def test_selector_contract_declares_neutral_lle_metadata_without_solving() -> None:
+    mix = _nonideal_lle_binary_mixture()
 
-    native_value_error = getattr(_core, "NativeValueError", ValueError)
-    with pytest.raises(native_value_error, match="selector-ineligible"):
-        _core._native_equilibrium_selector_contract(
-            mix._native,
-            {
-                "route": "neutral_lle",
-                "temperature": 300.0,
-                "composition": [0.35, 0.65],
-                "composition_role": "feed",
-            },
-        )
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "neutral_lle",
+            "temperature": 300.0,
+            "pressure": 1.0e6,
+            "composition": [0.5, 0.5],
+            "composition_role": "feed",
+        },
+    )
+
+    assert payload["selector_family"] == "neutral_lle"
+    assert payload["route"] == "neutral_lle"
+    assert payload["composition_role"] == "feed"
+    assert payload["problem_name"] == "neutral_lle_eos"
+    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume"
+    assert payload["density_backend"] == "explicit_phase_volume_pressure_constraint"
+    assert payload["residual_families"] == [
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_distance",
+    ]
+    assert payload["constraint_families"] == [
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_distance",
+    ]
+    assert "phase_volume_gap" not in payload["constraint_families"]
+    assert payload["activation"]["proof_routes"] == [
+        "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
+    ]
+    assert payload["activation_plan"]["phase_keys"] == ["liquid1", "liquid2"]
+    assert payload["activation_plan"]["phase_kinds"] == ["liquid", "liquid"]

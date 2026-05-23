@@ -291,9 +291,7 @@ def _registered_ipopt_public_routes() -> list[str]:
 def _equilibrium_activation_capabilities(*, ipopt_route_available: bool) -> dict[str, object]:
     rows = [_capability_value(row) for row in EQUILIBRIUM_ACTIVATION_MATRIX]
     production_families = [str(row["key"]) for row in rows if bool(row["production_exposed"])]
-    declared_not_exposed = [
-        str(row["key"]) for row in rows if str(row["exposure_status"]) == "declared_not_exposed"
-    ]
+    declared_not_exposed = [str(row["key"]) for row in rows if str(row["exposure_status"]) == "declared_not_exposed"]
     return {
         "source": "native_cpp",
         "rows": rows,
@@ -319,13 +317,13 @@ def _capability_evidence_summary(
         "problem_object_classes": list(EQUILIBRIUM_PROBLEM_OBJECT_CLASSES),
         "regression_keys": list(REGRESSION_CAPABILITY_KEYS),
         "regression_claim_dimensions": list(REGRESSION_CAPABILITY_DIMENSIONS),
-        "regression_target_kind_row_count": len(regression_target_rows) if isinstance(regression_target_rows, list) else 0,
+        "regression_target_kind_row_count": (
+            len(regression_target_rows) if isinstance(regression_target_rows, list) else 0
+        ),
         "derivative_row_count": len(derivative_rows) if isinstance(derivative_rows, list) else 0,
         "pytest_slices": list(TEST_SLICES),
         "validation_lanes": list(VALIDATION_LANES),
-        "cheap_validation_lanes": [
-            name for name, lane in VALIDATION_LANES.items() if bool(lane["cheap_by_default"])
-        ],
+        "cheap_validation_lanes": [name for name, lane in VALIDATION_LANES.items() if bool(lane["cheap_by_default"])],
     }
 
 
@@ -382,9 +380,7 @@ def _derivative_coverage_capabilities(cppad: dict[str, object], ceres: dict[str,
 def _regression_target_kind_evidence() -> dict[str, object]:
     rows = [_capability_value(row) for row in REGRESSION_TARGET_KIND_EVIDENCE]
     production_targets = [
-        str(row["target_kind"])
-        for row in rows
-        if bool(row["public_production_supported_target_kind"])
+        str(row["target_kind"]) for row in rows if bool(row["public_production_supported_target_kind"])
     ]
     registry_only_targets = [
         str(row["target_kind"])
@@ -567,6 +563,14 @@ def capabilities() -> dict[str, object]:
                 "input_scope": "neutral non-reactive non-electrolyte non-associating two-phase mixtures",
                 "requires": ["cppad", "ipopt"],
             },
+            "neutral_lle": {
+                "available": bool(equilibrium_activation["ipopt_available"]),
+                "production": True,
+                "entrypoint": "Equilibrium(mixture, route='lle', T=..., P=..., z=...).solve()",
+                "selector_core": True,
+                "input_scope": "neutral non-reactive non-electrolyte non-associating liquid/liquid mixtures",
+                "requires": ["cppad", "ipopt"],
+            },
             "repeated_state_properties": {
                 "available": True,
                 "helpers": ["evaluate_fugacity_coefficients", "evaluate_fugacity_coefficients_batch"],
@@ -592,9 +596,7 @@ def capabilities() -> dict[str, object]:
         },
         "regression": {
             "target_kind_evidence": regression_target_evidence,
-            "production_supported_target_kinds": list(
-                regression_target_evidence["production_supported_target_kinds"]
-            ),
+            "production_supported_target_kinds": list(regression_target_evidence["production_supported_target_kinds"]),
             "pure_neutral": {
                 "available": regression_route_available,
                 "production": regression_route_available,

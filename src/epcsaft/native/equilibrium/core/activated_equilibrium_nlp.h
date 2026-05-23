@@ -53,4 +53,16 @@ private:
     std::unique_ptr<NlpProblem> delegate_;
 };
 
+NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_tp_flash_nlp_contract(
+    const add_args& args,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+);
+
+NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_lle_nlp_contract(
+    const add_args& args,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+);
+
 }  // namespace epcsaft::native::equilibrium_nlp

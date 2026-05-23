@@ -5,7 +5,7 @@ goal:
   slug: "neutral-lle-implementation"
   kind: existing_plan
   tranche: "continuous execution: implement GitHub issue #144, verify neutral nonassociating LLE, then prepare associating neutral LLE follow-up from the proven baseline"
-  status: active
+  status: complete
   intake:
     original_request: "Use Agentify to read the final ChatGPT response about implementing LLE, create the issue, and begin a goal board to accomplish the full issue and plan to prep for associating neutral LLE."
     interpreted_outcome: "GitHub issue #144 is implemented as a production neutral nonassociating LLE route, verified through native/API/docs tests, and followed by a prepared associating-neutral-LLE planning artifact."
@@ -63,13 +63,13 @@ visual_board:
     command: "npx goalbuddy extend github-projects"
     missing: []
 
-active_task: T001
+active_task: null
 
 tasks:
   - id: T001
     type: scout
     assignee: Scout
-    status: active
+    status: done
     reasoning_hint: high
     objective: "Validate issue #144 against the live repo and produce the module/test ownership map for the first implementation package."
     inputs:
@@ -96,11 +96,21 @@ tasks:
       - "Corrections to issue #144 if live repo has drifted."
       - "Recommended largest safe first Worker package with allowed files and verify commands."
       - "Associating neutral LLE prerequisites that should be carried into the later planning task."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Scout verified issue #144 still matches the live repo: neutral_lle exists only as a declared-not-exposed activation row; activation plan, layout, selector, activated NLP, Python route registry, and result helpers are still flash/VLE-shaped; the synthetic nonassociating fixture already exists; associating/electrolyte LLE must remain out of scope."
+      evidence:
+        - "activation_matrix.h has neutral_lle production_exposed=false with the target residual/constraint families already sketched."
+        - "activation_plan.cpp, variable_layout.cpp, activated_equilibrium_nlp.cpp, and selector_core.cpp currently admit neutral_tp_flash only."
+        - "two_phase_eos_route.cpp already has generic phase-distance machinery suitable for a nonassociating LLE route."
+        - "workflows.py exposes bubble/dew/flash routes and VLE-only liquid/vapor result conveniences."
+      associating_neutral_lle_prerequisites:
+        - "Do not expose associating LLE in this tranche."
+        - "Follow-up needs association solved-state reliability and implicit sensitivity readiness before production exposure."
   - id: T002
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Review T001 and choose the first largest safe implementation package for issue #144."
     inputs:
@@ -119,25 +129,106 @@ tasks:
       - "Verify commands."
       - "Stop conditions."
       - "Deferred associating-neutral-LLE prerequisites."
-    receipt: null
+    receipt:
+      result: done
+      decision: "Use one coherent full-surface Worker package for issue #144; split docs only after route proof would risk stale capability claims."
+      worker_task: T003
+      allowed_files:
+        - "src/epcsaft/native/equilibrium/core/activation_matrix.h"
+        - "src/epcsaft/native/equilibrium/core/activation_plan.h"
+        - "src/epcsaft/native/equilibrium/core/activation_plan.cpp"
+        - "src/epcsaft/native/equilibrium/core/variable_layout.cpp"
+        - "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp"
+        - "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.h"
+        - "src/epcsaft/native/equilibrium/core/selector_core.cpp"
+        - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.h"
+        - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+        - "src/epcsaft/native/equilibrium/core/route_metadata.h"
+        - "src/epcsaft/native/equilibrium/register_bindings.cpp"
+        - "src/epcsaft/equilibrium/workflows.py"
+        - "src/epcsaft/equilibrium/core/native_results.py"
+        - "src/epcsaft/runtime/core.py"
+        - "src/epcsaft/runtime/capability_evidence.py"
+        - "src/epcsaft/runtime/equilibrium_activation.py"
+        - "tests/support/equilibrium_cases.py"
+        - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+        - "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
+        - "tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py"
+        - "tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
+        - "tests/api/frontend/test_equilibrium.py"
+        - "docs/pages/equilibrium_architecture.rst"
+        - "docs/pages/api_reference.rst"
+        - "README.md"
+      verify_commands:
+        - "uv run python scripts/dev/build_epcsaft.py --profile ipopt"
+        - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/equilibrium/results/test_neutral_lle_reference_values.py tests/api/frontend/test_equilibrium.py -q"
+        - "uv run python scripts/dev/validate_project.py docs"
+        - "uv run python scripts/dev/validate_project.py quick"
   - id: T003
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
-    objective: "Implement the first safe issue #144 package selected by Judge."
-    allowed_files: []
-    verify: []
+    objective: "Implement issue #144 end to end for neutral nonassociating LLE, including tests, native route, public API, capability claims, docs, and proof commands."
+    allowed_files:
+      - "src/epcsaft/native/equilibrium/core/activation_matrix.h"
+      - "src/epcsaft/native/equilibrium/core/activation_plan.h"
+      - "src/epcsaft/native/equilibrium/core/activation_plan.cpp"
+      - "src/epcsaft/native/equilibrium/core/variable_layout.cpp"
+      - "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp"
+      - "src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.h"
+      - "src/epcsaft/native/equilibrium/core/selector_core.cpp"
+      - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.h"
+      - "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      - "src/epcsaft/native/equilibrium/core/route_metadata.h"
+      - "src/epcsaft/native/equilibrium/register_bindings.cpp"
+      - "src/epcsaft/equilibrium/workflows.py"
+      - "src/epcsaft/equilibrium/core/native_results.py"
+      - "src/epcsaft/runtime/core.py"
+      - "src/epcsaft/runtime/capability_evidence.py"
+      - "src/epcsaft/runtime/equilibrium_activation.py"
+      - "tests/support/equilibrium_cases.py"
+      - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+      - "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
+      - "tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py"
+      - "tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
+      - "tests/api/frontend/test_equilibrium.py"
+      - "docs/pages/equilibrium_architecture.rst"
+      - "docs/pages/api_reference.rst"
+      - "README.md"
+    verify:
+      - "uv run python scripts/dev/build_epcsaft.py --profile ipopt"
+      - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/equilibrium/results/test_neutral_lle_reference_values.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python scripts/dev/validate_project.py docs"
+      - "uv run python scripts/dev/validate_project.py quick"
     stop_if:
       - "Need files outside allowed_files."
       - "Route semantics would admit associating, electrolyte, salting-out, reactive, SLE, precipitation, or Ksp behavior."
       - "Implementation requires a route-specific C++ problem class instead of the activation-plan / generic two-phase route path."
       - "Verification fails twice with the same unresolved cause."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Implemented issue #144 end to end for neutral nonassociating LLE through the existing activation matrix, activation plan, variable layout, selector, and shared two-phase EOS NLP core."
+      architecture_evidence:
+        - "`neutral_lle` is production-exposed only for the neutral, nonreactive, nonelectrolyte, nonassociating route."
+        - "The selector routes `neutral_lle` through `ActivatedEquilibriumNlp` and the generic `NeutralTwoPhaseEosProblem`; no LLE-specific problem class was added."
+        - "The activation plan uses `liquid1` and `liquid2` phase labels, liquid/liquid phase kinds, material/pressure/equilibrium residuals, and a composition-distance split check instead of a vapor/liquid or volume-gap shortcut."
+        - "The public API exposes `Equilibrium(..., route=\"lle\")` and generic phase helpers while keeping VLE-only `x`, `y`, vapor fraction, and liquid fraction route-limited."
+      validation:
+        - "uv run python scripts/dev/build_epcsaft.py --profile ipopt"
+        - "uv run python scripts/dev/generate_equilibrium_activation.py --check"
+        - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/equilibrium/results/test_neutral_lle_reference_values.py tests/api/frontend/test_equilibrium.py -q"
+        - "uv run python run_pytest.py --native-contracts -q"
+        - "uv run python scripts/dev/validate_project.py docs"
+        - "uv run python scripts/dev/validate_project.py quick"
+      proof_case:
+        fixture: "tests/support/equilibrium_cases.py::_nonideal_lle_binary_mixture()"
+        condition: "T=225 K, P=1.0e6 Pa, z=[0.5, 0.5]"
+        result: "Accepted nontrivial two-liquid split with exact-Hessian Ipopt route and chemical-potential consistency."
   - id: T004
     type: worker
     assignee: Worker
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Complete the remaining issue #144 implementation surface across native route, Python API/result handling, capabilities, tests, and docs."
     allowed_files:
@@ -173,11 +264,16 @@ tasks:
       - "Need to expose associating or electrolyte LLE to make the synthetic nonassociating proof pass."
       - "Native route cannot preserve exact-Hessian support through the current Ipopt adapter."
       - "Need files outside allowed_files."
-    receipt: null
+    receipt:
+      result: done
+      summary: "Covered by the larger T003 full-surface package; no separate repair worker was needed."
+      evidence:
+        - "Native route, Python API/result handling, capabilities, tests, and docs were completed together."
+        - "No files outside the T003/T004 allowed implementation surface were needed."
   - id: T005
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Audit issue #144 implementation against acceptance criteria and decide whether any repair Worker is needed before associating-LLE prep."
     inputs:
@@ -194,11 +290,21 @@ tasks:
       - "Acceptance criteria coverage map."
       - "Missing evidence."
       - "Repair Worker task if needed."
-    receipt: null
+    receipt:
+      result: complete
+      acceptance_criteria:
+        activation_matrix: "complete: `neutral_lle` is production-exposed with an Ipopt exact-Hessian proof route."
+        selector: "complete: `neutral_lle` routes only eligible neutral nonassociating mixtures."
+        native_route: "complete: implementation uses the shared activated NLP and generic two-phase EOS problem."
+        public_api: "complete: `route=\"lle\"` solves and exposes generic phase maps while preserving VLE-only convenience boundaries."
+        docs_capabilities: "complete: docs and runtime capability evidence describe neutral nonassociating LLE without claiming associating/electrolyte/reactive LLE."
+        validation: "complete: focused, native-contract, docs, and quick validation passed."
+      missing_evidence: []
+      repair_needed: false
   - id: T006
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Prepare the associating neutral LLE follow-up plan from the verified nonassociating baseline."
     inputs:
@@ -216,11 +322,26 @@ tasks:
       - "Candidate first proof system and why it is no longer premature."
       - "Acceptance criteria for the follow-up tranche."
       - "Decision on whether to create a GitHub issue now or keep a board note."
-    receipt: null
+    receipt:
+      result: done
+      recommended_title: "Prepare activation-driven associating neutral LLE after association derivative gates"
+      recommendation: "Create a GitHub follow-up issue now, scoped as a gated planning/prep issue rather than production associating LLE implementation."
+      prerequisites:
+        - "Association site-fraction solved-state diagnostics are reliable and enforced before derivative use."
+        - "A generic implicit-sensitivity helper exists for solved association site fractions."
+        - "`e_assoc`, `vol_a`, `k_hb_ij`, and active-association `l_ij` implicit sensitivities are implemented and validated."
+        - "Associating-equilibrium architecture is documented as implicit second-order closure or lifted `X_A` variables with exact mass-action constraints and exact Lagrangian Hessian support."
+        - "Active-association derivative validation proves finite implicit-labeled payloads and rejects direct CppAD fixed-point recording."
+      candidate_first_proof_system: "Defer selection until the derivative and architecture gates are merged; choosing methanol/cyclohexane, water/alcohol, or another associating binary before those gates would be premature."
+      acceptance_criteria:
+        - "Audit the post-#144 neutral LLE extension points."
+        - "Keep the route activation-matrix driven and reuse the shared NLP base/core; do not add custom problem classes for associating LLE."
+        - "Define selector, activation, result-contract, and validation deltas while preserving nonassociating behavior."
+        - "Keep associating LLE unavailable in production capability claims until proof evidence exists."
   - id: T007
     type: pm
     assignee: PM
-    status: queued
+    status: done
     reasoning_hint: medium
     objective: "Create or record the associating neutral LLE follow-up artifact approved by T006."
     inputs:
@@ -232,11 +353,14 @@ tasks:
     expected_output:
       - "GitHub issue URL or board-only note."
       - "Reason the artifact is ready or intentionally deferred."
-    receipt: null
+    receipt:
+      result: done
+      artifact: "https://github.com/tannerpolley/ePC-SAFT/issues/145"
+      reason: "The follow-up is ready as a gated prep issue because #144 establishes the nonassociating baseline, while the issue body explicitly blocks production associating LLE exposure until association derivative and architecture gates are satisfied."
   - id: T999
     type: judge
     assignee: Judge
-    status: queued
+    status: done
     reasoning_hint: high
     objective: "Audit whether the full owner outcome is complete."
     inputs:
@@ -256,11 +380,26 @@ tasks:
       - "Acceptance evidence."
       - "Missing evidence."
       - "Next task if not complete."
-    receipt: null
+    receipt:
+      result: complete
+      full_outcome_complete: true
+      acceptance_evidence:
+        - "Issue #144 implementation is complete and verified locally."
+        - "Associating neutral LLE prep is recorded in GitHub issue #145."
+        - "No required worker tasks remain queued or active."
+        - "Capability/docs language remains limited to neutral nonassociating LLE."
+      missing_evidence: []
+      next_task: null
 
 checks:
   dirty_fingerprint: unknown
   last_verification:
-    result: unknown
-    task: null
-    commands: []
+    result: passed
+    task: T999
+    commands:
+      - "uv run python scripts/dev/build_epcsaft.py --profile ipopt"
+      - "uv run python scripts/dev/generate_equilibrium_activation.py --check"
+      - "uv run python run_pytest.py tests/native/contracts/test_equilibrium_activation_capabilities.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py tests/native/equilibrium/results/test_neutral_lle_reference_values.py tests/api/frontend/test_equilibrium.py -q"
+      - "uv run python run_pytest.py --native-contracts -q"
+      - "uv run python scripts/dev/validate_project.py docs"
+      - "uv run python scripts/dev/validate_project.py quick"

@@ -133,7 +133,9 @@ class EquilibriumPhase:
         }
 
 
-def _phase_mapping(phases: Mapping[str, EquilibriumPhase] | Sequence[EquilibriumPhase]) -> Mapping[str, EquilibriumPhase]:
+def _phase_mapping(
+    phases: Mapping[str, EquilibriumPhase] | Sequence[EquilibriumPhase],
+) -> Mapping[str, EquilibriumPhase]:
     if isinstance(phases, Mapping):
         return MappingProxyType({str(label): phase for label, phase in phases.items()})
     return MappingProxyType({phase.label: phase for phase in phases})
@@ -180,24 +182,47 @@ class EquilibriumResult:
     def pressure(self) -> float:
         """Return the common phase pressure."""
 
-        return float(self.phases["liquid"].pressure)
+        return float(next(iter(self.phases.values())).pressure)
 
     @property
     def temperature(self) -> float:
         """Return the common phase temperature."""
 
-        return float(self.phases["liquid"].temperature)
+        return float(next(iter(self.phases.values())).temperature)
+
+    def phase(self, label: str) -> EquilibriumPhase:
+        """Return one named phase."""
+
+        return self.phases[str(label)]
+
+    @property
+    def phase_compositions(self) -> Mapping[str, np.ndarray]:
+        """Return compositions keyed by phase label."""
+
+        return MappingProxyType(
+            {label: np.asarray(phase.composition, dtype=float) for label, phase in self.phases.items()}
+        )
+
+    @property
+    def phase_fractions(self) -> Mapping[str, float]:
+        """Return phase fractions keyed by phase label."""
+
+        return MappingProxyType({label: float(phase.phase_fraction) for label, phase in self.phases.items()})
 
     @property
     def x(self) -> np.ndarray:
         """Return the liquid composition."""
 
+        if "liquid" not in self.phases:
+            raise AttributeError("x is available only for VLE routes with a 'liquid' phase.")
         return np.asarray(self.phases["liquid"].composition, dtype=float)
 
     @property
     def y(self) -> np.ndarray:
         """Return the vapor composition."""
 
+        if "vapor" not in self.phases:
+            raise AttributeError("y is available only for VLE routes with a 'vapor' phase.")
         return np.asarray(self.phases["vapor"].composition, dtype=float)
 
     @property
@@ -212,12 +237,16 @@ class EquilibriumResult:
     def liquid_fraction(self) -> float:
         """Return the liquid phase fraction."""
 
+        if "liquid" not in self.phases:
+            raise AttributeError("liquid_fraction is available only for VLE routes.")
         return float(self.phases["liquid"].phase_fraction)
 
     @property
     def vapor_fraction(self) -> float:
         """Return the vapor phase fraction."""
 
+        if "vapor" not in self.phases:
+            raise AttributeError("vapor_fraction is available only for VLE routes.")
         return float(self.phases["vapor"].phase_fraction)
 
     @property
@@ -238,17 +267,19 @@ class EquilibriumResult:
             "phases": {label: phase.to_dict() for label, phase in self.phases.items()},
             "stable": self.stable,
             "split_detected": self.split_detected,
-            "x": self.x.tolist(),
-            "y": self.y.tolist(),
+            "x": self.x.tolist() if "liquid" in self.phases else None,
+            "y": self.y.tolist() if "vapor" in self.phases else None,
             "z": None if self.feed_composition is None else self.z.tolist(),
-            "liquid_fraction": self.liquid_fraction,
-            "vapor_fraction": self.vapor_fraction,
+            "phase_compositions": {label: phase.composition.tolist() for label, phase in self.phases.items()},
+            "phase_fractions": {label: phase.phase_fraction for label, phase in self.phases.items()},
+            "liquid_fraction": self.liquid_fraction if "liquid" in self.phases else None,
+            "vapor_fraction": self.vapor_fraction if "vapor" in self.phases else None,
             "diagnostics": _json_like(self.diagnostics),
         }
 
 
 @dataclass(frozen=True, slots=True)
-class _VleRouteSpec:
+class _EquilibriumRouteSpec:
     selector_route: str
     composition_key: str
     composition_role: str
@@ -348,8 +379,8 @@ class EquilibriumStructure:
         }
 
 
-_VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
-    "bubble_pressure": _VleRouteSpec(
+_EQUILIBRIUM_ROUTE_SPECS: dict[str, _EquilibriumRouteSpec] = {
+    "bubble_pressure": _EquilibriumRouteSpec(
         selector_route="bubble_pressure",
         composition_key="x",
         composition_role="liquid",
@@ -361,7 +392,7 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         route_label="bubble_pressure",
         selector_family="bubble_dew_derived_routes",
     ),
-    "bubble_temperature": _VleRouteSpec(
+    "bubble_temperature": _EquilibriumRouteSpec(
         selector_route="bubble_temperature",
         composition_key="x",
         composition_role="liquid",
@@ -373,7 +404,7 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         route_label="bubble_temperature",
         selector_family="bubble_dew_derived_routes",
     ),
-    "dew_pressure": _VleRouteSpec(
+    "dew_pressure": _EquilibriumRouteSpec(
         selector_route="dew_pressure",
         composition_key="y",
         composition_role="vapor",
@@ -385,7 +416,7 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         route_label="dew_pressure",
         selector_family="bubble_dew_derived_routes",
     ),
-    "dew_temperature": _VleRouteSpec(
+    "dew_temperature": _EquilibriumRouteSpec(
         selector_route="dew_temperature",
         composition_key="y",
         composition_role="vapor",
@@ -397,7 +428,7 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         route_label="dew_temperature",
         selector_family="bubble_dew_derived_routes",
     ),
-    "flash": _VleRouteSpec(
+    "flash": _EquilibriumRouteSpec(
         selector_route="neutral_tp_flash",
         composition_key="z",
         composition_role="feed",
@@ -408,6 +439,19 @@ _VLE_ROUTE_SPECS: dict[str, _VleRouteSpec] = {
         problem_kind="neutral_tp_flash",
         route_label="flash",
         selector_family="neutral_tp_flash",
+    ),
+    "lle": _EquilibriumRouteSpec(
+        selector_route="neutral_lle",
+        composition_key="z",
+        composition_role="feed",
+        requires_temperature=True,
+        requires_pressure=True,
+        knowns=("T", "P", "z"),
+        unknowns=("liquid1", "liquid2", "phase_amounts", "phase_volumes"),
+        problem_kind="neutral_lle",
+        route_label="lle",
+        selector_family="neutral_lle",
+        expected_phase_keys=("liquid1", "liquid2"),
     ),
 }
 
@@ -425,9 +469,9 @@ def configure_equilibrium_problem(
     """Validate and freeze a constructor-configured equilibrium problem."""
 
     try:
-        spec = _VLE_ROUTE_SPECS[str(route)]
+        spec = _EQUILIBRIUM_ROUTE_SPECS[str(route)]
     except KeyError as exc:
-        allowed = ", ".join(sorted(_VLE_ROUTE_SPECS))
+        allowed = ", ".join(sorted(_EQUILIBRIUM_ROUTE_SPECS))
         raise InputError(f"Unknown equilibrium route '{route}'. Expected one of: {allowed}.") from exc
 
     composition_value = {"x": x, "y": y, "z": z}[spec.composition_key]
@@ -452,6 +496,8 @@ def configure_equilibrium_problem(
         spec.route_label,
     )
     _reject_ion_containing_mixture(mixture)
+    if spec.selector_route == "neutral_lle":
+        _reject_associating_mixture(mixture)
     temperature = _positive_scalar(T, "T", spec.route_label) if spec.requires_temperature else None
     pressure = _positive_scalar(P, "P", spec.route_label) if spec.requires_pressure else None
     fixed_specs: dict[str, Any] = {spec.composition_key: composition}
@@ -472,17 +518,17 @@ def configure_equilibrium_problem(
 
 
 # AlgID: bubble_dew_ipopt
-def _solve_selector_vle(
+def _solve_selector_route(
     mixture: Any,
     problem: EquilibriumProblem,
     *,
     options: EquilibriumSolverOptions | Mapping[str, Any] | None = None,
 ) -> EquilibriumResult:
-    """Solve one configured selector-admitted neutral VLE route spec through the shared core."""
+    """Solve one configured selector-admitted neutral two-phase route through the shared core."""
 
     opts = _normalize_options(options)
-    spec = _VLE_ROUTE_SPECS[problem.route]
-    return _native_selector_vle_route(
+    spec = _EQUILIBRIUM_ROUTE_SPECS[problem.route]
+    return _native_selector_route(
         mixture,
         request=_selector_request_from_problem(problem),
         options=opts,
@@ -492,6 +538,7 @@ def _solve_selector_vle(
         selector_family=spec.selector_family,
         composition_role=spec.composition_role,
         feed_composition=problem.fixed_specs.get("z"),
+        expected_phase_keys=spec.expected_phase_keys,
     )
 
 
@@ -516,7 +563,7 @@ def _selector_request(
 
 
 def _selector_request_from_problem(problem: EquilibriumProblem) -> dict[str, Any]:
-    composition_key = _VLE_ROUTE_SPECS[problem.route].composition_key
+    composition_key = _EQUILIBRIUM_ROUTE_SPECS[problem.route].composition_key
     return _selector_request(
         route=problem.selector_route,
         temperature=problem.fixed_specs.get("T"),
@@ -552,7 +599,7 @@ def equilibrium_structure(mixture: Any, problem: EquilibriumProblem) -> Equilibr
     )
 
 
-def _native_selector_vle_route(
+def _native_selector_route(
     mixture: Any,
     *,
     request: Mapping[str, Any],
@@ -563,6 +610,7 @@ def _native_selector_vle_route(
     selector_family: str,
     composition_role: str,
     feed_composition: Any = None,
+    expected_phase_keys: tuple[str, ...] = ("liquid", "vapor"),
 ) -> EquilibriumResult:
     from .. import _core
 
@@ -608,6 +656,7 @@ def _native_selector_vle_route(
         selector_family=selector_family,
         composition_role=composition_role,
         feed_composition=feed_composition,
+        expected_phase_keys=expected_phase_keys,
     )
 
 
@@ -625,6 +674,7 @@ def _accepted_native_selector_two_phase_result(
     selector_family: str,
     composition_role: str,
     feed_composition: Any = None,
+    expected_phase_keys: tuple[str, ...] = ("liquid", "vapor"),
 ) -> EquilibriumResult:
     from .. import _core
 
@@ -647,7 +697,7 @@ def _accepted_native_selector_two_phase_result(
     result = neutral_two_phase_payload_to_result(
         result_payload,
         problem_kind=problem_kind,
-        phase_labels=("liquid", "vapor"),
+        phase_labels=expected_phase_keys,
     )
     diagnostics = native_route_diagnostics(route)
     diagnostics.update(result.diagnostics)
@@ -846,7 +896,23 @@ def _positive_scalar(value: Any, label: str, kind: str) -> float:
 def _reject_ion_containing_mixture(mixture: Any) -> None:
     charges = np.asarray(mixture.parameters.get("z", []), dtype=float).flatten()
     if charges.size and np.any(np.abs(charges) > 1.0e-12):
-        raise InputError("Production VLE selector routes support only neutral mixtures.")
+        raise InputError("Production equilibrium selector routes support only neutral mixtures.")
+
+
+def _reject_associating_mixture(mixture: Any) -> None:
+    parameters = mixture.parameters
+    assoc_num = np.asarray(parameters.get("assoc_num", []), dtype=int).flatten()
+    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
+    e_assoc = np.asarray(parameters.get("e_assoc", []), dtype=float).flatten()
+    vol_a = np.asarray(parameters.get("vol_a", []), dtype=float).flatten()
+    active = (
+        (assoc_num.size > 0 and np.any(assoc_num > 0))
+        or (assoc_matrix.size > 0 and np.any(np.abs(assoc_matrix) > 0.0))
+        or (e_assoc.size > 0 and np.any(np.abs(e_assoc) > 0.0))
+        or (vol_a.size > 0 and np.any(np.abs(vol_a) > 0.0))
+    )
+    if active:
+        raise InputError("Production neutral LLE requires neutral non-associating mixtures.")
 
 
 def _json_like(value: Any) -> Any:

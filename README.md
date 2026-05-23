@@ -8,7 +8,7 @@ Current package version: `0.2.0`
 
 - Build PC-SAFT/ePC-SAFT mixtures from user-owned parameter data.
 - Evaluate pressure, density, residual properties, fugacity coefficients, activity coefficients, and derivatives.
-- Use the constructor-configured neutral equilibrium API when the package is built with optional native Ipopt.
+- Use the constructor-configured neutral equilibrium API, including neutral nonassociating LLE, when the package is built with optional native Ipopt.
 - Run supported pure-neutral parameter-regression workflows.
 - Inspect runtime capabilities with `capabilities()` before selecting optional native solver paths.
 
@@ -183,7 +183,7 @@ python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.gi
 
 Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig.cmake` directory. Runtime processes that execute Ipopt on Windows must expose the SDK `bin` directory through both `PATH` and `EPCSAFT_RUNTIME_DLL_DIRS`; repo build scripts do this automatically for the local SDK.
 
-The public equilibrium API does not expose a solver-backend selector. Use the certified `Equilibrium(...)` route specs and ordinary solver tolerances when validating constrained-NLP behavior.
+The public equilibrium API does not expose a solver-backend selector. Use the certified `Equilibrium(...)` route specs and ordinary solver tolerances when validating constrained-NLP behavior. The currently exposed route names are `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature`, `flash`, and neutral nonassociating `lle`.
 
 ## Documentation
 

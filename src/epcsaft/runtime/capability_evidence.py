@@ -14,6 +14,7 @@ IPOPT_PUBLIC_ROUTES: Final[tuple[str, ...]] = (
     "dew_pressure",
     "dew_temperature",
     "flash",
+    "lle",
 )
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES: Final[tuple[str, ...]] = (
@@ -42,9 +43,7 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
         "supported": True,
         "classification": "production_supported",
         "reason": "validated Ceres route with CppAD and implicit density/association sensitivities",
-        "tests": (
-            "tests/native/regression/test_binary.py",
-        ),
+        "tests": ("tests/native/regression/test_binary.py",),
     },
     {
         "row_family": "electrolyte_property",
@@ -86,6 +85,20 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "tests": (
             "tests/api/frontend/test_equilibrium.py",
             "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "quantity": "neutral_lle",
+        "derivative": "lagrangian_hessian",
+        "backend": "cppad_phase_blocks",
+        "supported": True,
+        "classification": "production_supported",
+        "reason": "the production selector exposes neutral nonassociating LLE through the activation-plan compiler and generic two-phase EOS NLP with exact Ipopt callbacks",
+        "tests": (
+            "tests/api/frontend/test_equilibrium.py",
+            "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
         ),
     },
 )
@@ -307,9 +320,7 @@ RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",
 )
-API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/frontend",
-)
+API_TEST_TARGETS: Final[tuple[str, ...]] = ("tests/api/frontend",)
 NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",

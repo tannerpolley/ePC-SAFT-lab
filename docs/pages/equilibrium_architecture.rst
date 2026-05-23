@@ -3,11 +3,11 @@ Equilibrium Architecture
 
 The reset public API is workflow-object based:
 
-* ``Equilibrium(mixture, route=..., ...).solve()`` for all certified neutral
-  VLE route specs.
-* Additional equilibrium families are declared in the native activation matrix
-  as not exposed until they have production selector support, focused public
-  tests, and capability evidence.
+* ``Equilibrium(mixture, route=..., ...).solve()`` for certified neutral
+  nonassociating VLE, flash, and LLE route specs.
+* Additional associating, electrolyte, reactive, and speciation families are
+  declared in the native activation matrix as not exposed until they have
+  production selector support, focused public tests, and capability evidence.
 
 Old public mixture route methods such as ``mixture.bubble_p(...)`` and
 ``mixture.equilibrium(kind=...)`` are no longer part of the reset public
@@ -37,17 +37,28 @@ Example
        z=[0.4, 0.25, 0.35],
    ).solve()
 
+   lle = epcsaft.Equilibrium(
+       neutral_nonassociating_binary,
+       route="lle",
+       T=225.0,
+       P=1.0e6,
+       z=[0.5, 0.5],
+   ).solve()
+
 Request Normalization
 ---------------------
 
 Public request normalization lives at ``Equilibrium(mixture, route=..., ...)``.
 The workflow object owns route/spec validation and delegates only to the
-selector core for production neutral VLE routes. Solver controls are passed to
+selector core for production neutral two-phase routes. Solver controls are passed to
 ``solve(solver_options=...)``. Selector-ineligible inputs fail before solver
 dispatch; solver or certification failures after dispatch raise with
 diagnostics. Flash is a selector-owned route spec over the same native VLE
 residual/constraint core as bubble and dew routes, not a direct pybind route or
-Python-owned optimizer loop. Route-specific public methods are intentionally
+Python-owned optimizer loop. Neutral LLE is also selector-owned: the activation
+matrix row builds a ``liquid1``/``liquid2`` activation plan and reuses the same
+generic two-phase EOS NLP core with a phase-distance constraint instead of a
+VLE ``phase_volume_gap``. Route-specific public methods are intentionally
 absent; ``solve`` is the only public execution lane.
 
 Solver Selection
@@ -56,10 +67,11 @@ Solver Selection
 The reset public frontend does not expose a solver-backend selector. Public
 equilibrium workflows choose the required native route directly and raise at the
 route boundary when the compiled dependency or CppAD coverage is missing. The
-trusted public proof set is the hydrocarbon neutral VLE route family through
-the native selector core, Ipopt, and exact Hessian callbacks. LLE, electrolyte,
-reactive, and speciation route families are declared-not-exposed activation rows
-until they are ported behind the selector and reset
+trusted public proof set is the hydrocarbon neutral VLE/flash route family and
+the synthetic neutral nonassociating LLE binary through the native selector
+core, Ipopt, and exact Hessian callbacks. Associating LLE, electrolyte,
+reactive, and speciation route families remain declared-not-exposed activation
+rows until they are ported behind the selector and reset
 ``Equilibrium(mixture, route=..., ...)`` workflow.
 
 The convex Gibbs formulation is limited to homogeneous ideal reaction or
@@ -74,10 +86,10 @@ Associating Equilibrium Boundary
 --------------------------------
 
 Associating mixtures remain selector-ineligible for production equilibrium
-routes. Association site fractions are solved internal variables, and direct
-CppAD recording through the association fixed-point iteration is forbidden.
-State and Regression routes eliminate the site fractions and apply implicit
-sensitivities.
+routes, including ``route="lle"``. Association site fractions are solved
+internal variables, and direct CppAD recording through the association
+fixed-point iteration is forbidden. State and Regression routes eliminate the
+site fractions and apply implicit sensitivities.
 
 Future associating equilibrium must choose one complete architecture before any
 public exposure: either eliminate site fractions and provide complete implicit

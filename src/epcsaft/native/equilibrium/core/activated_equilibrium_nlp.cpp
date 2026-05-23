@@ -9,12 +9,28 @@ namespace epcsaft::native::equilibrium_nlp {
 
 namespace {
 
-void require_activated_neutral_flash_plan(
+std::vector<int> phase_kind_tokens(const std::vector<std::string>& phase_kinds) {
+    std::vector<int> out;
+    out.reserve(phase_kinds.size());
+    for (const std::string& phase_kind : phase_kinds) {
+        if (phase_kind == "liquid") {
+            out.push_back(0);
+        } else if (phase_kind == "vapor") {
+            out.push_back(1);
+        } else {
+            throw ValueError("activation-nlp-ineligible: unsupported phase kind in activation plan.");
+        }
+    }
+    return out;
+}
+
+void require_activated_neutral_two_phase_plan(
     const epcsaft::native::equilibrium::ActivationPlan& plan,
     const epcsaft::native::equilibrium::VariableLayout& layout
 ) {
-    if (plan.family_key != "neutral_tp_flash" || plan.route != "neutral_tp_flash") {
-        throw ValueError("activation-nlp-ineligible: only neutral_tp_flash is supported.");
+    if (!((plan.family_key == "neutral_tp_flash" && plan.route == "neutral_tp_flash")
+          || (plan.family_key == "neutral_lle" && plan.route == "neutral_lle"))) {
+        throw ValueError("activation-nlp-ineligible: only activation-matrix neutral two-phase routes are supported.");
     }
     if (layout.family_key != plan.family_key || layout.route != plan.route) {
         throw ValueError("activation-nlp-ineligible: variable layout route does not match activation plan.");
@@ -22,6 +38,30 @@ void require_activated_neutral_flash_plan(
     if (layout.variable_model != plan.variable_model || layout.variable_count <= 0) {
         throw ValueError("activation-nlp-ineligible: variable layout does not match activation plan model.");
     }
+}
+
+std::unique_ptr<NlpProblem> make_delegate(
+    const add_args& args,
+    const epcsaft::native::equilibrium::ActivationPlan& plan
+) {
+    if (plan.route == "neutral_tp_flash") {
+        return make_neutral_tp_flash_eos_problem(
+            args,
+            plan.temperature,
+            plan.pressure,
+            plan.feed_composition,
+            "neutral_tp_flash_eos"
+        );
+    }
+    return make_neutral_two_phase_eos_problem_from_feed(
+        args,
+        plan.temperature,
+        plan.pressure,
+        plan.feed_composition,
+        phase_kind_tokens(plan.phase_kinds),
+        "neutral_lle_eos",
+        1.0e-8
+    );
 }
 
 NeutralTwoPhaseEosNlpContract make_activated_contract(
@@ -78,16 +118,10 @@ ActivatedEquilibriumNlp::ActivatedEquilibriumNlp(
 )
     : plan_(std::move(plan)),
       layout_(std::move(layout)),
-      delegate_(make_neutral_tp_flash_eos_problem(
-          args,
-          plan_.temperature,
-          plan_.pressure,
-          plan_.feed_composition,
-          "neutral_tp_flash_eos"
-      )) {
-    require_activated_neutral_flash_plan(plan_, layout_);
+      delegate_(make_delegate(args, plan_)) {
+    require_activated_neutral_two_phase_plan(plan_, layout_);
     if (!delegate_) {
-        throw ValueError("activation-nlp-ineligible: neutral_tp_flash delegate was not created.");
+        throw ValueError("activation-nlp-ineligible: two-phase delegate was not created.");
     }
     if (delegate_->variable_count() != layout_.variable_count) {
         throw ValueError("activation-nlp-ineligible: compiled NLP variable count does not match layout.");
@@ -186,6 +220,15 @@ const epcsaft::native::equilibrium::VariableLayout& ActivatedEquilibriumNlp::lay
 }
 
 NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_tp_flash_nlp_contract(
+    const add_args& args,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+) {
+    ActivatedEquilibriumNlp problem(args, plan, layout);
+    return make_activated_contract(problem, layout.phase_count, layout.species_count);
+}
+
+NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_lle_nlp_contract(
     const add_args& args,
     const epcsaft::native::equilibrium::ActivationPlan& plan,
     const epcsaft::native::equilibrium::VariableLayout& layout
