@@ -113,6 +113,9 @@ def _repo_tool_path(name: str) -> Path | None:
 def _cmake_command() -> list[str]:
     repo_cmake = _repo_tool_path("cmake")
     if repo_cmake is not None:
+        repo_python = _repo_tool_path("python")
+        if repo_python is not None:
+            return [str(repo_python), "-m", "cmake"]
         return [str(repo_cmake)]
     resolved = shutil.which("cmake")
     if resolved:

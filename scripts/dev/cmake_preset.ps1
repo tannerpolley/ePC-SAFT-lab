@@ -112,7 +112,7 @@ function Invoke-CMakeWithMsvc {
         [string[]]$Arguments
     )
 
-    $cmakeCommand = (ConvertTo-CmdArgument $CmakeExe) + " " + (($Arguments | ForEach-Object { ConvertTo-CmdArgument $_ }) -join " ")
+    $cmakeCommand = (ConvertTo-CmdArgument $PythonExe) + " " + (ConvertTo-CmdArgument "-m") + " " + (ConvertTo-CmdArgument "cmake") + " " + (($Arguments | ForEach-Object { ConvertTo-CmdArgument $_ }) -join " ")
     $toolPathCommand = "set `"PATH=$RepoToolDir;%PATH%`""
     $envCheckCommand = Assert-MsvcEnvironment
     $command = "call `"$VsDevCmd`" -arch=x64 -host_arch=x64 >nul && $toolPathCommand && $envCheckCommand && $cmakeCommand"
@@ -145,9 +145,9 @@ function New-CmakeArguments {
     }
 }
 
-$CmakeExe = Resolve-RepoTool "cmake"
+$PythonExe = Resolve-RepoTool "python"
 $NinjaExe = Resolve-RepoTool "ninja"
-$RepoToolDir = Split-Path -Parent $CmakeExe
+$RepoToolDir = Split-Path -Parent $PythonExe
 $VsDevCmd = Resolve-VsDevCmd
 $env:PATH = "$RepoToolDir;$env:PATH"
 
