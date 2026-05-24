@@ -269,3 +269,89 @@ Combined phase-chemical proof requires all phase and chemical evidence plus:
 - Do not broaden `capabilities()` before the corresponding matrix row is
   backed by implementation, proof tests, and negative broadening tests.
 
+## Codex Agent Instructions
+
+Future Codex agents must treat this matrix as an implementation-control
+document, not background reading. Before creating issues, editing code, or
+changing capability claims for generalized equilibrium, read these files in
+order:
+
+1. `docs/roadmaps/FULL_ROADMAP.md`
+2. `docs/roadmaps/unified_equilibrium_core_algorithm.md`
+3. `docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md`
+4. `docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md`
+5. The row-specific roadmap or ADR for the requested tranche, for example
+   `docs/roadmaps/gross2002_associating_vle_redo_plan.md` and ADR 0005 for
+   associating `bubble_pressure`.
+
+For Stage 1 work, preserve the current boundary:
+
+- PE-01 `neutral_tp_flash` and PE-03 `neutral_lle` are the only rows with the
+  current neutral `held_tpd_volume_composition` plus `tpd_postsolve` baseline.
+- PE-03 remains neutral, nonreactive, nonelectrolyte, and nonassociating.
+- PE-04 neutral multicomponent/multiphase phase discovery is the next neutral
+  expansion; it is not permission to start associating LLE.
+- New public routes require an explicit activation-row status change,
+  capability-evidence update, tests, and negative broadening checks.
+
+When turning this matrix into implementation issues, create vertical slices
+that can be verified independently:
+
+- one issue for row/schema or metadata changes;
+- one issue for route or solver implementation;
+- one issue for postsolve certification and result payloads;
+- one issue for public API/capability claims only after route proof exists;
+- one issue for source-backed benchmark or proof fixtures;
+- one issue for documentation and stale-plan cleanup.
+
+Every issue or implementation tranche must name:
+
+- the row IDs it changes;
+- the exact files expected to own the change;
+- the route exposure status before and after;
+- the proof case and validation command;
+- the rows that remain blocked;
+- the capability text that must not change.
+
+Use repo-owned shared execution surfaces where they exist. Prefer the IntelliJ
+run configurations for build, docs, registry sync, text gates, exact-Hessian
+proofs, and named validation slices. Shell probes are fine for narrow reads,
+git work, and one-off stale-text scans, but do not bypass existing dashboard
+commands for durable validation.
+
+Required validation for any matrix or Stage 1 documentation change:
+
+```text
+Sync Algorithm Registry
+Check Text Gates
+Build Docs
+tests/native/contracts/test_algorithm_registry.py
+```
+
+If native route metadata, result diagnostics, activation rows, or AlgID owner
+comments change, also run:
+
+```text
+Test Native Contracts
+```
+
+Before handoff, run the repo cleanup hook from the repo root:
+
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```
+
+Forbidden shortcuts:
+
+- Do not update the matrix without updating stale roadmap, algorithm-registry,
+  and capability language that contradicts it.
+- Do not admit a route by removing a selector guard globally.
+- Do not claim general associating VLE/LLE, electrolyte LLE, reactive LLE, or
+  reactive electrolyte support from a single narrow proof.
+- Do not treat explicit approximate association closures as exact PC-SAFT
+  association.
+- Do not treat optimizer success, a phase-distance constraint, or per-phase TPD
+  alone as full phase-set certification.
+- Do not compare raw ionic chemical potentials across phases.
+- Do not add application-specific downstream APIs while implementing generic
+  equilibrium rows.
