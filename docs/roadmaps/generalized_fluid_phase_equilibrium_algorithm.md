@@ -10,8 +10,17 @@ postsolve certification, and result classification.
 
 Use
 `docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md` as the
-row-by-row companion for PE/CE/CPE activation rows, proof examples, staged
-admission order, and current route status.
+row-by-row companion for phase-only (`PE-*`), chemical-only (`CE-*`), and
+combined phase-chemical (`CPE-*`) activation rows, proof examples, evidence
+tiers, staged admission order, and current route status. Use
+`docs/roadmaps/equilibrium_benchmark_registry.yaml` as the executable registry
+for those row records.
+
+Bubble and dew pressure/temperature routes are derived utility routes. They
+remain implemented and tested through the existing selector surface, but their
+generic route keys are excluded from the generalized PE/CE/CPE activation
+matrices. Do not delete existing bubble/dew code or tests; only demote them in
+the generalized roadmap.
 
 For fixed-`T`, fixed-`P` phase-split routes, the default production objective is
 the pressure-transformed Helmholtz energy
@@ -862,11 +871,16 @@ Route-family defaults:
 | --- | --- | --- | --- | --- |
 | `neutral_tp_flash` | `A+PV` | phase amounts plus volumes | `held_tpd_volume_composition` for the current two-phase route | material, pressure, fugacity, `tpd_postsolve`, noncollapse |
 | `neutral_lle` | `A+PV` | phase amounts plus volumes | `held_tpd_volume_composition` for the current neutral nonassociating two-liquid route | material, pressure, fugacity, `tpd_postsolve`, phase distance |
-| `bubble_dew_derived_routes` | route-specific `A+PV` or residual constraints | incipient phase plus scalar `P/T` plus volumes | route-seeded | fixed composition, pressure, fugacity, noncollapse |
 | `electrolyte_lle` | constrained `A+PV` or `G^{el}` | electroneutral reduced variables plus volumes | electrolyte TPD | material, charge, reduced electrochemical potentials, TPD |
 | `reactive_speciation` | `G` or residual stationarity | true species or extents | optional homogeneous stability | element balance, reaction affinity |
 | `reactive_lle` | `A+PV` or `G` | true species by phase plus extents if used | reactive TPD | element, pressure, transfer, reaction, TPD |
 | `reactive_electrolyte_lle` | constrained `A+PV` or `G^{el}` | true species, electroneutral reduced variables, reaction variables | electrolyte/reactive TPD | element, charge, reduced electrochemical, reaction, TPD |
+
+Derived bubble/dew utility routes keep their existing route-specific
+documentation and tests outside this defaults table. A future fixed-composition
+VLE proof may support a generalized matrix row, but the row must name the
+underlying phase-equilibrium family rather than the generic bubble/dew utility
+key.
 
 A route may be production-exposed only if the native route exists, the public
 API reaches it through the selector, activation metadata matches route

@@ -214,6 +214,28 @@ This algorithm runs after an Ipopt route returns finite variables. It checks
 stability, phase distinctness, candidate completeness, and route certification
 blocks before assigning a production-accepted status.
 
+% AlgID: generalized_equilibrium_activation_registry
+% Family: Equilibrium activation policy
+% Status: Documentation-only
+% Public API: No public route exposure; registry controls future generalized admission
+% Backend: Markdown and YAML registry
+% Dependency: None
+% Derivative backend: Exact derivatives required before production row exposure
+% Solver role: Records PE/CE/CPE activation rows, proof cases, evidence tiers, and benchmark status
+% Implementation owner: docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md; docs/roadmaps/equilibrium_benchmark_registry.yaml
+% Validation: tests/native/contracts/test_generalized_activation_matrix_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py
+% Capability key: docs:generalized_equilibrium_activation_registry
+% Description: Defines generalized phase-only, chemical-only, and combined phase-chemical activation matrices.
+% Change note: Bubble/dew routes remain derived utilities outside the generalized matrices; every generalized row carries proof evidence.
+
+The generalized equilibrium activation registry records three admission
+matrices: phase-only rows, chemical-only rows, and combined phase-chemical
+rows. Bubble and dew pressure/temperature routes remain implemented and tested
+as derived utility routes through the existing selector surface, but their
+generic route keys are excluded from the generalized matrices. Every generalized
+activation row must carry at least one proof case and evidence tier before it
+can be used for future route admission.
+
 % AlgID: explicit_association_closure_diagnostics
 % Family: Association diagnostics
 % Status: Planned

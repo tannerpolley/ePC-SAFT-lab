@@ -18,7 +18,9 @@ This document is authoritative over older roadmap language that allowed audit-on
 
 `docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md` is the mathematical doctrine for generalized fluid-phase equilibrium. It defines the thermodynamic constrained NLP form, HELD/TPD phase-discovery requirements, activation-matrix admission policy, postsolve certification, and result status taxonomy that future neutral, associating, electrolyte, and reactive routes must follow.
 
-`docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md` is the activation-row and proof-case companion to the generalized equilibrium doctrine. It records the PE/CE/CPE row families, current Stage 1 neutral HELD/TPD baseline, staged admission order, proof examples, and non-admission rules.
+`docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md` is the activation-row and proof-case companion to the generalized equilibrium doctrine. It records the phase-only (`PE-*`), chemical-only (`CE-*`), and combined phase-chemical (`CPE-*`) row families, current Stage 1 neutral HELD/TPD baseline, staged admission order, proof examples, evidence tiers, and non-admission rules.
+
+`docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the generalized activation matrix. Every activation row must carry at least one proof case and evidence tier there. Bubble/dew pressure and temperature routes remain implemented and tested as derived utility routes through the existing selector surface, but their generic route keys are excluded from the generalized PE/CE/CPE matrices. Do not delete existing bubble/dew code or tests; only demote them in the generalized roadmap.
 
 `docs/roadmaps/association_derivative_goal_roadmap.md` is the management document for the post-#130/#131 association-derivative tranche (#132 through #140). Read it before starting association solved-state, implicit-sensitivity, association-parameter regression, associating-equilibrium architecture, or lifted-`X_A` block work.
 

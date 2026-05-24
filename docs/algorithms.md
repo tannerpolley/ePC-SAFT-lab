@@ -333,6 +333,43 @@ blocks before assigning a production-accepted status.
 ```
 
 
+### `generalized_equilibrium_activation_registry`
+- Family: Equilibrium activation policy
+- Status: Documentation-only
+- Public API: No public route exposure; registry controls future generalized admission
+- Backend: Markdown and YAML registry
+- Dependency: None
+- Derivative backend: Exact derivatives required before production row exposure
+- Solver role: Records PE/CE/CPE activation rows, proof cases, evidence tiers, and benchmark status
+- Implementation owner: docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md; docs/roadmaps/equilibrium_benchmark_registry.yaml
+- Validation: tests/native/contracts/test_generalized_activation_matrix_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py
+- Capability key: docs:generalized_equilibrium_activation_registry
+- Description: Defines generalized phase-only, chemical-only, and combined phase-chemical activation matrices.
+- Change note: Bubble/dew routes remain derived utilities outside the generalized matrices; every generalized row carries proof evidence.
+- LaTeX: `docs/latex/algorithms.tex:217`
+- Code owners: Documentation-only or planned entry; no current owner expected.
+
+The generalized equilibrium activation registry records three admission
+matrices: phase-only rows, chemical-only rows, and combined phase-chemical
+rows. Bubble and dew pressure/temperature routes remain implemented and tested
+as derived utility routes through the existing selector surface, but their
+generic route keys are excluded from the generalized matrices. Every generalized
+activation row must carry at least one proof case and evidence tier before it
+can be used for future route admission.
+
+**LaTeX source**
+
+```tex
+The generalized equilibrium activation registry records three admission
+matrices: phase-only rows, chemical-only rows, and combined phase-chemical
+rows. Bubble and dew pressure/temperature routes remain implemented and tested
+as derived utility routes through the existing selector surface, but their
+generic route keys are excluded from the generalized matrices. Every generalized
+activation row must carry at least one proof case and evidence tier before it
+can be used for future route admission.
+```
+
+
 ### `explicit_association_closure_diagnostics`
 - Family: Association diagnostics
 - Status: Planned
@@ -346,7 +383,7 @@ blocks before assigning a production-accepted status.
 - Capability key: planned:explicit_association_closure_diagnostics
 - Description: Records explicit association closures as approximate Helmholtz diagnostics, not production exact association.
 - Change note: Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate.
-- LaTeX: `docs/latex/algorithms.tex:217`
+- LaTeX: `docs/latex/algorithms.tex:239`
 - Code owners: Documentation-only or planned entry; no current owner expected.
 
 This planned diagnostic family may use explicit algebraic association closures
@@ -383,7 +420,7 @@ same tolerance as the exact solve.
 - Capability key: regression:pure_neutral
 - Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-neutral regression.
-- LaTeX: `docs/latex/algorithms.tex:240`
+- LaTeX: `docs/latex/algorithms.tex:262`
 - Code owners: `src/epcsaft/native/bindings/module.cpp:1035` (m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);), `src/epcsaft/native/regression/ceres_regression.cpp:578` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {), `src/epcsaft/regression/core.py:2402` (def fit_pure_neutral(), `src/epcsaft/regression/core.py:2737` (def fit_pure_parameters()
 
 This entry covers the implemented nonassociating pure-neutral native Ceres route
@@ -428,7 +465,7 @@ $$
 - Capability key: regression:pure_ion
 - Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
-- LaTeX: `docs/latex/algorithms.tex:259`
+- LaTeX: `docs/latex/algorithms.tex:281`
 - Code owners: `src/epcsaft/native/bindings/module.cpp:1040` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `src/epcsaft/native/regression/ceres_regression.cpp:1537` (class PureIonCeresCostFunction final : public ceres::CostFunction {), `src/epcsaft/regression/core.py:2785` (def fit_pure_ion(), `src/epcsaft/regression/core.py:2988` (def fit_liquid_electrolyte_parameters()
 
 This entry is limited to the currently implemented pure-ion target surface. It
@@ -457,7 +494,7 @@ native target-kind registry knows their labels.
 - Capability key: regression:binary_pair
 - Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 - Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.
-- LaTeX: `docs/latex/algorithms.tex:277`
+- LaTeX: `docs/latex/algorithms.tex:299`
 - Code owners: `src/epcsaft/native/bindings/module.cpp:1040` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `src/epcsaft/native/regression/ceres_regression.cpp:1660` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {), `src/epcsaft/regression/core.py:2814` (def fit_binary_parameters()
 
 This entry intentionally does not claim native optimizer support for every

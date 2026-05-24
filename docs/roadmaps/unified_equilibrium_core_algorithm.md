@@ -7,6 +7,14 @@ mathematical doctrine companion for the generalized fluid-phase equilibrium
 formulation, phase-discovery requirements, activation policy, and result
 status taxonomy.
 
+`docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md` and
+`docs/roadmaps/equilibrium_benchmark_registry.yaml` split generalized
+admission into phase-only, chemical-only, and combined phase-chemical matrices.
+Each generalized row carries at least one proof case and evidence tier. Bubble
+and dew pressure/temperature routes are derived utility routes: keep their
+existing code and tests, but exclude their generic route keys from the
+generalized matrices.
+
 It is intentionally an architecture contract, not an implementation receipt. The purpose is to define one coherent mathematical and algorithmic structure that can cover:
 
 - homogeneous speciation and chemical equilibrium,
@@ -350,6 +358,9 @@ flowchart TD
 
 For the row-by-row PE/CE/CPE roadmap and proof-case inventory, see
 `docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md`.
+The table below is the native selector/problem-family view. Its bubble/dew row
+documents existing derived utility support and must not be copied into the
+generalized PE/CE/CPE matrices.
 
 | Problem family | Direct transfer | Reaction equilibrium | Conservation basis | Phase charge | Split variables | Stability prelayer | Postsolve certification |
 | --- | --- | --- | --- | --- | --- | --- | --- |

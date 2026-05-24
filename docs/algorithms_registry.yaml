@@ -320,6 +320,33 @@
       line: 1913
       comment_line: 1912
       context: "NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve("
+- algid: "generalized_equilibrium_activation_registry"
+  section: "Equilibrium Algorithms"
+  subsection: ""
+  subsubsection: ""
+  family: "Equilibrium activation policy"
+  status: "Documentation-only"
+  public_api: "No public route exposure; registry controls future generalized admission"
+  backend: "Markdown and YAML registry"
+  dependency: "None"
+  derivative_backend: "Exact derivatives required before production row exposure"
+  solver_role: "Records PE/CE/CPE activation rows, proof cases, evidence tiers, and benchmark status"
+  implementation_owner: "docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md; docs/roadmaps/equilibrium_benchmark_registry.yaml"
+  validation: "tests/native/contracts/test_generalized_activation_matrix_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py"
+  capability_key: "docs:generalized_equilibrium_activation_registry"
+  description: "Defines generalized phase-only, chemical-only, and combined phase-chemical activation matrices."
+  change_note: "Bubble/dew routes remain derived utilities outside the generalized matrices; every generalized row carries proof evidence."
+  tex_file: "docs/latex/algorithms.tex"
+  tex_line: 217
+  body: |
+    The generalized equilibrium activation registry records three admission
+    matrices: phase-only rows, chemical-only rows, and combined phase-chemical
+    rows. Bubble and dew pressure/temperature routes remain implemented and tested
+    as derived utility routes through the existing selector surface, but their
+    generic route keys are excluded from the generalized matrices. Every generalized
+    activation row must carry at least one proof case and evidence tier before it
+    can be used for future route admission.
+  owner_refs: []
 - algid: "explicit_association_closure_diagnostics"
   section: "Equilibrium Algorithms"
   subsection: ""
@@ -337,7 +364,7 @@
   description: "Records explicit association closures as approximate Helmholtz diagnostics, not production exact association."
   change_note: "Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 217
+  tex_line: 239
   body: |
     This planned diagnostic family may use explicit algebraic association closures
     for seed generation, continuation, and comparison against
@@ -363,7 +390,7 @@
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 240
+  tex_line: 262
   body: |
     This entry covers the implemented nonassociating pure-neutral native Ceres route
     for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
@@ -403,7 +430,7 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 259
+  tex_line: 281
   body: |
     This entry is limited to the currently implemented pure-ion target surface. It
     does not claim support for association-affecting target kinds merely because the
@@ -442,7 +469,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 277
+  tex_line: 299
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)

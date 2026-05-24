@@ -244,6 +244,10 @@ def test_slice_targets_use_grouped_test_subpackages():
 
 
 def test_native_contract_slice_uses_small_metadata_files_not_full_route_builder_suite():
+    assert "tests/native/contracts/test_generalized_activation_matrix_registry.py" in (
+        run_pytest.NATIVE_CONTRACT_TEST_TARGETS
+    )
+    assert "tests/native/contracts/test_equilibrium_benchmark_registry.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     assert "tests/native/contracts/test_equilibrium_activation_capabilities.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     assert "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     assert all("test_route_builders_" not in target for target in run_pytest.NATIVE_CONTRACT_TEST_TARGETS)
