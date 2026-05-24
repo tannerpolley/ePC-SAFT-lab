@@ -86,10 +86,10 @@ canonical package shape above.
 
 ### Stage 1: Report-Ready Derivation
 
-- Create and maintain the reduced association closure derivation in
+- Create and maintain the LaTeX-ready reduced association closure derivation in
+  `docs/derivation/explicit_association_closure_for_pcsaft.tex`.
+- Keep the roadmap summary synchronized in
   `docs/roadmaps/explicit_association_closure_for_pcsaft.md`.
-- If a paper-facing LaTeX artifact is needed later, create it from this
-  roadmap content under `docs/latex/` and keep equations synced.
 - The derivation must state:
   - exact mass-action association remains the reference model;
   - explicit closures are approximate Helmholtz models unless proven exact;

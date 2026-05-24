@@ -21,6 +21,11 @@ derivatives are exact derivatives of the approximate Helmholtz model. They are
 not exact PC-SAFT association derivatives unless the closure is proven to match
 the exact mass-action solution.
 
+The LaTeX-ready Stage 1 derivation lives at
+`docs/derivation/explicit_association_closure_for_pcsaft.tex`. Keep that file
+and this roadmap synchronized until the derivation is promoted into the main
+equation source.
+
 Use these labels consistently:
 
 ```text
