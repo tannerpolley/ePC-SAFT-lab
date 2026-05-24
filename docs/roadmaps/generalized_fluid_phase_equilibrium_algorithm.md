@@ -8,6 +8,11 @@ The thermodynamic model is a provider. The core owns variables, constraints,
 phase discovery, route activation, NLP assembly, derivative contracts,
 postsolve certification, and result classification.
 
+Use
+`docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md` as the
+row-by-row companion for PE/CE/CPE activation rows, proof examples, staged
+admission order, and current route status.
+
 For fixed-`T`, fixed-`P` phase-split routes, the default production objective is
 the pressure-transformed Helmholtz energy
 
@@ -668,6 +673,13 @@ are primary. In composition space, the independent electrolyte TPD domain is
 \{x\ge0:\sum_i x_i=1,\ z^Tx=0\}.
 ```
 
+For `C` true species, the reduced composition domain has `C-2` independent
+coordinates after the mole-fraction sum and electroneutrality constraints. A
+reduced mole-number formulation has `C-1` degrees of freedom after
+electroneutrality. HELD2.0 dual-variable counts depend on the exact primal
+form, so do not universalize the `C-2` composition count into every
+electrolyte TPD implementation.
+
 Using reduced coordinates `y`,
 
 ```math
@@ -848,8 +860,8 @@ Route-family defaults:
 
 | Family | Objective | Variables | Discovery | Required certification |
 | --- | --- | --- | --- | --- |
-| `neutral_tp_flash` | `A+PV` | phase amounts plus volumes | HELD/TPD after the next roadmap step | material, pressure, fugacity, TPD, noncollapse |
-| `neutral_lle` | `A+PV` | phase amounts plus volumes | HELD/TPD required before associating LLE | material, pressure, fugacity, TPD, phase distance |
+| `neutral_tp_flash` | `A+PV` | phase amounts plus volumes | `held_tpd_volume_composition` for the current two-phase route | material, pressure, fugacity, `tpd_postsolve`, noncollapse |
+| `neutral_lle` | `A+PV` | phase amounts plus volumes | `held_tpd_volume_composition` for the current neutral nonassociating two-liquid route | material, pressure, fugacity, `tpd_postsolve`, phase distance |
 | `bubble_dew_derived_routes` | route-specific `A+PV` or residual constraints | incipient phase plus scalar `P/T` plus volumes | route-seeded | fixed composition, pressure, fugacity, noncollapse |
 | `electrolyte_lle` | constrained `A+PV` or `G^{el}` | electroneutral reduced variables plus volumes | electrolyte TPD | material, charge, reduced electrochemical potentials, TPD |
 | `reactive_speciation` | `G` or residual stationarity | true species or extents | optional homogeneous stability | element balance, reaction affinity |
@@ -1064,72 +1076,74 @@ Use exact status semantics:
 
 ## Staged Implementation Roadmap
 
-Stage 0: roadmap/code reconciliation.
+Stage 0: activation-matrix and schema documentation.
 
-- Replace residual-NLP language with thermodynamic constrained NLP language.
-- Align docs with current neutral LLE production exposure and restrictions.
-- Update activation metadata expectations and algorithm registry entries.
+- Keep this doctrine, the activation-matrix companion, the unified core
+  roadmap, and the master roadmap synchronized.
+- Record row IDs, route-family status, proof cases, derivative requirements,
+  and non-admission rules before broadening solver math.
 
-Stage 1: neutral HELD/TPD phase discovery. Tracking issue: GitHub #148.
+Stage 1: neutral HELD/TPD phase discovery and full phase-set certification.
 
-- Add a neutral TPD evaluator.
-- Add a volume-composition trial-phase evaluator using existing EOS phase
-  blocks.
-- Add candidate generation, de-duplication, mass-balance selection, and
-  postsolve TPD certification.
-- Add activation metadata fields for phase discovery and certification.
-- Add tests proving optimizer success alone is not accepted.
-- Do not add new public routes.
+- Current baseline: PE-01 `neutral_tp_flash` and PE-03 `neutral_lle` report
+  `held_tpd_volume_composition` and `tpd_postsolve`.
+- Keep the route scope neutral, nonelectrolyte, nonreactive, and
+  nonassociating for `neutral_lle`.
+- The remaining neutral expansion is PE-04 neutral multicomponent/multiphase
+  discovery, not associating or electrolyte LLE.
+- Do not add new public routes merely because Stage 1 metadata exists.
 
-Stage 2: neutral multiphase generalization.
+Stage 2: standalone chemical equilibrium.
 
-- Extend two-phase candidate infrastructure toward internal LLLE/VLLE support.
-- Add phase-count discovery diagnostics.
+- Start with CE-01 ideal homogeneous CE.
+- Add CE-04 nonstoichiometric element CE.
+- Add CE-05 activity-based speciation.
+- Add CE-13 reaction-constant convention conversion.
 
-Stage 3: associating EOS and derivative proof.
+Stage 3: neutral combined phase-chemical equilibrium.
 
-- Prove exact association residual diagnostics and implicit first/second
-  sensitivities.
-- Run EOS-level Gross/Sadowski 2002 checks.
-- Keep explicit approximate closures diagnostic only.
+- Add CPE-01 neutral reactive VLE flash only after CE proof rows exist.
+- Add CPE-03 neutral reactive LLE only after phase-set certification and CE
+  proofs are both active.
+- Treat Ascani 2023 as a neutral reactive CPE/LLE reference, not as a general
+  reactive-electrolyte algorithm proof.
 
-Stage 4: narrow associating VLE admission.
+Stage 4: associating VLE.
 
-- Admit only neutral, nonelectrolyte, nonreactive `bubble_pressure` with at most
-  one associating component and exact Hessian evidence.
-- First proof: Gross/Sadowski 2002 methanol/isobutane.
-- Keep associating LLE blocked.
+- Prove exact associating EOS values and derivatives first.
+- Keep explicit association closures diagnostic or approximate unless they are
+  proven to match the mass-action solution.
+- Admit only PE-10 neutral, nonelectrolyte, nonreactive `bubble_pressure` with
+  at most one associating component and exact Hessian evidence.
+- Add PE-11 as a second one-associating-component isothermal VLE proof before
+  any associating LLE work.
 
-Stage 5: additional associating VLE.
-
-- Add a second one-associating-component VLE proof such as pentanol/benzene or
-  propanol/benzene.
-- Consider bubble-temperature only after the isothermal route is stable.
-
-Stage 6: associating neutral LLE.
-
-- Start only after Stages 1, 3, 4, and 5 pass.
-- Candidate targets: methanol/cyclohexane, then water/butanol or
-  water/isobutanol.
-
-Stage 7: strong-electrolyte LLE.
+Stage 5: strong-electrolyte LLE.
 
 - Implement true-ion species, phase electroneutrality, Ascani pair variables,
   Perdomo reduced-coordinate TPD, distributed ions, and trace-ion handling.
+- PE-15, PE-16, and PE-17 remain blocked until reduced electrolyte TPD and
+  phase-set certification are proven.
 
-Stage 8: reactive speciation and reactive neutral LLE.
+Stage 6: electrolyte chemical equilibrium.
 
-- Implement true-species reaction sets, reaction-constant conventions,
-  homogeneous speciation, and reactive LLE with phase transfer.
+- Add CE-07 electrolyte speciation.
+- Add CE-10 salt dissociation.
+- Reuse CE-13 convention conversion so ionic equilibrium constants are never
+  implicit.
 
-Stage 9: reactive electrolyte LLE.
+Stage 7: reactive electrolyte combined equilibrium.
 
 - Combine electrolyte reduced variables, phase electroneutrality, reaction
   affinities, cross-phase reactions, true species by phase, and HELD/TPD
   discovery.
+- Target CPE-09, CPE-10, CPE-12, and CPE-14 only after the prerequisite PE and
+  CE rows have proof evidence.
 
-Stage 10: benchmark and downstream smoke gates.
+Stage 8: generalized multiphase electrolyte/reactive flash.
 
+- Integrate the mature PE, CE, and CPE rows into generalized multiphase route
+  selection.
 - Turn source-backed benchmarks into executable tests or scripts with
   tolerances. Inventories alone are not benchmark completion.
 
@@ -1344,6 +1358,7 @@ model, not for the exact mass-action PC-SAFT association model.
 
 ## Local References
 
+- `docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md`
 - `docs/roadmaps/unified_equilibrium_core_algorithm.md`
 - `docs/roadmaps/FULL_ROADMAP.md`
 - `docs/roadmaps/gross2002_associating_vle_redo_plan.md`

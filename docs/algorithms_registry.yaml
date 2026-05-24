@@ -119,24 +119,24 @@
       comment_line: 348
       context: "SelectorContract evaluate_selector_contract("
     - file: "src/epcsaft/native/equilibrium/core/selector_core.cpp"
-      line: 402
-      comment_line: 401
+      line: 403
+      comment_line: 402
       context: "epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 725
-      comment_line: 724
+      line: 827
+      comment_line: 826
       context: "m.def(\"_native_equilibrium_selector_contract\", []("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 775
-      comment_line: 774
+      line: 877
+      comment_line: 876
       context: "m.def(\"_native_equilibrium_selector_route_result\", []("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2651
-      comment_line: 2650
+      line: 2701
+      comment_line: 2700
       context: "NeutralTwoPhaseEosRouteResult solve_pressure_route("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2788
-      comment_line: 2787
+      line: 2838
+      comment_line: 2837
       context: "NeutralTwoPhaseEosRouteResult solve_temperature_route("
 - algid: "neutral_tp_flash_ipopt"
   section: "Equilibrium Algorithms"
@@ -168,8 +168,8 @@
     acceptance criterion.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2921
-      comment_line: 2920
+      line: 2971
+      comment_line: 2970
       context: "NeutralTwoPhaseEosRouteResult solve_flash_route("
 - algid: "neutral_lle_ipopt"
   section: "Equilibrium Algorithms"
@@ -204,105 +204,122 @@
       comment_line: 443
       context: "\"lle\": _EquilibriumRouteSpec("
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 1486
-      comment_line: 1485
+      line: 2151
+      comment_line: 2150
       context: "NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route("
 - algid: "neutral_tpd_stability"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Planned"
+  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for broader neutral multiphase rows"
   public_api: "Internal route-discovery and certification infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
   derivative_backend: "EOS/provider chemical-potential and free-energy derivatives as required by the selected trial problem"
   solver_role: "Neutral tangent-plane stability evaluator for phase discovery and postsolve certification"
-  implementation_owner: "docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
-  validation: "Planned neutral TPD evaluator tests plus postsolve rejection tests for optimizer-converged unstable states"
-  capability_key: "planned:neutral_tpd_stability"
-  description: "Defines neutral TPD stability checks that distinguish accepted, unstable, metastable, and uncertified route results."
-  change_note: "Added as the first implementation issue target before associating LLE, electrolyte LLE, or reactive route broadening."
+  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
+  validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
+  capability_key: "internal:neutral_tpd_stability"
+  description: "Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance."
+  change_note: "Current Stage 1 baseline for PE-01 and PE-03; broader neutral multiphase, associating, electrolyte, and reactive rows still require separate admission."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 140
   body: |
-    This planned algorithm evaluates neutral tangent-plane distance candidates for
-    route discovery and certification. It is not a public route and must not change
+    This algorithm evaluates neutral tangent-plane distance candidates for route
+    discovery and certification in the current neutral two-phase TP flash and
+    neutral nonassociating LLE routes. It is not a public route and must not change
     capability exposure by itself. Accepted multiphase results require more than a
     per-phase local check: the phase set must be certified against missing
     lower-free-energy candidates and mass-balance incompleteness.
-  owner_refs: []
+  owner_refs:
+    - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      line: 422
+      comment_line: 421
+      context: "void append_tpd_candidates_for_reference_block("
 - algid: "neutral_held_phase_discovery"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Planned"
+  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for PE-04 neutral multiphase discovery"
   public_api: "Internal route-discovery infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
   derivative_backend: "EOS/provider derivatives for volume-composition trial phases"
   solver_role: "HELD-style neutral candidate generation, de-duplication, and seed construction"
-  implementation_owner: "docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
-  validation: "Planned candidate-generation tests for neutral flash/LLE seeds without new public routes"
-  capability_key: "planned:neutral_held_phase_discovery"
-  description: "Adds HELD-style neutral volume-composition phase discovery for activation-matrix routes."
-  change_note: "Documents the next architecture step after neutral LLE exposure and before associating LLE."
+  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
+  validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
+  capability_key: "internal:neutral_held_phase_discovery"
+  description: "Adds HELD-style neutral volume-composition phase discovery for the current neutral TP flash and neutral nonassociating LLE activation rows."
+  change_note: "Current Stage 1 baseline for PE-01 and PE-03; PE-04 neutral multiphase discovery remains a future row."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 160
+  tex_line: 161
   body: |
-    This planned algorithm reduces dependence on user-supplied phase guesses by
-    using neutral TPD or volume-composition trial problems to generate deterministic
+    This algorithm reduces dependence on user-supplied phase guesses by using
+    neutral TPD or volume-composition trial problems to generate deterministic
     candidate phases. It still requires bounded seed policies, candidate ranking,
     continuation, and postsolve certification; it is not a magic guess-free solver.
-  owner_refs: []
+  owner_refs:
+    - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      line: 1760
+      comment_line: 1759
+      context: "NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery("
 - algid: "phase_candidate_mass_balance_selection"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Planned"
+  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for PE-04 neutral multiphase discovery"
   public_api: "Internal route-discovery infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
   derivative_backend: "Not applicable for the first LP/active-set feasibility selector"
   solver_role: "Selects candidate phase sets whose phase fractions satisfy feed material balance"
-  implementation_owner: "docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
-  validation: "Planned small candidate-set feasibility and duplicate-rejection tests"
-  capability_key: "planned:phase_candidate_mass_balance_selection"
+  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
+  validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
+  capability_key: "internal:phase_candidate_mass_balance_selection"
   description: "Filters HELD/TPD phase candidates by mass-balance feasibility before Ipopt route assembly."
-  change_note: "Added to prevent accepting locally stable but mass-balance-incomplete phase sets."
+  change_note: "Current Stage 1 baseline prevents accepting locally stable but mass-balance-incomplete phase sets for PE-01 and PE-03."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 179
+  tex_line: 180
   body: |
-    This planned algorithm solves the small candidate phase-fraction feasibility
-    problem before final route assembly. A candidate set that cannot reconstruct
-    the feed composition is incomplete even if individual candidate phases look
-    locally stable.
-  owner_refs: []
+    This algorithm solves the small candidate phase-fraction feasibility problem
+    before final route assembly. A candidate set that cannot reconstruct the feed
+    composition is incomplete even if individual candidate phases look locally
+    stable.
+  owner_refs:
+    - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      line: 490
+      comment_line: 489
+      context: "void select_two_phase_candidate_set("
 - algid: "postsolve_tpd_certification"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Planned"
+  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for broader neutral multiphase rows"
   public_api: "Internal postsolve certification infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
   derivative_backend: "EOS/provider derivatives required by the selected TPD backend"
   solver_role: "Converts finite optimizer outputs into production_accepted, unstable, metastable, or uncertified statuses"
-  implementation_owner: "docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
-  validation: "Planned tests proving Ipopt convergence is not accepted when TPD or candidate-completeness certification fails"
-  capability_key: "planned:postsolve_tpd_certification"
-  description: "Adds full phase-set stability certification after neutral Ipopt solves."
-  change_note: "Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance."
+  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md"
+  validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
+  capability_key: "internal:postsolve_tpd_certification"
+  description: "Adds full phase-set stability certification after neutral Ipopt solves for PE-01 and PE-03."
+  change_note: "Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance; current implementation is limited to neutral TP flash and neutral nonassociating LLE."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 198
+  tex_line: 199
   body: |
-    This planned algorithm runs after an Ipopt route returns finite variables. It
-    checks stability, phase distinctness, candidate completeness, and route
-    certification blocks before assigning a production-accepted status.
-  owner_refs: []
+    This algorithm runs after an Ipopt route returns finite variables. It checks
+    stability, phase distinctness, candidate completeness, and route certification
+    blocks before assigning a production-accepted status.
+  owner_refs:
+    - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      line: 1913
+      comment_line: 1912
+      context: "NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve("
 - algid: "explicit_association_closure_diagnostics"
   section: "Equilibrium Algorithms"
   subsection: ""
@@ -320,7 +337,7 @@
   description: "Records explicit association closures as approximate Helmholtz diagnostics, not production exact association."
   change_note: "Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 216
+  tex_line: 217
   body: |
     This planned diagnostic family may use explicit algebraic association closures
     for seed generation, continuation, and comparison against
@@ -346,7 +363,7 @@
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 239
+  tex_line: 240
   body: |
     This entry covers the implemented nonassociating pure-neutral native Ceres route
     for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
@@ -386,7 +403,7 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 258
+  tex_line: 259
   body: |
     This entry is limited to the currently implemented pure-ion target surface. It
     does not claim support for association-affecting target kinds merely because the
@@ -425,7 +442,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 276
+  tex_line: 277
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)

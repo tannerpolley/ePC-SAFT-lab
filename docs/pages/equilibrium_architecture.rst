@@ -57,9 +57,13 @@ diagnostics. Flash is a selector-owned route spec over the same native VLE
 residual/constraint core as bubble and dew routes, not a direct pybind route or
 Python-owned optimizer loop. Neutral LLE is also selector-owned: the activation
 matrix row builds a ``liquid1``/``liquid2`` activation plan and reuses the same
-generic two-phase EOS NLP core with a phase-distance constraint instead of a
-VLE ``phase_volume_gap``. Route-specific public methods are intentionally
-absent; ``solve`` is the only public execution lane.
+generic two-phase EOS NLP core with a phase-distance anti-collapse constraint
+instead of a VLE ``phase_volume_gap``. The phase-distance constraint proves
+candidate distinctness, not thermodynamic equilibrium; accepted neutral TP
+flash and neutral nonassociating LLE results also require
+``held_tpd_volume_composition`` discovery and ``tpd_postsolve`` phase-set
+certification. Route-specific public methods are intentionally absent;
+``solve`` is the only public execution lane.
 
 Solver Selection
 ----------------

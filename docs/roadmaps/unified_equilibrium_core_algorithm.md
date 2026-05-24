@@ -348,10 +348,13 @@ flowchart TD
 
 ## Problem-family activation matrix
 
+For the row-by-row PE/CE/CPE roadmap and proof-case inventory, see
+`docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md`.
+
 | Problem family | Direct transfer | Reaction equilibrium | Conservation basis | Phase charge | Split variables | Stability prelayer | Postsolve certification |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Neutral TP flash | On | Off | Species | Off | On | On | On |
-| Neutral LLE | On | Off | Species | Off | On | On | On |
+| Neutral TP flash | On | Off | Species | Off | On | `held_tpd_volume_composition` | `tpd_postsolve` |
+| Neutral LLE | On | Off | Species | Off | On | `held_tpd_volume_composition` | `tpd_postsolve` |
 | Electrolyte LLE | On for transferable species | Off unless chemistry is modeled | Species or salt/solvent lift with exact back-lift | On | On | On | On |
 | Reactive speciation | Off | On | Element/moiety | On when ionic | Off | Optional | On |
 | Reactive LLE | On for shared species | On | Element/moiety | Optional | On | On | On |

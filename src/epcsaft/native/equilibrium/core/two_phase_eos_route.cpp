@@ -418,6 +418,7 @@ std::vector<std::vector<double>> neutral_tpd_trial_compositions(
     return out;
 }
 
+// AlgID: neutral_tpd_stability
 void append_tpd_candidates_for_reference_block(
     const add_args& args,
     double temperature,
@@ -485,6 +486,7 @@ double candidate_pair_mass_balance_norm(
     return norm;
 }
 
+// AlgID: phase_candidate_mass_balance_selection
 void select_two_phase_candidate_set(
     NeutralPhaseDiscoveryResult& discovery,
     const std::vector<double>& feed_composition,
@@ -1754,6 +1756,7 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
 
 }  // namespace
 
+// AlgID: neutral_held_phase_discovery
 NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     const add_args& args,
     double temperature,
@@ -1906,6 +1909,7 @@ IpoptSolveResult solve_neutral_two_phase_eos_ipopt(
     return solve_ipopt_nlp(problem, options);
 }
 
+// AlgID: postsolve_tpd_certification
 NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     const add_args& args,
     double temperature,
