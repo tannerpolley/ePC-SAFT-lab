@@ -348,12 +348,22 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
 ) {
     py::dict out;
     out["accepted"] = result.accepted;
+    out["stability_checked"] = result.stability_checked;
+    out["stability_accepted"] = result.stability_accepted;
+    out["candidate_completeness_accepted"] = result.candidate_completeness_accepted;
+    out["phase_set_mass_balance_feasible"] = result.phase_set_mass_balance_feasible;
     out["rejection_reason"] = result.rejection_reason;
+    out["phase_discovery_backend"] = result.phase_discovery_backend;
+    out["stability_certificate"] = result.stability_certificate;
+    out["phase_set_status"] = result.phase_set_status;
     out["derivative_backend"] = result.derivative_backend;
     out["residual_families"] = result.residual_families;
     out["constraint_families"] = result.constraint_families;
     out["phase_count"] = result.phase_count;
     out["species_count"] = result.species_count;
+    out["tpd_candidate_count"] = result.tpd_candidate_count;
+    out["unique_candidate_count"] = result.unique_candidate_count;
+    out["selected_candidate_count"] = result.selected_candidate_count;
     out["material_balance_norm"] = result.material_balance_norm;
     out["pressure_consistency_norm"] = result.pressure_consistency_norm;
     out["chemical_potential_consistency_norm"] = result.chemical_potential_consistency_norm;
@@ -362,6 +372,8 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["fixed_composition_norm"] = result.fixed_composition_norm;
     out["phase_amount_total_norm"] = result.phase_amount_total_norm;
     out["phase_distance"] = result.phase_distance;
+    out["min_tpd"] = result.min_tpd;
+    out["candidate_mass_balance_norm"] = result.candidate_mass_balance_norm;
     out["objective"] = result.objective;
     out["gibbs_feed"] = result.gibbs_feed;
     out["gibbs_split"] = result.gibbs_split;
@@ -374,6 +386,54 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["phase_densities"] = result.phase_densities;
     out["phase_compositions"] = result.phase_compositions;
     out["phase_ln_fugacity_coefficients"] = result.phase_ln_fugacity_coefficients;
+    out["selected_phase_fractions"] = result.selected_phase_fractions;
+    out["selected_phase_kinds"] = result.selected_phase_kinds;
+    out["selected_phase_compositions"] = result.selected_phase_compositions;
+    out["tpd_candidate_values"] = result.tpd_candidate_values;
+    out["tpd_candidate_phase_kinds"] = result.tpd_candidate_phase_kinds;
+    out["tpd_candidate_compositions"] = result.tpd_candidate_compositions;
+    return out;
+}
+
+py::dict neutral_tpd_candidate_to_dict(
+    const epcsaft::native::equilibrium_nlp::NeutralTpdCandidate& result
+) {
+    py::dict out;
+    out["valid"] = result.valid;
+    out["source"] = result.source;
+    out["phase_kind"] = result.phase_kind;
+    out["composition"] = result.composition;
+    out["density"] = result.density;
+    out["molar_volume"] = result.molar_volume;
+    out["tpd"] = result.tpd;
+    out["transformed_objective"] = result.transformed_objective;
+    return out;
+}
+
+py::dict neutral_phase_discovery_to_dict(
+    const epcsaft::native::equilibrium_nlp::NeutralPhaseDiscoveryResult& result
+) {
+    py::dict out;
+    out["stability_checked"] = result.stability_checked;
+    out["stability_accepted"] = result.stability_accepted;
+    out["candidate_completeness_accepted"] = result.candidate_completeness_accepted;
+    out["phase_set_mass_balance_feasible"] = result.phase_set_mass_balance_feasible;
+    out["phase_discovery_backend"] = result.phase_discovery_backend;
+    out["stability_certificate"] = result.stability_certificate;
+    out["phase_set_status"] = result.phase_set_status;
+    out["min_tpd"] = result.min_tpd;
+    out["candidate_mass_balance_norm"] = result.candidate_mass_balance_norm;
+    out["tpd_candidate_count"] = result.tpd_candidate_count;
+    out["unique_candidate_count"] = result.unique_candidate_count;
+    out["selected_candidate_count"] = result.selected_candidate_count;
+    out["selected_phase_fractions"] = result.selected_phase_fractions;
+    out["selected_phase_kinds"] = result.selected_phase_kinds;
+    out["selected_phase_compositions"] = result.selected_phase_compositions;
+    py::list candidates;
+    for (const auto& candidate : result.candidates) {
+        candidates.append(neutral_tpd_candidate_to_dict(candidate));
+    }
+    out["candidates"] = candidates;
     return out;
 }
 
@@ -521,14 +581,56 @@ void apply_selector_metadata(
     out["exact_derivatives_required"] = contract.exact_derivatives_required;
     out["input_classification"] = selector_input_classification_to_dict(contract.input_classification);
     py::dict stability_certificate;
-    stability_certificate["accepted"] = out["accepted"].cast<bool>();
     stability_certificate["method"] = contract.activation.postsolve_certification;
     py::object postsolve = out["postsolve"];
     if (!postsolve.is_none()) {
         py::dict postsolve_dict = postsolve.cast<py::dict>();
+        const bool stability_checked = postsolve_dict.contains("stability_checked")
+            && postsolve_dict["stability_checked"].cast<bool>();
+        const bool stability_accepted = postsolve_dict.contains("stability_accepted")
+            && postsolve_dict["stability_accepted"].cast<bool>();
+        const bool candidate_complete = postsolve_dict.contains("candidate_completeness_accepted")
+            && postsolve_dict["candidate_completeness_accepted"].cast<bool>();
+        const bool postsolve_local_only = postsolve_dict.contains("stability_certificate")
+            && postsolve_dict["stability_certificate"].cast<std::string>() == "postsolve_local_only";
+        stability_certificate["accepted"] = postsolve_local_only
+            ? out["accepted"].cast<bool>()
+            : stability_checked && stability_accepted && candidate_complete;
+        stability_certificate["stability_checked"] = postsolve_local_only ? true : stability_checked;
+        stability_certificate["stability_accepted"] = postsolve_local_only ? true : stability_accepted;
+        stability_certificate["candidate_set_complete"] = postsolve_local_only ? true : candidate_complete;
         if (postsolve_dict.contains("phase_distance")) {
             stability_certificate["phase_distance"] = postsolve_dict["phase_distance"];
         }
+        if (postsolve_dict.contains("phase_discovery_backend")) {
+            stability_certificate["phase_discovery_backend"] = postsolve_dict["phase_discovery_backend"];
+        }
+        if (postsolve_dict.contains("stability_certificate")) {
+            stability_certificate["method"] = postsolve_dict["stability_certificate"];
+        }
+        if (postsolve_dict.contains("phase_set_status")) {
+            stability_certificate["status"] = postsolve_dict["phase_set_status"];
+        }
+        if (postsolve_dict.contains("min_tpd")) {
+            stability_certificate["min_tpd"] = postsolve_dict["min_tpd"];
+        }
+        if (postsolve_dict.contains("candidate_mass_balance_norm")) {
+            stability_certificate["candidate_mass_balance_norm"] = postsolve_dict["candidate_mass_balance_norm"];
+        }
+        if (postsolve_dict.contains("tpd_candidate_count")) {
+            stability_certificate["tpd_candidate_count"] = postsolve_dict["tpd_candidate_count"];
+        }
+        if (postsolve_dict.contains("unique_candidate_count")) {
+            stability_certificate["unique_candidate_count"] = postsolve_dict["unique_candidate_count"];
+        }
+        if (postsolve_dict.contains("selected_candidate_count")) {
+            stability_certificate["selected_candidate_count"] = postsolve_dict["selected_candidate_count"];
+        }
+    } else {
+        stability_certificate["accepted"] = false;
+        stability_certificate["stability_checked"] = false;
+        stability_certificate["stability_accepted"] = false;
+        stability_certificate["candidate_set_complete"] = false;
     }
     out["stability_certificate"] = stability_certificate;
 }
@@ -1186,6 +1288,30 @@ void register_equilibrium_bindings(pybind11::module_& m) {
                 pressure_tolerance,
                 chemical_potential_tolerance,
                 phase_distance_tolerance
+            )
+        );
+    });
+    m.def("_native_neutral_tpd_phase_discovery", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<int>& phase_kinds,
+        double tpd_tolerance,
+        double candidate_mass_balance_tolerance
+    ) {
+        if (!mixture) {
+            throw ValueError("Neutral TPD phase discovery requires a native mixture.");
+        }
+        return neutral_phase_discovery_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_neutral_tpd_phase_discovery(
+                mixture->args(),
+                temperature,
+                target_pressure,
+                feed_composition,
+                phase_kinds,
+                tpd_tolerance,
+                candidate_mass_balance_tolerance
             )
         );
     });

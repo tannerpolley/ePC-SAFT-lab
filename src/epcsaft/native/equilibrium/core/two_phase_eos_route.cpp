@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <exception>
+#include <limits>
 #include <numeric>
 #include <utility>
 
@@ -73,6 +74,9 @@ namespace {
 
 constexpr double kGasConstant = 8.31446261815324;
 constexpr double kContractPhaseDistance = 1.0e-8;
+constexpr double kCompositionFloor = 1.0e-12;
+constexpr double kCandidateCompositionTolerance = 1.0e-6;
+constexpr double kCandidateLogVolumeTolerance = 1.0e-5;
 
 void apply_route_metadata(NeutralTwoPhaseEosNlpContract& out, const RouteMetadata& metadata) {
     out.variable_model = metadata.variable_model;
@@ -134,6 +138,44 @@ std::vector<double> normalized_positive_values(const std::vector<double>& values
         normalized.push_back(value / total);
     }
     return normalized;
+}
+
+std::vector<double> normalized_trial_composition(const std::vector<double>& values, const std::string& label) {
+    if (values.empty()) {
+        throw ValueError(label + " requires at least one value.");
+    }
+    std::vector<double> floored;
+    floored.reserve(values.size());
+    double total = 0.0;
+    for (double value : values) {
+        if (!std::isfinite(value) || value < 0.0) {
+            throw ValueError(label + " values must be finite and non-negative.");
+        }
+        const double floored_value = std::max(value, kCompositionFloor);
+        floored.push_back(floored_value);
+        total += floored_value;
+    }
+    require_positive_finite(total, label + " total");
+    for (double& value : floored) {
+        value /= total;
+    }
+    return floored;
+}
+
+std::vector<int> normalized_phase_kinds(const std::vector<int>& phase_kinds, const std::string& label) {
+    if (phase_kinds.empty()) {
+        throw ValueError(label + " requires at least one phase kind.");
+    }
+    std::vector<int> out;
+    for (int phase_kind : phase_kinds) {
+        if (phase_kind != 0 && phase_kind != 1) {
+            throw ValueError(label + " phase kind must be 0/liquid or 1/vapor.");
+        }
+        if (std::find(out.begin(), out.end(), phase_kind) == out.end()) {
+            out.push_back(phase_kind);
+        }
+    }
+    return out;
 }
 
 std::vector<double> deterministic_composition_shift(
@@ -266,6 +308,410 @@ NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point(
     return out;
 }
 
+EosPhaseBlockResult evaluate_unit_phase_block_at_pressure_root(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& composition,
+    int phase_kind,
+    const std::string& label
+) {
+    const std::vector<double> normalized = normalized_trial_composition(composition, label + " composition");
+    const DensitySolveResult density = density_solve_report_cpp(
+        temperature,
+        target_pressure,
+        normalized,
+        phase_kind,
+        args
+    );
+    if (!density.valid || !std::isfinite(density.rho) || density.rho <= 0.0) {
+        throw ValueError(label + " could not construct a pressure-density root trial phase.");
+    }
+    return evaluate_eos_phase_block(args, temperature, target_pressure, normalized, 1.0 / density.rho);
+}
+
+double composition_distance_inf_norm(
+    const std::vector<double>& first,
+    const std::vector<double>& second
+) {
+    require_size(second, first.size(), "Neutral TPD candidate composition");
+    double distance = 0.0;
+    for (std::size_t index = 0; index < first.size(); ++index) {
+        distance = std::max(distance, std::abs(first[index] - second[index]));
+    }
+    return distance;
+}
+
+bool duplicate_tpd_candidate(
+    const NeutralTpdCandidate& first,
+    const NeutralTpdCandidate& second
+) {
+    if (!first.valid || !second.valid || first.molar_volume <= 0.0 || second.molar_volume <= 0.0) {
+        return false;
+    }
+    return composition_distance_inf_norm(first.composition, second.composition) < kCandidateCompositionTolerance
+        && std::abs(std::log(first.molar_volume) - std::log(second.molar_volume)) < kCandidateLogVolumeTolerance;
+}
+
+void append_unique_tpd_candidate(
+    std::vector<NeutralTpdCandidate>& candidates,
+    const NeutralTpdCandidate& candidate
+) {
+    if (!candidate.valid) {
+        return;
+    }
+    for (NeutralTpdCandidate& existing : candidates) {
+        if (!duplicate_tpd_candidate(existing, candidate)) {
+            continue;
+        }
+        if (candidate.tpd < existing.tpd) {
+            existing = candidate;
+        }
+        return;
+    }
+    candidates.push_back(candidate);
+}
+
+std::vector<std::vector<double>> neutral_tpd_trial_compositions(
+    const std::vector<double>& reference
+) {
+    const std::vector<double> normalized = normalized_trial_composition(reference, "Neutral TPD reference");
+    std::vector<std::vector<double>> out;
+    out.push_back(normalized);
+    if (normalized.size() > 1) {
+        out.push_back(normalized_trial_composition(
+            deterministic_composition_shift(normalized, {}, "Neutral TPD shifted composition", 1.0),
+            "Neutral TPD shifted composition"
+        ));
+        out.push_back(normalized_trial_composition(
+            deterministic_composition_shift(normalized, {}, "Neutral TPD shifted composition", -1.0),
+            "Neutral TPD shifted composition"
+        ));
+    }
+    if (normalized.size() == 2) {
+        for (double first_fraction : {
+                 1.0e-4,
+                 1.0e-3,
+                 1.0e-2,
+                 2.0e-2,
+                 5.0e-2,
+                 1.0e-1,
+                 2.0e-1,
+                 3.5e-1,
+                 5.0e-1,
+                 6.5e-1,
+                 8.0e-1,
+                 9.0e-1,
+                 9.5e-1,
+                 9.8e-1,
+                 9.9e-1,
+                 9.99e-1}) {
+            out.push_back({first_fraction, 1.0 - first_fraction});
+        }
+    } else if (normalized.size() > 2) {
+        for (std::size_t rich = 0; rich < normalized.size(); ++rich) {
+            std::vector<double> near_pure(normalized.size(), kCompositionFloor);
+            near_pure[rich] = 1.0 - kCompositionFloor * static_cast<double>(normalized.size() - 1);
+            out.push_back(normalized_trial_composition(near_pure, "Neutral TPD near-pure composition"));
+        }
+    }
+    return out;
+}
+
+void append_tpd_candidates_for_reference_block(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const EosPhaseBlockResult& reference,
+    const std::vector<int>& trial_phase_kinds,
+    const std::string& source_prefix,
+    std::vector<NeutralTpdCandidate>& candidates,
+    int& valid_candidate_count
+) {
+    const std::size_t species_count = reference.composition.size();
+    if (reference.gradient.size() < species_count) {
+        throw ValueError("Neutral TPD reference gradient size did not match species count.");
+    }
+    const std::vector<std::vector<double>> trial_compositions =
+        neutral_tpd_trial_compositions(reference.composition);
+    for (int phase_kind : trial_phase_kinds) {
+        for (std::size_t index = 0; index < trial_compositions.size(); ++index) {
+            try {
+                const EosPhaseBlockResult trial = evaluate_unit_phase_block_at_pressure_root(
+                    args,
+                    temperature,
+                    target_pressure,
+                    trial_compositions[index],
+                    phase_kind,
+                    source_prefix
+                );
+                if (trial.gradient.size() < species_count) {
+                    continue;
+                }
+                NeutralTpdCandidate candidate;
+                candidate.valid = true;
+                candidate.source = source_prefix + "_trial_" + std::to_string(index);
+                candidate.phase_kind = phase_kind;
+                candidate.composition = trial.composition;
+                candidate.density = trial.density;
+                candidate.molar_volume = 1.0 / trial.density;
+                candidate.transformed_objective = trial.objective;
+                for (std::size_t species = 0; species < species_count; ++species) {
+                    candidate.tpd += trial.composition[species]
+                        * (trial.gradient[species] - reference.gradient[species]);
+                }
+                ++valid_candidate_count;
+                append_unique_tpd_candidate(candidates, candidate);
+            } catch (const std::exception&) {
+                continue;
+            }
+        }
+    }
+}
+
+double candidate_pair_mass_balance_norm(
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& first,
+    const std::vector<double>& second,
+    double first_fraction
+) {
+    require_size(first, feed_composition.size(), "Neutral TPD first candidate composition");
+    require_size(second, feed_composition.size(), "Neutral TPD second candidate composition");
+    double norm = 0.0;
+    for (std::size_t species = 0; species < feed_composition.size(); ++species) {
+        const double reconstructed = first_fraction * first[species] + (1.0 - first_fraction) * second[species];
+        norm = std::max(norm, std::abs(reconstructed - feed_composition[species]));
+    }
+    return norm;
+}
+
+void select_two_phase_candidate_set(
+    NeutralPhaseDiscoveryResult& discovery,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    double candidate_mass_balance_tolerance
+) {
+    if (phase_kinds.size() != 2 || discovery.candidates.size() < 2) {
+        discovery.phase_set_status = "candidate_mass_balance_incomplete";
+        discovery.candidate_mass_balance_norm = std::numeric_limits<double>::infinity();
+        return;
+    }
+    const std::vector<double> z = normalized_trial_composition(feed_composition, "Neutral TPD feed");
+    double best_norm = std::numeric_limits<double>::infinity();
+    double best_fraction = 0.0;
+    int best_first = -1;
+    int best_second = -1;
+    for (std::size_t first_index = 0; first_index < discovery.candidates.size(); ++first_index) {
+        const NeutralTpdCandidate& first = discovery.candidates[first_index];
+        if (first.phase_kind != phase_kinds[0]) {
+            continue;
+        }
+        for (std::size_t second_index = 0; second_index < discovery.candidates.size(); ++second_index) {
+            if (first_index == second_index) {
+                continue;
+            }
+            const NeutralTpdCandidate& second = discovery.candidates[second_index];
+            if (second.phase_kind != phase_kinds[1]) {
+                continue;
+            }
+            double numerator = 0.0;
+            double denominator = 0.0;
+            for (std::size_t species = 0; species < z.size(); ++species) {
+                const double direction = first.composition[species] - second.composition[species];
+                numerator += (z[species] - second.composition[species]) * direction;
+                denominator += direction * direction;
+            }
+            if (denominator <= 0.0) {
+                continue;
+            }
+            const double fraction = numerator / denominator;
+            if (!(fraction > 1.0e-10 && fraction < 1.0 - 1.0e-10)) {
+                continue;
+            }
+            const double norm = candidate_pair_mass_balance_norm(
+                z,
+                first.composition,
+                second.composition,
+                fraction
+            );
+            if (norm < best_norm) {
+                best_norm = norm;
+                best_fraction = fraction;
+                best_first = static_cast<int>(first_index);
+                best_second = static_cast<int>(second_index);
+            }
+        }
+    }
+    discovery.candidate_mass_balance_norm = best_norm;
+    discovery.phase_set_mass_balance_feasible = best_norm <= candidate_mass_balance_tolerance;
+    discovery.candidate_completeness_accepted = discovery.phase_set_mass_balance_feasible;
+    if (!discovery.phase_set_mass_balance_feasible) {
+        discovery.phase_set_status = "candidate_mass_balance_incomplete";
+        return;
+    }
+    discovery.selected_candidate_count = 2;
+    discovery.selected_phase_fractions = {best_fraction, 1.0 - best_fraction};
+    discovery.selected_phase_kinds = {phase_kinds[0], phase_kinds[1]};
+    discovery.selected_phase_compositions = {
+        discovery.candidates[static_cast<std::size_t>(best_first)].composition,
+        discovery.candidates[static_cast<std::size_t>(best_second)].composition,
+    };
+    discovery.phase_set_status = "candidate_mass_balance_feasible";
+}
+
+void copy_discovery_to_postsolve(
+    NeutralTwoPhaseEosPostsolve& postsolve,
+    const NeutralPhaseDiscoveryResult& discovery
+) {
+    postsolve.stability_checked = discovery.stability_checked;
+    postsolve.stability_accepted = discovery.stability_accepted;
+    postsolve.candidate_completeness_accepted = discovery.candidate_completeness_accepted;
+    postsolve.phase_set_mass_balance_feasible = discovery.phase_set_mass_balance_feasible;
+    postsolve.phase_discovery_backend = discovery.phase_discovery_backend;
+    postsolve.stability_certificate = discovery.stability_certificate;
+    postsolve.phase_set_status = discovery.phase_set_status;
+    postsolve.min_tpd = discovery.min_tpd;
+    postsolve.candidate_mass_balance_norm = discovery.candidate_mass_balance_norm;
+    postsolve.tpd_candidate_count = discovery.tpd_candidate_count;
+    postsolve.unique_candidate_count = discovery.unique_candidate_count;
+    postsolve.selected_candidate_count = discovery.selected_candidate_count;
+    postsolve.selected_phase_fractions = discovery.selected_phase_fractions;
+    postsolve.selected_phase_kinds = discovery.selected_phase_kinds;
+    postsolve.selected_phase_compositions = discovery.selected_phase_compositions;
+    postsolve.tpd_candidate_values.clear();
+    postsolve.tpd_candidate_phase_kinds.clear();
+    postsolve.tpd_candidate_compositions.clear();
+    for (const NeutralTpdCandidate& candidate : discovery.candidates) {
+        postsolve.tpd_candidate_values.push_back(candidate.tpd);
+        postsolve.tpd_candidate_phase_kinds.push_back(candidate.phase_kind);
+        postsolve.tpd_candidate_compositions.push_back(candidate.composition);
+    }
+}
+
+std::string certified_postsolve_status(const NeutralTwoPhaseEosPostsolve& postsolve) {
+    if (postsolve.accepted) {
+        return "production_accepted";
+    }
+    if (postsolve.rejection_reason == "stability_tpd") {
+        return "unstable";
+    }
+    if (postsolve.rejection_reason == "candidate_completeness") {
+        return "optimizer_converged_uncertified";
+    }
+    return "postsolve_rejected";
+}
+
+bool candidate_duplicates_accepted_phase(
+    const NeutralTpdCandidate& candidate,
+    const std::vector<EosPhaseBlockResult>& accepted_phases
+) {
+    for (const EosPhaseBlockResult& phase : accepted_phases) {
+        if (phase.total_amount <= 0.0 || phase.volume <= 0.0) {
+            continue;
+        }
+        NeutralTpdCandidate accepted;
+        accepted.valid = true;
+        accepted.composition = phase.composition;
+        accepted.molar_volume = phase.volume / phase.total_amount;
+        if (duplicate_tpd_candidate(candidate, accepted)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+NeutralPhaseDiscoveryResult certify_neutral_two_phase_set(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const EosPhaseSystemResult& system,
+    const std::vector<double>& feed_amounts,
+    const std::vector<int>& phase_kinds,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+) {
+    if (phase_kinds.size() != 2) {
+        throw ValueError("Neutral TPD postsolve phase kind size does not match the neutral two-phase EOS NLP contract.");
+    }
+    NeutralPhaseDiscoveryResult out;
+    out.phase_discovery_backend = "held_tpd_volume_composition";
+    out.stability_certificate = "tpd_postsolve";
+    const std::vector<int> trial_phase_kinds = normalized_phase_kinds(phase_kinds, "Neutral TPD postsolve");
+    int valid_candidate_count = 0;
+    for (std::size_t phase = 0; phase < system.phase_blocks.size(); ++phase) {
+        append_tpd_candidates_for_reference_block(
+            args,
+            temperature,
+            target_pressure,
+            system.phase_blocks[phase],
+            trial_phase_kinds,
+            "accepted_phase_" + std::to_string(phase),
+            out.candidates,
+            valid_candidate_count
+        );
+    }
+    out.tpd_candidate_count = valid_candidate_count;
+    out.unique_candidate_count = static_cast<int>(out.candidates.size());
+    out.stability_checked = out.unique_candidate_count > 0;
+    out.min_tpd = out.stability_checked ? std::numeric_limits<double>::infinity() : 0.0;
+    bool negative_novel_candidate = false;
+    for (const NeutralTpdCandidate& candidate : out.candidates) {
+        out.min_tpd = std::min(out.min_tpd, candidate.tpd);
+        if (candidate.tpd < -tpd_tolerance && !candidate_duplicates_accepted_phase(candidate, system.phase_blocks)) {
+            negative_novel_candidate = true;
+        }
+    }
+    out.stability_accepted = out.stability_checked && !negative_novel_candidate;
+
+    const double total_feed = positive_sum(feed_amounts, "Neutral TPD postsolve feed amount");
+    std::vector<double> feed_composition;
+    feed_composition.reserve(feed_amounts.size());
+    for (double amount : feed_amounts) {
+        feed_composition.push_back(amount / total_feed);
+    }
+    const double phase_total = std::accumulate(
+        system.phase_blocks.begin(),
+        system.phase_blocks.end(),
+        0.0,
+        [](double total, const EosPhaseBlockResult& block) {
+            return total + block.total_amount;
+        }
+    );
+    require_positive_finite(phase_total, "Neutral TPD postsolve phase total");
+    std::vector<double> fractions;
+    fractions.reserve(system.phase_blocks.size());
+    for (const EosPhaseBlockResult& block : system.phase_blocks) {
+        fractions.push_back(block.total_amount / phase_total);
+    }
+    out.candidate_mass_balance_norm = 0.0;
+    for (std::size_t species = 0; species < feed_composition.size(); ++species) {
+        double reconstructed = 0.0;
+        for (std::size_t phase = 0; phase < system.phase_blocks.size(); ++phase) {
+            reconstructed += fractions[phase] * system.phase_blocks[phase].composition[species];
+        }
+        out.candidate_mass_balance_norm =
+            std::max(out.candidate_mass_balance_norm, std::abs(reconstructed - feed_composition[species]));
+    }
+    out.phase_set_mass_balance_feasible = out.candidate_mass_balance_norm <= candidate_mass_balance_tolerance;
+    out.candidate_completeness_accepted = out.phase_set_mass_balance_feasible && out.stability_accepted;
+    out.selected_candidate_count = static_cast<int>(system.phase_blocks.size());
+    out.selected_phase_fractions = fractions;
+    out.selected_phase_kinds = phase_kinds;
+    for (const EosPhaseBlockResult& block : system.phase_blocks) {
+        out.selected_phase_compositions.push_back(block.composition);
+    }
+    if (!out.stability_checked) {
+        out.phase_set_status = "stability_uncertified";
+    } else if (!out.stability_accepted) {
+        out.phase_set_status = "negative_tpd_candidate";
+    } else if (!out.phase_set_mass_balance_feasible) {
+        out.phase_set_status = "candidate_mass_balance_incomplete";
+    } else {
+        out.phase_set_status = "phase_set_certified";
+    }
+    return out;
+}
+
 NeutralTwoPhaseEosInitialPoint build_neutral_two_phase_eos_initial_point(
     const add_args& args,
     const std::vector<double>& feed_amounts,
@@ -287,6 +733,54 @@ NeutralTwoPhaseEosInitialPoint build_neutral_two_phase_eos_initial_point(
         route_label,
         phase_kinds
     );
+}
+
+NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point_from_candidate_set(
+    const add_args& args,
+    const std::vector<double>& feed_amounts,
+    const NeutralPhaseDiscoveryResult& discovery,
+    double temperature,
+    double target_pressure,
+    const std::string& route_label,
+    const std::vector<int>& phase_kinds
+) {
+    if (discovery.selected_phase_compositions.size() != 2
+        || discovery.selected_phase_fractions.size() != 2
+        || discovery.selected_phase_kinds.size() != 2) {
+        throw ValueError(route_label + " requires a two-candidate phase-discovery seed.");
+    }
+    if (phase_kinds.size() != 2) {
+        throw ValueError(route_label + " phase kind size does not match the neutral two-phase EOS NLP contract.");
+    }
+    const double total_feed = positive_sum(feed_amounts, route_label + " feed amount");
+    NeutralTwoPhaseEosInitialPoint out;
+    out.phase_amounts.assign(2, std::vector<double>(feed_amounts.size(), 0.0));
+    out.volumes.reserve(2);
+    for (std::size_t phase = 0; phase < 2; ++phase) {
+        const std::vector<double> composition = normalized_trial_composition(
+            discovery.selected_phase_compositions[phase],
+            route_label + " phase-discovery composition"
+        );
+        require_size(composition, feed_amounts.size(), route_label + " phase-discovery composition");
+        const double phase_fraction = discovery.selected_phase_fractions[phase];
+        if (!(phase_fraction > 0.0 && phase_fraction < 1.0)) {
+            throw ValueError(route_label + " phase-discovery phase fraction must be inside (0, 1).");
+        }
+        for (std::size_t species = 0; species < composition.size(); ++species) {
+            out.phase_amounts[phase][species] = total_feed * phase_fraction * composition[species];
+            require_positive_finite(out.phase_amounts[phase][species], route_label + " phase-discovery amount");
+        }
+        const EosPhaseBlockResult block = evaluate_unit_phase_block_at_pressure_root(
+            args,
+            temperature,
+            target_pressure,
+            composition,
+            phase_kinds[phase],
+            route_label + " phase-discovery seed"
+        );
+        out.volumes.push_back((total_feed * phase_fraction) / block.density);
+    }
+    return out;
 }
 
 NeutralTwoPhaseEosInitialPoint build_charge_neutral_two_phase_eos_initial_point(
@@ -330,6 +824,49 @@ std::vector<double> neutral_two_phase_variables_from_initial(
     return out;
 }
 
+void append_phase_discovery_seed_candidates(
+    std::vector<NamedInitialVariables>& out,
+    const add_args& args,
+    const std::vector<double>& feed_amounts,
+    double temperature,
+    double target_pressure,
+    const std::string& route_label,
+    const std::vector<int>& phase_kinds
+) {
+    try {
+        const std::vector<double> feed_composition =
+            normalized_positive_values(feed_amounts, route_label + " feed amount");
+        const NeutralPhaseDiscoveryResult discovery = evaluate_neutral_tpd_phase_discovery(
+            args,
+            temperature,
+            target_pressure,
+            feed_composition,
+            phase_kinds,
+            1.0e-6,
+            1.0e-6
+        );
+        if (!discovery.phase_set_mass_balance_feasible || discovery.selected_candidate_count != 2) {
+            return;
+        }
+        out.push_back({
+            "held_tpd_candidate_pair",
+            neutral_two_phase_variables_from_initial(
+                build_two_phase_eos_initial_point_from_candidate_set(
+                    args,
+                    feed_amounts,
+                    discovery,
+                    temperature,
+                    target_pressure,
+                    route_label,
+                    phase_kinds
+                )
+            )
+        });
+    } catch (const std::exception&) {
+        return;
+    }
+}
+
 std::vector<NamedInitialVariables> neutral_two_phase_seed_candidates(
     const add_args& args,
     const std::vector<double>& feed_amounts,
@@ -341,6 +878,15 @@ std::vector<NamedInitialVariables> neutral_two_phase_seed_candidates(
 ) {
     std::vector<NamedInitialVariables> out;
     if (charges.empty()) {
+        append_phase_discovery_seed_candidates(
+            out,
+            args,
+            feed_amounts,
+            temperature,
+            target_pressure,
+            route_label,
+            phase_kinds
+        );
         const std::vector<double> feed_composition =
             normalized_positive_values(feed_amounts, route_label + " feed amount");
         out.push_back({
@@ -475,6 +1021,7 @@ RouteSeedAttempt neutral_seed_attempt_from_result(
     out.application_status = result.application_status;
     out.solver_accepted = result.solver_accepted;
     out.accepted = result.accepted;
+    out.stable = result.postsolve.stability_accepted;
     out.iteration_count = result.iteration_count;
     out.objective = result.objective;
     out.phase_distance = result.postsolve.phase_distance;
@@ -482,6 +1029,8 @@ RouteSeedAttempt neutral_seed_attempt_from_result(
     out.charge_balance_norm = result.postsolve.charge_balance_norm;
     out.pressure_consistency_norm = result.postsolve.pressure_consistency_norm;
     out.chemical_potential_consistency_norm = result.postsolve.chemical_potential_consistency_norm;
+    out.phase_equilibrium_norm = result.postsolve.ln_fugacity_consistency_norm;
+    out.min_tpd = result.postsolve.min_tpd;
     return out;
 }
 
@@ -1205,6 +1754,66 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
 
 }  // namespace
 
+NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+) {
+    require_positive_finite(tpd_tolerance, "Neutral TPD tolerance");
+    require_positive_finite(candidate_mass_balance_tolerance, "Neutral TPD candidate mass-balance tolerance");
+    const std::vector<double> feed =
+        normalized_trial_composition(feed_composition, "Neutral TPD feed composition");
+    const std::vector<int> trial_phase_kinds = normalized_phase_kinds(phase_kinds, "Neutral TPD discovery");
+
+    NeutralPhaseDiscoveryResult out;
+    int valid_candidate_count = 0;
+    for (int phase_kind : trial_phase_kinds) {
+        try {
+            const EosPhaseBlockResult reference = evaluate_unit_phase_block_at_pressure_root(
+                args,
+                temperature,
+                target_pressure,
+                feed,
+                phase_kind,
+                "Neutral TPD feed reference"
+            );
+            append_tpd_candidates_for_reference_block(
+                args,
+                temperature,
+                target_pressure,
+                reference,
+                trial_phase_kinds,
+                "feed_phase_kind_" + std::to_string(phase_kind),
+                out.candidates,
+                valid_candidate_count
+            );
+        } catch (const std::exception&) {
+            continue;
+        }
+    }
+    out.tpd_candidate_count = valid_candidate_count;
+    out.unique_candidate_count = static_cast<int>(out.candidates.size());
+    out.stability_checked = out.unique_candidate_count > 0;
+    out.min_tpd = out.stability_checked ? std::numeric_limits<double>::infinity() : 0.0;
+    for (const NeutralTpdCandidate& candidate : out.candidates) {
+        out.min_tpd = std::min(out.min_tpd, candidate.tpd);
+    }
+    out.stability_accepted = out.stability_checked && out.min_tpd >= -tpd_tolerance;
+    select_two_phase_candidate_set(out, feed, phase_kinds, candidate_mass_balance_tolerance);
+    if (!out.stability_checked) {
+        out.phase_set_status = "stability_uncertified";
+    } else if (!out.phase_set_mass_balance_feasible) {
+        out.phase_set_status = "candidate_mass_balance_incomplete";
+    } else if (out.stability_accepted) {
+        out.phase_set_status = "single_phase_stable_candidate_set";
+    }
+    return out;
+}
+
 NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     const add_args& args,
     double temperature,
@@ -1309,7 +1918,9 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     double chemical_potential_tolerance,
     double phase_distance_tolerance,
     const std::vector<double>& charges,
-    bool phase_distance_constraint
+    bool phase_distance_constraint,
+    bool stability_certification_required,
+    std::vector<int> phase_kinds
 ) {
     require_positive_finite(material_tolerance, "Neutral EOS postsolve material tolerance");
     require_positive_finite(pressure_tolerance, "Neutral EOS postsolve pressure tolerance");
@@ -1365,6 +1976,17 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         charges
     );
     out.phase_distance = phase_distance_inf_norm(out.phase_compositions[0], out.phase_compositions[1]);
+    out.stability_checked = false;
+    out.stability_accepted = !stability_certification_required;
+    out.candidate_completeness_accepted = !stability_certification_required;
+    out.phase_set_mass_balance_feasible = !stability_certification_required;
+    out.phase_discovery_backend = stability_certification_required
+        ? "held_tpd_volume_composition"
+        : "deterministic_seed_sweep";
+    out.stability_certificate = stability_certification_required
+        ? "tpd_postsolve"
+        : "postsolve_local_only";
+    out.phase_set_status = stability_certification_required ? "not_checked" : "not_required";
 
     const double effective_chemical_tolerance = charges.empty()
         ? chemical_potential_tolerance
@@ -1386,6 +2008,45 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         out.rejection_reason = "ln_fugacity_consistency";
     } else {
         out.rejection_reason = "phase_distance";
+    }
+    if (out.accepted && stability_certification_required) {
+        if (!charges.empty()) {
+            out.accepted = false;
+            out.rejection_reason = "stability_tpd";
+            out.phase_set_status = "neutral_tpd_not_valid_for_charged_system";
+            return out;
+        }
+        if (phase_kinds.empty()) {
+            phase_kinds = {0, 0};
+        }
+        if (phase_kinds.size() != 2) {
+            throw ValueError("Neutral EOS postsolve phase kind size does not match the neutral two-phase EOS NLP contract.");
+        }
+        const double tpd_tolerance = std::max(1.0e-6, 100.0 * chemical_potential_tolerance);
+        const double candidate_mass_balance_tolerance = std::max(1.0e-8, 10.0 * material_tolerance);
+        const NeutralPhaseDiscoveryResult discovery = certify_neutral_two_phase_set(
+            args,
+            temperature,
+            target_pressure,
+            system,
+            feed_amounts,
+            phase_kinds,
+            tpd_tolerance,
+            candidate_mass_balance_tolerance
+        );
+        copy_discovery_to_postsolve(out, discovery);
+        if (!out.stability_checked) {
+            out.accepted = false;
+            out.rejection_reason = "candidate_completeness";
+        } else if (!out.stability_accepted) {
+            out.accepted = false;
+            out.rejection_reason = "stability_tpd";
+        } else if (!out.candidate_completeness_accepted) {
+            out.accepted = false;
+            out.rejection_reason = "candidate_completeness";
+        } else {
+            out.rejection_reason = "accepted";
+        }
     }
     return out;
 }
@@ -1592,10 +2253,12 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
             chemical_potential_tolerance,
             phase_distance_tolerance,
             {},
-            true
+            true,
+            true,
+            {0, 0}
         );
         result.accepted = result.postsolve.accepted;
-        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        result.status = certified_postsolve_status(result.postsolve);
         attempts.push_back(neutral_seed_attempt_from_result(result));
         if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
             best = result;

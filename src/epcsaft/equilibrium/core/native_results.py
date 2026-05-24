@@ -303,6 +303,9 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
     stability_source, stability_payload = _stability_evidence(diagnostics)
     stability_checked = stability_payload is not None
     stability_accepted = bool(stability_payload.get("accepted", False)) if stability_payload is not None else False
+    candidate_set_complete = (
+        bool(stability_payload.get("candidate_set_complete", False)) if stability_payload is not None else False
+    )
     failure_reason = str(
         diagnostics.get(
             "failure_reason",
@@ -315,22 +318,29 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
     elif not postsolve_accepted:
         status = "postsolve_rejected"
     elif not stability_checked:
-        status = "stability_not_checked"
+        status = "optimizer_converged_uncertified"
     elif not stability_accepted:
-        status = "stability_rejected"
+        status = "unstable"
+    elif not candidate_set_complete:
+        status = "optimizer_converged_uncertified"
     else:
-        status = "accepted"
+        status = str(diagnostics.get("route_status", "production_accepted"))
 
-    return {
-        "accepted": route_accepted and postsolve_accepted and stability_checked and stability_accepted,
+    out = {
+        "accepted": route_accepted
+        and postsolve_accepted
+        and stability_checked
+        and stability_accepted
+        and candidate_set_complete,
         "status": status,
         "route_accepted": route_accepted,
         "postsolve_accepted": postsolve_accepted,
         "solver_accepted": solver_accepted,
         "stability_checked": stability_checked,
         "stability_accepted": stability_accepted,
+        "candidate_set_complete": candidate_set_complete,
         "stability_source": stability_source,
-        "failure_reason": "" if status == "accepted" else failure_reason,
+        "failure_reason": "" if status in {"accepted", "production_accepted"} else failure_reason,
         "active_residuals_reported": bool(diagnostics.get("residual_families"))
         or _has_any_key(diagnostics, _RESIDUAL_EVIDENCE_KEYS),
         "hard_constraints_reported": bool(diagnostics.get("constraint_families"))
@@ -338,6 +348,20 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
         "physical_admissibility_reported": _has_any_key(diagnostics, _ADMISSIBILITY_EVIDENCE_KEYS),
         "phase_eligibility_reported": _has_any_key(diagnostics, _PHASE_ELIGIBILITY_EVIDENCE_KEYS),
     }
+    if stability_payload is not None:
+        for key in (
+            "method",
+            "phase_discovery_backend",
+            "phase_distance",
+            "min_tpd",
+            "candidate_mass_balance_norm",
+            "tpd_candidate_count",
+            "unique_candidate_count",
+            "selected_candidate_count",
+        ):
+            if key in stability_payload:
+                out[key] = stability_payload[key]
+    return out
 
 
 def with_postsolve_certification(diagnostics: Mapping[str, Any]) -> dict[str, Any]:

@@ -370,7 +370,8 @@ SelectorContract evaluate_selector_contract(
     out.input_classification = classify_selector_input(args);
     require_eligible_input(out.input_classification);
     out.production_exposed = out.activation.production_exposed;
-    out.certification_required = out.activation.postsolve_certification == "on";
+    out.certification_required = out.activation.postsolve_certification == "on"
+        || out.activation.postsolve_certification == "tpd_postsolve";
     out.density_closure_required = true;
     out.exact_derivatives_required = exact_derivatives_required(out.activation);
     if (request.route == "neutral_tp_flash" || request.route == "neutral_lle") {

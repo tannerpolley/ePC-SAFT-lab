@@ -652,6 +652,35 @@ std::vector<NamedInitialVariables> flash_route_seed_candidates(
             out.push_back({std::move(seed_name), std::move(variables)});
         }
     };
+    try {
+        const NeutralPhaseDiscoveryResult discovery = evaluate_neutral_tpd_phase_discovery(
+            args,
+            temperature,
+            target_pressure,
+            feed_composition,
+            {0, 1},
+            1.0e-6,
+            1.0e-6
+        );
+        if (discovery.phase_set_mass_balance_feasible
+            && discovery.selected_phase_compositions.size() == 2
+            && discovery.selected_phase_fractions.size() == 2) {
+            append_if_feasible(
+                "held_tpd_candidate_pair",
+                build_flash_route_initial_variables(
+                    args,
+                    feed_composition,
+                    discovery.selected_phase_compositions[0],
+                    discovery.selected_phase_compositions[1],
+                    discovery.selected_phase_fractions[1],
+                    temperature,
+                    target_pressure,
+                    problem_name
+                )
+            );
+        }
+    } catch (const std::exception&) {
+    }
     for (double alpha : {1.5, 2.0, 2.5, 3.0}) {
         try {
             append_if_feasible(
@@ -744,6 +773,19 @@ int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
     return 0;
 }
 
+std::string certified_postsolve_status(const NeutralTwoPhaseEosPostsolve& postsolve) {
+    if (postsolve.accepted) {
+        return "production_accepted";
+    }
+    if (postsolve.rejection_reason == "stability_tpd") {
+        return "unstable";
+    }
+    if (postsolve.rejection_reason == "candidate_completeness") {
+        return "optimizer_converged_uncertified";
+    }
+    return "postsolve_rejected";
+}
+
 bool has_finite_complete_variables(const IpoptSolveResult& solve, int variable_count) {
     if (solve.variables.size() != static_cast<std::size_t>(variable_count)) {
         return false;
@@ -761,6 +803,7 @@ RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteR
     out.application_status = result.application_status;
     out.solver_accepted = result.solver_accepted;
     out.accepted = result.accepted;
+    out.stable = result.postsolve.stability_accepted;
     out.iteration_count = result.iteration_count;
     out.objective = result.objective;
     out.phase_distance = result.postsolve.phase_distance;
@@ -768,6 +811,8 @@ RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteR
     out.charge_balance_norm = result.postsolve.charge_balance_norm;
     out.pressure_consistency_norm = result.postsolve.pressure_consistency_norm;
     out.chemical_potential_consistency_norm = result.postsolve.chemical_potential_consistency_norm;
+    out.phase_equilibrium_norm = result.postsolve.ln_fugacity_consistency_norm;
+    out.min_tpd = result.postsolve.min_tpd;
     return out;
 }
 
@@ -2629,7 +2674,8 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_flash_postsolve(
     double material_tolerance,
     double pressure_tolerance,
     double chemical_potential_tolerance,
-    double phase_distance_tolerance
+    double phase_distance_tolerance,
+    bool stability_certification_required = false
 ) {
     NeutralTwoPhaseEosPostsolve out = evaluate_neutral_two_phase_eos_postsolve(
         args,
@@ -2641,7 +2687,11 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_flash_postsolve(
         material_tolerance,
         pressure_tolerance,
         chemical_potential_tolerance,
-        phase_distance_tolerance
+        phase_distance_tolerance,
+        {},
+        false,
+        stability_certification_required,
+        {0, 1}
     );
     apply_route_metadata(out, fixed_temperature_pressure_flash_route_metadata());
     return out;
@@ -3017,10 +3067,11 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
             material_tolerance,
             pressure_tolerance,
             chemical_potential_tolerance,
-            phase_distance_tolerance
+            phase_distance_tolerance,
+            true
         );
         result.accepted = result.postsolve.accepted;
-        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        result.status = certified_postsolve_status(result.postsolve);
         attempts.push_back(neutral_seed_attempt_from_result(result));
         if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
             best = result;
@@ -3202,10 +3253,11 @@ NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
             material_tolerance,
             pressure_tolerance,
             chemical_potential_tolerance,
-            phase_distance_tolerance
+            phase_distance_tolerance,
+            true
         );
         result.accepted = result.postsolve.accepted;
-        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        result.status = certified_postsolve_status(result.postsolve);
         attempts.push_back(neutral_seed_attempt_from_result(result));
         if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
             best = result;

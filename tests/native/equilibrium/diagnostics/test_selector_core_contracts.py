@@ -129,6 +129,9 @@ def test_selector_core_contract_owns_production_vle_metadata(
     assert payload["constraint_families"] == activation["constraint_families"]
     assert payload["variable_model"] == activation["variable_model"]
     assert payload["density_backend"] == activation["density_backend"]
+    if family in {"neutral_tp_flash", "neutral_lle"}:
+        assert activation["stability_prelayer"] == "held_tpd_volume_composition"
+        assert activation["postsolve_certification"] == "tpd_postsolve"
 
 
 def test_selector_core_rejects_old_scalar_composition_boundary() -> None:
@@ -219,6 +222,8 @@ def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
         "phase_distance",
         "phase_volume_gap",
     ]
+    assert activation["stability_prelayer"] == "held_tpd_volume_composition"
+    assert activation["postsolve_certification"] == "tpd_postsolve"
     assert plan["variable_model"] == activation["variable_model"]
     assert plan["density_backend"] == activation["density_backend"]
     assert plan["feed_composition"] == pytest.approx([0.35, 0.65])
@@ -283,6 +288,8 @@ def test_neutral_lle_activation_plan_contract_matches_matrix() -> None:
         "phase_equilibrium",
         "phase_distance",
     ]
+    assert activation["stability_prelayer"] == "held_tpd_volume_composition"
+    assert activation["postsolve_certification"] == "tpd_postsolve"
     assert plan["variable_model"] == activation["variable_model"]
     assert plan["density_backend"] == activation["density_backend"]
     assert plan["feed_composition"] == pytest.approx([0.5, 0.5])

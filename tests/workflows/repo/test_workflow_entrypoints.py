@@ -82,10 +82,11 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Current package version: ``0.2.0``" in release_installation
     assert "The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel" in release_installation
     assert "Public root exports" in release_note
-    assert "neutral bubble/dew routes and neutral TP flash" in release_note
-    assert "Neutral LLE, electrolyte LLE, reactive speciation, reactive LLE, and reactive electrolyte LLE are declared not exposed" in release_note
+    assert "neutral bubble/dew routes, neutral TP flash, and neutral nonassociating LLE" in release_note
+    assert "Electrolyte LLE, reactive speciation, reactive LLE, reactive electrolyte LLE, and associating LLE are declared not exposed" in release_note
     assert "PyPI publishing remains a manual Trusted Publishing action" in release_note
-    assert "production-exposed families are neutral bubble/dew routes and neutral TP flash" in overview
+    assert "production-exposed families are neutral bubble/dew routes, neutral TP flash" in overview
+    assert "and neutral nonassociating LLE" in overview
     assert "uv run python run_pytest.py --confidence -q" not in overview
     assert "run_pytest.py tests/test_runtime.py -q" not in overview
     assert "release_installation" in docs_index

@@ -50,12 +50,22 @@ struct NeutralTwoPhaseEosNlpContract {
 
 struct NeutralTwoPhaseEosPostsolve {
     bool accepted = false;
+    bool stability_checked = false;
+    bool stability_accepted = false;
+    bool candidate_completeness_accepted = false;
+    bool phase_set_mass_balance_feasible = false;
     std::string rejection_reason;
+    std::string phase_discovery_backend = "not_checked";
+    std::string stability_certificate = "not_checked";
+    std::string phase_set_status = "not_checked";
     std::string derivative_backend;
     std::vector<std::string> residual_families;
     std::vector<std::string> constraint_families;
     int phase_count = 0;
     int species_count = 0;
+    int tpd_candidate_count = 0;
+    int unique_candidate_count = 0;
+    int selected_candidate_count = 0;
     double material_balance_norm = 0.0;
     double pressure_consistency_norm = 0.0;
     double chemical_potential_consistency_norm = 0.0;
@@ -64,6 +74,8 @@ struct NeutralTwoPhaseEosPostsolve {
     double fixed_composition_norm = 0.0;
     double phase_amount_total_norm = 0.0;
     double phase_distance = 0.0;
+    double min_tpd = 0.0;
+    double candidate_mass_balance_norm = 0.0;
     double objective = 0.0;
     double gibbs_feed = 0.0;
     double gibbs_split = 0.0;
@@ -76,6 +88,42 @@ struct NeutralTwoPhaseEosPostsolve {
     std::vector<double> phase_densities;
     std::vector<std::vector<double>> phase_compositions;
     std::vector<std::vector<double>> phase_ln_fugacity_coefficients;
+    std::vector<double> selected_phase_fractions;
+    std::vector<int> selected_phase_kinds;
+    std::vector<std::vector<double>> selected_phase_compositions;
+    std::vector<double> tpd_candidate_values;
+    std::vector<int> tpd_candidate_phase_kinds;
+    std::vector<std::vector<double>> tpd_candidate_compositions;
+};
+
+struct NeutralTpdCandidate {
+    bool valid = false;
+    std::string source;
+    int phase_kind = 0;
+    std::vector<double> composition;
+    double density = 0.0;
+    double molar_volume = 0.0;
+    double tpd = 0.0;
+    double transformed_objective = 0.0;
+};
+
+struct NeutralPhaseDiscoveryResult {
+    bool stability_checked = false;
+    bool stability_accepted = false;
+    bool candidate_completeness_accepted = false;
+    bool phase_set_mass_balance_feasible = false;
+    std::string phase_discovery_backend = "held_tpd_volume_composition";
+    std::string stability_certificate = "tpd_postsolve";
+    std::string phase_set_status = "not_checked";
+    double min_tpd = 0.0;
+    double candidate_mass_balance_norm = 0.0;
+    int tpd_candidate_count = 0;
+    int unique_candidate_count = 0;
+    int selected_candidate_count = 0;
+    std::vector<double> selected_phase_fractions;
+    std::vector<int> selected_phase_kinds;
+    std::vector<std::vector<double>> selected_phase_compositions;
+    std::vector<NeutralTpdCandidate> candidates;
 };
 
 struct NeutralTwoPhaseEosRouteResult {
@@ -250,7 +298,19 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     double chemical_potential_tolerance,
     double phase_distance_tolerance,
     const std::vector<double>& charges = {},
-    bool phase_distance_constraint = false
+    bool phase_distance_constraint = false,
+    bool stability_certification_required = false,
+    std::vector<int> phase_kinds = {}
+);
+
+NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
 );
 
 NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(

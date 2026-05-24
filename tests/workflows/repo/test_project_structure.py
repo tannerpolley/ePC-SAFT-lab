@@ -516,7 +516,7 @@ def test_equilibrium_activation_production_rows_must_enter_through_selector_rout
         if row["production_exposed"] is not True:
             continue
         assert row["exposure_status"] == "production_exposed", row["key"]
-        assert row["postsolve_certification"] == "on", row["key"]
+        assert row["postsolve_certification"] in {"on", "tpd_postsolve"}, row["key"]
         assert row["derivative_requirement"] == "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes", row["key"]
         assert row["residual_families"], row["key"]
         assert row["constraint_families"], row["key"]
