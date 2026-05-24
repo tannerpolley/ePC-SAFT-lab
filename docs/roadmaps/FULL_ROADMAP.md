@@ -16,6 +16,8 @@ This document is authoritative over older roadmap language that allowed audit-on
 
 `docs/roadmaps/unified_equilibrium_core_algorithm.md` is the companion architecture contract for shared equilibrium-core implementation. It replaces completed Ipopt tranche handoffs, GoalBuddy receipts, and native-route audit reports as the current source of truth for equilibrium solver structure.
 
+`docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md` is the mathematical doctrine for generalized fluid-phase equilibrium. It defines the thermodynamic constrained NLP form, HELD/TPD phase-discovery requirements, activation-matrix admission policy, postsolve certification, and result status taxonomy that future neutral, associating, electrolyte, and reactive routes must follow.
+
 `docs/roadmaps/association_derivative_goal_roadmap.md` is the management document for the post-#130/#131 association-derivative tranche (#132 through #140). Read it before starting association solved-state, implicit-sensitivity, association-parameter regression, associating-equilibrium architecture, or lifted-`X_A` block work.
 
 `docs/roadmaps/gross2002_associating_vle_redo_plan.md` is the successor roadmap for the first associating-equilibrium admission after association derivative proof: Gross/Sadowski 2002 EOS validation, explicit association-closure diagnostics, and a narrow one-associating-component `bubble_pressure` route before any associating LLE work.
@@ -77,6 +79,7 @@ Equilibrium(mixture, route="bubble_temperature", P=..., x=...).solve()
 Equilibrium(mixture, route="dew_pressure", T=..., y=...).solve()
 Equilibrium(mixture, route="dew_temperature", P=..., y=...).solve()
 Equilibrium(mixture, route="flash", T=..., P=..., z=...).solve()
+Equilibrium(mixture, route="lle", T=..., P=..., z=...).solve()
 fit_pure_parameters(...)
 fit_binary_parameters(...)
 fit_liquid_electrolyte_parameters(...)
@@ -88,12 +91,16 @@ Downstream projects compute application metrics from generic outputs.
 Current API orientation for agents:
 
 - Prefer the constructor-configured `Equilibrium(mixture, route=..., ...)` workflow object for public equilibrium calls.
-- The current production neutral VLE equilibrium surface is one
+- The current production neutral equilibrium surface is one
   `Equilibrium(mixture, route=..., ...).solve()` workflow with route specs
   `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature`,
-  and `flash`; route-specific public methods, route-family dataclasses, and
-  private native request payloads are not exported compatibility surfaces.
+  `flash`, and neutral nonassociating `lle`; route-specific public methods,
+  route-family dataclasses, and private native request payloads are not
+  exported compatibility surfaces.
 - Treat the native activation matrix and selector core as the source of truth for which route families are production exposed versus declared-not-exposed.
+- Treat neutral HELD/TPD phase discovery and full phase-set stability
+  certification as the next architecture step before any associating LLE,
+  electrolyte LLE, or reactive route broadening.
 - Treat `ParameterSet` as the canonical parameter-family boundary; runtime payload emission belongs to `ParameterSet.to_runtime_dict()`.
 - Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across retained regression evidence.
 - Treat `epcsaft.capabilities()` and `capability_evidence` as the authoritative public capability contract.
@@ -444,6 +451,7 @@ Complete before more feature work.
 
 ## Milestone 3 — Production equilibrium backend
 
+- neutral HELD/TPD phase discovery and postsolve phase-set stability certification
 - native coupled activity speciation
 - native derivative-backed neutral LLE
 - native electrolyte LLE with distributed ions

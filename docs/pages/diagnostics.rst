@@ -74,9 +74,11 @@ hard constraints, and postsolve certification were used:
 * ``gradient_approximation`` and ``jacobian_approximation`` are exact.
 * ``postsolve_certification`` is present and accepted.
 
-Reactive, electrolyte, LLE, and stability route families are declared for
-roadmap context only. They are not callable production diagnostics until a
-future ADR re-exposes them through the activation matrix and selector core.
+Associating, electrolyte, reactive, and generalized stability route families
+are declared for roadmap context only. Neutral nonassociating LLE is already a
+selector-owned production route; broader associating LLE, electrolyte LLE, and
+reactive routes are not callable production diagnostics until a future ADR and
+activation-matrix proof expose them through the selector core.
 
 Contribution Maps
 -----------------

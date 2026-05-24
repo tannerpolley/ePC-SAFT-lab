@@ -440,6 +440,7 @@ _EQUILIBRIUM_ROUTE_SPECS: dict[str, _EquilibriumRouteSpec] = {
         route_label="flash",
         selector_family="neutral_tp_flash",
     ),
+    # AlgID: neutral_lle_ipopt
     "lle": _EquilibriumRouteSpec(
         selector_route="neutral_lle",
         composition_key="z",

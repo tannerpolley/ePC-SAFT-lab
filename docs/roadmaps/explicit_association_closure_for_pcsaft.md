@@ -344,6 +344,13 @@ Do not label these outputs as `implicit_exact`. Do not claim exact PC-SAFT
 association unless the closure is tested to satisfy the full mass-action
 equations at the same tolerance as the exact solver.
 
+Implementation policy: `explicit_approx` closures may initialize, diagnose, or
+continue Ipopt routes, but a production accepted result remains
+`implicit_exact` unless a separate route deliberately exposes the approximate
+model and labels the returned status as approximate. A route that uses
+`explicit_approx` in the final thermodynamic model must not report
+`production_accepted`.
+
 ## Validation Metrics
 
 Do not validate only site fractions. The phase solver cares about the

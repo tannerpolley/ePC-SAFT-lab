@@ -1482,6 +1482,7 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
     return out;
 }
 
+// AlgID: neutral_lle_ipopt
 NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
     const add_args& args,
     double temperature,

@@ -84,6 +84,13 @@ canonical package shape above.
 - Keep the first code branch scoped to one vertical proof. Suggested branch:
   `codex/gross2002-associating-bubble-pressure`.
 
+Before any associating LLE task starts, the generalized equilibrium doctrine in
+`docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md` must be
+implemented at least through neutral HELD/TPD phase discovery and full
+phase-set stability certification. Associating LLE must not rely on a local
+Ipopt split plus a phase-distance anti-collapse constraint as proof of global
+phase stability.
+
 ### Stage 1: Report-Ready Derivation
 
 - Create and maintain the LaTeX-ready reduced association closure derivation in
@@ -184,7 +191,7 @@ bubble_temperature
 dew_pressure
 dew_temperature
 neutral_tp_flash
-neutral_lle
+associating neutral_lle
 electrolyte_lle
 reactive routes
 cross-associating systems with more than one associating component
@@ -238,6 +245,11 @@ Only after the narrow `bubble_pressure` proof is stable:
 4. return to methanol/cyclohexane LLE;
 5. then try water/1-pentanol LLE;
 6. then revisit electrolyte and salting-out LLE.
+
+Associating LLE remains blocked until neutral HELD/TPD phase discovery,
+postsolve TPD certification, exact associating EOS derivatives, the first
+Gross 2002 `bubble_pressure` proof, and at least one additional isothermal
+associating VLE proof are all complete.
 
 ## Acceptance Criteria
 

@@ -2,6 +2,11 @@
 
 This document is the architecture source of truth for the shared equilibrium core in `ePC-SAFT`.
 
+`docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md` is the
+mathematical doctrine companion for the generalized fluid-phase equilibrium
+formulation, phase-discovery requirements, activation policy, and result
+status taxonomy.
+
 It is intentionally an architecture contract, not an implementation receipt. The purpose is to define one coherent mathematical and algorithmic structure that can cover:
 
 - homogeneous speciation and chemical equilibrium,
@@ -29,8 +34,12 @@ The active package architecture is:
 
 The core decisions fixed by this document are:
 
-1. The final package equilibrium representation is an explicit residual-based nonlinear program, not a direct all-purpose Gibbs minimizer.
-2. Gibbs-style minimization remains useful as a soft-start, feasibility, and globalization layer.
+1. The final package equilibrium representation is an activation-selected
+   thermodynamic constrained NLP. Residual objectives are allowed only as
+   route-declared equation-solve, globalization, diagnostic, or certification
+   forms.
+2. Gibbs-style minimization remains useful as a provider-native objective,
+   soft-start, feasibility, and globalization layer.
 3. Canonical thermodynamic truth is true species by phase.
 4. Reduced, transformed, apparent, or reaction-coordinate variables are allowed only as route-owned variableizations that lift into the canonical truth.
 5. Pretreatment, stability testing, seed generation, and certification are shared infrastructure for all equilibrium families.
@@ -59,22 +68,25 @@ The architecture must still be general enough that Tier 2 and Tier 3 routes are 
 
 ## Current public entrypoint and selector boundary
 
-The current repo exposes selector-backed neutral VLE production routes through
-the constructor-configured workflow object. The selector core sits beneath this
-interface:
+The current repo exposes selector-backed neutral nonassociating production
+routes through the constructor-configured workflow object. The selector core
+sits beneath this interface:
 
 - `Equilibrium(mixture, route="bubble_pressure", T=..., x=...).solve()`
 - `Equilibrium(mixture, route="bubble_temperature", P=..., x=...).solve()`
 - `Equilibrium(mixture, route="dew_pressure", T=..., y=...).solve()`
 - `Equilibrium(mixture, route="dew_temperature", P=..., y=...).solve()`
 - `Equilibrium(mixture, route="flash", T=..., P=..., z=...).solve()`
+- `Equilibrium(mixture, route="lle", T=..., P=..., z=...).solve()`
 
 The native activation matrix is authoritative for route-family exposure.
-`bubble_dew_derived_routes` and `neutral_tp_flash` are production exposed for
-neutral, non-reactive, non-electrolyte, non-associating mixtures. LLE,
-electrolyte, reactive, and speciation families remain declared-not-exposed
-future families and must not be advertised as callable public routes until a
-selector-owned production implementation and focused public tests exist.
+`bubble_dew_derived_routes`, `neutral_tp_flash`, and `neutral_lle` are
+production exposed for neutral, non-reactive, non-electrolyte mixtures. The
+current `neutral_lle` proof is a synthetic neutral nonassociating binary route
+with exact Ipopt callbacks and activation-matrix certification. Electrolyte,
+reactive, and speciation families remain declared-not-exposed future families
+and must not be advertised as callable public routes until a selector-owned
+production implementation and focused public tests exist.
 
 The architecture below should therefore be read as a unifying backend contract
 for future route families, not as a claim that those families are presently
@@ -105,7 +117,7 @@ edits begin:
 If the owner file or route-spec matrix is ambiguous, stop and ask for
 clarification before writing production code.
 
-### Current neutral VLE route-spec matrix
+### Current neutral production route-spec matrix
 
 | Public route spec | Selector route | Knowns | Unknowns | Composition role | Activation key | Residual rows | Hard constraints | Certification |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -114,6 +126,7 @@ clarification before writing production code.
 | `Equilibrium(mixture, route="dew_pressure", T, y).solve()` | `dew_pressure` | `T`, vapor `y` | `P`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
 | `Equilibrium(mixture, route="dew_temperature", P, y).solve()` | `dew_temperature` | `P`, vapor `y` | `T`, liquid `x`, phase volumes | vapor | `bubble_dew_derived_routes` | fixed-composition, phase-pressure consistency, phase-equilibrium, phase-distance | fixed vapor composition, common pressure, phase volume gap | exact derivatives, density closure, fixed composition, material/phase totals, phase-equilibrium residual, noncollapsed split |
 | `Equilibrium(mixture, route="flash", T, P, z).solve()` | `neutral_tp_flash` | `T`, `P`, feed `z` | liquid `x`, vapor `y`, phase amounts, phase volumes | feed | `neutral_tp_flash` | material-balance, phase-pressure consistency, phase-equilibrium, phase-distance | material balance, common pressure, phase volume gap | exact derivatives, density closure, material closure, phase-equilibrium residual, noncollapsed two-phase split |
+| `Equilibrium(mixture, route="lle", T, P, z).solve()` | `neutral_lle` | `T`, `P`, feed `z` | liquid1 `x`, liquid2 `x`, phase amounts, phase volumes | feed | `neutral_lle` | material-balance, phase-pressure consistency, phase-equilibrium, phase-distance | material balance, common pressure, phase-distance anti-collapse gate | exact derivatives, density closure, material closure, phase-equilibrium residual, noncollapsed liquid-liquid split |
 
 ## End-to-end stack
 
@@ -124,7 +137,7 @@ flowchart TD
     C --> D["Core problem assembly<br/>phase set, species eligibility, transfer set, reaction set, conservation basis"]
     D --> E["Pretreatment layer<br/>homogeneous chemistry seed, stability checks, split candidate generation"]
     E --> F["Route-owned variableization<br/>lift reduced variables into true species by phase"]
-    F --> G["Shared residual core<br/>active residual families + active hard-constraint families"]
+    F --> G["Thermodynamic constrained NLP<br/>objective + active hard-constraint families"]
     G --> H["EOS/state evaluation layer<br/>phase states, fugacity, activity, chemical potential, closures"]
     H --> I["Derivative layer<br/>Jacobian, constraint Jacobian, exact or limited-memory Hessian path"]
     I --> J["Ipopt solve / continuation / warm start"]
@@ -348,21 +361,22 @@ flowchart TD
 Notes:
 
 - Long-term Tier 1 emphasis remains electrolyte LLE, reactive electrolyte LLE, and reactive speciation.
-- Current production exposure is intentionally neutral VLE only: selector-dispatched
-  bubble/dew pressure and temperature routes plus selector-dispatched two-phase
-  TP flash are active.
+- Current production exposure is selector-dispatched neutral two-phase routes:
+  bubble/dew pressure and temperature, neutral TP flash, and neutral
+  nonassociating LLE.
 - Native C++ activation metadata is owned by `src/epcsaft/native/equilibrium/core/activation_matrix.h`.
   The metadata declares all problem families, keeps unproven families declared-not-exposed, and marks only the trusted
-  neutral VLE hydrocarbon Ipopt exact-Hessian routes as production-exposed. CMake owns native implementation through
+  neutral Ipopt exact-Hessian routes as production-exposed. CMake owns native implementation through
   explicit source groups under `native/model`, `native/eos`, `native/autodiff`, `native/equilibrium`,
   `native/regression`, and `native/bindings`.
 
 ## Canonical optimization form
 
-The final package representation is a residual-based constrained NLP:
+The final package representation is an activation-selected thermodynamic
+constrained NLP:
 
 $$
-\min_{u} \ \Phi_p(u)
+\min_{u} \ \Phi_p^{\mathrm{thermo}}(u)
 $$
 
 subject to
@@ -380,31 +394,58 @@ $$
 with objective
 
 $$
-\Phi_p(u)
-= \frac{1}{2}\left\|W_{r,p}\, r_p(u)\right\|_2^2 +
-\frac{\eta_{\mathrm{seed}}}{2}\left\|W_s \left(u-u^{(0)}\right)\right\|_2^2
+\Phi_p^{\mathrm{thermo}}(u)
+=
+\frac{1}{RT^0}
+\sum_{\alpha\in\mathcal{A}}
+\left[
+A_\alpha(T^0,V_\alpha,n_\alpha,q_\alpha)+P^0V_\alpha
+\right]
 $$
 
-where:
+for fixed-`T`, fixed-`P` phase-split routes. If the provider supplies a Gibbs
+surface directly, the route may instead use:
 
-- $r_p(u)$ is the active equilibrium-residual stack,
-- $W_{r,p}$ is a route-specific residual-weight matrix,
-- $u^{(0)}$ is the current seed or continuation point,
-- $\eta_{\mathrm{seed}} \ge 0$ is a globalization weight.
+$$
+\Phi_p^G(u)
+=
+\frac{1}{RT^0}
+\sum_{\alpha\in\mathcal{A}}
+G_\alpha(T^0,P^0,n_\alpha,q_\alpha)
+$$
 
-The first term is the shared "equilibrium objective" built from:
+Hard constraints and certification rows carry the route-specific physical
+conditions:
 
 - direct transfer residuals,
 - reaction residuals,
-- or both, depending on the route.
+- material or conserved-basis balances,
+- pressure closure,
+- phase eligibility and charge constraints,
+- internal-state closure where lifted,
+- phase distinctness/noncollapse gates.
 
-The seed-regularization term is only for globalization, continuation, or early-stage polishing. In the final certification solve it should be disabled:
+Residual least-squares objectives remain available as explicitly declared
+equation-solve, globalization, seed-polishing, or diagnostic forms:
 
 $$
-\eta_{\mathrm{seed}} = 0
+\Phi_{\mathrm{res}}(u)
+= \frac{1}{2}\left\|W_{r,p}\, r_p(u)\right\|_2^2 +
+\frac{\eta_{\mathrm{seed}}}{2}\left\|W_s \left(u-u^{(0)}\right)\right\|_2^2.
 $$
 
-This keeps the final accepted solution tied to the real equilibrium residuals rather than to seed proximity.
+The seed-regularization term is only for globalization, continuation, or
+early-stage polishing. In the final accepted thermodynamic phase-split solve,
+it should be disabled unless the route documentation explicitly declares
+otherwise:
+
+$$
+\eta_{\mathrm{seed}} = 0.
+$$
+
+This keeps the final accepted solution tied to the thermodynamic objective,
+hard constraints, and postsolve residual/certification checks rather than seed
+proximity or optimizer status alone.
 
 ## Why this form is preferred
 
@@ -429,7 +470,7 @@ flowchart TD
     D --> E["Candidate phase generation"]
     E --> F["Relaxed heterogeneous polish<br/>reduced EOS or reduced coupling if needed"]
     F --> G["Lift into canonical true-species state"]
-    G --> H["Continuation / warm-start solve in shared residual NLP"]
+    G --> H["Continuation / warm-start solve in thermodynamic constrained NLP"]
     H --> I["Final exact-route solve with seed penalty removed"]
 ```
 
@@ -454,6 +495,14 @@ It is shared infrastructure for:
 - certifying accepted results.
 
 The stability sublayer may use reduced trial-phase problems, but it must still consume the same EOS/state and derivative infrastructure as the main core.
+
+Neutral phase discovery should follow the doctrine in
+`docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md`: TPD or
+volume-composition trial phases generate candidates, duplicate candidates are
+removed, candidate phase fractions must satisfy mass balance, and accepted
+multiphase results must be certified as a full phase set. Per-phase TPD checks
+alone are not enough; certification must also rule out a missing
+lower-free-energy candidate set under the route's phase-count policy.
 
 ## EOS/state evaluation contract
 
@@ -683,7 +732,7 @@ Equilibrium(mixture, route=..., ...).solve():
     generate seed with shared pretreatment ladder
     choose route-owned variableization and lift map
     assemble active residual selectors and hard-constraint selectors
-    solve shared residual NLP with continuation / warm start support
+    solve thermodynamic constrained NLP with continuation / warm start support
     if exact hessian requested:
         require complete second-derivative coverage
     certify residuals, constraints, and stability
@@ -717,7 +766,7 @@ This architecture is meant to align with the current repo vocabulary and current
 The intended final package architecture is:
 
 - one shared equilibrium core,
-- one shared residual-based constrained NLP representation,
+- one shared thermodynamic constrained NLP representation,
 - one shared derivative ladder from EOS values to exact Lagrangian Hessians,
 - one shared pretreatment and certification layer,
 - route-owned variableizations that all lift into the same true-species-by-phase state,

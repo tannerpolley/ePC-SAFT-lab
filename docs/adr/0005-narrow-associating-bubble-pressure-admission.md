@@ -29,9 +29,9 @@ without reopening LLE, electrolyte, reactive, or cross-associating systems.
 - The first benchmark target is Gross/Sadowski 2002 Figure 2,
   methanol/isobutane at `T = 373.15 K` with `k_ij = 0.05`, using the existing
   package parameter structure.
-- `bubble_temperature`, `dew_pressure`, `dew_temperature`, TP flash, LLE,
-  electrolyte, reactive, and cross-associating route exposure remains blocked
-  until each route has separate selector-owned proof.
+- Associating `bubble_temperature`, `dew_pressure`, `dew_temperature`, TP
+  flash, LLE, electrolyte, reactive, and cross-associating route exposure
+  remains blocked until each route has separate selector-owned proof.
 - Explicit reduced association closures may be added as approximate EOS
   diagnostics or experimental model options, but they must be labeled as
   exact derivatives of an approximate association model unless they are proven
