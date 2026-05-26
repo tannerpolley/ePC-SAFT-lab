@@ -2,8 +2,7 @@
 
 ## Status
 
-Accepted. Amended by
-`docs/adr/0005-narrow-associating-bubble-pressure-admission.md`.
+Accepted.
 
 ## Context
 
@@ -46,8 +45,8 @@ that uses lifted `X_A` must first prove site count, site-component ownership,
 mass-action residuals, Jacobians, objective Hessian terms, and constraint
 Hessian rows for the exact variable model it exposes.
 
-ADR 0005 narrows this boundary for the next roadmap step: a single
-Gross/Sadowski 2002 associating `bubble_pressure` proof may be admitted after
-exact derivative and certification evidence exists. That amendment does not
-open associating bubble-temperature, dew, flash, LLE, electrolyte, reactive,
-or cross-associating route families.
+The generalized phase-equilibrium roadmap now keeps associating phase
+equilibrium behind the shared TP-flash architecture rather than a narrow
+associating `bubble_pressure` admission path. Gross/Sadowski 2002 remains the
+first associating proof target, but it must enter through exact association
+derivatives, phase NLP certification, and the collapsed GFPE registry gates.

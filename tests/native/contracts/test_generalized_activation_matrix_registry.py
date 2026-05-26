@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -7,125 +8,127 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = REPO_ROOT / "docs" / "roadmaps" / "equilibrium_benchmark_registry.yaml"
+GFPE_PATH = REPO_ROOT / "docs" / "roadmaps" / "generalized_fluid_phase_equilibrium.md"
 
-REQUIRED_ROW_FIELDS = {
-    "key",
-    "category",
-    "objective_family",
-    "variable_model",
-    "derivative_contract",
-    "certification_families",
-    "proof_cases",
+EXPECTED_FAMILY_LABELS = {
+    "PE-Neutral TP Flash",
+    "PE-Associating TP Flash",
+    "PE-Electrolyte LLE/TP Flash",
+    "PE-Generalized Multiphase",
+    "CE Chemical Equilibrium Placeholder",
+    "CPE Combined Phase-Chemical Placeholder",
 }
-REQUIRED_PROOF_FIELDS = {"evidence_tier", "source", "acceptance_checks", "rows"}
-PRODUCTION_TIERS = {"T1", "T2", "T3"}
+DERIVED_LABELS = {"Bubble point", "Dew point", "Cloud point", "Shadow point"}
+FORBIDDEN_NUMERIC_ROW_RE = re.compile(r"\b(?:PE|CE|CPE)-\d{2}\b")
 
 
 def _registry() -> dict[str, Any]:
     return yaml.safe_load(REGISTRY_PATH.read_text(encoding="utf-8"))
 
 
-def _rows_by_key() -> dict[str, dict[str, Any]]:
-    rows = _registry()["activation_rows"]
-    return {row["key"]: row for row in rows}
+def _family_rows() -> list[dict[str, Any]]:
+    return _registry()["family_rows"]
 
 
-def test_generalized_registry_declares_all_matrix_rows() -> None:
-    rows = _rows_by_key()
-
-    assert set(rows) >= {f"PE-{index:02d}" for index in range(1, 24)}
-    assert set(rows) >= {f"CE-{index:02d}" for index in range(1, 20)}
-    assert set(rows) >= {f"CPE-{index:02d}" for index in range(1, 25)}
+def _family_by_label() -> dict[str, dict[str, Any]]:
+    return {row["family_label"]: row for row in _family_rows()}
 
 
-def test_every_activation_row_has_required_schema_and_proof_case() -> None:
-    for row in _rows_by_key().values():
-        assert REQUIRED_ROW_FIELDS <= set(row), row["key"]
-        assert row["certification_families"], row["key"]
-        assert row["proof_cases"], row["key"]
-
-        for proof in row["proof_cases"]:
-            assert REQUIRED_PROOF_FIELDS <= set(proof), row["key"]
-            assert proof["acceptance_checks"], row["key"]
-            assert row["key"] in proof["rows"], row["key"]
-
-
-def test_production_rows_require_executable_exact_postsolve_evidence() -> None:
-    for row in _rows_by_key().values():
-        if not row.get("production_exposed"):
-            continue
-
-        assert row["activation_status"] == "production_exposed", row["key"]
-        assert row["exposure"] == "public", row["key"]
-        assert "exact" in row["derivative_contract"], row["key"]
-        assert "postsolve_checks" in row["certification_families"], row["key"]
-        assert any(
-            proof["evidence_tier"] in PRODUCTION_TIERS and proof.get("fixture_status") == "available"
-            for proof in row["proof_cases"]
-        ), row["key"]
-
-
-def test_bubble_dew_route_keys_are_excluded_from_generalized_rows() -> None:
+def test_registry_uses_collapsed_schema_v2_family_labels() -> None:
     registry = _registry()
-    excluded = set(registry["excluded_derived_utility_route_keys"])
+    rows = _family_by_label()
 
-    for row in registry["activation_rows"]:
-        assert row["key"] not in excluded
-        assert row["route_family"] not in excluded
-
-
-def test_hydrocarbon_flash_remains_mapped_to_pe_01() -> None:
-    pe01 = _rows_by_key()["PE-01"]
-
-    assert pe01["route_family"] == "neutral_tp_flash"
-    assert any(
-        proof["key"] == "hydrocarbon_tp_flash_reference"
-        and proof["source"] == "tests/support/hydrocarbon_cases.py"
-        and proof["rows"] == ["PE-01"]
-        for proof in pe01["proof_cases"]
-    )
+    assert registry["schema_version"] == 2
+    assert "activation_rows" not in registry
+    assert set(rows) == EXPECTED_FAMILY_LABELS
+    assert registry["policy"]["label_policy"].endswith("not runtime keys or public route strings.")
 
 
-def test_blocked_and_diagnostic_rows_are_not_public_production_routes() -> None:
-    for row in _rows_by_key().values():
-        if row["activation_status"] == "blocked_not_implemented":
-            assert row["exposure"] != "public", row["key"]
-            assert row["production_exposed"] is False, row["key"]
+def test_family_labels_replace_numeric_matrix_ids() -> None:
+    registry_text = REGISTRY_PATH.read_text(encoding="utf-8")
+    gfpe_text = GFPE_PATH.read_text(encoding="utf-8")
 
-        if row["activation_status"] == "diagnostic_only":
-            assert row["exposure"] == "internal", row["key"]
-            assert row["production_exposed"] is False, row["key"]
+    assert "key: PE-" not in registry_text
+    assert "key: CE-" not in registry_text
+    assert "key: CPE-" not in registry_text
+    assert "PE-01" not in registry_text
+    assert "CE-01" not in registry_text
+    assert "CPE-01" not in registry_text
 
-
-def test_charged_rows_include_charge_and_electrochemical_certification() -> None:
-    for row in _rows_by_key().values():
-        if "charged" not in row.get("species_classes", []):
-            continue
-
-        certification = set(row["certification_families"])
-        hard_constraints = set(row.get("hard_constraints", []))
-        assert "charge_balance" in certification | hard_constraints, row["key"]
-        assert (
-            "electrochemical_potential_equality" in certification
-            or "mean_ionic_fugacity_equality" in certification
-        ), row["key"]
+    assert "PE-01" not in gfpe_text
+    assert "CE-01" not in gfpe_text
+    assert "CPE-01" not in gfpe_text
+    assert "roadmap labels only" in gfpe_text
 
 
-def test_reactive_rows_include_affinity_and_constant_convention_certification() -> None:
-    for row in _rows_by_key().values():
-        if "reactive" not in row.get("species_classes", []):
-            continue
+def test_no_generalized_family_claims_production_before_held_gates() -> None:
+    for row in _family_rows():
+        assert row["activation_status"] == "planned_not_public", row["family_label"]
+        assert row["production_exposed"] is False, row["family_label"]
+        assert "required_gates" in row, row["family_label"]
 
-        certification = set(row["certification_families"])
-        assert "reaction_affinity" in certification, row["key"]
-        assert "reaction_constant_convention" in certification, row["key"]
+    neutral = _family_by_label()["PE-Neutral TP Flash"]
+    assert "continuous_tpd_minimization" in neutral["required_gates"]
+    assert "held_stage_ii_dual_phase_discovery" in neutral["required_gates"]
+    assert neutral["phase_discovery_status"] == "deterministic_screening_current_full_held_planned"
 
 
-def test_associating_rows_require_mass_action_and_reject_approx_final_production() -> None:
-    for row in _rows_by_key().values():
-        if "associating" not in row.get("species_classes", []):
-            continue
+def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> None:
+    registry = _registry()
+    family_labels = set(_family_by_label())
+    subworkflows = {row["label"]: row for row in registry["derived_subworkflows"]}
 
-        declared = set(row.get("hard_constraints", [])) | set(row["certification_families"])
-        assert "association_mass_action" in declared, row["key"]
-        assert "explicit_approx_final_production" in row.get("forbidden_shortcuts", []), row["key"]
+    assert set(subworkflows) == DERIVED_LABELS
+    assert not (DERIVED_LABELS & family_labels)
+
+    for label, row in subworkflows.items():
+        assert row["activation_family_row"] is False, label
+        assert row["planned_after_family"] == "PE-Neutral TP Flash", label
+        assert set(row["diagram_targets"]) == {"P-x", "T-x"}, label
+        assert row["vlle_test_required"] is False, label
+        assert "Pereira 2012 System III" in row["shared_mixture_policy"], label
+
+
+def test_deterministic_screening_is_not_called_full_held() -> None:
+    registry = _registry()
+    gfpe_text = GFPE_PATH.read_text(encoding="utf-8")
+
+    assert registry["policy"]["deterministic_screening_policy"].endswith("not full HELD.")
+    assert "Current deterministic TPD/candidate screening" in gfpe_text
+    assert "must not be described as full HELD" in gfpe_text
+
+    for row in _family_rows():
+        status = str(row.get("phase_discovery_status", ""))
+        if "deterministic_screening" in status:
+            assert "full_held_planned" in status, row["family_label"]
+            assert row["production_exposed"] is False, row["family_label"]
+
+
+def test_charged_and_associating_families_declare_required_gates() -> None:
+    associating = _family_by_label()["PE-Associating TP Flash"]
+    electrolyte = _family_by_label()["PE-Electrolyte LLE/TP Flash"]
+
+    assert "association_mass_action" in associating["hard_constraints"]
+    assert "exact_association_derivatives" in associating["required_gates"]
+    assert "explicit_approx_final_production" in associating["forbidden_shortcuts"]
+
+    assert "charge_balance" in electrolyte["hard_constraints"]
+    assert "electrochemical_potential_equality" in electrolyte["hard_constraints"]
+    assert "born_ssm_ds_exact_hessian" in electrolyte["required_gates"]
+    assert electrolyte["derivative_contract"] == "born_ssm_ds_exact_hessian_required_before_electrolyte_validation"
+
+
+def test_proof_cases_reference_descriptive_family_labels() -> None:
+    family_labels = set(_family_by_label())
+
+    for row in _family_rows():
+        assert row["proof_cases"], row["family_label"]
+        assert FORBIDDEN_NUMERIC_ROW_RE.search(row["family_label"]) is None
+        for proof in row["proof_cases"]:
+            assert proof["case_label"], row["family_label"]
+            assert proof["evidence_tier"] in _registry()["evidence_tiers"], proof["case_label"]
+            assert proof["fixture_status"], proof["case_label"]
+            assert proof["acceptance_checks"], proof["case_label"]
+
+    for case in _registry()["benchmark_cases"]:
+        assert set(case["family_labels"]) <= family_labels, case["case_label"]

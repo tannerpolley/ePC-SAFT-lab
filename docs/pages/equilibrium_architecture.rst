@@ -89,14 +89,15 @@ provide derivative payloads where the route is validated.
 Associating Equilibrium Boundary
 --------------------------------
 
-Associating mixtures were selector-ineligible for production equilibrium routes
-under the original ADR 0004 boundary. ADR 0005 admits one narrow successor path:
-a neutral, nonelectrolyte, nonreactive ``bubble_pressure`` proof with at most one
-associating component, exact derivative payloads, and postsolve certification
-evidence. Association site fractions remain solved internal variables, and direct
-CppAD recording through the association fixed-point iteration is forbidden. State
-and Regression routes eliminate the site fractions and apply implicit
-sensitivities.
+Associating mixtures remain selector-ineligible for generalized production
+equilibrium routes under the ADR 0004 boundary. The prior narrow associating
+``bubble_pressure`` admission path has been retired in favor of the shared GFPE
+TP-flash roadmap. Gross/Sadowski 2002 remains the first associating proof
+target, but it must enter through exact association derivatives, phase NLP
+certification, and the collapsed GFPE registry gates. Association site
+fractions remain solved internal variables, and direct CppAD recording through
+the association fixed-point iteration is forbidden. State and Regression routes
+eliminate the site fractions and apply implicit sensitivities.
 
 Broader associating equilibrium still requires one complete architecture before
 public exposure: either eliminate site fractions and provide complete implicit
@@ -104,7 +105,7 @@ first- and second-order derivatives for all Ipopt objective and constraint
 residuals, or lift site fractions as explicit NLP variables with exact
 mass-action constraints, true site topology, and exact Lagrangian Hessian rows.
 See ``docs/adr/0004-associating-equilibrium-architecture.md`` and
-``docs/adr/0005-narrow-associating-bubble-pressure-admission.md``.
+``docs/roadmaps/generalized_fluid_phase_equilibrium.md``.
 
 Repeated State Work
 -------------------

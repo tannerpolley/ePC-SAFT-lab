@@ -1816,7 +1816,7 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
 
 }  // namespace
 
-// AlgID: neutral_held_phase_discovery
+// AlgID: neutral_deterministic_phase_candidate_screening
 NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     const add_args& args,
     double temperature,

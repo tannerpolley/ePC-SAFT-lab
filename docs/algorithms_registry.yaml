@@ -123,12 +123,12 @@
       comment_line: 402
       context: "epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 827
-      comment_line: 826
+      line: 830
+      comment_line: 829
       context: "m.def(\"_native_equilibrium_selector_contract\", []("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 877
-      comment_line: 876
+      line: 880
+      comment_line: 879
       context: "m.def(\"_native_equilibrium_selector_route_result\", []("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
       line: 2701
@@ -204,15 +204,15 @@
       comment_line: 443
       context: "\"lle\": _EquilibriumRouteSpec("
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2151
-      comment_line: 2150
+      line: 2262
+      comment_line: 2261
       context: "NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route("
 - algid: "neutral_tpd_stability"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for broader neutral multiphase rows"
+  status: "Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned for generalized family admission after full HELD"
   public_api: "Internal route-discovery and certification infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
@@ -222,7 +222,7 @@
   validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
   capability_key: "internal:neutral_tpd_stability"
   description: "Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance."
-  change_note: "Current Stage 1 baseline for PE-01 and PE-03; broader neutral multiphase, associating, electrolyte, and reactive rows still require separate admission."
+  change_note: "Current deterministic screening supports existing neutral routes but is not full HELD; generalized neutral, associating, electrolyte, and reactive families still require separate admission."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 140
   body: |
@@ -237,40 +237,41 @@
       line: 422
       comment_line: 421
       context: "void append_tpd_candidates_for_reference_block("
-- algid: "neutral_held_phase_discovery"
+- algid: "neutral_deterministic_phase_candidate_screening"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for PE-04 neutral multiphase discovery"
+  status: "Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned to be replaced by staged HELD for generalized admission"
   public_api: "Internal route-discovery infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
   derivative_backend: "EOS/provider derivatives for volume-composition trial phases"
-  solver_role: "HELD-style neutral candidate generation, de-duplication, and seed construction"
+  solver_role: "Deterministic neutral candidate generation, de-duplication, and seed construction"
   implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; docs/roadmaps/generalized_fluid_phase_equilibrium.md"
   validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
-  capability_key: "internal:neutral_held_phase_discovery"
-  description: "Adds HELD-style neutral volume-composition phase discovery for the current neutral TP flash and neutral nonassociating LLE activation rows."
-  change_note: "Current Stage 1 baseline for PE-01 and PE-03; PE-04 neutral multiphase discovery remains a future row."
+  capability_key: "internal:neutral_deterministic_phase_candidate_screening"
+  description: "Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes."
+  change_note: "Full HELD Stage I/II/III remains future generalized family work."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 161
   body: |
     This algorithm reduces dependence on user-supplied phase guesses by using
     neutral TPD or volume-composition trial problems to generate deterministic
     candidate phases. It still requires bounded seed policies, candidate ranking,
-    continuation, and postsolve certification; it is not a magic guess-free solver.
+    continuation, and postsolve certification. It is not full HELD and must not be
+    used as generalized production evidence by itself.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 1760
-      comment_line: 1759
+      line: 1820
+      comment_line: 1819
       context: "NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery("
 - algid: "phase_candidate_mass_balance_selection"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for PE-04 neutral multiphase discovery"
+  status: "Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned for generalized multiphase admission after full HELD"
   public_api: "Internal route-discovery infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
@@ -279,10 +280,10 @@
   implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium.md"
   validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
   capability_key: "internal:phase_candidate_mass_balance_selection"
-  description: "Filters HELD/TPD phase candidates by mass-balance feasibility before Ipopt route assembly."
-  change_note: "Current Stage 1 baseline prevents accepting locally stable but mass-balance-incomplete phase sets for PE-01 and PE-03."
+  description: "Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly."
+  change_note: "Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; generalized admission still requires full HELD."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 180
+  tex_line: 181
   body: |
     This algorithm solves the small candidate phase-fraction feasibility problem
     before final route assembly. A candidate set that cannot reconstruct the feed
@@ -298,7 +299,7 @@
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Implemented for PE-01 neutral TP flash and PE-03 neutral nonassociating LLE; planned for broader neutral multiphase rows"
+  status: "Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned for generalized families after full HELD"
   public_api: "Internal postsolve certification infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
@@ -307,18 +308,18 @@
   implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium.md"
   validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
   capability_key: "internal:postsolve_tpd_certification"
-  description: "Adds full phase-set stability certification after neutral Ipopt solves for PE-01 and PE-03."
+  description: "Adds phase-set stability certification after current neutral Ipopt solves."
   change_note: "Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance; current implementation is limited to neutral TP flash and neutral nonassociating LLE."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 199
+  tex_line: 200
   body: |
     This algorithm runs after an Ipopt route returns finite variables. It checks
     stability, phase distinctness, candidate completeness, and route certification
     blocks before assigning a production-accepted status.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 1913
-      comment_line: 1912
+      line: 1994
+      comment_line: 1993
       context: "NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve("
 - algid: "generalized_equilibrium_activation_registry"
   section: "Equilibrium Algorithms"
@@ -330,22 +331,21 @@
   backend: "Markdown and YAML registry"
   dependency: "None"
   derivative_backend: "Exact derivatives required before production row exposure"
-  solver_role: "Records PE/CE/CPE activation rows, proof cases, evidence tiers, and benchmark status"
+  solver_role: "Records descriptive generalized family labels, derived subworkflows, proof cases, evidence tiers, and benchmark status"
   implementation_owner: "docs/roadmaps/generalized_fluid_phase_equilibrium.md; docs/roadmaps/equilibrium_benchmark_registry.yaml"
   validation: "tests/native/contracts/test_generalized_activation_matrix_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py"
   capability_key: "docs:generalized_equilibrium_activation_registry"
-  description: "Defines generalized phase-only, chemical-only, and combined phase-chemical activation matrices."
-  change_note: "Bubble/dew routes remain derived utilities outside the generalized matrices; every generalized row carries proof evidence."
+  description: "Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry."
+  change_note: "Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 217
+  tex_line: 218
   body: |
-    The generalized equilibrium activation registry records three admission
-    matrices: phase-only rows, chemical-only rows, and combined phase-chemical
-    rows. Bubble and dew pressure/temperature routes remain implemented and tested
-    as derived utility routes through the existing selector surface, but their
-    generic route keys are excluded from the generalized matrices. Every generalized
-    activation row must carry at least one proof case and evidence tier before it
-    can be used for future route admission.
+    The generalized equilibrium activation registry records descriptive family
+    labels for phase-only, chemical-only, and combined phase-chemical work, plus
+    derived boundary subworkflows and PE-focused benchmark cases. Bubble, dew,
+    cloud, and shadow workflows remain outside the main family rows. Current
+    deterministic screening is not full HELD, so generalized families stay
+    planned until HELD and derivative gates pass.
   owner_refs: []
 - algid: "explicit_association_closure_diagnostics"
   section: "Equilibrium Algorithms"

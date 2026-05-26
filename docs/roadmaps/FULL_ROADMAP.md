@@ -14,15 +14,11 @@ This document explains:
 
 This document is authoritative over older roadmap language that allowed audit-only closure, inventory-only closure, staged-only closure, diagnostic-only closure, or documented limitations as completion.
 
-`docs/roadmaps/generalized_fluid_phase_equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation matrix, and staged roadmap for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, HELD/TPD phase-discovery requirements, activation-row admission policy, postsolve certification, result status taxonomy, and phase-only (`PE-*`), chemical-only (`CE-*`), and combined phase-chemical (`CPE-*`) row families. It supersedes the prior split architecture, algorithm, and activation-matrix roadmap files.
+`docs/roadmaps/generalized_fluid_phase_equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation policy, and staged implementation roadmap for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, Ipopt/numerics layer, staged HELD requirements, postsolve certification, and collapsed roadmap family labels. Those labels are roadmap labels only, not runtime route keys.
 
-`docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the generalized activation matrix. Every activation row must carry at least one proof case and evidence tier there. Bubble/dew pressure and temperature routes remain implemented and tested as derived utility routes through the existing selector surface, but their generic route keys are excluded from the generalized PE/CE/CPE matrices. Do not delete existing bubble/dew code or tests; only demote them in the generalized roadmap.
+`docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the collapsed generalized roadmap. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash proof for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
 
-`docs/roadmaps/association_derivative_goal_roadmap.md` is the management document for the post-#130/#131 association-derivative tranche (#132 through #140). Read it before starting association solved-state, implicit-sensitivity, association-parameter regression, associating-equilibrium architecture, or lifted-`X_A` block work.
-
-`docs/roadmaps/gross2002_associating_vle_redo_plan.md` is the successor roadmap for the first associating-equilibrium admission after association derivative proof: Gross/Sadowski 2002 EOS validation, explicit association-closure diagnostics, and a narrow one-associating-component `bubble_pressure` route before any associating LLE work.
-
-`docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model.
+`docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
 
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
 
@@ -98,11 +94,11 @@ Current API orientation for agents:
   route-family dataclasses, and private native request payloads are not
   exported compatibility surfaces.
 - Treat the native activation matrix and selector core as the source of truth for which route families are production exposed versus declared-not-exposed.
-- Treat neutral HELD/TPD phase discovery and full phase-set stability
-  certification as the current baseline for neutral TP flash and neutral
-  nonassociating LLE. Any broader neutral multiphase, associating LLE,
-  electrolyte LLE, or reactive route still needs a separate row-level proof and
-  capability update.
+- Treat current neutral deterministic TPD/candidate screening and postsolve
+  certification as useful existing route support, not as full HELD. Any
+  generalized neutral, associating, electrolyte, or reactive production claim
+  still needs the GFPE infrastructure gate, staged HELD proof, exact
+  derivatives, and registry evidence update.
 - Treat `ParameterSet` as the canonical parameter-family boundary; runtime payload emission belongs to `ParameterSet.to_runtime_dict()`.
 - Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across retained regression evidence.
 - Treat `epcsaft.capabilities()` and `capability_evidence` as the authoritative public capability contract.
@@ -453,8 +449,9 @@ Complete before more feature work.
 
 ## Milestone 3 — Production equilibrium backend
 
-- neutral HELD/TPD phase discovery and postsolve phase-set stability certification for neutral TP flash and neutral nonassociating LLE
-- neutral multiphase phase-set discovery extension before broader LLE/VLLE admission
+- GFPE infrastructure gate: sparse NLP contracts, route scaling, domain bounds, smooth variable maps, Ipopt barrier constraints, diagnostics, and exact derivative policy
+- staged HELD phase discovery and postsolve phase-set certification before generalized neutral production admission
+- neutral multiphase phase-set discovery extension after the neutral TP flash proof; VLLE-specific tests are not the immediate priority
 - native coupled activity speciation
 - native derivative-backed neutral LLE
 - native electrolyte LLE with distributed ions

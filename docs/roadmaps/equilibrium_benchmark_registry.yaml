@@ -1,14 +1,16 @@
-schema_version: 1
+schema_version: 2
 source_document: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
+
 policy:
-  generalized_matrix_split:
-    - phase_only
-    - chemical_only
-    - combined_phase_chemical
-  bubble_dew_policy: "Derived utility routes stay tested in the existing selector surface but are excluded from generalized PE/CE/CPE activation rows."
+  label_policy: "family_label values are roadmap labels only, not runtime keys or public route strings."
+  generalized_status_policy: "Generalized family rows stay planned_not_public until full HELD-stage phase discovery, exact derivatives, and postsolve certification are proven."
+  current_public_route_policy: "Existing public utility routes remain implemented and tested, but this registry does not treat them as generalized production exposure."
+  deterministic_screening_policy: "Current deterministic TPD/candidate screening is seed and certification support, not full HELD."
+  domain_safety_policy: "All generalized routes require route-owned bounds, a smooth VariableTransform wrapper, and Ipopt internal barrier handling of explicit bounds and constraints."
+  custom_barrier_policy: "Production thermodynamic objectives must not include permanent custom barrier terms."
   documentation_scope: "canonical_doctrine_registry_schema_tests_only"
 
-excluded_derived_utility_route_keys:
+excluded_current_runtime_route_keys:
   - bubble_dew_derived_routes
   - bubble_pressure
   - bubble_temperature
@@ -16,10 +18,9 @@ excluded_derived_utility_route_keys:
   - dew_temperature
 
 activation_status_vocabulary:
-  production_exposed: "Public route selection is allowed after exact derivative and postsolve certification proof."
-  diagnostic_only: "Internal helper or diagnostic row only; cannot return production_accepted by itself."
-  planned_not_public: "Roadmap row with no public selector exposure."
-  blocked_not_implemented: "Explicitly blocked until named proof gates pass."
+  planned_not_public: "Roadmap family with no generalized production exposure."
+  implemented_utility_not_generalized: "Existing public utility behavior may exist, but does not satisfy generalized admission gates."
+  diagnostic_only: "Internal helper or diagnostic layer only."
   source_data_needed: "A source-backed target exists but local executable fixture data are missing."
 
 evidence_tiers:
@@ -28,2377 +29,326 @@ evidence_tiers:
     production_eligible: false
   T1:
     name: executable_package_fixture
-    production_eligible: true
+    production_eligible: false
   T2:
     name: source_digitized_reference
-    production_eligible: true
+    production_eligible: false
   T3:
     name: reproduced_literature_curve_or_table
-    production_eligible: true
+    production_eligible: false
 
-activation_rows:
-  - key: PE-01
-    category: phase
-    route_family: neutral_tp_flash
-    exposure: public
-    activation_status: production_exposed
-    production_exposed: true
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral, nonelectrolyte, nonreactive, nonassociating]
-    knowns: [T, P, feed_composition]
-    primary_variables: [phase_species_amounts, phase_volumes]
-    optional_variables: []
-    variable_model: phase_species_amounts_plus_phase_volume
-    objective_family: pressure_transformed_helmholtz
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, pressure, fugacity_equality, phase_distance]
-    phase_discovery_backend: held_tpd_volume_composition
-    seed_generators: [hydrocarbon_reference_seed, held_tpd_candidates]
-    stability_checks: [tpd_postsolve, candidate_mass_balance]
-    certification_families: [postsolve_checks, material_balance, phase_pressure_consistency, neutral_fugacity_equality, tpd_stability, phase_set_completeness]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_gradient_jacobian_hessian
-    internal_state_policy: no_association_no_charge_no_reaction
-    proof_cases:
-      - key: hydrocarbon_tp_flash_reference
-        evidence_tier: T1
-        source: tests/support/hydrocarbon_cases.py
-        rows: [PE-01]
-        acceptance_checks: [accepted_status, exact_hessian, material_balance, pressure_consistency, fugacity_equality, tpd_postsolve, hydrocarbon_flash_maps_to_PE-01]
-        fixture_status: available
-    required_evidence: [exact_derivatives, executable_fixture, postsolve_certification]
-    forbidden_shortcuts: [optimizer_success_only, route_claim_without_tpd_postsolve]
+generalized_production_gates:
+  - infrastructure_gate
+  - continuous_tpd_minimization
+  - held_stage_i_stability
+  - held_stage_ii_dual_phase_discovery
+  - held_stage_iii_ipopt_refinement
+  - exact_gradient_jacobian_hessian
+  - route_domain_bounds
+  - variable_transform_chain_rule
+  - ipopt_barrier_bounds_constraints
+  - postsolve_phase_set_certification
 
-  - key: PE-02
-    category: phase
-    route_family: neutral_two_phase_vle_tp
-    exposure: internal
+family_rows:
+  - family_label: "PE-Neutral TP Flash"
+    family_kind: phase_equilibrium
     activation_status: planned_not_public
     production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral, nonelectrolyte, nonreactive, nonassociating]
-    knowns: [T, P, feed_or_overall_composition]
-    primary_variables: [phase_species_amounts, phase_volumes]
-    optional_variables: [phase_fraction]
-    variable_model: phase_species_amounts_plus_phase_volume
-    objective_family: pressure_transformed_helmholtz
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, pressure, fugacity_equality]
-    phase_discovery_backend: planned_held_tpd
-    seed_generators: [planned_reference_seed]
-    stability_checks: [planned_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, phase_pressure_consistency, neutral_fugacity_equality]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: no_association_no_charge_no_reaction
-    proof_cases:
-      - key: neutral_two_phase_vle_tp_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [PE-02]
-        acceptance_checks: [must_not_expose_without_fixture, no_bubble_dew_route_key]
-        fixture_status: source_data_needed
-    required_evidence: [executable_fixture, tpd_postsolve]
-    forbidden_shortcuts: [treating_derived_utility_route_as_generalized_matrix_row]
-
-  - key: PE-03
-    category: phase
-    route_family: neutral_lle
-    exposure: public
-    activation_status: production_exposed
-    production_exposed: true
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral, nonelectrolyte, nonreactive, nonassociating]
+    existing_public_utility_routes: [flash, lle]
+    scope: "Neutral, nonelectrolyte, nonreactive TP flash plus neutral VLE/LLE proof ladder."
+    primary_problem: "TP flash at fixed T, P, and feed composition."
     knowns: [T, P, feed_composition]
-    primary_variables: [phase_species_amounts, phase_volumes]
-    optional_variables: []
-    variable_model: phase_species_amounts_plus_phase_volume
+    physical_variables: [phase_species_amounts, phase_volumes]
     objective_family: pressure_transformed_helmholtz
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, pressure, fugacity_equality, phase_distance]
-    phase_discovery_backend: held_tpd_volume_composition
-    seed_generators: [nonideal_binary_seed, held_tpd_candidates]
-    stability_checks: [tpd_postsolve, candidate_mass_balance]
-    certification_families: [postsolve_checks, material_balance, phase_pressure_consistency, neutral_fugacity_equality, tpd_stability, phase_set_completeness]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_gradient_jacobian_hessian
-    internal_state_policy: no_association_no_charge_no_reaction
+    hard_constraints: [material_balance, phase_pressure_consistency, chemical_potential_equality]
+    derivative_contract: exact_gradient_jacobian_hessian_required_before_generalized_exposure
+    phase_discovery_status: deterministic_screening_current_full_held_planned
+    required_gates:
+      - infrastructure_gate
+      - continuous_tpd_minimization
+      - held_stage_i_stability
+      - held_stage_ii_dual_phase_discovery
+      - held_stage_iii_ipopt_refinement
+      - postsolve_phase_set_certification
     proof_cases:
-      - key: neutral_lle_synthetic_binary_reference
-        evidence_tier: T1
-        source: tests/native/equilibrium/results/test_neutral_lle_reference_values.py
-        rows: [PE-03]
-        acceptance_checks: [accepted_status, exact_hessian, material_balance, pressure_consistency, fugacity_equality, tpd_postsolve]
-        fixture_status: available
-    required_evidence: [exact_derivatives, executable_fixture, postsolve_certification]
-    forbidden_shortcuts: [phase_distance_as_equilibrium_proof]
+      - case_label: "Pereira 2012 System III"
+        evidence_tier: T0
+        source: "Pereira et al. 2012 neutral HELD benchmark"
+        fixture_status: source_data_needed
+        acceptance_checks:
+          - source_backed_parameters
+          - material_balance
+          - pressure_consistency
+          - chemical_potential_equality
+          - held_stage_certification
+          - exact_hessian
+    forbidden_shortcuts:
+      - optimizer_success_only
+      - deterministic_screening_as_full_held
+      - public_utility_route_as_generalized_production
 
-  - key: PE-04
-    category: phase
-    route_family: neutral_multiphase_nonassoc
-    exposure: internal
+  - family_label: "PE-Associating TP Flash"
+    family_kind: phase_equilibrium
     activation_status: planned_not_public
     production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: variable_phase_count
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral, nonelectrolyte, nonreactive, nonassociating]
+    existing_public_utility_routes: []
+    scope: "Neutral associating TP flash, VLE, and LLE after exact association derivative architecture exists."
+    primary_problem: "Associating TP flash with PC-SAFT association mass-action consistency."
     knowns: [T, P, feed_composition]
-    primary_variables: [phase_species_amounts, phase_volumes, phase_count]
-    optional_variables: [candidate_phase_set]
-    variable_model: generalized_phase_species_amounts_plus_phase_volume
-    objective_family: pressure_transformed_helmholtz
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, pressure, fugacity_equality, phase_distance]
-    phase_discovery_backend: held_tpd_volume_composition_planned
-    seed_generators: [tpd_candidate_generator, mass_balance_candidate_selector]
-    stability_checks: [tpd_postsolve, supporting_plane_phase_set, candidate_mass_balance]
-    certification_families: [postsolve_checks, material_balance, phase_pressure_consistency, neutral_fugacity_equality, tpd_stability, phase_set_completeness]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: no_association_no_charge_no_reaction
+    physical_variables: [phase_species_amounts, phase_volumes, association_state]
+    objective_family: pressure_transformed_helmholtz_association
+    hard_constraints: [material_balance, phase_pressure_consistency, chemical_potential_equality, association_mass_action]
+    derivative_contract: exact_association_gradient_jacobian_hessian_required_before_exposure
+    phase_discovery_status: planned_after_neutral_held_and_association_derivatives
+    required_gates:
+      - infrastructure_gate
+      - exact_association_derivatives
+      - association_mass_action_certification
+      - neutral_phase_discovery_reuse
+      - postsolve_phase_set_certification
     proof_cases:
-      - key: neutral_multiphase_nonassoc_placeholder
+      - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [PE-04]
-        acceptance_checks: [candidate_phase_set_complete, no_public_route_before_fixture]
+        source: "Gross and Sadowski 2002 associating PC-SAFT benchmark"
         fixture_status: source_data_needed
-    required_evidence: [source_backed_fixture, tpd_postsolve, mass_balance_candidate_selection]
-    forbidden_shortcuts: [per_phase_tpd_only, optimizer_success_only]
+        acceptance_checks:
+          - source_backed_parameters
+          - association_mass_action
+          - exact_hessian
+          - phase_equilibrium_certification
+      - case_label: "Water/1-pentanol associating follow-on"
+        evidence_tier: T0
+        source: "source-backed associating follow-on target to be selected"
+        fixture_status: source_data_needed
+        acceptance_checks:
+          - two_associating_components
+          - association_mass_action
+          - exact_hessian
+    forbidden_shortcuts:
+      - explicit_approx_final_production
+      - narrow_bubble_route_as_general_associating_proof
 
-  - key: PE-05
-    category: phase
-    route_family: neutral_vle_multicomponent
-    exposure: internal
+  - family_label: "PE-Electrolyte LLE/TP Flash"
+    family_kind: phase_equilibrium
     activation_status: planned_not_public
     production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase_or_multiphase
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral, nonelectrolyte, nonreactive, nonassociating]
-    knowns: [T, P, composition_or_feed]
-    primary_variables: [phase_species_amounts, phase_volumes]
-    optional_variables: [phase_count]
-    variable_model: phase_species_amounts_plus_phase_volume
-    objective_family: pressure_transformed_helmholtz
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, pressure, fugacity_equality]
-    phase_discovery_backend: planned_held_tpd
-    seed_generators: [planned_multicomponent_seed]
-    stability_checks: [planned_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, phase_pressure_consistency, neutral_fugacity_equality]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: no_association_no_charge_no_reaction
-    proof_cases:
-      - key: neutral_multicomponent_vle_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [PE-05]
-        acceptance_checks: [source_backed_fixture_required, no_general_vle_claim]
-        fixture_status: source_data_needed
-    required_evidence: [source_backed_fixture, tolerances]
-    forbidden_shortcuts: [capability_claim_without_benchmark]
-
-  - key: PE-06
-    category: phase
-    route_family: neutral_single_phase_stability
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: stability_query_only
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral, nonelectrolyte, nonreactive]
+    existing_public_utility_routes: []
+    scope: "Strong-electrolyte LLE and TP flash with charge-neutral reduced variables."
+    primary_problem: "Electrolyte LLE/TP flash with electrochemical transfer equilibrium."
     knowns: [T, P, feed_composition]
-    primary_variables: [trial_phase_composition]
-    optional_variables: [trial_phase_volume]
-    variable_model: tangent_plane_trial_composition
-    objective_family: tangent_plane_distance
-    hard_constraints: [composition_sum]
-    optional_constraints: [composition_bounds]
-    residual_blocks: [tpd_stationarity]
-    phase_discovery_backend: neutral_tpd_planned
-    seed_generators: [simplex_vertices, feed_perturbations]
-    stability_checks: [tpd_stability]
-    certification_families: [postsolve_checks, tpd_stability]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: no_association_no_charge_no_reaction
-    proof_cases:
-      - key: neutral_single_phase_stability_placeholder
-        evidence_tier: T0
-        source: tests/support/hydrocarbon_cases.py
-        rows: [PE-06]
-        acceptance_checks: [stable_feed_case, unstable_feed_case]
-        fixture_status: source_data_needed
-    required_evidence: [stable_unstable_pair]
-    forbidden_shortcuts: [local_optimizer_status_as_stability_proof]
-
-  - key: PE-07
-    category: phase
-    route_family: neutral_split_seed_generation
-    exposure: internal
-    activation_status: diagnostic_only
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: helper_for_selected_rows
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral]
-    knowns: [T, P, feed_composition]
-    primary_variables: [candidate_phase_compositions]
-    optional_variables: [candidate_scores]
-    variable_model: seed_inventory
-    objective_family: initialization_diagnostic
-    hard_constraints: [composition_sum, bounds]
-    optional_constraints: [deduplication_tolerance]
-    residual_blocks: [seed_score]
-    phase_discovery_backend: held_tpd_volume_composition
-    seed_generators: [hydrocarbon_reference_seed, nonideal_binary_seed, held_tpd_candidates]
-    stability_checks: [candidate_ranking]
-    certification_families: [postsolve_checks, diagnostic_seed_inventory]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: helper_only
-    proof_cases:
-      - key: neutral_seed_generation_diagnostic
-        evidence_tier: T1
-        source: tests/native/equilibrium/results/test_neutral_vle_reference_values.py
-        rows: [PE-07]
-        acceptance_checks: [seed_attempts_reported, selected_seed_reported, no_production_accepted_from_helper]
-        fixture_status: available
-    required_evidence: [diagnostic_payload]
-    forbidden_shortcuts: [diagnostic_only_returning_production_accepted]
-
-  - key: PE-08
-    category: phase
-    route_family: neutral_density_closure
-    exposure: internal
-    activation_status: diagnostic_only
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: provider_dependency
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral]
-    knowns: [T, P, composition]
-    primary_variables: [density_or_volume]
-    optional_variables: []
-    variable_model: explicit_phase_volume_pressure_constraint
-    objective_family: eos_density_closure
-    hard_constraints: [pressure_closure]
-    optional_constraints: [density_bounds]
-    residual_blocks: [pressure_residual]
-    phase_discovery_backend: none_provider_dependency
-    seed_generators: [state_density_seed]
-    stability_checks: [domain_check]
-    certification_families: [postsolve_checks, density_closure, domain_check]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: density_is_route_variable_or_state_root
-    proof_cases:
-      - key: neutral_density_closure_existing_contract
-        evidence_tier: T1
-        source: tests/native/contracts/test_equilibrium_native_contracts.py
-        rows: [PE-08]
-        acceptance_checks: [density_closure_reported, no_public_route_from_provider_dependency]
-        fixture_status: available
-    required_evidence: [density_closure_diagnostics]
-    forbidden_shortcuts: [hidden_density_iteration_inside_production_callback]
-
-  - key: PE-09
-    category: phase
-    route_family: neutral_property_certification
-    exposure: internal
-    activation_status: diagnostic_only
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: provider_dependency
-    species_basis_policy: neutral_true_species
-    species_classes: [neutral]
-    knowns: [T, density_or_volume, composition]
-    primary_variables: [state_properties]
-    optional_variables: []
-    variable_model: provider_state
-    objective_family: property_consistency
-    hard_constraints: [state_domain]
-    optional_constraints: []
-    residual_blocks: [property_consistency]
-    phase_discovery_backend: none_provider_dependency
-    seed_generators: [state_call]
-    stability_checks: [domain_check]
-    certification_families: [postsolve_checks, property_consistency, domain_check]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: provider_state_only
-    proof_cases:
-      - key: neutral_property_certification_existing_contract
-        evidence_tier: T1
-        source: tests/native/contracts/test_property_derivative_backend_contract.py
-        rows: [PE-09]
-        acceptance_checks: [property_values_finite, derivative_backend_reported, no_public_route_from_provider_dependency]
-        fixture_status: available
-    required_evidence: [property_consistency]
-    forbidden_shortcuts: [provider_property_check_as_phase_equilibrium_proof]
-
-  - key: PE-10
-    category: phase
-    route_family: associating_vle_one_assoc_fixed_liquid_pressure
-    exposure: blocked
-    activation_status: blocked_not_implemented
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: neutral_true_species_with_association_sites
-    species_classes: [neutral, nonelectrolyte, nonreactive, associating]
-    knowns: [T, fixed_liquid_composition]
-    primary_variables: [pressure, vapor_composition, phase_volumes, association_site_fractions]
-    optional_variables: [association_diagnostics]
-    variable_model: phase_species_amounts_plus_phase_volume_plus_route_scalar
-    objective_family: fixed_composition_vle_pressure_condition
-    hard_constraints: [fixed_composition, phase_pressure_consistency, phase_equilibrium, association_mass_action]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [fixed_composition, pressure, fugacity_equality, association_mass_action]
-    phase_discovery_backend: route_seeded_then_postsolve
-    seed_generators: [gross2002_methanol_isobutane_seed]
-    stability_checks: [route_postsolve_certification]
-    certification_families: [postsolve_checks, material_balance, phase_pressure_consistency, neutral_fugacity_equality, association_mass_action]
-    thermo_provider_contract: pcsaft_helmholtz_eos_with_implicit_exact_association
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_exact_association_or_lifted_mass_action_constraints
-    proof_cases:
-      - key: gross2002_methanol_isobutane_figure2_first_point
-        evidence_tier: T0
-        source: analyses/paper_validation/2002_gross/
-        rows: [PE-10]
-        acceptance_checks: [exact_hessian, association_diagnostics, normalized_vapor_composition, liquid_like_density, vapor_like_density]
-        fixture_status: source_data_needed
-    required_evidence: [gross2002_fixture, association_eos_validation, exact_hessian, postsolve_certification]
-    forbidden_shortcuts: [explicit_approx_final_production, removing_association_guard_without_topology_rule]
-
-  - key: PE-11
-    category: phase
-    route_family: associating_isothermal_vle_one_assoc
-    exposure: blocked
-    activation_status: blocked_not_implemented
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: neutral_true_species_with_association_sites
-    species_classes: [neutral, nonelectrolyte, nonreactive, associating]
-    knowns: [T, composition_or_feed]
-    primary_variables: [phase_compositions, phase_volumes, association_site_fractions]
-    optional_variables: [pressure_condition]
-    variable_model: associating_vle_phase_species_amounts
-    objective_family: isothermal_vle_condition
-    hard_constraints: [phase_pressure_consistency, phase_equilibrium, association_mass_action]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [pressure, fugacity_equality, association_mass_action]
-    phase_discovery_backend: route_seeded_then_postsolve
-    seed_generators: [gross2002_pentanol_benzene_seed, gross2002_propanol_benzene_seed]
-    stability_checks: [route_postsolve_certification]
-    certification_families: [postsolve_checks, phase_pressure_consistency, neutral_fugacity_equality, association_mass_action]
-    thermo_provider_contract: pcsaft_helmholtz_eos_with_implicit_exact_association
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_exact_association_or_lifted_mass_action_constraints
-    proof_cases:
-      - key: gross2002_second_isothermal_vle_point
-        evidence_tier: T0
-        source: analyses/paper_validation/2002_gross/
-        rows: [PE-11]
-        acceptance_checks: [source_backed_kij, exact_hessian, association_diagnostics]
-        fixture_status: source_data_needed
-    required_evidence: [gross2002_fixture, exact_hessian, second_vle_case]
-    forbidden_shortcuts: [explicit_approx_final_production, treating_one_case_as_general_associating_vle]
-
-  - key: PE-12
-    category: phase
-    route_family: associating_lle
-    exposure: blocked
-    activation_status: blocked_not_implemented
-    production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase_or_multiphase
-    species_basis_policy: neutral_true_species_with_association_sites
-    species_classes: [neutral, nonelectrolyte, nonreactive, associating]
-    knowns: [T, P, feed_composition]
-    primary_variables: [phase_species_amounts, phase_volumes, association_site_fractions]
-    optional_variables: [phase_count]
-    variable_model: associating_lle_phase_species_amounts
-    objective_family: pressure_transformed_helmholtz_with_association
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium, association_mass_action]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, pressure, fugacity_equality, association_mass_action]
-    phase_discovery_backend: requires_PE-04_plus_association_tpd
-    seed_generators: [deferred_associating_lle_seed]
-    stability_checks: [associating_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, phase_pressure_consistency, neutral_fugacity_equality, association_mass_action, tpd_stability]
-    thermo_provider_contract: pcsaft_helmholtz_eos_with_implicit_exact_association
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_exact_association_or_lifted_mass_action_constraints
-    proof_cases:
-      - key: gross2002_methanol_cyclohexane_lle_deferred
-        evidence_tier: T0
-        source: analyses/paper_validation/2002_gross/
-        rows: [PE-12]
-        acceptance_checks: [PE-04_complete, PE-10_complete, PE-11_complete]
-        fixture_status: source_data_needed
-    required_evidence: [PE-04, PE-10, PE-11, associating_tpd_postsolve]
-    forbidden_shortcuts: [explicit_approx_final_production, associating_lle_before_associating_vle]
-
-  - key: PE-13
-    category: phase
-    route_family: associating_temperature_condition_vle
-    exposure: blocked
-    activation_status: blocked_not_implemented
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: neutral_true_species_with_association_sites
-    species_classes: [neutral, nonelectrolyte, nonreactive, associating]
-    knowns: [P, composition_or_feed]
-    primary_variables: [temperature, phase_compositions, phase_volumes, association_site_fractions]
-    optional_variables: []
-    variable_model: associating_vle_temperature_condition
-    objective_family: temperature_condition_vle
-    hard_constraints: [phase_pressure_consistency, phase_equilibrium, association_mass_action]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [temperature_condition, fugacity_equality, association_mass_action]
-    phase_discovery_backend: route_seeded_then_postsolve
-    seed_generators: [gross2002_isobaric_seed]
-    stability_checks: [route_postsolve_certification]
-    certification_families: [postsolve_checks, phase_pressure_consistency, neutral_fugacity_equality, association_mass_action]
-    thermo_provider_contract: pcsaft_helmholtz_eos_with_implicit_exact_association
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_exact_association_or_lifted_mass_action_constraints
-    proof_cases:
-      - key: gross2002_isobaric_vle_deferred
-        evidence_tier: T0
-        source: analyses/paper_validation/2002_gross/
-        rows: [PE-13]
-        acceptance_checks: [temperature_derivative, association_diagnostics, exact_hessian]
-        fixture_status: source_data_needed
-    required_evidence: [PE-10, PE-11, temperature_derivative_proof]
-    forbidden_shortcuts: [explicit_approx_final_production, temperature_route_before_isothermal_vle]
-
-  - key: PE-14
-    category: phase
-    route_family: cross_associating_vle
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: neutral_true_species_with_full_association_matrix
-    species_classes: [neutral, nonelectrolyte, nonreactive, associating]
-    knowns: [T_or_P, composition_or_feed]
-    primary_variables: [phase_compositions, phase_volumes, association_site_fractions]
-    optional_variables: [cross_association_parameters]
-    variable_model: full_association_matrix_vle
-    objective_family: pressure_transformed_helmholtz_with_association
-    hard_constraints: [phase_pressure_consistency, phase_equilibrium, association_mass_action]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [pressure, fugacity_equality, association_mass_action]
-    phase_discovery_backend: planned_associating_tpd
-    seed_generators: [deferred_cross_association_seed]
-    stability_checks: [planned_associating_tpd_postsolve]
-    certification_families: [postsolve_checks, phase_pressure_consistency, neutral_fugacity_equality, association_mass_action]
-    thermo_provider_contract: pcsaft_helmholtz_eos_with_implicit_exact_association
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_exact_association_or_lifted_mass_action_constraints
-    proof_cases:
-      - key: cross_associating_vle_source_needed
-        evidence_tier: T0
-        source: docs/roadmaps/gross2002_associating_vle_redo_plan.md
-        rows: [PE-14]
-        acceptance_checks: [cross_association_matrix_diagnostics, exact_hessian]
-        fixture_status: source_data_needed
-    required_evidence: [source_backed_cross_association_case]
-    forbidden_shortcuts: [explicit_approx_final_production, one_assoc_case_as_cross_assoc_proof]
-
-  - key: PE-15
-    category: phase
-    route_family: electrolyte_lle_salt_solvent
-    exposure: blocked
-    activation_status: source_data_needed
-    production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase_or_multiphase
-    species_basis_policy: salt_solvent_lift_with_exact_back_lift
-    species_classes: [charged, electrolyte, nonreactive]
-    knowns: [T, P, feed_composition]
-    primary_variables: [reduced_ionic_variables, neutral_phase_moles, phase_volumes]
-    optional_variables: [salt_lift_variables]
-    variable_model: electroneutral_reduced_phase_species_amounts
+    physical_variables: [reduced_charge_neutral_species_amounts, neutral_species_amounts, phase_volumes]
     objective_family: pressure_transformed_helmholtz_electrolyte
-    hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, reduced_electrochemical_potential_equality]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, charge_balance, pressure, electrochemical_transfer]
-    phase_discovery_backend: planned_electrolyte_tpd
-    seed_generators: [salt_solvent_seed]
-    stability_checks: [electrolyte_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, tpd_stability]
-    thermo_provider_contract: electrolyte_pcsaft_helmholtz_eos
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
+    hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
+    derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
+    phase_discovery_status: held2_planned_after_born_exact_hessian
+    required_gates:
+      - infrastructure_gate
+      - born_ssm_ds_exact_hessian
+      - reduced_electroneutral_variable_basis
+      - electrolyte_tpd
+      - held2_stage_discovery
+      - charge_and_electrochemical_certification
     proof_cases:
-      - key: ascani2022_electrolyte_lle_source_needed
+      - case_label: "Khudaida 2026 electrolyte LLE"
+        evidence_tier: T1
+        source: "data/reference/equilibrium_benchmarks/electrolyte_lle/khudaida_2026"
+        fixture_status: available
+        acceptance_checks:
+          - source_backed_data
+          - charge_balance
+          - electrochemical_potential_equality
+          - born_ssm_ds_exact_hessian
+          - electrolyte_tpd_or_held2_certification
+      - case_label: "Held 2014 Figure 6"
         evidence_tier: T0
-        source: analyses/paper_validation/2022_ascani_electrolyte_lle/
-        rows: [PE-15]
-        acceptance_checks: [charge_balance, electrochemical_potential_equality, electrolyte_tpd_postsolve]
+        source: "Held et al. 2014 ePC-SAFT benchmark"
         fixture_status: source_data_needed
-    required_evidence: [source_data, electrolyte_tpd, exact_derivatives]
-    forbidden_shortcuts: [raw_ionic_chemical_potential_transfer]
+        acceptance_checks:
+          - charge_balance
+          - electrochemical_potential_equality
+      - case_label: "Ascani/Sadowski/Held 2022 mixed-solvent LLE"
+        evidence_tier: T0
+        source: "Ascani, Sadowski, Held 2022 electrolyte LLE benchmark"
+        fixture_status: source_data_needed
+        acceptance_checks:
+          - mixed_solvent_electrolyte_lle
+          - electrochemical_potential_equality
+    forbidden_shortcuts:
+      - raw_ionic_chemical_potential_transfer
+      - electrolyte_validation_before_born_ssm_ds_exact_hessian
 
-  - key: PE-16
-    category: phase
-    route_family: electrolyte_lle_trace_ion
-    exposure: blocked
-    activation_status: source_data_needed
+  - family_label: "PE-Generalized Multiphase"
+    family_kind: phase_equilibrium
+    activation_status: planned_not_public
     production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase
-    species_basis_policy: electroneutral_reduced_trace_ion_basis
-    species_classes: [charged, electrolyte, trace_ion]
+    existing_public_utility_routes: []
+    scope: "More-than-two-phase discovery and phase-set completeness across representative PE families."
+    primary_problem: "Unknown phase count TP flash with source-backed phase-set certification."
     knowns: [T, P, feed_composition]
-    primary_variables: [reduced_ionic_variables, neutral_phase_moles, phase_volumes]
-    optional_variables: [trace_floors]
-    variable_model: electroneutral_trace_ion_reduced_variables
-    objective_family: pressure_transformed_helmholtz_electrolyte
-    hard_constraints: [material_balance, charge_balance, reduced_electrochemical_potential_equality]
-    optional_constraints: [trace_bounds, phase_distance_anti_collapse]
-    residual_blocks: [material_balance, charge_balance, electrochemical_transfer]
-    phase_discovery_backend: planned_electrolyte_tpd
-    seed_generators: [trace_ion_seed]
-    stability_checks: [electrolyte_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, tpd_stability]
-    thermo_provider_contract: electrolyte_pcsaft_helmholtz_eos
+    physical_variables: [phase_count, phase_species_amounts, phase_volumes]
+    objective_family: pressure_transformed_helmholtz
+    hard_constraints: [material_balance, phase_pressure_consistency, transferable_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
+    phase_discovery_status: full_held_required
+    required_gates:
+      - infrastructure_gate
+      - held_stage_i_stability
+      - held_stage_ii_dual_phase_discovery
+      - held_stage_iii_ipopt_refinement
+      - mass_balance_candidate_selection
+      - phase_set_completeness
     proof_cases:
-      - key: electrolyte_trace_ion_source_needed
+      - case_label: "Representative neutral/associating/electrolyte replay"
         evidence_tier: T0
-        source: analyses/paper_validation/2022_ascani_electrolyte_lle/
-        rows: [PE-16]
-        acceptance_checks: [trace_bounds_reported, charge_balance, electrochemical_potential_equality]
+        source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
         fixture_status: source_data_needed
-    required_evidence: [trace_ion_fixture, exact_derivatives]
-    forbidden_shortcuts: [hidden_ion_floor_without_diagnostic]
+        acceptance_checks:
+          - all_eligible_phases_considered
+          - candidate_phase_set_complete
+          - no_phase_count_assumption
+    forbidden_shortcuts:
+      - selected_two_phase_only
+      - per_phase_tpd_only
 
-  - key: PE-17
-    category: phase
-    route_family: electrolyte_vlle
-    exposure: blocked
-    activation_status: source_data_needed
-    production_exposed: false
-    phase_kinds: [vapor, liquid, liquid]
-    phase_count_policy: variable_phase_count
-    species_basis_policy: electroneutral_reduced_variables
-    species_classes: [charged, electrolyte]
-    knowns: [T, P, feed_composition]
-    primary_variables: [reduced_ionic_variables, neutral_phase_moles, phase_volumes]
-    optional_variables: [phase_count]
-    variable_model: electrolyte_multiphase_reduced_variables
-    objective_family: pressure_transformed_helmholtz_electrolyte
-    hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, reduced_electrochemical_potential_equality]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, charge_balance, pressure, electrochemical_transfer]
-    phase_discovery_backend: planned_electrolyte_held_tpd
-    seed_generators: [electrolyte_multiphase_seed]
-    stability_checks: [electrolyte_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, tpd_stability, phase_set_completeness]
-    thermo_provider_contract: electrolyte_pcsaft_helmholtz_eos
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
-    proof_cases:
-      - key: electrolyte_vlle_source_needed
-        evidence_tier: T0
-        source: analyses/paper_validation/2022_ascani_electrolyte_lle/
-        rows: [PE-17]
-        acceptance_checks: [all_eligible_phases_considered, charge_balance, electrochemical_potential_equality]
-        fixture_status: source_data_needed
-    required_evidence: [electrolyte_vlle_fixture]
-    forbidden_shortcuts: [electrolyte_lle_as_vlle_proof]
-
-  - key: PE-18
-    category: phase
-    route_family: electrolyte_tpd_reduced_composition
-    exposure: internal
+  - family_label: "CE Chemical Equilibrium Placeholder"
+    family_kind: chemical_equilibrium
     activation_status: planned_not_public
     production_exposed: false
-    phase_kinds: [liquid]
-    phase_count_policy: stability_query_only
-    species_basis_policy: reduced_composition_charge_neutral_basis
-    species_classes: [charged, electrolyte]
-    knowns: [T, P, reference_phase_composition]
-    primary_variables: [reduced_trial_composition]
-    optional_variables: []
-    variable_model: reduced_composition_tpd
-    objective_family: tangent_plane_distance_electrolyte
-    hard_constraints: [composition_sum, charge_balance]
-    optional_constraints: [composition_bounds]
-    residual_blocks: [tpd_stationarity, charge_balance]
-    phase_discovery_backend: planned_electrolyte_tpd
-    seed_generators: [charge_neutral_simplex_seed]
-    stability_checks: [electrolyte_tpd_stability]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, tpd_stability]
-    thermo_provider_contract: electrolyte_pcsaft_helmholtz_eos
+    existing_public_utility_routes: []
+    scope: "Homogeneous chemical and speciation equilibrium after standard-state conventions are explicit."
+    primary_problem: "Chemical equilibrium without phase split."
+    knowns: [T, P, feed_composition, reaction_set]
+    physical_variables: [species_amounts, reaction_extents_or_element_basis]
+    objective_family: gibbs_or_helmholtz_chemical_equilibrium
+    hard_constraints: [element_balance, reaction_affinity, standard_state_convention]
     derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
+    phase_discovery_status: none
+    required_gates:
+      - reaction_constant_convention
+      - standard_state_registry
+      - reaction_affinity_certification
     proof_cases:
-      - key: electrolyte_reduced_composition_tpd_placeholder
+      - case_label: "Chemical equilibrium placeholder"
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [PE-18]
-        acceptance_checks: [charge_neutral_basis_dimension, electrochemical_potential_equality]
+        source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
         fixture_status: source_data_needed
-    required_evidence: [reduced_basis_proof]
-    forbidden_shortcuts: [raw_ionic_chemical_potential_transfer]
-
-  - key: PE-19
-    category: phase
-    route_family: electrolyte_tpd_reduced_moles
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid]
-    phase_count_policy: stability_query_only
-    species_basis_policy: reduced_mole_charge_neutral_basis
-    species_classes: [charged, electrolyte]
-    knowns: [T, P, reference_phase_moles]
-    primary_variables: [reduced_trial_moles]
-    optional_variables: []
-    variable_model: reduced_mole_tpd
-    objective_family: tangent_plane_distance_electrolyte
-    hard_constraints: [charge_balance, mole_bounds]
-    optional_constraints: [normalization_choice]
-    residual_blocks: [tpd_stationarity, charge_balance]
-    phase_discovery_backend: planned_electrolyte_tpd
-    seed_generators: [charge_neutral_mole_seed]
-    stability_checks: [electrolyte_tpd_stability]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, tpd_stability]
-    thermo_provider_contract: electrolyte_pcsaft_helmholtz_eos
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
-    proof_cases:
-      - key: electrolyte_reduced_moles_tpd_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [PE-19]
-        acceptance_checks: [charge_neutral_basis_dimension, electrochemical_potential_equality]
-        fixture_status: source_data_needed
-    required_evidence: [reduced_basis_proof]
-    forbidden_shortcuts: [raw_ionic_chemical_potential_transfer]
-
-  - key: PE-20
-    category: phase
-    route_family: phase_distance_anti_collapse
-    exposure: internal
-    activation_status: diagnostic_only
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: helper_for_selected_rows
-    species_basis_policy: any_active_species_basis
-    species_classes: [neutral]
-    knowns: [candidate_phase_compositions]
-    primary_variables: [phase_distance_metric]
-    optional_variables: [tolerance]
-    variable_model: diagnostic_distance_metric
-    objective_family: anti_collapse_gate
-    hard_constraints: [minimum_phase_distance]
-    optional_constraints: []
-    residual_blocks: [phase_distance]
-    phase_discovery_backend: helper_only
-    seed_generators: []
-    stability_checks: [candidate_distinctness]
-    certification_families: [postsolve_checks, candidate_distinctness]
-    thermo_provider_contract: not_provider_specific
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: helper_only
-    proof_cases:
-      - key: phase_distance_existing_diagnostic
-        evidence_tier: T1
-        source: tests/native/equilibrium/results/test_neutral_vle_reference_values.py
-        rows: [PE-20]
-        acceptance_checks: [phase_distance_reported, no_thermodynamic_equilibrium_claim]
-        fixture_status: available
-    required_evidence: [diagnostic_payload]
-    forbidden_shortcuts: [phase_distance_as_equilibrium_proof, diagnostic_only_returning_production_accepted]
-
-  - key: PE-21
-    category: phase
-    route_family: supporting_plane_phase_set
-    exposure: internal
-    activation_status: diagnostic_only
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: helper_for_selected_rows
-    species_basis_policy: active_species_basis
-    species_classes: [neutral]
-    knowns: [accepted_phase_set]
-    primary_variables: [supporting_plane_residuals]
-    optional_variables: [missing_candidate_report]
-    variable_model: postsolve_phase_set_certificate
-    objective_family: supporting_plane_certification
-    hard_constraints: [phase_set_stability]
-    optional_constraints: [candidate_completeness]
-    residual_blocks: [supporting_plane_residuals]
-    phase_discovery_backend: helper_only
-    seed_generators: [postsolve_candidate_generation]
-    stability_checks: [supporting_plane_phase_set]
-    certification_families: [postsolve_checks, tpd_stability, phase_set_completeness]
-    thermo_provider_contract: pcsaft_helmholtz_eos
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: helper_only
-    proof_cases:
-      - key: supporting_plane_existing_diagnostic
-        evidence_tier: T1
-        source: tests/native/equilibrium/results/test_neutral_vle_reference_values.py
-        rows: [PE-21]
-        acceptance_checks: [tpd_postsolve, candidate_set_complete, no_public_route_from_helper]
-        fixture_status: available
-    required_evidence: [postsolve_certificate]
-    forbidden_shortcuts: [per_phase_tpd_only, diagnostic_only_returning_production_accepted]
-
-  - key: PE-22
-    category: phase
-    route_family: phase_candidate_mass_balance
-    exposure: internal
-    activation_status: diagnostic_only
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: helper_for_selected_rows
-    species_basis_policy: active_species_basis
-    species_classes: [neutral]
-    knowns: [feed_composition, candidate_phase_compositions]
-    primary_variables: [candidate_phase_fractions]
-    optional_variables: [active_set]
-    variable_model: candidate_phase_fraction_feasibility
-    objective_family: mass_balance_candidate_selection
-    hard_constraints: [candidate_mass_balance]
-    optional_constraints: [nonnegative_phase_fraction]
-    residual_blocks: [mass_balance_feasibility]
-    phase_discovery_backend: helper_only
-    seed_generators: [candidate_phase_inventory]
-    stability_checks: [candidate_mass_balance]
-    certification_families: [postsolve_checks, material_balance, phase_set_completeness]
-    thermo_provider_contract: not_provider_specific
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: helper_only
-    proof_cases:
-      - key: candidate_mass_balance_existing_diagnostic
-        evidence_tier: T1
-        source: tests/native/equilibrium/results/test_neutral_vle_reference_values.py
-        rows: [PE-22]
-        acceptance_checks: [candidate_set_complete, selected_candidate_count, no_public_route_from_helper]
-        fixture_status: available
-    required_evidence: [mass_balance_candidate_selection]
-    forbidden_shortcuts: [accepting_mass_balance_incomplete_phase_set]
-
-  - key: PE-23
-    category: phase
-    route_family: generalized_multiphase_flash
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: variable_phase_count
-    species_basis_policy: neutral_electrolyte_reactive_active_basis
-    species_classes: [neutral, charged, associating, reactive]
-    knowns: [T, P, feed_composition, optional_reaction_set]
-    primary_variables: [phase_species_amounts, phase_volumes, internal_states]
-    optional_variables: [reaction_extents, reduced_ionic_variables]
-    variable_model: generalized_true_species_by_phase
-    objective_family: pressure_transformed_helmholtz_generalized
-    hard_constraints: [material_balance, charge_balance, reaction_affinity, phase_pressure_consistency, association_mass_action]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, charge_balance, reaction_affinity, pressure, transfer, association_mass_action]
-    phase_discovery_backend: generalized_held_tpd_planned
-    seed_generators: [deferred_generalized_seed]
-    stability_checks: [generalized_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention, association_mass_action, tpd_stability]
-    thermo_provider_contract: generalized_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_sensitivities_or_lifted_constraints
-    proof_cases:
-      - key: generalized_multiphase_flash_deferred
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [PE-23]
-        acceptance_checks: [all_prerequisite_rows_mature, no_shortcut_around_PE_CE_CPE_gates]
-        fixture_status: source_data_needed
-    required_evidence: [mature_prerequisite_rows]
-    forbidden_shortcuts: [explicit_approx_final_production, using_generalized_row_to_bypass_specific_proof]
-
-  - key: CE-01
-    category: chemical
-    route_family: ideal_homogeneous_reaction
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: true_species
-    species_classes: [reactive]
-    knowns: [T, P, conserved_totals, reaction_constants]
-    primary_variables: [reaction_extents]
-    optional_variables: []
-    variable_model: extent_variables
-    objective_family: reaction_affinity_system
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [ideal_closed_form_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: ideal_activity_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: no_phase_split
-    proof_cases:
-      - key: ideal_homogeneous_reaction_synthetic
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-01]
-        acceptance_checks: [closed_form_reference, reaction_affinity, reaction_constant_convention]
-        fixture_status: source_data_needed
-    required_evidence: [synthetic_reference]
-    forbidden_shortcuts: [reaction_without_convention_metadata]
-
-  - key: CE-02
-    category: chemical
-    route_family: stoichiometric_extent_ce
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: stoichiometric_extent
-    species_classes: [reactive]
-    knowns: [T, P, feed_composition, stoichiometry, reaction_constants]
-    primary_variables: [reaction_extents]
-    optional_variables: []
-    variable_model: extent_variables
-    objective_family: reaction_affinity_system
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [extent_bounds]
-    residual_blocks: [reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [stoichiometric_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: no_phase_split
-    proof_cases:
-      - key: stoichiometric_extent_ce_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-02]
-        acceptance_checks: [element_balance, reaction_affinity, reaction_constant_convention]
-        fixture_status: source_data_needed
-    required_evidence: [extent_reference]
-    forbidden_shortcuts: [dependent_reaction_without_rank_check]
-
-  - key: CE-03
-    category: chemical
-    route_family: true_species_ce
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: true_species
-    species_classes: [reactive]
-    knowns: [T, P, conserved_totals, reaction_set]
-    primary_variables: [species_moles]
-    optional_variables: []
-    variable_model: true_species_moles
-    objective_family: constrained_gibbs_or_affinity
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [conserved_balance, reaction_affinity]
-    phase_discovery_backend: none
-    seed_generators: [true_species_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: no_phase_split
-    proof_cases:
-      - key: true_species_ce_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-03]
-        acceptance_checks: [element_matrix_rank, positivity, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [rank_checked_fixture]
-    forbidden_shortcuts: [species_basis_without_conservation_matrix]
-
-  - key: CE-04
-    category: chemical
-    route_family: nonstoichiometric_element_ce
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: element_conservation
-    species_classes: [reactive]
-    knowns: [T, P, element_totals, species_set]
-    primary_variables: [species_moles]
-    optional_variables: []
-    variable_model: element_constrained_species_moles
-    objective_family: gibbs_minimization_or_helmholtz_transform
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [element_balance, reaction_affinity]
-    phase_discovery_backend: none
-    seed_generators: [element_balance_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: no_phase_split
-    proof_cases:
-      - key: nonstoichiometric_element_ce_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-04]
-        acceptance_checks: [element_basis_rank, invariant_equilibrium, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [element_basis_fixture]
-    forbidden_shortcuts: [unranked_element_matrix]
-
-  - key: CE-05
-    category: chemical
-    route_family: activity_based_speciation
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid]
-    phase_count_policy: one_phase
-    species_basis_policy: true_species
-    species_classes: [reactive]
-    knowns: [T, P, feed_composition, reaction_constants, activity_model]
-    primary_variables: [species_moles, reaction_extents]
-    optional_variables: [activity_coefficients]
-    variable_model: activity_based_true_species
-    objective_family: activity_reaction_affinity
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [activity_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [activity_model_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: activity_model_state_declared
-    proof_cases:
-      - key: activity_based_speciation_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-05]
         acceptance_checks: [standard_state_convention, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [activity_convention_fixture]
-    forbidden_shortcuts: [activity_without_standard_state]
+    forbidden_shortcuts:
+      - hidden_standard_state
 
-  - key: CE-06
-    category: chemical
-    route_family: acid_base_speciation
-    exposure: internal
+  - family_label: "CPE Combined Phase-Chemical Placeholder"
+    family_kind: combined_phase_chemical_equilibrium
     activation_status: planned_not_public
     production_exposed: false
-    phase_kinds: [aqueous]
-    phase_count_policy: one_phase
-    species_basis_policy: true_species_charge_balanced
-    species_classes: [charged, reactive]
-    knowns: [T, P, conserved_totals, acid_base_constants]
-    primary_variables: [species_moles, reaction_extents, pH_related_variable]
-    optional_variables: []
-    variable_model: charge_balanced_speciation
-    objective_family: activity_reaction_affinity
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [charge_balance, reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [acid_base_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_electrolyte_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: charge_balanced_state
-    proof_cases:
-      - key: acid_base_speciation_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-06]
-        acceptance_checks: [charge_balance, pH_convention, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [acid_base_fixture]
-    forbidden_shortcuts: [pH_without_standard_state]
-
-  - key: CE-07
-    category: chemical
-    route_family: electrolyte_speciation
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [aqueous]
-    phase_count_policy: one_phase
-    species_basis_policy: reduced_electrolyte_true_species
-    species_classes: [charged, reactive]
-    knowns: [T, P, conserved_totals, reaction_constants]
-    primary_variables: [reduced_ionic_variables, reaction_extents]
-    optional_variables: []
-    variable_model: electroneutral_reduced_speciation
-    objective_family: electrolyte_reaction_affinity
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [charge_balance, reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [electrolyte_speciation_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: electrolyte_activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
-    proof_cases:
-      - key: electrolyte_speciation_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-07]
-        acceptance_checks: [charge_balance, reduced_electrochemical_basis, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [electrolyte_speciation_fixture]
-    forbidden_shortcuts: [raw_ionic_potential_basis]
-
-  - key: CE-08
-    category: chemical
-    route_family: ion_pairing
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [aqueous]
-    phase_count_policy: one_phase
-    species_basis_policy: ion_pair_true_species
-    species_classes: [charged, reactive]
-    knowns: [T, P, ion_totals, pairing_constants]
-    primary_variables: [species_moles, reaction_extents]
-    optional_variables: []
-    variable_model: ion_pair_speciation
-    objective_family: electrolyte_reaction_affinity
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [charge_balance, reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [ion_pair_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: electrolyte_activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
-    proof_cases:
-      - key: ion_pairing_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-08]
-        acceptance_checks: [element_balance, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [ion_pair_fixture]
-    forbidden_shortcuts: [ion_pair_without_species_conservation]
-
-  - key: CE-09
-    category: chemical
-    route_family: solvation_complexation
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid]
-    phase_count_policy: one_phase
-    species_basis_policy: complexation_true_species
-    species_classes: [charged, reactive]
-    knowns: [T, P, moiety_totals, complexation_constants]
-    primary_variables: [species_moles, reaction_extents]
-    optional_variables: []
-    variable_model: moiety_conserved_speciation
-    objective_family: activity_reaction_affinity
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [charge_balance, reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [complexation_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_electrolyte_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables_when_ionic
-    proof_cases:
-      - key: solvation_complexation_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-09]
-        acceptance_checks: [moiety_balance, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [complexation_fixture]
-    forbidden_shortcuts: [complexation_without_moiety_balance]
-
-  - key: CE-10
-    category: chemical
-    route_family: salt_dissociation
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [aqueous]
-    phase_count_policy: one_phase
-    species_basis_policy: salt_to_ion_lift
-    species_classes: [charged, reactive]
-    knowns: [T, P, salt_totals, dissociation_constants]
-    primary_variables: [reduced_ionic_variables, reaction_extents]
-    optional_variables: [mean_ionic_activity]
-    variable_model: salt_lift_speciation
-    objective_family: electrolyte_reaction_affinity
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [charge_balance, mean_ionic_relation, reaction_affinity]
-    phase_discovery_backend: none
-    seed_generators: [salt_dissociation_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, mean_ionic_fugacity_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: electrolyte_activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables
-    proof_cases:
-      - key: salt_dissociation_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-10]
-        acceptance_checks: [salt_to_ion_lift, charge_balance, mean_ionic_convention]
-        fixture_status: source_data_needed
-    required_evidence: [salt_lift_fixture]
-    forbidden_shortcuts: [salt_lift_without_exact_back_lift]
-
-  - key: CE-11
-    category: chemical
-    route_family: temperature_dependent_k
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: true_species
-    species_classes: [reactive]
-    knowns: [T, P, conserved_totals, temperature_dependent_constants]
-    primary_variables: [reaction_extents]
-    optional_variables: [temperature_derivative]
-    variable_model: reaction_extents_with_temperature_dependent_constants
-    objective_family: reaction_affinity_system
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: []
-    residual_blocks: [reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [temperature_continuation_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: temperature_constant_metadata_required
-    proof_cases:
-      - key: temperature_dependent_k_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-11]
-        acceptance_checks: [temperature_constant_convention, derivative_metadata, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [temperature_constant_fixture]
-    forbidden_shortcuts: [temperature_dependent_constant_without_derivative_policy]
-
-  - key: CE-12
-    category: chemical
-    route_family: pressure_dependent_k
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: true_species
-    species_classes: [reactive]
-    knowns: [T, P, conserved_totals, pressure_dependent_constants]
-    primary_variables: [reaction_extents]
-    optional_variables: [pressure_derivative]
-    variable_model: reaction_extents_with_pressure_dependent_constants
-    objective_family: reaction_affinity_system
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: []
-    residual_blocks: [reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [pressure_continuation_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: pressure_constant_metadata_required
-    proof_cases:
-      - key: pressure_dependent_k_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-12]
-        acceptance_checks: [pressure_constant_convention, derivative_metadata, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [pressure_constant_fixture]
-    forbidden_shortcuts: [pressure_dependent_constant_without_derivative_policy]
-
-  - key: CE-13
-    category: chemical
-    route_family: reaction_constant_conversion
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: true_species
-    species_classes: [reactive]
-    knowns: [reaction_constants, standard_state_metadata]
-    primary_variables: [converted_constants]
-    optional_variables: []
-    variable_model: standard_state_conversion_registry
-    objective_family: convention_conversion
-    hard_constraints: [reaction_constant_convention]
-    optional_constraints: [round_trip_tolerance]
-    residual_blocks: [constant_conversion_round_trip]
-    phase_discovery_backend: none
-    seed_generators: [metadata_conversion]
-    stability_checks: [round_trip_check]
-    certification_families: [postsolve_checks, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: convention_registry
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: metadata_only
-    proof_cases:
-      - key: reaction_constant_conversion_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-13]
-        acceptance_checks: [round_trip_conversion, reaction_constant_convention]
-        fixture_status: source_data_needed
-    required_evidence: [conversion_round_trip_fixture]
-    forbidden_shortcuts: [implicit_standard_state]
-
-  - key: CE-14
-    category: chemical
-    route_family: rank_deficient_reaction_sets
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: rank_reduced_reaction_basis
-    species_classes: [reactive]
-    knowns: [T, P, conserved_totals, dependent_reaction_set]
-    primary_variables: [independent_reaction_extents]
-    optional_variables: [dependent_reaction_diagnostics]
-    variable_model: rank_reduced_extents
-    objective_family: reaction_affinity_system
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [rank_tolerance]
-    residual_blocks: [reaction_affinity, conserved_balance]
-    phase_discovery_backend: none
-    seed_generators: [rank_reduced_seed]
-    stability_checks: [rank_invariance_check]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: rank_reduced_reaction_basis
-    proof_cases:
-      - key: rank_deficient_reaction_set_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-14]
-        acceptance_checks: [rank_reduction, invariant_equilibrium, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [rank_deficient_fixture]
-    forbidden_shortcuts: [dependent_reaction_double_counting]
-
-  - key: CE-15
-    category: chemical
-    route_family: moiety_conserved_speciation
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: one_phase
-    species_basis_policy: moiety_conservation
-    species_classes: [reactive]
-    knowns: [T, P, moiety_totals, reaction_constants]
-    primary_variables: [species_moles, reaction_extents]
-    optional_variables: []
-    variable_model: moiety_conserved_true_species
-    objective_family: reaction_affinity_system
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [moiety_balance, reaction_affinity]
-    phase_discovery_backend: none
-    seed_generators: [moiety_seed]
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: activity_or_eos_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: moiety_matrix_required
-    proof_cases:
-      - key: moiety_conserved_speciation_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-15]
-        acceptance_checks: [moiety_matrix_rank, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [moiety_fixture]
-    forbidden_shortcuts: [moiety_without_conservation_matrix]
-
-  - key: CE-16
-    category: chemical
-    route_family: precipitation_candidate
-    exposure: blocked
-    activation_status: blocked_not_implemented
-    production_exposed: false
-    phase_kinds: [solid, liquid]
-    phase_count_policy: outside_fluid_doctrine
-    species_basis_policy: solid_phase_requires_separate_ADR
-    species_classes: [reactive]
-    knowns: [T, P, conserved_totals]
-    primary_variables: [solid_amounts, liquid_species_moles]
-    optional_variables: []
-    variable_model: solid_liquid_candidate_not_admitted
-    objective_family: outside_scope
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [solid_phase_stability]
-    residual_blocks: [reaction_affinity, conserved_balance]
-    phase_discovery_backend: not_admitted
-    seed_generators: []
-    stability_checks: [requires_solid_phase_ADR]
-    certification_families: [postsolve_checks, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: requires_solid_phase_model
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: blocked_until_solid_phase_ADR
-    proof_cases:
-      - key: precipitation_candidate_blocked
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-16]
-        acceptance_checks: [separate_solid_phase_ADR_required, not_fluid_phase_production]
-        fixture_status: source_data_needed
-    required_evidence: [solid_phase_ADR]
-    forbidden_shortcuts: [solid_phase_inside_fluid_doctrine]
-
-  - key: CE-17
-    category: chemical
-    route_family: homogeneous_reactive_derivatives
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: derivative_backend
-    species_basis_policy: active_CE_basis
-    species_classes: [reactive]
-    knowns: [active_CE_variables]
-    primary_variables: [objective_gradient, constraint_jacobian, lagrangian_hessian]
-    optional_variables: []
-    variable_model: derivative_backend_contract
-    objective_family: derivative_contract
-    hard_constraints: [reaction_affinity]
-    optional_constraints: [conserved_balance]
-    residual_blocks: [derivative_consistency]
-    phase_discovery_backend: none
-    seed_generators: []
-    stability_checks: [derivative_consistency]
-    certification_families: [postsolve_checks, reaction_affinity, reaction_constant_convention, derivative_consistency]
-    thermo_provider_contract: active_CE_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_sensitivities_or_lifted_constraints
-    proof_cases:
-      - key: homogeneous_reactive_derivatives_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-17]
-        acceptance_checks: [exact_jacobian, exact_hessian, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [CE_derivative_fixture]
-    forbidden_shortcuts: [inexact_derivative_substitute]
-
-  - key: CE-18
-    category: chemical
-    route_family: standard_state_registry
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: metadata_registry
-    species_basis_policy: standard_state_metadata
-    species_classes: [reactive]
-    knowns: [standard_state_definitions]
-    primary_variables: [standard_state_records]
-    optional_variables: [conversion_records]
-    variable_model: standard_state_metadata_registry
-    objective_family: metadata_contract
-    hard_constraints: [reaction_constant_convention]
-    optional_constraints: [round_trip_tolerance]
-    residual_blocks: [metadata_consistency]
-    phase_discovery_backend: none
-    seed_generators: []
-    stability_checks: [metadata_consistency]
-    certification_families: [postsolve_checks, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: convention_registry
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: metadata_only
-    proof_cases:
-      - key: standard_state_registry_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-18]
-        acceptance_checks: [standard_state_explicit, conversion_round_trip]
-        fixture_status: source_data_needed
-    required_evidence: [standard_state_records]
-    forbidden_shortcuts: [implicit_standard_state]
-
-  - key: CE-19
-    category: chemical
-    route_family: ce_certification
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [homogeneous]
-    phase_count_policy: certification_backend
-    species_basis_policy: active_CE_basis
-    species_classes: [charged, reactive]
-    knowns: [CE_solution]
-    primary_variables: [certification_residuals]
-    optional_variables: [charge_residuals]
-    variable_model: homogeneous_CE_postsolve_certificate
-    objective_family: postsolve_certification
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [conserved_balance, charge_balance, reaction_affinity]
-    phase_discovery_backend: none
-    seed_generators: []
-    stability_checks: [homogeneous_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: active_CE_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: certification_only
-    proof_cases:
-      - key: ce_certification_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CE-19]
-        acceptance_checks: [element_residual, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [CE_postsolve_fixture]
-    forbidden_shortcuts: [optimizer_success_only]
-
-  - key: CPE-01
-    category: combined_cpe
-    route_family: neutral_reactive_vle_flash
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: true_species_by_phase_with_reactions
-    species_classes: [neutral, reactive]
+    existing_public_utility_routes: []
+    scope: "Simultaneous phase split and chemical/speciation equilibrium after PE and CE proofs exist."
+    primary_problem: "Combined phase and reaction equilibrium."
     knowns: [T, P, feed_composition, reaction_set]
-    primary_variables: [phase_species_amounts, phase_volumes, reaction_extents]
-    optional_variables: []
-    variable_model: phase_species_amounts_plus_reaction_extents
+    physical_variables: [phase_species_amounts, phase_volumes, reaction_variables]
     objective_family: pressure_transformed_helmholtz_with_reaction_affinity
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, pressure, transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_tpd
-    seed_generators: [CE_seed_then_phase_split]
-    stability_checks: [reactive_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, neutral_fugacity_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reaction_extents_lift_to_true_species
+    hard_constraints: [material_balance, phase_pressure_consistency, transferable_potential_equality, reaction_affinity]
+    derivative_contract: exact_coupled_derivatives_required_before_exposure
+    phase_discovery_status: planned_after_pe_and_ce_proofs
+    required_gates:
+      - pe_family_proof
+      - ce_family_proof
+      - coupled_phase_reaction_certification
     proof_cases:
-      - key: neutral_reactive_vle_flash_placeholder
+      - case_label: "Combined phase-chemical placeholder"
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-01]
-        acceptance_checks: [transfer_equilibrium, reaction_affinity, reaction_constant_convention]
+        source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
         fixture_status: source_data_needed
-    required_evidence: [CE_prerequisite, phase_split_fixture]
-    forbidden_shortcuts: [phase_only_solver_for_reactive_route]
+        acceptance_checks: [phase_equilibrium, reaction_affinity, coupled_certification]
+    forbidden_shortcuts:
+      - phase_only_proof_as_cpe_proof
+      - ce_only_proof_as_cpe_proof
 
-  - key: CPE-02
-    category: combined_cpe
-    route_family: neutral_reactive_fixed_composition_vle
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: true_species_by_phase_with_reactions
-    species_classes: [neutral, reactive]
-    knowns: [fixed_composition, T_or_P, reaction_set]
-    primary_variables: [route_scalar, phase_compositions, reaction_extents]
-    optional_variables: []
-    variable_model: fixed_composition_reactive_vle
-    objective_family: fixed_condition_reactive_vle
-    hard_constraints: [fixed_composition, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [fixed_condition, transfer, reaction_affinity]
-    phase_discovery_backend: route_seeded_then_postsolve
-    seed_generators: [CE_seed_then_fixed_condition_split]
-    stability_checks: [reactive_route_postsolve]
-    certification_families: [postsolve_checks, neutral_fugacity_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reaction_extents_lift_to_true_species
-    proof_cases:
-      - key: neutral_reactive_fixed_composition_vle_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-02]
-        acceptance_checks: [fixed_condition_proof, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [route_specific_reactive_fixture]
-    forbidden_shortcuts: [derived_utility_route_as_general_matrix_row]
+derived_subworkflows:
+  - label: "Bubble point"
+    workflow_kind: derived_boundary
+    planned_after_family: "PE-Neutral TP Flash"
+    activation_family_row: false
+    current_runtime_routes: [bubble_pressure, bubble_temperature]
+    fixed_variables: [temperature_or_pressure, liquid_or_feed_composition]
+    free_variables: [incipient_vapor_composition, phase_volumes, boundary_pressure_or_temperature]
+    diagram_targets: ["P-x", "T-x"]
+    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    vlle_test_required: false
+    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, diagram_trace]
 
-  - key: CPE-03
-    category: combined_cpe
-    route_family: neutral_reactive_lle
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase_or_multiphase
-    species_basis_policy: true_species_by_phase_with_reactions
-    species_classes: [neutral, reactive]
-    knowns: [T, P, feed_composition, reaction_set]
-    primary_variables: [phase_species_amounts, phase_volumes, reaction_extents]
-    optional_variables: [phase_count]
-    variable_model: reactive_lle_phase_species_amounts
-    objective_family: pressure_transformed_helmholtz_with_reaction_affinity
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_held_tpd
-    seed_generators: [CE_seed_then_lle_seed]
-    stability_checks: [reactive_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, neutral_fugacity_equality, reaction_affinity, reaction_constant_convention, tpd_stability]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reaction_extents_lift_to_true_species
-    proof_cases:
-      - key: neutral_reactive_lle_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-03]
-        acceptance_checks: [phase_set_certification, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [reactive_lle_fixture]
-    forbidden_shortcuts: [neutral_lle_as_reactive_lle_proof]
+  - label: "Dew point"
+    workflow_kind: derived_boundary
+    planned_after_family: "PE-Neutral TP Flash"
+    activation_family_row: false
+    current_runtime_routes: [dew_pressure, dew_temperature]
+    fixed_variables: [temperature_or_pressure, vapor_composition]
+    free_variables: [incipient_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
+    diagram_targets: ["P-x", "T-x"]
+    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    vlle_test_required: false
+    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, diagram_trace]
 
-  - key: CPE-04
-    category: combined_cpe
-    route_family: neutral_reactive_multiphase
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: variable_phase_count
-    species_basis_policy: true_species_by_phase_with_reactions
-    species_classes: [neutral, reactive]
-    knowns: [T, P, feed_composition, reaction_set]
-    primary_variables: [phase_species_amounts, phase_volumes, reaction_extents, phase_count]
-    optional_variables: []
-    variable_model: generalized_reactive_multiphase
-    objective_family: pressure_transformed_helmholtz_with_reaction_affinity
-    hard_constraints: [material_balance, phase_pressure_consistency, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_held_tpd
-    seed_generators: [reactive_multiphase_seed]
-    stability_checks: [reactive_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, neutral_fugacity_equality, reaction_affinity, reaction_constant_convention, phase_set_completeness]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reaction_extents_lift_to_true_species
-    proof_cases:
-      - key: neutral_reactive_multiphase_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-04]
-        acceptance_checks: [multiphase_candidate_completeness, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [multiphase_reactive_fixture]
-    forbidden_shortcuts: [two_phase_reactive_case_as_multiphase_proof]
+  - label: "Cloud point"
+    workflow_kind: derived_boundary
+    planned_after_family: "PE-Neutral TP Flash"
+    activation_family_row: false
+    current_runtime_routes: []
+    fixed_variables: [temperature_or_pressure, parent_liquid_composition]
+    free_variables: [incipient_second_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
+    diagram_targets: ["P-x", "T-x"]
+    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    vlle_test_required: false
+    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, diagram_trace]
 
-  - key: CPE-05
-    category: combined_cpe
-    route_family: activity_reactive_lle
-    exposure: blocked
-    activation_status: source_data_needed
-    production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase
-    species_basis_policy: activity_model_true_species
-    species_classes: [neutral, reactive]
-    knowns: [T, P, feed_composition, reaction_set, activity_model]
-    primary_variables: [phase_species_amounts, reaction_extents]
-    optional_variables: [activity_coefficients]
-    variable_model: activity_reactive_lle
-    objective_family: activity_reactive_phase_split
-    hard_constraints: [material_balance, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [transfer, reaction_affinity, material_balance]
-    phase_discovery_backend: planned_activity_reactive_tpd
-    seed_generators: [activity_model_seed]
-    stability_checks: [reactive_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, reaction_affinity, reaction_constant_convention, tpd_stability]
-    thermo_provider_contract: activity_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: activity_model_state_declared
-    proof_cases:
-      - key: ascani2023_activity_reactive_lle_source_needed
-        evidence_tier: T0
-        source: analyses/paper_validation/2023_ascani_reactive_lle/
-        rows: [CPE-05]
-        acceptance_checks: [activity_convention, reaction_affinity, phase_set_certification]
-        fixture_status: source_data_needed
-    required_evidence: [source_data, activity_convention_fixture]
-    forbidden_shortcuts: [activity_CPE_as_electrolyte_proof]
-
-  - key: CPE-06
-    category: combined_cpe
-    route_family: transfer_reaction_split
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: route_dependent
-    species_basis_policy: shared_species_plus_reactions
-    species_classes: [neutral, reactive]
-    knowns: [T, P, feed_composition, reaction_set]
-    primary_variables: [phase_species_amounts, reaction_extents]
-    optional_variables: []
-    variable_model: transfer_plus_reaction_blocks
-    objective_family: coupled_transfer_reaction
-    hard_constraints: [material_balance, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_tpd
-    seed_generators: [split_reaction_seed]
-    stability_checks: [reactive_postsolve]
-    certification_families: [postsolve_checks, material_balance, neutral_fugacity_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reaction_extents_lift_to_true_species
-    proof_cases:
-      - key: transfer_reaction_split_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-06]
-        acceptance_checks: [transfer_residual_ownership, reaction_affinity_ownership]
-        fixture_status: source_data_needed
-    required_evidence: [coupled_transfer_reaction_fixture]
-    forbidden_shortcuts: [unclear_transfer_reaction_ownership]
-
-  - key: CPE-07
-    category: combined_cpe
-    route_family: nonstoichiometric_reactive_phase
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: route_dependent
-    species_basis_policy: element_conservation_by_phase
-    species_classes: [neutral, reactive]
-    knowns: [T, P, element_totals, species_set]
-    primary_variables: [phase_species_amounts]
-    optional_variables: [reaction_basis]
-    variable_model: element_constrained_phase_species_moles
-    objective_family: constrained_gibbs_or_helmholtz_reactive_phase_split
-    hard_constraints: [material_balance, conserved_balance, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [element_balance, transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_tpd
-    seed_generators: [element_basis_phase_seed]
-    stability_checks: [reactive_postsolve]
-    certification_families: [postsolve_checks, material_balance, conserved_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: element_basis_rank_required
-    proof_cases:
-      - key: nonstoichiometric_reactive_phase_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-07]
-        acceptance_checks: [element_conservation_across_phases, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [element_phase_fixture]
-    forbidden_shortcuts: [species_balance_when_reaction_changes_species]
-
-  - key: CPE-08
-    category: combined_cpe
-    route_family: reactive_phase_stability
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: stability_query_only
-    species_basis_policy: reactive_trial_phase_basis
-    species_classes: [neutral, reactive]
-    knowns: [T, P, reference_reactive_phase_set]
-    primary_variables: [trial_phase_composition, reaction_extents]
-    optional_variables: []
-    variable_model: reactive_tpd_trial_phase
-    objective_family: reactive_tangent_plane_distance
-    hard_constraints: [conserved_balance, reaction_affinity]
-    optional_constraints: [composition_bounds]
-    residual_blocks: [reactive_tpd_stationarity, reaction_affinity]
-    phase_discovery_backend: planned_reactive_tpd
-    seed_generators: [reactive_tpd_seed]
-    stability_checks: [reactive_tpd_stability]
-    certification_families: [postsolve_checks, reaction_affinity, reaction_constant_convention, tpd_stability]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: reaction_extents_lift_to_true_species
-    proof_cases:
-      - key: reactive_phase_stability_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-08]
-        acceptance_checks: [reactive_tpd_stationarity, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [reactive_tpd_fixture]
-    forbidden_shortcuts: [neutral_tpd_as_reactive_tpd_proof]
-
-  - key: CPE-09
-    category: combined_cpe
-    route_family: electrolyte_reactive_lle
-    exposure: blocked
-    activation_status: source_data_needed
-    production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase_or_multiphase
-    species_basis_policy: reduced_electrolyte_true_species_with_reactions
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [T, P, feed_composition, reaction_set]
-    primary_variables: [reduced_ionic_variables, phase_species_amounts, reaction_extents, phase_volumes]
-    optional_variables: [salt_lift_variables]
-    variable_model: reactive_electrolyte_reduced_phase_species_amounts
-    objective_family: pressure_transformed_helmholtz_reactive_electrolyte
-    hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, reduced_electrochemical_potential_equality, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, charge_balance, electrochemical_transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_electrolyte_tpd
-    seed_generators: [CE_seed, electrolyte_lle_seed]
-    stability_checks: [reactive_electrolyte_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention, tpd_stability]
-    thermo_provider_contract: reactive_electrolyte_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables_plus_reaction_extents
-    proof_cases:
-      - key: reactive_electrolyte_lle_source_needed
-        evidence_tier: T0
-        source: analyses/paper_validation/2022_tsanas_reactive_electrolyte_lle/
-        rows: [CPE-09]
-        acceptance_checks: [charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-        fixture_status: source_data_needed
-    required_evidence: [source_data, electrolyte_TPD, CE_prerequisite]
-    forbidden_shortcuts: [raw_ionic_chemical_potential_transfer, downstream_metric_API]
-
-  - key: CPE-10
-    category: combined_cpe
-    route_family: reactive_electrolyte_vle
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: two_phase
-    species_basis_policy: reduced_electrolyte_true_species_with_reactions
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [T, P, feed_composition, reaction_set]
-    primary_variables: [reduced_ionic_variables, neutral_vapor_species, reaction_extents, phase_volumes]
-    optional_variables: []
-    variable_model: reactive_electrolyte_vle_reduced_variables
-    objective_family: pressure_transformed_helmholtz_reactive_electrolyte
-    hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, reduced_electrochemical_potential_equality, reaction_affinity]
-    optional_constraints: [vapor_eligibility_mask]
-    residual_blocks: [material_balance, charge_balance, electrochemical_transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_electrolyte_tpd
-    seed_generators: [reactive_electrolyte_vle_seed]
-    stability_checks: [reactive_electrolyte_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_electrolyte_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables_plus_reaction_extents
-    proof_cases:
-      - key: reactive_electrolyte_vle_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-10]
-        acceptance_checks: [vapor_eligibility_policy, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [reactive_electrolyte_vle_fixture]
-    forbidden_shortcuts: [ions_in_vapor_without_eligibility_policy]
-
-  - key: CPE-11
-    category: combined_cpe
-    route_family: reactive_electrolyte_vlle
-    exposure: blocked
-    activation_status: source_data_needed
-    production_exposed: false
-    phase_kinds: [vapor, liquid, liquid]
-    phase_count_policy: variable_phase_count
-    species_basis_policy: reduced_electrolyte_true_species_with_reactions
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [T, P, feed_composition, reaction_set]
-    primary_variables: [reduced_ionic_variables, phase_species_amounts, reaction_extents, phase_volumes]
-    optional_variables: [phase_count]
-    variable_model: reactive_electrolyte_multiphase_reduced_variables
-    objective_family: pressure_transformed_helmholtz_reactive_electrolyte
-    hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, reduced_electrochemical_potential_equality, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, charge_balance, electrochemical_transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_electrolyte_held_tpd
-    seed_generators: [reactive_electrolyte_multiphase_seed]
-    stability_checks: [reactive_electrolyte_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention, phase_set_completeness]
-    thermo_provider_contract: reactive_electrolyte_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables_plus_reaction_extents
-    proof_cases:
-      - key: reactive_electrolyte_vlle_source_needed
-        evidence_tier: T0
-        source: analyses/paper_validation/2022_tsanas_reactive_electrolyte_lle/
-        rows: [CPE-11]
-        acceptance_checks: [all_eligible_phases_considered, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [reactive_electrolyte_vlle_fixture]
-    forbidden_shortcuts: [reactive_electrolyte_lle_as_vlle_proof]
-
-  - key: CPE-12
-    category: combined_cpe
-    route_family: cross_phase_reaction
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: route_dependent
-    species_basis_policy: cross_phase_stoichiometry
-    species_classes: [neutral, reactive]
-    knowns: [T, P, feed_composition, cross_phase_reaction_set]
-    primary_variables: [phase_species_amounts, cross_phase_reaction_extents]
-    optional_variables: []
-    variable_model: cross_phase_reaction_extents
-    objective_family: cross_phase_reaction_affinity
-    hard_constraints: [material_balance, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [transfer, cross_phase_reaction_affinity]
-    phase_discovery_backend: planned_reactive_tpd
-    seed_generators: [cross_phase_reaction_seed]
-    stability_checks: [reactive_postsolve]
-    certification_families: [postsolve_checks, material_balance, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: cross_phase_stoichiometry_declared
-    proof_cases:
-      - key: cross_phase_reaction_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-12]
-        acceptance_checks: [cross_phase_stoichiometry, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [cross_phase_reaction_fixture]
-    forbidden_shortcuts: [same_species_transfer_for_species_identity_change]
-
-  - key: CPE-13
-    category: combined_cpe
-    route_family: extractive_reactive_lle
-    exposure: blocked
-    activation_status: source_data_needed
-    production_exposed: false
-    phase_kinds: [liquid, liquid]
-    phase_count_policy: two_phase_or_multiphase
-    species_basis_policy: extraction_complex_true_species
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [T, P, feed_composition, extraction_reaction_set]
-    primary_variables: [phase_species_amounts, reduced_ionic_variables, reaction_extents]
-    optional_variables: [organic_complex_species]
-    variable_model: extractive_reactive_phase_split
-    objective_family: reactive_electrolyte_lle
-    hard_constraints: [material_balance, charge_balance, phase_equilibrium, reaction_affinity]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [charge_balance, transfer, reaction_affinity]
-    phase_discovery_backend: planned_reactive_electrolyte_tpd
-    seed_generators: [extraction_seed]
-    stability_checks: [reactive_electrolyte_tpd_postsolve]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_electrolyte_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables_plus_reaction_extents
-    proof_cases:
-      - key: rezaee_lithium_extraction_source_needed
-        evidence_tier: T0
-        source: analyses/paper_validation/2026_rezaee_lithium_des/
-        rows: [CPE-13]
-        acceptance_checks: [generic_phase_compositions, phase_amounts, activities_or_fugacities, reaction_extents, residual_diagnostics]
-        fixture_status: source_data_needed
-    required_evidence: [generic_upstream_reduction_fixture]
-    forbidden_shortcuts: [calculate_extraction_efficiency_API, screen_lithium_extractants_API]
-
-  - key: CPE-14
-    category: combined_cpe
-    route_family: true_species_reactive_electrolyte
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid]
-    phase_count_policy: route_dependent
-    species_basis_policy: true_species_reactive_electrolyte
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [T, P, conserved_totals, reaction_set]
-    primary_variables: [true_species_moles, reduced_ionic_variables, reaction_extents]
-    optional_variables: []
-    variable_model: true_species_reactive_electrolyte
-    objective_family: reactive_electrolyte_affinity
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [positivity]
-    residual_blocks: [charge_balance, reaction_affinity, conserved_balance]
-    phase_discovery_backend: none_or_route_dependent
-    seed_generators: [reactive_electrolyte_CE_seed]
-    stability_checks: [reactive_electrolyte_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_electrolyte_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: reduced_charge_neutral_variables_plus_reaction_extents
-    proof_cases:
-      - key: true_species_reactive_electrolyte_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-14]
-        acceptance_checks: [element_rank, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [true_species_reactive_electrolyte_fixture]
-    forbidden_shortcuts: [apparent_species_without_exact_lift]
-
-  - key: CPE-15
-    category: combined_cpe
-    route_family: salt_lift_reactive_phase
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid]
-    phase_count_policy: route_dependent
-    species_basis_policy: salt_lift_with_reactions
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [T, P, salt_totals, reaction_set]
-    primary_variables: [salt_lift_variables, reduced_ionic_variables, reaction_extents]
-    optional_variables: []
-    variable_model: salt_lift_reactive_variables
-    objective_family: reactive_electrolyte_affinity
-    hard_constraints: [conserved_balance, charge_balance, reaction_affinity]
-    optional_constraints: [exact_back_lift]
-    residual_blocks: [charge_balance, reaction_affinity, lift_consistency]
-    phase_discovery_backend: none_or_route_dependent
-    seed_generators: [salt_lift_seed]
-    stability_checks: [reactive_electrolyte_postsolve]
-    certification_families: [postsolve_checks, conserved_balance, charge_balance, mean_ionic_fugacity_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: reactive_electrolyte_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: exact_salt_to_ion_back_lift
-    proof_cases:
-      - key: salt_lift_reactive_phase_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-15]
-        acceptance_checks: [exact_back_lift, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [salt_lift_reactive_fixture]
-    forbidden_shortcuts: [salt_lift_without_exact_back_lift]
-
-  - key: CPE-16
-    category: combined_cpe
-    route_family: combined_derivative_backend
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: derivative_backend
-    species_basis_policy: active_CPE_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [active_CPE_variables]
-    primary_variables: [objective_gradient, constraint_jacobian, lagrangian_hessian]
-    optional_variables: []
-    variable_model: combined_derivative_contract
-    objective_family: derivative_contract
-    hard_constraints: [charge_balance, reaction_affinity, phase_equilibrium]
-    optional_constraints: []
-    residual_blocks: [derivative_consistency]
-    phase_discovery_backend: none
-    seed_generators: []
-    stability_checks: [derivative_consistency]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention, derivative_consistency]
-    thermo_provider_contract: active_CPE_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_sensitivities_or_lifted_constraints
-    proof_cases:
-      - key: combined_derivative_backend_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-16]
-        acceptance_checks: [exact_jacobian, exact_hessian, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [combined_derivative_fixture]
-    forbidden_shortcuts: [inexact_derivative_substitute]
-
-  - key: CPE-17
-    category: combined_cpe
-    route_family: combined_result_schema
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: result_schema
-    species_basis_policy: active_CPE_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [CPE_solution]
-    primary_variables: [phase_payloads, reaction_payloads, charge_payloads, diagnostics]
-    optional_variables: [stability_payloads]
-    variable_model: result_payload_schema
-    objective_family: result_normalization
-    hard_constraints: [charge_balance, reaction_affinity]
-    optional_constraints: [phase_set_stability]
-    residual_blocks: [result_payload_consistency]
-    phase_discovery_backend: none
-    seed_generators: []
-    stability_checks: [payload_consistency]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: result_schema_contract
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: payload_metadata_required
-    proof_cases:
-      - key: combined_result_schema_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-17]
-        acceptance_checks: [phase_payloads, reaction_extents, charge_residuals, diagnostics]
-        fixture_status: source_data_needed
-    required_evidence: [schema_contract_test]
-    forbidden_shortcuts: [dropping_reaction_or_charge_diagnostics]
-
-  - key: CPE-18
-    category: combined_cpe
-    route_family: combined_capability_evidence
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: capability_metadata
-    species_basis_policy: active_CPE_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [activation_rows, proof_cases]
-    primary_variables: [capability_evidence_records]
-    optional_variables: []
-    variable_model: capability_metadata_registry
-    objective_family: capability_evidence_contract
-    hard_constraints: [charge_balance, reaction_affinity]
-    optional_constraints: []
-    residual_blocks: [capability_consistency]
-    phase_discovery_backend: none
-    seed_generators: []
-    stability_checks: [metadata_consistency]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: capability_evidence_registry
-    derivative_contract: exact_derivatives_not_route_admission
-    internal_state_policy: metadata_only
-    proof_cases:
-      - key: combined_capability_evidence_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-18]
-        acceptance_checks: [no_capability_without_row_proof, negative_broadening_tests]
-        fixture_status: source_data_needed
-    required_evidence: [capability_evidence_contract_test]
-    forbidden_shortcuts: [capability_claim_without_executable_proof]
-
-  - key: CPE-19
-    category: combined_cpe
-    route_family: temperature_route_cpe
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: route_dependent
-    species_basis_policy: active_CPE_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [P, composition_or_feed, reaction_set]
-    primary_variables: [temperature, phase_species_amounts, reaction_extents]
-    optional_variables: []
-    variable_model: CPE_temperature_condition
-    objective_family: temperature_condition_CPE
-    hard_constraints: [charge_balance, reaction_affinity, phase_equilibrium]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [temperature_condition, charge_balance, reaction_affinity, transfer]
-    phase_discovery_backend: route_seeded_then_postsolve
-    seed_generators: [temperature_CPE_seed]
-    stability_checks: [CPE_postsolve]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: active_CPE_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: active_CPE_internal_state_policy
-    proof_cases:
-      - key: temperature_route_cpe_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-19]
-        acceptance_checks: [temperature_derivative, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [temperature_route_CPE_fixture]
-    forbidden_shortcuts: [temperature_route_without_derivative_proof]
-
-  - key: CPE-20
-    category: combined_cpe
-    route_family: pressure_route_cpe
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: route_dependent
-    species_basis_policy: active_CPE_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [T, composition_or_feed, reaction_set]
-    primary_variables: [pressure, phase_species_amounts, reaction_extents]
-    optional_variables: []
-    variable_model: CPE_pressure_condition
-    objective_family: pressure_condition_CPE
-    hard_constraints: [charge_balance, reaction_affinity, phase_equilibrium]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [pressure_condition, charge_balance, reaction_affinity, transfer]
-    phase_discovery_backend: route_seeded_then_postsolve
-    seed_generators: [pressure_CPE_seed]
-    stability_checks: [CPE_postsolve]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: active_CPE_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: active_CPE_internal_state_policy
-    proof_cases:
-      - key: pressure_route_cpe_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-20]
-        acceptance_checks: [pressure_derivative, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [pressure_route_CPE_fixture]
-    forbidden_shortcuts: [pressure_route_without_derivative_proof]
-
-  - key: CPE-21
-    category: combined_cpe
-    route_family: continuation_cpe
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: route_dependent
-    species_basis_policy: active_CPE_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [continuation_path, starting_solution]
-    primary_variables: [continuation_state, phase_species_amounts, reaction_extents]
-    optional_variables: [step_diagnostics]
-    variable_model: CPE_continuation_path
-    objective_family: continuation_globalization
-    hard_constraints: [charge_balance, reaction_affinity, phase_equilibrium]
-    optional_constraints: [step_size_bounds]
-    residual_blocks: [continuation_residual, charge_balance, reaction_affinity]
-    phase_discovery_backend: route_dependent
-    seed_generators: [previous_solution_seed]
-    stability_checks: [CPE_postsolve_each_step]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: active_CPE_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: active_CPE_internal_state_policy
-    proof_cases:
-      - key: continuation_cpe_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-21]
-        acceptance_checks: [stepwise_certification, charge_balance, reaction_affinity]
-        fixture_status: source_data_needed
-    required_evidence: [continuation_fixture]
-    forbidden_shortcuts: [uncertified_continuation_step]
-
-  - key: CPE-22
-    category: combined_cpe
-    route_family: benchmark_cpe
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: benchmark_registry
-    species_basis_policy: active_CPE_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [benchmark_fixture, tolerance]
-    primary_variables: [benchmark_result]
-    optional_variables: [artifact_paths]
-    variable_model: benchmark_execution_record
-    objective_family: benchmark_validation
-    hard_constraints: [charge_balance, reaction_affinity]
-    optional_constraints: [tolerance_checks]
-    residual_blocks: [benchmark_residuals]
-    phase_discovery_backend: benchmark_dependent
-    seed_generators: [benchmark_seed]
-    stability_checks: [benchmark_certification]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: active_CPE_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: benchmark_metadata_required
-    proof_cases:
-      - key: benchmark_cpe_placeholder
-        evidence_tier: T0
-        source: docs/roadmaps/equilibrium_benchmark_registry.yaml
-        rows: [CPE-22]
-        acceptance_checks: [fixture, expected_result, tolerance, no_production_without_data]
-        fixture_status: source_data_needed
-    required_evidence: [source_backed_benchmark_fixture]
-    forbidden_shortcuts: [benchmark_claim_without_executable_data]
-
-  - key: CPE-23
-    category: combined_cpe
-    route_family: downstream_smoke_cpe
-    exposure: blocked
-    activation_status: source_data_needed
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: reduced_downstream_contract
-    species_basis_policy: generic_upstream_basis
-    species_classes: [charged, reactive, electrolyte]
-    knowns: [reduced_downstream_case]
-    primary_variables: [phase_compositions, phase_amounts, activities_or_fugacities, reaction_extents, diagnostics]
-    optional_variables: []
-    variable_model: generic_equilibrium_result_contract
-    objective_family: downstream_reduction_smoke
-    hard_constraints: [charge_balance, reaction_affinity, phase_equilibrium]
-    optional_constraints: [application_metric_excluded]
-    residual_blocks: [charge_balance, transfer, reaction_affinity]
-    phase_discovery_backend: route_dependent
-    seed_generators: [reduced_downstream_seed]
-    stability_checks: [route_postsolve]
-    certification_families: [postsolve_checks, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention]
-    thermo_provider_contract: active_CPE_provider
-    derivative_contract: exact_derivatives_required_before_exposure
-    internal_state_policy: generic_outputs_only
-    proof_cases:
-      - key: downstream_smoke_cpe_source_needed
-        evidence_tier: T0
-        source: analyses/paper_validation/2026_rezaee_lithium_des/
-        rows: [CPE-23]
-        acceptance_checks: [generic_outputs_only, no_application_specific_API]
-        fixture_status: source_data_needed
-    required_evidence: [reduced_downstream_fixture]
-    forbidden_shortcuts: [fit_mea_absorption_API, calculate_extraction_efficiency_API, fit_lithium_extraction_parameters_API, screen_lithium_extractants_API]
-
-  - key: CPE-24
-    category: combined_cpe
-    route_family: generalized_fluid_equilibrium
-    exposure: internal
-    activation_status: planned_not_public
-    production_exposed: false
-    phase_kinds: [liquid, vapor]
-    phase_count_policy: variable_phase_count
-    species_basis_policy: generalized_true_species_by_phase
-    species_classes: [neutral, charged, associating, reactive, electrolyte]
-    knowns: [T, P, feed_composition, reaction_set, species_metadata]
-    primary_variables: [phase_species_amounts, phase_volumes, internal_states, reaction_extents, reduced_ionic_variables]
-    optional_variables: [phase_count, candidate_phase_set]
-    variable_model: generalized_fluid_phase_equilibrium
-    objective_family: pressure_transformed_helmholtz_generalized
-    hard_constraints: [material_balance, charge_balance, reaction_affinity, phase_pressure_consistency, phase_equilibrium, association_mass_action]
-    optional_constraints: [phase_distance_anti_collapse]
-    residual_blocks: [material_balance, charge_balance, transfer, reaction_affinity, association_mass_action]
-    phase_discovery_backend: generalized_held_tpd_planned
-    seed_generators: [deferred_generalized_seed]
-    stability_checks: [generalized_postsolve_certification]
-    certification_families: [postsolve_checks, material_balance, charge_balance, electrochemical_potential_equality, reaction_affinity, reaction_constant_convention, association_mass_action, tpd_stability]
-    thermo_provider_contract: generalized_pcsaft_provider
-    derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    internal_state_policy: implicit_sensitivities_or_lifted_constraints
-    proof_cases:
-      - key: generalized_fluid_equilibrium_deferred
-        evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
-        rows: [CPE-24]
-        acceptance_checks: [all_prerequisite_rows_mature, no_shortcut_around_specific_rows]
-        fixture_status: source_data_needed
-    required_evidence: [mature_PE_CE_CPE_rows]
-    forbidden_shortcuts: [explicit_approx_final_production, generalized_row_as_capability_claim]
+  - label: "Shadow point"
+    workflow_kind: derived_boundary
+    planned_after_family: "PE-Neutral TP Flash"
+    activation_family_row: false
+    current_runtime_routes: []
+    fixed_variables: [cloud_point_state]
+    free_variables: [shadow_phase_composition, shadow_phase_volume]
+    diagram_targets: ["P-x", "T-x"]
+    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    vlle_test_required: false
+    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, diagram_trace]
 
 benchmark_cases:
-  - key: gross2002_associating_vle
-    rows: [PE-10, PE-11, PE-12, PE-13]
-    source_path: analyses/paper_validation/2002_gross/
-    status: source_inventory_available
-    fixture_status: source_data_needed
-    todo: "Create executable Gross/Sadowski 2002 fixtures and tolerances before production admission."
-  - key: ascani2022_electrolyte_lle
-    rows: [PE-15, PE-16, PE-17]
-    source_path: analyses/paper_validation/2022_ascani_electrolyte_lle/
+  - case_label: "Pereira 2012 System III"
+    family_labels: ["PE-Neutral TP Flash"]
+    priority_rank: 1
     status: source_data_needed
     fixture_status: source_data_needed
-    todo: "Add source-owned analysis folder or fixture manifest before marking electrolyte LLE benchmarks complete."
-  - key: ascani2023_reactive_lle
-    rows: [CPE-05]
-    source_path: analyses/paper_validation/2023_ascani_reactive_lle/
+    source_path: "literature:Pereira et al. 2012 System III"
+    todo: "Create a source-backed neutral benchmark fixture before generalized neutral production exposure."
+
+  - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
+    family_labels: ["PE-Associating TP Flash"]
+    priority_rank: 1
     status: source_data_needed
     fixture_status: source_data_needed
-    todo: "Add source-owned neutral reactive LLE data before benchmark admission."
-  - key: koulocheris2020_cpe
-    rows: [CPE-22]
-    source_path: analyses/paper_validation/2020_koulocheris_cpe/
+    source_path: "literature:Gross and Sadowski 2002 methanol/cyclohexane"
+    todo: "Use only after exact association derivative architecture exists."
+
+  - case_label: "Khudaida 2026 electrolyte LLE"
+    family_labels: ["PE-Electrolyte LLE/TP Flash"]
+    priority_rank: 1
+    status: fixture_available_not_generalized_production
+    fixture_status: available
+    source_path: "data/reference/equilibrium_benchmarks/electrolyte_lle/khudaida_2026"
+    todo: "Use as first electrolyte PE validation target after Born SSM+DS exact Hessian and HELD2 gates pass."
+
+  - case_label: "Held 2014 Figure 6"
+    family_labels: ["PE-Electrolyte LLE/TP Flash"]
+    priority_rank: 2
     status: source_data_needed
     fixture_status: source_data_needed
-    todo: "Add source-owned CPE benchmark data before production evidence claims."
-  - key: tsanas2019_electrolyte_cpe
-    rows: [CPE-09, CPE-22]
-    source_path: analyses/paper_validation/2019_tsanas_electrolyte_cpe/
+    source_path: "literature:Held et al. 2014 Figure 6"
+    todo: "Add as follow-on electrolyte validation after Khudaida 2026."
+
+  - case_label: "Ascani/Sadowski/Held 2022 mixed-solvent LLE"
+    family_labels: ["PE-Electrolyte LLE/TP Flash"]
+    priority_rank: 3
     status: source_data_needed
     fixture_status: source_data_needed
-    todo: "Add electrolyte CPE data and route-neutral tolerances before benchmark admission."
-  - key: tsanas2022_reactive_electrolyte_lle
-    rows: [CPE-09, CPE-11]
-    source_path: analyses/paper_validation/2022_tsanas_reactive_electrolyte_lle/
-    status: source_data_needed
-    fixture_status: source_data_needed
-    todo: "Add reactive electrolyte LLE source data before route evidence claims."
-  - key: coatleven2022_xrr
-    rows: [CPE-22]
-    source_path: analyses/paper_validation/2022_coatleven_xrr/
-    status: source_data_needed
-    fixture_status: source_data_needed
-    todo: "Add XRR benchmark source data only as generic equilibrium evidence, not an application API."
-  - key: belov2023_ipopt_ce
-    rows: [CE-01, CE-04, CE-17]
-    source_path: analyses/paper_validation/2023_belov_ipopt_ce/
-    status: source_data_needed
-    fixture_status: source_data_needed
-    todo: "Add source-backed CE/IPOPT benchmark data before chemical-equilibrium production evidence."
-  - key: rezaee2026_lithium_des
-    rows: [CPE-13, CPE-23]
-    source_path: analyses/paper_validation/2026_rezaee_lithium_des/
-    status: source_data_needed
-    fixture_status: source_data_needed
-    todo: "Reduce to generic upstream equilibrium outputs only: phase compositions, phase amounts, activities/fugacities, reaction extents, and residual diagnostics."
+    source_path: "literature:Ascani, Sadowski, Held 2022"
+    todo: "Keep as lower-confidence follow-on until data and conventions are audited."
