@@ -11,6 +11,9 @@ namespace epcsaft::native::equilibrium {
 
 struct SelectorRouteRequest;
 
+std::vector<std::string> normalized_phase_kind_tokens(const std::vector<std::string>& phase_kinds);
+std::vector<std::string> phase_keys_for_kinds(const std::vector<std::string>& phase_kinds);
+
 struct ActivationPlan {
     std::string family_key;
     std::string route;
@@ -46,6 +49,14 @@ ActivationPlan build_neutral_lle_activation_plan(
     double temperature,
     double pressure,
     const std::vector<double>& feed_composition
+);
+
+ActivationPlan build_neutral_multiphase_nonassoc_activation_plan(
+    const add_args& args,
+    double temperature,
+    double pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<std::string>& phase_kinds
 );
 
 }  // namespace epcsaft::native::equilibrium

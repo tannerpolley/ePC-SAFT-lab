@@ -622,7 +622,7 @@ bool candidate_duplicates_accepted_phase(
     return false;
 }
 
-NeutralPhaseDiscoveryResult certify_neutral_two_phase_set(
+NeutralPhaseDiscoveryResult certify_neutral_phase_set(
     const add_args& args,
     double temperature,
     double target_pressure,
@@ -632,8 +632,8 @@ NeutralPhaseDiscoveryResult certify_neutral_two_phase_set(
     double tpd_tolerance,
     double candidate_mass_balance_tolerance
 ) {
-    if (phase_kinds.size() != 2) {
-        throw ValueError("Neutral TPD postsolve phase kind size does not match the neutral two-phase EOS NLP contract.");
+    if (phase_kinds.size() != system.phase_blocks.size()) {
+        throw ValueError("Neutral TPD postsolve phase kind size does not match the accepted phase set.");
     }
     NeutralPhaseDiscoveryResult out;
     out.phase_discovery_backend = "held_tpd_volume_composition";
@@ -1169,6 +1169,61 @@ double ln_fugacity_inf_norm(
     return charge_projected_difference_inf_norm(first_values, second_values, charges, species_count);
 }
 
+double pairwise_chemical_potential_inf_norm(
+    const std::vector<EosPhaseBlockResult>& phase_blocks,
+    std::size_t species_count,
+    const std::vector<double>& charges
+) {
+    double norm = 0.0;
+    for (std::size_t first = 0; first < phase_blocks.size(); ++first) {
+        for (std::size_t second = first + 1; second < phase_blocks.size(); ++second) {
+            norm = std::max(
+                norm,
+                charges.empty()
+                    ? chemical_potential_inf_norm(phase_blocks[first], phase_blocks[second], species_count)
+                    : electrochemical_potential_inf_norm(
+                        phase_blocks[first],
+                        phase_blocks[second],
+                        charges,
+                        species_count
+                    )
+            );
+        }
+    }
+    return norm;
+}
+
+double pairwise_ln_fugacity_inf_norm(
+    const add_args& args,
+    const std::vector<EosPhaseBlockResult>& phase_blocks,
+    std::size_t species_count,
+    const std::vector<double>& charges
+) {
+    double norm = 0.0;
+    for (std::size_t first = 0; first < phase_blocks.size(); ++first) {
+        for (std::size_t second = first + 1; second < phase_blocks.size(); ++second) {
+            norm = std::max(
+                norm,
+                ln_fugacity_inf_norm(args, phase_blocks[first], phase_blocks[second], species_count, charges)
+            );
+        }
+    }
+    return norm;
+}
+
+double pairwise_phase_distance_inf_norm(const std::vector<std::vector<double>>& phase_compositions) {
+    double norm = 0.0;
+    for (std::size_t first = 0; first < phase_compositions.size(); ++first) {
+        for (std::size_t second = first + 1; second < phase_compositions.size(); ++second) {
+            norm = std::max(
+                norm,
+                composition_distance_inf_norm(phase_compositions[first], phase_compositions[second])
+            );
+        }
+    }
+    return norm;
+}
+
 std::vector<std::vector<double>> neutral_phase_amounts_from_route_variables(
     const std::vector<double>& variables,
     std::size_t species_count
@@ -1216,8 +1271,9 @@ public:
           charges_(std::move(charges)),
           problem_name_(std::move(problem_name)),
           minimum_phase_distance_(minimum_phase_distance) {
-        if (initial_phase_amounts_.size() != 2) {
-            throw ValueError("Neutral EOS route builder currently requires exactly two phases.");
+        phase_count_ = static_cast<int>(initial_phase_amounts_.size());
+        if (phase_count_ < 2) {
+            throw ValueError("Neutral EOS route builder requires at least two phases.");
         }
         if (!std::isfinite(temperature_) || temperature_ <= 0.0 || !std::isfinite(target_pressure_)) {
             throw ValueError("Neutral EOS route builder received invalid T/P specifications.");
@@ -1227,7 +1283,7 @@ public:
             throw ValueError("Neutral EOS route builder requires at least one feed species.");
         }
         if (!charges_.empty()) {
-            require_size(charges_, static_cast<std::size_t>(species_count_), "Two-phase EOS route charge");
+            require_size(charges_, static_cast<std::size_t>(species_count_), "Neutral EOS route charge");
         }
         require_size(initial_volumes_, initial_phase_amounts_.size(), "Neutral EOS route volume");
         for (const auto& amounts : initial_phase_amounts_) {
@@ -1245,6 +1301,9 @@ public:
             }
         }
         if (minimum_phase_distance_ > 0.0) {
+            if (phase_count_ != 2) {
+                throw ValueError("Neutral EOS route phase-distance gating currently requires exactly two phases.");
+            }
             const std::vector<double> first = phase_composition(
                 initial_phase_amounts_[0],
                 "Neutral EOS route first phase amount total"
@@ -1554,7 +1613,7 @@ public:
     }
 
     int phase_count() const {
-        return 2;
+        return phase_count_;
     }
 
 private:
@@ -1714,6 +1773,7 @@ private:
     double minimum_phase_distance_ = 0.0;
     int separation_species_index_ = 0;
     double separation_sign_ = 1.0;
+    int phase_count_ = 0;
     int species_count_ = 0;
 };
 
@@ -1826,6 +1886,27 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     const std::vector<double>& feed_amounts
 ) {
     NeutralTwoPhaseEosProblem problem(args, temperature, target_pressure, phase_amounts, volumes, feed_amounts);
+    return make_nlp_contract(problem, problem.phase_count(), problem.species_count());
+}
+
+NeutralTwoPhaseEosNlpContract evaluate_neutral_multiphase_eos_nlp_contract(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts
+) {
+    NeutralTwoPhaseEosProblem problem(
+        args,
+        temperature,
+        target_pressure,
+        phase_amounts,
+        volumes,
+        feed_amounts,
+        std::vector<double>{},
+        "neutral_multiphase_eos"
+    );
     return make_nlp_contract(problem, problem.phase_count(), problem.species_count());
 }
 
@@ -1943,8 +2024,11 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         feed_amounts,
         charges
     );
-    if (system.phase_count != 2) {
-        throw ValueError("Neutral EOS postsolve currently requires exactly two phases.");
+    if (system.phase_count < 2) {
+        throw ValueError("Neutral EOS postsolve requires at least two phases.");
+    }
+    if (phase_distance_constraint && system.phase_count != 2) {
+        throw ValueError("Neutral EOS postsolve phase-distance constraint currently requires exactly two phases.");
     }
 
     NeutralTwoPhaseEosPostsolve out;
@@ -1969,17 +2053,11 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         species_count,
         species_count + static_cast<std::size_t>(system.phase_count)
     );
-    out.chemical_potential_consistency_norm = charges.empty()
-        ? chemical_potential_inf_norm(system.phase_blocks[0], system.phase_blocks[1], species_count)
-        : electrochemical_potential_inf_norm(system.phase_blocks[0], system.phase_blocks[1], charges, species_count);
-    out.ln_fugacity_consistency_norm = ln_fugacity_inf_norm(
-        args,
-        system.phase_blocks[0],
-        system.phase_blocks[1],
-        species_count,
-        charges
-    );
-    out.phase_distance = phase_distance_inf_norm(out.phase_compositions[0], out.phase_compositions[1]);
+    out.chemical_potential_consistency_norm =
+        pairwise_chemical_potential_inf_norm(system.phase_blocks, species_count, charges);
+    out.ln_fugacity_consistency_norm =
+        pairwise_ln_fugacity_inf_norm(args, system.phase_blocks, species_count, charges);
+    out.phase_distance = pairwise_phase_distance_inf_norm(out.phase_compositions);
     out.stability_checked = false;
     out.stability_accepted = !stability_certification_required;
     out.candidate_completeness_accepted = !stability_certification_required;
@@ -1999,7 +2077,7 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         && out.pressure_consistency_norm <= pressure_tolerance
         && out.chemical_potential_consistency_norm <= effective_chemical_tolerance
         && out.ln_fugacity_consistency_norm <= effective_chemical_tolerance
-        && out.phase_distance >= phase_distance_tolerance;
+        && (!phase_distance_constraint || out.phase_distance >= phase_distance_tolerance);
     if (out.accepted) {
         out.rejection_reason = "accepted";
     } else if (out.material_balance_norm > material_tolerance) {
@@ -2010,8 +2088,10 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         out.rejection_reason = "chemical_potential_consistency";
     } else if (out.ln_fugacity_consistency_norm > effective_chemical_tolerance) {
         out.rejection_reason = "ln_fugacity_consistency";
-    } else {
+    } else if (phase_distance_constraint) {
         out.rejection_reason = "phase_distance";
+    } else {
+        out.rejection_reason = "phase_set_not_certified";
     }
     if (out.accepted && stability_certification_required) {
         if (!charges.empty()) {
@@ -2021,14 +2101,14 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
             return out;
         }
         if (phase_kinds.empty()) {
-            phase_kinds = {0, 0};
+            phase_kinds.assign(static_cast<std::size_t>(system.phase_count), 0);
         }
-        if (phase_kinds.size() != 2) {
-            throw ValueError("Neutral EOS postsolve phase kind size does not match the neutral two-phase EOS NLP contract.");
+        if (phase_kinds.size() != static_cast<std::size_t>(system.phase_count)) {
+            throw ValueError("Neutral EOS postsolve phase kind size does not match the accepted phase set.");
         }
         const double tpd_tolerance = std::max(1.0e-6, 100.0 * chemical_potential_tolerance);
         const double candidate_mass_balance_tolerance = std::max(1.0e-8, 10.0 * material_tolerance);
-        const NeutralPhaseDiscoveryResult discovery = certify_neutral_two_phase_set(
+        const NeutralPhaseDiscoveryResult discovery = certify_neutral_phase_set(
             args,
             temperature,
             target_pressure,
@@ -2053,6 +2133,37 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         }
     }
     return out;
+}
+
+NeutralTwoPhaseEosPostsolve evaluate_neutral_multiphase_eos_postsolve(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance,
+    const std::vector<int>& phase_kinds
+) {
+    return evaluate_neutral_two_phase_eos_postsolve(
+        args,
+        temperature,
+        target_pressure,
+        phase_amounts,
+        volumes,
+        feed_amounts,
+        material_tolerance,
+        pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance,
+        {},
+        false,
+        true,
+        phase_kinds
+    );
 }
 
 NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(

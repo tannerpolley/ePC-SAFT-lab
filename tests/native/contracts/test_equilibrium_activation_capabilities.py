@@ -29,6 +29,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "bubble_dew_derived_routes",
     ]
     assert activation["declared_not_exposed_families"] == [
+        "neutral_multiphase_nonassoc",
         "electrolyte_lle",
         "reactive_speciation",
         "reactive_lle",
@@ -47,6 +48,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "flash",
         "lle",
     ]
+    assert "neutral_multiphase_nonassoc" not in capabilities["public_routes"]
     assert capabilities["bubble_dew_derived_routes"]["entrypoint"] == ("Equilibrium(mixture, route=..., ...).solve()")
     assert (
         capabilities["bubble_dew_derived_routes"]["available"] is capabilities["activation_matrix"]["ipopt_available"]

@@ -27,6 +27,7 @@ struct SelectorRouteRequest {
     double pressure = 0.0;
     std::vector<double> composition;
     std::string composition_role;
+    std::vector<std::string> phase_kinds;
 };
 
 struct SelectorContract {

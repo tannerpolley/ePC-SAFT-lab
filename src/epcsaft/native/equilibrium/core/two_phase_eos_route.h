@@ -201,6 +201,15 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     const std::vector<double>& feed_amounts
 );
 
+NeutralTwoPhaseEosNlpContract evaluate_neutral_multiphase_eos_nlp_contract(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts
+);
+
 NeutralTwoPhaseEosNlpContract evaluate_neutral_bubble_p_eos_nlp_contract(
     const add_args& args,
     double temperature,
@@ -301,6 +310,20 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     bool phase_distance_constraint = false,
     bool stability_certification_required = false,
     std::vector<int> phase_kinds = {}
+);
+
+NeutralTwoPhaseEosPostsolve evaluate_neutral_multiphase_eos_postsolve(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts,
+    double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance,
+    const std::vector<int>& phase_kinds
 );
 
 NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(

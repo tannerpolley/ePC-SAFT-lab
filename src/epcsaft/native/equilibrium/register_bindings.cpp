@@ -660,6 +660,9 @@ epcsaft::native::equilibrium::SelectorRouteRequest selector_request_from_dict(co
     out.has_pressure = payload.contains("pressure") && !payload["pressure"].is_none();
     out.temperature = selector_request_double(payload, "temperature");
     out.pressure = selector_request_double(payload, "pressure");
+    if (payload.contains("phase_kinds") && !payload["phase_kinds"].is_none()) {
+        out.phase_kinds = py::cast<std::vector<std::string>>(payload["phase_kinds"]);
+    }
     return out;
 }
 
@@ -1261,6 +1264,28 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             )
         );
     });
+    m.def("_native_neutral_multiphase_eos_nlp_contract", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<std::vector<double>>& phase_amounts,
+        const std::vector<double>& volumes,
+        const std::vector<double>& feed_amounts
+    ) {
+        if (!mixture) {
+            throw ValueError("Neutral multiphase EOS NLP contract requires a native mixture.");
+        }
+        return neutral_two_phase_eos_nlp_contract_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_neutral_multiphase_eos_nlp_contract(
+                mixture->args(),
+                temperature,
+                target_pressure,
+                phase_amounts,
+                volumes,
+                feed_amounts
+            )
+        );
+    });
     m.def("_native_neutral_two_phase_eos_postsolve", [](
         const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
         double temperature,
@@ -1288,6 +1313,38 @@ void register_equilibrium_bindings(pybind11::module_& m) {
                 pressure_tolerance,
                 chemical_potential_tolerance,
                 phase_distance_tolerance
+            )
+        );
+    });
+    m.def("_native_neutral_multiphase_eos_postsolve", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<std::vector<double>>& phase_amounts,
+        const std::vector<double>& volumes,
+        const std::vector<double>& feed_amounts,
+        double material_tolerance,
+        double pressure_tolerance,
+        double chemical_potential_tolerance,
+        double phase_distance_tolerance,
+        const std::vector<int>& phase_kinds
+    ) {
+        if (!mixture) {
+            throw ValueError("Neutral multiphase EOS postsolve requires a native mixture.");
+        }
+        return neutral_two_phase_eos_postsolve_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_neutral_multiphase_eos_postsolve(
+                mixture->args(),
+                temperature,
+                target_pressure,
+                phase_amounts,
+                volumes,
+                feed_amounts,
+                material_tolerance,
+                pressure_tolerance,
+                chemical_potential_tolerance,
+                phase_distance_tolerance,
+                phase_kinds
             )
         );
     });

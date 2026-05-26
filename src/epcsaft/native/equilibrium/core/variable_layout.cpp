@@ -30,8 +30,8 @@ VariableLayout build_variable_layout(
     if (plan.variable_blocks != std::vector<std::string>{"phase_species_amounts", "phase_volumes"}) {
         throw ValueError("activation-layout-ineligible: unsupported variable blocks for activation layout.");
     }
-    if (static_cast<int>(plan.phase_keys.size()) != 2 || species_count <= 0) {
-        throw ValueError("activation-layout-ineligible: two-phase layout requires two phases and species.");
+    if (static_cast<int>(plan.phase_keys.size()) < 2 || species_count <= 0) {
+        throw ValueError("activation-layout-ineligible: amount-volume layout requires at least two phases and species.");
     }
 
     VariableLayout out;
