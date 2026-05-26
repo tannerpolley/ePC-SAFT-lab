@@ -854,7 +854,7 @@ the generalized roadmap.
 For fixed-`T`, fixed-`P` phase-split routes, the default production objective is
 the pressure-transformed Helmholtz energy
 
-```math
+$$
 \Phi_{TP}
 =
 \sum_{\alpha \in \mathcal{A}}
@@ -862,31 +862,31 @@ the pressure-transformed Helmholtz energy
 A_\alpha(T^0,V_\alpha,n_\alpha,q_\alpha)
 +P^0V_\alpha
 \right],
-```
+$$
 
 subject to exact hard constraints and bounds. When a provider supplies a Gibbs
 energy surface directly at fixed `T,P`, the equivalent objective is
 
-```math
+$$
 \Phi_G
 =
 \sum_{\alpha \in \mathcal{A}}
 G_\alpha(T^0,P^0,n_\alpha,q_\alpha).
-```
+$$
 
 The two forms are related by the Legendre transform
 
-```math
+$$
 G(T,P,n)=\min_V [A(T,V,n)+PV],
-```
+$$
 
 with stationarity condition
 
-```math
+$$
 \frac{\partial A}{\partial V}+P=0,
 \qquad
 P_{\mathrm{EOS}}=-\frac{\partial A}{\partial V}=P.
-```
+$$
 
 Residual least-squares objectives are allowed only as route-declared
 globalization, initialization, equation-solve, diagnostic, or certification
@@ -925,13 +925,13 @@ must expose a phase-state interface.
 
 State definitions:
 
-```math
+$$
 N_\alpha=\sum_i n_{i\alpha},
 \qquad
 x_{i\alpha}=\frac{n_{i\alpha}}{N_\alpha},
 \qquad
 \rho_\alpha=\frac{N_\alpha}{V_\alpha}.
-```
+$$
 
 Accepted provider modes:
 
@@ -946,32 +946,32 @@ iteration inside a callback.
 
 For Helmholtz mode, the provider supplies
 
-```math
+$$
 A_\alpha=A(T,V_\alpha,n_\alpha,q_\alpha),
-```
+$$
 
-```math
+$$
 P_\alpha
 =
 -\left(
 \frac{\partial A_\alpha}{\partial V_\alpha}
 \right)_{T,n_\alpha,q_\alpha},
-```
+$$
 
 and
 
-```math
+$$
 \mu_{i\alpha}
 =
 \left(
 \frac{\partial A_\alpha}{\partial n_{i\alpha}}
 \right)_{T,V_\alpha,n_{j\ne i,\alpha},q_\alpha},
-```
+$$
 
 after accounting for internal-state closure. For Gibbs mode, the provider
 supplies
 
-```math
+$$
 G_\alpha=G(T,P,n_\alpha,q_\alpha),
 \qquad
 \mu_{i\alpha}
@@ -979,7 +979,7 @@ G_\alpha=G(T,P,n_\alpha,q_\alpha),
 \left(
 \frac{\partial G_\alpha}{\partial n_{i\alpha}}
 \right)_{T,P,n_{j\ne i,\alpha},q_\alpha}.
-```
+$$
 
 Where meaningful, the provider also supplies `\ln \phi_i`, `\ln f_i`,
 `\ln a_i`, and `\ln \gamma_i`.
@@ -989,9 +989,9 @@ fractions, density roots, dielectric states, ion-pairing variables, homogeneous
 speciation extents, and activity-model reference-state variables. The provider
 must expose closure residuals
 
-```math
+$$
 F_\alpha^q(q_\alpha;T,V_\alpha,n_\alpha,p)=0.
-```
+$$
 
 For production derivative support, internal variables must be differentiated by
 implicit sensitivities or lifted as explicit NLP variables with exact
@@ -1000,9 +1000,9 @@ solve is not a production derivative path.
 
 First-order implicit sensitivity:
 
-```math
+$$
 q_u = -\left(F_q^q\right)^{-1}F_u^q.
-```
+$$
 
 Production Ipopt routes must provide objective value, objective gradient,
 constraint values, constraint Jacobian, and exact Lagrangian Hessian unless the
@@ -1015,28 +1015,28 @@ parameters from ordinary solver failure.
 
 Let
 
-```math
+$$
 \mathcal{I}=\{1,\ldots,C\}
-```
+$$
 
 be the true-species set, and let
 
-```math
+$$
 \mathcal{A}=\{1,\ldots,\pi\}
-```
+$$
 
 be the active fluid-phase set. The canonical truth state is true species by
 phase:
 
-```math
+$$
 N=\{n_{i\alpha}\}_{i\in\mathcal{I},\alpha\in\mathcal{A}}.
-```
+$$
 
 Every route-owned reduced variableization must lift into this state:
 
-```math
+$$
 N=\mathcal{T}_p(u).
-```
+$$
 
 Examples:
 
@@ -1051,19 +1051,19 @@ Examples:
 
 Composition and totals are
 
-```math
+$$
 N_\alpha=\sum_i n_{i\alpha},
 \qquad
 x_{i\alpha}=\frac{n_{i\alpha}}{N_\alpha},
 \qquad
 n_{i\alpha}\ge 0.
-```
+$$
 
 The phase-eligibility mask
 
-```math
+$$
 M_{i\alpha}\in\{0,1\}
-```
+$$
 
 is structural. If `M_{i\alpha}=0`, then `n_{i\alpha}=0`. Phase restrictions
 must not be enforced only through soft penalties.
@@ -1072,7 +1072,7 @@ must not be enforced only through soft penalties.
 
 For fixed `T,P` flash, LLE, and VLLE, use the dimensionless form
 
-```math
+$$
 \Phi_{TP}
 =
 \frac{1}{RT^0}
@@ -1081,16 +1081,16 @@ For fixed `T,P` flash, LLE, and VLLE, use the dimensionless form
 A_\alpha(T^0,V_\alpha,n_\alpha,q_\alpha)
 +P^0V_\alpha
 \right].
-```
+$$
 
 If Gibbs energy is the natural provider output:
 
-```math
+$$
 \Phi_G
 =
 \frac{1}{RT^0}
 \sum_\alpha G_\alpha(T^0,P^0,n_\alpha,q_\alpha).
-```
+$$
 
 Bubble/dew routes are route-specific reductions. They may use a thermodynamic
 objective with hard route constraints, a square residual system that is
@@ -1102,12 +1102,12 @@ certification rows.
 
 Residual objective form:
 
-```math
+$$
 \Phi_{\mathrm{res}}(u)
 =
 \frac{1}{2}\|W_r r_p(u)\|_2^2
 +\frac{\eta_s}{2}\|W_s(u-u^{(0)})\|_2^2.
-```
+$$
 
 Allowed uses are seed polishing, homogeneous speciation solves, globalization,
 diagnostic comparisons, and route formulations that explicitly declare equation
@@ -1121,48 +1121,48 @@ documentation explicitly states otherwise.
 
 Nonreactive material balance:
 
-```math
+$$
 c_i^{\mathrm{mat}}(N)
 =
 \sum_\alpha n_{i\alpha}-n_i^F=0.
-```
+$$
 
 Reactive element or moiety balance:
 
-```math
+$$
 c^{\mathrm{cons}}(N)
 =
 A_{\mathrm{cons}}\operatorname{vec}(N)-b=0.
-```
+$$
 
 The conserved-basis matrix must be rank-reduced before production use.
 
 Bounds:
 
-```math
+$$
 n_{i\alpha}\ge 0,
 \qquad
 N_\alpha>0,
 \qquad
 V_\alpha>0.
-```
+$$
 
 Trace-species lower bounds or log-variable transforms must be reported because
 they affect certification.
 
 For fixed pressure:
 
-```math
+$$
 c_\alpha^P
 =
 P_{\mathrm{EOS},\alpha}(T,V_\alpha,n_\alpha,q_\alpha)-P^0=0.
-```
+$$
 
 For unknown common pressure:
 
-```math
+$$
 c_{\alpha\beta}^P=P_\alpha-P_\beta=0.
-```
+$$
 
 Route specifications such as fixed `T`, fixed `P`, fixed feed `z`, fixed
 liquid composition for bubble routes, fixed vapor composition for dew routes,
@@ -1171,9 +1171,9 @@ phase-count caps are hard constraints or fixed variables.
 
 Electrolyte phases must satisfy phase electroneutrality:
 
-```math
+$$
 z^T n_\alpha=0.
-```
+$$
 
 Strong-electrolyte production routes should enforce electroneutrality
 structurally through reduced variables where possible.
@@ -1181,57 +1181,57 @@ structurally through reduced variables where possible.
 For reaction `r`, with stoichiometric coefficients `\nu_{i\alpha r}`, reaction
 affinity is
 
-```math
+$$
 \mathcal{A}_r
 =
 \sum_{\alpha,i}\nu_{i\alpha r}\mu_{i\alpha}.
-```
+$$
 
 The dimensionless reaction residual is
 
-```math
+$$
 c_r^{\mathrm{rxn}}
 =
 \frac{\mathcal{A}_r}{RT}=0.
-```
+$$
 
 If standard-state reaction constants are explicit, use
 
-```math
+$$
 c_r^{\mathrm{rxn}}
 =
 \ln Q_r-\ln K_r(T,P)=0.
-```
+$$
 
 For activity-based homogeneous reactions:
 
-```math
+$$
 \ln Q_r
 =
 \sum_i \nu_{ir}\ln(x_i\gamma_i).
-```
+$$
 
 If association site fractions are lifted, add exact mass-action constraints:
 
-```math
+$$
 F_a(X;T,\rho,x,p)
 =
 X_a
 \left(
 1+\rho\sum_b w_bX_b\Delta_{ab}
 \right)-1=0.
-```
+$$
 
 Lifted internal-state constraints must provide exact Jacobian and Hessian rows.
 
 A phase-distance constraint may be used as an anti-collapse gate:
 
-```math
+$$
 d_{\alpha\beta}
 =
 \|x_\alpha-x_\beta\|_\infty
 \ge \tau_{\mathrm{split}}.
-```
+$$
 
 This is not a thermodynamic equilibrium equation. It is a route-specific
 noncollapse, candidate-distinctness, or certification device and must be
@@ -1241,53 +1241,53 @@ labeled as such.
 
 For neutral nonreactive fixed `T,P` equilibrium in Gibbs form:
 
-```math
+$$
 \min_{\{n_{i\alpha}\}}
 \sum_\alpha G_\alpha(T,P,n_\alpha)
-```
+$$
 
 subject to
 
-```math
+$$
 \sum_\alpha n_{i\alpha}=n_i^F.
-```
+$$
 
 The Lagrangian is
 
-```math
+$$
 \mathcal{L}
 =
 \sum_\alpha G_\alpha
 +\sum_i\lambda_i
 \left(n_i^F-\sum_\alpha n_{i\alpha}\right).
-```
+$$
 
 Stationarity gives
 
-```math
+$$
 \mu_{i\alpha}-\lambda_i=0,
-```
+$$
 
 so transferable species satisfy
 
-```math
+$$
 \mu_{i\alpha}=\mu_{i\beta}
 \qquad
 \forall i,\alpha,\beta,
-```
+$$
 
 or equivalently
 
-```math
+$$
 \ln f_{i\alpha}-\ln f_{i\beta}=0.
-```
+$$
 
 For Helmholtz form, stationarity with respect to `V_\alpha` gives mechanical
 equilibrium:
 
-```math
+$$
 P_\alpha=P^0
-```
+$$
 
 for pressure-specified routes, or `P_\alpha=P_\beta` for unknown common
 pressure.
@@ -1299,28 +1299,28 @@ combinations, or a route-owned electroneutral transformed basis.
 
 If a charged reference species `r` is eliminated,
 
-```math
+$$
 n_{r\alpha}
 =
 -\sum_{i\ne r}\frac{z_i}{z_r}n_{i\alpha},
-```
+$$
 
 the reduced electrochemical potential is
 
-```math
+$$
 \mu_{i\alpha}^{el}
 =
 \mu_{i\alpha}
 -\frac{z_i}{z_r}\mu_{r\alpha}.
-```
+$$
 
 The charged-species equilibrium residual is
 
-```math
+$$
 r_i^{el,\alpha\beta}
 =
 \mu_{i\alpha}^{el}-\mu_{i\beta}^{el}.
-```
+$$
 
 For reactions, the KKT condition is zero reaction affinity or the documented
 standard-state form `\ln Q_r-\ln K_r=0`.
@@ -1338,27 +1338,27 @@ continuation, candidate ranking, and postsolve stability certification.
 
 For a reference phase `z` at `T,P`, define dimensionless chemical potentials
 
-```math
+$$
 \hat{\mu}_i(z)=\frac{\mu_i(T,P,z)}{RT}.
-```
+$$
 
 For trial composition `w`, with `\sum_i w_i=1`,
 
-```math
+$$
 \mathrm{TPD}(w;z)
 =
 \sum_i w_i
 \left[
 \hat{\mu}_i(w)-\hat{\mu}_i(z)
 \right].
-```
+$$
 
 A phase is stable if
 
-```math
+$$
 \min_{w\in\Delta}\mathrm{TPD}(w;z)
 \ge -\tau_{\mathrm{TPD}}.
-```
+$$
 
 If the minimum is less than `-\tau_{\mathrm{TPD}}`, the minimizing `w` is a
 candidate daughter phase.
@@ -1367,19 +1367,19 @@ For EOS models, a volume-composition trial problem avoids pressure-root
 fragility. Let `v` be molar volume and `a(T,v,w)` be molar Helmholtz energy.
 Define
 
-```math
+$$
 h(T,P^0,w,v)=a(T,v,w)+P^0v.
-```
+$$
 
 A supporting-plane trial problem may be written as
 
-```math
+$$
 \Theta(w,v;\lambda)
 =
 \frac{h(T,P^0,w,v)}{RT}
 -\lambda_0
 -\sum_{i=1}^{C-1}\lambda_iw_i,
-```
+$$
 
 with bounds on `w` and `v`. Candidate phases are minimizers that lie on or
 below the current supporting plane.
@@ -1399,34 +1399,34 @@ Do not call backup seed generation a production fallback solver.
 
 Candidate phases `p` and `q` are duplicates if
 
-```math
+$$
 \|x^{(p)}-x^{(q)}\|_\infty<\tau_x
-```
+$$
 
 and
 
-```math
+$$
 |\ln v^{(p)}-\ln v^{(q)}|<\tau_v.
-```
+$$
 
 Keep the candidate with lower transformed free energy and better domain
 diagnostics.
 
 Given candidate compositions `x^{(k)}`, solve phase-fraction feasibility:
 
-```math
+$$
 \sum_k\beta_k x_i^{(k)}=z_i,
 \qquad
 \sum_k\beta_k=1,
 \qquad
 \beta_k\ge 0.
-```
+$$
 
 If the mass-balance residual
 
-```math
+$$
 \delta_{\mathrm{mb,cand}}=\|X\beta-z\|_\infty
-```
+$$
 
 does not pass, phase discovery is incomplete.
 
@@ -1453,63 +1453,63 @@ explicitly declares an apparent salt variableization and exact back-lift.
 Every electrolyte phase and every electrolyte trial phase must satisfy
 electroneutrality:
 
-```math
+$$
 z^Tn_\alpha=0.
-```
+$$
 
 Do not run neutral TPD over unconstrained ionic composition space.
 
 Ascani-style cation-anion pair variables use charge-balanced increments. For a
 cation `c` and anion `a`,
 
-```math
+$$
 z_c\Delta n_{c\alpha}+z_a\Delta n_{a\alpha}=0.
-```
+$$
 
 Stacking independent pair and neutral variables gives
 
-```math
+$$
 n_\alpha=B_{\mathrm{pair}}s_\alpha,
 \qquad
 z^Tn_\alpha=0.
-```
+$$
 
 This is useful for mixed salts, common ions, and mean ionic residuals.
 
 Perdomo-style reduced electroneutral coordinates eliminate one charged
 reference species `r`:
 
-```math
+$$
 n_{r\alpha}
 =
 -\sum_{i\ne r}\frac{z_i}{z_r}n_{i\alpha}.
-```
+$$
 
 The constrained phase free energy is
 
-```math
+$$
 G_\alpha^{el}(T,P,n_\alpha^{(r)})
 =
 G_\alpha(T,P,n_\alpha(n_\alpha^{(r)})).
-```
+$$
 
 The reduced electrochemical potentials are
 
-```math
+$$
 \mu_{i\alpha}^{el}
 =
 \mu_{i\alpha}
 -\frac{z_i}{z_r}\mu_{r\alpha}.
-```
+$$
 
 Use this when formal strong-electrolyte TPD and HELD2.0-style phase discovery
 are primary. In composition space, the independent electrolyte TPD domain is
 
-```math
+$$
 \Omega^{el}
 =
 \{x\ge0:\sum_i x_i=1,\ z^Tx=0\}.
-```
+$$
 
 For `C` true species, the reduced composition domain has `C-2` independent
 coordinates after the mole-fraction sum and electroneutrality constraints. A
@@ -1520,19 +1520,19 @@ electrolyte TPD implementation.
 
 Using reduced coordinates `y`,
 
-```math
+$$
 \mathrm{TPD}^{el}(y;y^0)
 =
 g^{el}(y)-g^{el}(y^0)
 -\nabla g^{el}(y^0)^T(y-y^0),
-```
+$$
 
 with stability condition
 
-```math
+$$
 \min_{y\in\Omega^{el}}\mathrm{TPD}^{el}(y;y^0)
 \ge -\tau_{\mathrm{TPD}}.
-```
+$$
 
 Do not assume ions are absent from vapor or organic phases unless phase
 eligibility says so. Allowed strategies include log mole-number variables,
@@ -1542,12 +1542,12 @@ perturbations, and reduced-coordinate bounds from electroneutrality.
 For salt `m` with cation `c`, anion `a`, and stoichiometric coefficients
 `\nu_c,\nu_a`, a mean ionic chemical-potential combination is
 
-```math
+$$
 \mu_{\pm,m,\alpha}
 =
 \frac{\nu_c\mu_{c\alpha}+\nu_a\mu_{a\alpha}}
 {\nu_c+\nu_a}.
-```
+$$
 
 Mean ionic residuals are useful for pair formulations but do not replace full
 reduced electrochemical certification when multiple independent ions and common
@@ -1559,21 +1559,21 @@ Reactive systems use true species unless a route explicitly declares an
 apparent variableization with exact lift to true species. Let `E` be the
 element or moiety matrix:
 
-```math
+$$
 E\in\mathbb{R}^{B\times C}.
-```
+$$
 
 The conserved inventory is
 
-```math
+$$
 b=En^F,
-```
+$$
 
 and multiphase reactive equilibrium requires
 
-```math
+$$
 \sum_\alpha En_\alpha=b.
-```
+$$
 
 Two variableizations are allowed:
 
@@ -1598,27 +1598,27 @@ Exact PC-SAFT association remains the thermodynamic reference. With flattened
 association site `a`, site weight `w_b`, and association strength
 `\Delta_{ab}`,
 
-```math
+$$
 X_a
 =
 \frac{1}
 {1+\rho\sum_b w_bX_b\Delta_{ab}}.
-```
+$$
 
 Residual form:
 
-```math
+$$
 F_a(X;T,\rho,x,p)
 =
 X_a
 \left(
 1+\rho\sum_b w_bX_b\Delta_{ab}
 \right)-1=0.
-```
+$$
 
 Association Helmholtz contribution:
 
-```math
+$$
 a^{\mathrm{assoc}}
 =
 \sum_i x_i\sum_{A\in i}\nu_{iA}
@@ -1627,7 +1627,7 @@ a^{\mathrm{assoc}}
 -\frac{X_{iA}}{2}
 +\frac{1}{2}
 \right).
-```
+$$
 
 Production option A is eliminated exact association: solve `F(X)=0` inside the
 provider and use implicit sensitivities. Required diagnostics include
@@ -1642,15 +1642,16 @@ contracts.
 
 Nonproduction option C is explicit approximate association:
 
-```math
+$$
 X_a \approx X_a^{\mathrm{approx}}(T,\rho,x,p),
 \qquad
 a^{\mathrm{assoc,approx}}=a^{\mathrm{assoc}}(X^{\mathrm{approx}}).
-```
+$$
 
 Allowed uses are seed generation, phase-discovery acceleration, continuation,
 diagnostic comparison, and explicit experimental routes that are labeled
 approximate. Required metadata:
+
 
 ```text
 association_model = "explicit_approx"
@@ -1723,7 +1724,7 @@ capabilities do not overclaim.
 
 For two-phase neutral flash/LLE:
 
-```math
+$$
 u=
 [n_{1,1},\ldots,n_{C,1},V_1,
  n_{1,2},\ldots,n_{C,2},V_2].
@@ -1735,13 +1736,13 @@ fractions, reduced electrolyte variables, and phase fractions.
 
 The standard NLP form is
 
-```math
+$$
 \min_u \Phi_p(u)
 ```
 
 subject to
 
-```math
+$$
 c_p(u)=0,
 \qquad
 g_p(u)\ge0,
@@ -1776,54 +1777,54 @@ Optimizer success is not acceptance. A production result must certify:
 
 Conservation:
 
-```math
+$$
 \delta_{\mathrm{cons}}
 =
 \|A_{\mathrm{cons}}\operatorname{vec}(N)-b\|_\infty.
-```
+$$
 
 Nonreactive material balance:
 
-```math
+$$
 \delta_{\mathrm{mat}}
 =
 \left\|\sum_\alpha n_\alpha-n^F\right\|_\infty.
-```
+$$
 
 Pressure:
 
-```math
+$$
 \delta_P
 =
 \max_\alpha
 \left|
 \frac{P_\alpha-P^0}{P_{\mathrm{scale}}}
 \right|.
-```
+$$
 
 Neutral fugacity:
 
-```math
+$$
 \delta_f
 =
 \max_{i,\alpha,\beta}
 |\ln f_{i\alpha}-\ln f_{i\beta}|.
-```
+$$
 
 Electrolyte charge:
 
-```math
+$$
 \delta_z
 =
 \max_\alpha
 \left|
 \frac{z^Tn_\alpha}{N_\alpha}
 \right|.
-```
+$$
 
 Reduced electrochemical residual:
 
-```math
+$$
 \delta_\mu^{el}
 =
 \max_{i,\alpha,\beta}
@@ -1838,11 +1839,11 @@ Reduced electrochemical residual:
 -\frac{z_i}{z_r}\frac{\mu_{r\beta}}{RT}
 \right)
 \right|.
-```
+$$
 
 Reaction residual:
 
-```math
+$$
 \delta_{\mathrm{rxn}}
 =
 \max_r
@@ -1852,40 +1853,40 @@ Reaction residual:
 \frac{\mu_{i\alpha}}{RT}
 -\ln K_r
 \right|.
-```
+$$
 
 If `K_r` is embedded in standard chemical potentials, omit the explicit
 `\ln K_r` term and document the convention.
 
 TPD stability:
 
-```math
+$$
 \delta_{\mathrm{TPD},\alpha}
 =
 \min_w \mathrm{TPD}(w;x_\alpha).
-```
+$$
 
 Stable requires
 
-```math
+$$
 \delta_{\mathrm{TPD},\alpha}\ge -\tau_{\mathrm{TPD}}.
-```
+$$
 
 Electrolyte phases use the reduced electrolyte TPD over `\Omega^{el}`.
 
 Phase distinctness:
 
-```math
+$$
 d_{\alpha\beta}
 =
 \max_i |x_{i\alpha}-x_{i\beta}|.
-```
+$$
 
 Association internal-state residual:
 
-```math
+$$
 \delta_X=\|F(X)\|_\infty.
-```
+$$
 
 Production results must include accepted flag, status, rejection reason,
 objective, constraint norms, postsolve norms, phase labels, phase amounts,
@@ -2336,31 +2337,31 @@ native selector behavior while making the generalized matrix testable.
 Each phase-equilibrium row carries at least one proof example and evidence
 tier in `equilibrium_benchmark_registry.yaml`.
 
-| Row | Family key | Scope | Required discovery/certification | First proof case | Current status |
-| --- | --- | --- | --- | --- | --- |
-| PE-01 | `neutral_tp_flash` | Neutral, nonreactive, nonelectrolyte two-phase TP flash | `held_tpd_volume_composition` plus `tpd_postsolve`; material balance, common pressure, common fugacity, noncollapse, full phase-set stability | Hydrocarbon methane/ethane/propane case in `tests/support/hydrocarbon_cases.py` | `production_exposed` |
-| PE-02 | `neutral_two_phase_vle_tp` | Neutral, nonreactive, nonelectrolyte two-phase VLE at fixed `T,P` | Same PE-01 discovery/certification without fixed-composition route reduction | Hydrocarbon VLE fixture after PE-01 remains green | `planned_not_public` |
-| PE-03 | `neutral_lle` | Neutral, nonreactive, nonelectrolyte, nonassociating two-liquid split | `held_tpd_volume_composition` plus `tpd_postsolve`; material balance, common pressure, common fugacity, phase-distance anti-collapse, full phase-set stability | Synthetic nonideal binary in `tests/support/equilibrium_cases.py` | `production_exposed` |
-| PE-04 | `neutral_multiphase_nonassoc` | Neutral nonassociating LLLE/VLLE or more-than-two-phase discovery | HELD/TPD candidate generation generalized beyond two selected phases; mass-balance-complete phase-set certification | Internal ternary or source-backed literature case after PE-01/PE-03 remain green | `planned_not_public` |
-| PE-05 | `neutral_vle_multicomponent` | Neutral multicomponent VLE beyond current hydrocarbon proof envelope | PE-01 discovery/certification retained; broader benchmark coverage | Additional hydrocarbon or PC-SAFT paper fixture | `planned_not_public` |
-| PE-06 | `neutral_single_phase_stability` | Single feed stability check without route solve | Neutral TPD over simplex; no raw route acceptance from optimizer status | Hydrocarbon feed stable/unstable pair | `planned_not_public` |
-| PE-07 | `neutral_split_seed_generation` | Deterministic seed and candidate ranking layer | Seed inventory, de-duplication, rank diagnostics, phase-set completeness metrics | Shared with PE-01/PE-03/PE-04 | `diagnostic_only` |
-| PE-08 | `neutral_density_closure` | EOS density/volume solve for phase candidates | Exact density closure diagnostics and domain failure reporting | Existing native EOS density checks | `diagnostic_only` |
-| PE-09 | `neutral_property_certification` | Residual-property consistency at accepted phase states | Exact state/property diagnostics; no separate route admission | Existing state/property checks | `diagnostic_only` |
-| PE-10 | `associating_vle_one_assoc_fixed_liquid_pressure` | Neutral, nonelectrolyte, nonreactive VLE proof with at most one associating component | Exact associating EOS derivatives, association mass-action diagnostics, route-local postsolve certification; no global associating LLE claim | Gross/Sadowski 2002 Figure 2 methanol/isobutane, `T = 373.15 K`, `k_ij = 0.05` | `blocked_not_implemented` |
-| PE-11 | `associating_isothermal_vle_one_assoc` | Additional isothermal associating VLE proof | Same as PE-10, plus a second source-backed Gross/Sadowski case | Gross/Sadowski 2002 1-pentanol/benzene or 1-propanol/benzene | `blocked_not_implemented` |
-| PE-12 | `associating_lle` | Neutral associating liquid-liquid split | PE-04-style full phase discovery plus exact associating EOS derivatives plus PE-10/PE-11 VLE evidence | Methanol/cyclohexane only after VLE gates; water/alcohol later | `blocked_not_implemented` |
-| PE-13 | `associating_temperature_condition_vle` | Associating VLE with solved temperature condition | Temperature-variable route proof with exact derivative and association diagnostics | Gross/Sadowski isobaric VLE after PE-10/PE-11 | `blocked_not_implemented` |
-| PE-14 | `cross_associating_vle` | More than one associating component or cross-association route | Full association-matrix diagnostics and exact derivative proof | Source-backed alcohol/alcohol or water/alcohol case | `planned_not_public` |
-| PE-15 | `electrolyte_lle_salt_solvent` | Strong-electrolyte LLE with salt/solvent lift | Phase electroneutrality, reduced variables, electrolyte TPD, distributed-ion policy | Ascani/Sadowski/Held 2022 mixed-solvent electrolyte case | `source_data_needed` |
-| PE-16 | `electrolyte_lle_trace_ion` | Electrolyte LLE with trace-ion handling | Reduced-coordinate bounds, charge-neutral perturbations, reported floors and tolerances | Ascani 2022 trace-ion variant | `source_data_needed` |
-| PE-17 | `electrolyte_vlle` | Strong-electrolyte vapor-liquid-liquid equilibrium | Electrolyte HELD/TPD with all eligible phases considered | Ascani 2022 or Held electrolyte benchmark | `source_data_needed` |
-| PE-18 | `electrolyte_tpd_reduced_composition` | Formal electrolyte TPD in reduced composition coordinates | Composition domain has `C-2` independent coordinates after sum and electroneutrality constraints | Perdomo/HELD2.0-style reduced TPD case | `planned_not_public` |
-| PE-19 | `electrolyte_tpd_reduced_moles` | Formal electrolyte TPD in reduced mole-number coordinates | Reduced mole-number space has `C-1` degrees of freedom after electroneutrality; dual counts depend on primal form | Perdomo-style reduced mole-number case | `planned_not_public` |
-| PE-20 | `phase_distance_anti_collapse` | Nontriviality gate for candidate distinctness | Used only to prevent duplicate phases; never treated as thermodynamic equilibrium proof | Existing neutral LLE/flash noncollapse diagnostics | `diagnostic_only` |
-| PE-21 | `supporting_plane_phase_set` | Common-tangent/supporting-plane certification | Full phase-set stability, not just per-phase TPD | Shared postsolve certificate | `diagnostic_only` |
-| PE-22 | `phase_candidate_mass_balance` | Candidate-set completeness | Candidate phase set must be able to reconstruct the feed within tolerance | Shared HELD/TPD diagnostics | `diagnostic_only` |
-| PE-23 | `generalized_multiphase_flash` | General neutral/electrolyte/reactive multiphase flash | All active constraints, reduced variables, reactions, and phase-set certification | Deferred until PE/CE/CPE rows mature | `planned_not_public` |
+| Row   | Family key                                        | Scope                                                                                 | Required discovery/certification                                                                                                                               | First proof case                                                                 | Current status            |
+| ----- | ------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------- |
+| PE-01 | `neutral_tp_flash`                                | Neutral, nonreactive, nonelectrolyte two-phase TP flash                               | `held_tpd_volume_composition` plus `tpd_postsolve`; material balance, common pressure, common fugacity, noncollapse, full phase-set stability                  | Hydrocarbon methane/ethane/propane case in `tests/support/hydrocarbon_cases.py`  | `production_exposed`      |
+| PE-02 | `neutral_two_phase_vle_tp`                        | Neutral, nonreactive, nonelectrolyte two-phase VLE at fixed `T,P`                     | Same PE-01 discovery/certification without fixed-composition route reduction                                                                                   | Hydrocarbon VLE fixture after PE-01 remains green                                | `planned_not_public`      |
+| PE-03 | `neutral_lle`                                     | Neutral, nonreactive, nonelectrolyte, nonassociating two-liquid split                 | `held_tpd_volume_composition` plus `tpd_postsolve`; material balance, common pressure, common fugacity, phase-distance anti-collapse, full phase-set stability | Synthetic nonideal binary in `tests/support/equilibrium_cases.py`                | `production_exposed`      |
+| PE-04 | `neutral_multiphase_nonassoc`                     | Neutral nonassociating LLLE/VLLE or more-than-two-phase discovery                     | HELD/TPD candidate generation generalized beyond two selected phases; mass-balance-complete phase-set certification                                            | Internal ternary or source-backed literature case after PE-01/PE-03 remain green | `planned_not_public`      |
+| PE-05 | `neutral_vle_multicomponent`                      | Neutral multicomponent VLE beyond current hydrocarbon proof envelope                  | PE-01 discovery/certification retained; broader benchmark coverage                                                                                             | Additional hydrocarbon or PC-SAFT paper fixture                                  | `planned_not_public`      |
+| PE-06 | `neutral_single_phase_stability`                  | Single feed stability check without route solve                                       | Neutral TPD over simplex; no raw route acceptance from optimizer status                                                                                        | Hydrocarbon feed stable/unstable pair                                            | `planned_not_public`      |
+| PE-07 | `neutral_split_seed_generation`                   | Deterministic seed and candidate ranking layer                                        | Seed inventory, de-duplication, rank diagnostics, phase-set completeness metrics                                                                               | Shared with PE-01/PE-03/PE-04                                                    | `diagnostic_only`         |
+| PE-08 | `neutral_density_closure`                         | EOS density/volume solve for phase candidates                                         | Exact density closure diagnostics and domain failure reporting                                                                                                 | Existing native EOS density checks                                               | `diagnostic_only`         |
+| PE-09 | `neutral_property_certification`                  | Residual-property consistency at accepted phase states                                | Exact state/property diagnostics; no separate route admission                                                                                                  | Existing state/property checks                                                   | `diagnostic_only`         |
+| PE-10 | `associating_vle_one_assoc_fixed_liquid_pressure` | Neutral, nonelectrolyte, nonreactive VLE proof with at most one associating component | Exact associating EOS derivatives, association mass-action diagnostics, route-local postsolve certification; no global associating LLE claim                   | Gross/Sadowski 2002 Figure 2 methanol/isobutane, `T = 373.15 K`, `k_ij = 0.05`   | `blocked_not_implemented` |
+| PE-11 | `associating_isothermal_vle_one_assoc`            | Additional isothermal associating VLE proof                                           | Same as PE-10, plus a second source-backed Gross/Sadowski case                                                                                                 | Gross/Sadowski 2002 1-pentanol/benzene or 1-propanol/benzene                     | `blocked_not_implemented` |
+| PE-12 | `associating_lle`                                 | Neutral associating liquid-liquid split                                               | PE-04-style full phase discovery plus exact associating EOS derivatives plus PE-10/PE-11 VLE evidence                                                          | Methanol/cyclohexane only after VLE gates; water/alcohol later                   | `blocked_not_implemented` |
+| PE-13 | `associating_temperature_condition_vle`           | Associating VLE with solved temperature condition                                     | Temperature-variable route proof with exact derivative and association diagnostics                                                                             | Gross/Sadowski isobaric VLE after PE-10/PE-11                                    | `blocked_not_implemented` |
+| PE-14 | `cross_associating_vle`                           | More than one associating component or cross-association route                        | Full association-matrix diagnostics and exact derivative proof                                                                                                 | Source-backed alcohol/alcohol or water/alcohol case                              | `planned_not_public`      |
+| PE-15 | `electrolyte_lle_salt_solvent`                    | Strong-electrolyte LLE with salt/solvent lift                                         | Phase electroneutrality, reduced variables, electrolyte TPD, distributed-ion policy                                                                            | Ascani/Sadowski/Held 2022 mixed-solvent electrolyte case                         | `source_data_needed`      |
+| PE-16 | `electrolyte_lle_trace_ion`                       | Electrolyte LLE with trace-ion handling                                               | Reduced-coordinate bounds, charge-neutral perturbations, reported floors and tolerances                                                                        | Ascani 2022 trace-ion variant                                                    | `source_data_needed`      |
+| PE-17 | `electrolyte_vlle`                                | Strong-electrolyte vapor-liquid-liquid equilibrium                                    | Electrolyte HELD/TPD with all eligible phases considered                                                                                                       | Ascani 2022 or Held electrolyte benchmark                                        | `source_data_needed`      |
+| PE-18 | `electrolyte_tpd_reduced_composition`             | Formal electrolyte TPD in reduced composition coordinates                             | Composition domain has `C-2` independent coordinates after sum and electroneutrality constraints                                                               | Perdomo/HELD2.0-style reduced TPD case                                           | `planned_not_public`      |
+| PE-19 | `electrolyte_tpd_reduced_moles`                   | Formal electrolyte TPD in reduced mole-number coordinates                             | Reduced mole-number space has `C-1` degrees of freedom after electroneutrality; dual counts depend on primal form                                              | Perdomo-style reduced mole-number case                                           | `planned_not_public`      |
+| PE-20 | `phase_distance_anti_collapse`                    | Nontriviality gate for candidate distinctness                                         | Used only to prevent duplicate phases; never treated as thermodynamic equilibrium proof                                                                        | Existing neutral LLE/flash noncollapse diagnostics                               | `diagnostic_only`         |
+| PE-21 | `supporting_plane_phase_set`                      | Common-tangent/supporting-plane certification                                         | Full phase-set stability, not just per-phase TPD                                                                                                               | Shared postsolve certificate                                                     | `diagnostic_only`         |
+| PE-22 | `phase_candidate_mass_balance`                    | Candidate-set completeness                                                            | Candidate phase set must be able to reconstruct the feed within tolerance                                                                                      | Shared HELD/TPD diagnostics                                                      | `diagnostic_only`         |
+| PE-23 | `generalized_multiphase_flash`                    | General neutral/electrolyte/reactive multiphase flash                                 | All active constraints, reduced variables, reactions, and phase-set certification                                                                              | Deferred until PE/CE/CPE rows mature                                             | `planned_not_public`      |
 
 ### Chemical-Equilibrium Matrix
 
