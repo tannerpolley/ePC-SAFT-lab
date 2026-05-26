@@ -32,6 +32,7 @@ scripts/fits/
 scripts/paper_validation/
 docs/latex/out/
 docs/latex/references.bib
+docs/ChatGPT_Gemini_Responses/
 docs/goals/**/.goalbuddy-board/
 graphify-out/
 **/graphify-out/

@@ -373,27 +373,3 @@ Target the 2-3 percent error band on pressure, fugacity, and
 equilibrium-relevant outputs. A component site fraction may be outside that
 band in a region where it has little phase-equilibrium impact, but the
 diagnostic must report it.
-
-## Gross 2002 Case Order
-
-Follow Gross/Sadowski 2002 in an implementation-safe order:
-
-1. EOS-level pure associating checks from Figure 1.
-2. Isothermal one-associating-component VLE:
-   - Figure 2: methanol/isobutane at `T = 373.15 K`, `k_ij = 0.05`;
-   - Figure 4: 1-pentanol/benzene at `T = 313.15 K`, `k_ij = 0.0135`;
-   - Figure 5: 1-propanol/benzene and 2-propanol/benzene at
-     `T = 313.15 K`;
-   - Figure 6: 1-butanol/n-butane at selected temperatures.
-3. Additional one-associating-component VLE:
-   - Figure 7: ethanol/n-butane.
-4. Isobaric bubble-temperature routes after temperature derivatives are proven:
-   - Figure 3: 1-propanol/ethylbenzene;
-   - Figure 8: methanol/cyclohexane VLE;
-   - Figure 9: methanol/1-octanol;
-   - Figure 10: water/1-pentanol VLE.
-5. LLE only after VLE route families are proven:
-   - Figure 8: methanol/cyclohexane LLE;
-   - Figure 10: water/1-pentanol LLE.
-
-Do not start the redo with water/1-pentanol or associating LLE.
