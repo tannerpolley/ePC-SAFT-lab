@@ -501,7 +501,7 @@ Before editing for any goal:
 
 1. Read `docs/roadmaps/FULL_ROADMAP.md`.
 2. Read this document.
-3. Read `docs/roadmaps/unified_equilibrium_core_algorithm.md` if touching equilibrium internals.
+3. Read `docs/roadmaps/generalized_fluid_phase_equilibrium.md` if touching equilibrium internals.
 4. Read `docs/pages/development_workflows.rst` before running pytest or `validate_project.py`.
 5. Verify #130 and #131 are closed on GitHub.
 6. Verify the target issue is still open and read its current body.

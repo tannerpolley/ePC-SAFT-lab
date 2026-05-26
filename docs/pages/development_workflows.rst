@@ -198,7 +198,7 @@ Use the smallest relevant test first, then run ``uv run python scripts/dev/valid
 Before running ``run_pytest.py``, direct ``pytest``, or any ``validate_project.py``
 mode that runs pytest, read this command matrix and the test-selection rules in
 this section. Also read the relevant domain documentation for the slice: for
-example, read ``docs/roadmaps/unified_equilibrium_core_algorithm.md`` before
+example, read ``docs/roadmaps/generalized_fluid_phase_equilibrium.md`` before
 native/equilibrium route tests. If the right target is unclear, run
 ``uv run python run_pytest.py --list-slices`` before choosing a command.
 

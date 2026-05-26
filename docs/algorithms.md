@@ -215,7 +215,7 @@ LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
 - Dependency: None
 - Derivative backend: EOS/provider chemical-potential and free-energy derivatives as required by the selected trial problem
 - Solver role: Neutral tangent-plane stability evaluator for phase discovery and postsolve certification
-- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/roadmaps/generalized_fluid_phase_equilibrium.md
 - Validation: tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:neutral_tpd_stability
 - Description: Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance.
@@ -250,7 +250,7 @@ lower-free-energy candidates and mass-balance incompleteness.
 - Dependency: None
 - Derivative backend: EOS/provider derivatives for volume-composition trial phases
 - Solver role: HELD-style neutral candidate generation, de-duplication, and seed construction
-- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; docs/roadmaps/generalized_fluid_phase_equilibrium.md
 - Validation: tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:neutral_held_phase_discovery
 - Description: Adds HELD-style neutral volume-composition phase discovery for the current neutral TP flash and neutral nonassociating LLE activation rows.
@@ -281,7 +281,7 @@ continuation, and postsolve certification; it is not a magic guess-free solver.
 - Dependency: None
 - Derivative backend: Not applicable for the first LP/active-set feasibility selector
 - Solver role: Selects candidate phase sets whose phase fractions satisfy feed material balance
-- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium.md
 - Validation: tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py
 - Capability key: internal:phase_candidate_mass_balance_selection
 - Description: Filters HELD/TPD phase candidates by mass-balance feasibility before Ipopt route assembly.
@@ -312,7 +312,7 @@ stable.
 - Dependency: None
 - Derivative backend: EOS/provider derivatives required by the selected TPD backend
 - Solver role: Converts finite optimizer outputs into production_accepted, unstable, metastable, or uncertified statuses
-- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium.md
 - Validation: tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:postsolve_tpd_certification
 - Description: Adds full phase-set stability certification after neutral Ipopt solves for PE-01 and PE-03.
@@ -341,7 +341,7 @@ blocks before assigning a production-accepted status.
 - Dependency: None
 - Derivative backend: Exact derivatives required before production row exposure
 - Solver role: Records PE/CE/CPE activation rows, proof cases, evidence tiers, and benchmark status
-- Implementation owner: docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md; docs/roadmaps/equilibrium_benchmark_registry.yaml
+- Implementation owner: docs/roadmaps/generalized_fluid_phase_equilibrium.md; docs/roadmaps/equilibrium_benchmark_registry.yaml
 - Validation: tests/native/contracts/test_generalized_activation_matrix_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py
 - Capability key: docs:generalized_equilibrium_activation_registry
 - Description: Defines generalized phase-only, chemical-only, and combined phase-chemical activation matrices.

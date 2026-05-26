@@ -85,13 +85,13 @@ canonical package shape above.
   `codex/gross2002-associating-bubble-pressure`.
 
 Before any associating LLE task starts, the generalized equilibrium doctrine in
-`docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md` must be
+`docs/roadmaps/generalized_fluid_phase_equilibrium.md` must be
 preserved at least through the current neutral TP flash and neutral
 nonassociating LLE `held_tpd_volume_composition` discovery and `tpd_postsolve`
 phase-set certification baseline. Associating LLE must not rely on a local
 Ipopt split plus a phase-distance anti-collapse constraint as proof of global
 phase stability; it still needs the broader row-level gates in
-`docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md`.
+`docs/roadmaps/generalized_fluid_phase_equilibrium.md`.
 
 ### Stage 1: Report-Ready Derivation
 

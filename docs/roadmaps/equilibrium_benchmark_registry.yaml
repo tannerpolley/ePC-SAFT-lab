@@ -1,12 +1,12 @@
 schema_version: 1
-source_document: "docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md"
+source_document: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
 policy:
   generalized_matrix_split:
     - phase_only
     - chemical_only
     - combined_phase_chemical
   bubble_dew_policy: "Derived utility routes stay tested in the existing selector surface but are excluded from generalized PE/CE/CPE activation rows."
-  first_pr_scope: "docs_registry_schema_tests_only"
+  documentation_scope: "canonical_doctrine_registry_schema_tests_only"
 
 excluded_derived_utility_route_keys:
   - bubble_dew_derived_routes
@@ -100,7 +100,7 @@ activation_rows:
     proof_cases:
       - key: neutral_two_phase_vle_tp_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [PE-02]
         acceptance_checks: [must_not_expose_without_fixture, no_bubble_dew_route_key]
         fixture_status: source_data_needed
@@ -170,7 +170,7 @@ activation_rows:
     proof_cases:
       - key: neutral_multiphase_nonassoc_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [PE-04]
         acceptance_checks: [candidate_phase_set_complete, no_public_route_before_fixture]
         fixture_status: source_data_needed
@@ -205,7 +205,7 @@ activation_rows:
     proof_cases:
       - key: neutral_multicomponent_vle_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [PE-05]
         acceptance_checks: [source_backed_fixture_required, no_general_vle_claim]
         fixture_status: source_data_needed
@@ -660,7 +660,7 @@ activation_rows:
     proof_cases:
       - key: electrolyte_reduced_composition_tpd_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [PE-18]
         acceptance_checks: [charge_neutral_basis_dimension, electrochemical_potential_equality]
         fixture_status: source_data_needed
@@ -695,7 +695,7 @@ activation_rows:
     proof_cases:
       - key: electrolyte_reduced_moles_tpd_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [PE-19]
         acceptance_checks: [charge_neutral_basis_dimension, electrochemical_potential_equality]
         fixture_status: source_data_needed
@@ -835,7 +835,7 @@ activation_rows:
     proof_cases:
       - key: generalized_multiphase_flash_deferred
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [PE-23]
         acceptance_checks: [all_prerequisite_rows_mature, no_shortcut_around_PE_CE_CPE_gates]
         fixture_status: source_data_needed
@@ -870,7 +870,7 @@ activation_rows:
     proof_cases:
       - key: ideal_homogeneous_reaction_synthetic
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-01]
         acceptance_checks: [closed_form_reference, reaction_affinity, reaction_constant_convention]
         fixture_status: source_data_needed
@@ -905,7 +905,7 @@ activation_rows:
     proof_cases:
       - key: stoichiometric_extent_ce_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/unified_equilibrium_core_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-02]
         acceptance_checks: [element_balance, reaction_affinity, reaction_constant_convention]
         fixture_status: source_data_needed
@@ -940,7 +940,7 @@ activation_rows:
     proof_cases:
       - key: true_species_ce_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-03]
         acceptance_checks: [element_matrix_rank, positivity, reaction_affinity]
         fixture_status: source_data_needed
@@ -975,7 +975,7 @@ activation_rows:
     proof_cases:
       - key: nonstoichiometric_element_ce_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/unified_equilibrium_core_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-04]
         acceptance_checks: [element_basis_rank, invariant_equilibrium, reaction_affinity]
         fixture_status: source_data_needed
@@ -1010,7 +1010,7 @@ activation_rows:
     proof_cases:
       - key: activity_based_speciation_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-05]
         acceptance_checks: [standard_state_convention, reaction_affinity]
         fixture_status: source_data_needed
@@ -1045,7 +1045,7 @@ activation_rows:
     proof_cases:
       - key: acid_base_speciation_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-06]
         acceptance_checks: [charge_balance, pH_convention, reaction_affinity]
         fixture_status: source_data_needed
@@ -1080,7 +1080,7 @@ activation_rows:
     proof_cases:
       - key: electrolyte_speciation_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-07]
         acceptance_checks: [charge_balance, reduced_electrochemical_basis, reaction_affinity]
         fixture_status: source_data_needed
@@ -1115,7 +1115,7 @@ activation_rows:
     proof_cases:
       - key: ion_pairing_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-08]
         acceptance_checks: [element_balance, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -1150,7 +1150,7 @@ activation_rows:
     proof_cases:
       - key: solvation_complexation_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-09]
         acceptance_checks: [moiety_balance, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -1185,7 +1185,7 @@ activation_rows:
     proof_cases:
       - key: salt_dissociation_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-10]
         acceptance_checks: [salt_to_ion_lift, charge_balance, mean_ionic_convention]
         fixture_status: source_data_needed
@@ -1220,7 +1220,7 @@ activation_rows:
     proof_cases:
       - key: temperature_dependent_k_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-11]
         acceptance_checks: [temperature_constant_convention, derivative_metadata, reaction_affinity]
         fixture_status: source_data_needed
@@ -1255,7 +1255,7 @@ activation_rows:
     proof_cases:
       - key: pressure_dependent_k_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-12]
         acceptance_checks: [pressure_constant_convention, derivative_metadata, reaction_affinity]
         fixture_status: source_data_needed
@@ -1290,7 +1290,7 @@ activation_rows:
     proof_cases:
       - key: reaction_constant_conversion_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-13]
         acceptance_checks: [round_trip_conversion, reaction_constant_convention]
         fixture_status: source_data_needed
@@ -1325,7 +1325,7 @@ activation_rows:
     proof_cases:
       - key: rank_deficient_reaction_set_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-14]
         acceptance_checks: [rank_reduction, invariant_equilibrium, reaction_affinity]
         fixture_status: source_data_needed
@@ -1360,7 +1360,7 @@ activation_rows:
     proof_cases:
       - key: moiety_conserved_speciation_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-15]
         acceptance_checks: [moiety_matrix_rank, reaction_affinity]
         fixture_status: source_data_needed
@@ -1395,7 +1395,7 @@ activation_rows:
     proof_cases:
       - key: precipitation_candidate_blocked
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-16]
         acceptance_checks: [separate_solid_phase_ADR_required, not_fluid_phase_production]
         fixture_status: source_data_needed
@@ -1430,7 +1430,7 @@ activation_rows:
     proof_cases:
       - key: homogeneous_reactive_derivatives_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/unified_equilibrium_core_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-17]
         acceptance_checks: [exact_jacobian, exact_hessian, reaction_affinity]
         fixture_status: source_data_needed
@@ -1465,7 +1465,7 @@ activation_rows:
     proof_cases:
       - key: standard_state_registry_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-18]
         acceptance_checks: [standard_state_explicit, conversion_round_trip]
         fixture_status: source_data_needed
@@ -1500,7 +1500,7 @@ activation_rows:
     proof_cases:
       - key: ce_certification_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CE-19]
         acceptance_checks: [element_residual, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -1535,7 +1535,7 @@ activation_rows:
     proof_cases:
       - key: neutral_reactive_vle_flash_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-01]
         acceptance_checks: [transfer_equilibrium, reaction_affinity, reaction_constant_convention]
         fixture_status: source_data_needed
@@ -1570,7 +1570,7 @@ activation_rows:
     proof_cases:
       - key: neutral_reactive_fixed_composition_vle_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-02]
         acceptance_checks: [fixed_condition_proof, reaction_affinity]
         fixture_status: source_data_needed
@@ -1605,7 +1605,7 @@ activation_rows:
     proof_cases:
       - key: neutral_reactive_lle_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-03]
         acceptance_checks: [phase_set_certification, reaction_affinity]
         fixture_status: source_data_needed
@@ -1640,7 +1640,7 @@ activation_rows:
     proof_cases:
       - key: neutral_reactive_multiphase_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-04]
         acceptance_checks: [multiphase_candidate_completeness, reaction_affinity]
         fixture_status: source_data_needed
@@ -1710,7 +1710,7 @@ activation_rows:
     proof_cases:
       - key: transfer_reaction_split_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/unified_equilibrium_core_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-06]
         acceptance_checks: [transfer_residual_ownership, reaction_affinity_ownership]
         fixture_status: source_data_needed
@@ -1745,7 +1745,7 @@ activation_rows:
     proof_cases:
       - key: nonstoichiometric_reactive_phase_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-07]
         acceptance_checks: [element_conservation_across_phases, reaction_affinity]
         fixture_status: source_data_needed
@@ -1780,7 +1780,7 @@ activation_rows:
     proof_cases:
       - key: reactive_phase_stability_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-08]
         acceptance_checks: [reactive_tpd_stationarity, reaction_affinity]
         fixture_status: source_data_needed
@@ -1850,7 +1850,7 @@ activation_rows:
     proof_cases:
       - key: reactive_electrolyte_vle_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-10]
         acceptance_checks: [vapor_eligibility_policy, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -1920,7 +1920,7 @@ activation_rows:
     proof_cases:
       - key: cross_phase_reaction_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/unified_equilibrium_core_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-12]
         acceptance_checks: [cross_phase_stoichiometry, reaction_affinity]
         fixture_status: source_data_needed
@@ -1990,7 +1990,7 @@ activation_rows:
     proof_cases:
       - key: true_species_reactive_electrolyte_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-14]
         acceptance_checks: [element_rank, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -2025,7 +2025,7 @@ activation_rows:
     proof_cases:
       - key: salt_lift_reactive_phase_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-15]
         acceptance_checks: [exact_back_lift, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -2060,7 +2060,7 @@ activation_rows:
     proof_cases:
       - key: combined_derivative_backend_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/unified_equilibrium_core_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-16]
         acceptance_checks: [exact_jacobian, exact_hessian, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -2095,7 +2095,7 @@ activation_rows:
     proof_cases:
       - key: combined_result_schema_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/unified_equilibrium_core_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-17]
         acceptance_checks: [phase_payloads, reaction_extents, charge_residuals, diagnostics]
         fixture_status: source_data_needed
@@ -2130,7 +2130,7 @@ activation_rows:
     proof_cases:
       - key: combined_capability_evidence_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-18]
         acceptance_checks: [no_capability_without_row_proof, negative_broadening_tests]
         fixture_status: source_data_needed
@@ -2165,7 +2165,7 @@ activation_rows:
     proof_cases:
       - key: temperature_route_cpe_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-19]
         acceptance_checks: [temperature_derivative, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -2200,7 +2200,7 @@ activation_rows:
     proof_cases:
       - key: pressure_route_cpe_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-20]
         acceptance_checks: [pressure_derivative, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -2235,7 +2235,7 @@ activation_rows:
     proof_cases:
       - key: continuation_cpe_placeholder
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-21]
         acceptance_checks: [stepwise_certification, charge_balance, reaction_affinity]
         fixture_status: source_data_needed
@@ -2340,7 +2340,7 @@ activation_rows:
     proof_cases:
       - key: generalized_fluid_equilibrium_deferred
         evidence_tier: T0
-        source: docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md
+        source: docs/roadmaps/generalized_fluid_phase_equilibrium.md
         rows: [CPE-24]
         acceptance_checks: [all_prerequisite_rows_mature, no_shortcut_around_specific_rows]
         fixture_status: source_data_needed

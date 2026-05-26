@@ -14,11 +14,7 @@ This document explains:
 
 This document is authoritative over older roadmap language that allowed audit-only closure, inventory-only closure, staged-only closure, diagnostic-only closure, or documented limitations as completion.
 
-`docs/roadmaps/unified_equilibrium_core_algorithm.md` is the companion architecture contract for shared equilibrium-core implementation. It replaces completed Ipopt tranche handoffs, GoalBuddy receipts, and native-route audit reports as the current source of truth for equilibrium solver structure.
-
-`docs/roadmaps/generalized_fluid_phase_equilibrium_algorithm.md` is the mathematical doctrine for generalized fluid-phase equilibrium. It defines the thermodynamic constrained NLP form, HELD/TPD phase-discovery requirements, activation-matrix admission policy, postsolve certification, and result status taxonomy that future neutral, associating, electrolyte, and reactive routes must follow.
-
-`docs/roadmaps/generalized_fluid_phase_equilibrium_activation_matrix.md` is the activation-row and proof-case companion to the generalized equilibrium doctrine. It records the phase-only (`PE-*`), chemical-only (`CE-*`), and combined phase-chemical (`CPE-*`) row families, current Stage 1 neutral HELD/TPD baseline, staged admission order, proof examples, evidence tiers, and non-admission rules.
+`docs/roadmaps/generalized_fluid_phase_equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation matrix, and staged roadmap for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, HELD/TPD phase-discovery requirements, activation-row admission policy, postsolve certification, result status taxonomy, and phase-only (`PE-*`), chemical-only (`CE-*`), and combined phase-chemical (`CPE-*`) row families. It supersedes the prior split architecture, algorithm, and activation-matrix roadmap files.
 
 `docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the generalized activation matrix. Every activation row must carry at least one proof case and evidence tier there. Bubble/dew pressure and temperature routes remain implemented and tested as derived utility routes through the existing selector surface, but their generic route keys are excluded from the generalized PE/CE/CPE matrices. Do not delete existing bubble/dew code or tests; only demote them in the generalized roadmap.
 
