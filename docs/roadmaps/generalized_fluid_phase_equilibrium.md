@@ -388,10 +388,20 @@ The Pereira 2012 System III source audit found a SAFT-VR problem definition,
 including SAFT-VR range and binary interaction parameters. It remains useful
 HELD literature context, but it is not an executable ePC-SAFT proof fixture for
 the current package unless SAFT-VR support or a source-backed ePC-SAFT
-reparameterization is added. The shared boundary proof must therefore stop at
-source selection and choose a source-backed ePC-SAFT-compatible neutral binary
-rather than inventing a synthetic validation fixture. Do not add VLLE-specific
-tests in this step.
+reparameterization is added. Boundary-workflow proof must therefore use the
+Stage 10 source-backed ePC-SAFT-compatible neutral mixture unless a later
+implementation proves it physically unsuitable; it must not invent a synthetic
+validation fixture. Do not add VLLE-specific tests in this step.
+
+Current bubble/dew runtime routes are not Stage 11 completion evidence by
+themselves. Stage 11 requires strict Ipopt convergence for every requested
+boundary point: `solver_status == success`, `application_status ==
+solve_succeeded`, and no selected seed attempt ending in
+`max_iterations_exceeded`. Acceptable-level points, tiny steps, feasible
+points, postsolve-accepted finite variables, or any iteration-limit seed path
+remain diagnostic evidence only. Routine validation must stay contract-only
+unless a single named debug route point is requested; multi-point `T-x` or
+`P-x` sweeps require an explicit sweep opt-in.
 
 The Stage 10 neutral proof gate is explicit in
 `docs/roadmaps/equilibrium_benchmark_registry.yaml`. A neutral TP-flash case is
@@ -436,6 +446,14 @@ The script also supports
 `--generate-stage9-evidence` for an intentional one-command JetBrains Services
 diagnostic run; tests should prefer a supplied Stage 9 payload so Stage 10
 coverage does not hide a second Stage 9 TPD/Ipopt route solve.
+
+The Stage 11 boundary diagnostic checker is
+`uv run python scripts/validation/check_stage11_boundary_workflow_traces.py`.
+Use `--json --contracts-only` for the cheap derived-workflow contract check.
+Use `--json --run-current-boundary-route --route <route> --debug
+--require-complete` only when diagnosing one current bubble/dew route; the
+checker forwards Ipopt `print_level=5` output to stderr and fails closed when
+the route does not strictly converge.
 
 ## Family Proof Ladder
 

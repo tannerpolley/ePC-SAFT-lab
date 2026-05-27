@@ -290,48 +290,60 @@ derived_subworkflows:
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: [bubble_pressure, bubble_temperature]
+    current_convergence_status: diagnostic_only_not_stage11_complete
     fixed_variables: [temperature_or_pressure, liquid_or_feed_composition]
     free_variables: [incipient_vapor_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    diagnostic_policy: "Routine validation is contract-only. Current runtime route solves require one explicit route point unless an explicit sweep opt-in is provided."
+    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, diagram_trace]
+    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
   - label: "Dew point"
     workflow_kind: derived_boundary
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: [dew_pressure, dew_temperature]
+    current_convergence_status: diagnostic_only_not_stage11_complete
     fixed_variables: [temperature_or_pressure, vapor_composition]
     free_variables: [incipient_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    diagnostic_policy: "Routine validation is contract-only. Current runtime route solves require one explicit route point unless an explicit sweep opt-in is provided."
+    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, diagram_trace]
+    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
   - label: "Cloud point"
     workflow_kind: derived_boundary
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: []
+    current_convergence_status: planned_not_executable
     fixed_variables: [temperature_or_pressure, parent_liquid_composition]
     free_variables: [incipient_second_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
+    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, diagram_trace]
+    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
   - label: "Shadow point"
     workflow_kind: derived_boundary
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: []
+    current_convergence_status: planned_not_executable
     fixed_variables: [cloud_point_state]
     free_variables: [shadow_phase_composition, shadow_phase_volume]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
+    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, diagram_trace]
+    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
 stage10_neutral_tp_flash_source_gate:
   target_family_label: "PE-Neutral TP Flash"

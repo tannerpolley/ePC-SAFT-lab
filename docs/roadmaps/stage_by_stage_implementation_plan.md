@@ -1035,24 +1035,37 @@ Substeps:
    second-liquid composition plus boundary `P` or `T`.
 7. For shadow point, report the incipient phase composition and volume matched
    to the cloud-point state.
-8. Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary as the
-   shared boundary mixture.
+8. Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture as the
+   shared boundary mixture. The current executable fixture is the hydrocarbon
+   workbook PC-SAFT phase split, not a Pereira-derived fixture.
 9. Keep Pereira as HELD/SAFT-VR literature context unless model parity or a
    source-backed ePC-SAFT reparameterization exists.
 10. Do not invent a boundary fixture.
 11. Do not add VLLE-specific tests in this stage.
-12. Generate `T-x` and `P-x` traces through continuation with per-point
-    diagnostics.
-13. Record trace point status, seed source, final residuals, and skipped-point
-    reason.
-14. Preserve current public bubble/dew route behavior while generalized
+12. Keep routine validation contract-only unless an explicitly named single
+    boundary route point is requested. A checker or test must not solve all
+    bubble/dew `T-x` and `P-x` points by default.
+13. Generate `T-x` and `P-x` traces through continuation only behind an
+    explicit sweep opt-in. Per-point diagnostics must include route, fixed
+    composition role, seed source, seed-attempt status, Ipopt status, Ipopt
+    iteration history, final residuals, and skipped-point reason.
+14. Require strict route convergence before Stage 11 completion:
+    `solver_status == success`, `application_status == solve_succeeded`, and
+    no selected seed attempt ending in `max_iterations_exceeded`. Acceptable
+    points, tiny steps, feasible points, postsolve-accepted finite variables,
+    or any iteration-limit seed path are diagnostic evidence only.
+15. Preserve current public bubble/dew route behavior while generalized
     derived-workflow tests are added.
 
 Acceptance checks:
 
 - Registry tests prove bubble/dew/cloud/shadow are derived subworkflows.
 - Boundary tests prove fixed/free variable contracts.
-- Diagram tests prove trace generation and diagnostic reporting.
+- The Stage 11 checker rejects implicit route sweeps and exposes Ipopt
+  `print_level=5` output plus stored iteration history when a single debug
+  route point is requested.
+- Diagram tests prove trace generation and diagnostic reporting without
+  treating nonconverged Ipopt paths as complete evidence.
 
 Stop conditions:
 
@@ -1060,6 +1073,11 @@ Stop conditions:
 - Cloud/shadow work becomes a VLLE proof.
 - Boundary workflows duplicate a separate thermodynamic core instead of using
   the shared GFPE route.
+- A boundary point with `acceptable_point`, `tiny_step_detected`,
+  `feasible_point_found`, or `max_iterations_exceeded` is called Stage 11
+  complete.
+- Routine validation solves a multi-point boundary route sweep without an
+  explicit sweep opt-in.
 
 ## Stage 12 - Generalized Phase-Set And Multiphase PE
 

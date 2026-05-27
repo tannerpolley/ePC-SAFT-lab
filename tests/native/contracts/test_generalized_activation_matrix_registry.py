@@ -134,8 +134,14 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
         assert row["planned_after_family"] == "PE-Neutral TP Flash", label
         assert set(row["diagram_targets"]) == {"P-x", "T-x"}, label
         assert row["vlle_test_required"] is False, label
-        assert "ePC-SAFT-compatible neutral binary" in row["shared_mixture_policy"], label
+        assert "ePC-SAFT-compatible neutral mixture" in row["shared_mixture_policy"], label
         assert "Pereira 2012 System III remains HELD/SAFT-VR context" in row["shared_mixture_policy"], label
+        assert "contract-only" in row["diagnostic_policy"], label
+        assert "explicit sweep opt-in" in row["diagnostic_policy"], label
+        assert "Ipopt success" in row["strict_convergence_gate"], label
+        assert "no max_iterations_exceeded seed attempt" in row["strict_convergence_gate"], label
+        assert "strict_ipopt_convergence" in row["acceptance_checks"], label
+        assert "no_implicit_route_sweep" in row["acceptance_checks"], label
 
 
 def test_deterministic_screening_is_not_called_full_held() -> None:
