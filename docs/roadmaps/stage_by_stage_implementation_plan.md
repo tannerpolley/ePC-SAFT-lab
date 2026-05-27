@@ -849,9 +849,15 @@ Substeps:
     exist.
 15. Keep live diagnosis narrow: use
     `uv run python run_pytest.py --equilibrium-debug -q -s` or one explicit
-    test node, not whole equilibrium result files. The debug lane must enable
-    Ipopt iteration output, stored Ipopt iteration history, seed-attempt
-    summaries, and continuous-TPD iteration traces.
+    equilibrium test node, not whole equilibrium result files. The debug lane
+    must enable Ipopt iteration output, stored Ipopt iteration history,
+    seed-attempt summaries, and continuous-TPD iteration traces.
+16. Use
+    `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`
+    as the executable Stage 9 evidence snapshot. Use the same command with
+    `--debug` when the question is "what is the TPD/Ipopt solver doing?",
+    because that turns on continuous-TPD trace rows and Ipopt `print_level=5`
+    for the current Stage III refinement.
 
 Acceptance checks:
 
@@ -864,6 +870,8 @@ Acceptance checks:
   continuous TPD and HELD Stage I only when all continuous TPD starts converge,
   HELD Stage II as the pending dual cutting-plane loop, and current Ipopt
   solves as Stage III refinement only after a route solve.
+- The executable Stage 9 checker reports any iteration-limit continuous TPD
+  result as incomplete evidence, not as convergence.
 - Public utility `flash` may keep deterministic TPD postsolve certification
   without requesting continuous TPD; that path is not Stage I evidence.
 - Test wrappers reject broad native equilibrium result-file sweeps unless
@@ -914,9 +922,11 @@ Substeps:
    non-executable SAFT-VR evidence and records the published second-feed
    composition inconsistency. Its readiness files separate reported
    material-balance-feasible points from inferred feed-correction candidates.
-   The executable readiness gate is
-   `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json`;
-   use `--require-executable` only when promoting a case to proof evidence.
+   First produce the Stage 9 evidence payload with
+   `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`,
+   then pass it to the Stage 10 readiness gate with
+   `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json --stage9-evidence-json <payload>`.
+   Use `--require-executable` only when promoting a case to proof evidence.
 8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.

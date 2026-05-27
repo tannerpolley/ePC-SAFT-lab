@@ -47,6 +47,10 @@ LONG_EQUILIBRIUM_ROUTE_TARGETS = {
     "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
     "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
 }
+EQUILIBRIUM_DEBUG_TARGET_PREFIXES = (
+    "tests/api/frontend/test_equilibrium.py",
+    "tests/native/equilibrium/",
+)
 LONG_NATIVE_TARGETS_NOTE = (
     "Broad native equilibrium route-builder targets are intentionally guarded because they can take a long time. "
     "Use `uv run python run_pytest.py --native-contracts -q` for metadata/result-contract checks, "
@@ -209,10 +213,6 @@ def _selected_predefined_targets(**flags: bool) -> tuple[str, ...]:
     return PREDEFINED_TARGETS[selected[0]]
 
 
-def _has_positional_target(pytest_args: list[str]) -> bool:
-    return any(True for _target in _positional_targets(pytest_args))
-
-
 def _positional_targets(pytest_args: list[str]) -> list[str]:
     targets: list[str] = []
     skip_next = False
@@ -266,8 +266,16 @@ def _normalize_equilibrium_debug_selection(
         raise SystemExit(
             "--equilibrium-debug is only valid with --equilibrium-confidence or a single explicit equilibrium test node."
         )
-    if not equilibrium_confidence and not _has_positional_target(pytest_args):
+    positional_targets = _positional_targets(pytest_args)
+    if equilibrium_confidence and positional_targets:
+        raise SystemExit(
+            "--equilibrium-debug with --equilibrium-confidence cannot append extra pytest targets. "
+            "Use the focused confidence slice or one explicit equilibrium test node."
+        )
+    if not equilibrium_confidence and not positional_targets:
         equilibrium_confidence = True
+    elif not equilibrium_confidence:
+        _validate_equilibrium_debug_targets(positional_targets)
     return (
         generic,
         confidence,
@@ -279,6 +287,26 @@ def _normalize_equilibrium_debug_selection(
         native_contracts,
         all_tests,
     )
+
+
+def _validate_equilibrium_debug_targets(positional_targets: list[str]) -> None:
+    if len(positional_targets) != 1:
+        raise SystemExit(
+            "--equilibrium-debug accepts exactly one explicit equilibrium test node when not using "
+            "--equilibrium-confidence."
+        )
+    target = positional_targets[0].replace("\\", "/")
+    target_path = target.split("::", 1)[0].rstrip("/")
+    if "::" not in target:
+        raise SystemExit(
+            "--equilibrium-debug explicit targets must name one test node with `::`; broad files and directories "
+            "are intentionally blocked."
+        )
+    if not any(target_path.startswith(prefix) for prefix in EQUILIBRIUM_DEBUG_TARGET_PREFIXES):
+        raise SystemExit(
+            "--equilibrium-debug explicit targets must be equilibrium tests under tests/api/frontend/test_equilibrium.py "
+            "or tests/native/equilibrium/."
+        )
 
 
 def _reject_unbounded_native_targets(

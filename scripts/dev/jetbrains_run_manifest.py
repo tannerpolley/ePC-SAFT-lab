@@ -138,6 +138,20 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/dev/run_ipopt_exact_hessian_proofs.py",
     ),
     RunConfigSpec(
+        name="Check Stage 9 Phase Discovery Evidence",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/validation/check_stage9_phase_discovery_evidence.py",
+        parameters="--json",
+    ),
+    RunConfigSpec(
+        name="Check Stage 9 Phase Discovery Evidence Debug",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/validation/check_stage9_phase_discovery_evidence.py",
+        parameters="--debug",
+    ),
+    RunConfigSpec(
         name="Test List Slices",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_TESTS,

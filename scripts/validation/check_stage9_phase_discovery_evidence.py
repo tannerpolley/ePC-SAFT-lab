@@ -1,0 +1,274 @@
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import tempfile
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SRC_ROOT = REPO_ROOT / "src"
+for import_root in (REPO_ROOT, SRC_ROOT):
+    import_path = str(import_root)
+    if import_path not in sys.path:
+        sys.path.insert(0, import_path)
+
+from scripts.dev.native_runtime_env import apply_native_runtime_env
+
+apply_native_runtime_env(os.environ)
+
+from epcsaft.state.native_adapter import ePCSAFTMixture
+import epcsaft._core as _core
+
+STAGE9_EVIDENCE_REQUIREMENTS = (
+    "deterministic_screening",
+    "continuous_tpd_minimization",
+    "held_stage_i_stability",
+    "held_stage_ii_dual_phase_discovery",
+    "held_stage_iii_ipopt_refinement",
+)
+
+
+def _nonideal_lle_binary_mixture() -> ePCSAFTMixture:
+    params = {
+        "m": np.asarray([1.0, 2.0]),
+        "s": np.asarray([3.5, 4.0]),
+        "e": np.asarray([150.0, 250.0]),
+        "k_ij": np.asarray([[0.0, 0.5], [0.5, 0.0]]),
+    }
+    return ePCSAFTMixture.from_params(params, species=["A", "B"])
+
+
+def _equilibrium_debug_enabled() -> bool:
+    return os.environ.get("EPCSAFT_EQUILIBRIUM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _native_ipopt_compiled(*, show_native_output: bool = False) -> bool:
+    try:
+        if show_native_output:
+            return bool(_core._native_ipopt_smoke()["compiled"])
+        with _suppress_native_stdout():
+            return bool(_core._native_ipopt_smoke()["compiled"])
+    except Exception:
+        return False
+
+
+@contextmanager
+def _suppress_native_stdout():
+    sys.stdout.flush()
+    saved_stdout = os.dup(1)
+    try:
+        with tempfile.TemporaryFile(mode="w+b") as sink:
+            os.dup2(sink.fileno(), 1)
+            yield
+            sys.stdout.flush()
+    finally:
+        os.dup2(saved_stdout, 1)
+        os.close(saved_stdout)
+
+
+def _stage9_discovery(mix: ePCSAFTMixture) -> dict[str, Any]:
+    return dict(
+        _core._native_neutral_tpd_phase_discovery(
+            mix._native,
+            225.0,
+            1.0e6,
+            [0.5, 0.5],
+            [0, 0],
+            1.0e-6,
+            1.0e-6,
+        )
+    )
+
+
+def _stage9_route_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
+    return dict(
+        _core._native_equilibrium_selector_route_result(
+            mix._native,
+            {
+                "route": "neutral_lle",
+                "temperature": 225.0,
+                "pressure": 1.0e6,
+                "composition": [0.5, 0.5],
+                "composition_role": "feed",
+            },
+            260,
+            1.0e-6,
+            0.0,
+            "auto",
+            8,
+            1.0e-8,
+            1.0e-3,
+            1.0e-6,
+            1.0e-6,
+            {},
+            linear_solver="auto",
+            print_level=5 if _equilibrium_debug_enabled() else 0,
+            acceptable_tolerance=1.0e-7,
+            constraint_violation_tolerance=1.0e-8,
+            dual_infeasibility_tolerance=1.0e-8,
+            complementarity_tolerance=1.0e-8,
+        )
+    )
+
+
+def _stage9_route_postsolve(mix: ePCSAFTMixture, *, show_native_output: bool = False) -> dict[str, Any] | None:
+    if not _native_ipopt_compiled(show_native_output=show_native_output):
+        return None
+    if show_native_output:
+        route = _stage9_route_payload(mix)
+    else:
+        with _suppress_native_stdout():
+            route = _stage9_route_payload(mix)
+    return dict(route["postsolve"])
+
+
+def _continuous_candidates(discovery: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        dict(candidate)
+        for candidate in discovery.get("candidates", ())
+        if dict(candidate).get("tpd_backend") == "continuous_coordinate_search"
+    ]
+
+
+def evaluate_stage9_evidence(*, show_native_output: bool = False) -> dict[str, Any]:
+    mix = _nonideal_lle_binary_mixture()
+    discovery = _stage9_discovery(mix)
+    route_postsolve = _stage9_route_postsolve(mix, show_native_output=show_native_output)
+    continuous_candidates = _continuous_candidates(discovery)
+
+    evidence_status = {
+        "deterministic_screening": "missing",
+        "continuous_tpd_minimization": "missing",
+        "held_stage_i_stability": "missing",
+        "held_stage_ii_dual_phase_discovery": "missing",
+        "held_stage_iii_ipopt_refinement": "missing",
+    }
+
+    if (
+        discovery.get("deterministic_screening_status") == "completed"
+        and discovery.get("deterministic_screening_is_full_held") is False
+        and int(discovery.get("deterministic_candidate_count", 0)) > 0
+    ):
+        evidence_status["deterministic_screening"] = "verified_not_full_held"
+
+    if (
+        discovery.get("continuous_tpd_status") == "converged"
+        and discovery.get("continuous_tpd_backend") == "continuous_coordinate_search"
+        and int(discovery.get("continuous_tpd_start_count", 0)) > 0
+        and discovery.get("continuous_tpd_solve_count") == discovery.get("continuous_tpd_start_count")
+        and discovery.get("continuous_tpd_converged_count") == discovery.get("continuous_tpd_solve_count")
+        and continuous_candidates
+        and all(candidate.get("tpd_status") == "converged" for candidate in continuous_candidates)
+    ):
+        evidence_status["continuous_tpd_minimization"] = "verified_converged"
+    elif discovery.get("continuous_tpd_status") == "incomplete_iteration_limit":
+        evidence_status["continuous_tpd_minimization"] = "incomplete_iteration_limit"
+
+    if (
+        discovery.get("held_stage_i_status")
+        in {"negative_tpd_candidate_found", "no_negative_tpd_candidate_found"}
+        and discovery.get("held_stage_i_start_count") == discovery.get("continuous_tpd_start_count")
+        and discovery.get("continuous_tpd_status") == "converged"
+    ):
+        evidence_status["held_stage_i_stability"] = "verified_from_converged_continuous_tpd"
+
+    if discovery.get("held_stage_ii_status") == "pending_dual_cutting_plane_loop":
+        evidence_status["held_stage_ii_dual_phase_discovery"] = "pending_dual_cutting_plane_loop"
+
+    if route_postsolve is None:
+        evidence_status["held_stage_iii_ipopt_refinement"] = "ipopt_dependency_required"
+    elif (
+        route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
+        and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
+        and route_postsolve.get("accepted") is True
+    ):
+        evidence_status["held_stage_iii_ipopt_refinement"] = (
+            "verified_current_route_refinement_pending_stage_ii_candidates"
+        )
+
+    complete = all(
+        str(evidence_status[key]).startswith("verified")
+        for key in STAGE9_EVIDENCE_REQUIREMENTS
+    )
+    incomplete_requirements = [
+        key
+        for key in STAGE9_EVIDENCE_REQUIREMENTS
+        if not str(evidence_status[key]).startswith("verified")
+    ]
+
+    return {
+        "case_label": "Synthetic neutral binary Stage 9 evidence route",
+        "family_label": "PE-Neutral TP Flash",
+        "complete": complete,
+        "evidence_status": evidence_status,
+        "incomplete_requirements": incomplete_requirements,
+        "diagnostics": {
+            "equilibrium_debug_enabled": _equilibrium_debug_enabled(),
+            "ipopt_print_level": 5 if _equilibrium_debug_enabled() else 0,
+            "phase_discovery_backend": discovery.get("phase_discovery_backend"),
+            "stage9_phase_discovery_steps": discovery.get("stage9_phase_discovery_steps"),
+            "deterministic_candidate_count": discovery.get("deterministic_candidate_count"),
+            "continuous_tpd_start_count": discovery.get("continuous_tpd_start_count"),
+            "continuous_tpd_solve_count": discovery.get("continuous_tpd_solve_count"),
+            "continuous_tpd_converged_count": discovery.get("continuous_tpd_converged_count"),
+            "continuous_tpd_iteration_count_max": discovery.get("continuous_tpd_iteration_count_max"),
+            "continuous_tpd_min": discovery.get("continuous_tpd_min"),
+            "held_stage_i_status": discovery.get("held_stage_i_status"),
+            "held_stage_ii_status": discovery.get("held_stage_ii_status"),
+            "held_stage_ii_candidate_count": discovery.get("held_stage_ii_candidate_count"),
+            "held_stage_iii_status": None if route_postsolve is None else route_postsolve.get("held_stage_iii_status"),
+            "held_stage_iii_refined_phase_count": None
+            if route_postsolve is None
+            else route_postsolve.get("held_stage_iii_refined_phase_count"),
+        },
+    }
+
+
+def _print_human(payload: dict[str, Any]) -> None:
+    print(f"{payload['case_label']}: {'complete' if payload['complete'] else 'incomplete'}")
+    for key in STAGE9_EVIDENCE_REQUIREMENTS:
+        print(f"  {key}: {payload['evidence_status'][key]}")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Check current Stage 9 phase-discovery evidence.")
+    parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help=(
+            "Enable EPCSAFT_EQUILIBRIUM_DEBUG, continuous-TPD trace rows, and Ipopt print_level=5 for "
+            "the Stage III route refinement."
+        ),
+    )
+    parser.add_argument(
+        "--require-complete",
+        action="store_true",
+        help="Return a failing exit code when any Stage 9 evidence requirement is incomplete.",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    if args.debug:
+        os.environ["EPCSAFT_EQUILIBRIUM_DEBUG"] = "1"
+    payload = evaluate_stage9_evidence(show_native_output=args.debug and not args.json)
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        _print_human(payload)
+    if args.require_complete and not payload["complete"]:
+        print("Stage 9 phase-discovery evidence is incomplete.", file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

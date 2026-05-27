@@ -462,6 +462,59 @@ def test_equilibrium_debug_with_pytest_filter_still_defaults_to_focused_confiden
     assert args[-6:] == ["-k", "flash", "-q", "-s", "--basetemp", str(pytest_temp)]
 
 
+def test_equilibrium_debug_accepts_exactly_one_equilibrium_test_node():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+    target = (
+        "tests/native/equilibrium/results/test_neutral_lle_reference_values.py::"
+        "test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary"
+    )
+
+    args = run_pytest._pytest_args([target, "-q", "-s"], pytest_temp, equilibrium_debug=True)
+
+    assert args[0] == target
+    assert args[-4:] == ["-q", "-s", "--basetemp", str(pytest_temp)]
+
+
+def test_equilibrium_debug_rejects_sweeps_and_non_equilibrium_targets():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+    first = (
+        "tests/native/equilibrium/results/test_neutral_lle_reference_values.py::"
+        "test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary"
+    )
+    second = (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
+    )
+
+    with pytest.raises(SystemExit, match="exactly one explicit equilibrium test node"):
+        run_pytest._pytest_args([first, second, "-q"], pytest_temp, equilibrium_debug=True)
+
+    with pytest.raises(SystemExit, match="must name one test node"):
+        run_pytest._pytest_args(
+            ["tests/native/equilibrium/results/test_neutral_lle_reference_values.py", "-q"],
+            pytest_temp,
+            equilibrium_debug=True,
+        )
+
+    with pytest.raises(SystemExit, match="must be equilibrium tests"):
+        run_pytest._pytest_args(
+            ["tests/api/frontend/test_state_properties.py::test_state_properties_use_molar_units", "-q"],
+            pytest_temp,
+            equilibrium_debug=True,
+        )
+
+
+def test_equilibrium_debug_rejects_confidence_plus_extra_targets():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+    target = (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
+    )
+
+    with pytest.raises(SystemExit, match="cannot append extra pytest targets"):
+        run_pytest._pytest_args([target, "-q"], pytest_temp, equilibrium_confidence=True, equilibrium_debug=True)
+
+
 def test_equilibrium_debug_rejects_non_equilibrium_slices():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
 

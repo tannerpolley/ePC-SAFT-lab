@@ -170,11 +170,21 @@ HELD Stage I diagnostics are proof-path evidence, not a hidden cost on every
 public flash solve.
 
 Runtime diagnosis must stay narrow. Use
-`uv run python run_pytest.py --equilibrium-debug -q -s` or one explicit test
-node when investigating Ipopt iteration limits, seed attempts, or continuous
-TPD behavior. That lane enables verbose Ipopt output, stored Ipopt iteration
-history, and continuous-TPD trace rows. Whole equilibrium result files under
-`tests/native/equilibrium/results` are guarded as opt-in sweeps.
+`uv run python run_pytest.py --equilibrium-debug -q -s` or one explicit
+equilibrium test node when investigating Ipopt iteration limits, seed attempts,
+or continuous TPD behavior. That lane enables verbose Ipopt output, stored
+Ipopt iteration history, and continuous-TPD trace rows. Whole equilibrium
+result files under `tests/native/equilibrium/results` are guarded as opt-in
+sweeps.
+
+The executable Stage 9 snapshot is
+`uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`.
+Run it with `--debug` when diagnosing the current TPD/Ipopt path; debug mode
+enables `EPCSAFT_EQUILIBRIUM_DEBUG`, prints continuous-TPD trace rows, and uses
+Ipopt `print_level=5` for the current Stage III route refinement. Its current
+payload verifies deterministic screening, continuous TPD, HELD Stage I, and
+current-route Stage III refinement while keeping HELD Stage II as
+`pending_dual_cutting_plane_loop`, so it is not complete production evidence.
 
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful
@@ -384,9 +394,11 @@ correction before proof promotion.
 
 The readiness file is checked by
 `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json`.
-The same command with `--require-executable` is the closed gate for promoting a
-case into executable Stage 10 proof evidence; Pereira currently fails that gate
-by design.
+When executable Stage 9 evidence is relevant, first generate
+`check_stage9_phase_discovery_evidence.py --json` and pass the payload through
+`--stage9-evidence-json`. The same readiness command with
+`--require-executable` is the closed gate for promoting a case into executable
+Stage 10 proof evidence; Pereira currently fails that gate by design.
 
 ## Family Proof Ladder
 

@@ -30,6 +30,12 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
     return list(csv.DictReader(path.read_text(encoding="utf-8").splitlines()))
 
 
+def _read_optional_stage9_evidence(path: Path | None) -> dict[str, Any] | None:
+    if path is None:
+        return None
+    return _read_json(path)
+
+
 def _float_or_none(value: str | None) -> float | None:
     if value is None:
         return None
@@ -213,7 +219,37 @@ def _computed_feed_correction_rows(case_dir: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def evaluate_case_dir(case_dir: Path) -> dict[str, Any]:
+def _stage9_evidence_from_payload(payload: dict[str, Any] | None) -> dict[str, str]:
+    if payload is None:
+        return {key: "required_not_verified" for key in STAGE9_EVIDENCE_REQUIREMENTS}
+    raw_statuses = payload.get("evidence_status", {})
+    if not isinstance(raw_statuses, dict):
+        raw_statuses = {}
+    return {
+        key: str(raw_statuses.get(key, "required_not_verified"))
+        for key in STAGE9_EVIDENCE_REQUIREMENTS
+    }
+
+
+def _stage9_evidence_complete(payload: dict[str, Any] | None) -> bool:
+    if payload is None:
+        return False
+    statuses = _stage9_evidence_from_payload(payload)
+    return bool(payload.get("complete", False)) and all(
+        value.startswith("verified") for value in statuses.values()
+    )
+
+
+def _stage9_incomplete_requirements(payload: dict[str, Any] | None) -> list[str]:
+    statuses = _stage9_evidence_from_payload(payload)
+    return [
+        key
+        for key in STAGE9_EVIDENCE_REQUIREMENTS
+        if not statuses[key].startswith("verified")
+    ]
+
+
+def evaluate_case_dir(case_dir: Path, stage9_evidence_payload: dict[str, Any] | None = None) -> dict[str, Any]:
     metadata = _read_json(case_dir / "metadata.json")
     computed_rows = _computed_material_balance_rows(metadata, case_dir)
     stored_readiness = _read_csv(case_dir / "material_balance_readiness.csv")
@@ -221,7 +257,13 @@ def evaluate_case_dir(case_dir: Path) -> dict[str, Any]:
     blockers = list(dict.fromkeys(reason for row in computed_rows for reason in row["blockers"]))
     proof_readiness = metadata.get("proof_readiness", {})
     stage9_evidence_required = bool(proof_readiness.get("stage9_evidence_path_required", False))
-    stage9_evidence_verified = bool(proof_readiness.get("stage9_evidence_path_verified", False))
+    stage9_evidence = _stage9_evidence_from_payload(stage9_evidence_payload)
+    stage9_incomplete_requirements = _stage9_incomplete_requirements(stage9_evidence_payload)
+    stage9_evidence_verified = (
+        _stage9_evidence_complete(stage9_evidence_payload)
+        if stage9_evidence_payload is not None
+        else bool(proof_readiness.get("stage9_evidence_path_verified", False))
+    )
     if stage9_evidence_required and not stage9_evidence_verified:
         blockers.append("stage9_evidence_path_not_verified")
     if bool(proof_readiness.get("source_confirmed_feed_correction_required", False)):
@@ -244,7 +286,8 @@ def evaluate_case_dir(case_dir: Path) -> dict[str, Any]:
         "executable": executable,
         "stage9_evidence_path_required": stage9_evidence_required,
         "stage9_evidence_path_verified": stage9_evidence_verified,
-        "stage9_evidence": {key: "required_not_verified" for key in STAGE9_EVIDENCE_REQUIREMENTS},
+        "stage9_evidence": stage9_evidence,
+        "stage9_incomplete_requirements": stage9_incomplete_requirements,
         "blockers": list(dict.fromkeys(blockers)),
         "cases": computed_rows,
         "feed_correction_candidates": _computed_feed_correction_rows(case_dir),
@@ -270,6 +313,12 @@ def _print_human(payload: dict[str, Any]) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Check equilibrium benchmark readiness for Stage 10 proof use.")
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
+    parser.add_argument(
+        "--stage9-evidence-json",
+        type=Path,
+        default=None,
+        help="Machine-readable Stage 9 evidence payload from check_stage9_phase_discovery_evidence.py.",
+    )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument(
         "--require-executable",
@@ -281,7 +330,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    payload = evaluate_case_dir(args.case_dir)
+    stage9_evidence_payload = _read_optional_stage9_evidence(args.stage9_evidence_json)
+    payload = evaluate_case_dir(args.case_dir, stage9_evidence_payload=stage9_evidence_payload)
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
