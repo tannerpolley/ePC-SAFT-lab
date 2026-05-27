@@ -847,6 +847,11 @@ Substeps:
 13. Do not fill HELD status fields from deterministic screening.
 14. Promote HELD stage status in the registry only after executable tests
     exist.
+15. Keep live diagnosis narrow: use
+    `uv run python run_pytest.py --equilibrium-debug -q -s` or one explicit
+    test node, not whole equilibrium result files. The debug lane must enable
+    Ipopt iteration output, stored Ipopt iteration history, seed-attempt
+    summaries, and continuous-TPD iteration traces.
 
 Acceptance checks:
 
@@ -861,6 +866,8 @@ Acceptance checks:
   solves as Stage III refinement only after a route solve.
 - Public utility `flash` may keep deterministic TPD postsolve certification
   without requesting continuous TPD; that path is not Stage I evidence.
+- Test wrappers reject broad native equilibrium result-file sweeps unless
+  `--allow-long-equilibrium-tests` is explicitly set.
 
 Stop conditions:
 
@@ -907,6 +914,9 @@ Substeps:
    non-executable SAFT-VR evidence and records the published second-feed
    composition inconsistency. Its readiness files separate reported
    material-balance-feasible points from inferred feed-correction candidates.
+   The executable readiness gate is
+   `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json`;
+   use `--require-executable` only when promoting a case to proof evidence.
 8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.

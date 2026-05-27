@@ -169,6 +169,13 @@ certification but do not request continuous TPD by default. Continuous TPD and
 HELD Stage I diagnostics are proof-path evidence, not a hidden cost on every
 public flash solve.
 
+Runtime diagnosis must stay narrow. Use
+`uv run python run_pytest.py --equilibrium-debug -q -s` or one explicit test
+node when investigating Ipopt iteration limits, seed attempts, or continuous
+TPD behavior. That lane enables verbose Ipopt output, stored Ipopt iteration
+history, and continuous-TPD trace rows. Whole equilibrium result files under
+`tests/native/equilibrium/results` are guarded as opt-in sweeps.
+
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful
 limited cases.
@@ -374,6 +381,12 @@ published second-feed composition inconsistency as a blocker instead of
 normalizing it silently. Its material-balance readiness file identifies which
 reported points are lever-rule feasible and which need source-confirmed feed
 correction before proof promotion.
+
+The readiness file is checked by
+`uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json`.
+The same command with `--require-executable` is the closed gate for promoting a
+case into executable Stage 10 proof evidence; Pereira currently fails that gate
+by design.
 
 ## Family Proof Ladder
 

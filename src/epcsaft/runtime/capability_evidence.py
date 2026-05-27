@@ -318,7 +318,6 @@ EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
     "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
     "tests/api/frontend/test_equilibrium.py::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve",
     "tests/native/equilibrium/results/test_neutral_vle_reference_values.py::test_neutral_flash_reference_values_are_reported_and_verified",
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (

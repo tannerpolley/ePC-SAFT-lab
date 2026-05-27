@@ -43,6 +43,9 @@ LONG_NATIVE_TARGETS = {
 }
 LONG_EQUILIBRIUM_ROUTE_TARGETS = {
     "tests/api/frontend/test_equilibrium.py",
+    "tests/native/equilibrium/results",
+    "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
+    "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
 }
 LONG_NATIVE_TARGETS_NOTE = (
     "Broad native equilibrium route-builder targets are intentionally guarded because they can take a long time. "
@@ -50,7 +53,7 @@ LONG_NATIVE_TARGETS_NOTE = (
     "or target a single test node. Pass `--allow-long-native-tests` only when you intentionally need the broad route suite."
 )
 LONG_EQUILIBRIUM_ROUTE_TARGETS_NOTE = (
-    "Broad frontend equilibrium route-solve targets are intentionally guarded because they can run multiple Ipopt solves. "
+    "Broad equilibrium route-solve/result targets are intentionally guarded because they can run multiple Ipopt or TPD solves. "
     "Use `uv run python run_pytest.py --equilibrium-confidence -q -s` for the focused convergence proof, "
     "or target a single test node. Pass `--allow-long-equilibrium-tests` only when you intentionally need the broad file."
 )

@@ -12,10 +12,14 @@
 #include "equilibrium/core/variable_transform.h"
 
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <cmath>
+#include <iostream>
 #include <exception>
 #include <limits>
 #include <numeric>
+#include <string>
 #include <utility>
 
 namespace epcsaft::native::equilibrium_nlp {
@@ -123,6 +127,87 @@ constexpr double kCompositionFloor = 1.0e-12;
 constexpr double kCandidateCompositionTolerance = 1.0e-6;
 constexpr double kCandidateLogVolumeTolerance = 1.0e-5;
 constexpr std::size_t kContinuousTpdMaxStartsPerPhaseKind = 2;
+
+std::string equilibrium_debug_env_value() {
+#ifdef _MSC_VER
+    char* raw = nullptr;
+    std::size_t length = 0;
+    if (::_dupenv_s(&raw, &length, "EPCSAFT_EQUILIBRIUM_DEBUG") != 0 || raw == nullptr) {
+        return {};
+    }
+    std::string value(raw, length > 0 ? length - 1 : 0);
+    std::free(raw);
+    return value;
+#else
+    const char* raw = std::getenv("EPCSAFT_EQUILIBRIUM_DEBUG");
+    return raw == nullptr ? std::string{} : std::string(raw);
+#endif
+}
+
+bool equilibrium_debug_trace_enabled() {
+    std::string value = equilibrium_debug_env_value();
+    if (value.empty()) {
+        return false;
+    }
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return value == "1" || value == "true" || value == "yes" || value == "on";
+}
+
+void trace_continuous_tpd_iteration(
+    const std::string& event,
+    const std::string& source,
+    const std::string& start_source,
+    int phase_kind,
+    int iteration,
+    double step,
+    bool improved,
+    double best_tpd,
+    const std::vector<double>& composition
+) {
+    if (!equilibrium_debug_trace_enabled()) {
+        return;
+    }
+    std::cerr << "[EPCSAFT_TPD_DEBUG]"
+              << " event=" << event
+              << " source=" << source
+              << " start_source=" << start_source
+              << " phase_kind=" << phase_kind
+              << " iteration=" << iteration
+              << " step=" << step
+              << " improved=" << (improved ? "true" : "false")
+              << " best_tpd=" << best_tpd
+              << " composition=[";
+    for (std::size_t index = 0; index < composition.size(); ++index) {
+        if (index > 0) {
+            std::cerr << ",";
+        }
+        std::cerr << composition[index];
+    }
+    std::cerr << "]\n";
+}
+
+void trace_continuous_tpd_finish(
+    const std::string& source,
+    const std::string& start_source,
+    int phase_kind,
+    const NeutralTpdCandidate& best
+) {
+    if (!equilibrium_debug_trace_enabled()) {
+        return;
+    }
+    std::cerr << "[EPCSAFT_TPD_DEBUG]"
+              << " event=finish"
+              << " source=" << source
+              << " start_source=" << start_source
+              << " phase_kind=" << phase_kind
+              << " status=" << best.tpd_status
+              << " iterations=" << best.tpd_iteration_count
+              << " final_step=" << best.tpd_step_final
+              << " best_tpd=" << best.tpd
+              << "\n";
+}
 
 void apply_route_metadata(NeutralTwoPhaseEosNlpContract& out, const RouteMetadata& metadata) {
     out.variable_model = metadata.variable_model;
@@ -565,6 +650,17 @@ NeutralTpdCandidate refine_neutral_tpd_candidate(
     constexpr int kMaxIterations = 48;
     constexpr double kStepFloor = 1.0e-8;
     const std::size_t n = current.size();
+    trace_continuous_tpd_iteration(
+        "start",
+        source,
+        start_source,
+        phase_kind,
+        iteration,
+        step,
+        false,
+        best.tpd,
+        current
+    );
     while (iteration < kMaxIterations && step > kStepFloor) {
         bool improved = false;
         for (std::size_t from = 0; from < n; ++from) {
@@ -609,6 +705,17 @@ NeutralTpdCandidate refine_neutral_tpd_candidate(
         if (!improved) {
             step *= 0.5;
         }
+        trace_continuous_tpd_iteration(
+            "iteration",
+            source,
+            start_source,
+            phase_kind,
+            iteration + 1,
+            step,
+            improved,
+            best.tpd,
+            current
+        );
         ++iteration;
     }
     best.tpd_backend = "continuous_coordinate_search";
@@ -616,6 +723,7 @@ NeutralTpdCandidate refine_neutral_tpd_candidate(
     best.start_source = start_source;
     best.tpd_iteration_count = iteration;
     best.tpd_step_final = step;
+    trace_continuous_tpd_finish(source, start_source, phase_kind, best);
     return best;
 }
 

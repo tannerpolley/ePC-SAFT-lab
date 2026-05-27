@@ -136,6 +136,14 @@ def test_equilibrium_debug_flag_sets_opt_in_test_environment():
     assert env["EPCSAFT_EQUILIBRIUM_DEBUG"] == "1"
 
 
+def test_continuous_tpd_debug_trace_is_gated_by_equilibrium_debug_env():
+    source = Path("src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp").read_text(encoding="utf-8")
+
+    assert "EPCSAFT_EQUILIBRIUM_DEBUG" in source
+    assert "[EPCSAFT_TPD_DEBUG]" in source
+    assert "continuous_coordinate_search" in source
+
+
 def test_doctor_tracks_native_symbols_added_by_recent_workflows():
     required = set(doctor.REQUIRED_CORE_SYMBOLS)
 
@@ -356,6 +364,38 @@ def test_broad_frontend_equilibrium_route_file_requires_explicit_opt_in():
     assert single_node[0].endswith("::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point")
 
 
+def test_broad_native_equilibrium_result_targets_require_explicit_opt_in():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+    result_targets = (
+        "tests/native/equilibrium/results",
+        "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
+        "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
+    )
+
+    for target in result_targets:
+        with pytest.raises(SystemExit, match="--allow-long-equilibrium-tests"):
+            run_pytest._pytest_args([target, "-q"], pytest_temp)
+
+    allowed = run_pytest._pytest_args(
+        ["tests/native/equilibrium/results/test_neutral_lle_reference_values.py", "-q"],
+        pytest_temp,
+        allow_long_equilibrium_tests=True,
+    )
+    single_node = run_pytest._pytest_args(
+        [
+            "tests/native/equilibrium/results/test_neutral_lle_reference_values.py::"
+            "test_neutral_tpd_phase_discovery_can_run_deterministic_screening_without_continuous_tpd",
+            "-q",
+        ],
+        pytest_temp,
+    )
+
+    assert allowed[:2] == ["tests/native/equilibrium/results/test_neutral_lle_reference_values.py", "-q"]
+    assert single_node[0].endswith(
+        "::test_neutral_tpd_phase_discovery_can_run_deterministic_screening_without_continuous_tpd"
+    )
+
+
 def test_equilibrium_slices_are_listed():
     for flag, label in (
         ("--equilibrium-confidence", "equilibrium-confidence:"),
@@ -390,7 +430,8 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
     assert (
         "tests/api/frontend/test_equilibrium.py::"
         "test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve"
-    ) in targets
+    ) not in targets
+    assert all("iteration_limit" not in target for target in targets)
     assert "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py" in targets
     assert "tests/native/state/test_bubble_derivatives.py" not in targets
     assert all("paper_validation" not in target for target in targets)
