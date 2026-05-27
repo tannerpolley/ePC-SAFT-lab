@@ -22,6 +22,7 @@ constexpr double kInitialPressure = 1.0e5;
 constexpr double kInitialTemperature = 300.0;
 constexpr double kGasConstant = 8.31446261815324;
 constexpr double kPressureConstraintScaleFloor = 1.0e5;
+constexpr double kBoundaryVolatilityKAlpha = 2.2;
 constexpr double kTwoPhaseFlashFeedBasis = 2.0;
 constexpr double kSeparatedLiquidDensity = 8000.0;
 constexpr double kMinimumLiquidVolume = 1.0e-6;
@@ -391,13 +392,13 @@ std::vector<double> volatility_ranked_k_values(
         for (double value : args.m) {
             span = std::max(span, std::abs(value - mean_m));
         }
-        if (span <= 0.0) {
-            throw ValueError(problem_name + " flash seed requires non-degenerate segment numbers.");
+        if (span > 0.0) {
+            for (double value : args.m) {
+                scores.push_back((mean_m - value) / span);
+            }
         }
-        for (double value : args.m) {
-            scores.push_back((mean_m - value) / span);
-        }
-    } else {
+    }
+    if (scores.empty()) {
         const double denominator = static_cast<double>(feed_composition.size() - 1);
         for (std::size_t index = 0; index < feed_composition.size(); ++index) {
             scores.push_back(1.0 - 2.0 * static_cast<double>(index) / denominator);
@@ -631,40 +632,25 @@ std::vector<NamedInitialVariables> pressure_route_seed_candidates(
                 DensitySeedMode::PhasePressureRoot
             )
         );
-        try {
-            const std::vector<double> partner = boundary_partner_composition_from_k_values(
+        const std::vector<double> partner = boundary_partner_composition_from_k_values(
+            args,
+            fixed_composition,
+            fixed_phase_index,
+            problem_name,
+            kBoundaryVolatilityKAlpha
+        );
+        append_if_feasible(
+            "volatility_k_partner_density_root",
+            build_pressure_route_initial_variables_with_partner(
                 args,
                 fixed_composition,
+                partner,
                 fixed_phase_index,
+                temperature,
                 problem_name,
-                2.2
-            );
-            append_if_feasible(
-                "volatility_k_partner_density_root",
-                build_pressure_route_initial_variables_with_partner(
-                    args,
-                    fixed_composition,
-                    partner,
-                    fixed_phase_index,
-                    temperature,
-                    problem_name,
-                    DensitySeedMode::PhasePressureRoot
-                )
-            );
-            append_if_feasible(
-                "volatility_k_partner_phase_role",
-                build_pressure_route_initial_variables_with_partner(
-                    args,
-                    fixed_composition,
-                    partner,
-                    fixed_phase_index,
-                    temperature,
-                    problem_name,
-                    DensitySeedMode::SeparatedPhaseRole
-                )
-            );
-        } catch (const std::exception&) {
-        }
+                DensitySeedMode::PhasePressureRoot
+            )
+        );
     }
     out.push_back({
         "canonical_shifted_partner_phase",
@@ -735,40 +721,25 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
             DensitySeedMode::PhasePressureRoot
         )
     );
-    try {
-        const std::vector<double> partner = boundary_partner_composition_from_k_values(
+    const std::vector<double> partner = boundary_partner_composition_from_k_values(
+        args,
+        fixed_composition,
+        fixed_phase_index,
+        problem_name,
+        kBoundaryVolatilityKAlpha
+    );
+    append_if_feasible(
+        "volatility_k_partner_density_root",
+        build_temperature_route_initial_variables_with_partner(
             args,
             fixed_composition,
+            partner,
             fixed_phase_index,
+            target_pressure,
             problem_name,
-            2.2
-        );
-        append_if_feasible(
-            "volatility_k_partner_density_root",
-            build_temperature_route_initial_variables_with_partner(
-                args,
-                fixed_composition,
-                partner,
-                fixed_phase_index,
-                target_pressure,
-                problem_name,
-                DensitySeedMode::PhasePressureRoot
-            )
-        );
-        append_if_feasible(
-            "volatility_k_partner_phase_role",
-            build_temperature_route_initial_variables_with_partner(
-                args,
-                fixed_composition,
-                partner,
-                fixed_phase_index,
-                target_pressure,
-                problem_name,
-                DensitySeedMode::SeparatedPhaseRole
-            )
-        );
-    } catch (const std::exception&) {
-    }
+            DensitySeedMode::PhasePressureRoot
+        )
+    );
     out.push_back({
         "canonical_shifted_partner_phase",
         build_temperature_route_initial_variables(

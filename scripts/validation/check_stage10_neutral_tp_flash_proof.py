@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 import argparse
-import csv
-from contextlib import contextmanager
 import itertools
 import json
 import math
 import os
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
-
-import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
@@ -22,100 +17,15 @@ for import_root in (REPO_ROOT, SRC_ROOT):
         sys.path.insert(0, import_path)
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
-from scripts.validation import check_equilibrium_benchmark_readiness as readiness
-from scripts.validation import check_stage9_phase_discovery_evidence as stage9_evidence
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft.state.native_adapter import ePCSAFTMixture
 import epcsaft._core as _core
+from scripts.validation import check_equilibrium_benchmark_readiness as readiness
+from scripts.validation import check_stage9_phase_discovery_evidence as stage9_evidence
+from scripts.validation import equilibrium_validation_runtime as runtime
 
-DEFAULT_CASE_DIR = (
-    REPO_ROOT
-    / "data"
-    / "reference"
-    / "equilibrium_benchmarks"
-    / "neutral_tp_flash"
-    / "hydrocarbon_workbook_flash"
-)
-
-
-def _read_csv(path: Path) -> list[dict[str, str]]:
-    return list(csv.DictReader(path.read_text(encoding="utf-8").splitlines()))
-
-
-@contextmanager
-def _suppress_native_stdout():
-    sys.stdout.flush()
-    saved_stdout = os.dup(1)
-    try:
-        with tempfile.TemporaryFile(mode="w+b") as sink:
-            os.dup2(sink.fileno(), 1)
-            yield
-            sys.stdout.flush()
-    finally:
-        os.dup2(saved_stdout, 1)
-        os.close(saved_stdout)
-
-
-@contextmanager
-def _redirect_native_stdout_to_stderr():
-    sys.stdout.flush()
-    sys.stderr.flush()
-    saved_stdout = os.dup(1)
-    try:
-        os.dup2(2, 1)
-        yield
-        sys.stdout.flush()
-    finally:
-        os.dup2(saved_stdout, 1)
-        os.close(saved_stdout)
-
-
-def _indexed_columns(row: dict[str, str], prefix: str) -> list[str]:
-    return readiness._indexed_columns(row, prefix)
-
-
-def _composition(row: dict[str, str]) -> list[float]:
-    return [float(row[column]) for column in _indexed_columns(row, "x")]
-
-
-def _case_rows(case_dir: Path) -> dict[str, dict[str, str]]:
-    rows = _read_csv(case_dir / "phase_splits.csv")
-    case_keys = {row["case_key"] for row in rows}
-    if len(case_keys) != 1:
-        raise ValueError(f"Stage 10 proof expects exactly one case_key, got {sorted(case_keys)}")
-    return {row["phase"]: row for row in rows}
-
-
-def _species(case_rows: dict[str, dict[str, str]], metadata: dict[str, Any]) -> list[str]:
-    if isinstance(metadata.get("species"), list) and metadata["species"]:
-        return [str(item) for item in metadata["species"]]
-    feed = case_rows["feed"]
-    return [feed[column] for column in _indexed_columns(feed, "component_")]
-
-
-def _mixture(case_dir: Path, species: list[str]) -> ePCSAFTMixture:
-    parameter_rows = {row["species"]: row for row in _read_csv(case_dir / "pc_saft_parameters.csv")}
-    if set(parameter_rows) != set(species):
-        raise ValueError("pc_saft_parameters.csv species do not match phase_splits.csv species")
-    index = {name: position for position, name in enumerate(species)}
-    k_ij = np.zeros((len(species), len(species)), dtype=float)
-    for row in _read_csv(case_dir / "binary_interactions.csv"):
-        i = index[row["component_i"]]
-        j = index[row["component_j"]]
-        value = float(row["k_ij"])
-        k_ij[i, j] = value
-        k_ij[j, i] = value
-    return ePCSAFTMixture.from_params(
-        {
-            "m": np.asarray([float(parameter_rows[name]["m"]) for name in species], dtype=float),
-            "s": np.asarray([float(parameter_rows[name]["s_A"]) for name in species], dtype=float),
-            "e": np.asarray([float(parameter_rows[name]["e_over_k_K"]) for name in species], dtype=float),
-            "k_ij": k_ij,
-        },
-        species=species,
-    )
+DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
 
 
 def _phase_totals(route_payload: dict[str, Any]) -> list[float]:
@@ -123,21 +33,6 @@ def _phase_totals(route_payload: dict[str, Any]) -> list[float]:
     if isinstance(postsolve, dict) and isinstance(postsolve.get("phase_amount_totals"), list):
         return [float(value) for value in postsolve["phase_amount_totals"]]
     return [float(sum(phase_amounts)) for phase_amounts in route_payload.get("phase_amounts", [])]
-
-
-def _material_balance_row(case_dir: Path) -> dict[str, str]:
-    rows = _read_csv(case_dir / "material_balance_readiness.csv")
-    if len(rows) != 1:
-        raise ValueError("Stage 10 proof expects exactly one material-balance readiness row")
-    return rows[0]
-
-
-def _expected_phase_fractions(case_dir: Path) -> dict[str, float]:
-    row = _material_balance_row(case_dir)
-    return {
-        "vapor": float(row["vapor_fraction"]),
-        "liquid": float(row["liquid_fraction"]),
-    }
 
 
 def _best_phase_match(
@@ -174,15 +69,15 @@ def _best_phase_match(
 
 
 def _run_route_payload(case_dir: Path, metadata: dict[str, Any], *, debug: bool) -> dict[str, Any]:
-    case_rows = _case_rows(case_dir)
-    species = _species(case_rows, metadata)
-    mix = _mixture(case_dir, species)
-    feed = case_rows["feed"]
+    rows = runtime.case_rows(case_dir)
+    species = runtime.species(rows, metadata)
+    mix = runtime.mixture(case_dir, species)
+    feed = rows["feed"]
     request = {
         "route": "neutral_tp_flash",
         "temperature": float(feed["temperature_K"]),
         "pressure": float(feed["pressure_MPa"]) * 1.0e6,
-        "composition": _composition(feed),
+        "composition": runtime.composition(feed),
         "composition_role": "feed",
     }
     return dict(
@@ -216,9 +111,9 @@ def _run_route(
     if show_native_output:
         return _run_route_payload(case_dir, metadata, debug=debug)
     if redirect_native_output_to_stderr:
-        with _redirect_native_stdout_to_stderr():
+        with runtime.redirect_native_stdout_to_stderr():
             return _run_route_payload(case_dir, metadata, debug=debug)
-    with _suppress_native_stdout():
+    with runtime.suppress_native_stdout():
         return _run_route_payload(case_dir, metadata, debug=debug)
 
 
@@ -250,12 +145,12 @@ def evaluate_proof(
         phase_totals = _phase_totals(route_payload)
         total_amount = sum(phase_totals)
         actual_fractions = [amount / total_amount for amount in phase_totals] if total_amount > 0.0 else []
-        case_rows = _case_rows(case_dir)
+        case_rows = runtime.case_rows(case_dir)
         expected_compositions = {
-            "liquid": _composition(case_rows["liquid"]),
-            "vapor": _composition(case_rows["vapor"]),
+            "liquid": runtime.composition(case_rows["liquid"]),
+            "vapor": runtime.composition(case_rows["vapor"]),
         }
-        expected_fractions = _expected_phase_fractions(case_dir)
+        expected_fractions = runtime.expected_phase_fractions(case_dir)
         comparison = _best_phase_match(
             actual_compositions,
             actual_fractions,
@@ -365,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         stage9_source = "generated"
     else:
-        stage9_payload = readiness._read_optional_stage9_evidence(args.stage9_evidence_json)
+        stage9_payload = json.loads(args.stage9_evidence_json.read_text(encoding="utf-8"))
         stage9_source = str(args.stage9_evidence_json)
     payload = evaluate_proof(
         args.case_dir,

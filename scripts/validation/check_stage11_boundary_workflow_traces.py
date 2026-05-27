@@ -16,14 +16,14 @@ for import_root in (REPO_ROOT, SRC_ROOT):
         sys.path.insert(0, import_path)
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
-from scripts.validation import check_stage10_neutral_tp_flash_proof as stage10
 
 apply_native_runtime_env(os.environ)
 
 import epcsaft._core as _core
 from epcsaft.equilibrium.core.native_results import native_route_solved_pressure, native_route_solved_temperature
+from scripts.validation import equilibrium_validation_runtime as runtime
 
-DEFAULT_CASE_DIR = stage10.DEFAULT_CASE_DIR
+DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
 
 CURRENT_BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
     "bubble_pressure": {
@@ -129,7 +129,7 @@ def _planned_workflows(trace_points_by_label: dict[str, list[dict[str, Any]]] | 
 
 def _native_ipopt_compiled() -> bool:
     try:
-        with stage10._suppress_native_stdout():
+        with runtime.suppress_native_stdout():
             return bool(_core._native_ipopt_smoke()["compiled"])
     except Exception:
         return False
@@ -207,9 +207,9 @@ def _run_native_route(
         )
 
     if debug:
-        with stage10._redirect_native_stdout_to_stderr():
+        with runtime.redirect_native_stdout_to_stderr():
             return run()
-    with stage10._suppress_native_stdout():
+    with runtime.suppress_native_stdout():
         return run()
 
 
@@ -323,15 +323,15 @@ def _selected_routes(route: str | None) -> list[str]:
 
 def _run_route_points(args: argparse.Namespace) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
     metadata = json.loads(args.case_dir.joinpath("metadata.json").read_text(encoding="utf-8"))
-    rows = stage10._case_rows(args.case_dir)
-    species = stage10._species(rows, metadata)
-    mix = stage10._mixture(args.case_dir, species)
+    rows = runtime.case_rows(args.case_dir)
+    species = runtime.species(rows, metadata)
+    mix = runtime.mixture(args.case_dir, species)
     blockers: list[str] = []
     trace_points_by_label: dict[str, list[dict[str, Any]]] = {}
     for route in _selected_routes(args.route):
         spec = CURRENT_BOUNDARY_ROUTES[route]
         row = rows[str(spec["source_phase"])]
-        samples = _composition_samples(stage10._composition(row), int(args.trace_point_count))
+        samples = _composition_samples(runtime.composition(row), int(args.trace_point_count))
         for sample_index, composition in enumerate(samples):
             request = _route_request(route, spec, row, composition)
             payload = _run_native_route(

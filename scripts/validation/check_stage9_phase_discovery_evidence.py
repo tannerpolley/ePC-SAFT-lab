@@ -4,8 +4,6 @@ import argparse
 import json
 import os
 import sys
-import tempfile
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -22,8 +20,9 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft.state.native_adapter import ePCSAFTMixture
 import epcsaft._core as _core
+from epcsaft.state.native_adapter import ePCSAFTMixture
+from scripts.validation import equilibrium_validation_runtime as runtime
 
 STAGE9_EVIDENCE_REQUIREMENTS = (
     "deterministic_screening",
@@ -52,38 +51,10 @@ def _native_ipopt_compiled(*, show_native_output: bool = False) -> bool:
     try:
         if show_native_output:
             return bool(_core._native_ipopt_smoke()["compiled"])
-        with _suppress_native_stdout():
+        with runtime.suppress_native_stdout():
             return bool(_core._native_ipopt_smoke()["compiled"])
     except Exception:
         return False
-
-
-@contextmanager
-def _suppress_native_stdout():
-    sys.stdout.flush()
-    saved_stdout = os.dup(1)
-    try:
-        with tempfile.TemporaryFile(mode="w+b") as sink:
-            os.dup2(sink.fileno(), 1)
-            yield
-            sys.stdout.flush()
-    finally:
-        os.dup2(saved_stdout, 1)
-        os.close(saved_stdout)
-
-
-@contextmanager
-def _redirect_native_stdout_to_stderr():
-    sys.stdout.flush()
-    sys.stderr.flush()
-    saved_stdout = os.dup(1)
-    try:
-        os.dup2(2, 1)
-        yield
-        sys.stdout.flush()
-    finally:
-        os.dup2(saved_stdout, 1)
-        os.close(saved_stdout)
 
 
 def _stage9_discovery(mix: ePCSAFTMixture) -> dict[str, Any]:
@@ -143,10 +114,10 @@ def _stage9_route_result(
     if show_native_output:
         route = _stage9_route_payload(mix)
     elif redirect_native_output_to_stderr:
-        with _redirect_native_stdout_to_stderr():
+        with runtime.redirect_native_stdout_to_stderr():
             route = _stage9_route_payload(mix)
     else:
-        with _suppress_native_stdout():
+        with runtime.suppress_native_stdout():
             route = _stage9_route_payload(mix)
     return dict(route)
 
