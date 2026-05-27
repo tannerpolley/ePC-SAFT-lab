@@ -13,8 +13,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CASE_DIR = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
 )
-ACCEPTED_STAGE10_MODEL_FAMILIES = {"PC-SAFT", "ePC-SAFT"}
-STAGE9_EVIDENCE_REQUIREMENTS = (
+ACCEPTED_NEUTRAL_FLASH_MODEL_FAMILIES = {"PC-SAFT", "ePC-SAFT"}
+PHASE_DISCOVERY_REQUIREMENTS = (
     "deterministic_screening",
     "continuous_tpd_minimization",
     "held_stage_i_stability",
@@ -45,7 +45,7 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
     return list(csv.DictReader(path.read_text(encoding="utf-8").splitlines()))
 
 
-def _read_optional_stage9_evidence(path: Path | None) -> dict[str, Any] | None:
+def _read_optional_phase_discovery_payload(path: Path | None) -> dict[str, Any] | None:
     if path is None:
         return None
     return _read_json(path)
@@ -137,7 +137,7 @@ def _fixture_field_status(
     computed_rows: list[dict[str, Any]],
 ) -> dict[str, str]:
     source_model_family = str(metadata.get("source_model_family", ""))
-    accepted_model = source_model_family in ACCEPTED_STAGE10_MODEL_FAMILIES
+    accepted_model = source_model_family in ACCEPTED_NEUTRAL_FLASH_MODEL_FAMILIES
     feed_statuses = {str(row["reported_feed_status"]) for row in computed_rows}
     all_feeds_normalized = bool(computed_rows) and feed_statuses == {"normalized"}
     all_phase_fractions_present = bool(computed_rows) and all(
@@ -217,7 +217,7 @@ def _material_balance_residual(
 def _case_blockers(metadata: dict[str, Any], row: dict[str, Any]) -> list[str]:
     blockers = []
     source_model_family = str(metadata.get("source_model_family", ""))
-    if source_model_family not in ACCEPTED_STAGE10_MODEL_FAMILIES:
+    if source_model_family not in ACCEPTED_NEUTRAL_FLASH_MODEL_FAMILIES:
         blockers.append("model_family_mismatch")
     if str(metadata.get("runtime_model_support", "")) == "absent_from_epcsaft":
         blockers.append("saft_vr_runtime_absent")
@@ -353,37 +353,37 @@ def _computed_feed_correction_rows(case_dir: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _stage9_evidence_from_payload(payload: dict[str, Any] | None) -> dict[str, str]:
+def _phase_discovery_status_from_payload(payload: dict[str, Any] | None) -> dict[str, str]:
     if payload is None:
-        return {key: "required_not_verified" for key in STAGE9_EVIDENCE_REQUIREMENTS}
+        return {key: "required_not_verified" for key in PHASE_DISCOVERY_REQUIREMENTS}
     raw_statuses = payload.get("evidence_status", {})
     if not isinstance(raw_statuses, dict):
         raw_statuses = {}
     return {
         key: str(raw_statuses.get(key, "required_not_verified"))
-        for key in STAGE9_EVIDENCE_REQUIREMENTS
+        for key in PHASE_DISCOVERY_REQUIREMENTS
     }
 
 
-def _stage9_evidence_complete(payload: dict[str, Any] | None) -> bool:
+def _phase_discovery_complete(payload: dict[str, Any] | None) -> bool:
     if payload is None:
         return False
-    statuses = _stage9_evidence_from_payload(payload)
+    statuses = _phase_discovery_status_from_payload(payload)
     return bool(payload.get("complete", False)) and all(
         value.startswith("verified") for value in statuses.values()
     )
 
 
-def _stage9_incomplete_requirements(payload: dict[str, Any] | None) -> list[str]:
-    statuses = _stage9_evidence_from_payload(payload)
+def _phase_discovery_incomplete_requirements(payload: dict[str, Any] | None) -> list[str]:
+    statuses = _phase_discovery_status_from_payload(payload)
     return [
         key
-        for key in STAGE9_EVIDENCE_REQUIREMENTS
+        for key in PHASE_DISCOVERY_REQUIREMENTS
         if not statuses[key].startswith("verified")
     ]
 
 
-def evaluate_case_dir(case_dir: Path, stage9_evidence_payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def evaluate_case_dir(case_dir: Path, phase_discovery_payload: dict[str, Any] | None = None) -> dict[str, Any]:
     metadata = _read_json(case_dir / "metadata.json")
     phase_rows = _read_csv(case_dir / "phase_splits.csv")
     computed_rows = _computed_material_balance_rows(metadata, case_dir)
@@ -396,30 +396,30 @@ def evaluate_case_dir(case_dir: Path, stage9_evidence_payload: dict[str, Any] | 
     stored_readiness = _read_csv(case_dir / "material_balance_readiness.csv")
     mismatches = _compare_stored_readiness(computed_rows, stored_readiness)
     blockers = list(dict.fromkeys(reason for row in computed_rows for reason in row["blockers"]))
-    proof_readiness = metadata.get("proof_readiness", {})
-    stage9_evidence_required = bool(proof_readiness.get("stage9_evidence_path_required", False))
-    stage9_evidence = _stage9_evidence_from_payload(stage9_evidence_payload)
-    stage9_incomplete_requirements = _stage9_incomplete_requirements(stage9_evidence_payload)
-    stage9_evidence_verified = (
-        _stage9_evidence_complete(stage9_evidence_payload)
-        if stage9_evidence_payload is not None
-        else bool(proof_readiness.get("stage9_evidence_path_verified", False))
+    fixture_requirements = metadata.get("proof_readiness", {})
+    phase_discovery_required = bool(fixture_requirements.get("stage9_evidence_path_required", False))
+    phase_discovery_status = _phase_discovery_status_from_payload(phase_discovery_payload)
+    phase_discovery_incomplete = _phase_discovery_incomplete_requirements(phase_discovery_payload)
+    phase_discovery_verified = (
+        _phase_discovery_complete(phase_discovery_payload)
+        if phase_discovery_payload is not None
+        else bool(fixture_requirements.get("stage9_evidence_path_verified", False))
     )
-    if stage9_evidence_required and not stage9_evidence_verified:
+    if phase_discovery_required and not phase_discovery_verified:
         blockers.append("stage9_evidence_path_not_verified")
-    if bool(proof_readiness.get("source_confirmed_feed_correction_required", False)):
+    if bool(fixture_requirements.get("source_confirmed_feed_correction_required", False)):
         blockers.append("source_confirmed_feed_correction_required")
     if unmet_fixture_fields:
         blockers.append("executable_fixture_contract_incomplete")
     if mismatches:
         blockers.append("stored_material_balance_readiness_mismatch")
     executable = (
-        str(metadata.get("source_model_family", "")) in ACCEPTED_STAGE10_MODEL_FAMILIES
+        str(metadata.get("source_model_family", "")) in ACCEPTED_NEUTRAL_FLASH_MODEL_FAMILIES
         and all(bool(row["proof_eligible"]) for row in computed_rows)
         and not unmet_fixture_fields
         and not mismatches
-        and (not stage9_evidence_required or stage9_evidence_verified)
-        and not bool(proof_readiness.get("source_confirmed_feed_correction_required", False))
+        and (not phase_discovery_required or phase_discovery_verified)
+        and not bool(fixture_requirements.get("source_confirmed_feed_correction_required", False))
     )
     return {
         "name": metadata.get("name", ""),
@@ -428,10 +428,10 @@ def evaluate_case_dir(case_dir: Path, stage9_evidence_payload: dict[str, Any] | 
         "source_model_family": metadata.get("source_model_family", ""),
         "proof_status": "executable" if executable else "blocked",
         "executable": executable,
-        "stage9_evidence_path_required": stage9_evidence_required,
-        "stage9_evidence_path_verified": stage9_evidence_verified,
-        "stage9_evidence": stage9_evidence,
-        "stage9_incomplete_requirements": stage9_incomplete_requirements,
+        "stage9_evidence_path_required": phase_discovery_required,
+        "stage9_evidence_path_verified": phase_discovery_verified,
+        "stage9_evidence": phase_discovery_status,
+        "stage9_incomplete_requirements": phase_discovery_incomplete,
         "executable_fixture_required_fields": list(EXECUTABLE_FIXTURE_REQUIRED_FIELDS),
         "executable_fixture_field_status": fixture_field_status,
         "unmet_executable_fixture_fields": unmet_fixture_fields,
@@ -463,27 +463,28 @@ def _print_human(payload: dict[str, Any]) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Check equilibrium benchmark readiness for Stage 10 proof use.")
+    parser = argparse.ArgumentParser(description="Check whether an equilibrium benchmark fixture can run.")
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
     parser.add_argument(
         "--stage9-evidence-json",
+        dest="phase_discovery_json",
         type=Path,
         default=None,
-        help="Machine-readable Stage 9 evidence payload from check_stage9_phase_discovery_evidence.py.",
+        help="Machine-readable phase-discovery payload from check_stage9_phase_discovery_evidence.py.",
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument(
         "--require-executable",
         action="store_true",
-        help="Return a failing exit code when the fixture is not executable proof evidence.",
+        help="Return a failing exit code when the fixture is not executable.",
     )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    stage9_evidence_payload = _read_optional_stage9_evidence(args.stage9_evidence_json)
-    payload = evaluate_case_dir(args.case_dir, stage9_evidence_payload=stage9_evidence_payload)
+    phase_discovery_payload = _read_optional_phase_discovery_payload(args.phase_discovery_json)
+    payload = evaluate_case_dir(args.case_dir, phase_discovery_payload=phase_discovery_payload)
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
@@ -492,7 +493,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     if args.require_executable and not payload["executable"]:
         print(
-            f"{payload['case_label']} is not an executable Stage 10 proof fixture.",
+            f"{payload['case_label']} is not an executable equilibrium fixture.",
             file=sys.stderr,
         )
         return 2

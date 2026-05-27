@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Check Stage 9 Phase Discovery Evidence" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="Check Phase Discovery" type="PythonConfigurationType" factoryName="Python">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

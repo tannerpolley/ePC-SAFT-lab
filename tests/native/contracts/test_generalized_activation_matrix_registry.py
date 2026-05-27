@@ -62,7 +62,7 @@ def test_family_labels_replace_numeric_matrix_ids() -> None:
     assert "roadmap labels only" in gfpe_text
 
 
-def test_stage_plan_is_gfpe_first_and_pretreatment_centered() -> None:
+def test_gfpe_plan_is_pretreatment_centered() -> None:
     stage_text = STAGE_PLAN_PATH.read_text(encoding="utf-8")
 
     assert "GFPE is the organizing spine for this file." in stage_text
@@ -168,7 +168,7 @@ def test_deterministic_screening_is_not_called_full_held() -> None:
             assert row["production_exposed"] is False, row["family_label"]
 
 
-def test_gfpe_ipopt_layer_requires_stage8_scaling_and_profile_gates() -> None:
+def test_gfpe_ipopt_layer_requires_shared_scaling_and_profile_gates() -> None:
     gfpe_text = GFPE_PATH.read_text(encoding="utf-8")
     flattened = gfpe_text.replace("\n", " ")
 
@@ -204,7 +204,7 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert electrolyte["derivative_contract"] == expected_derivative_contract
 
 
-def test_proof_cases_reference_descriptive_family_labels() -> None:
+def test_benchmark_cases_reference_descriptive_family_labels() -> None:
     family_labels = set(_family_by_label())
 
     for row in _family_rows():

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Ipopt Exact Hessian Proofs" type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="Check Neutral TP Flash Fixture Debug" type="PythonConfigurationType" factoryName="Python">
     <module name="ePC-SAFT" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -16,8 +16,8 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
-    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/dev/run_ipopt_exact_hessian_proofs.py" />
-    <option name="PARAMETERS" value="" />
+    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/validation/check_stage10_neutral_tp_flash_proof.py" />
+    <option name="PARAMETERS" value="--generate-stage9-evidence --debug --require-proof" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

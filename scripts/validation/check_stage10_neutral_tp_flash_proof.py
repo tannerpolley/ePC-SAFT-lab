@@ -22,7 +22,7 @@ apply_native_runtime_env(os.environ)
 
 import epcsaft._core as _core
 from scripts.validation import check_equilibrium_benchmark_readiness as readiness
-from scripts.validation import check_stage9_phase_discovery_evidence as stage9_evidence
+from scripts.validation import check_stage9_phase_discovery_evidence as phase_discovery_checker
 from scripts.validation import equilibrium_validation_runtime as runtime
 
 DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
@@ -117,16 +117,16 @@ def _run_route(
         return _run_route_payload(case_dir, metadata, debug=debug)
 
 
-def evaluate_proof(
+def evaluate_neutral_flash(
     case_dir: Path,
-    stage9_evidence_payload: dict[str, Any] | None,
+    phase_discovery_payload: dict[str, Any] | None,
     *,
     debug: bool = False,
     show_native_output: bool = False,
     redirect_native_output_to_stderr: bool = False,
 ) -> dict[str, Any]:
     metadata = json.loads((case_dir / "metadata.json").read_text(encoding="utf-8"))
-    readiness_payload = readiness.evaluate_case_dir(case_dir, stage9_evidence_payload=stage9_evidence_payload)
+    readiness_payload = readiness.evaluate_case_dir(case_dir, phase_discovery_payload=phase_discovery_payload)
     blockers = list(readiness_payload["blockers"])
     route_payload: dict[str, Any] | None = None
     comparison: dict[str, Any] | None = None
@@ -176,13 +176,13 @@ def evaluate_proof(
         )
         if not route_accepted:
             if route_payload.get("solver_status") != "success":
-                blockers.append(f"stage10_route_solver_not_converged_{route_payload.get('solver_status', 'unknown')}")
+                blockers.append(f"neutral_flash_route_solver_not_converged_{route_payload.get('solver_status', 'unknown')}")
             if route_payload.get("application_status") != "solve_succeeded":
                 blockers.append(
-                    f"stage10_route_application_not_converged_{route_payload.get('application_status', 'unknown')}"
+                    f"neutral_flash_route_application_not_converged_{route_payload.get('application_status', 'unknown')}"
                 )
-            blockers.append("stage10_route_proof_failed")
-    proof_complete = readiness_payload["executable"] and route_accepted and not blockers
+            blockers.append("neutral_flash_route_validation_failed")
+    validation_complete = readiness_payload["executable"] and route_accepted and not blockers
     route_summary = None
     if route_payload is not None:
         seed_attempts = list(route_payload.get("seed_attempts") or ())
@@ -209,8 +209,8 @@ def evaluate_proof(
     return {
         "case_label": metadata["case_label"],
         "family_label": metadata["family_label"],
-        "proof_status": "complete" if proof_complete else "blocked",
-        "proof_complete": proof_complete,
+        "proof_status": "complete" if validation_complete else "blocked",
+        "proof_complete": validation_complete,
         "readiness": readiness_payload,
         "route": route_summary,
         "comparison": comparison,
@@ -219,18 +219,20 @@ def evaluate_proof(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run the Stage 10 neutral TP flash executable proof.")
+    parser = argparse.ArgumentParser(description="Run the neutral TP flash fixture check.")
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
-    stage9_source = parser.add_mutually_exclusive_group(required=True)
-    stage9_source.add_argument(
+    phase_discovery_source = parser.add_mutually_exclusive_group(required=True)
+    phase_discovery_source.add_argument(
         "--stage9-evidence-json",
+        dest="phase_discovery_json",
         type=Path,
-        help="Read a previously generated Stage 9 evidence JSON payload.",
+        help="Read a previously generated phase-discovery JSON payload.",
     )
-    stage9_source.add_argument(
+    phase_discovery_source.add_argument(
         "--generate-stage9-evidence",
+        dest="generate_phase_discovery",
         action="store_true",
-        help="Explicitly generate Stage 9 route-refinement evidence before running the Stage 10 proof.",
+        help="Generate phase-discovery route-refinement data before running the fixture check.",
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument(
@@ -240,8 +242,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--require-proof",
+        dest="require_complete",
         action="store_true",
-        help="Return a failing exit code unless the Stage 10 proof completes.",
+        help="Return a failing exit code unless the neutral TP flash check completes.",
     )
     return parser
 
@@ -252,24 +255,24 @@ def main(argv: list[str] | None = None) -> int:
         os.environ["EPCSAFT_EQUILIBRIUM_DEBUG"] = "1"
     show_native_output = args.debug and not args.json
     redirect_native_output_to_stderr = args.debug and args.json
-    if args.generate_stage9_evidence:
-        stage9_payload = stage9_evidence.evaluate_stage9_evidence(
+    if args.generate_phase_discovery:
+        phase_discovery_payload = phase_discovery_checker.evaluate_phase_discovery(
             include_route_refinement=True,
             show_native_output=show_native_output,
             redirect_native_output_to_stderr=redirect_native_output_to_stderr,
         )
-        stage9_source = "generated"
+        phase_discovery_source = "generated"
     else:
-        stage9_payload = json.loads(args.stage9_evidence_json.read_text(encoding="utf-8"))
-        stage9_source = str(args.stage9_evidence_json)
-    payload = evaluate_proof(
+        phase_discovery_payload = json.loads(args.phase_discovery_json.read_text(encoding="utf-8"))
+        phase_discovery_source = str(args.phase_discovery_json)
+    payload = evaluate_neutral_flash(
         args.case_dir,
-        stage9_payload,
+        phase_discovery_payload,
         debug=args.debug,
         show_native_output=show_native_output,
         redirect_native_output_to_stderr=redirect_native_output_to_stderr,
     )
-    payload["stage9_evidence_source"] = stage9_source
+    payload["stage9_evidence_source"] = phase_discovery_source
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
@@ -306,8 +309,8 @@ def main(argv: list[str] | None = None) -> int:
                 f"composition_abs={comparison.get('max_composition_abs_error')} "
                 f"phase_fraction_abs={comparison.get('max_phase_fraction_abs_error')}"
             )
-    if args.require_proof and not payload["proof_complete"]:
-        print(f"{payload['case_label']} did not complete Stage 10 proof.", file=sys.stderr)
+    if args.require_complete and not payload["proof_complete"]:
+        print(f"{payload['case_label']} did not complete the neutral TP flash check.", file=sys.stderr)
         return 2
     return 0
 

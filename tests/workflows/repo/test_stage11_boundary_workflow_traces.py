@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-STAGE11_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage11_boundary_workflow_traces.py"
+BOUNDARY_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage11_boundary_workflow_traces.py"
 
 
-def _run_stage11_checker(*args: str) -> subprocess.CompletedProcess[str]:
+def _run_boundary_checker(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(STAGE11_CHECKER), *args],
+        [sys.executable, str(BOUNDARY_CHECKER), *args],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -26,14 +26,14 @@ def _load_stdout_json(result: subprocess.CompletedProcess[str]) -> dict[str, obj
     return json.loads(result.stdout)
 
 
-def test_stage11_boundary_workflow_contracts_keep_cloud_shadow_planned() -> None:
-    result = _run_stage11_checker("--json", "--contracts-only")
+def test_boundary_workflow_contracts_keep_cloud_shadow_planned() -> None:
+    result = _run_boundary_checker("--json", "--contracts-only")
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
     workflows = {row["label"]: row for row in payload["workflows"]}
 
-    assert payload["stage11_status"] == "contracts_available"
+    assert payload["boundary_status"] == "contracts_available"
     assert set(workflows) == {"Bubble point", "Dew point", "Cloud point", "Shadow point"}
     assert workflows["Bubble point"]["runtime_status"] == "executable_current_routes"
     assert workflows["Dew point"]["runtime_status"] == "executable_current_routes"
@@ -47,13 +47,13 @@ def test_stage11_boundary_workflow_contracts_keep_cloud_shadow_planned() -> None
     assert set(workflows["Dew point"]["diagram_targets"]) == {"P-x", "T-x"}
 
 
-def test_stage11_checker_rejects_route_sweeps_without_explicit_opt_in() -> None:
-    result = _run_stage11_checker("--json", "--run-current-boundary-route")
+def test_boundary_checker_rejects_route_sweeps_without_explicit_opt_in() -> None:
+    result = _run_boundary_checker("--json", "--run-current-boundary-route")
 
     assert result.returncode == 2, result.stdout + result.stderr
     payload = _load_stdout_json(result)
 
-    assert payload["stage11_status"] == "route_sweep_rejected"
+    assert payload["boundary_status"] == "route_sweep_rejected"
     assert payload["requested_route_point_count"] == 4
     assert "explicit_route_or_allow_route_sweep_required" in payload["blockers"]
 
@@ -61,13 +61,13 @@ def test_stage11_checker_rejects_route_sweeps_without_explicit_opt_in() -> None:
 @pytest.mark.ipopt
 @pytest.mark.native_solver
 @pytest.mark.slow
-def test_stage11_current_boundary_route_reports_strict_convergence_and_debug_output() -> None:
+def test_boundary_route_reports_strict_convergence_and_debug_output() -> None:
     import epcsaft._core as _core
 
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
 
-    result = _run_stage11_checker(
+    result = _run_boundary_checker(
         "--json",
         "--run-current-boundary-route",
         "--route",
@@ -82,7 +82,7 @@ def test_stage11_current_boundary_route_reports_strict_convergence_and_debug_out
 
     assert "EXIT: Optimal Solution Found." in result.stderr
     assert "EXIT: Maximum Number of Iterations Exceeded." not in result.stderr
-    assert payload["stage11_status"] == "complete_current_boundary_convergence"
+    assert payload["boundary_status"] == "complete_route_convergence"
     assert payload["complete"] is True
     assert payload["source_fixture"].endswith("hydrocarbon_workbook_flash")
     assert payload["requested_route_point_count"] == 1
@@ -113,13 +113,13 @@ def test_stage11_current_boundary_route_reports_strict_convergence_and_debug_out
 @pytest.mark.ipopt
 @pytest.mark.native_solver
 @pytest.mark.slow
-def test_stage11_current_boundary_route_trace_completes_only_with_explicit_opt_in() -> None:
+def test_boundary_route_points_complete_only_with_explicit_opt_in() -> None:
     import epcsaft._core as _core
 
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
 
-    result = _run_stage11_checker(
+    result = _run_boundary_checker(
         "--json",
         "--run-current-boundary-route",
         "--allow-route-sweep",
@@ -132,7 +132,7 @@ def test_stage11_current_boundary_route_trace_completes_only_with_explicit_opt_i
     payload = _load_stdout_json(result)
     workflows = {row["label"]: row for row in payload["workflows"]}
 
-    assert payload["stage11_status"] == "complete_current_boundary_convergence"
+    assert payload["boundary_status"] == "complete_route_convergence"
     assert payload["complete"] is True
     assert payload["requested_route_point_count"] == 8
     assert payload["trace_summary"]["accepted_trace_point_count"] == 8

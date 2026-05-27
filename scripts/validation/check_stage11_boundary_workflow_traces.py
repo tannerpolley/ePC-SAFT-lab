@@ -25,7 +25,7 @@ from scripts.validation import equilibrium_validation_runtime as runtime
 
 DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
 
-CURRENT_BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
+BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
     "bubble_pressure": {
         "workflow_label": "Bubble point",
         "diagram_target": "P-x",
@@ -65,7 +65,7 @@ CURRENT_BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
 }
 
 
-def _planned_workflows(trace_points_by_label: dict[str, list[dict[str, Any]]] | None = None) -> list[dict[str, Any]]:
+def _workflow_contracts(trace_points_by_label: dict[str, list[dict[str, Any]]] | None = None) -> list[dict[str, Any]]:
     trace_points_by_label = trace_points_by_label or {}
     workflows = [
         {
@@ -274,13 +274,13 @@ def _solved_boundary_value(route: str, spec: dict[str, Any], route_payload: dict
     return native_route_solved_temperature(route_payload, route)
 
 
-def _route_trace_point(
+def _route_point_result(
     route: str,
     sample_index: int,
     composition: list[float],
     route_payload: dict[str, Any],
 ) -> dict[str, Any]:
-    spec = CURRENT_BOUNDARY_ROUTES[route]
+    spec = BOUNDARY_ROUTES[route]
     seed_attempts = _seed_attempt_summary(route_payload)
     iteration_limit_attempts = _iteration_limit_seed_attempts(route_payload)
     strict = _strict_convergence(route_payload, iteration_limit_attempts)
@@ -317,7 +317,7 @@ def _route_trace_point(
 
 def _selected_routes(route: str | None) -> list[str]:
     if route is None:
-        return list(CURRENT_BOUNDARY_ROUTES)
+        return list(BOUNDARY_ROUTES)
     return [route]
 
 
@@ -329,7 +329,7 @@ def _run_route_points(args: argparse.Namespace) -> tuple[dict[str, list[dict[str
     blockers: list[str] = []
     trace_points_by_label: dict[str, list[dict[str, Any]]] = {}
     for route in _selected_routes(args.route):
-        spec = CURRENT_BOUNDARY_ROUTES[route]
+        spec = BOUNDARY_ROUTES[route]
         row = rows[str(spec["source_phase"])]
         samples = _composition_samples(runtime.composition(row), int(args.trace_point_count))
         for sample_index, composition in enumerate(samples):
@@ -340,14 +340,14 @@ def _run_route_points(args: argparse.Namespace) -> tuple[dict[str, list[dict[str
                 debug=bool(args.debug),
                 max_iterations=int(args.max_iterations),
             )
-            point = _route_trace_point(route, sample_index, composition, payload)
+            point = _route_point_result(route, sample_index, composition, payload)
             trace_points_by_label.setdefault(str(spec["workflow_label"]), []).append(point)
             if point["status"] != "accepted":
                 blockers.append(f"{route}_strict_convergence_missing")
     return trace_points_by_label, list(dict.fromkeys(blockers))
 
 
-def _trace_summary(workflows: list[dict[str, Any]]) -> dict[str, int]:
+def _route_point_summary(workflows: list[dict[str, Any]]) -> dict[str, int]:
     points = [point for workflow in workflows for point in workflow["trace_points"]]
     accepted = [point for point in points if point["status"] == "accepted"]
     return {
@@ -365,16 +365,16 @@ def _source_fixture(case_dir: Path) -> str:
 
 
 def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blockers: list[str]) -> dict[str, Any]:
-    summary = _trace_summary(workflows)
+    summary = _route_point_summary(workflows)
     complete = summary["requested_trace_point_count"] > 0 and summary["failed_trace_point_count"] == 0 and not blockers
     if not args.run_current_boundary_route:
         status = "contracts_available"
     elif complete:
-        status = "complete_current_boundary_convergence"
+        status = "complete_route_convergence"
     else:
-        status = "blocked_current_boundary_convergence"
+        status = "blocked_route_convergence"
     return {
-        "stage11_status": status,
+        "boundary_status": status,
         "complete": complete,
         "source_fixture": _source_fixture(args.case_dir),
         "requested_route_point_count": summary["requested_trace_point_count"],
@@ -388,28 +388,28 @@ def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     selected_route_count = len(_selected_routes(args.route)) if args.run_current_boundary_route else 0
     requested_route_point_count = selected_route_count * int(args.trace_point_count)
     if requested_route_point_count > 1 and not args.allow_route_sweep:
-        workflows = _planned_workflows()
+        workflows = _workflow_contracts()
         payload = {
-            "stage11_status": "route_sweep_rejected",
+            "boundary_status": "route_sweep_rejected",
             "complete": False,
             "source_fixture": _source_fixture(args.case_dir),
             "requested_route_point_count": requested_route_point_count,
-            "trace_summary": _trace_summary(workflows),
+            "trace_summary": _route_point_summary(workflows),
             "blockers": ["explicit_route_or_allow_route_sweep_required"],
             "workflows": workflows,
         }
         return payload, 2
 
     if args.contracts_only or not args.run_current_boundary_route:
-        payload = _base_payload(args, _planned_workflows(), [])
+        payload = _base_payload(args, _workflow_contracts(), [])
         return payload, 0
 
     if not _native_ipopt_compiled():
-        payload = _base_payload(args, _planned_workflows(), ["native_ipopt_not_compiled"])
+        payload = _base_payload(args, _workflow_contracts(), ["native_ipopt_not_compiled"])
         return payload, 2 if args.require_complete else 0
 
     trace_points_by_label, blockers = _run_route_points(args)
-    workflows = _planned_workflows(trace_points_by_label)
+    workflows = _workflow_contracts(trace_points_by_label)
     payload = _base_payload(args, workflows, blockers)
     if args.require_complete and not payload["complete"]:
         return payload, 2
@@ -417,7 +417,7 @@ def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Check Stage 11 derived boundary workflow contracts and diagnostics.")
+    parser = argparse.ArgumentParser(description="Check derived boundary workflow contracts.")
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument("--contracts-only", action="store_true", help="Check workflow contracts without route solves.")
@@ -426,7 +426,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run current executable bubble/dew routes. Requires one route unless --allow-route-sweep is set.",
     )
-    parser.add_argument("--route", choices=tuple(CURRENT_BOUNDARY_ROUTES), help="Run one current boundary route.")
+    parser.add_argument("--route", choices=tuple(BOUNDARY_ROUTES), help="Run one current boundary route.")
     parser.add_argument("--trace-point-count", type=int, default=1)
     parser.add_argument(
         "--allow-route-sweep",
@@ -448,7 +448,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _print_text(payload: dict[str, Any]) -> None:
-    print(f"Stage 11 status: {payload['stage11_status']}")
+    print(f"Boundary status: {payload['boundary_status']}")
     print(f"source_fixture: {payload['source_fixture']}")
     print(f"requested_route_point_count: {payload['requested_route_point_count']}")
     if payload["blockers"]:

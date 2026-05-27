@@ -47,7 +47,7 @@ def case_rows(case_dir: Path) -> dict[str, dict[str, str]]:
     rows = read_csv(case_dir / "phase_splits.csv")
     case_keys = {row["case_key"] for row in rows}
     if len(case_keys) != 1:
-        raise ValueError(f"neutral TP flash proof expects exactly one case_key, got {sorted(case_keys)}")
+        raise ValueError(f"neutral TP flash fixture expects exactly one case_key, got {sorted(case_keys)}")
     return {row["phase"]: row for row in rows}
 
 
@@ -84,7 +84,7 @@ def mixture(case_dir: Path, species_names: list[str]) -> ePCSAFTMixture:
 def material_balance_row(case_dir: Path) -> dict[str, str]:
     rows = read_csv(case_dir / "material_balance_readiness.csv")
     if len(rows) != 1:
-        raise ValueError("neutral TP flash proof expects exactly one material-balance readiness row")
+        raise ValueError("neutral TP flash fixture expects exactly one material-balance readiness row")
     return rows[0]
 
 

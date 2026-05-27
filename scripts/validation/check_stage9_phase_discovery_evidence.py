@@ -24,7 +24,7 @@ import epcsaft._core as _core
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from scripts.validation import equilibrium_validation_runtime as runtime
 
-STAGE9_EVIDENCE_REQUIREMENTS = (
+PHASE_DISCOVERY_REQUIREMENTS = (
     "deterministic_screening",
     "continuous_tpd_minimization",
     "held_stage_i_stability",
@@ -57,7 +57,7 @@ def _native_ipopt_compiled(*, show_native_output: bool = False) -> bool:
         return False
 
 
-def _stage9_discovery(mix: ePCSAFTMixture) -> dict[str, Any]:
+def _phase_discovery_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
     return dict(
         _core._native_neutral_tpd_phase_discovery(
             mix._native,
@@ -71,7 +71,7 @@ def _stage9_discovery(mix: ePCSAFTMixture) -> dict[str, Any]:
     )
 
 
-def _stage9_route_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
+def _route_refinement_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
     return dict(
         _core._native_equilibrium_selector_route_result(
             mix._native,
@@ -103,7 +103,7 @@ def _stage9_route_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
     )
 
 
-def _stage9_route_result(
+def _route_refinement_result(
     mix: ePCSAFTMixture,
     *,
     show_native_output: bool = False,
@@ -112,13 +112,13 @@ def _stage9_route_result(
     if not _native_ipopt_compiled(show_native_output=show_native_output):
         return None
     if show_native_output:
-        route = _stage9_route_payload(mix)
+        route = _route_refinement_payload(mix)
     elif redirect_native_output_to_stderr:
         with runtime.redirect_native_stdout_to_stderr():
-            route = _stage9_route_payload(mix)
+            route = _route_refinement_payload(mix)
     else:
         with runtime.suppress_native_stdout():
-            route = _stage9_route_payload(mix)
+            route = _route_refinement_payload(mix)
     return dict(route)
 
 
@@ -137,16 +137,16 @@ def _route_solver_converged(route_payload: dict[str, Any]) -> bool:
     )
 
 
-def evaluate_stage9_evidence(
+def evaluate_phase_discovery(
     *,
     include_route_refinement: bool = False,
     show_native_output: bool = False,
     redirect_native_output_to_stderr: bool = False,
 ) -> dict[str, Any]:
     mix = _nonideal_lle_binary_mixture()
-    discovery = _stage9_discovery(mix)
+    discovery = _phase_discovery_payload(mix)
     route_payload = (
-        _stage9_route_result(
+        _route_refinement_result(
             mix,
             show_native_output=show_native_output,
             redirect_native_output_to_stderr=redirect_native_output_to_stderr,
@@ -234,16 +234,16 @@ def evaluate_stage9_evidence(
 
     complete = all(
         str(evidence_status[key]).startswith("verified")
-        for key in STAGE9_EVIDENCE_REQUIREMENTS
+        for key in PHASE_DISCOVERY_REQUIREMENTS
     )
     incomplete_requirements = [
         key
-        for key in STAGE9_EVIDENCE_REQUIREMENTS
+        for key in PHASE_DISCOVERY_REQUIREMENTS
         if not str(evidence_status[key]).startswith("verified")
     ]
 
     return {
-        "case_label": "Synthetic neutral binary Stage 9 evidence route",
+        "case_label": "Synthetic neutral binary phase-discovery case",
         "family_label": "PE-Neutral TP Flash",
         "complete": complete,
         "evidence_status": evidence_status,
@@ -302,7 +302,7 @@ def evaluate_stage9_evidence(
 
 def _print_human(payload: dict[str, Any]) -> None:
     print(f"{payload['case_label']}: {'complete' if payload['complete'] else 'incomplete'}")
-    for key in STAGE9_EVIDENCE_REQUIREMENTS:
+    for key in PHASE_DISCOVERY_REQUIREMENTS:
         print(f"  {key}: {payload['evidence_status'][key]}")
     diagnostics = dict(payload.get("diagnostics", {}))
     if diagnostics.get("route_refinement_requested"):
@@ -341,28 +341,28 @@ def _print_human(payload: dict[str, Any]) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Check current Stage 9 phase-discovery evidence.")
+    parser = argparse.ArgumentParser(description="Check the current phase-discovery validation status.")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument(
         "--debug",
         action="store_true",
         help=(
             "Enable EPCSAFT_EQUILIBRIUM_DEBUG and continuous-TPD trace rows. When "
-            "--include-route-refinement is also set, use Ipopt print_level=5 for the Stage III route refinement."
+            "--include-route-refinement is also set, use Ipopt print_level=5 for route refinement."
         ),
     )
     parser.add_argument(
         "--include-route-refinement",
         action="store_true",
         help=(
-            "Also run the current Stage III Ipopt route-refinement proof path. "
+            "Also run the current Ipopt route-refinement path. "
             "The default is the cheaper phase-discovery gate without the current-route Ipopt refinement solve."
         ),
     )
     parser.add_argument(
         "--require-complete",
         action="store_true",
-        help="Return a failing exit code when any Stage 9 evidence requirement is incomplete.",
+        help="Return a failing exit code when any phase-discovery requirement is incomplete.",
     )
     return parser
 
@@ -371,7 +371,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.debug:
         os.environ["EPCSAFT_EQUILIBRIUM_DEBUG"] = "1"
-    payload = evaluate_stage9_evidence(
+    payload = evaluate_phase_discovery(
         include_route_refinement=args.include_route_refinement,
         show_native_output=args.debug and not args.json,
         redirect_native_output_to_stderr=args.debug and args.json and args.include_route_refinement,
@@ -381,7 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         _print_human(payload)
     if args.require_complete and not payload["complete"]:
-        print("Stage 9 phase-discovery evidence is incomplete.", file=sys.stderr)
+        print("Phase-discovery validation is incomplete.", file=sys.stderr)
         return 2
     return 0
 

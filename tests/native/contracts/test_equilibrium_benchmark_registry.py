@@ -27,7 +27,7 @@ def _benchmark_by_label() -> dict[str, dict[str, Any]]:
     return {case["case_label"]: case for case in _registry()["benchmark_cases"]}
 
 
-def _stage10_gate() -> dict[str, Any]:
+def _neutral_flash_gate() -> dict[str, Any]:
     return _registry()["stage10_neutral_tp_flash_source_gate"]
 
 
@@ -82,8 +82,8 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     assert benchmarks["Ascani/Sadowski/Held 2022 mixed-solvent LLE"]["priority_rank"] == 3
 
 
-def test_stage10_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
-    gate = _stage10_gate()
+def test_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
+    gate = _neutral_flash_gate()
 
     assert gate["target_family_label"] == "PE-Neutral TP Flash"
     assert gate["proof_status"] == "executable_fixture_available"
@@ -116,8 +116,8 @@ def test_stage10_neutral_tp_flash_gate_defines_executable_fixture_contract() -> 
     }
 
 
-def test_stage10_local_source_audit_does_not_promote_context_to_proof() -> None:
-    gate = _stage10_gate()
+def test_local_source_audit_does_not_promote_context_to_fixture() -> None:
+    gate = _neutral_flash_gate()
     local_candidates = {case["case_label"]: case for case in gate["local_source_audit"]}
 
     assert local_candidates["Gross/Sadowski 2001 binary VLE table"]["local_artifact"].endswith(
@@ -137,7 +137,7 @@ def test_stage10_local_source_audit_does_not_promote_context_to_proof() -> None:
     )
 
 
-def test_pereira_stage10_source_audit_fixture_is_nonexecutable_and_complete() -> None:
+def test_pereira_source_audit_fixture_is_nonexecutable_and_complete() -> None:
     metadata = json.loads((PEREIRA_SOURCE_AUDIT_PATH / "metadata.json").read_text(encoding="utf-8"))
     phase_text = (PEREIRA_SOURCE_AUDIT_PATH / "phase_splits.csv").read_text(encoding="utf-8")
     parameter_text = (PEREIRA_SOURCE_AUDIT_PATH / "saft_vr_parameters.csv").read_text(encoding="utf-8")
@@ -173,7 +173,7 @@ def test_pereira_stage10_source_audit_fixture_is_nonexecutable_and_complete() ->
     assert all(row["source_status"] == "reported" for row in parameter_rows)
 
 
-def test_pereira_stage10_readiness_tracks_material_balance_without_proof_promotion() -> None:
+def test_pereira_readiness_tracks_material_balance_without_fixture_promotion() -> None:
     metadata = json.loads((PEREIRA_SOURCE_AUDIT_PATH / "metadata.json").read_text(encoding="utf-8"))
     readiness_text = (PEREIRA_SOURCE_AUDIT_PATH / "material_balance_readiness.csv").read_text(
         encoding="utf-8"
@@ -207,7 +207,7 @@ def test_pereira_stage10_readiness_tracks_material_balance_without_proof_promoti
     assert float(inferred_second["candidate_vapor_fraction"]) == pytest.approx(0.487365, rel=1.0e-5)
 
 
-def test_hydrocarbon_workbook_stage10_fixture_is_declared_as_available() -> None:
+def test_hydrocarbon_workbook_fixture_is_declared_as_available() -> None:
     benchmark = _benchmark_by_label()["Hydrocarbon workbook derived TP flash"]
     source_path = REPO_ROOT / benchmark["source_path"]
     metadata = json.loads((source_path / "metadata.json").read_text(encoding="utf-8"))
@@ -232,8 +232,8 @@ def test_hydrocarbon_workbook_stage10_fixture_is_declared_as_available() -> None
     assert len(interaction_rows) == 3
 
 
-def test_available_neutral_stage10_cases_must_have_full_fixture_contract() -> None:
-    gate = _stage10_gate()
+def test_available_neutral_cases_must_have_full_fixture_contract() -> None:
+    gate = _neutral_flash_gate()
     required_fields = set(gate["executable_fixture_required_fields"])
 
     for benchmark in _registry()["benchmark_cases"]:

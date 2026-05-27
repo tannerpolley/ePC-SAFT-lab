@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from scripts.validation import check_stage9_phase_discovery_evidence as stage9_checker
+from scripts.validation import check_stage9_phase_discovery_evidence as phase_discovery_checker
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CHECKER = REPO_ROOT / "scripts" / "validation" / "check_equilibrium_benchmark_readiness.py"
-STAGE9_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage9_phase_discovery_evidence.py"
-STAGE10_PROOF = REPO_ROOT / "scripts" / "validation" / "check_stage10_neutral_tp_flash_proof.py"
+PHASE_DISCOVERY_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage9_phase_discovery_evidence.py"
+NEUTRAL_FLASH_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage10_neutral_tp_flash_proof.py"
 PEREIRA_CASE_DIR = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
 )
@@ -38,9 +38,9 @@ def _run_checker(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def _run_stage9_checker(*args: str) -> subprocess.CompletedProcess[str]:
+def _run_phase_discovery_checker(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(STAGE9_CHECKER), *args],
+        [sys.executable, str(PHASE_DISCOVERY_CHECKER), *args],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -48,9 +48,9 @@ def _run_stage9_checker(*args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def _run_stage10_proof(*args: str) -> subprocess.CompletedProcess[str]:
+def _run_neutral_flash_checker(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(STAGE10_PROOF), *args],
+        [sys.executable, str(NEUTRAL_FLASH_CHECKER), *args],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -63,7 +63,7 @@ def _load_stdout_json(result: subprocess.CompletedProcess[str]) -> dict[str, obj
     return json.loads(result.stdout)
 
 
-def _write_minimal_stage10_fixture(case_dir: Path) -> None:
+def _write_minimal_neutral_flash_fixture(case_dir: Path) -> None:
     case_dir.mkdir(parents=True)
     (case_dir / "metadata.json").write_text(
         json.dumps(
@@ -118,7 +118,7 @@ def _write_minimal_stage10_fixture(case_dir: Path) -> None:
     )
 
 
-def _synthetic_stage9_discovery() -> dict[str, object]:
+def _synthetic_phase_discovery() -> dict[str, object]:
     return {
         "phase_discovery_backend": "deterministic_tpd_candidate_screening",
         "stage9_phase_discovery_steps": [
@@ -152,7 +152,7 @@ def _synthetic_stage9_discovery() -> dict[str, object]:
     }
 
 
-def _write_complete_stage9_evidence(path: Path) -> None:
+def _write_complete_phase_discovery_payload(path: Path) -> None:
     path.write_text(
         json.dumps(
             {
@@ -170,14 +170,14 @@ def _write_complete_stage9_evidence(path: Path) -> None:
     )
 
 
-def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_route_refinement_requires_explicit_request(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[bool] = []
 
-    monkeypatch.setattr(stage9_checker, "_nonideal_lle_binary_mixture", lambda: object())
-    monkeypatch.setattr(stage9_checker, "_stage9_discovery", lambda mix: _synthetic_stage9_discovery())
+    monkeypatch.setattr(phase_discovery_checker, "_nonideal_lle_binary_mixture", lambda: object())
+    monkeypatch.setattr(phase_discovery_checker, "_phase_discovery_payload", lambda mix: _synthetic_phase_discovery())
     monkeypatch.setattr(
-        stage9_checker,
-        "_stage9_route_result",
+        phase_discovery_checker,
+        "_route_refinement_result",
         lambda mix, **kwargs: calls.append(bool(kwargs)) or {
             "solver_status": "success",
             "application_status": "solve_succeeded",
@@ -210,8 +210,8 @@ def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.Monkey
         },
     )
 
-    cheap_payload = stage9_checker.evaluate_stage9_evidence()
-    full_payload = stage9_checker.evaluate_stage9_evidence(include_route_refinement=True)
+    cheap_payload = phase_discovery_checker.evaluate_phase_discovery()
+    full_payload = phase_discovery_checker.evaluate_phase_discovery(include_route_refinement=True)
 
     assert calls == [True]
     assert cheap_payload["diagnostics"]["route_refinement_requested"] is False
@@ -242,12 +242,12 @@ def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.Monkey
     ]
 
 
-def test_stage9_evidence_route_refinement_requires_ipopt_convergence(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(stage9_checker, "_nonideal_lle_binary_mixture", lambda: object())
-    monkeypatch.setattr(stage9_checker, "_stage9_discovery", lambda mix: _synthetic_stage9_discovery())
+def test_route_refinement_requires_ipopt_convergence(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(phase_discovery_checker, "_nonideal_lle_binary_mixture", lambda: object())
+    monkeypatch.setattr(phase_discovery_checker, "_phase_discovery_payload", lambda mix: _synthetic_phase_discovery())
     monkeypatch.setattr(
-        stage9_checker,
-        "_stage9_route_result",
+        phase_discovery_checker,
+        "_route_refinement_result",
         lambda mix, **kwargs: {
             "solver_status": "tiny_step_detected",
             "application_status": "search_direction_too_small",
@@ -264,7 +264,7 @@ def test_stage9_evidence_route_refinement_requires_ipopt_convergence(monkeypatch
         },
     )
 
-    payload = stage9_checker.evaluate_stage9_evidence(include_route_refinement=True)
+    payload = phase_discovery_checker.evaluate_phase_discovery(include_route_refinement=True)
 
     assert (
         payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
@@ -275,17 +275,17 @@ def test_stage9_evidence_route_refinement_requires_ipopt_convergence(monkeypatch
     assert payload["diagnostics"]["route_solver_status"] == "tiny_step_detected"
 
 
-def test_stage9_evidence_route_refinement_does_not_promote_acceptable_point(
+def test_route_refinement_rejects_acceptable_point_status(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(stage9_checker, "_nonideal_lle_binary_mixture", lambda: object())
-    discovery = _synthetic_stage9_discovery()
+    monkeypatch.setattr(phase_discovery_checker, "_nonideal_lle_binary_mixture", lambda: object())
+    discovery = _synthetic_phase_discovery()
     discovery["held_stage_ii_status"] = "candidate_bound_gap_closed"
     discovery["held_stage_ii_bound_gap"] = 0.0
-    monkeypatch.setattr(stage9_checker, "_stage9_discovery", lambda mix: discovery)
+    monkeypatch.setattr(phase_discovery_checker, "_phase_discovery_payload", lambda mix: discovery)
     monkeypatch.setattr(
-        stage9_checker,
-        "_stage9_route_result",
+        phase_discovery_checker,
+        "_route_refinement_result",
         lambda mix, **kwargs: {
             "solver_status": "acceptable_point",
             "application_status": "solved_to_acceptable_level",
@@ -302,7 +302,7 @@ def test_stage9_evidence_route_refinement_does_not_promote_acceptable_point(
         },
     )
 
-    payload = stage9_checker.evaluate_stage9_evidence(include_route_refinement=True)
+    payload = phase_discovery_checker.evaluate_phase_discovery(include_route_refinement=True)
 
     assert (
         payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
@@ -311,15 +311,15 @@ def test_stage9_evidence_route_refinement_does_not_promote_acceptable_point(
     assert "held_stage_iii_ipopt_refinement" in payload["incomplete_requirements"]
 
 
-def test_stage9_evidence_checker_require_complete_fails_incomplete_payload(
+def test_phase_discovery_checker_require_complete_fails_incomplete_payload(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(
-        stage9_checker,
-        "evaluate_stage9_evidence",
+        phase_discovery_checker,
+        "evaluate_phase_discovery",
         lambda **kwargs: {
-            "case_label": "Synthetic neutral binary Stage 9 evidence route",
+            "case_label": "Synthetic neutral binary phase-discovery case",
             "complete": False,
             "evidence_status": {
                 "deterministic_screening": "verified_not_full_held",
@@ -358,17 +358,17 @@ def test_stage9_evidence_checker_require_complete_fails_incomplete_payload(
         },
     )
 
-    exit_code = stage9_checker.main(["--require-complete"])
+    exit_code = phase_discovery_checker.main(["--require-complete"])
     captured = capsys.readouterr()
 
     assert exit_code == 2
-    assert "Stage 9 phase-discovery evidence is incomplete." in captured.err
+    assert "Phase-discovery validation is incomplete." in captured.err
     assert "seed_attempt: name=deterministic_tpd_candidate_pair" in captured.out
     assert "last_ipopt_iterations:" in captured.out
     assert "ipopt_iteration: iter=260 objective=4.2 inf_pr=0.001 inf_du=0.002" in captured.out
 
 
-def test_pereira_readiness_checker_reports_nonexecutable_stage10_json() -> None:
+def test_pereira_readiness_checker_reports_nonexecutable_json() -> None:
     result = _run_checker("--json")
 
     assert result.returncode == 0, result.stdout + result.stderr
@@ -430,19 +430,19 @@ def test_pereira_readiness_checker_reports_nonexecutable_stage10_json() -> None:
     assert "published_second_feed_composition_not_normalized" in second["blockers"]
 
 
-def test_stage10_checker_promotes_only_complete_source_backed_fixture_with_stage9_evidence(
+def test_readiness_checker_accepts_complete_source_backed_fixture(
     tmp_path: Path,
 ) -> None:
     case_dir = tmp_path / "minimal_pc_saft_binary"
-    _write_minimal_stage10_fixture(case_dir)
-    stage9_path = tmp_path / "complete_stage9_evidence.json"
-    _write_complete_stage9_evidence(stage9_path)
+    _write_minimal_neutral_flash_fixture(case_dir)
+    phase_discovery_path = tmp_path / "complete_phase_discovery.json"
+    _write_complete_phase_discovery_payload(phase_discovery_path)
 
     result = _run_checker(
         "--case-dir",
         str(case_dir),
         "--stage9-evidence-json",
-        str(stage9_path),
+        str(phase_discovery_path),
         "--json",
         "--require-executable",
     )
@@ -457,17 +457,17 @@ def test_stage10_checker_promotes_only_complete_source_backed_fixture_with_stage
     assert all(status == "present" for status in payload["executable_fixture_field_status"].values())
 
 
-def test_hydrocarbon_workbook_stage10_fixture_is_executable_with_stage9_evidence(
+def test_hydrocarbon_workbook_fixture_is_executable_with_phase_discovery_payload(
     tmp_path: Path,
 ) -> None:
-    stage9_path = tmp_path / "complete_stage9_evidence.json"
-    _write_complete_stage9_evidence(stage9_path)
+    phase_discovery_path = tmp_path / "complete_phase_discovery.json"
+    _write_complete_phase_discovery_payload(phase_discovery_path)
 
     result = _run_checker(
         "--case-dir",
         str(HYDROCARBON_CASE_DIR),
         "--stage9-evidence-json",
-        str(stage9_path),
+        str(phase_discovery_path),
         "--json",
         "--require-executable",
     )
@@ -482,11 +482,11 @@ def test_hydrocarbon_workbook_stage10_fixture_is_executable_with_stage9_evidence
     assert payload["blockers"] == []
 
 
-def test_stage10_neutral_tp_flash_proof_requires_complete_stage9_evidence(
+def test_neutral_flash_checker_requires_complete_phase_discovery_payload(
     tmp_path: Path,
 ) -> None:
-    stage9_path = tmp_path / "incomplete_stage9_evidence.json"
-    stage9_path.write_text(
+    phase_discovery_path = tmp_path / "incomplete_phase_discovery.json"
+    phase_discovery_path.write_text(
         json.dumps(
             {
                 "complete": False,
@@ -503,7 +503,7 @@ def test_stage10_neutral_tp_flash_proof_requires_complete_stage9_evidence(
         encoding="utf-8",
     )
 
-    result = _run_stage10_proof("--stage9-evidence-json", str(stage9_path), "--json", "--require-proof")
+    result = _run_neutral_flash_checker("--stage9-evidence-json", str(phase_discovery_path), "--json", "--require-proof")
 
     assert result.returncode == 2
     payload = _load_stdout_json(result)
@@ -513,7 +513,7 @@ def test_stage10_neutral_tp_flash_proof_requires_complete_stage9_evidence(
     assert "held_stage_iii_ipopt_refinement" in payload["readiness"]["stage9_incomplete_requirements"]
 
 
-def test_stage10_neutral_tp_flash_proof_runs_source_backed_workbook_fixture(
+def test_neutral_flash_checker_runs_source_backed_workbook_fixture(
     tmp_path: Path,
 ) -> None:
     import epcsaft._core as _core
@@ -521,12 +521,12 @@ def test_stage10_neutral_tp_flash_proof_runs_source_backed_workbook_fixture(
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
 
-    stage9_path = tmp_path / "stage9_evidence.json"
-    _write_complete_stage9_evidence(stage9_path)
+    phase_discovery_path = tmp_path / "phase_discovery.json"
+    _write_complete_phase_discovery_payload(phase_discovery_path)
 
-    result = _run_stage10_proof(
+    result = _run_neutral_flash_checker(
         "--stage9-evidence-json",
-        str(stage9_path),
+        str(phase_discovery_path),
         "--json",
         "--debug",
         "--require-proof",
@@ -539,7 +539,7 @@ def test_stage10_neutral_tp_flash_proof_runs_source_backed_workbook_fixture(
     assert payload["proof_status"] == "complete"
     assert payload["proof_complete"] is True
     assert payload["blockers"] == []
-    assert payload["stage9_evidence_source"] == str(stage9_path)
+    assert payload["stage9_evidence_source"] == str(phase_discovery_path)
     assert payload["readiness"]["stage9_evidence_path_verified"] is True
     assert payload["route"]["solver_status"] == "success"
     assert payload["route"]["application_status"] == "solve_succeeded"
@@ -561,7 +561,7 @@ def test_pereira_readiness_checker_fails_closed_when_executable_required() -> No
     payload = _load_stdout_json(result)
     assert payload["executable"] is False
     assert payload["proof_status"] == "blocked"
-    assert "Pereira 2012 System III is not an executable Stage 10 proof fixture" in result.stderr
+    assert "Pereira 2012 System III is not an executable equilibrium fixture" in result.stderr
 
 
 def test_pereira_readiness_checker_recomputes_material_balance_and_rejects_stale_csv(
@@ -587,8 +587,8 @@ def test_pereira_readiness_checker_recomputes_material_balance_and_rejects_stale
     assert payload["stored_readiness_mismatches"][0]["case_key"] == "system_iii_22325_09mpa"
 
 
-def test_stage9_evidence_checker_reports_stage_ii_without_running_stage_iii() -> None:
-    result = _run_stage9_checker("--json")
+def test_phase_discovery_checker_reports_candidate_status_without_refinement() -> None:
+    result = _run_phase_discovery_checker("--json")
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
@@ -615,8 +615,8 @@ def test_stage9_evidence_checker_reports_stage_ii_without_running_stage_iii() ->
     assert payload["diagnostics"]["held_stage_ii_bound_gap"] <= 1.0e-6
 
 
-def test_stage9_evidence_checker_debug_mode_exposes_trace_without_breaking_json() -> None:
-    result = _run_stage9_checker("--json", "--debug")
+def test_phase_discovery_checker_debug_mode_preserves_json_stdout() -> None:
+    result = _run_phase_discovery_checker("--json", "--debug")
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
@@ -627,8 +627,8 @@ def test_stage9_evidence_checker_debug_mode_exposes_trace_without_breaking_json(
     assert "[EPCSAFT_TPD_DEBUG]" in result.stderr
 
 
-def test_stage9_evidence_checker_debug_route_reports_complete_converged_path() -> None:
-    result = _run_stage9_checker("--json", "--debug", "--include-route-refinement")
+def test_phase_discovery_checker_debug_route_reports_complete_converged_path() -> None:
+    result = _run_phase_discovery_checker("--json", "--debug", "--include-route-refinement")
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
@@ -649,11 +649,11 @@ def test_stage9_evidence_checker_debug_route_reports_complete_converged_path() -
     assert "EXIT: Optimal Solution Found." in result.stderr
 
 
-def test_pereira_readiness_checker_consumes_stage9_evidence_without_faking_completion(
+def test_pereira_readiness_checker_consumes_phase_discovery_payload_without_faking_completion(
     tmp_path: Path,
 ) -> None:
-    stage9_path = tmp_path / "stage9_evidence.json"
-    stage9_path.write_text(
+    phase_discovery_path = tmp_path / "phase_discovery.json"
+    phase_discovery_path.write_text(
         json.dumps(
             {
                 "complete": False,
@@ -672,7 +672,7 @@ def test_pereira_readiness_checker_consumes_stage9_evidence_without_faking_compl
         encoding="utf-8",
     )
 
-    result = _run_checker("--json", "--stage9-evidence-json", str(stage9_path))
+    result = _run_checker("--json", "--stage9-evidence-json", str(phase_discovery_path))
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
@@ -686,11 +686,11 @@ def test_pereira_readiness_checker_consumes_stage9_evidence_without_faking_compl
     assert "stage9_evidence_path_not_verified" in payload["blockers"]
 
 
-def test_pereira_readiness_checker_removes_stage9_blocker_only_for_complete_stage9_evidence(
+def test_pereira_readiness_checker_removes_blocker_only_for_complete_phase_discovery_payload(
     tmp_path: Path,
 ) -> None:
-    stage9_path = tmp_path / "complete_stage9_evidence.json"
-    stage9_path.write_text(
+    phase_discovery_path = tmp_path / "complete_phase_discovery.json"
+    phase_discovery_path.write_text(
         json.dumps(
             {
                 "complete": True,
@@ -706,7 +706,7 @@ def test_pereira_readiness_checker_removes_stage9_blocker_only_for_complete_stag
         encoding="utf-8",
     )
 
-    result = _run_checker("--json", "--stage9-evidence-json", str(stage9_path))
+    result = _run_checker("--json", "--stage9-evidence-json", str(phase_discovery_path))
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
