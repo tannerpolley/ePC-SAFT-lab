@@ -11,10 +11,17 @@ from typing import Any, Literal
 import numpy as np
 
 from .._types import InputError, SolutionError
-from .core.native_requests import neutral_two_phase_eos_tolerances
+from .core.native_requests import (
+    EQUILIBRIUM_ROUTE_SPECS,
+    NativeSelectorRouteSpec,
+    neutral_two_phase_eos_tolerances,
+    selector_request_payload,
+    selector_route_solver_tolerances,
+)
 from .core.native_results import (
     RouteDiagnosticsView,
     native_route_diagnostics,
+    native_route_phase_labels,
     native_route_solved_pressure,
     native_route_solved_temperature,
     native_route_summed_phase_amounts,
@@ -280,21 +287,6 @@ class EquilibriumResult:
 
 
 @dataclass(frozen=True, slots=True)
-class _EquilibriumRouteSpec:
-    selector_route: str
-    composition_key: str
-    composition_role: str
-    requires_temperature: bool
-    requires_pressure: bool
-    knowns: tuple[str, ...]
-    unknowns: tuple[str, ...]
-    problem_kind: str
-    route_label: str
-    selector_family: str
-    expected_phase_keys: tuple[str, ...] = ("liquid", "vapor")
-
-
-@dataclass(frozen=True, slots=True)
 class EquilibriumProblem:
     """Read-only configured equilibrium problem metadata."""
 
@@ -380,82 +372,7 @@ class EquilibriumStructure:
         }
 
 
-_EQUILIBRIUM_ROUTE_SPECS: dict[str, _EquilibriumRouteSpec] = {
-    "bubble_pressure": _EquilibriumRouteSpec(
-        selector_route="bubble_pressure",
-        composition_key="x",
-        composition_role="liquid",
-        requires_temperature=True,
-        requires_pressure=False,
-        knowns=("T", "x"),
-        unknowns=("P", "y", "phase_volumes"),
-        problem_kind="neutral_bubble_p",
-        route_label="bubble_pressure",
-        selector_family="bubble_dew_derived_routes",
-    ),
-    "bubble_temperature": _EquilibriumRouteSpec(
-        selector_route="bubble_temperature",
-        composition_key="x",
-        composition_role="liquid",
-        requires_temperature=False,
-        requires_pressure=True,
-        knowns=("P", "x"),
-        unknowns=("T", "y", "phase_volumes"),
-        problem_kind="neutral_bubble_t",
-        route_label="bubble_temperature",
-        selector_family="bubble_dew_derived_routes",
-    ),
-    "dew_pressure": _EquilibriumRouteSpec(
-        selector_route="dew_pressure",
-        composition_key="y",
-        composition_role="vapor",
-        requires_temperature=True,
-        requires_pressure=False,
-        knowns=("T", "y"),
-        unknowns=("P", "x", "phase_volumes"),
-        problem_kind="neutral_dew_p",
-        route_label="dew_pressure",
-        selector_family="bubble_dew_derived_routes",
-    ),
-    "dew_temperature": _EquilibriumRouteSpec(
-        selector_route="dew_temperature",
-        composition_key="y",
-        composition_role="vapor",
-        requires_temperature=False,
-        requires_pressure=True,
-        knowns=("P", "y"),
-        unknowns=("T", "x", "phase_volumes"),
-        problem_kind="neutral_dew_t",
-        route_label="dew_temperature",
-        selector_family="bubble_dew_derived_routes",
-    ),
-    "flash": _EquilibriumRouteSpec(
-        selector_route="neutral_tp_flash",
-        composition_key="z",
-        composition_role="feed",
-        requires_temperature=True,
-        requires_pressure=True,
-        knowns=("T", "P", "z"),
-        unknowns=("x", "y", "phase_amounts", "phase_volumes"),
-        problem_kind="neutral_tp_flash",
-        route_label="flash",
-        selector_family="neutral_tp_flash",
-    ),
-    # AlgID: neutral_lle_ipopt
-    "lle": _EquilibriumRouteSpec(
-        selector_route="neutral_lle",
-        composition_key="z",
-        composition_role="feed",
-        requires_temperature=True,
-        requires_pressure=True,
-        knowns=("T", "P", "z"),
-        unknowns=("liquid1", "liquid2", "phase_amounts", "phase_volumes"),
-        problem_kind="neutral_lle",
-        route_label="lle",
-        selector_family="neutral_lle",
-        expected_phase_keys=("liquid1", "liquid2"),
-    ),
-}
+_EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = EQUILIBRIUM_ROUTE_SPECS
 
 
 def configure_equilibrium_problem(
@@ -514,7 +431,7 @@ def configure_equilibrium_problem(
         unknowns=spec.unknowns,
         composition_role=spec.composition_role,
         activation_key=spec.selector_family,
-        expected_phase_keys=spec.expected_phase_keys,
+        expected_phase_keys=spec.phase_labels,
         fixed_specs=fixed_specs,
     )
 
@@ -540,33 +457,12 @@ def _solve_selector_route(
         selector_family=spec.selector_family,
         composition_role=spec.composition_role,
         feed_composition=problem.fixed_specs.get("z"),
-        expected_phase_keys=spec.expected_phase_keys,
     )
-
-
-def _selector_request(
-    *,
-    route: str,
-    composition: np.ndarray,
-    composition_role: str,
-    temperature: float | None = None,
-    pressure: float | None = None,
-) -> dict[str, Any]:
-    request: dict[str, Any] = {
-        "route": route,
-        "composition": composition.tolist(),
-        "composition_role": composition_role,
-    }
-    if temperature is not None:
-        request["temperature"] = float(temperature)
-    if pressure is not None:
-        request["pressure"] = float(pressure)
-    return request
 
 
 def _selector_request_from_problem(problem: EquilibriumProblem) -> dict[str, Any]:
     composition_key = _EQUILIBRIUM_ROUTE_SPECS[problem.route].composition_key
-    return _selector_request(
+    return selector_request_payload(
         route=problem.selector_route,
         temperature=problem.fixed_specs.get("T"),
         pressure=problem.fixed_specs.get("P"),
@@ -591,7 +487,7 @@ def equilibrium_structure(mixture: Any, problem: EquilibriumProblem) -> Equilibr
         activation_key=problem.activation_key,
         residual_families=tuple(str(item) for item in activation["residual_families"]),
         hard_constraint_families=tuple(str(item) for item in activation["constraint_families"]),
-        expected_phase_keys=problem.expected_phase_keys,
+        expected_phase_keys=tuple(str(item) for item in contract.get("phase_labels", problem.expected_phase_keys)),
         dof={
             "available": False,
             "reason": "not_generally_owned_by_route_metadata",
@@ -612,16 +508,9 @@ def _native_selector_route(
     selector_family: str,
     composition_role: str,
     feed_composition: Any = None,
-    expected_phase_keys: tuple[str, ...] = ("liquid", "vapor"),
 ) -> EquilibriumResult:
     from .. import _core
 
-    route_tolerances = (
-        options.tolerance,
-        max(1.0e5 * options.tolerance, options.tolerance),
-        options.tolerance,
-        max(10.0 * options.min_composition, 1.0e-8),
-    )
     route = _core._native_equilibrium_selector_route_result(
         mixture._native,
         dict(request),
@@ -629,7 +518,7 @@ def _native_selector_route(
         options.tolerance,
         _native_timeout_seconds(options),
         *_native_ipopt_option_args(options),
-        *route_tolerances,
+        *selector_route_solver_tolerances(options),
         dict(options.continuation_state or {}),
         **_native_ipopt_control_kwargs(options),
     )
@@ -658,7 +547,6 @@ def _native_selector_route(
         selector_family=selector_family,
         composition_role=composition_role,
         feed_composition=feed_composition,
-        expected_phase_keys=expected_phase_keys,
     )
 
 
@@ -676,7 +564,6 @@ def _accepted_native_selector_two_phase_result(
     selector_family: str,
     composition_role: str,
     feed_composition: Any = None,
-    expected_phase_keys: tuple[str, ...] = ("liquid", "vapor"),
 ) -> EquilibriumResult:
     from .. import _core
 
@@ -699,7 +586,7 @@ def _accepted_native_selector_two_phase_result(
     result = neutral_two_phase_payload_to_result(
         result_payload,
         problem_kind=problem_kind,
-        phase_labels=expected_phase_keys,
+        phase_labels=native_route_phase_labels(route, route_label),
     )
     diagnostics = native_route_diagnostics(route)
     diagnostics.update(result.diagnostics)

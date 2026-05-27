@@ -1,11 +1,73 @@
 #pragma once
 
+#include "equilibrium/core/two_phase_eos_route.h"
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 #include <string>
 
 namespace epcsaft::native::equilibrium_nlp::route_result_bridge {
+
+inline pybind11::dict route_phase_evidence_to_dict(const RoutePhaseEvidence& phase) {
+    pybind11::dict out;
+    out["label"] = phase.label;
+    out["role"] = phase.role;
+    out["phase_kind"] = phase.phase_kind;
+    out["amount_total"] = phase.amount_total;
+    out["volume"] = phase.volume;
+    out["density"] = phase.density;
+    out["phase_fraction"] = phase.phase_fraction;
+    out["composition"] = phase.composition;
+    out["ln_fugacity_coefficients"] = phase.ln_fugacity_coefficients;
+    return out;
+}
+
+inline pybind11::dict route_physical_evidence_to_dict(const RoutePhysicalEvidence& evidence) {
+    pybind11::list phases;
+    for (const RoutePhaseEvidence& phase : evidence.phases) {
+        phases.append(route_phase_evidence_to_dict(phase));
+    }
+
+    pybind11::dict out;
+    out["available"] = evidence.available;
+    out["phase_count"] = evidence.phase_count;
+    out["species_count"] = evidence.species_count;
+    out["phase_labels"] = evidence.phase_labels;
+    out["phase_roles"] = evidence.phase_roles;
+    out["material_balance_norm"] = evidence.material_balance_norm;
+    out["pressure_consistency_norm"] = evidence.pressure_consistency_norm;
+    out["chemical_potential_consistency_norm"] = evidence.chemical_potential_consistency_norm;
+    out["ln_fugacity_consistency_norm"] = evidence.ln_fugacity_consistency_norm;
+    out["charge_balance_norm"] = evidence.charge_balance_norm;
+    out["fixed_composition_norm"] = evidence.fixed_composition_norm;
+    out["phase_amount_total_norm"] = evidence.phase_amount_total_norm;
+    out["phase_distance"] = evidence.phase_distance;
+    out["minimum_phase_fraction"] = evidence.minimum_phase_fraction;
+    out["min_tpd"] = evidence.min_tpd;
+    out["candidate_mass_balance_norm"] = evidence.candidate_mass_balance_norm;
+    out["phase_discovery_backend"] = evidence.phase_discovery_backend;
+    out["stability_certificate"] = evidence.stability_certificate;
+    out["phase_set_status"] = evidence.phase_set_status;
+    out["stability_checked"] = evidence.stability_checked;
+    out["stability_accepted"] = evidence.stability_accepted;
+    out["candidate_completeness_accepted"] = evidence.candidate_completeness_accepted;
+    out["deterministic_screening_is_full_held"] = evidence.deterministic_screening_is_full_held;
+    out["deterministic_screening_status"] = evidence.deterministic_screening_status;
+    out["continuous_tpd_status"] = evidence.continuous_tpd_status;
+    out["held_stage_i_status"] = evidence.held_stage_i_status;
+    out["held_stage_ii_status"] = evidence.held_stage_ii_status;
+    out["held_stage_iii_status"] = evidence.held_stage_iii_status;
+    out["tpd_candidate_count"] = evidence.tpd_candidate_count;
+    out["unique_candidate_count"] = evidence.unique_candidate_count;
+    out["selected_candidate_count"] = evidence.selected_candidate_count;
+    out["tpd_candidate_values"] = evidence.tpd_candidate_values;
+    out["tpd_candidate_sources"] = evidence.tpd_candidate_sources;
+    out["tpd_candidate_phase_kinds"] = evidence.tpd_candidate_phase_kinds;
+    out["tpd_candidate_compositions"] = evidence.tpd_candidate_compositions;
+    out["phases"] = phases;
+    return out;
+}
 
 template <typename Result>
 void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) {

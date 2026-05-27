@@ -70,6 +70,8 @@ int neutral_boundary_route_quality(const NeutralTwoPhaseEosRouteResult& result);
 
 RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteResult& result);
 
+RoutePhysicalEvidence build_neutral_route_physical_evidence(const NeutralTwoPhaseEosRouteResult& result);
+
 NeutralTwoPhaseEosResultPayload build_neutral_two_phase_eos_result(
     const add_args& args,
     double temperature,

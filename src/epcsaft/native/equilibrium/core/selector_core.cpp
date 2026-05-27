@@ -173,6 +173,20 @@ std::string pressure_role_for_route(const SelectorRouteRequest& request) {
     return request.has_pressure ? "fixed_pressure" : "not_specified";
 }
 
+std::vector<std::string> phase_labels_for_route(const std::string& route) {
+    if (route == "neutral_lle") {
+        return {"liquid1", "liquid2"};
+    }
+    return {"liquid", "vapor"};
+}
+
+std::vector<std::string> phase_roles_for_route(const std::string& route) {
+    if (route == "neutral_lle") {
+        return {"liquid", "liquid"};
+    }
+    return {"liquid", "vapor"};
+}
+
 SelectorRequestPretreatment pretreat_selector_request(
     const add_args& args,
     const SelectorRouteRequest& request
@@ -567,6 +581,8 @@ SelectorContract evaluate_selector_contract(
     out.selector_family = family;
     out.route = request.route;
     out.composition_role = request.composition_role;
+    out.phase_labels = phase_labels_for_route(request.route);
+    out.phase_roles = phase_roles_for_route(request.route);
     out.specified_temperature = request.has_temperature;
     out.specified_pressure = request.has_pressure;
     out.activation = activation;
@@ -632,6 +648,8 @@ epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_r
         chemical_potential_tolerance,
         phase_distance_tolerance
     );
+    result.phase_labels = contract.phase_labels;
+    result.phase_roles = contract.phase_roles;
     require_result_matches_activation(result, contract.activation);
     return result;
 }

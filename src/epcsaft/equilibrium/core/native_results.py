@@ -305,6 +305,23 @@ def _diagnostics(payload: Mapping[str, Any]) -> dict[str, Any]:
     return {}
 
 
+def _route_physical_evidence(route: Mapping[str, Any]) -> dict[str, Any]:
+    evidence = route.get("physical_evidence", {})
+    return dict(evidence) if isinstance(evidence, Mapping) else {}
+
+
+def native_route_phase_labels(route: Mapping[str, Any], route_label: str) -> tuple[str, ...]:
+    """Return phase labels owned by the native route evidence payload."""
+    evidence = _route_physical_evidence(route)
+    labels = evidence.get("phase_labels", route.get("phase_labels", ()))
+    if not isinstance(labels, Sequence) or isinstance(labels, (str, bytes)):
+        raise SolutionError(f"Native neutral {route_label} route returned invalid phase labels.")
+    out = tuple(str(label) for label in labels)
+    if not out:
+        raise SolutionError(f"Native neutral {route_label} route did not return phase labels.")
+    return out
+
+
 def _has_any_key(diagnostics: Mapping[str, Any], keys: tuple[str, ...]) -> bool:
     return any(key in diagnostics for key in keys)
 
@@ -422,6 +439,12 @@ def native_route_diagnostics(
     """Return diagnostics for a native route acceptance gate."""
     postsolve = route.get("postsolve", {})
     diagnostics = dict(postsolve) if isinstance(postsolve, Mapping) else {}
+    physical_evidence = _route_physical_evidence(route)
+    if physical_evidence:
+        diagnostics["physical_evidence"] = physical_evidence
+        for key in ("phase_labels", "phase_roles"):
+            if key in physical_evidence:
+                diagnostics[key] = _diagnostic_sequence(physical_evidence[key])
     default_values = dict(defaults or {})
     diagnostics[route_status_key] = str(route.get("status", default_values.get("status", "")))
     diagnostics["solver_backend"] = str(route.get("backend", default_values.get("solver_backend", "")))

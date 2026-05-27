@@ -4,6 +4,7 @@
 #include "equilibrium/core/route_metadata.h"
 #include "eos/core_internal.h"
 
+#include <algorithm>
 #include <cmath>
 #include <numeric>
 #include <utility>
@@ -209,6 +210,57 @@ std::string neutral_route_rejection_reason(const std::string& status, const std:
     return status;
 }
 
+std::string phase_kind_role(int phase_kind) {
+    if (phase_kind == 0) {
+        return "liquid";
+    }
+    if (phase_kind == 1) {
+        return "vapor";
+    }
+    return "phase";
+}
+
+std::string default_phase_label(std::size_t index) {
+    return "phase_" + std::to_string(index);
+}
+
+std::string default_phase_role(const std::vector<int>& phase_kinds, std::size_t index) {
+    if (index < phase_kinds.size()) {
+        return phase_kind_role(phase_kinds[index]);
+    }
+    return "phase";
+}
+
+std::size_t route_evidence_phase_count(const NeutralTwoPhaseEosRouteResult& result) {
+    return std::max({
+        result.phase_labels.size(),
+        result.phase_roles.size(),
+        result.phase_amounts.size(),
+        result.phase_volumes.size(),
+        result.postsolve.phase_amount_totals.size(),
+        result.postsolve.phase_volumes.size(),
+        result.postsolve.phase_densities.size(),
+        result.postsolve.phase_compositions.size(),
+        result.postsolve.phase_ln_fugacity_coefficients.size(),
+        result.postsolve.selected_phase_kinds.size(),
+    });
+}
+
+double indexed_or_zero(const std::vector<double>& values, std::size_t index) {
+    return index < values.size() ? values[index] : 0.0;
+}
+
+int indexed_or_zero(const std::vector<int>& values, std::size_t index) {
+    return index < values.size() ? values[index] : 0;
+}
+
+std::vector<double> indexed_or_empty(
+    const std::vector<std::vector<double>>& values,
+    std::size_t index
+) {
+    return index < values.size() ? values[index] : std::vector<double>{};
+}
+
 }  // namespace
 
 void mark_neutral_route_ipopt_dependency_required(NeutralTwoPhaseEosRouteResult& out) {
@@ -295,6 +347,89 @@ RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteR
     out.chemical_potential_consistency_norm = result.postsolve.chemical_potential_consistency_norm;
     out.phase_equilibrium_norm = result.postsolve.ln_fugacity_consistency_norm;
     out.min_tpd = result.postsolve.min_tpd;
+    return out;
+}
+
+RoutePhysicalEvidence build_neutral_route_physical_evidence(const NeutralTwoPhaseEosRouteResult& result) {
+    const NeutralTwoPhaseEosPostsolve& postsolve = result.postsolve;
+    RoutePhysicalEvidence out;
+    out.available = result.ran || !result.status.empty() || postsolve.phase_count > 0;
+    out.phase_count = postsolve.phase_count;
+    out.species_count = postsolve.species_count;
+    out.phase_labels = result.phase_labels;
+    out.phase_roles = result.phase_roles;
+    out.material_balance_norm = postsolve.material_balance_norm;
+    out.pressure_consistency_norm = postsolve.pressure_consistency_norm;
+    out.chemical_potential_consistency_norm = postsolve.chemical_potential_consistency_norm;
+    out.ln_fugacity_consistency_norm = postsolve.ln_fugacity_consistency_norm;
+    out.charge_balance_norm = postsolve.charge_balance_norm;
+    out.fixed_composition_norm = postsolve.fixed_composition_norm;
+    out.phase_amount_total_norm = postsolve.phase_amount_total_norm;
+    out.phase_distance = postsolve.phase_distance;
+    out.minimum_phase_fraction = postsolve.minimum_phase_fraction;
+    out.min_tpd = postsolve.min_tpd;
+    out.candidate_mass_balance_norm = postsolve.candidate_mass_balance_norm;
+    out.phase_discovery_backend = postsolve.phase_discovery_backend;
+    out.stability_certificate = postsolve.stability_certificate;
+    out.phase_set_status = postsolve.phase_set_status;
+    out.stability_checked = postsolve.stability_checked;
+    out.stability_accepted = postsolve.stability_accepted;
+    out.candidate_completeness_accepted = postsolve.candidate_completeness_accepted;
+    out.deterministic_screening_is_full_held = postsolve.deterministic_screening_is_full_held;
+    out.deterministic_screening_status = postsolve.deterministic_screening_status;
+    out.continuous_tpd_status = postsolve.continuous_tpd_status;
+    out.held_stage_i_status = postsolve.held_stage_i_status;
+    out.held_stage_ii_status = postsolve.held_stage_ii_status;
+    out.held_stage_iii_status = postsolve.held_stage_iii_status;
+    out.tpd_candidate_count = postsolve.tpd_candidate_count;
+    out.unique_candidate_count = postsolve.unique_candidate_count;
+    out.selected_candidate_count = postsolve.selected_candidate_count;
+    out.tpd_candidate_values = postsolve.tpd_candidate_values;
+    out.tpd_candidate_sources = postsolve.tpd_candidate_sources;
+    out.tpd_candidate_phase_kinds = postsolve.tpd_candidate_phase_kinds;
+    out.tpd_candidate_compositions = postsolve.tpd_candidate_compositions;
+
+    const std::size_t phase_count = route_evidence_phase_count(result);
+    if (out.phase_count == 0 && phase_count > 0) {
+        out.phase_count = static_cast<int>(phase_count);
+    }
+    if (out.phase_labels.empty()) {
+        out.phase_labels.reserve(phase_count);
+        for (std::size_t index = 0; index < phase_count; ++index) {
+            out.phase_labels.push_back(default_phase_label(index));
+        }
+    }
+    if (out.phase_roles.empty()) {
+        out.phase_roles.reserve(phase_count);
+        for (std::size_t index = 0; index < phase_count; ++index) {
+            out.phase_roles.push_back(default_phase_role(postsolve.selected_phase_kinds, index));
+        }
+    }
+
+    out.phases.reserve(phase_count);
+    const double total_amount = std::accumulate(
+        postsolve.phase_amount_totals.begin(),
+        postsolve.phase_amount_totals.end(),
+        0.0
+    );
+    for (std::size_t index = 0; index < phase_count; ++index) {
+        RoutePhaseEvidence phase;
+        phase.label = index < out.phase_labels.size() ? out.phase_labels[index] : default_phase_label(index);
+        phase.role = index < out.phase_roles.size()
+            ? out.phase_roles[index]
+            : default_phase_role(postsolve.selected_phase_kinds, index);
+        phase.phase_kind = indexed_or_zero(postsolve.selected_phase_kinds, index);
+        phase.amount_total = indexed_or_zero(postsolve.phase_amount_totals, index);
+        phase.volume = indexed_or_zero(postsolve.phase_volumes, index);
+        phase.density = indexed_or_zero(postsolve.phase_densities, index);
+        phase.phase_fraction = index < postsolve.selected_phase_fractions.size()
+            ? postsolve.selected_phase_fractions[index]
+            : (total_amount > 0.0 ? phase.amount_total / total_amount : 0.0);
+        phase.composition = indexed_or_empty(postsolve.phase_compositions, index);
+        phase.ln_fugacity_coefficients =
+            indexed_or_empty(postsolve.phase_ln_fugacity_coefficients, index);
+        out.phases.push_back(std::move(phase));
+    }
     return out;
 }
 

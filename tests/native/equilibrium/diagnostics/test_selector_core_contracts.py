@@ -15,7 +15,16 @@ from tests.support.equilibrium_cases import (
 
 
 @pytest.mark.parametrize(
-    ("selector_request", "family", "problem_name", "composition_role", "specified_temperature", "specified_pressure"),
+    (
+        "selector_request",
+        "family",
+        "problem_name",
+        "composition_role",
+        "phase_labels",
+        "phase_roles",
+        "specified_temperature",
+        "specified_pressure",
+    ),
     [
         (
             {
@@ -27,6 +36,8 @@ from tests.support.equilibrium_cases import (
             "bubble_dew_derived_routes",
             "neutral_bubble_p_eos",
             "liquid",
+            ["liquid", "vapor"],
+            ["liquid", "vapor"],
             True,
             False,
         ),
@@ -40,6 +51,8 @@ from tests.support.equilibrium_cases import (
             "bubble_dew_derived_routes",
             "neutral_bubble_t_eos",
             "liquid",
+            ["liquid", "vapor"],
+            ["liquid", "vapor"],
             False,
             True,
         ),
@@ -53,6 +66,8 @@ from tests.support.equilibrium_cases import (
             "bubble_dew_derived_routes",
             "neutral_dew_p_eos",
             "vapor",
+            ["liquid", "vapor"],
+            ["liquid", "vapor"],
             True,
             False,
         ),
@@ -66,6 +81,8 @@ from tests.support.equilibrium_cases import (
             "bubble_dew_derived_routes",
             "neutral_dew_t_eos",
             "vapor",
+            ["liquid", "vapor"],
+            ["liquid", "vapor"],
             False,
             True,
         ),
@@ -80,6 +97,8 @@ from tests.support.equilibrium_cases import (
             "neutral_tp_flash",
             "neutral_tp_flash_eos",
             "feed",
+            ["liquid", "vapor"],
+            ["liquid", "vapor"],
             True,
             True,
         ),
@@ -94,6 +113,8 @@ from tests.support.equilibrium_cases import (
             "neutral_lle",
             "neutral_lle_eos",
             "feed",
+            ["liquid1", "liquid2"],
+            ["liquid", "liquid"],
             True,
             True,
         ),
@@ -104,6 +125,8 @@ def test_selector_core_contract_owns_production_vle_metadata(
     family: str,
     problem_name: str,
     composition_role: str,
+    phase_labels: list[str],
+    phase_roles: list[str],
     specified_temperature: bool,
     specified_pressure: bool,
 ) -> None:
@@ -116,6 +139,8 @@ def test_selector_core_contract_owns_production_vle_metadata(
     assert payload["route"] == selector_request["route"]
     assert payload["problem_name"] == problem_name
     assert payload["composition_role"] == composition_role
+    assert payload["phase_labels"] == phase_labels
+    assert payload["phase_roles"] == phase_roles
     assert payload["specified_temperature"] is specified_temperature
     assert payload["specified_pressure"] is specified_pressure
     assert payload["production_exposed"] is True

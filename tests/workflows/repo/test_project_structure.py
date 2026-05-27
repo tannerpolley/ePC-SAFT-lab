@@ -204,7 +204,7 @@ def _equilibrium_activation_rows() -> list[dict[str, object]]:
 
 
 def _workflow_route_specs() -> dict[str, dict[str, str]]:
-    workflow_path = REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py"
+    workflow_path = REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core" / "native_requests.py"
     tree = ast.parse(workflow_path.read_text(encoding="utf-8"), filename=workflow_path.relative_to(REPO_ROOT).as_posix())
     specs: dict[str, dict[str, str]] = {}
     spec_tables = 0
@@ -535,6 +535,7 @@ def test_production_equilibrium_routes_delegate_ipopt_acceptance_to_adapter() ->
     route_sources = [
         REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "two_phase_eos_route.cpp",
         REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "routes" / "derived" / "bubble_dew.cpp",
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "results" / "result_builder.cpp",
     ]
     combined = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in route_sources)
     adapter = (
@@ -602,6 +603,39 @@ def test_native_equilibrium_python_diagnostics_bridge_stays_centralized() -> Non
     assert "neutral_route_stability_certificate_from_postsolve" in bridge
     assert "stability_checked = postsolve_dict" not in bindings
     assert "candidate_complete = postsolve_dict" not in bindings
+    assert "route_physical_evidence_to_dict" in bridge
+    assert "out[\"physical_evidence\"]" in bindings
+
+
+def test_selector_request_pretreatment_and_phase_labels_stay_in_shared_bridges() -> None:
+    workflows = (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(
+        encoding="utf-8",
+        errors="ignore",
+    )
+    requests = (
+        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core" / "native_requests.py"
+    ).read_text(encoding="utf-8", errors="ignore")
+    results = (
+        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core" / "native_results.py"
+    ).read_text(encoding="utf-8", errors="ignore")
+
+    forbidden_workflow_fragments = (
+        "NativeSelectorRouteSpec(",
+        "composition_role=\"liquid\"",
+        "composition_role=\"vapor\"",
+        "composition_role=\"feed\"",
+        "route_tolerances = (",
+        "phase_labels=expected_phase_keys",
+    )
+    offenders = [fragment for fragment in forbidden_workflow_fragments if fragment in workflows]
+    assert offenders == []
+    assert "selector_request_payload(" in workflows
+    assert "selector_route_solver_tolerances(options)" in workflows
+    assert "phase_labels=native_route_phase_labels(route, route_label)" in workflows
+    assert "NativeSelectorRouteSpec(" in requests
+    assert "def selector_route_solver_tolerances(" in requests
+    assert "def native_route_phase_labels(" in results
+    assert "physical_evidence" in results
 
 
 def test_activation_matrix_families_do_not_gain_direct_pybind_route_entrypoints() -> None:

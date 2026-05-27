@@ -222,6 +222,57 @@ struct NeutralPhaseDiscoveryResult {
     std::vector<NeutralTpdCandidate> candidates;
 };
 
+struct RoutePhaseEvidence {
+    std::string label;
+    std::string role;
+    int phase_kind = 0;
+    double amount_total = 0.0;
+    double volume = 0.0;
+    double density = 0.0;
+    double phase_fraction = 0.0;
+    std::vector<double> composition;
+    std::vector<double> ln_fugacity_coefficients;
+};
+
+struct RoutePhysicalEvidence {
+    bool available = false;
+    int phase_count = 0;
+    int species_count = 0;
+    std::vector<std::string> phase_labels;
+    std::vector<std::string> phase_roles;
+    double material_balance_norm = 0.0;
+    double pressure_consistency_norm = 0.0;
+    double chemical_potential_consistency_norm = 0.0;
+    double ln_fugacity_consistency_norm = 0.0;
+    double charge_balance_norm = 0.0;
+    double fixed_composition_norm = 0.0;
+    double phase_amount_total_norm = 0.0;
+    double phase_distance = 0.0;
+    double minimum_phase_fraction = 0.0;
+    double min_tpd = 0.0;
+    double candidate_mass_balance_norm = 0.0;
+    std::string phase_discovery_backend;
+    std::string stability_certificate;
+    std::string phase_set_status;
+    bool stability_checked = false;
+    bool stability_accepted = false;
+    bool candidate_completeness_accepted = false;
+    bool deterministic_screening_is_full_held = false;
+    std::string deterministic_screening_status;
+    std::string continuous_tpd_status;
+    std::string held_stage_i_status;
+    std::string held_stage_ii_status;
+    std::string held_stage_iii_status;
+    int tpd_candidate_count = 0;
+    int unique_candidate_count = 0;
+    int selected_candidate_count = 0;
+    std::vector<double> tpd_candidate_values;
+    std::vector<std::string> tpd_candidate_sources;
+    std::vector<int> tpd_candidate_phase_kinds;
+    std::vector<std::vector<double>> tpd_candidate_compositions;
+    std::vector<RoutePhaseEvidence> phases;
+};
+
 struct NeutralTwoPhaseEosRouteResult {
     bool compiled = false;
     bool adapter_available = false;
@@ -315,6 +366,8 @@ struct NeutralTwoPhaseEosRouteResult {
     std::vector<RouteSeedAttempt> seed_attempts;
     std::vector<std::vector<double>> phase_amounts;
     std::vector<double> phase_volumes;
+    std::vector<std::string> phase_labels;
+    std::vector<std::string> phase_roles;
     NeutralTwoPhaseEosPostsolve postsolve;
 };
 

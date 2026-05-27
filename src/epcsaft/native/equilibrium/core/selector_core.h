@@ -95,6 +95,8 @@ struct SelectorContract {
     std::string selector_family;
     std::string route;
     std::string composition_role;
+    std::vector<std::string> phase_labels;
+    std::vector<std::string> phase_roles;
     bool specified_temperature = false;
     bool specified_pressure = false;
     bool production_exposed = false;

@@ -50,6 +50,8 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert route["selector_family"] == "neutral_lle"
     assert route["route"] == "neutral_lle"
     assert route["problem_name"] == "neutral_lle_eos"
+    assert route["phase_labels"] == ["liquid1", "liquid2"]
+    assert route["phase_roles"] == ["liquid", "liquid"]
     assert route["activation"]["production_exposed"] is True
     assert route["activation_compiler"] == "activation_plan"
     assert route["constraint_families"] == [
@@ -131,6 +133,20 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert postsolve["pressure_consistency_norm"] <= 1.0e-3
     assert postsolve["ln_fugacity_consistency_norm"] <= 1.0e-6
     assert postsolve["phase_distance"] >= 1.0e-6
+
+    evidence = route["physical_evidence"]
+    assert evidence["available"] is True
+    assert evidence["phase_labels"] == ["liquid1", "liquid2"]
+    assert evidence["phase_roles"] == ["liquid", "liquid"]
+    assert evidence["material_balance_norm"] == pytest.approx(postsolve["material_balance_norm"])
+    assert evidence["pressure_consistency_norm"] == pytest.approx(postsolve["pressure_consistency_norm"])
+    assert evidence["ln_fugacity_consistency_norm"] == pytest.approx(postsolve["ln_fugacity_consistency_norm"])
+    assert evidence["phase_distance"] == pytest.approx(postsolve["phase_distance"])
+    assert evidence["stability_checked"] is True
+    assert evidence["deterministic_screening_is_full_held"] is False
+    assert evidence["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
+    assert [phase["label"] for phase in evidence["phases"]] == ["liquid1", "liquid2"]
+    assert [phase["role"] for phase in evidence["phases"]] == ["liquid", "liquid"]
 
     compositions = np.asarray(postsolve["phase_compositions"], dtype=float)
     amounts = np.asarray(route["phase_amounts"], dtype=float)

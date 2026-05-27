@@ -44,6 +44,19 @@ def test_native_route_diagnostics_normalizes_solver_route_and_seed_contract() ->
             "accepted": False,
             "rejection_reason": "phase_distance",
         },
+        "physical_evidence": {
+            "available": True,
+            "phase_labels": ["liquid", "vapor"],
+            "phase_roles": ["liquid", "vapor"],
+            "material_balance_norm": 1.0e-9,
+            "pressure_consistency_norm": 2.0e-3,
+            "ln_fugacity_consistency_norm": 4.0e-7,
+            "stability_checked": False,
+            "phases": [
+                {"label": "liquid", "role": "liquid", "composition": [0.4, 0.6]},
+                {"label": "vapor", "role": "vapor", "composition": [0.7, 0.3]},
+            ],
+        },
     }
 
     diagnostics = native_route_diagnostics(route)
@@ -69,6 +82,9 @@ def test_native_route_diagnostics_normalizes_solver_route_and_seed_contract() ->
     assert diagnostics["seed_attempts"][1]["route_status"] == "postsolve_rejected"
     assert diagnostics["seed_attempts"][1]["selected_seed"] is True
     assert diagnostics["seed_attempts"][1]["gradient_is_exact"] is True
+    assert diagnostics["physical_evidence"]["phase_labels"] == ["liquid", "vapor"]
+    assert diagnostics["phase_labels"] == ["liquid", "vapor"]
+    assert diagnostics["phase_roles"] == ["liquid", "vapor"]
 
 
 def test_native_route_diagnostics_preserves_route_metadata_contract() -> None:

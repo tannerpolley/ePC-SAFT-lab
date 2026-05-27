@@ -808,6 +808,12 @@ py::dict neutral_two_phase_eos_route_result_to_dict(
     out["seed_attempts"] = route_seed_attempts_to_list(result.seed_attempts);
     out["phase_amounts"] = result.phase_amounts;
     out["phase_volumes"] = result.phase_volumes;
+    out["phase_labels"] = result.phase_labels;
+    out["phase_roles"] = result.phase_roles;
+    out["physical_evidence"] =
+        epcsaft::native::equilibrium_nlp::route_result_bridge::route_physical_evidence_to_dict(
+            epcsaft::native::equilibrium_nlp::build_neutral_route_physical_evidence(result)
+        );
     out["postsolve"] = neutral_two_phase_eos_postsolve_to_dict(result.postsolve);
     return out;
 }
@@ -980,6 +986,8 @@ py::dict selector_contract_to_dict(const epcsaft::native::equilibrium::SelectorC
     out["selector_family"] = contract.selector_family;
     out["route"] = contract.route;
     out["composition_role"] = contract.composition_role;
+    out["phase_labels"] = contract.phase_labels;
+    out["phase_roles"] = contract.phase_roles;
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
@@ -1006,6 +1014,8 @@ void apply_selector_metadata(
     out["selector_family"] = contract.selector_family;
     out["route"] = contract.route;
     out["composition_role"] = contract.composition_role;
+    out["phase_labels"] = contract.phase_labels;
+    out["phase_roles"] = contract.phase_roles;
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);

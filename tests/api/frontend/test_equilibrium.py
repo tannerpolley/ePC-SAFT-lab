@@ -384,6 +384,10 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
     assert result.diagnostics["application_status"] == "solve_succeeded"
     assert result.diagnostics["postsolve_accepted"] is True
     assert result.diagnostics["option_profile"] == "held_refinement"
+    assert result.diagnostics["physical_evidence"]["phase_labels"] == ("liquid1", "liquid2")
+    assert result.diagnostics["physical_evidence"]["phase_roles"] == ("liquid", "liquid")
+    assert result.diagnostics["phase_labels"] == ("liquid1", "liquid2")
+    assert result.diagnostics["phase_roles"] == ("liquid", "liquid")
     assert result.route_diagnostics.constraint_families == (
         "material_balance",
         "phase_pressure_consistency",
@@ -469,6 +473,10 @@ def _assert_hydrocarbon_pair(result, *, problem_kind: str) -> None:
     assert 0 < diagnostics["iteration_history_size"] <= diagnostics["iteration_history_limit"]
     assert len(diagnostics["iteration_history"]) == diagnostics["iteration_history_size"]
     assert diagnostics["postsolve_certification"]["accepted"] is True
+    assert diagnostics["physical_evidence"]["phase_labels"] == ("liquid", "vapor")
+    assert diagnostics["physical_evidence"]["phase_roles"] == ("liquid", "vapor")
+    assert diagnostics["phase_labels"] == ("liquid", "vapor")
+    assert diagnostics["phase_roles"] == ("liquid", "vapor")
     if problem_kind == "neutral_tp_flash":
         assert diagnostics["solver_status"] == "success"
         assert diagnostics["application_status"] == "solve_succeeded"
