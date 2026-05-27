@@ -158,11 +158,15 @@ The HELD implementation ladder is:
 The current Stage 9 neutral implementation separates these statuses in native
 diagnostics: deterministic screening remains seed and certification support,
 continuous TPD and HELD Stage I diagnostics are reported only when every
-continuous TPD start converges, HELD Stage II remains the pending dual
-cutting-plane loop, and current Ipopt phase-amount/phase-volume solves are
-reported as Stage III refinement only for the route that was actually solved.
-An iteration-limit result is an incomplete continuous TPD result, not phase
-discovery evidence.
+continuous TPD start converges, HELD Stage II reports an executable candidate
+bound audit, and current Ipopt phase-amount/phase-volume solves are reported
+as Stage III refinement only for the route that was actually solved. An
+iteration-limit result is an incomplete continuous TPD result, not phase
+discovery evidence. An open Stage II candidate bound gap is also incomplete
+phase-discovery evidence, not a production HELD proof. A current-route Stage
+III postsolve is not verified Stage III evidence unless Ipopt itself reports a
+converged or acceptable solver status; finite variables plus postsolve
+acceptance are diagnostics, not convergence proof.
 
 Current public utility `flash` calls keep deterministic TPD postsolve
 certification but do not request continuous TPD by default. Continuous TPD and
@@ -170,21 +174,27 @@ HELD Stage I diagnostics are proof-path evidence, not a hidden cost on every
 public flash solve.
 
 Runtime diagnosis must stay narrow. Use
-`uv run python run_pytest.py --equilibrium-debug -q -s` or one explicit
-equilibrium test node when investigating Ipopt iteration limits, seed attempts,
-or continuous TPD behavior. That lane enables verbose Ipopt output, stored
-Ipopt iteration history, and continuous-TPD trace rows. Whole equilibrium
-result files under `tests/native/equilibrium/results` are guarded as opt-in
-sweeps.
+`uv run python run_pytest.py --equilibrium-debug -q -s <one equilibrium
+test node>` when investigating Ipopt iteration limits, seed attempts, or
+continuous TPD behavior. The debug lane requires a bounded target unless the
+caller explicitly requests `--equilibrium-confidence`, enables verbose Ipopt
+output, stores Ipopt iteration history, and prints continuous-TPD trace rows.
+Whole equilibrium result files under `tests/native/equilibrium/results` are
+guarded as opt-in sweeps.
 
 The executable Stage 9 snapshot is
 `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`.
-Run it with `--debug` when diagnosing the current TPD/Ipopt path; debug mode
-enables `EPCSAFT_EQUILIBRIUM_DEBUG`, prints continuous-TPD trace rows, and uses
-Ipopt `print_level=5` for the current Stage III route refinement. Its current
-payload verifies deterministic screening, continuous TPD, HELD Stage I, and
-current-route Stage III refinement while keeping HELD Stage II as
-`pending_dual_cutting_plane_loop`, so it is not complete production evidence.
+That default command is the cheap phase-discovery gate: it does not run the
+Stage III Ipopt route while Stage II is already known incomplete. Run it with
+`--include-route-refinement` only when current-route Stage III evidence is
+needed, and with `--debug --include-route-refinement` when diagnosing the
+current TPD/Ipopt path. Debug mode enables `EPCSAFT_EQUILIBRIUM_DEBUG`, prints
+continuous-TPD trace rows, and uses Ipopt `print_level=5`; JSON debug mode keeps
+the machine-readable payload on stdout and forwards native solver output to
+stderr. Its current payload reports HELD Stage II as
+`candidate_bound_gap_open`; when route refinement is requested, current Ipopt
+solver status is also part of the Stage III evidence gate. It is not complete
+production evidence.
 
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful
@@ -395,8 +405,8 @@ correction before proof promotion.
 The readiness file is checked by
 `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json`.
 When executable Stage 9 evidence is relevant, first generate
-`check_stage9_phase_discovery_evidence.py --json` and pass the payload through
-`--stage9-evidence-json`. The same readiness command with
+`check_stage9_phase_discovery_evidence.py --json --include-route-refinement`
+and pass the payload through `--stage9-evidence-json`. The same readiness command with
 `--require-executable` is the closed gate for promoting a case into executable
 Stage 10 proof evidence; Pereira currently fails that gate by design.
 

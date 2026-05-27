@@ -17,7 +17,7 @@
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
     <option name="SCRIPT_NAME" value="$MODULE_DIR$/run_pytest.py" />
-    <option name="PARAMETERS" value="--equilibrium-debug -q -s" />
+    <option name="PARAMETERS" value="--equilibrium-confidence --equilibrium-debug -q -s" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

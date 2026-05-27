@@ -840,6 +840,10 @@ Substeps:
 8. Store Stage II candidate phases with replayable route-assembly metadata.
 9. Use the amount-volume Ipopt NLP as HELD Stage III primal refinement.
 10. Record the relation between Stage II bounds and Stage III refined objective.
+    Stage III evidence requires Ipopt solver convergence or acceptable-level
+    convergence. A finite-variable postsolve with `tiny_step_detected`,
+    iteration-limit, or another nonconverged Ipopt status remains diagnostic
+    evidence only.
 11. Check phase-set completeness:
     no missing lower-free-energy candidate, mass-balance feasibility, no
     duplicate phase, no collapsed phase, and no unexamined transferable species.
@@ -848,16 +852,19 @@ Substeps:
 14. Promote HELD stage status in the registry only after executable tests
     exist.
 15. Keep live diagnosis narrow: use
-    `uv run python run_pytest.py --equilibrium-debug -q -s` or one explicit
-    equilibrium test node, not whole equilibrium result files. The debug lane
-    must enable Ipopt iteration output, stored Ipopt iteration history,
-    seed-attempt summaries, and continuous-TPD iteration traces.
+    `uv run python run_pytest.py --equilibrium-debug -q -s <one equilibrium
+    test node>`, not whole equilibrium result files. The debug lane must enable
+    Ipopt iteration output, stored Ipopt iteration history, seed-attempt
+    summaries, and continuous-TPD iteration traces. It may run the focused
+    confidence slice only when `--equilibrium-confidence` is explicit.
 16. Use
     `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`
-    as the executable Stage 9 evidence snapshot. Use the same command with
-    `--debug` when the question is "what is the TPD/Ipopt solver doing?",
-    because that turns on continuous-TPD trace rows and Ipopt `print_level=5`
-    for the current Stage III refinement.
+    as the cheap Stage 9 phase-discovery evidence snapshot. Add
+    `--include-route-refinement` only when the current Stage III Ipopt
+    route-refinement evidence is needed. Use
+    `--debug --include-route-refinement` when the question is "what is the
+    TPD/Ipopt solver doing?", because that turns on continuous-TPD trace rows
+    and Ipopt `print_level=5` for the current Stage III refinement.
 
 Acceptance checks:
 
@@ -868,8 +875,9 @@ Acceptance checks:
   complete.
 - Current neutral evidence reports deterministic screening as seed support,
   continuous TPD and HELD Stage I only when all continuous TPD starts converge,
-  HELD Stage II as the pending dual cutting-plane loop, and current Ipopt
-  solves as Stage III refinement only after a route solve.
+  HELD Stage II as an executable candidate bound audit, and current Ipopt
+  solves as Stage III refinement only after a route solve. A Stage II open
+  candidate bound gap remains incomplete HELD evidence.
 - The executable Stage 9 checker reports any iteration-limit continuous TPD
   result as incomplete evidence, not as convergence.
 - Public utility `flash` may keep deterministic TPD postsolve certification
@@ -923,7 +931,7 @@ Substeps:
    composition inconsistency. Its readiness files separate reported
    material-balance-feasible points from inferred feed-correction candidates.
    First produce the Stage 9 evidence payload with
-   `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`,
+   `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json --include-route-refinement`,
    then pass it to the Stage 10 readiness gate with
    `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json --stage9-evidence-json <payload>`.
    Use `--require-executable` only when promoting a case to proof evidence.

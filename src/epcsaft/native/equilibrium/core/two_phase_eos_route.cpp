@@ -949,6 +949,67 @@ void select_two_phase_candidate_set(
     discovery.phase_set_status = "candidate_mass_balance_feasible";
 }
 
+void evaluate_held_stage_ii_candidate_bounds(
+    NeutralPhaseDiscoveryResult& discovery,
+    double tpd_tolerance,
+    bool continuous_tpd_required
+) {
+    discovery.held_stage_ii_major_iterations = 0;
+    discovery.held_stage_ii_candidate_count = discovery.unique_candidate_count;
+    discovery.held_stage_ii_lower_bound = 0.0;
+    discovery.held_stage_ii_upper_bound = 0.0;
+    discovery.held_stage_ii_bound_gap = 0.0;
+
+    if (!continuous_tpd_required) {
+        discovery.held_stage_ii_status = "not_requested";
+        return;
+    }
+    if (discovery.continuous_tpd_status != "converged") {
+        discovery.held_stage_ii_status = "incomplete_stage_i_evidence";
+        return;
+    }
+    if (discovery.candidates.empty()) {
+        discovery.held_stage_ii_status = "inconclusive_no_candidates";
+        return;
+    }
+
+    double lower_bound = std::numeric_limits<double>::infinity();
+    double selected_upper_bound = std::numeric_limits<double>::infinity();
+    for (const NeutralTpdCandidate& candidate : discovery.candidates) {
+        if (!candidate.valid || !std::isfinite(candidate.tpd)) {
+            continue;
+        }
+        lower_bound = std::min(lower_bound, candidate.tpd);
+        if (candidate.selected) {
+            selected_upper_bound = std::min(selected_upper_bound, candidate.tpd);
+        }
+    }
+    if (!std::isfinite(lower_bound)) {
+        discovery.held_stage_ii_status = "inconclusive_no_finite_candidate_bound";
+        return;
+    }
+
+    discovery.held_stage_ii_major_iterations = 1;
+    discovery.held_stage_ii_lower_bound = lower_bound;
+    if (!discovery.phase_set_mass_balance_feasible || discovery.selected_candidate_count < 2) {
+        discovery.held_stage_ii_upper_bound = lower_bound;
+        discovery.held_stage_ii_status = "candidate_simplex_mass_balance_incomplete";
+        return;
+    }
+    if (!std::isfinite(selected_upper_bound)) {
+        selected_upper_bound = 0.0;
+    }
+
+    discovery.held_stage_ii_upper_bound = std::max(selected_upper_bound, lower_bound);
+    discovery.held_stage_ii_bound_gap =
+        std::max(0.0, discovery.held_stage_ii_upper_bound - discovery.held_stage_ii_lower_bound);
+    if (discovery.held_stage_ii_bound_gap <= tpd_tolerance) {
+        discovery.held_stage_ii_status = "candidate_bound_gap_closed";
+    } else {
+        discovery.held_stage_ii_status = "candidate_bound_gap_open";
+    }
+}
+
 // AlgID: neutral_held_stage_ladder_diagnostics
 void finalize_stage9_phase_discovery(
     NeutralPhaseDiscoveryResult& discovery,
@@ -987,12 +1048,7 @@ void finalize_stage9_phase_discovery(
     } else {
         discovery.held_stage_i_status = "no_negative_tpd_candidate_found";
     }
-    discovery.held_stage_ii_status = "pending_dual_cutting_plane_loop";
-    discovery.held_stage_ii_major_iterations = 0;
-    discovery.held_stage_ii_candidate_count = discovery.unique_candidate_count;
-    discovery.held_stage_ii_lower_bound = 0.0;
-    discovery.held_stage_ii_upper_bound = 0.0;
-    discovery.held_stage_ii_bound_gap = 0.0;
+    evaluate_held_stage_ii_candidate_bounds(discovery, tpd_tolerance, continuous_tpd_required);
     discovery.held_stage_iii_status = "pending_ipopt_refinement";
     discovery.held_stage_iii_refined_phase_count = 0;
 }

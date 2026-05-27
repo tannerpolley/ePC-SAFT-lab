@@ -72,6 +72,20 @@ def _suppress_native_stdout():
         os.close(saved_stdout)
 
 
+@contextmanager
+def _redirect_native_stdout_to_stderr():
+    sys.stdout.flush()
+    sys.stderr.flush()
+    saved_stdout = os.dup(1)
+    try:
+        os.dup2(2, 1)
+        yield
+        sys.stdout.flush()
+    finally:
+        os.dup2(saved_stdout, 1)
+        os.close(saved_stdout)
+
+
 def _stage9_discovery(mix: ePCSAFTMixture) -> dict[str, Any]:
     return dict(
         _core._native_neutral_tpd_phase_discovery(
@@ -101,7 +115,7 @@ def _stage9_route_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
             1.0e-6,
             0.0,
             "auto",
-            8,
+            50 if _equilibrium_debug_enabled() else 8,
             1.0e-8,
             1.0e-3,
             1.0e-6,
@@ -117,15 +131,23 @@ def _stage9_route_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
     )
 
 
-def _stage9_route_postsolve(mix: ePCSAFTMixture, *, show_native_output: bool = False) -> dict[str, Any] | None:
+def _stage9_route_result(
+    mix: ePCSAFTMixture,
+    *,
+    show_native_output: bool = False,
+    redirect_native_output_to_stderr: bool = False,
+) -> dict[str, Any] | None:
     if not _native_ipopt_compiled(show_native_output=show_native_output):
         return None
     if show_native_output:
         route = _stage9_route_payload(mix)
+    elif redirect_native_output_to_stderr:
+        with _redirect_native_stdout_to_stderr():
+            route = _stage9_route_payload(mix)
     else:
         with _suppress_native_stdout():
             route = _stage9_route_payload(mix)
-    return dict(route["postsolve"])
+    return dict(route)
 
 
 def _continuous_candidates(discovery: dict[str, Any]) -> list[dict[str, Any]]:
@@ -136,10 +158,30 @@ def _continuous_candidates(discovery: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def evaluate_stage9_evidence(*, show_native_output: bool = False) -> dict[str, Any]:
+def _route_solver_converged(route_payload: dict[str, Any]) -> bool:
+    return route_payload.get("solver_status") in {"success", "acceptable_point"} or route_payload.get(
+        "application_status"
+    ) in {"solve_succeeded", "solved_to_acceptable_level"}
+
+
+def evaluate_stage9_evidence(
+    *,
+    include_route_refinement: bool = False,
+    show_native_output: bool = False,
+    redirect_native_output_to_stderr: bool = False,
+) -> dict[str, Any]:
     mix = _nonideal_lle_binary_mixture()
     discovery = _stage9_discovery(mix)
-    route_postsolve = _stage9_route_postsolve(mix, show_native_output=show_native_output)
+    route_payload = (
+        _stage9_route_result(
+            mix,
+            show_native_output=show_native_output,
+            redirect_native_output_to_stderr=redirect_native_output_to_stderr,
+        )
+        if include_route_refinement
+        else None
+    )
+    route_postsolve = None if route_payload is None else dict(route_payload["postsolve"])
     continuous_candidates = _continuous_candidates(discovery)
 
     evidence_status = {
@@ -178,18 +220,37 @@ def evaluate_stage9_evidence(*, show_native_output: bool = False) -> dict[str, A
     ):
         evidence_status["held_stage_i_stability"] = "verified_from_converged_continuous_tpd"
 
-    if discovery.get("held_stage_ii_status") == "pending_dual_cutting_plane_loop":
-        evidence_status["held_stage_ii_dual_phase_discovery"] = "pending_dual_cutting_plane_loop"
+    if (
+        discovery.get("held_stage_ii_status") == "candidate_bound_gap_closed"
+        and int(discovery.get("held_stage_ii_major_iterations", 0)) > 0
+        and float(discovery.get("held_stage_ii_bound_gap", 0.0)) <= 1.0e-6
+    ):
+        evidence_status["held_stage_ii_dual_phase_discovery"] = "verified_candidate_bound_gap_closed"
+    elif discovery.get("held_stage_ii_status") == "candidate_bound_gap_open":
+        evidence_status["held_stage_ii_dual_phase_discovery"] = "incomplete_candidate_bound_gap_open"
 
-    if route_postsolve is None:
+    if not include_route_refinement:
+        evidence_status["held_stage_iii_ipopt_refinement"] = "not_requested_stage_ii_incomplete"
+    elif route_postsolve is None:
         evidence_status["held_stage_iii_ipopt_refinement"] = "ipopt_dependency_required"
     elif (
-        route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
+        route_payload is not None
+        and _route_solver_converged(route_payload)
+        and route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
         and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
         and route_postsolve.get("accepted") is True
     ):
         evidence_status["held_stage_iii_ipopt_refinement"] = (
             "verified_current_route_refinement_pending_stage_ii_candidates"
+        )
+    elif (
+        route_payload is not None
+        and route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
+        and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
+        and route_postsolve.get("accepted") is True
+    ):
+        evidence_status["held_stage_iii_ipopt_refinement"] = (
+            f"incomplete_ipopt_solver_status_{route_payload.get('solver_status', 'unknown')}"
         )
 
     complete = all(
@@ -210,6 +271,7 @@ def evaluate_stage9_evidence(*, show_native_output: bool = False) -> dict[str, A
         "incomplete_requirements": incomplete_requirements,
         "diagnostics": {
             "equilibrium_debug_enabled": _equilibrium_debug_enabled(),
+            "route_refinement_requested": include_route_refinement,
             "ipopt_print_level": 5 if _equilibrium_debug_enabled() else 0,
             "phase_discovery_backend": discovery.get("phase_discovery_backend"),
             "stage9_phase_discovery_steps": discovery.get("stage9_phase_discovery_steps"),
@@ -221,11 +283,29 @@ def evaluate_stage9_evidence(*, show_native_output: bool = False) -> dict[str, A
             "continuous_tpd_min": discovery.get("continuous_tpd_min"),
             "held_stage_i_status": discovery.get("held_stage_i_status"),
             "held_stage_ii_status": discovery.get("held_stage_ii_status"),
+            "held_stage_ii_major_iterations": discovery.get("held_stage_ii_major_iterations"),
             "held_stage_ii_candidate_count": discovery.get("held_stage_ii_candidate_count"),
+            "held_stage_ii_lower_bound": discovery.get("held_stage_ii_lower_bound"),
+            "held_stage_ii_upper_bound": discovery.get("held_stage_ii_upper_bound"),
+            "held_stage_ii_bound_gap": discovery.get("held_stage_ii_bound_gap"),
             "held_stage_iii_status": None if route_postsolve is None else route_postsolve.get("held_stage_iii_status"),
             "held_stage_iii_refined_phase_count": None
             if route_postsolve is None
             else route_postsolve.get("held_stage_iii_refined_phase_count"),
+            "route_solver_status": None if route_payload is None else route_payload.get("solver_status"),
+            "route_application_status": None if route_payload is None else route_payload.get("application_status"),
+            "route_status": None if route_payload is None else route_payload.get("status"),
+            "route_iteration_count": None if route_payload is None else route_payload.get("iteration_count"),
+            "route_iteration_history_size": None
+            if route_payload is None
+            else route_payload.get("iteration_history_size"),
+            "route_iteration_history_limit": None
+            if route_payload is None
+            else route_payload.get("iteration_history_limit"),
+            "route_seed_attempt_count": None
+            if route_payload is None
+            else len(route_payload.get("seed_attempts", ())),
+            "route_seed_attempts": None if route_payload is None else route_payload.get("seed_attempts"),
         },
     }
 
@@ -243,8 +323,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--debug",
         action="store_true",
         help=(
-            "Enable EPCSAFT_EQUILIBRIUM_DEBUG, continuous-TPD trace rows, and Ipopt print_level=5 for "
-            "the Stage III route refinement."
+            "Enable EPCSAFT_EQUILIBRIUM_DEBUG and continuous-TPD trace rows. When "
+            "--include-route-refinement is also set, use Ipopt print_level=5 for the Stage III route refinement."
+        ),
+    )
+    parser.add_argument(
+        "--include-route-refinement",
+        action="store_true",
+        help=(
+            "Also run the current Stage III Ipopt route-refinement proof path. "
+            "The default is the cheaper phase-discovery gate because Stage II is currently incomplete."
         ),
     )
     parser.add_argument(
@@ -259,7 +347,11 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.debug:
         os.environ["EPCSAFT_EQUILIBRIUM_DEBUG"] = "1"
-    payload = evaluate_stage9_evidence(show_native_output=args.debug and not args.json)
+    payload = evaluate_stage9_evidence(
+        include_route_refinement=args.include_route_refinement,
+        show_native_output=args.debug and not args.json,
+        redirect_native_output_to_stderr=args.debug and args.json and args.include_route_refinement,
+    )
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:

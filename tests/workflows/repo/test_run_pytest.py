@@ -439,27 +439,30 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
     assert all("tests/workflows/validation" not in target for target in targets)
 
 
-def test_equilibrium_debug_without_explicit_target_defaults_to_focused_confidence_slice():
+def test_equilibrium_debug_without_explicit_target_requires_bounded_selection():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
 
-    args = run_pytest._pytest_args(["-q", "-s"], pytest_temp, equilibrium_debug=True)
+    with pytest.raises(SystemExit, match="requires --equilibrium-confidence or one explicit equilibrium test node"):
+        run_pytest._pytest_args(["-q", "-s"], pytest_temp, equilibrium_debug=True)
+
+
+def test_equilibrium_debug_with_only_pytest_filter_requires_bounded_selection():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+
+    with pytest.raises(SystemExit, match="requires --equilibrium-confidence or one explicit equilibrium test node"):
+        run_pytest._pytest_args(["-k", "flash", "-q", "-s"], pytest_temp, equilibrium_debug=True)
+
+
+def test_equilibrium_debug_allows_explicit_confidence_slice_when_requested():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+
+    args = run_pytest._pytest_args(["-q", "-s"], pytest_temp, equilibrium_confidence=True, equilibrium_debug=True)
 
     assert args[: len(run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)] == list(
         run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
     )
     assert "tests/api/frontend/test_equilibrium.py" not in args
     assert args[-4:] == ["-q", "-s", "--basetemp", str(pytest_temp)]
-
-
-def test_equilibrium_debug_with_pytest_filter_still_defaults_to_focused_confidence_slice():
-    pytest_temp = Path("build") / "pytest-temp" / "run-test"
-
-    args = run_pytest._pytest_args(["-k", "flash", "-q", "-s"], pytest_temp, equilibrium_debug=True)
-
-    assert args[: len(run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)] == list(
-        run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
-    )
-    assert args[-6:] == ["-k", "flash", "-q", "-s", "--basetemp", str(pytest_temp)]
 
 
 def test_equilibrium_debug_accepts_exactly_one_equilibrium_test_node():

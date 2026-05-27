@@ -180,7 +180,7 @@ TPD value, start source, iteration count, and convergence status.
 
 % AlgID: neutral_held_stage_ladder_diagnostics
 % Family: Phase discovery and certification
-% Status: Implemented as diagnostics for deterministic screening, continuous TPD, HELD Stage I, pending Stage II, and current-route Stage III refinement
+% Status: Implemented as diagnostics for deterministic screening, continuous TPD, HELD Stage I, Stage II candidate bound-gap audit, and current-route Stage III refinement with an Ipopt solver-convergence gate
 % Public API: Internal route-discovery and certification infrastructure only
 % Backend: Native C++ equilibrium core
 % Dependency: Neutral TPD stability, continuous TPD minimization, and Ipopt phase-amount/phase-volume routes
@@ -190,14 +190,16 @@ TPD value, start source, iteration count, and convergence status.
 % Validation: tests/native/equilibrium/results/test_neutral_lle_reference_values.py
 % Capability key: internal:neutral_held_stage_ladder_diagnostics
 % Description: Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III.
-% Change note: Stage II remains an explicit pending dual cutting-plane loop until the outer/inner HELD state is implemented.
+% Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics also fail open unless the current Ipopt route reports solver convergence or acceptable-level convergence.
 
 This diagnostic layer makes the phase-discovery ladder auditable. Current
 deterministic screening remains seed and certification support. Continuous TPD
-and HELD Stage I can run from multiple starts, while Stage II is reported as a
-pending dual cutting-plane loop. Current Ipopt phase-amount/phase-volume solves
-are reported as current-route Stage III refinement, not as proof that Stage II
-has been completed.
+and HELD Stage I can run from multiple starts, while Stage II reports a
+candidate lower/upper bound audit and fails open when the bound gap remains
+nonzero. Current Ipopt phase-amount/phase-volume solves are reported as
+current-route Stage III refinement only when the Ipopt solve itself reports
+convergence or acceptable-level convergence; finite variables plus postsolve
+acceptance are diagnostics, not proof that Stage II or Stage III has converged.
 
 % AlgID: neutral_deterministic_phase_candidate_screening
 % Family: Phase discovery and certification

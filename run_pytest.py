@@ -85,8 +85,8 @@ SLICE_SELECTION_NOTE = (
     "`uv run python scripts/dev/validate_project.py quick` or `uv run python run_pytest.py -q`. "
     "Use `--all` only when you explicitly need every retained pytest contract. "
     "Extra positional pytest targets after a slice are appended and will run in addition to that slice. "
-    "Use `--equilibrium-debug -s` with `--equilibrium-confidence` or a single equilibrium test node "
-    "when Ipopt iteration logs are needed."
+    "Use `--equilibrium-debug -s` with an explicit single equilibrium test node, or with "
+    "`--equilibrium-confidence` only when you intentionally want the focused confidence slice."
 )
 
 
@@ -273,7 +273,10 @@ def _normalize_equilibrium_debug_selection(
             "Use the focused confidence slice or one explicit equilibrium test node."
         )
     if not equilibrium_confidence and not positional_targets:
-        equilibrium_confidence = True
+        raise SystemExit(
+            "--equilibrium-debug requires --equilibrium-confidence or one explicit equilibrium test node. "
+            "Do not run debug mode without a bounded target."
+        )
     elif not equilibrium_confidence:
         _validate_equilibrium_debug_targets(positional_targets)
     return (

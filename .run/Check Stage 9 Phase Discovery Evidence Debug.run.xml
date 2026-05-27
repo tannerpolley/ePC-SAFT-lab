@@ -17,7 +17,7 @@
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
     <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/validation/check_stage9_phase_discovery_evidence.py" />
-    <option name="PARAMETERS" value="--debug" />
+    <option name="PARAMETERS" value="--debug --include-route-refinement" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

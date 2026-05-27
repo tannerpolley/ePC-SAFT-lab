@@ -86,8 +86,11 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     }
     assert postsolve["held_stage_i_start_count"] == postsolve["continuous_tpd_start_count"]
     assert postsolve["held_stage_i_min_tpd"] == pytest.approx(postsolve["continuous_tpd_min"])
-    assert postsolve["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert postsolve["held_stage_ii_status"] == "candidate_bound_gap_closed"
+    assert postsolve["held_stage_ii_major_iterations"] > 0
     assert postsolve["held_stage_ii_candidate_count"] == postsolve["unique_candidate_count"]
+    assert postsolve["held_stage_ii_lower_bound"] <= postsolve["held_stage_ii_upper_bound"]
+    assert postsolve["held_stage_ii_bound_gap"] <= 1.0e-6
     assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
     assert postsolve["held_stage_iii_refined_phase_count"] == 2
     assert postsolve["stability_checked"] is True
@@ -114,7 +117,7 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert postsolve["seed_and_stability"]["deterministic_screening_is_full_held"] is False
     assert postsolve["seed_and_stability"]["continuous_tpd_status"] == "converged"
     assert postsolve["seed_and_stability"]["held_stage_i_status"] == postsolve["held_stage_i_status"]
-    assert postsolve["seed_and_stability"]["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert postsolve["seed_and_stability"]["held_stage_ii_status"] == "candidate_bound_gap_closed"
     assert postsolve["candidate_mass_balance_norm"] <= 1.0e-8
     assert postsolve["material_balance_norm"] <= 1.0e-8
     assert postsolve["pressure_consistency_norm"] <= 1.0e-3
@@ -139,7 +142,7 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert certificate["deterministic_screening_is_full_held"] is False
     assert certificate["continuous_tpd_status"] == "converged"
     assert certificate["held_stage_i_status"] == postsolve["held_stage_i_status"]
-    assert certificate["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert certificate["held_stage_ii_status"] == "candidate_bound_gap_closed"
     assert certificate["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
     assert certificate["stability_checked"] is True
     assert certificate["stability_accepted"] is True
@@ -189,9 +192,15 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
     }
     assert discovery["held_stage_i_start_count"] == discovery["continuous_tpd_start_count"]
     assert discovery["held_stage_i_min_tpd"] == pytest.approx(discovery["continuous_tpd_min"])
-    assert discovery["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
-    assert discovery["held_stage_ii_major_iterations"] == 0
+    assert discovery["held_stage_ii_status"] == "candidate_bound_gap_open"
+    assert discovery["held_stage_ii_major_iterations"] > 0
     assert discovery["held_stage_ii_candidate_count"] == discovery["unique_candidate_count"]
+    assert discovery["held_stage_ii_lower_bound"] == pytest.approx(discovery["min_tpd"])
+    assert discovery["held_stage_ii_lower_bound"] <= discovery["held_stage_ii_upper_bound"]
+    assert discovery["held_stage_ii_bound_gap"] == pytest.approx(
+        discovery["held_stage_ii_upper_bound"] - discovery["held_stage_ii_lower_bound"]
+    )
+    assert discovery["held_stage_ii_bound_gap"] > 0.0
     assert discovery["held_stage_iii_status"] == "pending_ipopt_refinement"
     assert discovery["held_stage_iii_refined_phase_count"] == 0
     assert discovery["stability_checked"] is True
@@ -250,6 +259,8 @@ def test_neutral_tpd_phase_discovery_can_run_deterministic_screening_without_con
     assert discovery["continuous_tpd_iteration_count_max"] == 0
     assert discovery["continuous_tpd_step_final_max"] == 0.0
     assert discovery["held_stage_i_status"] == "not_requested"
+    assert discovery["held_stage_ii_status"] == "not_requested"
+    assert discovery["held_stage_ii_major_iterations"] == 0
     assert {candidate["tpd_backend"] for candidate in discovery["candidates"]} == {
         "deterministic_grid_evaluation",
     }
@@ -285,9 +296,10 @@ def test_stage9_phase_discovery_ladder_reports_distinct_layers() -> None:
         "no_negative_tpd_candidate_found",
     }
     assert discovery["held_stage_i_status"] != discovery["continuous_tpd_status"]
-    assert discovery["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert discovery["held_stage_ii_status"] == "candidate_bound_gap_open"
     assert discovery["held_stage_ii_status"] != discovery["held_stage_i_status"]
-    assert discovery["held_stage_ii_major_iterations"] == 0
+    assert discovery["held_stage_ii_major_iterations"] > 0
+    assert discovery["held_stage_ii_bound_gap"] > 0.0
     assert discovery["held_stage_iii_status"] == "pending_ipopt_refinement"
     assert discovery["held_stage_iii_status"] != discovery["held_stage_ii_status"]
 
