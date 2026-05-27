@@ -85,8 +85,7 @@ SLICE_SELECTION_NOTE = (
     "`uv run python scripts/dev/validate_project.py quick` or `uv run python run_pytest.py -q`. "
     "Use `--all` only when you explicitly need every retained pytest contract. "
     "Extra positional pytest targets after a slice are appended and will run in addition to that slice. "
-    "Use `--equilibrium-debug -s` with an explicit single equilibrium test node, or with "
-    "`--equilibrium-confidence` only when you intentionally want the focused confidence slice."
+    "Use `--equilibrium-debug -s` only with one explicit equilibrium test node."
 )
 
 
@@ -262,23 +261,27 @@ def _normalize_equilibrium_debug_selection(
             native_contracts,
             all_tests,
         )
-    if generic or confidence or equilibrium_api or runtime or api or native or native_contracts or all_tests:
+    if (
+        generic
+        or confidence
+        or equilibrium_confidence
+        or equilibrium_api
+        or runtime
+        or api
+        or native
+        or native_contracts
+        or all_tests
+    ):
         raise SystemExit(
-            "--equilibrium-debug is only valid with --equilibrium-confidence or a single explicit equilibrium test node."
+            "--equilibrium-debug requires one explicit equilibrium test node; do not use it with pytest slices."
         )
     positional_targets = _positional_targets(pytest_args)
-    if equilibrium_confidence and positional_targets:
+    if not positional_targets:
         raise SystemExit(
-            "--equilibrium-debug with --equilibrium-confidence cannot append extra pytest targets. "
-            "Use the focused confidence slice or one explicit equilibrium test node."
-        )
-    if not equilibrium_confidence and not positional_targets:
-        raise SystemExit(
-            "--equilibrium-debug requires --equilibrium-confidence or one explicit equilibrium test node. "
+            "--equilibrium-debug requires one explicit equilibrium test node. "
             "Do not run debug mode without a bounded target."
         )
-    elif not equilibrium_confidence:
-        _validate_equilibrium_debug_targets(positional_targets)
+    _validate_equilibrium_debug_targets(positional_targets)
     return (
         generic,
         confidence,
@@ -295,8 +298,7 @@ def _normalize_equilibrium_debug_selection(
 def _validate_equilibrium_debug_targets(positional_targets: list[str]) -> None:
     if len(positional_targets) != 1:
         raise SystemExit(
-            "--equilibrium-debug accepts exactly one explicit equilibrium test node when not using "
-            "--equilibrium-confidence."
+            "--equilibrium-debug accepts exactly one explicit equilibrium test node."
         )
     target = positional_targets[0].replace("\\", "/")
     target_path = target.split("::", 1)[0].rstrip("/")

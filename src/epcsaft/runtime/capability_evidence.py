@@ -399,10 +399,10 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
     "equilibrium-debug": {
         "commands": (
             ("scripts/dev/doctor.py",),
-            ("run_pytest.py", "--equilibrium-confidence", "--equilibrium-debug", "-q", "-s"),
+            ("scripts/validation/check_stage9_phase_discovery_evidence.py", "--debug", "--include-route-refinement"),
         ),
         "cheap_by_default": False,
-        "evidence": "doctor plus focused neutral TP flash convergence contracts with verbose Ipopt diagnostics",
+        "evidence": "doctor plus one Stage 9 phase-discovery route with verbose TPD and Ipopt diagnostics",
     },
 }
 

@@ -840,12 +840,12 @@ Substeps:
 8. Store Stage II candidate phases with replayable route-assembly metadata.
 9. Use the amount-volume Ipopt NLP as HELD Stage III primal refinement.
 10. Record the relation between Stage II bounds and Stage III refined objective.
-    Stage III evidence requires Ipopt solver convergence or acceptable-level
-    convergence. A finite-variable postsolve with `tiny_step_detected`,
-    iteration-limit, or another nonconverged Ipopt status remains diagnostic
-    evidence only. The current neutral LLE proof fixture uses the route-owned
-    `held_refinement` Ipopt profile; postsolve certification is not allowed to
-    promote a nonconverged Ipopt attempt.
+    Stage III evidence requires Ipopt `success` and `solve_succeeded`.
+    Acceptable-level status, a finite-variable postsolve with
+    `tiny_step_detected`, iteration-limit, or another nonconverged Ipopt status
+    remains diagnostic evidence only. The current neutral LLE proof fixture uses
+    the route-owned `held_refinement` Ipopt profile; postsolve certification is
+    not allowed to promote a nonconverged Ipopt attempt.
 11. Check phase-set completeness:
     no missing lower-free-energy candidate, mass-balance feasibility, no
     duplicate phase, no collapsed phase, and no unexamined transferable species.
@@ -857,8 +857,7 @@ Substeps:
     `uv run python run_pytest.py --equilibrium-debug -q -s <one equilibrium
     test node>`, not whole equilibrium result files. The debug lane must enable
     Ipopt iteration output, stored Ipopt iteration history, seed-attempt
-    summaries, and continuous-TPD iteration traces. It may run the focused
-    confidence slice only when `--equilibrium-confidence` is explicit.
+    summaries, and continuous-TPD iteration traces. It cannot run pytest slices.
 16. Use
     `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`
     as the cheap Stage 9 phase-discovery evidence snapshot. Add
@@ -879,7 +878,9 @@ Acceptance checks:
   continuous TPD and HELD Stage I only when all continuous TPD starts converge,
   HELD Stage II as an executable candidate bound audit, and current Ipopt
   solves as Stage III refinement only after the route solve itself converges. A
-  Stage II open candidate bound gap remains incomplete HELD evidence.
+  Stage II open candidate bound gap remains incomplete HELD evidence; the
+  current neutral fixture closes only the finite candidate bound audit, not the
+  full generalized dual-loop HELD admission gate.
 - The executable Stage 9 checker reports any iteration-limit continuous TPD
   result as incomplete evidence, not as convergence.
 - Public utility `flash` may keep deterministic TPD postsolve certification

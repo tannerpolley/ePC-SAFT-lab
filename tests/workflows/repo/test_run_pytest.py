@@ -97,7 +97,7 @@ def test_validate_project_modes_route_to_standard_validation_bundles():
     )
     assert validate_project.CHECK_COMMANDS["equilibrium-debug"] == (
         ("scripts/dev/doctor.py",),
-        ("run_pytest.py", "--equilibrium-confidence", "--equilibrium-debug", "-q", "-s"),
+        ("scripts/validation/check_stage9_phase_discovery_evidence.py", "--debug", "--include-route-refinement"),
     )
 
 
@@ -442,27 +442,22 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
 def test_equilibrium_debug_without_explicit_target_requires_bounded_selection():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
 
-    with pytest.raises(SystemExit, match="requires --equilibrium-confidence or one explicit equilibrium test node"):
+    with pytest.raises(SystemExit, match="requires one explicit equilibrium test node"):
         run_pytest._pytest_args(["-q", "-s"], pytest_temp, equilibrium_debug=True)
 
 
 def test_equilibrium_debug_with_only_pytest_filter_requires_bounded_selection():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
 
-    with pytest.raises(SystemExit, match="requires --equilibrium-confidence or one explicit equilibrium test node"):
+    with pytest.raises(SystemExit, match="requires one explicit equilibrium test node"):
         run_pytest._pytest_args(["-k", "flash", "-q", "-s"], pytest_temp, equilibrium_debug=True)
 
 
-def test_equilibrium_debug_allows_explicit_confidence_slice_when_requested():
+def test_equilibrium_debug_rejects_confidence_slice_sweeps():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
 
-    args = run_pytest._pytest_args(["-q", "-s"], pytest_temp, equilibrium_confidence=True, equilibrium_debug=True)
-
-    assert args[: len(run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)] == list(
-        run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
-    )
-    assert "tests/api/frontend/test_equilibrium.py" not in args
-    assert args[-4:] == ["-q", "-s", "--basetemp", str(pytest_temp)]
+    with pytest.raises(SystemExit, match="one explicit equilibrium test node"):
+        run_pytest._pytest_args(["-q", "-s"], pytest_temp, equilibrium_confidence=True, equilibrium_debug=True)
 
 
 def test_equilibrium_debug_accepts_exactly_one_equilibrium_test_node():
@@ -514,18 +509,21 @@ def test_equilibrium_debug_rejects_confidence_plus_extra_targets():
         "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
     )
 
-    with pytest.raises(SystemExit, match="cannot append extra pytest targets"):
+    with pytest.raises(SystemExit, match="do not use it with pytest slices"):
         run_pytest._pytest_args([target, "-q"], pytest_temp, equilibrium_confidence=True, equilibrium_debug=True)
 
 
 def test_equilibrium_debug_rejects_non_equilibrium_slices():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
 
-    with pytest.raises(SystemExit, match="--equilibrium-debug is only valid"):
+    with pytest.raises(SystemExit, match="requires one explicit equilibrium test node"):
         run_pytest._pytest_args(["-q"], pytest_temp, generic=True, equilibrium_debug=True)
 
-    with pytest.raises(SystemExit, match="--equilibrium-debug is only valid"):
+    with pytest.raises(SystemExit, match="requires one explicit equilibrium test node"):
         run_pytest._pytest_args(["-q"], pytest_temp, all_tests=True, equilibrium_debug=True)
+
+    with pytest.raises(SystemExit, match="one explicit equilibrium test node"):
+        run_pytest._pytest_args(["-q"], pytest_temp, equilibrium_confidence=True, equilibrium_debug=True)
 
 
 def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():

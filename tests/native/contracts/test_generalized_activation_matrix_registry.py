@@ -100,7 +100,10 @@ def test_no_generalized_family_claims_production_before_held_gates() -> None:
     neutral = _family_by_label()["PE-Neutral TP Flash"]
     assert "continuous_tpd_minimization" in neutral["required_gates"]
     assert "held_stage_ii_dual_phase_discovery" in neutral["required_gates"]
-    assert neutral["phase_discovery_status"] == "continuous_tpd_stage_i_stage_ii_bound_gap_open"
+    assert (
+        neutral["phase_discovery_status"]
+        == "continuous_tpd_stage_i_stage_ii_candidate_bound_audit_closed_current_fixture"
+    )
     assert neutral["stage9_status"]["deterministic_screening"].endswith("not_full_held")
     assert (
         neutral["stage9_status"]["continuous_tpd_minimization"]
@@ -110,11 +113,11 @@ def test_no_generalized_family_claims_production_before_held_gates() -> None:
     assert neutral["stage9_status"]["held_stage_i_stability"] == expected_stage_i_status
     assert (
         neutral["stage9_status"]["held_stage_ii_dual_phase_discovery"]
-        == "diagnostic_candidate_bound_gap_open_pending_dual_convergence"
+        == "current_neutral_candidate_bound_audit_closed_pending_full_dual_loop_generalization"
     )
     assert (
         neutral["stage9_status"]["held_stage_iii_ipopt_refinement"]
-        == "current_route_refinement_verified_with_ipopt_convergence_pending_stage_ii_candidates"
+        == "current_route_refinement_verified_with_ipopt_success"
     )
 
 

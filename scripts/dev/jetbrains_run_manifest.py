@@ -173,13 +173,6 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="--equilibrium-api -q",
     ),
     RunConfigSpec(
-        name="Test Equilibrium Debug",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="--equilibrium-confidence --equilibrium-debug -q -s",
-    ),
-    RunConfigSpec(
         name="Test Runtime",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_TESTS,

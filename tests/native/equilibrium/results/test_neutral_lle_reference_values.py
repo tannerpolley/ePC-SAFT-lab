@@ -243,7 +243,7 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
     }
     assert discovery["held_stage_i_start_count"] == discovery["continuous_tpd_start_count"]
     assert discovery["held_stage_i_min_tpd"] == pytest.approx(discovery["continuous_tpd_min"])
-    assert discovery["held_stage_ii_status"] == "candidate_bound_gap_open"
+    assert discovery["held_stage_ii_status"] == "candidate_bound_gap_closed"
     assert discovery["held_stage_ii_major_iterations"] > 0
     assert discovery["held_stage_ii_candidate_count"] == discovery["unique_candidate_count"]
     assert discovery["held_stage_ii_lower_bound"] == pytest.approx(discovery["min_tpd"])
@@ -251,7 +251,7 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
     assert discovery["held_stage_ii_bound_gap"] == pytest.approx(
         discovery["held_stage_ii_upper_bound"] - discovery["held_stage_ii_lower_bound"]
     )
-    assert discovery["held_stage_ii_bound_gap"] > 0.0
+    assert discovery["held_stage_ii_bound_gap"] <= 1.0e-6
     assert discovery["held_stage_iii_status"] == "pending_ipopt_refinement"
     assert discovery["held_stage_iii_refined_phase_count"] == 0
     assert discovery["stability_checked"] is True
@@ -266,6 +266,8 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
         range(discovery["unique_candidate_count"])
     )
     assert sum(candidate["selected"] for candidate in discovery["candidates"]) == discovery["selected_candidate_count"]
+    selected_tpds = [candidate["tpd"] for candidate in discovery["candidates"] if candidate["selected"]]
+    assert min(selected_tpds) == pytest.approx(discovery["min_tpd"])
     for candidate in discovery["candidates"]:
         assert candidate["source"].startswith("feed_phase_kind_")
         assert candidate["tpd_backend"] in {
@@ -347,10 +349,10 @@ def test_stage9_phase_discovery_ladder_reports_distinct_layers() -> None:
         "no_negative_tpd_candidate_found",
     }
     assert discovery["held_stage_i_status"] != discovery["continuous_tpd_status"]
-    assert discovery["held_stage_ii_status"] == "candidate_bound_gap_open"
+    assert discovery["held_stage_ii_status"] == "candidate_bound_gap_closed"
     assert discovery["held_stage_ii_status"] != discovery["held_stage_i_status"]
     assert discovery["held_stage_ii_major_iterations"] > 0
-    assert discovery["held_stage_ii_bound_gap"] > 0.0
+    assert discovery["held_stage_ii_bound_gap"] <= 1.0e-6
     assert discovery["held_stage_iii_status"] == "pending_ipopt_refinement"
     assert discovery["held_stage_iii_status"] != discovery["held_stage_ii_status"]
 

@@ -164,9 +164,9 @@ as Stage III refinement only for the route that was actually solved. An
 iteration-limit result is an incomplete continuous TPD result, not phase
 discovery evidence. An open Stage II candidate bound gap is also incomplete
 phase-discovery evidence, not a production HELD proof. A current-route Stage
-III postsolve is not verified Stage III evidence unless Ipopt itself reports a
-converged or acceptable solver status; finite variables plus postsolve
-acceptance are diagnostics, not convergence proof. The current neutral LLE proof
+III postsolve is not verified Stage III evidence unless Ipopt itself reports
+`success` and `solve_succeeded`; acceptable-level or finite-variable postsolve
+acceptance is diagnostic, not convergence proof. The current neutral LLE proof
 fixture uses the route-owned `held_refinement` Ipopt profile and reports Stage
 III only when the same route converges before postsolve certification.
 
@@ -178,26 +178,28 @@ public flash solve.
 Runtime diagnosis must stay narrow. Use
 `uv run python run_pytest.py --equilibrium-debug -q -s <one equilibrium
 test node>` when investigating Ipopt iteration limits, seed attempts, or
-continuous TPD behavior. The debug lane requires a bounded target unless the
-caller explicitly requests `--equilibrium-confidence`, enables verbose Ipopt
-output, stores Ipopt iteration history, and prints continuous-TPD trace rows.
+continuous TPD behavior. The debug lane requires one explicit test node; it
+cannot run a pytest slice. It enables verbose Ipopt output, stores Ipopt
+iteration history, and prints continuous-TPD trace rows.
 Whole equilibrium result files under `tests/native/equilibrium/results` are
 guarded as opt-in sweeps.
 
 The executable Stage 9 snapshot is
 `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`.
 That default command is the cheap phase-discovery gate: it does not run the
-Stage III Ipopt route while Stage II is already known incomplete. Run it with
+Stage III Ipopt route refinement solve. Run it with
 `--include-route-refinement` only when current-route Stage III evidence is
 needed, and with `--debug --include-route-refinement` when diagnosing the
 current TPD/Ipopt path. Debug mode enables `EPCSAFT_EQUILIBRIUM_DEBUG`, prints
 continuous-TPD trace rows, and uses Ipopt `print_level=5`; JSON debug mode keeps
 the machine-readable payload on stdout and forwards native solver output to
-stderr. Its current payload reports HELD Stage II as
-`candidate_bound_gap_open`; when route refinement is requested, current Ipopt
-solver convergence is required before Stage III can be counted as current-route
-refinement evidence. Stage III convergence does not close the open Stage II
-candidate-bound gap, so the snapshot is still not complete production evidence.
+stderr. Its current synthetic neutral payload reports HELD Stage II as
+`candidate_bound_gap_closed` for the finite candidate audit. When route
+refinement is requested, current Ipopt `success` / `solve_succeeded` convergence
+is required before Stage III can be counted as current-route refinement
+evidence. This still does not make the generalized family production-exposed:
+source-backed Stage 10 proof, full family generalization, exact derivatives,
+and postsolve certification gates still control admission.
 
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful

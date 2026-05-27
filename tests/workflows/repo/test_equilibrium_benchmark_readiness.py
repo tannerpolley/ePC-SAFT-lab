@@ -161,6 +161,42 @@ def test_stage9_evidence_route_refinement_requires_ipopt_convergence(monkeypatch
     assert payload["diagnostics"]["route_solver_status"] == "tiny_step_detected"
 
 
+def test_stage9_evidence_route_refinement_does_not_promote_acceptable_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(stage9_checker, "_nonideal_lle_binary_mixture", lambda: object())
+    discovery = _synthetic_stage9_discovery()
+    discovery["held_stage_ii_status"] = "candidate_bound_gap_closed"
+    discovery["held_stage_ii_bound_gap"] = 0.0
+    monkeypatch.setattr(stage9_checker, "_stage9_discovery", lambda mix: discovery)
+    monkeypatch.setattr(
+        stage9_checker,
+        "_stage9_route_result",
+        lambda mix, **kwargs: {
+            "solver_status": "acceptable_point",
+            "application_status": "solved_to_acceptable_level",
+            "status": "production_accepted",
+            "iteration_count": 59,
+            "iteration_history_size": 50,
+            "iteration_history_limit": 50,
+            "seed_attempts": [],
+            "postsolve": {
+                "accepted": True,
+                "held_stage_iii_status": "ipopt_refinement_completed_current_route",
+                "held_stage_iii_refined_phase_count": 2,
+            },
+        },
+    )
+
+    payload = stage9_checker.evaluate_stage9_evidence(include_route_refinement=True)
+
+    assert (
+        payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
+        == "incomplete_ipopt_solver_status_acceptable_point"
+    )
+    assert "held_stage_iii_ipopt_refinement" in payload["incomplete_requirements"]
+
+
 def test_pereira_readiness_checker_reports_nonexecutable_stage10_json() -> None:
     result = _run_checker("--json")
 
@@ -229,7 +265,7 @@ def test_pereira_readiness_checker_recomputes_material_balance_and_rejects_stale
     assert payload["stored_readiness_mismatches"][0]["case_key"] == "system_iii_22325_09mpa"
 
 
-def test_stage9_evidence_checker_reports_current_ladder_without_promoting_stage_ii() -> None:
+def test_stage9_evidence_checker_reports_stage_ii_without_running_stage_iii() -> None:
     result = _run_stage9_checker("--json")
 
     assert result.returncode == 0, result.stdout + result.stderr
@@ -240,19 +276,21 @@ def test_stage9_evidence_checker_reports_current_ladder_without_promoting_stage_
     assert payload["evidence_status"]["deterministic_screening"] == "verified_not_full_held"
     assert payload["evidence_status"]["continuous_tpd_minimization"] == "verified_converged"
     assert payload["evidence_status"]["held_stage_i_stability"] == "verified_from_converged_continuous_tpd"
-    assert payload["evidence_status"]["held_stage_ii_dual_phase_discovery"] == "incomplete_candidate_bound_gap_open"
+    assert (
+        payload["evidence_status"]["held_stage_ii_dual_phase_discovery"]
+        == "verified_candidate_bound_gap_closed"
+    )
     assert (
         payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
-        == "not_requested_stage_ii_incomplete"
+        == "not_requested"
     )
     assert payload["incomplete_requirements"] == [
-        "held_stage_ii_dual_phase_discovery",
         "held_stage_iii_ipopt_refinement",
     ]
     assert payload["diagnostics"]["route_refinement_requested"] is False
-    assert payload["diagnostics"]["held_stage_ii_status"] == "candidate_bound_gap_open"
+    assert payload["diagnostics"]["held_stage_ii_status"] == "candidate_bound_gap_closed"
     assert payload["diagnostics"]["held_stage_ii_major_iterations"] > 0
-    assert payload["diagnostics"]["held_stage_ii_bound_gap"] > 0.0
+    assert payload["diagnostics"]["held_stage_ii_bound_gap"] <= 1.0e-6
 
 
 def test_stage9_evidence_checker_debug_mode_exposes_trace_without_breaking_json() -> None:
@@ -265,6 +303,24 @@ def test_stage9_evidence_checker_debug_mode_exposes_trace_without_breaking_json(
     assert payload["diagnostics"]["route_refinement_requested"] is False
     assert payload["diagnostics"]["ipopt_print_level"] == 5
     assert "[EPCSAFT_TPD_DEBUG]" in result.stderr
+
+
+def test_stage9_evidence_checker_debug_route_reports_complete_converged_path() -> None:
+    result = _run_stage9_checker("--json", "--debug", "--include-route-refinement")
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = _load_stdout_json(result)
+
+    assert payload["complete"] is True
+    assert payload["incomplete_requirements"] == []
+    assert payload["evidence_status"]["held_stage_iii_ipopt_refinement"].startswith("verified")
+    assert payload["diagnostics"]["route_solver_status"] == "success"
+    assert payload["diagnostics"]["route_application_status"] == "solve_succeeded"
+    assert payload["diagnostics"]["route_iteration_count"] > 0
+    assert payload["diagnostics"]["route_iteration_history_size"] > 0
+    assert payload["diagnostics"]["route_scaled_acceptance_passed"] is True
+    assert "[EPCSAFT_TPD_DEBUG]" in result.stderr
+    assert "EXIT: Optimal Solution Found." in result.stderr
 
 
 def test_pereira_readiness_checker_consumes_stage9_evidence_without_faking_completion(

@@ -160,9 +160,10 @@ def _continuous_candidates(discovery: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _route_solver_converged(route_payload: dict[str, Any]) -> bool:
-    return route_payload.get("solver_status") in {"success", "acceptable_point"} or route_payload.get(
-        "application_status"
-    ) in {"solve_succeeded", "solved_to_acceptable_level"}
+    return (
+        route_payload.get("solver_status") == "success"
+        and route_payload.get("application_status") == "solve_succeeded"
+    )
 
 
 def evaluate_stage9_evidence(
@@ -231,7 +232,10 @@ def evaluate_stage9_evidence(
         evidence_status["held_stage_ii_dual_phase_discovery"] = "incomplete_candidate_bound_gap_open"
 
     if not include_route_refinement:
-        evidence_status["held_stage_iii_ipopt_refinement"] = "not_requested_stage_ii_incomplete"
+        if str(evidence_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
+            evidence_status["held_stage_iii_ipopt_refinement"] = "not_requested"
+        else:
+            evidence_status["held_stage_iii_ipopt_refinement"] = "not_requested_stage_ii_incomplete"
     elif route_postsolve is None:
         evidence_status["held_stage_iii_ipopt_refinement"] = "ipopt_dependency_required"
     elif (
@@ -241,9 +245,12 @@ def evaluate_stage9_evidence(
         and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
         and route_postsolve.get("accepted") is True
     ):
-        evidence_status["held_stage_iii_ipopt_refinement"] = (
-            "verified_current_route_refinement_pending_stage_ii_candidates"
-        )
+        if str(evidence_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
+            evidence_status["held_stage_iii_ipopt_refinement"] = "verified_current_route_refinement_converged"
+        else:
+            evidence_status["held_stage_iii_ipopt_refinement"] = (
+                "verified_current_route_refinement_pending_stage_ii_candidates"
+            )
     elif (
         route_payload is not None
         and route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
@@ -343,7 +350,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Also run the current Stage III Ipopt route-refinement proof path. "
-            "The default is the cheaper phase-discovery gate because Stage II is currently incomplete."
+            "The default is the cheaper phase-discovery gate without the current-route Ipopt refinement solve."
         ),
     )
     parser.add_argument(

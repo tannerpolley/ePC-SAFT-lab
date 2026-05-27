@@ -874,12 +874,18 @@ void select_two_phase_candidate_set(
     rank_tpd_candidates(discovery);
     const std::vector<double> z = normalized_trial_composition(feed_composition, "Neutral TPD feed");
     double best_norm = std::numeric_limits<double>::infinity();
+    double best_selected_bound = std::numeric_limits<double>::infinity();
     double best_fraction = 0.0;
     int best_first = -1;
     int best_second = -1;
+    const double norm_tie_tolerance = std::max(1.0e-12, 0.01 * candidate_mass_balance_tolerance);
+    constexpr double kTpdTieTolerance = 1.0e-12;
     for (std::size_t first_index = 0; first_index < discovery.candidates.size(); ++first_index) {
         const NeutralTpdCandidate& first = discovery.candidates[first_index];
         if (first.phase_kind != phase_kinds[0]) {
+            continue;
+        }
+        if (!std::isfinite(first.tpd)) {
             continue;
         }
         for (std::size_t second_index = 0; second_index < discovery.candidates.size(); ++second_index) {
@@ -888,6 +894,9 @@ void select_two_phase_candidate_set(
             }
             const NeutralTpdCandidate& second = discovery.candidates[second_index];
             if (second.phase_kind != phase_kinds[1]) {
+                continue;
+            }
+            if (!std::isfinite(second.tpd)) {
                 continue;
             }
             double numerator = 0.0;
@@ -910,8 +919,28 @@ void select_two_phase_candidate_set(
                 second.composition,
                 fraction
             );
-            if (norm < best_norm) {
+            const double selected_bound = std::min(first.tpd, second.tpd);
+            const bool norm_feasible = norm <= candidate_mass_balance_tolerance;
+            const bool best_norm_feasible = best_norm <= candidate_mass_balance_tolerance;
+            bool better_pair = best_first < 0;
+            if (!better_pair && norm_feasible != best_norm_feasible) {
+                better_pair = norm_feasible;
+            } else if (!better_pair && norm_feasible && best_norm_feasible) {
+                better_pair = selected_bound + kTpdTieTolerance < best_selected_bound
+                    || (
+                        std::abs(selected_bound - best_selected_bound) <= kTpdTieTolerance
+                        && norm + norm_tie_tolerance < best_norm
+                    );
+            } else if (!better_pair) {
+                better_pair = norm + norm_tie_tolerance < best_norm
+                    || (
+                        std::abs(norm - best_norm) <= norm_tie_tolerance
+                        && selected_bound + kTpdTieTolerance < best_selected_bound
+                    );
+            }
+            if (better_pair) {
                 best_norm = norm;
+                best_selected_bound = selected_bound;
                 best_fraction = fraction;
                 best_first = static_cast<int>(first_index);
                 best_second = static_cast<int>(second_index);

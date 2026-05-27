@@ -190,7 +190,7 @@ TPD value, start source, iteration count, and convergence status.
 % Validation: tests/native/equilibrium/results/test_neutral_lle_reference_values.py
 % Capability key: internal:neutral_held_stage_ladder_diagnostics
 % Description: Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III.
-% Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics require the current Ipopt route to report solver convergence or acceptable-level convergence before postsolve certification can be counted.
+% Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics require the current Ipopt route to report Ipopt success and solve_succeeded before postsolve certification can be counted.
 
 This diagnostic layer makes the phase-discovery ladder auditable. Current
 deterministic screening remains seed and certification support. Continuous TPD
@@ -198,8 +198,9 @@ and HELD Stage I can run from multiple starts, while Stage II reports a
 candidate lower/upper bound audit and fails open when the bound gap remains
 nonzero. Current Ipopt phase-amount/phase-volume solves are reported as
 current-route Stage III refinement only when the Ipopt solve itself reports
-convergence or acceptable-level convergence; finite variables plus postsolve
-acceptance are diagnostics, not proof that Stage II or Stage III has converged.
+success and solve_succeeded; acceptable-level status, finite variables, and
+postsolve acceptance are diagnostics, not proof that Stage II or Stage III has
+converged.
 The neutral LLE proof route uses the `held_refinement` Ipopt profile so the
 Stage III diagnostic records an actual converged route solve before postsolve
 certification is evaluated.
@@ -236,12 +237,15 @@ used as generalized production evidence by itself.
 % Validation: tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py
 % Capability key: internal:phase_candidate_mass_balance_selection
 % Description: Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly.
-% Change note: Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; generalized admission still requires full HELD.
+% Change note: Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; among mass-feasible pairs it now chooses the pair that closes the finite candidate TPD bound audit before route assembly. Generalized admission still requires full HELD.
 
 This algorithm solves the small candidate phase-fraction feasibility problem
 before final route assembly. A candidate set that cannot reconstruct the feed
 composition is incomplete even if individual candidate phases look locally
-stable.
+stable. When several candidate pairs satisfy the feed within tolerance, the
+selector keeps mass balance as the primary gate and uses the selected-pair TPD
+bound as the tie-breaker so an arbitrary enumeration order cannot leave a
+finite candidate bound gap open.
 
 % AlgID: postsolve_tpd_certification
 % Family: Phase discovery and certification
