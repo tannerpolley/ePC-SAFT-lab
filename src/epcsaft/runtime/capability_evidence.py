@@ -322,7 +322,16 @@ EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/equilibrium/results/test_neutral_vle_reference_values.py::test_neutral_flash_reference_values_are_reported_and_verified",
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/frontend/test_equilibrium.py",
+    "tests/api/frontend/test_equilibrium.py::test_workflow_object_is_constructed_with_problem_spec",
+    "tests/api/frontend/test_equilibrium.py::test_equilibrium_constructor_configures_route_before_solve",
+    "tests/api/frontend/test_equilibrium.py::test_equilibrium_requires_constructor_route",
+    "tests/api/frontend/test_equilibrium.py::test_constructor_enforces_route_required_and_forbidden_specs",
+    "tests/api/frontend/test_equilibrium.py::test_solve_signature_rejects_legacy_route_specs",
+    "tests/api/frontend/test_equilibrium.py::test_equilibrium_problem_and_structure_are_read_only_metadata",
+    "tests/api/frontend/test_equilibrium.py::test_equilibrium_problem_fixed_specs_are_deeply_read_only",
+    "tests/api/frontend/test_equilibrium.py::test_solver_options_reject_ignored_backend_selection_knobs",
+    "tests/api/frontend/test_equilibrium.py::test_equilibrium_lle_route_configures_neutral_liquid_pair_structure",
+    "tests/api/frontend/test_equilibrium.py::test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs",
     "tests/native/state/test_bubble_derivatives.py",
 )
 RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
@@ -382,6 +391,19 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
         ),
         "cheap_by_default": False,
         "evidence": "Ceres and CppAD build profile plus focused native regression tests",
+    },
+    "equilibrium-confidence": {
+        "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--equilibrium-confidence", "-q", "-s")),
+        "cheap_by_default": False,
+        "evidence": "doctor plus focused neutral TP flash convergence and diagnostics contracts",
+    },
+    "equilibrium-debug": {
+        "commands": (
+            ("scripts/dev/doctor.py",),
+            ("run_pytest.py", "--equilibrium-confidence", "--equilibrium-debug", "-q", "-s"),
+        ),
+        "cheap_by_default": False,
+        "evidence": "doctor plus focused neutral TP flash convergence contracts with verbose Ipopt diagnostics",
     },
 }
 

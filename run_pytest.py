@@ -41,17 +41,45 @@ PREDEFINED_TARGETS = {
 LONG_NATIVE_TARGETS = {
     "tests/native/equilibrium",
 }
+LONG_EQUILIBRIUM_ROUTE_TARGETS = {
+    "tests/api/frontend/test_equilibrium.py",
+}
 LONG_NATIVE_TARGETS_NOTE = (
     "Broad native equilibrium route-builder targets are intentionally guarded because they can take a long time. "
     "Use `uv run python run_pytest.py --native-contracts -q` for metadata/result-contract checks, "
     "or target a single test node. Pass `--allow-long-native-tests` only when you intentionally need the broad route suite."
 )
+LONG_EQUILIBRIUM_ROUTE_TARGETS_NOTE = (
+    "Broad frontend equilibrium route-solve targets are intentionally guarded because they can run multiple Ipopt solves. "
+    "Use `uv run python run_pytest.py --equilibrium-confidence -q -s` for the focused convergence proof, "
+    "or target a single test node. Pass `--allow-long-equilibrium-tests` only when you intentionally need the broad file."
+)
+PYTEST_OPTIONS_WITH_SEPARATE_VALUE = {
+    "-k",
+    "-m",
+    "--basetemp",
+    "--capture",
+    "--color",
+    "--cov",
+    "--cov-report",
+    "--deselect",
+    "--ignore",
+    "--ignore-glob",
+    "--junit-xml",
+    "--log-cli-level",
+    "--log-file",
+    "--log-file-level",
+    "--maxfail",
+    "--rootdir",
+    "--tb",
+}
 SLICE_SELECTION_NOTE = (
     "Slice flags are mutually exclusive. Developers should normally start with "
     "`uv run python scripts/dev/validate_project.py quick` or `uv run python run_pytest.py -q`. "
     "Use `--all` only when you explicitly need every retained pytest contract. "
     "Extra positional pytest targets after a slice are appended and will run in addition to that slice. "
-    "Use `--equilibrium-debug -s` with an equilibrium target when Ipopt iteration logs are needed."
+    "Use `--equilibrium-debug -s` with `--equilibrium-confidence` or a single equilibrium test node "
+    "when Ipopt iteration logs are needed."
 )
 
 
@@ -106,11 +134,41 @@ def _pytest_args(
     native_contracts: bool = False,
     all_tests: bool = False,
     allow_long_native_tests: bool = False,
+    allow_long_equilibrium_tests: bool = False,
+    equilibrium_debug: bool = False,
 ) -> list[str]:
+    (
+        generic,
+        confidence,
+        equilibrium_confidence,
+        equilibrium_api,
+        runtime,
+        api,
+        native,
+        native_contracts,
+        all_tests,
+    ) = _normalize_equilibrium_debug_selection(
+        pytest_args,
+        generic=generic,
+        confidence=confidence,
+        equilibrium_confidence=equilibrium_confidence,
+        equilibrium_api=equilibrium_api,
+        runtime=runtime,
+        api=api,
+        native=native,
+        native_contracts=native_contracts,
+        all_tests=all_tests,
+        equilibrium_debug=equilibrium_debug,
+    )
     _reject_unbounded_native_targets(
         pytest_args,
         all_tests=all_tests,
         allow_long_native_tests=allow_long_native_tests,
+    )
+    _reject_unbounded_equilibrium_route_targets(
+        pytest_args,
+        all_tests=all_tests,
+        allow_long_equilibrium_tests=allow_long_equilibrium_tests,
     )
     selected_targets = _selected_predefined_targets(
         generic=generic,
@@ -148,6 +206,78 @@ def _selected_predefined_targets(**flags: bool) -> tuple[str, ...]:
     return PREDEFINED_TARGETS[selected[0]]
 
 
+def _has_positional_target(pytest_args: list[str]) -> bool:
+    return any(True for _target in _positional_targets(pytest_args))
+
+
+def _positional_targets(pytest_args: list[str]) -> list[str]:
+    targets: list[str] = []
+    skip_next = False
+    after_separator = False
+    for arg in pytest_args:
+        if skip_next:
+            skip_next = False
+            continue
+        if after_separator:
+            targets.append(arg)
+            continue
+        if arg == "--":
+            after_separator = True
+            continue
+        if arg.startswith("-"):
+            option = arg.split("=", 1)[0]
+            if "=" not in arg and option in PYTEST_OPTIONS_WITH_SEPARATE_VALUE:
+                skip_next = True
+            continue
+        targets.append(arg)
+    return targets
+
+
+def _normalize_equilibrium_debug_selection(
+    pytest_args: list[str],
+    *,
+    generic: bool,
+    confidence: bool,
+    equilibrium_confidence: bool,
+    equilibrium_api: bool,
+    runtime: bool,
+    api: bool,
+    native: bool,
+    native_contracts: bool,
+    all_tests: bool,
+    equilibrium_debug: bool,
+) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool, bool]:
+    if not equilibrium_debug:
+        return (
+            generic,
+            confidence,
+            equilibrium_confidence,
+            equilibrium_api,
+            runtime,
+            api,
+            native,
+            native_contracts,
+            all_tests,
+        )
+    if generic or confidence or equilibrium_api or runtime or api or native or native_contracts or all_tests:
+        raise SystemExit(
+            "--equilibrium-debug is only valid with --equilibrium-confidence or a single explicit equilibrium test node."
+        )
+    if not equilibrium_confidence and not _has_positional_target(pytest_args):
+        equilibrium_confidence = True
+    return (
+        generic,
+        confidence,
+        equilibrium_confidence,
+        equilibrium_api,
+        runtime,
+        api,
+        native,
+        native_contracts,
+        all_tests,
+    )
+
+
 def _reject_unbounded_native_targets(
     pytest_args: list[str],
     *,
@@ -156,14 +286,28 @@ def _reject_unbounded_native_targets(
 ) -> None:
     if all_tests or allow_long_native_tests or os.environ.get("EPCSAFT_ALLOW_LONG_NATIVE_TESTS") == "1":
         return
-    for arg in pytest_args:
-        if arg.startswith("-"):
-            continue
+    for arg in _positional_targets(pytest_args):
         target_path = arg.split("::", 1)[0].replace("\\", "/").rstrip("/")
         if "::" in arg:
             continue
         if target_path in LONG_NATIVE_TARGETS:
             raise SystemExit(LONG_NATIVE_TARGETS_NOTE)
+
+
+def _reject_unbounded_equilibrium_route_targets(
+    pytest_args: list[str],
+    *,
+    all_tests: bool,
+    allow_long_equilibrium_tests: bool,
+) -> None:
+    if all_tests or allow_long_equilibrium_tests or os.environ.get("EPCSAFT_ALLOW_LONG_EQUILIBRIUM_TESTS") == "1":
+        return
+    for arg in _positional_targets(pytest_args):
+        target_path = arg.split("::", 1)[0].replace("\\", "/").rstrip("/")
+        if "::" in arg:
+            continue
+        if target_path in LONG_EQUILIBRIUM_ROUTE_TARGETS:
+            raise SystemExit(LONG_EQUILIBRIUM_ROUTE_TARGETS_NOTE)
 
 
 def _slice_listing_text() -> str:
@@ -253,6 +397,11 @@ def main() -> int:
         help="Allow broad known-slow native route-builder file targets",
     )
     parser.add_argument(
+        "--allow-long-equilibrium-tests",
+        action="store_true",
+        help="Allow broad known-slow frontend equilibrium route-solve file targets",
+    )
+    parser.add_argument(
         "--equilibrium-debug",
         action="store_true",
         help="Enable opt-in equilibrium debug settings in tests, including verbose Ipopt print/history controls.",
@@ -284,6 +433,8 @@ def main() -> int:
         native_contracts=args.native_contracts,
         all_tests=args.all_tests,
         allow_long_native_tests=args.allow_long_native_tests,
+        allow_long_equilibrium_tests=args.allow_long_equilibrium_tests,
+        equilibrium_debug=args.equilibrium_debug,
     )
     print("Running:", f"{sys.executable} -m pytest", " ".join(cmd), flush=True)
     os.environ.update(env)

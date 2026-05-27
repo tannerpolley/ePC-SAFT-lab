@@ -91,6 +91,14 @@ def test_validate_project_modes_route_to_standard_validation_bundles():
             "-q",
         ),
     )
+    assert validate_project.CHECK_COMMANDS["equilibrium-confidence"] == (
+        ("scripts/dev/doctor.py",),
+        ("run_pytest.py", "--equilibrium-confidence", "-q", "-s"),
+    )
+    assert validate_project.CHECK_COMMANDS["equilibrium-debug"] == (
+        ("scripts/dev/doctor.py",),
+        ("run_pytest.py", "--equilibrium-confidence", "--equilibrium-debug", "-q", "-s"),
+    )
 
 
 def test_validate_project_script_runs_when_invoked_by_path():
@@ -245,7 +253,19 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert "tests/api/frontend/test_equilibrium.py" not in run_pytest.GENERIC_TEST_TARGETS
     assert "tests/api/frontend/test_imports.py" in run_pytest.API_TEST_TARGETS
     assert "tests/api/frontend/test_state_properties.py" in run_pytest.GENERIC_TEST_TARGETS
-    assert "tests/api/frontend/test_equilibrium.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
+    assert "tests/api/frontend/test_equilibrium.py" not in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
+    assert (
+        "tests/api/frontend/test_equilibrium.py::test_equilibrium_constructor_configures_route_before_solve"
+        in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
+    )
+    assert (
+        "tests/api/frontend/test_equilibrium.py::test_equilibrium_lle_route_returns_named_liquid_phase_helpers"
+        not in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
+    )
+    assert all(
+        "recovers_shared" not in target and "returns_named" not in target
+        for target in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
+    )
     assert "tests/native/state/test_bubble_derivatives.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert "tests/native/state/test_bubble_derivatives.py" not in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
     assert "tests/native/equilibrium/results/test_neutral_vle_reference_values.py" not in (
@@ -304,6 +324,38 @@ def test_broad_native_route_builder_targets_require_explicit_opt_in():
     assert single_node[0].endswith("::test_selector_core_contract_owns_production_vle_metadata")
 
 
+def test_broad_frontend_equilibrium_route_file_requires_explicit_opt_in():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+    route_solve_target = "tests/api/frontend/test_equilibrium.py"
+
+    try:
+        run_pytest._pytest_args([route_solve_target, "-q"], pytest_temp)
+    except SystemExit as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("Expected broad frontend equilibrium route file target to be rejected")
+
+    assert "--equilibrium-confidence" in message
+    assert "--allow-long-equilibrium-tests" in message
+
+    allowed = run_pytest._pytest_args(
+        [route_solve_target, "-q"],
+        pytest_temp,
+        allow_long_equilibrium_tests=True,
+    )
+    single_node = run_pytest._pytest_args(
+        [
+            "tests/api/frontend/test_equilibrium.py::"
+            "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point",
+            "-q",
+        ],
+        pytest_temp,
+    )
+
+    assert allowed[:2] == [route_solve_target, "-q"]
+    assert single_node[0].endswith("::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point")
+
+
 def test_equilibrium_slices_are_listed():
     for flag, label in (
         ("--equilibrium-confidence", "equilibrium-confidence:"),
@@ -346,6 +398,39 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
     assert all("tests/workflows/validation" not in target for target in targets)
 
 
+def test_equilibrium_debug_without_explicit_target_defaults_to_focused_confidence_slice():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+
+    args = run_pytest._pytest_args(["-q", "-s"], pytest_temp, equilibrium_debug=True)
+
+    assert args[: len(run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)] == list(
+        run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    )
+    assert "tests/api/frontend/test_equilibrium.py" not in args
+    assert args[-4:] == ["-q", "-s", "--basetemp", str(pytest_temp)]
+
+
+def test_equilibrium_debug_with_pytest_filter_still_defaults_to_focused_confidence_slice():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+
+    args = run_pytest._pytest_args(["-k", "flash", "-q", "-s"], pytest_temp, equilibrium_debug=True)
+
+    assert args[: len(run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)] == list(
+        run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    )
+    assert args[-6:] == ["-k", "flash", "-q", "-s", "--basetemp", str(pytest_temp)]
+
+
+def test_equilibrium_debug_rejects_non_equilibrium_slices():
+    pytest_temp = Path("build") / "pytest-temp" / "run-test"
+
+    with pytest.raises(SystemExit, match="--equilibrium-debug is only valid"):
+        run_pytest._pytest_args(["-q"], pytest_temp, generic=True, equilibrium_debug=True)
+
+    with pytest.raises(SystemExit, match="--equilibrium-debug is only valid"):
+        run_pytest._pytest_args(["-q"], pytest_temp, all_tests=True, equilibrium_debug=True)
+
+
 def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():
     blocked = {
         "tests/api/frontend",
@@ -354,6 +439,7 @@ def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():
 
     assert blocked.isdisjoint(run_pytest.GENERIC_TEST_TARGETS)
     assert blocked.isdisjoint(run_pytest.API_TEST_TARGETS)
+    assert blocked.isdisjoint(run_pytest.EQUILIBRIUM_API_TEST_TARGETS)
 
 
 def test_pytest_temp_root_prefers_configured_root_and_normalizes_relative_paths(monkeypatch, tmp_path):

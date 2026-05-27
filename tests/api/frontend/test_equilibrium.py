@@ -423,6 +423,19 @@ def _solver_options() -> dict[str, object]:
     return options
 
 
+def _iteration_limit_solver_options() -> dict[str, object]:
+    options = {
+        "max_iterations": 1,
+        "tolerance": 1.0e-8,
+        "ipopt_iteration_history_limit": 4,
+        "ipopt_print_level": 0,
+    }
+    if _equilibrium_debug_enabled():
+        options["ipopt_print_level"] = 5
+        options["ipopt_iteration_history_limit"] = 50
+    return options
+
+
 def _equilibrium_debug_enabled() -> bool:
     return os.environ.get("EPCSAFT_EQUILIBRIUM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -466,12 +479,7 @@ def test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve() -> N
 
     with pytest.raises(epcsaft.SolutionError) as exc_info:
         _configured_equilibrium("flash", T=HYDROCARBON_T, P=HYDROCARBON_BUBBLE_P, z=HYDROCARBON_FLASH_Z).solve(
-            solver_options={
-                "max_iterations": 1,
-                "tolerance": 1.0e-8,
-                "ipopt_iteration_history_limit": 4,
-                "ipopt_print_level": 0,
-            }
+            solver_options=_iteration_limit_solver_options()
         )
 
     diagnostics = exc_info.value.diagnostics
@@ -483,6 +491,10 @@ def test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve() -> N
     assert diagnostics["route_accepted"] is False
     assert diagnostics["max_iterations"] == 1
     assert diagnostics["iteration_count"] == 1
+    assert diagnostics["ipopt_print_level"] == (5 if _equilibrium_debug_enabled() else 0)
+    assert diagnostics["iteration_history_limit"] == (50 if _equilibrium_debug_enabled() else 4)
+    assert 0 < diagnostics["iteration_history_size"] <= diagnostics["iteration_history_limit"]
+    assert len(diagnostics["iteration_history"]) == diagnostics["iteration_history_size"]
     assert diagnostics["seed_attempt_count"] >= 1
     assert diagnostics["seed_attempt_solver_accepted_count"] == 0
     assert diagnostics["seed_attempt_route_accepted_count"] == 0

@@ -263,6 +263,76 @@ def _print_seed_attempts(diagnostics: Mapping[str, Any]) -> None:
     )
 
 
+def _print_tpd_candidate_report(diagnostics: Mapping[str, Any]) -> None:
+    certification = diagnostics.get("postsolve_certification", {})
+    if not isinstance(certification, Mapping):
+        certification = {}
+    _print_key_values(
+        "TPD phase-discovery diagnostics",
+        (
+            ("phase discovery backend", certification.get("phase_discovery_backend")),
+            ("deterministic screening status", certification.get("deterministic_screening_status")),
+            ("continuous TPD status", certification.get("continuous_tpd_status")),
+            ("continuous TPD backend", certification.get("continuous_tpd_backend")),
+            ("continuous TPD starts", certification.get("continuous_tpd_start_count")),
+            ("continuous TPD solves", certification.get("continuous_tpd_solve_count")),
+            ("continuous TPD converged", certification.get("continuous_tpd_converged_count")),
+            ("continuous TPD max iterations", certification.get("continuous_tpd_iteration_count_max")),
+            ("continuous TPD final step max", certification.get("continuous_tpd_step_final_max")),
+            ("HELD Stage I status", certification.get("held_stage_i_status")),
+            ("HELD Stage II status", certification.get("held_stage_ii_status")),
+            ("HELD Stage III status", certification.get("held_stage_iii_status")),
+        ),
+    )
+
+    sources = _to_report_sequence(diagnostics.get("tpd_candidate_sources"))
+    if not sources:
+        return
+
+    values = _to_report_sequence(diagnostics.get("tpd_candidate_values")) or ()
+    phase_kinds = _to_report_sequence(diagnostics.get("tpd_candidate_phase_kinds")) or ()
+    compositions = _to_report_sequence(diagnostics.get("tpd_candidate_compositions")) or ()
+    pressure_residuals = _to_report_sequence(diagnostics.get("tpd_candidate_pressure_residuals")) or ()
+    iteration_counts = _to_report_sequence(diagnostics.get("tpd_candidate_iteration_counts")) or ()
+    step_finals = _to_report_sequence(diagnostics.get("tpd_candidate_step_finals")) or ()
+    ranks = _to_report_sequence(diagnostics.get("tpd_candidate_ranks")) or ()
+    feasibility = _to_report_sequence(diagnostics.get("tpd_candidate_feasibility_statuses")) or ()
+    selected = _to_report_sequence(diagnostics.get("tpd_candidate_selected")) or ()
+
+    rows: list[tuple[object, ...]] = []
+    for index, source in enumerate(sources):
+        rows.append(
+            (
+                _sequence_item(ranks, index),
+                source,
+                _sequence_item(selected, index),
+                _sequence_item(phase_kinds, index),
+                _sequence_item(values, index),
+                _sequence_item(iteration_counts, index),
+                _sequence_item(step_finals, index),
+                _sequence_item(pressure_residuals, index),
+                _sequence_item(feasibility, index),
+                _sequence_item(compositions, index),
+            )
+        )
+    _print_table(
+        "TPD candidate rows",
+        (
+            "rank",
+            "source",
+            "selected",
+            "phase",
+            "TPD",
+            "iters",
+            "final step",
+            "P residual",
+            "feasibility",
+            "composition",
+        ),
+        rows,
+    )
+
+
 def _print_iteration_history(diagnostics: Mapping[str, Any]) -> None:
     iteration_history = diagnostics.get("iteration_history", ())
     if not isinstance(iteration_history, (list, tuple)) or not iteration_history:
@@ -401,6 +471,7 @@ def _print_route_report(report: Mapping[str, Any]) -> None:
         ),
     )
     _print_seed_attempts(diagnostics)
+    _print_tpd_candidate_report(diagnostics)
     _print_key_values(
         "Runtime and solver",
         (
