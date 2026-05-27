@@ -399,7 +399,12 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
     "equilibrium-debug": {
         "commands": (
             ("scripts/dev/doctor.py",),
-            ("scripts/validation/check_stage9_phase_discovery_evidence.py", "--debug", "--include-route-refinement"),
+            (
+                "scripts/validation/check_stage9_phase_discovery_evidence.py",
+                "--debug",
+                "--include-route-refinement",
+                "--require-complete",
+            ),
         ),
         "cheap_by_default": False,
         "evidence": "doctor plus one Stage 9 phase-discovery route with verbose TPD and Ipopt diagnostics",

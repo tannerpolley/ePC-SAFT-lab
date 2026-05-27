@@ -97,8 +97,14 @@ def test_validate_project_modes_route_to_standard_validation_bundles():
     )
     assert validate_project.CHECK_COMMANDS["equilibrium-debug"] == (
         ("scripts/dev/doctor.py",),
-        ("scripts/validation/check_stage9_phase_discovery_evidence.py", "--debug", "--include-route-refinement"),
+        (
+            "scripts/validation/check_stage9_phase_discovery_evidence.py",
+            "--debug",
+            "--include-route-refinement",
+            "--require-complete",
+        ),
     )
+    assert all(command[0] != "run_pytest.py" for command in validate_project.CHECK_COMMANDS["equilibrium-debug"])
 
 
 def test_validate_project_script_runs_when_invoked_by_path():

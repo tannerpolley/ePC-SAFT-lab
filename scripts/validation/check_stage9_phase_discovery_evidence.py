@@ -332,6 +332,25 @@ def _print_human(payload: dict[str, Any]) -> None:
     print(f"{payload['case_label']}: {'complete' if payload['complete'] else 'incomplete'}")
     for key in STAGE9_EVIDENCE_REQUIREMENTS:
         print(f"  {key}: {payload['evidence_status'][key]}")
+    diagnostics = dict(payload.get("diagnostics", {}))
+    if diagnostics.get("route_refinement_requested"):
+        print(
+            "  route_refinement: "
+            f"solver={diagnostics.get('route_solver_status')} "
+            f"application={diagnostics.get('route_application_status')} "
+            f"iterations={diagnostics.get('route_iteration_count')} "
+            f"seed_attempts={diagnostics.get('route_seed_attempt_count')}"
+        )
+        for attempt in diagnostics.get("route_seed_attempts") or ():
+            attempt = dict(attempt)
+            print(
+                "    seed_attempt: "
+                f"name={attempt.get('seed_name')} "
+                f"solver={attempt.get('solver_status')} "
+                f"application={attempt.get('application_status')} "
+                f"accepted={attempt.get('accepted')} "
+                f"iterations={attempt.get('iteration_count')}"
+            )
 
 
 def build_parser() -> argparse.ArgumentParser:

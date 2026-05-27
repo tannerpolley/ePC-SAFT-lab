@@ -149,7 +149,7 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_VALIDATION,
         command="scripts/validation/check_stage9_phase_discovery_evidence.py",
-        parameters="--debug --include-route-refinement",
+        parameters="--debug --include-route-refinement --require-complete",
     ),
     RunConfigSpec(
         name="Test List Slices",

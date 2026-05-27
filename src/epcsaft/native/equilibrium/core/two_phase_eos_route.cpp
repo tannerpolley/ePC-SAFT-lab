@@ -209,6 +209,54 @@ void trace_continuous_tpd_finish(
               << "\n";
 }
 
+void trace_route_seed_attempt_start(
+    const std::string& problem_name,
+    const std::string& seed_name,
+    int attempt_index,
+    int attempt_count,
+    const IpoptSolveOptions& options
+) {
+    if (!equilibrium_debug_trace_enabled()) {
+        return;
+    }
+    std::cerr << "[EPCSAFT_ROUTE_DEBUG]"
+              << " event=seed_attempt_start"
+              << " problem=" << problem_name
+              << " seed=" << seed_name
+              << " attempt=" << attempt_index << "/" << attempt_count
+              << " option_profile=" << options.option_profile
+              << " print_level=" << options.print_level
+              << " max_iterations=" << options.max_iterations
+              << " iteration_history_limit=" << options.iteration_history_limit
+              << "\n";
+}
+
+void trace_route_seed_attempt_finish(
+    const std::string& problem_name,
+    const std::string& seed_name,
+    int attempt_index,
+    int attempt_count,
+    const NeutralTwoPhaseEosRouteResult& result
+) {
+    if (!equilibrium_debug_trace_enabled()) {
+        return;
+    }
+    std::cerr << "[EPCSAFT_ROUTE_DEBUG]"
+              << " event=seed_attempt_finish"
+              << " problem=" << problem_name
+              << " seed=" << seed_name
+              << " attempt=" << attempt_index << "/" << attempt_count
+              << " status=" << result.status
+              << " solver_status=" << result.solver_status
+              << " application_status=" << result.application_status
+              << " solver_accepted=" << (result.solver_accepted ? "true" : "false")
+              << " accepted=" << (result.accepted ? "true" : "false")
+              << " iteration_count=" << result.iteration_count
+              << " max_iterations=" << result.max_iterations
+              << " objective=" << result.objective
+              << "\n";
+}
+
 void apply_route_metadata(NeutralTwoPhaseEosNlpContract& out, const RouteMetadata& metadata) {
     out.variable_model = metadata.variable_model;
     out.density_backend = metadata.density_backend;
@@ -2959,8 +3007,18 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
     bool have_best = false;
     std::vector<RouteSeedAttempt> attempts;
     attempts.reserve(seeds.size() + (route_options.initial_variables.empty() ? 0 : 1));
+    const int seed_attempt_count =
+        static_cast<int>(seeds.size() + (route_options.initial_variables.empty() ? 0 : 1));
 
     auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
+        const int seed_attempt_index = static_cast<int>(attempts.size()) + 1;
+        trace_route_seed_attempt_start(
+            problem_name,
+            seed_name,
+            seed_attempt_index,
+            seed_attempt_count,
+            attempt_options
+        );
         ActivatedEquilibriumNlp problem(args, plan, layout);
         const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
         NeutralTwoPhaseEosRouteResult result;
@@ -2987,6 +3045,13 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
         if (!can_postsolve) {
             result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
+            trace_route_seed_attempt_finish(
+                problem_name,
+                seed_name,
+                seed_attempt_index,
+                seed_attempt_count,
+                result
+            );
             if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
                 best = result;
                 have_best = true;
@@ -3022,6 +3087,13 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
         result.accepted = result.postsolve.accepted;
         result.status = certified_postsolve_status(result.postsolve);
         attempts.push_back(neutral_seed_attempt_from_result(result));
+        trace_route_seed_attempt_finish(
+            problem_name,
+            seed_name,
+            seed_attempt_index,
+            seed_attempt_count,
+            result
+        );
         if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
             best = result;
             have_best = true;

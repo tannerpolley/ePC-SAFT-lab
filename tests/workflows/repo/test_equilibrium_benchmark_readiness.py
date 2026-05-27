@@ -197,6 +197,50 @@ def test_stage9_evidence_route_refinement_does_not_promote_acceptable_point(
     assert "held_stage_iii_ipopt_refinement" in payload["incomplete_requirements"]
 
 
+def test_stage9_evidence_checker_require_complete_fails_incomplete_payload(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        stage9_checker,
+        "evaluate_stage9_evidence",
+        lambda **kwargs: {
+            "case_label": "Synthetic neutral binary Stage 9 evidence route",
+            "complete": False,
+            "evidence_status": {
+                "deterministic_screening": "verified_not_full_held",
+                "continuous_tpd_minimization": "verified_converged",
+                "held_stage_i_stability": "verified_from_converged_continuous_tpd",
+                "held_stage_ii_dual_phase_discovery": "verified_candidate_bound_gap_closed",
+                "held_stage_iii_ipopt_refinement": "incomplete_ipopt_solver_status_max_iterations_exceeded",
+            },
+            "diagnostics": {
+                "route_refinement_requested": True,
+                "route_solver_status": "max_iterations_exceeded",
+                "route_application_status": "maximum_iterations_exceeded",
+                "route_iteration_count": 260,
+                "route_seed_attempt_count": 1,
+                "route_seed_attempts": [
+                    {
+                        "seed_name": "deterministic_tpd_candidate_pair",
+                        "solver_status": "max_iterations_exceeded",
+                        "application_status": "maximum_iterations_exceeded",
+                        "accepted": False,
+                        "iteration_count": 260,
+                    }
+                ],
+            },
+        },
+    )
+
+    exit_code = stage9_checker.main(["--require-complete"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "Stage 9 phase-discovery evidence is incomplete." in captured.err
+    assert "seed_attempt: name=deterministic_tpd_candidate_pair" in captured.out
+
+
 def test_pereira_readiness_checker_reports_nonexecutable_stage10_json() -> None:
     result = _run_checker("--json")
 
@@ -319,7 +363,11 @@ def test_stage9_evidence_checker_debug_route_reports_complete_converged_path() -
     assert payload["diagnostics"]["route_iteration_count"] > 0
     assert payload["diagnostics"]["route_iteration_history_size"] > 0
     assert payload["diagnostics"]["route_scaled_acceptance_passed"] is True
+    assert payload["diagnostics"]["route_seed_attempt_count"] <= 2
     assert "[EPCSAFT_TPD_DEBUG]" in result.stderr
+    assert "[EPCSAFT_ROUTE_DEBUG]" in result.stderr
+    assert "event=seed_attempt_start" in result.stderr
+    assert "event=seed_attempt_finish" in result.stderr
     assert "EXIT: Optimal Solution Found." in result.stderr
 
 
