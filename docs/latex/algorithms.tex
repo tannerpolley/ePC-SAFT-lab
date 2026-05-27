@@ -158,9 +158,50 @@ capability exposure by itself. Accepted multiphase results require more than a
 per-phase local check: the phase set must be certified against missing
 lower-free-energy candidates and mass-balance incompleteness.
 
+% AlgID: neutral_continuous_tpd_minimization
+% Family: Phase discovery and certification
+% Status: Implemented for neutral volume-composition TPD refinement; generalized admission still requires the HELD Stage II dual loop
+% Public API: Internal route-discovery and certification infrastructure only
+% Backend: Native C++ equilibrium core
+% Dependency: None
+% Derivative backend: EOS/provider chemical-potential and free-energy derivatives through pressure-root phase-block evaluation
+% Solver role: Refines deterministic TPD starts through continuous composition-space minimization with trial density/volume from the EOS pressure root
+% Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h
+% Validation: tests/native/equilibrium/results/test_neutral_lle_reference_values.py
+% Capability key: internal:neutral_continuous_tpd_minimization
+% Description: Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening.
+% Change note: This is the Stage 9 continuous-TPD layer. It does not satisfy the HELD Stage II dual cutting-plane requirement by itself.
+
+This algorithm starts from deterministic neutral TPD trial compositions and
+performs a bounded coordinate search on the composition simplex. Each trial
+composition is evaluated through the pressure-root phase-block path so the
+diagnostics include trial composition, phase kind, density, molar volume,
+TPD value, start source, iteration count, and convergence status.
+
+% AlgID: neutral_held_stage_ladder_diagnostics
+% Family: Phase discovery and certification
+% Status: Implemented as diagnostics for deterministic screening, continuous TPD, HELD Stage I, pending Stage II, and current-route Stage III refinement
+% Public API: Internal route-discovery and certification infrastructure only
+% Backend: Native C++ equilibrium core
+% Dependency: Neutral TPD stability, continuous TPD minimization, and Ipopt phase-amount/phase-volume routes
+% Derivative backend: EOS/provider derivatives for TPD and exact route derivatives for Ipopt refinement
+% Solver role: Reports which phase-discovery stages supplied evidence and prevents deterministic screening from being reported as full HELD
+% Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp
+% Validation: tests/native/equilibrium/results/test_neutral_lle_reference_values.py
+% Capability key: internal:neutral_held_stage_ladder_diagnostics
+% Description: Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III.
+% Change note: Stage II remains an explicit pending dual cutting-plane loop until the outer/inner HELD state is implemented.
+
+This diagnostic layer makes the phase-discovery ladder auditable. Current
+deterministic screening remains seed and certification support. Continuous TPD
+and HELD Stage I can run from multiple starts, while Stage II is reported as a
+pending dual cutting-plane loop. Current Ipopt phase-amount/phase-volume solves
+are reported as current-route Stage III refinement, not as proof that Stage II
+has been completed.
+
 % AlgID: neutral_deterministic_phase_candidate_screening
 % Family: Phase discovery and certification
-% Status: Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned to be replaced by staged HELD for generalized admission
+% Status: Implemented for current neutral TP flash and neutral nonassociating LLE utility support; supplemented by continuous TPD and HELD-stage diagnostics for generalized admission work
 % Public API: Internal route-discovery infrastructure only
 % Backend: Native C++ equilibrium core
 % Dependency: None
@@ -170,7 +211,7 @@ lower-free-energy candidates and mass-balance incompleteness.
 % Validation: tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py
 % Capability key: internal:neutral_deterministic_phase_candidate_screening
 % Description: Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes.
-% Change note: Full HELD Stage I/II/III remains future generalized family work.
+% Change note: Deterministic screening remains distinct from continuous TPD and must not be promoted as full HELD evidence.
 
 This algorithm reduces dependence on user-supplied phase guesses by using
 neutral TPD or volume-composition trial problems to generate deterministic

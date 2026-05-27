@@ -156,8 +156,10 @@ These rules apply to every stage:
 - Do not add permanent custom barrier terms to the thermodynamic objective.
 - Benchmark proof cases must be source-backed. A synthetic unit fixture can
   test mechanics, but it cannot prove a GFPE family.
-- Pereira 2012 System III is the first neutral proof target unless a
-  source-backed audit proves it physically unsuitable.
+- Pereira 2012 System III remains HELD/SAFT-VR literature context only until
+  model parity or a source-backed ePC-SAFT reparameterization exists.
+- The first neutral proof target must be a source-backed ePC-SAFT-compatible
+  TP flash fixture.
 - Gross/Sadowski 2002 methanol/cyclohexane is the first associating proof
   target after association derivative gates pass.
 - Khudaida 2026 electrolyte LLE is the first electrolyte proof target after
@@ -830,18 +832,20 @@ Substeps:
    status, start source, and final residuals.
 3. Add HELD Stage I stability testing with multiple starts.
 4. Report Stage I failure modes separately from instability proof.
-5. Add HELD Stage II dual cutting-plane phase discovery.
-6. Report Stage II upper bounds, lower bounds, candidate phases, and stopping
+5. Treat any continuous TPD iteration-limit result as incomplete Stage I
+   evidence, regardless of whether another start found a negative TPD value.
+6. Add HELD Stage II dual cutting-plane phase discovery.
+7. Report Stage II upper bounds, lower bounds, candidate phases, and stopping
    criteria.
-7. Store Stage II candidate phases with replayable route-assembly metadata.
-8. Use the amount-volume Ipopt NLP as HELD Stage III primal refinement.
-9. Record the relation between Stage II bounds and Stage III refined objective.
-10. Check phase-set completeness:
+8. Store Stage II candidate phases with replayable route-assembly metadata.
+9. Use the amount-volume Ipopt NLP as HELD Stage III primal refinement.
+10. Record the relation between Stage II bounds and Stage III refined objective.
+11. Check phase-set completeness:
     no missing lower-free-energy candidate, mass-balance feasibility, no
     duplicate phase, no collapsed phase, and no unexamined transferable species.
-11. Keep deterministic screening available as a seed source.
-12. Do not fill HELD status fields from deterministic screening.
-13. Promote HELD stage status in the registry only after executable tests
+12. Keep deterministic screening available as a seed source.
+13. Do not fill HELD status fields from deterministic screening.
+14. Promote HELD stage status in the registry only after executable tests
     exist.
 
 Acceptance checks:
@@ -851,10 +855,17 @@ Acceptance checks:
 - Registry rows can name which HELD gates are passed for each family.
 - Production exposure remains false until the relevant HELD ladder is
   complete.
+- Current neutral evidence reports deterministic screening as seed support,
+  continuous TPD and HELD Stage I only when all continuous TPD starts converge,
+  HELD Stage II as the pending dual cutting-plane loop, and current Ipopt
+  solves as Stage III refinement only after a route solve.
+- Public utility `flash` may keep deterministic TPD postsolve certification
+  without requesting continuous TPD; that path is not Stage I evidence.
 
 Stop conditions:
 
 - Local TPD success is treated as global phase-discovery proof.
+- Any iteration-limit continuous TPD solve is accepted as Stage I evidence.
 - HELD status fields can be satisfied by deterministic screening.
 - Phase-set completeness lacks mass-balance feasibility.
 
@@ -887,9 +898,10 @@ Substeps:
 4. Use Stage 7 deterministic screening only as seed and certification support.
 5. Use Stage 9 continuous TPD and HELD diagnostics as the phase-discovery
    evidence path for generalized proof.
-6. Build the proof around Pereira 2012 System III unless a source-backed audit
-   proves it physically unsuitable.
-7. If Pereira source data are unavailable, stop at `source_data_needed`.
+6. Treat Pereira 2012 System III as a HELD/SAFT-VR reference, not the current
+   executable ePC-SAFT proof fixture.
+7. Stop at `source_data_needed` until a source-backed ePC-SAFT-compatible
+   neutral TP flash fixture is selected.
 8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.
@@ -913,8 +925,10 @@ Substeps:
 
 Acceptance checks:
 
-- Pereira neutral proof fixture exists and is source-backed before being used
-  as proof evidence.
+- Neutral proof fixture exists, is source-backed, and is executable with the
+  active ePC-SAFT model before being used as proof evidence.
+- Pereira is not used as ePC-SAFT proof evidence unless SAFT-VR support or a
+  source-backed ePC-SAFT reparameterization closes the model-family gap.
 - Neutral TP flash diagnostics include material, pressure, potential,
   stability, derivative, and domain margins.
 - Registry tests keep generalized neutral TP flash not production-exposed
@@ -923,6 +937,7 @@ Acceptance checks:
 Stop conditions:
 
 - The first neutral proof is synthetic.
+- Pereira SAFT-VR parameters are treated as ePC-SAFT parameters.
 - Production admission rests only on optimizer convergence.
 - Current public utility success is used as generalized GFPE proof without
   GFPE gates.
@@ -960,10 +975,10 @@ Substeps:
    second-liquid composition plus boundary `P` or `T`.
 7. For shadow point, report the incipient phase composition and volume matched
    to the cloud-point state.
-8. Use Pereira as the shared boundary mixture unless implementation proves it
-   physically unsuitable.
-9. If Pereira is unsuitable for a boundary diagram, stop and select a
-   source-backed neutral binary.
+8. Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary as the
+   shared boundary mixture.
+9. Keep Pereira as HELD/SAFT-VR literature context unless model parity or a
+   source-backed ePC-SAFT reparameterization exists.
 10. Do not invent a boundary fixture.
 11. Do not add VLLE-specific tests in this stage.
 12. Generate `T-x` and `P-x` traces through continuation with per-point
@@ -1278,8 +1293,10 @@ Substeps:
 1. Promote a family row only when its stage-specific gates are executable and
    tested.
 2. Keep benchmark cases PE-focused:
-   Pereira first for neutral, Gross/Sadowski first for associating, Khudaida
-   first for electrolyte, then Held and Ascani as follow-ons.
+   source-backed ePC-SAFT-compatible neutral proof first for neutral, with
+   Pereira retained as blocked SAFT-VR context; Gross/Sadowski first for
+   associating; Khudaida first for electrolyte, then Held and Ascani as
+   follow-ons.
 3. Record evidence tier, fixture status, source path, active equations,
    derivative coverage, stability coverage, and postsolve certification status
    for each benchmark.

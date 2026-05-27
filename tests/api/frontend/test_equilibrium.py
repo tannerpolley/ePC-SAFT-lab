@@ -440,6 +440,9 @@ def _assert_hydrocarbon_pair(result, *, problem_kind: str) -> None:
     assert diagnostics["exact_hessian_available"] is True
     assert diagnostics["eval_h_calls"] > 0
     assert diagnostics["postsolve_certification"]["accepted"] is True
+    if problem_kind == "neutral_tp_flash":
+        assert diagnostics["postsolve_certification"]["continuous_tpd_status"] == "not_requested"
+        assert diagnostics["postsolve_certification"]["held_stage_i_status"] == "not_requested"
 
 
 def _skip_without_ipopt() -> None:

@@ -155,6 +155,20 @@ The HELD implementation ladder is:
 6. Add HELD2.0 for strong electrolytes with reduced electroneutral variables
    before electrolyte production validation.
 
+The current Stage 9 neutral implementation separates these statuses in native
+diagnostics: deterministic screening remains seed and certification support,
+continuous TPD and HELD Stage I diagnostics are reported only when every
+continuous TPD start converges, HELD Stage II remains the pending dual
+cutting-plane loop, and current Ipopt phase-amount/phase-volume solves are
+reported as Stage III refinement only for the route that was actually solved.
+An iteration-limit result is an incomplete continuous TPD result, not phase
+discovery evidence.
+
+Current public utility `flash` calls keep deterministic TPD postsolve
+certification but do not request continuous TPD by default. Continuous TPD and
+HELD Stage I diagnostics are proof-path evidence, not a hidden cost on every
+public flash solve.
+
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful
 limited cases.
@@ -300,7 +314,8 @@ Implementation must proceed in this order:
    proof or boundary workflow as generalized GFPE evidence.
 3. Neutral TP flash:
    build on the shared amount-volume phase NLP and Stage 9 HELD diagnostics,
-   then prove the Pereira neutral case before broadening claims.
+   then prove a source-backed ePC-SAFT-compatible neutral case before
+   broadening claims.
 4. Derived boundary workflows:
    bubble, dew, cloud, and shadow workflows as DOF swaps over the shared phase
    NLP, then `T-x` and `P-x` diagram generation.
@@ -333,17 +348,22 @@ are the route to `T-x` and `P-x` diagrams after the main neutral TP flash proof.
 | Cloud point | `T` or `P` and parent liquid composition | incipient second-liquid composition, phase volumes, boundary `P` or `T` | second liquid appears |
 | Shadow point | matched cloud-point state | shadow-phase composition and volume | composition of the incipient phase |
 
-The shared boundary proof should start with the Pereira neutral proof case
-unless implementation proves that case cannot physically support the requested
-VLE/LLE boundary diagrams. If that happens, stop and choose a source-backed
-neutral binary rather than inventing a synthetic validation fixture. Do not add
-VLLE-specific tests in this step.
+The Pereira 2012 System III source audit found a SAFT-VR problem definition,
+including SAFT-VR range and binary interaction parameters. It remains useful
+HELD literature context, but it is not an executable ePC-SAFT proof fixture for
+the current package unless SAFT-VR support or a source-backed ePC-SAFT
+reparameterization is added. The shared boundary proof must therefore stop at
+source selection and choose a source-backed ePC-SAFT-compatible neutral binary
+rather than inventing a synthetic validation fixture. Do not add VLLE-specific
+tests in this step.
 
 ## Family Proof Ladder
 
 `PE-Neutral TP Flash`
 
-- first proof: Pereira 2012 System III neutral TP flash target;
+- first proof: source-backed ePC-SAFT-compatible neutral TP flash target;
+- Pereira 2012 System III: HELD/SAFT-VR reference only until model parity or a
+  source-backed ePC-SAFT reparameterization exists;
 - follow-on stress: methane/H2S or another source-backed neutral case if the
   EOS/parameter set supports it;
 - required before exposure: infrastructure gate, continuous TPD minimization,

@@ -58,6 +58,32 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert postsolve["accepted"] is True
     assert postsolve["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
     assert postsolve["stability_certificate"] == "tpd_postsolve"
+    assert postsolve["stage9_phase_discovery_steps"] == [
+        "deterministic_screening",
+        "continuous_tpd",
+        "held_stage_i",
+        "held_stage_ii",
+        "held_stage_iii",
+    ]
+    assert postsolve["deterministic_screening_status"] == "completed"
+    assert postsolve["deterministic_screening_is_full_held"] is False
+    assert postsolve["continuous_tpd_status"] == "converged"
+    assert postsolve["continuous_tpd_backend"] == "continuous_coordinate_search"
+    assert postsolve["continuous_tpd_start_count"] > 0
+    assert postsolve["continuous_tpd_solve_count"] == postsolve["continuous_tpd_start_count"]
+    assert postsolve["continuous_tpd_converged_count"] == postsolve["continuous_tpd_solve_count"]
+    assert postsolve["continuous_tpd_best_source"]
+    assert len(postsolve["continuous_tpd_best_composition"]) == 2
+    assert postsolve["held_stage_i_status"] in {
+        "negative_tpd_candidate_found",
+        "no_negative_tpd_candidate_found",
+    }
+    assert postsolve["held_stage_i_start_count"] == postsolve["continuous_tpd_start_count"]
+    assert postsolve["held_stage_i_min_tpd"] == pytest.approx(postsolve["continuous_tpd_min"])
+    assert postsolve["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert postsolve["held_stage_ii_candidate_count"] == postsolve["unique_candidate_count"]
+    assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
+    assert postsolve["held_stage_iii_refined_phase_count"] == 2
     assert postsolve["stability_checked"] is True
     assert postsolve["stability_accepted"] is True
     assert postsolve["candidate_completeness_accepted"] is True
@@ -74,6 +100,9 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert postsolve["seed_and_stability"]["candidate_source_count"] == postsolve["unique_candidate_count"]
     assert postsolve["seed_and_stability"]["candidate_sources"] == postsolve["tpd_candidate_sources"]
     assert postsolve["seed_and_stability"]["deterministic_screening_is_full_held"] is False
+    assert postsolve["seed_and_stability"]["continuous_tpd_status"] == "converged"
+    assert postsolve["seed_and_stability"]["held_stage_i_status"] == postsolve["held_stage_i_status"]
+    assert postsolve["seed_and_stability"]["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
     assert postsolve["candidate_mass_balance_norm"] <= 1.0e-8
     assert postsolve["material_balance_norm"] <= 1.0e-8
     assert postsolve["pressure_consistency_norm"] <= 1.0e-3
@@ -95,6 +124,11 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert certificate["accepted"] is True
     assert certificate["method"] == "tpd_postsolve"
     assert certificate["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
+    assert certificate["deterministic_screening_is_full_held"] is False
+    assert certificate["continuous_tpd_status"] == "converged"
+    assert certificate["held_stage_i_status"] == postsolve["held_stage_i_status"]
+    assert certificate["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert certificate["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
     assert certificate["stability_checked"] is True
     assert certificate["stability_accepted"] is True
     assert certificate["candidate_set_complete"] is True
@@ -117,6 +151,34 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
 
     assert discovery["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
     assert discovery["stability_certificate"] == "tpd_postsolve"
+    assert discovery["stage9_phase_discovery_steps"] == [
+        "deterministic_screening",
+        "continuous_tpd",
+        "held_stage_i",
+        "held_stage_ii",
+        "held_stage_iii",
+    ]
+    assert discovery["deterministic_screening_status"] == "completed"
+    assert discovery["deterministic_screening_is_full_held"] is False
+    assert discovery["deterministic_candidate_count"] > 0
+    assert discovery["continuous_tpd_status"] == "converged"
+    assert discovery["continuous_tpd_backend"] == "continuous_coordinate_search"
+    assert discovery["continuous_tpd_start_count"] > 0
+    assert discovery["continuous_tpd_solve_count"] == discovery["continuous_tpd_start_count"]
+    assert discovery["continuous_tpd_converged_count"] == discovery["continuous_tpd_solve_count"]
+    assert discovery["continuous_tpd_best_source"]
+    assert len(discovery["continuous_tpd_best_composition"]) == 2
+    assert discovery["held_stage_i_status"] in {
+        "negative_tpd_candidate_found",
+        "no_negative_tpd_candidate_found",
+    }
+    assert discovery["held_stage_i_start_count"] == discovery["continuous_tpd_start_count"]
+    assert discovery["held_stage_i_min_tpd"] == pytest.approx(discovery["continuous_tpd_min"])
+    assert discovery["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert discovery["held_stage_ii_major_iterations"] == 0
+    assert discovery["held_stage_ii_candidate_count"] == discovery["unique_candidate_count"]
+    assert discovery["held_stage_iii_status"] == "pending_ipopt_refinement"
+    assert discovery["held_stage_iii_refined_phase_count"] == 0
     assert discovery["stability_checked"] is True
     assert discovery["tpd_candidate_count"] >= discovery["unique_candidate_count"] >= 1
     assert discovery["phase_set_mass_balance_feasible"] is True
@@ -131,6 +193,14 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
     assert sum(candidate["selected"] for candidate in discovery["candidates"]) == discovery["selected_candidate_count"]
     for candidate in discovery["candidates"]:
         assert candidate["source"].startswith("feed_phase_kind_")
+        assert candidate["tpd_backend"] in {
+            "deterministic_grid_evaluation",
+            "continuous_coordinate_search",
+        }
+        if candidate["tpd_backend"] == "continuous_coordinate_search":
+            assert candidate["tpd_status"] == "converged"
+            assert candidate["start_source"].startswith("feed_phase_kind_")
+            assert candidate["tpd_iteration_count"] >= 0
         assert candidate["feasibility_status"] in {
             "selected_mass_balance_feasible",
             "mass_balance_pair_unselected",

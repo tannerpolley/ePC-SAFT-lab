@@ -610,6 +610,33 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["phase_discovery_backend"] = result.phase_discovery_backend;
     out["stability_certificate"] = result.stability_certificate;
     out["phase_set_status"] = result.phase_set_status;
+    out["stage9_phase_discovery_steps"] = result.stage9_phase_discovery_steps;
+    out["deterministic_screening_status"] = result.deterministic_screening_status;
+    out["deterministic_screening_is_full_held"] = result.deterministic_screening_is_full_held;
+    out["continuous_tpd_status"] = result.continuous_tpd_status;
+    out["continuous_tpd_backend"] = result.continuous_tpd_backend;
+    out["continuous_tpd_best_source"] = result.continuous_tpd_best_source;
+    out["deterministic_candidate_count"] = result.deterministic_candidate_count;
+    out["continuous_tpd_start_count"] = result.continuous_tpd_start_count;
+    out["continuous_tpd_solve_count"] = result.continuous_tpd_solve_count;
+    out["continuous_tpd_converged_count"] = result.continuous_tpd_converged_count;
+    out["continuous_tpd_min"] = result.continuous_tpd_min;
+    out["continuous_tpd_best_phase_kind"] = result.continuous_tpd_best_phase_kind;
+    out["continuous_tpd_best_density"] = result.continuous_tpd_best_density;
+    out["continuous_tpd_best_molar_volume"] = result.continuous_tpd_best_molar_volume;
+    out["continuous_tpd_best_composition"] = result.continuous_tpd_best_composition;
+    out["held_stage_i_status"] = result.held_stage_i_status;
+    out["held_stage_i_start_count"] = result.held_stage_i_start_count;
+    out["held_stage_i_negative_tpd_found"] = result.held_stage_i_negative_tpd_found;
+    out["held_stage_i_min_tpd"] = result.held_stage_i_min_tpd;
+    out["held_stage_ii_status"] = result.held_stage_ii_status;
+    out["held_stage_ii_major_iterations"] = result.held_stage_ii_major_iterations;
+    out["held_stage_ii_candidate_count"] = result.held_stage_ii_candidate_count;
+    out["held_stage_ii_lower_bound"] = result.held_stage_ii_lower_bound;
+    out["held_stage_ii_upper_bound"] = result.held_stage_ii_upper_bound;
+    out["held_stage_ii_bound_gap"] = result.held_stage_ii_bound_gap;
+    out["held_stage_iii_status"] = result.held_stage_iii_status;
+    out["held_stage_iii_refined_phase_count"] = result.held_stage_iii_refined_phase_count;
     out["derivative_backend"] = result.derivative_backend;
     out["residual_families"] = result.residual_families;
     out["constraint_families"] = result.constraint_families;
@@ -663,6 +690,12 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     seed_and_stability["candidate_mass_balance_norm"] = result.candidate_mass_balance_norm;
     seed_and_stability["min_tpd"] = result.min_tpd;
     seed_and_stability["deterministic_screening_is_full_held"] = false;
+    seed_and_stability["stage9_phase_discovery_steps"] = result.stage9_phase_discovery_steps;
+    seed_and_stability["deterministic_screening_status"] = result.deterministic_screening_status;
+    seed_and_stability["continuous_tpd_status"] = result.continuous_tpd_status;
+    seed_and_stability["held_stage_i_status"] = result.held_stage_i_status;
+    seed_and_stability["held_stage_ii_status"] = result.held_stage_ii_status;
+    seed_and_stability["held_stage_iii_status"] = result.held_stage_iii_status;
     out["seed_and_stability"] = seed_and_stability;
     return out;
 }
@@ -680,6 +713,11 @@ py::dict neutral_tpd_candidate_to_dict(
     out["tpd"] = result.tpd;
     out["transformed_objective"] = result.transformed_objective;
     out["pressure_residual_estimate"] = result.pressure_residual_estimate;
+    out["tpd_backend"] = result.tpd_backend;
+    out["tpd_status"] = result.tpd_status;
+    out["start_source"] = result.start_source;
+    out["tpd_iteration_count"] = result.tpd_iteration_count;
+    out["tpd_step_final"] = result.tpd_step_final;
     out["feasibility_status"] = result.feasibility_status;
     out["candidate_rank"] = result.candidate_rank;
     out["selected"] = result.selected;
@@ -697,6 +735,33 @@ py::dict neutral_phase_discovery_to_dict(
     out["phase_discovery_backend"] = result.phase_discovery_backend;
     out["stability_certificate"] = result.stability_certificate;
     out["phase_set_status"] = result.phase_set_status;
+    out["stage9_phase_discovery_steps"] = result.stage9_phase_discovery_steps;
+    out["deterministic_screening_status"] = result.deterministic_screening_status;
+    out["deterministic_screening_is_full_held"] = result.deterministic_screening_is_full_held;
+    out["continuous_tpd_status"] = result.continuous_tpd_status;
+    out["continuous_tpd_backend"] = result.continuous_tpd_backend;
+    out["continuous_tpd_best_source"] = result.continuous_tpd_best_source;
+    out["deterministic_candidate_count"] = result.deterministic_candidate_count;
+    out["continuous_tpd_start_count"] = result.continuous_tpd_start_count;
+    out["continuous_tpd_solve_count"] = result.continuous_tpd_solve_count;
+    out["continuous_tpd_converged_count"] = result.continuous_tpd_converged_count;
+    out["continuous_tpd_min"] = result.continuous_tpd_min;
+    out["continuous_tpd_best_phase_kind"] = result.continuous_tpd_best_phase_kind;
+    out["continuous_tpd_best_density"] = result.continuous_tpd_best_density;
+    out["continuous_tpd_best_molar_volume"] = result.continuous_tpd_best_molar_volume;
+    out["continuous_tpd_best_composition"] = result.continuous_tpd_best_composition;
+    out["held_stage_i_status"] = result.held_stage_i_status;
+    out["held_stage_i_start_count"] = result.held_stage_i_start_count;
+    out["held_stage_i_negative_tpd_found"] = result.held_stage_i_negative_tpd_found;
+    out["held_stage_i_min_tpd"] = result.held_stage_i_min_tpd;
+    out["held_stage_ii_status"] = result.held_stage_ii_status;
+    out["held_stage_ii_major_iterations"] = result.held_stage_ii_major_iterations;
+    out["held_stage_ii_candidate_count"] = result.held_stage_ii_candidate_count;
+    out["held_stage_ii_lower_bound"] = result.held_stage_ii_lower_bound;
+    out["held_stage_ii_upper_bound"] = result.held_stage_ii_upper_bound;
+    out["held_stage_ii_bound_gap"] = result.held_stage_ii_bound_gap;
+    out["held_stage_iii_status"] = result.held_stage_iii_status;
+    out["held_stage_iii_refined_phase_count"] = result.held_stage_iii_refined_phase_count;
     out["min_tpd"] = result.min_tpd;
     out["candidate_mass_balance_norm"] = result.candidate_mass_balance_norm;
     out["tpd_candidate_count"] = result.tpd_candidate_count;
@@ -989,6 +1054,26 @@ void apply_selector_metadata(
         }
         if (postsolve_dict.contains("selected_candidate_count")) {
             stability_certificate["selected_candidate_count"] = postsolve_dict["selected_candidate_count"];
+        }
+        for (const char* key : {
+                 "stage9_phase_discovery_steps",
+                 "deterministic_screening_status",
+                 "deterministic_screening_is_full_held",
+                 "continuous_tpd_status",
+                 "continuous_tpd_backend",
+                 "continuous_tpd_min",
+                 "held_stage_i_status",
+                 "held_stage_i_start_count",
+                 "held_stage_i_negative_tpd_found",
+                 "held_stage_i_min_tpd",
+                 "held_stage_ii_status",
+                 "held_stage_ii_candidate_count",
+                 "held_stage_iii_status",
+                 "held_stage_iii_refined_phase_count",
+             }) {
+            if (postsolve_dict.contains(key)) {
+                stability_certificate[key] = postsolve_dict[key];
+            }
         }
     } else {
         stability_certificate["accepted"] = false;

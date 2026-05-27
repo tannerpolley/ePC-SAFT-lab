@@ -358,6 +358,20 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
             "tpd_candidate_count",
             "unique_candidate_count",
             "selected_candidate_count",
+            "stage9_phase_discovery_steps",
+            "deterministic_screening_status",
+            "deterministic_screening_is_full_held",
+            "continuous_tpd_status",
+            "continuous_tpd_backend",
+            "continuous_tpd_min",
+            "held_stage_i_status",
+            "held_stage_i_start_count",
+            "held_stage_i_negative_tpd_found",
+            "held_stage_i_min_tpd",
+            "held_stage_ii_status",
+            "held_stage_ii_candidate_count",
+            "held_stage_iii_status",
+            "held_stage_iii_refined_phase_count",
         ):
             if key in stability_payload:
                 out[key] = stability_payload[key]

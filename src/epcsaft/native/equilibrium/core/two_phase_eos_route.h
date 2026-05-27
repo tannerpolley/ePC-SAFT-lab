@@ -78,6 +78,33 @@ struct NeutralTwoPhaseEosPostsolve {
     std::string phase_discovery_backend = "not_checked";
     std::string stability_certificate = "not_checked";
     std::string phase_set_status = "not_checked";
+    std::vector<std::string> stage9_phase_discovery_steps;
+    std::string deterministic_screening_status = "pending";
+    bool deterministic_screening_is_full_held = false;
+    std::string continuous_tpd_status = "pending";
+    std::string continuous_tpd_backend;
+    std::string continuous_tpd_best_source;
+    int deterministic_candidate_count = 0;
+    int continuous_tpd_start_count = 0;
+    int continuous_tpd_solve_count = 0;
+    int continuous_tpd_converged_count = 0;
+    double continuous_tpd_min = 0.0;
+    int continuous_tpd_best_phase_kind = 0;
+    double continuous_tpd_best_density = 0.0;
+    double continuous_tpd_best_molar_volume = 0.0;
+    std::vector<double> continuous_tpd_best_composition;
+    std::string held_stage_i_status = "pending";
+    int held_stage_i_start_count = 0;
+    bool held_stage_i_negative_tpd_found = false;
+    double held_stage_i_min_tpd = 0.0;
+    std::string held_stage_ii_status = "pending";
+    int held_stage_ii_major_iterations = 0;
+    int held_stage_ii_candidate_count = 0;
+    double held_stage_ii_lower_bound = 0.0;
+    double held_stage_ii_upper_bound = 0.0;
+    double held_stage_ii_bound_gap = 0.0;
+    std::string held_stage_iii_status = "pending";
+    int held_stage_iii_refined_phase_count = 0;
     std::string derivative_backend;
     std::vector<std::string> residual_families;
     std::vector<std::string> constraint_families;
@@ -131,6 +158,11 @@ struct NeutralTpdCandidate {
     double tpd = 0.0;
     double transformed_objective = 0.0;
     double pressure_residual_estimate = 0.0;
+    std::string tpd_backend = "deterministic_grid_evaluation";
+    std::string tpd_status = "candidate_generated";
+    std::string start_source;
+    int tpd_iteration_count = 0;
+    double tpd_step_final = 0.0;
     std::string feasibility_status = "candidate_generated";
     int candidate_rank = -1;
     bool selected = false;
@@ -144,6 +176,33 @@ struct NeutralPhaseDiscoveryResult {
     std::string phase_discovery_backend = "deterministic_tpd_candidate_screening";
     std::string stability_certificate = "tpd_postsolve";
     std::string phase_set_status = "not_checked";
+    std::vector<std::string> stage9_phase_discovery_steps;
+    std::string deterministic_screening_status = "pending";
+    bool deterministic_screening_is_full_held = false;
+    std::string continuous_tpd_status = "pending";
+    std::string continuous_tpd_backend;
+    std::string continuous_tpd_best_source;
+    int deterministic_candidate_count = 0;
+    int continuous_tpd_start_count = 0;
+    int continuous_tpd_solve_count = 0;
+    int continuous_tpd_converged_count = 0;
+    double continuous_tpd_min = 0.0;
+    int continuous_tpd_best_phase_kind = 0;
+    double continuous_tpd_best_density = 0.0;
+    double continuous_tpd_best_molar_volume = 0.0;
+    std::vector<double> continuous_tpd_best_composition;
+    std::string held_stage_i_status = "pending";
+    int held_stage_i_start_count = 0;
+    bool held_stage_i_negative_tpd_found = false;
+    double held_stage_i_min_tpd = 0.0;
+    std::string held_stage_ii_status = "pending";
+    int held_stage_ii_major_iterations = 0;
+    int held_stage_ii_candidate_count = 0;
+    double held_stage_ii_lower_bound = 0.0;
+    double held_stage_ii_upper_bound = 0.0;
+    double held_stage_ii_bound_gap = 0.0;
+    std::string held_stage_iii_status = "pending";
+    int held_stage_iii_refined_phase_count = 0;
     double min_tpd = 0.0;
     double candidate_mass_balance_norm = 0.0;
     int tpd_candidate_count = 0;
@@ -363,7 +422,8 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     const std::vector<double>& charges = {},
     bool phase_distance_constraint = false,
     bool stability_certification_required = false,
-    std::vector<int> phase_kinds = {}
+    std::vector<int> phase_kinds = {},
+    bool continuous_tpd_required = false
 );
 
 NeutralTwoPhaseEosPostsolve evaluate_neutral_multiphase_eos_postsolve(

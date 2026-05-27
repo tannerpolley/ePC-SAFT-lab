@@ -62,7 +62,13 @@ family_rows:
     objective_family: pressure_transformed_helmholtz
     hard_constraints: [material_balance, phase_pressure_consistency, chemical_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_generalized_exposure
-    phase_discovery_status: deterministic_screening_current_full_held_planned
+    phase_discovery_status: continuous_tpd_stage_i_current_stage_ii_pending
+    stage9_status:
+      deterministic_screening: implemented_seed_and_certification_support_not_full_held
+      continuous_tpd_minimization: implemented_neutral_coordinate_search_convergence_required
+      held_stage_i_stability: implemented_neutral_multi_start_convergence_required
+      held_stage_ii_dual_phase_discovery: pending_dual_cutting_plane_loop
+      held_stage_iii_ipopt_refinement: current_route_refinement_available_pending_stage_ii_candidates
     required_gates:
       - infrastructure_gate
       - continuous_tpd_minimization
@@ -74,7 +80,10 @@ family_rows:
       - case_label: "Pereira 2012 System III"
         evidence_tier: T0
         source: "Pereira et al. 2012 neutral HELD benchmark"
+        source_model_family: SAFT-VR
+        current_fixture_blocker: model_family_mismatch
         fixture_status: source_data_needed
+        todo: "Select a source-backed ePC-SAFT-compatible neutral TP flash fixture, or add SAFT-VR/model-parity support before using Pereira as proof evidence."
         acceptance_checks:
           - source_backed_parameters
           - material_balance
@@ -272,7 +281,7 @@ derived_subworkflows:
     fixed_variables: [temperature_or_pressure, liquid_or_feed_composition]
     free_variables: [incipient_vapor_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, diagram_trace]
 
@@ -284,7 +293,7 @@ derived_subworkflows:
     fixed_variables: [temperature_or_pressure, vapor_composition]
     free_variables: [incipient_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, diagram_trace]
 
@@ -296,7 +305,7 @@ derived_subworkflows:
     fixed_variables: [temperature_or_pressure, parent_liquid_composition]
     free_variables: [incipient_second_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, diagram_trace]
 
@@ -308,7 +317,7 @@ derived_subworkflows:
     fixed_variables: [cloud_point_state]
     free_variables: [shadow_phase_composition, shadow_phase_volume]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use Pereira 2012 System III unless implementation proves it physically unsuitable."
+    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral binary; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, diagram_trace]
 
@@ -319,7 +328,9 @@ benchmark_cases:
     status: source_data_needed
     fixture_status: source_data_needed
     source_path: "literature:Pereira et al. 2012 System III"
-    todo: "Create a source-backed neutral benchmark fixture before generalized neutral production exposure."
+    source_model_family: SAFT-VR
+    current_fixture_blocker: model_family_mismatch
+    todo: "Do not use Pereira as ePC-SAFT proof evidence until SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization exists; select a source-backed ePC-SAFT-compatible neutral TP flash fixture first."
 
   - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
     family_labels: ["PE-Associating TP Flash"]

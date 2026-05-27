@@ -51,8 +51,8 @@
     Jacobians remain in their route problem owners.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp"
-      line: 325
-      comment_line: 324
+      line: 484
+      comment_line: 483
       context: "class IpoptTnlpAdapter final : public Ipopt::TNLP {"
 - algid: "native_ceres_regression_adapter"
   section: "Core Optimizer and Adapter Algorithms"
@@ -77,8 +77,8 @@
     regression routes. It is separate from Ipopt and does not call Ipopt routes.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1040
-      comment_line: 1037
+      line: 1044
+      comment_line: 1041
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 565
@@ -115,20 +115,20 @@
       comment_line: 521
       context: "def _solve_selector_route("
     - file: "src/epcsaft/native/equilibrium/core/selector_core.cpp"
-      line: 349
-      comment_line: 348
+      line: 552
+      comment_line: 551
       context: "SelectorContract evaluate_selector_contract("
     - file: "src/epcsaft/native/equilibrium/core/selector_core.cpp"
-      line: 403
-      comment_line: 402
+      line: 610
+      comment_line: 609
       context: "epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 830
-      comment_line: 829
+      line: 1293
+      comment_line: 1292
       context: "m.def(\"_native_equilibrium_selector_contract\", []("
     - file: "src/epcsaft/native/equilibrium/register_bindings.cpp"
-      line: 880
-      comment_line: 879
+      line: 1343
+      comment_line: 1342
       context: "m.def(\"_native_equilibrium_selector_route_result\", []("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
       line: 2701
@@ -204,8 +204,8 @@
       comment_line: 443
       context: "\"lle\": _EquilibriumRouteSpec("
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2262
-      comment_line: 2261
+      line: 2689
+      comment_line: 2688
       context: "NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route("
 - algid: "neutral_tpd_stability"
   section: "Equilibrium Algorithms"
@@ -234,15 +234,74 @@
     lower-free-energy candidates and mass-balance incompleteness.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 422
-      comment_line: 421
+      line: 645
+      comment_line: 644
       context: "void append_tpd_candidates_for_reference_block("
+- algid: "neutral_continuous_tpd_minimization"
+  section: "Equilibrium Algorithms"
+  subsection: ""
+  subsubsection: ""
+  family: "Phase discovery and certification"
+  status: "Implemented for neutral volume-composition TPD refinement; generalized admission still requires the HELD Stage II dual loop"
+  public_api: "Internal route-discovery and certification infrastructure only"
+  backend: "Native C++ equilibrium core"
+  dependency: "None"
+  derivative_backend: "EOS/provider chemical-potential and free-energy derivatives through pressure-root phase-block evaluation"
+  solver_role: "Refines deterministic TPD starts through continuous composition-space minimization with trial density/volume from the EOS pressure root"
+  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h"
+  validation: "tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
+  capability_key: "internal:neutral_continuous_tpd_minimization"
+  description: "Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening."
+  change_note: "This is the Stage 9 continuous-TPD layer. It does not satisfy the HELD Stage II dual cutting-plane requirement by itself."
+  tex_file: "docs/latex/algorithms.tex"
+  tex_line: 161
+  body: |
+    This algorithm starts from deterministic neutral TPD trial compositions and
+    performs a bounded coordinate search on the composition simplex. Each trial
+    composition is evaluated through the pressure-root phase-block path so the
+    diagnostics include trial composition, phase kind, density, molar volume,
+    TPD value, start source, iteration count, and convergence status.
+  owner_refs:
+    - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      line: 536
+      comment_line: 535
+      context: "NeutralTpdCandidate refine_neutral_tpd_candidate("
+- algid: "neutral_held_stage_ladder_diagnostics"
+  section: "Equilibrium Algorithms"
+  subsection: ""
+  subsubsection: ""
+  family: "Phase discovery and certification"
+  status: "Implemented as diagnostics for deterministic screening, continuous TPD, HELD Stage I, pending Stage II, and current-route Stage III refinement"
+  public_api: "Internal route-discovery and certification infrastructure only"
+  backend: "Native C++ equilibrium core"
+  dependency: "Neutral TPD stability, continuous TPD minimization, and Ipopt phase-amount/phase-volume routes"
+  derivative_backend: "EOS/provider derivatives for TPD and exact route derivatives for Ipopt refinement"
+  solver_role: "Reports which phase-discovery stages supplied evidence and prevents deterministic screening from being reported as full HELD"
+  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp"
+  validation: "tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
+  capability_key: "internal:neutral_held_stage_ladder_diagnostics"
+  description: "Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III."
+  change_note: "Stage II remains an explicit pending dual cutting-plane loop until the outer/inner HELD state is implemented."
+  tex_file: "docs/latex/algorithms.tex"
+  tex_line: 181
+  body: |
+    This diagnostic layer makes the phase-discovery ladder auditable. Current
+    deterministic screening remains seed and certification support. Continuous TPD
+    and HELD Stage I can run from multiple starts, while Stage II is reported as a
+    pending dual cutting-plane loop. Current Ipopt phase-amount/phase-volume solves
+    are reported as current-route Stage III refinement, not as proof that Stage II
+    has been completed.
+  owner_refs:
+    - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
+      line: 834
+      comment_line: 833
+      context: "void finalize_stage9_phase_discovery("
 - algid: "neutral_deterministic_phase_candidate_screening"
   section: "Equilibrium Algorithms"
   subsection: ""
   subsubsection: ""
   family: "Phase discovery and certification"
-  status: "Implemented for current neutral TP flash and neutral nonassociating LLE utility support; planned to be replaced by staged HELD for generalized admission"
+  status: "Implemented for current neutral TP flash and neutral nonassociating LLE utility support; supplemented by continuous TPD and HELD-stage diagnostics for generalized admission work"
   public_api: "Internal route-discovery infrastructure only"
   backend: "Native C++ equilibrium core"
   dependency: "None"
@@ -252,9 +311,9 @@
   validation: "tests/native/equilibrium/results/test_neutral_vle_reference_values.py; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
   capability_key: "internal:neutral_deterministic_phase_candidate_screening"
   description: "Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes."
-  change_note: "Full HELD Stage I/II/III remains future generalized family work."
+  change_note: "Deterministic screening remains distinct from continuous TPD and must not be promoted as full HELD evidence."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 161
+  tex_line: 202
   body: |
     This algorithm reduces dependence on user-supplied phase guesses by using
     neutral TPD or volume-composition trial problems to generate deterministic
@@ -263,8 +322,8 @@
     used as generalized production evidence by itself.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 1820
-      comment_line: 1819
+      line: 2240
+      comment_line: 2239
       context: "NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery("
 - algid: "phase_candidate_mass_balance_selection"
   section: "Equilibrium Algorithms"
@@ -283,7 +342,7 @@
   description: "Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly."
   change_note: "Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; generalized admission still requires full HELD."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 181
+  tex_line: 222
   body: |
     This algorithm solves the small candidate phase-fraction feasibility problem
     before final route assembly. A candidate set that cannot reconstruct the feed
@@ -291,8 +350,8 @@
     stable.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 490
-      comment_line: 489
+      line: 740
+      comment_line: 739
       context: "void select_two_phase_candidate_set("
 - algid: "postsolve_tpd_certification"
   section: "Equilibrium Algorithms"
@@ -311,15 +370,15 @@
   description: "Adds phase-set stability certification after current neutral Ipopt solves."
   change_note: "Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance; current implementation is limited to neutral TP flash and neutral nonassociating LLE."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 200
+  tex_line: 241
   body: |
     This algorithm runs after an Ipopt route returns finite variables. It checks
     stability, phase distinctness, candidate completeness, and route certification
     blocks before assigning a production-accepted status.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 1994
-      comment_line: 1993
+      line: 2417
+      comment_line: 2416
       context: "NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve("
 - algid: "generalized_equilibrium_activation_registry"
   section: "Equilibrium Algorithms"
@@ -338,7 +397,7 @@
   description: "Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry."
   change_note: "Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 218
+  tex_line: 259
   body: |
     The generalized equilibrium activation registry records descriptive family
     labels for phase-only, chemical-only, and combined phase-chemical work, plus
@@ -364,7 +423,7 @@
   description: "Records explicit association closures as approximate Helmholtz diagnostics, not production exact association."
   change_note: "Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 239
+  tex_line: 280
   body: |
     This planned diagnostic family may use explicit algebraic association closures
     for seed generation, continuation, and comparison against
@@ -390,7 +449,7 @@
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 262
+  tex_line: 303
   body: |
     This entry covers the implemented nonassociating pure-neutral native Ceres route
     for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
@@ -398,8 +457,8 @@
     \verb|vol_a| targets until the association parameter-sensitivity work lands.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1035
-      comment_line: 1034
+      line: 1039
+      comment_line: 1038
       context: "m.def(\"_fit_pure_neutral_native_ceres\", &fit_pure_neutral_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 578
@@ -430,15 +489,15 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 281
+  tex_line: 322
   body: |
     This entry is limited to the currently implemented pure-ion target surface. It
     does not claim support for association-affecting target kinds merely because the
     native target-kind registry knows their labels.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1040
-      comment_line: 1038
+      line: 1044
+      comment_line: 1042
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 1537
@@ -469,7 +528,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 299
+  tex_line: 340
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)
@@ -477,8 +536,8 @@
     derivative and optimizer evidence both exist.
   owner_refs:
     - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1040
-      comment_line: 1039
+      line: 1044
+      comment_line: 1043
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "src/epcsaft/native/regression/ceres_regression.cpp"
       line: 1660

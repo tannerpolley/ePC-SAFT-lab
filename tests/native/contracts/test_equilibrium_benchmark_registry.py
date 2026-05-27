@@ -53,6 +53,9 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     } <= set(benchmarks)
 
     assert benchmarks["Pereira 2012 System III"]["family_labels"] == ["PE-Neutral TP Flash"]
+    assert benchmarks["Pereira 2012 System III"]["source_model_family"] == "SAFT-VR"
+    assert benchmarks["Pereira 2012 System III"]["current_fixture_blocker"] == "model_family_mismatch"
+    assert "ePC-SAFT-compatible neutral TP flash fixture" in benchmarks["Pereira 2012 System III"]["todo"]
     assert benchmarks["Gross/Sadowski 2002 methanol/cyclohexane"]["family_labels"] == [
         "PE-Associating TP Flash"
     ]

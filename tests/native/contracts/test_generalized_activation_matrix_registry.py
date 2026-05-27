@@ -71,6 +71,8 @@ def test_stage_plan_is_gfpe_first_and_pretreatment_centered() -> None:
     assert (
         "Package-wide milestones are intentionally not used as stage names." in stage_text
     )
+    assert "Pereira 2012 System III remains HELD/SAFT-VR literature context" in stage_text
+    assert "first neutral proof target must be a source-backed ePC-SAFT-compatible" in stage_text
     assert "## GFPE Pretreatment Pipeline" in stage_text
     assert "public request\n  -> request-shape record" in stage_text
     assert "parameter and EOS-contribution readiness record" in stage_text
@@ -98,7 +100,19 @@ def test_no_generalized_family_claims_production_before_held_gates() -> None:
     neutral = _family_by_label()["PE-Neutral TP Flash"]
     assert "continuous_tpd_minimization" in neutral["required_gates"]
     assert "held_stage_ii_dual_phase_discovery" in neutral["required_gates"]
-    assert neutral["phase_discovery_status"] == "deterministic_screening_current_full_held_planned"
+    assert neutral["phase_discovery_status"] == "continuous_tpd_stage_i_current_stage_ii_pending"
+    assert neutral["stage9_status"]["deterministic_screening"].endswith("not_full_held")
+    assert (
+        neutral["stage9_status"]["continuous_tpd_minimization"]
+        == "implemented_neutral_coordinate_search_convergence_required"
+    )
+    expected_stage_i_status = "implemented_neutral_multi_start_convergence_required"
+    assert neutral["stage9_status"]["held_stage_i_stability"] == expected_stage_i_status
+    assert neutral["stage9_status"]["held_stage_ii_dual_phase_discovery"] == "pending_dual_cutting_plane_loop"
+    assert (
+        neutral["stage9_status"]["held_stage_iii_ipopt_refinement"]
+        == "current_route_refinement_available_pending_stage_ii_candidates"
+    )
 
 
 def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> None:
@@ -114,7 +128,8 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
         assert row["planned_after_family"] == "PE-Neutral TP Flash", label
         assert set(row["diagram_targets"]) == {"P-x", "T-x"}, label
         assert row["vlle_test_required"] is False, label
-        assert "Pereira 2012 System III" in row["shared_mixture_policy"], label
+        assert "ePC-SAFT-compatible neutral binary" in row["shared_mixture_policy"], label
+        assert "Pereira 2012 System III remains HELD/SAFT-VR context" in row["shared_mixture_policy"], label
 
 
 def test_deterministic_screening_is_not_called_full_held() -> None:
