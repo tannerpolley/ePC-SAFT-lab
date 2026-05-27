@@ -242,6 +242,34 @@ Scaling is route-owned and mandatory. At minimum, routes must scale:
   form;
 - objective values by a declared extensive scale.
 
+Ipopt must receive the route-owned scaling as user scaling. Automatic Ipopt
+scaling may remain a development comparison, but it is not the production
+contract for GFPE routes. Route diagnostics must report the objective scale,
+variable-scale minimum and maximum, constraint-scale minimum and maximum,
+variable-scale ratio, constraint-scale ratio, scaled constraint violation,
+scaled stationarity, bound complementarity, and whether the scaled numerical
+acceptance gate passed. These diagnostics are separate from physical
+postsolve acceptance because a numerically converged NLP can still fail phase,
+stability, material-balance, or domain-certification checks.
+
+Stage 8 owns the Ipopt option profiles used before any Stage 9 real-mixture
+HELD proof case starts:
+
+- `proof`: normal exact-derivative proof profile for the shared NLP contract.
+- `continuation_trace`: longer iteration history and conservative bound-push
+  defaults for branch tracking and seed-transfer debugging.
+- `held_refinement`: tighter interior-bound defaults and larger iteration
+  budget for HELD-discovered phase-set refinement.
+- `diagnostic`: the only profile allowed to use limited-memory Hessians.
+
+Every non-diagnostic profile must keep the exact-Hessian gate active through
+the `profile_exact_hessian_gate` diagnostic. The solve payload must also record
+requested and selected linear solver, bound-push and bound-fraction values,
+active lower/upper/total bound counts, Ipopt barrier parameter, restoration
+phase observation, regularization size, and maximum step-trial count. Stage 9
+must not test real mixtures until these Stage 8 diagnostics and profile gates
+are covered by focused native contract tests.
+
 Domain diagnostics are mandatory. Route results should report the smallest
 margin to amount bounds, volume/density bounds, packing-fraction limits,
 composition floors, charge-neutrality constraints, and any transform saturation

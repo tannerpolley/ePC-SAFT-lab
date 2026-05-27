@@ -162,8 +162,45 @@ std::string normalize_linear_solver(std::string value) {
     return value;
 }
 
+std::string normalize_option_profile(std::string value) {
+    if (value.empty()) {
+        return "proof";
+    }
+    std::replace(value.begin(), value.end(), '-', '_');
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    if (
+        value == "proof"
+        || value == "continuation_trace"
+        || value == "held_refinement"
+        || value == "diagnostic"
+    ) {
+        return value;
+    }
+    throw ValueError(
+        "Native Ipopt adapter option_profile must be 'proof', 'continuation_trace', "
+        "'held_refinement', or 'diagnostic'."
+    );
+}
+
+bool profile_needs_exact_hessian(const std::string& option_profile) {
+    return option_profile != "diagnostic";
+}
+
 IpoptSolveOptions normalize_ipopt_solve_options(const IpoptSolveOptions& options) {
     IpoptSolveOptions normalized = options;
+    normalized.option_profile = normalize_option_profile(normalized.option_profile);
+    if (normalized.option_profile == "continuation_trace") {
+        normalized.iteration_history_limit = std::max(normalized.iteration_history_limit, 50);
+        normalized.bound_push = std::max(normalized.bound_push, 1.0e-9);
+        normalized.bound_frac = std::max(normalized.bound_frac, 1.0e-9);
+    } else if (normalized.option_profile == "held_refinement") {
+        normalized.max_iterations = std::max(normalized.max_iterations, 200);
+        normalized.iteration_history_limit = std::max(normalized.iteration_history_limit, 50);
+        normalized.bound_push = std::max(normalized.bound_push, 1.0e-10);
+        normalized.bound_frac = std::max(normalized.bound_frac, 1.0e-10);
+    }
     if (!std::isfinite(normalized.tolerance) || normalized.tolerance <= 0.0) {
         throw ValueError("Native Ipopt adapter tolerance must be positive and finite.");
     }
@@ -233,6 +270,128 @@ double vector_max_or_zero(const std::vector<double>& values) {
         return 0.0;
     }
     return *std::max_element(values.begin(), values.end());
+}
+
+double scale_at(const std::vector<double>& scaling, std::size_t index) {
+    return scaling.empty() ? 1.0 : scaling[index];
+}
+
+double scaling_ratio_or_one(const std::vector<double>& scaling) {
+    if (scaling.empty()) {
+        return 1.0;
+    }
+    const double minimum = vector_min_or_zero(scaling);
+    const double maximum = vector_max_or_zero(scaling);
+    if (minimum <= 0.0) {
+        return std::numeric_limits<double>::infinity();
+    }
+    return maximum / minimum;
+}
+
+double constraint_violation(
+    double value,
+    double lower,
+    double upper
+) {
+    if (value < lower) {
+        return lower - value;
+    }
+    if (value > upper) {
+        return value - upper;
+    }
+    return 0.0;
+}
+
+double scaled_constraint_violation_inf_norm(
+    const std::vector<double>& values,
+    const NlpBounds& bounds,
+    const NlpScaling& scaling
+) {
+    double out = 0.0;
+    for (std::size_t index = 0; index < values.size(); ++index) {
+        const double violation = constraint_violation(
+            values[index],
+            bounds.constraint_lower[index],
+            bounds.constraint_upper[index]
+        );
+        out = std::max(out, std::abs(scale_at(scaling.constraints, index) * violation));
+    }
+    return out;
+}
+
+double bound_complementarity_inf_norm(
+    const std::vector<double>& variables,
+    const std::vector<double>& lower_multipliers,
+    const std::vector<double>& upper_multipliers,
+    const NlpBounds& bounds
+) {
+    if (lower_multipliers.size() != variables.size() || upper_multipliers.size() != variables.size()) {
+        return std::numeric_limits<double>::infinity();
+    }
+    double out = 0.0;
+    for (std::size_t index = 0; index < variables.size(); ++index) {
+        if (std::isfinite(bounds.variable_lower[index])) {
+            const double lower_margin = variables[index] - bounds.variable_lower[index];
+            out = std::max(out, std::abs(lower_margin * lower_multipliers[index]));
+        }
+        if (std::isfinite(bounds.variable_upper[index])) {
+            const double upper_margin = bounds.variable_upper[index] - variables[index];
+            out = std::max(out, std::abs(upper_margin * upper_multipliers[index]));
+        }
+    }
+    return out;
+}
+
+double scaled_stationarity_inf_norm(
+    const NlpProblem& problem,
+    const std::vector<double>& variables,
+    const std::vector<double>& lower_multipliers,
+    const std::vector<double>& upper_multipliers,
+    const std::vector<double>& constraint_multipliers,
+    const NlpJacobianStructure& jacobian_structure,
+    const NlpScaling& scaling
+) {
+    if (
+        lower_multipliers.size() != variables.size()
+        || upper_multipliers.size() != variables.size()
+        || constraint_multipliers.size() != static_cast<std::size_t>(problem.constraint_count())
+    ) {
+        return std::numeric_limits<double>::infinity();
+    }
+    std::vector<double> stationarity = problem.objective_gradient(variables);
+    const std::vector<double> jacobian = problem.jacobian_values(variables);
+    if (stationarity.size() != variables.size() || jacobian.size() != jacobian_structure.rows.size()) {
+        return std::numeric_limits<double>::infinity();
+    }
+    for (double& value : stationarity) {
+        value *= scaling.objective;
+    }
+    for (std::size_t index = 0; index < jacobian.size(); ++index) {
+        const std::size_t row = static_cast<std::size_t>(jacobian_structure.rows[index]);
+        const std::size_t col = static_cast<std::size_t>(jacobian_structure.cols[index]);
+        stationarity[col] += scale_at(scaling.constraints, row) * constraint_multipliers[row] * jacobian[index];
+    }
+    double out = 0.0;
+    for (std::size_t index = 0; index < stationarity.size(); ++index) {
+        stationarity[index] -= lower_multipliers[index];
+        stationarity[index] += upper_multipliers[index];
+        out = std::max(out, std::abs(scale_at(scaling.variables, index) * stationarity[index]));
+    }
+    return out;
+}
+
+int active_bound_count(
+    const std::vector<double>& variables,
+    const std::vector<double>& bounds,
+    double active_tolerance
+) {
+    int out = 0;
+    for (std::size_t index = 0; index < variables.size(); ++index) {
+        if (std::abs(variables[index] - bounds[index]) <= active_tolerance) {
+            ++out;
+        }
+    }
+    return out;
 }
 
 std::string solver_status_name(Ipopt::SolverReturn status) {
@@ -358,7 +517,19 @@ public:
         result_.diagnostics_string["hessian_approximation"] = selected_hessian_mode_;
         result_.diagnostics_string["hessian_backend"] =
             selected_hessian_mode_ == "exact" ? problem_.hessian_backend() : "limited-memory";
+        result_.diagnostics_string["option_profile"] = options_.option_profile;
+        result_.diagnostics_string["exact_hessian_policy"] =
+            profile_needs_exact_hessian(options_.option_profile)
+                ? "required_by_profile"
+                : "diagnostic_profile_allows_limited_memory";
         result_.diagnostics_string["scaling_method"] = "user-scaling";
+        result_.diagnostics_string["scaling_contract"] =
+            "route_owned_objective_variable_constraint_scaling";
+        result_.diagnostics_string["residual_scaling_policy"] =
+            "route_owned_nondimensional_or_extensive_reference_scales";
+        result_.diagnostics_string["linear_solver_policy"] =
+            options_.linear_solver == "auto" ? "ipopt_default_recorded" : "explicit_request_recorded";
+        result_.diagnostics_string["barrier_policy"] = "ipopt_internal_barrier_for_declared_bounds";
         result_.diagnostics_string["linear_solver_requested"] = options_.linear_solver;
         result_.diagnostics_string["linear_solver_selected"] =
             options_.linear_solver == "auto" ? "default" : options_.linear_solver;
@@ -376,7 +547,15 @@ public:
         result_.diagnostics_double["variable_scaling_max"] = vector_max_or_zero(scaling_.variables);
         result_.diagnostics_double["constraint_scaling_min"] = vector_min_or_zero(scaling_.constraints);
         result_.diagnostics_double["constraint_scaling_max"] = vector_max_or_zero(scaling_.constraints);
+        result_.diagnostics_double["variable_scaling_ratio"] = scaling_ratio_or_one(scaling_.variables);
+        result_.diagnostics_double["constraint_scaling_ratio"] = scaling_ratio_or_one(scaling_.constraints);
+        result_.diagnostics_bool["variable_scaling_quality_passed"] =
+            scaling_.variables.empty() || scaling_ratio_or_one(scaling_.variables) <= 1.0e8;
+        result_.diagnostics_bool["constraint_scaling_quality_passed"] =
+            scaling_.constraints.empty() || scaling_ratio_or_one(scaling_.constraints) <= 1.0e8;
         result_.diagnostics_bool["exact_hessian_available"] = problem_.has_exact_hessian();
+        result_.diagnostics_bool["profile_exact_hessian_gate"] =
+            profile_needs_exact_hessian(options_.option_profile);
         result_.diagnostics_bool["warm_start_requested"] = has_warm_start();
         for (const auto& item : problem_.diagnostics()) {
             result_.diagnostics_string[item.first] = item.second;
@@ -759,9 +938,71 @@ public:
         result_.diagnostics_int["variables"] = static_cast<int>(n);
         result_.diagnostics_int["constraints"] = static_cast<int>(m);
         result_.diagnostics_int["iteration_history_size"] = static_cast<int>(result_.iteration_history.size());
+        const double active_tolerance = std::max(10.0 * options_.tolerance, 1.0e-10);
+        const int active_lower_count = active_bound_count(
+            result_.variables,
+            bounds_.variable_lower,
+            active_tolerance
+        );
+        const int active_upper_count = active_bound_count(
+            result_.variables,
+            bounds_.variable_upper,
+            active_tolerance
+        );
+        result_.diagnostics_int["active_lower_bound_count"] = active_lower_count;
+        result_.diagnostics_int["active_upper_bound_count"] = active_upper_count;
+        result_.diagnostics_int["active_variable_bound_count"] = active_lower_count + active_upper_count;
         result_.diagnostics_bool["exact_gradient_required"] = true;
         result_.diagnostics_bool["exact_jacobian_required"] = true;
         result_.diagnostics_bool["feasible_point_found"] = result_.feasible_point;
+        const double scaled_constraint_violation = scaled_constraint_violation_inf_norm(
+            result_.constraints,
+            bounds_,
+            scaling_
+        );
+        const double scaled_stationarity = scaled_stationarity_inf_norm(
+            problem_,
+            result_.variables,
+            result_.bound_lower_multipliers,
+            result_.bound_upper_multipliers,
+            result_.constraint_multipliers,
+            jacobian_structure_,
+            scaling_
+        );
+        const double complementarity = bound_complementarity_inf_norm(
+            result_.variables,
+            result_.bound_lower_multipliers,
+            result_.bound_upper_multipliers,
+            bounds_
+        );
+        double final_barrier = 0.0;
+        double final_regularization = 0.0;
+        double maximum_regularization = 0.0;
+        int maximum_step_trial_count = 0;
+        bool restoration_observed = false;
+        if (!result_.iteration_history.empty()) {
+            const IpoptIterationRecord& final_record = result_.iteration_history.back();
+            final_barrier = final_record.barrier_parameter;
+            final_regularization = final_record.regularization_size;
+            for (const IpoptIterationRecord& record : result_.iteration_history) {
+                maximum_regularization = std::max(maximum_regularization, record.regularization_size);
+                maximum_step_trial_count = std::max(maximum_step_trial_count, record.step_trial_count);
+                restoration_observed = restoration_observed || record.restoration_phase;
+            }
+        }
+        result_.diagnostics_double["scaled_constraint_violation_inf_norm"] = scaled_constraint_violation;
+        result_.diagnostics_double["scaled_stationarity_inf_norm"] = scaled_stationarity;
+        result_.diagnostics_double["bound_complementarity_inf_norm"] = complementarity;
+        result_.diagnostics_double["barrier_parameter_final"] = final_barrier;
+        result_.diagnostics_double["regularization_size_final"] = final_regularization;
+        result_.diagnostics_double["regularization_size_max"] = maximum_regularization;
+        result_.diagnostics_int["step_trial_count_max"] = maximum_step_trial_count;
+        const bool scaled_acceptance =
+            scaled_constraint_violation <= options_.constraint_violation_tolerance
+            && scaled_stationarity <= options_.dual_infeasibility_tolerance
+            && complementarity <= options_.complementarity_tolerance;
+        result_.diagnostics_bool["scaled_acceptance_passed"] = scaled_acceptance;
+        result_.diagnostics_bool["restoration_phase_observed"] = restoration_observed;
     }
 
     const IpoptSolveResult& result() const {
@@ -794,6 +1035,9 @@ private:
         }
         if (mode == "exact" && !problem.has_exact_hessian()) {
             throw ValueError("Native Ipopt exact Hessian mode requires an NLP Hessian provider.");
+        }
+        if (profile_needs_exact_hessian(options.option_profile) && mode == "limited-memory") {
+            throw ValueError("Native Ipopt production option_profile requires exact Hessian support.");
         }
         return mode;
     }
@@ -878,6 +1122,12 @@ IpoptSolveResult solve_ipopt_nlp(
     }
     if (selected_hessian_mode == "exact" && !problem.has_exact_hessian()) {
         throw ValueError("Native Ipopt exact Hessian mode requires an NLP Hessian provider.");
+    }
+    if (
+        profile_needs_exact_hessian(normalized_options.option_profile)
+        && selected_hessian_mode == "limited-memory"
+    ) {
+        throw ValueError("Native Ipopt production option_profile requires exact Hessian support.");
     }
     if (!std::isfinite(normalized_options.max_wall_time_seconds) || normalized_options.max_wall_time_seconds < 0.0) {
         throw ValueError("Native Ipopt adapter requires a non-negative wall-clock timeout.");

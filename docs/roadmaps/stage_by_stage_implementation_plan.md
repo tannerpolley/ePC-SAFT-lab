@@ -714,6 +714,8 @@ Primary output:
 
 - A route-owned `NlpProblem` contract with exact derivatives, sparse
   structures, bounds, scaling, transform policy, and diagnostics.
+- A complete Ipopt numerics gate that is finished before Stage 9 starts any
+  real-mixture HELD proof case.
 
 References:
 
@@ -749,11 +751,36 @@ Substeps:
 10. Keep thermodynamic residual equations in route problems.
 11. Pass route-owned bounds and constraints to Ipopt.
 12. Pass route-owned scaling to Ipopt or to the route-owned scaling adapter.
-13. Add tests for objective value, gradient size, constraint size, Jacobian
+13. Keep Ipopt on user scaling for GFPE routes; do not depend on automatic
+    scaling as the production contract.
+14. Define nondimensional or reference-scale residual conventions for every
+    material, pressure, phase-equilibrium, charge, and reaction residual row.
+15. Report scaling-quality diagnostics:
+    objective scale, min/max variable scale, min/max constraint scale,
+    variable-scale ratio, constraint-scale ratio, scaled constraint violation,
+    scaled stationarity, and bound-complementarity norms.
+16. Report active-bound and barrier diagnostics:
+    lower-bound count, upper-bound count, total active variable-bound count,
+    final barrier parameter, restoration-phase observation, final and maximum
+    regularization size, and maximum step trial count.
+17. Treat scaled numerical acceptance as a separate gate from physical
+    postsolve acceptance.
+18. Add Ipopt option profiles before Stage 9 real-mixture work:
+    `proof`, `continuation_trace`, `held_refinement`, and `diagnostic`.
+19. Require exact Hessian mode for all production profiles; keep limited-memory
+    Hessian use diagnostic-only through the `profile_exact_hessian_gate`
+    diagnostic.
+20. Record the requested and selected linear solver for every route solve.
+21. Record bound-push and bound-fraction values used by the profile or caller.
+22. Preserve continuation starts with primal variables, bound multipliers, and
+    constraint multipliers.
+23. Add tests for objective value, gradient size, constraint size, Jacobian
     structure size, Jacobian value size, fixed sparse ordering, Hessian
     nonzero count, bounds size, scaling size, and diagnostic payload shape.
-14. Add failure tests for mismatched sparse structure and values.
-15. Add exact-Hessian proof scripts for active route families before registry
+24. Add failure tests for mismatched sparse structure and values.
+25. Add scaling-quality tests that assert actual scale magnitudes and scaled
+    residual norms, not only vector sizes.
+26. Add exact-Hessian proof scripts for active route families before registry
     promotion.
 
 Acceptance checks:
@@ -762,12 +789,19 @@ Acceptance checks:
 - A route cannot be admitted when sparse structure and value vectors diverge.
 - Exact derivative metadata appears in route diagnostics and capability
   evidence.
+- Ipopt diagnostics report user-scaling, option profile, scaled numerical
+  acceptance, active-bound pattern, barrier behavior, regularization, and
+  linear-solver selection.
+- Stage 9 cannot use real-mixture HELD proof cases until the Stage 8 Ipopt
+  scaling and numerics contract is present in tests.
 
 Stop conditions:
 
 - A GFPE route bypasses `NlpProblem`.
 - Ipopt adapter code owns thermodynamic equations.
 - Missing exact Hessian coverage is treated as production-ready.
+- A real-mixture Stage 9 proof starts while scaling quality, scaled numerical
+  acceptance, barrier diagnostics, or option-profile behavior are untested.
 
 ## Stage 9 - Continuous TPD And HELD Stage Ladder
 

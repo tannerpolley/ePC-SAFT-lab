@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import epcsaft
 import pytest
 import epcsaft._core as _core
@@ -131,12 +133,45 @@ def test_native_ipopt_quadratic_exact_hessian_reports_callback_and_bounded_histo
     assert len(smoke["iteration_history"]) <= 2
     assert smoke["iteration_history_limit"] == 2
     assert smoke["scaling_method"] == "user-scaling"
+    assert smoke["option_profile"] == "proof"
+    assert smoke["exact_hessian_policy"] == "required_by_profile"
+    assert smoke["profile_exact_hessian_gate"] is True
+    assert smoke["scaling_contract"] == "route_owned_objective_variable_constraint_scaling"
+    assert smoke["residual_scaling_policy"] == "route_owned_nondimensional_or_extensive_reference_scales"
+    assert smoke["linear_solver_policy"] == "ipopt_default_recorded"
+    assert smoke["barrier_policy"] == "ipopt_internal_barrier_for_declared_bounds"
     assert smoke["variable_scaling_count"] == 2
     assert smoke["constraint_scaling_count"] == 1
+    assert smoke["objective_scaling"] == pytest.approx(1.0)
+    assert smoke["variable_scaling_min"] == pytest.approx(1.0)
+    assert smoke["variable_scaling_max"] == pytest.approx(1.0)
+    assert smoke["constraint_scaling_min"] == pytest.approx(1.0)
+    assert smoke["constraint_scaling_max"] == pytest.approx(1.0)
+    assert smoke["variable_scaling_ratio"] == pytest.approx(1.0)
+    assert smoke["constraint_scaling_ratio"] == pytest.approx(1.0)
+    assert smoke["variable_scaling_quality_passed"] is True
+    assert smoke["constraint_scaling_quality_passed"] is True
+    assert smoke["scaled_constraint_violation_inf_norm"] <= smoke["constraint_violation_tolerance"]
+    assert smoke["scaled_stationarity_inf_norm"] <= smoke["dual_infeasibility_tolerance"]
+    assert smoke["bound_complementarity_inf_norm"] <= smoke["complementarity_tolerance"]
+    assert smoke["scaled_acceptance_passed"] is True
+    assert smoke["active_lower_bound_count"] >= 0
+    assert smoke["active_upper_bound_count"] >= 0
+    assert smoke["active_variable_bound_count"] == (
+        smoke["active_lower_bound_count"] + smoke["active_upper_bound_count"]
+    )
+    assert smoke["step_trial_count_max"] >= 0
+    assert math.isfinite(smoke["barrier_parameter_final"])
+    assert math.isfinite(smoke["regularization_size_final"])
+    assert math.isfinite(smoke["regularization_size_max"])
+    assert smoke["restoration_phase_observed"] in {False, True}
 
 
-def test_native_ipopt_quadratic_limited_memory_reports_explicit_mode() -> None:
-    smoke = _core._native_ipopt_quadratic_smoke(hessian_mode="limited-memory")
+def test_native_ipopt_quadratic_limited_memory_is_diagnostic_only() -> None:
+    smoke = _core._native_ipopt_quadratic_smoke(
+        hessian_mode="limited-memory",
+        option_profile="diagnostic",
+    )
 
     assert smoke["backend"] == "ipopt"
     if not smoke["compiled"]:
@@ -144,9 +179,42 @@ def test_native_ipopt_quadratic_limited_memory_reports_explicit_mode() -> None:
         return
 
     assert smoke["accepted"] is True
+    assert smoke["option_profile"] == "diagnostic"
+    assert smoke["exact_hessian_policy"] == "diagnostic_profile_allows_limited_memory"
+    assert smoke["profile_exact_hessian_gate"] is False
     assert smoke["hessian_approximation"] == "limited-memory"
     assert smoke["hessian_backend"] == "limited-memory"
     assert smoke["eval_h_calls"] == 0
+
+
+def test_native_ipopt_quadratic_production_profile_rejects_limited_memory() -> None:
+    if not _core._native_ipopt_smoke()["compiled"]:
+        return
+
+    with pytest.raises(Exception, match="production option_profile requires exact Hessian support"):
+        _core._native_ipopt_quadratic_smoke(hessian_mode="limited-memory", option_profile="proof")
+
+
+def test_native_ipopt_quadratic_option_profiles_apply_contract_defaults() -> None:
+    smoke = _core._native_ipopt_quadratic_smoke(
+        hessian_mode="exact",
+        option_profile="continuation_trace",
+        iteration_history_limit=2,
+    )
+
+    assert smoke["backend"] == "ipopt"
+    if not smoke["compiled"]:
+        assert smoke["status"] == "ipopt_dependency_required"
+        return
+
+    assert smoke["accepted"] is True
+    assert smoke["option_profile"] == "continuation_trace"
+    assert smoke["profile_exact_hessian_gate"] is True
+    assert smoke["iteration_history_limit"] == 50
+    assert len(smoke["iteration_history"]) <= 50
+    assert smoke["bound_push"] >= 1.0e-9
+    assert smoke["bound_frac"] >= 1.0e-9
+    assert smoke["scaled_acceptance_passed"] is True
 
 
 def test_native_ipopt_quadratic_reports_linear_solver_and_tolerance_controls() -> None:

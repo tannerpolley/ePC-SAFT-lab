@@ -39,6 +39,13 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
     out.jacobian_approximation = solve_diagnostic_string(solve, "jacobian_approximation", "exact");
     out.hessian_approximation = solve_diagnostic_string(solve, "hessian_approximation", out.hessian_approximation);
     out.hessian_backend = solve_diagnostic_string(solve, "hessian_backend", out.hessian_backend);
+    out.option_profile = solve_diagnostic_string(solve, "option_profile", out.option_profile);
+    out.exact_hessian_policy = solve_diagnostic_string(solve, "exact_hessian_policy", out.exact_hessian_policy);
+    out.scaling_contract = solve_diagnostic_string(solve, "scaling_contract", out.scaling_contract);
+    out.residual_scaling_policy =
+        solve_diagnostic_string(solve, "residual_scaling_policy", out.residual_scaling_policy);
+    out.linear_solver_policy = solve_diagnostic_string(solve, "linear_solver_policy", out.linear_solver_policy);
+    out.barrier_policy = solve_diagnostic_string(solve, "barrier_policy", out.barrier_policy);
     out.last_callback_exception = solve_diagnostic_string(solve, "last_callback_exception", out.last_callback_exception);
     out.last_callback_failure = solve_diagnostic_string(solve, "last_callback_failure", out.last_callback_failure);
     out.scaling_method = solve_diagnostic_string(solve, "scaling_method", out.scaling_method);
@@ -50,6 +57,10 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
     out.variable_scaling_count = solve_diagnostic_int(solve, "variable_scaling_count");
     out.constraint_scaling_count = solve_diagnostic_int(solve, "constraint_scaling_count");
     out.eval_h_calls = solve_diagnostic_int(solve, "eval_h_calls");
+    out.active_lower_bound_count = solve_diagnostic_int(solve, "active_lower_bound_count");
+    out.active_upper_bound_count = solve_diagnostic_int(solve, "active_upper_bound_count");
+    out.active_variable_bound_count = solve_diagnostic_int(solve, "active_variable_bound_count");
+    out.step_trial_count_max = solve_diagnostic_int(solve, "step_trial_count_max");
     out.objective_scaling = solve_diagnostic_double(solve, "objective_scaling", out.objective_scaling);
     out.acceptable_tolerance = solve_diagnostic_double(solve, "acceptable_tolerance", out.acceptable_tolerance);
     out.constraint_violation_tolerance =
@@ -58,11 +69,42 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
         solve_diagnostic_double(solve, "dual_infeasibility_tolerance", out.dual_infeasibility_tolerance);
     out.complementarity_tolerance =
         solve_diagnostic_double(solve, "complementarity_tolerance", out.complementarity_tolerance);
+    out.bound_push = solve_diagnostic_double(solve, "bound_push", out.bound_push);
+    out.bound_frac = solve_diagnostic_double(solve, "bound_frac", out.bound_frac);
     out.variable_scaling_min = solve_diagnostic_double(solve, "variable_scaling_min", out.variable_scaling_min);
     out.variable_scaling_max = solve_diagnostic_double(solve, "variable_scaling_max", out.variable_scaling_max);
     out.constraint_scaling_min = solve_diagnostic_double(solve, "constraint_scaling_min", out.constraint_scaling_min);
     out.constraint_scaling_max = solve_diagnostic_double(solve, "constraint_scaling_max", out.constraint_scaling_max);
+    out.variable_scaling_ratio = solve_diagnostic_double(solve, "variable_scaling_ratio", out.variable_scaling_ratio);
+    out.constraint_scaling_ratio =
+        solve_diagnostic_double(solve, "constraint_scaling_ratio", out.constraint_scaling_ratio);
+    out.scaled_constraint_violation_inf_norm = solve_diagnostic_double(
+        solve,
+        "scaled_constraint_violation_inf_norm",
+        out.scaled_constraint_violation_inf_norm
+    );
+    out.scaled_stationarity_inf_norm = solve_diagnostic_double(
+        solve,
+        "scaled_stationarity_inf_norm",
+        out.scaled_stationarity_inf_norm
+    );
+    out.bound_complementarity_inf_norm = solve_diagnostic_double(
+        solve,
+        "bound_complementarity_inf_norm",
+        out.bound_complementarity_inf_norm
+    );
+    out.barrier_parameter_final =
+        solve_diagnostic_double(solve, "barrier_parameter_final", out.barrier_parameter_final);
+    out.regularization_size_final =
+        solve_diagnostic_double(solve, "regularization_size_final", out.regularization_size_final);
+    out.regularization_size_max =
+        solve_diagnostic_double(solve, "regularization_size_max", out.regularization_size_max);
     out.exact_hessian_available = solve_diagnostic_bool(solve, "exact_hessian_available");
+    out.profile_exact_hessian_gate = solve_diagnostic_bool(solve, "profile_exact_hessian_gate", true);
+    out.variable_scaling_quality_passed = solve_diagnostic_bool(solve, "variable_scaling_quality_passed", true);
+    out.constraint_scaling_quality_passed = solve_diagnostic_bool(solve, "constraint_scaling_quality_passed", true);
+    out.scaled_acceptance_passed = solve_diagnostic_bool(solve, "scaled_acceptance_passed");
+    out.restoration_phase_observed = solve_diagnostic_bool(solve, "restoration_phase_observed");
     out.warm_start_requested = solve_diagnostic_bool(solve, "warm_start_requested");
     out.warm_start_used = solve_diagnostic_bool(solve, "warm_start_used");
     out.bound_lower_multipliers = solve.bound_lower_multipliers;

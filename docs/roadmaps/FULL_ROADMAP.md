@@ -19,6 +19,9 @@ This document is authoritative over older roadmap language that allowed audit-on
 `docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the collapsed generalized roadmap. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash proof for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
 
 `docs/roadmaps/stage_by_stage_implementation_plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master roadmap as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
+Its Stage 8 gate must complete route-owned user scaling, Ipopt option profiles,
+scaled numerical acceptance diagnostics, barrier/active-bound diagnostics, and
+exact-Hessian profile gating before Stage 9 real-mixture HELD proof work starts.
 
 `docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
 

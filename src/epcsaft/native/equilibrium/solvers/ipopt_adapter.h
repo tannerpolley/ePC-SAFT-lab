@@ -28,6 +28,7 @@ struct IpoptSolveOptions {
     double complementarity_tolerance = 0.0;
     double max_wall_time_seconds = 0.0;
     std::string hessian_mode = "auto";
+    std::string option_profile = "proof";
     int iteration_history_limit = 20;
     std::string linear_solver = "auto";
     double bound_push = 0.0;

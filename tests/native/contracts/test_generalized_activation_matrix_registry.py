@@ -76,6 +76,10 @@ def test_stage_plan_is_gfpe_first_and_pretreatment_centered() -> None:
     assert "parameter and EOS-contribution readiness record" in stage_text
     assert "bounds, scaling, and transform record" in stage_text
     assert "## Stage 8 - Shared NLP And Ipopt Infrastructure Gate" in stage_text
+    assert "complete Ipopt numerics gate" in stage_text
+    assert "`proof`, `continuation_trace`, `held_refinement`, and `diagnostic`" in stage_text
+    assert "`profile_exact_hessian_gate`" in stage_text
+    assert "Stage 9 cannot use real-mixture HELD proof cases" in stage_text
     assert "## Stage 17 - Registry, Capability, And Benchmark Closure" in stage_text
     assert stage_text.index("## Stage 9 - Continuous TPD And HELD Stage Ladder") < stage_text.index(
         "## Stage 10 - Neutral TP Flash Source-Backed Proof"
@@ -126,6 +130,24 @@ def test_deterministic_screening_is_not_called_full_held() -> None:
         if "deterministic_screening" in status:
             assert "full_held_planned" in status, row["family_label"]
             assert row["production_exposed"] is False, row["family_label"]
+
+
+def test_gfpe_ipopt_layer_requires_stage8_scaling_and_profile_gates() -> None:
+    gfpe_text = GFPE_PATH.read_text(encoding="utf-8")
+    flattened = gfpe_text.replace("\n", " ")
+
+    assert "Ipopt must receive the route-owned scaling as user scaling." in gfpe_text
+    assert "Automatic Ipopt scaling" in flattened
+    assert "not the production contract for GFPE routes" in flattened
+    assert "scaled constraint violation" in gfpe_text
+    assert "scaled stationarity" in gfpe_text
+    assert "bound complementarity" in gfpe_text
+    assert "`proof`" in gfpe_text
+    assert "`continuation_trace`" in gfpe_text
+    assert "`held_refinement`" in gfpe_text
+    assert "`diagnostic`" in gfpe_text
+    assert "`profile_exact_hessian_gate`" in gfpe_text
+    assert "Stage 9 must not test real mixtures" in flattened
 
 
 def test_charged_and_associating_families_declare_required_gates() -> None:

@@ -1104,6 +1104,7 @@ epcsaft::native::equilibrium_nlp::IpoptSolveOptions ipopt_solve_options_from_sca
     double tolerance,
     double timeout_seconds,
     const std::string& hessian_mode = "auto",
+    const std::string& option_profile = "proof",
     int iteration_history_limit = 20,
     const std::string& linear_solver = "auto",
     double acceptable_tolerance = 0.0,
@@ -1120,6 +1121,7 @@ epcsaft::native::equilibrium_nlp::IpoptSolveOptions ipopt_solve_options_from_sca
     options.complementarity_tolerance = complementarity_tolerance;
     options.max_wall_time_seconds = timeout_seconds;
     options.hessian_mode = hessian_mode;
+    options.option_profile = option_profile;
     options.iteration_history_limit = iteration_history_limit;
     options.linear_solver = linear_solver;
     return options;
@@ -1133,6 +1135,18 @@ void apply_ipopt_control_kwargs(
         const std::string key = py::cast<std::string>(item.first);
         if (key == "linear_solver") {
             options.linear_solver = py::cast<std::string>(item.second);
+            continue;
+        }
+        if (key == "option_profile") {
+            options.option_profile = py::cast<std::string>(item.second);
+            continue;
+        }
+        if (key == "bound_push") {
+            options.bound_push = py::cast<double>(item.second);
+            continue;
+        }
+        if (key == "bound_frac") {
+            options.bound_frac = py::cast<double>(item.second);
             continue;
         }
         if (key == "acceptable_tolerance") {
@@ -1265,6 +1279,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
                 tolerance,
                 timeout_seconds,
                 hessian_mode,
+                "proof",
                 iteration_history_limit
             );
         apply_ipopt_control_kwargs(options, kwargs);
@@ -1449,6 +1464,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
     });
     m.def("_native_ipopt_quadratic_smoke", [](
         const std::string& hessian_mode,
+        const std::string& option_profile,
         int iteration_history_limit,
         const std::string& linear_solver,
         double acceptable_tolerance,
@@ -1474,6 +1490,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         options.max_iterations = 50;
         options.tolerance = 1.0e-10;
         options.hessian_mode = hessian_mode;
+        options.option_profile = option_profile;
         options.iteration_history_limit = iteration_history_limit;
         options.linear_solver = linear_solver;
         options.acceptable_tolerance = acceptable_tolerance;
@@ -1495,29 +1512,60 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         out["iteration_history_limit"] = diagnostic_int_or(result, "iteration_history_limit", 0);
         out["hessian_approximation"] = diagnostic_string_or(result, "hessian_approximation", "");
         out["hessian_backend"] = diagnostic_string_or(result, "hessian_backend", "");
+        out["option_profile"] = diagnostic_string_or(result, "option_profile", "");
+        out["exact_hessian_policy"] = diagnostic_string_or(result, "exact_hessian_policy", "");
         out["eval_h_calls"] = diagnostic_int_or(result, "eval_h_calls", 0);
         out["scaling_method"] = diagnostic_string_or(result, "scaling_method", "");
+        out["scaling_contract"] = diagnostic_string_or(result, "scaling_contract", "");
+        out["residual_scaling_policy"] = diagnostic_string_or(result, "residual_scaling_policy", "");
+        out["linear_solver_policy"] = diagnostic_string_or(result, "linear_solver_policy", "");
+        out["barrier_policy"] = diagnostic_string_or(result, "barrier_policy", "");
         out["variable_scaling_count"] = diagnostic_int_or(result, "variable_scaling_count", 0);
         out["constraint_scaling_count"] = diagnostic_int_or(result, "constraint_scaling_count", 0);
+        out["active_lower_bound_count"] = diagnostic_int_or(result, "active_lower_bound_count", 0);
+        out["active_upper_bound_count"] = diagnostic_int_or(result, "active_upper_bound_count", 0);
+        out["active_variable_bound_count"] = diagnostic_int_or(result, "active_variable_bound_count", 0);
+        out["step_trial_count_max"] = diagnostic_int_or(result, "step_trial_count_max", 0);
         out["objective_scaling"] = diagnostic_double_or(result, "objective_scaling", 1.0);
         out["acceptable_tolerance"] = diagnostic_double_or(result, "acceptable_tolerance", 0.0);
         out["constraint_violation_tolerance"] = diagnostic_double_or(result, "constraint_violation_tolerance", 0.0);
         out["dual_infeasibility_tolerance"] = diagnostic_double_or(result, "dual_infeasibility_tolerance", 0.0);
         out["complementarity_tolerance"] = diagnostic_double_or(result, "complementarity_tolerance", 0.0);
+        out["bound_push"] = diagnostic_double_or(result, "bound_push", 0.0);
+        out["bound_frac"] = diagnostic_double_or(result, "bound_frac", 0.0);
         out["variable_scaling_min"] = diagnostic_double_or(result, "variable_scaling_min", 0.0);
         out["variable_scaling_max"] = diagnostic_double_or(result, "variable_scaling_max", 0.0);
         out["constraint_scaling_min"] = diagnostic_double_or(result, "constraint_scaling_min", 0.0);
         out["constraint_scaling_max"] = diagnostic_double_or(result, "constraint_scaling_max", 0.0);
+        out["variable_scaling_ratio"] = diagnostic_double_or(result, "variable_scaling_ratio", 1.0);
+        out["constraint_scaling_ratio"] = diagnostic_double_or(result, "constraint_scaling_ratio", 1.0);
+        out["scaled_constraint_violation_inf_norm"] =
+            diagnostic_double_or(result, "scaled_constraint_violation_inf_norm", 0.0);
+        out["scaled_stationarity_inf_norm"] =
+            diagnostic_double_or(result, "scaled_stationarity_inf_norm", 0.0);
+        out["bound_complementarity_inf_norm"] =
+            diagnostic_double_or(result, "bound_complementarity_inf_norm", 0.0);
+        out["barrier_parameter_final"] = diagnostic_double_or(result, "barrier_parameter_final", 0.0);
+        out["regularization_size_final"] = diagnostic_double_or(result, "regularization_size_final", 0.0);
+        out["regularization_size_max"] = diagnostic_double_or(result, "regularization_size_max", 0.0);
         out["linear_solver_requested"] = diagnostic_string_or(result, "linear_solver_requested", "auto");
         out["linear_solver_selected"] = diagnostic_string_or(result, "linear_solver_selected", "default");
         out["warm_start_requested"] = diagnostic_bool_or(result, "warm_start_requested", false);
         out["warm_start_used"] = diagnostic_bool_or(result, "warm_start_used", false);
         out["exact_hessian_available"] = diagnostic_bool_or(result, "exact_hessian_available", false);
+        out["profile_exact_hessian_gate"] = diagnostic_bool_or(result, "profile_exact_hessian_gate", true);
+        out["variable_scaling_quality_passed"] =
+            diagnostic_bool_or(result, "variable_scaling_quality_passed", false);
+        out["constraint_scaling_quality_passed"] =
+            diagnostic_bool_or(result, "constraint_scaling_quality_passed", false);
+        out["scaled_acceptance_passed"] = diagnostic_bool_or(result, "scaled_acceptance_passed", false);
+        out["restoration_phase_observed"] = diagnostic_bool_or(result, "restoration_phase_observed", false);
         out["exact_gradient_required"] = adapter.exact_gradient_required;
         out["exact_jacobian_required"] = adapter.exact_jacobian_required;
         return out;
     },
         py::arg("hessian_mode") = "auto",
+        py::arg("option_profile") = "proof",
         py::arg("iteration_history_limit") = 20,
         py::arg("linear_solver") = "auto",
         py::arg("acceptable_tolerance") = 1.0e-8,
