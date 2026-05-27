@@ -18,6 +18,8 @@ This document is authoritative over older roadmap language that allowed audit-on
 
 `docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the collapsed generalized roadmap. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash proof for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
 
+`docs/roadmaps/stage_by_stage_implementation_plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master roadmap as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
+
 `docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
 
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
@@ -416,6 +418,12 @@ Required benchmark families:
 ---
 
 # 8. Required milestones
+
+For generalized fluid-phase equilibrium work, use
+`docs/roadmaps/stage_by_stage_implementation_plan.md` as the GFPE-first
+execution plan. The milestones below define the package completion envelope;
+the stage plan breaks GFPE into concrete pretreatment, implementation gates,
+and exit evidence.
 
 ## Milestone 0 — Process hard gates
 

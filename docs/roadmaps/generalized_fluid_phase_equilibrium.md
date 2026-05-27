@@ -14,6 +14,11 @@ that production code must consume.
 contribution details. This roadmap repeats only the core equilibrium,
 stability, NLP, and Ipopt equations needed to implement the family plan.
 
+`docs/roadmaps/stage_by_stage_implementation_plan.md` is the companion
+GFPE-first execution overlay. It uses `FULL_ROADMAP.md` only as package
+context and lists concrete pretreatment, implementation, and exit-evidence
+steps for each GFPE stage.
+
 ## Source Hierarchy And Current Boundary
 
 The current public package still exposes the existing selector-backed neutral
@@ -275,6 +280,10 @@ Implementation must proceed in this order:
 7. CE and CPE:
    homogeneous chemical equilibrium first, then simultaneous phase-chemical
    equilibrium after PE and CE proofs exist.
+
+The detailed stage-by-stage execution plan is in
+`docs/roadmaps/stage_by_stage_implementation_plan.md`. Keep this section short:
+it defines order; the companion plan defines work packages and exit evidence.
 
 ## Derived Boundary Workflows
 
