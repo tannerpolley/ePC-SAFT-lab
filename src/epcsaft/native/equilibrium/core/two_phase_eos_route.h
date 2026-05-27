@@ -228,6 +228,7 @@ struct NeutralTwoPhaseEosRouteResult {
     bool ran = false;
     bool solver_accepted = false;
     bool solver_feasible_point = false;
+    bool postsolve_accepted = false;
     bool accepted = false;
     bool exact_gradient_required = true;
     bool exact_jacobian_required = true;
@@ -257,6 +258,7 @@ struct NeutralTwoPhaseEosRouteResult {
     std::string initial_point_strategy = "single_seed";
     std::string seed_name = "problem_initial_point";
     std::string status;
+    std::string rejection_reason;
     std::string solver_status;
     std::string application_status;
     std::string last_callback_exception;
@@ -315,9 +317,6 @@ struct NeutralTwoPhaseEosRouteResult {
     std::vector<double> phase_volumes;
     NeutralTwoPhaseEosPostsolve postsolve;
 };
-
-void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptSolveResult& solve);
-
 
 NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     const add_args& args,

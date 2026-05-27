@@ -43,6 +43,8 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert route["accepted"] is True
     assert route["status"] == "production_accepted"
     assert route["solver_accepted"] is True
+    assert route["postsolve_accepted"] is True
+    assert route["rejection_reason"] == "accepted"
     assert route["solver_status"] == "success"
     assert route["application_status"] == "solve_succeeded"
     assert route["selector_family"] == "neutral_lle"
@@ -157,7 +159,7 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert certificate["min_tpd"] == pytest.approx(postsolve["min_tpd"])
 
 
-def test_neutral_lle_does_not_accept_nonconverged_ipopt_postsolve() -> None:
+def test_neutral_lle_does_not_accept_time_limited_ipopt_postsolve() -> None:
     _skip_without_ipopt()
     mix = _nonideal_lle_binary_mixture()
 
@@ -172,7 +174,7 @@ def test_neutral_lle_does_not_accept_nonconverged_ipopt_postsolve() -> None:
         },
         1,
         1.0e-6,
-        0.0,
+        1.0e-6,
         "auto",
         4,
         1.0e-8,
@@ -192,8 +194,10 @@ def test_neutral_lle_does_not_accept_nonconverged_ipopt_postsolve() -> None:
     assert route["accepted"] is False
     assert route["status"] == "solver_rejected"
     assert route["solver_accepted"] is False
-    assert route["solver_status"] == "max_iterations_exceeded"
-    assert route["application_status"] == "maximum_iterations_exceeded"
+    assert route["postsolve_accepted"] is False
+    assert route["rejection_reason"] == "solver_rejected"
+    assert route["solver_status"] == "wall_time_exceeded"
+    assert route["application_status"] == "maximum_wall_time_exceeded"
     assert route["postsolve"]["accepted"] is False
     assert route["postsolve"]["held_stage_iii_status"] == "pending"
     assert route["phase_amounts"] == []

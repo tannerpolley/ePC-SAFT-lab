@@ -554,6 +554,56 @@ def test_production_equilibrium_routes_delegate_ipopt_acceptance_to_adapter() ->
     assert "_resolved_ipopt_" not in workflow
 
 
+def test_equilibrium_routes_delegate_result_acceptance_to_result_builder() -> None:
+    route_sources = [
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "two_phase_eos_route.cpp",
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "routes" / "derived" / "bubble_dew.cpp",
+    ]
+    result_builder = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "results" / "result_builder.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
+
+    forbidden_fragments = (
+        ".solver_accepted =",
+        ".solver_feasible_point = solve.feasible_point",
+        ".solver_status = solve.solver_status",
+        ".application_status = solve.application_status",
+        ".accepted = result.postsolve.accepted",
+        ".status = result.accepted ?",
+        ".status = \"solver_rejected\"",
+        ".status = certified_postsolve_status",
+        "certified_postsolve_status(",
+        "apply_ipopt_solve_metadata(",
+    )
+    offenders: list[str] = []
+    for path in route_sources:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        for fragment in forbidden_fragments:
+            if fragment in text:
+                offenders.append(f"{rel}: {fragment}")
+
+    assert offenders == []
+    assert "apply_neutral_route_solve_result" in result_builder
+    assert "apply_neutral_route_postsolve" in result_builder
+    assert "neutral_route_postsolve_status" in result_builder
+
+
+def test_native_equilibrium_python_diagnostics_bridge_stays_centralized() -> None:
+    bridge = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "results" / "route_result_bridge.h"
+    ).read_text(encoding="utf-8", errors="ignore")
+    bindings = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "register_bindings.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
+
+    assert "out[\"postsolve_accepted\"] = result.postsolve_accepted" in bridge
+    assert "out[\"rejection_reason\"] = result.rejection_reason" in bridge
+    assert "neutral_route_stability_certificate_from_postsolve" in bridge
+    assert "stability_checked = postsolve_dict" not in bindings
+    assert "candidate_complete = postsolve_dict" not in bindings
+
+
 def test_activation_matrix_families_do_not_gain_direct_pybind_route_entrypoints() -> None:
     activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
     binding_source_paths = [

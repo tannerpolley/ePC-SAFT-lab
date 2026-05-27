@@ -10,7 +10,9 @@ def test_native_route_diagnostics_normalizes_solver_route_and_seed_contract() ->
         "ran": True,
         "accepted": False,
         "status": "postsolve_rejected",
+        "rejection_reason": "phase_distance",
         "solver_accepted": True,
+        "postsolve_accepted": False,
         "solver_status": "success",
         "application_status": "solve_succeeded",
         "gradient_approximation": "exact",
@@ -51,6 +53,7 @@ def test_native_route_diagnostics_normalizes_solver_route_and_seed_contract() ->
     assert diagnostics["solver_ran"] is True
     assert diagnostics["route_accepted"] is False
     assert diagnostics["postsolve_accepted"] is False
+    assert diagnostics["rejection_reason"] == "phase_distance"
     assert diagnostics["gradient_is_exact"] is True
     assert diagnostics["jacobian_is_exact"] is True
     assert diagnostics["hessian_is_exact"] is True
@@ -72,6 +75,8 @@ def test_native_route_diagnostics_preserves_route_metadata_contract() -> None:
     route = {
         "accepted": True,
         "status": "accepted",
+        "postsolve_accepted": True,
+        "rejection_reason": "accepted",
         "variable_model": "log_phase_species_amounts_plus_log_density",
         "density_backend": "explicit_log_density_pressure_constraint",
         "residual_families": [
@@ -95,6 +100,8 @@ def test_native_route_diagnostics_preserves_route_metadata_contract() -> None:
 
     assert diagnostics["variable_model"] == "log_phase_species_amounts_plus_log_density"
     assert diagnostics["density_backend"] == "explicit_log_density_pressure_constraint"
+    assert diagnostics["postsolve_accepted"] is True
+    assert diagnostics["rejection_reason"] == "accepted"
     assert diagnostics["residual_families"] == [
         "conserved_balance",
         "reaction_stationarity",

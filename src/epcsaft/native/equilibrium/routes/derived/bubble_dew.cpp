@@ -8,6 +8,7 @@
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/variable_layout.h"
+#include "equilibrium/results/result_builder.h"
 
 #include <algorithm>
 #include <cmath>
@@ -889,67 +890,6 @@ std::vector<NamedInitialVariables> flash_route_seed_candidates(
         );
     } catch (const std::exception&) {
     }
-    return out;
-}
-
-int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
-    if (result.accepted) {
-        return 3;
-    }
-    if (result.solver_accepted) {
-        return 2;
-    }
-    if (result.ran) {
-        return 1;
-    }
-    return 0;
-}
-
-bool strict_ipopt_route_success(const NeutralTwoPhaseEosRouteResult& result) {
-    return result.accepted
-        && result.solver_status == "success"
-        && result.application_status == "solve_succeeded";
-}
-
-int strict_boundary_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
-    if (strict_ipopt_route_success(result)) {
-        return 4;
-    }
-    return neutral_route_quality(result);
-}
-
-std::string certified_postsolve_status(const NeutralTwoPhaseEosPostsolve& postsolve) {
-    if (postsolve.accepted) {
-        return "production_accepted";
-    }
-    if (postsolve.rejection_reason == "stability_tpd") {
-        return "unstable";
-    }
-    if (postsolve.rejection_reason == "candidate_completeness") {
-        return "optimizer_converged_uncertified";
-    }
-    return "postsolve_rejected";
-}
-
-RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteResult& result) {
-    RouteSeedAttempt out;
-    out.seed_name = result.seed_name;
-    out.status = result.status;
-    out.solver_status = result.solver_status;
-    out.application_status = result.application_status;
-    out.solver_accepted = result.solver_accepted;
-    out.accepted = result.accepted;
-    out.stable = result.postsolve.stability_accepted;
-    out.max_iterations = result.max_iterations;
-    out.iteration_count = result.iteration_count;
-    out.objective = result.objective;
-    out.phase_distance = result.postsolve.phase_distance;
-    out.material_balance_norm = result.postsolve.material_balance_norm;
-    out.charge_balance_norm = result.postsolve.charge_balance_norm;
-    out.pressure_consistency_norm = result.postsolve.pressure_consistency_norm;
-    out.chemical_potential_consistency_norm = result.postsolve.chemical_potential_consistency_norm;
-    out.phase_equilibrium_norm = result.postsolve.ln_fugacity_consistency_norm;
-    out.min_tpd = result.postsolve.min_tpd;
     return out;
 }
 
@@ -2871,7 +2811,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
     best.problem_name = problem_name;
     apply_route_metadata(best, fixed_temperature_pressure_route_metadata(!charges.empty()));
     if (!adapter.compiled) {
-        best.status = "ipopt_dependency_required";
+        mark_neutral_route_ipopt_dependency_required(best);
         return best;
     }
 
@@ -2909,20 +2849,10 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         result.problem_name = problem_name;
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
-        result.ran = solve.solver_ran;
-        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
-        result.solver_accepted = can_postsolve;
-        result.solver_feasible_point = solve.feasible_point;
-        result.solver_status = solve.solver_status;
-        result.application_status = solve.application_status;
-        apply_ipopt_solve_metadata(result, solve);
-        result.objective = solve.objective;
-        result.variables = solve.variables;
-        result.constraints = solve.constraints;
+        const bool can_postsolve = apply_neutral_route_solve_result(result, solve);
         if (!can_postsolve) {
-            result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
-            if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
+            if (!have_best || neutral_boundary_route_quality(result) > neutral_boundary_route_quality(best)) {
                 best = result;
                 have_best = true;
             }
@@ -2932,7 +2862,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         const int species_count = problem.species_count();
         result.phase_amounts = pressure_route_phase_amounts(solve.variables, species_count);
         result.phase_volumes = pressure_route_phase_volumes(solve.variables, species_count);
-        result.postsolve = fixed_temperature_pressure_postsolve(
+        NeutralTwoPhaseEosPostsolve postsolve = fixed_temperature_pressure_postsolve(
             args,
             temperature,
             solve.variables.back(),
@@ -2947,10 +2877,13 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
             chemical_potential_tolerance,
             phase_distance_tolerance
         );
-        result.accepted = result.postsolve.accepted;
-        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        apply_neutral_route_postsolve(
+            result,
+            std::move(postsolve),
+            NeutralRouteCertificationLevel::LocalPostsolve
+        );
         attempts.push_back(neutral_seed_attempt_from_result(result));
-        if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
+        if (!have_best || neutral_boundary_route_quality(result) > neutral_boundary_route_quality(best)) {
             best = result;
             have_best = true;
         }
@@ -2959,7 +2892,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
 
     if (!options.initial_variables.empty()) {
         const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
-        if (strict_ipopt_route_success(continuation)) {
+        if (neutral_route_strict_ipopt_success(continuation)) {
             best.seed_attempts = attempts;
             return best;
         }
@@ -2972,7 +2905,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         attempt_options.initial_bound_upper_multipliers.clear();
         attempt_options.initial_constraint_multipliers.clear();
         const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
-        if (strict_ipopt_route_success(attempt)) {
+        if (neutral_route_strict_ipopt_success(attempt)) {
             break;
         }
     }
@@ -3005,7 +2938,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
     best.problem_name = problem_name;
     apply_route_metadata(best, fixed_pressure_temperature_route_metadata());
     if (!adapter.compiled) {
-        best.status = "ipopt_dependency_required";
+        mark_neutral_route_ipopt_dependency_required(best);
         return best;
     }
 
@@ -3040,20 +2973,10 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         result.problem_name = problem_name;
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
-        result.ran = solve.solver_ran;
-        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
-        result.solver_accepted = can_postsolve;
-        result.solver_feasible_point = solve.feasible_point;
-        result.solver_status = solve.solver_status;
-        result.application_status = solve.application_status;
-        apply_ipopt_solve_metadata(result, solve);
-        result.objective = solve.objective;
-        result.variables = solve.variables;
-        result.constraints = solve.constraints;
+        const bool can_postsolve = apply_neutral_route_solve_result(result, solve);
         if (!can_postsolve) {
-            result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
-            if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
+            if (!have_best || neutral_boundary_route_quality(result) > neutral_boundary_route_quality(best)) {
                 best = result;
                 have_best = true;
             }
@@ -3064,7 +2987,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         const double solved_temperature = solve.variables.back();
         result.phase_amounts = pressure_route_phase_amounts(solve.variables, species_count);
         result.phase_volumes = pressure_route_phase_volumes(solve.variables, species_count);
-        result.postsolve = fixed_temperature_pressure_postsolve(
+        NeutralTwoPhaseEosPostsolve postsolve = fixed_temperature_pressure_postsolve(
             args,
             solved_temperature,
             target_pressure,
@@ -3079,10 +3002,13 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
             chemical_potential_tolerance,
             phase_distance_tolerance
         );
-        result.accepted = result.postsolve.accepted;
-        result.status = result.accepted ? "accepted" : "postsolve_rejected";
+        apply_neutral_route_postsolve(
+            result,
+            std::move(postsolve),
+            NeutralRouteCertificationLevel::LocalPostsolve
+        );
         attempts.push_back(neutral_seed_attempt_from_result(result));
-        if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
+        if (!have_best || neutral_boundary_route_quality(result) > neutral_boundary_route_quality(best)) {
             best = result;
             have_best = true;
         }
@@ -3091,7 +3017,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
 
     if (!options.initial_variables.empty()) {
         const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
-        if (strict_ipopt_route_success(continuation)) {
+        if (neutral_route_strict_ipopt_success(continuation)) {
             best.seed_attempts = attempts;
             return best;
         }
@@ -3104,7 +3030,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         attempt_options.initial_bound_upper_multipliers.clear();
         attempt_options.initial_constraint_multipliers.clear();
         const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
-        if (strict_ipopt_route_success(attempt)) {
+        if (neutral_route_strict_ipopt_success(attempt)) {
             break;
         }
     }
@@ -3137,7 +3063,7 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
     best.problem_name = problem_name;
     apply_route_metadata(best, fixed_temperature_pressure_flash_route_metadata());
     if (!adapter.compiled) {
-        best.status = "ipopt_dependency_required";
+        mark_neutral_route_ipopt_dependency_required(best);
         return best;
     }
 
@@ -3180,18 +3106,8 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
         result.problem_name = problem_name;
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
-        result.ran = solve.solver_ran;
-        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
-        result.solver_accepted = can_postsolve;
-        result.solver_feasible_point = solve.feasible_point;
-        result.solver_status = solve.solver_status;
-        result.application_status = solve.application_status;
-        apply_ipopt_solve_metadata(result, solve);
-        result.objective = solve.objective;
-        result.variables = solve.variables;
-        result.constraints = solve.constraints;
+        const bool can_postsolve = apply_neutral_route_solve_result(result, solve);
         if (!can_postsolve) {
-            result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
             if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
                 best = result;
@@ -3203,7 +3119,7 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
         const int species_count = problem.species_count();
         result.phase_amounts = flash_route_phase_amounts(solve.variables, species_count);
         result.phase_volumes = flash_route_phase_volumes(solve.variables, species_count);
-        result.postsolve = fixed_temperature_pressure_flash_postsolve(
+        NeutralTwoPhaseEosPostsolve postsolve = fixed_temperature_pressure_flash_postsolve(
             args,
             temperature,
             target_pressure,
@@ -3216,8 +3132,11 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
             phase_distance_tolerance,
             true
         );
-        result.accepted = result.postsolve.accepted;
-        result.status = certified_postsolve_status(result.postsolve);
+        apply_neutral_route_postsolve(
+            result,
+            std::move(postsolve),
+            NeutralRouteCertificationLevel::PhaseSetCertified
+        );
         attempts.push_back(neutral_seed_attempt_from_result(result));
         if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
             best = result;
@@ -3328,7 +3247,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
     best.activation_compiler = "activation_plan";
     apply_route_metadata(best, fixed_temperature_pressure_flash_route_metadata());
     if (!adapter.compiled) {
-        best.status = "ipopt_dependency_required";
+        mark_neutral_route_ipopt_dependency_required(best);
         return best;
     }
 
@@ -3365,19 +3284,9 @@ NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
         result.activation_compiler = "activation_plan";
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
-        result.ran = solve.solver_ran;
-        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
-        result.solver_accepted = can_postsolve;
-        result.solver_feasible_point = solve.feasible_point;
-        result.solver_status = solve.solver_status;
-        result.application_status = solve.application_status;
-        apply_ipopt_solve_metadata(result, solve);
-        result.objective = solve.objective;
-        result.variables = solve.variables;
-        result.constraints = solve.constraints;
+        const bool can_postsolve = apply_neutral_route_solve_result(result, solve);
         apply_route_metadata(result, fixed_temperature_pressure_flash_route_metadata());
         if (!can_postsolve) {
-            result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
             if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
                 best = result;
@@ -3388,7 +3297,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
 
         result.phase_amounts = activated_phase_amounts(solve.variables, layout);
         result.phase_volumes = activated_phase_volumes(solve.variables, layout);
-        result.postsolve = fixed_temperature_pressure_flash_postsolve(
+        NeutralTwoPhaseEosPostsolve postsolve = fixed_temperature_pressure_flash_postsolve(
             args,
             temperature,
             target_pressure,
@@ -3401,8 +3310,11 @@ NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
             phase_distance_tolerance,
             true
         );
-        result.accepted = result.postsolve.accepted;
-        result.status = certified_postsolve_status(result.postsolve);
+        apply_neutral_route_postsolve(
+            result,
+            std::move(postsolve),
+            NeutralRouteCertificationLevel::PhaseSetCertified
+        );
         attempts.push_back(neutral_seed_attempt_from_result(result));
         if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
             best = result;

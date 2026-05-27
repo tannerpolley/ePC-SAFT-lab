@@ -10,6 +10,7 @@
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/variable_transform.h"
+#include "equilibrium/results/result_builder.h"
 
 #include <algorithm>
 #include <cctype>
@@ -23,114 +24,6 @@
 #include <utility>
 
 namespace epcsaft::native::equilibrium_nlp {
-
-void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptSolveResult& solve) {
-    const RouteMetadata route_metadata = route_metadata_from_diagnostics(solve.diagnostics_string);
-    if (!route_metadata.variable_model.empty()) {
-        out.variable_model = route_metadata.variable_model;
-    }
-    if (!route_metadata.density_backend.empty()) {
-        out.density_backend = route_metadata.density_backend;
-    }
-    if (!route_metadata.residual_families.empty()) {
-        out.residual_families = route_metadata.residual_families;
-    }
-    if (!route_metadata.constraint_families.empty()) {
-        out.constraint_families = route_metadata.constraint_families;
-    }
-    out.solver_feasible_point = solve.feasible_point;
-    out.gradient_approximation = solve_diagnostic_string(solve, "gradient_approximation", "exact");
-    out.jacobian_approximation = solve_diagnostic_string(solve, "jacobian_approximation", "exact");
-    out.hessian_approximation = solve_diagnostic_string(solve, "hessian_approximation", out.hessian_approximation);
-    out.hessian_backend = solve_diagnostic_string(solve, "hessian_backend", out.hessian_backend);
-    out.option_profile = solve_diagnostic_string(solve, "option_profile", out.option_profile);
-    out.solver_acceptance_policy =
-        solve_diagnostic_string(solve, "solver_acceptance_policy", out.solver_acceptance_policy);
-    out.exact_hessian_policy = solve_diagnostic_string(solve, "exact_hessian_policy", out.exact_hessian_policy);
-    out.scaling_contract = solve_diagnostic_string(solve, "scaling_contract", out.scaling_contract);
-    out.residual_scaling_policy =
-        solve_diagnostic_string(solve, "residual_scaling_policy", out.residual_scaling_policy);
-    out.linear_solver_policy = solve_diagnostic_string(solve, "linear_solver_policy", out.linear_solver_policy);
-    out.barrier_policy = solve_diagnostic_string(solve, "barrier_policy", out.barrier_policy);
-    out.last_callback_exception = solve_diagnostic_string(solve, "last_callback_exception", out.last_callback_exception);
-    out.last_callback_failure = solve_diagnostic_string(solve, "last_callback_failure", out.last_callback_failure);
-    out.scaling_method = solve_diagnostic_string(solve, "scaling_method", out.scaling_method);
-    out.linear_solver_requested = solve_diagnostic_string(solve, "linear_solver_requested", out.linear_solver_requested);
-    out.linear_solver_selected = solve_diagnostic_string(solve, "linear_solver_selected", out.linear_solver_selected);
-    out.print_level = solve_diagnostic_int(solve, "print_level");
-    out.max_iterations = solve_diagnostic_int(solve, "max_iterations");
-    out.acceptable_iteration_limit = solve_diagnostic_int(solve, "acceptable_iteration_limit");
-    out.iteration_count = solve_diagnostic_int(solve, "iteration_count");
-    out.iteration_history_limit = solve_diagnostic_int(solve, "iteration_history_limit");
-    out.iteration_history_size = solve_diagnostic_int(solve, "iteration_history_size");
-    out.variable_scaling_count = solve_diagnostic_int(solve, "variable_scaling_count");
-    out.constraint_scaling_count = solve_diagnostic_int(solve, "constraint_scaling_count");
-    out.eval_h_calls = solve_diagnostic_int(solve, "eval_h_calls");
-    out.active_lower_bound_count = solve_diagnostic_int(solve, "active_lower_bound_count");
-    out.active_upper_bound_count = solve_diagnostic_int(solve, "active_upper_bound_count");
-    out.active_variable_bound_count = solve_diagnostic_int(solve, "active_variable_bound_count");
-    out.step_trial_count_max = solve_diagnostic_int(solve, "step_trial_count_max");
-    out.objective_scaling = solve_diagnostic_double(solve, "objective_scaling", out.objective_scaling);
-    out.acceptable_tolerance = solve_diagnostic_double(solve, "acceptable_tolerance", out.acceptable_tolerance);
-    out.constraint_violation_tolerance =
-        solve_diagnostic_double(solve, "constraint_violation_tolerance", out.constraint_violation_tolerance);
-    out.ipopt_unscaled_constraint_violation_tolerance = solve_diagnostic_double(
-        solve,
-        "ipopt_unscaled_constraint_violation_tolerance",
-        out.ipopt_unscaled_constraint_violation_tolerance
-    );
-    out.dual_infeasibility_tolerance =
-        solve_diagnostic_double(solve, "dual_infeasibility_tolerance", out.dual_infeasibility_tolerance);
-    out.complementarity_tolerance =
-        solve_diagnostic_double(solve, "complementarity_tolerance", out.complementarity_tolerance);
-    out.bound_push = solve_diagnostic_double(solve, "bound_push", out.bound_push);
-    out.bound_frac = solve_diagnostic_double(solve, "bound_frac", out.bound_frac);
-    out.variable_scaling_min = solve_diagnostic_double(solve, "variable_scaling_min", out.variable_scaling_min);
-    out.variable_scaling_max = solve_diagnostic_double(solve, "variable_scaling_max", out.variable_scaling_max);
-    out.constraint_scaling_min = solve_diagnostic_double(solve, "constraint_scaling_min", out.constraint_scaling_min);
-    out.constraint_scaling_max = solve_diagnostic_double(solve, "constraint_scaling_max", out.constraint_scaling_max);
-    out.variable_scaling_ratio = solve_diagnostic_double(solve, "variable_scaling_ratio", out.variable_scaling_ratio);
-    out.constraint_scaling_ratio =
-        solve_diagnostic_double(solve, "constraint_scaling_ratio", out.constraint_scaling_ratio);
-    out.scaled_constraint_violation_inf_norm = solve_diagnostic_double(
-        solve,
-        "scaled_constraint_violation_inf_norm",
-        out.scaled_constraint_violation_inf_norm
-    );
-    out.scaled_stationarity_inf_norm = solve_diagnostic_double(
-        solve,
-        "scaled_stationarity_inf_norm",
-        out.scaled_stationarity_inf_norm
-    );
-    out.scaled_complementarity_inf_norm = solve_diagnostic_double(
-        solve,
-        "scaled_complementarity_inf_norm",
-        out.scaled_complementarity_inf_norm
-    );
-    out.bound_complementarity_inf_norm = solve_diagnostic_double(
-        solve,
-        "bound_complementarity_inf_norm",
-        out.bound_complementarity_inf_norm
-    );
-    out.barrier_parameter_final =
-        solve_diagnostic_double(solve, "barrier_parameter_final", out.barrier_parameter_final);
-    out.regularization_size_final =
-        solve_diagnostic_double(solve, "regularization_size_final", out.regularization_size_final);
-    out.regularization_size_max =
-        solve_diagnostic_double(solve, "regularization_size_max", out.regularization_size_max);
-    out.exact_hessian_available = solve_diagnostic_bool(solve, "exact_hessian_available");
-    out.profile_exact_hessian_gate = solve_diagnostic_bool(solve, "profile_exact_hessian_gate", true);
-    out.variable_scaling_quality_passed = solve_diagnostic_bool(solve, "variable_scaling_quality_passed", true);
-    out.constraint_scaling_quality_passed = solve_diagnostic_bool(solve, "constraint_scaling_quality_passed", true);
-    out.scaled_acceptance_passed = solve_diagnostic_bool(solve, "scaled_acceptance_passed");
-    out.restoration_phase_observed = solve_diagnostic_bool(solve, "restoration_phase_observed");
-    out.warm_start_requested = solve_diagnostic_bool(solve, "warm_start_requested");
-    out.warm_start_used = solve_diagnostic_bool(solve, "warm_start_used");
-    out.bound_lower_multipliers = solve.bound_lower_multipliers;
-    out.bound_upper_multipliers = solve.bound_upper_multipliers;
-    out.constraint_multipliers = solve.constraint_multipliers;
-    out.iteration_history = solve.iteration_history;
-}
 
 namespace {
 
@@ -1216,19 +1109,6 @@ void copy_discovery_to_postsolve(
     }
 }
 
-std::string certified_postsolve_status(const NeutralTwoPhaseEosPostsolve& postsolve) {
-    if (postsolve.accepted) {
-        return "production_accepted";
-    }
-    if (postsolve.rejection_reason == "stability_tpd") {
-        return "unstable";
-    }
-    if (postsolve.rejection_reason == "candidate_completeness") {
-        return "optimizer_converged_uncertified";
-    }
-    return "postsolve_rejected";
-}
-
 bool candidate_duplicates_accepted_phase(
     const NeutralTpdCandidate& candidate,
     const std::vector<EosPhaseBlockResult>& accepted_phases
@@ -1620,43 +1500,6 @@ std::vector<NamedInitialVariables> neutral_two_phase_seed_candidates(
             )
         )
     });
-    return out;
-}
-
-int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
-    if (result.accepted) {
-        return 3;
-    }
-    if (result.solver_accepted) {
-        return 2;
-    }
-    if (result.ran) {
-        return 1;
-    }
-    return 0;
-}
-
-RouteSeedAttempt neutral_seed_attempt_from_result(
-    const NeutralTwoPhaseEosRouteResult& result
-) {
-    RouteSeedAttempt out;
-    out.seed_name = result.seed_name;
-    out.status = result.status;
-    out.solver_status = result.solver_status;
-    out.application_status = result.application_status;
-    out.solver_accepted = result.solver_accepted;
-    out.accepted = result.accepted;
-    out.stable = result.postsolve.stability_accepted;
-    out.max_iterations = result.max_iterations;
-    out.iteration_count = result.iteration_count;
-    out.objective = result.objective;
-    out.phase_distance = result.postsolve.phase_distance;
-    out.material_balance_norm = result.postsolve.material_balance_norm;
-    out.charge_balance_norm = result.postsolve.charge_balance_norm;
-    out.pressure_consistency_norm = result.postsolve.pressure_consistency_norm;
-    out.chemical_potential_consistency_norm = result.postsolve.chemical_potential_consistency_norm;
-    out.phase_equilibrium_norm = result.postsolve.ln_fugacity_consistency_norm;
-    out.min_tpd = result.postsolve.min_tpd;
     return out;
 }
 
@@ -2890,7 +2733,7 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
     out.problem_name = problem_name;
     apply_route_metadata(out, phase_amount_volume_route_metadata(!charges.empty(), minimum_phase_distance > 0.0));
     if (!adapter.compiled) {
-        out.status = "ipopt_dependency_required";
+        mark_neutral_route_ipopt_dependency_required(out);
         return out;
     }
 
@@ -2906,27 +2749,14 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         problem_name,
         minimum_phase_distance
     );
-    out.ran = solve.solver_ran;
-    out.solver_accepted = ipopt_solve_result_allows_postsolve(solve);
-    out.solver_status = solve.solver_status;
-    out.application_status = solve.application_status;
-    apply_ipopt_solve_metadata(out, solve);
-    const auto last_exception = solve.diagnostics_string.find("last_callback_exception");
-    if (last_exception != solve.diagnostics_string.end()) {
-        out.last_callback_exception = last_exception->second;
-    }
-    out.objective = solve.objective;
-    out.variables = solve.variables;
-    out.constraints = solve.constraints;
-    if (!ipopt_solve_result_allows_postsolve(solve)) {
-        out.status = "solver_rejected";
+    if (!apply_neutral_route_solve_result(out, solve)) {
         return out;
     }
 
     const std::size_t species_count = feed_amounts.size();
     out.phase_amounts = neutral_phase_amounts_from_route_variables(solve.variables, species_count);
     out.phase_volumes = neutral_phase_volumes_from_route_variables(solve.variables, species_count);
-    out.postsolve = evaluate_neutral_two_phase_eos_postsolve(
+    NeutralTwoPhaseEosPostsolve postsolve = evaluate_neutral_two_phase_eos_postsolve(
         args,
         temperature,
         target_pressure,
@@ -2941,14 +2771,13 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         minimum_phase_distance > 0.0
     );
     if (!charges.empty()) {
-        out.postsolve.charge_balance_norm = phase_charge_inf_norm(out.phase_amounts, charges);
-        out.postsolve.accepted = out.postsolve.accepted && out.postsolve.charge_balance_norm <= charge_tolerance;
-        if (out.postsolve.charge_balance_norm > charge_tolerance) {
-            out.postsolve.rejection_reason = "charge_balance";
+        postsolve.charge_balance_norm = phase_charge_inf_norm(out.phase_amounts, charges);
+        postsolve.accepted = postsolve.accepted && postsolve.charge_balance_norm <= charge_tolerance;
+        if (postsolve.charge_balance_norm > charge_tolerance) {
+            postsolve.rejection_reason = "charge_balance";
         }
     }
-    out.accepted = out.postsolve.accepted;
-    out.status = out.accepted ? "accepted" : "postsolve_rejected";
+    apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
     return out;
 }
 
@@ -2988,7 +2817,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
     best.activation_compiler = "activation_plan";
     apply_route_metadata(best, phase_amount_volume_route_metadata(false, true));
     if (!adapter.compiled) {
-        best.status = "ipopt_dependency_required";
+        mark_neutral_route_ipopt_dependency_required(best);
         return best;
     }
 
@@ -3031,19 +2860,9 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
         result.activation_compiler = "activation_plan";
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
-        result.ran = solve.solver_ran;
-        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
-        result.solver_accepted = can_postsolve;
-        result.solver_feasible_point = solve.feasible_point;
-        result.solver_status = solve.solver_status;
-        result.application_status = solve.application_status;
-        apply_ipopt_solve_metadata(result, solve);
-        result.objective = solve.objective;
-        result.variables = solve.variables;
-        result.constraints = solve.constraints;
+        const bool can_postsolve = apply_neutral_route_solve_result(result, solve);
         apply_route_metadata(result, phase_amount_volume_route_metadata(false, true));
         if (!can_postsolve) {
-            result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
             trace_route_seed_attempt_finish(
                 problem_name,
@@ -3067,7 +2886,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
             solve.variables,
             static_cast<std::size_t>(layout.species_count)
         );
-        result.postsolve = evaluate_neutral_two_phase_eos_postsolve(
+        NeutralTwoPhaseEosPostsolve postsolve = evaluate_neutral_two_phase_eos_postsolve(
             args,
             temperature,
             target_pressure,
@@ -3084,8 +2903,11 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
             {0, 0},
             true
         );
-        result.accepted = result.postsolve.accepted;
-        result.status = certified_postsolve_status(result.postsolve);
+        apply_neutral_route_postsolve(
+            result,
+            std::move(postsolve),
+            NeutralRouteCertificationLevel::PhaseSetCertified
+        );
         attempts.push_back(neutral_seed_attempt_from_result(result));
         trace_route_seed_attempt_finish(
             problem_name,

@@ -13,6 +13,7 @@ from ..._types import SolutionError
 _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "solver_status",
     "application_status",
+    "rejection_reason",
     "last_callback_exception",
     "problem_name",
     "adapter_kind",
@@ -43,6 +44,7 @@ _ROUTE_BOOL_DIAGNOSTIC_KEYS = (
     "warm_start_used",
     "solver_accepted",
     "solver_feasible_point",
+    "postsolve_accepted",
     "scaled_acceptance_passed",
 )
 
@@ -455,7 +457,7 @@ def native_route_diagnostics(
     diagnostics["route_accepted"] = bool(
         route.get("accepted", diagnostics.get("accepted", default_values.get("accepted", False)))
     )
-    if "accepted" in diagnostics:
+    if "postsolve_accepted" not in diagnostics and "accepted" in diagnostics:
         diagnostics["postsolve_accepted"] = bool(diagnostics["accepted"])
     if "initial_point_strategy" in route or "initial_point_strategy" in default_values:
         diagnostics["initial_point_strategy"] = str(

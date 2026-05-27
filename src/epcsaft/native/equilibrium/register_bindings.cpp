@@ -1022,86 +1022,13 @@ void apply_selector_metadata(
     out["thermodynamic_input"] = selector_thermodynamic_input_to_dict(contract.thermodynamic_input);
     out["parameter_readiness"] = selector_parameter_readiness_to_dict(contract.parameter_readiness);
     out["input_classification"] = selector_input_classification_to_dict(contract.input_classification);
-    py::dict stability_certificate;
-    stability_certificate["method"] = contract.activation.postsolve_certification;
-    py::object postsolve = out["postsolve"];
-    if (!postsolve.is_none()) {
-        py::dict postsolve_dict = postsolve.cast<py::dict>();
-        const bool stability_checked = postsolve_dict.contains("stability_checked")
-            && postsolve_dict["stability_checked"].cast<bool>();
-        const bool stability_accepted = postsolve_dict.contains("stability_accepted")
-            && postsolve_dict["stability_accepted"].cast<bool>();
-        const bool candidate_complete = postsolve_dict.contains("candidate_completeness_accepted")
-            && postsolve_dict["candidate_completeness_accepted"].cast<bool>();
-        const bool postsolve_local_only = postsolve_dict.contains("stability_certificate")
-            && postsolve_dict["stability_certificate"].cast<std::string>() == "postsolve_local_only";
-        stability_certificate["accepted"] = postsolve_local_only
-            ? out["accepted"].cast<bool>()
-            : stability_checked && stability_accepted && candidate_complete;
-        stability_certificate["stability_checked"] = postsolve_local_only ? true : stability_checked;
-        stability_certificate["stability_accepted"] = postsolve_local_only ? true : stability_accepted;
-        stability_certificate["candidate_set_complete"] = postsolve_local_only ? true : candidate_complete;
-        if (postsolve_dict.contains("phase_distance")) {
-            stability_certificate["phase_distance"] = postsolve_dict["phase_distance"];
-        }
-        if (postsolve_dict.contains("phase_discovery_backend")) {
-            stability_certificate["phase_discovery_backend"] = postsolve_dict["phase_discovery_backend"];
-        }
-        if (postsolve_dict.contains("stability_certificate")) {
-            stability_certificate["method"] = postsolve_dict["stability_certificate"];
-        }
-        if (postsolve_dict.contains("phase_set_status")) {
-            stability_certificate["status"] = postsolve_dict["phase_set_status"];
-        }
-        if (postsolve_dict.contains("min_tpd")) {
-            stability_certificate["min_tpd"] = postsolve_dict["min_tpd"];
-        }
-        if (postsolve_dict.contains("candidate_mass_balance_norm")) {
-            stability_certificate["candidate_mass_balance_norm"] = postsolve_dict["candidate_mass_balance_norm"];
-        }
-        if (postsolve_dict.contains("tpd_candidate_count")) {
-            stability_certificate["tpd_candidate_count"] = postsolve_dict["tpd_candidate_count"];
-        }
-        if (postsolve_dict.contains("unique_candidate_count")) {
-            stability_certificate["unique_candidate_count"] = postsolve_dict["unique_candidate_count"];
-        }
-        if (postsolve_dict.contains("selected_candidate_count")) {
-            stability_certificate["selected_candidate_count"] = postsolve_dict["selected_candidate_count"];
-        }
-        for (const char* key : {
-                 "stage9_phase_discovery_steps",
-                 "deterministic_screening_status",
-                 "deterministic_screening_is_full_held",
-                 "deterministic_candidate_count",
-                 "continuous_tpd_status",
-                 "continuous_tpd_backend",
-                 "continuous_tpd_start_count",
-                 "continuous_tpd_solve_count",
-                 "continuous_tpd_converged_count",
-                 "continuous_tpd_iteration_count_total",
-                 "continuous_tpd_iteration_count_max",
-                 "continuous_tpd_min",
-                 "continuous_tpd_step_final_max",
-                 "held_stage_i_status",
-                 "held_stage_i_start_count",
-                 "held_stage_i_negative_tpd_found",
-                 "held_stage_i_min_tpd",
-                 "held_stage_ii_status",
-                 "held_stage_ii_candidate_count",
-                 "held_stage_iii_status",
-                 "held_stage_iii_refined_phase_count",
-             }) {
-            if (postsolve_dict.contains(key)) {
-                stability_certificate[key] = postsolve_dict[key];
-            }
-        }
-    } else {
-        stability_certificate["accepted"] = false;
-        stability_certificate["stability_checked"] = false;
-        stability_certificate["stability_accepted"] = false;
-        stability_certificate["candidate_set_complete"] = false;
-    }
-    out["stability_certificate"] = stability_certificate;
+    const py::object postsolve = out["postsolve"];
+    out["stability_certificate"] =
+        epcsaft::native::equilibrium_nlp::route_result_bridge::neutral_route_stability_certificate_from_postsolve(
+            postsolve,
+            contract.activation.postsolve_certification,
+            out["accepted"].cast<bool>()
+        );
 }
 
 double selector_request_double(const py::dict& payload, const char* key) {

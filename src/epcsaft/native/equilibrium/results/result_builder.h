@@ -44,6 +44,32 @@ struct NeutralTwoPhaseEosResultPayload {
     std::vector<NeutralTwoPhaseEosPhasePayload> phases;
 };
 
+enum class NeutralRouteCertificationLevel {
+    LocalPostsolve,
+    PhaseSetCertified,
+};
+
+void mark_neutral_route_ipopt_dependency_required(NeutralTwoPhaseEosRouteResult& out);
+
+bool apply_neutral_route_solve_result(
+    NeutralTwoPhaseEosRouteResult& out,
+    const IpoptSolveResult& solve
+);
+
+void apply_neutral_route_postsolve(
+    NeutralTwoPhaseEosRouteResult& out,
+    NeutralTwoPhaseEosPostsolve postsolve,
+    NeutralRouteCertificationLevel certification_level
+);
+
+int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result);
+
+bool neutral_route_strict_ipopt_success(const NeutralTwoPhaseEosRouteResult& result);
+
+int neutral_boundary_route_quality(const NeutralTwoPhaseEosRouteResult& result);
+
+RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteResult& result);
+
 NeutralTwoPhaseEosResultPayload build_neutral_two_phase_eos_result(
     const add_args& args,
     double temperature,
