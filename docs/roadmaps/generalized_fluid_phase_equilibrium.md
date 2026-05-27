@@ -267,21 +267,24 @@ Implementation must proceed in this order:
    sparse `NlpProblem` contracts, route scaling, domain bounds, smooth
    coordinate wrapper design, Ipopt barrier constraints, diagnostics, and exact
    derivative expectations.
-2. Neutral TP flash:
-   build on the shared amount-volume phase NLP and prove the Pereira neutral
-   case before broadening claims.
-3. Derived boundary workflows:
+2. Continuous TPD and HELD:
+   add staged phase-discovery evidence before treating a source-backed neutral
+   proof or boundary workflow as generalized GFPE evidence.
+3. Neutral TP flash:
+   build on the shared amount-volume phase NLP and Stage 9 HELD diagnostics,
+   then prove the Pereira neutral case before broadening claims.
+4. Derived boundary workflows:
    bubble, dew, cloud, and shadow workflows as DOF swaps over the shared phase
    NLP, then `T-x` and `P-x` diagram generation.
-4. Neutral generalized multiphase:
+5. Neutral generalized multiphase:
    full HELD stages and phase-set completeness beyond two selected phases.
-5. Associating PE:
+6. Associating PE:
    exact association derivative coverage or lifted mass-action variables before
    Gross/Sadowski proof cases.
-6. Electrolyte PE:
+7. Electrolyte PE:
    Born SSM+DS exact Hessian coverage, charge-neutral reduced variables, and
    HELD2.0 before Khudaida/Held/Ascani validation.
-7. CE and CPE:
+8. CE and CPE:
    homogeneous chemical equilibrium first, then simultaneous phase-chemical
    equilibrium after PE and CE proofs exist.
 

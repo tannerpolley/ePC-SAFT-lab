@@ -77,6 +77,12 @@ def test_stage_plan_is_gfpe_first_and_pretreatment_centered() -> None:
     assert "bounds, scaling, and transform record" in stage_text
     assert "## Stage 8 - Shared NLP And Ipopt Infrastructure Gate" in stage_text
     assert "## Stage 17 - Registry, Capability, And Benchmark Closure" in stage_text
+    assert stage_text.index("## Stage 9 - Continuous TPD And HELD Stage Ladder") < stage_text.index(
+        "## Stage 10 - Neutral TP Flash Source-Backed Proof"
+    )
+    assert stage_text.index("## Stage 10 - Neutral TP Flash Source-Backed Proof") < stage_text.index(
+        "## Stage 11 - Derived Boundary Workflows And Diagram Traces"
+    )
 
 
 def test_no_generalized_family_claims_production_before_held_gates() -> None:

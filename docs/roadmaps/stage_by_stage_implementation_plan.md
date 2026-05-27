@@ -688,7 +688,7 @@ Substeps:
    benchmark fixture.
 10. Add postsolve stability diagnostics after final Ipopt solves.
 11. Keep seed-generation success distinct from route acceptance.
-12. Keep all HELD status fields empty or planned until Stage 11 supplies
+12. Keep all HELD status fields empty or planned until Stage 9 supplies
     executable HELD evidence.
 
 Acceptance checks:
@@ -769,7 +769,62 @@ Stop conditions:
 - Ipopt adapter code owns thermodynamic equations.
 - Missing exact Hessian coverage is treated as production-ready.
 
-## Stage 9 - Neutral TP Flash Source-Backed Proof
+## Stage 9 - Continuous TPD And HELD Stage Ladder
+
+Purpose: replace seed-only deterministic screening with the staged
+phase-discovery evidence required before source-backed neutral proof,
+boundary workflows, or generalized GFPE admission.
+
+Primary output:
+
+- HELD-stage diagnostics that distinguish continuous TPD, Stage I stability,
+  Stage II dual discovery, and Stage III primal refinement.
+
+References:
+
+- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/algorithms.md`
+- `docs/latex/algorithms.tex`
+- `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
+- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
+- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
+
+Substeps:
+
+1. Add continuous TPD minimization in volume-composition space.
+2. Report TPD objective, trial composition, trial volume or density, local
+   status, start source, and final residuals.
+3. Add HELD Stage I stability testing with multiple starts.
+4. Report Stage I failure modes separately from instability proof.
+5. Add HELD Stage II dual cutting-plane phase discovery.
+6. Report Stage II upper bounds, lower bounds, candidate phases, and stopping
+   criteria.
+7. Store Stage II candidate phases with replayable route-assembly metadata.
+8. Use the amount-volume Ipopt NLP as HELD Stage III primal refinement.
+9. Record the relation between Stage II bounds and Stage III refined objective.
+10. Check phase-set completeness:
+    no missing lower-free-energy candidate, mass-balance feasibility, no
+    duplicate phase, no collapsed phase, and no unexamined transferable species.
+11. Keep deterministic screening available as a seed source.
+12. Do not fill HELD status fields from deterministic screening.
+13. Promote HELD stage status in the registry only after executable tests
+    exist.
+
+Acceptance checks:
+
+- Tests distinguish deterministic screening, continuous TPD, HELD Stage I,
+  HELD Stage II, and HELD Stage III.
+- Registry rows can name which HELD gates are passed for each family.
+- Production exposure remains false until the relevant HELD ladder is
+  complete.
+
+Stop conditions:
+
+- Local TPD success is treated as global phase-discovery proof.
+- HELD status fields can be satisfied by deterministic screening.
+- Phase-set completeness lacks mass-balance feasibility.
+
+## Stage 10 - Neutral TP Flash Source-Backed Proof
 
 Purpose: prove the first GFPE family on neutral TP flash before deriving
 boundary workflows or widening to association/electrolytes.
@@ -777,8 +832,9 @@ boundary workflows or widening to association/electrolytes.
 Primary output:
 
 - A source-backed `PE-Neutral TP Flash` proof case with full route diagnostics,
-  exact derivative evidence, and registry evidence that still remains
-  nonproduction until HELD gates pass.
+  exact derivative evidence, Stage 9 phase-discovery evidence, and registry
+  evidence that still remains nonproduction until all GFPE promotion gates
+  pass.
 
 References:
 
@@ -795,28 +851,30 @@ Substeps:
 2. Use the Stage 5 amount-volume physical variable model.
 3. Use the Stage 6 bounds, scaling, and transform policy.
 4. Use Stage 7 deterministic screening only as seed and certification support.
-5. Build the proof around Pereira 2012 System III unless a source-backed audit
+5. Use Stage 9 continuous TPD and HELD diagnostics as the phase-discovery
+   evidence path for generalized proof.
+6. Build the proof around Pereira 2012 System III unless a source-backed audit
    proves it physically unsuitable.
-6. If Pereira source data are unavailable, stop at `source_data_needed`.
-7. Record proof species, parameters, binary interactions, `T`, `P`, feed
+7. If Pereira source data are unavailable, stop at `source_data_needed`.
+8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.
-8. Evaluate the pressure-transformed Helmholtz objective:
+9. Evaluate the pressure-transformed Helmholtz objective:
 
    ```text
    Phi = sum_a A_a + P * sum_a V_a
    ```
 
-9. Enforce or certify material balance for every species.
-10. Enforce or certify phase pressure consistency.
-11. Enforce or certify chemical-potential equality for transferable species.
-12. Certify noncollapse through phase amount, phase fraction, composition
+10. Enforce or certify material balance for every species.
+11. Enforce or certify phase pressure consistency.
+12. Enforce or certify chemical-potential equality for transferable species.
+13. Certify noncollapse through phase amount, phase fraction, composition
     distance, and density or volume margins.
-13. Certify postsolve stability with TPD diagnostics.
-14. Certify exact derivatives for the active objective and constraints.
-15. Store all proof evidence in tests and registry fields without marking
+14. Certify postsolve stability with Stage 9 phase-discovery diagnostics.
+15. Certify exact derivatives for the active objective and constraints.
+16. Store all proof evidence in tests and registry fields without marking
     generalized production exposure.
-16. Keep existing public `flash` behavior unchanged unless it is explicitly
+17. Keep existing public `flash` behavior unchanged unless it is explicitly
     migrated through the same verified route and tests.
 
 Acceptance checks:
@@ -835,10 +893,10 @@ Stop conditions:
 - Current public utility success is used as generalized GFPE proof without
   GFPE gates.
 
-## Stage 10 - Derived Boundary Workflows And Diagram Traces
+## Stage 11 - Derived Boundary Workflows And Diagram Traces
 
 Purpose: derive bubble, dew, cloud, and shadow workflows from the neutral GFPE
-core after the main neutral proof is reliable.
+core after Stage 9 phase discovery and Stage 10 neutral proof are reliable.
 
 Primary output:
 
@@ -894,60 +952,6 @@ Stop conditions:
 - Boundary workflows duplicate a separate thermodynamic core instead of using
   the shared GFPE route.
 
-## Stage 11 - Continuous TPD And HELD Stage Ladder
-
-Purpose: replace seed-only deterministic screening with the staged
-phase-discovery evidence required for generalized GFPE admission.
-
-Primary output:
-
-- HELD-stage diagnostics that distinguish continuous TPD, Stage I stability,
-  Stage II dual discovery, and Stage III primal refinement.
-
-References:
-
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/algorithms.md`
-- `docs/latex/algorithms.tex`
-- `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
-- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
-- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
-
-Substeps:
-
-1. Add continuous TPD minimization in volume-composition space.
-2. Report TPD objective, trial composition, trial volume or density, local
-   status, start source, and final residuals.
-3. Add HELD Stage I stability testing with multiple starts.
-4. Report Stage I failure modes separately from instability proof.
-5. Add HELD Stage II dual cutting-plane phase discovery.
-6. Report Stage II upper bounds, lower bounds, candidate phases, and stopping
-   criteria.
-7. Store Stage II candidate phases with replayable route-assembly metadata.
-8. Use the amount-volume Ipopt NLP as HELD Stage III primal refinement.
-9. Record the relation between Stage II bounds and Stage III refined objective.
-10. Check phase-set completeness:
-    no missing lower-free-energy candidate, mass-balance feasibility, no
-    duplicate phase, no collapsed phase, and no unexamined transferable species.
-11. Keep deterministic screening available as a seed source.
-12. Do not fill HELD status fields from deterministic screening.
-13. Promote HELD stage status in the registry only after executable tests
-    exist.
-
-Acceptance checks:
-
-- Tests distinguish deterministic screening, continuous TPD, HELD Stage I,
-  HELD Stage II, and HELD Stage III.
-- Registry rows can name which HELD gates are passed for each family.
-- Production exposure remains false until the relevant HELD ladder is
-  complete.
-
-Stop conditions:
-
-- Local TPD success is treated as global phase-discovery proof.
-- HELD status fields can be satisfied by deterministic screening.
-- Phase-set completeness lacks mass-balance feasibility.
-
 ## Stage 12 - Generalized Phase-Set And Multiphase PE
 
 Purpose: extend GFPE from selected two-phase solves to unknown phase count and
@@ -964,7 +968,7 @@ References:
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
 - `src/epcsaft/native/equilibrium/core/variable_layout.h`
 - `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
-- future generalized phase-set route owner created after Stage 11
+- future generalized phase-set route owner created after Stage 9
 
 Substeps:
 
@@ -1250,7 +1254,8 @@ Substeps:
 5. Preserve existing public route behavior when a GFPE family remains planned.
 6. Add negative tests for stale source references, deleted narrow roadmap file
    references, and raw-response note citations.
-7. Add positive tests for derived subworkflow placement after neutral TP flash.
+7. Add positive tests for derived subworkflow placement after Stage 10 neutral
+   TP flash proof.
 8. Add positive tests for deterministic screening being named as deterministic
    screening, not HELD.
 9. Add benchmark fixture tests only when source data and acceptance tolerances
@@ -1286,9 +1291,9 @@ The GFPE dependency chain is:
 6 bounds, scaling, variable transform, and domain diagnostics
 7 seed, candidate, and stability pretreatment
 8 shared NLP and Ipopt infrastructure gate
-9 neutral TP flash source-backed proof
-10 derived boundary workflows and diagram traces
-11 continuous TPD and HELD stage ladder
+9 continuous TPD and HELD stage ladder
+10 neutral TP flash source-backed proof
+11 derived boundary workflows and diagram traces
 12 generalized phase-set and multiphase PE
 13 associating GFPE pretreatment and proof
 14 electrolyte pretreatment and Born SSM+DS gate
