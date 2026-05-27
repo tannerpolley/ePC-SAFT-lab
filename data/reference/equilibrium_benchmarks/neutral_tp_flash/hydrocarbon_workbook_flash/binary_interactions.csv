@@ -1,0 +1,4 @@
+component_i,component_j,k_ij,source_workbook,source_sheet,source_cells,source_status
+Methane,Ethane,0.0003,workbooks/PC-SAFT Calculations - Hydrocarbon Basis.xlsm,PC-SAFT Liquid,H15/G16,reported
+Methane,Propane,0.0115,workbooks/PC-SAFT Calculations - Hydrocarbon Basis.xlsm,PC-SAFT Liquid,I15/G17,reported
+Ethane,Propane,0.0051,workbooks/PC-SAFT Calculations - Hydrocarbon Basis.xlsm,PC-SAFT Liquid,I16/H17,reported

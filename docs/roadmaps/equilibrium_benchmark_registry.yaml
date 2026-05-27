@@ -77,6 +77,18 @@ family_rows:
       - held_stage_iii_ipopt_refinement
       - postsolve_phase_set_certification
     proof_cases:
+      - case_label: "Hydrocarbon workbook derived TP flash"
+        evidence_tier: T1
+        source: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash"
+        source_model_family: PC-SAFT
+        fixture_status: available
+        acceptance_checks:
+          - source_backed_parameters
+          - material_balance
+          - pressure_consistency
+          - chemical_potential_equality
+          - held_stage_certification
+          - exact_hessian
       - case_label: "Pereira 2012 System III"
         evidence_tier: T0
         source: "Pereira et al. 2012 neutral HELD benchmark"
@@ -323,7 +335,7 @@ derived_subworkflows:
 
 stage10_neutral_tp_flash_source_gate:
   target_family_label: "PE-Neutral TP Flash"
-  proof_status: source_selection_blocked
+  proof_status: executable_fixture_available
   accepted_source_model_families: ["PC-SAFT", "ePC-SAFT"]
   rejected_context_cases:
     "Pereira 2012 System III":
@@ -356,10 +368,10 @@ stage10_neutral_tp_flash_source_gate:
       status: insufficient_no_point_phase_split_fixture
       note: "This table supplies binary VLE correlation/AAD context and fitted k_ij values, but not a single T, P, feed-composition, phase-fraction, and phase-composition TP-flash target."
     - case_label: "Hydrocarbon workbook TP flash smoke"
-      local_artifact: "tests/support/hydrocarbon_cases.py"
+      local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/metadata.json"
       source_model_family: PC-SAFT
-      status: insufficient_package_smoke
-      note: "The current hydrocarbon case is useful runtime smoke evidence, but its expected flash split is package-pinned rather than a source-backed literature phase-split fixture."
+      status: promoted_executable_workbook_fixture
+      note: "The workbook bubble-point coexistence state now has a derived equal-phase TP flash feed, explicit phase fractions, source-backed PC-SAFT parameters, and an executable Stage 10 proof gate."
     - case_label: "Pereira 2012 System III"
       local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012/metadata.json"
       source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
@@ -368,9 +380,37 @@ stage10_neutral_tp_flash_source_gate:
       note: "Do not use as executable ePC-SAFT proof evidence unless SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization is added."
 
 benchmark_cases:
-  - case_label: "Pereira 2012 System III"
+  - case_label: "Hydrocarbon workbook derived TP flash"
     family_labels: ["PE-Neutral TP Flash"]
     priority_rank: 1
+    status: available
+    fixture_status: available
+    source_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash"
+    source_model_family: PC-SAFT
+    species: ["Methane", "Ethane", "Propane"]
+    pure_component_parameters: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/pc_saft_parameters.csv"
+    binary_interactions: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/binary_interactions.csv"
+    temperature: 233.15
+    pressure: 1276369.4735856401
+    feed_composition: [0.41233144641716446, 0.2514659568616244, 0.3362025967212111]
+    expected_phase_count: 2
+    expected_phase_compositions:
+      liquid: [0.1, 0.3, 0.6]
+      vapor: [0.72466289283432894, 0.20293191372324873, 0.0724051934424223]
+    expected_phase_fractions:
+      liquid: 0.5
+      vapor: 0.5
+    acceptance_tolerances:
+      composition_abs: 1.0e-5
+      phase_fraction_abs: 2.0e-5
+      material_balance_abs: 1.0e-8
+      pressure_abs_Pa: 1.0e-2
+      ln_fugacity_abs: 1.0e-7
+    todo: "Use with scripts/validation/check_stage10_neutral_tp_flash_proof.py after generating complete Stage 9 evidence; this is the first executable neutral TP flash proof fixture."
+
+  - case_label: "Pereira 2012 System III"
+    family_labels: ["PE-Neutral TP Flash"]
+    priority_rank: 2
     status: source_data_needed
     fixture_status: source_data_needed
     source_path: "literature:Pereira et al. 2012 System III"

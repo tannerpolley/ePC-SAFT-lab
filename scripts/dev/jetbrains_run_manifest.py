@@ -152,6 +152,20 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="--debug --include-route-refinement --require-complete",
     ),
     RunConfigSpec(
+        name="Check Stage 10 Neutral TP Flash Proof",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/validation/check_stage10_neutral_tp_flash_proof.py",
+        parameters="--generate-stage9-evidence --require-proof",
+    ),
+    RunConfigSpec(
+        name="Check Stage 10 Neutral TP Flash Proof Debug",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_VALIDATION,
+        command="scripts/validation/check_stage10_neutral_tp_flash_proof.py",
+        parameters="--generate-stage9-evidence --debug --require-proof",
+    ),
+    RunConfigSpec(
         name="Test List Slices",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_TESTS,

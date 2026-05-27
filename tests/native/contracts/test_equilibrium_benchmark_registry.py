@@ -55,6 +55,7 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     benchmarks = _benchmark_by_label()
 
     assert {
+        "Hydrocarbon workbook derived TP flash",
         "Pereira 2012 System III",
         "Gross/Sadowski 2002 methanol/cyclohexane",
         "Khudaida 2026 electrolyte LLE",
@@ -62,6 +63,10 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
         "Ascani/Sadowski/Held 2022 mixed-solvent LLE",
     } <= set(benchmarks)
 
+    assert benchmarks["Hydrocarbon workbook derived TP flash"]["family_labels"] == ["PE-Neutral TP Flash"]
+    assert benchmarks["Hydrocarbon workbook derived TP flash"]["source_model_family"] == "PC-SAFT"
+    assert benchmarks["Hydrocarbon workbook derived TP flash"]["fixture_status"] == "available"
+    assert benchmarks["Hydrocarbon workbook derived TP flash"]["priority_rank"] == 1
     assert benchmarks["Pereira 2012 System III"]["family_labels"] == ["PE-Neutral TP Flash"]
     assert benchmarks["Pereira 2012 System III"]["source_model_family"] == "SAFT-VR"
     assert benchmarks["Pereira 2012 System III"]["current_fixture_blocker"] == "model_family_mismatch"
@@ -81,7 +86,7 @@ def test_stage10_neutral_tp_flash_gate_defines_executable_fixture_contract() -> 
     gate = _stage10_gate()
 
     assert gate["target_family_label"] == "PE-Neutral TP Flash"
-    assert gate["proof_status"] == "source_selection_blocked"
+    assert gate["proof_status"] == "executable_fixture_available"
     assert gate["accepted_source_model_families"] == ["PC-SAFT", "ePC-SAFT"]
     assert gate["rejected_context_cases"]["Pereira 2012 System III"]["source_model_family"] == "SAFT-VR"
     assert gate["rejected_context_cases"]["Pereira 2012 System III"]["blocker"] == "model_family_mismatch"
@@ -122,7 +127,10 @@ def test_stage10_local_source_audit_does_not_promote_context_to_proof() -> None:
         local_candidates["Gross/Sadowski 2001 binary VLE table"]["status"]
         == "insufficient_no_point_phase_split_fixture"
     )
-    assert local_candidates["Hydrocarbon workbook TP flash smoke"]["status"] == "insufficient_package_smoke"
+    assert local_candidates["Hydrocarbon workbook TP flash smoke"]["local_artifact"].endswith(
+        "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/metadata.json"
+    )
+    assert local_candidates["Hydrocarbon workbook TP flash smoke"]["status"] == "promoted_executable_workbook_fixture"
     assert local_candidates["Pereira 2012 System III"]["status"] == "rejected_model_family_mismatch"
     assert local_candidates["Pereira 2012 System III"]["source_audit_path"] == (
         "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
@@ -197,6 +205,31 @@ def test_pereira_stage10_readiness_tracks_material_balance_without_proof_promoti
     assert inferred_second["correction_status"] == "inferred_not_source_confirmed"
     assert float(inferred_second["candidate_x2"]) == pytest.approx(0.91)
     assert float(inferred_second["candidate_vapor_fraction"]) == pytest.approx(0.487365, rel=1.0e-5)
+
+
+def test_hydrocarbon_workbook_stage10_fixture_is_declared_as_available() -> None:
+    benchmark = _benchmark_by_label()["Hydrocarbon workbook derived TP flash"]
+    source_path = REPO_ROOT / benchmark["source_path"]
+    metadata = json.loads((source_path / "metadata.json").read_text(encoding="utf-8"))
+    phase_rows = list(csv.DictReader((source_path / "phase_splits.csv").read_text(encoding="utf-8").splitlines()))
+    parameter_rows = list(
+        csv.DictReader((source_path / "pc_saft_parameters.csv").read_text(encoding="utf-8").splitlines())
+    )
+    interaction_rows = list(
+        csv.DictReader((source_path / "binary_interactions.csv").read_text(encoding="utf-8").splitlines())
+    )
+
+    assert metadata["proof_status"] == "source_backed_executable_fixture"
+    assert metadata["source_model_family"] == "PC-SAFT"
+    assert metadata["proof_readiness"]["stage9_evidence_path_required"] is True
+    assert {row["phase"] for row in phase_rows} == {"feed", "liquid", "vapor"}
+    feed = next(row for row in phase_rows if row["phase"] == "feed")
+    assert float(feed["composition_sum"]) == pytest.approx(1.0)
+    assert [float(feed[f"x{index}"]) for index in range(1, 4)] == pytest.approx(
+        benchmark["feed_composition"]
+    )
+    assert {row["species"] for row in parameter_rows} == {"Methane", "Ethane", "Propane"}
+    assert len(interaction_rows) == 3
 
 
 def test_available_neutral_stage10_cases_must_have_full_fixture_contract() -> None:

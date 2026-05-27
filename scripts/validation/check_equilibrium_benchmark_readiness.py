@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import math
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,16 @@ def _phase_rows_by_case(phase_rows: list[dict[str, str]]) -> dict[str, dict[str,
     return by_case
 
 
+def _indexed_columns(row: dict[str, str], prefix: str) -> list[str]:
+    columns = []
+    pattern = re.compile(rf"^{re.escape(prefix)}(\d+)$")
+    for key in row:
+        match = pattern.match(key)
+        if match is not None:
+            columns.append(key)
+    return sorted(columns, key=lambda item: int(pattern.match(item).group(1)))  # type: ignore[union-attr]
+
+
 def _source_path_present(metadata: dict[str, Any]) -> bool:
     source_path = metadata.get("source_path")
     source_paths = metadata.get("source_paths")
@@ -76,7 +87,7 @@ def _species_present(phase_rows: list[dict[str, str]], metadata: dict[str, Any])
     species = metadata.get("species")
     if isinstance(species, list) and species:
         return True
-    component_columns = [key for key in phase_rows[0] if key.startswith("component_")] if phase_rows else []
+    component_columns = _indexed_columns(phase_rows[0], "component_") if phase_rows else []
     return bool(component_columns) and all(row.get(column, "").strip() for row in phase_rows for column in component_columns)
 
 
@@ -165,25 +176,35 @@ def _fixture_field_status(
     }
 
 
-def _composition(row: dict[str, str]) -> tuple[float, float]:
-    return float(row["x1"]), float(row["x2"])
+def _composition(row: dict[str, str]) -> tuple[float, ...]:
+    composition_columns = _indexed_columns(row, "x")
+    if not composition_columns:
+        raise ValueError("phase split row does not define x1, x2, ... composition columns")
+    return tuple(float(row[column]) for column in composition_columns)
 
 
 def _composition_sum(row: dict[str, str]) -> float:
     return float(row["composition_sum"])
 
 
-def _lever_fraction(feed: tuple[float, float], vapor: tuple[float, float], liquid: tuple[float, float]) -> float:
-    denominator = vapor[0] - liquid[0]
-    if abs(denominator) <= 1.0e-15:
+def _lever_fraction(feed: tuple[float, ...], vapor: tuple[float, ...], liquid: tuple[float, ...]) -> float:
+    candidates = [
+        (feed[index] - liquid[index]) / (vapor[index] - liquid[index])
+        for index in range(len(feed))
+        if abs(vapor[index] - liquid[index]) > 1.0e-15
+    ]
+    if not candidates:
         raise ValueError("phase split cannot determine a lever-rule vapor fraction")
-    return (feed[0] - liquid[0]) / denominator
+    vapor_fraction = sum(candidates) / len(candidates)
+    if any(abs(candidate - vapor_fraction) > 1.0e-8 for candidate in candidates):
+        raise ValueError("phase split gives inconsistent lever-rule vapor fractions")
+    return vapor_fraction
 
 
 def _material_balance_residual(
-    feed: tuple[float, float],
-    vapor: tuple[float, float],
-    liquid: tuple[float, float],
+    feed: tuple[float, ...],
+    vapor: tuple[float, ...],
+    liquid: tuple[float, ...],
     vapor_fraction: float,
 ) -> float:
     liquid_fraction = 1.0 - vapor_fraction

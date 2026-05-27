@@ -1,0 +1,4 @@
+case_key,source_table,state,phase,temperature_K,pressure_MPa,component_1,component_2,component_3,x1,x2,x3,composition_sum,eta,molar_volume_m3_per_mol,phase_fraction,source_status
+hydrocarbon_workbook_23315k_1276369pa_equal_split,PC-SAFT VLE,TP_flash,feed,233.15,1.2763694735856401,Methane,Ethane,Propane,0.41233144641716446,0.2514659568616244,0.3362025967212111,1.0,,,,constructed_equal_phase_feed
+hydrocarbon_workbook_23315k_1276369pa_equal_split,PC-SAFT VLE,TP_flash,liquid,233.15,1.2763694735856401,Methane,Ethane,Propane,0.1,0.3,0.6,1.0,0.36478456406367621,6.9781639455482653e-05,0.5,reported_workbook_phase
+hydrocarbon_workbook_23315k_1276369pa_equal_split,PC-SAFT VLE,TP_flash,vapor,233.15,1.2763694735856401,Methane,Ethane,Propane,0.72466289283432894,0.20293191372324873,0.0724051934424223,1.0,0.012733658785437574,0.0013725673091254805,0.5,reported_workbook_phase

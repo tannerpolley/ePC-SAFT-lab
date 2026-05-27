@@ -928,8 +928,12 @@ Substeps:
    evidence path for generalized proof.
 6. Treat Pereira 2012 System III as a HELD/SAFT-VR reference, not the current
    executable ePC-SAFT proof fixture.
-7. Stop at `source_data_needed` until a source-backed ePC-SAFT-compatible
-   neutral TP flash fixture is selected.
+7. Use the hydrocarbon workbook-derived TP flash as the first executable
+   Stage 10 fixture. The workbook supplies PC-SAFT component parameters,
+   binary interactions, `T`, `P`, and liquid/vapor phase compositions at a
+   bubble-point coexistence state. The Stage 10 fixture derives a TP-flash
+   feed by equal-phase lever blending and expects 0.5 liquid / 0.5 vapor
+   fractions.
    The Pereira source audit now lives under
    `data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012` as
    non-executable SAFT-VR evidence and records the published second-feed
@@ -966,13 +970,23 @@ Substeps:
 15. Certify exact derivatives for the active objective and constraints.
 16. Store all proof evidence in tests and registry fields without marking
     generalized production exposure.
-17. Keep existing public `flash` behavior unchanged unless it is explicitly
+17. Run the Stage 10 proof with
+    `uv run python scripts/validation/check_stage10_neutral_tp_flash_proof.py --stage9-evidence-json <payload> --require-proof`.
+    Use `--debug --json` for convergence diagnosis so Ipopt `print_level=5`,
+    any selected-path seed-attempt traces, and bounded iteration history are
+    visible without corrupting the JSON proof payload. Tests must pass a Stage 9 evidence JSON
+    fixture instead of generating Stage 9 evidence inside the Stage 10 test, so
+    the test does not hide an extra continuous-TPD/Ipopt route solve.
+18. Keep existing public `flash` behavior unchanged unless it is explicitly
     migrated through the same verified route and tests.
 
 Acceptance checks:
 
 - Neutral proof fixture exists, is source-backed, and is executable with the
   active ePC-SAFT model before being used as proof evidence.
+- Stage 10 proof completion requires native Ipopt `success` and
+  `solve_succeeded`; iteration-limit, acceptable-point, tiny-step, or other
+  nonconverged statuses remain blockers.
 - Pereira is not used as ePC-SAFT proof evidence unless SAFT-VR support or a
   source-backed ePC-SAFT reparameterization closes the model-family gap.
 - Neutral TP flash diagnostics include material, pressure, potential,

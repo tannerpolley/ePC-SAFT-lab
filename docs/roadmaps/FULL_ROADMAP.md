@@ -22,6 +22,12 @@ This document is authoritative over older roadmap language that allowed audit-on
 Its Stage 8 gate must complete route-owned user scaling, Ipopt option profiles,
 scaled numerical acceptance diagnostics, barrier/active-bound diagnostics, and
 exact-Hessian profile gating before Stage 9 real-mixture HELD proof work starts.
+Stage 9 and Stage 10 convergence diagnosis must stay narrow: use the Stage 9
+evidence checker or one explicit `--equilibrium-debug` test node, not broad
+equilibrium route/result sweeps. Stage 10 currently uses the
+hydrocarbon-workbook-derived PC-SAFT TP flash fixture as the executable neutral
+proof target; Pereira 2012 System III remains SAFT-VR/HELD context until model
+parity or a source-backed ePC-SAFT reparameterization exists.
 
 `docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
 

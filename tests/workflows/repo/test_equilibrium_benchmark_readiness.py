@@ -14,8 +14,17 @@ from scripts.validation import check_stage9_phase_discovery_evidence as stage9_c
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CHECKER = REPO_ROOT / "scripts" / "validation" / "check_equilibrium_benchmark_readiness.py"
 STAGE9_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage9_phase_discovery_evidence.py"
+STAGE10_PROOF = REPO_ROOT / "scripts" / "validation" / "check_stage10_neutral_tp_flash_proof.py"
 PEREIRA_CASE_DIR = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
+)
+HYDROCARBON_CASE_DIR = (
+    REPO_ROOT
+    / "data"
+    / "reference"
+    / "equilibrium_benchmarks"
+    / "neutral_tp_flash"
+    / "hydrocarbon_workbook_flash"
 )
 
 
@@ -32,6 +41,16 @@ def _run_checker(*args: str) -> subprocess.CompletedProcess[str]:
 def _run_stage9_checker(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(STAGE9_CHECKER), *args],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _run_stage10_proof(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(STAGE10_PROOF), *args],
         cwd=REPO_ROOT,
         check=False,
         capture_output=True,
@@ -131,6 +150,24 @@ def _synthetic_stage9_discovery() -> dict[str, object]:
             {"tpd_backend": "continuous_coordinate_search", "tpd_status": "converged"},
         ],
     }
+
+
+def _write_complete_stage9_evidence(path: Path) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "complete": True,
+                "evidence_status": {
+                    "deterministic_screening": "verified_not_full_held",
+                    "continuous_tpd_minimization": "verified_converged",
+                    "held_stage_i_stability": "verified_from_converged_continuous_tpd",
+                    "held_stage_ii_dual_phase_discovery": "verified_candidate_bound_gap_closed",
+                    "held_stage_iii_ipopt_refinement": "verified_current_route_refinement_converged",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -399,21 +436,7 @@ def test_stage10_checker_promotes_only_complete_source_backed_fixture_with_stage
     case_dir = tmp_path / "minimal_pc_saft_binary"
     _write_minimal_stage10_fixture(case_dir)
     stage9_path = tmp_path / "complete_stage9_evidence.json"
-    stage9_path.write_text(
-        json.dumps(
-            {
-                "complete": True,
-                "evidence_status": {
-                    "deterministic_screening": "verified_not_full_held",
-                    "continuous_tpd_minimization": "verified_converged",
-                    "held_stage_i_stability": "verified_from_converged_continuous_tpd",
-                    "held_stage_ii_dual_phase_discovery": "verified_candidate_bound_gap_closed",
-                    "held_stage_iii_ipopt_refinement": "verified_current_route_refinement_converged",
-                },
-            }
-        ),
-        encoding="utf-8",
-    )
+    _write_complete_stage9_evidence(stage9_path)
 
     result = _run_checker(
         "--case-dir",
@@ -432,6 +455,103 @@ def test_stage10_checker_promotes_only_complete_source_backed_fixture_with_stage
     assert payload["unmet_executable_fixture_fields"] == []
     assert payload["blockers"] == []
     assert all(status == "present" for status in payload["executable_fixture_field_status"].values())
+
+
+def test_hydrocarbon_workbook_stage10_fixture_is_executable_with_stage9_evidence(
+    tmp_path: Path,
+) -> None:
+    stage9_path = tmp_path / "complete_stage9_evidence.json"
+    _write_complete_stage9_evidence(stage9_path)
+
+    result = _run_checker(
+        "--case-dir",
+        str(HYDROCARBON_CASE_DIR),
+        "--stage9-evidence-json",
+        str(stage9_path),
+        "--json",
+        "--require-executable",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = _load_stdout_json(result)
+    assert payload["case_label"] == "Hydrocarbon workbook derived TP flash"
+    assert payload["proof_status"] == "executable"
+    assert payload["executable"] is True
+    assert payload["stage9_evidence_path_verified"] is True
+    assert payload["unmet_executable_fixture_fields"] == []
+    assert payload["blockers"] == []
+
+
+def test_stage10_neutral_tp_flash_proof_requires_complete_stage9_evidence(
+    tmp_path: Path,
+) -> None:
+    stage9_path = tmp_path / "incomplete_stage9_evidence.json"
+    stage9_path.write_text(
+        json.dumps(
+            {
+                "complete": False,
+                "evidence_status": {
+                    "deterministic_screening": "verified_not_full_held",
+                    "continuous_tpd_minimization": "verified_converged",
+                    "held_stage_i_stability": "verified_from_converged_continuous_tpd",
+                    "held_stage_ii_dual_phase_discovery": "verified_candidate_bound_gap_closed",
+                    "held_stage_iii_ipopt_refinement": "incomplete_ipopt_solver_status_max_iterations_exceeded",
+                },
+                "incomplete_requirements": ["held_stage_iii_ipopt_refinement"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = _run_stage10_proof("--stage9-evidence-json", str(stage9_path), "--json", "--require-proof")
+
+    assert result.returncode == 2
+    payload = _load_stdout_json(result)
+    assert payload["proof_complete"] is False
+    assert payload["route"] is None
+    assert "stage9_evidence_path_not_verified" in payload["blockers"]
+    assert "held_stage_iii_ipopt_refinement" in payload["readiness"]["stage9_incomplete_requirements"]
+
+
+def test_stage10_neutral_tp_flash_proof_runs_source_backed_workbook_fixture(
+    tmp_path: Path,
+) -> None:
+    import epcsaft._core as _core
+
+    if not _core._native_ipopt_smoke()["compiled"]:
+        pytest.skip("native Ipopt is not compiled")
+
+    stage9_path = tmp_path / "stage9_evidence.json"
+    _write_complete_stage9_evidence(stage9_path)
+
+    result = _run_stage10_proof(
+        "--stage9-evidence-json",
+        str(stage9_path),
+        "--json",
+        "--debug",
+        "--require-proof",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = _load_stdout_json(result)
+    assert "EXIT: Optimal Solution Found." in result.stderr
+    assert payload["case_label"] == "Hydrocarbon workbook derived TP flash"
+    assert payload["proof_status"] == "complete"
+    assert payload["proof_complete"] is True
+    assert payload["blockers"] == []
+    assert payload["stage9_evidence_source"] == str(stage9_path)
+    assert payload["readiness"]["stage9_evidence_path_verified"] is True
+    assert payload["route"]["solver_status"] == "success"
+    assert payload["route"]["application_status"] == "solve_succeeded"
+    assert payload["route"]["ipopt_print_level"] == 5
+    assert payload["route"]["hessian_approximation"] == "exact"
+    assert payload["route"]["exact_hessian_available"] is True
+    assert payload["route"]["iteration_count"] > 0
+    assert payload["route"]["iteration_history_size"] > 0
+    assert payload["route"]["iteration_history"]
+    assert payload["route"]["postsolve"]["stability_accepted"] is True
+    assert payload["comparison"]["max_composition_abs_error"] <= 1.0e-5
+    assert payload["comparison"]["max_phase_fraction_abs_error"] <= 2.0e-5
 
 
 def test_pereira_readiness_checker_fails_closed_when_executable_required() -> None:
