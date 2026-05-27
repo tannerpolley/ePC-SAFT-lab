@@ -66,6 +66,39 @@ def test_native_second_order_assembler_smoke_covers_lagrangian_residual_and_tran
     assert smoke["transformed_lower"] == pytest.approx([118.0, 44.0, 13.0])
 
 
+def test_native_variable_transform_smoke_exposes_solver_to_physical_chain_rule_contract() -> None:
+    smoke = _core._native_variable_transform_smoke()
+
+    assert smoke["method_names"] == ["solver_to_physical", "dx_du", "d2x_du2"]
+    assert smoke["identity_policy"] == "identity_physical_coordinates"
+    assert smoke["identity_backend"] == "analytic_identity"
+    assert smoke["identity_physical"] == pytest.approx([1.0, 2.0, 3.0])
+    assert smoke["identity_dx_du"] == pytest.approx(
+        [
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0,
+        ]
+    )
+    assert smoke["identity_d2x_du2"] == pytest.approx([0.0] * 27)
+    assert smoke["identity_second_order_backend"] == "analytic_identity"
+
+    assert smoke["positive_log_policy"] == "positive_log_coordinates"
+    assert smoke["positive_log_backend"] == "analytic_positive_log"
+    assert smoke["positive_log_physical"] == pytest.approx([2.0, 3.0])
+    assert smoke["positive_log_dx_du"] == pytest.approx([2.0, 0.0, 0.0, 3.0])
+    assert smoke["positive_log_d2x_du2"] == pytest.approx(
+        [
+            2.0, 0.0,
+            0.0, 0.0,
+            0.0, 0.0,
+            0.0, 3.0,
+        ]
+    )
+    assert smoke["positive_log_chain_rule_gradient"] == pytest.approx([4.0, 9.0])
+    assert smoke["positive_log_chain_rule_lower"] == pytest.approx([8.0, 0.0, 18.0])
+
+
 def test_native_nlp_shape_validation_rejects_sparse_value_mismatches() -> None:
     smoke = _core._native_nlp_shape_validation_smoke()
 

@@ -1,6 +1,7 @@
 #include "equilibrium/core/activated_equilibrium_nlp.h"
 
 #include "equilibrium/core/route_metadata.h"
+#include "equilibrium/core/variable_transform.h"
 #include "model/native_types.h"
 
 #include <algorithm>
@@ -81,6 +82,8 @@ NeutralTwoPhaseEosNlpContract make_activated_contract(
     const NlpScaling scaling = problem.scaling();
     const std::vector<double> constraints = problem.constraints(initial);
     const std::map<std::string, std::string> diagnostics = problem.diagnostics();
+    const IdentityVariableTransform transform(problem.variable_count());
+    const VariableTransformEvaluation transform_evaluation = transform.evaluate(initial);
 
     NeutralTwoPhaseEosNlpContract out;
     out.problem_name = problem.name();
@@ -124,6 +127,13 @@ NeutralTwoPhaseEosNlpContract make_activated_contract(
     out.objective_scaling = scaling.objective;
     out.variable_scaling = scaling.variables;
     out.constraint_scaling = scaling.constraints;
+    out.transform_policy = transform_evaluation.transform_policy;
+    out.transform_backend = transform_evaluation.backend;
+    out.transform_input_variable_count = transform_evaluation.input_variable_count;
+    out.transform_output_variable_count = transform_evaluation.output_variable_count;
+    out.transform_jacobian_value_count = static_cast<int>(transform_evaluation.jacobian_row_major.size());
+    out.transform_hessian_value_count =
+        static_cast<int>(transform_evaluation.output_hessian_tensor_row_major.size());
     out.initial_variable_lower_margin = std::numeric_limits<double>::infinity();
     out.initial_variable_upper_margin = std::numeric_limits<double>::infinity();
     out.initial_amount_lower_margin = std::numeric_limits<double>::infinity();

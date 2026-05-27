@@ -493,10 +493,20 @@ def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None
     assert activated["initial_volume_lower_margin"] > 0.0
     assert activated["initial_constraint_bound_violation"] >= 0.0
     assert activated["domain_safety_policy"] == "explicit_bounds_variable_transform_ipopt_barrier"
+    assert activated["transform_policy"] == "identity_physical_coordinates"
+    assert activated["transform_backend"] == "analytic_identity"
+    assert activated["transform_input_variable_count"] == activated["variable_count"]
+    assert activated["transform_output_variable_count"] == activated["variable_count"]
+    assert activated["transform_jacobian_value_count"] == activated["variable_count"] ** 2
+    assert activated["transform_hessian_value_count"] == activated["variable_count"] ** 3
     assert activated["barrier_policy"] == "ipopt_internal_barrier_only"
     domain = activated["domain_contract"]
     assert domain["variable_bounds_declared"] is True
     assert domain["constraint_bounds_declared"] is True
+    assert domain["solver_to_physical_declared"] is True
+    assert domain["transform_jacobian_declared"] is True
+    assert domain["transform_hessian_declared"] is True
+    assert domain["transform_chain_rule_derivatives_declared"] is True
     assert domain["variable_scaling_declared"] is True
     assert domain["constraint_scaling_declared"] is True
     assert domain["ipopt_barrier_owns_declared_bounds"] is True

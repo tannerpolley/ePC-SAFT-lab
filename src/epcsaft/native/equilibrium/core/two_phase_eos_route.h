@@ -59,7 +59,12 @@ struct NeutralTwoPhaseEosNlpContract {
     double initial_volume_lower_margin = 0.0;
     double initial_constraint_bound_violation = 0.0;
     std::string domain_safety_policy = "explicit_bounds_variable_transform_ipopt_barrier";
-    std::string transform_policy = "physical_variables_identity_transform_until_variable_transform_wrapper";
+    std::string transform_policy = "identity_physical_coordinates";
+    std::string transform_backend = "analytic_identity";
+    int transform_input_variable_count = 0;
+    int transform_output_variable_count = 0;
+    int transform_jacobian_value_count = 0;
+    int transform_hessian_value_count = 0;
     std::string barrier_policy = "ipopt_internal_barrier_only";
 };
 

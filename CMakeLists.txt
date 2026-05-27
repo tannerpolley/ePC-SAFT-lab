@@ -286,6 +286,7 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     src/epcsaft/native/equilibrium/core/selector_core.cpp
     src/epcsaft/native/equilibrium/core/second_order.cpp
     src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp
+    src/epcsaft/native/equilibrium/core/variable_transform.cpp
     src/epcsaft/native/equilibrium/core/variable_layout.cpp
     src/epcsaft/native/equilibrium/results/result_builder.cpp
     src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp

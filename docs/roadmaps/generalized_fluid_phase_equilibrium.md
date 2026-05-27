@@ -214,13 +214,17 @@ constraints. It does not mean adding a permanent custom barrier term to
 `Phi`. A route may use temporary continuation aids only if it later performs a
 final certification solve on the unmodified thermodynamic objective.
 
-The planned coordinate wrapper is:
+The reusable coordinate wrapper contract is implemented at
+`src/epcsaft/native/equilibrium/core/variable_transform.h`. Current neutral
+routes declare the identity physical-coordinate transform; the native smoke
+contract also proves a positive-log map so future positive-domain coordinates
+reuse the same chain-rule path.
 
 ```text
 VariableTransform
   solver_to_physical(u) -> x
-  jacobian_dx_du(u)
-  hessian_terms_for_chain_rule(u, lambda_x)
+  dx_du(u)
+  d2x_du2(u)
 ```
 
 Routes keep their equations in physical variables. The wrapper owns smooth maps

@@ -79,6 +79,8 @@ Shared phase-NLP seam:
 - `src/epcsaft/native/equilibrium/core/variable_layout.h`
 - `src/epcsaft/native/equilibrium/core/variable_layout.cpp`
 - `src/epcsaft/native/equilibrium/core/second_order.h`
+- `src/epcsaft/native/equilibrium/core/variable_transform.h`
+- `src/epcsaft/native/equilibrium/core/variable_transform.cpp`
 - `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.h`
 - `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
@@ -585,6 +587,7 @@ References:
 
 - `src/epcsaft/native/equilibrium/core/nlp_problem.h`
 - `src/epcsaft/native/equilibrium/core/second_order.h`
+- `src/epcsaft/native/equilibrium/core/variable_transform.h`
 - `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
@@ -633,6 +636,9 @@ Acceptance checks:
 
 - `NlpProblem` exposes bounds and scaling for every admitted route.
 - Ipopt adapter tests prove declared bounds and constraints are transferred.
+- The native `VariableTransform` smoke proves `solver_to_physical`,
+  `dx_du`, `d2x_du2`, and second-order chain-rule assembly for identity and
+  positive-log maps.
 - Diagnostics expose domain margins without silent clipping.
 
 Stop conditions:

@@ -19,6 +19,7 @@
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/selector_core.h"
+#include "equilibrium/core/variable_transform.h"
 #include "equilibrium/results/result_builder.h"
 #include "equilibrium/results/route_result_bridge.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
@@ -432,6 +433,23 @@ bool vector_has_size(const std::vector<int>& values, int expected) {
 py::dict nlp_domain_contract_to_dict(
     const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract& result
 ) {
+    const bool transform_counts_declared =
+        result.transform_input_variable_count > 0 && result.transform_output_variable_count > 0;
+    const int expected_transform_jacobian_count = transform_counts_declared
+        ? result.transform_input_variable_count * result.transform_output_variable_count
+        : 0;
+    const int expected_transform_hessian_count = transform_counts_declared
+        ? result.transform_output_variable_count
+            * result.transform_input_variable_count
+            * result.transform_input_variable_count
+        : 0;
+    const bool transform_jacobian_declared =
+        transform_counts_declared
+        && result.transform_jacobian_value_count == expected_transform_jacobian_count;
+    const bool transform_hessian_declared =
+        transform_counts_declared
+        && result.transform_hessian_value_count == expected_transform_hessian_count;
+
     py::dict margins;
     margins["initial_variable_lower_margin"] = result.initial_variable_lower_margin;
     margins["initial_variable_upper_margin"] = result.initial_variable_upper_margin;
@@ -443,7 +461,13 @@ py::dict nlp_domain_contract_to_dict(
     py::dict out;
     out["domain_safety_policy"] = result.domain_safety_policy;
     out["transform_policy"] = result.transform_policy;
+    out["transform_backend"] = result.transform_backend;
     out["barrier_policy"] = result.barrier_policy;
+    out["solver_to_physical_declared"] = transform_counts_declared;
+    out["transform_jacobian_declared"] = transform_jacobian_declared;
+    out["transform_hessian_declared"] = transform_hessian_declared;
+    out["transform_chain_rule_derivatives_declared"] =
+        transform_jacobian_declared && transform_hessian_declared;
     out["variable_bounds_declared"] = vector_has_size(result.variable_lower_bounds, result.variable_count)
         && vector_has_size(result.variable_upper_bounds, result.variable_count);
     out["constraint_bounds_declared"] = vector_has_size(result.constraint_lower_bounds, result.constraint_count)
@@ -561,6 +585,11 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     out["initial_constraint_bound_violation"] = result.initial_constraint_bound_violation;
     out["domain_safety_policy"] = result.domain_safety_policy;
     out["transform_policy"] = result.transform_policy;
+    out["transform_backend"] = result.transform_backend;
+    out["transform_input_variable_count"] = result.transform_input_variable_count;
+    out["transform_output_variable_count"] = result.transform_output_variable_count;
+    out["transform_jacobian_value_count"] = result.transform_jacobian_value_count;
+    out["transform_hessian_value_count"] = result.transform_hessian_value_count;
     out["barrier_policy"] = result.barrier_policy;
     out["domain_contract"] = nlp_domain_contract_to_dict(result);
     out["sparse_contract"] = nlp_sparse_contract_to_dict(result);
@@ -1342,6 +1371,52 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             nlp::transformed_objective_second_order(transform, output_objective);
         out["transformed_lower"] =
             nlp::lower_triangle_values(transformed.hessian_row_major, transformed.variable_count);
+        return out;
+    });
+    m.def("_native_variable_transform_smoke", []() {
+        py::dict out;
+
+        const nlp::IdentityVariableTransform identity(3);
+        const std::vector<double> identity_solver = {1.0, 2.0, 3.0};
+        const nlp::VariableTransformEvaluation identity_eval = identity.evaluate(identity_solver);
+        out["method_names"] = std::vector<std::string>{
+            "solver_to_physical",
+            "dx_du",
+            "d2x_du2",
+        };
+        out["identity_policy"] = identity_eval.transform_policy;
+        out["identity_backend"] = identity_eval.backend;
+        out["identity_physical"] = identity.solver_to_physical(identity_solver);
+        out["identity_dx_du"] = identity.dx_du(identity_solver);
+        out["identity_d2x_du2"] = identity.d2x_du2(identity_solver);
+        out["identity_second_order_backend"] = identity.second_order_data(identity_solver).backend;
+
+        const nlp::PositiveLogVariableTransform positive_log(2);
+        const std::vector<double> positive_solver = {std::log(2.0), std::log(3.0)};
+        const nlp::VariableTransformEvaluation positive_eval = positive_log.evaluate(positive_solver);
+        out["positive_log_policy"] = positive_eval.transform_policy;
+        out["positive_log_backend"] = positive_eval.backend;
+        out["positive_log_physical"] = positive_log.solver_to_physical(positive_solver);
+        out["positive_log_dx_du"] = positive_log.dx_du(positive_solver);
+        out["positive_log_d2x_du2"] = positive_log.d2x_du2(positive_solver);
+
+        nlp::ObjectiveSecondOrderData output_objective;
+        output_objective.variable_count = 2;
+        output_objective.gradient = positive_eval.physical_variables;
+        output_objective.hessian_row_major = {
+            1.0, 0.0,
+            0.0, 1.0
+        };
+        output_objective.backend = "analytic";
+        const nlp::ObjectiveSecondOrderData transformed =
+            nlp::transformed_objective_second_order(
+                positive_log.second_order_data(positive_solver),
+                output_objective
+            );
+        out["positive_log_chain_rule_gradient"] = transformed.gradient;
+        out["positive_log_chain_rule_lower"] =
+            nlp::lower_triangle_values(transformed.hessian_row_major, transformed.variable_count);
+
         return out;
     });
     m.def("_native_ipopt_smoke", []() {

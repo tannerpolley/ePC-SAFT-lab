@@ -133,7 +133,11 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert "charge_balance" in electrolyte["hard_constraints"]
     assert "electrochemical_potential_equality" in electrolyte["hard_constraints"]
     assert "born_ssm_ds_exact_hessian" in electrolyte["required_gates"]
-    assert electrolyte["derivative_contract"] == "born_ssm_ds_exact_hessian_required_before_electrolyte_validation"
+    expected_derivative_contract = (
+        "born_ssm_ds_exact_hessian_"
+        + "required_before_electrolyte_validation"
+    )
+    assert electrolyte["derivative_contract"] == expected_derivative_contract
 
 
 def test_proof_cases_reference_descriptive_family_labels() -> None:
