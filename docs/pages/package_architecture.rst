@@ -1,18 +1,33 @@
 Package Architecture
 ====================
 
-``epcsaft`` is a package repo. The Python layer owns input validation,
-user-facing objects, diagnostics, documentation examples, and workflow
-orchestration. The equation-of-state runtime and package-owned phase,
-chemical-equilibrium, and regression kernels are native C++ exposed through
+``epcsaft`` is the current source repository and the long-term core
+thermodynamic provider package. The Python layer owns input validation,
+user-facing provider objects, diagnostics, documentation examples, and workflow
+orchestration. The equation-of-state runtime is native C++ exposed through
 ``pybind11``.
+
+During the monorepo transition, this distribution still exposes equilibrium and
+regression workflow objects. ADR 0005 makes those transition surfaces: final
+ownership moves Ipopt-backed equilibrium to ``epcsaft-equilibrium`` and
+Ceres-backed regression to ``epcsaft-regression`` after the provider and native
+extension boundaries are proven.
 
 Organization Boundary
 ---------------------
 
-``epcsaft`` remains one installable distribution package. The project uses
-clean internal subsystem boundaries instead of splitting EOS, equilibrium,
-regression, native, data, or benchmark code into separate packages.
+``epcsaft`` currently ships as a single distribution package while the
+split is prepared. That is a transition-state implementation detail, not the
+long-term package ownership model. The target organization layout is:
+
+.. code-block:: text
+
+   ePC-SAFT/ePC-SAFT              # core provider package: epcsaft
+   ePC-SAFT/epcsaft-equilibrium   # Ipopt-backed equilibrium extension
+   ePC-SAFT/epcsaft-regression    # Ceres-backed regression extension
+
+The current repo must keep clean internal subsystem boundaries so the extension
+packages can be extracted without hidden compatibility paths.
 
 The target internal shape is:
 
@@ -37,20 +52,24 @@ EOS harness
    and delegates thermodynamic calculations to the native runtime.
 
 Equilibrium
-   Owns phase-equilibrium, stability, bubble/dew, electrolyte LLE, and
-   chemical-equilibrium orchestration. It may use Python for problem objects,
-   request normalization, result shaping, and diagnostics, but production
-   thermodynamic evaluations should route through the EOS/native boundary.
-   The public reset frontend is reached through direct
+   In the current monorepo, owns phase-equilibrium, stability, bubble/dew,
+   electrolyte LLE, and chemical-equilibrium orchestration. Long term, this
+   subsystem belongs to ``epcsaft-equilibrium``. It may use Python for problem
+   objects, request normalization, result shaping, and diagnostics, but
+   production thermodynamic evaluations should route through the core
+   provider/native boundary. The current public reset frontend is reached
+   through direct
    ``Equilibrium(mixture, ...)`` workflow objects. Legacy string facades and
    typed problem objects are internal transition surfaces until they are ported
    behind reset methods.
 
 Regression
-   Owns fitting problem definitions, records, provenance validation, objective
-   assembly, derivative diagnostics, and fit-result serialization. Public
-   regression workflows are reached through ``Regression(mixture, ...)``,
-   while expensive objective and derivative work uses native kernels.
+   In the current monorepo, owns fitting problem definitions, records,
+   provenance validation, objective assembly, derivative diagnostics, and
+   fit-result serialization. Long term, this subsystem belongs to
+   ``epcsaft-regression``. Public regression workflows are currently reached
+   through ``Regression(mixture, ...)``, while expensive objective and
+   derivative work uses native kernels.
 
 Native
    Owns C++ kernels, pybind11 bindings, native capability reporting, and
@@ -75,10 +94,13 @@ Benchmarks
 Core Surfaces
 -------------
 
-Use these imports for new code:
+Use these imports for current monorepo code:
 
-* ``from epcsaft import Mixture, State, Equilibrium, Regression`` for workflow
+* ``from epcsaft import Mixture, State`` for core provider workflow
   construction.
+* ``from epcsaft import Equilibrium, Regression`` for transition equilibrium
+  and regression workflow construction until the extension packages own those
+  imports.
 * ``from epcsaft import ParameterSet, ModelOptions`` for parameter data and
   model formulation choices.
 * ``from epcsaft import create_input_template`` for reset input scaffolds.
@@ -92,17 +114,22 @@ APIs; keep them outside the runtime package.
 Import Policy
 -------------
 
-Public user code should import from the top-level package or from documented
-subsystem modules:
+Current public user code should import from the top-level package or from
+documented subsystem modules:
 
 * ``import epcsaft``
 * ``from epcsaft import Mixture, ParameterSet, ModelOptions``
-* ``from epcsaft import Equilibrium, Regression``
+* ``from epcsaft import Equilibrium, Regression`` during the transition release
+  series
 
 Internal modules may share package-owned helpers when that keeps behavior
 centralized, but subsystem code should avoid circular ownership. In particular,
 benchmarks and docs may depend on public APIs, while core runtime modules must
 not depend on benchmark entrypoints or generated analysis artifacts.
+
+After the split, extension packages import the core provider contract instead
+of reaching into private core modules. Core must not import extension packages
+by default.
 
 Compatibility Policy
 --------------------
@@ -117,18 +144,22 @@ The hard reset intentionally cuts off legacy root imports:
    epcsaft.ParameterSet
    epcsaft.ModelOptions
 
-Legacy runtime classes may remain in internal bridge modules while the native
-routes are ported, but they are not top-level public imports.
+Internal bridge modules may exist only as actively owned implementation seams
+for current transition work. They are not top-level public imports, and they
+must be deleted when the old path is migrated.
 
 Optional Dependency Policy
 --------------------------
 
-The default install should keep the lightweight runtime usable. Heavy or
-platform-sensitive dependencies belong behind optional dependency groups,
-feature flags, or runtime capability checks. For example, Ipopt-dependent
-workflows must fail with actionable diagnostics when native Ipopt is not
-compiled or a route is outside the compiled native adapter surface, instead of
-making the base package import fail.
+The default provider install should keep the lightweight runtime usable. Heavy
+or platform-sensitive dependencies belong to the capability that needs them:
+Ceres to regression and Ipopt to equilibrium. During the monorepo transition,
+source-checkout builds may still compile all current native capabilities by
+default, but that must not be described as final core dependency ownership.
+
+Ipopt-dependent workflows must fail with actionable diagnostics when native
+Ipopt is not compiled or a route is outside the compiled native adapter
+surface, instead of making the base package import fail.
 
 Native build capabilities should be reported through ``capabilities()`` and
 ``runtime_build_info()`` so downstream projects can select supported workflows

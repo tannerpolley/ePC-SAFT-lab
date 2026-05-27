@@ -90,10 +90,10 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     pyproject_text = (build_epcsaft.REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     presets = json.loads((build_epcsaft.REPO_ROOT / "CMakePresets.json").read_text(encoding="utf-8"))
 
-    assert 'option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support required for native regression solves" ON)' in cmake_text
+    assert 'option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support for native regression solves" ON)' in cmake_text
     assert 'option(EPCSAFT_ENABLE_CPPAD "Enable package-wide CppAD support" ON)' in cmake_text
     assert 'option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)' in cmake_text
-    assert "native regression builds require Ceres" in cmake_text
+    assert "EPCSAFT_ENABLE_CERES=OFF is not supported" not in cmake_text
     assert "derivative-capable package builds require CppAD" in cmake_text
     assert 'set(EPCSAFT_CERES_VERSION "2.2.0")' in cmake_text
     assert "find_package(Ceres ${EPCSAFT_CERES_VERSION} CONFIG REQUIRED)" in cmake_text
@@ -104,6 +104,13 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "EPCSAFT_NATIVE_AUTODIFF_SOURCES" in cmake_text
     assert "EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES" in cmake_text
     assert "EPCSAFT_NATIVE_REGRESSION_SOURCES" in cmake_text
+    assert "EPCSAFT_PROVIDER_NATIVE_SOURCES" in cmake_text
+    assert "EPCSAFT_NATIVE_OBJECT_TARGETS" in cmake_text
+    assert "add_library(epcsaft_provider_native OBJECT" in cmake_text
+    assert "add_library(epcsaft_equilibrium_native OBJECT" in cmake_text
+    assert "add_library(epcsaft_regression_native OBJECT" in cmake_text
+    assert "target_link_libraries(epcsaft_regression_native PUBLIC Ceres::ceres)" in cmake_text
+    assert 'target_link_libraries(epcsaft_equilibrium_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")' in cmake_text
     assert "EPCSAFT_NATIVE_INCLUDE_DIRS" in cmake_text
     assert "file(GLOB EPCSAFT_NATIVE_SOURCES" not in cmake_text
     assert "src/epcsaft/native/*.cpp" not in cmake_text

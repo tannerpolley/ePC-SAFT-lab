@@ -87,13 +87,31 @@ The canonical local native build command is:
 
    uv run python scripts/dev/build_epcsaft.py
 
-That command uses ``--profile fast`` by default: Ceres and CppAD are enabled, and Ipopt is enabled when a native install is available. On Windows, the script first honors explicit ``EPCSAFT_IPOPT_ROOT`` / ``EPCSAFT_PEP517_IPOPT_ROOT`` values and otherwise uses the local SDK default ``%USERPROFILE%\Documents\deps\ipopt-msvc`` when present. Ceres is required for native regression builds, CppAD is required for derivative-capable package builds, and Ipopt-enabled equilibrium routes require an Ipopt-enabled native build.
+That command uses ``--profile fast`` by default: Ceres and CppAD are enabled,
+and Ipopt is enabled when a native install is available. On Windows, the script
+first honors explicit ``EPCSAFT_IPOPT_ROOT`` /
+``EPCSAFT_PEP517_IPOPT_ROOT`` values and otherwise uses the local SDK default
+``%USERPROFILE%\Documents\deps\ipopt-msvc`` when present. In this transition
+checkout, Ceres is enabled by default for native regression builds, CppAD is
+required for derivative-capable provider builds, and Ipopt-enabled equilibrium
+routes require an Ipopt-enabled native build. ADR 0005 assigns final Ceres
+ownership to ``epcsaft-regression`` and final Ipopt ownership to
+``epcsaft-equilibrium``. Explicit package-boundary proof lanes may disable
+Ceres or Ipopt to prove the future provider and extension dependency split.
 
 Root ``CMAKE.md`` is the source of truth for direct CMake preset operations. Direct CMake preset operations must use ``scripts/dev/cmake_preset.ps1`` or the matching JetBrains Services entries: ``CMake Configure dev-native``, ``CMake Build _core dev-native``, and ``CMake Build dev-native``. Do not call raw ``cmake --preset`` or ``cmake --build`` from ad hoc shells for this repo. The wrapper loads the Visual Studio developer environment, uses the repo-local ``.venv\Scripts\cmake.exe`` and ``.venv\Scripts\ninja.exe``, pins ``CMAKE_MAKE_PROGRAM`` for ``dev-native``, and refuses to run while ``build/dev/.ninja_lock`` exists.
 
 Strawberry may remain installed for unrelated tooling, but it is not the ePC-SAFT CMake standard. Do not select a Strawberry MinGW toolchain or rely on Strawberry's ``cmake.exe`` / ``ninja.exe`` for ``build/dev``.
 
-Wheel/editable/path installs go through the PEP 517/scikit-build backend and use the same required Ceres/CppAD policy. On Windows, the backend also uses the local Ipopt SDK default when it exists; otherwise set ``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` explicitly for Ipopt package builds. Repeated package builds avoid rebuilding Ceres when the default repo-local Ceres package exists at ``build/system-ceres/2.2.0/install/lib/cmake/Ceres`` or when an explicit ``EPCSAFT_PEP517_CERES_DIR``/``Ceres_DIR`` points at a valid Ceres package config.
+Wheel/editable/path installs go through the PEP 517/scikit-build backend and
+use the same transition Ceres/CppAD policy. On Windows, the backend also uses
+the local Ipopt SDK default when it exists; otherwise set
+``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` explicitly for
+Ipopt package builds. Repeated package builds avoid rebuilding Ceres when the
+default repo-local Ceres package exists at
+``build/system-ceres/2.2.0/install/lib/cmake/Ceres`` or when an explicit
+``EPCSAFT_PEP517_CERES_DIR``/``Ceres_DIR`` points at a valid Ceres package
+config.
 
 .. list-table::
    :header-rows: 1

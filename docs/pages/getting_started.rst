@@ -10,6 +10,10 @@ For the current release, install the Windows CPython 3.13 wheel from GitHub:
 
    python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 
+The GitHub URLs below are current pre-transfer release and source locations.
+The package roadmap targets transfer to the ``ePC-SAFT`` organization before
+extension packages are extracted.
+
 The ``v0.2.0`` tag also supports source installs that build the native
 extension locally:
 

@@ -146,19 +146,23 @@ def _config_value(config: dict, key: str) -> str | None:
     return None
 
 
+def _cmake_truthy(value: str | None) -> bool:
+    return value is None or value.strip().upper() not in {"0", "FALSE", "NO", "OFF"}
+
+
 def _apply_required_native_dependency_config(config: dict) -> dict:
-    for key, dependency in (
-        ("cmake.define.EPCSAFT_ENABLE_CERES", "Ceres"),
-        ("cmake.define.EPCSAFT_ENABLE_CPPAD", "CppAD"),
-    ):
-        value = _config_value(config, key)
-        if value is not None and value.strip().upper() in {"0", "FALSE", "NO", "OFF"}:
-            raise ValueError(f"{dependency} is required for native regression and derivative-capable package builds.")
-        _set_config_default(config, key, "ON")
+    key = "cmake.define.EPCSAFT_ENABLE_CPPAD"
+    value = _config_value(config, key)
+    if value is not None and not _cmake_truthy(value):
+        raise ValueError("CppAD is required for derivative-capable package builds.")
+    _set_config_default(config, key, "ON")
+    _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_CERES", "ON")
     return config
 
 
 def _apply_system_ceres_config(config: dict) -> dict:
+    if not _cmake_truthy(_config_value(config, "cmake.define.EPCSAFT_ENABLE_CERES")):
+        return config
     ceres_dir_env = os.environ.get("EPCSAFT_PEP517_CERES_DIR") or os.environ.get("Ceres_DIR")
     default_ceres_dir = None if ceres_dir_env else resolve_default_system_ceres_config_dir(_source_root())
     ceres_dir = Path(ceres_dir_env).expanduser().resolve() if ceres_dir_env else default_ceres_dir

@@ -1,14 +1,18 @@
 Parameter Regression
 ====================
 
-Public regression runs through ``Regression(mixture, ...)``. The reset frontend
-does not expose free ``fit_*`` functions or backend-selection flags.
+Public regression currently runs through ``Regression(mixture, ...)`` in the
+monorepo transition release. ADR 0005 assigns final ownership of this surface
+to the ``epcsaft-regression`` extension package. The reset frontend does not
+expose free ``fit_*`` functions or backend-selection flags.
 
 Current Public Proof
 --------------------
 
 The current trusted public regression path is pure-neutral hydrocarbon fitting
-through the native Ceres route with CppAD-backed Jacobians:
+through the native Ceres route with CppAD-backed Jacobians. Ceres is the
+regression optimizer dependency; CppAD-backed provider derivatives remain
+core-owned:
 
 .. code-block:: python
 

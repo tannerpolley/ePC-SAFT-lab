@@ -41,7 +41,19 @@ Use the normal build path first:
    uv run python scripts/dev/doctor.py
    uv run python run_pytest.py --confidence -q
 
-The normal local dev build is the fast profile: Ceres ON, CppAD ON, and Ipopt ON when ``EPCSAFT_IPOPT_ROOT``, ``EPCSAFT_PEP517_IPOPT_ROOT``, ``--ipopt-dir``, or the Windows local SDK default ``%USERPROFILE%\Documents\deps\ipopt-msvc`` provides a native Ipopt install. Ceres is required for native regression builds, CppAD is required for derivative-capable builds, and Ipopt-enabled builds own the production native equilibrium routes. Use ``uv run python scripts/dev/build_epcsaft.py --disable-ipopt`` only when the debug task intentionally excludes native Ipopt coverage.
+The normal local dev build is the fast profile: Ceres ON, CppAD ON, and Ipopt
+ON when ``EPCSAFT_IPOPT_ROOT``, ``EPCSAFT_PEP517_IPOPT_ROOT``,
+``--ipopt-dir``, or the Windows local SDK default
+``%USERPROFILE%\Documents\deps\ipopt-msvc`` provides a native Ipopt install.
+In this transition checkout, Ceres is enabled by default for native regression
+builds, CppAD is required for derivative-capable provider builds, and
+Ipopt-enabled builds own the production native equilibrium routes. ADR 0005
+assigns final Ceres ownership to ``epcsaft-regression`` and final Ipopt
+ownership to ``epcsaft-equilibrium``. Use
+``uv run python scripts/dev/build_epcsaft.py --disable-ipopt`` only when the
+debug task intentionally excludes native Ipopt coverage. Use Ceres-disabled
+builds only for package-boundary proof lanes that intentionally exclude native
+regression coverage.
 
 For C++ iteration after the build tree is configured:
 

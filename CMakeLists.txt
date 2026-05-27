@@ -18,7 +18,7 @@ project(${SKBUILD_PROJECT_NAME}
 )
 
 option(EPCSAFT_DEV_INPLACE "Copy the compiled extension into src/epcsaft for local development" OFF)
-option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support required for native regression solves" ON)
+option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support for native regression solves" ON)
 option(EPCSAFT_USE_SYSTEM_CERES "Use an installed Ceres Solver package instead of FetchContent" OFF)
 option(EPCSAFT_ENABLE_CPPAD "Enable package-wide CppAD support" ON)
 option(EPCSAFT_USE_SYSTEM_CPPAD "Use installed CppAD instead of FetchContent" OFF)
@@ -29,9 +29,6 @@ option(EPCSAFT_WARNINGS_AS_ERRORS "Treat native warnings as errors" OFF)
 option(EPCSAFT_ENABLE_SANITIZERS "Enable ASAN/UBSAN in debug builds" OFF)
 set(EPCSAFT_CERES_VERSION "2.2.0")
 
-if(NOT EPCSAFT_ENABLE_CERES)
-    message(FATAL_ERROR "EPCSAFT_ENABLE_CERES=OFF is not supported; native regression builds require Ceres.")
-endif()
 if(NOT EPCSAFT_ENABLE_CPPAD)
     message(FATAL_ERROR "EPCSAFT_ENABLE_CPPAD=OFF is not supported; derivative-capable package builds require CppAD.")
 endif()
@@ -295,18 +292,15 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
 set(EPCSAFT_NATIVE_REGRESSION_SOURCES
     src/epcsaft/native/regression/ceres_regression.cpp
 )
-set(EPCSAFT_NATIVE_SOURCES
+set(EPCSAFT_PROVIDER_NATIVE_SOURCES
     ${EPCSAFT_NATIVE_MODEL_SOURCES}
     ${EPCSAFT_NATIVE_EOS_SOURCES}
     ${EPCSAFT_NATIVE_AUTODIFF_SOURCES}
-    ${EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES}
-    ${EPCSAFT_NATIVE_REGRESSION_SOURCES}
 )
 if(EPCSAFT_CPPAD_SOURCE_FILE)
-    list(APPEND EPCSAFT_NATIVE_SOURCES "${EPCSAFT_CPPAD_SOURCE_FILE}")
+    list(APPEND EPCSAFT_PROVIDER_NATIVE_SOURCES "${EPCSAFT_CPPAD_SOURCE_FILE}")
 endif()
 
-add_library(epcsaft_native OBJECT ${EPCSAFT_NATIVE_SOURCES})
 set(EPCSAFT_NATIVE_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/autodiff"
@@ -323,31 +317,55 @@ set(EPCSAFT_NATIVE_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/regression"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/runtime"
 )
-target_include_directories(epcsaft_native
-    PUBLIC
-        ${EPCSAFT_NATIVE_INCLUDE_DIRS}
-        "${EPCSAFT_EIGEN_INCLUDE}"
+
+add_library(epcsaft_provider_native OBJECT ${EPCSAFT_PROVIDER_NATIVE_SOURCES})
+add_library(epcsaft_equilibrium_native OBJECT ${EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES})
+add_library(epcsaft_regression_native OBJECT ${EPCSAFT_NATIVE_REGRESSION_SOURCES})
+add_library(epcsaft_native INTERFACE)
+
+set(EPCSAFT_NATIVE_OBJECT_TARGETS
+    epcsaft_provider_native
+    epcsaft_equilibrium_native
+    epcsaft_regression_native
 )
-target_compile_features(epcsaft_native PUBLIC cxx_std_17)
-set_target_properties(epcsaft_native PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(epcsaft_native INTERFACE ${EPCSAFT_NATIVE_OBJECT_TARGETS})
+
+foreach(target_name IN LISTS EPCSAFT_NATIVE_OBJECT_TARGETS)
+    target_include_directories(${target_name}
+        PUBLIC
+            ${EPCSAFT_NATIVE_INCLUDE_DIRS}
+            "${EPCSAFT_EIGEN_INCLUDE}"
+    )
+    target_compile_features(${target_name} PUBLIC cxx_std_17)
+    set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endforeach()
+
+target_link_libraries(epcsaft_equilibrium_native PUBLIC epcsaft_provider_native)
+target_link_libraries(epcsaft_regression_native PUBLIC epcsaft_provider_native)
 
 if(EPCSAFT_ENABLE_CERES)
-    target_link_libraries(epcsaft_native PUBLIC Ceres::ceres)
-    target_compile_definitions(epcsaft_native PUBLIC EPCSAFT_HAS_CERES=1)
+    target_link_libraries(epcsaft_regression_native PUBLIC Ceres::ceres)
+    target_compile_definitions(epcsaft_regression_native PUBLIC EPCSAFT_HAS_CERES=1)
 endif()
 if(EPCSAFT_ENABLE_IPOPT)
-    target_link_libraries(epcsaft_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")
-    target_compile_definitions(epcsaft_native PUBLIC EPCSAFT_HAS_IPOPT=1)
+    target_link_libraries(epcsaft_equilibrium_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")
+    target_compile_definitions(epcsaft_equilibrium_native PUBLIC EPCSAFT_HAS_IPOPT=1)
 endif()
 if(EPCSAFT_CPPAD_LIBRARY)
-    target_link_libraries(epcsaft_native PUBLIC "${EPCSAFT_CPPAD_LIBRARY}")
+    target_link_libraries(epcsaft_provider_native PUBLIC "${EPCSAFT_CPPAD_LIBRARY}")
 endif()
 
 pybind11_add_module(_core NO_EXTRAS
     src/epcsaft/native/bindings/module.cpp
     src/epcsaft/native/equilibrium/register_bindings.cpp
 )
-target_link_libraries(_core PRIVATE epcsaft_native)
+target_link_libraries(
+    _core
+    PRIVATE
+        epcsaft_provider_native
+        epcsaft_equilibrium_native
+        epcsaft_regression_native
+)
 target_include_directories(_core
     PRIVATE
         ${EPCSAFT_NATIVE_INCLUDE_DIRS}
@@ -362,7 +380,10 @@ if(MSVC)
     )
 endif()
 
-set(EPCSAFT_NATIVE_TARGETS epcsaft_native _core)
+set(EPCSAFT_NATIVE_TARGETS
+    ${EPCSAFT_NATIVE_OBJECT_TARGETS}
+    _core
+)
 
 foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
     target_compile_definitions(
@@ -393,17 +414,22 @@ foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
         endif()
         if(EPCSAFT_ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
             target_compile_options(${target_name} PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
-            target_link_options(${target_name} PRIVATE -fsanitize=address,undefined)
         endif()
     endif()
 endforeach()
+
+if(EPCSAFT_ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
+    target_link_options(_core PRIVATE -fsanitize=address,undefined)
+endif()
 
 if(EPCSAFT_ENABLE_SANITIZERS AND MSVC)
     message(WARNING "EPCSAFT_ENABLE_SANITIZERS is currently only configured for GNU/Clang debug builds.")
 endif()
 
 if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(epcsaft_native PRIVATE -Wa,-mbig-obj)
+    foreach(target_name IN LISTS EPCSAFT_NATIVE_OBJECT_TARGETS)
+        target_compile_options(${target_name} PRIVATE -Wa,-mbig-obj)
+    endforeach()
     target_compile_options(_core PRIVATE -Wa,-mbig-obj)
     target_link_options(_core PRIVATE -static -static-libgcc -static-libstdc++)
 endif()

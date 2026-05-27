@@ -1,6 +1,9 @@
 # Issue Tracker: GitHub
 
-Issues and PRDs for this repo live in GitHub Issues for `tannerpolley/ePC-SAFT`. Use the `gh` CLI for issue operations from inside this clone.
+Issues and PRDs for this repo live in GitHub Issues for the repository shown by
+`git remote -v`. Before the organization transfer this is
+`tannerpolley/ePC-SAFT`; after transfer it should be `ePC-SAFT/ePC-SAFT`. Use
+the `gh` CLI for issue operations from inside this clone.
 
 ## Conventions
 
@@ -15,7 +18,7 @@ Infer the repo from `git remote -v`. The GitHub CLI does this automatically when
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue in `tannerpolley/ePC-SAFT`.
+Create a GitHub issue in the repository shown by `git remote -v`.
 
 ## When a skill says "fetch the relevant ticket"
 

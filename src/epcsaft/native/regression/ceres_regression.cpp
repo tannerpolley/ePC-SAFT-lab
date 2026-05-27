@@ -9,13 +9,11 @@
 #include <string>
 
 
-#ifndef EPCSAFT_HAS_CERES
-#error "EPCSAFT_HAS_CERES must be defined; Ceres is a required native dependency."
-#endif
-
+#ifdef EPCSAFT_HAS_CERES
 #include <ceres/cost_function.h>
 #include <ceres/problem.h>
 #include <ceres/solver.h>
+#endif
 
 using Index = Eigen::Index;
 using thermo_detail::kDispersionA0;
@@ -1864,6 +1862,17 @@ PureNeutralRegressionResult fit_pure_neutral_ceres_cpp(
     const vector<double> &lower,
     const vector<double> &upper
 ) {
+#ifndef EPCSAFT_HAS_CERES
+    (void)base_args;
+    (void)density_records;
+    (void)density_scale;
+    (void)pure_vle_records;
+    (void)pure_vle_scale;
+    (void)x0;
+    (void)lower;
+    (void)upper;
+    throw ValueError("Native Ceres regression requires a Ceres-enabled build.");
+#else
     validate_pure_neutral_base_args_cpp(base_args);
     if (density_records.empty() || pure_vle_records.empty()) {
         throw ValueError("Native Ceres pure-neutral regression requires both density and pure-VLE record families.");
@@ -1887,6 +1896,7 @@ PureNeutralRegressionResult fit_pure_neutral_ceres_cpp(
     result.derivative_backend = "cppad_implicit";
     result.jacobian_backend = result.derivative_backend;
     return result;
+#endif
 }
 
 GenericRegressionDebugResult evaluate_generic_regression_debug_cpp(
@@ -1918,6 +1928,18 @@ GenericRegressionResult fit_generic_ceres_cpp(
     const vector<double> &upper,
     int max_nfev
 ) {
+#ifndef EPCSAFT_HAS_CERES
+    (void)base_args_by_record;
+    (void)records;
+    (void)target_kinds;
+    (void)target_indices;
+    (void)target_indices_2;
+    (void)x0;
+    (void)lower;
+    (void)upper;
+    (void)max_nfev;
+    throw ValueError("Native Ceres regression requires a Ceres-enabled build.");
+#else
     if (target_kinds.empty()) {
         throw ValueError("Native Ceres generic regression requires at least one optimization target.");
     }
@@ -1973,5 +1995,6 @@ GenericRegressionResult fit_generic_ceres_cpp(
     result.jacobian_available = true;
     result.jacobian_backend = "cppad_implicit";
     return result;
+#endif
 }
 

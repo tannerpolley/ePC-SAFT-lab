@@ -11,10 +11,19 @@ Root ``CMAKE.md`` is the direct CMake execution protocol. Keep it aligned when
 direct preset, Services, wrapper, generator, or local toolchain behavior
 changes.
 
-Current dependency contract
----------------------------
+Current transition dependency contract
+--------------------------------------
 
-Ceres is required for native regression builds. CppAD is required for derivative-capable package builds. Ipopt is required for production equilibrium validation because production native equilibrium routes are Ipopt-backed NLP routes.
+This source checkout is still a monorepo transition build. It compiles the
+current provider, regression, and equilibrium native capability set into one
+``_core`` module, with logical native object targets separating provider/CppAD,
+equilibrium/Ipopt, and regression/Ceres ownership while ADR 0005 moves final
+package ownership to separate packages.
+
+Ceres is currently required for native regression builds in this checkout.
+CppAD is required for derivative-capable provider builds and remains core-owned
+after the split. Ipopt is required for production equilibrium validation because
+production native equilibrium routes are Ipopt-backed NLP routes.
 
 The default source-checkout build command remains:
 
@@ -27,16 +36,22 @@ native Ipopt install is discoverable. ``--disable-ipopt`` is allowed only for a
 diagnostic or smoke lane that intentionally excludes Ipopt. A no-Ipopt smoke
 lane must not be described as production equilibrium validation.
 
-Regression and equilibrium are core package capabilities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Regression and equilibrium are transition capabilities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Native regression and production native equilibrium are core capabilities of
-this package, not optional add-on examples. Ceres, CppAD, and Ipopt should
-therefore be enabled by default wherever the relevant native dependency can be
-provided with controlled, reproducible friction.
+Native regression and production native equilibrium are current monorepo
+capabilities, not optional examples. That does not make them final core package
+capabilities. ADR 0005 assigns final ownership of Ceres-backed regression to
+``epcsaft-regression`` and Ipopt-backed equilibrium to
+``epcsaft-equilibrium``.
 
-The intended low-friction path is not to make these capabilities optional. The
-intended low-friction path is:
+Ceres, CppAD, and Ipopt should therefore be enabled by default in this checkout
+where the relevant native dependency can be provided with controlled,
+reproducible friction. The provider-only package proof separates that
+source-checkout convenience from final core dependency ownership by explicitly
+building without Ceres and Ipopt while retaining CppAD.
+
+The intended transition low-friction path is:
 
 - reuse or auto-detect a local/system Ceres package when repeated builds would
   otherwise rebuild Ceres;
@@ -45,7 +60,8 @@ intended low-friction path is:
 - use a native system Ipopt install or pinned non-Conda Ipopt SDK artifact;
 - keep normal wheels/sdists free from user-local Ipopt runtime coupling unless
   an explicit Ipopt package artifact is being validated;
-- reserve no-Ipopt builds for smoke, diagnostic, or package-boundary lanes.
+- reserve no-Ipopt and no-Ceres builds for smoke, diagnostic, or
+  package-boundary lanes.
 
 A build or CI lane that disables Ipopt must be named and documented as a
 no-Ipopt lane. It must not be used as evidence for production equilibrium
@@ -56,7 +72,9 @@ CMake and C++ dependency rules
 
 Keep the CMake dependency contract explicit and loud:
 
-- ``EPCSAFT_ENABLE_CERES`` stays ON and unsupported when OFF.
+- ``EPCSAFT_ENABLE_CERES`` stays ON by default for the transition checkout, but
+  OFF is supported for provider-only and equilibrium-extension package-boundary
+  proof lanes.
 - ``EPCSAFT_ENABLE_CPPAD`` stays ON and unsupported when OFF.
 - ``EPCSAFT_ENABLE_IPOPT`` stays ON for Ipopt-capable source validation.
 - Vendored Ipopt builds are not supported by the package CMake project.
@@ -71,8 +89,11 @@ that needs production equilibrium proof must configure Ipopt and fail loudly if
 the requested Ipopt root or config package cannot be used.
 
 Do not reframe Ceres, CppAD, or Ipopt as greenfield optional dependencies in
-repo protocol documents; they are required for the native capabilities named
-above, with only explicitly scoped smoke/package-boundary exceptions.
+repo protocol documents. In the transition checkout, Ceres and Ipopt are enabled
+for the native capabilities named above, with explicitly scoped smoke or
+package-boundary exceptions. In the final split, Ceres belongs to the regression
+package, Ipopt belongs to the equilibrium package, and CppAD remains part of the
+core derivative provider substrate.
 
 CI lane policy
 --------------

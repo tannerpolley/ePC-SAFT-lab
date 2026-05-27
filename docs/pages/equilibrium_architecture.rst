@@ -1,7 +1,11 @@
 Equilibrium Architecture
 ========================
 
-The reset public API is workflow-object based:
+This page describes the current monorepo equilibrium surface. ADR 0005 assigns
+final ownership of this surface to the ``epcsaft-equilibrium`` extension
+package after the provider API and native boundary contracts are proven.
+
+The current reset public API is workflow-object based:
 
 * ``Equilibrium(mixture, route=..., ...).solve()`` for certified neutral
   nonassociating VLE, flash, and LLE route specs.
@@ -83,8 +87,10 @@ speciation subkernels and validation tests. Full ePC-SAFT multiphase,
 electrolyte, density-coupled, or association-coupled equilibrium should be
 treated as a thermodynamic constrained NLP, not as a globally convex problem.
 Production equilibrium routes require exact analytic or CppAD Jacobians. Native
-Ceres owns package regression solves, while CppAD and implicit sensitivities
-provide derivative payloads where the route is validated.
+Ceres owns the current monorepo regression solves and the future
+``epcsaft-regression`` capability. Ipopt owns the current monorepo equilibrium
+solves and the future ``epcsaft-equilibrium`` capability. CppAD and implicit
+sensitivities remain provider-owned where the EoS route is validated.
 
 Ipopt diagnostics are route-owned and available through
 ``result.diagnostics``. Use ``ipopt_iteration_history_limit`` to retain recent

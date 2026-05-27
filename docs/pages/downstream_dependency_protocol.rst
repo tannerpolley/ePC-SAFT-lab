@@ -8,12 +8,13 @@ documentation ambiguity, or numerical behavior change.
 Issue intake
 ------------
 
-Downstream projects should file GitHub issues against ``tannerpolley/ePC-SAFT``
-with the downstream dependency bug or upstream package request form. A complete
-report includes the downstream repo or path, task goal, failing command, error
-or bad result, minimal reproducer, imported ``epcsaft`` path, expected behavior,
-actual behavior, downstream validation command after the fix, and temporary
-workaround status.
+Downstream projects should file GitHub issues against the current upstream
+repository shown by ``git remote -v``. Before the organization transfer this is
+``tannerpolley/ePC-SAFT``; after transfer it should be
+``ePC-SAFT/ePC-SAFT``. A complete report includes the downstream repo or path,
+task goal, failing command, error or bad result, minimal reproducer, imported
+``epcsaft`` path, expected behavior, actual behavior, downstream validation
+command after the fix, and temporary workaround status.
 
 Use labels to make routing durable:
 
@@ -67,7 +68,7 @@ Use the read-only helper to inspect one issue and choose the first command:
 .. code-block:: powershell
 
    uv run python scripts/support/triage_dependency_issue.py --issue 12
-   uv run python scripts/support/triage_dependency_issue.py --issue https://github.com/tannerpolley/ePC-SAFT/issues/12 --json
+   uv run python scripts/support/triage_dependency_issue.py --issue https://github.com/<owner>/<repo>/issues/12 --json
 
 The helper fetches the issue through GitHub CLI, checks the required sections,
 classifies the likely area from labels and body text, and prints recommended

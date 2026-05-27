@@ -11,6 +11,10 @@ archive:
 
 ``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
 
+That URL is the current pre-transfer release location. The package roadmap
+targets transfer to the ``ePC-SAFT`` GitHub organization before extension
+packages are extracted.
+
 Windows users on Python 3.13 can download the wheel and install it directly:
 
 .. code-block:: powershell
@@ -123,7 +127,9 @@ want an implicit sync to rebuild the package again.
 Native IPOPT SDK support
 ------------------------
 
-IPOPT support is a native build dependency, not a Python extra. On Windows, the
+IPOPT support is a native build dependency for constrained-NLP equilibrium
+routes in the current transition build, not a Python extra. Long term, Ipopt
+belongs to the ``epcsaft-equilibrium`` extension package. On Windows, the
 preferred local dependency is the SDK root at
 ``%USERPROFILE%\Documents\deps\ipopt-msvc``. Source and editable installs use
 that SDK automatically when the directory exists; otherwise point the build

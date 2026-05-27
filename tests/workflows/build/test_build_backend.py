@@ -193,7 +193,7 @@ def test_pep517_build_backend_uses_local_windows_ipopt_sdk_default(tmp_path, mon
     assert str(bin_dir.resolve()) in os.environ["EPCSAFT_RUNTIME_DLL_DIRS"]
 
 
-def test_pep517_build_backend_requires_ceres_and_cppad_by_default(tmp_path, monkeypatch) -> None:
+def test_pep517_build_backend_keeps_ceres_default_and_requires_cppad(tmp_path, monkeypatch) -> None:
     backend = _load_backend()
     monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
     monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
@@ -218,11 +218,26 @@ def test_pep517_build_backend_requires_ceres_and_cppad_by_default(tmp_path, monk
     assert "cmake.define.EPCSAFT_IPOPT_ROOT" not in config
 
 
-def test_pep517_build_backend_rejects_disabled_required_native_dependencies() -> None:
+def test_pep517_build_backend_allows_provider_build_without_ceres() -> None:
     backend = _load_backend()
 
-    with pytest.raises(ValueError, match="Ceres is required"):
-        backend._isolated_build_config({"cmake.define.EPCSAFT_ENABLE_CERES": "OFF"})
+    config = backend._isolated_build_config(
+        {
+            "cmake.define.EPCSAFT_ENABLE_CERES": "OFF",
+            "cmake.define.EPCSAFT_ENABLE_IPOPT": "OFF",
+        }
+    )
+
+    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "OFF"
+    assert config["cmake.define.EPCSAFT_ENABLE_CPPAD"] == "ON"
+    assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "OFF"
+    assert "cmake.define.EPCSAFT_USE_SYSTEM_CERES" not in config
+    assert "cmake.define.Ceres_DIR" not in config
+
+
+def test_pep517_build_backend_rejects_disabled_required_cppad() -> None:
+    backend = _load_backend()
+
     with pytest.raises(ValueError, match="CppAD is required"):
         backend._isolated_build_config({"cmake.define.EPCSAFT_ENABLE_CPPAD": "OFF"})
 

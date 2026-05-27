@@ -141,14 +141,14 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
 
     for token in (
         "Build/Package Dependency Protocol",
-        "Ceres is required",
+        "Ceres, CppAD, and Ipopt should therefore be enabled by default",
         "CppAD is required",
         "Ipopt is required for production equilibrium validation",
-        "Regression and equilibrium are core package capabilities",
-        "not optional add-on examples",
-        "controlled, reproducible friction",
+        "transition capabilities",
+        "current monorepo",
+        "reproducible friction",
         "Do not reframe Ceres, CppAD, or Ipopt as greenfield optional dependencies",
-        "smoke/package-boundary exceptions",
+        "package-boundary exceptions",
         "Conda or mamba must not be the normal Ipopt CI provisioning path",
         "Option B is the accepted normal PR CI direction",
         "no-Ipopt smoke lane",
@@ -477,6 +477,11 @@ def test_native_warning_options_apply_to_all_native_targets() -> None:
 
     assert 'option(EPCSAFT_WARNINGS_AS_ERRORS "Treat native warnings as errors" OFF)' in cmake
     assert 'option(EPCSAFT_ENABLE_SANITIZERS "Enable ASAN/UBSAN in debug builds" OFF)' in cmake
-    assert "set(EPCSAFT_NATIVE_TARGETS epcsaft_native _core)" in cmake
+    assert "set(EPCSAFT_NATIVE_OBJECT_TARGETS" in cmake
+    assert "epcsaft_provider_native" in cmake
+    assert "epcsaft_equilibrium_native" in cmake
+    assert "epcsaft_regression_native" in cmake
+    assert "set(EPCSAFT_NATIVE_TARGETS" in cmake
+    assert "${EPCSAFT_NATIVE_OBJECT_TARGETS}" in cmake
     assert "foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)" in cmake
     assert "target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)" in cmake

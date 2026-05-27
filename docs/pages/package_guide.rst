@@ -1,9 +1,15 @@
 Package Guide
 =============
 
-This guide groups the reset public package surface by task. The package root
-exports ``Mixture``, ``State``, ``Equilibrium``, ``Regression``,
-``ParameterSet``, ``ModelOptions``, and ``create_input_template``.
+This guide groups the reset public package surface by task. The current
+transition release exports ``Mixture``, ``State``, ``Equilibrium``,
+``Regression``, ``ParameterSet``, ``ModelOptions``, and
+``create_input_template`` from the package root.
+
+ADR 0005 assigns final ownership of ``Equilibrium`` to
+``epcsaft-equilibrium`` and final ownership of ``Regression`` to
+``epcsaft-regression``. The examples below describe the current monorepo
+surface until that coordinated migration lands.
 
 Constructing A Model
 --------------------
@@ -49,7 +55,8 @@ Equilibrium
 
 Construct ``Equilibrium`` directly from a ``Mixture``. The trusted equilibrium
 proof is the hydrocarbon bubble-pressure route with native Ipopt and an exact
-Hessian:
+Hessian. This is a current transition API; final ownership moves to
+``epcsaft-equilibrium``:
 
 .. code-block:: python
 
@@ -66,7 +73,8 @@ Regression
 ----------
 
 Construct ``Regression`` directly from a ``Mixture``. The current public proof
-is pure-neutral hydrocarbon regression through the CppAD/Ceres route:
+is pure-neutral hydrocarbon regression through the CppAD/Ceres route. This is a
+current transition API; final ownership moves to ``epcsaft-regression``:
 
 .. code-block:: python
 

@@ -171,8 +171,9 @@ def _native_ceres_backend_info() -> dict[str, object]:
     except (ImportError, OSError):
         return {
             "backend": "ceres",
-            "status": "required_native_extension_missing",
-            "required": True,
+            "status": "native_extension_missing",
+            "required": False,
+            "required_for": ["epcsaft-regression"],
             "compiled": False,
             "available": False,
         }
@@ -181,17 +182,19 @@ def _native_ceres_backend_info() -> dict[str, object]:
     except AttributeError:
         return {
             "backend": "ceres",
-            "status": "required_ceres_smoke_missing",
-            "required": True,
+            "status": "ceres_probe_missing",
+            "required": False,
+            "required_for": ["epcsaft-regression"],
             "compiled": False,
             "available": False,
         }
-    status = str(smoke.get("status", "required_ceres_status_missing"))
+    status = str(smoke.get("status", "ceres_probe_missing"))
     compiled = bool(smoke.get("compiled", False))
     return {
         "backend": "ceres",
         "status": status,
-        "required": True,
+        "required": False,
+        "required_for": ["epcsaft-regression"],
         "compiled": compiled,
         "available": status == "enabled_available" and compiled,
     }
@@ -432,19 +435,59 @@ def capabilities() -> dict[str, object]:
     ceres_capability: dict[str, object] = {
         **ceres,
         "production": ceres_available,
-        "scope": "native optimizer backend behind the reset Regression workflow",
+        "scope": "native optimizer backend owned by the regression extension",
         "native_hot_loop": ceres_available,
         "production_routes": ["regression:pure_neutral"],
     }
     if not ceres_available:
-        ceres_capability["reason"] = "required_native_dependency_missing"
+        ceres_capability["reason"] = "extension_dependency_missing"
     derivative_coverage = _derivative_coverage_capabilities(cppad, ceres)
     equilibrium_activation = _equilibrium_activation_capabilities(ipopt_route_available=ipopt_route_available)
     ipopt_public_routes = list(equilibrium_activation["public_routes"])
     public_routes_by_family = dict(equilibrium_activation["public_routes_by_family"])
     regression_target_evidence = _regression_target_kind_evidence()
     regression_route_available = bool(ceres_available and cppad_capability.get("available", False))
+    provider_view = {
+        "package": "epcsaft",
+        "owner": "core_provider",
+        "contract_id": "provider_api_v1",
+        "native_dependencies": {
+            "cppad": cppad_capability,
+        },
+        "reports_only_provider_capabilities_after_split": True,
+    }
+    equilibrium_view = {
+        "package": "epcsaft-equilibrium",
+        "owner": "equilibrium_extension",
+        "native_dependencies": {
+            "cppad": cppad_capability,
+            "ipopt": ipopt,
+        },
+        "requires": ["epcsaft", "cppad", "ipopt"],
+        "forbidden_default_dependencies": ["ceres"],
+    }
+    regression_view = {
+        "package": "epcsaft-regression",
+        "owner": "regression_extension",
+        "native_dependencies": {
+            "cppad": cppad_capability,
+            "ceres": ceres_capability,
+        },
+        "requires": ["epcsaft", "cppad", "ceres"],
+        "forbidden_default_dependencies": ["ipopt"],
+    }
     return {
+        "capability_report_owner": "epcsaft-transition-monorepo",
+        "package_ownership": {
+            "provider": "epcsaft",
+            "equilibrium": "epcsaft-equilibrium",
+            "regression": "epcsaft-regression",
+        },
+        "package_views": {
+            "provider": provider_view,
+            "equilibrium": equilibrium_view,
+            "regression": regression_view,
+        },
         "native_extension": bool(build_info["native_extension_available"]),
         "capability_evidence": _capability_evidence_summary(
             derivative_coverage,

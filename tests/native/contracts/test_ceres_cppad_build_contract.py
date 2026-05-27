@@ -20,11 +20,14 @@ def test_runtime_reports_ceres_build_contract() -> None:
 
     assert ceres["backend"] == "ceres"
     assert ceres["status"] == "enabled_available"
-    assert ceres["required"] is True
+    assert ceres["required"] is False
+    assert ceres["required_for"] == ["epcsaft-regression"]
     assert ceres["compiled"] is True
     assert ceres["available"] is True
 
     capabilities = epcsaft.capabilities()
+    assert capabilities["package_views"]["regression"]["native_dependencies"]["ceres"]["required"] is False
+    assert capabilities["package_views"]["regression"]["forbidden_default_dependencies"] == ["ipopt"]
     assert capabilities["optimizers"]["ceres"]["status"] == ceres["status"]
     assert capabilities["optimizers"]["ceres"]["compiled"] is ceres["compiled"]
     assert capabilities["optimizers"]["ceres"]["production"] is ceres["available"]

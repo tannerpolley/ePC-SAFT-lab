@@ -1,6 +1,8 @@
 # epcsaft
 
-`epcsaft` is a Windows-first Python package for PC-SAFT and electrolyte PC-SAFT thermodynamic calculations. The public API is Python; the equation-of-state runtime and package-owned equilibrium/regression kernels are implemented in native C++ through `pybind11`.
+`epcsaft` is a Windows-first Python package for PC-SAFT and electrolyte PC-SAFT thermodynamic calculations. The public API is Python; the equation-of-state runtime is implemented in native C++ through `pybind11`.
+
+This release is still a monorepo transition build. It exposes equilibrium and regression workflow objects from `epcsaft` today, while ADR 0005 assigns final ownership of Ipopt-backed equilibrium to `epcsaft-equilibrium` and Ceres-backed regression to `epcsaft-regression`.
 
 Current package version: `0.2.0`
 
@@ -12,7 +14,7 @@ Current package version: `0.2.0`
 - Run supported pure-neutral parameter-regression workflows.
 - Inspect runtime capabilities with `capabilities()` before selecting optional native solver paths.
 
-The main public objects are `ParameterSet`, `ModelOptions`, `Mixture`, `State`, `Equilibrium`, `Regression`, and `create_input_template(...)`.
+The main public objects in the current transition release are `ParameterSet`, `ModelOptions`, `Mixture`, `State`, `Equilibrium`, `Regression`, and `create_input_template(...)`. `Equilibrium` and `Regression` are planned extension-owned surfaces after the package split.
 
 ## Install
 
@@ -21,6 +23,8 @@ The main public objects are `ParameterSet`, `ModelOptions`, `Mixture`, `State`, 
 The `v0.2.0` GitHub release provides a Windows CPython 3.13 wheel and source archive:
 
 <https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0>
+
+That URL is the current pre-transfer source location for release history. The package roadmap targets transfer to the `ePC-SAFT` GitHub organization before extension extraction.
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 
@@ -174,7 +178,12 @@ Full paper-validation parameter snapshots live under `analyses/paper_validation/
 
 ## Optional Ipopt Support
 
-Ipopt is an optional native dependency for constrained-NLP equilibrium routes. On Windows, source and editable installs automatically use the local SDK at `%USERPROFILE%\Documents\deps\ipopt-msvc` when that directory exists. Otherwise point the build backend at an Ipopt install root:
+Ipopt is an optional native dependency for constrained-NLP equilibrium routes in
+the current transition build. Long term, Ipopt belongs to the
+`epcsaft-equilibrium` extension package. On Windows, source and editable
+installs automatically use the local SDK at
+`%USERPROFILE%\Documents\deps\ipopt-msvc` when that directory exists. Otherwise
+point the build backend at an Ipopt install root:
 
 ```powershell
 $env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"

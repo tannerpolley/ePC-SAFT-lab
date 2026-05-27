@@ -3,8 +3,12 @@ Overview
 
 ``epcsaft`` is a Windows-first Python package for PC-SAFT and electrolyte
 PC-SAFT thermodynamic calculations. The public interface is Python, while the
-equation-of-state runtime and package-owned equilibrium/regression kernels are
-implemented in native C++ through ``pybind11``.
+equation-of-state runtime is implemented in native C++ through ``pybind11``.
+
+This release is still a monorepo transition build. It exposes equilibrium and
+regression workflow objects from ``epcsaft`` today, while ADR 0005 assigns final
+ownership of Ipopt-backed equilibrium to ``epcsaft-equilibrium`` and
+Ceres-backed regression to ``epcsaft-regression``.
 
 Current package version: ``0.2.0``
 
@@ -36,6 +40,10 @@ The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel and source
 archive:
 
 ``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
+
+That URL is the current pre-transfer source location for release history. The
+package roadmap targets transfer to the ``ePC-SAFT`` GitHub organization before
+extension extraction.
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 

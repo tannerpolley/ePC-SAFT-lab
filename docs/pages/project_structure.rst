@@ -1,13 +1,16 @@
 Project Structure
 =================
 
-This repository is organized as a Python package with separate source-owned analysis workflows.
+This repository is organized as a Python package with separate source-owned
+analysis workflows. ADR 0005 defines the long-term package-extension split:
+``epcsaft`` remains the core provider package, while equilibrium and regression
+move to extension packages after provider/native boundaries are proven.
 
 Package Surfaces
 ----------------
 
 ``src/epcsaft/``
-    Public Python package code, pure-Python helpers, and native-extension wrappers.
+    Public Python package code, pure-Python helpers, and native-extension wrappers. During the transition it still contains equilibrium and regression modules; after extraction, core provider code remains here and extension-owned workflow code moves to its owning package.
 
 ``tests/``
     Package/API/native/workflow contracts. ``tests/api/`` is intentionally narrow and uses only reset public frontend objects; ``tests/native/`` owns C++/pybind contracts; ``tests/workflows/`` owns build and repository commands; shared fixtures live under ``tests/support/``. Default tests should stay fast and should not reproduce full scientific studies, benchmark scripts, regenerate plot galleries, or run long fitting/equilibrium sweeps.

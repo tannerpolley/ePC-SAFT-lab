@@ -16,10 +16,15 @@ remain owned by the selector activation metadata, not by roadmap prose.
    admission and the native activation matrix the capability authority.
 3. `docs/adr/0004-associating-equilibrium-architecture.md` keeps associating
    equilibrium declared-not-exposed until exact derivative support exists.
-4. `src/epcsaft/native/equilibrium/core/activation_matrix.h` is the executable
+4. `docs/adr/0005-package-extension-split.md` assigns final equilibrium
+   ownership to `epcsaft-equilibrium`; this cleanup plan prepares that module
+   boundary before extraction.
+5. `src/epcsaft/native/equilibrium/core/activation_matrix.h` is the executable
    selector-admission inventory.
-5. `epcsaft.capabilities()` mirrors that inventory upward for users and
-   downstream projects.
+6. During the monorepo transition, `epcsaft.capabilities()` mirrors that
+   inventory upward for users and downstream projects. After extraction, the
+   equilibrium extension owns its capability report and any aggregate view must
+   be explicit and test-backed.
 
 ## Design Rules
 
@@ -134,6 +139,11 @@ The result builder owns:
 
 Bubble, dew, flash, and LLE results should differ by populated fields and phase
 labels, not by separate acceptance philosophies.
+
+This result shape is an extraction seam. The future equilibrium extension
+should consume provider thermodynamic evidence and own equilibrium acceptance,
+certification, diagnostics, and result schemas without reaching through
+private core internals.
 
 ### 5. Contribution Families
 

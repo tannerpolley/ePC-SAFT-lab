@@ -86,7 +86,7 @@ closure.
 
 I do not think the code should be split into separate repos immediately. The
 current roadmap and build protocol still define native regression and production
-equilibrium as core package capabilities. The current repo has public docs,
+equilibrium as package-owned transition capabilities. The current repo has public docs,
 release docs, build workflows, issue-tracker docs, PyPI trusted-publisher text,
 and package metadata that still point at `tannerpolley/ePC-SAFT`. Moving folders
 before changing those contracts would produce a partially split project with
@@ -262,7 +262,7 @@ Exit criteria:
 Goal: make the repo's source-of-truth docs agree on the package split before
 moving code.
 
-Create:
+Create or maintain:
 
 - `docs/adr/0005-package-extension-split.md`
 

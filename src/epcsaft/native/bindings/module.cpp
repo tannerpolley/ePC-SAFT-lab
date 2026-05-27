@@ -617,6 +617,7 @@ py::dict native_density_failure_payload(const DensitySolveDiagnostics& diagnosti
     return out;
 }
 
+#ifdef EPCSAFT_HAS_CERES
 py::dict fit_pure_neutral_native_ceres_binding(
     const add_args& args,
     const py::array& density_t,
@@ -748,6 +749,7 @@ py::dict evaluate_generic_native_debug_binding(
     }
     return generic_regression_debug_to_dict(result);
 }
+#endif
 
 }  // namespace
 
@@ -1035,6 +1037,7 @@ PYBIND11_MODULE(_core, m) {
             py::arg("solvent_override_index") = -1
         );
 
+#ifdef EPCSAFT_HAS_CERES
     // AlgID: pure_neutral_ceres_regression
     m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);
     m.def("_fit_pure_neutral_native_debug", &evaluate_pure_neutral_objective_debug_binding);
@@ -1043,4 +1046,5 @@ PYBIND11_MODULE(_core, m) {
     // AlgID: binary_kij_ceres_regression
     m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);
     m.def("_evaluate_generic_native_debug", &evaluate_generic_native_debug_binding);
+#endif
 }

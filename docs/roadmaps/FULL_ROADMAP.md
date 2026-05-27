@@ -2,7 +2,7 @@
 
 ## Purpose of this document
 
-Every Codex agent working on `tannerpolley/ePC-SAFT` must read this document before planning, coding, reviewing, or merging.
+Every Codex agent working on this ePC-SAFT repository must read this document before planning, coding, reviewing, or merging.
 
 This document explains:
 
@@ -40,6 +40,13 @@ that same GFPE doctrine. It keeps selector admission, shared NLP ownership,
 Ipopt numerics, result certification, capability reporting, and validation
 lanes aligned around one modular equilibrium core.
 
+`docs/adr/0005-package-extension-split.md` is the source-of-truth decision for
+the package-extension split. The current monorepo still exposes provider,
+equilibrium, and regression workflows, but final ownership is `epcsaft` for the
+core provider, `epcsaft-equilibrium` for Ipopt-backed equilibrium, and
+`epcsaft-regression` for Ceres-backed regression. CppAD/exact derivative
+provider support stays core-owned.
+
 `docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
 
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
@@ -48,7 +55,10 @@ lanes aligned around one modular equilibrium core.
 
 # 1. Package identity
 
-`epcsaft` is a general-purpose thermodynamic package.
+`epcsaft` is a general-purpose thermodynamic package. In the long-term package
+split, `epcsaft` is the core thermodynamic provider. The current repository is
+still a monorepo transition build that exposes equilibrium and regression
+workflows until the provider and native extension boundaries are proven.
 
 It must provide generic, reusable ePC-SAFT functionality for:
 
@@ -106,6 +116,12 @@ epcsaft.capabilities()
 
 Downstream projects compute application metrics from generic outputs.
 
+The list above describes accepted generic API concepts across the current
+monorepo and the future package ecosystem. ADR 0005 decides which package owns
+each concept after the split: provider objects stay in `epcsaft`; equilibrium
+objects move to `epcsaft-equilibrium`; regression objects move to
+`epcsaft-regression`.
+
 Current API orientation for agents:
 
 - Prefer the constructor-configured `Equilibrium(mixture, route=..., ...)` workflow object for public equilibrium calls.
@@ -123,7 +139,10 @@ Current API orientation for agents:
   derivatives, and registry evidence update.
 - Treat `ParameterSet` as the canonical parameter-family boundary; runtime payload emission belongs to `ParameterSet.to_runtime_dict()`.
 - Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across retained regression evidence.
-- Treat `epcsaft.capabilities()` and `capability_evidence` as the authoritative public capability contract.
+- During the monorepo transition, treat `epcsaft.capabilities()` and
+  `capability_evidence` as the authoritative public capability contract. After
+  extraction, `epcsaft.capabilities()` reports provider capabilities only and
+  extension packages own their own capability reports.
 
 ---
 

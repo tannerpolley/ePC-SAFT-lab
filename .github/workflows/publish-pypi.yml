@@ -42,6 +42,7 @@ jobs:
           import urllib.request
 
           project = "epcsaft"
+          repository = os.environ.get("GITHUB_REPOSITORY", "tannerpolley/ePC-SAFT")
           version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
           url = f"https://pypi.org/pypi/{project}/json"
           try:
@@ -54,7 +55,7 @@ jobs:
                       "## PyPI first-publish preflight\n\n"
                       "PyPI does not have a published `epcsaft` project yet. "
                       "This is valid only when PyPI has a matching pending publisher "
-                      "for `tannerpolley/ePC-SAFT`, workflow `publish-pypi.yml`, "
+                      f"for `{repository}`, workflow `publish-pypi.yml`, "
                       "environment `pypi`.\n",
                       encoding="utf-8",
                   )
