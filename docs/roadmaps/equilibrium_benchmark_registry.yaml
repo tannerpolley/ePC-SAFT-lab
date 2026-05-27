@@ -361,7 +361,8 @@ stage10_neutral_tp_flash_source_gate:
       status: insufficient_package_smoke
       note: "The current hydrocarbon case is useful runtime smoke evidence, but its expected flash split is package-pinned rather than a source-backed literature phase-split fixture."
     - case_label: "Pereira 2012 System III"
-      local_artifact: "docs/papers/md/Equilibrium/Pereira et al. - 2012 - The HELD algorithm for multicomponent, multiphase equilibrium calculations with generic equations of.md"
+      local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012/metadata.json"
+      source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
       source_model_family: SAFT-VR
       status: rejected_model_family_mismatch
       note: "Do not use as executable ePC-SAFT proof evidence unless SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization is added."
@@ -373,6 +374,7 @@ benchmark_cases:
     status: source_data_needed
     fixture_status: source_data_needed
     source_path: "literature:Pereira et al. 2012 System III"
+    source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
     source_model_family: SAFT-VR
     current_fixture_blocker: model_family_mismatch
     todo: "Do not use Pereira as ePC-SAFT proof evidence until SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization exists; select a source-backed ePC-SAFT-compatible neutral TP flash fixture first."

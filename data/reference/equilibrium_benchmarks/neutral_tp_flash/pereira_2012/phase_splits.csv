@@ -1,0 +1,7 @@
+case_key,source_table,state,phase,temperature_K,pressure_MPa,component_1,component_2,x1,x2,composition_sum,eta,molar_volume_m3_per_mol,source_status
+system_iii_22325_09mpa,Table 3,VLE,feed,223.25,0.9,ethane,carbon_dioxide,0.6,0.4,1.0,,,reported
+system_iii_22325_09mpa,Table 3,VLE,vapor,223.25,0.9,ethane,carbon_dioxide,0.59092,0.40908,1.0,0.01419,1.76010e-3,reported
+system_iii_22325_09mpa,Table 3,VLE,liquid,223.25,0.9,ethane,carbon_dioxide,0.71543,0.28457,1.0,0.32959,7.93441e-5,reported
+system_iii_29315_61mpa,Table 3,VLE,feed,293.15,6.1,ethane,carbon_dioxide,0.09,0.01,0.10,,,published_feed_not_normalized
+system_iii_29315_61mpa,Table 3,VLE,vapor,293.15,6.1,ethane,carbon_dioxide,0.09568,0.90432,1.0,0.09999,2.03547e-4,reported
+system_iii_29315_61mpa,Table 3,VLE,liquid,293.15,6.1,ethane,carbon_dioxide,0.08460,0.91540,1.0,0.20806,9.73197e-5,reported

@@ -902,6 +902,10 @@ Substeps:
    executable ePC-SAFT proof fixture.
 7. Stop at `source_data_needed` until a source-backed ePC-SAFT-compatible
    neutral TP flash fixture is selected.
+   The Pereira source audit now lives under
+   `data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012` as
+   non-executable SAFT-VR evidence and records the published second-feed
+   composition inconsistency.
 8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.

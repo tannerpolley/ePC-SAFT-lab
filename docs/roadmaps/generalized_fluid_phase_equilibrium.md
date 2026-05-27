@@ -367,6 +367,11 @@ Gross/Sadowski 2001 material is useful PC-SAFT context, but the currently
 available local table is a binary VLE correlation/AAD summary rather than a
 point TP-flash fixture. The existing hydrocarbon workbook case remains package
 runtime smoke evidence until source-backed phase-split provenance is added.
+The Pereira source audit is retained under
+`data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012`; it
+captures the SAFT-VR phase-split table and parameters, and records the
+published second-feed composition inconsistency as a blocker instead of
+normalizing it silently.
 
 ## Family Proof Ladder
 

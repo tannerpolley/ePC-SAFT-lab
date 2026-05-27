@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import csv
+import json
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +9,9 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = REPO_ROOT / "docs" / "roadmaps" / "equilibrium_benchmark_registry.yaml"
+PEREIRA_SOURCE_AUDIT_PATH = (
+    REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
+)
 
 
 def _registry() -> dict[str, Any]:
@@ -59,6 +64,9 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     assert benchmarks["Pereira 2012 System III"]["family_labels"] == ["PE-Neutral TP Flash"]
     assert benchmarks["Pereira 2012 System III"]["source_model_family"] == "SAFT-VR"
     assert benchmarks["Pereira 2012 System III"]["current_fixture_blocker"] == "model_family_mismatch"
+    assert benchmarks["Pereira 2012 System III"]["source_audit_path"] == (
+        "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
+    )
     assert "ePC-SAFT-compatible neutral TP flash fixture" in benchmarks["Pereira 2012 System III"]["todo"]
     assert benchmarks["Gross/Sadowski 2002 methanol/cyclohexane"]["family_labels"] == [
         "PE-Associating TP Flash"
@@ -115,6 +123,45 @@ def test_stage10_local_source_audit_does_not_promote_context_to_proof() -> None:
     )
     assert local_candidates["Hydrocarbon workbook TP flash smoke"]["status"] == "insufficient_package_smoke"
     assert local_candidates["Pereira 2012 System III"]["status"] == "rejected_model_family_mismatch"
+    assert local_candidates["Pereira 2012 System III"]["source_audit_path"] == (
+        "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
+    )
+
+
+def test_pereira_stage10_source_audit_fixture_is_nonexecutable_and_complete() -> None:
+    metadata = json.loads((PEREIRA_SOURCE_AUDIT_PATH / "metadata.json").read_text(encoding="utf-8"))
+    phase_text = (PEREIRA_SOURCE_AUDIT_PATH / "phase_splits.csv").read_text(encoding="utf-8")
+    parameter_text = (PEREIRA_SOURCE_AUDIT_PATH / "saft_vr_parameters.csv").read_text(encoding="utf-8")
+    phase_rows = list(csv.DictReader(phase_text.splitlines()))
+    parameter_rows = list(csv.DictReader(parameter_text.splitlines()))
+
+    assert metadata["name"] == "pereira_2012_system_iii"
+    assert metadata["family_label"] == "PE-Neutral TP Flash"
+    assert metadata["proof_status"] == "source_audited_not_executable"
+    assert metadata["source_model_family"] == "SAFT-VR"
+    assert metadata["runtime_model_support"] == "absent_from_epcsaft"
+    assert {
+        "model_family_mismatch",
+        "saft_vr_runtime_absent",
+        "published_second_feed_composition_not_normalized",
+    } <= set(metadata["blocking_reasons"])
+
+    by_case_phase = {(row["case_key"], row["phase"]): row for row in phase_rows}
+    first_feed = by_case_phase[("system_iii_22325_09mpa", "feed")]
+    assert first_feed["source_status"] == "reported"
+    assert float(first_feed["composition_sum"]) == 1.0
+
+    second_feed = by_case_phase[("system_iii_29315_61mpa", "feed")]
+    assert second_feed["source_status"] == "published_feed_not_normalized"
+    assert float(second_feed["composition_sum"]) == 0.10
+
+    for phase in ("vapor", "liquid"):
+        assert by_case_phase[("system_iii_22325_09mpa", phase)]["source_status"] == "reported"
+        assert by_case_phase[("system_iii_29315_61mpa", phase)]["source_status"] == "reported"
+
+    assert {row["component"] for row in parameter_rows} == {"ethane", "carbon_dioxide"}
+    assert all(row["source_model_family"] == "SAFT-VR" for row in parameter_rows)
+    assert all(row["source_status"] == "reported" for row in parameter_rows)
 
 
 def test_available_neutral_stage10_cases_must_have_full_fixture_contract() -> None:
