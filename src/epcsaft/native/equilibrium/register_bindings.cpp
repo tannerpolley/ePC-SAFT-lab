@@ -476,7 +476,8 @@ py::dict nlp_domain_contract_to_dict(
     out["objective_scaling"] = result.objective_scaling;
     out["variable_scaling_declared"] = vector_has_size(result.variable_scaling, result.variable_count);
     out["constraint_scaling_declared"] = vector_has_size(result.constraint_scaling, result.constraint_count);
-    out["ipopt_barrier_owns_declared_bounds"] = result.barrier_policy == "ipopt_internal_barrier_only";
+    out["ipopt_barrier_owns_declared_bounds"] =
+        result.barrier_policy == "ipopt_internal_barrier_for_declared_bounds";
     out["thermodynamic_objective_custom_barrier"] = false;
     out["margins"] = margins;
     return out;
@@ -1614,9 +1615,11 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         out["iteration_history"] = ipopt_iteration_history_to_list(result.iteration_history);
         out["iteration_count"] = diagnostic_int_or(result, "iteration_count", 0);
         out["iteration_history_limit"] = diagnostic_int_or(result, "iteration_history_limit", 0);
+        out["acceptable_iteration_limit"] = diagnostic_int_or(result, "acceptable_iteration_limit", 0);
         out["hessian_approximation"] = diagnostic_string_or(result, "hessian_approximation", "");
         out["hessian_backend"] = diagnostic_string_or(result, "hessian_backend", "");
         out["option_profile"] = diagnostic_string_or(result, "option_profile", "");
+        out["solver_acceptance_policy"] = diagnostic_string_or(result, "solver_acceptance_policy", "");
         out["exact_hessian_policy"] = diagnostic_string_or(result, "exact_hessian_policy", "");
         out["eval_h_calls"] = diagnostic_int_or(result, "eval_h_calls", 0);
         out["scaling_method"] = diagnostic_string_or(result, "scaling_method", "");
@@ -1633,6 +1636,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         out["objective_scaling"] = diagnostic_double_or(result, "objective_scaling", 1.0);
         out["acceptable_tolerance"] = diagnostic_double_or(result, "acceptable_tolerance", 0.0);
         out["constraint_violation_tolerance"] = diagnostic_double_or(result, "constraint_violation_tolerance", 0.0);
+        out["ipopt_unscaled_constraint_violation_tolerance"] =
+            diagnostic_double_or(result, "ipopt_unscaled_constraint_violation_tolerance", 0.0);
         out["dual_infeasibility_tolerance"] = diagnostic_double_or(result, "dual_infeasibility_tolerance", 0.0);
         out["complementarity_tolerance"] = diagnostic_double_or(result, "complementarity_tolerance", 0.0);
         out["bound_push"] = diagnostic_double_or(result, "bound_push", 0.0);
@@ -1647,6 +1652,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             diagnostic_double_or(result, "scaled_constraint_violation_inf_norm", 0.0);
         out["scaled_stationarity_inf_norm"] =
             diagnostic_double_or(result, "scaled_stationarity_inf_norm", 0.0);
+        out["scaled_complementarity_inf_norm"] =
+            diagnostic_double_or(result, "scaled_complementarity_inf_norm", 0.0);
         out["bound_complementarity_inf_norm"] =
             diagnostic_double_or(result, "bound_complementarity_inf_norm", 0.0);
         out["barrier_parameter_final"] = diagnostic_double_or(result, "barrier_parameter_final", 0.0);

@@ -931,15 +931,6 @@ std::string certified_postsolve_status(const NeutralTwoPhaseEosPostsolve& postso
     return "postsolve_rejected";
 }
 
-bool has_finite_complete_variables(const IpoptSolveResult& solve, int variable_count) {
-    if (solve.variables.size() != static_cast<std::size_t>(variable_count)) {
-        return false;
-    }
-    return std::all_of(solve.variables.begin(), solve.variables.end(), [](double value) {
-        return std::isfinite(value);
-    });
-}
-
 RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteResult& result) {
     RouteSeedAttempt out;
     out.seed_name = result.seed_name;
@@ -2919,8 +2910,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve =
-            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;
@@ -3051,8 +3041,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve =
-            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;
@@ -3192,7 +3181,7 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve = solve.accepted;
+        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;
@@ -3377,7 +3366,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve = solve.accepted;
+        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;

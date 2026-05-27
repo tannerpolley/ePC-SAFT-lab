@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 
 import epcsaft._core as _core
-from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft.frontend import Mixture
 from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from tests.support.equilibrium_cases import (
     _ionic_mixture,
     _methanol_cyclohexane_mixture,
@@ -499,7 +499,7 @@ def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None
     assert activated["transform_output_variable_count"] == activated["variable_count"]
     assert activated["transform_jacobian_value_count"] == activated["variable_count"] ** 2
     assert activated["transform_hessian_value_count"] == activated["variable_count"] ** 3
-    assert activated["barrier_policy"] == "ipopt_internal_barrier_only"
+    assert activated["barrier_policy"] == "ipopt_internal_barrier_for_declared_bounds"
     domain = activated["domain_contract"]
     assert domain["variable_bounds_declared"] is True
     assert domain["constraint_bounds_declared"] is True

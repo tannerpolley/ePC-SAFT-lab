@@ -110,6 +110,10 @@ _Avoid_: loose CSV, anonymous fixture
 The validated native implementation route that owns residual packing, solver iteration, diagnostics, and result contracts for a required workflow. Compatibility adapters may normalize public inputs into typed problems, but they do not create separate capability claims.
 _Avoid_: diagnostic route, staged-only route, Python-owned optimizer loop
 
+**Ipopt Adapter**:
+The native optimizer adapter module that owns Ipopt option profiles, exact-Hessian policy, solver-status acceptance, scaling enforcement, barrier/bound diagnostics, iteration history, and normalized solve metadata for production equilibrium NLPs.
+_Avoid_: route-local Ipopt option assembly, acceptable-point success, finite-variable postsolve shortcut
+
 **Derivative Path**:
 The validated analytic, CppAD, analytic-implicit, or CppAD-implicit derivative route used by a solver or regression workflow.
 _Avoid_: approximate derivative substitute, unspecified derivative support

@@ -24,6 +24,7 @@ void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) 
     out["hessian_approximation"] = result.hessian_approximation;
     out["hessian_backend"] = result.hessian_backend;
     out["option_profile"] = result.option_profile;
+    out["solver_acceptance_policy"] = result.solver_acceptance_policy;
     out["exact_hessian_policy"] = result.exact_hessian_policy;
     out["scaling_contract"] = result.scaling_contract;
     out["residual_scaling_policy"] = result.residual_scaling_policy;
@@ -47,6 +48,7 @@ void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) 
     out["objective_scaling"] = result.objective_scaling;
     out["acceptable_tolerance"] = result.acceptable_tolerance;
     out["constraint_violation_tolerance"] = result.constraint_violation_tolerance;
+    out["ipopt_unscaled_constraint_violation_tolerance"] = result.ipopt_unscaled_constraint_violation_tolerance;
     out["dual_infeasibility_tolerance"] = result.dual_infeasibility_tolerance;
     out["complementarity_tolerance"] = result.complementarity_tolerance;
     out["bound_push"] = result.bound_push;
@@ -59,6 +61,7 @@ void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) 
     out["constraint_scaling_ratio"] = result.constraint_scaling_ratio;
     out["scaled_constraint_violation_inf_norm"] = result.scaled_constraint_violation_inf_norm;
     out["scaled_stationarity_inf_norm"] = result.scaled_stationarity_inf_norm;
+    out["scaled_complementarity_inf_norm"] = result.scaled_complementarity_inf_norm;
     out["bound_complementarity_inf_norm"] = result.bound_complementarity_inf_norm;
     out["barrier_parameter_final"] = result.barrier_parameter_final;
     out["regularization_size_final"] = result.regularization_size_final;
@@ -73,6 +76,7 @@ void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) 
     out["warm_start_used"] = result.warm_start_used;
     out["ipopt_print_level"] = result.print_level;
     out["max_iterations"] = result.max_iterations;
+    out["acceptable_iteration_limit"] = result.acceptable_iteration_limit;
     out["status"] = result.status;
     out["solver_status"] = result.solver_status;
     out["application_status"] = result.application_status;

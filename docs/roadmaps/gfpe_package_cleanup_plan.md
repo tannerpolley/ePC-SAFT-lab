@@ -92,7 +92,7 @@ The adapter owns:
 - named option profiles;
 - exact Hessian policy;
 - user scaling;
-- route-owned bounds and Ipopt barrier constraints;
+- NLP-declared bounds enforced through Ipopt barrier constraints;
 - acceptable-status rejection;
 - iteration history capture;
 - active-bound and barrier diagnostics;
@@ -100,6 +100,24 @@ The adapter owns:
 
 Routes request a profile and receive a certified adapter result. They do not set
 Ipopt options piecemeal.
+
+Current ownership inventory:
+
+- Python `EquilibriumSolverOptions` validates public numerical controls and
+  passes scalar controls to the native selector binding without resolving
+  adapter-owned optional tolerance defaults.
+- `register_bindings.cpp` translates those public controls into
+  `IpoptSolveOptions`; it does not decide route acceptance or profile defaults.
+- `ipopt_adapter.*` owns profile defaults, exact Hessian gating, normalized
+  Ipopt status acceptance, optional tolerance defaults, user scaling
+  enforcement, scaled-to-unscaled Ipopt constraint tolerance translation,
+  Ipopt barrier/bound diagnostics, and iteration-history capture.
+- `two_phase_eos_route.*` and `routes/derived/bubble_dew.cpp` may provide
+  route seeds and request a named profile, but must use adapter-normalized
+  `IpoptSolveResult` acceptance before postsolve.
+- Production route code must not accept Ipopt acceptable-point, feasible-point,
+  tiny-step, iteration-limit, or finite-variable-only outputs as postsolve
+  candidates.
 
 ### 4. Result Certification
 

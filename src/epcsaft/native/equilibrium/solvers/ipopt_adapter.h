@@ -98,6 +98,13 @@ struct IpoptSolveResult {
     std::map<std::string, std::string> diagnostics_string;
 };
 
+IpoptSolveOptions ipopt_solve_options_for_profile(
+    const IpoptSolveOptions& options,
+    const std::string& option_profile
+);
+
+bool ipopt_solve_result_allows_postsolve(const IpoptSolveResult& solve);
+
 std::string solve_diagnostic_string(
     const IpoptSolveResult& solve,
     const std::string& key,

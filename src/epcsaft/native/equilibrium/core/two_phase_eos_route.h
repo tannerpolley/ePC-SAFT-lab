@@ -65,7 +65,7 @@ struct NeutralTwoPhaseEosNlpContract {
     int transform_output_variable_count = 0;
     int transform_jacobian_value_count = 0;
     int transform_hessian_value_count = 0;
-    std::string barrier_policy = "ipopt_internal_barrier_only";
+    std::string barrier_policy = "ipopt_internal_barrier_for_declared_bounds";
 };
 
 struct NeutralTwoPhaseEosPostsolve {
@@ -245,6 +245,7 @@ struct NeutralTwoPhaseEosRouteResult {
     std::string hessian_approximation = "unknown";
     std::string hessian_backend = "unknown";
     std::string option_profile = "proof";
+    std::string solver_acceptance_policy;
     std::string exact_hessian_policy;
     std::string scaling_contract;
     std::string residual_scaling_policy;
@@ -262,6 +263,7 @@ struct NeutralTwoPhaseEosRouteResult {
     std::string last_callback_failure;
     int print_level = 0;
     int max_iterations = 0;
+    int acceptable_iteration_limit = 0;
     int iteration_count = 0;
     int iteration_history_limit = 0;
     int iteration_history_size = 0;
@@ -275,6 +277,7 @@ struct NeutralTwoPhaseEosRouteResult {
     double objective_scaling = 1.0;
     double acceptable_tolerance = 0.0;
     double constraint_violation_tolerance = 0.0;
+    double ipopt_unscaled_constraint_violation_tolerance = 0.0;
     double dual_infeasibility_tolerance = 0.0;
     double complementarity_tolerance = 0.0;
     double bound_push = 0.0;
@@ -287,6 +290,7 @@ struct NeutralTwoPhaseEosRouteResult {
     double constraint_scaling_ratio = 1.0;
     double scaled_constraint_violation_inf_norm = 0.0;
     double scaled_stationarity_inf_norm = 0.0;
+    double scaled_complementarity_inf_norm = 0.0;
     double bound_complementarity_inf_norm = 0.0;
     double barrier_parameter_final = 0.0;
     double regularization_size_final = 0.0;

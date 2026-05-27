@@ -24,6 +24,12 @@ _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "hessian_approximation",
     "hessian_backend",
     "option_profile",
+    "solver_acceptance_policy",
+    "exact_hessian_policy",
+    "scaling_contract",
+    "residual_scaling_policy",
+    "linear_solver_policy",
+    "barrier_policy",
     "scaling_method",
     "linear_solver_requested",
     "linear_solver_selected",
@@ -42,6 +48,7 @@ _ROUTE_BOOL_DIAGNOSTIC_KEYS = (
 
 _ROUTE_INT_DIAGNOSTIC_KEYS = (
     "max_iterations",
+    "acceptable_iteration_limit",
     "iteration_count",
     "iteration_history_limit",
     "iteration_history_size",
@@ -55,6 +62,7 @@ _ROUTE_FLOAT_DIAGNOSTIC_KEYS = (
     "objective_scaling",
     "acceptable_tolerance",
     "constraint_violation_tolerance",
+    "ipopt_unscaled_constraint_violation_tolerance",
     "dual_infeasibility_tolerance",
     "complementarity_tolerance",
     "variable_scaling_min",
@@ -62,6 +70,12 @@ _ROUTE_FLOAT_DIAGNOSTIC_KEYS = (
     "constraint_scaling_min",
     "constraint_scaling_max",
     "scaled_constraint_violation_inf_norm",
+    "scaled_stationarity_inf_norm",
+    "scaled_complementarity_inf_norm",
+    "bound_complementarity_inf_norm",
+    "barrier_parameter_final",
+    "regularization_size_final",
+    "regularization_size_max",
 )
 
 _ROUTE_SEQUENCE_DIAGNOSTIC_KEYS = (

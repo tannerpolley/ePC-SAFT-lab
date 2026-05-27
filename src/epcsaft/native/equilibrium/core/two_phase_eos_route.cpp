@@ -44,6 +44,8 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
     out.hessian_approximation = solve_diagnostic_string(solve, "hessian_approximation", out.hessian_approximation);
     out.hessian_backend = solve_diagnostic_string(solve, "hessian_backend", out.hessian_backend);
     out.option_profile = solve_diagnostic_string(solve, "option_profile", out.option_profile);
+    out.solver_acceptance_policy =
+        solve_diagnostic_string(solve, "solver_acceptance_policy", out.solver_acceptance_policy);
     out.exact_hessian_policy = solve_diagnostic_string(solve, "exact_hessian_policy", out.exact_hessian_policy);
     out.scaling_contract = solve_diagnostic_string(solve, "scaling_contract", out.scaling_contract);
     out.residual_scaling_policy =
@@ -57,6 +59,7 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
     out.linear_solver_selected = solve_diagnostic_string(solve, "linear_solver_selected", out.linear_solver_selected);
     out.print_level = solve_diagnostic_int(solve, "print_level");
     out.max_iterations = solve_diagnostic_int(solve, "max_iterations");
+    out.acceptable_iteration_limit = solve_diagnostic_int(solve, "acceptable_iteration_limit");
     out.iteration_count = solve_diagnostic_int(solve, "iteration_count");
     out.iteration_history_limit = solve_diagnostic_int(solve, "iteration_history_limit");
     out.iteration_history_size = solve_diagnostic_int(solve, "iteration_history_size");
@@ -71,6 +74,11 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
     out.acceptable_tolerance = solve_diagnostic_double(solve, "acceptable_tolerance", out.acceptable_tolerance);
     out.constraint_violation_tolerance =
         solve_diagnostic_double(solve, "constraint_violation_tolerance", out.constraint_violation_tolerance);
+    out.ipopt_unscaled_constraint_violation_tolerance = solve_diagnostic_double(
+        solve,
+        "ipopt_unscaled_constraint_violation_tolerance",
+        out.ipopt_unscaled_constraint_violation_tolerance
+    );
     out.dual_infeasibility_tolerance =
         solve_diagnostic_double(solve, "dual_infeasibility_tolerance", out.dual_infeasibility_tolerance);
     out.complementarity_tolerance =
@@ -93,6 +101,11 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
         solve,
         "scaled_stationarity_inf_norm",
         out.scaled_stationarity_inf_norm
+    );
+    out.scaled_complementarity_inf_norm = solve_diagnostic_double(
+        solve,
+        "scaled_complementarity_inf_norm",
+        out.scaled_complementarity_inf_norm
     );
     out.bound_complementarity_inf_norm = solve_diagnostic_double(
         solve,
@@ -1610,19 +1623,6 @@ std::vector<NamedInitialVariables> neutral_two_phase_seed_candidates(
     return out;
 }
 
-constexpr double kNeutralLleRefinementConstraintTolerance = 1.0e-7;
-
-IpoptSolveOptions neutral_lle_refinement_options(const IpoptSolveOptions& options) {
-    IpoptSolveOptions out = options;
-    if (out.option_profile == "proof") {
-        out.option_profile = "held_refinement";
-    }
-    if (out.option_profile == "held_refinement") {
-        out.constraint_violation_tolerance = kNeutralLleRefinementConstraintTolerance;
-    }
-    return out;
-}
-
 int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
     if (result.accepted) {
         return 3;
@@ -2907,7 +2907,7 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         minimum_phase_distance
     );
     out.ran = solve.solver_ran;
-    out.solver_accepted = solve.accepted;
+    out.solver_accepted = ipopt_solve_result_allows_postsolve(solve);
     out.solver_status = solve.solver_status;
     out.application_status = solve.application_status;
     apply_ipopt_solve_metadata(out, solve);
@@ -2918,7 +2918,7 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
     out.objective = solve.objective;
     out.variables = solve.variables;
     out.constraints = solve.constraints;
-    if (!solve.accepted) {
+    if (!ipopt_solve_result_allows_postsolve(solve)) {
         out.status = "solver_rejected";
         return out;
     }
@@ -2994,7 +2994,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
 
     const std::vector<double>& normalized_feed = plan.feed_composition;
     const std::vector<double> feed_amounts = normalized_feed;
-    const IpoptSolveOptions route_options = neutral_lle_refinement_options(options);
+    const IpoptSolveOptions route_options = ipopt_solve_options_for_profile(options, "held_refinement");
     const std::vector<NamedInitialVariables> seeds = neutral_two_phase_seed_candidates(
         args,
         feed_amounts,
@@ -3032,7 +3032,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve = solve.accepted;
+        const bool can_postsolve = ipopt_solve_result_allows_postsolve(solve);
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;

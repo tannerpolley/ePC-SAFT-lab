@@ -531,6 +531,29 @@ def test_equilibrium_activation_production_rows_must_enter_through_selector_rout
     assert missing_selector_admission == []
 
 
+def test_production_equilibrium_routes_delegate_ipopt_acceptance_to_adapter() -> None:
+    route_sources = [
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "two_phase_eos_route.cpp",
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "routes" / "derived" / "bubble_dew.cpp",
+    ]
+    combined = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in route_sources)
+    adapter = (
+        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "solvers" / "ipopt_adapter.cpp"
+    ).read_text(encoding="utf-8", errors="ignore")
+    workflow = (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(
+        encoding="utf-8",
+        errors="ignore",
+    )
+
+    assert "ipopt_solve_result_allows_postsolve(solve)" in combined
+    assert "has_finite_complete_variables" not in combined
+    assert "solve.accepted || solve.feasible_point" not in combined
+    assert "result_.accepted = result_.solved || result_.acceptable" not in adapter
+    assert "solve.application_status == \"solve_succeeded\"" in adapter
+    assert "success_status_and_scaled_kkt_required" in adapter
+    assert "_resolved_ipopt_" not in workflow
+
+
 def test_activation_matrix_families_do_not_gain_direct_pybind_route_entrypoints() -> None:
     activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
     binding_source_paths = [

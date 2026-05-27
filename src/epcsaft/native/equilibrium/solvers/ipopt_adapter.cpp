@@ -188,6 +188,37 @@ bool profile_needs_exact_hessian(const std::string& option_profile) {
     return option_profile != "diagnostic";
 }
 
+bool profile_disables_acceptable_termination(const std::string& option_profile) {
+    return option_profile != "diagnostic";
+}
+
+int profile_acceptable_iteration_limit(const std::string& option_profile) {
+    return profile_disables_acceptable_termination(option_profile) ? 0 : 15;
+}
+
+std::string profile_acceptance_policy(const std::string& option_profile) {
+    return profile_disables_acceptable_termination(option_profile)
+        ? "success_status_and_scaled_kkt_required"
+        : "diagnostic_status_and_scaled_kkt_recorded";
+}
+
+constexpr double kHeldRefinementConstraintViolationTolerance = 1.0e-7;
+
+double minimum_constraint_scale(const NlpScaling& scaling) {
+    if (scaling.constraints.empty()) {
+        return 1.0;
+    }
+    return *std::min_element(scaling.constraints.begin(), scaling.constraints.end());
+}
+
+double ipopt_unscaled_constraint_violation_tolerance(
+    const IpoptSolveOptions& options,
+    const NlpScaling& scaling
+) {
+    const double scale = minimum_constraint_scale(scaling);
+    return std::max(options.constraint_violation_tolerance, options.constraint_violation_tolerance / scale);
+}
+
 IpoptSolveOptions normalize_ipopt_solve_options(const IpoptSolveOptions& options) {
     IpoptSolveOptions normalized = options;
     normalized.option_profile = normalize_option_profile(normalized.option_profile);
@@ -200,6 +231,7 @@ IpoptSolveOptions normalize_ipopt_solve_options(const IpoptSolveOptions& options
         normalized.iteration_history_limit = std::max(normalized.iteration_history_limit, 50);
         normalized.bound_push = std::max(normalized.bound_push, 1.0e-10);
         normalized.bound_frac = std::max(normalized.bound_frac, 1.0e-10);
+        normalized.constraint_violation_tolerance = kHeldRefinementConstraintViolationTolerance;
     }
     if (!std::isfinite(normalized.tolerance) || normalized.tolerance <= 0.0) {
         throw ValueError("Native Ipopt adapter tolerance must be positive and finite.");
@@ -270,6 +302,14 @@ double vector_max_or_zero(const std::vector<double>& values) {
         return 0.0;
     }
     return *std::max_element(values.begin(), values.end());
+}
+
+double vector_abs_max_or_zero(const std::vector<double>& values) {
+    double out = 0.0;
+    for (double value : values) {
+        out = std::max(out, std::abs(value));
+    }
+    return out;
 }
 
 double scale_at(const std::vector<double>& scaling, std::size_t index) {
@@ -522,11 +562,12 @@ public:
             profile_needs_exact_hessian(options_.option_profile)
                 ? "required_by_profile"
                 : "diagnostic_profile_allows_limited_memory";
+        result_.diagnostics_string["solver_acceptance_policy"] = profile_acceptance_policy(options_.option_profile);
         result_.diagnostics_string["scaling_method"] = "user-scaling";
         result_.diagnostics_string["scaling_contract"] =
-            "route_owned_objective_variable_constraint_scaling";
+            "adapter_enforced_nlp_objective_variable_constraint_scaling";
         result_.diagnostics_string["residual_scaling_policy"] =
-            "route_owned_nondimensional_or_extensive_reference_scales";
+            "nlp_provided_nondimensional_or_extensive_reference_scales";
         result_.diagnostics_string["linear_solver_policy"] =
             options_.linear_solver == "auto" ? "ipopt_default_recorded" : "explicit_request_recorded";
         result_.diagnostics_string["barrier_policy"] = "ipopt_internal_barrier_for_declared_bounds";
@@ -536,11 +577,15 @@ public:
         result_.diagnostics_int["print_level"] = options_.print_level;
         result_.diagnostics_int["max_iterations"] = options_.max_iterations;
         result_.diagnostics_int["iteration_history_limit"] = std::max(0, options_.iteration_history_limit);
+        result_.diagnostics_int["acceptable_iteration_limit"] =
+            profile_acceptable_iteration_limit(options_.option_profile);
         result_.diagnostics_int["variable_scaling_count"] = static_cast<int>(scaling_.variables.size());
         result_.diagnostics_int["constraint_scaling_count"] = static_cast<int>(scaling_.constraints.size());
         result_.diagnostics_double["objective_scaling"] = scaling_.objective;
         result_.diagnostics_double["acceptable_tolerance"] = options_.acceptable_tolerance;
         result_.diagnostics_double["constraint_violation_tolerance"] = options_.constraint_violation_tolerance;
+        result_.diagnostics_double["ipopt_unscaled_constraint_violation_tolerance"] =
+            ipopt_unscaled_constraint_violation_tolerance(options_, scaling_);
         result_.diagnostics_double["dual_infeasibility_tolerance"] = options_.dual_infeasibility_tolerance;
         result_.diagnostics_double["complementarity_tolerance"] = options_.complementarity_tolerance;
         result_.diagnostics_double["bound_push"] = options_.bound_push;
@@ -885,8 +930,7 @@ public:
         Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
         (void)d_norm;
-        (void)ip_data;
-        (void)ip_cq;
+        capture_scaled_violations(ip_data, ip_cq);
         result_.diagnostics_int["iteration_count"] = static_cast<int>(iter);
         const int limit = std::max(0, options_.iteration_history_limit);
         if (limit > 0) {
@@ -929,7 +973,6 @@ public:
         result_.solved = status == Ipopt::SUCCESS;
         result_.acceptable = status == Ipopt::STOP_AT_ACCEPTABLE_POINT;
         result_.feasible_point = status == Ipopt::FEASIBLE_POINT_FOUND;
-        result_.accepted = result_.solved || result_.acceptable;
         result_.objective = obj_value;
         result_.variables = vector_from_raw(x, n);
         result_.constraints = vector_from_raw(g, m);
@@ -957,12 +1000,12 @@ public:
         result_.diagnostics_bool["exact_gradient_required"] = true;
         result_.diagnostics_bool["exact_jacobian_required"] = true;
         result_.diagnostics_bool["feasible_point_found"] = result_.feasible_point;
-        const double scaled_constraint_violation = scaled_constraint_violation_inf_norm(
+        const double scaled_constraint_violation_from_problem = scaled_constraint_violation_inf_norm(
             result_.constraints,
             bounds_,
             scaling_
         );
-        const double scaled_stationarity = scaled_stationarity_inf_norm(
+        const double scaled_stationarity_from_problem = scaled_stationarity_inf_norm(
             problem_,
             result_.variables,
             result_.bound_lower_multipliers,
@@ -971,12 +1014,21 @@ public:
             jacobian_structure_,
             scaling_
         );
-        const double complementarity = bound_complementarity_inf_norm(
+        const double bound_complementarity = bound_complementarity_inf_norm(
             result_.variables,
             result_.bound_lower_multipliers,
             result_.bound_upper_multipliers,
             bounds_
         );
+        const double scaled_constraint_violation = scaled_violation_metrics_available_
+            ? ipopt_scaled_constraint_violation_inf_norm_
+            : scaled_constraint_violation_from_problem;
+        const double scaled_stationarity = scaled_violation_metrics_available_
+            ? ipopt_scaled_stationarity_inf_norm_
+            : scaled_stationarity_from_problem;
+        const double scaled_complementarity = scaled_violation_metrics_available_
+            ? ipopt_scaled_complementarity_inf_norm_
+            : bound_complementarity;
         double final_barrier = 0.0;
         double final_regularization = 0.0;
         double maximum_regularization = 0.0;
@@ -994,17 +1046,21 @@ public:
         }
         result_.diagnostics_double["scaled_constraint_violation_inf_norm"] = scaled_constraint_violation;
         result_.diagnostics_double["scaled_stationarity_inf_norm"] = scaled_stationarity;
-        result_.diagnostics_double["bound_complementarity_inf_norm"] = complementarity;
+        result_.diagnostics_double["scaled_complementarity_inf_norm"] = scaled_complementarity;
+        result_.diagnostics_double["bound_complementarity_inf_norm"] = bound_complementarity;
         result_.diagnostics_double["barrier_parameter_final"] = final_barrier;
         result_.diagnostics_double["regularization_size_final"] = final_regularization;
         result_.diagnostics_double["regularization_size_max"] = maximum_regularization;
         result_.diagnostics_int["step_trial_count_max"] = maximum_step_trial_count;
         const bool scaled_acceptance =
-            scaled_constraint_violation <= options_.constraint_violation_tolerance
+            result_.solved
+            && scaled_constraint_violation <= options_.constraint_violation_tolerance
             && scaled_stationarity <= options_.dual_infeasibility_tolerance
-            && complementarity <= options_.complementarity_tolerance;
+            && !result_.acceptable
+            && !result_.feasible_point;
         result_.diagnostics_bool["scaled_acceptance_passed"] = scaled_acceptance;
         result_.diagnostics_bool["restoration_phase_observed"] = restoration_observed;
+        result_.accepted = scaled_acceptance;
     }
 
     const IpoptSolveResult& result() const {
@@ -1012,6 +1068,51 @@ public:
     }
 
 private:
+    void capture_scaled_violations(
+        const Ipopt::IpoptData* ip_data,
+        Ipopt::IpoptCalculatedQuantities* ip_cq
+    ) {
+        if (ip_data == nullptr || ip_cq == nullptr) {
+            return;
+        }
+        const int variable_count = problem_.variable_count();
+        const int constraint_count = problem_.constraint_count();
+        std::vector<double> lower_violation(static_cast<std::size_t>(variable_count), 0.0);
+        std::vector<double> upper_violation(static_cast<std::size_t>(variable_count), 0.0);
+        std::vector<double> lower_complementarity(static_cast<std::size_t>(variable_count), 0.0);
+        std::vector<double> upper_complementarity(static_cast<std::size_t>(variable_count), 0.0);
+        std::vector<double> lagrangian_gradient(static_cast<std::size_t>(variable_count), 0.0);
+        std::vector<double> constraint_violation(static_cast<std::size_t>(constraint_count), 0.0);
+        std::vector<double> constraint_complementarity(static_cast<std::size_t>(constraint_count), 0.0);
+        const bool ok = get_curr_violations(
+            ip_data,
+            ip_cq,
+            true,
+            variable_count,
+            lower_violation.data(),
+            upper_violation.data(),
+            lower_complementarity.data(),
+            upper_complementarity.data(),
+            lagrangian_gradient.data(),
+            constraint_count,
+            constraint_violation.data(),
+            constraint_complementarity.data()
+        );
+        if (!ok) {
+            return;
+        }
+        ipopt_scaled_constraint_violation_inf_norm_ = vector_abs_max_or_zero(constraint_violation);
+        ipopt_scaled_stationarity_inf_norm_ = vector_abs_max_or_zero(lagrangian_gradient);
+        ipopt_scaled_complementarity_inf_norm_ = std::max(
+            std::max(
+                vector_abs_max_or_zero(lower_complementarity),
+                vector_abs_max_or_zero(upper_complementarity)
+            ),
+            vector_abs_max_or_zero(constraint_complementarity)
+        );
+        scaled_violation_metrics_available_ = true;
+    }
+
     void record_callback_failure(const std::string& callback, const std::string& message) {
         result_.diagnostics_string["last_callback_failure"] = callback + ": " + message;
     }
@@ -1052,11 +1153,33 @@ private:
     NlpJacobianStructure jacobian_structure_;
     NlpHessianStructure hessian_structure_;
     NlpScaling scaling_;
+    bool scaled_violation_metrics_available_ = false;
+    double ipopt_scaled_constraint_violation_inf_norm_ = 0.0;
+    double ipopt_scaled_stationarity_inf_norm_ = 0.0;
+    double ipopt_scaled_complementarity_inf_norm_ = 0.0;
     IpoptSolveResult result_;
 };
 #endif
 
 }  // namespace
+
+IpoptSolveOptions ipopt_solve_options_for_profile(
+    const IpoptSolveOptions& options,
+    const std::string& option_profile
+) {
+    IpoptSolveOptions profiled = options;
+    profiled.option_profile = option_profile;
+    return normalize_ipopt_solve_options(profiled);
+}
+
+bool ipopt_solve_result_allows_postsolve(const IpoptSolveResult& solve) {
+    return solve.accepted
+        && solve.solved
+        && !solve.acceptable
+        && !solve.feasible_point
+        && solve.solver_status == "success"
+        && solve.application_status == "solve_succeeded";
+}
 
 std::string solve_diagnostic_string(
     const IpoptSolveResult& solve,
@@ -1144,7 +1267,15 @@ IpoptSolveResult solve_ipopt_nlp(
     app->Options()->SetIntegerValue("max_iter", normalized_options.max_iterations);
     app->Options()->SetNumericValue("tol", normalized_options.tolerance);
     app->Options()->SetNumericValue("acceptable_tol", normalized_options.acceptable_tolerance);
-    app->Options()->SetNumericValue("constr_viol_tol", normalized_options.constraint_violation_tolerance);
+    app->Options()->SetIntegerValue(
+        "acceptable_iter",
+        profile_acceptable_iteration_limit(normalized_options.option_profile)
+    );
+    const NlpScaling problem_scaling = problem.scaling();
+    app->Options()->SetNumericValue(
+        "constr_viol_tol",
+        ipopt_unscaled_constraint_violation_tolerance(normalized_options, problem_scaling)
+    );
     app->Options()->SetNumericValue("dual_inf_tol", normalized_options.dual_infeasibility_tolerance);
     app->Options()->SetNumericValue("compl_inf_tol", normalized_options.complementarity_tolerance);
     app->Options()->SetStringValue("jacobian_approximation", "exact");

@@ -836,28 +836,8 @@ def _native_timeout_seconds(options: EquilibriumSolverOptions) -> float:
     return 0.0 if options.timeout_seconds is None else float(options.timeout_seconds)
 
 
-def _resolved_ipopt_acceptable_tolerance(options: EquilibriumSolverOptions) -> float:
-    if options.ipopt_acceptable_tolerance is not None:
-        return float(options.ipopt_acceptable_tolerance)
-    return max(100.0 * float(options.tolerance), 1.0e-10)
-
-
-def _resolved_ipopt_constraint_violation_tolerance(options: EquilibriumSolverOptions) -> float:
-    if options.ipopt_constraint_violation_tolerance is not None:
-        return float(options.ipopt_constraint_violation_tolerance)
-    return float(options.tolerance)
-
-
-def _resolved_ipopt_dual_infeasibility_tolerance(options: EquilibriumSolverOptions) -> float:
-    if options.ipopt_dual_infeasibility_tolerance is not None:
-        return float(options.ipopt_dual_infeasibility_tolerance)
-    return float(options.tolerance)
-
-
-def _resolved_ipopt_complementarity_tolerance(options: EquilibriumSolverOptions) -> float:
-    if options.ipopt_complementarity_tolerance is not None:
-        return float(options.ipopt_complementarity_tolerance)
-    return float(options.tolerance)
+def _native_ipopt_optional_tolerance(value: float | None) -> float:
+    return 0.0 if value is None else float(value)
 
 
 def _native_ipopt_option_args(options: EquilibriumSolverOptions) -> tuple[str, int]:
@@ -868,10 +848,12 @@ def _native_ipopt_control_kwargs(options: EquilibriumSolverOptions) -> dict[str,
     return {
         "linear_solver": str(options.ipopt_linear_solver),
         "print_level": int(options.ipopt_print_level),
-        "acceptable_tolerance": _resolved_ipopt_acceptable_tolerance(options),
-        "constraint_violation_tolerance": _resolved_ipopt_constraint_violation_tolerance(options),
-        "dual_infeasibility_tolerance": _resolved_ipopt_dual_infeasibility_tolerance(options),
-        "complementarity_tolerance": _resolved_ipopt_complementarity_tolerance(options),
+        "acceptable_tolerance": _native_ipopt_optional_tolerance(options.ipopt_acceptable_tolerance),
+        "constraint_violation_tolerance": _native_ipopt_optional_tolerance(
+            options.ipopt_constraint_violation_tolerance
+        ),
+        "dual_infeasibility_tolerance": _native_ipopt_optional_tolerance(options.ipopt_dual_infeasibility_tolerance),
+        "complementarity_tolerance": _native_ipopt_optional_tolerance(options.ipopt_complementarity_tolerance),
     }
 
 
