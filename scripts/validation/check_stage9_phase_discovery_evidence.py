@@ -320,6 +320,7 @@ def evaluate_stage9_evidence(
             "route_iteration_history_limit": None
             if route_payload is None
             else route_payload.get("iteration_history_limit"),
+            "route_iteration_history": None if route_payload is None else route_payload.get("iteration_history", []),
             "route_seed_attempt_count": None
             if route_payload is None
             else len(route_payload.get("seed_attempts", ())),
@@ -351,6 +352,21 @@ def _print_human(payload: dict[str, Any]) -> None:
                 f"accepted={attempt.get('accepted')} "
                 f"iterations={attempt.get('iteration_count')}"
             )
+        iteration_history = list(diagnostics.get("route_iteration_history") or ())
+        if iteration_history:
+            print("    last_ipopt_iterations:")
+            for record in iteration_history[-5:]:
+                record = dict(record)
+                print(
+                    "      ipopt_iteration: "
+                    f"iter={record.get('iteration')} "
+                    f"objective={record.get('objective')} "
+                    f"inf_pr={record.get('primal_infeasibility')} "
+                    f"inf_du={record.get('dual_infeasibility')} "
+                    f"mu={record.get('barrier_parameter')} "
+                    f"alpha_pr={record.get('step_size_primal')} "
+                    f"ls={record.get('step_trial_count')}"
+                )
 
 
 def build_parser() -> argparse.ArgumentParser:

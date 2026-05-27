@@ -20,6 +20,20 @@ STAGE9_EVIDENCE_REQUIREMENTS = (
     "held_stage_ii_dual_phase_discovery",
     "held_stage_iii_ipopt_refinement",
 )
+EXECUTABLE_FIXTURE_REQUIRED_FIELDS = (
+    "species",
+    "pure_component_parameters",
+    "binary_interactions",
+    "temperature",
+    "pressure",
+    "feed_composition",
+    "expected_phase_count",
+    "expected_phase_compositions",
+    "expected_phase_fractions",
+    "source_model_family",
+    "source_path",
+    "acceptance_tolerances",
+)
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -50,6 +64,105 @@ def _phase_rows_by_case(phase_rows: list[dict[str, str]]) -> dict[str, dict[str,
     for row in phase_rows:
         by_case.setdefault(row["case_key"], {})[row["phase"]] = row
     return by_case
+
+
+def _source_path_present(metadata: dict[str, Any]) -> bool:
+    source_path = metadata.get("source_path")
+    source_paths = metadata.get("source_paths")
+    return bool(source_path) or (isinstance(source_paths, dict) and any(source_paths.values()))
+
+
+def _species_present(phase_rows: list[dict[str, str]], metadata: dict[str, Any]) -> bool:
+    species = metadata.get("species")
+    if isinstance(species, list) and species:
+        return True
+    component_columns = [key for key in phase_rows[0] if key.startswith("component_")] if phase_rows else []
+    return bool(component_columns) and all(row.get(column, "").strip() for row in phase_rows for column in component_columns)
+
+
+def _all_rows_have_finite(phase_rows: list[dict[str, str]], column: str) -> bool:
+    try:
+        return bool(phase_rows) and all(math.isfinite(float(row[column])) for row in phase_rows)
+    except (KeyError, ValueError):
+        return False
+
+
+def _all_phase_compositions_present(phase_rows: list[dict[str, str]]) -> bool:
+    phase_rows_only = [row for row in phase_rows if row.get("phase") != "feed"]
+    if not phase_rows_only:
+        return False
+    try:
+        return all(
+            math.isclose(float(row["composition_sum"]), 1.0, rel_tol=0.0, abs_tol=1.0e-12)
+            for row in phase_rows_only
+        )
+    except (KeyError, ValueError):
+        return False
+
+
+def _expected_phase_count_present(phase_rows: list[dict[str, str]], metadata: dict[str, Any]) -> bool:
+    if metadata.get("expected_phase_count"):
+        return True
+    by_case = _phase_rows_by_case(phase_rows)
+    return bool(by_case) and all({"vapor", "liquid"} <= set(phases) for phases in by_case.values())
+
+
+def _has_pc_saft_parameter_fixture(metadata: dict[str, Any], case_dir: Path) -> bool:
+    if metadata.get("pure_component_parameters"):
+        return True
+    return (case_dir / "pc_saft_parameters.csv").exists() or (case_dir / "epcsaft_parameters.csv").exists()
+
+
+def _has_binary_interaction_fixture(metadata: dict[str, Any], case_dir: Path) -> bool:
+    if metadata.get("binary_interactions"):
+        return True
+    return (case_dir / "binary_interactions.csv").exists()
+
+
+def _fixture_field_status(
+    metadata: dict[str, Any],
+    case_dir: Path,
+    phase_rows: list[dict[str, str]],
+    computed_rows: list[dict[str, Any]],
+) -> dict[str, str]:
+    source_model_family = str(metadata.get("source_model_family", ""))
+    accepted_model = source_model_family in ACCEPTED_STAGE10_MODEL_FAMILIES
+    feed_statuses = {str(row["reported_feed_status"]) for row in computed_rows}
+    all_feeds_normalized = bool(computed_rows) and feed_statuses == {"normalized"}
+    all_phase_fractions_present = bool(computed_rows) and all(
+        row["material_balance_eligible"] and row["vapor_fraction"] is not None and row["liquid_fraction"] is not None
+        for row in computed_rows
+    )
+    saft_vr_parameters_present = (case_dir / "saft_vr_parameters.csv").exists()
+
+    return {
+        "species": "present" if _species_present(phase_rows, metadata) else "missing",
+        "pure_component_parameters": (
+            "present"
+            if accepted_model and _has_pc_saft_parameter_fixture(metadata, case_dir)
+            else "rejected_saft_vr_parameters"
+            if saft_vr_parameters_present and not accepted_model
+            else "missing_pc_saft_parameters"
+        ),
+        "binary_interactions": (
+            "present"
+            if accepted_model and _has_binary_interaction_fixture(metadata, case_dir)
+            else "rejected_saft_vr_binary_factors"
+            if saft_vr_parameters_present and not accepted_model
+            else "missing_binary_interactions"
+        ),
+        "temperature": "present" if _all_rows_have_finite(phase_rows, "temperature_K") else "missing",
+        "pressure": "present" if _all_rows_have_finite(phase_rows, "pressure_MPa") else "missing",
+        "feed_composition": "present" if all_feeds_normalized else "incomplete_reported_feed_not_normalized",
+        "expected_phase_count": "present" if _expected_phase_count_present(phase_rows, metadata) else "missing",
+        "expected_phase_compositions": "present" if _all_phase_compositions_present(phase_rows) else "missing",
+        "expected_phase_fractions": (
+            "present" if all_phase_fractions_present else "incomplete_material_balance_or_phase_fraction"
+        ),
+        "source_model_family": "present" if accepted_model else "rejected_model_family_mismatch",
+        "source_path": "present" if _source_path_present(metadata) else "missing",
+        "acceptance_tolerances": "present" if bool(metadata.get("acceptance_tolerances")) else "missing",
+    }
 
 
 def _composition(row: dict[str, str]) -> tuple[float, float]:
@@ -251,7 +364,14 @@ def _stage9_incomplete_requirements(payload: dict[str, Any] | None) -> list[str]
 
 def evaluate_case_dir(case_dir: Path, stage9_evidence_payload: dict[str, Any] | None = None) -> dict[str, Any]:
     metadata = _read_json(case_dir / "metadata.json")
+    phase_rows = _read_csv(case_dir / "phase_splits.csv")
     computed_rows = _computed_material_balance_rows(metadata, case_dir)
+    fixture_field_status = _fixture_field_status(metadata, case_dir, phase_rows, computed_rows)
+    unmet_fixture_fields = [
+        field
+        for field in EXECUTABLE_FIXTURE_REQUIRED_FIELDS
+        if fixture_field_status[field] != "present"
+    ]
     stored_readiness = _read_csv(case_dir / "material_balance_readiness.csv")
     mismatches = _compare_stored_readiness(computed_rows, stored_readiness)
     blockers = list(dict.fromkeys(reason for row in computed_rows for reason in row["blockers"]))
@@ -268,11 +388,14 @@ def evaluate_case_dir(case_dir: Path, stage9_evidence_payload: dict[str, Any] | 
         blockers.append("stage9_evidence_path_not_verified")
     if bool(proof_readiness.get("source_confirmed_feed_correction_required", False)):
         blockers.append("source_confirmed_feed_correction_required")
+    if unmet_fixture_fields:
+        blockers.append("executable_fixture_contract_incomplete")
     if mismatches:
         blockers.append("stored_material_balance_readiness_mismatch")
     executable = (
         str(metadata.get("source_model_family", "")) in ACCEPTED_STAGE10_MODEL_FAMILIES
         and all(bool(row["proof_eligible"]) for row in computed_rows)
+        and not unmet_fixture_fields
         and not mismatches
         and (not stage9_evidence_required or stage9_evidence_verified)
         and not bool(proof_readiness.get("source_confirmed_feed_correction_required", False))
@@ -288,6 +411,9 @@ def evaluate_case_dir(case_dir: Path, stage9_evidence_payload: dict[str, Any] | 
         "stage9_evidence_path_verified": stage9_evidence_verified,
         "stage9_evidence": stage9_evidence,
         "stage9_incomplete_requirements": stage9_incomplete_requirements,
+        "executable_fixture_required_fields": list(EXECUTABLE_FIXTURE_REQUIRED_FIELDS),
+        "executable_fixture_field_status": fixture_field_status,
+        "unmet_executable_fixture_fields": unmet_fixture_fields,
         "blockers": list(dict.fromkeys(blockers)),
         "cases": computed_rows,
         "feed_correction_candidates": _computed_feed_correction_rows(case_dir),
@@ -302,6 +428,11 @@ def _print_human(payload: dict[str, Any]) -> None:
     print(f"  source model: {payload['source_model_family']}")
     if payload["blockers"]:
         print("  blockers: " + ", ".join(str(item) for item in payload["blockers"]))
+    if payload["unmet_executable_fixture_fields"]:
+        print(
+            "  unmet fixture fields: "
+            + ", ".join(str(item) for item in payload["unmet_executable_fixture_fields"])
+        )
     for case in payload["cases"]:
         print(
             "  "

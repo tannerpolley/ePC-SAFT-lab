@@ -543,6 +543,33 @@ def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():
     assert blocked.isdisjoint(run_pytest.EQUILIBRIUM_API_TEST_TARGETS)
 
 
+def test_validation_lanes_do_not_smuggle_broad_equilibrium_sweeps_into_debug_paths():
+    broad_equilibrium_targets = {
+        "tests/api/frontend/test_equilibrium.py",
+        "tests/native/equilibrium/results",
+        "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
+        "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
+    }
+
+    for lane_name, commands in validate_project.CHECK_COMMANDS.items():
+        if lane_name == "full":
+            continue
+        flattened_commands = {" ".join(command) for command in commands}
+        for command_text in flattened_commands:
+            assert "--all" not in command_text
+            for blocked_target in broad_equilibrium_targets:
+                assert f" {blocked_target} " not in f" {command_text} "
+        if lane_name == "equilibrium-debug":
+            assert all(command[0] != "run_pytest.py" for command in commands)
+            debug_command = commands[-1]
+            assert debug_command == (
+                "scripts/validation/check_stage9_phase_discovery_evidence.py",
+                "--debug",
+                "--include-route-refinement",
+                "--require-complete",
+            )
+
+
 def test_pytest_temp_root_prefers_configured_root_and_normalizes_relative_paths(monkeypatch, tmp_path):
     repo_root = tmp_path / "repo"
     repo_root.mkdir()

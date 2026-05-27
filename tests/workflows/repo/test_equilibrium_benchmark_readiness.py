@@ -44,6 +44,61 @@ def _load_stdout_json(result: subprocess.CompletedProcess[str]) -> dict[str, obj
     return json.loads(result.stdout)
 
 
+def _write_minimal_stage10_fixture(case_dir: Path) -> None:
+    case_dir.mkdir(parents=True)
+    (case_dir / "metadata.json").write_text(
+        json.dumps(
+            {
+                "name": "minimal_pc_saft_binary",
+                "case_label": "Minimal PC-SAFT binary TP flash",
+                "family_label": "PE-Neutral TP Flash",
+                "source_model_family": "PC-SAFT",
+                "runtime_model_support": "available_in_epcsaft",
+                "proof_readiness": {
+                    "stage9_evidence_path_required": True,
+                    "source_confirmed_feed_correction_required": False,
+                },
+                "pure_component_parameters": {
+                    "source": "test fixture source table",
+                    "families": ["m", "sigma", "epsilon"],
+                },
+                "binary_interactions": {
+                    "source": "test fixture source table",
+                    "k_ij": [[0.0, 0.01], [0.01, 0.0]],
+                },
+                "source_paths": {"paper_markdown": "docs/source.md"},
+                "acceptance_tolerances": {
+                    "composition_abs": 1.0e-6,
+                    "phase_fraction_abs": 1.0e-6,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (case_dir / "phase_splits.csv").write_text(
+        "\n".join(
+            [
+                "case_key,source_table,state,phase,temperature_K,pressure_MPa,component_1,component_2,x1,x2,composition_sum,eta,molar_volume_m3_per_mol,source_status",
+                "binary_300k_1mpa,Table 1,VLE,feed,300.0,1.0,A,B,0.5,0.5,1.0,,,reported",
+                "binary_300k_1mpa,Table 1,VLE,vapor,300.0,1.0,A,B,0.2,0.8,1.0,0.01,1.0e-3,reported",
+                "binary_300k_1mpa,Table 1,VLE,liquid,300.0,1.0,A,B,0.8,0.2,1.0,0.20,1.0e-4,reported",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (case_dir / "material_balance_readiness.csv").write_text(
+        "\n".join(
+            [
+                "case_key,reported_feed_status,material_balance_status,vapor_fraction,liquid_fraction,max_abs_material_balance_residual,material_balance_eligible,proof_eligible,blockers",
+                "binary_300k_1mpa,normalized,feasible_from_reported_feed,0.5,0.5,0.0,true,true,",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def _synthetic_stage9_discovery() -> dict[str, object]:
     return {
         "phase_discovery_backend": "deterministic_tpd_candidate_screening",
@@ -97,6 +152,17 @@ def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.Monkey
             "iteration_count": 6,
             "iteration_history_size": 6,
             "iteration_history_limit": 8,
+            "iteration_history": [
+                {
+                    "iteration": 6,
+                    "objective": 3.0,
+                    "primal_infeasibility": 1.0e-9,
+                    "dual_infeasibility": 2.0e-9,
+                    "barrier_parameter": 1.0e-8,
+                    "step_size_primal": 1.0,
+                    "step_trial_count": 1,
+                }
+            ],
             "seed_attempts": [],
             "accepted": True,
             "postsolve": {
@@ -126,6 +192,17 @@ def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.Monkey
     assert full_payload["diagnostics"]["route_scaled_acceptance_passed"] is True
     assert full_payload["diagnostics"]["route_iteration_count"] == 6
     assert full_payload["diagnostics"]["route_iteration_history_size"] == 6
+    assert full_payload["diagnostics"]["route_iteration_history"] == [
+        {
+            "iteration": 6,
+            "objective": 3.0,
+            "primal_infeasibility": 1.0e-9,
+            "dual_infeasibility": 2.0e-9,
+            "barrier_parameter": 1.0e-8,
+            "step_size_primal": 1.0,
+            "step_trial_count": 1,
+        }
+    ]
 
 
 def test_stage9_evidence_route_refinement_requires_ipopt_convergence(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -219,6 +296,17 @@ def test_stage9_evidence_checker_require_complete_fails_incomplete_payload(
                 "route_solver_status": "max_iterations_exceeded",
                 "route_application_status": "maximum_iterations_exceeded",
                 "route_iteration_count": 260,
+                "route_iteration_history": [
+                    {
+                        "iteration": 260,
+                        "objective": 4.2,
+                        "primal_infeasibility": 1.0e-3,
+                        "dual_infeasibility": 2.0e-3,
+                        "barrier_parameter": 1.0e-6,
+                        "step_size_primal": 0.25,
+                        "step_trial_count": 8,
+                    }
+                ],
                 "route_seed_attempt_count": 1,
                 "route_seed_attempts": [
                     {
@@ -239,6 +327,8 @@ def test_stage9_evidence_checker_require_complete_fails_incomplete_payload(
     assert exit_code == 2
     assert "Stage 9 phase-discovery evidence is incomplete." in captured.err
     assert "seed_attempt: name=deterministic_tpd_candidate_pair" in captured.out
+    assert "last_ipopt_iterations:" in captured.out
+    assert "ipopt_iteration: iter=260 objective=4.2 inf_pr=0.001 inf_du=0.002" in captured.out
 
 
 def test_pereira_readiness_checker_reports_nonexecutable_stage10_json() -> None:
@@ -260,6 +350,33 @@ def test_pereira_readiness_checker_reports_nonexecutable_stage10_json() -> None:
         "stage9_evidence_path_not_verified",
     } <= set(payload["blockers"])
     assert payload["stage9_evidence"]["held_stage_ii_dual_phase_discovery"] == "required_not_verified"
+    assert payload["executable_fixture_required_fields"] == [
+        "species",
+        "pure_component_parameters",
+        "binary_interactions",
+        "temperature",
+        "pressure",
+        "feed_composition",
+        "expected_phase_count",
+        "expected_phase_compositions",
+        "expected_phase_fractions",
+        "source_model_family",
+        "source_path",
+        "acceptance_tolerances",
+    ]
+    assert {
+        "pure_component_parameters",
+        "binary_interactions",
+        "feed_composition",
+        "expected_phase_fractions",
+        "source_model_family",
+        "acceptance_tolerances",
+    } <= set(payload["unmet_executable_fixture_fields"])
+    assert payload["executable_fixture_field_status"]["species"] == "present"
+    assert payload["executable_fixture_field_status"]["pure_component_parameters"] == "rejected_saft_vr_parameters"
+    assert payload["executable_fixture_field_status"]["binary_interactions"] == "rejected_saft_vr_binary_factors"
+    assert payload["executable_fixture_field_status"]["source_model_family"] == "rejected_model_family_mismatch"
+    assert "executable_fixture_contract_incomplete" in payload["blockers"]
     assert payload["stored_readiness_consistent"] is True
 
     cases = {case["case_key"]: case for case in payload["cases"]}
@@ -274,6 +391,47 @@ def test_pereira_readiness_checker_reports_nonexecutable_stage10_json() -> None:
     assert second["reported_feed_status"] == "not_normalized"
     assert second["material_balance_status"] == "blocked_by_published_feed"
     assert "published_second_feed_composition_not_normalized" in second["blockers"]
+
+
+def test_stage10_checker_promotes_only_complete_source_backed_fixture_with_stage9_evidence(
+    tmp_path: Path,
+) -> None:
+    case_dir = tmp_path / "minimal_pc_saft_binary"
+    _write_minimal_stage10_fixture(case_dir)
+    stage9_path = tmp_path / "complete_stage9_evidence.json"
+    stage9_path.write_text(
+        json.dumps(
+            {
+                "complete": True,
+                "evidence_status": {
+                    "deterministic_screening": "verified_not_full_held",
+                    "continuous_tpd_minimization": "verified_converged",
+                    "held_stage_i_stability": "verified_from_converged_continuous_tpd",
+                    "held_stage_ii_dual_phase_discovery": "verified_candidate_bound_gap_closed",
+                    "held_stage_iii_ipopt_refinement": "verified_current_route_refinement_converged",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = _run_checker(
+        "--case-dir",
+        str(case_dir),
+        "--stage9-evidence-json",
+        str(stage9_path),
+        "--json",
+        "--require-executable",
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = _load_stdout_json(result)
+    assert payload["proof_status"] == "executable"
+    assert payload["executable"] is True
+    assert payload["stage9_evidence_path_verified"] is True
+    assert payload["unmet_executable_fixture_fields"] == []
+    assert payload["blockers"] == []
+    assert all(status == "present" for status in payload["executable_fixture_field_status"].values())
 
 
 def test_pereira_readiness_checker_fails_closed_when_executable_required() -> None:

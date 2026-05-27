@@ -863,9 +863,11 @@ Substeps:
     as the cheap Stage 9 phase-discovery evidence snapshot. Add
     `--include-route-refinement` only when the current Stage III Ipopt
     route-refinement evidence is needed. Use
-    `--debug --include-route-refinement` when the question is "what is the
-    TPD/Ipopt solver doing?", because that turns on continuous-TPD trace rows
-    and Ipopt `print_level=5` for the current Stage III refinement.
+    `--debug --include-route-refinement --require-complete` when the question
+    is "what is the TPD/Ipopt solver doing?", because that turns on
+    continuous-TPD trace rows, route seed-attempt markers, Ipopt
+    `print_level=5`, bounded Ipopt iteration-history diagnostics, and a
+    nonzero exit if current Stage III convergence evidence is incomplete.
 
 Acceptance checks:
 
@@ -938,6 +940,10 @@ Substeps:
    then pass it to the Stage 10 readiness gate with
    `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json --stage9-evidence-json <payload>`.
    Use `--require-executable` only when promoting a case to proof evidence.
+   The readiness gate reports every executable fixture field independently so
+   missing PC/ePC parameters, binary interactions, normalized feed data,
+   expected phase fractions, accepted model family, source path, tolerances, or
+   Stage 9 evidence cannot be hidden behind a generic blocked status.
 8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.

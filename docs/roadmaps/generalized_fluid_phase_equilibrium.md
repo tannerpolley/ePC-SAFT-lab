@@ -189,11 +189,15 @@ The executable Stage 9 snapshot is
 That default command is the cheap phase-discovery gate: it does not run the
 Stage III Ipopt route refinement solve. Run it with
 `--include-route-refinement` only when current-route Stage III evidence is
-needed, and with `--debug --include-route-refinement` when diagnosing the
-current TPD/Ipopt path. Debug mode enables `EPCSAFT_EQUILIBRIUM_DEBUG`, prints
-continuous-TPD trace rows, and uses Ipopt `print_level=5`; JSON debug mode keeps
-the machine-readable payload on stdout and forwards native solver output to
-stderr. Its current synthetic neutral payload reports HELD Stage II as
+needed, and with `--debug --include-route-refinement --require-complete` when
+diagnosing the current TPD/Ipopt path. Debug mode enables
+`EPCSAFT_EQUILIBRIUM_DEBUG`, prints continuous-TPD trace rows and route
+seed-attempt markers, uses Ipopt `print_level=5`, and fails if convergence
+evidence is incomplete; the diagnostics payload includes bounded Ipopt
+iteration-history records so the actual primal/dual residual path is visible
+without running a pytest sweep. JSON debug mode keeps the machine-readable
+payload on stdout and forwards native solver output to stderr. Its current
+synthetic neutral payload reports HELD Stage II as
 `candidate_bound_gap_closed` for the finite candidate audit. When route
 refinement is requested, current Ipopt `success` / `solve_succeeded` convergence
 is required before Stage III can be counted as current-route refinement
@@ -413,7 +417,11 @@ When executable Stage 9 evidence is relevant, first generate
 `check_stage9_phase_discovery_evidence.py --json --include-route-refinement`
 and pass the payload through `--stage9-evidence-json`. The same readiness command with
 `--require-executable` is the closed gate for promoting a case into executable
-Stage 10 proof evidence; Pereira currently fails that gate by design.
+Stage 10 proof evidence; Pereira currently fails that gate by design. The
+readiness payload reports each executable fixture field separately so a source
+case cannot be promoted until PC/ePC parameters, binary interactions, feed and
+phase-fraction data, accepted model family, source path, tolerances, and Stage
+9 evidence are all present.
 
 ## Family Proof Ladder
 
