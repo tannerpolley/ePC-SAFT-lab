@@ -28,7 +28,7 @@ def _benchmark_by_label() -> dict[str, dict[str, Any]]:
 
 
 def _neutral_flash_gate() -> dict[str, Any]:
-    return _registry()["stage10_neutral_tp_flash_source_gate"]
+    return _registry()["neutral_tp_flash_fixture_gate"]
 
 
 def test_benchmark_registry_schema_v2_defines_nonproduction_evidence_tiers() -> None:
@@ -86,7 +86,7 @@ def test_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
     gate = _neutral_flash_gate()
 
     assert gate["target_family_label"] == "PE-Neutral TP Flash"
-    assert gate["proof_status"] == "executable_fixture_available"
+    assert gate["fixture_status"] == "executable_fixture_available"
     assert gate["accepted_source_model_families"] == ["PC-SAFT", "ePC-SAFT"]
     assert gate["rejected_context_cases"]["Pereira 2012 System III"]["source_model_family"] == "SAFT-VR"
     assert gate["rejected_context_cases"]["Pereira 2012 System III"]["blocker"] == "model_family_mismatch"
@@ -107,7 +107,7 @@ def test_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
         "acceptance_tolerances",
     } <= required_fields
 
-    assert set(gate["stage9_evidence_required"]) == {
+    assert set(gate["phase_discovery_required"]) == {
         "deterministic_screening",
         "continuous_tpd_minimization",
         "held_stage_i_stability",
@@ -146,7 +146,7 @@ def test_pereira_source_audit_fixture_is_nonexecutable_and_complete() -> None:
 
     assert metadata["name"] == "pereira_2012_system_iii"
     assert metadata["family_label"] == "PE-Neutral TP Flash"
-    assert metadata["proof_status"] == "source_audited_not_executable"
+    assert metadata["fixture_status"] == "source_audited_not_executable"
     assert metadata["source_model_family"] == "SAFT-VR"
     assert metadata["runtime_model_support"] == "absent_from_epcsaft"
     assert {
@@ -173,33 +173,33 @@ def test_pereira_source_audit_fixture_is_nonexecutable_and_complete() -> None:
     assert all(row["source_status"] == "reported" for row in parameter_rows)
 
 
-def test_pereira_readiness_tracks_material_balance_without_fixture_promotion() -> None:
+def test_pereira_material_balance_check_does_not_promote_fixture() -> None:
     metadata = json.loads((PEREIRA_SOURCE_AUDIT_PATH / "metadata.json").read_text(encoding="utf-8"))
-    readiness_text = (PEREIRA_SOURCE_AUDIT_PATH / "material_balance_readiness.csv").read_text(
+    check_text = (PEREIRA_SOURCE_AUDIT_PATH / "material_balance_check.csv").read_text(
         encoding="utf-8"
     )
     correction_text = (PEREIRA_SOURCE_AUDIT_PATH / "feed_correction_candidates.csv").read_text(
         encoding="utf-8"
     )
-    readiness_rows = {row["case_key"]: row for row in csv.DictReader(readiness_text.splitlines())}
+    check_rows = {row["case_key"]: row for row in csv.DictReader(check_text.splitlines())}
     correction_rows = {row["case_key"]: row for row in csv.DictReader(correction_text.splitlines())}
 
-    assert metadata["proof_readiness"]["executable"] is False
-    assert metadata["proof_readiness"]["stage9_evidence_path_required"] is True
-    assert metadata["proof_readiness"]["saft_vr_runtime_required"] is True
-    assert metadata["proof_readiness"]["source_confirmed_feed_correction_required"] is True
+    assert metadata["fixture_requirements"]["executable"] is False
+    assert metadata["fixture_requirements"]["phase_discovery_required"] is True
+    assert metadata["fixture_requirements"]["saft_vr_runtime_required"] is True
+    assert metadata["fixture_requirements"]["source_confirmed_feed_correction_required"] is True
 
-    first_case = readiness_rows["system_iii_22325_09mpa"]
+    first_case = check_rows["system_iii_22325_09mpa"]
     assert first_case["reported_feed_status"] == "normalized"
     assert first_case["material_balance_status"] == "feasible_from_reported_feed"
     assert float(first_case["vapor_fraction"]) == pytest.approx(0.927074, rel=1.0e-5)
     assert float(first_case["liquid_fraction"]) == pytest.approx(0.072926, rel=1.0e-5)
     assert float(first_case["max_abs_material_balance_residual"]) < 1.0e-12
 
-    second_case = readiness_rows["system_iii_29315_61mpa"]
+    second_case = check_rows["system_iii_29315_61mpa"]
     assert second_case["reported_feed_status"] == "not_normalized"
     assert second_case["material_balance_status"] == "blocked_by_published_feed"
-    assert second_case["proof_eligible"] == "false"
+    assert second_case["fixture_eligible"] == "false"
 
     inferred_second = correction_rows["system_iii_29315_61mpa"]
     assert inferred_second["correction_status"] == "inferred_not_source_confirmed"
@@ -219,9 +219,9 @@ def test_hydrocarbon_workbook_fixture_is_declared_as_available() -> None:
         csv.DictReader((source_path / "binary_interactions.csv").read_text(encoding="utf-8").splitlines())
     )
 
-    assert metadata["proof_status"] == "source_backed_executable_fixture"
+    assert metadata["fixture_status"] == "source_backed_executable_fixture"
     assert metadata["source_model_family"] == "PC-SAFT"
-    assert metadata["proof_readiness"]["stage9_evidence_path_required"] is True
+    assert metadata["fixture_requirements"]["phase_discovery_required"] is True
     assert {row["phase"] for row in phase_rows} == {"feed", "liquid", "vapor"}
     feed = next(row for row in phase_rows if row["phase"] == "feed")
     assert float(feed["composition_sum"]) == pytest.approx(1.0)

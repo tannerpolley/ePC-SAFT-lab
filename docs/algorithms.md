@@ -106,7 +106,7 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 - Description: Solves production neutral bubble/dew pressure and temperature route specs through the native selector core.
 - Change note: Neutral VLE selector expansion promotes bubble/dew pressure and temperature routes through the shared thermodynamic constrained core.
 - LaTeX: `docs/latex/algorithms.tex:72`
-- Code owners: `src/epcsaft/equilibrium/workflows.py:523` (def _solve_selector_route(), `src/epcsaft/native/equilibrium/core/selector_core.cpp:552` (SelectorContract evaluate_selector_contract(), `src/epcsaft/native/equilibrium/core/selector_core.cpp:610` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `src/epcsaft/native/equilibrium/register_bindings.cpp:1311` (m.def("_native_equilibrium_selector_contract", [](), `src/epcsaft/native/equilibrium/register_bindings.cpp:1361` (m.def("_native_equilibrium_selector_route_result", [](), `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:2703` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:2840` (NeutralTwoPhaseEosRouteResult solve_temperature_route()
+- Code owners: `src/epcsaft/equilibrium/workflows.py:523` (def _solve_selector_route(), `src/epcsaft/native/equilibrium/core/selector_core.cpp:552` (SelectorContract evaluate_selector_contract(), `src/epcsaft/native/equilibrium/core/selector_core.cpp:610` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `src/epcsaft/native/equilibrium/register_bindings.cpp:1311` (m.def("_native_equilibrium_selector_contract", [](), `src/epcsaft/native/equilibrium/register_bindings.cpp:1361` (m.def("_native_equilibrium_selector_route_result", [](), `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:2859` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:2996` (NeutralTwoPhaseEosRouteResult solve_temperature_route()
 
 This entry exposes the trusted neutral bubble/dew proof set through route specs
 configured by `Equilibrium(mixture, route=..., ...)` and executed by
@@ -141,7 +141,7 @@ derivatives plus postsolve certification.
 - Description: Solves certified neutral two-phase TP flash through the native selector core.
 - Change note: Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification.
 - LaTeX: `docs/latex/algorithms.tex:93`
-- Code owners: `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:2973` (NeutralTwoPhaseEosRouteResult solve_flash_route()
+- Code owners: `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:3129` (NeutralTwoPhaseEosRouteResult solve_flash_route()
 
 This entry exposes the trusted neutral two-phase TP flash proof through the
 `flash` route spec configured by
@@ -182,7 +182,7 @@ acceptance criterion.
 - Description: Solves certified neutral nonassociating LLE through the native selector core.
 - Change note: Neutral LLE is production-exposed only for the current neutral nonassociating activation-row proof.
 - LaTeX: `docs/latex/algorithms.tex:117`
-- Code owners: `src/epcsaft/equilibrium/workflows.py:445` ("lle": _EquilibriumRouteSpec(), `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2908` (NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route()
+- Code owners: `src/epcsaft/equilibrium/workflows.py:445` ("lle": _EquilibriumRouteSpec(), `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2956` (NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route()
 
 This entry exposes the trusted neutral nonassociating LLE proof through the
 `lle` route spec configured by
@@ -221,7 +221,7 @@ LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
 - Description: Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance.
 - Change note: Current deterministic screening supports existing neutral routes but is not full HELD; generalized neutral, associating, electrolyte, and reactive families still require separate admission.
 - LaTeX: `docs/latex/algorithms.tex:140`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:764` (void append_tpd_candidates_for_reference_block()
+- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:812` (void append_tpd_candidates_for_reference_block()
 
 This algorithm evaluates neutral tangent-plane distance candidates for route
 discovery and certification in the current neutral two-phase TP flash and
@@ -256,7 +256,7 @@ lower-free-energy candidates and mass-balance incompleteness.
 - Description: Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening.
 - Change note: This is the Stage 9 continuous-TPD layer. It does not satisfy the HELD Stage II dual cutting-plane requirement by itself.
 - LaTeX: `docs/latex/algorithms.tex:161`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:623` (NeutralTpdCandidate refine_neutral_tpd_candidate()
+- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:671` (NeutralTpdCandidate refine_neutral_tpd_candidate()
 
 This algorithm starts from deterministic neutral TPD trial compositions and
 performs a bounded coordinate search on the composition simplex. Each trial
@@ -289,7 +289,7 @@ TPD value, start source, iteration count, and convergence status.
 - Description: Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III.
 - Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics require the current Ipopt route to report Ipopt success and solve_succeeded before postsolve certification can be counted.
 - LaTeX: `docs/latex/algorithms.tex:181`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:1043` (void finalize_stage9_phase_discovery()
+- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:1091` (void finalize_stage9_phase_discovery()
 
 This diagnostic layer makes the phase-discovery ladder auditable. Current
 deterministic screening remains seed and certification support. Continuous TPD
@@ -336,7 +336,7 @@ certification is evaluated.
 - Description: Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes.
 - Change note: Deterministic screening remains distinct from continuous TPD and must not be promoted as full HELD evidence.
 - LaTeX: `docs/latex/algorithms.tex:208`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2457` (NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery()
+- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2505` (NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery()
 
 This algorithm reduces dependence on user-supplied phase guesses by using
 neutral TPD or volume-composition trial problems to generate deterministic
@@ -369,7 +369,7 @@ used as generalized production evidence by itself.
 - Description: Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly.
 - Change note: Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; among mass-feasible pairs it now chooses the pair that closes the finite candidate TPD bound audit before route assembly. Generalized admission still requires full HELD.
 - LaTeX: `docs/latex/algorithms.tex:228`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:859` (void select_two_phase_candidate_set()
+- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:907` (void select_two_phase_candidate_set()
 
 This algorithm solves the small candidate phase-fraction feasibility problem
 before final route assembly. A candidate set that cannot reconstruct the feed
@@ -406,7 +406,7 @@ finite candidate bound gap open.
 - Description: Adds phase-set stability certification after current neutral Ipopt solves.
 - Change note: Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance; current implementation is limited to neutral TP flash and neutral nonassociating LLE.
 - LaTeX: `docs/latex/algorithms.tex:250`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2636` (NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve()
+- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2684` (NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve()
 
 This algorithm runs after an Ipopt route returns finite variables. It checks
 stability, phase distinctness, candidate completeness, and route certification
@@ -428,9 +428,9 @@ blocks before assigning a production-accepted status.
 - Backend: Markdown and YAML registry
 - Dependency: None
 - Derivative backend: Exact derivatives required before production row exposure
-- Solver role: Records descriptive generalized family labels, derived subworkflows, proof cases, evidence tiers, and benchmark status
+- Solver role: Records descriptive generalized family labels, derived subworkflows, reference cases, evidence tiers, and benchmark status
 - Implementation owner: docs/roadmaps/generalized_fluid_phase_equilibrium.md; docs/roadmaps/equilibrium_benchmark_registry.yaml
-- Validation: tests/native/contracts/test_generalized_activation_matrix_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py
+- Validation: tests/native/contracts/test_generalized_equilibrium_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py
 - Capability key: docs:generalized_equilibrium_activation_registry
 - Description: Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry.
 - Change note: Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass.

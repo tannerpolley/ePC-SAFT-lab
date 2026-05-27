@@ -1,0 +1,2 @@
+case_key,reported_feed_status,material_balance_status,vapor_fraction,liquid_fraction,max_abs_material_balance_residual,material_balance_eligible,fixture_eligible,blockers
+hydrocarbon_workbook_23315k_1276369pa_equal_split,normalized,feasible_from_reported_feed,0.5,0.5,0.0,true,true,

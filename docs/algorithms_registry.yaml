@@ -131,12 +131,12 @@
       comment_line: 1360
       context: "m.def(\"_native_equilibrium_selector_route_result\", []("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2703
-      comment_line: 2702
+      line: 2859
+      comment_line: 2858
       context: "NeutralTwoPhaseEosRouteResult solve_pressure_route("
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2840
-      comment_line: 2839
+      line: 2996
+      comment_line: 2995
       context: "NeutralTwoPhaseEosRouteResult solve_temperature_route("
 - algid: "neutral_tp_flash_ipopt"
   section: "Equilibrium Algorithms"
@@ -168,8 +168,8 @@
     acceptance criterion.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2973
-      comment_line: 2972
+      line: 3129
+      comment_line: 3128
       context: "NeutralTwoPhaseEosRouteResult solve_flash_route("
 - algid: "neutral_lle_ipopt"
   section: "Equilibrium Algorithms"
@@ -204,8 +204,8 @@
       comment_line: 444
       context: "\"lle\": _EquilibriumRouteSpec("
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2908
-      comment_line: 2907
+      line: 2956
+      comment_line: 2955
       context: "NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route("
 - algid: "neutral_tpd_stability"
   section: "Equilibrium Algorithms"
@@ -234,8 +234,8 @@
     lower-free-energy candidates and mass-balance incompleteness.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 764
-      comment_line: 763
+      line: 812
+      comment_line: 811
       context: "void append_tpd_candidates_for_reference_block("
 - algid: "neutral_continuous_tpd_minimization"
   section: "Equilibrium Algorithms"
@@ -263,8 +263,8 @@
     TPD value, start source, iteration count, and convergence status.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 623
-      comment_line: 622
+      line: 671
+      comment_line: 670
       context: "NeutralTpdCandidate refine_neutral_tpd_candidate("
 - algid: "neutral_held_stage_ladder_diagnostics"
   section: "Equilibrium Algorithms"
@@ -299,8 +299,8 @@
     certification is evaluated.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 1043
-      comment_line: 1042
+      line: 1091
+      comment_line: 1090
       context: "void finalize_stage9_phase_discovery("
 - algid: "neutral_deterministic_phase_candidate_screening"
   section: "Equilibrium Algorithms"
@@ -328,8 +328,8 @@
     used as generalized production evidence by itself.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2457
-      comment_line: 2456
+      line: 2505
+      comment_line: 2504
       context: "NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery("
 - algid: "phase_candidate_mass_balance_selection"
   section: "Equilibrium Algorithms"
@@ -359,8 +359,8 @@
     finite candidate bound gap open.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 859
-      comment_line: 858
+      line: 907
+      comment_line: 906
       context: "void select_two_phase_candidate_set("
 - algid: "postsolve_tpd_certification"
   section: "Equilibrium Algorithms"
@@ -386,8 +386,8 @@
     blocks before assigning a production-accepted status.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2636
-      comment_line: 2635
+      line: 2684
+      comment_line: 2683
       context: "NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve("
 - algid: "generalized_equilibrium_activation_registry"
   section: "Equilibrium Algorithms"
@@ -399,9 +399,9 @@
   backend: "Markdown and YAML registry"
   dependency: "None"
   derivative_backend: "Exact derivatives required before production row exposure"
-  solver_role: "Records descriptive generalized family labels, derived subworkflows, proof cases, evidence tiers, and benchmark status"
+  solver_role: "Records descriptive generalized family labels, derived subworkflows, reference cases, evidence tiers, and benchmark status"
   implementation_owner: "docs/roadmaps/generalized_fluid_phase_equilibrium.md; docs/roadmaps/equilibrium_benchmark_registry.yaml"
-  validation: "tests/native/contracts/test_generalized_activation_matrix_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py"
+  validation: "tests/native/contracts/test_generalized_equilibrium_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py"
   capability_key: "docs:generalized_equilibrium_activation_registry"
   description: "Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry."
   change_note: "Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass."

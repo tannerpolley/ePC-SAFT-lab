@@ -48,5 +48,5 @@ Hessian rows for the exact variable model it exposes.
 The generalized phase-equilibrium roadmap now keeps associating phase
 equilibrium behind the shared TP-flash architecture rather than a narrow
 associating `bubble_pressure` admission path. Gross/Sadowski 2002 remains the
-first associating proof target, but it must enter through exact association
+first associating validation target, but it must enter through exact association
 derivatives, phase NLP certification, and the collapsed GFPE registry gates.

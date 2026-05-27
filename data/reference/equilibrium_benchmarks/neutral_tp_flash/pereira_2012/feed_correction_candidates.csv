@@ -1,2 +1,2 @@
 case_key,candidate_x1,candidate_x2,candidate_source,correction_status,candidate_vapor_fraction,candidate_liquid_fraction,max_abs_material_balance_residual,note
-system_iii_29315_61mpa,0.09,0.91,material_balance_from_reported_phase_splits,inferred_not_source_confirmed,0.48736462093862816,0.5126353790613718,0.0,"Published Table 3 reports feed [0.09,0.01]; this candidate is the normalized/material-balance-compatible value but is not source-confirmed proof input."
+system_iii_29315_61mpa,0.09,0.91,material_balance_from_reported_phase_splits,inferred_not_source_confirmed,0.48736462093862816,0.5126353790613718,0.0,"Published Table 3 reports feed [0.09,0.01]; this candidate is the normalized/material-balance-compatible value but is not source-confirmed validation input."

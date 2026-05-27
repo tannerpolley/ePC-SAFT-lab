@@ -30,7 +30,7 @@ behavior.
 The generalized equilibrium roadmap is stricter than the current public
 surface. A route family is not generalized-production-ready until it has:
 
-- a source-backed proof case;
+- a source-backed validation case;
 - exact first derivatives and exact Lagrangian Hessian coverage for the active
   objective and constraints;
 - route-owned bounds, scaling, smooth coordinate maps, and Ipopt barrier
@@ -51,7 +51,7 @@ The collapsed roadmap has six visible family labels:
 
 | Roadmap label | Scope | Current generalized status |
 | --- | --- | --- |
-| `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE proof ladder | `planned_not_public` |
+| `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `planned_not_public` |
 | `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `planned_not_public` |
 | `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `planned_not_public` |
 | `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `planned_not_public` |
@@ -185,7 +185,7 @@ Whole equilibrium result files under `tests/native/equilibrium/results` are
 guarded as opt-in sweeps.
 
 The executable Stage 9 snapshot is
-`uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`.
+`uv run python scripts/validation/check_phase_discovery.py --json`.
 That default command is the cheap phase-discovery gate: it does not run the
 Stage III Ipopt route refinement solve. Run it with
 `--include-route-refinement` only when current-route Stage III evidence is
@@ -202,8 +202,8 @@ synthetic neutral payload reports HELD Stage II as
 refinement is requested, current Ipopt `success` / `solve_succeeded` convergence
 is required before Stage III can be counted as current-route refinement
 evidence. This still does not make the generalized family production-exposed:
-source-backed Stage 10 proof, full family generalization, exact derivatives,
-and postsolve certification gates still control admission.
+the source-backed neutral TP flash fixture, full family generalization, exact
+derivatives, and postsolve certification gates still control admission.
 
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful
@@ -359,7 +359,7 @@ Implementation must proceed in this order:
    full HELD stages and phase-set completeness beyond two selected phases.
 6. Associating PE:
    exact association derivative coverage or lifted mass-action variables before
-   Gross/Sadowski proof cases.
+   Gross/Sadowski validation cases.
 7. Electrolyte PE:
    Born SSM+DS exact Hessian coverage, charge-neutral reduced variables, and
    HELD2.0 before Khudaida/Held/Ascani validation.
@@ -386,36 +386,36 @@ are the route to `T-x` and `P-x` diagrams after the main neutral TP flash proof.
 
 The Pereira 2012 System III source audit found a SAFT-VR problem definition,
 including SAFT-VR range and binary interaction parameters. It remains useful
-HELD literature context, but it is not an executable ePC-SAFT proof fixture for
+HELD literature context, but it is not an executable ePC-SAFT validation fixture for
 the current package unless SAFT-VR support or a source-backed ePC-SAFT
-reparameterization is added. Boundary-workflow proof must therefore use the
-Stage 10 source-backed ePC-SAFT-compatible neutral mixture unless a later
+reparameterization is added. Boundary-workflow validation must therefore use the
+source-backed ePC-SAFT-compatible neutral TP flash mixture unless a later
 implementation proves it physically unsuitable; it must not invent a synthetic
 validation fixture. Do not add VLLE-specific tests in this step.
 
-Current bubble/dew runtime routes are Stage 11 evidence only through the
-derived-boundary checker, not by ad hoc public-route success. Stage 11 requires
-strict Ipopt convergence for every requested boundary point: `solver_status ==
-success`, `application_status == solve_succeeded`, and no selected seed attempt
-ending in `max_iterations_exceeded`. Acceptable-level points, tiny steps,
-feasible points, postsolve-accepted finite variables, or any iteration-limit
-seed path remain diagnostic evidence only. The current hydrocarbon-workbook
-fixture now verifies strict bubble/dew `P-x` and `T-x` route traces when the
-checker is run with explicit sweep opt-in. Routine validation must stay
-contract-only unless a single named debug route point is requested; multi-point
-`T-x` or `P-x` traces require `--allow-route-sweep` and an explicit
-`--trace-point-count`.
+Current bubble/dew runtime routes are validated only through the
+derived-boundary checker, not by ad hoc public-route success. Boundary workflow
+completion requires strict Ipopt convergence for every requested boundary
+point: `solver_status == success`, `application_status == solve_succeeded`,
+and no selected seed attempt ending in `max_iterations_exceeded`.
+Acceptable-level points, tiny steps, feasible points, postsolve-accepted finite
+variables, or any iteration-limit seed path remain diagnostic evidence only.
+The current hydrocarbon-workbook fixture now verifies strict bubble/dew `P-x`
+and `T-x` route points when the checker is run with explicit sweep opt-in.
+Routine validation must stay contract-only unless a single named debug route
+point is requested; multi-point `T-x` or `P-x` route points require
+`--allow-route-sweep` and an explicit `--route-point-count`.
 
-The Stage 10 neutral proof gate is explicit in
+The neutral TP flash fixture gate is explicit in
 `docs/roadmaps/equilibrium_benchmark_registry.yaml`. A neutral TP-flash case is
-not executable proof until it supplies source-backed species, pure-component
+not executable until it supplies source-backed species, pure-component
 parameters, binary interactions, temperature, pressure, feed composition,
 expected phase count, expected phase compositions, expected phase fractions,
 accepted source model family, source path, and acceptance tolerances. Local
 Gross/Sadowski 2001 material is useful PC-SAFT context, but the currently
 available local table is a binary VLE correlation/AAD summary rather than a
 point TP-flash fixture. The local hydrocarbon workbook case is now the first
-executable Stage 10 fixture: it uses the workbook's PC-SAFT bubble-point
+executable neutral TP flash fixture: it uses the workbook's PC-SAFT bubble-point
 liquid and vapor phase split, derives a neutral TP flash feed by equal-phase
 lever blending, and checks the native `neutral_tp_flash` route against the
 source phase compositions and phase fractions. This is source-backed workbook
@@ -424,48 +424,48 @@ The Pereira source audit is retained under
 `data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012`; it
 captures the SAFT-VR phase-split table and parameters, and records the
 published second-feed composition inconsistency as a blocker instead of
-normalizing it silently. Its material-balance readiness file identifies which
+normalizing it silently. Its material-balance check file identifies which
 reported points are lever-rule feasible and which need source-confirmed feed
-correction before proof promotion.
+correction before fixture promotion.
 
-The readiness file is checked by
-`uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json`.
-When executable Stage 9 evidence is relevant, first generate
-`check_stage9_phase_discovery_evidence.py --json --include-route-refinement`
-and pass the payload through `--stage9-evidence-json`. The same readiness command with
-`--require-executable` is the closed gate for promoting a case into executable
-Stage 10 proof evidence; Pereira currently fails that gate by design. The
-readiness payload reports each executable fixture field separately so a source
+The fixture is checked by
+`uv run python scripts/validation/check_equilibrium_benchmark_fixture.py --json`.
+When phase-discovery validation is relevant, first generate
+`check_phase_discovery.py --json --include-route-refinement`
+and pass the payload through `--phase-discovery-json`. The same fixture command
+with `--require-executable` is the closed gate for promoting a case into an
+executable neutral TP flash fixture; Pereira currently fails that gate by
+design. The fixture payload reports each executable field separately so a source
 case cannot be promoted until PC/ePC parameters, binary interactions, feed and
-phase-fraction data, accepted model family, source path, tolerances, and Stage
-9 evidence are all present.
+phase-fraction data, accepted model family, source path, tolerances, and
+phase-discovery validation are all present.
 
-The executable Stage 10 proof is
-`uv run python scripts/validation/check_stage10_neutral_tp_flash_proof.py --stage9-evidence-json <payload> --require-proof`.
-Use `--debug --json` when diagnosing the proof path: machine-readable proof
-evidence stays on stdout, while Ipopt iteration output and any route
+The executable neutral TP flash route check is
+`uv run python scripts/validation/check_neutral_tp_flash_fixture.py --phase-discovery-json <payload> --require-complete`.
+Use `--debug --json` when diagnosing the route path: machine-readable fixture
+output stays on stdout, while Ipopt iteration output and any route
 seed-attempt trace rows generated by the selected path are forwarded to stderr.
 The script also supports
-`--generate-stage9-evidence` for an intentional one-command JetBrains Services
-diagnostic run; tests should prefer a supplied Stage 9 payload so Stage 10
-coverage does not hide a second Stage 9 TPD/Ipopt route solve.
+`--generate-phase-discovery` for an intentional one-command JetBrains Services
+diagnostic run; tests should prefer a supplied phase-discovery payload so
+neutral TP flash coverage does not hide a second TPD/Ipopt route solve.
 
-The Stage 11 boundary diagnostic checker is
-`uv run python scripts/validation/check_stage11_boundary_workflow_traces.py`.
+The boundary workflow checker is
+`uv run python scripts/validation/check_boundary_workflows.py`.
 Use `--json --contracts-only` for the cheap derived-workflow contract check.
 Use `--json --run-current-boundary-route --route <route> --debug
 --require-complete` only when diagnosing one current bubble/dew route; the
 checker forwards Ipopt `print_level=5` output to stderr and fails closed when
 the route does not strictly converge. Use
-`--json --run-current-boundary-route --allow-route-sweep --trace-point-count
-<N> --require-complete` only for intentional Stage 11 trace proof; it is not a
+`--json --run-current-boundary-route --allow-route-sweep --route-point-count
+<N> --require-complete` only for intentional boundary route-point validation; it is not a
 routine validation lane.
 
-## Family Proof Ladder
+## Family Validation Ladder
 
 `PE-Neutral TP Flash`
 
-- first proof: source-backed ePC-SAFT-compatible neutral TP flash target;
+- first validation target: source-backed ePC-SAFT-compatible neutral TP flash target;
 - Pereira 2012 System III: HELD/SAFT-VR reference only until model parity or a
   source-backed ePC-SAFT reparameterization exists;
 - follow-on stress: methane/H2S or another source-backed neutral case if the
@@ -475,14 +475,14 @@ routine validation lane.
 
 `PE-Associating TP Flash`
 
-- first proof: Gross/Sadowski 2002 methanol/cyclohexane;
+- first validation target: Gross/Sadowski 2002 methanol/cyclohexane;
 - follow-on stress: water/1-pentanol or another two-associating-component case;
 - required before exposure: association mass-action or implicit sensitivity
   architecture with exact Jacobian and Hessian contributions.
 
 `PE-Electrolyte LLE/TP Flash`
 
-- first proof: Khudaida 2026 electrolyte LLE case;
+- first validation target: Khudaida 2026 electrolyte LLE case;
 - follow-on: Held 2014 Figure 6, then Ascani/Sadowski/Held 2022;
 - required before exposure: Born SSM+DS exact Hessian, reduced
   electroneutral variables, electrolyte TPD/HELD2.0, charge and
@@ -490,7 +490,7 @@ routine validation lane.
 
 `PE-Generalized Multiphase`
 
-- first proof: replay representative neutral, associating, and electrolyte
+- first validation target: replay representative neutral, associating, and electrolyte
   cases through the same phase-set discovery contract;
 - required before exposure: complete candidate phase set, mass-balance
   feasibility, and no route-specific phase-count assumptions.
@@ -525,9 +525,9 @@ Registry acceptance rules:
 - no family row marked `production_exposed: true` before the HELD and
   derivative gates pass;
 - bubble/dew/cloud/shadow appear only under `derived_subworkflows`;
-- proof cases reference descriptive family labels;
+- reference cases use descriptive family labels;
 - deterministic screening is not called full HELD;
 - raw `docs/ChatGPT_Gemini_Responses/*` files remain uncited input artifacts.
 
 The immediate test work is registry/test audit cleanup only. It must not add
-new public routes, new solver infrastructure, or new executable proof fixtures.
+new public routes, new solver infrastructure, or new executable validation fixtures.

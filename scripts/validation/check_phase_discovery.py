@@ -157,7 +157,7 @@ def evaluate_phase_discovery(
     route_postsolve = None if route_payload is None else dict(route_payload["postsolve"])
     continuous_candidates = _continuous_candidates(discovery)
 
-    evidence_status = {
+    requirement_status = {
         "deterministic_screening": "missing",
         "continuous_tpd_minimization": "missing",
         "held_stage_i_stability": "missing",
@@ -170,7 +170,7 @@ def evaluate_phase_discovery(
         and discovery.get("deterministic_screening_is_full_held") is False
         and int(discovery.get("deterministic_candidate_count", 0)) > 0
     ):
-        evidence_status["deterministic_screening"] = "verified_not_full_held"
+        requirement_status["deterministic_screening"] = "verified_not_full_held"
 
     if (
         discovery.get("continuous_tpd_status") == "converged"
@@ -181,9 +181,9 @@ def evaluate_phase_discovery(
         and continuous_candidates
         and all(candidate.get("tpd_status") == "converged" for candidate in continuous_candidates)
     ):
-        evidence_status["continuous_tpd_minimization"] = "verified_converged"
+        requirement_status["continuous_tpd_minimization"] = "verified_converged"
     elif discovery.get("continuous_tpd_status") == "incomplete_iteration_limit":
-        evidence_status["continuous_tpd_minimization"] = "incomplete_iteration_limit"
+        requirement_status["continuous_tpd_minimization"] = "incomplete_iteration_limit"
 
     if (
         discovery.get("held_stage_i_status")
@@ -191,24 +191,24 @@ def evaluate_phase_discovery(
         and discovery.get("held_stage_i_start_count") == discovery.get("continuous_tpd_start_count")
         and discovery.get("continuous_tpd_status") == "converged"
     ):
-        evidence_status["held_stage_i_stability"] = "verified_from_converged_continuous_tpd"
+        requirement_status["held_stage_i_stability"] = "verified_from_converged_continuous_tpd"
 
     if (
         discovery.get("held_stage_ii_status") == "candidate_bound_gap_closed"
         and int(discovery.get("held_stage_ii_major_iterations", 0)) > 0
         and float(discovery.get("held_stage_ii_bound_gap", 0.0)) <= 1.0e-6
     ):
-        evidence_status["held_stage_ii_dual_phase_discovery"] = "verified_candidate_bound_gap_closed"
+        requirement_status["held_stage_ii_dual_phase_discovery"] = "verified_candidate_bound_gap_closed"
     elif discovery.get("held_stage_ii_status") == "candidate_bound_gap_open":
-        evidence_status["held_stage_ii_dual_phase_discovery"] = "incomplete_candidate_bound_gap_open"
+        requirement_status["held_stage_ii_dual_phase_discovery"] = "incomplete_candidate_bound_gap_open"
 
     if not include_route_refinement:
-        if str(evidence_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
-            evidence_status["held_stage_iii_ipopt_refinement"] = "not_requested"
+        if str(requirement_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
+            requirement_status["held_stage_iii_ipopt_refinement"] = "not_requested"
         else:
-            evidence_status["held_stage_iii_ipopt_refinement"] = "not_requested_stage_ii_incomplete"
+            requirement_status["held_stage_iii_ipopt_refinement"] = "not_requested_stage_ii_incomplete"
     elif route_postsolve is None:
-        evidence_status["held_stage_iii_ipopt_refinement"] = "ipopt_dependency_required"
+        requirement_status["held_stage_iii_ipopt_refinement"] = "ipopt_dependency_required"
     elif (
         route_payload is not None
         and _route_solver_converged(route_payload)
@@ -216,10 +216,10 @@ def evaluate_phase_discovery(
         and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
         and route_postsolve.get("accepted") is True
     ):
-        if str(evidence_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
-            evidence_status["held_stage_iii_ipopt_refinement"] = "verified_current_route_refinement_converged"
+        if str(requirement_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
+            requirement_status["held_stage_iii_ipopt_refinement"] = "verified_current_route_refinement_converged"
         else:
-            evidence_status["held_stage_iii_ipopt_refinement"] = (
+            requirement_status["held_stage_iii_ipopt_refinement"] = (
                 "verified_current_route_refinement_pending_stage_ii_candidates"
             )
     elif (
@@ -228,32 +228,32 @@ def evaluate_phase_discovery(
         and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
         and route_postsolve.get("accepted") is True
     ):
-        evidence_status["held_stage_iii_ipopt_refinement"] = (
+        requirement_status["held_stage_iii_ipopt_refinement"] = (
             f"incomplete_ipopt_solver_status_{route_payload.get('solver_status', 'unknown')}"
         )
 
     complete = all(
-        str(evidence_status[key]).startswith("verified")
+        str(requirement_status[key]).startswith("verified")
         for key in PHASE_DISCOVERY_REQUIREMENTS
     )
     incomplete_requirements = [
         key
         for key in PHASE_DISCOVERY_REQUIREMENTS
-        if not str(evidence_status[key]).startswith("verified")
+        if not str(requirement_status[key]).startswith("verified")
     ]
 
     return {
         "case_label": "Synthetic neutral binary phase-discovery case",
         "family_label": "PE-Neutral TP Flash",
         "complete": complete,
-        "evidence_status": evidence_status,
+        "requirement_status": requirement_status,
         "incomplete_requirements": incomplete_requirements,
         "diagnostics": {
             "equilibrium_debug_enabled": _equilibrium_debug_enabled(),
             "route_refinement_requested": include_route_refinement,
             "ipopt_print_level": 5 if _equilibrium_debug_enabled() else 0,
             "phase_discovery_backend": discovery.get("phase_discovery_backend"),
-            "stage9_phase_discovery_steps": discovery.get("stage9_phase_discovery_steps"),
+            "phase_discovery_steps": discovery.get("stage9_phase_discovery_steps"),
             "deterministic_candidate_count": discovery.get("deterministic_candidate_count"),
             "continuous_tpd_start_count": discovery.get("continuous_tpd_start_count"),
             "continuous_tpd_solve_count": discovery.get("continuous_tpd_solve_count"),
@@ -303,7 +303,7 @@ def evaluate_phase_discovery(
 def _print_human(payload: dict[str, Any]) -> None:
     print(f"{payload['case_label']}: {'complete' if payload['complete'] else 'incomplete'}")
     for key in PHASE_DISCOVERY_REQUIREMENTS:
-        print(f"  {key}: {payload['evidence_status'][key]}")
+        print(f"  {key}: {payload['requirement_status'][key]}")
     diagnostics = dict(payload.get("diagnostics", {}))
     if diagnostics.get("route_refinement_requested"):
         print(

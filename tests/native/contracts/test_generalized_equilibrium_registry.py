@@ -72,21 +72,21 @@ def test_gfpe_plan_is_pretreatment_centered() -> None:
         "Package-wide milestones are intentionally not used as stage names." in stage_text
     )
     assert "Pereira 2012 System III remains HELD/SAFT-VR literature context" in stage_text
-    assert "first neutral proof target must be a source-backed ePC-SAFT-compatible" in stage_text
+    assert "first neutral validation target must be a source-backed ePC-SAFT-compatible" in stage_text
     assert "## GFPE Pretreatment Pipeline" in stage_text
     assert "public request\n  -> request-shape record" in stage_text
-    assert "parameter and EOS-contribution readiness record" in stage_text
+    assert "parameter and EOS-contribution suitability record" in stage_text
     assert "bounds, scaling, and transform record" in stage_text
     assert "## Stage 8 - Shared NLP And Ipopt Infrastructure Gate" in stage_text
     assert "complete Ipopt numerics gate" in stage_text
     assert "`proof`, `continuation_trace`, `held_refinement`, and `diagnostic`" in stage_text
     assert "`profile_exact_hessian_gate`" in stage_text
-    assert "Stage 9 cannot use real-mixture HELD proof cases" in stage_text
+    assert "Stage 9 cannot use real-mixture HELD validation cases" in stage_text
     assert "## Stage 17 - Registry, Capability, And Benchmark Closure" in stage_text
     assert stage_text.index("## Stage 9 - Continuous TPD And HELD Stage Ladder") < stage_text.index(
-        "## Stage 10 - Neutral TP Flash Source-Backed Proof"
+        "## Stage 10 - Neutral TP Flash Source-Backed Fixture"
     )
-    assert stage_text.index("## Stage 10 - Neutral TP Flash Source-Backed Proof") < stage_text.index(
+    assert stage_text.index("## Stage 10 - Neutral TP Flash Source-Backed Fixture") < stage_text.index(
         "## Stage 11 - Derived Boundary Workflows And Diagram Traces"
     )
 
@@ -104,19 +104,19 @@ def test_no_generalized_family_claims_production_before_held_gates() -> None:
         neutral["phase_discovery_status"]
         == "continuous_tpd_stage_i_stage_ii_candidate_bound_audit_closed_current_fixture"
     )
-    assert neutral["stage9_status"]["deterministic_screening"].endswith("not_full_held")
+    assert neutral["phase_discovery_gate_status"]["deterministic_screening"].endswith("not_full_held")
     assert (
-        neutral["stage9_status"]["continuous_tpd_minimization"]
+        neutral["phase_discovery_gate_status"]["continuous_tpd_minimization"]
         == "implemented_neutral_coordinate_search_convergence_required"
     )
     expected_stage_i_status = "implemented_neutral_multi_start_convergence_required"
-    assert neutral["stage9_status"]["held_stage_i_stability"] == expected_stage_i_status
+    assert neutral["phase_discovery_gate_status"]["held_stage_i_stability"] == expected_stage_i_status
     assert (
-        neutral["stage9_status"]["held_stage_ii_dual_phase_discovery"]
+        neutral["phase_discovery_gate_status"]["held_stage_ii_dual_phase_discovery"]
         == "current_neutral_candidate_bound_audit_closed_pending_full_dual_loop_generalization"
     )
     assert (
-        neutral["stage9_status"]["held_stage_iii_ipopt_refinement"]
+        neutral["phase_discovery_gate_status"]["held_stage_iii_ipopt_refinement"]
         == "current_route_refinement_verified_with_ipopt_success"
     )
 
@@ -134,7 +134,7 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
         assert row["planned_after_family"] == "PE-Neutral TP Flash", label
         assert set(row["diagram_targets"]) == {"P-x", "T-x"}, label
         assert row["vlle_test_required"] is False, label
-        assert "ePC-SAFT-compatible neutral mixture" in row["shared_mixture_policy"], label
+        assert "ePC-SAFT-compatible neutral TP flash mixture" in row["shared_mixture_policy"], label
         assert "Pereira 2012 System III remains HELD/SAFT-VR context" in row["shared_mixture_policy"], label
         assert "contract-only" in row["diagnostic_policy"], label
         assert "explicit sweep opt-in" in row["diagnostic_policy"], label
@@ -144,10 +144,10 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
         assert "no_implicit_route_sweep" in row["acceptance_checks"], label
 
     assert subworkflows["Bubble point"]["current_convergence_status"] == (
-        "stage11_current_fixture_strict_trace_verified"
+        "current_fixture_strict_route_points_verified"
     )
     assert subworkflows["Dew point"]["current_convergence_status"] == (
-        "stage11_current_fixture_strict_trace_verified"
+        "current_fixture_strict_route_points_verified"
     )
     assert subworkflows["Cloud point"]["current_convergence_status"] == "planned_not_executable"
     assert subworkflows["Shadow point"]["current_convergence_status"] == "planned_not_executable"
@@ -208,13 +208,13 @@ def test_benchmark_cases_reference_descriptive_family_labels() -> None:
     family_labels = set(_family_by_label())
 
     for row in _family_rows():
-        assert row["proof_cases"], row["family_label"]
+        assert row["reference_cases"], row["family_label"]
         assert FORBIDDEN_NUMERIC_ROW_RE.search(row["family_label"]) is None
-        for proof in row["proof_cases"]:
-            assert proof["case_label"], row["family_label"]
-            assert proof["evidence_tier"] in _registry()["evidence_tiers"], proof["case_label"]
-            assert proof["fixture_status"], proof["case_label"]
-            assert proof["acceptance_checks"], proof["case_label"]
+        for case in row["reference_cases"]:
+            assert case["case_label"], row["family_label"]
+            assert case["evidence_tier"] in _registry()["evidence_tiers"], case["case_label"]
+            assert case["fixture_status"], case["case_label"]
+            assert case["acceptance_checks"], case["case_label"]
 
     for case in _registry()["benchmark_cases"]:
         assert set(case["family_labels"]) <= family_labels, case["case_label"]

@@ -58,7 +58,7 @@ LONG_NATIVE_TARGETS_NOTE = (
 )
 LONG_EQUILIBRIUM_ROUTE_TARGETS_NOTE = (
     "Broad equilibrium route-solve/result targets are intentionally guarded because they can run multiple Ipopt or TPD solves. "
-    "Use `uv run python run_pytest.py --equilibrium-confidence -q -s` for the focused convergence proof, "
+    "Use `uv run python run_pytest.py --equilibrium-confidence -q -s` for the focused convergence fixture, "
     "or target a single test node. Pass `--allow-long-equilibrium-tests` only when you intentionally need the broad file."
 )
 PYTEST_OPTIONS_WITH_SEPARATE_VALUE = {

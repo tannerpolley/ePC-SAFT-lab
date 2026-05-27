@@ -16,22 +16,22 @@ This document is authoritative over older roadmap language that allowed audit-on
 
 `docs/roadmaps/generalized_fluid_phase_equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation policy, and staged implementation roadmap for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, Ipopt/numerics layer, staged HELD requirements, postsolve certification, and collapsed roadmap family labels. Those labels are roadmap labels only, not runtime route keys.
 
-`docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the collapsed generalized roadmap. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash proof for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
+`docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the collapsed generalized roadmap. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash fixture for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
 
 `docs/roadmaps/stage_by_stage_implementation_plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master roadmap as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
 Its Stage 8 gate must complete route-owned user scaling, Ipopt option profiles,
 scaled numerical acceptance diagnostics, barrier/active-bound diagnostics, and
-exact-Hessian profile gating before Stage 9 real-mixture HELD proof work starts.
-Stage 9 and Stage 10 convergence diagnosis must stay narrow: use the Stage 9
-evidence checker or one explicit `--equilibrium-debug` test node, not broad
+exact-Hessian profile gating before Stage 9 real-mixture HELD validation work starts.
+Stage 9 and Stage 10 convergence diagnosis must stay narrow: use the phase-discovery
+checker or one explicit `--equilibrium-debug` test node, not broad
 equilibrium route/result sweeps. Stage 10 currently uses the
 hydrocarbon-workbook-derived PC-SAFT TP flash fixture as the executable neutral
-proof target; Pereira 2012 System III remains SAFT-VR/HELD context until model
+validation target; Pereira 2012 System III remains SAFT-VR/HELD context until model
 parity or a source-backed ePC-SAFT reparameterization exists.
 Stage 11 boundary diagnostics follow the same rule: routine checks are
 contract-only, one named route point is the debug unit, and any Ipopt
 acceptable-point, tiny-step, feasible-point, or iteration-limit seed path is
-not completion evidence. Current bubble/dew `P-x` and `T-x` trace proof is
+not completion evidence. Current bubble/dew `P-x` and `T-x` route-point validation is
 available only through the explicit Stage 11 checker sweep opt-in, not through
 routine validation.
 

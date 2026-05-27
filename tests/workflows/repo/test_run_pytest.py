@@ -98,7 +98,7 @@ def test_validate_project_modes_route_to_standard_validation_bundles():
     assert validate_project.CHECK_COMMANDS["equilibrium-debug"] == (
         ("scripts/dev/doctor.py",),
         (
-            "scripts/validation/check_stage9_phase_discovery_evidence.py",
+            "scripts/validation/check_phase_discovery.py",
             "--debug",
             "--include-route-refinement",
             "--require-complete",
@@ -299,7 +299,7 @@ def test_slice_targets_use_grouped_test_subpackages():
 
 
 def test_native_contract_slice_uses_small_metadata_files_not_full_route_builder_suite():
-    assert "tests/native/contracts/test_generalized_activation_matrix_registry.py" in (
+    assert "tests/native/contracts/test_generalized_equilibrium_registry.py" in (
         run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     )
     assert "tests/native/contracts/test_equilibrium_benchmark_registry.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
@@ -563,7 +563,7 @@ def test_validation_lanes_do_not_smuggle_broad_equilibrium_sweeps_into_debug_pat
             assert all(command[0] != "run_pytest.py" for command in commands)
             debug_command = commands[-1]
             assert debug_command == (
-                "scripts/validation/check_stage9_phase_discovery_evidence.py",
+                "scripts/validation/check_phase_discovery.py",
                 "--debug",
                 "--include-route-refinement",
                 "--require-complete",

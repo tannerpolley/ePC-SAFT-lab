@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from scripts.validation import check_stage9_phase_discovery_evidence as phase_discovery_checker
+from scripts.validation import check_phase_discovery as phase_discovery_checker
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CHECKER = REPO_ROOT / "scripts" / "validation" / "check_equilibrium_benchmark_readiness.py"
-PHASE_DISCOVERY_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage9_phase_discovery_evidence.py"
-NEUTRAL_FLASH_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage10_neutral_tp_flash_proof.py"
+CHECKER = REPO_ROOT / "scripts" / "validation" / "check_equilibrium_benchmark_fixture.py"
+PHASE_DISCOVERY_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_phase_discovery.py"
+NEUTRAL_FLASH_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_neutral_tp_flash_fixture.py"
 PEREIRA_CASE_DIR = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
 )
@@ -73,8 +73,8 @@ def _write_minimal_neutral_flash_fixture(case_dir: Path) -> None:
                 "family_label": "PE-Neutral TP Flash",
                 "source_model_family": "PC-SAFT",
                 "runtime_model_support": "available_in_epcsaft",
-                "proof_readiness": {
-                    "stage9_evidence_path_required": True,
+                "fixture_requirements": {
+                    "phase_discovery_required": True,
                     "source_confirmed_feed_correction_required": False,
                 },
                 "pure_component_parameters": {
@@ -106,10 +106,10 @@ def _write_minimal_neutral_flash_fixture(case_dir: Path) -> None:
         + "\n",
         encoding="utf-8",
     )
-    (case_dir / "material_balance_readiness.csv").write_text(
+    (case_dir / "material_balance_check.csv").write_text(
         "\n".join(
             [
-                "case_key,reported_feed_status,material_balance_status,vapor_fraction,liquid_fraction,max_abs_material_balance_residual,material_balance_eligible,proof_eligible,blockers",
+                "case_key,reported_feed_status,material_balance_status,vapor_fraction,liquid_fraction,max_abs_material_balance_residual,material_balance_eligible,fixture_eligible,blockers",
                 "binary_300k_1mpa,normalized,feasible_from_reported_feed,0.5,0.5,0.0,true,true,",
             ]
         )
@@ -121,7 +121,7 @@ def _write_minimal_neutral_flash_fixture(case_dir: Path) -> None:
 def _synthetic_phase_discovery() -> dict[str, object]:
     return {
         "phase_discovery_backend": "deterministic_tpd_candidate_screening",
-        "stage9_phase_discovery_steps": [
+        "phase_discovery_steps": [
             "deterministic_screening",
             "continuous_tpd",
             "held_stage_i",
@@ -157,7 +157,7 @@ def _write_complete_phase_discovery_payload(path: Path) -> None:
         json.dumps(
             {
                 "complete": True,
-                "evidence_status": {
+                "requirement_status": {
                     "deterministic_screening": "verified_not_full_held",
                     "continuous_tpd_minimization": "verified_converged",
                     "held_stage_i_stability": "verified_from_converged_continuous_tpd",
@@ -216,12 +216,12 @@ def test_route_refinement_requires_explicit_request(monkeypatch: pytest.MonkeyPa
     assert calls == [True]
     assert cheap_payload["diagnostics"]["route_refinement_requested"] is False
     assert (
-        cheap_payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
+        cheap_payload["requirement_status"]["held_stage_iii_ipopt_refinement"]
         == "not_requested_stage_ii_incomplete"
     )
     assert full_payload["diagnostics"]["route_refinement_requested"] is True
     assert (
-        full_payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
+        full_payload["requirement_status"]["held_stage_iii_ipopt_refinement"]
         == "verified_current_route_refinement_pending_stage_ii_candidates"
     )
     assert full_payload["diagnostics"]["route_solver_status"] == "success"
@@ -267,7 +267,7 @@ def test_route_refinement_requires_ipopt_convergence(monkeypatch: pytest.MonkeyP
     payload = phase_discovery_checker.evaluate_phase_discovery(include_route_refinement=True)
 
     assert (
-        payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
+        payload["requirement_status"]["held_stage_iii_ipopt_refinement"]
         == "incomplete_ipopt_solver_status_tiny_step_detected"
     )
     assert "held_stage_iii_ipopt_refinement" in payload["incomplete_requirements"]
@@ -305,7 +305,7 @@ def test_route_refinement_rejects_acceptable_point_status(
     payload = phase_discovery_checker.evaluate_phase_discovery(include_route_refinement=True)
 
     assert (
-        payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
+        payload["requirement_status"]["held_stage_iii_ipopt_refinement"]
         == "incomplete_ipopt_solver_status_acceptable_point"
     )
     assert "held_stage_iii_ipopt_refinement" in payload["incomplete_requirements"]
@@ -321,7 +321,7 @@ def test_phase_discovery_checker_require_complete_fails_incomplete_payload(
         lambda **kwargs: {
             "case_label": "Synthetic neutral binary phase-discovery case",
             "complete": False,
-            "evidence_status": {
+            "requirement_status": {
                 "deterministic_screening": "verified_not_full_held",
                 "continuous_tpd_minimization": "verified_converged",
                 "held_stage_i_stability": "verified_from_converged_continuous_tpd",
@@ -368,7 +368,7 @@ def test_phase_discovery_checker_require_complete_fails_incomplete_payload(
     assert "ipopt_iteration: iter=260 objective=4.2 inf_pr=0.001 inf_du=0.002" in captured.out
 
 
-def test_pereira_readiness_checker_reports_nonexecutable_json() -> None:
+def test_pereira_fixture_checker_reports_nonexecutable_json() -> None:
     result = _run_checker("--json")
 
     assert result.returncode == 0, result.stdout + result.stderr
@@ -377,16 +377,16 @@ def test_pereira_readiness_checker_reports_nonexecutable_json() -> None:
     assert payload["case_label"] == "Pereira 2012 System III"
     assert payload["family_label"] == "PE-Neutral TP Flash"
     assert payload["source_model_family"] == "SAFT-VR"
-    assert payload["proof_status"] == "blocked"
+    assert payload["fixture_status"] == "blocked"
     assert payload["executable"] is False
-    assert payload["stage9_evidence_path_required"] is True
+    assert payload["phase_discovery_required"] is True
     assert {
         "model_family_mismatch",
         "saft_vr_runtime_absent",
         "source_confirmed_feed_correction_required",
-        "stage9_evidence_path_not_verified",
+        "phase_discovery_not_verified",
     } <= set(payload["blockers"])
-    assert payload["stage9_evidence"]["held_stage_ii_dual_phase_discovery"] == "required_not_verified"
+    assert payload["phase_discovery_status"]["held_stage_ii_dual_phase_discovery"] == "required_not_verified"
     assert payload["executable_fixture_required_fields"] == [
         "species",
         "pure_component_parameters",
@@ -414,13 +414,13 @@ def test_pereira_readiness_checker_reports_nonexecutable_json() -> None:
     assert payload["executable_fixture_field_status"]["binary_interactions"] == "rejected_saft_vr_binary_factors"
     assert payload["executable_fixture_field_status"]["source_model_family"] == "rejected_model_family_mismatch"
     assert "executable_fixture_contract_incomplete" in payload["blockers"]
-    assert payload["stored_readiness_consistent"] is True
+    assert payload["stored_material_balance_consistent"] is True
 
     cases = {case["case_key"]: case for case in payload["cases"]}
     first = cases["system_iii_22325_09mpa"]
     assert first["reported_feed_status"] == "normalized"
     assert first["material_balance_status"] == "feasible_from_reported_feed"
-    assert first["proof_eligible"] is False
+    assert first["fixture_eligible"] is False
     assert first["vapor_fraction"] == pytest.approx(0.9270741305919203)
     assert first["liquid_fraction"] == pytest.approx(0.07292586940807967)
 
@@ -430,7 +430,7 @@ def test_pereira_readiness_checker_reports_nonexecutable_json() -> None:
     assert "published_second_feed_composition_not_normalized" in second["blockers"]
 
 
-def test_readiness_checker_accepts_complete_source_backed_fixture(
+def test_fixture_checker_accepts_complete_source_backed_fixture(
     tmp_path: Path,
 ) -> None:
     case_dir = tmp_path / "minimal_pc_saft_binary"
@@ -441,7 +441,7 @@ def test_readiness_checker_accepts_complete_source_backed_fixture(
     result = _run_checker(
         "--case-dir",
         str(case_dir),
-        "--stage9-evidence-json",
+        "--phase-discovery-json",
         str(phase_discovery_path),
         "--json",
         "--require-executable",
@@ -449,9 +449,9 @@ def test_readiness_checker_accepts_complete_source_backed_fixture(
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
-    assert payload["proof_status"] == "executable"
+    assert payload["fixture_status"] == "executable"
     assert payload["executable"] is True
-    assert payload["stage9_evidence_path_verified"] is True
+    assert payload["phase_discovery_verified"] is True
     assert payload["unmet_executable_fixture_fields"] == []
     assert payload["blockers"] == []
     assert all(status == "present" for status in payload["executable_fixture_field_status"].values())
@@ -466,7 +466,7 @@ def test_hydrocarbon_workbook_fixture_is_executable_with_phase_discovery_payload
     result = _run_checker(
         "--case-dir",
         str(HYDROCARBON_CASE_DIR),
-        "--stage9-evidence-json",
+        "--phase-discovery-json",
         str(phase_discovery_path),
         "--json",
         "--require-executable",
@@ -475,9 +475,9 @@ def test_hydrocarbon_workbook_fixture_is_executable_with_phase_discovery_payload
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
     assert payload["case_label"] == "Hydrocarbon workbook derived TP flash"
-    assert payload["proof_status"] == "executable"
+    assert payload["fixture_status"] == "executable"
     assert payload["executable"] is True
-    assert payload["stage9_evidence_path_verified"] is True
+    assert payload["phase_discovery_verified"] is True
     assert payload["unmet_executable_fixture_fields"] == []
     assert payload["blockers"] == []
 
@@ -490,7 +490,7 @@ def test_neutral_flash_checker_requires_complete_phase_discovery_payload(
         json.dumps(
             {
                 "complete": False,
-                "evidence_status": {
+                "requirement_status": {
                     "deterministic_screening": "verified_not_full_held",
                     "continuous_tpd_minimization": "verified_converged",
                     "held_stage_i_stability": "verified_from_converged_continuous_tpd",
@@ -503,14 +503,19 @@ def test_neutral_flash_checker_requires_complete_phase_discovery_payload(
         encoding="utf-8",
     )
 
-    result = _run_neutral_flash_checker("--stage9-evidence-json", str(phase_discovery_path), "--json", "--require-proof")
+    result = _run_neutral_flash_checker(
+        "--phase-discovery-json",
+        str(phase_discovery_path),
+        "--json",
+        "--require-complete",
+    )
 
     assert result.returncode == 2
     payload = _load_stdout_json(result)
-    assert payload["proof_complete"] is False
+    assert payload["complete"] is False
     assert payload["route"] is None
-    assert "stage9_evidence_path_not_verified" in payload["blockers"]
-    assert "held_stage_iii_ipopt_refinement" in payload["readiness"]["stage9_incomplete_requirements"]
+    assert "phase_discovery_not_verified" in payload["blockers"]
+    assert "held_stage_iii_ipopt_refinement" in payload["fixture"]["phase_discovery_incomplete_requirements"]
 
 
 def test_neutral_flash_checker_runs_source_backed_workbook_fixture(
@@ -525,22 +530,22 @@ def test_neutral_flash_checker_runs_source_backed_workbook_fixture(
     _write_complete_phase_discovery_payload(phase_discovery_path)
 
     result = _run_neutral_flash_checker(
-        "--stage9-evidence-json",
+        "--phase-discovery-json",
         str(phase_discovery_path),
         "--json",
         "--debug",
-        "--require-proof",
+        "--require-complete",
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
     assert "EXIT: Optimal Solution Found." in result.stderr
     assert payload["case_label"] == "Hydrocarbon workbook derived TP flash"
-    assert payload["proof_status"] == "complete"
-    assert payload["proof_complete"] is True
+    assert payload["status"] == "complete"
+    assert payload["complete"] is True
     assert payload["blockers"] == []
-    assert payload["stage9_evidence_source"] == str(phase_discovery_path)
-    assert payload["readiness"]["stage9_evidence_path_verified"] is True
+    assert payload["phase_discovery_source"] == str(phase_discovery_path)
+    assert payload["fixture"]["phase_discovery_verified"] is True
     assert payload["route"]["solver_status"] == "success"
     assert payload["route"]["application_status"] == "solve_succeeded"
     assert payload["route"]["ipopt_print_level"] == 5
@@ -554,26 +559,26 @@ def test_neutral_flash_checker_runs_source_backed_workbook_fixture(
     assert payload["comparison"]["max_phase_fraction_abs_error"] <= 2.0e-5
 
 
-def test_pereira_readiness_checker_fails_closed_when_executable_required() -> None:
+def test_pereira_fixture_checker_fails_closed_when_executable_required() -> None:
     result = _run_checker("--json", "--require-executable")
 
     assert result.returncode == 2
     payload = _load_stdout_json(result)
     assert payload["executable"] is False
-    assert payload["proof_status"] == "blocked"
+    assert payload["fixture_status"] == "blocked"
     assert "Pereira 2012 System III is not an executable equilibrium fixture" in result.stderr
 
 
-def test_pereira_readiness_checker_recomputes_material_balance_and_rejects_stale_csv(
+def test_pereira_fixture_checker_recomputes_material_balance_and_rejects_stale_csv(
     tmp_path: Path,
 ) -> None:
     case_dir = tmp_path / "pereira_2012"
     shutil.copytree(PEREIRA_CASE_DIR, case_dir)
 
-    readiness_path = case_dir / "material_balance_readiness.csv"
-    rows = list(csv.DictReader(readiness_path.read_text(encoding="utf-8").splitlines()))
+    material_balance_path = case_dir / "material_balance_check.csv"
+    rows = list(csv.DictReader(material_balance_path.read_text(encoding="utf-8").splitlines()))
     rows[0]["vapor_fraction"] = "0.1"
-    with readiness_path.open("w", encoding="utf-8", newline="") as handle:
+    with material_balance_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
         writer.writeheader()
         writer.writerows(rows)
@@ -582,9 +587,9 @@ def test_pereira_readiness_checker_recomputes_material_balance_and_rejects_stale
 
     assert result.returncode == 1
     payload = _load_stdout_json(result)
-    assert payload["stored_readiness_consistent"] is False
-    assert "stored_material_balance_readiness_mismatch" in payload["blockers"]
-    assert payload["stored_readiness_mismatches"][0]["case_key"] == "system_iii_22325_09mpa"
+    assert payload["stored_material_balance_consistent"] is False
+    assert "stored_material_balance_check_mismatch" in payload["blockers"]
+    assert payload["stored_material_balance_mismatches"][0]["case_key"] == "system_iii_22325_09mpa"
 
 
 def test_phase_discovery_checker_reports_candidate_status_without_refinement() -> None:
@@ -595,15 +600,15 @@ def test_phase_discovery_checker_reports_candidate_status_without_refinement() -
 
     assert payload["family_label"] == "PE-Neutral TP Flash"
     assert payload["complete"] is False
-    assert payload["evidence_status"]["deterministic_screening"] == "verified_not_full_held"
-    assert payload["evidence_status"]["continuous_tpd_minimization"] == "verified_converged"
-    assert payload["evidence_status"]["held_stage_i_stability"] == "verified_from_converged_continuous_tpd"
+    assert payload["requirement_status"]["deterministic_screening"] == "verified_not_full_held"
+    assert payload["requirement_status"]["continuous_tpd_minimization"] == "verified_converged"
+    assert payload["requirement_status"]["held_stage_i_stability"] == "verified_from_converged_continuous_tpd"
     assert (
-        payload["evidence_status"]["held_stage_ii_dual_phase_discovery"]
+        payload["requirement_status"]["held_stage_ii_dual_phase_discovery"]
         == "verified_candidate_bound_gap_closed"
     )
     assert (
-        payload["evidence_status"]["held_stage_iii_ipopt_refinement"]
+        payload["requirement_status"]["held_stage_iii_ipopt_refinement"]
         == "not_requested"
     )
     assert payload["incomplete_requirements"] == [
@@ -635,7 +640,7 @@ def test_phase_discovery_checker_debug_route_reports_complete_converged_path() -
 
     assert payload["complete"] is True
     assert payload["incomplete_requirements"] == []
-    assert payload["evidence_status"]["held_stage_iii_ipopt_refinement"].startswith("verified")
+    assert payload["requirement_status"]["held_stage_iii_ipopt_refinement"].startswith("verified")
     assert payload["diagnostics"]["route_solver_status"] == "success"
     assert payload["diagnostics"]["route_application_status"] == "solve_succeeded"
     assert payload["diagnostics"]["route_iteration_count"] > 0
@@ -649,7 +654,7 @@ def test_phase_discovery_checker_debug_route_reports_complete_converged_path() -
     assert "EXIT: Optimal Solution Found." in result.stderr
 
 
-def test_pereira_readiness_checker_consumes_phase_discovery_payload_without_faking_completion(
+def test_pereira_fixture_checker_consumes_phase_discovery_payload_without_faking_completion(
     tmp_path: Path,
 ) -> None:
     phase_discovery_path = tmp_path / "phase_discovery.json"
@@ -657,7 +662,7 @@ def test_pereira_readiness_checker_consumes_phase_discovery_payload_without_faki
         json.dumps(
             {
                 "complete": False,
-                "evidence_status": {
+                "requirement_status": {
                     "deterministic_screening": "verified_not_full_held",
                     "continuous_tpd_minimization": "verified_converged",
                     "held_stage_i_stability": "verified_from_converged_continuous_tpd",
@@ -672,21 +677,21 @@ def test_pereira_readiness_checker_consumes_phase_discovery_payload_without_faki
         encoding="utf-8",
     )
 
-    result = _run_checker("--json", "--stage9-evidence-json", str(phase_discovery_path))
+    result = _run_checker("--json", "--phase-discovery-json", str(phase_discovery_path))
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
 
-    assert payload["stage9_evidence_path_verified"] is False
-    assert payload["stage9_evidence"]["continuous_tpd_minimization"] == "verified_converged"
-    assert payload["stage9_evidence"]["held_stage_ii_dual_phase_discovery"] == "incomplete_candidate_bound_gap_open"
-    assert payload["stage9_incomplete_requirements"] == [
+    assert payload["phase_discovery_verified"] is False
+    assert payload["phase_discovery_status"]["continuous_tpd_minimization"] == "verified_converged"
+    assert payload["phase_discovery_status"]["held_stage_ii_dual_phase_discovery"] == "incomplete_candidate_bound_gap_open"
+    assert payload["phase_discovery_incomplete_requirements"] == [
         "held_stage_ii_dual_phase_discovery",
     ]
-    assert "stage9_evidence_path_not_verified" in payload["blockers"]
+    assert "phase_discovery_not_verified" in payload["blockers"]
 
 
-def test_pereira_readiness_checker_removes_blocker_only_for_complete_phase_discovery_payload(
+def test_pereira_fixture_checker_removes_blocker_only_for_complete_phase_discovery_payload(
     tmp_path: Path,
 ) -> None:
     phase_discovery_path = tmp_path / "complete_phase_discovery.json"
@@ -694,7 +699,7 @@ def test_pereira_readiness_checker_removes_blocker_only_for_complete_phase_disco
         json.dumps(
             {
                 "complete": True,
-                "evidence_status": {
+                "requirement_status": {
                     "deterministic_screening": "verified",
                     "continuous_tpd_minimization": "verified",
                     "held_stage_i_stability": "verified",
@@ -706,12 +711,12 @@ def test_pereira_readiness_checker_removes_blocker_only_for_complete_phase_disco
         encoding="utf-8",
     )
 
-    result = _run_checker("--json", "--stage9-evidence-json", str(phase_discovery_path))
+    result = _run_checker("--json", "--phase-discovery-json", str(phase_discovery_path))
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = _load_stdout_json(result)
 
-    assert payload["stage9_evidence_path_verified"] is True
-    assert "stage9_evidence_path_not_verified" not in payload["blockers"]
+    assert payload["phase_discovery_verified"] is True
+    assert "phase_discovery_not_verified" not in payload["blockers"]
     assert payload["executable"] is False
     assert {"model_family_mismatch", "saft_vr_runtime_absent"} <= set(payload["blockers"])

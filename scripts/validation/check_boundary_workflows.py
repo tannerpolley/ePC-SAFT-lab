@@ -65,8 +65,8 @@ BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
 }
 
 
-def _workflow_contracts(trace_points_by_label: dict[str, list[dict[str, Any]]] | None = None) -> list[dict[str, Any]]:
-    trace_points_by_label = trace_points_by_label or {}
+def _workflow_contracts(route_points_by_label: dict[str, list[dict[str, Any]]] | None = None) -> list[dict[str, Any]]:
+    route_points_by_label = route_points_by_label or {}
     workflows = [
         {
             "label": "Bubble point",
@@ -114,16 +114,16 @@ def _workflow_contracts(trace_points_by_label: dict[str, list[dict[str, Any]]] |
         },
     ]
     for workflow in workflows:
-        trace_points = list(trace_points_by_label.get(workflow["label"], []))
-        workflow["trace_points"] = trace_points
+        route_points = list(route_points_by_label.get(workflow["label"], []))
+        workflow["route_points"] = route_points
         if workflow["runtime_status"] == "planned_not_executable":
-            workflow["trace_status"] = "planned_not_executable"
-        elif not trace_points:
-            workflow["trace_status"] = "not_requested"
-        elif all(point["status"] == "accepted" for point in trace_points):
-            workflow["trace_status"] = "complete"
+            workflow["route_point_status"] = "planned_not_executable"
+        elif not route_points:
+            workflow["route_point_status"] = "not_requested"
+        elif all(point["status"] == "accepted" for point in route_points):
+            workflow["route_point_status"] = "complete"
         else:
-            workflow["trace_status"] = "blocked"
+            workflow["route_point_status"] = "blocked"
     return workflows
 
 
@@ -137,7 +137,7 @@ def _native_ipopt_compiled() -> bool:
 
 def _composition_samples(base: list[float], count: int) -> list[list[float]]:
     if count < 1:
-        raise ValueError("--trace-point-count must be greater than zero")
+        raise ValueError("--route-point-count must be greater than zero")
     if count == 1:
         return [base]
     if len(base) < 2:
@@ -151,7 +151,7 @@ def _composition_samples(base: list[float], count: int) -> list[list[float]]:
         sample[-1] -= offset
         total = sum(sample)
         if total <= 0.0 or any(value <= 0.0 for value in sample):
-            raise ValueError("Generated boundary trace composition left the positive simplex")
+            raise ValueError("Generated boundary route-point composition left the positive simplex")
         samples.append([value / total for value in sample])
     return samples
 
@@ -327,11 +327,11 @@ def _run_route_points(args: argparse.Namespace) -> tuple[dict[str, list[dict[str
     species = runtime.species(rows, metadata)
     mix = runtime.mixture(args.case_dir, species)
     blockers: list[str] = []
-    trace_points_by_label: dict[str, list[dict[str, Any]]] = {}
+    route_points_by_label: dict[str, list[dict[str, Any]]] = {}
     for route in _selected_routes(args.route):
         spec = BOUNDARY_ROUTES[route]
         row = rows[str(spec["source_phase"])]
-        samples = _composition_samples(runtime.composition(row), int(args.trace_point_count))
+        samples = _composition_samples(runtime.composition(row), int(args.route_point_count))
         for sample_index, composition in enumerate(samples):
             request = _route_request(route, spec, row, composition)
             payload = _run_native_route(
@@ -341,19 +341,19 @@ def _run_route_points(args: argparse.Namespace) -> tuple[dict[str, list[dict[str
                 max_iterations=int(args.max_iterations),
             )
             point = _route_point_result(route, sample_index, composition, payload)
-            trace_points_by_label.setdefault(str(spec["workflow_label"]), []).append(point)
+            route_points_by_label.setdefault(str(spec["workflow_label"]), []).append(point)
             if point["status"] != "accepted":
                 blockers.append(f"{route}_strict_convergence_missing")
-    return trace_points_by_label, list(dict.fromkeys(blockers))
+    return route_points_by_label, list(dict.fromkeys(blockers))
 
 
 def _route_point_summary(workflows: list[dict[str, Any]]) -> dict[str, int]:
-    points = [point for workflow in workflows for point in workflow["trace_points"]]
+    points = [point for workflow in workflows for point in workflow["route_points"]]
     accepted = [point for point in points if point["status"] == "accepted"]
     return {
-        "requested_trace_point_count": len(points),
-        "accepted_trace_point_count": len(accepted),
-        "failed_trace_point_count": len(points) - len(accepted),
+        "requested_route_point_count": len(points),
+        "accepted_route_point_count": len(accepted),
+        "failed_route_point_count": len(points) - len(accepted),
     }
 
 
@@ -366,7 +366,7 @@ def _source_fixture(case_dir: Path) -> str:
 
 def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blockers: list[str]) -> dict[str, Any]:
     summary = _route_point_summary(workflows)
-    complete = summary["requested_trace_point_count"] > 0 and summary["failed_trace_point_count"] == 0 and not blockers
+    complete = summary["requested_route_point_count"] > 0 and summary["failed_route_point_count"] == 0 and not blockers
     if not args.run_current_boundary_route:
         status = "contracts_available"
     elif complete:
@@ -377,8 +377,8 @@ def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blo
         "boundary_status": status,
         "complete": complete,
         "source_fixture": _source_fixture(args.case_dir),
-        "requested_route_point_count": summary["requested_trace_point_count"],
-        "trace_summary": summary,
+        "requested_route_point_count": summary["requested_route_point_count"],
+        "route_point_summary": summary,
         "blockers": blockers,
         "workflows": workflows,
     }
@@ -386,7 +386,7 @@ def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blo
 
 def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     selected_route_count = len(_selected_routes(args.route)) if args.run_current_boundary_route else 0
-    requested_route_point_count = selected_route_count * int(args.trace_point_count)
+    requested_route_point_count = selected_route_count * int(args.route_point_count)
     if requested_route_point_count > 1 and not args.allow_route_sweep:
         workflows = _workflow_contracts()
         payload = {
@@ -394,7 +394,7 @@ def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             "complete": False,
             "source_fixture": _source_fixture(args.case_dir),
             "requested_route_point_count": requested_route_point_count,
-            "trace_summary": _route_point_summary(workflows),
+            "route_point_summary": _route_point_summary(workflows),
             "blockers": ["explicit_route_or_allow_route_sweep_required"],
             "workflows": workflows,
         }
@@ -408,8 +408,8 @@ def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         payload = _base_payload(args, _workflow_contracts(), ["native_ipopt_not_compiled"])
         return payload, 2 if args.require_complete else 0
 
-    trace_points_by_label, blockers = _run_route_points(args)
-    workflows = _workflow_contracts(trace_points_by_label)
+    route_points_by_label, blockers = _run_route_points(args)
+    workflows = _workflow_contracts(route_points_by_label)
     payload = _base_payload(args, workflows, blockers)
     if args.require_complete and not payload["complete"]:
         return payload, 2
@@ -427,7 +427,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run current executable bubble/dew routes. Requires one route unless --allow-route-sweep is set.",
     )
     parser.add_argument("--route", choices=tuple(BOUNDARY_ROUTES), help="Run one current boundary route.")
-    parser.add_argument("--trace-point-count", type=int, default=1)
+    parser.add_argument("--route-point-count", type=int, default=1)
     parser.add_argument(
         "--allow-route-sweep",
         action="store_true",
@@ -458,9 +458,9 @@ def _print_text(payload: dict[str, Any]) -> None:
     for workflow in payload["workflows"]:
         print(
             f"{workflow['label']}: runtime={workflow['runtime_status']} "
-            f"trace={workflow['trace_status']} points={len(workflow['trace_points'])}"
+            f"route_points={workflow['route_point_status']} points={len(workflow['route_points'])}"
         )
-        for point in workflow["trace_points"]:
+        for point in workflow["route_points"]:
             print(
                 "  route_point: "
                 f"route={point['route']} "

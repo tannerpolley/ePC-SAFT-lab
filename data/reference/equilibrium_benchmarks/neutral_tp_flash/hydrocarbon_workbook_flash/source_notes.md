@@ -3,8 +3,8 @@
 This folder records a source-backed neutral PC-SAFT TP flash fixture derived
 from `workbooks/PC-SAFT Calculations - Hydrocarbon Basis.xlsm`.
 
-Status: executable Stage 10 fixture for the current ePC-SAFT runtime when a
-complete Stage 9 evidence payload is supplied.
+Status: executable neutral TP flash fixture for the current ePC-SAFT runtime
+when a complete phase-discovery payload is supplied.
 
 Source facts:
 
@@ -19,6 +19,6 @@ The TP flash feed is constructed as an equal-mole blend of the source liquid and
 vapor compositions. At the same source `T` and `P`, the expected vapor and
 liquid phase fractions are therefore both `0.5`.
 
-This is not Pereira 2012 proof evidence. Pereira System III remains HELD
+This is not Pereira 2012 validation input. Pereira System III remains HELD
 literature context because the local source audit shows SAFT-VR parameters, not
 an executable PC-SAFT/ePC-SAFT fixture for this package.

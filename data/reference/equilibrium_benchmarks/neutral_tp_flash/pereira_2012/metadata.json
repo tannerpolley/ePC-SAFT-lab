@@ -4,14 +4,13 @@
   "family_label": "PE-Neutral TP Flash",
   "source_model_family": "SAFT-VR",
   "runtime_model_support": "absent_from_epcsaft",
-  "proof_status": "source_audited_not_executable",
-  "fixture_status": "source_data_needed",
-  "proof_readiness": {
+  "fixture_status": "source_audited_not_executable",
+  "fixture_requirements": {
     "executable": false,
-    "stage9_evidence_path_required": true,
+    "phase_discovery_required": true,
     "saft_vr_runtime_required": true,
     "source_confirmed_feed_correction_required": true,
-    "material_balance_readiness_path": "material_balance_readiness.csv",
+    "material_balance_check_path": "material_balance_check.csv",
     "feed_correction_candidates_path": "feed_correction_candidates.csv"
   },
   "composition_basis": "mole_fraction",
@@ -41,7 +40,7 @@
     "published_second_feed_composition_not_normalized"
   ],
   "notes": [
-    "This source audit captures Pereira System III data needed for a future proof path, but it is not an executable ePC-SAFT fixture.",
-    "The published second feed composition is [0.09, 0.01], which sums to 0.10. Do not silently normalize or infer [0.09, 0.91] in proof code without a source-backed correction policy."
+    "This source audit captures Pereira System III data needed for a future validation path, but it is not an executable ePC-SAFT fixture.",
+    "The published second feed composition is [0.09, 0.01], which sums to 0.10. Do not silently normalize or infer [0.09, 0.91] in validation code without a source-backed correction policy."
   ]
 }

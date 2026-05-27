@@ -245,7 +245,6 @@ def _computed_material_balance_rows(metadata: dict[str, Any], case_dir: Path) ->
             "liquid_fraction": None,
             "max_abs_material_balance_residual": None,
             "material_balance_eligible": False,
-            "proof_eligible": False,
             "blockers": [],
         }
         if normalized:
@@ -261,7 +260,7 @@ def _computed_material_balance_rows(metadata: dict[str, Any], case_dir: Path) ->
                 }
             )
         row["blockers"] = _case_blockers(metadata, row)
-        row["proof_eligible"] = row["material_balance_eligible"] and not row["blockers"]
+        row["fixture_eligible"] = row["material_balance_eligible"] and not row["blockers"]
         rows.append(row)
     return rows
 
@@ -274,7 +273,7 @@ def _stored_blockers(value: str) -> list[str]:
     return [] if not value.strip() else value.split(";")
 
 
-def _compare_stored_readiness(
+def _compare_stored_material_balance(
     computed_rows: list[dict[str, Any]],
     stored_rows: list[dict[str, str]],
 ) -> list[dict[str, Any]]:
@@ -296,8 +295,12 @@ def _compare_stored_readiness(
                 _float_or_none(stored["max_abs_material_balance_residual"]),
                 computed["max_abs_material_balance_residual"],
             ),
-            ("material_balance_eligible", _stored_bool(stored["material_balance_eligible"]), computed["material_balance_eligible"]),
-            ("proof_eligible", _stored_bool(stored["proof_eligible"]), computed["proof_eligible"]),
+            (
+                "material_balance_eligible",
+                _stored_bool(stored["material_balance_eligible"]),
+                computed["material_balance_eligible"],
+            ),
+            ("fixture_eligible", _stored_bool(stored["fixture_eligible"]), computed["fixture_eligible"]),
             ("blockers", _stored_blockers(stored["blockers"]), computed["blockers"]),
         )
         for field, stored_value, computed_value in checks:
@@ -356,7 +359,7 @@ def _computed_feed_correction_rows(case_dir: Path) -> list[dict[str, Any]]:
 def _phase_discovery_status_from_payload(payload: dict[str, Any] | None) -> dict[str, str]:
     if payload is None:
         return {key: "required_not_verified" for key in PHASE_DISCOVERY_REQUIREMENTS}
-    raw_statuses = payload.get("evidence_status", {})
+    raw_statuses = payload.get("requirement_status", {})
     if not isinstance(raw_statuses, dict):
         raw_statuses = {}
     return {
@@ -393,29 +396,29 @@ def evaluate_case_dir(case_dir: Path, phase_discovery_payload: dict[str, Any] | 
         for field in EXECUTABLE_FIXTURE_REQUIRED_FIELDS
         if fixture_field_status[field] != "present"
     ]
-    stored_readiness = _read_csv(case_dir / "material_balance_readiness.csv")
-    mismatches = _compare_stored_readiness(computed_rows, stored_readiness)
+    stored_material_balance = _read_csv(case_dir / "material_balance_check.csv")
+    mismatches = _compare_stored_material_balance(computed_rows, stored_material_balance)
     blockers = list(dict.fromkeys(reason for row in computed_rows for reason in row["blockers"]))
-    fixture_requirements = metadata.get("proof_readiness", {})
-    phase_discovery_required = bool(fixture_requirements.get("stage9_evidence_path_required", False))
+    fixture_requirements = metadata.get("fixture_requirements", {})
+    phase_discovery_required = bool(fixture_requirements.get("phase_discovery_required", False))
     phase_discovery_status = _phase_discovery_status_from_payload(phase_discovery_payload)
     phase_discovery_incomplete = _phase_discovery_incomplete_requirements(phase_discovery_payload)
     phase_discovery_verified = (
         _phase_discovery_complete(phase_discovery_payload)
         if phase_discovery_payload is not None
-        else bool(fixture_requirements.get("stage9_evidence_path_verified", False))
+        else bool(fixture_requirements.get("phase_discovery_verified", False))
     )
     if phase_discovery_required and not phase_discovery_verified:
-        blockers.append("stage9_evidence_path_not_verified")
+        blockers.append("phase_discovery_not_verified")
     if bool(fixture_requirements.get("source_confirmed_feed_correction_required", False)):
         blockers.append("source_confirmed_feed_correction_required")
     if unmet_fixture_fields:
         blockers.append("executable_fixture_contract_incomplete")
     if mismatches:
-        blockers.append("stored_material_balance_readiness_mismatch")
+        blockers.append("stored_material_balance_check_mismatch")
     executable = (
         str(metadata.get("source_model_family", "")) in ACCEPTED_NEUTRAL_FLASH_MODEL_FAMILIES
-        and all(bool(row["proof_eligible"]) for row in computed_rows)
+        and all(bool(row["fixture_eligible"]) for row in computed_rows)
         and not unmet_fixture_fields
         and not mismatches
         and (not phase_discovery_required or phase_discovery_verified)
@@ -426,25 +429,25 @@ def evaluate_case_dir(case_dir: Path, phase_discovery_payload: dict[str, Any] | 
         "case_label": metadata.get("case_label", ""),
         "family_label": metadata.get("family_label", ""),
         "source_model_family": metadata.get("source_model_family", ""),
-        "proof_status": "executable" if executable else "blocked",
+        "fixture_status": "executable" if executable else "blocked",
         "executable": executable,
-        "stage9_evidence_path_required": phase_discovery_required,
-        "stage9_evidence_path_verified": phase_discovery_verified,
-        "stage9_evidence": phase_discovery_status,
-        "stage9_incomplete_requirements": phase_discovery_incomplete,
+        "phase_discovery_required": phase_discovery_required,
+        "phase_discovery_verified": phase_discovery_verified,
+        "phase_discovery_status": phase_discovery_status,
+        "phase_discovery_incomplete_requirements": phase_discovery_incomplete,
         "executable_fixture_required_fields": list(EXECUTABLE_FIXTURE_REQUIRED_FIELDS),
         "executable_fixture_field_status": fixture_field_status,
         "unmet_executable_fixture_fields": unmet_fixture_fields,
         "blockers": list(dict.fromkeys(blockers)),
         "cases": computed_rows,
         "feed_correction_candidates": _computed_feed_correction_rows(case_dir),
-        "stored_readiness_consistent": not mismatches,
-        "stored_readiness_mismatches": mismatches,
+        "stored_material_balance_consistent": not mismatches,
+        "stored_material_balance_mismatches": mismatches,
     }
 
 
 def _print_human(payload: dict[str, Any]) -> None:
-    print(f"{payload['case_label']}: {payload['proof_status']}")
+    print(f"{payload['case_label']}: {payload['fixture_status']}")
     print(f"  executable: {str(payload['executable']).lower()}")
     print(f"  source model: {payload['source_model_family']}")
     if payload["blockers"]:
@@ -458,7 +461,7 @@ def _print_human(payload: dict[str, Any]) -> None:
         print(
             "  "
             + str(case["case_key"])
-            + f": {case['material_balance_status']}, proof_eligible={str(case['proof_eligible']).lower()}"
+            + f": {case['material_balance_status']}, fixture_eligible={str(case['fixture_eligible']).lower()}"
         )
 
 
@@ -466,11 +469,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Check whether an equilibrium benchmark fixture can run.")
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
     parser.add_argument(
-        "--stage9-evidence-json",
+        "--phase-discovery-json",
         dest="phase_discovery_json",
         type=Path,
         default=None,
-        help="Machine-readable phase-discovery payload from check_stage9_phase_discovery_evidence.py.",
+        help="Machine-readable phase-discovery payload from check_phase_discovery.py.",
     )
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument(
@@ -489,7 +492,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
         _print_human(payload)
-    if not payload["stored_readiness_consistent"]:
+    if not payload["stored_material_balance_consistent"]:
         return 1
     if args.require_executable and not payload["executable"]:
         print(

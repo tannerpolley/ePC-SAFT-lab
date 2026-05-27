@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BOUNDARY_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_stage11_boundary_workflow_traces.py"
+BOUNDARY_CHECKER = REPO_ROOT / "scripts" / "validation" / "check_boundary_workflows.py"
 
 
 def _run_boundary_checker(*args: str) -> subprocess.CompletedProcess[str]:
@@ -39,8 +39,8 @@ def test_boundary_workflow_contracts_keep_cloud_shadow_planned() -> None:
     assert workflows["Dew point"]["runtime_status"] == "executable_current_routes"
     assert workflows["Cloud point"]["runtime_status"] == "planned_not_executable"
     assert workflows["Shadow point"]["runtime_status"] == "planned_not_executable"
-    assert workflows["Cloud point"]["trace_points"] == []
-    assert workflows["Shadow point"]["trace_points"] == []
+    assert workflows["Cloud point"]["route_points"] == []
+    assert workflows["Shadow point"]["route_points"] == []
     assert workflows["Bubble point"]["activation_family_row"] is False
     assert workflows["Dew point"]["activation_family_row"] is False
     assert set(workflows["Bubble point"]["diagram_targets"]) == {"P-x", "T-x"}
@@ -86,14 +86,14 @@ def test_boundary_route_reports_strict_convergence_and_debug_output() -> None:
     assert payload["complete"] is True
     assert payload["source_fixture"].endswith("hydrocarbon_workbook_flash")
     assert payload["requested_route_point_count"] == 1
-    assert payload["trace_summary"]["accepted_trace_point_count"] == 1
-    assert payload["trace_summary"]["failed_trace_point_count"] == 0
+    assert payload["route_point_summary"]["accepted_route_point_count"] == 1
+    assert payload["route_point_summary"]["failed_route_point_count"] == 0
 
     workflow = workflows["Bubble point"]
     assert workflow["runtime_status"] == "executable_current_routes"
-    assert workflow["trace_status"] == "complete"
-    assert len(workflow["trace_points"]) == 1
-    point = workflow["trace_points"][0]
+    assert workflow["route_point_status"] == "complete"
+    assert len(workflow["route_points"]) == 1
+    point = workflow["route_points"][0]
     assert point["status"] == "accepted"
     assert point["route"] == "bubble_pressure"
     assert point["solver_status"] == "success"
@@ -106,8 +106,8 @@ def test_boundary_route_reports_strict_convergence_and_debug_output() -> None:
     assert point["strict_convergence"] is True
     assert point["iteration_limit_seed_attempts"] == []
 
-    assert workflows["Cloud point"]["trace_status"] == "planned_not_executable"
-    assert workflows["Shadow point"]["trace_status"] == "planned_not_executable"
+    assert workflows["Cloud point"]["route_point_status"] == "planned_not_executable"
+    assert workflows["Shadow point"]["route_point_status"] == "planned_not_executable"
 
 
 @pytest.mark.ipopt
@@ -123,7 +123,7 @@ def test_boundary_route_points_complete_only_with_explicit_opt_in() -> None:
         "--json",
         "--run-current-boundary-route",
         "--allow-route-sweep",
-        "--trace-point-count",
+        "--route-point-count",
         "2",
         "--require-complete",
     )
@@ -135,14 +135,14 @@ def test_boundary_route_points_complete_only_with_explicit_opt_in() -> None:
     assert payload["boundary_status"] == "complete_route_convergence"
     assert payload["complete"] is True
     assert payload["requested_route_point_count"] == 8
-    assert payload["trace_summary"]["accepted_trace_point_count"] == 8
-    assert payload["trace_summary"]["failed_trace_point_count"] == 0
+    assert payload["route_point_summary"]["accepted_route_point_count"] == 8
+    assert payload["route_point_summary"]["failed_route_point_count"] == 0
     for label in ("Bubble point", "Dew point"):
-        assert workflows[label]["trace_status"] == "complete"
-        assert len(workflows[label]["trace_points"]) == 4
-        assert {point["diagram_target"] for point in workflows[label]["trace_points"]} == {"P-x", "T-x"}
-        assert {point["sample_index"] for point in workflows[label]["trace_points"]} == {0, 1}
-        for point in workflows[label]["trace_points"]:
+        assert workflows[label]["route_point_status"] == "complete"
+        assert len(workflows[label]["route_points"]) == 4
+        assert {point["diagram_target"] for point in workflows[label]["route_points"]} == {"P-x", "T-x"}
+        assert {point["sample_index"] for point in workflows[label]["route_points"]} == {0, 1}
+        for point in workflows[label]["route_points"]:
             assert point["status"] == "accepted"
             assert point["solver_status"] == "success"
             assert point["application_status"] == "solve_succeeded"

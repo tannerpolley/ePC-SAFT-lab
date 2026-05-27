@@ -26,7 +26,7 @@ Use this order when two documents disagree:
 2. `docs/roadmaps/generalized_fluid_phase_equilibrium.md` for GFPE doctrine,
    mathematical form, family order, and admission policy.
 3. `docs/roadmaps/equilibrium_benchmark_registry.yaml` for executable family
-   rows, derived subworkflows, proof cases, and production flags.
+   rows, derived subworkflows, reference cases, and production flags.
 4. This file for implementation sequencing and stage exit evidence.
 5. `docs/roadmaps/FULL_ROADMAP.md` for package-wide boundaries and completion
    standards.
@@ -45,7 +45,7 @@ GFPE doctrine and registry:
 
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
-- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
+- `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 
 Equation and algorithm sources:
@@ -122,7 +122,7 @@ public request
   -> request-shape record
   -> normalized thermodynamic input record
   -> species and phase-eligibility record
-  -> parameter and EOS-contribution readiness record
+  -> parameter and EOS-contribution suitability record
   -> physical-basis and variable-layout record
   -> bounds, scaling, and transform record
   -> seed and candidate record
@@ -133,8 +133,8 @@ public request
 ```
 
 Each stage below either creates one of those records, deepens the shared NLP
-contract, or supplies the source-backed proof needed to promote registry
-evidence.
+contract, or supplies the source-backed validation fixture needed to promote
+registry support.
 
 ## GFPE Non-Negotiables
 
@@ -154,15 +154,15 @@ These rules apply to every stage:
   wrapper, and Ipopt internal barrier handling of declared bounds and
   constraints.
 - Do not add permanent custom barrier terms to the thermodynamic objective.
-- Benchmark proof cases must be source-backed. A synthetic unit fixture can
+- Benchmark validation cases must be source-backed. A synthetic unit fixture can
   test mechanics, but it cannot prove a GFPE family.
 - Pereira 2012 System III remains HELD/SAFT-VR literature context only until
   model parity or a source-backed ePC-SAFT reparameterization exists.
-- The first neutral proof target must be a source-backed ePC-SAFT-compatible
+- The first neutral validation target must be a source-backed ePC-SAFT-compatible
   TP flash fixture.
 - Gross/Sadowski 2002 methanol/cyclohexane is the first associating proof
   target after association derivative gates pass.
-- Khudaida 2026 electrolyte LLE is the first electrolyte proof target after
+- Khudaida 2026 electrolyte LLE is the first electrolyte validation target after
   Born SSM+DS exact-Hessian and HELD2.0 gates pass.
 
 ## Common Physical Form
@@ -481,7 +481,7 @@ Substeps:
    converted units, and fitted domain when available.
 8. Reject missing required parameter families in pretreatment.
 9. Keep direct dictionaries acceptable only for small synthetic tests, not
-   source-backed GFPE proof cases.
+   source-backed GFPE validation cases.
 10. Route durable equation claims through `docs/latex/equations.tex` or a
     generated registry view.
 11. Keep reduced explicit association closures diagnostic unless a route is
@@ -794,7 +794,7 @@ Acceptance checks:
 - Ipopt diagnostics report user-scaling, option profile, scaled numerical
   acceptance, active-bound pattern, barrier behavior, regularization, and
   linear-solver selection.
-- Stage 9 cannot use real-mixture HELD proof cases until the Stage 8 Ipopt
+- Stage 9 cannot use real-mixture HELD validation cases until the Stage 8 Ipopt
   scaling and numerics contract is present in tests.
 
 Stop conditions:
@@ -808,7 +808,7 @@ Stop conditions:
 ## Stage 9 - Continuous TPD And HELD Stage Ladder
 
 Purpose: replace seed-only deterministic screening with the staged
-phase-discovery evidence required before source-backed neutral proof,
+phase-discovery evidence required before the source-backed neutral fixture,
 boundary workflows, or generalized GFPE admission.
 
 Primary output:
@@ -822,7 +822,7 @@ References:
 - `docs/algorithms.md`
 - `docs/latex/algorithms.tex`
 - `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
-- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
+- `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
 
 Substeps:
@@ -843,7 +843,7 @@ Substeps:
     Stage III evidence requires Ipopt `success` and `solve_succeeded`.
     Acceptable-level status, a finite-variable postsolve with
     `tiny_step_detected`, iteration-limit, or another nonconverged Ipopt status
-    remains diagnostic evidence only. The current neutral LLE proof fixture uses
+    remains diagnostic evidence only. The current neutral LLE validation fixture uses
     the route-owned `held_refinement` Ipopt profile; postsolve certification is
     not allowed to promote a nonconverged Ipopt attempt.
 11. Check phase-set completeness:
@@ -859,7 +859,7 @@ Substeps:
     Ipopt iteration output, stored Ipopt iteration history, seed-attempt
     summaries, and continuous-TPD iteration traces. It cannot run pytest slices.
 16. Use
-    `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json`
+    `uv run python scripts/validation/check_phase_discovery.py --json`
     as the cheap Stage 9 phase-discovery evidence snapshot. Add
     `--include-route-refinement` only when the current Stage III Ipopt
     route-refinement evidence is needed. Use
@@ -897,7 +897,7 @@ Stop conditions:
 - HELD status fields can be satisfied by deterministic screening.
 - Phase-set completeness lacks mass-balance feasibility.
 
-## Stage 10 - Neutral TP Flash Source-Backed Proof
+## Stage 10 - Neutral TP Flash Source-Backed Fixture
 
 Purpose: prove the first GFPE family on neutral TP flash before deriving
 boundary workflows or widening to association/electrolytes.
@@ -925,36 +925,36 @@ Substeps:
 3. Use the Stage 6 bounds, scaling, and transform policy.
 4. Use Stage 7 deterministic screening only as seed and certification support.
 5. Use Stage 9 continuous TPD and HELD diagnostics as the phase-discovery
-   evidence path for generalized proof.
+   validation path for generalized admission.
 6. Treat Pereira 2012 System III as a HELD/SAFT-VR reference, not the current
-   executable ePC-SAFT proof fixture.
+   executable ePC-SAFT validation fixture.
 7. Use the hydrocarbon workbook-derived TP flash as the first executable
-   Stage 10 fixture. The workbook supplies PC-SAFT component parameters,
+   neutral TP flash fixture. The workbook supplies PC-SAFT component parameters,
    binary interactions, `T`, `P`, and liquid/vapor phase compositions at a
-   bubble-point coexistence state. The Stage 10 fixture derives a TP-flash
+   bubble-point coexistence state. The fixture derives a TP-flash
    feed by equal-phase lever blending and expects 0.5 liquid / 0.5 vapor
    fractions.
    The Pereira source audit now lives under
    `data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012` as
-   non-executable SAFT-VR evidence and records the published second-feed
-   composition inconsistency. Its readiness files separate reported
+   non-executable SAFT-VR context and records the published second-feed
+   composition inconsistency. Its material-balance files separate reported
    material-balance-feasible points from inferred feed-correction candidates.
-   First produce the Stage 9 evidence payload with
-   `uv run python scripts/validation/check_stage9_phase_discovery_evidence.py --json --include-route-refinement`,
-   then pass it to the Stage 10 readiness gate with
-   `uv run python scripts/validation/check_equilibrium_benchmark_readiness.py --json --stage9-evidence-json <payload>`.
-   Use `--require-executable` only when promoting a case to proof evidence.
-   The readiness gate reports every executable fixture field independently so
+   First produce the phase-discovery payload with
+   `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement`,
+   then pass it to the neutral TP flash fixture gate with
+   `uv run python scripts/validation/check_equilibrium_benchmark_fixture.py --json --phase-discovery-json <payload>`.
+   Use `--require-executable` only when promoting a case to an executable fixture.
+   The fixture gate reports every executable field independently so
    missing PC/ePC parameters, binary interactions, normalized feed data,
    expected phase fractions, accepted model family, source path, tolerances, or
-   Stage 9 evidence cannot be hidden behind a generic blocked status.
-8. Record proof species, parameters, binary interactions, `T`, `P`, feed
+   phase-discovery validation cannot be hidden behind a generic blocked status.
+8. Record fixture species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.
    The registry source gate also requires expected phase count, expected phase
    compositions, expected phase fractions, accepted source model family, source
    path, and acceptance tolerances before any case can be marked as executable
-   Stage 10 proof.
+   neutral TP flash validation.
 9. Evaluate the pressure-transformed Helmholtz objective:
 
    ```text
@@ -968,26 +968,26 @@ Substeps:
     distance, and density or volume margins.
 14. Certify postsolve stability with Stage 9 phase-discovery diagnostics.
 15. Certify exact derivatives for the active objective and constraints.
-16. Store all proof evidence in tests and registry fields without marking
+16. Store all fixture validation in tests and registry fields without marking
     generalized production exposure.
-17. Run the Stage 10 proof with
-    `uv run python scripts/validation/check_stage10_neutral_tp_flash_proof.py --stage9-evidence-json <payload> --require-proof`.
+17. Run the neutral TP flash fixture check with
+    `uv run python scripts/validation/check_neutral_tp_flash_fixture.py --phase-discovery-json <payload> --require-complete`.
     Use `--debug --json` for convergence diagnosis so Ipopt `print_level=5`,
     any selected-path seed-attempt traces, and bounded iteration history are
-    visible without corrupting the JSON proof payload. Tests must pass a Stage 9 evidence JSON
-    fixture instead of generating Stage 9 evidence inside the Stage 10 test, so
+    visible without corrupting the JSON fixture payload. Tests must pass a phase-discovery JSON
+    fixture instead of generating phase-discovery data inside the TP flash test, so
     the test does not hide an extra continuous-TPD/Ipopt route solve.
 18. Keep existing public `flash` behavior unchanged unless it is explicitly
     migrated through the same verified route and tests.
 
 Acceptance checks:
 
-- Neutral proof fixture exists, is source-backed, and is executable with the
-  active ePC-SAFT model before being used as proof evidence.
-- Stage 10 proof completion requires native Ipopt `success` and
+- Neutral TP flash fixture exists, is source-backed, and is executable with the
+  active ePC-SAFT model before being used as validation input.
+- Neutral TP flash completion requires native Ipopt `success` and
   `solve_succeeded`; iteration-limit, acceptable-point, tiny-step, or other
   nonconverged statuses remain blockers.
-- Pereira is not used as ePC-SAFT proof evidence unless SAFT-VR support or a
+- Pereira is not used as ePC-SAFT validation input unless SAFT-VR support or a
   source-backed ePC-SAFT reparameterization closes the model-family gap.
 - Neutral TP flash diagnostics include material, pressure, potential,
   stability, derivative, and domain margins.
@@ -996,16 +996,16 @@ Acceptance checks:
 
 Stop conditions:
 
-- The first neutral proof is synthetic.
+- The first neutral validation fixture is synthetic.
 - Pereira SAFT-VR parameters are treated as ePC-SAFT parameters.
 - Production admission rests only on optimizer convergence.
-- Current public utility success is used as generalized GFPE proof without
+- Current public utility success is used as generalized GFPE admission without
   GFPE gates.
 
 ## Stage 11 - Derived Boundary Workflows And Diagram Traces
 
 Purpose: derive bubble, dew, cloud, and shadow workflows from the neutral GFPE
-core after Stage 9 phase discovery and Stage 10 neutral proof are reliable.
+core after Stage 9 phase discovery and the Stage 10 neutral fixture are reliable.
 
 Primary output:
 
@@ -1035,7 +1035,7 @@ Substeps:
    second-liquid composition plus boundary `P` or `T`.
 7. For shadow point, report the incipient phase composition and volume matched
    to the cloud-point state.
-8. Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture as the
+8. Use the source-backed ePC-SAFT-compatible neutral TP flash mixture as the
    shared boundary mixture. The current executable fixture is the hydrocarbon
    workbook PC-SAFT phase split, not a Pereira-derived fixture.
 9. Keep Pereira as HELD/SAFT-VR literature context unless model parity or a
@@ -1049,7 +1049,7 @@ Substeps:
     explicit sweep opt-in. Per-point diagnostics must include route, fixed
     composition role, seed source, seed-attempt status, Ipopt status, Ipopt
     iteration history, final residuals, and skipped-point reason.
-14. Require strict route convergence before Stage 11 completion:
+14. Require strict route convergence before boundary workflow completion:
     `solver_status == success`, `application_status == solve_succeeded`, and
     no selected seed attempt ending in `max_iterations_exceeded`. Acceptable
     points, tiny steps, feasible points, postsolve-accepted finite variables,
@@ -1061,7 +1061,7 @@ Acceptance checks:
 
 - Registry tests prove bubble/dew/cloud/shadow are derived subworkflows.
 - Boundary tests prove fixed/free variable contracts.
-- The Stage 11 checker rejects implicit route sweeps and exposes Ipopt
+- The boundary checker rejects implicit route sweeps and exposes Ipopt
   `print_level=5` output plus stored iteration history when a single debug
   route point is requested.
 - Diagram tests prove trace generation and diagnostic reporting without
@@ -1074,7 +1074,7 @@ Stop conditions:
 - Boundary workflows duplicate a separate thermodynamic core instead of using
   the shared GFPE route.
 - A boundary point with `acceptable_point`, `tiny_step_detected`,
-  `feasible_point_found`, or `max_iterations_exceeded` is called Stage 11
+  `feasible_point_found`, or `max_iterations_exceeded` is called boundary
   complete.
 - Routine validation solves a multi-point boundary route sweep without an
   explicit sweep opt-in.
@@ -1111,7 +1111,7 @@ Substeps:
 8. Certify every accepted phase against continuous TPD or HELD-discovered
    missing phases.
 9. Replay representative neutral, associating, and electrolyte cases only
-   after each base family has source-backed proof.
+   after each base family has source-backed validation.
 10. Keep `PE-Generalized Multiphase` not production-exposed until phase-count
     independence is tested.
 
@@ -1161,7 +1161,7 @@ Substeps:
 8. Require exact gradient, Jacobian, and Lagrangian Hessian coverage for active
    association terms before production exposure.
 9. Use Gross/Sadowski 2002 methanol/cyclohexane as the first associating proof.
-10. Add a two-associating-component follow-on only after the first proof is
+10. Add a two-associating-component follow-on only after the first validation case is
     stable and source-backed.
 11. Reuse neutral GFPE bounds, scaling, transforms, stability, and HELD gates.
 12. Add association-specific postsolve checks:
@@ -1172,7 +1172,7 @@ Substeps:
 
 Acceptance checks:
 
-- Associating proof fixture is source-backed and executable.
+- Associating validation fixture is source-backed and executable.
 - Association derivative tests prove exact first and second derivative
   coverage for the chosen architecture.
 - Registry rejects narrow associating boundary work as general associating PE
@@ -1361,7 +1361,7 @@ References:
 
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
 - `src/epcsaft/runtime/capability_evidence.py`
-- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
+- `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 - `tests/native/contracts/test_equilibrium_activation_capabilities.py`
 - `tests/workflows/repo/test_workflow_entrypoints.py`
@@ -1371,7 +1371,7 @@ Substeps:
 1. Promote a family row only when its stage-specific gates are executable and
    tested.
 2. Keep benchmark cases PE-focused:
-   source-backed ePC-SAFT-compatible neutral proof first for neutral, with
+   source-backed ePC-SAFT-compatible neutral fixture first for neutral, with
    Pereira retained as blocked SAFT-VR context; Gross/Sadowski first for
    associating; Khudaida first for electrolyte, then Held and Ascani as
    follow-ons.
@@ -1421,7 +1421,7 @@ The GFPE dependency chain is:
 7 seed, candidate, and stability pretreatment
 8 shared NLP and Ipopt infrastructure gate
 9 continuous TPD and HELD stage ladder
-10 neutral TP flash source-backed proof
+10 neutral TP flash source-backed fixture
 11 derived boundary workflows and diagram traces
 12 generalized phase-set and multiphase PE
 13 associating GFPE pretreatment and proof

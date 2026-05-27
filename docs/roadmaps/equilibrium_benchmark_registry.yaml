@@ -55,7 +55,7 @@ family_rows:
     activation_status: planned_not_public
     production_exposed: false
     existing_public_utility_routes: [flash, lle]
-    scope: "Neutral, nonelectrolyte, nonreactive TP flash plus neutral VLE/LLE proof ladder."
+    scope: "Neutral, nonelectrolyte, nonreactive TP flash plus neutral VLE/LLE validation ladder."
     primary_problem: "TP flash at fixed T, P, and feed composition."
     knowns: [T, P, feed_composition]
     physical_variables: [phase_species_amounts, phase_volumes]
@@ -63,7 +63,7 @@ family_rows:
     hard_constraints: [material_balance, phase_pressure_consistency, chemical_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_generalized_exposure
     phase_discovery_status: continuous_tpd_stage_i_stage_ii_candidate_bound_audit_closed_current_fixture
-    stage9_status:
+    phase_discovery_gate_status:
       deterministic_screening: implemented_seed_and_certification_support_not_full_held
       continuous_tpd_minimization: implemented_neutral_coordinate_search_convergence_required
       held_stage_i_stability: implemented_neutral_multi_start_convergence_required
@@ -76,7 +76,7 @@ family_rows:
       - held_stage_ii_dual_phase_discovery
       - held_stage_iii_ipopt_refinement
       - postsolve_phase_set_certification
-    proof_cases:
+    reference_cases:
       - case_label: "Hydrocarbon workbook derived TP flash"
         evidence_tier: T1
         source: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash"
@@ -95,7 +95,7 @@ family_rows:
         source_model_family: SAFT-VR
         current_fixture_blocker: model_family_mismatch
         fixture_status: source_data_needed
-        todo: "Select a source-backed ePC-SAFT-compatible neutral TP flash fixture, or add SAFT-VR/model-parity support before using Pereira as proof evidence."
+        todo: "Select a source-backed ePC-SAFT-compatible neutral TP flash fixture, or add SAFT-VR/model-parity support before using Pereira as validation input."
         acceptance_checks:
           - source_backed_parameters
           - material_balance
@@ -127,7 +127,7 @@ family_rows:
       - association_mass_action_certification
       - neutral_phase_discovery_reuse
       - postsolve_phase_set_certification
-    proof_cases:
+    reference_cases:
       - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
         evidence_tier: T0
         source: "Gross and Sadowski 2002 associating PC-SAFT benchmark"
@@ -147,7 +147,7 @@ family_rows:
           - exact_hessian
     forbidden_shortcuts:
       - explicit_approx_final_production
-      - narrow_bubble_route_as_general_associating_proof
+      - narrow_bubble_route_as_general_associating_validation
 
   - family_label: "PE-Electrolyte LLE/TP Flash"
     family_kind: phase_equilibrium
@@ -169,7 +169,7 @@ family_rows:
       - electrolyte_tpd
       - held2_stage_discovery
       - charge_and_electrochemical_certification
-    proof_cases:
+    reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1
         source: "data/reference/equilibrium_benchmarks/electrolyte_lle/khudaida_2026"
@@ -218,7 +218,7 @@ family_rows:
       - held_stage_iii_ipopt_refinement
       - mass_balance_candidate_selection
       - phase_set_completeness
-    proof_cases:
+    reference_cases:
       - case_label: "Representative neutral/associating/electrolyte replay"
         evidence_tier: T0
         source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
@@ -248,7 +248,7 @@ family_rows:
       - reaction_constant_convention
       - standard_state_registry
       - reaction_affinity_certification
-    proof_cases:
+    reference_cases:
       - case_label: "Chemical equilibrium placeholder"
         evidence_tier: T0
         source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
@@ -262,27 +262,27 @@ family_rows:
     activation_status: planned_not_public
     production_exposed: false
     existing_public_utility_routes: []
-    scope: "Simultaneous phase split and chemical/speciation equilibrium after PE and CE proofs exist."
+    scope: "Simultaneous phase split and chemical/speciation equilibrium after PE and CE validation gates exist."
     primary_problem: "Combined phase and reaction equilibrium."
     knowns: [T, P, feed_composition, reaction_set]
     physical_variables: [phase_species_amounts, phase_volumes, reaction_variables]
     objective_family: pressure_transformed_helmholtz_with_reaction_affinity
     hard_constraints: [material_balance, phase_pressure_consistency, transferable_potential_equality, reaction_affinity]
     derivative_contract: exact_coupled_derivatives_required_before_exposure
-    phase_discovery_status: planned_after_pe_and_ce_proofs
+    phase_discovery_status: planned_after_pe_and_ce_validation_gates
     required_gates:
-      - pe_family_proof
-      - ce_family_proof
+      - pe_family_validation
+      - ce_family_validation
       - coupled_phase_reaction_certification
-    proof_cases:
+    reference_cases:
       - case_label: "Combined phase-chemical placeholder"
         evidence_tier: T0
         source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
         fixture_status: source_data_needed
         acceptance_checks: [phase_equilibrium, reaction_affinity, coupled_certification]
     forbidden_shortcuts:
-      - phase_only_proof_as_cpe_proof
-      - ce_only_proof_as_cpe_proof
+      - phase_only_validation_as_cpe_validation
+      - ce_only_validation_as_cpe_validation
 
 derived_subworkflows:
   - label: "Bubble point"
@@ -290,13 +290,13 @@ derived_subworkflows:
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: [bubble_pressure, bubble_temperature]
-    current_convergence_status: stage11_current_fixture_strict_trace_verified
+    current_convergence_status: current_fixture_strict_route_points_verified
     fixed_variables: [temperature_or_pressure, liquid_or_feed_composition]
     free_variables: [incipient_vapor_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the source-backed ePC-SAFT-compatible neutral TP flash mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     diagnostic_policy: "Routine validation is contract-only. Current runtime route solves require one explicit route point unless an explicit sweep opt-in is provided."
-    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
+    strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
@@ -305,13 +305,13 @@ derived_subworkflows:
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: [dew_pressure, dew_temperature]
-    current_convergence_status: stage11_current_fixture_strict_trace_verified
+    current_convergence_status: current_fixture_strict_route_points_verified
     fixed_variables: [temperature_or_pressure, vapor_composition]
     free_variables: [incipient_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the source-backed ePC-SAFT-compatible neutral TP flash mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     diagnostic_policy: "Routine validation is contract-only. Current runtime route solves require one explicit route point unless an explicit sweep opt-in is provided."
-    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
+    strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
@@ -324,9 +324,9 @@ derived_subworkflows:
     fixed_variables: [temperature_or_pressure, parent_liquid_composition]
     free_variables: [incipient_second_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the source-backed ePC-SAFT-compatible neutral TP flash mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
-    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
+    strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
@@ -339,15 +339,15 @@ derived_subworkflows:
     fixed_variables: [cloud_point_state]
     free_variables: [shadow_phase_composition, shadow_phase_volume]
     diagram_targets: ["P-x", "T-x"]
-    shared_mixture_policy: "Use the Stage 10 source-backed ePC-SAFT-compatible neutral mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
+    shared_mixture_policy: "Use the source-backed ePC-SAFT-compatible neutral TP flash mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
     diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
-    strict_convergence_gate: "Stage 11 completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
+    strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
-stage10_neutral_tp_flash_source_gate:
+neutral_tp_flash_fixture_gate:
   target_family_label: "PE-Neutral TP Flash"
-  proof_status: executable_fixture_available
+  fixture_status: executable_fixture_available
   accepted_source_model_families: ["PC-SAFT", "ePC-SAFT"]
   rejected_context_cases:
     "Pereira 2012 System III":
@@ -367,7 +367,7 @@ stage10_neutral_tp_flash_source_gate:
     - source_model_family
     - source_path
     - acceptance_tolerances
-  stage9_evidence_required:
+  phase_discovery_required:
     - deterministic_screening
     - continuous_tpd_minimization
     - held_stage_i_stability
@@ -383,13 +383,13 @@ stage10_neutral_tp_flash_source_gate:
       local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/metadata.json"
       source_model_family: PC-SAFT
       status: promoted_executable_workbook_fixture
-      note: "The workbook bubble-point coexistence state now has a derived equal-phase TP flash feed, explicit phase fractions, source-backed PC-SAFT parameters, and an executable Stage 10 proof gate."
+      note: "The workbook bubble-point coexistence state now has a derived equal-phase TP flash feed, explicit phase fractions, source-backed PC-SAFT parameters, and an executable neutral TP flash fixture gate."
     - case_label: "Pereira 2012 System III"
       local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012/metadata.json"
       source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
       source_model_family: SAFT-VR
       status: rejected_model_family_mismatch
-      note: "Do not use as executable ePC-SAFT proof evidence unless SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization is added."
+      note: "Do not use as executable ePC-SAFT validation input unless SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization is added."
 
 benchmark_cases:
   - case_label: "Hydrocarbon workbook derived TP flash"
@@ -418,7 +418,7 @@ benchmark_cases:
       material_balance_abs: 1.0e-8
       pressure_abs_Pa: 1.0e-2
       ln_fugacity_abs: 1.0e-7
-    todo: "Use with scripts/validation/check_stage10_neutral_tp_flash_proof.py after generating complete Stage 9 evidence; this is the first executable neutral TP flash proof fixture."
+    todo: "Use with scripts/validation/check_neutral_tp_flash_fixture.py after generating a complete phase-discovery payload; this is the first executable neutral TP flash fixture."
 
   - case_label: "Pereira 2012 System III"
     family_labels: ["PE-Neutral TP Flash"]
@@ -429,7 +429,7 @@ benchmark_cases:
     source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
     source_model_family: SAFT-VR
     current_fixture_blocker: model_family_mismatch
-    todo: "Do not use Pereira as ePC-SAFT proof evidence until SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization exists; select a source-backed ePC-SAFT-compatible neutral TP flash fixture first."
+    todo: "Do not use Pereira as ePC-SAFT validation input until SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization exists; select a source-backed ePC-SAFT-compatible neutral TP flash fixture first."
 
   - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
     family_labels: ["PE-Associating TP Flash"]

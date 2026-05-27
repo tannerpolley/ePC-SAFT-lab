@@ -16,8 +16,8 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <option name="RUN_TOOL" value="" />
-    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/validation/check_stage10_neutral_tp_flash_proof.py" />
-    <option name="PARAMETERS" value="--generate-stage9-evidence --require-proof" />
+    <option name="SCRIPT_NAME" value="$MODULE_DIR$/scripts/validation/check_neutral_tp_flash_fixture.py" />
+    <option name="PARAMETERS" value="--generate-phase-discovery --require-complete" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

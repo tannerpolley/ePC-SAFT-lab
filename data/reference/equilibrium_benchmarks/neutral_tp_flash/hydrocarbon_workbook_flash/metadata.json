@@ -4,11 +4,11 @@
   "family_label": "PE-Neutral TP Flash",
   "source_model_family": "PC-SAFT",
   "runtime_model_support": "available_in_epcsaft",
-  "proof_status": "source_backed_executable_fixture",
+  "fixture_status": "source_backed_executable_fixture",
   "species": ["Methane", "Ethane", "Propane"],
-  "proof_readiness": {
+  "fixture_requirements": {
     "executable": true,
-    "stage9_evidence_path_required": true,
+    "phase_discovery_required": true,
     "source_confirmed_feed_correction_required": false
   },
   "pure_component_parameters": {

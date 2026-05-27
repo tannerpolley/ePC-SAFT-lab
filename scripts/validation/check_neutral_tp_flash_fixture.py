@@ -21,8 +21,8 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 apply_native_runtime_env(os.environ)
 
 import epcsaft._core as _core
-from scripts.validation import check_equilibrium_benchmark_readiness as readiness
-from scripts.validation import check_stage9_phase_discovery_evidence as phase_discovery_checker
+from scripts.validation import check_equilibrium_benchmark_fixture as fixture_checker
+from scripts.validation import check_phase_discovery as phase_discovery_checker
 from scripts.validation import equilibrium_validation_runtime as runtime
 
 DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
@@ -126,12 +126,12 @@ def evaluate_neutral_flash(
     redirect_native_output_to_stderr: bool = False,
 ) -> dict[str, Any]:
     metadata = json.loads((case_dir / "metadata.json").read_text(encoding="utf-8"))
-    readiness_payload = readiness.evaluate_case_dir(case_dir, phase_discovery_payload=phase_discovery_payload)
-    blockers = list(readiness_payload["blockers"])
+    fixture_payload = fixture_checker.evaluate_case_dir(case_dir, phase_discovery_payload=phase_discovery_payload)
+    blockers = list(fixture_payload["blockers"])
     route_payload: dict[str, Any] | None = None
     comparison: dict[str, Any] | None = None
     route_accepted = False
-    if readiness_payload["executable"]:
+    if fixture_payload["executable"]:
         route_payload = _run_route(
             case_dir,
             metadata,
@@ -182,7 +182,7 @@ def evaluate_neutral_flash(
                     f"neutral_flash_route_application_not_converged_{route_payload.get('application_status', 'unknown')}"
                 )
             blockers.append("neutral_flash_route_validation_failed")
-    validation_complete = readiness_payload["executable"] and route_accepted and not blockers
+    validation_complete = fixture_payload["executable"] and route_accepted and not blockers
     route_summary = None
     if route_payload is not None:
         seed_attempts = list(route_payload.get("seed_attempts") or ())
@@ -209,9 +209,9 @@ def evaluate_neutral_flash(
     return {
         "case_label": metadata["case_label"],
         "family_label": metadata["family_label"],
-        "proof_status": "complete" if validation_complete else "blocked",
-        "proof_complete": validation_complete,
-        "readiness": readiness_payload,
+        "status": "complete" if validation_complete else "blocked",
+        "complete": validation_complete,
+        "fixture": fixture_payload,
         "route": route_summary,
         "comparison": comparison,
         "blockers": list(dict.fromkeys(blockers)),
@@ -223,13 +223,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
     phase_discovery_source = parser.add_mutually_exclusive_group(required=True)
     phase_discovery_source.add_argument(
-        "--stage9-evidence-json",
+        "--phase-discovery-json",
         dest="phase_discovery_json",
         type=Path,
         help="Read a previously generated phase-discovery JSON payload.",
     )
     phase_discovery_source.add_argument(
-        "--generate-stage9-evidence",
+        "--generate-phase-discovery",
         dest="generate_phase_discovery",
         action="store_true",
         help="Generate phase-discovery route-refinement data before running the fixture check.",
@@ -241,7 +241,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Use Ipopt print_level=5, retain more iteration history, and expose native iteration output.",
     )
     parser.add_argument(
-        "--require-proof",
+        "--require-complete",
         dest="require_complete",
         action="store_true",
         help="Return a failing exit code unless the neutral TP flash check completes.",
@@ -272,11 +272,11 @@ def main(argv: list[str] | None = None) -> int:
         show_native_output=show_native_output,
         redirect_native_output_to_stderr=redirect_native_output_to_stderr,
     )
-    payload["stage9_evidence_source"] = phase_discovery_source
+    payload["phase_discovery_source"] = phase_discovery_source
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
-        print(f"{payload['case_label']}: {payload['proof_status']}")
+        print(f"{payload['case_label']}: {payload['status']}")
         if payload["blockers"]:
             print("  blockers: " + ", ".join(str(item) for item in payload["blockers"]))
         route = payload.get("route") or {}
@@ -309,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"composition_abs={comparison.get('max_composition_abs_error')} "
                 f"phase_fraction_abs={comparison.get('max_phase_fraction_abs_error')}"
             )
-    if args.require_complete and not payload["proof_complete"]:
+    if args.require_complete and not payload["complete"]:
         print(f"{payload['case_label']} did not complete the neutral TP flash check.", file=sys.stderr)
         return 2
     return 0

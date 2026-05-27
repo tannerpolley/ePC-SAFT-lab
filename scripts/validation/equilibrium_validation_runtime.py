@@ -82,9 +82,9 @@ def mixture(case_dir: Path, species_names: list[str]) -> ePCSAFTMixture:
 
 
 def material_balance_row(case_dir: Path) -> dict[str, str]:
-    rows = read_csv(case_dir / "material_balance_readiness.csv")
+    rows = read_csv(case_dir / "material_balance_check.csv")
     if len(rows) != 1:
-        raise ValueError("neutral TP flash fixture expects exactly one material-balance readiness row")
+        raise ValueError("neutral TP flash fixture expects exactly one material-balance check row")
     return rows[0]
 
 
