@@ -357,6 +357,17 @@ source selection and choose a source-backed ePC-SAFT-compatible neutral binary
 rather than inventing a synthetic validation fixture. Do not add VLLE-specific
 tests in this step.
 
+The Stage 10 neutral proof gate is explicit in
+`docs/roadmaps/equilibrium_benchmark_registry.yaml`. A neutral TP-flash case is
+not executable proof until it supplies source-backed species, pure-component
+parameters, binary interactions, temperature, pressure, feed composition,
+expected phase count, expected phase compositions, expected phase fractions,
+accepted source model family, source path, and acceptance tolerances. Local
+Gross/Sadowski 2001 material is useful PC-SAFT context, but the currently
+available local table is a binary VLE correlation/AAD summary rather than a
+point TP-flash fixture. The existing hydrocarbon workbook case remains package
+runtime smoke evidence until source-backed phase-split provenance is added.
+
 ## Family Proof Ladder
 
 `PE-Neutral TP Flash`

@@ -21,6 +21,10 @@ def _benchmark_by_label() -> dict[str, dict[str, Any]]:
     return {case["case_label"]: case for case in _registry()["benchmark_cases"]}
 
 
+def _stage10_gate() -> dict[str, Any]:
+    return _registry()["stage10_neutral_tp_flash_source_gate"]
+
+
 def test_benchmark_registry_schema_v2_defines_nonproduction_evidence_tiers() -> None:
     registry = _registry()
     tiers = registry["evidence_tiers"]
@@ -62,6 +66,68 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     assert benchmarks["Khudaida 2026 electrolyte LLE"]["priority_rank"] == 1
     assert benchmarks["Held 2014 Figure 6"]["priority_rank"] == 2
     assert benchmarks["Ascani/Sadowski/Held 2022 mixed-solvent LLE"]["priority_rank"] == 3
+
+
+def test_stage10_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
+    gate = _stage10_gate()
+
+    assert gate["target_family_label"] == "PE-Neutral TP Flash"
+    assert gate["proof_status"] == "source_selection_blocked"
+    assert gate["accepted_source_model_families"] == ["PC-SAFT", "ePC-SAFT"]
+    assert gate["rejected_context_cases"]["Pereira 2012 System III"]["source_model_family"] == "SAFT-VR"
+    assert gate["rejected_context_cases"]["Pereira 2012 System III"]["blocker"] == "model_family_mismatch"
+
+    required_fields = set(gate["executable_fixture_required_fields"])
+    assert {
+        "species",
+        "pure_component_parameters",
+        "binary_interactions",
+        "temperature",
+        "pressure",
+        "feed_composition",
+        "expected_phase_count",
+        "expected_phase_compositions",
+        "expected_phase_fractions",
+        "source_model_family",
+        "source_path",
+        "acceptance_tolerances",
+    } <= required_fields
+
+    assert set(gate["stage9_evidence_required"]) == {
+        "deterministic_screening",
+        "continuous_tpd_minimization",
+        "held_stage_i_stability",
+        "held_stage_ii_dual_phase_discovery",
+        "held_stage_iii_ipopt_refinement",
+    }
+
+
+def test_stage10_local_source_audit_does_not_promote_context_to_proof() -> None:
+    gate = _stage10_gate()
+    local_candidates = {case["case_label"]: case for case in gate["local_source_audit"]}
+
+    assert local_candidates["Gross/Sadowski 2001 binary VLE table"]["local_artifact"].endswith(
+        "analyses/paper_validation/2001_gross/tables/table_005/table_005.csv"
+    )
+    assert (
+        local_candidates["Gross/Sadowski 2001 binary VLE table"]["status"]
+        == "insufficient_no_point_phase_split_fixture"
+    )
+    assert local_candidates["Hydrocarbon workbook TP flash smoke"]["status"] == "insufficient_package_smoke"
+    assert local_candidates["Pereira 2012 System III"]["status"] == "rejected_model_family_mismatch"
+
+
+def test_available_neutral_stage10_cases_must_have_full_fixture_contract() -> None:
+    gate = _stage10_gate()
+    required_fields = set(gate["executable_fixture_required_fields"])
+
+    for benchmark in _registry()["benchmark_cases"]:
+        if "PE-Neutral TP Flash" not in benchmark["family_labels"]:
+            continue
+        if benchmark["fixture_status"] != "available":
+            continue
+        assert benchmark["source_model_family"] in gate["accepted_source_model_families"], benchmark["case_label"]
+        assert required_fields <= set(benchmark), benchmark["case_label"]
 
 
 def test_available_benchmark_source_paths_exist_and_source_needed_cases_have_todos() -> None:

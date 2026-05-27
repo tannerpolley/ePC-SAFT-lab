@@ -321,6 +321,51 @@ derived_subworkflows:
     vlle_test_required: false
     acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, diagram_trace]
 
+stage10_neutral_tp_flash_source_gate:
+  target_family_label: "PE-Neutral TP Flash"
+  proof_status: source_selection_blocked
+  accepted_source_model_families: ["PC-SAFT", "ePC-SAFT"]
+  rejected_context_cases:
+    "Pereira 2012 System III":
+      source_model_family: SAFT-VR
+      blocker: model_family_mismatch
+      reason: "Pereira 2012 System III is useful HELD context, but the local source audit shows SAFT-VR range and binary interaction parameters rather than an executable ePC-SAFT/PC-SAFT fixture."
+  executable_fixture_required_fields:
+    - species
+    - pure_component_parameters
+    - binary_interactions
+    - temperature
+    - pressure
+    - feed_composition
+    - expected_phase_count
+    - expected_phase_compositions
+    - expected_phase_fractions
+    - source_model_family
+    - source_path
+    - acceptance_tolerances
+  stage9_evidence_required:
+    - deterministic_screening
+    - continuous_tpd_minimization
+    - held_stage_i_stability
+    - held_stage_ii_dual_phase_discovery
+    - held_stage_iii_ipopt_refinement
+  local_source_audit:
+    - case_label: "Gross/Sadowski 2001 binary VLE table"
+      local_artifact: "analyses/paper_validation/2001_gross/tables/table_005/table_005.csv"
+      source_model_family: PC-SAFT
+      status: insufficient_no_point_phase_split_fixture
+      note: "This table supplies binary VLE correlation/AAD context and fitted k_ij values, but not a single T, P, feed-composition, phase-fraction, and phase-composition TP-flash target."
+    - case_label: "Hydrocarbon workbook TP flash smoke"
+      local_artifact: "tests/support/hydrocarbon_cases.py"
+      source_model_family: PC-SAFT
+      status: insufficient_package_smoke
+      note: "The current hydrocarbon case is useful runtime smoke evidence, but its expected flash split is package-pinned rather than a source-backed literature phase-split fixture."
+    - case_label: "Pereira 2012 System III"
+      local_artifact: "docs/papers/md/Equilibrium/Pereira et al. - 2012 - The HELD algorithm for multicomponent, multiphase equilibrium calculations with generic equations of.md"
+      source_model_family: SAFT-VR
+      status: rejected_model_family_mismatch
+      note: "Do not use as executable ePC-SAFT proof evidence unless SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization is added."
+
 benchmark_cases:
   - case_label: "Pereira 2012 System III"
     family_labels: ["PE-Neutral TP Flash"]

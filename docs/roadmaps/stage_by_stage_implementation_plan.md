@@ -905,6 +905,10 @@ Substeps:
 8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.
+   The registry source gate also requires expected phase count, expected phase
+   compositions, expected phase fractions, accepted source model family, source
+   path, and acceptance tolerances before any case can be marked as executable
+   Stage 10 proof.
 9. Evaluate the pressure-transformed Helmholtz objective:
 
    ```text
