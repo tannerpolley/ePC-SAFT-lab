@@ -630,6 +630,15 @@ void record_continuous_tpd_candidate(
     if (candidate.tpd_status == "converged") {
         ++discovery->continuous_tpd_converged_count;
     }
+    discovery->continuous_tpd_iteration_count_total += candidate.tpd_iteration_count;
+    discovery->continuous_tpd_iteration_count_max = std::max(
+        discovery->continuous_tpd_iteration_count_max,
+        candidate.tpd_iteration_count
+    );
+    discovery->continuous_tpd_step_final_max = std::max(
+        discovery->continuous_tpd_step_final_max,
+        candidate.tpd_step_final
+    );
     if (
         discovery->continuous_tpd_best_source.empty()
         || candidate.tpd < discovery->continuous_tpd_min
@@ -901,7 +910,10 @@ void copy_discovery_to_postsolve(
     postsolve.continuous_tpd_start_count = discovery.continuous_tpd_start_count;
     postsolve.continuous_tpd_solve_count = discovery.continuous_tpd_solve_count;
     postsolve.continuous_tpd_converged_count = discovery.continuous_tpd_converged_count;
+    postsolve.continuous_tpd_iteration_count_total = discovery.continuous_tpd_iteration_count_total;
+    postsolve.continuous_tpd_iteration_count_max = discovery.continuous_tpd_iteration_count_max;
     postsolve.continuous_tpd_min = discovery.continuous_tpd_min;
+    postsolve.continuous_tpd_step_final_max = discovery.continuous_tpd_step_final_max;
     postsolve.continuous_tpd_best_phase_kind = discovery.continuous_tpd_best_phase_kind;
     postsolve.continuous_tpd_best_density = discovery.continuous_tpd_best_density;
     postsolve.continuous_tpd_best_molar_volume = discovery.continuous_tpd_best_molar_volume;
@@ -931,6 +943,8 @@ void copy_discovery_to_postsolve(
     postsolve.tpd_candidate_phase_kinds.clear();
     postsolve.tpd_candidate_compositions.clear();
     postsolve.tpd_candidate_pressure_residuals.clear();
+    postsolve.tpd_candidate_iteration_counts.clear();
+    postsolve.tpd_candidate_step_finals.clear();
     postsolve.tpd_candidate_ranks.clear();
     postsolve.tpd_candidate_feasibility_statuses.clear();
     postsolve.tpd_candidate_selected.clear();
@@ -940,6 +954,8 @@ void copy_discovery_to_postsolve(
         postsolve.tpd_candidate_phase_kinds.push_back(candidate.phase_kind);
         postsolve.tpd_candidate_compositions.push_back(candidate.composition);
         postsolve.tpd_candidate_pressure_residuals.push_back(candidate.pressure_residual_estimate);
+        postsolve.tpd_candidate_iteration_counts.push_back(candidate.tpd_iteration_count);
+        postsolve.tpd_candidate_step_finals.push_back(candidate.tpd_step_final);
         postsolve.tpd_candidate_ranks.push_back(candidate.candidate_rank);
         postsolve.tpd_candidate_feasibility_statuses.push_back(candidate.feasibility_status);
         postsolve.tpd_candidate_selected.push_back(candidate.selected);

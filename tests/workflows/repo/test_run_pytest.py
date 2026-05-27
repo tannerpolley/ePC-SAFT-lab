@@ -18,7 +18,8 @@ def test_confidence_slice_extends_generic_targets_without_changing_generic():
 
     assert generic_args[: len(run_pytest.GENERIC_TEST_TARGETS)] == list(run_pytest.GENERIC_TEST_TARGETS)
     assert "tests/native/state/test_properties.py" not in generic_args
-    assert "tests/api/frontend" in generic_args
+    assert "tests/api/frontend" not in generic_args
+    assert "tests/api/frontend/test_equilibrium.py" not in generic_args
     assert confidence_args[: len(run_pytest.CONFIDENCE_TEST_TARGETS)] == list(run_pytest.CONFIDENCE_TEST_TARGETS)
     assert "tests/native/state/test_contributions.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract" in confidence_args
     assert confidence_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
@@ -31,6 +32,8 @@ def test_default_pytest_route_uses_fast_contracts_not_exhaustive_suite():
 
     assert default_args[: len(run_pytest.FAST_TEST_TARGETS)] == list(run_pytest.FAST_TEST_TARGETS)
     assert "tests" not in default_args
+    assert "tests/api/frontend" not in default_args
+    assert "tests/api/frontend/test_equilibrium.py" not in default_args
     assert not any(target.startswith("tests/plots/") for target in default_args)
     assert "tests/workflows/validation/equilibrium_core/test_electrolyte_lle_confidence.py" not in default_args
     assert default_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
@@ -113,6 +116,16 @@ def test_pytest_slices_are_adapted_from_capability_evidence_registry():
     assert run_pytest.GENERIC_TEST_TARGETS == capability_evidence.registry_targets("generic")
     assert run_pytest.CONFIDENCE_TEST_TARGETS == capability_evidence.registry_targets("confidence")
     assert run_pytest.NATIVE_CONTRACT_TEST_TARGETS == capability_evidence.registry_targets("native-contracts")
+
+
+def test_equilibrium_debug_flag_sets_opt_in_test_environment():
+    env: dict[str, str] = {}
+
+    run_pytest._apply_equilibrium_debug_env(env, enabled=False)
+    assert "EPCSAFT_EQUILIBRIUM_DEBUG" not in env
+
+    run_pytest._apply_equilibrium_debug_env(env, enabled=True)
+    assert env["EPCSAFT_EQUILIBRIUM_DEBUG"] == "1"
 
 
 def test_doctor_tracks_native_symbols_added_by_recent_workflows():
@@ -226,8 +239,12 @@ def test_slice_targets_use_grouped_test_subpackages():
 
     assert all(target.startswith("tests/") for target in all_targets)
     assert all(target.count("/") >= 2 for target in all_targets)
-    assert "tests/api/frontend" in run_pytest.API_TEST_TARGETS
-    assert "tests/api/frontend" in run_pytest.GENERIC_TEST_TARGETS
+    assert "tests/api/frontend" not in run_pytest.API_TEST_TARGETS
+    assert "tests/api/frontend" not in run_pytest.GENERIC_TEST_TARGETS
+    assert "tests/api/frontend/test_equilibrium.py" not in run_pytest.API_TEST_TARGETS
+    assert "tests/api/frontend/test_equilibrium.py" not in run_pytest.GENERIC_TEST_TARGETS
+    assert "tests/api/frontend/test_imports.py" in run_pytest.API_TEST_TARGETS
+    assert "tests/api/frontend/test_state_properties.py" in run_pytest.GENERIC_TEST_TARGETS
     assert "tests/api/frontend/test_equilibrium.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert "tests/native/state/test_bubble_derivatives.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert "tests/native/state/test_bubble_derivatives.py" not in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
@@ -327,6 +344,16 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
     assert all("paper_validation" not in target for target in targets)
     assert all("tests/regression/literature" not in target for target in targets)
     assert all("tests/workflows/validation" not in target for target in targets)
+
+
+def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():
+    blocked = {
+        "tests/api/frontend",
+        "tests/api/frontend/test_equilibrium.py",
+    }
+
+    assert blocked.isdisjoint(run_pytest.GENERIC_TEST_TARGETS)
+    assert blocked.isdisjoint(run_pytest.API_TEST_TARGETS)
 
 
 def test_pytest_temp_root_prefers_configured_root_and_normalizes_relative_paths(monkeypatch, tmp_path):

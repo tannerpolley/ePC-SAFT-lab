@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from numbers import Real
+import os
 from time import perf_counter
 from typing import Any
 
@@ -103,11 +104,19 @@ def _mixture() -> epcsaft.Mixture:
 
 
 def _solver_options() -> dict[str, object]:
-    return {
+    options = {
         "max_iterations": 200,
         "tolerance": 1.0e-8,
         "ipopt_iteration_history_limit": 4,
     }
+    if _equilibrium_debug_enabled():
+        options["ipopt_print_level"] = 5
+        options["ipopt_iteration_history_limit"] = 50
+    return options
+
+
+def _equilibrium_debug_enabled() -> bool:
+    return os.environ.get("EPCSAFT_EQUILIBRIUM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _format_vector(values: Sequence[object]) -> str:

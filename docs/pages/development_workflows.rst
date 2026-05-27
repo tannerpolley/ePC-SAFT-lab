@@ -17,7 +17,7 @@ Start every fresh source checkout with this sequence:
    uv run python scripts/dev/doctor.py
    uv run python scripts/dev/validate_project.py quick
 
-This is the expected healthy baseline. It creates the uv environment, builds the in-place pybind11 ``epcsaft._core`` extension, verifies imports/tool paths and generated-output state through doctor, then runs the fast contract suite. The default test route intentionally samples representative API, native, regression, equilibrium, and workflow contracts instead of running full equilibrium/regression reproductions or generated plot production. Use ``uv run python scripts/dev/validate_project.py confidence`` before release or broad runtime claims when extra native runtime contracts should be included.
+This is the expected healthy baseline. It creates the uv environment, builds the in-place pybind11 ``epcsaft._core`` extension, verifies imports/tool paths and generated-output state through doctor, then runs the fast contract suite. The default test route intentionally samples representative API, native, regression, equilibrium metadata, and workflow contracts instead of running full equilibrium route sweeps, regression reproductions, or generated plot production. Use ``uv run python scripts/dev/validate_project.py confidence`` before release or broad runtime claims when extra native runtime contracts should be included.
 The current development and CI smoke baseline is Python 3.13, while ``pyproject.toml`` still declares package compatibility with Python ``>=3.9``.
 
 Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` and JetBrains pytest runs also work because ``tests/conftest.py`` applies the native runtime DLL setup before test collection, but the wrapper uses a per-run pytest temp directory that is safer for Windows and parallel local runs.
@@ -43,7 +43,7 @@ Command matrix
      - Quick checks for Python/runtime/regression API changes plus cheap native metadata contracts.
    * - Python API work
      - ``uv run python run_pytest.py --api -q``
-     - Public wrapper, parameter-template, or regression API edits.
+     - Public wrapper, state, parameter-template, or regression API edits. Equilibrium route solves stay in explicit equilibrium slices.
    * - Public equilibrium contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
      - Fast representative check for neutral equilibrium route contracts, derivative-backend contracts, and capability reporting, including route families declared not exposed.
@@ -59,6 +59,9 @@ Command matrix
    * - Equilibrium route confidence
      - ``uv run python run_pytest.py --equilibrium-confidence -q -s``
      - Focused neutral TP flash proof plus route diagnostics. Full route sweeps, bubble/dew ladders, paper validation, and feed-line validation remain explicit benchmark or analysis workflows, not default pytest validation.
+   * - Equilibrium debug trace
+     - ``uv run python run_pytest.py --equilibrium-confidence --equilibrium-debug -q -s``
+     - Same focused proof with opt-in verbose Ipopt print level and expanded iteration-history capture for diagnosing iteration-limit or seed-attempt behavior.
    * - Docs check
      - ``uv run python scripts/dev/validate_project.py docs``
      - Build Sphinx HTML under ``build/docs-html``.
@@ -202,9 +205,10 @@ example, read ``docs/roadmaps/generalized_fluid_phase_equilibrium.md`` before
 native/equilibrium route tests. If the right target is unclear, run
 ``uv run python run_pytest.py --list-slices`` before choosing a command.
 
-- Python wrapper/API changes: ``uv run python run_pytest.py --api -q`` first, then ``uv run python run_pytest.py --confidence -q``.
+- Python wrapper/API changes: ``uv run python run_pytest.py --api -q`` first, then ``uv run python run_pytest.py --confidence -q``. Use ``--equilibrium-api`` only when wrapper work touches equilibrium route behavior.
 - Native/equation changes: ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` first, then ``uv run python run_pytest.py --runtime -q``, then ``uv run python run_pytest.py --confidence -q``.
 - Native route metadata, result-adapter diagnostics, or pybind payload-shape changes: run ``uv run python run_pytest.py --native-contracts -q`` first. Do not run broad route-builder files under ``tests/native/equilibrium`` for these changes; the wrapper rejects those broad targets unless ``--allow-long-native-tests`` or ``EPCSAFT_ALLOW_LONG_NATIVE_TESTS=1`` is set.
+- Equilibrium convergence diagnosis: use a single explicit test node or ``uv run python run_pytest.py --equilibrium-confidence --equilibrium-debug -q -s``. Do not use generic/API slices to investigate equilibrium runtime; they intentionally do not run ``tests/api/frontend/test_equilibrium.py``.
 - Equation traceability changes: ``uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`` then ``uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q``.
 - Performance claims: add or restore an explicit benchmark or analysis workflow first. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.

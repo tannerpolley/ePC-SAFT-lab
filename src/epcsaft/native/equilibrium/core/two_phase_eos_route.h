@@ -88,7 +88,10 @@ struct NeutralTwoPhaseEosPostsolve {
     int continuous_tpd_start_count = 0;
     int continuous_tpd_solve_count = 0;
     int continuous_tpd_converged_count = 0;
+    int continuous_tpd_iteration_count_total = 0;
+    int continuous_tpd_iteration_count_max = 0;
     double continuous_tpd_min = 0.0;
+    double continuous_tpd_step_final_max = 0.0;
     int continuous_tpd_best_phase_kind = 0;
     double continuous_tpd_best_density = 0.0;
     double continuous_tpd_best_molar_volume = 0.0;
@@ -143,6 +146,8 @@ struct NeutralTwoPhaseEosPostsolve {
     std::vector<int> tpd_candidate_phase_kinds;
     std::vector<std::vector<double>> tpd_candidate_compositions;
     std::vector<double> tpd_candidate_pressure_residuals;
+    std::vector<int> tpd_candidate_iteration_counts;
+    std::vector<double> tpd_candidate_step_finals;
     std::vector<int> tpd_candidate_ranks;
     std::vector<std::string> tpd_candidate_feasibility_statuses;
     std::vector<bool> tpd_candidate_selected;
@@ -186,7 +191,10 @@ struct NeutralPhaseDiscoveryResult {
     int continuous_tpd_start_count = 0;
     int continuous_tpd_solve_count = 0;
     int continuous_tpd_converged_count = 0;
+    int continuous_tpd_iteration_count_total = 0;
+    int continuous_tpd_iteration_count_max = 0;
     double continuous_tpd_min = 0.0;
+    double continuous_tpd_step_final_max = 0.0;
     int continuous_tpd_best_phase_kind = 0;
     double continuous_tpd_best_density = 0.0;
     double continuous_tpd_best_molar_volume = 0.0;

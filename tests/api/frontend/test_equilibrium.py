@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import os
 from types import MappingProxyType
 
 import numpy as np
@@ -415,7 +416,15 @@ def _configured_equilibrium(route: str, **kwargs: object) -> epcsaft.Equilibrium
 
 
 def _solver_options() -> dict[str, object]:
-    return {"max_iterations": 200, "tolerance": 1.0e-8, "ipopt_iteration_history_limit": 4}
+    options = {"max_iterations": 200, "tolerance": 1.0e-8, "ipopt_iteration_history_limit": 4}
+    if _equilibrium_debug_enabled():
+        options["ipopt_print_level"] = 5
+        options["ipopt_iteration_history_limit"] = 50
+    return options
+
+
+def _equilibrium_debug_enabled() -> bool:
+    return os.environ.get("EPCSAFT_EQUILIBRIUM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _assert_hydrocarbon_pair(result, *, problem_kind: str) -> None:
@@ -436,7 +445,7 @@ def _assert_hydrocarbon_pair(result, *, problem_kind: str) -> None:
     assert diagnostics["solver_status"] != "max_iterations_exceeded"
     assert diagnostics["application_status"] != "maximum_iterations_exceeded"
     assert diagnostics["eval_h_calls"] > 0
-    assert diagnostics["ipopt_print_level"] == 0
+    assert diagnostics["ipopt_print_level"] == (5 if _equilibrium_debug_enabled() else 0)
     assert diagnostics["iteration_count"] > 0
     assert 0 < diagnostics["iteration_history_size"] <= diagnostics["iteration_history_limit"]
     assert len(diagnostics["iteration_history"]) == diagnostics["iteration_history_size"]

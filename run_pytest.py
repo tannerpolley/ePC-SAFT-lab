@@ -50,7 +50,8 @@ SLICE_SELECTION_NOTE = (
     "Slice flags are mutually exclusive. Developers should normally start with "
     "`uv run python scripts/dev/validate_project.py quick` or `uv run python run_pytest.py -q`. "
     "Use `--all` only when you explicitly need every retained pytest contract. "
-    "Extra positional pytest targets after a slice are appended and will run in addition to that slice."
+    "Extra positional pytest targets after a slice are appended and will run in addition to that slice. "
+    "Use `--equilibrium-debug -s` with an equilibrium target when Ipopt iteration logs are needed."
 )
 
 
@@ -85,6 +86,11 @@ def _pytest_env(pytest_temp: Path) -> dict[str, str]:
     if apply_native_runtime_env is not None:
         apply_native_runtime_env(env)
     return env
+
+
+def _apply_equilibrium_debug_env(env: dict[str, str], enabled: bool) -> None:
+    if enabled:
+        env["EPCSAFT_EQUILIBRIUM_DEBUG"] = "1"
 
 
 def _pytest_args(
@@ -246,6 +252,11 @@ def main() -> int:
         action="store_true",
         help="Allow broad known-slow native route-builder file targets",
     )
+    parser.add_argument(
+        "--equilibrium-debug",
+        action="store_true",
+        help="Enable opt-in equilibrium debug settings in tests, including verbose Ipopt print/history controls.",
+    )
     args, pytest_args = parser.parse_known_args()
 
     if args.list_slices:
@@ -255,6 +266,7 @@ def main() -> int:
     repo_root = _repo_root()
     pytest_temp = _pytest_temp(repo_root)
     env = _pytest_env(pytest_temp)
+    _apply_equilibrium_debug_env(env, args.equilibrium_debug)
     src_root = repo_root / "src"
     sys.path.insert(0, str(src_root))
     env["PYTHONPATH"] = str(src_root)

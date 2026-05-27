@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import pytest
 
@@ -31,6 +33,7 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
         1.0e-6,
         {},
         linear_solver="auto",
+        print_level=_ipopt_print_level(),
         acceptable_tolerance=1.0e-7,
         constraint_violation_tolerance=1.0e-8,
         dual_infeasibility_tolerance=1.0e-8,
@@ -72,6 +75,9 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert postsolve["continuous_tpd_start_count"] > 0
     assert postsolve["continuous_tpd_solve_count"] == postsolve["continuous_tpd_start_count"]
     assert postsolve["continuous_tpd_converged_count"] == postsolve["continuous_tpd_solve_count"]
+    assert postsolve["continuous_tpd_iteration_count_total"] >= postsolve["continuous_tpd_solve_count"]
+    assert postsolve["continuous_tpd_iteration_count_max"] > 0
+    assert postsolve["continuous_tpd_step_final_max"] > 0.0
     assert postsolve["continuous_tpd_best_source"]
     assert len(postsolve["continuous_tpd_best_composition"]) == 2
     assert postsolve["held_stage_i_status"] in {
@@ -94,11 +100,17 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert len(postsolve["tpd_candidate_ranks"]) == postsolve["unique_candidate_count"]
     assert len(postsolve["tpd_candidate_sources"]) == postsolve["unique_candidate_count"]
     assert len(postsolve["tpd_candidate_pressure_residuals"]) == postsolve["unique_candidate_count"]
+    assert len(postsolve["tpd_candidate_iteration_counts"]) == postsolve["unique_candidate_count"]
+    assert len(postsolve["tpd_candidate_step_finals"]) == postsolve["unique_candidate_count"]
     assert len(postsolve["tpd_candidate_feasibility_statuses"]) == postsolve["unique_candidate_count"]
     assert len(postsolve["tpd_candidate_selected"]) == postsolve["unique_candidate_count"]
     assert postsolve["seed_and_stability"]["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
     assert postsolve["seed_and_stability"]["candidate_source_count"] == postsolve["unique_candidate_count"]
     assert postsolve["seed_and_stability"]["candidate_sources"] == postsolve["tpd_candidate_sources"]
+    assert (
+        postsolve["seed_and_stability"]["candidate_iteration_counts"]
+        == postsolve["tpd_candidate_iteration_counts"]
+    )
     assert postsolve["seed_and_stability"]["deterministic_screening_is_full_held"] is False
     assert postsolve["seed_and_stability"]["continuous_tpd_status"] == "converged"
     assert postsolve["seed_and_stability"]["held_stage_i_status"] == postsolve["held_stage_i_status"]
@@ -166,6 +178,9 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
     assert discovery["continuous_tpd_start_count"] > 0
     assert discovery["continuous_tpd_solve_count"] == discovery["continuous_tpd_start_count"]
     assert discovery["continuous_tpd_converged_count"] == discovery["continuous_tpd_solve_count"]
+    assert discovery["continuous_tpd_iteration_count_total"] >= discovery["continuous_tpd_solve_count"]
+    assert discovery["continuous_tpd_iteration_count_max"] > 0
+    assert discovery["continuous_tpd_step_final_max"] > 0.0
     assert discovery["continuous_tpd_best_source"]
     assert len(discovery["continuous_tpd_best_composition"]) == 2
     assert discovery["held_stage_i_status"] in {
@@ -231,6 +246,9 @@ def test_neutral_tpd_phase_discovery_can_run_deterministic_screening_without_con
     assert discovery["continuous_tpd_start_count"] == 0
     assert discovery["continuous_tpd_solve_count"] == 0
     assert discovery["continuous_tpd_converged_count"] == 0
+    assert discovery["continuous_tpd_iteration_count_total"] == 0
+    assert discovery["continuous_tpd_iteration_count_max"] == 0
+    assert discovery["continuous_tpd_step_final_max"] == 0.0
     assert discovery["held_stage_i_status"] == "not_requested"
     assert {candidate["tpd_backend"] for candidate in discovery["candidates"]} == {
         "deterministic_grid_evaluation",
@@ -294,3 +312,8 @@ def test_stage9_phase_discovery_ladder_reports_distinct_layers() -> None:
 def _skip_without_ipopt() -> None:
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
+
+
+def _ipopt_print_level() -> int:
+    enabled = os.environ.get("EPCSAFT_EQUILIBRIUM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
+    return 5 if enabled else 0

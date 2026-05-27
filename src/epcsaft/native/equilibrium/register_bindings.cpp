@@ -621,7 +621,10 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["continuous_tpd_start_count"] = result.continuous_tpd_start_count;
     out["continuous_tpd_solve_count"] = result.continuous_tpd_solve_count;
     out["continuous_tpd_converged_count"] = result.continuous_tpd_converged_count;
+    out["continuous_tpd_iteration_count_total"] = result.continuous_tpd_iteration_count_total;
+    out["continuous_tpd_iteration_count_max"] = result.continuous_tpd_iteration_count_max;
     out["continuous_tpd_min"] = result.continuous_tpd_min;
+    out["continuous_tpd_step_final_max"] = result.continuous_tpd_step_final_max;
     out["continuous_tpd_best_phase_kind"] = result.continuous_tpd_best_phase_kind;
     out["continuous_tpd_best_density"] = result.continuous_tpd_best_density;
     out["continuous_tpd_best_molar_volume"] = result.continuous_tpd_best_molar_volume;
@@ -676,6 +679,8 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["tpd_candidate_phase_kinds"] = result.tpd_candidate_phase_kinds;
     out["tpd_candidate_compositions"] = result.tpd_candidate_compositions;
     out["tpd_candidate_pressure_residuals"] = result.tpd_candidate_pressure_residuals;
+    out["tpd_candidate_iteration_counts"] = result.tpd_candidate_iteration_counts;
+    out["tpd_candidate_step_finals"] = result.tpd_candidate_step_finals;
     out["tpd_candidate_ranks"] = result.tpd_candidate_ranks;
     out["tpd_candidate_feasibility_statuses"] = result.tpd_candidate_feasibility_statuses;
     out["tpd_candidate_selected"] = result.tpd_candidate_selected;
@@ -686,6 +691,8 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     seed_and_stability["candidate_source_count"] = static_cast<int>(result.tpd_candidate_sources.size());
     seed_and_stability["candidate_sources"] = result.tpd_candidate_sources;
     seed_and_stability["candidate_ranks"] = result.tpd_candidate_ranks;
+    seed_and_stability["candidate_iteration_counts"] = result.tpd_candidate_iteration_counts;
+    seed_and_stability["candidate_step_finals"] = result.tpd_candidate_step_finals;
     seed_and_stability["candidate_feasibility_statuses"] = result.tpd_candidate_feasibility_statuses;
     seed_and_stability["candidate_selected"] = result.tpd_candidate_selected;
     seed_and_stability["candidate_mass_balance_norm"] = result.candidate_mass_balance_norm;
@@ -746,7 +753,10 @@ py::dict neutral_phase_discovery_to_dict(
     out["continuous_tpd_start_count"] = result.continuous_tpd_start_count;
     out["continuous_tpd_solve_count"] = result.continuous_tpd_solve_count;
     out["continuous_tpd_converged_count"] = result.continuous_tpd_converged_count;
+    out["continuous_tpd_iteration_count_total"] = result.continuous_tpd_iteration_count_total;
+    out["continuous_tpd_iteration_count_max"] = result.continuous_tpd_iteration_count_max;
     out["continuous_tpd_min"] = result.continuous_tpd_min;
+    out["continuous_tpd_step_final_max"] = result.continuous_tpd_step_final_max;
     out["continuous_tpd_best_phase_kind"] = result.continuous_tpd_best_phase_kind;
     out["continuous_tpd_best_density"] = result.continuous_tpd_best_density;
     out["continuous_tpd_best_molar_volume"] = result.continuous_tpd_best_molar_volume;
@@ -1066,7 +1076,10 @@ void apply_selector_metadata(
                  "continuous_tpd_start_count",
                  "continuous_tpd_solve_count",
                  "continuous_tpd_converged_count",
+                 "continuous_tpd_iteration_count_total",
+                 "continuous_tpd_iteration_count_max",
                  "continuous_tpd_min",
+                 "continuous_tpd_step_final_max",
                  "held_stage_i_status",
                  "held_stage_i_start_count",
                  "held_stage_i_negative_tpd_found",

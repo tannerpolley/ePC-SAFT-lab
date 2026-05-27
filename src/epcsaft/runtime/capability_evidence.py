@@ -291,9 +291,17 @@ NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
 )
 
+FRONTEND_API_TEST_TARGETS: Final[tuple[str, ...]] = (
+    "tests/api/frontend/test_imports.py",
+    "tests/api/frontend/test_mixture.py",
+    "tests/api/frontend/test_templates.py",
+    "tests/api/frontend/test_regression.py",
+    "tests/api/frontend/test_state_properties.py",
+)
+
 GENERIC_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/package/test_package_main.py::test_python_m_epcsaft_reports_package_and_core_status",
-    "tests/api/frontend",
+    *FRONTEND_API_TEST_TARGETS,
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",
     "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced",
@@ -322,7 +330,7 @@ RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",
 )
-API_TEST_TARGETS: Final[tuple[str, ...]] = ("tests/api/frontend",)
+API_TEST_TARGETS: Final[tuple[str, ...]] = FRONTEND_API_TEST_TARGETS
 NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",
