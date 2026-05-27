@@ -210,6 +210,59 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
         assert abs(candidate["pressure_residual_estimate"]) <= 1.0e-5
 
 
+def test_stage9_phase_discovery_ladder_reports_distinct_layers() -> None:
+    mix = _nonideal_lle_binary_mixture()
+
+    discovery = _core._native_neutral_tpd_phase_discovery(
+        mix._native,
+        225.0,
+        1.0e6,
+        [0.5, 0.5],
+        [0, 0],
+        1.0e-6,
+        1.0e-6,
+    )
+
+    assert discovery["stage9_phase_discovery_steps"] == [
+        "deterministic_screening",
+        "continuous_tpd",
+        "held_stage_i",
+        "held_stage_ii",
+        "held_stage_iii",
+    ]
+    assert discovery["deterministic_screening_status"] == "completed"
+    assert discovery["deterministic_screening_is_full_held"] is False
+    assert discovery["continuous_tpd_status"] == "converged"
+    assert discovery["continuous_tpd_solve_count"] == discovery["continuous_tpd_converged_count"]
+    assert discovery["held_stage_i_status"] in {
+        "negative_tpd_candidate_found",
+        "no_negative_tpd_candidate_found",
+    }
+    assert discovery["held_stage_i_status"] != discovery["continuous_tpd_status"]
+    assert discovery["held_stage_ii_status"] == "pending_dual_cutting_plane_loop"
+    assert discovery["held_stage_ii_status"] != discovery["held_stage_i_status"]
+    assert discovery["held_stage_ii_major_iterations"] == 0
+    assert discovery["held_stage_iii_status"] == "pending_ipopt_refinement"
+    assert discovery["held_stage_iii_status"] != discovery["held_stage_ii_status"]
+
+    candidate_backends = {candidate["tpd_backend"] for candidate in discovery["candidates"]}
+    assert candidate_backends == {
+        "deterministic_grid_evaluation",
+        "continuous_coordinate_search",
+    }
+    assert discovery["deterministic_candidate_count"] > discovery["continuous_tpd_solve_count"]
+    for candidate in discovery["candidates"]:
+        if candidate["tpd_backend"] == "deterministic_grid_evaluation":
+            assert candidate["tpd_status"] == "candidate_generated"
+            assert candidate["tpd_iteration_count"] == 0
+            continue
+
+        assert candidate["tpd_backend"] == "continuous_coordinate_search"
+        assert candidate["tpd_status"] == "converged"
+        assert candidate["start_source"].startswith("feed_phase_kind_")
+        assert candidate["tpd_iteration_count"] > 0
+
+
 def _skip_without_ipopt() -> None:
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
