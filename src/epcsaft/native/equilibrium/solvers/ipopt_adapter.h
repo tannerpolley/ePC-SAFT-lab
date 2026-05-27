@@ -61,6 +61,7 @@ struct RouteSeedAttempt {
     bool solver_accepted = false;
     bool accepted = false;
     bool stable = false;
+    int max_iterations = 0;
     int iteration_count = 0;
     double objective = 0.0;
     double phase_distance = 0.0;

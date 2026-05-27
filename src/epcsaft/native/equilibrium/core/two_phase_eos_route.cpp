@@ -52,6 +52,7 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
     out.linear_solver_requested = solve_diagnostic_string(solve, "linear_solver_requested", out.linear_solver_requested);
     out.linear_solver_selected = solve_diagnostic_string(solve, "linear_solver_selected", out.linear_solver_selected);
     out.print_level = solve_diagnostic_int(solve, "print_level");
+    out.max_iterations = solve_diagnostic_int(solve, "max_iterations");
     out.iteration_count = solve_diagnostic_int(solve, "iteration_count");
     out.iteration_history_limit = solve_diagnostic_int(solve, "iteration_history_limit");
     out.iteration_history_size = solve_diagnostic_int(solve, "iteration_history_size");
@@ -1385,6 +1386,7 @@ RouteSeedAttempt neutral_seed_attempt_from_result(
     out.solver_accepted = result.solver_accepted;
     out.accepted = result.accepted;
     out.stable = result.postsolve.stability_accepted;
+    out.max_iterations = result.max_iterations;
     out.iteration_count = result.iteration_count;
     out.objective = result.objective;
     out.phase_distance = result.postsolve.phase_distance;

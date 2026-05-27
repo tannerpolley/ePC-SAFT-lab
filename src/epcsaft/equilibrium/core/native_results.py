@@ -39,6 +39,7 @@ _ROUTE_BOOL_DIAGNOSTIC_KEYS = (
 )
 
 _ROUTE_INT_DIAGNOSTIC_KEYS = (
+    "max_iterations",
     "iteration_count",
     "iteration_history_limit",
     "iteration_history_size",

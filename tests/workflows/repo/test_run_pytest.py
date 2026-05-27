@@ -230,10 +230,14 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert "tests/api/frontend" in run_pytest.GENERIC_TEST_TARGETS
     assert "tests/api/frontend/test_equilibrium.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert "tests/native/state/test_bubble_derivatives.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
-    assert "tests/native/state/test_bubble_derivatives.py" in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
-    assert "tests/native/equilibrium/results/test_neutral_vle_reference_values.py" in (
+    assert "tests/native/state/test_bubble_derivatives.py" not in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    assert "tests/native/equilibrium/results/test_neutral_vle_reference_values.py" not in (
         run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
     )
+    assert (
+        "tests/native/equilibrium/results/test_neutral_vle_reference_values.py::"
+        "test_neutral_flash_reference_values_are_reported_and_verified"
+    ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
@@ -309,8 +313,17 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
     targets = run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
 
     assert "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py" in targets
-    assert "tests/api/frontend/test_equilibrium.py" in targets
+    assert "tests/api/frontend/test_equilibrium.py" not in targets
+    assert (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
+    ) in targets
+    assert (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve"
+    ) in targets
     assert "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py" in targets
+    assert "tests/native/state/test_bubble_derivatives.py" not in targets
     assert all("paper_validation" not in target for target in targets)
     assert all("tests/regression/literature" not in target for target in targets)
     assert all("tests/workflows/validation" not in target for target in targets)

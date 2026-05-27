@@ -72,6 +72,7 @@ void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) 
     out["warm_start_requested"] = result.warm_start_requested;
     out["warm_start_used"] = result.warm_start_used;
     out["ipopt_print_level"] = result.print_level;
+    out["max_iterations"] = result.max_iterations;
     out["status"] = result.status;
     out["solver_status"] = result.solver_status;
     out["application_status"] = result.application_status;

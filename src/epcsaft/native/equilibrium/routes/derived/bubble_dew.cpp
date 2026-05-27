@@ -805,6 +805,7 @@ RouteSeedAttempt neutral_seed_attempt_from_result(const NeutralTwoPhaseEosRouteR
     out.solver_accepted = result.solver_accepted;
     out.accepted = result.accepted;
     out.stable = result.postsolve.stability_accepted;
+    out.max_iterations = result.max_iterations;
     out.iteration_count = result.iteration_count;
     out.objective = result.objective;
     out.phase_distance = result.postsolve.phase_distance;
@@ -3035,8 +3036,7 @@ NeutralTwoPhaseEosRouteResult solve_flash_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve =
-            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        const bool can_postsolve = solve.accepted;
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;
@@ -3221,8 +3221,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_flash_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve =
-            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        const bool can_postsolve = solve.accepted;
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;

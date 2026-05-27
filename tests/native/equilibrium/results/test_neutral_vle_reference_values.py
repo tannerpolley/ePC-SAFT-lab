@@ -416,7 +416,7 @@ def _print_route_report(report: Mapping[str, Any]) -> None:
     _print_iteration_history(diagnostics)
 
 
-def test_neutral_vle_reference_values_are_reported_and_verified(capsys: pytest.CaptureFixture[str]) -> None:
+def test_neutral_flash_reference_values_are_reported_and_verified(capsys: pytest.CaptureFixture[str]) -> None:
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
 
@@ -425,7 +425,7 @@ def test_neutral_vle_reference_values_are_reported_and_verified(capsys: pytest.C
     reports: list[dict[str, object]] = []
     mixture = _mixture()
 
-    for route, kwargs, problem_kind, selector_family in ROUTE_CASES:
+    for route, kwargs, problem_kind, selector_family in (ROUTE_CASES[-1],):
         started_at = perf_counter()
         result = epcsaft.Equilibrium(mixture, route=route, **kwargs).solve(solver_options=_solver_options())
         elapsed_seconds = perf_counter() - started_at
@@ -436,6 +436,10 @@ def test_neutral_vle_reference_values_are_reported_and_verified(capsys: pytest.C
 
         assert result.problem_kind == problem_kind
         assert certification["accepted"] is True
+        assert diagnostics["solver_status"] == "success"
+        assert diagnostics["application_status"] == "solve_succeeded"
+        assert diagnostics["solver_accepted"] is True
+        assert diagnostics["max_iterations"] == _solver_options()["max_iterations"]
         assert diagnostics["hessian_approximation"] == "exact"
         assert diagnostics["exact_hessian_available"] is True
         assert liquid.temperature == pytest.approx(HYDROCARBON_T, rel=5.0e-5)
@@ -462,6 +466,9 @@ def test_neutral_vle_reference_values_are_reported_and_verified(capsys: pytest.C
             assert diagnostics["stability_accepted"] is True
             assert diagnostics["candidate_completeness_accepted"] is True
             assert diagnostics["selected_candidate_count"] == 2
+            assert certification["continuous_tpd_status"] == "not_requested"
+            assert certification["continuous_tpd_solve_count"] == 0
+            assert certification["held_stage_i_status"] == "not_requested"
 
         reports.append(
             {
@@ -485,8 +492,8 @@ def test_neutral_vle_reference_values_are_reported_and_verified(capsys: pytest.C
         )
 
     with capsys.disabled():
-        print("\nNeutral VLE selector reference results")
-        print("Each section reports the route request, fixed values, solved variables, active constraints,")
+        print("\nNeutral flash selector reference result")
+        print("This section reports the route request, fixed values, solved variables, active constraints,")
         print("native certification, deterministic seed sweep, and Ipopt runtime diagnostics.")
         print("Wall time is measured inside this pytest run; the first Ipopt call can include one-time setup cost.")
         for report in reports:

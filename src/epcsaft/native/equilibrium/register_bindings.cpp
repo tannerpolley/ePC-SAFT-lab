@@ -214,6 +214,7 @@ py::list route_seed_attempts_to_list(
         row["solver_accepted"] = attempt.solver_accepted;
         row["accepted"] = attempt.accepted;
         row["stable"] = attempt.stable;
+        row["max_iterations"] = attempt.max_iterations;
         row["iteration_count"] = attempt.iteration_count;
         row["objective"] = attempt.objective;
         row["phase_distance"] = attempt.phase_distance;

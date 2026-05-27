@@ -431,6 +431,10 @@ def _assert_hydrocarbon_pair(result, *, problem_kind: str) -> None:
     assert result.phases["vapor"].density == pytest.approx(HYDROCARBON_VAPOR_RHO, rel=1.0e-4)
     assert diagnostics["hessian_approximation"] == "exact"
     assert diagnostics["exact_hessian_available"] is True
+    assert diagnostics["solver_accepted"] is True
+    assert diagnostics["max_iterations"] == 200
+    assert diagnostics["solver_status"] != "max_iterations_exceeded"
+    assert diagnostics["application_status"] != "maximum_iterations_exceeded"
     assert diagnostics["eval_h_calls"] > 0
     assert diagnostics["ipopt_print_level"] == 0
     assert diagnostics["iteration_count"] > 0
@@ -438,12 +442,49 @@ def _assert_hydrocarbon_pair(result, *, problem_kind: str) -> None:
     assert len(diagnostics["iteration_history"]) == diagnostics["iteration_history_size"]
     assert diagnostics["postsolve_certification"]["accepted"] is True
     if problem_kind == "neutral_tp_flash":
+        assert diagnostics["solver_status"] == "success"
+        assert diagnostics["application_status"] == "solve_succeeded"
         assert diagnostics["postsolve_certification"]["continuous_tpd_status"] == "not_requested"
         assert diagnostics["postsolve_certification"]["deterministic_candidate_count"] > 0
         assert diagnostics["postsolve_certification"]["continuous_tpd_start_count"] == 0
         assert diagnostics["postsolve_certification"]["continuous_tpd_solve_count"] == 0
         assert diagnostics["postsolve_certification"]["continuous_tpd_converged_count"] == 0
         assert diagnostics["postsolve_certification"]["held_stage_i_status"] == "not_requested"
+
+
+def test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve() -> None:
+    _skip_without_ipopt()
+
+    with pytest.raises(epcsaft.SolutionError) as exc_info:
+        _configured_equilibrium("flash", T=HYDROCARBON_T, P=HYDROCARBON_BUBBLE_P, z=HYDROCARBON_FLASH_Z).solve(
+            solver_options={
+                "max_iterations": 1,
+                "tolerance": 1.0e-8,
+                "ipopt_iteration_history_limit": 4,
+                "ipopt_print_level": 0,
+            }
+        )
+
+    diagnostics = exc_info.value.diagnostics
+    assert diagnostics is not None
+    assert diagnostics["route_status"] == "solver_rejected"
+    assert diagnostics["solver_status"] == "max_iterations_exceeded"
+    assert diagnostics["application_status"] == "maximum_iterations_exceeded"
+    assert diagnostics["solver_accepted"] is False
+    assert diagnostics["route_accepted"] is False
+    assert diagnostics["max_iterations"] == 1
+    assert diagnostics["iteration_count"] == 1
+    assert diagnostics["seed_attempt_count"] >= 1
+    assert diagnostics["seed_attempt_solver_accepted_count"] == 0
+    assert diagnostics["seed_attempt_route_accepted_count"] == 0
+    for attempt in diagnostics["seed_attempts"]:
+        assert attempt["route_status"] == "solver_rejected"
+        assert attempt["solver_status"] == "max_iterations_exceeded"
+        assert attempt["application_status"] == "maximum_iterations_exceeded"
+        assert attempt["solver_accepted"] is False
+        assert attempt["route_accepted"] is False
+        assert attempt["max_iterations"] == 1
+        assert attempt["iteration_count"] == 1
 
 
 def _skip_without_ipopt() -> None:

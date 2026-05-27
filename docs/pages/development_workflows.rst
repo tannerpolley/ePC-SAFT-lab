@@ -58,7 +58,7 @@ Command matrix
      - Fast check for native route ``variable_model``, ``density_backend``, residual-family payloads, and Python route diagnostics. Use this instead of the full route-builder suite for architecture or metadata edits.
    * - Equilibrium route confidence
      - ``uv run python run_pytest.py --equilibrium-confidence -q -s``
-     - Trusted exact-Hessian native Ipopt route ladder anchored on the hydrocarbon bubble workflow plus route diagnostics. Full paper or feed-line validation remains an explicit benchmark or analysis workflow, not pytest.
+     - Focused neutral TP flash proof plus route diagnostics. Full route sweeps, bubble/dew ladders, paper validation, and feed-line validation remain explicit benchmark or analysis workflows, not default pytest validation.
    * - Docs check
      - ``uv run python scripts/dev/validate_project.py docs``
      - Build Sphinx HTML under ``build/docs-html``.

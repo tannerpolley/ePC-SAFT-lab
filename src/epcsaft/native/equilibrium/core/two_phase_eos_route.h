@@ -253,6 +253,7 @@ struct NeutralTwoPhaseEosRouteResult {
     std::string last_callback_exception;
     std::string last_callback_failure;
     int print_level = 0;
+    int max_iterations = 0;
     int iteration_count = 0;
     int iteration_history_limit = 0;
     int iteration_history_size = 0;
