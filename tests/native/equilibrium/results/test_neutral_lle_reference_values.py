@@ -56,7 +56,7 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
 
     postsolve = route["postsolve"]
     assert postsolve["accepted"] is True
-    assert postsolve["phase_discovery_backend"] == "held_tpd_volume_composition"
+    assert postsolve["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
     assert postsolve["stability_certificate"] == "tpd_postsolve"
     assert postsolve["stability_checked"] is True
     assert postsolve["stability_accepted"] is True
@@ -65,6 +65,10 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert postsolve["phase_set_status"] == "phase_set_certified"
     assert postsolve["tpd_candidate_count"] >= postsolve["unique_candidate_count"] >= 1
     assert postsolve["selected_candidate_count"] == 2
+    assert len(postsolve["tpd_candidate_ranks"]) == postsolve["unique_candidate_count"]
+    assert len(postsolve["tpd_candidate_pressure_residuals"]) == postsolve["unique_candidate_count"]
+    assert len(postsolve["tpd_candidate_feasibility_statuses"]) == postsolve["unique_candidate_count"]
+    assert len(postsolve["tpd_candidate_selected"]) == postsolve["unique_candidate_count"]
     assert postsolve["candidate_mass_balance_norm"] <= 1.0e-8
     assert postsolve["material_balance_norm"] <= 1.0e-8
     assert postsolve["pressure_consistency_norm"] <= 1.0e-3
@@ -85,7 +89,7 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     certificate = route["stability_certificate"]
     assert certificate["accepted"] is True
     assert certificate["method"] == "tpd_postsolve"
-    assert certificate["phase_discovery_backend"] == "held_tpd_volume_composition"
+    assert certificate["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
     assert certificate["stability_checked"] is True
     assert certificate["stability_accepted"] is True
     assert certificate["candidate_set_complete"] is True
@@ -106,7 +110,7 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
         1.0e-6,
     )
 
-    assert discovery["phase_discovery_backend"] == "held_tpd_volume_composition"
+    assert discovery["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
     assert discovery["stability_certificate"] == "tpd_postsolve"
     assert discovery["stability_checked"] is True
     assert discovery["tpd_candidate_count"] >= discovery["unique_candidate_count"] >= 1
@@ -116,6 +120,18 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
     assert discovery["selected_candidate_count"] == 2
     assert len(discovery["selected_phase_compositions"]) == 2
     assert len(discovery["candidates"]) == discovery["unique_candidate_count"]
+    assert [candidate["candidate_rank"] for candidate in discovery["candidates"]] == list(
+        range(discovery["unique_candidate_count"])
+    )
+    assert sum(candidate["selected"] for candidate in discovery["candidates"]) == discovery["selected_candidate_count"]
+    for candidate in discovery["candidates"]:
+        assert candidate["feasibility_status"] in {
+            "selected_mass_balance_feasible",
+            "mass_balance_pair_unselected",
+            "candidate_mass_balance_incomplete",
+        }
+        assert np.isfinite(candidate["pressure_residual_estimate"])
+        assert abs(candidate["pressure_residual_estimate"]) <= 1.0e-5
 
 
 def _skip_without_ipopt() -> None:

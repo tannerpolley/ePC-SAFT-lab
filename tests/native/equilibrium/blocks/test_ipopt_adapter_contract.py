@@ -29,6 +29,7 @@ def test_runtime_capabilities_report_public_ipopt_routes() -> None:
         "dew_pressure",
         "dew_temperature",
         "flash",
+        "lle",
     ]
 
 

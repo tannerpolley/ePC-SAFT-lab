@@ -127,6 +127,6 @@ def test_internal_multiphase_eos_postsolve_certifies_three_phase_shape_without_p
     assert payload["selected_candidate_count"] == 3
     assert payload["selected_phase_kinds"] == [0, 0, 0]
     assert len(payload["selected_phase_compositions"]) == 3
-    assert payload["phase_discovery_backend"] == "held_tpd_volume_composition"
+    assert payload["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
     assert payload["stability_certificate"] == "tpd_postsolve"
     assert payload["candidate_mass_balance_norm"] >= 0.0

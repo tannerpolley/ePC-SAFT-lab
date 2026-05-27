@@ -452,7 +452,10 @@ def test_neutral_vle_reference_values_are_reported_and_verified(capsys: pytest.C
             assert vapor.phase_fraction == pytest.approx(0.5, rel=1.0e-4, abs=1.0e-6)
             assert diagnostics["route_status"] == "production_accepted"
             assert diagnostics["stability_certificate"]["method"] == "tpd_postsolve"
-            assert diagnostics["stability_certificate"]["phase_discovery_backend"] == "held_tpd_volume_composition"
+            assert (
+                diagnostics["stability_certificate"]["phase_discovery_backend"]
+                == "deterministic_tpd_candidate_screening"
+            )
             assert diagnostics["stability_certificate"]["accepted"] is True
             assert diagnostics["stability_certificate"]["candidate_set_complete"] is True
             assert diagnostics["stability_checked"] is True

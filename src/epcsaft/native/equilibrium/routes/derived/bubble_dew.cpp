@@ -666,7 +666,7 @@ std::vector<NamedInitialVariables> flash_route_seed_candidates(
             && discovery.selected_phase_compositions.size() == 2
             && discovery.selected_phase_fractions.size() == 2) {
             append_if_feasible(
-                "held_tpd_candidate_pair",
+                "deterministic_tpd_candidate_pair",
                 build_flash_route_initial_variables(
                     args,
                     feed_composition,

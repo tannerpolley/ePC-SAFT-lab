@@ -3,6 +3,9 @@
 #include "equilibrium/core/route_metadata.h"
 #include "model/native_types.h"
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <utility>
 
 namespace epcsaft::native::equilibrium_nlp {
@@ -74,6 +77,8 @@ NeutralTwoPhaseEosNlpContract make_activated_contract(
     const std::vector<double> initial = problem.initial_point();
     const NlpBounds bounds = problem.bounds();
     const NlpJacobianStructure structure = problem.jacobian_structure();
+    const NlpScaling scaling = problem.scaling();
+    const std::vector<double> constraints = problem.constraints(initial);
     const std::map<std::string, std::string> diagnostics = problem.diagnostics();
 
     NeutralTwoPhaseEosNlpContract out;
@@ -102,10 +107,50 @@ NeutralTwoPhaseEosNlpContract make_activated_contract(
     out.constraint_upper_bounds = bounds.constraint_upper;
     out.objective_at_initial = problem.objective(initial);
     out.gradient_at_initial = problem.objective_gradient(initial);
-    out.constraints_at_initial = problem.constraints(initial);
+    out.constraints_at_initial = constraints;
     out.jacobian_rows = structure.rows;
     out.jacobian_cols = structure.cols;
     out.jacobian_values_at_initial = problem.jacobian_values(initial);
+    out.objective_scaling = scaling.objective;
+    out.variable_scaling = scaling.variables;
+    out.constraint_scaling = scaling.constraints;
+    out.initial_variable_lower_margin = std::numeric_limits<double>::infinity();
+    out.initial_variable_upper_margin = std::numeric_limits<double>::infinity();
+    out.initial_amount_lower_margin = std::numeric_limits<double>::infinity();
+    out.initial_volume_lower_margin = std::numeric_limits<double>::infinity();
+    for (int index = 0; index < problem.variable_count(); ++index) {
+        const std::size_t i = static_cast<std::size_t>(index);
+        const double lower_margin = initial[i] - bounds.variable_lower[i];
+        const double upper_margin = bounds.variable_upper[i] - initial[i];
+        out.initial_variable_lower_margin = std::min(out.initial_variable_lower_margin, lower_margin);
+        out.initial_variable_upper_margin = std::min(out.initial_variable_upper_margin, upper_margin);
+        const bool is_volume = species_count > 0 && (index % (species_count + 1)) == species_count;
+        if (is_volume) {
+            out.initial_volume_lower_margin = std::min(out.initial_volume_lower_margin, lower_margin);
+        } else {
+            out.initial_amount_lower_margin = std::min(out.initial_amount_lower_margin, lower_margin);
+        }
+    }
+    out.initial_variable_bound_margin =
+        std::min(out.initial_variable_lower_margin, out.initial_variable_upper_margin);
+    out.initial_constraint_bound_violation = 0.0;
+    for (int index = 0; index < problem.constraint_count(); ++index) {
+        const std::size_t i = static_cast<std::size_t>(index);
+        if (constraints[i] < bounds.constraint_lower[i]) {
+            out.initial_constraint_bound_violation =
+                std::max(out.initial_constraint_bound_violation, bounds.constraint_lower[i] - constraints[i]);
+        }
+        if (constraints[i] > bounds.constraint_upper[i]) {
+            out.initial_constraint_bound_violation =
+                std::max(out.initial_constraint_bound_violation, constraints[i] - bounds.constraint_upper[i]);
+        }
+    }
+    if (!std::isfinite(out.initial_amount_lower_margin)) {
+        out.initial_amount_lower_margin = 0.0;
+    }
+    if (!std::isfinite(out.initial_volume_lower_margin)) {
+        out.initial_volume_lower_margin = 0.0;
+    }
     return out;
 }
 

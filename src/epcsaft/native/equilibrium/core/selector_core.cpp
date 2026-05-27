@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cctype>
+#include <numeric>
+#include <sstream>
 
 namespace epcsaft::native::equilibrium {
 namespace {
@@ -49,6 +51,12 @@ bool all_zero_or_empty(const std::vector<double>& values) {
     });
 }
 
+std::vector<int> all_species_indices(std::size_t count) {
+    std::vector<int> out(count, 0);
+    std::iota(out.begin(), out.end(), 0);
+    return out;
+}
+
 bool no_association_sites(const add_args& args) {
     return std::all_of(args.assoc_num.begin(), args.assoc_num.end(), [](int value) { return value == 0; })
         && args.assoc_matrix.empty()
@@ -57,12 +65,55 @@ bool no_association_sites(const add_args& args) {
         && args.vol_a.empty();
 }
 
+bool active_association_for_species(const add_args& args, std::size_t species) {
+    if (species < args.assoc_num.size() && args.assoc_num[species] > 0) {
+        return true;
+    }
+    if (species < args.e_assoc.size() && std::isfinite(args.e_assoc[species]) && args.e_assoc[species] != 0.0) {
+        return true;
+    }
+    if (species < args.vol_a.size() && std::isfinite(args.vol_a[species]) && args.vol_a[species] != 0.0) {
+        return true;
+    }
+    return false;
+}
+
 SelectorInputClassification classify_selector_input(const add_args& args) {
     SelectorInputClassification out;
-    out.nonelectrolyte = all_zero_or_empty(args.z);
-    out.neutral = out.nonelectrolyte;
+    const std::size_t species_count = args.m.size();
+    out.phase_eligible_species_indices = all_species_indices(species_count);
+    out.transferable_species_indices = out.phase_eligible_species_indices;
+    for (std::size_t species = 0; species < species_count; ++species) {
+        const double charge = species < args.z.size() ? args.z[species] : 0.0;
+        if (std::isfinite(charge) && std::abs(charge) > 1.0e-12) {
+            out.ionic_species_indices.push_back(static_cast<int>(species));
+            out.ionic_species_charges.push_back(charge);
+        } else {
+            out.neutral_species_indices.push_back(static_cast<int>(species));
+        }
+        if (active_association_for_species(args, species)) {
+            out.associating_species_indices.push_back(static_cast<int>(species));
+        }
+    }
+    out.nonelectrolyte = out.ionic_species_indices.empty() && all_zero_or_empty(args.z);
     out.nonassociating = no_association_sites(args);
     out.nonreactive = true;
+    out.neutral = out.nonelectrolyte && out.nonassociating && out.nonreactive;
+    if (out.neutral) {
+        out.active_family_markers.push_back("neutral");
+    }
+    if (!out.nonelectrolyte) {
+        out.active_family_markers.push_back("electrolyte");
+    }
+    if (!out.nonassociating) {
+        out.active_family_markers.push_back("associating");
+    }
+    if (!out.nonreactive) {
+        out.active_family_markers.push_back("reactive");
+    }
+    if (out.nonreactive) {
+        out.active_family_markers.push_back("nonreactive");
+    }
     return out;
 }
 
@@ -95,6 +146,140 @@ void require_composition(const add_args& args, const std::vector<double>& compos
         total += value;
     }
     require_positive_finite(total, "composition total");
+}
+
+std::vector<double> normalized_composition(const std::vector<double>& composition) {
+    const double total = std::accumulate(composition.begin(), composition.end(), 0.0);
+    require_positive_finite(total, "composition total");
+    std::vector<double> out;
+    out.reserve(composition.size());
+    for (double value : composition) {
+        out.push_back(value / total);
+    }
+    return out;
+}
+
+std::string temperature_role_for_route(const SelectorRouteRequest& request) {
+    if (request.route == "bubble_temperature" || request.route == "dew_temperature") {
+        return "solved_boundary_temperature";
+    }
+    return request.has_temperature ? "fixed_temperature" : "not_specified";
+}
+
+std::string pressure_role_for_route(const SelectorRouteRequest& request) {
+    if (request.route == "bubble_pressure" || request.route == "dew_pressure") {
+        return "solved_boundary_pressure";
+    }
+    return request.has_pressure ? "fixed_pressure" : "not_specified";
+}
+
+SelectorRequestPretreatment pretreat_selector_request(
+    const add_args& args,
+    const SelectorRouteRequest& request
+) {
+    SelectorRequestPretreatment out;
+    out.route = request.route;
+    out.composition_role = request.composition_role;
+    out.temperature_role = temperature_role_for_route(request);
+    out.pressure_role = pressure_role_for_route(request);
+    out.species_count = static_cast<int>(args.m.size());
+    out.composition_length = static_cast<int>(request.composition.size());
+    out.composition_original_sum =
+        std::accumulate(request.composition.begin(), request.composition.end(), 0.0);
+    const std::vector<double> normalized = normalized_composition(request.composition);
+    out.composition_normalized_sum = std::accumulate(normalized.begin(), normalized.end(), 0.0);
+    out.composition_was_normalized =
+        std::abs(out.composition_original_sum - 1.0) > out.composition_normalization_tolerance;
+    out.finite_numeric_inputs = std::isfinite(out.composition_original_sum)
+        && (!request.has_temperature || std::isfinite(request.temperature))
+        && (!request.has_pressure || std::isfinite(request.pressure));
+    out.route_shape_validated = true;
+    return out;
+}
+
+SelectorThermodynamicInput build_thermodynamic_input(
+    const add_args& args,
+    const SelectorRouteRequest& request
+) {
+    SelectorThermodynamicInput out;
+    out.temperature_kelvin = request.temperature;
+    out.pressure_pascal = request.pressure;
+    out.composition_role = request.composition_role;
+    out.temperature_role = temperature_role_for_route(request);
+    out.pressure_role = pressure_role_for_route(request);
+    out.species_indices = all_species_indices(args.m.size());
+    out.normalized_composition = normalized_composition(request.composition);
+    out.extensive_amounts = out.normalized_composition;
+    return out;
+}
+
+bool positive_finite_vector(const std::vector<double>& values, std::size_t expected) {
+    if (values.size() != expected) {
+        return false;
+    }
+    return std::all_of(values.begin(), values.end(), [](double value) {
+        return std::isfinite(value) && value > 0.0;
+    });
+}
+
+bool dense_pair_matrix_present(const std::vector<double>& values, std::size_t species_count) {
+    if (species_count <= 1) {
+        return true;
+    }
+    return values.size() == species_count * species_count
+        && std::all_of(values.begin(), values.end(), [](double value) { return std::isfinite(value); });
+}
+
+bool any_nonzero_finite(const std::vector<double>& values) {
+    return std::any_of(values.begin(), values.end(), [](double value) {
+        return std::isfinite(value) && std::abs(value) > 1.0e-12;
+    });
+}
+
+SelectorParameterReadiness evaluate_parameter_readiness(
+    const add_args& args,
+    const ProblemFamilyActivation& activation
+) {
+    SelectorParameterReadiness out;
+    const std::size_t species_count = args.m.size();
+    out.required_parameter_families.push_back("pure_neutral_pcsaft");
+    if (species_count > 1) {
+        out.required_parameter_families.push_back("binary_interaction_matrix");
+    }
+    out.pure_neutral_parameters_present =
+        positive_finite_vector(args.m, species_count)
+        && positive_finite_vector(args.s, species_count)
+        && positive_finite_vector(args.e, species_count);
+    out.binary_interaction_matrix_present = dense_pair_matrix_present(args.k_ij, species_count);
+    out.association_parameters_active = !no_association_sites(args);
+    out.electrolyte_parameters_active = !all_zero_or_empty(args.z);
+    out.born_terms_active = args.include_born_model != 0
+        || args.born_model != 0
+        || any_nonzero_finite(args.d_born)
+        || any_nonzero_finite(args.f_solv);
+    out.active_residual_families = activation.residual_families;
+    if (!out.pure_neutral_parameters_present) {
+        out.missing_required_parameter_families.push_back("pure_neutral_pcsaft");
+    }
+    if (!out.binary_interaction_matrix_present) {
+        out.missing_required_parameter_families.push_back("binary_interaction_matrix");
+    }
+    out.required_parameter_families_present = out.missing_required_parameter_families.empty();
+    out.derivative_gate = activation.derivative_requirement;
+    return out;
+}
+
+void require_parameter_readiness(const SelectorParameterReadiness& readiness) {
+    if (readiness.required_parameter_families_present) {
+        return;
+    }
+    std::ostringstream msg;
+    msg << "selector-ineligible: missing required parameter families:";
+    for (const std::string& family : readiness.missing_required_parameter_families) {
+        msg << " " << family;
+    }
+    msg << ".";
+    throw ValueError(msg.str());
 }
 
 void require_present(bool present, const std::string& label, const std::string& route) {
@@ -367,6 +552,10 @@ SelectorContract evaluate_selector_contract(
     out.specified_temperature = request.has_temperature;
     out.specified_pressure = request.has_pressure;
     out.activation = activation;
+    out.request_pretreatment = pretreat_selector_request(args, request);
+    out.thermodynamic_input = build_thermodynamic_input(args, request);
+    out.parameter_readiness = evaluate_parameter_readiness(args, out.activation);
+    require_parameter_readiness(out.parameter_readiness);
     out.input_classification = classify_selector_input(args);
     require_eligible_input(out.input_classification);
     out.production_exposed = out.activation.production_exposed;

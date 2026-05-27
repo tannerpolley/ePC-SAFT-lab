@@ -46,6 +46,18 @@ struct NeutralTwoPhaseEosNlpContract {
     std::vector<int> jacobian_rows;
     std::vector<int> jacobian_cols;
     std::vector<double> jacobian_values_at_initial;
+    double objective_scaling = 1.0;
+    std::vector<double> variable_scaling;
+    std::vector<double> constraint_scaling;
+    double initial_variable_lower_margin = 0.0;
+    double initial_variable_upper_margin = 0.0;
+    double initial_variable_bound_margin = 0.0;
+    double initial_amount_lower_margin = 0.0;
+    double initial_volume_lower_margin = 0.0;
+    double initial_constraint_bound_violation = 0.0;
+    std::string domain_safety_policy = "explicit_bounds_variable_transform_ipopt_barrier";
+    std::string transform_policy = "physical_variables_identity_transform_until_variable_transform_wrapper";
+    std::string barrier_policy = "ipopt_internal_barrier_only";
 };
 
 struct NeutralTwoPhaseEosPostsolve {
@@ -94,6 +106,10 @@ struct NeutralTwoPhaseEosPostsolve {
     std::vector<double> tpd_candidate_values;
     std::vector<int> tpd_candidate_phase_kinds;
     std::vector<std::vector<double>> tpd_candidate_compositions;
+    std::vector<double> tpd_candidate_pressure_residuals;
+    std::vector<int> tpd_candidate_ranks;
+    std::vector<std::string> tpd_candidate_feasibility_statuses;
+    std::vector<bool> tpd_candidate_selected;
 };
 
 struct NeutralTpdCandidate {
@@ -105,6 +121,10 @@ struct NeutralTpdCandidate {
     double molar_volume = 0.0;
     double tpd = 0.0;
     double transformed_objective = 0.0;
+    double pressure_residual_estimate = 0.0;
+    std::string feasibility_status = "candidate_generated";
+    int candidate_rank = -1;
+    bool selected = false;
 };
 
 struct NeutralPhaseDiscoveryResult {
@@ -112,7 +132,7 @@ struct NeutralPhaseDiscoveryResult {
     bool stability_accepted = false;
     bool candidate_completeness_accepted = false;
     bool phase_set_mass_balance_feasible = false;
-    std::string phase_discovery_backend = "held_tpd_volume_composition";
+    std::string phase_discovery_backend = "deterministic_tpd_candidate_screening";
     std::string stability_certificate = "tpd_postsolve";
     std::string phase_set_status = "not_checked";
     double min_tpd = 0.0;

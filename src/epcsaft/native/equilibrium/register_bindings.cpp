@@ -340,6 +340,18 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     out["jacobian_rows"] = result.jacobian_rows;
     out["jacobian_cols"] = result.jacobian_cols;
     out["jacobian_values_at_initial"] = result.jacobian_values_at_initial;
+    out["objective_scaling"] = result.objective_scaling;
+    out["variable_scaling"] = result.variable_scaling;
+    out["constraint_scaling"] = result.constraint_scaling;
+    out["initial_variable_lower_margin"] = result.initial_variable_lower_margin;
+    out["initial_variable_upper_margin"] = result.initial_variable_upper_margin;
+    out["initial_variable_bound_margin"] = result.initial_variable_bound_margin;
+    out["initial_amount_lower_margin"] = result.initial_amount_lower_margin;
+    out["initial_volume_lower_margin"] = result.initial_volume_lower_margin;
+    out["initial_constraint_bound_violation"] = result.initial_constraint_bound_violation;
+    out["domain_safety_policy"] = result.domain_safety_policy;
+    out["transform_policy"] = result.transform_policy;
+    out["barrier_policy"] = result.barrier_policy;
     return out;
 }
 
@@ -392,6 +404,10 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["tpd_candidate_values"] = result.tpd_candidate_values;
     out["tpd_candidate_phase_kinds"] = result.tpd_candidate_phase_kinds;
     out["tpd_candidate_compositions"] = result.tpd_candidate_compositions;
+    out["tpd_candidate_pressure_residuals"] = result.tpd_candidate_pressure_residuals;
+    out["tpd_candidate_ranks"] = result.tpd_candidate_ranks;
+    out["tpd_candidate_feasibility_statuses"] = result.tpd_candidate_feasibility_statuses;
+    out["tpd_candidate_selected"] = result.tpd_candidate_selected;
     return out;
 }
 
@@ -407,6 +423,10 @@ py::dict neutral_tpd_candidate_to_dict(
     out["molar_volume"] = result.molar_volume;
     out["tpd"] = result.tpd;
     out["transformed_objective"] = result.transformed_objective;
+    out["pressure_residual_estimate"] = result.pressure_residual_estimate;
+    out["feasibility_status"] = result.feasibility_status;
+    out["candidate_rank"] = result.candidate_rank;
+    out["selected"] = result.selected;
     return out;
 }
 
@@ -536,6 +556,73 @@ py::dict selector_input_classification_to_dict(
     out["nonreactive"] = classification.nonreactive;
     out["nonelectrolyte"] = classification.nonelectrolyte;
     out["nonassociating"] = classification.nonassociating;
+    out["neutral_species_indices"] = classification.neutral_species_indices;
+    out["ionic_species_indices"] = classification.ionic_species_indices;
+    out["ionic_species_charges"] = classification.ionic_species_charges;
+    out["associating_species_indices"] = classification.associating_species_indices;
+    out["reactive_species_indices"] = classification.reactive_species_indices;
+    out["phase_eligible_species_indices"] = classification.phase_eligible_species_indices;
+    out["transferable_species_indices"] = classification.transferable_species_indices;
+    out["fixed_species_indices"] = classification.fixed_species_indices;
+    out["active_family_markers"] = classification.active_family_markers;
+    return out;
+}
+
+py::dict selector_request_pretreatment_to_dict(
+    const epcsaft::native::equilibrium::SelectorRequestPretreatment& pretreatment
+) {
+    py::dict out;
+    out["request_source"] = pretreatment.request_source;
+    out["route"] = pretreatment.route;
+    out["composition_role"] = pretreatment.composition_role;
+    out["temperature_role"] = pretreatment.temperature_role;
+    out["pressure_role"] = pretreatment.pressure_role;
+    out["composition_basis"] = pretreatment.composition_basis;
+    out["feed_amount_basis"] = pretreatment.feed_amount_basis;
+    out["route_shape_validated"] = pretreatment.route_shape_validated;
+    out["finite_numeric_inputs"] = pretreatment.finite_numeric_inputs;
+    out["species_count"] = pretreatment.species_count;
+    out["composition_length"] = pretreatment.composition_length;
+    out["composition_original_sum"] = pretreatment.composition_original_sum;
+    out["composition_normalized_sum"] = pretreatment.composition_normalized_sum;
+    out["composition_was_normalized"] = pretreatment.composition_was_normalized;
+    out["composition_normalization_tolerance"] = pretreatment.composition_normalization_tolerance;
+    return out;
+}
+
+py::dict selector_thermodynamic_input_to_dict(
+    const epcsaft::native::equilibrium::SelectorThermodynamicInput& input
+) {
+    py::dict out;
+    out["temperature_kelvin"] = input.temperature_kelvin;
+    out["pressure_pascal"] = input.pressure_pascal;
+    out["total_amount_basis"] = input.total_amount_basis;
+    out["composition_role"] = input.composition_role;
+    out["composition_basis"] = input.composition_basis;
+    out["amount_basis"] = input.amount_basis;
+    out["temperature_role"] = input.temperature_role;
+    out["pressure_role"] = input.pressure_role;
+    out["species_indices"] = input.species_indices;
+    out["normalized_composition"] = input.normalized_composition;
+    out["extensive_amounts"] = input.extensive_amounts;
+    return out;
+}
+
+py::dict selector_parameter_readiness_to_dict(
+    const epcsaft::native::equilibrium::SelectorParameterReadiness& readiness
+) {
+    py::dict out;
+    out["parameter_basis"] = readiness.parameter_basis;
+    out["pure_neutral_parameters_present"] = readiness.pure_neutral_parameters_present;
+    out["binary_interaction_matrix_present"] = readiness.binary_interaction_matrix_present;
+    out["association_parameters_active"] = readiness.association_parameters_active;
+    out["electrolyte_parameters_active"] = readiness.electrolyte_parameters_active;
+    out["born_terms_active"] = readiness.born_terms_active;
+    out["required_parameter_families_present"] = readiness.required_parameter_families_present;
+    out["required_parameter_families"] = readiness.required_parameter_families;
+    out["missing_required_parameter_families"] = readiness.missing_required_parameter_families;
+    out["active_residual_families"] = readiness.active_residual_families;
+    out["derivative_gate"] = readiness.derivative_gate;
     return out;
 }
 
@@ -556,6 +643,9 @@ py::dict selector_contract_to_dict(const epcsaft::native::equilibrium::SelectorC
     out["certification_required"] = contract.certification_required;
     out["density_closure_required"] = contract.density_closure_required;
     out["exact_derivatives_required"] = contract.exact_derivatives_required;
+    out["request_pretreatment"] = selector_request_pretreatment_to_dict(contract.request_pretreatment);
+    out["thermodynamic_input"] = selector_thermodynamic_input_to_dict(contract.thermodynamic_input);
+    out["parameter_readiness"] = selector_parameter_readiness_to_dict(contract.parameter_readiness);
     out["input_classification"] = selector_input_classification_to_dict(contract.input_classification);
     return out;
 }
@@ -579,6 +669,9 @@ void apply_selector_metadata(
     out["certification_required"] = contract.certification_required;
     out["density_closure_required"] = contract.density_closure_required;
     out["exact_derivatives_required"] = contract.exact_derivatives_required;
+    out["request_pretreatment"] = selector_request_pretreatment_to_dict(contract.request_pretreatment);
+    out["thermodynamic_input"] = selector_thermodynamic_input_to_dict(contract.thermodynamic_input);
+    out["parameter_readiness"] = selector_parameter_readiness_to_dict(contract.parameter_readiness);
     out["input_classification"] = selector_input_classification_to_dict(contract.input_classification);
     py::dict stability_certificate;
     stability_certificate["method"] = contract.activation.postsolve_certification;

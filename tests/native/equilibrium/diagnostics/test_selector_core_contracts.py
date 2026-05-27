@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 import epcsaft._core as _core
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from tests.support.equilibrium_cases import (
     _ionic_mixture,
     _methanol_cyclohexane_mixture,
@@ -119,18 +120,47 @@ def test_selector_core_contract_owns_production_vle_metadata(
     assert payload["certification_required"] is True
     assert payload["density_closure_required"] is True
     assert payload["exact_derivatives_required"] is True
-    assert payload["input_classification"] == {
-        "neutral": True,
-        "nonreactive": True,
-        "nonelectrolyte": True,
-        "nonassociating": True,
-    }
+    classification = payload["input_classification"]
+    assert classification["neutral"] is True
+    assert classification["nonreactive"] is True
+    assert classification["nonelectrolyte"] is True
+    assert classification["nonassociating"] is True
+    assert classification["neutral_species_indices"] == [0, 1]
+    assert classification["ionic_species_indices"] == []
+    assert classification["associating_species_indices"] == []
+    assert classification["phase_eligible_species_indices"] == [0, 1]
+    assert classification["transferable_species_indices"] == [0, 1]
+    assert classification["fixed_species_indices"] == []
+    assert classification["active_family_markers"] == ["neutral", "nonreactive"]
+
+    request_pretreatment = payload["request_pretreatment"]
+    assert request_pretreatment["route_shape_validated"] is True
+    assert request_pretreatment["finite_numeric_inputs"] is True
+    assert request_pretreatment["species_count"] == 2
+    assert request_pretreatment["composition_length"] == 2
+    assert request_pretreatment["composition_normalized_sum"] == pytest.approx(1.0)
+    assert request_pretreatment["composition_basis"] == "mole_fraction"
+
+    thermodynamic_input = payload["thermodynamic_input"]
+    assert thermodynamic_input["species_indices"] == [0, 1]
+    assert thermodynamic_input["composition_role"] == composition_role
+    assert thermodynamic_input["normalized_composition"] == pytest.approx(selector_request["composition"])
+    assert thermodynamic_input["extensive_amounts"] == pytest.approx(selector_request["composition"])
+    assert thermodynamic_input["amount_basis"] == "unit_total_moles"
+
+    parameter_readiness = payload["parameter_readiness"]
+    assert parameter_readiness["pure_neutral_parameters_present"] is True
+    assert parameter_readiness["binary_interaction_matrix_present"] is True
+    assert parameter_readiness["required_parameter_families_present"] is True
+    assert parameter_readiness["missing_required_parameter_families"] == []
+    assert parameter_readiness["association_parameters_active"] is False
+    assert parameter_readiness["electrolyte_parameters_active"] is False
     assert payload["residual_families"] == activation["residual_families"]
     assert payload["constraint_families"] == activation["constraint_families"]
     assert payload["variable_model"] == activation["variable_model"]
     assert payload["density_backend"] == activation["density_backend"]
     if family in {"neutral_tp_flash", "neutral_lle"}:
-        assert activation["stability_prelayer"] == "held_tpd_volume_composition"
+        assert activation["stability_prelayer"] == "deterministic_tpd_candidate_screening"
         assert activation["postsolve_certification"] == "tpd_postsolve"
 
 
@@ -192,6 +222,29 @@ def test_selector_core_rejects_ionic_lle_before_solver_dispatch() -> None:
         )
 
 
+def test_selector_core_rejects_missing_binary_interactions_before_solver_dispatch() -> None:
+    mix = ePCSAFTMixture.from_params(
+        {
+            "m": [1.0, 1.6069],
+            "s": [3.7039, 3.5206],
+            "e": [150.03, 191.42],
+        },
+        species=["Methane", "Ethane"],
+    )
+
+    with pytest.raises(_core.NativeValueError, match="binary_interaction_matrix"):
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": "neutral_tp_flash",
+                "temperature": 300.0,
+                "pressure": 1.0e6,
+                "composition": [0.35, 0.65],
+                "composition_role": "feed",
+            },
+        )
+
+
 def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
     mix = _neutral_binary_mixture()
     request = {
@@ -222,7 +275,7 @@ def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
         "phase_distance",
         "phase_volume_gap",
     ]
-    assert activation["stability_prelayer"] == "held_tpd_volume_composition"
+    assert activation["stability_prelayer"] == "deterministic_tpd_candidate_screening"
     assert activation["postsolve_certification"] == "tpd_postsolve"
     assert plan["variable_model"] == activation["variable_model"]
     assert plan["density_backend"] == activation["density_backend"]
@@ -288,7 +341,7 @@ def test_neutral_lle_activation_plan_contract_matches_matrix() -> None:
         "phase_equilibrium",
         "phase_distance",
     ]
-    assert activation["stability_prelayer"] == "held_tpd_volume_composition"
+    assert activation["stability_prelayer"] == "deterministic_tpd_candidate_screening"
     assert activation["postsolve_certification"] == "tpd_postsolve"
     assert plan["variable_model"] == activation["variable_model"]
     assert plan["density_backend"] == activation["density_backend"]
@@ -364,6 +417,15 @@ def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None
     assert activated["exact_hessian_available"] is True
     assert activated["hessian_nonzero_count"] == trusted["hessian_nonzero_count"]
     assert activated["hessian_backend"] == trusted["hessian_backend"]
+    assert activated["objective_scaling"] > 0.0
+    assert len(activated["variable_scaling"]) == activated["variable_count"]
+    assert len(activated["constraint_scaling"]) == activated["constraint_count"]
+    assert activated["initial_variable_bound_margin"] > 0.0
+    assert activated["initial_amount_lower_margin"] > 0.0
+    assert activated["initial_volume_lower_margin"] > 0.0
+    assert activated["initial_constraint_bound_violation"] >= 0.0
+    assert activated["domain_safety_policy"] == "explicit_bounds_variable_transform_ipopt_barrier"
+    assert activated["barrier_policy"] == "ipopt_internal_barrier_only"
 
 
 def test_selector_core_rejects_incompatible_composition_role_before_solver_dispatch() -> None:

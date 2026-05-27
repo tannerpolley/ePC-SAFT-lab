@@ -353,6 +353,15 @@ bool duplicate_tpd_candidate(
         && std::abs(std::log(first.molar_volume) - std::log(second.molar_volume)) < kCandidateLogVolumeTolerance;
 }
 
+void rank_tpd_candidates(NeutralPhaseDiscoveryResult& discovery) {
+    for (std::size_t index = 0; index < discovery.candidates.size(); ++index) {
+        discovery.candidates[index].candidate_rank = static_cast<int>(index);
+        if (discovery.candidates[index].feasibility_status.empty()) {
+            discovery.candidates[index].feasibility_status = "candidate_generated";
+        }
+    }
+}
+
 void append_unique_tpd_candidate(
     std::vector<NeutralTpdCandidate>& candidates,
     const NeutralTpdCandidate& candidate
@@ -457,6 +466,8 @@ void append_tpd_candidates_for_reference_block(
                 candidate.density = trial.density;
                 candidate.molar_volume = 1.0 / trial.density;
                 candidate.transformed_objective = trial.objective;
+                candidate.pressure_residual_estimate = trial.pressure_consistency_residual;
+                candidate.feasibility_status = "candidate_generated";
                 for (std::size_t species = 0; species < species_count; ++species) {
                     candidate.tpd += trial.composition[species]
                         * (trial.gradient[species] - reference.gradient[species]);
@@ -496,8 +507,13 @@ void select_two_phase_candidate_set(
     if (phase_kinds.size() != 2 || discovery.candidates.size() < 2) {
         discovery.phase_set_status = "candidate_mass_balance_incomplete";
         discovery.candidate_mass_balance_norm = std::numeric_limits<double>::infinity();
+        for (NeutralTpdCandidate& candidate : discovery.candidates) {
+            candidate.feasibility_status = "candidate_mass_balance_incomplete";
+            candidate.selected = false;
+        }
         return;
     }
+    rank_tpd_candidates(discovery);
     const std::vector<double> z = normalized_trial_composition(feed_composition, "Neutral TPD feed");
     double best_norm = std::numeric_limits<double>::infinity();
     double best_fraction = 0.0;
@@ -549,8 +565,22 @@ void select_two_phase_candidate_set(
     discovery.candidate_completeness_accepted = discovery.phase_set_mass_balance_feasible;
     if (!discovery.phase_set_mass_balance_feasible) {
         discovery.phase_set_status = "candidate_mass_balance_incomplete";
+        for (NeutralTpdCandidate& candidate : discovery.candidates) {
+            candidate.feasibility_status = "candidate_mass_balance_incomplete";
+            candidate.selected = false;
+        }
         return;
     }
+    for (NeutralTpdCandidate& candidate : discovery.candidates) {
+        candidate.feasibility_status = "mass_balance_pair_unselected";
+        candidate.selected = false;
+    }
+    discovery.candidates[static_cast<std::size_t>(best_first)].selected = true;
+    discovery.candidates[static_cast<std::size_t>(best_first)].feasibility_status =
+        "selected_mass_balance_feasible";
+    discovery.candidates[static_cast<std::size_t>(best_second)].selected = true;
+    discovery.candidates[static_cast<std::size_t>(best_second)].feasibility_status =
+        "selected_mass_balance_feasible";
     discovery.selected_candidate_count = 2;
     discovery.selected_phase_fractions = {best_fraction, 1.0 - best_fraction};
     discovery.selected_phase_kinds = {phase_kinds[0], phase_kinds[1]};
@@ -583,10 +613,18 @@ void copy_discovery_to_postsolve(
     postsolve.tpd_candidate_values.clear();
     postsolve.tpd_candidate_phase_kinds.clear();
     postsolve.tpd_candidate_compositions.clear();
+    postsolve.tpd_candidate_pressure_residuals.clear();
+    postsolve.tpd_candidate_ranks.clear();
+    postsolve.tpd_candidate_feasibility_statuses.clear();
+    postsolve.tpd_candidate_selected.clear();
     for (const NeutralTpdCandidate& candidate : discovery.candidates) {
         postsolve.tpd_candidate_values.push_back(candidate.tpd);
         postsolve.tpd_candidate_phase_kinds.push_back(candidate.phase_kind);
         postsolve.tpd_candidate_compositions.push_back(candidate.composition);
+        postsolve.tpd_candidate_pressure_residuals.push_back(candidate.pressure_residual_estimate);
+        postsolve.tpd_candidate_ranks.push_back(candidate.candidate_rank);
+        postsolve.tpd_candidate_feasibility_statuses.push_back(candidate.feasibility_status);
+        postsolve.tpd_candidate_selected.push_back(candidate.selected);
     }
 }
 
@@ -636,7 +674,7 @@ NeutralPhaseDiscoveryResult certify_neutral_phase_set(
         throw ValueError("Neutral TPD postsolve phase kind size does not match the accepted phase set.");
     }
     NeutralPhaseDiscoveryResult out;
-    out.phase_discovery_backend = "held_tpd_volume_composition";
+    out.phase_discovery_backend = "deterministic_tpd_candidate_screening";
     out.stability_certificate = "tpd_postsolve";
     const std::vector<int> trial_phase_kinds = normalized_phase_kinds(phase_kinds, "Neutral TPD postsolve");
     int valid_candidate_count = 0;
@@ -654,6 +692,7 @@ NeutralPhaseDiscoveryResult certify_neutral_phase_set(
     }
     out.tpd_candidate_count = valid_candidate_count;
     out.unique_candidate_count = static_cast<int>(out.candidates.size());
+    rank_tpd_candidates(out);
     out.stability_checked = out.unique_candidate_count > 0;
     out.min_tpd = out.stability_checked ? std::numeric_limits<double>::infinity() : 0.0;
     bool negative_novel_candidate = false;
@@ -851,7 +890,7 @@ void append_phase_discovery_seed_candidates(
             return;
         }
         out.push_back({
-            "held_tpd_candidate_pair",
+            "deterministic_tpd_candidate_pair",
             neutral_two_phase_variables_from_initial(
                 build_two_phase_eos_initial_point_from_candidate_set(
                     args,
@@ -1787,6 +1826,8 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
     const std::vector<double> initial = problem.initial_point();
     const NlpBounds bounds = problem.bounds();
     const NlpJacobianStructure structure = problem.jacobian_structure();
+    const NlpScaling scaling = problem.scaling();
+    const std::vector<double> constraints = problem.constraints(initial);
 
     NeutralTwoPhaseEosNlpContract out;
     out.problem_name = problem.name();
@@ -1807,10 +1848,50 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
     out.constraint_upper_bounds = bounds.constraint_upper;
     out.objective_at_initial = problem.objective(initial);
     out.gradient_at_initial = problem.objective_gradient(initial);
-    out.constraints_at_initial = problem.constraints(initial);
+    out.constraints_at_initial = constraints;
     out.jacobian_rows = structure.rows;
     out.jacobian_cols = structure.cols;
     out.jacobian_values_at_initial = problem.jacobian_values(initial);
+    out.objective_scaling = scaling.objective;
+    out.variable_scaling = scaling.variables;
+    out.constraint_scaling = scaling.constraints;
+    out.initial_variable_lower_margin = std::numeric_limits<double>::infinity();
+    out.initial_variable_upper_margin = std::numeric_limits<double>::infinity();
+    out.initial_amount_lower_margin = std::numeric_limits<double>::infinity();
+    out.initial_volume_lower_margin = std::numeric_limits<double>::infinity();
+    for (int index = 0; index < problem.variable_count(); ++index) {
+        const std::size_t i = static_cast<std::size_t>(index);
+        const double lower_margin = initial[i] - bounds.variable_lower[i];
+        const double upper_margin = bounds.variable_upper[i] - initial[i];
+        out.initial_variable_lower_margin = std::min(out.initial_variable_lower_margin, lower_margin);
+        out.initial_variable_upper_margin = std::min(out.initial_variable_upper_margin, upper_margin);
+        const bool is_volume = species_count > 0 && (index % (species_count + 1)) == species_count;
+        if (is_volume) {
+            out.initial_volume_lower_margin = std::min(out.initial_volume_lower_margin, lower_margin);
+        } else {
+            out.initial_amount_lower_margin = std::min(out.initial_amount_lower_margin, lower_margin);
+        }
+    }
+    out.initial_variable_bound_margin =
+        std::min(out.initial_variable_lower_margin, out.initial_variable_upper_margin);
+    out.initial_constraint_bound_violation = 0.0;
+    for (int index = 0; index < problem.constraint_count(); ++index) {
+        const std::size_t i = static_cast<std::size_t>(index);
+        if (constraints[i] < bounds.constraint_lower[i]) {
+            out.initial_constraint_bound_violation =
+                std::max(out.initial_constraint_bound_violation, bounds.constraint_lower[i] - constraints[i]);
+        }
+        if (constraints[i] > bounds.constraint_upper[i]) {
+            out.initial_constraint_bound_violation =
+                std::max(out.initial_constraint_bound_violation, constraints[i] - bounds.constraint_upper[i]);
+        }
+    }
+    if (!std::isfinite(out.initial_amount_lower_margin)) {
+        out.initial_amount_lower_margin = 0.0;
+    }
+    if (!std::isfinite(out.initial_volume_lower_margin)) {
+        out.initial_volume_lower_margin = 0.0;
+    }
     return out;
 }
 
@@ -1860,6 +1941,7 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     }
     out.tpd_candidate_count = valid_candidate_count;
     out.unique_candidate_count = static_cast<int>(out.candidates.size());
+    rank_tpd_candidates(out);
     out.stability_checked = out.unique_candidate_count > 0;
     out.min_tpd = out.stability_checked ? std::numeric_limits<double>::infinity() : 0.0;
     for (const NeutralTpdCandidate& candidate : out.candidates) {
@@ -2063,7 +2145,7 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     out.candidate_completeness_accepted = !stability_certification_required;
     out.phase_set_mass_balance_feasible = !stability_certification_required;
     out.phase_discovery_backend = stability_certification_required
-        ? "held_tpd_volume_composition"
+        ? "deterministic_tpd_candidate_screening"
         : "deterministic_seed_sweep";
     out.stability_certificate = stability_certification_required
         ? "tpd_postsolve"
