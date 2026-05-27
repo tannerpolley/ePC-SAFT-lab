@@ -71,6 +71,7 @@ void apply_ipopt_route_status_fields(pybind11::dict& out, const Result& result) 
     out["restoration_phase_observed"] = result.restoration_phase_observed;
     out["warm_start_requested"] = result.warm_start_requested;
     out["warm_start_used"] = result.warm_start_used;
+    out["ipopt_print_level"] = result.print_level;
     out["status"] = result.status;
     out["solver_status"] = result.solver_status;
     out["application_status"] = result.application_status;

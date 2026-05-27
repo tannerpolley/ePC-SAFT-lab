@@ -1059,8 +1059,12 @@ void apply_selector_metadata(
                  "stage9_phase_discovery_steps",
                  "deterministic_screening_status",
                  "deterministic_screening_is_full_held",
+                 "deterministic_candidate_count",
                  "continuous_tpd_status",
                  "continuous_tpd_backend",
+                 "continuous_tpd_start_count",
+                 "continuous_tpd_solve_count",
+                 "continuous_tpd_converged_count",
                  "continuous_tpd_min",
                  "held_stage_i_status",
                  "held_stage_i_start_count",
@@ -1907,7 +1911,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const std::vector<double>& feed_composition,
         const std::vector<int>& phase_kinds,
         double tpd_tolerance,
-        double candidate_mass_balance_tolerance
+        double candidate_mass_balance_tolerance,
+        bool continuous_tpd_required
     ) {
         if (!mixture) {
             throw ValueError("Neutral TPD phase discovery requires a native mixture.");
@@ -1920,10 +1925,20 @@ void register_equilibrium_bindings(pybind11::module_& m) {
                 feed_composition,
                 phase_kinds,
                 tpd_tolerance,
-                candidate_mass_balance_tolerance
+                candidate_mass_balance_tolerance,
+                continuous_tpd_required
             )
         );
-    });
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("phase_kinds"),
+        py::arg("tpd_tolerance"),
+        py::arg("candidate_mass_balance_tolerance"),
+        py::arg("continuous_tpd_required") = true
+    );
     m.def("_native_neutral_two_phase_eos_result", [](
         const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
         double temperature,

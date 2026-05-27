@@ -210,6 +210,34 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
         assert abs(candidate["pressure_residual_estimate"]) <= 1.0e-5
 
 
+def test_neutral_tpd_phase_discovery_can_run_deterministic_screening_without_continuous_tpd() -> None:
+    mix = _nonideal_lle_binary_mixture()
+
+    discovery = _core._native_neutral_tpd_phase_discovery(
+        mix._native,
+        225.0,
+        1.0e6,
+        [0.5, 0.5],
+        [0, 0],
+        1.0e-6,
+        1.0e-6,
+        continuous_tpd_required=False,
+    )
+
+    assert discovery["deterministic_screening_status"] == "completed"
+    assert discovery["deterministic_screening_is_full_held"] is False
+    assert discovery["deterministic_candidate_count"] > 0
+    assert discovery["continuous_tpd_status"] == "not_requested"
+    assert discovery["continuous_tpd_start_count"] == 0
+    assert discovery["continuous_tpd_solve_count"] == 0
+    assert discovery["continuous_tpd_converged_count"] == 0
+    assert discovery["held_stage_i_status"] == "not_requested"
+    assert {candidate["tpd_backend"] for candidate in discovery["candidates"]} == {
+        "deterministic_grid_evaluation",
+    }
+    assert all(candidate["tpd_iteration_count"] == 0 for candidate in discovery["candidates"])
+
+
 def test_stage9_phase_discovery_ladder_reports_distinct_layers() -> None:
     mix = _nonideal_lle_binary_mixture()
 

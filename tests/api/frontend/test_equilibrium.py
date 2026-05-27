@@ -43,18 +43,18 @@ ROUTE_CONSTRUCTOR_CASES = (
 def test_equilibrium_constructor_configures_route_before_solve(
     route: str, kwargs: dict[str, object], problem_kind: str
 ) -> None:
-    _skip_without_ipopt()
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
-    result = epcsaft.Equilibrium(mixture, route=route, **kwargs).solve(
-        solver_options={
-            "max_iterations": 200,
-            "tolerance": 1.0e-8,
-            "ipopt_iteration_history_limit": 4,
-        }
-    )
+    equilibrium = epcsaft.Equilibrium(mixture, route=route, **kwargs)
+    structure = equilibrium.structure()
 
-    _assert_hydrocarbon_pair(result, problem_kind=problem_kind)
+    expected_selector_route = "neutral_tp_flash" if route == "flash" else route
+    assert problem_kind.startswith("neutral_")
+    assert equilibrium.problem.route == route
+    assert equilibrium.problem.selector_route == expected_selector_route
+    assert structure.route == route
+    assert structure.selector_route == expected_selector_route
+    assert structure.activation_key
 
 
 def test_equilibrium_requires_constructor_route() -> None:
@@ -236,18 +236,8 @@ def test_result_diagnostics_are_deeply_read_only() -> None:
         result.phases["liquid"].diagnostics["inner"]["status"] = "mutated"  # type: ignore[index]
 
 
-def test_flash_result_exposes_feed_composition_helper() -> None:
-    _skip_without_ipopt()
-    mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
-
-    result = epcsaft.Equilibrium(
-        mixture,
-        route="flash",
-        T=HYDROCARBON_T,
-        P=HYDROCARBON_BUBBLE_P,
-        z=HYDROCARBON_FLASH_Z,
-    ).solve(solver_options={"max_iterations": 200, "tolerance": 1.0e-8, "ipopt_iteration_history_limit": 4})
-
+def test_flash_result_exposes_feed_composition_helper(hydrocarbon_flash_result) -> None:
+    result = hydrocarbon_flash_result
     assert result.z == pytest.approx(HYDROCARBON_FLASH_Z)
     assert result.liquid_fraction == pytest.approx(0.5, rel=1.0e-4, abs=1.0e-6)
     assert result.vapor_fraction == pytest.approx(0.5, rel=1.0e-4, abs=1.0e-6)
@@ -322,6 +312,9 @@ def test_solver_options_reject_ignored_backend_selection_knobs() -> None:
     assert "derivative_backend" not in solver_options_signature.parameters
     assert "jacobian_backend" not in solver_options_signature.parameters
     assert "solver_backend" not in solver_options_signature.parameters
+    assert "ipopt_print_level" in solver_options_signature.parameters
+    with pytest.raises(epcsaft.InputError, match="ipopt_print_level"):
+        equilibrium.solve(solver_options={"ipopt_print_level": -1})
 
 
 def test_equilibrium_lle_route_configures_neutral_liquid_pair_structure() -> None:
@@ -439,9 +432,17 @@ def _assert_hydrocarbon_pair(result, *, problem_kind: str) -> None:
     assert diagnostics["hessian_approximation"] == "exact"
     assert diagnostics["exact_hessian_available"] is True
     assert diagnostics["eval_h_calls"] > 0
+    assert diagnostics["ipopt_print_level"] == 0
+    assert diagnostics["iteration_count"] > 0
+    assert 0 < diagnostics["iteration_history_size"] <= diagnostics["iteration_history_limit"]
+    assert len(diagnostics["iteration_history"]) == diagnostics["iteration_history_size"]
     assert diagnostics["postsolve_certification"]["accepted"] is True
     if problem_kind == "neutral_tp_flash":
         assert diagnostics["postsolve_certification"]["continuous_tpd_status"] == "not_requested"
+        assert diagnostics["postsolve_certification"]["deterministic_candidate_count"] > 0
+        assert diagnostics["postsolve_certification"]["continuous_tpd_start_count"] == 0
+        assert diagnostics["postsolve_certification"]["continuous_tpd_solve_count"] == 0
+        assert diagnostics["postsolve_certification"]["continuous_tpd_converged_count"] == 0
         assert diagnostics["postsolve_certification"]["held_stage_i_status"] == "not_requested"
 
 
@@ -537,13 +538,8 @@ def test_equilibrium_dew_temperature_recovers_shared_hydrocarbon_point() -> None
     _assert_hydrocarbon_pair(result, problem_kind="neutral_dew_t")
 
 
-def test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point() -> None:
-    _skip_without_ipopt()
-
-    result = _configured_equilibrium("flash", T=HYDROCARBON_T, P=HYDROCARBON_BUBBLE_P, z=HYDROCARBON_FLASH_Z).solve(
-        solver_options=_solver_options()
-    )
-
+def test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point(hydrocarbon_flash_result) -> None:
+    result = hydrocarbon_flash_result
     _assert_hydrocarbon_pair(result, problem_kind="neutral_tp_flash")
     assert result.split_detected is True
     assert result.phases["liquid"].phase_fraction == pytest.approx(0.5, rel=1.0e-4, abs=1.0e-6)
@@ -558,3 +554,11 @@ def test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point() -> None
     assert list(result.diagnostics["variable_layout"]["phase_volume_indices"]) == [
         phase * local_variable_count + species_count for phase in range(2)
     ]
+
+
+@pytest.fixture(scope="module")
+def hydrocarbon_flash_result():
+    _skip_without_ipopt()
+    return _configured_equilibrium("flash", T=HYDROCARBON_T, P=HYDROCARBON_BUBBLE_P, z=HYDROCARBON_FLASH_Z).solve(
+        solver_options=_solver_options()
+    )

@@ -252,6 +252,7 @@ struct NeutralTwoPhaseEosRouteResult {
     std::string application_status;
     std::string last_callback_exception;
     std::string last_callback_failure;
+    int print_level = 0;
     int iteration_count = 0;
     int iteration_history_limit = 0;
     int iteration_history_size = 0;
@@ -447,7 +448,8 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     const std::vector<double>& feed_composition,
     const std::vector<int>& phase_kinds,
     double tpd_tolerance,
-    double candidate_mass_balance_tolerance
+    double candidate_mass_balance_tolerance,
+    bool continuous_tpd_required = true
 );
 
 NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(

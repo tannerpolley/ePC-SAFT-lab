@@ -533,6 +533,7 @@ public:
         result_.diagnostics_string["linear_solver_requested"] = options_.linear_solver;
         result_.diagnostics_string["linear_solver_selected"] =
             options_.linear_solver == "auto" ? "default" : options_.linear_solver;
+        result_.diagnostics_int["print_level"] = options_.print_level;
         result_.diagnostics_int["iteration_history_limit"] = std::max(0, options_.iteration_history_limit);
         result_.diagnostics_int["variable_scaling_count"] = static_cast<int>(scaling_.variables.size());
         result_.diagnostics_int["constraint_scaling_count"] = static_cast<int>(scaling_.constraints.size());

@@ -660,7 +660,8 @@ std::vector<NamedInitialVariables> flash_route_seed_candidates(
             feed_composition,
             {0, 1},
             1.0e-6,
-            1.0e-6
+            1.0e-6,
+            false
         );
         if (discovery.phase_set_mass_balance_feasible
             && discovery.selected_phase_compositions.size() == 2

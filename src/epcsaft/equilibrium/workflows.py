@@ -33,6 +33,7 @@ class EquilibriumSolverOptions:
     timeout_seconds: float | None = None
     hessian_mode: Literal["auto", "exact", "limited-memory"] = "auto"
     ipopt_iteration_history_limit: int = 20
+    ipopt_print_level: int = 0
     ipopt_linear_solver: str = "auto"
     ipopt_acceptable_tolerance: float | None = None
     ipopt_constraint_violation_tolerance: float | None = None
@@ -733,6 +734,7 @@ def _normalize_options(options: EquilibriumSolverOptions | Mapping[str, Any] | N
             "timeout_seconds",
             "hessian_mode",
             "ipopt_iteration_history_limit",
+            "ipopt_print_level",
             "ipopt_linear_solver",
             "ipopt_acceptable_tolerance",
             "ipopt_constraint_violation_tolerance",
@@ -768,6 +770,11 @@ def _normalize_options(options: EquilibriumSolverOptions | Mapping[str, Any] | N
     ipopt_iteration_history_limit = int(options.ipopt_iteration_history_limit)
     if ipopt_iteration_history_limit < 0:
         raise InputError("options.ipopt_iteration_history_limit must be an integer greater than or equal to zero.")
+    if isinstance(options.ipopt_print_level, bool) or not isinstance(options.ipopt_print_level, Integral):
+        raise InputError("options.ipopt_print_level must be an integer greater than or equal to zero.")
+    ipopt_print_level = int(options.ipopt_print_level)
+    if ipopt_print_level < 0:
+        raise InputError("options.ipopt_print_level must be an integer greater than or equal to zero.")
     ipopt_linear_solver = str(options.ipopt_linear_solver).strip().lower()
     if not ipopt_linear_solver:
         raise InputError("options.ipopt_linear_solver must be a non-empty string.")
@@ -797,6 +804,7 @@ def _normalize_options(options: EquilibriumSolverOptions | Mapping[str, Any] | N
         timeout_seconds=timeout_seconds,
         hessian_mode=hessian_mode,  # type: ignore[arg-type]
         ipopt_iteration_history_limit=ipopt_iteration_history_limit,
+        ipopt_print_level=ipopt_print_level,
         ipopt_linear_solver=ipopt_linear_solver,
         ipopt_acceptable_tolerance=ipopt_acceptable_tolerance,
         ipopt_constraint_violation_tolerance=ipopt_constraint_violation_tolerance,
@@ -859,6 +867,7 @@ def _native_ipopt_option_args(options: EquilibriumSolverOptions) -> tuple[str, i
 def _native_ipopt_control_kwargs(options: EquilibriumSolverOptions) -> dict[str, Any]:
     return {
         "linear_solver": str(options.ipopt_linear_solver),
+        "print_level": int(options.ipopt_print_level),
         "acceptable_tolerance": _resolved_ipopt_acceptable_tolerance(options),
         "constraint_violation_tolerance": _resolved_ipopt_constraint_violation_tolerance(options),
         "dual_infeasibility_tolerance": _resolved_ipopt_dual_infeasibility_tolerance(options),

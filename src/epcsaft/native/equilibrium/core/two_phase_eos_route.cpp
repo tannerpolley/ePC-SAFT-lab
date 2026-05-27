@@ -51,6 +51,7 @@ void apply_ipopt_solve_metadata(NeutralTwoPhaseEosRouteResult& out, const IpoptS
     out.scaling_method = solve_diagnostic_string(solve, "scaling_method", out.scaling_method);
     out.linear_solver_requested = solve_diagnostic_string(solve, "linear_solver_requested", out.linear_solver_requested);
     out.linear_solver_selected = solve_diagnostic_string(solve, "linear_solver_selected", out.linear_solver_selected);
+    out.print_level = solve_diagnostic_int(solve, "print_level");
     out.iteration_count = solve_diagnostic_int(solve, "iteration_count");
     out.iteration_history_limit = solve_diagnostic_int(solve, "iteration_history_limit");
     out.iteration_history_size = solve_diagnostic_int(solve, "iteration_history_size");
@@ -1204,7 +1205,8 @@ void append_phase_discovery_seed_candidates(
             feed_composition,
             phase_kinds,
             1.0e-6,
-            1.0e-6
+            1.0e-6,
+            false
         );
         if (!discovery.phase_set_mass_balance_feasible || discovery.selected_candidate_count != 2) {
             return;
@@ -2244,7 +2246,8 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     const std::vector<double>& feed_composition,
     const std::vector<int>& phase_kinds,
     double tpd_tolerance,
-    double candidate_mass_balance_tolerance
+    double candidate_mass_balance_tolerance,
+    bool continuous_tpd_required
 ) {
     require_positive_finite(tpd_tolerance, "Neutral TPD tolerance");
     require_positive_finite(candidate_mass_balance_tolerance, "Neutral TPD candidate mass-balance tolerance");
@@ -2273,7 +2276,8 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
                 "feed_phase_kind_" + std::to_string(phase_kind),
                 out.candidates,
                 valid_candidate_count,
-                &out
+                &out,
+                continuous_tpd_required
             );
         } catch (const std::exception&) {
             continue;
@@ -2296,7 +2300,7 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     } else if (out.stability_accepted) {
         out.phase_set_status = "single_phase_stable_candidate_set";
     }
-    finalize_stage9_phase_discovery(out, tpd_tolerance);
+    finalize_stage9_phase_discovery(out, tpd_tolerance, continuous_tpd_required);
     return out;
 }
 

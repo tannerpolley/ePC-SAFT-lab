@@ -86,6 +86,12 @@ Production equilibrium routes require exact analytic or CppAD Jacobians. Native
 Ceres owns package regression solves, while CppAD and implicit sensitivities
 provide derivative payloads where the route is validated.
 
+Ipopt diagnostics are route-owned and available through
+``result.diagnostics``. Use ``ipopt_iteration_history_limit`` to retain recent
+iteration records and ``ipopt_print_level`` only for local debugging output;
+normal tests should assert the diagnostic payload instead of enabling noisy
+solver logs.
+
 Associating Equilibrium Boundary
 --------------------------------
 
