@@ -905,7 +905,8 @@ Substeps:
    The Pereira source audit now lives under
    `data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012` as
    non-executable SAFT-VR evidence and records the published second-feed
-   composition inconsistency.
+   composition inconsistency. Its readiness files separate reported
+   material-balance-feasible points from inferred feed-correction candidates.
 8. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.

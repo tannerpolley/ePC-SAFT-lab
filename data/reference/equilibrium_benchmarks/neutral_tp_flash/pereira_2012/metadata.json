@@ -6,6 +6,14 @@
   "runtime_model_support": "absent_from_epcsaft",
   "proof_status": "source_audited_not_executable",
   "fixture_status": "source_data_needed",
+  "proof_readiness": {
+    "executable": false,
+    "stage9_evidence_path_required": true,
+    "saft_vr_runtime_required": true,
+    "source_confirmed_feed_correction_required": true,
+    "material_balance_readiness_path": "material_balance_readiness.csv",
+    "feed_correction_candidates_path": "feed_correction_candidates.csv"
+  },
   "composition_basis": "mole_fraction",
   "pressure_basis": "MPa in source tables; Pa required by package runtime",
   "temperature_basis": "K",

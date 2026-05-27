@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -162,6 +163,40 @@ def test_pereira_stage10_source_audit_fixture_is_nonexecutable_and_complete() ->
     assert {row["component"] for row in parameter_rows} == {"ethane", "carbon_dioxide"}
     assert all(row["source_model_family"] == "SAFT-VR" for row in parameter_rows)
     assert all(row["source_status"] == "reported" for row in parameter_rows)
+
+
+def test_pereira_stage10_readiness_tracks_material_balance_without_proof_promotion() -> None:
+    metadata = json.loads((PEREIRA_SOURCE_AUDIT_PATH / "metadata.json").read_text(encoding="utf-8"))
+    readiness_text = (PEREIRA_SOURCE_AUDIT_PATH / "material_balance_readiness.csv").read_text(
+        encoding="utf-8"
+    )
+    correction_text = (PEREIRA_SOURCE_AUDIT_PATH / "feed_correction_candidates.csv").read_text(
+        encoding="utf-8"
+    )
+    readiness_rows = {row["case_key"]: row for row in csv.DictReader(readiness_text.splitlines())}
+    correction_rows = {row["case_key"]: row for row in csv.DictReader(correction_text.splitlines())}
+
+    assert metadata["proof_readiness"]["executable"] is False
+    assert metadata["proof_readiness"]["stage9_evidence_path_required"] is True
+    assert metadata["proof_readiness"]["saft_vr_runtime_required"] is True
+    assert metadata["proof_readiness"]["source_confirmed_feed_correction_required"] is True
+
+    first_case = readiness_rows["system_iii_22325_09mpa"]
+    assert first_case["reported_feed_status"] == "normalized"
+    assert first_case["material_balance_status"] == "feasible_from_reported_feed"
+    assert float(first_case["vapor_fraction"]) == pytest.approx(0.927074, rel=1.0e-5)
+    assert float(first_case["liquid_fraction"]) == pytest.approx(0.072926, rel=1.0e-5)
+    assert float(first_case["max_abs_material_balance_residual"]) < 1.0e-12
+
+    second_case = readiness_rows["system_iii_29315_61mpa"]
+    assert second_case["reported_feed_status"] == "not_normalized"
+    assert second_case["material_balance_status"] == "blocked_by_published_feed"
+    assert second_case["proof_eligible"] == "false"
+
+    inferred_second = correction_rows["system_iii_29315_61mpa"]
+    assert inferred_second["correction_status"] == "inferred_not_source_confirmed"
+    assert float(inferred_second["candidate_x2"]) == pytest.approx(0.91)
+    assert float(inferred_second["candidate_vapor_fraction"]) == pytest.approx(0.487365, rel=1.0e-5)
 
 
 def test_available_neutral_stage10_cases_must_have_full_fixture_contract() -> None:

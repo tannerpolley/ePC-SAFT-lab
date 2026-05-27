@@ -14,6 +14,12 @@ Reasons:
 - Table 3 reports the second feed as `[0.09,0.01]`, which sums to 0.10. The
   adjacent phase compositions imply the intended second component may be 0.91,
   but this audit does not silently correct published source data.
+- `material_balance_readiness.csv` records that the first System III point has
+  a feasible lever-rule split from the reported feed. The second point remains
+  blocked as published.
+- `feed_correction_candidates.csv` records the material-balance-compatible
+  `[0.09,0.91]` candidate for the second point as inferred but not
+  source-confirmed.
 
 Source locations:
 

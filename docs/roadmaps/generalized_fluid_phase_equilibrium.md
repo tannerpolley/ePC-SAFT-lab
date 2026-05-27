@@ -371,7 +371,9 @@ The Pereira source audit is retained under
 `data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012`; it
 captures the SAFT-VR phase-split table and parameters, and records the
 published second-feed composition inconsistency as a blocker instead of
-normalizing it silently.
+normalizing it silently. Its material-balance readiness file identifies which
+reported points are lever-rule feasible and which need source-confirmed feed
+correction before proof promotion.
 
 ## Family Proof Ladder
 
