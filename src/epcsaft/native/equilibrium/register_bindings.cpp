@@ -4,8 +4,10 @@
 #include <pybind11/stl.h>
 
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "equilibrium/blocks/association_block.h"
@@ -14,6 +16,7 @@
 #include "equilibrium/blocks/gibbs_blocks.h"
 #include "equilibrium/blocks/reaction_block.h"
 #include "equilibrium/core/activation_matrix.h"
+#include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/selector_core.h"
 #include "equilibrium/results/result_builder.h"
@@ -28,6 +31,117 @@ namespace {
 using epcsaft::native::equilibrium_nlp::route_result_bridge::apply_eos_route_metadata_fields;
 using epcsaft::native::equilibrium_nlp::route_result_bridge::apply_ipopt_route_solution_fields;
 using epcsaft::native::equilibrium_nlp::route_result_bridge::apply_ipopt_route_status_fields;
+namespace nlp = epcsaft::native::equilibrium_nlp;
+
+class NlpShapeValidationSmokeProblem final : public nlp::NlpProblem {
+public:
+    explicit NlpShapeValidationSmokeProblem(std::string failure_mode)
+        : failure_mode_(std::move(failure_mode)) {}
+
+    std::string name() const override {
+        return "nlp_shape_validation_smoke";
+    }
+
+    int variable_count() const override {
+        return 2;
+    }
+
+    int constraint_count() const override {
+        return 1;
+    }
+
+    int jacobian_nonzero_count() const override {
+        return 2;
+    }
+
+    nlp::NlpBounds bounds() const override {
+        return {{-10.0, -10.0}, {10.0, 10.0}, {3.0}, {3.0}};
+    }
+
+    std::vector<double> initial_point() const override {
+        return {1.0, 2.0};
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        return variables[0] * variables[0] + variables[1] * variables[1];
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        if (failure_mode_ == "gradient_value_size") {
+            return {2.0 * variables[0]};
+        }
+        return {2.0 * variables[0], 2.0 * variables[1]};
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        return {variables[0] + variables[1]};
+    }
+
+    nlp::NlpJacobianStructure jacobian_structure() const override {
+        return {{0, 0}, {0, 1}};
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        (void)variables;
+        if (failure_mode_ == "jacobian_value_size") {
+            return {1.0};
+        }
+        if (failure_mode_ == "jacobian_value_nonfinite") {
+            return {1.0, std::numeric_limits<double>::infinity()};
+        }
+        return {1.0, 1.0};
+    }
+
+    bool has_exact_hessian() const override {
+        return true;
+    }
+
+    int hessian_nonzero_count() const override {
+        return 3;
+    }
+
+    nlp::NlpHessianStructure hessian_structure() const override {
+        return {{0, 1, 1}, {0, 0, 1}};
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        (void)variables;
+        (void)constraint_multipliers;
+        if (failure_mode_ == "hessian_value_size") {
+            return {2.0 * objective_factor, 0.0};
+        }
+        return {2.0 * objective_factor, 0.0, 2.0 * objective_factor};
+    }
+
+    std::string hessian_backend() const override {
+        return "analytic";
+    }
+
+    nlp::NlpScaling scaling() const override {
+        return {1.0, {1.0, 1.0}, {1.0}};
+    }
+
+private:
+    std::string failure_mode_;
+};
+
+py::dict nlp_shape_validation_case(const std::string& failure_mode) {
+    py::dict out;
+    try {
+        NlpShapeValidationSmokeProblem problem(failure_mode);
+        nlp::validate_nlp_problem_shape(problem);
+        out["accepted"] = true;
+        out["message"] = "";
+    } catch (const std::exception& exc) {
+        out["accepted"] = false;
+        out["message"] = exc.what();
+    }
+    return out;
+}
 
 std::string diagnostic_string_or(
     const epcsaft::native::equilibrium_nlp::IpoptSolveResult& result,
@@ -307,6 +421,99 @@ py::dict association_mass_action_block_to_dict(
     return out;
 }
 
+bool vector_has_size(const std::vector<double>& values, int expected) {
+    return expected >= 0 && values.size() == static_cast<std::size_t>(expected);
+}
+
+bool vector_has_size(const std::vector<int>& values, int expected) {
+    return expected >= 0 && values.size() == static_cast<std::size_t>(expected);
+}
+
+py::dict nlp_domain_contract_to_dict(
+    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract& result
+) {
+    py::dict margins;
+    margins["initial_variable_lower_margin"] = result.initial_variable_lower_margin;
+    margins["initial_variable_upper_margin"] = result.initial_variable_upper_margin;
+    margins["initial_variable_bound_margin"] = result.initial_variable_bound_margin;
+    margins["initial_amount_lower_margin"] = result.initial_amount_lower_margin;
+    margins["initial_volume_lower_margin"] = result.initial_volume_lower_margin;
+    margins["initial_constraint_bound_violation"] = result.initial_constraint_bound_violation;
+
+    py::dict out;
+    out["domain_safety_policy"] = result.domain_safety_policy;
+    out["transform_policy"] = result.transform_policy;
+    out["barrier_policy"] = result.barrier_policy;
+    out["variable_bounds_declared"] = vector_has_size(result.variable_lower_bounds, result.variable_count)
+        && vector_has_size(result.variable_upper_bounds, result.variable_count);
+    out["constraint_bounds_declared"] = vector_has_size(result.constraint_lower_bounds, result.constraint_count)
+        && vector_has_size(result.constraint_upper_bounds, result.constraint_count);
+    out["objective_scaling"] = result.objective_scaling;
+    out["variable_scaling_declared"] = vector_has_size(result.variable_scaling, result.variable_count);
+    out["constraint_scaling_declared"] = vector_has_size(result.constraint_scaling, result.constraint_count);
+    out["ipopt_barrier_owns_declared_bounds"] = result.barrier_policy == "ipopt_internal_barrier_only";
+    out["thermodynamic_objective_custom_barrier"] = false;
+    out["margins"] = margins;
+    return out;
+}
+
+py::dict nlp_sparse_contract_to_dict(
+    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract& result
+) {
+    py::dict out;
+    out["jacobian_ordering_policy"] = "fixed_route_owned_row_col_value_order";
+    out["jacobian_nonzero_count"] = result.jacobian_nonzero_count;
+    out["jacobian_row_count"] = static_cast<int>(result.jacobian_rows.size());
+    out["jacobian_col_count"] = static_cast<int>(result.jacobian_cols.size());
+    out["jacobian_value_count"] = static_cast<int>(result.jacobian_values_at_initial.size());
+    out["jacobian_structure_matches_values"] =
+        vector_has_size(result.jacobian_rows, result.jacobian_nonzero_count)
+        && vector_has_size(result.jacobian_cols, result.jacobian_nonzero_count)
+        && vector_has_size(result.jacobian_values_at_initial, result.jacobian_nonzero_count);
+    out["hessian_ordering_policy"] = "fixed_route_owned_lower_triangle_order";
+    out["hessian_nonzero_count"] = result.hessian_nonzero_count;
+    out["hessian_row_count"] = static_cast<int>(result.hessian_rows.size());
+    out["hessian_col_count"] = static_cast<int>(result.hessian_cols.size());
+    out["hessian_value_count"] = static_cast<int>(result.hessian_values_at_initial.size());
+    out["hessian_structure_matches_values"] =
+        !result.exact_hessian_available
+        || (
+            vector_has_size(result.hessian_rows, result.hessian_nonzero_count)
+            && vector_has_size(result.hessian_cols, result.hessian_nonzero_count)
+            && vector_has_size(result.hessian_values_at_initial, result.hessian_nonzero_count)
+        );
+    return out;
+}
+
+py::dict nlp_derivative_contract_to_dict(
+    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract& result
+) {
+    const bool gradient_exact = vector_has_size(result.gradient_at_initial, result.variable_count);
+    const bool jacobian_exact = vector_has_size(result.jacobian_values_at_initial, result.jacobian_nonzero_count);
+    const bool hessian_exact = result.exact_hessian_available
+        && vector_has_size(result.hessian_values_at_initial, result.hessian_nonzero_count);
+    std::vector<std::string> missing;
+    if (!gradient_exact) {
+        missing.push_back("objective_gradient");
+    }
+    if (!jacobian_exact) {
+        missing.push_back("constraint_jacobian");
+    }
+    if (!hessian_exact) {
+        missing.push_back("lagrangian_hessian");
+    }
+
+    py::dict out;
+    out["derivative_backend"] = result.derivative_backend;
+    out["objective_gradient_exact"] = gradient_exact;
+    out["constraint_jacobian_exact"] = jacobian_exact;
+    out["lagrangian_hessian_exact"] = hessian_exact;
+    out["hessian_backend"] = result.hessian_backend;
+    out["exact_hessian_available"] = result.exact_hessian_available;
+    out["missing_exact_derivative_blocks"] = missing;
+    return out;
+}
+
 py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract& result
 ) {
@@ -340,6 +547,9 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     out["jacobian_rows"] = result.jacobian_rows;
     out["jacobian_cols"] = result.jacobian_cols;
     out["jacobian_values_at_initial"] = result.jacobian_values_at_initial;
+    out["hessian_rows"] = result.hessian_rows;
+    out["hessian_cols"] = result.hessian_cols;
+    out["hessian_values_at_initial"] = result.hessian_values_at_initial;
     out["objective_scaling"] = result.objective_scaling;
     out["variable_scaling"] = result.variable_scaling;
     out["constraint_scaling"] = result.constraint_scaling;
@@ -352,6 +562,9 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     out["domain_safety_policy"] = result.domain_safety_policy;
     out["transform_policy"] = result.transform_policy;
     out["barrier_policy"] = result.barrier_policy;
+    out["domain_contract"] = nlp_domain_contract_to_dict(result);
+    out["sparse_contract"] = nlp_sparse_contract_to_dict(result);
+    out["derivative_contract"] = nlp_derivative_contract_to_dict(result);
     return out;
 }
 
@@ -402,12 +615,26 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["selected_phase_kinds"] = result.selected_phase_kinds;
     out["selected_phase_compositions"] = result.selected_phase_compositions;
     out["tpd_candidate_values"] = result.tpd_candidate_values;
+    out["tpd_candidate_sources"] = result.tpd_candidate_sources;
     out["tpd_candidate_phase_kinds"] = result.tpd_candidate_phase_kinds;
     out["tpd_candidate_compositions"] = result.tpd_candidate_compositions;
     out["tpd_candidate_pressure_residuals"] = result.tpd_candidate_pressure_residuals;
     out["tpd_candidate_ranks"] = result.tpd_candidate_ranks;
     out["tpd_candidate_feasibility_statuses"] = result.tpd_candidate_feasibility_statuses;
     out["tpd_candidate_selected"] = result.tpd_candidate_selected;
+    py::dict seed_and_stability;
+    seed_and_stability["phase_discovery_backend"] = result.phase_discovery_backend;
+    seed_and_stability["stability_certificate"] = result.stability_certificate;
+    seed_and_stability["phase_set_status"] = result.phase_set_status;
+    seed_and_stability["candidate_source_count"] = static_cast<int>(result.tpd_candidate_sources.size());
+    seed_and_stability["candidate_sources"] = result.tpd_candidate_sources;
+    seed_and_stability["candidate_ranks"] = result.tpd_candidate_ranks;
+    seed_and_stability["candidate_feasibility_statuses"] = result.tpd_candidate_feasibility_statuses;
+    seed_and_stability["candidate_selected"] = result.tpd_candidate_selected;
+    seed_and_stability["candidate_mass_balance_norm"] = result.candidate_mass_balance_norm;
+    seed_and_stability["min_tpd"] = result.min_tpd;
+    seed_and_stability["deterministic_screening_is_full_held"] = false;
+    out["seed_and_stability"] = seed_and_stability;
     return out;
 }
 
@@ -535,9 +762,17 @@ py::dict variable_layout_to_dict(const epcsaft::native::equilibrium::VariableLay
     out["family_key"] = layout.family_key;
     out["route"] = layout.route;
     out["variable_model"] = layout.variable_model;
+    out["physical_basis"] = layout.physical_basis;
+    out["solver_coordinate_basis"] = layout.solver_coordinate_basis;
+    out["lift_policy"] = layout.lift_policy;
+    out["back_lift_policy"] = layout.back_lift_policy;
+    out["transform_policy"] = layout.transform_policy;
     out["phase_count"] = layout.phase_count;
     out["species_count"] = layout.species_count;
     out["variable_count"] = layout.variable_count;
+    out["phase_keys"] = layout.phase_keys;
+    out["phase_kinds"] = layout.phase_kinds;
+    out["physical_variable_order"] = layout.physical_variable_order;
     py::list blocks;
     for (const auto& block : layout.variable_blocks) {
         blocks.append(variable_block_layout_to_dict(block));
@@ -613,8 +848,14 @@ py::dict selector_parameter_readiness_to_dict(
 ) {
     py::dict out;
     out["parameter_basis"] = readiness.parameter_basis;
+    out["parameter_source_label"] = readiness.parameter_source_label;
+    out["parameter_provenance_status"] = readiness.parameter_provenance_status;
+    out["binary_interaction_provenance_status"] = readiness.binary_interaction_provenance_status;
     out["pure_neutral_parameters_present"] = readiness.pure_neutral_parameters_present;
     out["binary_interaction_matrix_present"] = readiness.binary_interaction_matrix_present;
+    out["source_backed_parameter_provenance_present"] = readiness.source_backed_parameter_provenance_present;
+    out["explicit_zero_binary_interaction_convention"] =
+        readiness.explicit_zero_binary_interaction_convention;
     out["association_parameters_active"] = readiness.association_parameters_active;
     out["electrolyte_parameters_active"] = readiness.electrolyte_parameters_active;
     out["born_terms_active"] = readiness.born_terms_active;
@@ -622,6 +863,7 @@ py::dict selector_parameter_readiness_to_dict(
     out["required_parameter_families"] = readiness.required_parameter_families;
     out["missing_required_parameter_families"] = readiness.missing_required_parameter_families;
     out["active_residual_families"] = readiness.active_residual_families;
+    out["parameter_provenance_fields"] = readiness.parameter_provenance_fields;
     out["derivative_gate"] = readiness.derivative_gate;
     return out;
 }
@@ -1119,6 +1361,15 @@ void register_equilibrium_bindings(pybind11::module_& m) {
 #else
         out["status"] = adapter.status;
 #endif
+        return out;
+    });
+    m.def("_native_nlp_shape_validation_smoke", []() {
+        py::dict out;
+        out["valid"] = nlp_shape_validation_case("");
+        out["gradient_value_size"] = nlp_shape_validation_case("gradient_value_size");
+        out["jacobian_value_size"] = nlp_shape_validation_case("jacobian_value_size");
+        out["jacobian_value_nonfinite"] = nlp_shape_validation_case("jacobian_value_nonfinite");
+        out["hessian_value_size"] = nlp_shape_validation_case("hessian_value_size");
         return out;
     });
     m.def("_native_ipopt_quadratic_smoke", [](

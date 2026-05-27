@@ -41,6 +41,19 @@ void require_positive_finite(const std::vector<double>& values, const std::strin
     }
 }
 
+void require_finite(double value, const std::string& label) {
+    if (std::isfinite(value)) {
+        return;
+    }
+    throw ValueError(label + " must be finite.");
+}
+
+void require_finite(const std::vector<double>& values, const std::string& label) {
+    for (double value : values) {
+        require_finite(value, label);
+    }
+}
+
 }  // namespace
 
 void validate_nlp_problem_shape(const NlpProblem& problem) {
@@ -66,7 +79,9 @@ void validate_nlp_problem_shape(const NlpProblem& problem) {
     require_size(problem_bounds.variable_upper, static_cast<std::size_t>(variables), "NLP variable upper bounds");
     require_size(problem_bounds.constraint_lower, static_cast<std::size_t>(constraints), "NLP constraint lower bounds");
     require_size(problem_bounds.constraint_upper, static_cast<std::size_t>(constraints), "NLP constraint upper bounds");
-    require_size(problem.initial_point(), static_cast<std::size_t>(variables), "NLP initial point");
+    const std::vector<double> initial = problem.initial_point();
+    require_size(initial, static_cast<std::size_t>(variables), "NLP initial point");
+    require_finite(initial, "NLP initial point");
 
     const NlpJacobianStructure structure = problem.jacobian_structure();
     if (structure.rows.size() != static_cast<std::size_t>(jacobian_nonzeros)
@@ -100,6 +115,26 @@ void validate_nlp_problem_shape(const NlpProblem& problem) {
         }
     } else if (hessian_nonzeros != 0) {
         throw ValueError("NLP Hessian nonzero count requires exact Hessian support.");
+    }
+
+    require_finite(problem.objective(initial), "NLP objective at initial point");
+    const std::vector<double> gradient = problem.objective_gradient(initial);
+    require_size(gradient, static_cast<std::size_t>(variables), "NLP objective gradient");
+    require_finite(gradient, "NLP objective gradient");
+    const std::vector<double> constraint_values = problem.constraints(initial);
+    require_size(constraint_values, static_cast<std::size_t>(constraints), "NLP constraint values");
+    require_finite(constraint_values, "NLP constraint values");
+    const std::vector<double> jacobian_values = problem.jacobian_values(initial);
+    require_size(jacobian_values, static_cast<std::size_t>(jacobian_nonzeros), "NLP Jacobian values");
+    require_finite(jacobian_values, "NLP Jacobian values");
+    if (problem.has_exact_hessian()) {
+        const std::vector<double> hessian_values = problem.hessian_values(
+            initial,
+            1.0,
+            std::vector<double>(static_cast<std::size_t>(constraints), 0.0)
+        );
+        require_size(hessian_values, static_cast<std::size_t>(hessian_nonzeros), "NLP Hessian values");
+        require_finite(hessian_values, "NLP Hessian values");
     }
 
     const NlpScaling scaling = problem.scaling();

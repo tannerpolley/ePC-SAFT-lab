@@ -43,6 +43,16 @@ _PURE_PARAMETER_KEYS = {
 }
 _BINARY_PARAMETER_KEYS = {"k_ij", "l_ij", "k_hb", "k_hb_ij"}
 _GENERATED_PARAMETER_KEYS = {"assoc_num", "assoc_matrix"}
+_PROVENANCE_METADATA_KEYS = (
+    "source",
+    "dataset",
+    "paper",
+    "doi",
+    "table",
+    "figure",
+    "source_file",
+    "source_path",
+)
 _STRUCTURAL_KEYS = {
     "schema",
     "schema_version",
@@ -461,6 +471,7 @@ class ParameterSet:
         if reserved:
             raise InputError(f"runtime_options cannot override parameter payload keys: {', '.join(reserved)}.")
         payload.update(runtime_options)
+        payload.update(_runtime_parameter_provenance_payload(self.metadata, bool(self.binary_records)))
         return payload
 
     def to_legacy_dict(self) -> dict[str, Any]:
@@ -651,6 +662,26 @@ def _runtime_options_from_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
         str(key): _copy_payload_value(value)
         for key, value in payload.items()
         if str(key) not in _PARAMETER_PAYLOAD_KEYS
+    }
+
+
+def _runtime_parameter_provenance_payload(metadata: Mapping[str, Any], has_binary_records: bool) -> dict[str, Any]:
+    fields = [key for key in _PROVENANCE_METADATA_KEYS if metadata.get(key) not in (None, "")]
+    source_label = next((str(metadata[key]) for key in fields if key in {"source", "dataset", "paper"}), "ParameterSet")
+    source_backed = bool(metadata.get("source_backed", False))
+    if fields and source_backed:
+        status = "source_backed_parameter_metadata"
+    elif fields:
+        status = "declared_parameter_metadata"
+    else:
+        status = "parameter_metadata_missing_source"
+    return {
+        "_parameter_source_label": source_label,
+        "_parameter_provenance_status": status,
+        "_parameter_provenance_fields": fields,
+        "_binary_interaction_provenance_status": (
+            "explicit_binary_records" if has_binary_records else "missing_binary_records"
+        ),
     }
 
 

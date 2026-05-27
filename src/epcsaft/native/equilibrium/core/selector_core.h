@@ -62,8 +62,13 @@ struct SelectorThermodynamicInput {
 
 struct SelectorParameterReadiness {
     std::string parameter_basis = "add_args";
+    std::string parameter_source_label = "runtime_payload";
+    std::string parameter_provenance_status = "runtime_payload_without_source_provenance";
+    std::string binary_interaction_provenance_status = "runtime_payload_binary_matrix";
     bool pure_neutral_parameters_present = false;
     bool binary_interaction_matrix_present = false;
+    bool source_backed_parameter_provenance_present = false;
+    bool explicit_zero_binary_interaction_convention = false;
     bool association_parameters_active = false;
     bool electrolyte_parameters_active = false;
     bool born_terms_active = false;
@@ -71,6 +76,7 @@ struct SelectorParameterReadiness {
     std::vector<std::string> required_parameter_families;
     std::vector<std::string> missing_required_parameter_families;
     std::vector<std::string> active_residual_families;
+    std::vector<std::string> parameter_provenance_fields;
     std::string derivative_gate;
 };
 

@@ -66,6 +66,20 @@ def test_native_second_order_assembler_smoke_covers_lagrangian_residual_and_tran
     assert smoke["transformed_lower"] == pytest.approx([118.0, 44.0, 13.0])
 
 
+def test_native_nlp_shape_validation_rejects_sparse_value_mismatches() -> None:
+    smoke = _core._native_nlp_shape_validation_smoke()
+
+    assert smoke["valid"]["accepted"] is True
+    assert smoke["gradient_value_size"]["accepted"] is False
+    assert "NLP objective gradient has size" in smoke["gradient_value_size"]["message"]
+    assert smoke["jacobian_value_size"]["accepted"] is False
+    assert "NLP Jacobian values has size" in smoke["jacobian_value_size"]["message"]
+    assert smoke["jacobian_value_nonfinite"]["accepted"] is False
+    assert "NLP Jacobian values must be finite" in smoke["jacobian_value_nonfinite"]["message"]
+    assert smoke["hessian_value_size"]["accepted"] is False
+    assert "NLP Hessian values has size" in smoke["hessian_value_size"]["message"]
+
+
 def test_native_ipopt_quadratic_exact_hessian_reports_callback_and_bounded_history() -> None:
     smoke = _core._native_ipopt_quadratic_smoke(hessian_mode="exact", iteration_history_limit=2)
 

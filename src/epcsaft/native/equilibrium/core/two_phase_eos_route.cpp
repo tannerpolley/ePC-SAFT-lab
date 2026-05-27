@@ -611,6 +611,7 @@ void copy_discovery_to_postsolve(
     postsolve.selected_phase_kinds = discovery.selected_phase_kinds;
     postsolve.selected_phase_compositions = discovery.selected_phase_compositions;
     postsolve.tpd_candidate_values.clear();
+    postsolve.tpd_candidate_sources.clear();
     postsolve.tpd_candidate_phase_kinds.clear();
     postsolve.tpd_candidate_compositions.clear();
     postsolve.tpd_candidate_pressure_residuals.clear();
@@ -619,6 +620,7 @@ void copy_discovery_to_postsolve(
     postsolve.tpd_candidate_selected.clear();
     for (const NeutralTpdCandidate& candidate : discovery.candidates) {
         postsolve.tpd_candidate_values.push_back(candidate.tpd);
+        postsolve.tpd_candidate_sources.push_back(candidate.source);
         postsolve.tpd_candidate_phase_kinds.push_back(candidate.phase_kind);
         postsolve.tpd_candidate_compositions.push_back(candidate.composition);
         postsolve.tpd_candidate_pressure_residuals.push_back(candidate.pressure_residual_estimate);
@@ -1826,6 +1828,7 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
     const std::vector<double> initial = problem.initial_point();
     const NlpBounds bounds = problem.bounds();
     const NlpJacobianStructure structure = problem.jacobian_structure();
+    const NlpHessianStructure hessian_structure = problem.hessian_structure();
     const NlpScaling scaling = problem.scaling();
     const std::vector<double> constraints = problem.constraints(initial);
 
@@ -1852,6 +1855,15 @@ NeutralTwoPhaseEosNlpContract make_nlp_contract(
     out.jacobian_rows = structure.rows;
     out.jacobian_cols = structure.cols;
     out.jacobian_values_at_initial = problem.jacobian_values(initial);
+    out.hessian_rows = hessian_structure.rows;
+    out.hessian_cols = hessian_structure.cols;
+    if (problem.has_exact_hessian()) {
+        out.hessian_values_at_initial = problem.hessian_values(
+            initial,
+            1.0,
+            std::vector<double>(static_cast<std::size_t>(problem.constraint_count()), 0.0)
+        );
+    }
     out.objective_scaling = scaling.objective;
     out.variable_scaling = scaling.variables;
     out.constraint_scaling = scaling.constraints;

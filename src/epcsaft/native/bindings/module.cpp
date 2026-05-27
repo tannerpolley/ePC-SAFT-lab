@@ -915,7 +915,11 @@ PYBIND11_MODULE(_core, m) {
         .def_readwrite("assoc_num", &add_args::assoc_num)
         .def_readwrite("assoc_matrix", &add_args::assoc_matrix)
         .def_readwrite("k_hb", &add_args::k_hb)
-        .def_readwrite("l_ij", &add_args::l_ij);
+        .def_readwrite("l_ij", &add_args::l_ij)
+        .def_readwrite("parameter_source_label", &add_args::parameter_source_label)
+        .def_readwrite("parameter_provenance_status", &add_args::parameter_provenance_status)
+        .def_readwrite("binary_interaction_provenance_status", &add_args::binary_interaction_provenance_status)
+        .def_readwrite("parameter_provenance_fields", &add_args::parameter_provenance_fields);
 
     py::class_<ScalarContributionTerms>(m, "ScalarContributionTerms")
         .def_readonly("hc", &ScalarContributionTerms::hc)

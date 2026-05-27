@@ -77,6 +77,7 @@ NeutralTwoPhaseEosNlpContract make_activated_contract(
     const std::vector<double> initial = problem.initial_point();
     const NlpBounds bounds = problem.bounds();
     const NlpJacobianStructure structure = problem.jacobian_structure();
+    const NlpHessianStructure hessian_structure = problem.hessian_structure();
     const NlpScaling scaling = problem.scaling();
     const std::vector<double> constraints = problem.constraints(initial);
     const std::map<std::string, std::string> diagnostics = problem.diagnostics();
@@ -111,6 +112,15 @@ NeutralTwoPhaseEosNlpContract make_activated_contract(
     out.jacobian_rows = structure.rows;
     out.jacobian_cols = structure.cols;
     out.jacobian_values_at_initial = problem.jacobian_values(initial);
+    out.hessian_rows = hessian_structure.rows;
+    out.hessian_cols = hessian_structure.cols;
+    if (problem.has_exact_hessian()) {
+        out.hessian_values_at_initial = problem.hessian_values(
+            initial,
+            1.0,
+            std::vector<double>(static_cast<std::size_t>(problem.constraint_count()), 0.0)
+        );
+    }
     out.objective_scaling = scaling.objective;
     out.variable_scaling = scaling.variables;
     out.constraint_scaling = scaling.constraints;

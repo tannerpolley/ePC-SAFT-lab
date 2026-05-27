@@ -40,6 +40,8 @@ VariableLayout build_variable_layout(
     out.variable_model = plan.variable_model;
     out.phase_count = static_cast<int>(plan.phase_keys.size());
     out.species_count = species_count;
+    out.phase_keys = plan.phase_keys;
+    out.phase_kinds = plan.phase_kinds;
     const int local_variable_count = species_count + 1;
     out.variable_count = out.phase_count * local_variable_count;
     out.variable_blocks = {
@@ -56,8 +58,12 @@ VariableLayout build_variable_layout(
         for (int species = 0; species < out.species_count; ++species) {
             out.phase_amount_indices[static_cast<std::size_t>(phase)][static_cast<std::size_t>(species)] =
                 offset + species;
+            out.physical_variable_order.push_back(
+                "n_phase_" + std::to_string(phase) + "_species_" + std::to_string(species)
+            );
         }
         out.phase_volume_indices[static_cast<std::size_t>(phase)] = offset + out.species_count;
+        out.physical_variable_order.push_back("V_phase_" + std::to_string(phase));
     }
     return out;
 }

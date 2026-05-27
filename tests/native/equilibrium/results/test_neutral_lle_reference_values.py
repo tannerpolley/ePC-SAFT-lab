@@ -66,9 +66,14 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert postsolve["tpd_candidate_count"] >= postsolve["unique_candidate_count"] >= 1
     assert postsolve["selected_candidate_count"] == 2
     assert len(postsolve["tpd_candidate_ranks"]) == postsolve["unique_candidate_count"]
+    assert len(postsolve["tpd_candidate_sources"]) == postsolve["unique_candidate_count"]
     assert len(postsolve["tpd_candidate_pressure_residuals"]) == postsolve["unique_candidate_count"]
     assert len(postsolve["tpd_candidate_feasibility_statuses"]) == postsolve["unique_candidate_count"]
     assert len(postsolve["tpd_candidate_selected"]) == postsolve["unique_candidate_count"]
+    assert postsolve["seed_and_stability"]["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
+    assert postsolve["seed_and_stability"]["candidate_source_count"] == postsolve["unique_candidate_count"]
+    assert postsolve["seed_and_stability"]["candidate_sources"] == postsolve["tpd_candidate_sources"]
+    assert postsolve["seed_and_stability"]["deterministic_screening_is_full_held"] is False
     assert postsolve["candidate_mass_balance_norm"] <= 1.0e-8
     assert postsolve["material_balance_norm"] <= 1.0e-8
     assert postsolve["pressure_consistency_norm"] <= 1.0e-3
@@ -125,6 +130,7 @@ def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> N
     )
     assert sum(candidate["selected"] for candidate in discovery["candidates"]) == discovery["selected_candidate_count"]
     for candidate in discovery["candidates"]:
+        assert candidate["source"].startswith("feed_phase_kind_")
         assert candidate["feasibility_status"] in {
             "selected_mass_balance_feasible",
             "mass_balance_pair_unselected",

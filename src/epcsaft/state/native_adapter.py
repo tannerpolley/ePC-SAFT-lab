@@ -1435,6 +1435,22 @@ def np_to_vector_int(np_array):
     return np.asarray(np_array, dtype=int).ravel().tolist()
 
 
+def _native_metadata_string(params, key, default):
+    value = params.get(key, default)
+    if value in (None, ""):
+        return str(default)
+    return str(value)
+
+
+def _native_metadata_string_list(params, key):
+    value = params.get(key, ())
+    if value in (None, ""):
+        return []
+    if isinstance(value, str):
+        return [value]
+    return [str(item) for item in value]
+
+
 def create_struct(params):
     """Convert ePC-SAFT parameters to a C++ struct."""
 
@@ -1794,5 +1810,17 @@ def create_struct(params):
         cppargs.k_hb = np_to_vector_double(params["k_hb"])
     if "l_ij" in params:
         cppargs.l_ij = np_to_vector_double(params["l_ij"])
+    cppargs.parameter_source_label = _native_metadata_string(params, "_parameter_source_label", "runtime_payload")
+    cppargs.parameter_provenance_status = _native_metadata_string(
+        params,
+        "_parameter_provenance_status",
+        "runtime_payload_without_source_provenance",
+    )
+    cppargs.binary_interaction_provenance_status = _native_metadata_string(
+        params,
+        "_binary_interaction_provenance_status",
+        "runtime_payload_binary_matrix",
+    )
+    cppargs.parameter_provenance_fields = _native_metadata_string_list(params, "_parameter_provenance_fields")
 
     return cppargs

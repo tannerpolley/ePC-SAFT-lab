@@ -4,6 +4,8 @@ import pytest
 
 import epcsaft._core as _core
 from epcsaft.state.native_adapter import ePCSAFTMixture
+from epcsaft.frontend import Mixture
+from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
 from tests.support.equilibrium_cases import (
     _ionic_mixture,
     _methanol_cyclohexane_mixture,
@@ -151,6 +153,9 @@ def test_selector_core_contract_owns_production_vle_metadata(
     parameter_readiness = payload["parameter_readiness"]
     assert parameter_readiness["pure_neutral_parameters_present"] is True
     assert parameter_readiness["binary_interaction_matrix_present"] is True
+    assert parameter_readiness["parameter_provenance_status"] == "runtime_payload_without_source_provenance"
+    assert parameter_readiness["source_backed_parameter_provenance_present"] is False
+    assert parameter_readiness["explicit_zero_binary_interaction_convention"] is False
     assert parameter_readiness["required_parameter_families_present"] is True
     assert parameter_readiness["missing_required_parameter_families"] == []
     assert parameter_readiness["association_parameters_active"] is False
@@ -245,6 +250,42 @@ def test_selector_core_rejects_missing_binary_interactions_before_solver_dispatc
         )
 
 
+def test_selector_core_accepts_source_backed_explicit_zero_binary_convention() -> None:
+    parameters = ParameterSet.from_records(
+        [
+            PureRecord(component="A", molar_mass=16.0e-3, m=1.0, sigma=3.7, epsilon_k=150.0),
+            PureRecord(component="B", molar_mass=30.0e-3, m=1.6, sigma=3.5, epsilon_k=190.0),
+        ],
+        [BinaryRecord(("A", "B"), k_ij=0.0)],
+        metadata={
+            "source": "zero-binary-contract-fixture",
+            "table": "selector-pretreatment",
+            "source_backed": True,
+        },
+    )
+    mix = Mixture(parameters).native
+
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "neutral_tp_flash",
+            "temperature": 300.0,
+            "pressure": 1.0e6,
+            "composition": [0.35, 0.65],
+            "composition_role": "feed",
+        },
+    )
+
+    readiness = payload["parameter_readiness"]
+    assert readiness["binary_interaction_matrix_present"] is True
+    assert readiness["binary_interaction_provenance_status"] == "explicit_binary_records"
+    assert readiness["parameter_provenance_status"] == "source_backed_parameter_metadata"
+    assert readiness["source_backed_parameter_provenance_present"] is True
+    assert readiness["explicit_zero_binary_interaction_convention"] is True
+    assert readiness["parameter_provenance_fields"] == ["source", "table"]
+    assert readiness["required_parameter_families_present"] is True
+
+
 def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
     mix = _neutral_binary_mixture()
     request = {
@@ -285,11 +326,25 @@ def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:
 
     assert layout["family_key"] == "neutral_tp_flash"
     assert layout["route"] == "neutral_tp_flash"
+    assert layout["physical_basis"] == "true_species_phase_amounts_and_phase_volumes"
+    assert layout["solver_coordinate_basis"] == "physical_variables"
+    assert layout["lift_policy"] == "identity_true_species_lift"
+    assert layout["back_lift_policy"] == "phase_amount_volume_back_lift"
+    assert layout["phase_keys"] == ["liquid", "vapor"]
+    assert layout["phase_kinds"] == ["liquid", "vapor"]
     assert layout["phase_count"] == 2
     assert layout["species_count"] == 2
     assert layout["variable_count"] == payload["variable_count"]
     assert layout["phase_amount_indices"] == [[0, 1], [3, 4]]
     assert layout["phase_volume_indices"] == [2, 5]
+    assert layout["physical_variable_order"] == [
+        "n_phase_0_species_0",
+        "n_phase_0_species_1",
+        "V_phase_0",
+        "n_phase_1_species_0",
+        "n_phase_1_species_1",
+        "V_phase_1",
+    ]
     assert layout["variable_blocks"] == [
         {
             "name": "phase_species_amounts",
@@ -351,6 +406,10 @@ def test_neutral_lle_activation_plan_contract_matches_matrix() -> None:
 
     assert layout["family_key"] == "neutral_lle"
     assert layout["route"] == "neutral_lle"
+    assert layout["physical_basis"] == "true_species_phase_amounts_and_phase_volumes"
+    assert layout["lift_policy"] == "identity_true_species_lift"
+    assert layout["phase_keys"] == ["liquid1", "liquid2"]
+    assert layout["phase_kinds"] == ["liquid", "liquid"]
     assert layout["phase_count"] == 2
     assert layout["species_count"] == 2
     assert layout["variable_count"] == payload["variable_count"]
@@ -416,7 +475,16 @@ def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None
     assert activated["constraint_families"] == trusted["constraint_families"]
     assert activated["exact_hessian_available"] is True
     assert activated["hessian_nonzero_count"] == trusted["hessian_nonzero_count"]
+    assert len(activated["hessian_rows"]) == activated["hessian_nonzero_count"]
+    assert len(activated["hessian_cols"]) == activated["hessian_nonzero_count"]
+    assert len(activated["hessian_values_at_initial"]) == activated["hessian_nonzero_count"]
     assert activated["hessian_backend"] == trusted["hessian_backend"]
+    assert activated["sparse_contract"]["jacobian_structure_matches_values"] is True
+    assert activated["sparse_contract"]["hessian_structure_matches_values"] is True
+    assert activated["derivative_contract"]["objective_gradient_exact"] is True
+    assert activated["derivative_contract"]["constraint_jacobian_exact"] is True
+    assert activated["derivative_contract"]["lagrangian_hessian_exact"] is True
+    assert activated["derivative_contract"]["missing_exact_derivative_blocks"] == []
     assert activated["objective_scaling"] > 0.0
     assert len(activated["variable_scaling"]) == activated["variable_count"]
     assert len(activated["constraint_scaling"]) == activated["constraint_count"]
@@ -426,6 +494,16 @@ def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None
     assert activated["initial_constraint_bound_violation"] >= 0.0
     assert activated["domain_safety_policy"] == "explicit_bounds_variable_transform_ipopt_barrier"
     assert activated["barrier_policy"] == "ipopt_internal_barrier_only"
+    domain = activated["domain_contract"]
+    assert domain["variable_bounds_declared"] is True
+    assert domain["constraint_bounds_declared"] is True
+    assert domain["variable_scaling_declared"] is True
+    assert domain["constraint_scaling_declared"] is True
+    assert domain["ipopt_barrier_owns_declared_bounds"] is True
+    assert domain["thermodynamic_objective_custom_barrier"] is False
+    assert domain["margins"]["initial_variable_bound_margin"] == pytest.approx(
+        activated["initial_variable_bound_margin"]
+    )
 
 
 def test_selector_core_rejects_incompatible_composition_role_before_solver_dispatch() -> None:

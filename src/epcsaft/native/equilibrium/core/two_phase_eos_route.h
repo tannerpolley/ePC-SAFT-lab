@@ -46,6 +46,9 @@ struct NeutralTwoPhaseEosNlpContract {
     std::vector<int> jacobian_rows;
     std::vector<int> jacobian_cols;
     std::vector<double> jacobian_values_at_initial;
+    std::vector<int> hessian_rows;
+    std::vector<int> hessian_cols;
+    std::vector<double> hessian_values_at_initial;
     double objective_scaling = 1.0;
     std::vector<double> variable_scaling;
     std::vector<double> constraint_scaling;
@@ -104,6 +107,7 @@ struct NeutralTwoPhaseEosPostsolve {
     std::vector<int> selected_phase_kinds;
     std::vector<std::vector<double>> selected_phase_compositions;
     std::vector<double> tpd_candidate_values;
+    std::vector<std::string> tpd_candidate_sources;
     std::vector<int> tpd_candidate_phase_kinds;
     std::vector<std::vector<double>> tpd_candidate_compositions;
     std::vector<double> tpd_candidate_pressure_residuals;

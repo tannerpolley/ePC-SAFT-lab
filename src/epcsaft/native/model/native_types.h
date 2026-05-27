@@ -62,6 +62,10 @@ struct add_args {
     vector<int> assoc_matrix;
     vector<double> k_hb;
     vector<double> l_ij;
+    std::string parameter_source_label = "runtime_payload";
+    std::string parameter_provenance_status = "runtime_payload_without_source_provenance";
+    std::string binary_interaction_provenance_status = "runtime_payload_binary_matrix";
+    vector<std::string> parameter_provenance_fields;
 };
 
 struct ActivityCoefficientNative {

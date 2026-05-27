@@ -60,9 +60,9 @@ std::vector<int> all_species_indices(std::size_t count) {
 bool no_association_sites(const add_args& args) {
     return std::all_of(args.assoc_num.begin(), args.assoc_num.end(), [](int value) { return value == 0; })
         && args.assoc_matrix.empty()
-        && args.k_hb.empty()
-        && args.e_assoc.empty()
-        && args.vol_a.empty();
+        && all_zero_or_empty(args.k_hb)
+        && all_zero_or_empty(args.e_assoc)
+        && all_zero_or_empty(args.vol_a);
 }
 
 bool active_association_for_species(const add_args& args, std::size_t species) {
@@ -242,6 +242,12 @@ SelectorParameterReadiness evaluate_parameter_readiness(
 ) {
     SelectorParameterReadiness out;
     const std::size_t species_count = args.m.size();
+    out.parameter_source_label = args.parameter_source_label;
+    out.parameter_provenance_status = args.parameter_provenance_status;
+    out.binary_interaction_provenance_status = args.binary_interaction_provenance_status;
+    out.parameter_provenance_fields = args.parameter_provenance_fields;
+    out.source_backed_parameter_provenance_present =
+        args.parameter_provenance_status == "source_backed_parameter_metadata";
     out.required_parameter_families.push_back("pure_neutral_pcsaft");
     if (species_count > 1) {
         out.required_parameter_families.push_back("binary_interaction_matrix");
@@ -251,6 +257,12 @@ SelectorParameterReadiness evaluate_parameter_readiness(
         && positive_finite_vector(args.s, species_count)
         && positive_finite_vector(args.e, species_count);
     out.binary_interaction_matrix_present = dense_pair_matrix_present(args.k_ij, species_count);
+    out.explicit_zero_binary_interaction_convention =
+        out.binary_interaction_matrix_present
+        && species_count > 1
+        && all_zero_or_empty(args.k_ij)
+        && args.binary_interaction_provenance_status == "explicit_binary_records"
+        && out.source_backed_parameter_provenance_present;
     out.association_parameters_active = !no_association_sites(args);
     out.electrolyte_parameters_active = !all_zero_or_empty(args.z);
     out.born_terms_active = args.include_born_model != 0
@@ -263,6 +275,12 @@ SelectorParameterReadiness evaluate_parameter_readiness(
     }
     if (!out.binary_interaction_matrix_present) {
         out.missing_required_parameter_families.push_back("binary_interaction_matrix");
+    } else if (
+        species_count > 1
+        && all_zero_or_empty(args.k_ij)
+        && !out.explicit_zero_binary_interaction_convention
+    ) {
+        out.missing_required_parameter_families.push_back("source_backed_zero_binary_interaction_convention");
     }
     out.required_parameter_families_present = out.missing_required_parameter_families.empty();
     out.derivative_gate = activation.derivative_requirement;
