@@ -282,13 +282,17 @@ def test_slice_targets_use_grouped_test_subpackages():
     )
     assert "tests/native/state/test_bubble_derivatives.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert "tests/native/state/test_bubble_derivatives.py" not in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
-    assert "tests/native/equilibrium/results/test_neutral_vle_reference_values.py" not in (
-        run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
-    )
     assert (
-        "tests/native/equilibrium/results/test_neutral_vle_reference_values.py::"
-        "test_neutral_flash_reference_values_are_reported_and_verified"
+        "tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
     ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    assert (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
+    ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    assert (
+        "tests/api/frontend/test_equilibrium.py::test_equilibrium_lle_route_returns_named_liquid_phase_helpers"
+    ) in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
+    assert all("tests/native/equilibrium/results" not in target for target in run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
@@ -424,11 +428,15 @@ def test_equilibrium_confidence_shortcut_keeps_full_report_env_opt_in():
     assert 'env["EPCSAFT_EQUILIBRIUM_CONFIDENCE"] = "1"' not in source
 
 
-def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pytests():
+def test_equilibrium_confidence_slice_uses_one_target_per_public_route_family():
     targets = run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS
 
-    assert "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py" in targets
+    assert len(targets) == 3
     assert "tests/api/frontend/test_equilibrium.py" not in targets
+    assert (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
+    ) in targets
     assert (
         "tests/api/frontend/test_equilibrium.py::"
         "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
@@ -437,8 +445,12 @@ def test_equilibrium_confidence_slice_uses_trusted_route_contracts_not_paper_pyt
         "tests/api/frontend/test_equilibrium.py::"
         "test_equilibrium_flash_rejects_ipopt_iteration_limit_before_postsolve"
     ) not in targets
+    assert (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_lle_route_returns_named_liquid_phase_helpers"
+    ) in targets
     assert all("iteration_limit" not in target for target in targets)
-    assert "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py" in targets
+    assert all("tests/native/equilibrium/diagnostics" not in target for target in targets)
     assert "tests/native/state/test_bubble_derivatives.py" not in targets
     assert all("paper_validation" not in target for target in targets)
     assert all("tests/regression/literature" not in target for target in targets)

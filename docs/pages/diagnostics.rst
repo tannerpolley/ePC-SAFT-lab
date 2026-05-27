@@ -13,12 +13,13 @@ and implemented package workflows. The important backend labels are:
 * ``batch_residual_evaluation_context``: Python batches rows and formats
   diagnostics for a residual context; this is not a production optimizer.
 
-The static evidence behind route names, derivative coverage rows, pytest
-slices, and ``scripts/dev/validate_project.py`` modes lives in
-``epcsaft.runtime.capability_evidence``. ``capabilities()`` adapts that registry to the
-currently installed native dependencies instead of duplicating route lists in
-CLI wrappers. This keeps public command names stable while still tying
-capability claims to executable checks.
+The native activation matrix owns selector-admitted public route names.
+``epcsaft.runtime.capability_evidence`` mirrors that metadata into derivative
+coverage rows, pytest slices, and ``scripts/dev/validate_project.py`` modes.
+``capabilities()`` adapts the mirrored activation metadata to the currently
+installed native dependencies instead of duplicating route lists in CLI
+wrappers. This keeps public command names stable while still tying capability
+claims to executable checks.
 
 Use ``uv run python run_pytest.py --native-contracts -q`` for native route
 metadata and result-diagnostics checks. That slice is intentionally separate
@@ -58,13 +59,15 @@ neutral VLE routes:
 * ``Equilibrium(mixture, route="dew_pressure", T=..., y=...).solve()``
 * ``Equilibrium(mixture, route="dew_temperature", P=..., y=...).solve()``
 * ``Equilibrium(mixture, route="flash", T=..., P=..., z=...).solve()``
+* ``Equilibrium(mixture, route="lle", T=..., P=..., z=...).solve()``
 
 Accepted results include enough route diagnostics to prove that the native
 activation row, exact Ipopt derivative path, density closure, residual rows,
 hard constraints, and postsolve certification were used:
 
-* ``selector_family`` is ``bubble_dew_derived_routes`` for bubble/dew specs or
-  ``neutral_tp_flash`` for TP flash.
+* ``selector_family`` is ``bubble_dew_derived_routes`` for bubble/dew specs,
+  ``neutral_tp_flash`` for TP flash, or ``neutral_lle`` for neutral
+  nonassociating LLE.
 * ``route`` is the admitted selector route spec.
 * ``activation`` is copied from the native activation matrix row.
 * ``activation_compiler`` is ``activation_plan`` for the TP flash slice, with

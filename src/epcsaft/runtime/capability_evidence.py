@@ -8,14 +8,46 @@ from __future__ import annotations
 
 from typing import Final
 
-IPOPT_PUBLIC_ROUTES: Final[tuple[str, ...]] = (
-    "bubble_pressure",
-    "bubble_temperature",
-    "dew_pressure",
-    "dew_temperature",
-    "flash",
-    "lle",
-)
+from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
+
+
+def production_equilibrium_activation_rows() -> tuple[dict[str, object], ...]:
+    """Return production-exposed equilibrium activation rows from the generated mirror."""
+
+    return tuple(dict(row) for row in EQUILIBRIUM_ACTIVATION_MATRIX if bool(row["production_exposed"]))
+
+
+def public_ipopt_routes_by_family() -> dict[str, tuple[str, ...]]:
+    """Return selector-admitted public route labels keyed by production family."""
+
+    routes_by_family: dict[str, tuple[str, ...]] = {}
+    for row in EQUILIBRIUM_ACTIVATION_MATRIX:
+        family_key = str(row["key"])
+        routes = tuple(str(route) for route in row.get("public_routes", ()))
+        production_exposed = bool(row["production_exposed"])
+        if not production_exposed:
+            if routes:
+                raise RuntimeError(f"Declared-not-exposed equilibrium family '{family_key}' publishes routes.")
+            continue
+        if not routes:
+            raise RuntimeError(f"Production equilibrium family '{family_key}' publishes no public routes.")
+        routes_by_family[family_key] = routes
+    return routes_by_family
+
+
+def public_ipopt_route_family_map() -> dict[str, str]:
+    """Return each selector-admitted public route label mapped to its activation family."""
+
+    route_to_family: dict[str, str] = {}
+    for family_key, routes in public_ipopt_routes_by_family().items():
+        for route in routes:
+            if route in route_to_family:
+                raise RuntimeError(
+                    f"Public equilibrium route '{route}' is admitted by both "
+                    f"'{route_to_family[route]}' and '{family_key}'."
+                )
+            route_to_family[route] = family_key
+    return route_to_family
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES: Final[tuple[str, ...]] = (
     "EquilibriumProblem",
@@ -102,6 +134,21 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         ),
     },
 )
+
+EQUILIBRIUM_VALIDATION_TARGETS_BY_FAMILY: Final[dict[str, str]] = {
+    "bubble_dew_derived_routes": (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
+    ),
+    "neutral_tp_flash": (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
+    ),
+    "neutral_lle": (
+        "tests/api/frontend/test_equilibrium.py::"
+        "test_equilibrium_lle_route_returns_named_liquid_phase_helpers"
+    ),
+}
 
 REGRESSION_CAPABILITY_KEYS: Final[tuple[str, ...]] = (
     "pure_neutral",
@@ -314,11 +361,8 @@ CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
     *GENERIC_TEST_TARGETS,
     "tests/native/state/test_contributions.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract",
 )
-EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
-    "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point",
-    "tests/native/equilibrium/results/test_neutral_vle_reference_values.py::test_neutral_flash_reference_values_are_reported_and_verified",
+EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = tuple(
+    EQUILIBRIUM_VALIDATION_TARGETS_BY_FAMILY[str(row["key"])] for row in production_equilibrium_activation_rows()
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/frontend/test_equilibrium.py::test_workflow_object_is_constructed_with_problem_spec",
@@ -394,7 +438,7 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
     "equilibrium-confidence": {
         "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--equilibrium-confidence", "-q", "-s")),
         "cheap_by_default": False,
-        "evidence": "doctor plus focused neutral TP flash convergence and diagnostics contracts",
+        "evidence": "doctor plus one focused convergence target for each selector-admitted equilibrium family",
     },
     "equilibrium-debug": {
         "commands": (
@@ -427,4 +471,4 @@ def validation_lane_commands(name: str) -> tuple[tuple[str, ...], ...]:
 def registered_ipopt_public_routes() -> list[str]:
     """Return public Ipopt route labels registered by activation-driven capability evidence."""
 
-    return list(IPOPT_PUBLIC_ROUTES)
+    return sorted(public_ipopt_route_family_map())

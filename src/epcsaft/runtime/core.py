@@ -17,14 +17,16 @@ from urllib.request import url2pathname
 
 from .capability_evidence import (
     DERIVATIVE_COVERAGE_ROWS,
-    EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE,
     EQUILIBRIUM_PROBLEM_OBJECT_CLASSES,
+    EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE,
     REGRESSION_CAPABILITY_DIMENSIONS,
     REGRESSION_CAPABILITY_KEYS,
     REGRESSION_CAPABILITY_REVISIT_AFTER,
     REGRESSION_TARGET_KIND_EVIDENCE,
     TEST_SLICES,
     VALIDATION_LANES,
+    public_ipopt_route_family_map,
+    public_ipopt_routes_by_family,
     registered_ipopt_public_routes,
 )
 from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
@@ -292,11 +294,18 @@ def _equilibrium_activation_capabilities(*, ipopt_route_available: bool) -> dict
     rows = [_capability_value(row) for row in EQUILIBRIUM_ACTIVATION_MATRIX]
     production_families = [str(row["key"]) for row in rows if bool(row["production_exposed"])]
     declared_not_exposed = [str(row["key"]) for row in rows if str(row["exposure_status"]) == "declared_not_exposed"]
+    public_routes_by_family = {
+        family: list(routes) for family, routes in public_ipopt_routes_by_family().items()
+    }
+    public_route_family_map = public_ipopt_route_family_map()
     return {
         "source": "native_cpp",
         "rows": rows,
         "production_families": production_families,
         "declared_not_exposed_families": declared_not_exposed,
+        "public_routes": _registered_ipopt_public_routes(),
+        "public_routes_by_family": public_routes_by_family,
+        "public_route_family_map": dict(sorted(public_route_family_map.items())),
         "ipopt_available": ipopt_route_available,
     }
 
@@ -312,7 +321,7 @@ def _capability_evidence_summary(
         "source": "registered_capability_evidence",
         "equilibrium_keys": list(activation["production_families"]),
         "equilibrium_route_derivative_row_count": len(EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE),
-        "ipopt_public_routes": _registered_ipopt_public_routes(),
+        "ipopt_public_routes": list(activation["public_routes"]),
         "declared_not_exposed_equilibrium_keys": list(activation["declared_not_exposed_families"]),
         "problem_object_classes": list(EQUILIBRIUM_PROBLEM_OBJECT_CLASSES),
         "regression_keys": list(REGRESSION_CAPABILITY_KEYS),
@@ -414,7 +423,6 @@ def capabilities() -> dict[str, object]:
     ceres = dict(native_dependencies["ceres"])  # type: ignore[index]
     cppad = dict(native_dependencies["cppad"])  # type: ignore[index]
     ipopt = dict(native_dependencies["ipopt"])  # type: ignore[index]
-    ipopt_public_routes = _registered_ipopt_public_routes()
     ipopt_route_available = bool(ipopt.get("available", False))
     ceres_available = bool(ceres.get("available", False))
     cppad_capability = {
@@ -432,6 +440,8 @@ def capabilities() -> dict[str, object]:
         ceres_capability["reason"] = "required_native_dependency_missing"
     derivative_coverage = _derivative_coverage_capabilities(cppad, ceres)
     equilibrium_activation = _equilibrium_activation_capabilities(ipopt_route_available=ipopt_route_available)
+    ipopt_public_routes = list(equilibrium_activation["public_routes"])
+    public_routes_by_family = dict(equilibrium_activation["public_routes_by_family"])
     regression_target_evidence = _regression_target_kind_evidence()
     regression_route_available = bool(ceres_available and cppad_capability.get("available", False))
     return {
@@ -551,6 +561,7 @@ def capabilities() -> dict[str, object]:
                 "available": bool(equilibrium_activation["ipopt_available"]),
                 "production": True,
                 "entrypoint": "Equilibrium(mixture, route=..., ...).solve()",
+                "public_routes": public_routes_by_family["bubble_dew_derived_routes"],
                 "selector_core": True,
                 "input_scope": "neutral non-reactive non-electrolyte non-associating mixtures",
                 "requires": ["cppad", "ipopt"],
@@ -559,6 +570,7 @@ def capabilities() -> dict[str, object]:
                 "available": bool(equilibrium_activation["ipopt_available"]),
                 "production": True,
                 "entrypoint": "Equilibrium(mixture, route='flash', T=..., P=..., z=...).solve()",
+                "public_routes": public_routes_by_family["neutral_tp_flash"],
                 "selector_core": True,
                 "input_scope": "neutral non-reactive non-electrolyte non-associating two-phase mixtures",
                 "requires": ["cppad", "ipopt"],
@@ -567,6 +579,7 @@ def capabilities() -> dict[str, object]:
                 "available": bool(equilibrium_activation["ipopt_available"]),
                 "production": True,
                 "entrypoint": "Equilibrium(mixture, route='lle', T=..., P=..., z=...).solve()",
+                "public_routes": public_routes_by_family["neutral_lle"],
                 "selector_core": True,
                 "input_scope": "neutral non-reactive non-electrolyte non-associating liquid/liquid mixtures",
                 "requires": ["cppad", "ipopt"],

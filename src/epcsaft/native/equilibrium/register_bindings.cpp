@@ -828,6 +828,7 @@ py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyAct
     out["residual_families"] = activation.residual_families;
     out["constraint_families"] = activation.constraint_families;
     out["proof_routes"] = activation.proof_routes;
+    out["public_routes"] = activation.public_routes;
     out["variable_model"] = activation.variable_model;
     out["density_backend"] = activation.density_backend;
     return out;

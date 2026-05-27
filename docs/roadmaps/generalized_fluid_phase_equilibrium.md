@@ -19,6 +19,11 @@ GFPE-first execution overlay. It uses `FULL_ROADMAP.md` only as package
 context and lists concrete pretreatment, implementation, and exit-evidence
 steps for each GFPE stage.
 
+`docs/roadmaps/gfpe_package_cleanup_plan.md` is the companion package cleanup
+overlay. It translates this doctrine into module boundaries for selector
+admission, the shared NLP core, Ipopt numerics, certified results, capability
+reporting, and validation lanes.
+
 ## Source Hierarchy And Current Boundary
 
 The current public package still exposes the existing selector-backed neutral

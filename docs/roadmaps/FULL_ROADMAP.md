@@ -35,6 +35,11 @@ not completion evidence. Current bubble/dew `P-x` and `T-x` route-point validati
 available only through the explicit Stage 11 checker sweep opt-in, not through
 routine validation.
 
+`docs/roadmaps/gfpe_package_cleanup_plan.md` is the module cleanup overlay for
+that same GFPE doctrine. It keeps selector admission, shared NLP ownership,
+Ipopt numerics, result certification, capability reporting, and validation
+lanes aligned around one modular equilibrium core.
+
 `docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
 
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.

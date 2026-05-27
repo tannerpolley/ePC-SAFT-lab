@@ -58,7 +58,7 @@ Command matrix
      - Fast check for native route ``variable_model``, ``density_backend``, residual-family payloads, and Python route diagnostics. Use this instead of the full route-builder suite for architecture or metadata edits.
    * - Equilibrium route confidence
      - ``uv run python run_pytest.py --equilibrium-confidence -q -s`` or ``uv run python scripts/dev/validate_project.py equilibrium-confidence``
-     - Focused neutral TP flash fixture plus route diagnostics. Full route sweeps, bubble/dew ladders, paper validation, and feed-line validation remain explicit benchmark or analysis workflows, not default pytest validation.
+     - One focused convergence target per selector-admitted equilibrium family. Full route sweeps, bubble/dew ladders, paper validation, and feed-line validation remain explicit benchmark or analysis workflows, not default pytest validation.
    * - Equilibrium debug trace
      - ``uv run python run_pytest.py --equilibrium-debug -q -s <one equilibrium test node>``
      - Opt-in verbose Ipopt print level, continuous-TPD trace output, and expanded iteration-history capture for diagnosing iteration-limit, TPD candidate, or seed-attempt behavior. Debug mode requires one explicit equilibrium test node; it cannot run a slice.

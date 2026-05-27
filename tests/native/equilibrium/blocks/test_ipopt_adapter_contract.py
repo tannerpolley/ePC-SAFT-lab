@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import math
 
-import epcsaft
 import pytest
+
+import epcsaft
 import epcsaft._core as _core
 
 
@@ -22,17 +23,19 @@ def test_native_ipopt_smoke_reports_generic_adapter_contract() -> None:
 def test_runtime_capabilities_report_public_ipopt_routes() -> None:
     capabilities = epcsaft.capabilities()
     ipopt = capabilities["optimizers"]["ipopt"]
+    equilibrium = capabilities["equilibrium"]
 
     assert ipopt["adapter_source_available"] is True
     assert ipopt["adapter_kind"] == "native_tnlp_adapter"
-    assert ipopt["public_routes"] == [
-        "bubble_pressure",
-        "bubble_temperature",
-        "dew_pressure",
-        "dew_temperature",
-        "flash",
-        "lle",
-    ]
+    assert ipopt["public_routes"] == equilibrium["activation_matrix"]["public_routes"]
+    assert equilibrium["activation_matrix"]["public_route_family_map"] == {
+        "bubble_pressure": "bubble_dew_derived_routes",
+        "bubble_temperature": "bubble_dew_derived_routes",
+        "dew_pressure": "bubble_dew_derived_routes",
+        "dew_temperature": "bubble_dew_derived_routes",
+        "flash": "neutral_tp_flash",
+        "lle": "neutral_lle",
+    }
 
 
 def test_native_ipopt_quadratic_smoke_is_gated_by_compiled_dependency() -> None:

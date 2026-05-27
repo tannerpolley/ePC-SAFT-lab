@@ -21,6 +21,7 @@ struct ProblemFamilyActivation {
     std::vector<std::string> residual_families;
     std::vector<std::string> constraint_families;
     std::vector<std::string> proof_routes;
+    std::vector<std::string> public_routes;
     std::string variable_model;
     std::string density_backend;
 };
@@ -48,6 +49,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_volume_gap",
             },
             {"neutral_tp_flash_hydrocarbon_ipopt_exact_hessian"},
+            {"flash"},
             "phase_species_amounts_plus_phase_volume",
             "explicit_phase_volume_pressure_constraint",
         },
@@ -67,6 +69,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             {"material_balance", "phase_pressure_consistency", "phase_equilibrium", "phase_distance"},
             {"material_balance", "phase_pressure_consistency", "phase_distance"},
             {"neutral_lle_binary_nonassociating_ipopt_exact_hessian"},
+            {"lle"},
             "phase_species_amounts_plus_phase_volume",
             "explicit_phase_volume_pressure_constraint",
         },
@@ -85,6 +88,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "declared_not_exposed",
             {"material_balance", "phase_pressure_consistency", "phase_equilibrium", "phase_distance"},
             {"material_balance", "phase_pressure_consistency"},
+            {},
             {},
             "phase_species_amounts_plus_phase_volume",
             "explicit_phase_volume_pressure_constraint",
@@ -105,6 +109,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             {"phase_equilibrium", "material_balance", "phase_charge"},
             {"phase_equilibrium", "phase_pressure_consistency", "phase_distance", "formula_feasibility", "phase_charge"},
             {},
+            {},
         },
         {
             "reactive_speciation",
@@ -122,6 +127,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             {"reaction_stationarity"},
             {"conserved_balance", "reaction_stationarity", "phase_charge"},
             {},
+            {},
         },
         {
             "reactive_lle",
@@ -138,6 +144,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "declared_not_exposed",
             {"conserved_balance", "reaction_stationarity", "phase_equilibrium"},
             {"conserved_balance", "reaction_stationarity", "phase_pressure_consistency", "phase_distance"},
+            {},
             {},
         },
         {
@@ -161,6 +168,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_distance",
                 "phase_charge",
             },
+            {},
             {},
         },
         {
@@ -191,6 +199,7 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_volume_gap",
             },
             {"neutral_bubble_pressure_hydrocarbon_ipopt_exact_hessian"},
+            {"bubble_pressure", "bubble_temperature", "dew_pressure", "dew_temperature"},
             "phase_species_amounts_plus_phase_volume_plus_route_scalar",
             "explicit_phase_volume_pressure_constraint",
         },
