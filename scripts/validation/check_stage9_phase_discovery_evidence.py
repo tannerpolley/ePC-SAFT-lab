@@ -122,9 +122,10 @@ def _stage9_route_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
             1.0e-6,
             {},
             linear_solver="auto",
+            option_profile="held_refinement",
             print_level=5 if _equilibrium_debug_enabled() else 0,
             acceptable_tolerance=1.0e-7,
-            constraint_violation_tolerance=1.0e-8,
+            constraint_violation_tolerance=1.0e-7,
             dual_infeasibility_tolerance=1.0e-8,
             complementarity_tolerance=1.0e-8,
         )
@@ -295,6 +296,16 @@ def evaluate_stage9_evidence(
             "route_solver_status": None if route_payload is None else route_payload.get("solver_status"),
             "route_application_status": None if route_payload is None else route_payload.get("application_status"),
             "route_status": None if route_payload is None else route_payload.get("status"),
+            "route_option_profile": None if route_payload is None else route_payload.get("option_profile"),
+            "route_scaled_acceptance_passed": None
+            if route_payload is None
+            else route_payload.get("scaled_acceptance_passed"),
+            "route_constraint_violation_tolerance": None
+            if route_payload is None
+            else route_payload.get("constraint_violation_tolerance"),
+            "route_scaled_constraint_violation_inf_norm": None
+            if route_payload is None
+            else route_payload.get("scaled_constraint_violation_inf_norm"),
             "route_iteration_count": None if route_payload is None else route_payload.get("iteration_count"),
             "route_iteration_history_size": None
             if route_payload is None

@@ -843,7 +843,9 @@ Substeps:
     Stage III evidence requires Ipopt solver convergence or acceptable-level
     convergence. A finite-variable postsolve with `tiny_step_detected`,
     iteration-limit, or another nonconverged Ipopt status remains diagnostic
-    evidence only.
+    evidence only. The current neutral LLE proof fixture uses the route-owned
+    `held_refinement` Ipopt profile; postsolve certification is not allowed to
+    promote a nonconverged Ipopt attempt.
 11. Check phase-set completeness:
     no missing lower-free-energy candidate, mass-balance feasibility, no
     duplicate phase, no collapsed phase, and no unexamined transferable species.
@@ -876,8 +878,8 @@ Acceptance checks:
 - Current neutral evidence reports deterministic screening as seed support,
   continuous TPD and HELD Stage I only when all continuous TPD starts converge,
   HELD Stage II as an executable candidate bound audit, and current Ipopt
-  solves as Stage III refinement only after a route solve. A Stage II open
-  candidate bound gap remains incomplete HELD evidence.
+  solves as Stage III refinement only after the route solve itself converges. A
+  Stage II open candidate bound gap remains incomplete HELD evidence.
 - The executable Stage 9 checker reports any iteration-limit continuous TPD
   result as incomplete evidence, not as convergence.
 - Public utility `flash` may keep deterministic TPD postsolve certification

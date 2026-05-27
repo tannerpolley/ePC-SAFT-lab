@@ -90,6 +90,10 @@ def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.Monkey
             "solver_status": "success",
             "application_status": "solve_succeeded",
             "status": "production_accepted",
+            "option_profile": "held_refinement",
+            "scaled_acceptance_passed": True,
+            "constraint_violation_tolerance": 1.0e-7,
+            "scaled_constraint_violation_inf_norm": 5.0e-8,
             "iteration_count": 6,
             "iteration_history_size": 6,
             "iteration_history_limit": 8,
@@ -118,6 +122,8 @@ def test_stage9_evidence_route_refinement_is_explicit(monkeypatch: pytest.Monkey
         == "verified_current_route_refinement_pending_stage_ii_candidates"
     )
     assert full_payload["diagnostics"]["route_solver_status"] == "success"
+    assert full_payload["diagnostics"]["route_option_profile"] == "held_refinement"
+    assert full_payload["diagnostics"]["route_scaled_acceptance_passed"] is True
     assert full_payload["diagnostics"]["route_iteration_count"] == 6
     assert full_payload["diagnostics"]["route_iteration_history_size"] == 6
 
@@ -274,11 +280,10 @@ def test_pereira_readiness_checker_consumes_stage9_evidence_without_faking_compl
                     "continuous_tpd_minimization": "verified_converged",
                     "held_stage_i_stability": "verified_from_converged_continuous_tpd",
                     "held_stage_ii_dual_phase_discovery": "incomplete_candidate_bound_gap_open",
-                    "held_stage_iii_ipopt_refinement": "incomplete_ipopt_solver_status_tiny_step_detected",
+                    "held_stage_iii_ipopt_refinement": "verified_current_route_refinement_pending_stage_ii_candidates",
                 },
                 "incomplete_requirements": [
                     "held_stage_ii_dual_phase_discovery",
-                    "held_stage_iii_ipopt_refinement",
                 ],
             }
         ),
@@ -295,7 +300,6 @@ def test_pereira_readiness_checker_consumes_stage9_evidence_without_faking_compl
     assert payload["stage9_evidence"]["held_stage_ii_dual_phase_discovery"] == "incomplete_candidate_bound_gap_open"
     assert payload["stage9_incomplete_requirements"] == [
         "held_stage_ii_dual_phase_discovery",
-        "held_stage_iii_ipopt_refinement",
     ]
     assert "stage9_evidence_path_not_verified" in payload["blockers"]
 

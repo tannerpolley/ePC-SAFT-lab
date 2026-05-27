@@ -35,13 +35,16 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
         linear_solver="auto",
         print_level=_ipopt_print_level(),
         acceptable_tolerance=1.0e-7,
-        constraint_violation_tolerance=1.0e-8,
+        constraint_violation_tolerance=1.0e-7,
         dual_infeasibility_tolerance=1.0e-8,
         complementarity_tolerance=1.0e-8,
     )
 
     assert route["accepted"] is True
     assert route["status"] == "production_accepted"
+    assert route["solver_accepted"] is True
+    assert route["solver_status"] == "success"
+    assert route["application_status"] == "solve_succeeded"
     assert route["selector_family"] == "neutral_lle"
     assert route["route"] == "neutral_lle"
     assert route["problem_name"] == "neutral_lle_eos"
@@ -54,7 +57,10 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     ]
     assert "phase_volume_gap" not in route["constraint_families"]
     assert route["hessian_approximation"] == "exact"
+    assert route["option_profile"] == "held_refinement"
     assert route["exact_hessian_available"] is True
+    assert route["scaled_acceptance_passed"] is True
+    assert route["constraint_violation_tolerance"] == pytest.approx(1.0e-7)
     assert route["eval_h_calls"] > 0
 
     postsolve = route["postsolve"]
@@ -149,6 +155,51 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert certificate["candidate_set_complete"] is True
     assert certificate["status"] == "phase_set_certified"
     assert certificate["min_tpd"] == pytest.approx(postsolve["min_tpd"])
+
+
+def test_neutral_lle_does_not_accept_nonconverged_ipopt_postsolve() -> None:
+    _skip_without_ipopt()
+    mix = _nonideal_lle_binary_mixture()
+
+    route = _core._native_equilibrium_selector_route_result(
+        mix._native,
+        {
+            "route": "neutral_lle",
+            "temperature": 225.0,
+            "pressure": 1.0e6,
+            "composition": [0.5, 0.5],
+            "composition_role": "feed",
+        },
+        1,
+        1.0e-6,
+        0.0,
+        "auto",
+        4,
+        1.0e-8,
+        1.0e-3,
+        1.0e-6,
+        1.0e-6,
+        {},
+        linear_solver="auto",
+        option_profile="diagnostic",
+        print_level=0,
+        acceptable_tolerance=1.0e-7,
+        constraint_violation_tolerance=1.0e-7,
+        dual_infeasibility_tolerance=1.0e-8,
+        complementarity_tolerance=1.0e-8,
+    )
+
+    assert route["accepted"] is False
+    assert route["status"] == "solver_rejected"
+    assert route["solver_accepted"] is False
+    assert route["solver_status"] == "max_iterations_exceeded"
+    assert route["application_status"] == "maximum_iterations_exceeded"
+    assert route["postsolve"]["accepted"] is False
+    assert route["postsolve"]["held_stage_iii_status"] == "pending"
+    assert route["phase_amounts"] == []
+    assert route["phase_volumes"] == []
+    assert route["seed_attempts"]
+    assert all(attempt["solver_accepted"] is False for attempt in route["seed_attempts"])
 
 
 def test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary() -> None:

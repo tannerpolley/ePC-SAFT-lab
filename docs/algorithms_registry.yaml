@@ -204,8 +204,8 @@
       comment_line: 444
       context: "\"lle\": _EquilibriumRouteSpec("
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2875
-      comment_line: 2874
+      line: 2879
+      comment_line: 2878
       context: "NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route("
 - algid: "neutral_tpd_stability"
   section: "Equilibrium Algorithms"
@@ -281,7 +281,7 @@
   validation: "tests/native/equilibrium/results/test_neutral_lle_reference_values.py"
   capability_key: "internal:neutral_held_stage_ladder_diagnostics"
   description: "Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III."
-  change_note: "Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics also fail open unless the current Ipopt route reports solver convergence or acceptable-level convergence."
+  change_note: "Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics require the current Ipopt route to report solver convergence or acceptable-level convergence before postsolve certification can be counted."
   tex_file: "docs/latex/algorithms.tex"
   tex_line: 181
   body: |
@@ -293,6 +293,9 @@
     current-route Stage III refinement only when the Ipopt solve itself reports
     convergence or acceptable-level convergence; finite variables plus postsolve
     acceptance are diagnostics, not proof that Stage II or Stage III has converged.
+    The neutral LLE proof route uses the `held_refinement` Ipopt profile so the
+    Stage III diagnostic records an actual converged route solve before postsolve
+    certification is evaluated.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
       line: 1014
@@ -315,7 +318,7 @@
   description: "Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes."
   change_note: "Deterministic screening remains distinct from continuous TPD and must not be promoted as full HELD evidence."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 204
+  tex_line: 207
   body: |
     This algorithm reduces dependence on user-supplied phase guesses by using
     neutral TPD or volume-composition trial problems to generate deterministic
@@ -324,8 +327,8 @@
     used as generalized production evidence by itself.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2424
-      comment_line: 2423
+      line: 2428
+      comment_line: 2427
       context: "NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery("
 - algid: "phase_candidate_mass_balance_selection"
   section: "Equilibrium Algorithms"
@@ -344,7 +347,7 @@
   description: "Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly."
   change_note: "Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; generalized admission still requires full HELD."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 224
+  tex_line: 227
   body: |
     This algorithm solves the small candidate phase-fraction feasibility problem
     before final route assembly. A candidate set that cannot reconstruct the feed
@@ -372,15 +375,15 @@
   description: "Adds phase-set stability certification after current neutral Ipopt solves."
   change_note: "Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance; current implementation is limited to neutral TP flash and neutral nonassociating LLE."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 243
+  tex_line: 246
   body: |
     This algorithm runs after an Ipopt route returns finite variables. It checks
     stability, phase distinctness, candidate completeness, and route certification
     blocks before assigning a production-accepted status.
   owner_refs:
     - file: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2603
-      comment_line: 2602
+      line: 2607
+      comment_line: 2606
       context: "NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve("
 - algid: "generalized_equilibrium_activation_registry"
   section: "Equilibrium Algorithms"
@@ -399,7 +402,7 @@
   description: "Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry."
   change_note: "Bubble/dew/cloud/shadow routes are derived subworkflows outside the main family rows; generalized rows stay planned until HELD and derivative gates pass."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 261
+  tex_line: 264
   body: |
     The generalized equilibrium activation registry records descriptive family
     labels for phase-only, chemical-only, and combined phase-chemical work, plus
@@ -425,7 +428,7 @@
   description: "Records explicit association closures as approximate Helmholtz diagnostics, not production exact association."
   change_note: "Keeps explicit association closures out of production acceptance unless a route is deliberately exposed as approximate."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 282
+  tex_line: 285
   body: |
     This planned diagnostic family may use explicit algebraic association closures
     for seed generation, continuation, and comparison against
@@ -451,7 +454,7 @@
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-neutral regression."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 305
+  tex_line: 308
   body: |
     This entry covers the implemented nonassociating pure-neutral native Ceres route
     for \(m\), \(\sigma\), and \(\epsilon/k_B\). It is not a production Ceres
@@ -491,7 +494,7 @@
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
   change_note: "Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 324
+  tex_line: 327
   body: |
     This entry is limited to the currently implemented pure-ion target surface. It
     does not claim support for association-affecting target kinds merely because the
@@ -530,7 +533,7 @@
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
   change_note: "Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists."
   tex_file: "docs/latex/algorithms.tex"
-  tex_line: 342
+  tex_line: 345
   body: |
     This entry intentionally does not claim native optimizer support for every
     binary parameter family. It is not a production Ceres optimizer for \(l_{ij}\)

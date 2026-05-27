@@ -190,7 +190,7 @@ TPD value, start source, iteration count, and convergence status.
 % Validation: tests/native/equilibrium/results/test_neutral_lle_reference_values.py
 % Capability key: internal:neutral_held_stage_ladder_diagnostics
 % Description: Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III.
-% Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics also fail open unless the current Ipopt route reports solver convergence or acceptable-level convergence.
+% Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics require the current Ipopt route to report solver convergence or acceptable-level convergence before postsolve certification can be counted.
 
 This diagnostic layer makes the phase-discovery ladder auditable. Current
 deterministic screening remains seed and certification support. Continuous TPD
@@ -200,6 +200,9 @@ nonzero. Current Ipopt phase-amount/phase-volume solves are reported as
 current-route Stage III refinement only when the Ipopt solve itself reports
 convergence or acceptable-level convergence; finite variables plus postsolve
 acceptance are diagnostics, not proof that Stage II or Stage III has converged.
+The neutral LLE proof route uses the `held_refinement` Ipopt profile so the
+Stage III diagnostic records an actual converged route solve before postsolve
+certification is evaluated.
 
 % AlgID: neutral_deterministic_phase_candidate_screening
 % Family: Phase discovery and certification

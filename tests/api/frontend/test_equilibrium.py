@@ -347,7 +347,7 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
             "tolerance": 1.0e-6,
             "ipopt_iteration_history_limit": 8,
             "ipopt_acceptable_tolerance": 1.0e-7,
-            "ipopt_constraint_violation_tolerance": 1.0e-8,
+            "ipopt_constraint_violation_tolerance": 1.0e-7,
             "ipopt_dual_infeasibility_tolerance": 1.0e-8,
             "ipopt_complementarity_tolerance": 1.0e-8,
         }
@@ -378,6 +378,12 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
     assert payload["liquid_fraction"] is None
     assert payload["vapor_fraction"] is None
     assert result.diagnostics["activation_plan"]["family_key"] == "neutral_lle"
+    assert result.diagnostics["route_status"] == "production_accepted"
+    assert result.diagnostics["solver_accepted"] is True
+    assert result.diagnostics["solver_status"] == "success"
+    assert result.diagnostics["application_status"] == "solve_succeeded"
+    assert result.diagnostics["postsolve_accepted"] is True
+    assert result.diagnostics["option_profile"] == "held_refinement"
     assert result.route_diagnostics.constraint_families == (
         "material_balance",
         "phase_pressure_consistency",

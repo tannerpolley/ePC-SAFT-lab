@@ -166,7 +166,9 @@ discovery evidence. An open Stage II candidate bound gap is also incomplete
 phase-discovery evidence, not a production HELD proof. A current-route Stage
 III postsolve is not verified Stage III evidence unless Ipopt itself reports a
 converged or acceptable solver status; finite variables plus postsolve
-acceptance are diagnostics, not convergence proof.
+acceptance are diagnostics, not convergence proof. The current neutral LLE proof
+fixture uses the route-owned `held_refinement` Ipopt profile and reports Stage
+III only when the same route converges before postsolve certification.
 
 Current public utility `flash` calls keep deterministic TPD postsolve
 certification but do not request continuous TPD by default. Continuous TPD and
@@ -193,8 +195,9 @@ continuous-TPD trace rows, and uses Ipopt `print_level=5`; JSON debug mode keeps
 the machine-readable payload on stdout and forwards native solver output to
 stderr. Its current payload reports HELD Stage II as
 `candidate_bound_gap_open`; when route refinement is requested, current Ipopt
-solver status is also part of the Stage III evidence gate. It is not complete
-production evidence.
+solver convergence is required before Stage III can be counted as current-route
+refinement evidence. Stage III convergence does not close the open Stage II
+candidate-bound gap, so the snapshot is still not complete production evidence.
 
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful

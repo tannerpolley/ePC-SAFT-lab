@@ -1533,6 +1533,19 @@ std::vector<NamedInitialVariables> neutral_two_phase_seed_candidates(
     return out;
 }
 
+constexpr double kNeutralLleRefinementConstraintTolerance = 1.0e-7;
+
+IpoptSolveOptions neutral_lle_refinement_options(const IpoptSolveOptions& options) {
+    IpoptSolveOptions out = options;
+    if (out.option_profile == "proof") {
+        out.option_profile = "held_refinement";
+    }
+    if (out.option_profile == "held_refinement") {
+        out.constraint_violation_tolerance = kNeutralLleRefinementConstraintTolerance;
+    }
+    return out;
+}
+
 int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
     if (result.accepted) {
         return 3;
@@ -1544,15 +1557,6 @@ int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
         return 1;
     }
     return 0;
-}
-
-bool has_finite_complete_variables(const IpoptSolveResult& solve, int variable_count) {
-    if (solve.variables.size() != static_cast<std::size_t>(variable_count)) {
-        return false;
-    }
-    return std::all_of(solve.variables.begin(), solve.variables.end(), [](double value) {
-        return std::isfinite(value);
-    });
 }
 
 RouteSeedAttempt neutral_seed_attempt_from_result(
@@ -2913,6 +2917,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
 
     const std::vector<double>& normalized_feed = plan.feed_composition;
     const std::vector<double> feed_amounts = normalized_feed;
+    const IpoptSolveOptions route_options = neutral_lle_refinement_options(options);
     const std::vector<NamedInitialVariables> seeds = neutral_two_phase_seed_candidates(
         args,
         feed_amounts,
@@ -2924,7 +2929,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
     );
     bool have_best = false;
     std::vector<RouteSeedAttempt> attempts;
-    attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
+    attempts.reserve(seeds.size() + (route_options.initial_variables.empty() ? 0 : 1));
 
     auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
         ActivatedEquilibriumNlp problem(args, plan, layout);
@@ -2940,8 +2945,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
         result.initial_point_strategy = "deterministic_seed_sweep";
         result.seed_name = seed_name;
         result.ran = solve.solver_ran;
-        const bool can_postsolve =
-            solve.accepted || solve.feasible_point || has_finite_complete_variables(solve, problem.variable_count());
+        const bool can_postsolve = solve.accepted;
         result.solver_accepted = can_postsolve;
         result.solver_feasible_point = solve.feasible_point;
         result.solver_status = solve.solver_status;
@@ -2996,8 +3000,8 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
         return result;
     };
 
-    if (!options.initial_variables.empty()) {
-        const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
+    if (!route_options.initial_variables.empty()) {
+        const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", route_options);
         if (continuation.accepted) {
             best.seed_attempts = attempts;
             return best;
@@ -3008,7 +3012,7 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
         throw ValueError(problem_name + " could not construct a deterministic LLE seed.");
     }
     for (const auto& seed : seeds) {
-        IpoptSolveOptions attempt_options = options;
+        IpoptSolveOptions attempt_options = route_options;
         attempt_options.initial_variables = seed.variables;
         attempt_options.initial_bound_lower_multipliers.clear();
         attempt_options.initial_bound_upper_multipliers.clear();

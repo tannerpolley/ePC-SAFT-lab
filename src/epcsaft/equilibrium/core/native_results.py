@@ -23,6 +23,7 @@ _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "jacobian_approximation",
     "hessian_approximation",
     "hessian_backend",
+    "option_profile",
     "scaling_method",
     "linear_solver_requested",
     "linear_solver_selected",
@@ -36,6 +37,7 @@ _ROUTE_BOOL_DIAGNOSTIC_KEYS = (
     "warm_start_used",
     "solver_accepted",
     "solver_feasible_point",
+    "scaled_acceptance_passed",
 )
 
 _ROUTE_INT_DIAGNOSTIC_KEYS = (
@@ -59,6 +61,7 @@ _ROUTE_FLOAT_DIAGNOSTIC_KEYS = (
     "variable_scaling_max",
     "constraint_scaling_min",
     "constraint_scaling_max",
+    "scaled_constraint_violation_inf_norm",
 )
 
 _ROUTE_SEQUENCE_DIAGNOSTIC_KEYS = (

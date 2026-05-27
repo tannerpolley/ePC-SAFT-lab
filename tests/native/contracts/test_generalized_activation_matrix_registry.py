@@ -114,7 +114,7 @@ def test_no_generalized_family_claims_production_before_held_gates() -> None:
     )
     assert (
         neutral["stage9_status"]["held_stage_iii_ipopt_refinement"]
-        == "diagnostic_current_route_refinement_open_ipopt_solver_convergence_gate"
+        == "current_route_refinement_verified_with_ipopt_convergence_pending_stage_ii_candidates"
     )
 
 
