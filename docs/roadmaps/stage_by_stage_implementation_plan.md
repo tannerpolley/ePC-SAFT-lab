@@ -2,87 +2,169 @@
 
 This is the GFPE-first execution plan for
 `docs/roadmaps/generalized_fluid_phase_equilibrium.md`.
-`docs/roadmaps/FULL_ROADMAP.md` remains package context and a completion
-standard, but it is not the organizing spine for this file.
 
-The purpose of this plan is to turn generalized fluid-phase equilibrium
-doctrine into implementable stages. The center of gravity is:
+GFPE is the organizing spine for this file. `FULL_ROADMAP.md` is a boundary
+document: it explains package identity, derivative policy, benchmark
+standards, and downstream consequences, but it does not define the stage order
+here. Package-wide milestones are intentionally not used as stage names.
+
+The plan covers generalized fluid-phase equilibrium and only the pretreatment,
+NLP, derivative, phase-discovery, and registry work needed to make GFPE
+reliable. Regression, downstream application metrics, homogeneous chemical
+equilibrium, and combined phase-chemical equilibrium appear only where they
+constrain GFPE admission or future extension.
+
+Stage labels in this file are planning labels only. They are not Python route
+strings, C++ selector keys, registry keys, capability keys, or public API
+names.
+
+## Source Hierarchy
+
+Use this order when two documents disagree:
+
+1. `docs/latex/equations.tex` for EOS contribution equations.
+2. `docs/roadmaps/generalized_fluid_phase_equilibrium.md` for GFPE doctrine,
+   mathematical form, family order, and admission policy.
+3. `docs/roadmaps/equilibrium_benchmark_registry.yaml` for executable family
+   rows, derived subworkflows, proof cases, and production flags.
+4. This file for implementation sequencing and stage exit evidence.
+5. `docs/roadmaps/FULL_ROADMAP.md` for package-wide boundaries and completion
+   standards.
+6. Generated views such as `docs/equations.md`, `docs/equations_registry.yaml`,
+   `docs/algorithms.md`, and `docs/algorithms_registry.yaml` for navigation
+   and consistency checks only.
+
+Raw response notes under `docs/ChatGPT_Gemini_Responses/` are not
+authoritative sources and must not be cited in GFPE doctrine or registry rows
+unless their claims have been converted into source-backed equations, tests, or
+benchmark fixture records.
+
+## Implementation Reference Map
+
+GFPE doctrine and registry:
+
+- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
+- `tests/native/contracts/test_equilibrium_benchmark_registry.py`
+
+Equation and algorithm sources:
+
+- `docs/latex/equations.tex`
+- `docs/latex/algorithms.tex`
+- `scripts/docs/sync_equation_registry.py`
+- `scripts/docs/sync_algorithm_registry.py`
+- `tests/native/contracts/test_equation_registry.py`
+- `tests/native/contracts/test_algorithm_registry.py`
+
+Public request seam:
+
+- `src/epcsaft/equilibrium/workflows.py`
+- `tests/api/frontend/test_equilibrium.py`
+
+Selector and family-admission seam:
+
+- `src/epcsaft/native/equilibrium/core/activation_matrix.h`
+- `src/epcsaft/native/equilibrium/core/activation_plan.h`
+- `src/epcsaft/native/equilibrium/core/selector_core.h`
+- `src/epcsaft/native/equilibrium/core/selector_core.cpp`
+- `src/epcsaft/native/equilibrium/register_bindings.cpp`
+- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
+- `tests/native/contracts/test_equilibrium_activation_capabilities.py`
+
+Shared phase-NLP seam:
+
+- `src/epcsaft/native/equilibrium/core/nlp_problem.h`
+- `src/epcsaft/native/equilibrium/core/nlp_problem.cpp`
+- `src/epcsaft/native/equilibrium/core/variable_layout.h`
+- `src/epcsaft/native/equilibrium/core/variable_layout.cpp`
+- `src/epcsaft/native/equilibrium/core/second_order.h`
+- `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.h`
+- `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp`
+- `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
+
+Current neutral utility-route anchors:
+
+- `src/epcsaft/native/equilibrium/core/two_phase_eos_route.h`
+- `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
+- `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`
+- `tests/native/equilibrium/results/test_neutral_vle_reference_values.py`
+- `tests/native/equilibrium/results/test_neutral_lle_reference_values.py`
+- `tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py`
+
+Parameter, mixture, and capability seams:
+
+- `src/epcsaft/model/parameters.py`
+- `src/epcsaft/model/options.py`
+- `src/epcsaft/frontend/mixture.py`
+- `src/epcsaft/runtime/capability_evidence.py`
+- `tests/support/equilibrium_cases.py`
+
+Association and electrolyte constraints:
+
+- `docs/roadmaps/explicit_association_closure_for_pcsaft.md`
+- `docs/adr/0004-associating-equilibrium-architecture.md`
+- `analyses/paper_validation/2026_khudaida/`
+- `scripts/dev/run_ipopt_exact_hessian_proofs.py`
+
+## GFPE Pretreatment Pipeline
+
+Pretreatment is the deterministic front half of GFPE. It turns a user-facing
+request into a solver-ready thermodynamic problem before Ipopt or a
+phase-discovery optimizer runs.
+
+The intended pipeline is:
 
 ```text
-user request
-  -> pretreated thermodynamic problem
-  -> family admission and route contract
-  -> source-backed phase-equilibrium NLP
-  -> stability and phase-discovery certification
-  -> benchmark-backed capability claim
+public request
+  -> request-shape record
+  -> normalized thermodynamic input record
+  -> species and phase-eligibility record
+  -> parameter and EOS-contribution readiness record
+  -> physical-basis and variable-layout record
+  -> bounds, scaling, and transform record
+  -> seed and candidate record
+  -> NlpProblem contract
+  -> Ipopt solve or phase-discovery stage
+  -> postsolve certification
+  -> registry and capability evidence
 ```
 
-Stage labels in this file are planning labels only. They are not runtime route
-keys, selector keys, registry keys, capability keys, or public API names.
+Each stage below either creates one of those records, deepens the shared NLP
+contract, or supplies the source-backed proof needed to promote registry
+evidence.
 
-## Scope And Source Map
+## GFPE Non-Negotiables
 
-This plan covers generalized fluid-phase equilibrium and only the adjacent work
-needed to make GFPE reliable. Regression, downstream integration, chemical
-equilibrium, and combined phase-chemical equilibrium appear only where they
-constrain GFPE pretreatment, route admission, validation, or future extension.
+These rules apply to every stage:
 
-Authoritative local references:
+- Family labels are roadmap labels only.
+- Public route strings remain separate from roadmap labels.
+- Current `bubble_*`, `dew_*`, `flash`, and neutral `lle` utility behavior is
+  preserved unless a later implementation explicitly migrates it with tests.
+- Current deterministic TPD/candidate screening is seed and certification
+  support, not full HELD.
+- Generalized production exposure requires exact objective gradients, exact
+  constraint Jacobians, exact Lagrangian Hessian support, route-owned bounds,
+  route-owned scaling, transform chain-rule coverage, HELD-stage phase
+  discovery, and postsolve phase-set certification.
+- Domain safety uses explicit route bounds, a smooth `VariableTransform`
+  wrapper, and Ipopt internal barrier handling of declared bounds and
+  constraints.
+- Do not add permanent custom barrier terms to the thermodynamic objective.
+- Benchmark proof cases must be source-backed. A synthetic unit fixture can
+  test mechanics, but it cannot prove a GFPE family.
+- Pereira 2012 System III is the first neutral proof target unless a
+  source-backed audit proves it physically unsuitable.
+- Gross/Sadowski 2002 methanol/cyclohexane is the first associating proof
+  target after association derivative gates pass.
+- Khudaida 2026 electrolyte LLE is the first electrolyte proof target after
+  Born SSM+DS exact-Hessian and HELD2.0 gates pass.
 
-- GFPE doctrine: `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- GFPE executable registry: `docs/roadmaps/equilibrium_benchmark_registry.yaml`
-- package context: `docs/roadmaps/FULL_ROADMAP.md`
-- equation source of truth: `docs/latex/equations.tex`
-- algorithm source of truth: `docs/latex/algorithms.tex`
-- generated algorithm view: `docs/algorithms.md`
-- public equilibrium seam: `src/epcsaft/equilibrium/workflows.py`
-- current route admission seam:
-  `src/epcsaft/native/equilibrium/core/activation_matrix.h`
-- selector owner:
-  `src/epcsaft/native/equilibrium/core/selector_core.cpp`
-- shared NLP seam:
-  `src/epcsaft/native/equilibrium/core/nlp_problem.h`
-- Ipopt adapter:
-  `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp`
-- current neutral amount-volume route:
-  `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
-- current derived bubble/dew route:
-  `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`
-- pybind equilibrium registration:
-  `src/epcsaft/native/equilibrium/register_bindings.cpp`
-- selector and route diagnostics tests:
-  `tests/native/equilibrium/diagnostics/`
-- GFPE registry tests:
-  `tests/native/contracts/test_generalized_activation_matrix_registry.py`
-  and `tests/native/contracts/test_equilibrium_benchmark_registry.py`
-- public API route tests:
-  `tests/api/frontend/test_equilibrium.py`
+## Common Physical Form
 
-Non-authoritative raw response notes must stay uncited unless they are
-converted into source-backed roadmap text, tests, or registry entries.
-
-## Common GFPE Definitions
-
-Pretreatment means every deterministic step that turns user-facing request data
-into a solver-ready thermodynamic problem before Ipopt or a phase-discovery
-optimizer runs. Pretreatment owns:
-
-- route request validation;
-- unit and basis normalization;
-- species ordering;
-- family classification;
-- parameter provenance checks;
-- active EOS contribution selection;
-- phase eligibility;
-- physical variable layout;
-- coordinate transforms;
-- bounds and scaling;
-- seed generation;
-- candidate phase screening;
-- diagnostics that explain why a problem is or is not selector-eligible.
-
-The canonical phase variables are true species amounts by phase and phase
-volumes:
+For phases `a = 1..Np` and true species `i = 1..Nc`, the canonical physical
+variables are phase species amounts and phase volumes:
 
 ```text
 n_{i,a}  species i amount in phase a
@@ -92,8 +174,7 @@ x_{i,a}  = n_{i,a} / N_a
 rho_a    = N_a / V_a
 ```
 
-For fixed `T` and `P`, the physical objective is the pressure-transformed
-Helmholtz objective:
+For fixed `T` and `P`, the GFPE objective is:
 
 ```text
 Phi(T, P, n, V) = sum_a A_a(T, V_a, n_a) + P * sum_a V_a
@@ -107,246 +188,325 @@ P_eos(T, V_a, n_a) - P = 0
 mu_i(T, V_a, n_a) - mu_i(T, V_b, n_b) = 0
 ```
 
-Electrolyte extensions add per-phase charge balance and projected
-electrochemical-potential equality:
+Electrolyte GFPE adds phase charge balance and reduced-basis electrochemical
+potential equality:
 
 ```text
 sum_i charge_i * n_{i,a} = 0
 Pi_perp(mu_i + charge_i * psi_a) equal across transferable phases
 ```
 
-Reactive extensions add reaction-affinity constraints:
+Future combined phase-chemical work adds reaction-affinity constraints:
 
 ```text
 sum_i nu_{r,i} * mu_i = 0
 ```
 
-The current deterministic neutral TPD and candidate screening code is useful
-pretreatment and postsolve support. It is not full HELD.
+These equations define the direction of the stage plan. The implementation can
+use reduced coordinates, transformed coordinates, or route-specific degrees of
+freedom only if it provides a deterministic lift back into this physical basis.
 
-## Stage 0 - GFPE Doctrine And Registry Lock
+## Stage 0 - GFPE Doctrine, Registry, And Scope Lock
 
-Purpose: make the GFPE roadmap, registry, algorithm index, and public route
-language agree before any new route behavior is added.
+Purpose: keep the GFPE source hierarchy, registry rows, algorithm language, and
+public-route language aligned before solver work expands.
+
+Primary output:
+
+- A stable source hierarchy and registry doctrine that future stages can test
+  against.
 
 References:
 
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/roadmaps/FULL_ROADMAP.md`
 - `docs/latex/algorithms.tex`
 - `docs/algorithms.md`
 - `docs/algorithms_registry.yaml`
 - `docs/adr/0003-selector-core-activation-capabilities.md`
 - `docs/adr/0004-associating-equilibrium-architecture.md`
 
-Steps:
+Substeps:
 
-1. Keep GFPE as the canonical generalized equilibrium doctrine.
-2. Keep `FULL_ROADMAP.md` as package context only for this work.
-3. Keep `equilibrium_benchmark_registry.yaml` on schema version 2 with:
-   `family_rows`, `derived_subworkflows`, and PE-focused `benchmark_cases`.
-4. Keep roadmap `family_label` values descriptive:
+1. State that GFPE, not the package-wide roadmap, controls this stage order.
+2. Keep `FULL_ROADMAP.md` as a boundary for package identity, derivative
+   policy, benchmark expectations, and downstream consequences.
+3. Keep `equilibrium_benchmark_registry.yaml` on schema version 2.
+4. Keep registry top-level sections as `family_rows`,
+   `derived_subworkflows`, and PE-focused `benchmark_cases`.
+5. Keep the six visible family labels descriptive:
    `PE-Neutral TP Flash`, `PE-Associating TP Flash`,
    `PE-Electrolyte LLE/TP Flash`, `PE-Generalized Multiphase`,
    `CE Chemical Equilibrium Placeholder`, and
    `CPE Combined Phase-Chemical Placeholder`.
-5. State in every relevant doc that family labels are roadmap labels only.
-6. Keep current public route strings separate from roadmap family labels.
-7. Keep bubble, dew, cloud, and shadow outside the main family rows.
-8. State that current deterministic TPD/candidate screening is not full HELD.
-9. Keep generalized family rows `planned_not_public` and
-   `production_exposed: false` until staged HELD, exact derivatives, and
-   postsolve certification pass.
-10. Keep raw AI-response notes uncited and outside the authoritative source
-    hierarchy.
-11. Regenerate `docs/algorithms.md` and `docs/algorithms_registry.yaml` only
-    through `scripts/docs/sync_algorithm_registry.py` after changing
-    `docs/latex/algorithms.tex`.
+6. State that those labels are roadmap labels only in GFPE, the registry, and
+   this plan.
+7. Keep public route strings out of the registry family-label namespace.
+8. Keep bubble, dew, cloud, and shadow under `derived_subworkflows`.
+9. Keep generalized family rows `planned_not_public` with
+   `production_exposed: false` until HELD and derivative gates pass.
+10. Remove stale narrow-roadmap references when they appear in registry-facing
+    docs or tests.
+11. Keep raw AI-response notes uncited.
+12. Update `docs/latex/algorithms.tex` before regenerating algorithm views.
+13. Regenerate `docs/algorithms.md` and `docs/algorithms_registry.yaml` only
+    with `scripts/docs/sync_algorithm_registry.py`.
 
-Exit evidence:
+Acceptance checks:
 
-- GFPE and registry tests pass.
-- Generated algorithm docs are synchronized when algorithm source changes.
-- No visible PE/CE/CPE numeric row IDs remain in GFPE or the registry.
-- Public route strings are not presented as roadmap family labels.
-- Existing public route behavior is not removed by roadmap cleanup.
+- Registry schema is version 2.
+- No visible numeric PE/CE/CPE row IDs remain in GFPE or the registry.
+- Derived workflows are not family rows.
+- Deterministic screening is not named as full HELD.
+- Algorithm generated views are synchronized when algorithm source changes.
 
-Do not proceed if:
+Stop conditions:
 
-- a generalized family is marked production-exposed without HELD and exact
-  derivative evidence;
-- deterministic screening is named as full HELD;
-- the plan uses `FULL_ROADMAP.md` milestones as the GFPE stage spine.
+- A generalized family row is production-exposed before HELD and exact
+  derivative evidence exists.
+- Public route strings are presented as GFPE family labels.
+- This file starts using package-wide roadmap milestones as the stage spine.
 
 ## Stage 1 - Public Request Pretreatment
 
-Purpose: define how a user-facing equilibrium request becomes a validated
-route request before native dispatch.
+Purpose: turn a user-facing equilibrium call into a validated request-shape
+record before native dispatch.
+
+Primary output:
+
+- `request_pretreatment` diagnostics covering route shape, fixed variables,
+  composition role, unit basis, and validation status.
 
 References:
 
 - `src/epcsaft/equilibrium/workflows.py`
 - `src/epcsaft/native/equilibrium/core/selector_core.cpp`
+- `src/epcsaft/native/equilibrium/register_bindings.cpp`
 - `tests/api/frontend/test_equilibrium.py`
 - `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
-- ADR 0003 selector-core decision
 
-Steps:
+Substeps:
 
-1. Enumerate the current public equilibrium request forms:
+1. Enumerate the current public route names:
    `bubble_pressure`, `bubble_temperature`, `dew_pressure`,
    `dew_temperature`, `flash`, and neutral nonassociating `lle`.
-2. Document which public inputs are required, forbidden, or role-specific for
-   each route:
-   `T`, `P`, `x`, `y`, `z`, feed amount basis, composition role, and route
-   option payloads.
-3. Define the canonical input unit expectation at the public seam:
-   temperature in kelvin, pressure in pascal, compositions as mole fractions
-   unless a documented route says otherwise, and feed amounts in a declared
-   extensive basis.
-4. Add request-level validation for finite numeric inputs before any EOS call.
-5. Normalize composition vectors once, with diagnostics reporting the original
-   sum, normalized sum, and species ordering.
-6. Reject mismatched composition length before native solver dispatch.
-7. Reject route requests that mix incompatible fixed variables, such as
-   specifying both fixed `T` and a temperature-solve boundary route.
-8. Keep public request validation separate from GFPE roadmap family admission.
-9. Preserve existing public route names while planning generalized internals.
-10. Make the selector error messages explain whether the failure came from
-    route shape, mixture family, parameter data, derivative coverage, or
-    production exposure.
+2. For each route, declare required inputs, forbidden inputs, and
+   role-specific composition inputs:
+   `T`, `P`, `x`, `y`, `z`, feed amount, and route options.
+3. Declare public unit expectations:
+   `T` in kelvin, `P` in pascal, composition as mole fractions, and feed as a
+   declared extensive basis.
+4. Validate finite numeric values before native dispatch.
+5. Validate composition vector length against species count before EOS state
+   construction.
+6. Normalize composition vectors exactly once.
+7. Report original composition sum, normalized sum, normalization tolerance,
+   and species ordering in diagnostics.
+8. Reject route requests that mix incompatible fixed variables, such as a
+   boundary-temperature route with a fixed boundary temperature.
+9. Separate public request shape from GFPE family admission. A valid public
+   request may still be selector-ineligible.
+10. Make errors identify the failed pretreatment layer:
+    route shape, composition basis, mixture family, parameter readiness,
+    derivative coverage, or production exposure.
+11. Preserve current public route names. Do not introduce roadmap
+    `family_label` values as public route names.
 
-Exit evidence:
+Acceptance checks:
 
-- API tests cover required and forbidden request fields for each public route.
-- Selector diagnostics distinguish invalid request shape from unsupported
-  family admission.
-- No code consumes roadmap `family_label` strings as route keys.
+- API tests cover required and forbidden public inputs.
+- Selector diagnostics distinguish route-shape rejection from family-admission
+  rejection.
+- No code path consumes `family_label` strings as public routes.
 
-Do not proceed if:
+Stop conditions:
 
-- invalid public inputs can reach EOS state construction;
-- route validation silently rewrites the user request without diagnostics;
-- generalized roadmap labels are passed through the public API as route names.
+- Invalid public inputs reach native EOS state construction.
+- Request normalization silently changes user input without diagnostics.
+- Route validation and GFPE admission are collapsed into one opaque failure.
 
-## Stage 2 - Species And Family Classification Pretreatment
+## Stage 2 - Thermodynamic Input Basis Pretreatment
 
-Purpose: classify the thermodynamic problem before choosing a route, while
-making clear that family labels are planning labels, not code keys.
+Purpose: make temperature, pressure, feed, species order, and amount basis
+explicit before species-family classification.
+
+Primary output:
+
+- `thermodynamic_input` diagnostics covering resolved `T`, `P`, feed basis,
+  total feed amount, species order, and composition basis.
+
+References:
+
+- `src/epcsaft/equilibrium/workflows.py`
+- `src/epcsaft/frontend/mixture.py`
+- `src/epcsaft/model/options.py`
+- `tests/support/equilibrium_cases.py`
+- `tests/api/frontend/test_equilibrium.py`
+
+Substeps:
+
+1. Resolve the public mixture species order before building any native payload.
+2. Store the composition vector in that same species order.
+3. Define the default feed total `F` for mole-fraction inputs.
+4. Preserve enough diagnostics to reconstruct `z_i F`.
+5. Declare whether a route uses mole fractions, phase compositions, or
+   extensive feed amounts at the public seam.
+6. Declare whether pressure is fixed, solved, or only used as a boundary
+   continuation parameter.
+7. Declare whether temperature is fixed, solved, or only used as a boundary
+   continuation parameter.
+8. Ensure all unit conversions happen before native dispatch and are reported
+   when a conversion is supported.
+9. Reject unknown unit bases loudly. Do not infer hidden units.
+10. Record the thermodynamic input payload in route diagnostics so a failed run
+    can be reproduced without reading UI-level objects.
+
+Acceptance checks:
+
+- A native diagnostic payload can identify the species order, feed basis, `T`,
+  `P`, and composition role used for the solve.
+- Public tests prove mismatched lengths and nonfinite values stop before
+  native dispatch.
+
+Stop conditions:
+
+- A route can build a native request without a declared species order.
+- Feed amount basis is implicit in solver code.
+- Temperature or pressure meaning changes between public and native layers.
+
+## Stage 3 - Species, Phase Eligibility, And Family Classification
+
+Purpose: classify the pretreated thermodynamic problem without leaking
+roadmap labels into runtime keys.
+
+Primary output:
+
+- `input_classification` diagnostics covering neutral, ionic, associating,
+  reactive, phase-eligible, transferable, and fixed species.
 
 References:
 
 - `src/epcsaft/native/equilibrium/core/activation_matrix.h`
-- `src/epcsaft/native/equilibrium/core/selector_core.cpp`
 - `src/epcsaft/native/equilibrium/core/activation_plan.h`
+- `src/epcsaft/native/equilibrium/core/selector_core.h`
+- `src/epcsaft/native/equilibrium/core/selector_core.cpp`
 - `src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp`
 - `tests/native/contracts/test_equilibrium_activation_capabilities.py`
 - `tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py`
 
-Steps:
+Substeps:
 
-1. Define a pretreated classification record with fields for:
-   neutral species, ionic species, associating species, reactive species,
-   phase-eligible species, transferable species, and fixed species.
-2. Separate code-owned route admission keys from roadmap labels. Existing
-   native keys such as current selector families may remain implementation
-   details, but they must not leak into the roadmap as the organizing model.
-3. Classify a mixture as neutral only when no ionic charge balance,
-   electrochemical-potential projection, reaction basis, or association
-   mass-action variables are needed.
-4. Classify a mixture as associating when active parameters require association
-   site fractions or association mass-action consistency.
-5. Classify a mixture as electrolyte when any charged true species, salt basis,
-   Debye-Huckel term, Born term, charge-neutral reduced variables, or
-   electrochemical transfer condition is active.
-6. Classify a mixture as reactive when chemical stoichiometry, reaction
-   extents, standard-state convention, or reaction affinity constraints are
-   active.
-7. Define phase eligibility per species and per phase before building the NLP.
-8. Define transfer eligibility separately from species existence. A phase may
-   contain a species that is not transferable across every phase boundary.
-9. Report selector-ineligible mixtures before Ipopt dispatch when the active
-   family has not passed GFPE admission gates.
-10. Add negative tests for associating, electrolyte, and reactive inputs
-    reaching current neutral-only production routes.
+1. Define classification fields for neutral species indices.
+2. Define classification fields for ionic species indices and charges.
+3. Define classification fields for associating species and active site
+   schemes.
+4. Define classification fields for reactive species and active reaction
+   basis when present.
+5. Define phase eligibility per species and per possible phase.
+6. Define transfer eligibility separately from phase eligibility.
+7. Define fixed or constrained species separately from transferable species.
+8. Classify a problem as neutral only when no charge-balance, electrochemical,
+   association mass-action, or reaction-affinity equations are active.
+9. Classify a problem as associating when active parameter data requires
+   association site fractions or association mass-action consistency.
+10. Classify a problem as electrolyte when charged true species, salt basis,
+    Debye-Huckel, Born, charge-neutral reduced variables, or electrochemical
+    transfer conditions are active.
+11. Classify a problem as reactive when reaction stoichiometry, reaction
+    extents, standard-state convention, or reaction-affinity constraints are
+    active.
+12. Keep current native admission keys as implementation details.
+13. Report selector-ineligible mixtures before any Ipopt dispatch.
+14. Add negative tests for associating, electrolyte, and reactive inputs that
+    try to enter current neutral-only generalized paths.
 
-Exit evidence:
+Acceptance checks:
 
-- Classification diagnostics are present in route metadata.
-- Selector tests prove unsupported families fail before solver dispatch.
-- Capability output distinguishes current public utilities from future GFPE
-  family rows.
+- Route metadata exposes classification fields.
+- Unsupported families fail before optimizer construction.
+- Capability evidence separates current public utilities from GFPE family
+  rows.
 
-Do not proceed if:
+Stop conditions:
 
-- association, electrolyte, or reactive markers can be ignored to force a
-  neutral route;
-- a runtime key is renamed just to match a roadmap label;
-- selector-ineligible failures are only discovered after an optimizer run.
+- Association, electrolyte, or reactive markers are ignored to force a neutral
+  route.
+- Runtime keys are renamed only to match roadmap labels.
+- Selector-ineligible failures are discovered only after optimizer execution.
 
-## Stage 3 - Parameter And EOS Contribution Pretreatment
+## Stage 4 - Parameter And EOS Contribution Pretreatment
 
-Purpose: prove the route has the parameter data and EOS contribution set needed
-for the requested family before variables or seeds are assembled.
+Purpose: prove that the active route has the parameter families and EOS
+contributions required by its classified family.
+
+Primary output:
+
+- `parameter_readiness` diagnostics covering required parameter families,
+  active residual contributions, provenance, and exact-derivative readiness.
 
 References:
 
 - `docs/latex/equations.tex`
+- `docs/equations_registry.yaml`
 - `src/epcsaft/model/parameters.py`
 - `src/epcsaft/model/options.py`
 - `src/epcsaft/frontend/mixture.py`
-- `src/epcsaft/native/` EOS contribution owners
-- `docs/adr/0002-hard-public-api-reset-cppad-only-frontend.md`
+- `src/epcsaft/native/`
 - `docs/roadmaps/explicit_association_closure_for_pcsaft.md`
 - `tests/native/contracts/test_equation_registry.py`
 
-Steps:
+Substeps:
 
-1. Treat `ParameterSet` and `ParameterSet.to_runtime_dict()` as the canonical
-   public-to-native parameter boundary.
-2. Check pure neutral PC-SAFT parameters before admitting a neutral PE route:
-   segment number, segment diameter, dispersion energy, molecular weight when
-   required by density or reporting, and binary interaction parameters.
-3. Check association parameters before admitting associating PE:
-   association scheme, site list, association energy, association volume, and
-   cross-association rules.
-4. Check electrolyte parameters before admitting electrolyte PE:
-   charges, ion sizes or solvated diameters, ion-solvent dispersion data,
-   Debye-Huckel settings, Born settings, relative-permittivity model, SSM
-   model, and DS model where active.
-5. Record active residual contribution families in route metadata:
+1. Treat `ParameterSet` and `ParameterSet.to_runtime_dict()` as the public to
+   native parameter boundary.
+2. For neutral PE, require pure component PC-SAFT parameters:
+   segment number, segment diameter, dispersion energy, and any molecular data
+   needed by density or reporting.
+3. For neutral binary or multicomponent PE, require binary interaction data or
+   an explicitly source-backed zero-interaction convention.
+4. For associating PE, require association scheme, site list, association
+   energy, association volume, and cross-association rule.
+5. For electrolyte PE, require species charges, ion sizes or solvated
+   diameters, ion-solvent dispersion data, Debye-Huckel settings, Born
+   settings, relative-permittivity model, SSM model, and DS model when active.
+6. Record active residual contribution families:
    hard-chain, dispersion, association, Debye-Huckel, Born, SSM, DS, and any
-   selected dielectric contribution.
-6. Reject missing parameter families loudly at pretreatment time.
-7. Record parameter provenance in proof fixtures, including source file,
-   paper/table/figure when available, units, converted units, and fitted
-   domain.
-8. Do not treat a direct dictionary as a full literature benchmark source
-   unless the test is explicitly synthetic or a small unit test.
-9. Route every durable equation claim through `docs/latex/equations.tex` or a
-   generated registry view.
-10. Keep association explicit-closure diagnostics separate from exact
-    association production admission.
-11. For electrolyte validation, require the Born SSM+DS master path with exact
-    Hessian support before declaring the electrolyte PE proof eligible.
+   dielectric contribution.
+7. Record parameter provenance by source file, paper, table, figure, units,
+   converted units, and fitted domain when available.
+8. Reject missing required parameter families in pretreatment.
+9. Keep direct dictionaries acceptable only for small synthetic tests, not
+   source-backed GFPE proof cases.
+10. Route durable equation claims through `docs/latex/equations.tex` or a
+    generated registry view.
+11. Keep reduced explicit association closures diagnostic unless a route is
+    explicitly approximate.
+12. Block electrolyte PE validation until the Born SSM+DS master path has exact
+    Hessian support.
 
-Exit evidence:
+Acceptance checks:
 
-- Route diagnostics list active residual families and parameter provenance.
-- Missing parameter-family tests fail before native solver dispatch.
-- Benchmark fixtures point to source-backed parameter records.
-- Equation registry tests catch stale equation documentation.
+- Route diagnostics list active residual families and parameter readiness.
+- Missing required parameter families fail before solver dispatch.
+- Source-backed benchmark fixtures record parameter provenance.
+- Equation registry tests stay synchronized.
 
-Do not proceed if:
+Stop conditions:
 
-- a route can run with placeholder parameters;
-- a proof case lacks source-backed parameter provenance;
-- electrolyte PE validation bypasses the Born SSM+DS exact-Hessian gate.
+- A GFPE proof case uses placeholder parameter data.
+- A benchmark fixture lacks source-backed parameter provenance.
+- Electrolyte validation bypasses the Born SSM+DS exact-Hessian gate.
 
-## Stage 4 - Canonical Basis And Variable Layout Pretreatment
+## Stage 5 - Physical Basis, Lifts, And Variable Layout
 
-Purpose: define the physical variables and lifted true-species state before the
-route creates an `NlpProblem`.
+Purpose: define the true-species physical state that every route must evaluate
+even if the solver uses reduced coordinates.
+
+Primary output:
+
+- `variable_layout` diagnostics covering physical variable order, phase block
+  boundaries, lifts from reduced coordinates, and result back-lifts.
 
 References:
 
@@ -357,10 +517,9 @@ References:
 - `src/epcsaft/native/equilibrium/core/nlp_problem.h`
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
 
-Steps:
+Substeps:
 
-1. Define the physical variable vector in true species amounts and phase
-   volumes for every PE route:
+1. Define the physical PE variable vector:
 
    ```text
    x_phys = [n_{1,1}, ..., n_{Nc,1}, V_1, ..., n_{1,Np}, ..., V_Np]
@@ -368,226 +527,252 @@ Steps:
 
 2. Store species order, phase order, and variable block boundaries in route
    metadata.
-3. Build helper accessors for amount blocks, volume blocks, composition blocks,
-   total phase amount, density, and phase fraction.
-4. Ensure route constraints are written in the same physical basis used by the
-   objective.
-5. Define the material-balance map once:
+3. Provide accessors for phase amount blocks.
+4. Provide accessors for phase volume entries.
+5. Provide accessors for phase composition, total phase amount, density, and
+   phase fraction.
+6. Define the material-balance map once:
 
    ```text
    b_i(n) = sum_a n_{i,a} - z_i F
    ```
 
-6. Define the pressure-consistency map once:
+7. Define the phase-pressure map once:
 
    ```text
    p_a(n_a, V_a) = P_eos(T, V_a, n_a) - P_spec
    ```
 
-7. Define transferable-potential residuals only for species that are both
-   present and transferable across the selected phase pair.
-8. For associating routes, choose one production architecture before proof:
+8. Define transferable-potential residuals only for species eligible to
+   transfer across the selected phase pair.
+9. For associating routes, choose one production architecture before proof:
    lifted association-site variables with mass-action constraints, or complete
    implicit association sensitivities.
-9. For electrolyte routes, define reduced charge-neutral coordinates and a
-   deterministic lift into true species by phase.
-10. For reactive routes, define reaction coordinates or an element/moiety basis
-    and a lift into true species by phase.
-11. Record the lift/back-lift equations in documentation before coding the
-    route.
-12. Add variable-layout tests for species count, phase count, phase volume
-    positions, and lifted basis consistency.
+10. For electrolyte routes, define charge-neutral reduced coordinates and a
+    deterministic lift into true species by phase.
+11. For reactive extensions, define reaction coordinates or element/moiety
+    coordinates and a deterministic lift into true species.
+12. Record every lift and back-lift equation before coding a route that uses
+    reduced coordinates.
+13. Add variable-layout tests for species count, phase count, volume positions,
+    phase block slicing, and lift consistency.
 
-Exit evidence:
+Acceptance checks:
 
-- Variable-layout tests prove consistent index ownership.
-- Route metadata can reconstruct every physical block from a solver result.
-- Constraint residual tests use the same basis as the objective.
+- Route metadata can reconstruct every physical block from a solver vector.
+- Constraint residual tests use the same physical basis as the objective.
+- Reduced-coordinate routes expose their true-species lift.
 
-Do not proceed if:
+Stop conditions:
 
-- composition variables and amount variables are mixed without a declared lift;
-- charge-neutral reduced variables lack a true-species lift;
-- association site variables are hidden from derivative and diagnostics
+- Composition variables and amount variables are mixed without a declared
+  lift.
+- Charge-neutral reduced variables lack a true-species lift.
+- Association state variables are hidden from derivative or diagnostic
   contracts.
 
-## Stage 5 - Bounds, Scaling, And Transform Pretreatment
+## Stage 6 - Bounds, Scaling, Variable Transform, And Domain Diagnostics
 
-Purpose: make domain safety a declared route contract before expanding GFPE
-families.
+Purpose: make domain safety a declared route contract before any family is
+expanded.
+
+Primary output:
+
+- `domain_contract` diagnostics covering bounds, scaling, smooth transforms,
+  Ipopt barrier ownership, and domain margins.
 
 References:
 
 - `src/epcsaft/native/equilibrium/core/nlp_problem.h`
+- `src/epcsaft/native/equilibrium/core/second_order.h`
 - `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
 
-Steps:
+Substeps:
 
-1. Require every route to own variable lower and upper bounds.
-2. Require every route to own constraint lower and upper bounds.
-3. Define amount floors, phase-volume bounds, density bounds, composition
-   floors, packing-fraction margins, and phase-fraction noncollapse limits.
-4. For electrolyte routes, add charge-neutrality constraints and reduced-basis
-   bounds before electrochemical residuals are evaluated.
-5. For associating routes, add site-fraction or association-state bounds before
-   association residuals are evaluated.
-6. Define a reusable `VariableTransform` concept:
+1. Require variable lower and upper bounds for every route.
+2. Require constraint lower and upper bounds for every route.
+3. Define amount floors.
+4. Define phase-volume lower and upper bounds.
+5. Define density or packing-fraction margins where the EOS requires them.
+6. Define composition floors for trace components.
+7. Define phase-fraction noncollapse limits.
+8. For associating routes, define site-fraction or association-state bounds.
+9. For electrolyte routes, define charge-neutrality constraints and
+   reduced-basis bounds before electrochemical residuals are evaluated.
+10. Define a reusable `VariableTransform` concept:
 
-   ```text
-   solver_to_physical(u) -> x
-   dx_du(u)
-   d2x_du2(u)
-   ```
+    ```text
+    solver_to_physical(u) -> x
+    dx_du(u)
+    d2x_du2(u)
+    ```
 
-7. Keep route equations in physical variables. The transform owns coordinate
-   maps and chain-rule derivative assembly.
-8. Use smooth maps for positivity, trace components, simplex-like
-   compositions, phase volumes, and reduced electrolyte coordinates.
-9. Require scaling for amounts, volumes, pressure residuals, material-balance
-   residuals, potential-equality residuals, objective values, and transform
-   coordinates.
-10. Use Ipopt's internal barrier for declared bounds and constraints.
-11. Do not add permanent custom barrier terms to the thermodynamic objective.
-12. Report domain margins in result diagnostics:
-    amount floor margin, volume margin, density margin, packing margin,
-    composition floor margin, charge-balance margin, and transform saturation
-    margin.
-13. Add contract tests that assert scaling metadata and domain-margin metadata
-    are present for admitted generalized routes.
+11. Keep route equations in physical variables.
+12. Put coordinate maps and chain-rule derivative assembly in the transform
+    wrapper.
+13. Use smooth maps for positivity, trace components, simplex-like
+    compositions, phase volumes, and reduced electrolyte variables.
+14. Define objective scaling.
+15. Define amount scaling.
+16. Define volume scaling.
+17. Define pressure-residual scaling.
+18. Define material-balance residual scaling.
+19. Define chemical-potential, fugacity, or electrochemical residual scaling.
+20. Define transform-coordinate scaling.
+21. Use Ipopt internal barrier handling for declared bounds and constraints.
+22. Do not modify `Phi` with permanent custom barrier terms.
+23. Report margins to amount floors, volume bounds, density bounds,
+    packing-fraction limits, composition floors, charge-balance constraints,
+    and transform saturation thresholds.
+24. Add tests that assert scaling and domain-margin metadata exist for admitted
+    GFPE routes.
 
-Exit evidence:
+Acceptance checks:
 
-- `NlpProblem` exposes bounds and scaling for every route.
+- `NlpProblem` exposes bounds and scaling for every admitted route.
 - Ipopt adapter tests prove declared bounds and constraints are transferred.
-- Diagnostics report domain margins without silent clipping.
+- Diagnostics expose domain margins without silent clipping.
 
-Do not proceed if:
+Stop conditions:
 
-- a route relies on ad hoc clipping to remain inside the EOS domain;
-- the thermodynamic objective is permanently modified for domain safety;
-- a transform changes variables without exact chain-rule derivative coverage.
+- A route relies on hidden clipping to stay inside the EOS domain.
+- The thermodynamic objective is permanently changed for domain safety.
+- A transform changes variables without exact chain-rule derivative coverage.
 
-## Stage 6 - Seed And Stability Pretreatment
+## Stage 7 - Seed, Candidate, And Stability Pretreatment
 
-Purpose: separate initialization support from generalized phase-discovery
-evidence.
+Purpose: keep initialization support separate from generalized
+phase-discovery evidence.
+
+Primary output:
+
+- `seed_and_stability` diagnostics covering density roots, deterministic
+  candidates, TPD estimates, candidate ranking, mass-balance feasibility, and
+  postsolve stability checks.
 
 References:
 
 - `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
-- `docs/algorithms.md` entries:
-  `neutral_tpd_stability`,
-  `neutral_deterministic_phase_candidate_screening`,
-  `phase_candidate_mass_balance_selection`,
-  and `postsolve_tpd_certification`
+- `docs/algorithms.md`
+- `docs/latex/algorithms.tex`
 - `tests/native/equilibrium/results/test_neutral_vle_reference_values.py`
 - `tests/native/equilibrium/results/test_neutral_lle_reference_values.py`
 - `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
 
-Steps:
+Substeps:
 
-1. Keep density roots and single-phase state solves as state evaluation and seed
-   generation tools.
-2. Keep deterministic neutral TPD/candidate screening as seed and certification
-   support.
+1. Keep density roots and single-phase state solves as state evaluation and
+   seed-generation tools.
+2. Keep deterministic neutral TPD/candidate screening as seed and
+   certification support.
 3. Name deterministic candidate screening exactly as deterministic screening,
    not HELD.
-4. Store every generated candidate with:
-   composition, phase kind, volume or density, seed source, TPD estimate,
-   pressure residual estimate, and feasibility status.
-5. Run candidate de-duplication with declared composition and density
-   tolerances.
-6. Run candidate mass-balance feasibility before assembling a final phase set.
-7. Preserve lower-free-energy or instability diagnostics even when a candidate
-   is rejected for mass-balance infeasibility.
-8. Add seed ranking that is deterministic for a fixed input problem.
-9. Record whether the final Ipopt start came from user input, deterministic
-   screening, continuation, a boundary workflow, or a stored benchmark fixture.
+4. Store every generated candidate with composition, phase kind, density,
+   volume, seed source, TPD estimate, pressure residual estimate, and
+   feasibility status.
+5. Deduplicate candidates with declared composition and density tolerances.
+6. Rank candidates deterministically for a fixed input problem.
+7. Run candidate mass-balance feasibility before final phase-set assembly.
+8. Preserve instability diagnostics even when a candidate is rejected for
+   mass-balance infeasibility.
+9. Record final Ipopt start source:
+   user input, deterministic screening, continuation, boundary workflow, or
+   benchmark fixture.
 10. Add postsolve stability diagnostics after final Ipopt solves.
 11. Keep seed-generation success distinct from route acceptance.
+12. Keep all HELD status fields empty or planned until Stage 11 supplies
+    executable HELD evidence.
 
-Exit evidence:
+Acceptance checks:
 
-- Diagnostics identify seed source and candidate-selection decisions.
+- Diagnostics identify candidate source, rank, feasibility, and selection.
 - Tests reject any doc or registry language that calls deterministic screening
   full HELD.
-- Current utility routes retain their existing deterministic support without
-  creating generalized production claims.
+- Current utility routes retain deterministic support without generalized
+  production claims.
 
-Do not proceed if:
+Stop conditions:
 
-- optimizer success is accepted without postsolve stability checks;
-- candidate generation is treated as proof of phase-set completeness;
-- seed failure is hidden behind a generic solver failure.
+- Optimizer success is accepted without postsolve stability checks.
+- Candidate generation is treated as phase-set completeness.
+- Seed failure is hidden behind a generic solver failure.
 
-## Stage 7 - Shared NLP And Ipopt Infrastructure Gate
+## Stage 8 - Shared NLP And Ipopt Infrastructure Gate
 
-Purpose: make the shared optimizer seam strong enough for generalized GFPE
-before adding new families.
+Purpose: make the optimizer seam strong enough for all GFPE families before
+new family behavior expands.
+
+Primary output:
+
+- A route-owned `NlpProblem` contract with exact derivatives, sparse
+  structures, bounds, scaling, transform policy, and diagnostics.
 
 References:
 
 - `src/epcsaft/native/equilibrium/core/nlp_problem.h`
 - `src/epcsaft/native/equilibrium/core/nlp_problem.cpp`
+- `src/epcsaft/native/equilibrium/core/second_order.h`
 - `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.h`
 - `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
 
-Steps:
+Substeps:
 
 1. Treat `NlpProblem` as the route-owned contract for objective, gradient,
-   constraints, sparse Jacobian structure, sparse Jacobian values, Lagrangian
-   Hessian values, bounds, scaling, and diagnostics.
+   constraints, Jacobian, Hessian, bounds, scaling, and diagnostics.
 2. Require fixed sparse Jacobian ordering:
 
    ```text
    rows[k], cols[k], values[k]
    ```
 
-   must describe the same nonzero in the same order for every evaluation.
+   The same index `k` must describe the same nonzero for every evaluation.
 
-3. Require exact objective gradients for admitted generalized routes.
-4. Require exact constraint Jacobians for admitted generalized routes.
-5. Require exact Lagrangian Hessian values before production exposure unless a
-   route is explicitly marked internal diagnostic.
-6. Require derivative metadata that records the active backend and any missing
-   exact block.
-7. Keep Ipopt option transfer in the adapter, not in route equations.
-8. Keep route equation ownership in the route problem, not in the adapter.
-9. Add tests for:
-   objective value;
-   gradient size;
-   constraint size;
-   Jacobian nonzero count;
-   fixed Jacobian ordering;
-   Hessian nonzero count;
-   bounds size;
-   scaling size;
-   and diagnostic payload shape.
-10. Add failure tests for mismatched sparse structure and value vector length.
-11. Add exact-Hessian proof scripts for active route families before production
-    admission.
+3. Require sparse Hessian ordering and values for the Lagrangian Hessian.
+4. Require exact objective gradients for admitted GFPE routes.
+5. Require exact constraint Jacobians for admitted GFPE routes.
+6. Require exact Lagrangian Hessians before production exposure unless the
+   route is internal diagnostic only.
+7. Record derivative backend metadata for every active objective and
+   constraint block.
+8. Record any missing exact derivative block as a hard admission blocker.
+9. Keep Ipopt option transfer in the adapter.
+10. Keep thermodynamic residual equations in route problems.
+11. Pass route-owned bounds and constraints to Ipopt.
+12. Pass route-owned scaling to Ipopt or to the route-owned scaling adapter.
+13. Add tests for objective value, gradient size, constraint size, Jacobian
+    structure size, Jacobian value size, fixed sparse ordering, Hessian
+    nonzero count, bounds size, scaling size, and diagnostic payload shape.
+14. Add failure tests for mismatched sparse structure and values.
+15. Add exact-Hessian proof scripts for active route families before registry
+    promotion.
 
-Exit evidence:
+Acceptance checks:
 
-- Focused native Ipopt adapter tests pass.
-- A route cannot be admitted if its sparse structure and value vectors diverge.
-- Exact derivative metadata is visible in route diagnostics and capability
+- Focused Ipopt adapter contract tests pass.
+- A route cannot be admitted when sparse structure and value vectors diverge.
+- Exact derivative metadata appears in route diagnostics and capability
   evidence.
 
-Do not proceed if:
+Stop conditions:
 
-- a generalized route bypasses `NlpProblem`;
-- Ipopt adapter code owns thermodynamic residual equations;
-- missing exact Hessian coverage is treated as production-ready.
+- A GFPE route bypasses `NlpProblem`.
+- Ipopt adapter code owns thermodynamic equations.
+- Missing exact Hessian coverage is treated as production-ready.
 
-## Stage 8 - Neutral TP Flash Proof
+## Stage 9 - Neutral TP Flash Source-Backed Proof
 
-Purpose: prove the first generalized PE family on neutral TP flash before
-deriving boundary workflows or widening to association/electrolytes.
+Purpose: prove the first GFPE family on neutral TP flash before deriving
+boundary workflows or widening to association/electrolytes.
+
+Primary output:
+
+- A source-backed `PE-Neutral TP Flash` proof case with full route diagnostics,
+  exact derivative evidence, and registry evidence that still remains
+  nonproduction until HELD gates pass.
 
 References:
 
@@ -598,251 +783,281 @@ References:
 - `tests/native/equilibrium/results/test_neutral_vle_reference_values.py`
 - `tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py`
 
-Steps:
+Substeps:
 
 1. Use `PE-Neutral TP Flash` as the first GFPE proof family.
-2. Use the amount-volume physical variable model from Stage 4.
-3. Use the bounds, scaling, and transform rules from Stage 5.
-4. Use deterministic screening only as seed and postsolve support from Stage 6.
+2. Use the Stage 5 amount-volume physical variable model.
+3. Use the Stage 6 bounds, scaling, and transform policy.
+4. Use Stage 7 deterministic screening only as seed and certification support.
 5. Build the proof around Pereira 2012 System III unless a source-backed audit
-   proves the fixture physically unsuitable.
-6. Record the proof fixture inputs:
-   species, parameters, binary interaction parameters, `T`, `P`, feed
+   proves it physically unsuitable.
+6. If Pereira source data are unavailable, stop at `source_data_needed`.
+7. Record proof species, parameters, binary interactions, `T`, `P`, feed
    composition, expected phases, expected composition window, and source
    provenance.
-7. Evaluate the thermodynamic objective:
+8. Evaluate the pressure-transformed Helmholtz objective:
 
    ```text
    Phi = sum_a A_a + P * sum_a V_a
    ```
 
-8. Enforce material balance, pressure consistency, and chemical-potential
-   equality as hard route constraints or certified KKT residuals.
-9. Certify noncollapse through phase amount, phase fraction, composition
-   distance, and density/volume margins.
-10. Certify postsolve stability with TPD diagnostics.
-11. Certify exact derivative coverage for the active objective and constraints.
-12. Keep the registry row `planned_not_public` until continuous TPD and HELD
-    stages pass.
-13. Keep existing public `flash` behavior unchanged unless the implementation
-    explicitly migrates it through the same verified route with tests.
+9. Enforce or certify material balance for every species.
+10. Enforce or certify phase pressure consistency.
+11. Enforce or certify chemical-potential equality for transferable species.
+12. Certify noncollapse through phase amount, phase fraction, composition
+    distance, and density or volume margins.
+13. Certify postsolve stability with TPD diagnostics.
+14. Certify exact derivatives for the active objective and constraints.
+15. Store all proof evidence in tests and registry fields without marking
+    generalized production exposure.
+16. Keep existing public `flash` behavior unchanged unless it is explicitly
+    migrated through the same verified route and tests.
 
-Exit evidence:
+Acceptance checks:
 
-- Pereira neutral proof fixture exists and is source-backed.
+- Pereira neutral proof fixture exists and is source-backed before being used
+  as proof evidence.
 - Neutral TP flash diagnostics include material, pressure, potential,
   stability, derivative, and domain margins.
-- Registry tests still show generalized neutral TP flash as not production
-  exposed until HELD completion.
+- Registry tests keep generalized neutral TP flash not production-exposed
+  until HELD completion.
 
-Do not proceed if:
+Stop conditions:
 
-- the first neutral proof is a synthetic fixture;
-- production admission rests only on Ipopt convergence;
-- public utility-route success is used as generalized GFPE proof without the
+- The first neutral proof is synthetic.
+- Production admission rests only on optimizer convergence.
+- Current public utility success is used as generalized GFPE proof without
   GFPE gates.
 
-## Stage 9 - Derived Boundary Workflows And Diagrams
+## Stage 10 - Derived Boundary Workflows And Diagram Traces
 
-Purpose: derive bubble, dew, cloud, and shadow workflows from the neutral TP
-flash core after the main proof is reliable.
+Purpose: derive bubble, dew, cloud, and shadow workflows from the neutral GFPE
+core after the main neutral proof is reliable.
 
-References:
+Primary output:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`
-- `src/epcsaft/equilibrium/workflows.py`
-- `tests/api/frontend/test_equilibrium.py`
-- `tests/native/contracts/test_equilibrium_benchmark_registry.py`
-
-Steps:
-
-1. Keep bubble, dew, cloud, and shadow as derived subworkflows, not main
-   activation-family rows.
-2. Implement each boundary workflow as a degree-of-freedom swap over the
-   shared phase NLP:
-   fixed `T` solve for boundary `P`, or fixed `P` solve for boundary `T`.
-3. Bubble point:
-   fixed liquid/feed composition, incipient vapor composition free, boundary
-   `P` or `T` free.
-4. Dew point:
-   fixed vapor composition, incipient liquid composition free, boundary `P` or
-   `T` free.
-5. Cloud point:
-   fixed parent liquid composition, incipient second-liquid composition free,
-   boundary `P` or `T` free.
-6. Shadow point:
-   matched cloud-point state with shadow-phase composition and volume reported.
-7. Use the Pereira neutral proof mixture for shared boundary workflow testing
-   unless implementation proves it physically unsuitable.
-8. If Pereira is unsuitable for a specific boundary diagram, stop and select a
-   source-backed neutral binary. Do not invent a fixture.
-9. Generate `T-x` and `P-x` traces from boundary solves with continuation
-   metadata and failure diagnostics per trace point.
-10. Keep VLLE-specific tests out of this stage.
-11. Keep current public bubble/dew route behavior intact while generalized
-    derived-workflow tests are added.
-
-Exit evidence:
-
-- Registry tests prove bubble/dew/cloud/shadow are derived subworkflows.
-- Boundary workflow tests prove fixed/free variable contracts.
-- Diagram tests prove trace generation and diagnostic reporting.
-
-Do not proceed if:
-
-- a boundary workflow is promoted to a main family row;
-- cloud/shadow tests silently become VLLE tests;
-- boundary workflows duplicate a separate thermodynamic core instead of using
-  the shared GFPE route.
-
-## Stage 10 - Continuous TPD And HELD Stage Ladder
-
-Purpose: replace seed-only deterministic screening with the staged
-phase-discovery evidence required for generalized admission.
-
-References:
-
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/algorithms.md`
-- `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
-- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
-- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
-
-Steps:
-
-1. Add continuous TPD minimization in volume-composition space.
-2. Report the TPD objective, trial-phase composition, trial volume or density,
-   local status, and source seed for every TPD minimization.
-3. Add HELD Stage I stability testing with multiple starts and declared
-   failure modes.
-4. Add HELD Stage II dual cutting-plane phase discovery with explicit upper and
-   lower bounds.
-5. Store candidate phases generated by Stage II with enough metadata to replay
-   route assembly.
-6. Use the Ipopt amount-volume NLP as HELD Stage III primal refinement.
-7. Record the relation between Stage II bounds and Stage III refined objective.
-8. Add phase-set completeness checks:
-   no missing lower-free-energy candidate, material-balance feasibility, no
-   duplicate phase, and no collapsed phase.
-9. Keep deterministic screening results available as seeds, but do not mix
-   them with HELD status fields.
-10. Expose HELD stage status in registry evidence only after executable tests
-    exist.
-
-Exit evidence:
-
-- Tests distinguish deterministic screening, continuous TPD, HELD Stage I,
-  HELD Stage II, and HELD Stage III.
-- Registry rows can name which HELD gates are passed for each family.
-- Generalized production exposure remains false until the relevant HELD ladder
-  is complete.
-
-Do not proceed if:
-
-- local TPD success is treated as global phase-discovery proof;
-- HELD status fields can be filled by deterministic screening;
-- phase-set completeness lacks a mass-balance feasibility check.
-
-## Stage 11 - Generalized Multiphase PE
-
-Purpose: extend GFPE from selected two-phase solves to unknown phase count and
-phase-set certification.
+- Derived boundary workflow contracts and `T-x` or `P-x` diagram trace
+  diagnostics that reuse the shared GFPE core.
 
 References:
 
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`
+- `src/epcsaft/equilibrium/workflows.py`
+- `tests/api/frontend/test_equilibrium.py`
+- `tests/native/contracts/test_equilibrium_benchmark_registry.py`
+
+Substeps:
+
+1. Keep bubble, dew, cloud, and shadow as derived subworkflows.
+2. Do not add them as main family rows.
+3. Implement each boundary workflow as a degree-of-freedom swap over the
+   shared phase NLP.
+4. For bubble point, fix liquid or feed composition and solve incipient vapor
+   composition plus boundary `P` or `T`.
+5. For dew point, fix vapor composition and solve incipient liquid composition
+   plus boundary `P` or `T`.
+6. For cloud point, fix parent liquid composition and solve incipient
+   second-liquid composition plus boundary `P` or `T`.
+7. For shadow point, report the incipient phase composition and volume matched
+   to the cloud-point state.
+8. Use Pereira as the shared boundary mixture unless implementation proves it
+   physically unsuitable.
+9. If Pereira is unsuitable for a boundary diagram, stop and select a
+   source-backed neutral binary.
+10. Do not invent a boundary fixture.
+11. Do not add VLLE-specific tests in this stage.
+12. Generate `T-x` and `P-x` traces through continuation with per-point
+    diagnostics.
+13. Record trace point status, seed source, final residuals, and skipped-point
+    reason.
+14. Preserve current public bubble/dew route behavior while generalized
+    derived-workflow tests are added.
+
+Acceptance checks:
+
+- Registry tests prove bubble/dew/cloud/shadow are derived subworkflows.
+- Boundary tests prove fixed/free variable contracts.
+- Diagram tests prove trace generation and diagnostic reporting.
+
+Stop conditions:
+
+- A boundary workflow is promoted to a main family row.
+- Cloud/shadow work becomes a VLLE proof.
+- Boundary workflows duplicate a separate thermodynamic core instead of using
+  the shared GFPE route.
+
+## Stage 11 - Continuous TPD And HELD Stage Ladder
+
+Purpose: replace seed-only deterministic screening with the staged
+phase-discovery evidence required for generalized GFPE admission.
+
+Primary output:
+
+- HELD-stage diagnostics that distinguish continuous TPD, Stage I stability,
+  Stage II dual discovery, and Stage III primal refinement.
+
+References:
+
+- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/algorithms.md`
+- `docs/latex/algorithms.tex`
 - `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
-- future generalized phase-set route owner to be added only after Stage 10
+- `tests/native/contracts/test_generalized_activation_matrix_registry.py`
+- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
 
-Steps:
+Substeps:
 
-1. Define a generalized phase-set data structure with phase count, phase kinds,
-   candidate source, amounts, volumes, compositions, and objective value.
-2. Allow more than two candidate phases after HELD Stage II phase discovery.
+1. Add continuous TPD minimization in volume-composition space.
+2. Report TPD objective, trial composition, trial volume or density, local
+   status, start source, and final residuals.
+3. Add HELD Stage I stability testing with multiple starts.
+4. Report Stage I failure modes separately from instability proof.
+5. Add HELD Stage II dual cutting-plane phase discovery.
+6. Report Stage II upper bounds, lower bounds, candidate phases, and stopping
+   criteria.
+7. Store Stage II candidate phases with replayable route-assembly metadata.
+8. Use the amount-volume Ipopt NLP as HELD Stage III primal refinement.
+9. Record the relation between Stage II bounds and Stage III refined objective.
+10. Check phase-set completeness:
+    no missing lower-free-energy candidate, mass-balance feasibility, no
+    duplicate phase, no collapsed phase, and no unexamined transferable species.
+11. Keep deterministic screening available as a seed source.
+12. Do not fill HELD status fields from deterministic screening.
+13. Promote HELD stage status in the registry only after executable tests
+    exist.
+
+Acceptance checks:
+
+- Tests distinguish deterministic screening, continuous TPD, HELD Stage I,
+  HELD Stage II, and HELD Stage III.
+- Registry rows can name which HELD gates are passed for each family.
+- Production exposure remains false until the relevant HELD ladder is
+  complete.
+
+Stop conditions:
+
+- Local TPD success is treated as global phase-discovery proof.
+- HELD status fields can be satisfied by deterministic screening.
+- Phase-set completeness lacks mass-balance feasibility.
+
+## Stage 12 - Generalized Phase-Set And Multiphase PE
+
+Purpose: extend GFPE from selected two-phase solves to unknown phase count and
+phase-set certification.
+
+Primary output:
+
+- A generalized phase-set route contract that no longer assumes exactly two
+  phases after phase discovery.
+
+References:
+
+- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `src/epcsaft/native/equilibrium/core/variable_layout.h`
+- `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp`
+- future generalized phase-set route owner created after Stage 11
+
+Substeps:
+
+1. Define a phase-set data structure with phase count, phase kinds, candidate
+   sources, amounts, volumes, compositions, objective value, and status.
+2. Allow more than two candidate phases after HELD Stage II discovery.
 3. Assemble material-balance feasibility for arbitrary candidate phase sets.
 4. Select candidate phase sets by feasibility, thermodynamic objective, and
    phase-set completeness diagnostics.
 5. Refine candidate phase sets with the shared amount-volume NLP.
-6. Reject duplicate or collapsed phases after refinement.
-7. Certify every accepted phase against continuous TPD or HELD-discovered
+6. Reject duplicate phases.
+7. Reject collapsed phases.
+8. Certify every accepted phase against continuous TPD or HELD-discovered
    missing phases.
-8. Add benchmark replay for representative neutral, associating, and
-   electrolyte cases only after each base family is validated.
-9. Keep `PE-Generalized Multiphase` not production-exposed until it proves
-   phase-count independence.
+9. Replay representative neutral, associating, and electrolyte cases only
+   after each base family has source-backed proof.
+10. Keep `PE-Generalized Multiphase` not production-exposed until phase-count
+    independence is tested.
 
-Exit evidence:
+Acceptance checks:
 
-- Generalized phase-set tests fail if a lower-free-energy feasible phase set is
-  omitted.
-- Result diagnostics report phase count, phase kinds, phase-set feasibility,
-  and completeness status.
-- No route assumes exactly two phases after entering the generalized
-  multiphase path.
+- Tests fail if a lower-free-energy feasible phase set is omitted.
+- Diagnostics report phase count, phase kinds, feasibility, and completeness.
+- No generalized path assumes exactly two phases after discovery.
 
-Do not proceed if:
+Stop conditions:
 
-- multiphase support is only a loop around two-phase route calls;
-- phase-count assumptions remain hidden in variable layout or diagnostics;
-- representative cases are replayed before their base family proof is stable.
+- Multiphase support is only repeated two-phase calls.
+- Phase-count assumptions remain hidden in variable layout or diagnostics.
+- Representative cases are replayed before their base family proof is stable.
 
-## Stage 12 - Associating PE Admission
+## Stage 13 - Associating GFPE Pretreatment And Proof
 
 Purpose: admit associating phase equilibrium through the GFPE amount-volume
-route, not through a narrow bubble-only path.
+route, not through a narrow boundary-only route.
+
+Primary output:
+
+- Associating GFPE route admission with exact association derivative evidence
+  and source-backed Gross/Sadowski proof data.
 
 References:
 
 - `docs/roadmaps/explicit_association_closure_for_pcsaft.md`
 - `docs/adr/0004-associating-equilibrium-architecture.md`
 - `docs/latex/equations.tex`
-- `docs/algorithms.md` entry `explicit_association_closure_diagnostics`
+- `docs/algorithms.md`
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
 
-Steps:
+Substeps:
 
-1. Choose the production association architecture before implementation:
-   lifted association-site variables with mass-action constraints, or complete
-   implicit association sensitivities.
-2. If lifted variables are chosen, add site-fraction variables to the physical
-   route layout and association mass-action equations to the constraint set.
-3. If implicit sensitivities are chosen, prove complete first and second
-   derivative propagation through the association solve.
-4. Keep reduced explicit association closures as diagnostics unless a route is
+1. Choose the production association architecture before implementation.
+2. Option A: add lifted association-site variables and mass-action constraints.
+3. Option B: use complete implicit association sensitivities.
+4. For lifted variables, add site-fraction variables to the physical route
+   layout.
+5. For lifted variables, add association mass-action equations to the
+   constraint set.
+6. For implicit sensitivities, prove first and second derivative propagation
+   through the association solve.
+7. Keep reduced explicit association closures diagnostic unless a route is
    deliberately exposed as approximate.
-5. Require exact gradient, Jacobian, and Lagrangian Hessian coverage for active
+8. Require exact gradient, Jacobian, and Lagrangian Hessian coverage for active
    association terms before production exposure.
-6. Use Gross/Sadowski 2002 methanol/cyclohexane as the first associating proof.
-7. Add a two-associating-component follow-on such as water/1-pentanol only
-   after the first proof is stable and source-backed.
-8. Reuse neutral GFPE bounds, scaling, transforms, stability, and HELD gates.
-9. Add association-specific postsolve checks:
-   site-fraction bounds, association mass-action residuals, contribution
-   activation, and derivative block coverage.
-10. Keep selector-ineligible associating mixtures out of current neutral public
-    utility routes until the proof gates pass.
+9. Use Gross/Sadowski 2002 methanol/cyclohexane as the first associating proof.
+10. Add a two-associating-component follow-on only after the first proof is
+    stable and source-backed.
+11. Reuse neutral GFPE bounds, scaling, transforms, stability, and HELD gates.
+12. Add association-specific postsolve checks:
+    site-fraction bounds, mass-action residuals, contribution activation, and
+    derivative block coverage.
+13. Keep selector-ineligible associating mixtures out of current neutral public
+    utility routes until proof gates pass.
 
-Exit evidence:
+Acceptance checks:
 
 - Associating proof fixture is source-backed and executable.
-- Association derivative tests prove exact first and second derivative coverage
-  for the chosen architecture.
-- Registry still rejects a narrow associating bubble route as general
-  associating PE proof.
+- Association derivative tests prove exact first and second derivative
+  coverage for the chosen architecture.
+- Registry rejects narrow associating boundary work as general associating PE
+  proof.
 
-Do not proceed if:
+Stop conditions:
 
-- a single bubble-pressure proof is treated as associating TP flash validation;
-- explicit association diagnostics are silently used as exact production
-  equations;
-- association variables are omitted from route metadata.
+- A single bubble-pressure proof is treated as associating TP flash validation.
+- Explicit association diagnostics are silently used as exact production
+  equations.
+- Association variables are omitted from route metadata.
 
-## Stage 13 - Electrolyte Pretreatment And Born SSM+DS Gate
+## Stage 14 - Electrolyte Pretreatment And Born SSM+DS Gate
 
 Purpose: make electrolyte thermodynamics solver-ready before electrolyte PE is
 validated.
+
+Primary output:
+
+- Electrolyte pretreatment records for true species, reduced electroneutral
+  variables, contribution activation, Born SSM+DS derivative readiness, and
+  electrochemical residual projection.
 
 References:
 
@@ -852,69 +1067,72 @@ References:
 - `analyses/paper_validation/2026_khudaida/`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
 
-Steps:
+Substeps:
 
 1. Define true species for salts, ions, neutral solvents, complexes, and any
    phase-restricted species.
-2. Define charges and charge-balance constraints before building the route NLP.
-3. Define reduced electroneutral coordinates per phase.
-4. Define a deterministic lift from reduced coordinates into true species
+2. Define charges for every charged true species.
+3. Define per-phase charge-balance constraints before building the NLP.
+4. Define reduced electroneutral coordinates per phase.
+5. Define a deterministic lift from reduced coordinates into true species
    amounts.
-5. Define a back-lift for diagnostics and result reporting.
-6. Project electrochemical potentials into the reduced electroneutral basis
-   before comparing transfer equilibrium.
-7. Record the active dielectric, Debye-Huckel, Born, SSM, and DS contribution
-   settings in route metadata.
-8. Make the Born SSM+DS path the master Born path.
-9. Make simpler Born modes reduce from the master path rather than owning a
-   separate production route.
-10. Prove exact Hessian support for active Born SSM+DS phase blocks before
+6. Define a back-lift for diagnostics and result reporting.
+7. Project electrochemical potentials into the reduced electroneutral basis.
+8. Compare transfer equilibrium only after projection.
+9. Record active dielectric, Debye-Huckel, Born, SSM, and DS settings.
+10. Make the Born SSM+DS path the master Born path.
+11. Make simpler Born modes reduce from the master path.
+12. Prove exact Hessian support for active Born SSM+DS phase blocks before
     electrolyte PE validation.
-11. Add electrolyte domain diagnostics:
+13. Add electrolyte domain diagnostics:
     charge-balance residuals, ionic-strength margins, concentration bounds,
-    dielectric model domain, Born radius/model domain, and projected-potential
+    dielectric model domain, Born model domain, and projected-potential
     residuals.
-12. Keep electrolyte PE blocked until reduced variables and Born exact Hessian
+14. Keep electrolyte PE blocked until reduced variables and Born exact Hessian
     evidence are in place.
 
-Exit evidence:
+Acceptance checks:
 
-- Reduced electroneutral variable tests prove lift/back-lift consistency.
+- Reduced electroneutral variable tests prove lift and back-lift consistency.
 - Born SSM+DS exact-Hessian proof tests pass for active electrolyte blocks.
-- Electrolyte route diagnostics distinguish charge balance from transfer
+- Electrolyte diagnostics distinguish charge balance from transfer
   equilibrium.
 
-Do not proceed if:
+Stop conditions:
 
-- raw ionic chemical potentials are compared without projection;
-- electrolyte validation runs before the Born SSM+DS exact-Hessian gate;
-- charge neutrality is enforced by hidden clipping instead of declared
+- Raw ionic chemical potentials are compared without projection.
+- Electrolyte validation runs before the Born SSM+DS exact-Hessian gate.
+- Charge neutrality is enforced by hidden clipping instead of declared
   constraints or reduced variables.
 
-## Stage 14 - Electrolyte PE And HELD2.0 Validation
+## Stage 15 - Electrolyte GFPE And HELD2.0 Validation
 
 Purpose: prove strong-electrolyte LLE/TP flash through electrolyte-specific
 phase discovery and certification.
+
+Primary output:
+
+- Source-backed electrolyte GFPE validation using Khudaida first, with HELD2.0
+  and Born SSM+DS exact-Hessian evidence.
 
 References:
 
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
 - `analyses/paper_validation/2026_khudaida/`
-- `docs/papers/` source material when a fixture is promoted into validation
+- `docs/papers/` source material when a fixture is promoted
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
-- future electrolyte route tests
+- future electrolyte GFPE route tests
 
-Steps:
+Substeps:
 
 1. Add electrolyte TPD in the reduced electroneutral variable basis.
-2. Add HELD2.0 phase discovery before claiming electrolyte generalized
-   production readiness.
+2. Add HELD2.0 phase discovery before electrolyte production readiness.
 3. Use Khudaida 2026 electrolyte LLE as the first electrolyte validation
    target.
-4. Treat Held 2014 Figure 6 as a follow-on after its data, units, and
-   conventions are source-backed locally.
-5. Treat Ascani/Sadowski/Held 2022 as a lower-confidence follow-on until its
-   data and convention audit is complete.
+4. Treat Held 2014 Figure 6 as a follow-on after data, units, and conventions
+   are source-backed locally.
+5. Treat Ascani/Sadowski/Held 2022 as a lower-confidence follow-on until data
+   and convention audit is complete.
 6. Certify per-phase charge balance.
 7. Certify total material balance.
 8. Certify pressure consistency where the route is TP.
@@ -926,7 +1144,7 @@ Steps:
 12. Report solvent, ion, salt, and phase-basis outputs in a result shape that
     downstream projects can consume without private EOS code.
 
-Exit evidence:
+Acceptance checks:
 
 - Khudaida electrolyte fixture is executable with declared tolerances.
 - Electrolyte validation reports charge, material, pressure, potential,
@@ -934,66 +1152,73 @@ Exit evidence:
 - Registry rows remain nonproduction until HELD2.0 and Born SSM+DS exact
   Hessian gates pass.
 
-Do not proceed if:
+Stop conditions:
 
-- electrolyte LLE acceptance is based only on composition error;
-- a downstream case-study metric is used as the upstream package validation
-  target;
+- Electrolyte LLE acceptance is based only on composition error.
+- A downstream case-study metric is used as upstream package validation.
 - Held or Ascani follow-ons are promoted without source-backed fixture data.
 
-## Stage 15 - CE And CPE Interface Gates For GFPE
+## Stage 16 - CE And CPE Interface Guards For GFPE
 
-Purpose: define the minimum chemical-equilibrium and combined-equilibrium
-contracts needed so GFPE is not boxed into a nonreactive design.
+Purpose: keep GFPE from being boxed into a nonreactive design while avoiding
+full CE/CPE implementation in this plan.
+
+Primary output:
+
+- Interface constraints showing how future CE/CPE can attach to GFPE without
+  claiming reactive or combined equilibrium support now.
 
 References:
 
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/roadmaps/FULL_ROADMAP.md`
 - `docs/latex/equations.tex`
 - future CE/CPE roadmap files when created
 
-Steps:
+Substeps:
 
-1. Keep CE and CPE as placeholders in the GFPE registry until their equations,
-   standard states, and tests exist.
-2. Define the species-basis interface between GFPE and future CE:
-   true species, element or moiety balances, reaction stoichiometry, and
-   reaction extents.
-3. Define the reaction-affinity residual:
+1. Keep CE and CPE as placeholders in the GFPE registry.
+2. Define the future species-basis interface:
+   true species, elements or moieties, reaction stoichiometry, and reaction
+   extents.
+3. Define the future reaction-affinity residual:
 
    ```text
    A_r = sum_i nu_{r,i} * mu_i
    ```
 
-4. Define the standard-state and reaction-constant convention before any
-   reaction proof.
+4. Require a standard-state and reaction-constant convention before any CE
+   proof.
 5. Ensure GFPE variable layouts can later carry reaction variables or lifted
-   true-species amounts without redesigning the phase route.
-6. Ensure electrolyte reduced variables can coexist with reaction coordinates
-   for future reactive electrolyte LLE.
+   true-species amounts.
+6. Ensure electrolyte reduced variables can coexist with future reaction
+   coordinates.
 7. Define CPE as one simultaneous thermodynamic problem, not a staged phase
    solve plus a staged reaction solve accepted as final proof.
 8. Keep homogeneous CE proof separate from CPE proof.
 9. Keep CPE production blocked until PE and CE proof gates both exist.
 
-Exit evidence:
+Acceptance checks:
 
 - GFPE docs state the CE/CPE boundary without claiming implementation.
 - Variable-layout and route metadata design can represent future reaction
   variables.
 - Registry tests keep CE and CPE placeholders not production-exposed.
 
-Do not proceed if:
+Stop conditions:
 
-- CE or CPE placeholders are used to claim reactive package capability;
-- reaction standard-state conventions are implicit;
-- staged PE plus staged CE is treated as simultaneous CPE proof.
+- CE or CPE placeholders are used as capability claims.
+- Reaction standard-state conventions are implicit.
+- Staged PE plus staged CE is treated as simultaneous CPE proof.
 
-## Stage 16 - Registry, Capability, And Benchmark Closure
+## Stage 17 - Registry, Capability, And Benchmark Closure
 
 Purpose: turn GFPE implementation evidence into public capability claims only
 after the relevant proof gates pass.
+
+Primary output:
+
+- Registry rows, capability evidence, and benchmark fixtures that make exactly
+  the claims proven by executable tests.
 
 References:
 
@@ -1004,20 +1229,19 @@ References:
 - `tests/native/contracts/test_equilibrium_activation_capabilities.py`
 - `tests/workflows/repo/test_workflow_entrypoints.py`
 
-Steps:
+Substeps:
 
 1. Promote a family row only when its stage-specific gates are executable and
    tested.
 2. Keep benchmark cases PE-focused:
    Pereira first for neutral, Gross/Sadowski first for associating, Khudaida
-   first for electrolyte, then Held and Ascani as lower-confidence follow-ons.
+   first for electrolyte, then Held and Ascani as follow-ons.
 3. Record evidence tier, fixture status, source path, active equations,
    derivative coverage, stability coverage, and postsolve certification status
    for each benchmark.
 4. Keep `epcsaft.capabilities()` honest:
    current public utility routes are separate from generalized GFPE rows.
-5. Do not remove existing public route behavior when a GFPE family remains
-   planned.
+5. Preserve existing public route behavior when a GFPE family remains planned.
 6. Add negative tests for stale source references, deleted narrow roadmap file
    references, and raw-response note citations.
 7. Add positive tests for derived subworkflow placement after neutral TP flash.
@@ -1028,46 +1252,48 @@ Steps:
 10. Before handoff, run focused registry and route contract tests in proportion
     to the edited surface.
 
-Exit evidence:
+Acceptance checks:
 
 - Registry contract tests pass.
-- Capability tests pass.
+- Capability tests pass for edited capability evidence.
 - Benchmark tests pass for admitted fixtures.
 - Public docs and capability output make the same claims.
 - No downstream-specific application metric is exposed as a package API.
 
-Do not proceed if:
+Stop conditions:
 
-- a registry row is promoted before proof gates pass;
-- a capability claim cannot point to executable evidence;
-- a downstream repository becomes the source of package route semantics.
+- A registry row is promoted before proof gates pass.
+- A capability claim cannot point to executable evidence.
+- A downstream repository becomes the source of package route semantics.
 
-## Stage Dependency Summary
+## Dependency Chain
 
 The GFPE dependency chain is:
 
 ```text
-0 doctrine and registry lock
+0 doctrine, registry, and scope lock
 1 public request pretreatment
-2 species and family classification
-3 parameter and EOS contribution pretreatment
-4 canonical basis and variable layout
-5 bounds, scaling, and transforms
-6 seed and stability pretreatment
-7 shared NLP and Ipopt infrastructure
-8 neutral TP flash proof
-9 derived boundary workflows
-10 continuous TPD and HELD
-11 generalized multiphase PE
-12 associating PE
-13 electrolyte pretreatment and Born SSM+DS
-14 electrolyte PE and HELD2.0
-15 CE/CPE interface gates
-16 registry, capability, and benchmark closure
+2 thermodynamic input basis pretreatment
+3 species, phase eligibility, and family classification
+4 parameter and EOS contribution pretreatment
+5 physical basis, lifts, and variable layout
+6 bounds, scaling, variable transform, and domain diagnostics
+7 seed, candidate, and stability pretreatment
+8 shared NLP and Ipopt infrastructure gate
+9 neutral TP flash source-backed proof
+10 derived boundary workflows and diagram traces
+11 continuous TPD and HELD stage ladder
+12 generalized phase-set and multiphase PE
+13 associating GFPE pretreatment and proof
+14 electrolyte pretreatment and Born SSM+DS gate
+15 electrolyte GFPE and HELD2.0 validation
+16 CE and CPE interface guards for GFPE
+17 registry, capability, and benchmark closure
 ```
 
-The earliest useful implementation slices are therefore not new phase families.
-They are pretreatment contracts, diagnostics, bounds/scaling/transform
-contracts, and sparse NLP derivative contracts. New families should wait until
-the neutral GFPE proof and phase-discovery gates make the acceptance path
+The earliest useful implementation slices are not new phase families. They are
+pretreatment records, selector diagnostics, parameter readiness checks,
+variable-layout contracts, bounds/scaling/transform contracts, seed and
+candidate diagnostics, and sparse NLP derivative contracts. New family
+admission should wait until those artifacts make the neutral GFPE proof
 auditable.
