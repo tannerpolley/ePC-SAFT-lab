@@ -393,15 +393,18 @@ Stage 10 source-backed ePC-SAFT-compatible neutral mixture unless a later
 implementation proves it physically unsuitable; it must not invent a synthetic
 validation fixture. Do not add VLLE-specific tests in this step.
 
-Current bubble/dew runtime routes are not Stage 11 completion evidence by
-themselves. Stage 11 requires strict Ipopt convergence for every requested
-boundary point: `solver_status == success`, `application_status ==
-solve_succeeded`, and no selected seed attempt ending in
-`max_iterations_exceeded`. Acceptable-level points, tiny steps, feasible
-points, postsolve-accepted finite variables, or any iteration-limit seed path
-remain diagnostic evidence only. Routine validation must stay contract-only
-unless a single named debug route point is requested; multi-point `T-x` or
-`P-x` sweeps require an explicit sweep opt-in.
+Current bubble/dew runtime routes are Stage 11 evidence only through the
+derived-boundary checker, not by ad hoc public-route success. Stage 11 requires
+strict Ipopt convergence for every requested boundary point: `solver_status ==
+success`, `application_status == solve_succeeded`, and no selected seed attempt
+ending in `max_iterations_exceeded`. Acceptable-level points, tiny steps,
+feasible points, postsolve-accepted finite variables, or any iteration-limit
+seed path remain diagnostic evidence only. The current hydrocarbon-workbook
+fixture now verifies strict bubble/dew `P-x` and `T-x` route traces when the
+checker is run with explicit sweep opt-in. Routine validation must stay
+contract-only unless a single named debug route point is requested; multi-point
+`T-x` or `P-x` traces require `--allow-route-sweep` and an explicit
+`--trace-point-count`.
 
 The Stage 10 neutral proof gate is explicit in
 `docs/roadmaps/equilibrium_benchmark_registry.yaml`. A neutral TP-flash case is
@@ -453,7 +456,10 @@ Use `--json --contracts-only` for the cheap derived-workflow contract check.
 Use `--json --run-current-boundary-route --route <route> --debug
 --require-complete` only when diagnosing one current bubble/dew route; the
 checker forwards Ipopt `print_level=5` output to stderr and fails closed when
-the route does not strictly converge.
+the route does not strictly converge. Use
+`--json --run-current-boundary-route --allow-route-sweep --trace-point-count
+<N> --require-complete` only for intentional Stage 11 trace proof; it is not a
+routine validation lane.
 
 ## Family Proof Ladder
 

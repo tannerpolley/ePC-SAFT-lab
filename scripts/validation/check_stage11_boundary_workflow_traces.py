@@ -284,7 +284,10 @@ def _route_trace_point(
     seed_attempts = _seed_attempt_summary(route_payload)
     iteration_limit_attempts = _iteration_limit_seed_attempts(route_payload)
     strict = _strict_convergence(route_payload, iteration_limit_attempts)
-    accepted_seed = next((attempt["seed_name"] for attempt in seed_attempts if attempt.get("accepted")), None)
+    selected_seed = route_payload.get("seed_name") or next(
+        (attempt["seed_name"] for attempt in seed_attempts if attempt.get("accepted")),
+        None,
+    )
     return {
         "route": route,
         "diagram_target": spec["diagram_target"],
@@ -299,7 +302,7 @@ def _route_trace_point(
         "application_status": route_payload.get("application_status"),
         "strict_convergence": strict,
         "iteration_limit_seed_attempts": iteration_limit_attempts,
-        "seed_source": accepted_seed,
+        "seed_source": selected_seed,
         "seed_attempts": seed_attempts,
         "max_iterations": route_payload.get("max_iterations"),
         "iteration_count": route_payload.get("iteration_count"),

@@ -21,6 +21,7 @@ namespace {
 constexpr double kInitialPressure = 1.0e5;
 constexpr double kInitialTemperature = 300.0;
 constexpr double kGasConstant = 8.31446261815324;
+constexpr double kPressureConstraintScaleFloor = 1.0e5;
 constexpr double kTwoPhaseFlashFeedBasis = 2.0;
 constexpr double kSeparatedLiquidDensity = 8000.0;
 constexpr double kMinimumLiquidVolume = 1.0e-6;
@@ -66,6 +67,22 @@ void require_positive_finite(double value, const std::string& label) {
         return;
     }
     throw ValueError(label + " must be positive and finite.");
+}
+
+double pressure_constraint_scale(double reference_pressure) {
+    return 1.0 / std::max(kPressureConstraintScaleFloor, std::abs(reference_pressure));
+}
+
+void apply_pressure_constraint_scaling(
+    NlpScaling& scaling,
+    int pressure_row_start,
+    int phase_count,
+    double reference_pressure
+) {
+    const double scale = pressure_constraint_scale(reference_pressure);
+    for (int phase = 0; phase < phase_count; ++phase) {
+        scaling.constraints[static_cast<std::size_t>(pressure_row_start + phase)] = scale;
+    }
 }
 
 std::vector<double> normalized_positive_values(const std::vector<double>& values, const std::string& label) {
@@ -395,6 +412,81 @@ std::vector<double> volatility_ranked_k_values(
     return k_values;
 }
 
+std::vector<double> boundary_partner_composition_from_k_values(
+    const add_args& args,
+    const std::vector<double>& fixed_composition,
+    int fixed_phase_index,
+    const std::string& problem_name,
+    double alpha
+) {
+    const std::vector<double> k_values = volatility_ranked_k_values(
+        args,
+        fixed_composition,
+        problem_name,
+        alpha
+    );
+    std::vector<double> partner;
+    partner.reserve(fixed_composition.size());
+    for (std::size_t index = 0; index < fixed_composition.size(); ++index) {
+        const double k_value = k_values[index];
+        require_positive_finite(k_value, problem_name + " boundary K-value");
+        partner.push_back(
+            fixed_phase_index == 0
+                ? fixed_composition[index] * k_value
+                : fixed_composition[index] / k_value
+        );
+    }
+    return normalized_positive_values(partner, problem_name + " boundary K-value partner composition");
+}
+
+std::vector<double> build_pressure_route_initial_variables_with_partner(
+    const add_args& args,
+    const std::vector<double>& fixed_composition,
+    const std::vector<double>& partner_composition,
+    int fixed_phase_index,
+    double temperature,
+    const std::string& problem_name,
+    DensitySeedMode density_seed_mode
+) {
+    require_size(partner_composition, fixed_composition.size(), problem_name + " boundary partner composition");
+    std::vector<double> out;
+    out.reserve(2 * (fixed_composition.size() + 1) + 1);
+    for (int phase = 0; phase < 2; ++phase) {
+        const std::vector<double>& composition = phase == fixed_phase_index ? fixed_composition : partner_composition;
+        out.insert(out.end(), composition.begin(), composition.end());
+        const double density = density_seed_mode == DensitySeedMode::PhasePressureRoot
+            ? phase_density_root_seed(args, temperature, kInitialPressure, composition, phase, problem_name)
+            : separated_phase_role_density_seed(temperature, kInitialPressure, phase, problem_name);
+        out.push_back(1.0 / density);
+    }
+    out.push_back(kInitialPressure);
+    return out;
+}
+
+std::vector<double> build_temperature_route_initial_variables_with_partner(
+    const add_args& args,
+    const std::vector<double>& fixed_composition,
+    const std::vector<double>& partner_composition,
+    int fixed_phase_index,
+    double target_pressure,
+    const std::string& problem_name,
+    DensitySeedMode density_seed_mode
+) {
+    require_size(partner_composition, fixed_composition.size(), problem_name + " boundary partner composition");
+    std::vector<double> out;
+    out.reserve(2 * (fixed_composition.size() + 1) + 1);
+    for (int phase = 0; phase < 2; ++phase) {
+        const std::vector<double>& composition = phase == fixed_phase_index ? fixed_composition : partner_composition;
+        out.insert(out.end(), composition.begin(), composition.end());
+        const double density = density_seed_mode == DensitySeedMode::PhasePressureRoot
+            ? phase_density_root_seed(args, kInitialTemperature, target_pressure, composition, phase, problem_name)
+            : separated_phase_role_density_seed(kInitialTemperature, target_pressure, phase, problem_name);
+        out.push_back(1.0 / density);
+    }
+    out.push_back(kInitialTemperature);
+    return out;
+}
+
 std::vector<double> build_flash_route_initial_variables(
     const add_args& args,
     const std::vector<double>& feed_composition,
@@ -539,6 +631,40 @@ std::vector<NamedInitialVariables> pressure_route_seed_candidates(
                 DensitySeedMode::PhasePressureRoot
             )
         );
+        try {
+            const std::vector<double> partner = boundary_partner_composition_from_k_values(
+                args,
+                fixed_composition,
+                fixed_phase_index,
+                problem_name,
+                2.2
+            );
+            append_if_feasible(
+                "volatility_k_partner_density_root",
+                build_pressure_route_initial_variables_with_partner(
+                    args,
+                    fixed_composition,
+                    partner,
+                    fixed_phase_index,
+                    temperature,
+                    problem_name,
+                    DensitySeedMode::PhasePressureRoot
+                )
+            );
+            append_if_feasible(
+                "volatility_k_partner_phase_role",
+                build_pressure_route_initial_variables_with_partner(
+                    args,
+                    fixed_composition,
+                    partner,
+                    fixed_phase_index,
+                    temperature,
+                    problem_name,
+                    DensitySeedMode::SeparatedPhaseRole
+                )
+            );
+        } catch (const std::exception&) {
+        }
     }
     out.push_back({
         "canonical_shifted_partner_phase",
@@ -609,6 +735,40 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
             DensitySeedMode::PhasePressureRoot
         )
     );
+    try {
+        const std::vector<double> partner = boundary_partner_composition_from_k_values(
+            args,
+            fixed_composition,
+            fixed_phase_index,
+            problem_name,
+            2.2
+        );
+        append_if_feasible(
+            "volatility_k_partner_density_root",
+            build_temperature_route_initial_variables_with_partner(
+                args,
+                fixed_composition,
+                partner,
+                fixed_phase_index,
+                target_pressure,
+                problem_name,
+                DensitySeedMode::PhasePressureRoot
+            )
+        );
+        append_if_feasible(
+            "volatility_k_partner_phase_role",
+            build_temperature_route_initial_variables_with_partner(
+                args,
+                fixed_composition,
+                partner,
+                fixed_phase_index,
+                target_pressure,
+                problem_name,
+                DensitySeedMode::SeparatedPhaseRole
+            )
+        );
+    } catch (const std::exception&) {
+    }
     out.push_back({
         "canonical_shifted_partner_phase",
         build_temperature_route_initial_variables(
@@ -772,6 +932,19 @@ int neutral_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
         return 1;
     }
     return 0;
+}
+
+bool strict_ipopt_route_success(const NeutralTwoPhaseEosRouteResult& result) {
+    return result.accepted
+        && result.solver_status == "success"
+        && result.application_status == "solve_succeeded";
+}
+
+int strict_boundary_route_quality(const NeutralTwoPhaseEosRouteResult& result) {
+    if (strict_ipopt_route_success(result)) {
+        return 4;
+    }
+    return neutral_route_quality(result);
 }
 
 std::string certified_postsolve_status(const NeutralTwoPhaseEosPostsolve& postsolve) {
@@ -1620,8 +1793,14 @@ public:
         NlpScaling out;
         out.objective = 1.0;
         out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
-        out.variables.back() = 1.0e-5;
+        out.variables.back() = pressure_constraint_scale(kInitialPressure);
         out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
+        apply_pressure_constraint_scaling(
+            out,
+            composition_constraint_count() + phase_count() + charge_constraint_count(),
+            phase_count(),
+            kInitialPressure
+        );
         return out;
     }
 
@@ -2086,6 +2265,12 @@ public:
         out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
         out.variables.back() = 1.0e-2;
         out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
+        apply_pressure_constraint_scaling(
+            out,
+            composition_constraint_count() + phase_count(),
+            phase_count(),
+            target_pressure_
+        );
         return out;
     }
 
@@ -2776,7 +2961,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         if (!can_postsolve) {
             result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
-            if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+            if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
                 best = result;
                 have_best = true;
             }
@@ -2804,7 +2989,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         result.accepted = result.postsolve.accepted;
         result.status = result.accepted ? "accepted" : "postsolve_rejected";
         attempts.push_back(neutral_seed_attempt_from_result(result));
-        if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+        if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
             best = result;
             have_best = true;
         }
@@ -2813,7 +2998,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
 
     if (!options.initial_variables.empty()) {
         const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
-        if (continuation.accepted) {
+        if (strict_ipopt_route_success(continuation)) {
             best.seed_attempts = attempts;
             return best;
         }
@@ -2826,7 +3011,7 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
         attempt_options.initial_bound_upper_multipliers.clear();
         attempt_options.initial_constraint_multipliers.clear();
         const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
-        if (attempt.accepted) {
+        if (strict_ipopt_route_success(attempt)) {
             break;
         }
     }
@@ -2908,7 +3093,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         if (!can_postsolve) {
             result.status = "solver_rejected";
             attempts.push_back(neutral_seed_attempt_from_result(result));
-            if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+            if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
                 best = result;
                 have_best = true;
             }
@@ -2937,7 +3122,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         result.accepted = result.postsolve.accepted;
         result.status = result.accepted ? "accepted" : "postsolve_rejected";
         attempts.push_back(neutral_seed_attempt_from_result(result));
-        if (!have_best || neutral_route_quality(result) > neutral_route_quality(best)) {
+        if (!have_best || strict_boundary_route_quality(result) > strict_boundary_route_quality(best)) {
             best = result;
             have_best = true;
         }
@@ -2946,7 +3131,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
 
     if (!options.initial_variables.empty()) {
         const NeutralTwoPhaseEosRouteResult continuation = run_attempt("continuation_state", options);
-        if (continuation.accepted) {
+        if (strict_ipopt_route_success(continuation)) {
             best.seed_attempts = attempts;
             return best;
         }
@@ -2959,7 +3144,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         attempt_options.initial_bound_upper_multipliers.clear();
         attempt_options.initial_constraint_multipliers.clear();
         const NeutralTwoPhaseEosRouteResult attempt = run_attempt(seed.seed_name, attempt_options);
-        if (attempt.accepted) {
+        if (strict_ipopt_route_success(attempt)) {
             break;
         }
     }

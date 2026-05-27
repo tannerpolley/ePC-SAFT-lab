@@ -290,7 +290,7 @@ derived_subworkflows:
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: [bubble_pressure, bubble_temperature]
-    current_convergence_status: diagnostic_only_not_stage11_complete
+    current_convergence_status: stage11_current_fixture_strict_trace_verified
     fixed_variables: [temperature_or_pressure, liquid_or_feed_composition]
     free_variables: [incipient_vapor_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
@@ -305,7 +305,7 @@ derived_subworkflows:
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: [dew_pressure, dew_temperature]
-    current_convergence_status: diagnostic_only_not_stage11_complete
+    current_convergence_status: stage11_current_fixture_strict_trace_verified
     fixed_variables: [temperature_or_pressure, vapor_composition]
     free_variables: [incipient_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]

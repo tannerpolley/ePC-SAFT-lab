@@ -143,6 +143,15 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
         assert "strict_ipopt_convergence" in row["acceptance_checks"], label
         assert "no_implicit_route_sweep" in row["acceptance_checks"], label
 
+    assert subworkflows["Bubble point"]["current_convergence_status"] == (
+        "stage11_current_fixture_strict_trace_verified"
+    )
+    assert subworkflows["Dew point"]["current_convergence_status"] == (
+        "stage11_current_fixture_strict_trace_verified"
+    )
+    assert subworkflows["Cloud point"]["current_convergence_status"] == "planned_not_executable"
+    assert subworkflows["Shadow point"]["current_convergence_status"] == "planned_not_executable"
+
 
 def test_deterministic_screening_is_not_called_full_held() -> None:
     registry = _registry()

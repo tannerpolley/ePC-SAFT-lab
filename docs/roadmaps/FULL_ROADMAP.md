@@ -31,7 +31,9 @@ parity or a source-backed ePC-SAFT reparameterization exists.
 Stage 11 boundary diagnostics follow the same rule: routine checks are
 contract-only, one named route point is the debug unit, and any Ipopt
 acceptable-point, tiny-step, feasible-point, or iteration-limit seed path is
-not completion evidence.
+not completion evidence. Current bubble/dew `P-x` and `T-x` trace proof is
+available only through the explicit Stage 11 checker sweep opt-in, not through
+routine validation.
 
 `docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
 
