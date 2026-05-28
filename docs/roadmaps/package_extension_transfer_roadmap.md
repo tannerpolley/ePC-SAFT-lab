@@ -390,6 +390,19 @@ Boundary rules:
 - `epcsaft_regression` must not require Ipopt unless the equilibrium-target
   integration lane is explicitly selected.
 
+Current internal workspace checkpoint:
+
+- The root project is now a uv workspace with extension package shells at
+  `packages/epcsaft-equilibrium` and `packages/epcsaft-regression`.
+- The extension shells are packaging/build targets only; they do not re-export
+  current monorepo `Equilibrium` or `Regression` objects.
+- `provider_native_sdk_v1` is the provider-owned native SDK discovery contract,
+  exposed through `epcsaft.provider_native_sdk()` and backed by a native
+  `_native_provider_sdk_contract` probe.
+- Full migration still requires moving equilibrium and regression Python/native
+  implementation into those package roots and removing the transition exports at
+  a coordinated release boundary.
+
 Implementation order:
 
 1. Add import-boundary tests.

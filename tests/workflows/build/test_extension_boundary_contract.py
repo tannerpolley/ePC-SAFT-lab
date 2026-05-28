@@ -78,3 +78,19 @@ def test_native_boundary_contract_defines_extraction_proof_matrix() -> None:
         "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF",
     ):
         assert proof in text
+
+
+def test_provider_native_sdk_contract_is_bound_to_runtime_and_native_metadata() -> None:
+    contract = _read(REPO_ROOT / "docs" / "contracts" / "provider_native_sdk_v1.md")
+    runtime_init = _read(REPO_ROOT / "src" / "epcsaft" / "runtime" / "__init__.py")
+    package_init = _read(REPO_ROOT / "src" / "epcsaft" / "__init__.py")
+    native_stub = _read(REPO_ROOT / "src" / "epcsaft" / "_core.pyi")
+    native_module = _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
+
+    assert "Provider native SDK contract id: `provider_native_sdk_v1`." in contract
+    assert "epcsaft_provider_native" in contract
+    assert "`epcsaft._core` is not the provider-native SDK." in contract
+    assert "provider_native_sdk" in runtime_init
+    assert "provider_native_sdk" in package_init
+    assert "_native_provider_sdk_contract" in native_stub
+    assert "_native_provider_sdk_contract" in native_module

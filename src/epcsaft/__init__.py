@@ -25,7 +25,7 @@ from epcsaft.frontend import Equilibrium, Mixture, Regression, State
 from epcsaft.model.options import MissingModelParameterError, ModelOptions
 from epcsaft.model.parameters import ParameterSet
 from epcsaft.model.templates import create_input_template
-from epcsaft.runtime import __version__, capabilities, runtime_build_info
+from epcsaft.runtime import __version__, capabilities, provider_native_sdk, runtime_build_info
 
 __all__ = [
     "Equilibrium",
@@ -40,5 +40,6 @@ __all__ = [
     "__version__",
     "capabilities",
     "create_input_template",
+    "provider_native_sdk",
     "runtime_build_info",
 ]

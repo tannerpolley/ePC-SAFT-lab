@@ -68,6 +68,12 @@ dev = [
 package = false
 default-groups = ["dev"]
 
+[tool.uv.workspace]
+members = [
+    "packages/epcsaft-equilibrium",
+    "packages/epcsaft-regression",
+]
+
 [tool.scikit-build]
 minimum-version = "0.12"
 build-dir = "build/{wheel_tag}"

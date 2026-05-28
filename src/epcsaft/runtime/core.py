@@ -451,6 +451,8 @@ def capabilities() -> dict[str, object]:
         "package": "epcsaft",
         "owner": "core_provider",
         "contract_id": "provider_api_v1",
+        "native_sdk_contract_id": "provider_native_sdk_v1",
+        "native_sdk_target": "epcsaft_provider_native",
         "native_dependencies": {
             "cppad": cppad_capability,
         },

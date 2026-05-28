@@ -8,6 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 CONTRACTS = {
     "provider": REPO_ROOT / "docs" / "contracts" / "provider_api_v1.md",
+    "provider_native": REPO_ROOT / "docs" / "contracts" / "provider_native_sdk_v1.md",
     "extension": REPO_ROOT / "docs" / "contracts" / "extension_compatibility.md",
     "native": REPO_ROOT / "docs" / "contracts" / "native_extension_boundary.md",
 }
@@ -23,6 +24,7 @@ def test_package_extension_contract_docs_exist_and_share_status() -> None:
         assert "Status: pre-extraction contract." in text
 
     assert "provider_api_v1" in _read(CONTRACTS["provider"])
+    assert "provider_native_sdk_v1" in _read(CONTRACTS["provider_native"])
     assert "Final package ownership" in _read(CONTRACTS["extension"])
     assert "Target Native Ownership" in _read(CONTRACTS["native"])
 
@@ -92,8 +94,24 @@ def test_runtime_capabilities_are_separable_by_future_package_owner() -> None:
     }
     views = capabilities["package_views"]
     assert views["provider"]["reports_only_provider_capabilities_after_split"] is True
+    assert views["provider"]["native_sdk_contract_id"] == "provider_native_sdk_v1"
     assert views["equilibrium"]["forbidden_default_dependencies"] == ["ceres"]
     assert views["regression"]["forbidden_default_dependencies"] == ["ipopt"]
+
+
+def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() -> None:
+    sdk = epcsaft.provider_native_sdk()
+
+    assert sdk["contract_id"] == "provider_native_sdk_v1"
+    assert sdk["provider_api_contract_id"] == "provider_api_v1"
+    assert sdk["owner_package"] == "epcsaft"
+    assert sdk["native_target"] == "epcsaft_provider_native"
+    assert sdk["required_native_dependencies"] == ["cppad", "eigen"]
+    assert sdk["forbidden_native_dependencies"] == ["ceres", "ipopt"]
+    assert sdk["extension_consumers"] == ["epcsaft-equilibrium", "epcsaft-regression"]
+    assert "epcsaft._core" not in sdk["stable_python_surface"]
+    assert sdk["native_contract_exported"] is True
+    assert sdk["native_metadata"]["native_target"] == "epcsaft_provider_native"
 
 
 def test_issue_tracker_and_downstream_docs_are_transfer_aware() -> None:

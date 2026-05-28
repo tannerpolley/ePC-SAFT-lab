@@ -763,6 +763,18 @@ PYBIND11_MODULE(_core, m) {
     m.def("_native_cppad_smoke", []() {
         return cppad_smoke_to_dict(epcsaft::native::cppad_support::cppad_square_smoke_derivative(3.0));
     });
+    m.def("_native_provider_sdk_contract", []() {
+        py::dict out;
+        out["contract_id"] = "provider_native_sdk_v1";
+        out["provider_api_contract_id"] = "provider_api_v1";
+        out["owner_package"] = "epcsaft";
+        out["native_target"] = "epcsaft_provider_native";
+        out["cppad_status"] = epcsaft::native::cppad_support::cppad_build_status();
+        out["required_native_dependencies"] = std::vector<std::string>{"cppad", "eigen"};
+        out["forbidden_native_dependencies"] = std::vector<std::string>{"ceres", "ipopt"};
+        out["extension_consumers"] = std::vector<std::string>{"epcsaft-equilibrium", "epcsaft-regression"};
+        return out;
+    });
     m.def("_native_ceres_smoke", []() {
         py::dict out;
 #ifdef EPCSAFT_HAS_CERES

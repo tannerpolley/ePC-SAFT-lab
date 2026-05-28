@@ -11,6 +11,7 @@ The reset public API is intentionally small. Import these names from
 - ``ParameterSet``
 - ``ModelOptions``
 - ``create_input_template``
+- ``provider_native_sdk``
 
 Import user-facing workflows from the package root. Native bridge modules are
 internal implementation details.
@@ -89,5 +90,7 @@ Runtime Metadata
 ----------------
 
 .. autofunction:: epcsaft.runtime_build_info
+
+.. autofunction:: epcsaft.provider_native_sdk
 
 .. autofunction:: epcsaft.capabilities

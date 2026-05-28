@@ -17,6 +17,7 @@ It records the boundary that must be preserved before `epcsaft-equilibrium` or
 - `State`
 - `create_input_template(...)`
 - `runtime_build_info()`
+- `provider_native_sdk()`
 - provider-scoped `capabilities()`
 - `InputError`, `SolutionError`, and model-parameter errors
 
@@ -108,6 +109,11 @@ Native code may still live in one monorepo `_core` module during the transition.
 Before extraction, the native boundary must define provider-owned symbols and
 extension-owned symbols so provider-only, equilibrium, regression, and
 integration validation can be run separately.
+
+Provider-native SDK discovery is exposed through `provider_native_sdk()` and
+the `provider_native_sdk_v1` contract. That SDK describes the provider-owned
+native target and dependency boundary; it does not make `_core` a stable
+extension ABI.
 
 ## Capability Contract
 

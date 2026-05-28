@@ -14,6 +14,7 @@ State: Any
 __version__: str
 capabilities: Any
 create_input_template: Any
+provider_native_sdk: Any
 runtime_build_info: Any
 
 __all__: list[str]

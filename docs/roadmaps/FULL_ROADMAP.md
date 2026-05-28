@@ -112,6 +112,7 @@ fit_pure_parameters(...)
 fit_binary_parameters(...)
 fit_liquid_electrolyte_parameters(...)
 epcsaft.capabilities()
+epcsaft.provider_native_sdk()
 ```
 
 Downstream projects compute application metrics from generic outputs.
@@ -143,6 +144,9 @@ Current API orientation for agents:
   `capability_evidence` as the authoritative public capability contract. After
   extraction, `epcsaft.capabilities()` reports provider capabilities only and
   extension packages own their own capability reports.
+- Treat `epcsaft.provider_native_sdk()` as the provider-owned native SDK
+  discovery surface for future extension builds. It does not make
+  `epcsaft._core` a stable extension ABI.
 
 ---
 

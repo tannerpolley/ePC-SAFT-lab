@@ -104,6 +104,8 @@ Use these imports for current monorepo code:
 * ``from epcsaft import ParameterSet, ModelOptions`` for parameter data and
   model formulation choices.
 * ``from epcsaft import create_input_template`` for reset input scaffolds.
+* ``from epcsaft import provider_native_sdk`` for provider-native SDK
+  discovery during the package-extension transition.
 * current explicit benchmark or analysis workflows for package-owned timing and smoke claims.
 * ``epcsaft.capabilities()`` and ``epcsaft.runtime_build_info()`` for runtime
   capability metadata.
@@ -130,6 +132,10 @@ not depend on benchmark entrypoints or generated analysis artifacts.
 After the split, extension packages import the core provider contract instead
 of reaching into private core modules. Core must not import extension packages
 by default.
+
+Extension packages that need native-provider build metadata use the
+``provider_native_sdk_v1`` contract exposed by ``provider_native_sdk()``. The
+private ``_core`` pybind module is not the native SDK or a stable extension ABI.
 
 Compatibility Policy
 --------------------

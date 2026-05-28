@@ -3,8 +3,8 @@
 Status: pre-extraction contract.
 
 This contract defines the native build and linkage boundary that must be proven
-before package extraction. It records the target boundary; it does not implement
-the CMake split in this pass.
+before package extraction. It records the target boundary and the current
+transition implementation inside one source repository.
 
 ## Current State
 
@@ -70,6 +70,11 @@ can later move without hidden compatibility paths.
 Extensions must not use private `_core` names as a stable Python API. A future
 native adapter may be documented only after provider-owned symbols and extension
 symbols are separated and tested.
+
+The provider-native SDK discovery surface is `provider_native_sdk_v1`, exposed
+through `epcsaft.provider_native_sdk()` and mirrored by the native
+`_native_provider_sdk_contract` probe. That probe describes the provider-owned
+target and dependency boundary; it does not make `_core` the extension ABI.
 
 ## Proof Matrix
 
