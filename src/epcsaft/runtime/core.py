@@ -337,7 +337,6 @@ def capabilities() -> dict[str, object]:
     build_info = runtime_build_info()
     native_dependencies = build_info["native_dependencies"]  # type: ignore[index]
     cppad = dict(native_dependencies["cppad"])  # type: ignore[index]
-    regression_public_production_supported = ["m", "s", "e", "d_born", "k_ij", "f_solv"]
     cppad_capability = {
         **cppad,
         "scope": "package-wide AD substrate; production derivative routes are listed in coverage_matrix",
@@ -398,15 +397,6 @@ def capabilities() -> dict[str, object]:
                         "d_born",
                         "f_solv",
                         "relative_permittivity",
-                    ],
-                    "regression_public_production_supported": list(
-                        regression_public_production_supported
-                    ),
-                    "not_optimizer_support": [
-                        "e_assoc",
-                        "vol_a",
-                        "l_ij",
-                        "k_hb_ij",
                     ],
                     "production_scope": {
                         "e_assoc": "pure_associating_component_parameter_only",

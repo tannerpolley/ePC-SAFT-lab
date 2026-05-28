@@ -29,14 +29,15 @@ def test_capabilities_expose_property_derivative_result_apis() -> None:
     assert "unsupported" not in str(payload["backend_labels"])
     parameter_families = payload["parameter_families"]
     assert "state_property_derivative_supported" in parameter_families
-    assert "regression_public_production_supported" in parameter_families
+    assert "regression_public_production_supported" not in parameter_families
     assert "production_supported" not in parameter_families
     assert {"e_assoc", "vol_a", "l_ij", "k_hb_ij"}.issubset(
         set(parameter_families["state_property_derivative_supported"])
     )
-    assert {"e_assoc", "vol_a", "l_ij", "k_hb_ij"}.isdisjoint(
-        set(parameter_families["regression_public_production_supported"])
-    )
+    assert parameter_families["production_scope"]["e_assoc"] == "pure_associating_component_parameter_only"
+    assert parameter_families["production_scope"]["vol_a"] == "pure_associating_component_parameter_only"
+    assert parameter_families["production_scope"]["l_ij"] == "binary_pair_including_active_association"
+    assert parameter_families["production_scope"]["k_hb_ij"] == "active_association_binary_pair_only"
 
 
 def test_core_type_stub_declares_association_component_parameter_binding() -> None:

@@ -65,7 +65,8 @@ The current checkout is still a transition monorepo, not real extraction:
 - `packages/epcsaft-regression` is currently a thin shell and does not own the
   native regression implementation;
 - root `epcsaft` still exports `Regression`;
-- provider runtime metadata still reports regression transition capability data;
+- provider runtime metadata is provider-scoped, while regression transition
+  capability data is staged under `packages/epcsaft-regression`;
 - this is not yet true provider/extension extraction.
 
 These facts are the starting point for the roadmap. They are not acceptable as

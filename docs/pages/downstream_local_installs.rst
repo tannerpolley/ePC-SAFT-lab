@@ -157,7 +157,8 @@ workflows:
 
    provider_caps = epcsaft.capabilities()
    equilibrium_caps = epcsaft_equilibrium.capabilities()
-   assert provider_caps["package_ownership"]["provider"] == "epcsaft"
+   assert provider_caps["package"] == "epcsaft"
+   assert provider_caps["owner"] == "core_provider"
    assert equilibrium_caps["production_families"] == [
        "neutral_tp_flash",
        "neutral_lle",

@@ -31,6 +31,13 @@ def test_package_extension_contract_docs_exist_and_share_status() -> None:
     assert "Target Native Ownership" in _read(CONTRACTS["native"])
 
 
+def test_transfer_roadmap_current_state_matches_runtime_boundary_progress() -> None:
+    roadmap = _read(REPO_ROOT / "docs" / "roadmaps" / "package_extension_transfer_roadmap.md")
+
+    assert "provider runtime metadata is provider-scoped" in roadmap
+    assert "provider runtime metadata still reports regression transition capability data" not in roadmap
+
+
 def test_adr_and_source_docs_agree_on_package_owners() -> None:
     files = [
         REPO_ROOT / "docs" / "adr" / "0005-package-extension-split.md",
@@ -148,3 +155,10 @@ def test_issue_tracker_and_downstream_docs_are_transfer_aware() -> None:
     assert "git remote -v" in downstream
     assert "ePC-SAFT/ePC-SAFT" in issue_tracker
     assert "ePC-SAFT/ePC-SAFT" in downstream
+
+
+def test_downstream_local_install_docs_use_provider_scoped_capabilities() -> None:
+    downstream = _read(REPO_ROOT / "docs" / "pages" / "downstream_local_installs.rst")
+
+    assert 'provider_caps["package"] == "epcsaft"' in downstream
+    assert 'provider_caps["package_ownership"]' not in downstream
