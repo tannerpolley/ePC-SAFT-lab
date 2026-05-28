@@ -4,8 +4,8 @@ import math
 
 import pytest
 
-import epcsaft
 import epcsaft._core as _core
+import epcsaft_equilibrium
 
 
 def test_native_ipopt_smoke_reports_generic_adapter_contract() -> None:
@@ -21,9 +21,8 @@ def test_native_ipopt_smoke_reports_generic_adapter_contract() -> None:
 
 
 def test_runtime_capabilities_report_public_ipopt_routes() -> None:
-    capabilities = epcsaft.capabilities()
-    ipopt = capabilities["optimizers"]["ipopt"]
-    equilibrium = capabilities["equilibrium"]
+    equilibrium = epcsaft_equilibrium.capabilities()
+    ipopt = equilibrium["optimizer"]["ipopt"]
 
     assert ipopt["adapter_source_available"] is True
     assert ipopt["adapter_kind"] == "native_tnlp_adapter"

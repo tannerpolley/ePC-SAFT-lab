@@ -8,31 +8,35 @@ from __future__ import annotations
 
 from typing import Final
 
-from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
+_EQUILIBRIUM_PRODUCTION_ROUTES_BY_FAMILY: Final[dict[str, tuple[str, ...]]] = {
+    "neutral_tp_flash": ("flash",),
+    "neutral_lle": ("lle",),
+    "bubble_dew_derived_routes": (
+        "bubble_pressure",
+        "bubble_temperature",
+        "dew_pressure",
+        "dew_temperature",
+    ),
+}
 
 
 def production_equilibrium_activation_rows() -> tuple[dict[str, object], ...]:
     """Return production-exposed equilibrium activation rows from the generated mirror."""
 
-    return tuple(dict(row) for row in EQUILIBRIUM_ACTIVATION_MATRIX if bool(row["production_exposed"]))
+    return tuple(
+        {
+            "key": family,
+            "production_exposed": True,
+            "public_routes": routes,
+        }
+        for family, routes in _EQUILIBRIUM_PRODUCTION_ROUTES_BY_FAMILY.items()
+    )
 
 
 def public_ipopt_routes_by_family() -> dict[str, tuple[str, ...]]:
     """Return selector-admitted public route labels keyed by production family."""
 
-    routes_by_family: dict[str, tuple[str, ...]] = {}
-    for row in EQUILIBRIUM_ACTIVATION_MATRIX:
-        family_key = str(row["key"])
-        routes = tuple(str(route) for route in row.get("public_routes", ()))
-        production_exposed = bool(row["production_exposed"])
-        if not production_exposed:
-            if routes:
-                raise RuntimeError(f"Declared-not-exposed equilibrium family '{family_key}' publishes routes.")
-            continue
-        if not routes:
-            raise RuntimeError(f"Production equilibrium family '{family_key}' publishes no public routes.")
-        routes_by_family[family_key] = routes
-    return routes_by_family
+    return dict(_EQUILIBRIUM_PRODUCTION_ROUTES_BY_FAMILY)
 
 
 def public_ipopt_route_family_map() -> dict[str, str]:
@@ -48,11 +52,6 @@ def public_ipopt_route_family_map() -> dict[str, str]:
                 )
             route_to_family[route] = family_key
     return route_to_family
-
-EQUILIBRIUM_PROBLEM_OBJECT_CLASSES: Final[tuple[str, ...]] = (
-    "EquilibriumProblem",
-    "EquilibriumStructure",
-)
 
 DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
     {
@@ -87,51 +86,6 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
         "classification": "production_supported",
         "reason": "public derivative reporting is CppAD-only; native analytic kernels may remain internal transition details",
         "tests": ("tests/native/state/test_born_ssmds_liquid_derivatives.py",),
-    },
-)
-
-EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
-    {
-        "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
-        "quantity": "bubble_dew_derived_routes",
-        "derivative": "lagrangian_hessian",
-        "backend": "cppad_phase_blocks",
-        "supported": True,
-        "classification": "production_supported",
-        "reason": "the production selector exposes neutral bubble/dew pressure and temperature routes through exact gradient/Jacobian/Hessian Ipopt callbacks",
-        "tests": (
-            "tests/api/frontend/test_equilibrium.py",
-            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
-        ),
-    },
-    {
-        "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
-        "quantity": "neutral_tp_flash",
-        "derivative": "lagrangian_hessian",
-        "backend": "cppad_phase_blocks",
-        "supported": True,
-        "classification": "production_supported",
-        "reason": "the production selector exposes neutral two-phase TP flash through the native activation-plan compiler, native-owned seed generation, and postsolve certification",
-        "tests": (
-            "tests/api/frontend/test_equilibrium.py",
-            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
-        ),
-    },
-    {
-        "row_family": "equilibrium",
-        "subsystem": "native_ipopt",
-        "quantity": "neutral_lle",
-        "derivative": "lagrangian_hessian",
-        "backend": "cppad_phase_blocks",
-        "supported": True,
-        "classification": "production_supported",
-        "reason": "the production selector exposes neutral nonassociating LLE through the activation-plan compiler and generic two-phase EOS NLP with exact Ipopt callbacks",
-        "tests": (
-            "tests/api/frontend/test_equilibrium.py",
-            "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
-        ),
     },
 )
 

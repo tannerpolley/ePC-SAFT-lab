@@ -22,15 +22,10 @@ ALLOWED_NATIVE_DOMAIN_FOLDERS = {
     "runtime",
 }
 IMPORT_BOUNDARY_WATCHLIST = {
-    "epcsaft.equilibrium",
-    "epcsaft.equilibrium.core",
-    "epcsaft.equilibrium.electrolyte_bubble",
-    "epcsaft.equilibrium.reactive_electrolyte",
-    "epcsaft.equilibrium.reactive_speciation",
-    "epcsaft.equilibrium.reactive_staged",
-    "epcsaft.equilibrium.workflows",
+    "epcsaft_equilibrium",
+    "epcsaft_equilibrium.core",
+    "epcsaft_equilibrium.workflows",
     "epcsaft.frontend",
-    "epcsaft.frontend.equilibrium",
     "epcsaft.frontend.mixture",
     "epcsaft.frontend.regression",
     "epcsaft.frontend.state",
@@ -191,7 +186,7 @@ def _tracked_files(*paths: str) -> list[str]:
 
 
 def _equilibrium_activation_rows() -> list[dict[str, object]]:
-    mirror = REPO_ROOT / "src" / "epcsaft" / "runtime" / "equilibrium_activation.py"
+    mirror = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "equilibrium_activation.py"
     tree = ast.parse(mirror.read_text(encoding="utf-8"), filename=mirror.relative_to(REPO_ROOT).as_posix())
     for node in tree.body:
         if not isinstance(node, ast.Assign):
@@ -204,7 +199,7 @@ def _equilibrium_activation_rows() -> list[dict[str, object]]:
 
 
 def _workflow_route_specs() -> dict[str, dict[str, str]]:
-    workflow_path = REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core" / "native_requests.py"
+    workflow_path = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "core" / "native_requests.py"
     tree = ast.parse(workflow_path.read_text(encoding="utf-8"), filename=workflow_path.relative_to(REPO_ROOT).as_posix())
     specs: dict[str, dict[str, str]] = {}
     spec_tables = 0
@@ -304,7 +299,15 @@ def test_root_package_contains_only_entry_python_files() -> None:
     }
     assert root_files == ALLOWED_ROOT_PYTHON_ENTRY_FILES
     assert not (REPO_ROOT / "src" / "epcsaft" / "equilibrium_core").exists()
-    assert (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core").is_dir()
+    assert not (REPO_ROOT / "src" / "epcsaft" / "equilibrium").exists()
+    assert (
+        REPO_ROOT
+        / "packages"
+        / "epcsaft-equilibrium"
+        / "src"
+        / "epcsaft_equilibrium"
+        / "core"
+    ).is_dir()
 
 
 def test_native_cpp_sources_live_under_domain_workflow_modules() -> None:
@@ -541,7 +544,7 @@ def test_production_equilibrium_routes_delegate_ipopt_acceptance_to_adapter() ->
     adapter = (
         REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "solvers" / "ipopt_adapter.cpp"
     ).read_text(encoding="utf-8", errors="ignore")
-    workflow = (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(
+    workflow = (REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "workflows.py").read_text(
         encoding="utf-8",
         errors="ignore",
     )
@@ -608,15 +611,15 @@ def test_native_equilibrium_python_diagnostics_bridge_stays_centralized() -> Non
 
 
 def test_selector_request_pretreatment_and_phase_labels_stay_in_shared_bridges() -> None:
-    workflows = (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(
+    workflows = (REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "workflows.py").read_text(
         encoding="utf-8",
         errors="ignore",
     )
     requests = (
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core" / "native_requests.py"
+        REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "core" / "native_requests.py"
     ).read_text(encoding="utf-8", errors="ignore")
     results = (
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "core" / "native_results.py"
+        REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "core" / "native_results.py"
     ).read_text(encoding="utf-8", errors="ignore")
 
     forbidden_workflow_fragments = (
@@ -696,8 +699,8 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
     route_specific_names = set(route_specs) | activation_keys | legacy_route_aliases
     forbidden_helper_names = route_specific_names | {f"_solve_{name}" for name in route_specific_names}
     inspected_paths = (
-        REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
+        REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "equilibrium.py",
+        REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "workflows.py",
         REPO_ROOT / "src" / "epcsaft" / "state" / "native_adapter.py",
     )
 
@@ -710,8 +713,8 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
                 offenders.append(f"{rel}:{node.lineno}: def {node.name}")
 
     frontend_tree = ast.parse(
-        (REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py").read_text(encoding="utf-8"),
-        filename="src/epcsaft/frontend/equilibrium.py",
+        (REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "equilibrium.py").read_text(encoding="utf-8"),
+        filename="packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium.py",
     )
     equilibrium_class = next(
         node for node in frontend_tree.body if isinstance(node, ast.ClassDef) and node.name == "Equilibrium"
@@ -729,8 +732,8 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
         and node.func.id.startswith("_solve_selector")
     ]
     workflow_tree = ast.parse(
-        (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(encoding="utf-8"),
-        filename="src/epcsaft/equilibrium/workflows.py",
+        (REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "workflows.py").read_text(encoding="utf-8"),
+        filename="packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py",
     )
     workflow_helpers = [
         node.name
@@ -781,7 +784,7 @@ def test_state_native_adapter_does_not_own_regression_native_wrappers() -> None:
 
 
 def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_helpers() -> None:
-    frontend_path = REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py"
+    frontend_path = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "equilibrium.py"
     tree = ast.parse(frontend_path.read_text(encoding="utf-8"), filename=frontend_path.relative_to(REPO_ROOT).as_posix())
     equilibrium_class = next(
         node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "Equilibrium"
@@ -806,9 +809,8 @@ def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_he
 
 
 def test_python_equilibrium_package_exposes_only_production_selector_solve_support() -> None:
-    import epcsaft
-    import epcsaft.equilibrium as equilibrium
-    import epcsaft.equilibrium.workflows as workflows
+    import epcsaft_equilibrium as equilibrium
+    import epcsaft_equilibrium.workflows as workflows
     from epcsaft.state.native_adapter import ePCSAFTMixture
 
     route_specific_methods = set(_workflow_route_specs())
@@ -816,9 +818,11 @@ def test_python_equilibrium_package_exposes_only_production_selector_solve_suppo
     declared_not_exposed_keys = {
         str(row["key"]) for row in _equilibrium_activation_rows() if row["production_exposed"] is False
     }
-    assert hasattr(epcsaft.Equilibrium, "solve")
-    assert {name for name in route_specific_methods if hasattr(epcsaft.Equilibrium, name)} == set()
-    assert {name for name in {"bubble_p", "bubble_t", "dew_p", "dew_t", "tp_flash"} if hasattr(epcsaft.Equilibrium, name)} == set()
+    assert hasattr(equilibrium.Equilibrium, "solve")
+    assert {name for name in route_specific_methods if hasattr(equilibrium.Equilibrium, name)} == set()
+    assert {
+        name for name in {"bubble_p", "bubble_t", "dew_p", "dew_t", "tp_flash"} if hasattr(equilibrium.Equilibrium, name)
+    } == set()
 
     forbidden_exports = {
         "bubble_p",
@@ -862,8 +866,8 @@ def test_python_equilibrium_package_exposes_only_production_selector_solve_suppo
 
 def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> None:
     public_solver_sources = (
-        REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
-        REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
+        REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "workflows.py",
+        REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "equilibrium.py",
         REPO_ROOT / "src" / "epcsaft" / "frontend" / "regression.py",
         REPO_ROOT / "src" / "epcsaft" / "regression" / "core.py",
     )
@@ -890,7 +894,7 @@ def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> N
 
 
 def test_public_equilibrium_workflows_dispatch_only_through_selector_binding() -> None:
-    workflows = (REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py").read_text(
+    workflows = (REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "workflows.py").read_text(
         encoding="utf-8"
     )
     activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
@@ -994,7 +998,6 @@ def test_package_import_is_lazy_across_equilibrium_and_regression_extensions() -
     loaded = _probe_epcsaft_import_modules("import epcsaft")
     assert {
         "epcsaft.frontend",
-        "epcsaft.frontend.equilibrium",
         "epcsaft.frontend.mixture",
         "epcsaft.frontend.regression",
         "epcsaft.frontend.state",
@@ -1008,13 +1011,9 @@ def test_package_import_is_lazy_across_equilibrium_and_regression_extensions() -
     } <= loaded
     assert loaded.isdisjoint(
         {
-            "epcsaft.equilibrium",
-            "epcsaft.equilibrium.core",
-            "epcsaft.equilibrium.electrolyte_bubble",
-            "epcsaft.equilibrium.reactive_electrolyte",
-            "epcsaft.equilibrium.reactive_speciation",
-            "epcsaft.equilibrium.reactive_staged",
-            "epcsaft.equilibrium.workflows",
+            "epcsaft_equilibrium",
+            "epcsaft_equilibrium.core",
+            "epcsaft_equilibrium.workflows",
             "epcsaft.regression",
             "epcsaft.regression.core",
             "epcsaft.regression.reactive",
@@ -1037,13 +1036,9 @@ def test_frontend_import_does_not_load_solver_extensions() -> None:
     } <= loaded
     assert loaded.isdisjoint(
         {
-            "epcsaft.equilibrium",
-            "epcsaft.equilibrium.core",
-            "epcsaft.equilibrium.electrolyte_bubble",
-            "epcsaft.equilibrium.reactive_electrolyte",
-            "epcsaft.equilibrium.reactive_speciation",
-            "epcsaft.equilibrium.reactive_staged",
-            "epcsaft.equilibrium.workflows",
+            "epcsaft_equilibrium",
+            "epcsaft_equilibrium.core",
+            "epcsaft_equilibrium.workflows",
             "epcsaft.regression",
             "epcsaft.regression.core",
             "epcsaft.regression.reactive",
@@ -1053,10 +1048,10 @@ def test_frontend_import_does_not_load_solver_extensions() -> None:
     )
 
 
-def test_top_level_public_exports_load_only_the_requested_extension() -> None:
-    loaded = _probe_epcsaft_import_modules("import epcsaft\n_ = epcsaft.Equilibrium")
+def test_top_level_public_exports_do_not_load_equilibrium_extension() -> None:
+    loaded = _probe_epcsaft_import_modules("import epcsaft\n_ = epcsaft.Mixture")
     assert "epcsaft.frontend" in loaded
-    assert "epcsaft.equilibrium" not in loaded
+    assert "epcsaft_equilibrium" not in loaded
     assert "epcsaft.regression" not in loaded
     assert "epcsaft.regression.reactive" not in loaded
 

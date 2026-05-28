@@ -1,7 +1,8 @@
 # epcsaft-equilibrium
 
-Internal workspace shell for the future Ipopt-backed equilibrium extension.
+Workspace package for the Ipopt-backed equilibrium extension.
 
-This package does not re-export the current monorepo `Equilibrium` object. The
-real migration must move equilibrium ownership here through the provider API and
-provider-native SDK contracts.
+Use `from epcsaft_equilibrium import Equilibrium` for constructor-configured
+neutral bubble, dew, flash, and nonassociating LLE routes. The extension
+depends on the provider package and its `provider_native_sdk()` contract; the
+provider root does not re-export `Equilibrium`.

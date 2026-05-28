@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import epcsaft
+import epcsaft_equilibrium
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -89,14 +90,30 @@ def test_runtime_capabilities_are_separable_by_future_package_owner() -> None:
 
     assert capabilities["package_ownership"] == {
         "provider": "epcsaft",
-        "equilibrium": "epcsaft-equilibrium",
         "regression": "epcsaft-regression",
     }
     views = capabilities["package_views"]
     assert views["provider"]["reports_only_provider_capabilities_after_split"] is True
     assert views["provider"]["native_sdk_contract_id"] == "provider_native_sdk_v1"
-    assert views["equilibrium"]["forbidden_default_dependencies"] == ["ceres"]
     assert views["regression"]["forbidden_default_dependencies"] == ["ipopt"]
+    assert "equilibrium" not in views
+    assert "equilibrium" not in capabilities
+    assert "ipopt" not in capabilities["optimizers"]
+
+    equilibrium_capabilities = epcsaft_equilibrium.capabilities()
+    assert equilibrium_capabilities["package"] == "epcsaft-equilibrium"
+    assert equilibrium_capabilities["owner"] == "equilibrium_extension"
+    assert equilibrium_capabilities["provider_contract"]["provider_native_sdk_contract_id"] == "provider_native_sdk_v1"
+    assert equilibrium_capabilities["forbidden_default_dependencies"] == ["ceres"]
+    assert equilibrium_capabilities["requires"] == ["epcsaft", "cppad", "ipopt"]
+    assert equilibrium_capabilities["public_routes"] == [
+        "bubble_pressure",
+        "bubble_temperature",
+        "dew_pressure",
+        "dew_temperature",
+        "flash",
+        "lle",
+    ]
 
 
 def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() -> None:

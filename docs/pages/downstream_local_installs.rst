@@ -147,27 +147,32 @@ Downstream projects can confirm which package source they are using:
 Capability discovery
 --------------------
 
-Use ``capabilities()`` before wiring high-level downstream workflows:
+Use provider and extension capabilities before wiring high-level downstream
+workflows:
 
 .. code-block:: python
 
    import epcsaft
+   import epcsaft_equilibrium
 
-   caps = epcsaft.capabilities()
-   assert caps["equilibrium"]["production_families"] == [
+   provider_caps = epcsaft.capabilities()
+   equilibrium_caps = epcsaft_equilibrium.capabilities()
+   assert provider_caps["package_ownership"]["provider"] == "epcsaft"
+   assert equilibrium_caps["production_families"] == [
        "neutral_tp_flash",
+       "neutral_lle",
        "bubble_dew_derived_routes",
    ]
-   assert "bubble_pressure" in caps["equilibrium"]["public_routes"]
-   assert "flash" in caps["equilibrium"]["public_routes"]
+   assert "bubble_pressure" in equilibrium_caps["public_routes"]
+   assert "flash" in equilibrium_caps["public_routes"]
 
 Native EOS/property calls and native regression helpers are available. The
 production equilibrium public route list contains route names for
 constructor-configured ``Equilibrium(mixture, route=..., ...).solve()``
-workflows: selector-backed neutral VLE bubble/dew pressure and temperature specs
-plus certified two-phase flash. Future LLE, electrolyte, reactive, and
-speciation families are declared in the native activation matrix without being
-advertised as callable routes.
+workflows: selector-backed neutral VLE bubble/dew pressure and temperature
+specs, certified two-phase flash, and neutral nonassociating LLE. Electrolyte,
+reactive, and speciation families are declared in the native activation matrix
+without being advertised as callable routes.
 
 For routing examples and the production/opt-in solver table, see
 :doc:`equilibrium_cookbook`.
@@ -185,8 +190,8 @@ Capability status summary
      - Production selector-backed native Ipopt route when compiled
      - Certified two-phase flash only; Python does not provide an alternate solve loop.
    * - Neutral LLE
-     - Declared-not-exposed
-     - Future route family until selector-owned production evidence exists.
+     - Production selector-backed native Ipopt route when compiled
+     - Neutral nonassociating LLE only.
    * - Neutral bubble/dew pressure and temperature
      - Native Ipopt route when compiled
      - Requires an Ipopt-enabled build; Python does not provide an alternate solve loop.

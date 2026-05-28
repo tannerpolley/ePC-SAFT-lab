@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any, TypeAlias
 
-Equilibrium: Any
 InputError: TypeAlias = Any
 MissingModelParameterError: TypeAlias = Any
 Mixture: Any

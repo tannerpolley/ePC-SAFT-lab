@@ -140,10 +140,10 @@ Current API orientation for agents:
   derivatives, and registry evidence update.
 - Treat `ParameterSet` as the canonical parameter-family boundary; runtime payload emission belongs to `ParameterSet.to_runtime_dict()`.
 - Treat `TargetDataset.target_family_summaries()` as the shared target-family summary shape across retained regression evidence.
-- During the monorepo transition, treat `epcsaft.capabilities()` and
-  `capability_evidence` as the authoritative public capability contract. After
-  extraction, `epcsaft.capabilities()` reports provider capabilities only and
-  extension packages own their own capability reports.
+- During the monorepo transition, treat `epcsaft.capabilities()` as the
+  provider capability contract and `epcsaft_equilibrium.capabilities()` as the
+  equilibrium capability contract. The retained `capability_evidence` registry
+  still owns test-slice routing for source-checkout validation.
 - Treat `epcsaft.provider_native_sdk()` as the provider-owned native SDK
   discovery surface for future extension builds. It does not make
   `epcsaft._core` a stable extension ABI.

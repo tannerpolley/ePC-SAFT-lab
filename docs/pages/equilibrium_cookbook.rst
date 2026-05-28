@@ -14,7 +14,8 @@ through the selector core and native Ipopt with exact Hessian callbacks:
 .. code-block:: python
 
    import numpy as np
-   from epcsaft import Equilibrium, Mixture
+   from epcsaft import Mixture
+   from epcsaft_equilibrium import Equilibrium
 
    result = Equilibrium(
        Mixture(parameters),

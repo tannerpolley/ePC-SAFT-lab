@@ -4,8 +4,9 @@ Diagnostics
 Runtime Capabilities
 --------------------
 
-``epcsaft.capabilities()`` reports installed runtime features, solver backends,
-and implemented package workflows. The important backend labels are:
+``epcsaft.capabilities()`` reports provider runtime features. Equilibrium route
+capabilities are reported by ``epcsaft_equilibrium.capabilities()``. The
+important backend labels are:
 
 * ``native``: production native runtime path.
 * ``native_ipopt_equilibrium_nlp``: implemented production equilibrium route
@@ -16,10 +17,10 @@ and implemented package workflows. The important backend labels are:
 The native activation matrix owns selector-admitted public route names.
 ``epcsaft.runtime.capability_evidence`` mirrors that metadata into derivative
 coverage rows, pytest slices, and ``scripts/dev/validate_project.py`` modes.
-``capabilities()`` adapts the mirrored activation metadata to the currently
-installed native dependencies instead of duplicating route lists in CLI
-wrappers. This keeps public command names stable while still tying capability
-claims to executable checks.
+``epcsaft_equilibrium.capabilities()`` adapts the mirrored activation metadata
+to the currently installed native dependencies instead of duplicating route
+lists in CLI wrappers. This keeps public command names stable while still
+tying capability claims to executable checks.
 
 Use ``uv run python run_pytest.py --native-contracts -q`` for native route
 metadata and result-diagnostics checks. That slice is intentionally separate

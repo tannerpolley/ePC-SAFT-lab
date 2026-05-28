@@ -394,25 +394,27 @@ Current internal workspace checkpoint:
 
 - The root project is now a uv workspace with extension package shells at
   `packages/epcsaft-equilibrium` and `packages/epcsaft-regression`.
-- The extension shells are packaging/build targets only; they do not re-export
-  current monorepo `Equilibrium` or `Regression` objects.
+- `epcsaft-equilibrium` owns the current `Equilibrium` Python workflow,
+  route specs, diagnostics bridge, activation mirror, and equilibrium
+  capability report.
+- `epcsaft-regression` remains a packaging/build shell and does not re-export
+  the current monorepo `Regression` object.
 - `provider_native_sdk_v1` is the provider-owned native SDK discovery contract,
   exposed through `epcsaft.provider_native_sdk()` and backed by a native
   `_native_provider_sdk_contract` probe.
-- Full migration still requires moving equilibrium and regression Python/native
-  implementation into those package roots and removing the transition exports at
-  a coordinated release boundary.
+- Full migration still requires moving regression Python/native implementation,
+  splitting native extension targets by package owner, and proving extraction
+  lanes at a coordinated release boundary.
 
 Implementation order:
 
 1. Add import-boundary tests.
 2. Move core-only Python provider code into the core package root.
-3. Move equilibrium Python frontends into `epcsaft_equilibrium`.
-4. Move equilibrium native code under an extension-owned native tree.
-5. Move regression Python frontends into `epcsaft_regression`.
-6. Move regression native code under an extension-owned native tree.
-7. Update CMake targets so Ceres and Ipopt belong to the extension builds.
-8. Update validation orchestration to run provider, equilibrium, regression, and
+3. Move equilibrium native code under an extension-owned native tree.
+4. Move regression Python frontends into `epcsaft_regression`.
+5. Move regression native code under an extension-owned native tree.
+6. Update CMake targets so Ceres and Ipopt belong to the extension builds.
+7. Update validation orchestration to run provider, equilibrium, regression, and
    integration lanes separately.
 
 Exit criteria:
@@ -432,7 +434,7 @@ standards.
 
 Equilibrium migration:
 
-- Move `Equilibrium(...)` ownership to `epcsaft_equilibrium`.
+- `Equilibrium(...)` ownership lives in `epcsaft_equilibrium`.
 - Move Ipopt route assembly, option profiles, route diagnostics, phase
   discovery, postsolve certification, and GFPE-specific capability reporting.
 - Keep provider derivative calls in core.

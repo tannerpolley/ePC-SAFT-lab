@@ -7,11 +7,11 @@ user-facing provider objects, diagnostics, documentation examples, and workflow
 orchestration. The equation-of-state runtime is native C++ exposed through
 ``pybind11``.
 
-During the monorepo transition, this distribution still exposes equilibrium and
-regression workflow objects. ADR 0005 makes those transition surfaces: final
-ownership moves Ipopt-backed equilibrium to ``epcsaft-equilibrium`` and
-Ceres-backed regression to ``epcsaft-regression`` after the provider and native
-extension boundaries are proven.
+During the monorepo transition, Ipopt-backed equilibrium is owned by
+``epcsaft-equilibrium`` while regression remains a temporary provider-root
+export. ADR 0005 makes regression a transition surface whose final ownership
+moves to ``epcsaft-regression`` after the provider and native extension
+boundaries are proven.
 
 Organization Boundary
 ---------------------
@@ -37,10 +37,10 @@ The target internal shape is:
      frontend/
      model/
      state/
-     equilibrium/
      regression/
      runtime/
      native/
+   packages/epcsaft-equilibrium/src/epcsaft_equilibrium/
 
 Subsystem Boundaries
 --------------------
@@ -52,13 +52,12 @@ EOS harness
    and delegates thermodynamic calculations to the native runtime.
 
 Equilibrium
-   In the current monorepo, owns phase-equilibrium, stability, bubble/dew,
-   electrolyte LLE, and chemical-equilibrium orchestration. Long term, this
-   subsystem belongs to ``epcsaft-equilibrium``. It may use Python for problem
-   objects, request normalization, result shaping, and diagnostics, but
-   production thermodynamic evaluations should route through the core
-   provider/native boundary. The current public reset frontend is reached
-   through direct
+   Owned by ``epcsaft-equilibrium``. It owns phase-equilibrium, stability,
+   bubble/dew, electrolyte LLE, and chemical-equilibrium orchestration. It may
+   use Python for problem objects, request normalization, result shaping, and
+   diagnostics, but production thermodynamic evaluations should route through
+   the core provider/native boundary. The current public reset frontend is
+   reached through direct
    ``Equilibrium(mixture, ...)`` workflow objects. Legacy string facades and
    typed problem objects are internal transition surfaces until they are ported
    behind reset methods.
@@ -98,9 +97,10 @@ Use these imports for current monorepo code:
 
 * ``from epcsaft import Mixture, State`` for core provider workflow
   construction.
-* ``from epcsaft import Equilibrium, Regression`` for transition equilibrium
-  and regression workflow construction until the extension packages own those
-  imports.
+* ``from epcsaft_equilibrium import Equilibrium`` for equilibrium workflow
+  construction.
+* ``from epcsaft import Regression`` for transition regression workflow
+  construction until ``epcsaft-regression`` owns that import.
 * ``from epcsaft import ParameterSet, ModelOptions`` for parameter data and
   model formulation choices.
 * ``from epcsaft import create_input_template`` for reset input scaffolds.
@@ -121,7 +121,8 @@ documented subsystem modules:
 
 * ``import epcsaft``
 * ``from epcsaft import Mixture, ParameterSet, ModelOptions``
-* ``from epcsaft import Equilibrium, Regression`` during the transition release
+* ``from epcsaft_equilibrium import Equilibrium``
+* ``from epcsaft import Regression`` during the remaining regression transition
   series
 
 Internal modules may share package-owned helpers when that keeps behavior

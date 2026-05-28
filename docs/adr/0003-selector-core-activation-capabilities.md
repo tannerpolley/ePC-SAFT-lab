@@ -30,7 +30,7 @@ deleted or unproven families looking available.
 - Non-production TP flash, LLE, stability, electrolyte, reactive, and
   speciation route files, bindings, public exports, docs, and tests are deleted
   rather than preserved as stubs or compatibility wrappers.
-- `epcsaft.capabilities()["equilibrium"]` reports production families and
+- `epcsaft_equilibrium.capabilities()` reports production families and
   declared-not-exposed future families separately, without claiming route
   availability for future rows.
 

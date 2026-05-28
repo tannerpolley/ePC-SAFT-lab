@@ -35,9 +35,10 @@ def test_current_root_exports_are_marked_as_transition_surfaces() -> None:
     for name in ("ParameterSet", "ModelOptions", "Mixture", "State", "create_input_template"):
         assert name in epcsaft.__all__
 
-    assert {"Equilibrium", "Regression"}.issubset(set(epcsaft.__all__))
-    assert "transition exports under ADR 0005" in text
-    assert "not final provider ownership" in normalized
+    assert "Equilibrium" not in epcsaft.__all__
+    assert "Regression" in epcsaft.__all__
+    assert "Equilibrium` is owned by `epcsaft-equilibrium`" in text
+    assert "remaining transition export" in normalized
 
 
 def test_provider_contract_freezes_derivative_result_shape() -> None:
@@ -62,11 +63,11 @@ def test_provider_contract_freezes_derivative_result_shape() -> None:
         assert field in result_shape
 
 
-def test_cppad_stays_core_owned_while_solver_capabilities_are_transition_reported() -> None:
+def test_cppad_stays_core_owned_while_equilibrium_capabilities_are_extension_owned() -> None:
     text = _contract_text()
 
     assert "CppAD and exact derivative provider support remain core-owned" in text
-    assert "During the monorepo transition, `epcsaft.capabilities()` may report provider," in text
+    assert "Equilibrium capability reporting is owned by `epcsaft-equilibrium`." in text
 
     build_info = epcsaft.runtime_build_info()
     native_dependencies = build_info["native_dependencies"]
@@ -75,11 +76,11 @@ def test_cppad_stays_core_owned_while_solver_capabilities_are_transition_reporte
     capabilities = epcsaft.capabilities()
     assert capabilities["package_ownership"] == {
         "provider": "epcsaft",
-        "equilibrium": "epcsaft-equilibrium",
         "regression": "epcsaft-regression",
     }
     assert capabilities["package_views"]["provider"]["contract_id"] == "provider_api_v1"
-    assert set(capabilities["package_views"]) == {"provider", "equilibrium", "regression"}
+    assert set(capabilities["package_views"]) == {"provider", "regression"}
+    assert "equilibrium" not in capabilities
 
 
 def test_extensions_must_not_use_private_core_as_provider_contract() -> None:

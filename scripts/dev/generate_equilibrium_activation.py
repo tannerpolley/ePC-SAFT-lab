@@ -10,7 +10,14 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
-OUTPUT = SRC_ROOT / "epcsaft" / "runtime" / "equilibrium_activation.py"
+OUTPUT = (
+    REPO_ROOT
+    / "packages"
+    / "epcsaft-equilibrium"
+    / "src"
+    / "epcsaft_equilibrium"
+    / "equilibrium_activation.py"
+)
 
 
 def _load_native_rows() -> list[dict[str, object]]:

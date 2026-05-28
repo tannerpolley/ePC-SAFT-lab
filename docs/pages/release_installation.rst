@@ -104,6 +104,11 @@ source changes are picked up from the checkout. If you change C++ sources,
 pybind bindings, CMake files, or build metadata, rerun the editable install
 command so the native extension is rebuilt.
 
+Equilibrium workflows live in the sibling ``epcsaft-equilibrium`` workspace
+package. In a source checkout, use the uv workspace environment or install the
+built ``epcsaft-equilibrium`` wheel alongside ``epcsaft`` before importing
+``epcsaft_equilibrium``.
+
 Local path dependency
 ---------------------
 
@@ -146,10 +151,10 @@ Runtime processes that execute Ipopt on Windows must expose the SDK ``bin``
 directory through both ``PATH`` and ``EPCSAFT_RUNTIME_DLL_DIRS``; repo build
 scripts do this automatically for the local SDK.
 
-When Ipopt is compiled, use the certified ``Equilibrium(...)`` route specs and
-ordinary solver tolerances for native constrained-NLP behavior. The public
-equilibrium API does not expose a solver-backend selector or claim unvalidated
-Ipopt coverage.
+When Ipopt is compiled, import ``Equilibrium`` from ``epcsaft_equilibrium`` and
+use the certified route specs and ordinary solver tolerances for native
+constrained-NLP behavior. The public equilibrium API does not expose a
+solver-backend selector or claim unvalidated Ipopt coverage.
 
 Verify the install
 ------------------
@@ -157,10 +162,12 @@ Verify the install
 .. code-block:: python
 
    import epcsaft
+   import epcsaft_equilibrium
 
    print(epcsaft.__version__)
    print(epcsaft.runtime_build_info())
    print(epcsaft.capabilities())
+   print(epcsaft_equilibrium.capabilities())
 
 If import fails after a source build on Windows, make sure no Python process is
 holding an old ``epcsaft._core`` extension open and reinstall from a clean

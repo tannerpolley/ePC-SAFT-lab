@@ -5,11 +5,17 @@ import importlib.util
 import epcsaft
 
 
+def _find_spec(module_name: str):
+    try:
+        return importlib.util.find_spec(module_name)
+    except ModuleNotFoundError:
+        return None
+
+
 def test_root_public_api_is_reset_to_clean_frontend_names() -> None:
     required = {
         "Mixture",
         "State",
-        "Equilibrium",
         "Regression",
         "ParameterSet",
         "ModelOptions",
@@ -27,6 +33,8 @@ def test_root_public_api_is_reset_to_clean_frontend_names() -> None:
     }
 
     assert required <= set(epcsaft.__all__)
+    assert "Equilibrium" not in epcsaft.__all__
+    assert not hasattr(epcsaft, "Equilibrium")
     assert legacy.isdisjoint(epcsaft.__all__)
     for name in legacy:
         assert not hasattr(epcsaft, name)
@@ -37,12 +45,16 @@ def test_removed_root_compatibility_modules_are_not_importable() -> None:
         "epcsaft.capability_evidence",
         "epcsaft.diagnostics",
         "epcsaft.electrolyte",
+        "epcsaft.equilibrium",
+        "epcsaft.equilibrium.core",
         "epcsaft.equilibrium.native_adapter",
         "epcsaft.equilibrium.options",
         "epcsaft.equilibrium.problems",
         "epcsaft.equilibrium.results",
+        "epcsaft.equilibrium.workflows",
         "epcsaft.eos",
         "epcsaft.epcsaft",
+        "epcsaft.frontend.equilibrium",
         "epcsaft.regression.electrolyte",
         "epcsaft.regression.results",
         "epcsaft.regression.targets",
@@ -56,4 +68,4 @@ def test_removed_root_compatibility_modules_are_not_importable() -> None:
         "epcsaft.runtime.evidence",
     }
     for module_name in removed_modules:
-        assert importlib.util.find_spec(module_name) is None
+        assert _find_spec(module_name) is None

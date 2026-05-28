@@ -5,8 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from .._types import InputError
-from .mixture import Mixture
+from epcsaft._types import InputError
+from epcsaft.frontend.mixture import Mixture
+
+from ._native import provider_contract
 
 
 class Equilibrium:
@@ -28,8 +30,9 @@ class Equilibrium:
         if not isinstance(mixture, Mixture):
             raise InputError("Equilibrium requires a Mixture.")
 
-        from ..equilibrium.workflows import configure_equilibrium_problem
+        from .workflows import configure_equilibrium_problem
 
+        provider_contract()
         self.mixture = mixture
         self._problem = configure_equilibrium_problem(mixture.native, route=route, T=T, P=P, x=x, y=y, z=z)
 
@@ -42,14 +45,14 @@ class Equilibrium:
     def structure(self) -> Any:
         """Return immutable selector structure metadata for the configured problem."""
 
-        from ..equilibrium.workflows import equilibrium_structure
+        from .workflows import equilibrium_structure
 
         return equilibrium_structure(self.mixture.native, self._problem)
 
     def solve(self, *, solver_options: Mapping[str, Any] | Any = None) -> Any:
         """Solve the already configured equilibrium problem."""
 
-        from ..equilibrium.workflows import _solve_selector_route
+        from .workflows import _solve_selector_route
 
         result = _solve_selector_route(self.mixture.native, self._problem, options=solver_options)
         return _require_exact_hessian(result, method=f"Equilibrium(route='{self._problem.route}').solve()")

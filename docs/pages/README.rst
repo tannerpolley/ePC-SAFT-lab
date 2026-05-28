@@ -5,10 +5,9 @@ Overview
 PC-SAFT thermodynamic calculations. The public interface is Python, while the
 equation-of-state runtime is implemented in native C++ through ``pybind11``.
 
-This release is still a monorepo transition build. It exposes equilibrium and
-regression workflow objects from ``epcsaft`` today, while ADR 0005 assigns final
-ownership of Ipopt-backed equilibrium to ``epcsaft-equilibrium`` and
-Ceres-backed regression to ``epcsaft-regression``.
+This release is still a monorepo transition build. Ipopt-backed equilibrium is
+owned by ``epcsaft-equilibrium``, while regression remains a temporary
+``epcsaft`` root export until it moves to ``epcsaft-regression``.
 
 Current package version: ``0.2.0``
 
@@ -16,10 +15,10 @@ What the package does
 ---------------------
 
 Use ``epcsaft`` to build PC-SAFT/ePC-SAFT mixtures, evaluate thermodynamic
-states, compute fugacity and activity coefficients, use the
-constructor-configured neutral equilibrium API when the package is built with
-optional native Ipopt, and fit supported pure-neutral parameter sets against
-tabular data.
+states, compute fugacity and activity coefficients, fit supported pure-neutral
+parameter sets against tabular data, and pair it with ``epcsaft_equilibrium``
+for constructor-configured neutral equilibrium routes when native Ipopt is
+available.
 
 The main user objects are:
 
@@ -28,8 +27,10 @@ The main user objects are:
 - ``Mixture``: stores parameters/options and creates workflow objects.
 - ``State``: evaluates CppAD-backed density, pressure, fugacity, and derivative
   payloads.
-- ``Equilibrium`` and ``Regression``: configured workflow objects created from
-  ``Mixture``.
+- ``Equilibrium``: configured workflow object imported from
+  ``epcsaft_equilibrium``.
+- ``Regression``: configured workflow object imported from ``epcsaft`` during
+  the remaining regression transition.
 - ``create_input_template(...)``: creates reset CSV/JSON input scaffolds.
 - ``capabilities()``: reports available runtime and solver paths.
 
@@ -103,16 +104,23 @@ source changes are picked up from the checkout. If you change C++ sources,
 pybind bindings, CMake files, or build metadata, rerun
 ``python -m pip install -e .``.
 
+Equilibrium workflows live in the sibling ``epcsaft-equilibrium`` workspace
+package. In a source checkout, use the uv workspace environment or install the
+built ``epcsaft-equilibrium`` wheel alongside ``epcsaft`` before importing
+``epcsaft_equilibrium``.
+
 Verify the install
 ------------------
 
 .. code-block:: python
 
    import epcsaft
+   import epcsaft_equilibrium
 
    print(epcsaft.__version__)
    print(epcsaft.runtime_build_info())
    print(epcsaft.capabilities())
+   print(epcsaft_equilibrium.capabilities())
 
 Quick example
 -------------
@@ -180,22 +188,23 @@ Most users should create and own their parameter folders:
 
 After filling in the generated files, construct a ``ParameterSet`` from the
 parameter data and pass thermodynamic conditions to ``State(...)`` or workflow
-defaults to ``Equilibrium(...)`` and ``Regression(...)``.
+defaults to ``Equilibrium(...)`` from ``epcsaft_equilibrium`` and
+``Regression(...)`` from ``epcsaft``.
 
 Equilibrium and speciation
 --------------------------
 
-Use ``capabilities()`` and the cookbook before wiring a high-level equilibrium
-workflow. The package includes native-backed paths for neutral phase
-equilibrium through constructor-configured ``Equilibrium(...)`` objects. The
-production-exposed families are neutral bubble/dew routes, neutral TP flash,
+Use ``epcsaft_equilibrium.capabilities()`` and the cookbook before wiring a
+high-level equilibrium workflow. The extension includes native-backed paths for
+neutral phase equilibrium through constructor-configured ``Equilibrium(...)``
+objects. The production-exposed families are neutral bubble/dew routes, neutral TP flash,
 and neutral nonassociating LLE when the native Ipopt dependency is compiled.
 
 Important boundaries:
 
 - Electrolyte LLE, reactive speciation, reactive LLE, reactive electrolyte LLE,
-  and associating LLE are declared not exposed in ``capabilities()`` for this
-  release.
+  and associating LLE are declared not exposed in
+  ``epcsaft_equilibrium.capabilities()`` for this release.
 - The GitHub release wheel is built without a local Ipopt runtime dependency.
   Ipopt-backed equilibrium routes require an Ipopt-enabled source or editable
   build.

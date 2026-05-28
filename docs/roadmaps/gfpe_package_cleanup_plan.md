@@ -21,10 +21,10 @@ remain owned by the selector activation metadata, not by roadmap prose.
    boundary before extraction.
 5. `src/epcsaft/native/equilibrium/core/activation_matrix.h` is the executable
    selector-admission inventory.
-6. During the monorepo transition, `epcsaft.capabilities()` mirrors that
-   inventory upward for users and downstream projects. After extraction, the
-   equilibrium extension owns its capability report and any aggregate view must
-   be explicit and test-backed.
+6. During the monorepo transition, `epcsaft_equilibrium.capabilities()` mirrors
+   that inventory upward for users and downstream projects. The provider
+   capability report stays provider-scoped, and any aggregate view must be
+   explicit and test-backed.
 
 ## Design Rules
 
@@ -227,8 +227,9 @@ Acceptance:
 - every callable route maps to exactly one selector activation family;
 - declared-not-exposed families publish no route labels;
 - Python route specs agree with the selector admission map;
-- `capabilities()["equilibrium"]["public_routes"]` and
-  `capabilities()["optimizers"]["ipopt"]["public_routes"]` derive from that map;
+- `epcsaft_equilibrium.capabilities()["public_routes"]` and
+  `epcsaft_equilibrium.capabilities()["optimizer"]["ipopt"]["public_routes"]`
+  derive from that map;
 - the equilibrium confidence lane has one focused convergence target per
   admitted production family.
 

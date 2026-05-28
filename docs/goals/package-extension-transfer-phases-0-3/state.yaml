@@ -278,13 +278,13 @@ tasks:
     receipt:
       result: done
       summary:
-        - "The current public root exports mix three future packages: provider surfaces, equilibrium workflow surfaces, and regression workflow surfaces all leave through epcsaft today."
+        - "The current public root exports still mix provider and regression transition surfaces; equilibrium workflow surfaces now leave through epcsaft_equilibrium."
         - "The provider API v1 candidate is not a new user API; it is the stable extension-consumption contract around ParameterSet, ModelOptions, Mixture, State, derivative/result schemas, errors, runtime metadata, and native provider access."
         - "The split must move ownership of Equilibrium and regression target/fit/result surfaces out of core at a coordinated release boundary, rather than preserving long-lived core wrappers."
       current_public_surface_map:
         - "Core/provider today: epcsaft.ParameterSet, ModelOptions, MissingModelParameterError, Mixture, State, InputError, SolutionError, create_input_template, runtime_build_info, capabilities, and __version__."
         - "State/provider methods today: density and pressure closure, z/compressibility_factor, residual Helmholtz/Gibbs/enthalpy/entropy, contribution maps, ln fugacity coefficients, fugacity coefficients, and CppAD-backed derivative-result methods."
-        - "Equilibrium today: epcsaft.Equilibrium plus epcsaft.equilibrium EquilibriumSolverOptions, EquilibriumPhase, EquilibriumResult, internal problem/structure objects, selector route normalization, diagnostics, certification, and phase payload conversion."
+        - "Equilibrium today: epcsaft_equilibrium.Equilibrium plus epcsaft_equilibrium EquilibriumSolverOptions, EquilibriumPhase, EquilibriumResult, internal problem/structure objects, selector route normalization, diagnostics, certification, and phase payload conversion."
         - "Regression today: epcsaft.Regression plus epcsaft.regression star-exported records, bounds, target rows/datasets, fit problems/results, provenance helpers, fit_pure_neutral, fit_pure_parameters, fit_pure_ion, fit_binary_parameters, fit_binary_pair, fit_liquid_electrolyte_parameters, derivative evaluation, and result writing."
         - "Runtime/capability today: epcsaft.capabilities reports provider derivatives, Ceres-backed regression claims, Ipopt-backed equilibrium claims, activation metadata, validation lanes, and evidence summaries in one payload."
       future_owner_map:
@@ -307,7 +307,7 @@ tasks:
         - "Capability claims must not broaden because a dependency is present; the owning package must provide evidence-backed route or target rows."
       evidence:
         - "src/epcsaft/__init__.py root __all__ currently exports both core provider objects and Equilibrium/Regression."
-        - "src/epcsaft/frontend/equilibrium.py exposes only Equilibrium(mixture, route=...).solve() and blocks non-exact Hessian results."
+        - "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium.py exposes only Equilibrium(mixture, route=...).solve() and blocks non-exact Hessian results."
         - "src/epcsaft/frontend/regression.py exposes Regression(mixture).fit_pure_neutral and derivative evaluation while blocking backend-selection options."
         - "src/epcsaft/regression/__init__.py currently star-exports the regression core module, so Phase 2 must explicitly classify those names before extraction."
         - "src/epcsaft/runtime/core.py currently combines provider derivative, Ceres regression, Ipopt equilibrium, activation, and validation-lane capability evidence."
@@ -363,7 +363,7 @@ tasks:
       recommended_first_target:
         - "After Phase 1 docs and Phase 2 provider contract tests, implement Option B: logical CMake target separation in the current repo with one public wheel path, plus tests that prove provider target code has no Ceres or Ipopt linkage and extension targets own those solvers."
       provider_only_runtime_expectations:
-        - "Core/provider imports should expose ParameterSet, ModelOptions, Mixture, State, create_input_template, runtime_build_info, and provider-level capabilities without importing epcsaft.equilibrium, epcsaft.regression, or state.native_adapter until those objects are used."
+        - "Core/provider imports should expose ParameterSet, ModelOptions, Mixture, State, create_input_template, runtime_build_info, and provider-level capabilities without importing epcsaft_equilibrium, epcsaft.regression, or state.native_adapter until those objects are used."
         - "Core/provider package installation must eventually pass without Ceres and Ipopt. That is not true in current CMake because Ceres OFF is unsupported and CppAD remains required."
         - "CppAD remains core-owned for derivative-capable provider behavior, so provider-only does not mean no native derivative substrate."
         - "Ipopt-free package boundary proof exists only as a release/smoke lane today; it is not an equilibrium production proof."
@@ -402,7 +402,7 @@ tasks:
       - "docs/roadmaps/gfpe_package_cleanup_plan.md"
       - "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
       - "docs/roadmaps/stage_by_stage_implementation_plan.md"
-      - "src/epcsaft/equilibrium"
+      - "packages/epcsaft-equilibrium/src/epcsaft_equilibrium"
       - "src/epcsaft/native/equilibrium"
       - "tests/native/contracts"
       - "tests/native/equilibrium"
@@ -457,12 +457,12 @@ tasks:
         - "tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py"
         - "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py"
       evidence:
-        - "src/epcsaft/equilibrium/core/native_requests.py defines the admitted public route map: bubble/dew to bubble_dew_derived_routes, flash to neutral_tp_flash, and lle to neutral_lle."
-        - "src/epcsaft/equilibrium/workflows.py calls _native_equilibrium_selector_route_result as the public dispatch path and verifies selector_family before accepting the payload."
+        - "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/core/native_requests.py defines the admitted public route map: bubble/dew to bubble_dew_derived_routes, flash to neutral_tp_flash, and lle to neutral_lle."
+        - "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py calls _native_equilibrium_selector_route_result as the public dispatch path and verifies selector_family before accepting the payload."
         - "src/epcsaft/native/equilibrium/core/activation_matrix.h marks neutral_tp_flash, neutral_lle, and bubble_dew_derived_routes as production-exposed and generalized families as declared-not-exposed."
         - "src/epcsaft/native/equilibrium/results/result_builder.cpp owns apply_neutral_route_solve_result, apply_neutral_route_postsolve, neutral_route_postsolve_status, and rejection reason handling."
         - "src/epcsaft/native/equilibrium/results/route_result_bridge.h serializes solver_accepted, postsolve_accepted, accepted, rejection_reason, route physical evidence, and stability certificate fields."
-        - "src/epcsaft/equilibrium/core/native_results.py performs the Python phase-payload and diagnostics conversion into public result objects."
+        - "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/core/native_results.py performs the Python phase-payload and diagnostics conversion into public result objects."
         - "docs/roadmaps/generalized_fluid_phase_equilibrium.md and docs/roadmaps/equilibrium_benchmark_registry.yaml keep deterministic screening separate from full HELD and keep generalized family rows planned_not_public."
       extraction_gate_interpretation:
         - "Do not block extraction readiness on full GFPE completion."

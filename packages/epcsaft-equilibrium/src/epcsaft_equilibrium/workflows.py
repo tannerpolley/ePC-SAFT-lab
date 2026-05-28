@@ -10,7 +10,9 @@ from typing import Any, Literal
 
 import numpy as np
 
-from .._types import InputError, SolutionError
+from epcsaft._types import InputError, SolutionError
+
+from ._native import provider_native_core
 from .core.native_requests import (
     EQUILIBRIUM_ROUTE_SPECS,
     NativeSelectorRouteSpec,
@@ -474,7 +476,7 @@ def _selector_request_from_problem(problem: EquilibriumProblem) -> dict[str, Any
 def equilibrium_structure(mixture: Any, problem: EquilibriumProblem) -> EquilibriumStructure:
     """Return immutable native selector structure metadata for a configured problem."""
 
-    from .. import _core
+    _core = provider_native_core()
 
     contract = _core._native_equilibrium_selector_contract(mixture._native, _selector_request_from_problem(problem))
     activation = contract["activation"]
@@ -509,7 +511,7 @@ def _native_selector_route(
     composition_role: str,
     feed_composition: Any = None,
 ) -> EquilibriumResult:
-    from .. import _core
+    _core = provider_native_core()
 
     route = _core._native_equilibrium_selector_route_result(
         mixture._native,
@@ -565,7 +567,7 @@ def _accepted_native_selector_two_phase_result(
     composition_role: str,
     feed_composition: Any = None,
 ) -> EquilibriumResult:
-    from .. import _core
+    _core = provider_native_core()
 
     if not bool(route.get("accepted", False)):
         raise_native_route_rejected(route, f"Native selector {route_label} route was rejected.")

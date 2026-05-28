@@ -26,6 +26,6 @@ Supported public options:
 - ``born_formulation``: ``"disabled"``, ``"born"``, ``"ssm"``, ``"ds"``, or
   ``"ssm_ds"``
 
-Derivative selection is not a user option. Public ``State``, ``Equilibrium``,
-and ``Regression`` workflows require CppAD-backed coverage and raise when the
-requested formulation is not covered.
+Derivative selection is not a user option. Public provider ``State``,
+extension ``Equilibrium``, and transition ``Regression`` workflows require
+CppAD-backed coverage and raise when the requested formulation is not covered.

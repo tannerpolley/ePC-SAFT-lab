@@ -1,9 +1,8 @@
 Equilibrium Architecture
 ========================
 
-This page describes the current monorepo equilibrium surface. ADR 0005 assigns
-final ownership of this surface to the ``epcsaft-equilibrium`` extension
-package after the provider API and native boundary contracts are proven.
+This page describes the equilibrium surface now owned by the
+``epcsaft-equilibrium`` extension package.
 
 The current reset public API is workflow-object based:
 
@@ -24,8 +23,9 @@ Example
 .. code-block:: python
 
    import epcsaft
+   from epcsaft_equilibrium import Equilibrium
 
-   bubble = epcsaft.Equilibrium(
+   bubble = Equilibrium(
        mixture,
        route="bubble_pressure",
        T=233.15,
@@ -33,7 +33,7 @@ Example
    )
    result = bubble.solve(solver_options={"max_iterations": 200})
 
-   flash = epcsaft.Equilibrium(
+   flash = Equilibrium(
        mixture,
        route="flash",
        T=233.15,
@@ -41,7 +41,7 @@ Example
        z=[0.4, 0.25, 0.35],
    ).solve()
 
-   lle = epcsaft.Equilibrium(
+   lle = Equilibrium(
        neutral_nonassociating_binary,
        route="lle",
        T=225.0,

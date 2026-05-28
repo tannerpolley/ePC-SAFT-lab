@@ -2,7 +2,9 @@
 
 `epcsaft` is a Windows-first Python package for PC-SAFT and electrolyte PC-SAFT thermodynamic calculations. The public API is Python; the equation-of-state runtime is implemented in native C++ through `pybind11`.
 
-This release is still a monorepo transition build. It exposes equilibrium and regression workflow objects from `epcsaft` today, while ADR 0005 assigns final ownership of Ipopt-backed equilibrium to `epcsaft-equilibrium` and Ceres-backed regression to `epcsaft-regression`.
+This release is still a monorepo transition build. Ipopt-backed equilibrium is
+owned by `epcsaft-equilibrium`, while regression remains a temporary `epcsaft`
+root export until it moves to `epcsaft-regression`.
 
 Current package version: `0.2.0`
 
@@ -10,11 +12,14 @@ Current package version: `0.2.0`
 
 - Build PC-SAFT/ePC-SAFT mixtures from user-owned parameter data.
 - Evaluate pressure, density, residual properties, fugacity coefficients, activity coefficients, and derivatives.
-- Use the constructor-configured neutral equilibrium API, including neutral nonassociating LLE, when the package is built with optional native Ipopt.
+- Use the constructor-configured neutral equilibrium API from `epcsaft_equilibrium`, including neutral nonassociating LLE, when the package is built with optional native Ipopt.
 - Run supported pure-neutral parameter-regression workflows.
 - Inspect runtime capabilities with `capabilities()` before selecting optional native solver paths.
 
-The main public objects in the current transition release are `ParameterSet`, `ModelOptions`, `Mixture`, `State`, `Equilibrium`, `Regression`, and `create_input_template(...)`. `Equilibrium` and `Regression` are planned extension-owned surfaces after the package split.
+The main provider objects are `ParameterSet`, `ModelOptions`, `Mixture`,
+`State`, and `create_input_template(...)`. Import `Equilibrium` from
+`epcsaft_equilibrium`; `Regression` remains a planned extension-owned transition
+surface.
 
 ## Install
 
@@ -82,14 +87,21 @@ python -m pip install -e .
 
 Editable installs use the same native build backend as wheel installs. If you change C++ sources, pybind bindings, CMake files, or build metadata, rerun the editable install command so the native extension is rebuilt.
 
+Equilibrium workflows now live in the sibling `epcsaft-equilibrium` workspace
+package. In a source checkout, use the uv workspace environment or install the
+built `epcsaft-equilibrium` wheel alongside `epcsaft` before importing
+`epcsaft_equilibrium`.
+
 ## Verify The Install
 
 ```python
 import epcsaft
+import epcsaft_equilibrium
 
 print(epcsaft.__version__)
 print(epcsaft.runtime_build_info())
 print(epcsaft.capabilities())
+print(epcsaft_equilibrium.capabilities())
 ```
 
 ## Quick Example
@@ -192,7 +204,11 @@ python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.gi
 
 Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig.cmake` directory. Runtime processes that execute Ipopt on Windows must expose the SDK `bin` directory through both `PATH` and `EPCSAFT_RUNTIME_DLL_DIRS`; repo build scripts do this automatically for the local SDK.
 
-The public equilibrium API does not expose a solver-backend selector. Use the certified `Equilibrium(...)` route specs and ordinary solver tolerances when validating constrained-NLP behavior. The currently exposed route names are `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature`, `flash`, and neutral nonassociating `lle`.
+The public equilibrium API does not expose a solver-backend selector. Import
+`Equilibrium` from `epcsaft_equilibrium` and use the certified route specs and
+ordinary solver tolerances when validating constrained-NLP behavior. The
+currently exposed route names are `bubble_pressure`, `bubble_temperature`,
+`dew_pressure`, `dew_temperature`, `flash`, and neutral nonassociating `lle`.
 
 ## Documentation
 

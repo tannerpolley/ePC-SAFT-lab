@@ -10,6 +10,7 @@ import pytest
 
 import epcsaft
 import epcsaft._core as _core
+import epcsaft_equilibrium
 from tests.support.hydrocarbon_cases import (
     HYDROCARBON_BUBBLE_P,
     HYDROCARBON_FLASH_Z,
@@ -507,7 +508,7 @@ def test_neutral_flash_reference_values_are_reported_and_verified(capsys: pytest
 
     for route, kwargs, problem_kind, selector_family in (ROUTE_CASES[-1],):
         started_at = perf_counter()
-        result = epcsaft.Equilibrium(mixture, route=route, **kwargs).solve(solver_options=_solver_options())
+        result = epcsaft_equilibrium.Equilibrium(mixture, route=route, **kwargs).solve(solver_options=_solver_options())
         elapsed_seconds = perf_counter() - started_at
         liquid = result.phases["liquid"]
         vapor = result.phases["vapor"]

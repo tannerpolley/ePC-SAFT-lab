@@ -9,7 +9,7 @@ import pytest
 
 import epcsaft
 import epcsaft._core as _core
-import epcsaft.equilibrium as equilibrium_module
+import epcsaft_equilibrium as equilibrium_module
 from tests.support.hydrocarbon_cases import (
     HYDROCARBON_BUBBLE_P,
     HYDROCARBON_FLASH_Z,
@@ -25,7 +25,7 @@ from tests.support.hydrocarbon_cases import (
 def test_workflow_object_is_constructed_with_problem_spec() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
-    equilibrium = epcsaft.Equilibrium(mixture, route="bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X)
+    equilibrium = equilibrium_module.Equilibrium(mixture, route="bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X)
 
     assert equilibrium.mixture is mixture
     assert equilibrium.problem.route == "bubble_pressure"
@@ -46,7 +46,7 @@ def test_equilibrium_constructor_configures_route_before_solve(
 ) -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
-    equilibrium = epcsaft.Equilibrium(mixture, route=route, **kwargs)
+    equilibrium = equilibrium_module.Equilibrium(mixture, route=route, **kwargs)
     structure = equilibrium.structure()
 
     expected_selector_route = "neutral_tp_flash" if route == "flash" else route
@@ -62,7 +62,7 @@ def test_equilibrium_requires_constructor_route() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
     with pytest.raises((TypeError, epcsaft.InputError), match="route"):
-        epcsaft.Equilibrium(mixture)
+        equilibrium_module.Equilibrium(mixture)
 
 
 @pytest.mark.parametrize(
@@ -112,19 +112,19 @@ def test_constructor_enforces_route_required_and_forbidden_specs(
     missing_payload = dict(valid_kwargs)
     missing_payload.pop(missing_key)
     with pytest.raises(epcsaft.InputError, match=missing_key):
-        epcsaft.Equilibrium(mixture, route=route, **missing_payload)
+        equilibrium_module.Equilibrium(mixture, route=route, **missing_payload)
 
     forbidden_payload = dict(valid_kwargs)
     forbidden_payload[forbidden_key] = forbidden_value
     with pytest.raises(epcsaft.InputError, match=forbidden_key):
-        epcsaft.Equilibrium(mixture, route=route, **forbidden_payload)
+        equilibrium_module.Equilibrium(mixture, route=route, **forbidden_payload)
 
 
 def test_solver_options_live_on_solve_not_constructor() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
     with pytest.raises((TypeError, epcsaft.InputError), match="solver_options"):
-        epcsaft.Equilibrium(
+        equilibrium_module.Equilibrium(
             mixture,
             route="bubble_pressure",
             T=HYDROCARBON_T,
@@ -140,7 +140,7 @@ def test_solver_options_live_on_solve_not_constructor() -> None:
     )
 
     _skip_without_ipopt()
-    result = epcsaft.Equilibrium(
+    result = equilibrium_module.Equilibrium(
         mixture,
         route="bubble_pressure",
         T=HYDROCARBON_T,
@@ -151,7 +151,7 @@ def test_solver_options_live_on_solve_not_constructor() -> None:
 
 
 def test_solve_signature_rejects_legacy_route_specs() -> None:
-    signature = inspect.signature(epcsaft.Equilibrium.solve)
+    signature = inspect.signature(equilibrium_module.Equilibrium.solve)
 
     for removed in ("route", "T", "P", "x", "y", "z"):
         assert removed not in signature.parameters
@@ -161,7 +161,7 @@ def test_constructor_configured_result_exposes_named_phase_helpers() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
-    result = epcsaft.Equilibrium(
+    result = equilibrium_module.Equilibrium(
         mixture,
         route="bubble_pressure",
         T=HYDROCARBON_T,
@@ -246,7 +246,7 @@ def test_flash_result_exposes_feed_composition_helper(hydrocarbon_flash_result) 
 
 def test_equilibrium_problem_and_structure_are_read_only_metadata() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
-    equilibrium = epcsaft.Equilibrium(
+    equilibrium = equilibrium_module.Equilibrium(
         mixture,
         route="bubble_pressure",
         T=HYDROCARBON_T,
@@ -279,7 +279,7 @@ def test_equilibrium_problem_and_structure_are_read_only_metadata() -> None:
 
 def test_equilibrium_problem_fixed_specs_are_deeply_read_only() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
-    equilibrium = epcsaft.Equilibrium(
+    equilibrium = equilibrium_module.Equilibrium(
         mixture,
         route="bubble_pressure",
         T=HYDROCARBON_T,
@@ -297,7 +297,7 @@ def test_equilibrium_problem_fixed_specs_are_deeply_read_only() -> None:
 
 def test_solver_options_reject_ignored_backend_selection_knobs() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
-    equilibrium = epcsaft.Equilibrium(
+    equilibrium = equilibrium_module.Equilibrium(
         mixture,
         route="bubble_pressure",
         T=HYDROCARBON_T,
@@ -321,7 +321,7 @@ def test_solver_options_reject_ignored_backend_selection_knobs() -> None:
 def test_equilibrium_lle_route_configures_neutral_liquid_pair_structure() -> None:
     mixture = epcsaft.Mixture(_neutral_lle_parameter_set())
 
-    equilibrium = epcsaft.Equilibrium(mixture, route="lle", T=225.0, P=1.0e6, z=[0.5, 0.5])
+    equilibrium = equilibrium_module.Equilibrium(mixture, route="lle", T=225.0, P=1.0e6, z=[0.5, 0.5])
     structure = equilibrium.structure()
 
     assert equilibrium.problem.route == "lle"
@@ -341,7 +341,7 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(_neutral_lle_parameter_set())
 
-    result = epcsaft.Equilibrium(mixture, route="lle", T=225.0, P=1.0e6, z=[0.5, 0.5]).solve(
+    result = equilibrium_module.Equilibrium(mixture, route="lle", T=225.0, P=1.0e6, z=[0.5, 0.5]).solve(
         solver_options={
             "max_iterations": 260,
             "tolerance": 1.0e-6,
@@ -397,7 +397,7 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
 
 def test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs() -> None:
     with pytest.raises(epcsaft.InputError, match="non-associating"):
-        epcsaft.Equilibrium(
+        equilibrium_module.Equilibrium(
             epcsaft.Mixture(_associating_parameter_set()),
             route="lle",
             T=300.0,
@@ -406,7 +406,7 @@ def test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs() -> N
         )
 
     with pytest.raises(epcsaft.InputError, match="neutral mixtures"):
-        epcsaft.Equilibrium(
+        equilibrium_module.Equilibrium(
             epcsaft.Mixture(_ionic_parameter_set()),
             route="lle",
             T=300.0,
@@ -415,14 +415,14 @@ def test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs() -> N
         )
 
 
-def _equilibrium() -> epcsaft.Equilibrium:
-    return epcsaft.Equilibrium(
+def _equilibrium() -> equilibrium_module.Equilibrium:
+    return equilibrium_module.Equilibrium(
         epcsaft.Mixture(hydrocarbon_parameter_set()), route="bubble_pressure", T=HYDROCARBON_T, x=HYDROCARBON_LIQUID_X
     )
 
 
-def _configured_equilibrium(route: str, **kwargs: object) -> epcsaft.Equilibrium:
-    return epcsaft.Equilibrium(epcsaft.Mixture(hydrocarbon_parameter_set()), route=route, **kwargs)
+def _configured_equilibrium(route: str, **kwargs: object) -> equilibrium_module.Equilibrium:
+    return equilibrium_module.Equilibrium(epcsaft.Mixture(hydrocarbon_parameter_set()), route=route, **kwargs)
 
 
 def _solver_options() -> dict[str, object]:

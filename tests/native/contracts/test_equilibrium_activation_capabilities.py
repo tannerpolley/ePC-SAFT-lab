@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-import epcsaft
 import epcsaft._core as _core
-from epcsaft.equilibrium.workflows import _EQUILIBRIUM_ROUTE_SPECS
+import epcsaft_equilibrium
+from epcsaft_equilibrium.workflows import _EQUILIBRIUM_ROUTE_SPECS
 
 EXPECTED_PUBLIC_ROUTE_FAMILIES = {
     "bubble_pressure": "bubble_dew_derived_routes",
@@ -31,7 +31,7 @@ def _admitted_public_route_map(rows: list[dict[str, object]]) -> dict[str, str]:
 
 def test_generated_activation_mirror_matches_native_source_of_truth() -> None:
     try:
-        from epcsaft.runtime.equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
+        from epcsaft_equilibrium.equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
     except ModuleNotFoundError as exc:
         pytest.fail(f"missing generated activation mirror: {exc}")
 
@@ -42,7 +42,7 @@ def test_generated_activation_mirror_matches_native_source_of_truth() -> None:
 
 def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None:
     native_rows = list(_core._native_equilibrium_activation_matrix())
-    capabilities = epcsaft.capabilities()["equilibrium"]
+    capabilities = epcsaft_equilibrium.capabilities()
     activation = capabilities["activation_matrix"]
     public_route_map = _admitted_public_route_map(native_rows)
 
@@ -111,6 +111,11 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["neutral_lle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["problem_objects"]["available"] is True
     assert capabilities["problem_objects"]["entrypoint"] == "Equilibrium(mixture, route=..., ...)"
+    assert {row["quantity"] for row in capabilities["route_derivative_evidence"]["rows"]} == {
+        "bubble_dew_derived_routes",
+        "neutral_tp_flash",
+        "neutral_lle",
+    }
 
     deleted_route_keys = {
         "neutral_lle_flash",

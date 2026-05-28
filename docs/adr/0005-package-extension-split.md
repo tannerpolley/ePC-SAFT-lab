@@ -38,9 +38,10 @@ packages:
   datasets and target rows, parameter maps and bounds, Ceres residual blocks,
   optimizer diagnostics, regression result schemas, and regression capability
   reports.
-- The current top-level `Equilibrium` and `Regression` exports are transition
-  surfaces for the monorepo. They remain valid until a coordinated migration
-  release moves ownership to the extension packages.
+- `Equilibrium` is owned by `epcsaft-equilibrium` in the transition monorepo
+  and is no longer exported from the provider package root. `Regression`
+  remains a root transition export until a coordinated migration release moves
+  ownership to `epcsaft-regression`.
 - The migration must not leave hidden long-lived compatibility wrappers in the
   core package. When ownership moves, old core-owned paths are removed in the
   same coordinated migration unless a short public deprecation window is

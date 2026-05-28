@@ -21,9 +21,9 @@ It records the boundary that must be preserved before `epcsaft-equilibrium` or
 - provider-scoped `capabilities()`
 - `InputError`, `SolutionError`, and model-parameter errors
 
-The current monorepo still exports `Equilibrium` and `Regression` from the
-package root. Those are transition exports under ADR 0005, not final provider
-ownership.
+`Equilibrium` is owned by `epcsaft-equilibrium` and is no longer exported from
+the provider package root. `Regression` remains a remaining transition export
+under ADR 0005 until the regression extension migration lands.
 
 ## Version
 
@@ -117,9 +117,9 @@ extension ABI.
 
 ## Capability Contract
 
-During the monorepo transition, `epcsaft.capabilities()` may report provider,
-equilibrium, and regression capability sections because those workflows still
-ship together.
+Equilibrium capability reporting is owned by `epcsaft-equilibrium`.
+`epcsaft.capabilities()` no longer reports equilibrium route admission or Ipopt
+route capabilities.
 
 After the split:
 
@@ -130,8 +130,8 @@ After the split:
 
 Dependency presence alone is not capability evidence.
 
-During the transition, the runtime capability payload must expose separable
-provider, equilibrium, and regression package views. The provider view is the
+During the remaining transition, the runtime capability payload exposes the
+provider view and the not-yet-migrated regression view. The provider view is the
 future core report and must not require Ceres or Ipopt to be present.
 
 ## Error Contract

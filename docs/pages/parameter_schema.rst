@@ -37,6 +37,6 @@ Using ModelOptions
        model_options=ModelOptions(relative_permittivity_rule="component_linear"),
    )
 
-The reset API has no public backend-mode flag. Public ``State``,
-``Equilibrium``, and ``Regression`` workflows require CppAD-backed derivative
-coverage and raise when coverage is missing.
+The reset API has no public backend-mode flag. Public provider ``State``,
+extension ``Equilibrium``, and transition ``Regression`` workflows require
+CppAD-backed derivative coverage and raise when coverage is missing.

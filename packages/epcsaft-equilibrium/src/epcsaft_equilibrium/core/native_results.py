@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from ..._types import SolutionError
+from epcsaft._types import SolutionError
 
 _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "solver_status",

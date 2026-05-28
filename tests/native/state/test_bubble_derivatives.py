@@ -5,6 +5,7 @@ import pytest
 
 import epcsaft
 import epcsaft._core as _core
+import epcsaft_equilibrium
 from tests.support.hydrocarbon_cases import HYDROCARBON_LIQUID_X, HYDROCARBON_T, hydrocarbon_parameter_set
 from tests.support.native_cases import _neutral_state
 
@@ -21,7 +22,7 @@ def test_cppad_pressure_derivative_api_underpins_bubble_policy() -> None:
 
 def test_neutral_bubble_uses_native_ipopt_route_gate() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
-    equilibrium = epcsaft.Equilibrium(
+    equilibrium = epcsaft_equilibrium.Equilibrium(
         mixture,
         route="bubble_pressure",
         T=HYDROCARBON_T,

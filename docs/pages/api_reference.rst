@@ -1,20 +1,19 @@
 API Reference
 =============
 
-The reset public API is intentionally small. Import these names from
+The reset provider API is intentionally small. Import these names from
 ``epcsaft``:
 
 - ``Mixture``
 - ``State``
-- ``Equilibrium``
 - ``Regression``
 - ``ParameterSet``
 - ``ModelOptions``
 - ``create_input_template``
 - ``provider_native_sdk``
 
-Import user-facing workflows from the package root. Native bridge modules are
-internal implementation details.
+Import equilibrium workflows from ``epcsaft_equilibrium``. Native bridge modules
+are internal implementation details.
 
 Mixture
 -------
@@ -39,7 +38,7 @@ It exposes common property names such as ``z()``, ``ares()``, ``hres()``,
 Equilibrium
 -----------
 
-.. autoclass:: epcsaft.Equilibrium
+.. autoclass:: epcsaft_equilibrium.Equilibrium
    :members:
    :undoc-members:
    :no-index:

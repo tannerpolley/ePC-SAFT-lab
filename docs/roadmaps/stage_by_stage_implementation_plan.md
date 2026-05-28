@@ -59,7 +59,7 @@ Equation and algorithm sources:
 
 Public request seam:
 
-- `src/epcsaft/equilibrium/workflows.py`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `tests/api/frontend/test_equilibrium.py`
 
 Selector and family-admission seam:
@@ -284,7 +284,7 @@ Primary output:
 
 References:
 
-- `src/epcsaft/equilibrium/workflows.py`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `src/epcsaft/native/equilibrium/core/selector_core.cpp`
 - `src/epcsaft/native/equilibrium/register_bindings.cpp`
 - `tests/api/frontend/test_equilibrium.py`
@@ -342,7 +342,7 @@ Primary output:
 
 References:
 
-- `src/epcsaft/equilibrium/workflows.py`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `src/epcsaft/frontend/mixture.py`
 - `src/epcsaft/model/options.py`
 - `tests/support/equilibrium_cases.py`
@@ -1017,7 +1017,7 @@ References:
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
 - `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`
-- `src/epcsaft/equilibrium/workflows.py`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `tests/api/frontend/test_equilibrium.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 

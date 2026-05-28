@@ -2,14 +2,13 @@ Package Guide
 =============
 
 This guide groups the reset public package surface by task. The current
-transition release exports ``Mixture``, ``State``, ``Equilibrium``,
-``Regression``, ``ParameterSet``, ``ModelOptions``, and
-``create_input_template`` from the package root.
+transition release exports ``Mixture``, ``State``, ``Regression``,
+``ParameterSet``, ``ModelOptions``, and ``create_input_template`` from the
+provider package root.
 
-ADR 0005 assigns final ownership of ``Equilibrium`` to
-``epcsaft-equilibrium`` and final ownership of ``Regression`` to
-``epcsaft-regression``. The examples below describe the current monorepo
-surface until that coordinated migration lands.
+``Equilibrium`` is imported from ``epcsaft_equilibrium``. ADR 0005 assigns
+final ownership of ``Regression`` to ``epcsaft-regression``; that migration is
+still pending.
 
 Constructing A Model
 --------------------
@@ -55,12 +54,11 @@ Equilibrium
 
 Construct ``Equilibrium`` directly from a ``Mixture``. The trusted equilibrium
 proof is the hydrocarbon bubble-pressure route with native Ipopt and an exact
-Hessian. This is a current transition API; final ownership moves to
-``epcsaft-equilibrium``:
+Hessian:
 
 .. code-block:: python
 
-   from epcsaft import Equilibrium
+   from epcsaft_equilibrium import Equilibrium
 
    result = Equilibrium(
        mixture,

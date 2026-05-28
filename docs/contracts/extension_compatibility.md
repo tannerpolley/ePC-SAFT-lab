@@ -13,9 +13,9 @@ Final package ownership:
 - `epcsaft-equilibrium`: Ipopt-backed equilibrium extension.
 - `epcsaft-regression`: Ceres-backed regression extension.
 
-The current repository is a monorepo transition build. Current root exports for
-`Equilibrium` and `Regression` remain valid until a coordinated migration
-release moves them to the extension packages.
+The current repository is a monorepo transition build. `Equilibrium` is owned
+by `epcsaft-equilibrium`; `Regression` remains a root transition export until a
+coordinated regression migration moves it to `epcsaft-regression`.
 
 ## Dependency Rules
 
