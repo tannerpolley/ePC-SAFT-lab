@@ -102,7 +102,7 @@ source changes are picked up from the checkout. If you change C++ sources,
 pybind bindings, CMake files, or build metadata, rerun the editable install
 command so the native extension is rebuilt.
 
-Equilibrium workflows live in the sibling ``epcsaft-equilibrium`` workspace
+Equilibrium workflows live in the monorepo ``packages/epcsaft-equilibrium`` workspace
 package. In a source checkout, use the uv workspace environment or install the
 built ``epcsaft-equilibrium`` wheel alongside ``epcsaft`` before importing
 ``epcsaft_equilibrium``.

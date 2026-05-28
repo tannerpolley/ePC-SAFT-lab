@@ -11,13 +11,13 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-WORKSPACE_ROOT = REPO_ROOT.parent
-EQUILIBRIUM_REPO_ROOT = WORKSPACE_ROOT / "epcsaft-equilibrium"
-EQUILIBRIUM_PACKAGE_ROOT = EQUILIBRIUM_REPO_ROOT / "src" / "epcsaft_equilibrium"
-EQUILIBRIUM_TEST_ROOT = EQUILIBRIUM_REPO_ROOT / "tests"
-EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_REPO_ROOT / "native" / "equilibrium"
-REGRESSION_REPO_ROOT = WORKSPACE_ROOT / "epcsaft-regression"
-REGRESSION_PACKAGE_ROOT = REGRESSION_REPO_ROOT / "src" / "epcsaft_regression"
+WORKSPACE_ROOT = REPO_ROOT
+EQUILIBRIUM_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft-equilibrium"
+EQUILIBRIUM_PACKAGE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "src" / "epcsaft_equilibrium"
+EQUILIBRIUM_TEST_ROOT = EQUILIBRIUM_PACKAGE_DIR / "tests"
+EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "native" / "equilibrium"
+REGRESSION_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft-regression"
+REGRESSION_PACKAGE_ROOT = REGRESSION_PACKAGE_DIR / "src" / "epcsaft_regression"
 ALLOWED_ROOT_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_core.pyi", "_types.py"}
 ALLOWED_NATIVE_DOMAIN_FOLDERS = {
     "autodiff",
@@ -172,8 +172,8 @@ print(json.dumps(sorted(name for name in watchlist if name in sys.modules)))
     env = os.environ.copy()
     pythonpath_entries = [
         str(REPO_ROOT / "src"),
-        str(EQUILIBRIUM_REPO_ROOT / "src"),
-        str(REGRESSION_REPO_ROOT / "src"),
+        str(EQUILIBRIUM_PACKAGE_DIR / "src"),
+        str(REGRESSION_PACKAGE_DIR / "src"),
     ]
     env["PYTHONPATH"] = os.pathsep.join([*pythonpath_entries, env["PYTHONPATH"]]) if env.get("PYTHONPATH") else os.pathsep.join(pythonpath_entries)
     result = subprocess.run(

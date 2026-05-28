@@ -19,12 +19,12 @@ _EQUILIBRIUM_PRODUCTION_ROUTES_BY_FAMILY: Final[dict[str, tuple[str, ...]]] = {
     ),
 }
 
-EQUILIBRIUM_API_TEST_FILE: Final[str] = "../epcsaft-equilibrium/tests/api/test_equilibrium.py"
+EQUILIBRIUM_API_TEST_FILE: Final[str] = "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py"
 EQUILIBRIUM_BUBBLE_DERIVATIVE_TEST_FILE: Final[str] = (
-    "../epcsaft-equilibrium/tests/api/test_bubble_derivatives.py"
+    "packages/epcsaft-equilibrium/tests/api/test_bubble_derivatives.py"
 )
 EQUILIBRIUM_CAPABILITY_TEST_FILE: Final[str] = (
-    "../epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
+    "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
 )
 
 
@@ -354,7 +354,7 @@ EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = tuple(
     EQUILIBRIUM_VALIDATION_TARGETS_BY_FAMILY[str(row["key"])] for row in production_equilibrium_activation_rows()
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "../epcsaft-equilibrium/tests/api/test_imports.py",
+    "packages/epcsaft-equilibrium/tests/api/test_imports.py",
     f"{EQUILIBRIUM_API_TEST_FILE}::test_workflow_object_is_constructed_with_problem_spec",
     f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_constructor_configures_route_before_solve",
     f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_requires_constructor_route",
@@ -383,7 +383,7 @@ NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
 )
 TEST_SLICES: Final[dict[str, dict[str, object]]] = {
     "generic": {"targets": GENERIC_TEST_TARGETS, "cheap_by_default": True},
-    "all": {"targets": ("tests", "../epcsaft-equilibrium/tests"), "cheap_by_default": False},
+    "all": {"targets": ("tests", "packages/epcsaft-equilibrium/tests"), "cheap_by_default": False},
     "confidence": {"targets": CONFIDENCE_TEST_TARGETS, "cheap_by_default": False},
     "provider-api": {"targets": PROVIDER_API_TEST_TARGETS, "cheap_by_default": True},
     "equilibrium-confidence": {"targets": EQUILIBRIUM_CONFIDENCE_TEST_TARGETS, "cheap_by_default": False},

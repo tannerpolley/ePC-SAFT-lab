@@ -9,24 +9,28 @@ orchestration. The equation-of-state runtime is native C++ exposed through
 
 During the monorepo transition, Ipopt-backed equilibrium is owned by
 ``epcsaft-equilibrium`` and regression is owned by
-``epcsaft-regression``. The provider repo remains the source checkout for core
-APIs and shared native/provider contracts while the split is completed.
+``epcsaft-regression``. The monorepo remains the source checkout for core APIs,
+extension packages, and shared native/provider contracts while package
+boundaries are completed.
 
 Organization Boundary
 ---------------------
 
-``epcsaft`` currently ships as a single distribution package while the
-split is prepared. That is a transition-state implementation detail, not the
-long-term package ownership model. The target organization layout is:
+``epcsaft`` currently remains the root package while the monorepo package
+layout is stabilized. That is a transition-state implementation detail, not the
+long-term package ownership model. The target repository layout is one
+organization-owned monorepo with three installable distributions:
 
 .. code-block:: text
 
-   ePC-SAFT/ePC-SAFT              # core provider package: epcsaft
-   ePC-SAFT/epcsaft-equilibrium   # Ipopt-backed equilibrium extension
-   ePC-SAFT/epcsaft-regression    # Ceres-backed regression extension
+   ePC-SAFT/ePC-SAFT
+     packages/epcsaft              # core provider distribution: epcsaft
+     packages/epcsaft-equilibrium   # Ipopt-backed equilibrium distribution
+     packages/epcsaft-regression    # Ceres-backed regression distribution
 
 The current repo must keep clean internal subsystem boundaries so the extension
-packages can be extracted without hidden compatibility paths.
+packages can be built, tested, and released independently without hidden
+compatibility paths.
 
 The target internal shape is:
 
@@ -38,8 +42,8 @@ The target internal shape is:
      state/
      runtime/
      native/
-   ../epcsaft-equilibrium/src/epcsaft_equilibrium/
-   ../epcsaft-regression/src/epcsaft_regression/
+   packages/epcsaft-equilibrium/src/epcsaft_equilibrium/
+   packages/epcsaft-regression/src/epcsaft_regression/
 
 Subsystem Boundaries
 --------------------

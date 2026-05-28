@@ -288,34 +288,34 @@ set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
     src/epcsaft/native/autodiff/implicit_sensitivity.cpp
 )
 set(
-    EPCSAFT_EQUILIBRIUM_REPO_ROOT
-    "${CMAKE_CURRENT_SOURCE_DIR}/../epcsaft-equilibrium"
+    EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/packages/epcsaft-equilibrium"
     CACHE PATH
-    "Sibling checkout that owns the equilibrium extension sources"
+    "Monorepo package directory that owns the equilibrium extension sources"
 )
 set(
-    EPCSAFT_REGRESSION_REPO_ROOT
-    "${CMAKE_CURRENT_SOURCE_DIR}/../epcsaft-regression"
+    EPCSAFT_REGRESSION_PACKAGE_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/packages/epcsaft-regression"
     CACHE PATH
-    "Sibling checkout that owns the regression extension sources"
+    "Monorepo package directory that owns the regression extension sources"
 )
-set(EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_REPO_ROOT}/native")
-set(EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_REPO_ROOT}/native")
+set(EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT}/native")
+set(EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_PACKAGE_ROOT}/native")
 set(EPCSAFT_EQUILIBRIUM_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT}/equilibrium")
 set(EPCSAFT_REGRESSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT}/regression")
 set(EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/register_bindings.cpp")
 if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE AND NOT EXISTS "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}")
     message(
         FATAL_ERROR
-        "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE requires the sibling epcsaft-equilibrium checkout at "
-        "${EPCSAFT_EQUILIBRIUM_REPO_ROOT}."
+        "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE requires the monorepo epcsaft-equilibrium package at "
+        "${EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT}."
     )
 endif()
 if(EPCSAFT_ENABLE_REGRESSION_NATIVE AND NOT EXISTS "${EPCSAFT_REGRESSION_NATIVE_ROOT}/ceres_regression.cpp")
     message(
         FATAL_ERROR
-        "EPCSAFT_ENABLE_REGRESSION_NATIVE requires the sibling epcsaft-regression checkout at "
-        "${EPCSAFT_REGRESSION_REPO_ROOT}."
+        "EPCSAFT_ENABLE_REGRESSION_NATIVE requires the monorepo epcsaft-regression package at "
+        "${EPCSAFT_REGRESSION_PACKAGE_ROOT}."
     )
 endif()
 set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES

@@ -1,17 +1,27 @@
 # ePC-SAFT Package Extension Transfer Roadmap
 
+> Superseded for active execution by
+> `docs/roadmaps/monorepo_package_migration.md`. This document records the
+> previous sibling-repo transfer direction and should not be used as the active
+> source of truth for the current monorepo consolidation work.
+
 Date: 2026-05-28
 
-This document is the authoritative roadmap for the true ePC-SAFT package-extension
-transfer. Treat this as the original plan for the split, not as a correction to
-an older plan.
+This document is retained historical context for the previous sibling-repo
+package-extension transfer direction. The active roadmap for package execution
+is now `docs/roadmaps/monorepo_package_migration.md`.
 
-This roadmap controls extraction sequencing. Do not proceed with real extraction
-work until the target state and phase gates defined here are satisfied.
+Do not use this roadmap to control new extraction sequencing unless the
+monorepo migration roadmap explicitly reactivates a section.
 
-## Non-Negotiable Target State
+## Historical Target State (Superseded)
 
-### Final GitHub Organization Layout
+The following layout was the prior extraction target. It is no longer the active
+execution target for package migration. Use
+`docs/roadmaps/monorepo_package_migration.md` for current gates and source
+layout decisions.
+
+### Former GitHub Organization Layout
 
 ```text
 ePC-SAFT/ePC-SAFT
@@ -24,7 +34,7 @@ ePC-SAFT/epcsaft-regression
   Regression extension repo and PyPI package: epcsaft-regression
 ```
 
-### Final Local Sibling-Repo Layout
+### Former Local Sibling-Repo Layout
 
 ```text
 C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT

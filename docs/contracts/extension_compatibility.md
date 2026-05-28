@@ -73,7 +73,7 @@ An aggregate report may exist only when it is explicit, opt-in, and tested.
 
 ## Version Rules
 
-Extension packages must declare compatible `epcsaft` versions. During sibling
+Extension packages must declare compatible `epcsaft` versions. During monorepo
 checkout development, tests may use path dependencies, but published packages
 must depend on released compatible versions unless a release plan explicitly
 coordinates pre-release artifacts.
