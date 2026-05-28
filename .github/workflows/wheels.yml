@@ -110,7 +110,6 @@ jobs:
           required_exports = {
               "Mixture",
               "State",
-              "Equilibrium",
               "Regression",
               "ParameterSet",
               "ModelOptions",
@@ -122,10 +121,22 @@ jobs:
           missing_exports = sorted(required_exports - exported)
           if missing_exports:
               raise SystemExit(f"missing public exports: {missing_exports}")
+          equilibrium_tree = ast.parse(
+              Path("packages/epcsaft-equilibrium/src/epcsaft_equilibrium/__init__.py").read_text(encoding="utf-8")
+          )
+          equilibrium_exports = {
+              alias.name
+              for node in equilibrium_tree.body
+              if isinstance(node, ast.ImportFrom)
+              for alias in node.names
+          }
+          if "Equilibrium" not in equilibrium_exports:
+              raise SystemExit("missing equilibrium extension export: Equilibrium")
           legacy_exports = {
               "ePC" + "SAFTMixture",
               "ePC" + "SAFTState",
               "fit_pure_" + "neutral",
+              "Equilibrium",
               "bubble_p",
               "dew_p",
           }
