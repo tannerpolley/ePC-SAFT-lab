@@ -147,6 +147,17 @@ def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() ->
     assert sdk["native_metadata"]["native_target"] == "epcsaft_provider_native"
 
 
+def test_provider_owns_pure_neutral_parameter_derivative_native_symbol() -> None:
+    definition_fragment = "CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp("
+    definitions: list[str] = []
+    for root in (REPO_ROOT / "src" / "epcsaft" / "native", REPO_ROOT / "packages"):
+        for path in sorted(root.rglob("*.cpp")):
+            if definition_fragment in _read(path):
+                definitions.append(path.relative_to(REPO_ROOT).as_posix())
+
+    assert definitions == ["src/epcsaft/native/eos/pure_neutral_parameter_derivatives.cpp"]
+
+
 def test_issue_tracker_and_downstream_docs_are_transfer_aware() -> None:
     issue_tracker = _read(REPO_ROOT / "docs" / "agents" / "issue-tracker.md")
     downstream = _read(REPO_ROOT / "docs" / "pages" / "downstream_dependency_protocol.rst")
