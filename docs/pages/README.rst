@@ -40,11 +40,9 @@ Install
 The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel and source
 archive:
 
-``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
+``https://github.com/ePC-SAFT/ePC-SAFT/releases/tag/v0.2.0``
 
-That URL is the current pre-transfer source location for release history. The
-package roadmap targets transfer to the ``ePC-SAFT`` GitHub organization before
-extension extraction.
+That URL is the current organization-owned source location for release history.
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 
@@ -73,13 +71,13 @@ locally:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 
 Source builds require Python ``>=3.9``, a C++ compiler, CMake, and Ninja or
 another CMake generator. Python 3.13 is the current project smoke-test
@@ -89,7 +87,7 @@ For a normal local source install:
 
 .. code-block:: powershell
 
-   git clone https://github.com/tannerpolley/ePC-SAFT.git
+   git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
    python -m pip install .
 

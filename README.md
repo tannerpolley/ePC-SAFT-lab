@@ -27,9 +27,9 @@ surface.
 
 The `v0.2.0` GitHub release provides a Windows CPython 3.13 wheel and source archive:
 
-<https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0>
+<https://github.com/ePC-SAFT/ePC-SAFT/releases/tag/v0.2.0>
 
-That URL is the current pre-transfer source location for release history. The package roadmap targets transfer to the `ePC-SAFT` GitHub organization before extension extraction.
+That URL is the current organization-owned source location for release history.
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 
@@ -60,13 +60,13 @@ If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above.
 The `v0.2.0` tag supports source installs that build the native extension locally. Source installs require Python `>=3.9`, a C++ compiler, CMake, and Ninja or another CMake generator:
 
 ```powershell
-python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 ```
 
 With `uv`:
 
 ```powershell
-uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 ```
 
 ### Local Clone
@@ -74,7 +74,7 @@ uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
 For a local source install:
 
 ```powershell
-git clone https://github.com/tannerpolley/ePC-SAFT.git
+git clone https://github.com/ePC-SAFT/ePC-SAFT.git
 cd ePC-SAFT
 python -m pip install .
 ```
@@ -199,7 +199,7 @@ point the build backend at an Ipopt install root:
 
 ```powershell
 $env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 ```
 
 Use `EPCSAFT_PEP517_IPOPT_DIR` instead when the install provides an `IpoptConfig.cmake` directory. Runtime processes that execute Ipopt on Windows must expose the SDK `bin` directory through both `PATH` and `EPCSAFT_RUNTIME_DLL_DIRS`; repo build scripts do this automatically for the local SDK.

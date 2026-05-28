@@ -10,16 +10,14 @@ For the current release, install the Windows CPython 3.13 wheel from GitHub:
 
    python -m pip install C:\path\to\epcsaft-0.2.0-*.whl
 
-The GitHub URLs below are current pre-transfer release and source locations.
-The package roadmap targets transfer to the ``ePC-SAFT`` organization before
-extension packages are extracted.
+The GitHub URLs below point at the current organization-owned source location.
 
 The ``v0.2.0`` tag also supports source installs that build the native
 extension locally:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 
 After the package is published on PyPI, use the standard package-manager
 command:
@@ -32,7 +30,7 @@ For a local editable checkout:
 
 .. code-block:: powershell
 
-   git clone https://github.com/tannerpolley/ePC-SAFT.git
+   git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
    python -m pip install -e .
 

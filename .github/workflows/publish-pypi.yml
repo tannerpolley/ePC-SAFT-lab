@@ -42,7 +42,7 @@ jobs:
           import urllib.request
 
           project = "epcsaft"
-          repository = os.environ.get("GITHUB_REPOSITORY", "tannerpolley/ePC-SAFT")
+          repository = os.environ.get("GITHUB_REPOSITORY", "ePC-SAFT/ePC-SAFT")
           version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
           url = f"https://pypi.org/pypi/{project}/json"
           try:
