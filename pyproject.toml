@@ -92,6 +92,10 @@ include = [
     "src/epcsaft/**/*.pyi",
     "src/epcsaft/**/*.cpp",
     "src/epcsaft/**/*.h",
+    "packages/epcsaft-equilibrium/native/**/*.cpp",
+    "packages/epcsaft-equilibrium/native/**/*.h",
+    "packages/epcsaft-regression/native/**/*.cpp",
+    "packages/epcsaft-regression/native/**/*.h",
     "tests/**/*.py",
 ]
 

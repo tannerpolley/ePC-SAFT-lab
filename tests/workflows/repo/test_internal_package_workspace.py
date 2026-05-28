@@ -39,6 +39,16 @@ def test_provider_repo_uses_monorepo_extension_workspace_members() -> None:
     assert "packages/epcsaft-regression/src" in root["tool"]["pytest"]["ini_options"]["pythonpath"]
 
 
+def test_provider_sdist_includes_transitional_extension_native_sources() -> None:
+    root = _pyproject(REPO_ROOT / "pyproject.toml")
+    sdist_include = set(root["tool"]["scikit-build"]["sdist"]["include"])
+
+    assert "packages/epcsaft-equilibrium/native/**/*.cpp" in sdist_include
+    assert "packages/epcsaft-equilibrium/native/**/*.h" in sdist_include
+    assert "packages/epcsaft-regression/native/**/*.cpp" in sdist_include
+    assert "packages/epcsaft-regression/native/**/*.h" in sdist_include
+
+
 def test_extension_package_manifests_depend_on_provider_workspace_source() -> None:
     for package_name, metadata in EXTENSION_PACKAGES.items():
         package_dir = metadata["directory"]
