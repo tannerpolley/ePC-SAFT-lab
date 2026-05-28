@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import epcsaft
+from epcsaft.runtime import RouteDiagnosticsView
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONTRACT = REPO_ROOT / "docs" / "contracts" / "provider_api_v1.md"
@@ -74,13 +75,16 @@ def test_cppad_stays_core_owned_while_equilibrium_capabilities_are_extension_own
     assert "cppad" in native_dependencies
 
     capabilities = epcsaft.capabilities()
-    assert capabilities["package_ownership"] == {
-        "provider": "epcsaft",
-        "regression": "epcsaft-regression",
-    }
-    assert capabilities["package_views"]["provider"]["contract_id"] == "provider_api_v1"
-    assert set(capabilities["package_views"]) == {"provider", "regression"}
+    assert capabilities["package"] == "epcsaft"
+    assert capabilities["owner"] == "core_provider"
+    assert capabilities["contract_id"] == "provider_api_v1"
+    assert capabilities["native_sdk_contract_id"] == "provider_native_sdk_v1"
+    assert capabilities["reports_only_provider_capabilities_after_split"] is True
+    assert "package_ownership" not in capabilities
+    assert "package_views" not in capabilities
     assert "equilibrium" not in capabilities
+    assert "regression" not in capabilities
+    assert "optimizers" not in capabilities
 
 
 def test_extensions_must_not_use_private_core_as_provider_contract() -> None:
@@ -89,3 +93,22 @@ def test_extensions_must_not_use_private_core_as_provider_contract() -> None:
     assert "must not import" in text
     assert "`epcsaft._core`" in text
     assert "private modules" in text
+
+
+def test_provider_contract_owns_public_route_diagnostics_view() -> None:
+    text = _contract_text()
+
+    assert "`RouteDiagnosticsView`" in text
+    exc = epcsaft.SolutionError(
+        "route failed",
+        diagnostics={
+            "route_status": "solver_rejected",
+            "constraint_families": ["material_balance"],
+        },
+    )
+
+    view = exc.route_diagnostics
+
+    assert isinstance(view, RouteDiagnosticsView)
+    assert view.route_status == "solver_rejected"
+    assert view.constraint_families == ("material_balance",)

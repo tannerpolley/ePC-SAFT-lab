@@ -4,6 +4,7 @@ from pathlib import Path
 
 import epcsaft
 import epcsaft_equilibrium
+import epcsaft_regression
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -88,17 +89,15 @@ def test_extension_compatibility_contract_rejects_hidden_core_wrappers() -> None
 def test_runtime_capabilities_are_separable_by_future_package_owner() -> None:
     capabilities = epcsaft.capabilities()
 
-    assert capabilities["package_ownership"] == {
-        "provider": "epcsaft",
-        "regression": "epcsaft-regression",
-    }
-    views = capabilities["package_views"]
-    assert views["provider"]["reports_only_provider_capabilities_after_split"] is True
-    assert views["provider"]["native_sdk_contract_id"] == "provider_native_sdk_v1"
-    assert views["regression"]["forbidden_default_dependencies"] == ["ipopt"]
-    assert "equilibrium" not in views
+    assert capabilities["package"] == "epcsaft"
+    assert capabilities["owner"] == "core_provider"
+    assert capabilities["reports_only_provider_capabilities_after_split"] is True
+    assert capabilities["native_sdk_contract_id"] == "provider_native_sdk_v1"
+    assert "package_ownership" not in capabilities
+    assert "package_views" not in capabilities
     assert "equilibrium" not in capabilities
-    assert "ipopt" not in capabilities["optimizers"]
+    assert "regression" not in capabilities
+    assert "optimizers" not in capabilities
 
     equilibrium_capabilities = epcsaft_equilibrium.capabilities()
     assert equilibrium_capabilities["package"] == "epcsaft-equilibrium"
@@ -115,6 +114,13 @@ def test_runtime_capabilities_are_separable_by_future_package_owner() -> None:
         "lle",
     ]
 
+    regression_capabilities = epcsaft_regression.capabilities()
+    assert regression_capabilities["package"] == "epcsaft-regression"
+    assert regression_capabilities["owner"] == "regression_extension"
+    assert regression_capabilities["provider_contract"]["provider_native_sdk_contract_id"] == "provider_native_sdk_v1"
+    assert regression_capabilities["forbidden_default_dependencies"] == ["ipopt"]
+    assert regression_capabilities["requires"] == ["epcsaft", "cppad", "ceres"]
+
 
 def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() -> None:
     sdk = epcsaft.provider_native_sdk()
@@ -128,6 +134,9 @@ def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() ->
     assert sdk["extension_consumers"] == ["epcsaft-equilibrium", "epcsaft-regression"]
     assert "epcsaft._core" not in sdk["stable_python_surface"]
     assert sdk["native_contract_exported"] is True
+    assert isinstance(sdk["provider_only_core"], bool)
+    assert isinstance(sdk["equilibrium_native_enabled"], bool)
+    assert isinstance(sdk["regression_native_enabled"], bool)
     assert sdk["native_metadata"]["native_target"] == "epcsaft_provider_native"
 
 

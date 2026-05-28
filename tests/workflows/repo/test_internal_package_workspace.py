@@ -99,3 +99,22 @@ def test_equilibrium_extension_native_access_is_isolated_behind_provider_sdk_bri
     assert offenders == []
     assert "provider_native_sdk()" in native_bridge
     assert "provider_native_sdk_v1" in native_bridge
+
+
+def test_equilibrium_extension_uses_public_provider_imports_only() -> None:
+    module_dir = EXTENSION_PACKAGES["epcsaft-equilibrium"]["directory"] / "src" / "epcsaft_equilibrium"
+    forbidden_import_fragments = (
+        "from epcsaft._types import",
+        "import epcsaft._types",
+        "from epcsaft.frontend.mixture import",
+        "import epcsaft.frontend.mixture",
+    )
+    offenders: list[str] = []
+    for path in sorted(module_dir.rglob("*.py")):
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        for fragment in forbidden_import_fragments:
+            if fragment in text:
+                offenders.append(f"{rel}: {fragment}")
+
+    assert offenders == []

@@ -27,7 +27,7 @@ class SolutionError(Exception):
     @property
     def route_diagnostics(self):
         """Return a typed view over route diagnostics when present."""
-        from .equilibrium.core.native_results import RouteDiagnosticsView
+        from .runtime import RouteDiagnosticsView
 
         return RouteDiagnosticsView(self.diagnostics or {})
 

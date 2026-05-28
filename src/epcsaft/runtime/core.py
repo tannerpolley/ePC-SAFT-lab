@@ -17,10 +17,6 @@ from urllib.request import url2pathname
 
 from .capability_evidence import (
     DERIVATIVE_COVERAGE_ROWS,
-    REGRESSION_CAPABILITY_DIMENSIONS,
-    REGRESSION_CAPABILITY_KEYS,
-    REGRESSION_CAPABILITY_REVISIT_AFTER,
-    REGRESSION_TARGET_KIND_EVIDENCE,
     TEST_SLICES,
     VALIDATION_LANES,
 )
@@ -283,19 +279,10 @@ def _capability_value(value: object) -> object:
     return value
 
 
-def _capability_evidence_summary(
-    derivative_coverage: dict[str, object],
-    regression_target_evidence: dict[str, object],
-) -> dict[str, object]:
+def _capability_evidence_summary(derivative_coverage: dict[str, object]) -> dict[str, object]:
     derivative_rows = derivative_coverage.get("rows", [])
-    regression_target_rows = regression_target_evidence.get("rows", [])
     return {
         "source": "registered_capability_evidence",
-        "regression_keys": list(REGRESSION_CAPABILITY_KEYS),
-        "regression_claim_dimensions": list(REGRESSION_CAPABILITY_DIMENSIONS),
-        "regression_target_kind_row_count": (
-            len(regression_target_rows) if isinstance(regression_target_rows, list) else 0
-        ),
         "derivative_row_count": len(derivative_rows) if isinstance(derivative_rows, list) else 0,
         "pytest_slices": list(TEST_SLICES),
         "validation_lanes": list(VALIDATION_LANES),
@@ -303,9 +290,7 @@ def _capability_evidence_summary(
     }
 
 
-def _derivative_coverage_capabilities(cppad: dict[str, object], ceres: dict[str, object]) -> dict[str, object]:
-    cppad_available = bool(cppad.get("available", False))
-    ceres_available = bool(ceres.get("available", False))
+def _derivative_coverage_capabilities(cppad: dict[str, object]) -> dict[str, object]:
     coverage_rows = [_capability_value(row) for row in DERIVATIVE_COVERAGE_ROWS]
     return {
         "derivative_coverage_matrix_available": True,
@@ -343,33 +328,6 @@ def _derivative_coverage_capabilities(cppad: dict[str, object], ceres: dict[str,
             "phase_scope": "liquid_electrolyte_only",
             "vapor_support": False,
         },
-        "regression_ceres_jacobians": {
-            "available": bool(cppad_available and ceres_available),
-            "production": bool(cppad_available and ceres_available),
-            "routes": list(REGRESSION_CAPABILITY_KEYS),
-            "backends": ["cppad_implicit"],
-            "requires": ["ceres", "cppad"],
-        },
-    }
-
-
-def _regression_target_kind_evidence() -> dict[str, object]:
-    rows = [_capability_value(row) for row in REGRESSION_TARGET_KIND_EVIDENCE]
-    production_targets = [
-        str(row["target_kind"]) for row in rows if bool(row["public_production_supported_target_kind"])
-    ]
-    registry_only_targets = [
-        str(row["target_kind"])
-        for row in rows
-        if bool(row["registry_known_target_kind"]) and not bool(row["public_production_supported_target_kind"])
-    ]
-    return {
-        "source": "registered_capability_evidence",
-        "dimensions": list(REGRESSION_CAPABILITY_DIMENSIONS),
-        "revisit_after": list(REGRESSION_CAPABILITY_REVISIT_AFTER),
-        "production_supported_target_kinds": production_targets,
-        "registry_only_or_pending_target_kinds": registry_only_targets,
-        "rows": rows,
     }
 
 
@@ -378,26 +336,15 @@ def capabilities() -> dict[str, object]:
 
     build_info = runtime_build_info()
     native_dependencies = build_info["native_dependencies"]  # type: ignore[index]
-    ceres = dict(native_dependencies["ceres"])  # type: ignore[index]
     cppad = dict(native_dependencies["cppad"])  # type: ignore[index]
-    ceres_available = bool(ceres.get("available", False))
+    regression_public_production_supported = ["m", "s", "e", "d_born", "k_ij", "f_solv"]
     cppad_capability = {
         **cppad,
         "scope": "package-wide AD substrate; production derivative routes are listed in coverage_matrix",
     }
-    ceres_capability: dict[str, object] = {
-        **ceres,
-        "production": ceres_available,
-        "scope": "native optimizer backend owned by the regression extension",
-        "native_hot_loop": ceres_available,
-        "production_routes": ["regression:pure_neutral"],
-    }
-    if not ceres_available:
-        ceres_capability["reason"] = "extension_dependency_missing"
-    derivative_coverage = _derivative_coverage_capabilities(cppad, ceres)
-    regression_target_evidence = _regression_target_kind_evidence()
-    regression_route_available = bool(ceres_available and cppad_capability.get("available", False))
-    provider_view = {
+    derivative_coverage = _derivative_coverage_capabilities(cppad)
+    return {
+        "capability_report_owner": "epcsaft",
         "package": "epcsaft",
         "owner": "core_provider",
         "contract_id": "provider_api_v1",
@@ -407,32 +354,8 @@ def capabilities() -> dict[str, object]:
             "cppad": cppad_capability,
         },
         "reports_only_provider_capabilities_after_split": True,
-    }
-    regression_view = {
-        "package": "epcsaft-regression",
-        "owner": "regression_extension",
-        "native_dependencies": {
-            "cppad": cppad_capability,
-            "ceres": ceres_capability,
-        },
-        "requires": ["epcsaft", "cppad", "ceres"],
-        "forbidden_default_dependencies": ["ipopt"],
-    }
-    return {
-        "capability_report_owner": "epcsaft-transition-monorepo",
-        "package_ownership": {
-            "provider": "epcsaft",
-            "regression": "epcsaft-regression",
-        },
-        "package_views": {
-            "provider": provider_view,
-            "regression": regression_view,
-        },
         "native_extension": bool(build_info["native_extension_available"]),
-        "capability_evidence": _capability_evidence_summary(
-            derivative_coverage,
-            regression_target_evidence,
-        ),
+        "capability_evidence": _capability_evidence_summary(derivative_coverage),
         "derivatives": {
             "cppad": cppad_capability,
             "coverage_matrix": derivative_coverage,
@@ -477,7 +400,7 @@ def capabilities() -> dict[str, object]:
                         "relative_permittivity",
                     ],
                     "regression_public_production_supported": list(
-                        regression_target_evidence["production_supported_target_kinds"]
+                        regression_public_production_supported
                     ),
                     "not_optimizer_support": [
                         "e_assoc",
@@ -509,37 +432,6 @@ def capabilities() -> dict[str, object]:
                     "relative_permittivity_parameter_derivative_result",
                     "derivative_coverage_matrix",
                 ],
-            },
-        },
-        "optimizers": {
-            "ceres": ceres_capability,
-        },
-        "regression": {
-            "target_kind_evidence": regression_target_evidence,
-            "production_supported_target_kinds": list(regression_target_evidence["production_supported_target_kinds"]),
-            "pure_neutral": {
-                "available": regression_route_available,
-                "production": regression_route_available,
-                "backend": "native_ceres",
-                "entrypoint": "Regression(mixture, ...).fit_pure_neutral(...)",
-                "jacobian_backend": "cppad_implicit",
-                "target_kinds": ["m", "s", "e"],
-            },
-            "binary_pair_constant_kij": {
-                "available": regression_route_available,
-                "production": regression_route_available,
-                "backend": "native_ceres",
-                "entrypoint": "fit_binary_parameters(..., parameters_to_fit=('k_ij',))",
-                "jacobian_backend": "cppad_implicit",
-                "target_kinds": ["k_ij"],
-            },
-            "liquid_electrolyte_born": {
-                "available": regression_route_available,
-                "production": regression_route_available,
-                "backend": "native_ceres",
-                "entrypoint": "fit_liquid_electrolyte_parameters(...)",
-                "jacobian_backend": "cppad_implicit",
-                "target_kinds": ["d_born", "f_solv"],
             },
         },
     }

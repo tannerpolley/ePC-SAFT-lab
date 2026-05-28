@@ -65,6 +65,32 @@ def test_build_script_auto_prefers_ninja_for_new_build_tree(monkeypatch) -> None
     assert args == ["-G", "Ninja"]
 
 
+def test_build_script_auto_loads_msvc_for_new_windows_tree(monkeypatch) -> None:
+    build = _load_script()
+    env = {"PATH": "C:/repo/.venv/Scripts"}
+    loaded = {"PATH": "C:/repo/.venv/Scripts", "VSCMD_VER": "17.0"}
+
+    monkeypatch.setattr(build.os, "name", "nt")
+    monkeypatch.setattr(build, "_configured_cxx_compiler", lambda: None)
+    monkeypatch.setattr(build, "_load_msvc_env", lambda build_env: loaded)
+
+    result = build._apply_toolchain_env(env, toolchain="auto", enable_ipopt=False, ipopt_root=None)
+
+    assert result == loaded
+
+
+def test_build_script_auto_preserves_existing_non_msvc_windows_tree_without_clean(monkeypatch) -> None:
+    build = _load_script()
+    env = {"PATH": "C:/Strawberry/c/bin"}
+
+    monkeypatch.setattr(build.os, "name", "nt")
+    monkeypatch.setattr(build, "_configured_cxx_compiler", lambda: "C:/Strawberry/c/bin/c++.exe")
+
+    result = build._apply_toolchain_env(env, toolchain="auto", enable_ipopt=False, ipopt_root=None)
+
+    assert result == env
+
+
 def test_build_script_reads_version_from_pyproject() -> None:
     build = _load_script()
     pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))

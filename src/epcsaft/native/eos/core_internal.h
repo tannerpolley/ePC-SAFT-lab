@@ -317,6 +317,11 @@ epcsaft::native::cppad_support::CppADDerivativeResult cppad_pressure_density_der
     const vector<double> &x,
     const add_args &cppargs
 );
+epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
+    double t,
+    double rho,
+    const add_args &cppargs
+);
 PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_composition_sensitivity_cpp(
     double t,
     double p,

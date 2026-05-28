@@ -216,7 +216,14 @@ def _apply_system_ipopt_config(config: dict) -> dict:
 
 
 def _apply_native_dependency_config(config: dict) -> dict:
-    return _apply_system_ipopt_config(_apply_system_ceres_config(_apply_required_native_dependency_config(config)))
+    config = _apply_system_ipopt_config(_apply_system_ceres_config(_apply_required_native_dependency_config(config)))
+    if (
+        not _cmake_truthy(_config_value(config, "cmake.define.EPCSAFT_ENABLE_CERES"))
+        and not _cmake_truthy(_config_value(config, "cmake.define.EPCSAFT_ENABLE_IPOPT"))
+    ):
+        _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE", "OFF")
+        _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE", "OFF")
+    return config
 
 
 def _source_root() -> Path:

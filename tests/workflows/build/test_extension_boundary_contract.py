@@ -22,6 +22,8 @@ def test_native_boundary_contract_names_current_transition_state() -> None:
     assert "epcsaft_equilibrium_native" in cmake
     assert "epcsaft_regression_native" in cmake
     assert "EPCSAFT_ENABLE_IPOPT" in cmake
+    assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE" in cmake
+    assert "EPCSAFT_ENABLE_REGRESSION_NATIVE" in cmake
 
 
 def test_native_boundary_contract_defines_logical_target_split() -> None:
@@ -54,6 +56,8 @@ def test_solver_libraries_are_linked_to_extension_owned_native_targets() -> None
     assert "target_link_libraries(epcsaft_provider_native PUBLIC Ceres::ceres)" not in cmake
     assert 'target_link_libraries(epcsaft_provider_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")' not in cmake
     assert "EPCSAFT_ENABLE_CERES=OFF is not supported" not in cmake
+    assert "#ifdef EPCSAFT_HAS_EQUILIBRIUM_NATIVE" in _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
+    assert "#ifdef EPCSAFT_HAS_REGRESSION_NATIVE" in _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
     assert '#ifdef EPCSAFT_HAS_CERES' in _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
 
 
@@ -76,6 +80,8 @@ def test_native_boundary_contract_defines_extraction_proof_matrix() -> None:
         "capability reports are package-owned and evidence-backed",
         "cmake.define.EPCSAFT_ENABLE_CERES=OFF",
         "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF",
+        "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF",
+        "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF",
     ):
         assert proof in text
 

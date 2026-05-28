@@ -31,10 +31,23 @@ The default source-checkout build command remains:
 
    uv run python scripts/dev/build_epcsaft.py
 
-That command uses the fast profile: Ceres ON, CppAD ON, and Ipopt ON when a
-native Ipopt install is discoverable. ``--disable-ipopt`` is allowed only for a
-diagnostic or smoke lane that intentionally excludes Ipopt. A no-Ipopt smoke
-lane must not be described as production equilibrium validation.
+That command uses the fast profile: transition equilibrium and regression
+native surfaces enabled, Ceres ON, CppAD ON, and Ipopt ON when a native Ipopt
+install is discoverable. ``--disable-ipopt`` is allowed only for a diagnostic
+or smoke lane that intentionally excludes Ipopt. A no-Ipopt smoke lane must
+not be described as production equilibrium validation.
+
+The provider-only boundary proof now has an explicit direct-build profile:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/build_epcsaft.py --clean --profile provider
+
+That profile keeps CppAD ON while setting
+``EPCSAFT_ENABLE_CERES=OFF``, ``EPCSAFT_ENABLE_IPOPT=OFF``,
+``EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF``, and
+``EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF`` so provider ``epcsaft._core`` exports
+provider-owned symbols only.
 
 Regression and equilibrium are transition capabilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,6 +88,10 @@ Keep the CMake dependency contract explicit and loud:
 - ``EPCSAFT_ENABLE_CERES`` stays ON by default for the transition checkout, but
   OFF is supported for provider-only and equilibrium-extension package-boundary
   proof lanes.
+- ``EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE`` stays ON by default for the transition
+  checkout, but OFF is required for provider-only build/install proof.
+- ``EPCSAFT_ENABLE_REGRESSION_NATIVE`` stays ON by default for the transition
+  checkout, but OFF is required for provider-only build/install proof.
 - ``EPCSAFT_ENABLE_CPPAD`` stays ON and unsupported when OFF.
 - ``EPCSAFT_ENABLE_IPOPT`` stays ON for Ipopt-capable source validation.
 - Vendored Ipopt builds are not supported by the package CMake project.
@@ -111,6 +128,11 @@ Normal PR CI should have separate lane names for separate claims:
    A cheap PR smoke lane that intentionally runs with ``--disable-ipopt``. It
    may prove package import, Ceres, CppAD, and non-Ipopt contracts, but it does
    not prove production Ipopt equilibrium behavior.
+
+``provider-only boundary``
+   A focused lane that runs ``uv run python scripts/dev/build_epcsaft.py
+   --clean --profile provider`` and then checks that provider ``_core`` omits
+   equilibrium and regression native symbols.
 
 ``native CppAD derivative contract``
    A focused CppAD derivative lane for CppAD/autodiff derivative coverage. It should use

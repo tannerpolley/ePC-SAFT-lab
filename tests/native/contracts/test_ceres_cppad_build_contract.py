@@ -4,6 +4,7 @@ import json
 
 import epcsaft
 import epcsaft.regression.core as regression_core
+import epcsaft_regression
 
 
 REGRESSION_CAPABILITY_DIMENSIONS = (
@@ -25,9 +26,9 @@ def test_runtime_reports_ceres_build_contract() -> None:
     assert ceres["compiled"] is True
     assert ceres["available"] is True
 
-    capabilities = epcsaft.capabilities()
-    assert capabilities["package_views"]["regression"]["native_dependencies"]["ceres"]["required"] is False
-    assert capabilities["package_views"]["regression"]["forbidden_default_dependencies"] == ["ipopt"]
+    capabilities = epcsaft_regression.capabilities()
+    assert capabilities["native_dependencies"]["ceres"]["required"] is False
+    assert capabilities["forbidden_default_dependencies"] == ["ipopt"]
     assert capabilities["optimizers"]["ceres"]["status"] == ceres["status"]
     assert capabilities["optimizers"]["ceres"]["compiled"] is ceres["compiled"]
     assert capabilities["optimizers"]["ceres"]["production"] is ceres["available"]
@@ -35,17 +36,18 @@ def test_runtime_reports_ceres_build_contract() -> None:
 
 
 def test_ceres_cppad_capability_claims_require_enabled_native_dependencies() -> None:
-    capabilities = epcsaft.capabilities()
+    provider_capabilities = epcsaft.capabilities()
+    capabilities = epcsaft_regression.capabilities()
     ceres = capabilities["optimizers"]["ceres"]
     cppad = capabilities["derivatives"]["cppad"]
-    coverage = capabilities["derivatives"]["coverage_matrix"]
+    coverage = provider_capabilities["derivatives"]["coverage_matrix"]
+    jacobians = capabilities["derivatives"]["regression_ceres_jacobians"]
 
     assert ceres["compiled"] is True
     assert ceres["available"] is True
     assert cppad["compiled"] is True
     assert cppad["available"] is True
 
-    jacobians = coverage["regression_ceres_jacobians"]
     assert jacobians["available"] is True
     assert jacobians["production"] is True
     assert jacobians["routes"] == [
@@ -58,7 +60,7 @@ def test_ceres_cppad_capability_claims_require_enabled_native_dependencies() -> 
 
 
 def test_regression_capability_evidence_separates_registry_derivative_optimizer_and_public_claims() -> None:
-    evidence = epcsaft.capabilities()["regression"]["target_kind_evidence"]
+    evidence = epcsaft_regression.capabilities()["regression"]["target_kind_evidence"]
     rows = evidence["rows"]
 
     assert evidence["dimensions"] == list(REGRESSION_CAPABILITY_DIMENSIONS)
@@ -77,7 +79,7 @@ def test_regression_capability_evidence_separates_registry_derivative_optimizer_
 def test_association_affecting_regression_targets_remain_nonproduction_until_evidence_exists() -> None:
     rows = {
         row["target_kind"]: row
-        for row in epcsaft.capabilities()["regression"]["target_kind_evidence"]["rows"]
+        for row in epcsaft_regression.capabilities()["regression"]["target_kind_evidence"]["rows"]
     }
 
     for target in ("e_assoc", "vol_a"):

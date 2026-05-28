@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from typing import Any
 
 import numpy as np
 
-from epcsaft._types import SolutionError
+from epcsaft import SolutionError
 
 _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "solver_status",
@@ -121,137 +121,6 @@ _STABILITY_EVIDENCE_KEYS = (
     "tpdf_stability",
     "stability_certificate",
 )
-
-
-@dataclass(frozen=True, slots=True)
-class RouteDiagnosticsView:
-    """Read-only typed view over serialized route diagnostics."""
-
-    diagnostics: Mapping[str, Any]
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "diagnostics", dict(self.diagnostics or {}))
-
-    @property
-    def route_status(self) -> str:
-        """Return the route status token, including reactive-specialized payloads."""
-        return str(
-            self.diagnostics.get(
-                "route_status",
-                self.diagnostics.get("reactive_route_status", self.diagnostics.get("equilibrium_route", "")),
-            )
-        )
-
-    @property
-    def solver_backend(self) -> str:
-        """Return the native solver backend token when present."""
-        return str(self.diagnostics.get("solver_backend", self.diagnostics.get("backend", "")))
-
-    @property
-    def route_accepted(self) -> bool:
-        """Return whether the outer route accepted the result."""
-        return bool(self.diagnostics.get("route_accepted", self.diagnostics.get("accepted", False)))
-
-    @property
-    def postsolve_accepted(self) -> bool:
-        """Return whether postsolve certification accepted the route."""
-        return bool(self.diagnostics.get("postsolve_accepted", self.diagnostics.get("accepted", False)))
-
-    @property
-    def postsolve_certification(self) -> Mapping[str, Any]:
-        """Return the normalized route certification summary."""
-        summary = self.diagnostics.get("postsolve_certification", {})
-        if isinstance(summary, Mapping):
-            return dict(summary)
-        return _postsolve_certification_summary(self.diagnostics)
-
-    @property
-    def certification_status(self) -> str:
-        """Return the normalized route certification status token."""
-        return str(self.postsolve_certification.get("status", ""))
-
-    @property
-    def postsolve_certification_accepted(self) -> bool:
-        """Return whether the shared certification summary accepted the route."""
-        return bool(self.postsolve_certification.get("accepted", False))
-
-    @property
-    def stability_checked(self) -> bool:
-        """Return whether route diagnostics include stability-certificate evidence."""
-        return bool(self.postsolve_certification.get("stability_checked", False))
-
-    @property
-    def gradient_is_exact(self) -> bool:
-        """Return whether the route reports exact gradients."""
-        return bool(
-            self.diagnostics.get(
-                "gradient_is_exact",
-                _approximation_is_exact(self.diagnostics.get("gradient_approximation", "")),
-            )
-        )
-
-    @property
-    def jacobian_is_exact(self) -> bool:
-        """Return whether the route reports exact Jacobians."""
-        return bool(
-            self.diagnostics.get(
-                "jacobian_is_exact",
-                _approximation_is_exact(self.diagnostics.get("jacobian_approximation", "")),
-            )
-        )
-
-    @property
-    def hessian_is_exact(self) -> bool:
-        """Return whether the route reports an exact Hessian path."""
-        return bool(
-            self.diagnostics.get(
-                "hessian_is_exact",
-                _approximation_is_exact(self.diagnostics.get("hessian_approximation", "")),
-            )
-        )
-
-    @property
-    def exact_derivatives_required(self) -> bool:
-        """Return whether exact gradient and Jacobian routes were required."""
-        return bool(
-            self.diagnostics.get(
-                "exact_derivatives_required",
-                bool(self.diagnostics.get("exact_gradient_required", False))
-                and bool(self.diagnostics.get("exact_jacobian_required", False)),
-            )
-        )
-
-    @property
-    def residual_families(self) -> tuple[str, ...]:
-        """Return active residual families."""
-        return tuple(str(item) for item in _diagnostic_sequence(self.diagnostics.get("residual_families", ())))
-
-    @property
-    def constraint_families(self) -> tuple[str, ...]:
-        """Return active hard-constraint families."""
-        return tuple(str(item) for item in _diagnostic_sequence(self.diagnostics.get("constraint_families", ())))
-
-    @property
-    def selected_seed_name(self) -> str:
-        """Return the selected deterministic seed name."""
-        return str(self.diagnostics.get("seed_name", ""))
-
-    @property
-    def seed_attempts(self) -> tuple[Mapping[str, Any], ...]:
-        """Return normalized seed-attempt rows."""
-        attempts = self.diagnostics.get("seed_attempts", ())
-        return tuple(
-            dict(item) if isinstance(item, Mapping) else {"value": item} for item in _diagnostic_sequence(attempts)
-        )
-
-    @property
-    def seed_attempt_count(self) -> int:
-        """Return the reported seed-attempt count."""
-        return int(self.diagnostics.get("seed_attempt_count", len(self.seed_attempts)))
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return a copy of the underlying diagnostics payload."""
-        return dict(self.diagnostics)
 
 
 def _approximation_is_exact(value: Any) -> bool:

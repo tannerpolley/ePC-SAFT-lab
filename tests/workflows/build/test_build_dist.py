@@ -92,11 +92,14 @@ def test_dist_build_env_uses_reusable_fetchcontent_build_dir(monkeypatch) -> Non
     assert env["EPCSAFT_PEP517_BUILD_DIR"].endswith("no-ipopt-fetchcontent-ceres")
 
 
-def test_dist_build_disables_ipopt_for_release_baseline() -> None:
+def test_dist_build_uses_provider_only_release_baseline() -> None:
     cmd = build_dist._uv_build_command(with_local_ipopt=False)
 
     assert cmd[:2] == ["uv", "build"]
+    assert "cmake.define.EPCSAFT_ENABLE_CERES=OFF" in cmd
     assert "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF" in cmd
+    assert "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF" in cmd
+    assert "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF" in cmd
     assert "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT=OFF" in cmd
     assert "cmake.define.EPCSAFT_IPOPT_ROOT=" in cmd
 

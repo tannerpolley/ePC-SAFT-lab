@@ -50,7 +50,9 @@ Core provider imports must not import extension packages by default.
 
 Extensions must consume the public provider contract. They must not use private
 core modules, private pybind names, or native memory layouts as a compatibility
-surface.
+surface. Public provider diagnostics are consumed through
+`epcsaft.runtime.RouteDiagnosticsView` or `SolutionError.route_diagnostics`,
+not through extension-owned module paths.
 
 The migration must not leave hidden long-lived compatibility wrappers in core.
 When a public object moves to an extension package, the old core-owned path is

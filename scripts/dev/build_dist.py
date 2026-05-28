@@ -132,7 +132,13 @@ def _uv_build_command(*, with_local_ipopt: bool) -> list[str]:
     return [
         *cmd,
         "--config-setting",
+        "cmake.define.EPCSAFT_ENABLE_CERES=OFF",
+        "--config-setting",
         "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF",
+        "--config-setting",
+        "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF",
+        "--config-setting",
+        "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF",
         "--config-setting",
         "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT=OFF",
         "--config-setting",
@@ -187,6 +193,7 @@ import numpy as np
 import epcsaft
 import epcsaft._core
 from epcsaft import Mixture, ParameterSet, State
+sdk = epcsaft.provider_native_sdk()
 mixture = Mixture(ParameterSet.from_dict(
     {{
         "m": np.asarray([1.0]),
@@ -197,6 +204,24 @@ mixture = Mixture(ParameterSet.from_dict(
     species=["Methane"],
 ))
 state = State(mixture, T=300.0, x=np.asarray([1.0]), rho=100.0)
+if not {with_local_ipopt!r}:
+    assert sdk["provider_only_core"] is True
+    assert sdk["equilibrium_native_enabled"] is False
+    assert sdk["regression_native_enabled"] is False
+    blocked = (
+        "_native_equilibrium_selector_contract",
+        "_native_equilibrium_selector_route_result",
+        "_native_ipopt_quadratic_smoke",
+        "_native_ipopt_smoke",
+        "_native_nlp_shape_validation_smoke",
+        "_native_second_order_assembly_smoke",
+        "_native_variable_transform_smoke",
+        "_native_ceres_smoke",
+        "_fit_pure_neutral_native_ceres",
+        "_fit_generic_native_ceres",
+    )
+    leaked = [name for name in blocked if hasattr(epcsaft._core, name)]
+    assert leaked == [], leaked
 print("wheel smoke ok", epcsaft.__file__, state.z())
 """
     _run([sys.executable, "-S", "-c", code], env=smoke_env)

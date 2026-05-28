@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from epcsaft._types import InputError
-from epcsaft.frontend.mixture import Mixture
+from epcsaft import InputError, Mixture
 
 from ._native import provider_contract
 

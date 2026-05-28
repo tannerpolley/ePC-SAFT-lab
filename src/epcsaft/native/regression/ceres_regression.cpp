@@ -1800,14 +1800,6 @@ using regression_detail::solve_one_binary_kij_ceres_start_cpp;
 using regression_detail::solve_one_pure_ion_ceres_start_cpp;
 #endif
 
-epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
-    double t,
-    double rho,
-    const add_args &base_args
-) {
-    return regression_detail::cppad_pure_neutral_parameter_derivatives_cpp(t, rho, base_args);
-}
-
 PureNeutralRegressionDebugResult evaluate_pure_neutral_objective_debug_cpp(
     const add_args &base_args,
     const vector<PureNeutralRegressionDensityRecord> &density_records,
