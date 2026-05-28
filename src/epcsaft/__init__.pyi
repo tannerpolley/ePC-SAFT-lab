@@ -7,7 +7,6 @@ MissingModelParameterError: TypeAlias = Any
 Mixture: Any
 ModelOptions: Any
 ParameterSet: Any
-Regression: Any
 SolutionError: TypeAlias = Any
 State: Any
 __version__: str

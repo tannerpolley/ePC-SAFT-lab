@@ -48,13 +48,13 @@ LONG_NATIVE_TARGETS = {
     "tests/native/equilibrium",
 }
 LONG_EQUILIBRIUM_ROUTE_TARGETS = {
-    "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+    "../epcsaft-equilibrium/tests/api/test_equilibrium.py",
     "tests/native/equilibrium/results",
     "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
     "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
 }
 EQUILIBRIUM_DEBUG_TARGET_PREFIXES = (
-    "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+    "../epcsaft-equilibrium/tests/api/test_equilibrium.py",
     "tests/native/equilibrium/",
 )
 LONG_NATIVE_TARGETS_NOTE = (
@@ -340,7 +340,7 @@ def _validate_equilibrium_debug_targets(positional_targets: list[str]) -> None:
     if not any(target_path.startswith(prefix) for prefix in EQUILIBRIUM_DEBUG_TARGET_PREFIXES):
         raise SystemExit(
             "--equilibrium-debug explicit targets must be equilibrium tests under "
-            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py or tests/native/equilibrium/."
+            "../epcsaft-equilibrium/tests/api/test_equilibrium.py or tests/native/equilibrium/."
         )
 
 

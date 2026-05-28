@@ -4,7 +4,7 @@ import json
 
 import epcsaft
 from epcsaft.state.native_adapter import ePCSAFTMixture
-from epcsaft.regression import fit_liquid_electrolyte_parameters
+from epcsaft_regression import fit_liquid_electrolyte_parameters
 
 
 def _write_ssmds_dataset(tmp_path):

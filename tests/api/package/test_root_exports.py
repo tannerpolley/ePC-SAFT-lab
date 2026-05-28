@@ -16,7 +16,6 @@ def test_root_public_api_is_reset_to_clean_frontend_names() -> None:
     required = {
         "Mixture",
         "State",
-        "Regression",
         "ParameterSet",
         "ModelOptions",
         "create_input_template",

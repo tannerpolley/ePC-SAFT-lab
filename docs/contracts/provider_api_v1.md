@@ -23,8 +23,8 @@ It records the boundary that must be preserved before `epcsaft-equilibrium` or
 - `InputError`, `SolutionError`, and model-parameter errors
 
 `Equilibrium` is owned by `epcsaft-equilibrium` and is no longer exported from
-the provider package root. `Regression` remains a remaining transition export
-under ADR 0005 until the regression extension migration lands.
+the provider package root. `Regression` is owned by `epcsaft-regression` and
+is no longer exported from the provider package root.
 
 ## Version
 

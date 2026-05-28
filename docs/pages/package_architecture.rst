@@ -8,10 +8,9 @@ orchestration. The equation-of-state runtime is native C++ exposed through
 ``pybind11``.
 
 During the monorepo transition, Ipopt-backed equilibrium is owned by
-``epcsaft-equilibrium`` while regression remains a temporary provider-root
-export. ADR 0005 makes regression a transition surface whose final ownership
-moves to ``epcsaft-regression`` after the provider and native extension
-boundaries are proven.
+``epcsaft-equilibrium`` and regression is owned by
+``epcsaft-regression``. The provider repo remains the source checkout for core
+APIs and shared native/provider contracts while the split is completed.
 
 Organization Boundary
 ---------------------
@@ -37,10 +36,10 @@ The target internal shape is:
      frontend/
      model/
      state/
-     regression/
      runtime/
      native/
-   packages/epcsaft-equilibrium/src/epcsaft_equilibrium/
+   ../epcsaft-equilibrium/src/epcsaft_equilibrium/
+   ../epcsaft-regression/src/epcsaft_regression/
 
 Subsystem Boundaries
 --------------------
@@ -63,12 +62,11 @@ Equilibrium
    behind reset methods.
 
 Regression
-   In the current monorepo, owns fitting problem definitions, records,
-   provenance validation, objective assembly, derivative diagnostics, and
-   fit-result serialization. Long term, this subsystem belongs to
-   ``epcsaft-regression``. Public regression workflows are currently reached
-   through ``Regression(mixture, ...)``, while expensive objective and
-   derivative work uses native kernels.
+   Owns fitting problem definitions, records, provenance validation, objective
+   assembly, derivative diagnostics, and fit-result serialization in
+   ``epcsaft-regression``. Public regression workflows are reached through
+   ``Regression(mixture, ...)``, while expensive objective and derivative work
+   uses native kernels.
 
 Native
    Owns C++ kernels, pybind11 bindings, native capability reporting, and
@@ -99,10 +97,10 @@ Use these imports for current monorepo code:
   construction.
 * ``from epcsaft_equilibrium import Equilibrium`` for equilibrium workflow
   construction.
-* ``from epcsaft import Regression`` for transition regression workflow
-  construction until ``epcsaft-regression`` owns that import.
 * ``from epcsaft import ParameterSet, ModelOptions`` for parameter data and
   model formulation choices.
+* ``from epcsaft_regression import Regression`` for regression workflow
+  construction.
 * ``from epcsaft import create_input_template`` for reset input scaffolds.
 * ``from epcsaft import provider_native_sdk`` for provider-native SDK
   discovery during the package-extension transition.
@@ -122,8 +120,7 @@ documented subsystem modules:
 * ``import epcsaft``
 * ``from epcsaft import Mixture, ParameterSet, ModelOptions``
 * ``from epcsaft_equilibrium import Equilibrium``
-* ``from epcsaft import Regression`` during the remaining regression transition
-  series
+* ``from epcsaft_regression import Regression``
 
 Internal modules may share package-owned helpers when that keeps behavior
 centralized, but subsystem code should avoid circular ownership. In particular,

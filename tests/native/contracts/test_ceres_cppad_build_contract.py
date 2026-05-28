@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 
 import epcsaft
-import epcsaft.regression.core as regression_core
 import epcsaft_regression
+import epcsaft_regression.core as regression_core
 
 
 REGRESSION_CAPABILITY_DIMENSIONS = (

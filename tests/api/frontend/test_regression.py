@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 import epcsaft
+from epcsaft_regression import Regression
 from tests.support.hydrocarbon_cases import hydrocarbon_parameter_set
 from tests.support.regression_cases import (
     _load_workbook_reference_rows,
@@ -14,7 +15,7 @@ from tests.support.regression_cases import (
 def test_workflow_object_is_constructed_directly() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
 
-    regression = epcsaft.Regression(mixture)
+    regression = Regression(mixture)
 
     assert regression.mixture is mixture
 
@@ -22,7 +23,7 @@ def test_workflow_object_is_constructed_directly() -> None:
 def test_regression_hydrocarbon_anchor_routes_through_new_object_api() -> None:
     reference = _load_workbook_reference_rows()["Methane"]
 
-    debug = epcsaft.Regression(epcsaft.Mixture(hydrocarbon_parameter_set())).evaluate_pure_neutral_derivatives(
+    debug = Regression(epcsaft.Mixture(hydrocarbon_parameter_set())).evaluate_pure_neutral_derivatives(
         _real_saturation_records("Methane"),
         component="Methane",
         assoc_scheme="",

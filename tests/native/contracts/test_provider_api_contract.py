@@ -31,15 +31,14 @@ def test_provider_contract_names_stable_core_surfaces() -> None:
 
 def test_current_root_exports_are_marked_as_transition_surfaces() -> None:
     text = _contract_text()
-    normalized = " ".join(text.split())
 
     for name in ("ParameterSet", "ModelOptions", "Mixture", "State", "create_input_template"):
         assert name in epcsaft.__all__
 
     assert "Equilibrium" not in epcsaft.__all__
-    assert "Regression" in epcsaft.__all__
+    assert "Regression" not in epcsaft.__all__
     assert "Equilibrium` is owned by `epcsaft-equilibrium`" in text
-    assert "remaining transition export" in normalized
+    assert "Regression` is owned by `epcsaft-regression`" in text
 
 
 def test_provider_contract_freezes_derivative_result_shape() -> None:

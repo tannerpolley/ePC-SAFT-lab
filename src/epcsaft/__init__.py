@@ -21,7 +21,7 @@ def _add_runtime_dll_directories() -> None:
 _add_runtime_dll_directories()
 
 from epcsaft._types import InputError, SolutionError
-from epcsaft.frontend import Mixture, Regression, State
+from epcsaft.frontend import Mixture, State
 from epcsaft.model.options import MissingModelParameterError, ModelOptions
 from epcsaft.model.parameters import ParameterSet
 from epcsaft.model.templates import create_input_template
@@ -33,7 +33,6 @@ __all__ = [
     "Mixture",
     "ModelOptions",
     "ParameterSet",
-    "Regression",
     "SolutionError",
     "State",
     "__version__",

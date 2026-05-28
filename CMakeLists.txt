@@ -287,27 +287,58 @@ set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
     src/epcsaft/native/autodiff/cppad_smoke_checks.cpp
     src/epcsaft/native/autodiff/implicit_sensitivity.cpp
 )
+set(
+    EPCSAFT_EQUILIBRIUM_REPO_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/../epcsaft-equilibrium"
+    CACHE PATH
+    "Sibling checkout that owns the equilibrium extension sources"
+)
+set(
+    EPCSAFT_REGRESSION_REPO_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/../epcsaft-regression"
+    CACHE PATH
+    "Sibling checkout that owns the regression extension sources"
+)
+set(EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_REPO_ROOT}/native")
+set(EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_REPO_ROOT}/native")
+set(EPCSAFT_EQUILIBRIUM_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT}/equilibrium")
+set(EPCSAFT_REGRESSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT}/regression")
+set(EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/register_bindings.cpp")
+if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE AND NOT EXISTS "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}")
+    message(
+        FATAL_ERROR
+        "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE requires the sibling epcsaft-equilibrium checkout at "
+        "${EPCSAFT_EQUILIBRIUM_REPO_ROOT}."
+    )
+endif()
+if(EPCSAFT_ENABLE_REGRESSION_NATIVE AND NOT EXISTS "${EPCSAFT_REGRESSION_NATIVE_ROOT}/ceres_regression.cpp")
+    message(
+        FATAL_ERROR
+        "EPCSAFT_ENABLE_REGRESSION_NATIVE requires the sibling epcsaft-regression checkout at "
+        "${EPCSAFT_REGRESSION_REPO_ROOT}."
+    )
+endif()
 set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
-    src/epcsaft/native/equilibrium/blocks/association_block.cpp
-    src/epcsaft/native/equilibrium/blocks/electrolyte_block.cpp
-    src/epcsaft/native/equilibrium/blocks/eos_phase_block.cpp
-    src/epcsaft/native/equilibrium/blocks/gibbs_blocks.cpp
-    src/epcsaft/native/equilibrium/blocks/reaction_block.cpp
-    src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp
-    src/epcsaft/native/equilibrium/core/activation_plan.cpp
-    src/epcsaft/native/equilibrium/core/helpers.cpp
-    src/epcsaft/native/equilibrium/core/nlp_problem.cpp
-    src/epcsaft/native/equilibrium/core/selector_core.cpp
-    src/epcsaft/native/equilibrium/core/second_order.cpp
-    src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp
-    src/epcsaft/native/equilibrium/core/variable_transform.cpp
-    src/epcsaft/native/equilibrium/core/variable_layout.cpp
-    src/epcsaft/native/equilibrium/results/result_builder.cpp
-    src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp
-    src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/association_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/electrolyte_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/eos_phase_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/gibbs_blocks.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/reaction_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activated_equilibrium_nlp.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activation_plan.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/helpers.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/nlp_problem.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/selector_core.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/second_order.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/two_phase_eos_route.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_transform.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_layout.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results/result_builder.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived/bubble_dew.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers/ipopt_adapter.cpp
 )
 set(EPCSAFT_NATIVE_REGRESSION_SOURCES
-    src/epcsaft/native/regression/ceres_regression.cpp
+    ${EPCSAFT_REGRESSION_NATIVE_ROOT}/ceres_regression.cpp
 )
 set(EPCSAFT_PROVIDER_NATIVE_SOURCES
     ${EPCSAFT_NATIVE_MODEL_SOURCES}
@@ -324,15 +355,17 @@ set(EPCSAFT_NATIVE_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/bindings"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos/contributions"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/blocks"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/core"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/results"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/derived"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/solvers"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/model"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/regression"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/runtime"
+    "${EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT}"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers"
+    "${EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT}"
+    "${EPCSAFT_REGRESSION_NATIVE_ROOT}"
 )
 
 add_library(epcsaft_provider_native OBJECT ${EPCSAFT_PROVIDER_NATIVE_SOURCES})
@@ -383,7 +416,7 @@ set(EPCSAFT_PYBIND_SOURCES
     src/epcsaft/native/bindings/module.cpp
 )
 if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE)
-    list(APPEND EPCSAFT_PYBIND_SOURCES src/epcsaft/native/equilibrium/register_bindings.cpp)
+    list(APPEND EPCSAFT_PYBIND_SOURCES "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}")
 endif()
 pybind11_add_module(_core NO_EXTRAS ${EPCSAFT_PYBIND_SOURCES})
 target_link_libraries(
@@ -410,7 +443,7 @@ if(MSVC)
     )
     if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE)
         set_source_files_properties(
-            src/epcsaft/native/equilibrium/register_bindings.cpp
+            "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}"
             PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
         )
     endif()
