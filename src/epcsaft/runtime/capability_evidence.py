@@ -19,6 +19,14 @@ _EQUILIBRIUM_PRODUCTION_ROUTES_BY_FAMILY: Final[dict[str, tuple[str, ...]]] = {
     ),
 }
 
+EQUILIBRIUM_API_TEST_FILE: Final[str] = "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py"
+EQUILIBRIUM_BUBBLE_DERIVATIVE_TEST_FILE: Final[str] = (
+    "packages/epcsaft-equilibrium/tests/api/test_bubble_derivatives.py"
+)
+EQUILIBRIUM_CAPABILITY_TEST_FILE: Final[str] = (
+    "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
+)
+
 
 def production_equilibrium_activation_rows() -> tuple[dict[str, object], ...]:
     """Return production-exposed equilibrium activation rows from the generated mirror."""
@@ -91,15 +99,15 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
 
 EQUILIBRIUM_VALIDATION_TARGETS_BY_FAMILY: Final[dict[str, str]] = {
     "bubble_dew_derived_routes": (
-        "tests/api/frontend/test_equilibrium.py::"
+        f"{EQUILIBRIUM_API_TEST_FILE}::"
         "test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route"
     ),
     "neutral_tp_flash": (
-        "tests/api/frontend/test_equilibrium.py::"
+        f"{EQUILIBRIUM_API_TEST_FILE}::"
         "test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point"
     ),
     "neutral_lle": (
-        "tests/api/frontend/test_equilibrium.py::"
+        f"{EQUILIBRIUM_API_TEST_FILE}::"
         "test_equilibrium_lle_route_returns_named_liquid_phase_helpers"
     ),
 }
@@ -287,26 +295,52 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
 NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/contracts/test_generalized_equilibrium_registry.py",
     "tests/native/contracts/test_equilibrium_benchmark_registry.py",
-    "tests/native/contracts/test_equilibrium_activation_capabilities.py",
     "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
     "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
 )
 
-FRONTEND_API_TEST_TARGETS: Final[tuple[str, ...]] = (
+PROVIDER_API_TEST_TARGETS: Final[tuple[str, ...]] = (
+    "tests/api/package/test_root_exports.py",
+    "tests/api/package/test_package_main.py",
     "tests/api/frontend/test_imports.py",
     "tests/api/frontend/test_mixture.py",
     "tests/api/frontend/test_templates.py",
-    "tests/api/frontend/test_regression.py",
     "tests/api/frontend/test_state_properties.py",
 )
 
+REGRESSION_TRANSITION_TEST_TARGETS: Final[tuple[str, ...]] = (
+    "tests/api/frontend/test_regression.py",
+)
+
+REGRESSION_TEST_TARGETS: Final[tuple[str, ...]] = (
+    *REGRESSION_TRANSITION_TEST_TARGETS,
+    "tests/native/regression/test_pure.py",
+    "tests/native/regression/test_binary.py",
+    "tests/native/regression/test_liquid_electrolyte.py",
+)
+
+EQUILIBRIUM_PACKAGE_CONTRACT_TARGETS: Final[tuple[str, ...]] = (
+    EQUILIBRIUM_CAPABILITY_TEST_FILE,
+)
+
+INTEGRATION_TEST_TARGETS: Final[tuple[str, ...]] = (
+    "tests/workflows/repo/test_internal_package_workspace.py",
+    "tests/workflows/repo/test_package_extension_boundary.py",
+)
+
+FRONTEND_API_TEST_TARGETS: Final[tuple[str, ...]] = (
+    *PROVIDER_API_TEST_TARGETS,
+    *REGRESSION_TRANSITION_TEST_TARGETS,
+)
+
 GENERIC_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/package/test_package_main.py::test_python_m_epcsaft_reports_package_and_core_status",
     *FRONTEND_API_TEST_TARGETS,
+    *EQUILIBRIUM_PACKAGE_CONTRACT_TARGETS,
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",
     "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced",
     *NATIVE_CONTRACT_TEST_TARGETS,
+    *INTEGRATION_TEST_TARGETS,
     "tests/workflows/repo/test_project_structure.py",
     "tests/workflows/repo/test_run_pytest.py::test_list_slices_exits_without_running_pytest",
     "tests/workflows/repo/test_workflow_entrypoints.py::test_docs_make_confidence_suite_the_default_runtime_check",
@@ -319,36 +353,42 @@ EQUILIBRIUM_CONFIDENCE_TEST_TARGETS: Final[tuple[str, ...]] = tuple(
     EQUILIBRIUM_VALIDATION_TARGETS_BY_FAMILY[str(row["key"])] for row in production_equilibrium_activation_rows()
 )
 EQUILIBRIUM_API_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/frontend/test_equilibrium.py::test_workflow_object_is_constructed_with_problem_spec",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_constructor_configures_route_before_solve",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_requires_constructor_route",
-    "tests/api/frontend/test_equilibrium.py::test_constructor_enforces_route_required_and_forbidden_specs",
-    "tests/api/frontend/test_equilibrium.py::test_solve_signature_rejects_legacy_route_specs",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_problem_and_structure_are_read_only_metadata",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_problem_fixed_specs_are_deeply_read_only",
-    "tests/api/frontend/test_equilibrium.py::test_solver_options_reject_ignored_backend_selection_knobs",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_lle_route_configures_neutral_liquid_pair_structure",
-    "tests/api/frontend/test_equilibrium.py::test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs",
-    "tests/native/state/test_bubble_derivatives.py",
+    "packages/epcsaft-equilibrium/tests/api/test_imports.py",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_workflow_object_is_constructed_with_problem_spec",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_constructor_configures_route_before_solve",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_requires_constructor_route",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_constructor_enforces_route_required_and_forbidden_specs",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_solve_signature_rejects_legacy_route_specs",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_problem_and_structure_are_read_only_metadata",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_problem_fixed_specs_are_deeply_read_only",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_solver_options_reject_ignored_backend_selection_knobs",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_lle_route_configures_neutral_liquid_pair_structure",
+    f"{EQUILIBRIUM_API_TEST_FILE}::test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs",
+    EQUILIBRIUM_BUBBLE_DERIVATIVE_TEST_FILE,
+    *EQUILIBRIUM_PACKAGE_CONTRACT_TARGETS,
 )
 RUNTIME_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives",
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",
 )
-API_TEST_TARGETS: Final[tuple[str, ...]] = FRONTEND_API_TEST_TARGETS
+API_TEST_TARGETS: Final[tuple[str, ...]] = PROVIDER_API_TEST_TARGETS
 NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/state/test_pressure_density.py",
     "tests/native/state/test_phase_state_sensitivities.py",
+    "tests/native/state/test_bubble_derivatives.py",
     "tests/native/state/test_contributions.py",
     "tests/native/state/test_runtime_cache.py",
 )
 TEST_SLICES: Final[dict[str, dict[str, object]]] = {
     "generic": {"targets": GENERIC_TEST_TARGETS, "cheap_by_default": True},
-    "all": {"targets": ("tests",), "cheap_by_default": False},
+    "all": {"targets": ("tests", "packages/epcsaft-equilibrium/tests"), "cheap_by_default": False},
     "confidence": {"targets": CONFIDENCE_TEST_TARGETS, "cheap_by_default": False},
+    "provider-api": {"targets": PROVIDER_API_TEST_TARGETS, "cheap_by_default": True},
     "equilibrium-confidence": {"targets": EQUILIBRIUM_CONFIDENCE_TEST_TARGETS, "cheap_by_default": False},
     "equilibrium-api": {"targets": EQUILIBRIUM_API_TEST_TARGETS, "cheap_by_default": True},
+    "regression": {"targets": REGRESSION_TEST_TARGETS, "cheap_by_default": False},
+    "integration": {"targets": INTEGRATION_TEST_TARGETS, "cheap_by_default": True},
     "runtime": {"targets": RUNTIME_TEST_TARGETS, "cheap_by_default": True},
     "api": {"targets": API_TEST_TARGETS, "cheap_by_default": True},
     "native": {"targets": NATIVE_TEST_TARGETS, "cheap_by_default": True},
@@ -360,6 +400,26 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
         "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "-q")),
         "cheap_by_default": True,
         "evidence": "doctor plus generic pytest slice",
+    },
+    "provider": {
+        "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--provider-api", "-q")),
+        "cheap_by_default": True,
+        "evidence": "doctor plus provider-owned API pytest slice",
+    },
+    "equilibrium": {
+        "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--equilibrium-api", "-q")),
+        "cheap_by_default": True,
+        "evidence": "doctor plus equilibrium-extension API and capability pytest slice",
+    },
+    "regression": {
+        "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--regression", "-q")),
+        "cheap_by_default": False,
+        "evidence": "doctor plus transition regression pytest slice",
+    },
+    "integration": {
+        "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--integration", "-q")),
+        "cheap_by_default": True,
+        "evidence": "doctor plus package-extension integration pytest slice",
     },
     "confidence": {
         "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--confidence", "-q")),

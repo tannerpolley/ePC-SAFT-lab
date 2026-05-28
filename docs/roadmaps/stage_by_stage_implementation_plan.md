@@ -60,7 +60,7 @@ Equation and algorithm sources:
 Public request seam:
 
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
-- `tests/api/frontend/test_equilibrium.py`
+- `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 
 Selector and family-admission seam:
 
@@ -70,7 +70,7 @@ Selector and family-admission seam:
 - `src/epcsaft/native/equilibrium/core/selector_core.cpp`
 - `src/epcsaft/native/equilibrium/register_bindings.cpp`
 - `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
-- `tests/native/contracts/test_equilibrium_activation_capabilities.py`
+- `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 
 Shared phase-NLP seam:
 
@@ -287,7 +287,7 @@ References:
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `src/epcsaft/native/equilibrium/core/selector_core.cpp`
 - `src/epcsaft/native/equilibrium/register_bindings.cpp`
-- `tests/api/frontend/test_equilibrium.py`
+- `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 - `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
 
 Substeps:
@@ -346,7 +346,7 @@ References:
 - `src/epcsaft/frontend/mixture.py`
 - `src/epcsaft/model/options.py`
 - `tests/support/equilibrium_cases.py`
-- `tests/api/frontend/test_equilibrium.py`
+- `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 
 Substeps:
 
@@ -396,7 +396,7 @@ References:
 - `src/epcsaft/native/equilibrium/core/selector_core.h`
 - `src/epcsaft/native/equilibrium/core/selector_core.cpp`
 - `src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp`
-- `tests/native/contracts/test_equilibrium_activation_capabilities.py`
+- `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - `tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py`
 
 Substeps:
@@ -1018,7 +1018,7 @@ References:
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
 - `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
-- `tests/api/frontend/test_equilibrium.py`
+- `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 
 Substeps:
@@ -1363,7 +1363,7 @@ References:
 - `src/epcsaft/runtime/capability_evidence.py`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
-- `tests/native/contracts/test_equilibrium_activation_capabilities.py`
+- `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - `tests/workflows/repo/test_workflow_entrypoints.py`
 
 Substeps:

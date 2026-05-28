@@ -22,7 +22,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "classification": "production_supported",
         "reason": "production selector exposes neutral bubble/dew pressure and temperature routes through exact Ipopt callbacks",
         "tests": (
-            "tests/api/frontend/test_equilibrium.py",
+            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
             "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
         ),
     },
@@ -36,7 +36,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "classification": "production_supported",
         "reason": "production selector exposes neutral two-phase TP flash through activation-plan assembly and postsolve certification",
         "tests": (
-            "tests/api/frontend/test_equilibrium.py",
+            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
             "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
         ),
     },
@@ -50,7 +50,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "classification": "production_supported",
         "reason": "production selector exposes neutral nonassociating LLE through the generic two-phase EOS NLP with exact Ipopt callbacks",
         "tests": (
-            "tests/api/frontend/test_equilibrium.py",
+            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
             "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
         ),
     },

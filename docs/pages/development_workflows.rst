@@ -40,13 +40,19 @@ Command matrix
      - Before claiming repo runtime confidence. This includes doctor and the confidence slice.
    * - Fast generic validation
      - ``uv run python scripts/dev/validate_project.py quick``
-     - Quick checks for Python/runtime/regression API changes plus cheap native metadata contracts.
-   * - Python API work
-     - ``uv run python run_pytest.py --api -q``
-     - Public wrapper, state, parameter-template, or regression API edits. Equilibrium route solves stay in explicit equilibrium slices.
-   * - Public equilibrium contracts
+     - Quick checks across provider API, transition regression API, equilibrium capability metadata, cheap native metadata, and package-boundary contracts.
+   * - Provider API work
+     - ``uv run python run_pytest.py --provider-api -q`` or ``uv run python scripts/dev/validate_project.py provider``
+     - Core provider package imports, state, mixture, parameter-template, and root export checks. This slice must not import ``epcsaft_equilibrium``.
+   * - Equilibrium extension contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
-     - Fast metadata/API check for neutral equilibrium route construction, solver-option validation, derivative-backend contracts, and capability reporting. This slice does not run the full frontend equilibrium route-solve file.
+     - Package-owned metadata/API check under ``packages/epcsaft-equilibrium/tests`` for neutral equilibrium route construction, solver-option validation, derivative-backend contracts, and capability reporting. This slice does not run the full route-solve file.
+   * - Regression transition tests
+     - ``uv run python run_pytest.py --regression -q`` or ``uv run python scripts/dev/validate_project.py regression``
+     - Transition Ceres/regression tests that remain in this repo until ``epcsaft-regression`` owns them.
+   * - Package integration checks
+     - ``uv run python run_pytest.py --integration -q`` or ``uv run python scripts/dev/validate_project.py integration``
+     - Cross-package workspace, provider/extension capability, and ownership-boundary checks.
    * - Native or density/equation work
      - ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` then ``uv run python run_pytest.py --runtime -q``
      - C++ iteration after ``build/dev`` is already configured.
@@ -55,7 +61,7 @@ Command matrix
      - Fast check for pressure-vs-density and contribution-map contracts.
    * - Native route metadata/result contracts
      - ``uv run python run_pytest.py --native-contracts -q``
-     - Fast check for native route ``variable_model``, ``density_backend``, residual-family payloads, and Python route diagnostics. Use this instead of the full route-builder suite for architecture or metadata edits.
+     - Fast check for native route ``variable_model``, ``density_backend``, residual-family payloads, and Python route diagnostics. Root ``tests/native/equilibrium`` tests are native-equilibrium transition tests until the native target split lands; use this instead of the full route-builder suite for architecture or metadata edits.
    * - Equilibrium route confidence
      - ``uv run python run_pytest.py --equilibrium-confidence -q -s`` or ``uv run python scripts/dev/validate_project.py equilibrium-confidence``
      - One focused convergence target per selector-admitted equilibrium family. Full route sweeps, bubble/dew ladders, paper validation, and feed-line validation remain explicit benchmark or analysis workflows, not default pytest validation.
@@ -226,10 +232,13 @@ example, read ``docs/roadmaps/generalized_fluid_phase_equilibrium.md`` before
 native/equilibrium route tests. If the right target is unclear, run
 ``uv run python run_pytest.py --list-slices`` before choosing a command.
 
-- Python wrapper/API changes: ``uv run python run_pytest.py --api -q`` first, then ``uv run python run_pytest.py --confidence -q``. Use ``--equilibrium-api`` only when wrapper work touches equilibrium route behavior.
+- Provider wrapper/API changes: ``uv run python run_pytest.py --provider-api -q`` first, then ``uv run python run_pytest.py --confidence -q``. The older ``--api`` shortcut is retained as a provider-owned API alias during the transition.
+- Equilibrium extension API changes: ``uv run python run_pytest.py --equilibrium-api -q`` first. Package-facing equilibrium tests live under ``packages/epcsaft-equilibrium/tests``; root ``tests/native/equilibrium`` remains the native-equilibrium transition lane until the native target split lands.
+- Regression transition changes: ``uv run python run_pytest.py --regression -q`` first. These tests are classified for future ``epcsaft-regression`` ownership even while the code remains in this repo.
+- Cross-package ownership changes: ``uv run python run_pytest.py --integration -q`` first, then the smallest package-specific slice that matches the edit.
 - Native/equation changes: ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` first, then ``uv run python run_pytest.py --runtime -q``, then ``uv run python run_pytest.py --confidence -q``.
 - Native route metadata, result-adapter diagnostics, or pybind payload-shape changes: run ``uv run python run_pytest.py --native-contracts -q`` first. Do not run broad route-builder files under ``tests/native/equilibrium`` for these changes; the wrapper rejects those broad targets unless ``--allow-long-native-tests`` or ``EPCSAFT_ALLOW_LONG_NATIVE_TESTS=1`` is set.
-- Equilibrium convergence diagnosis: use one explicit equilibrium test node with ``uv run python run_pytest.py --equilibrium-debug -q -s <target>`` or the phase-discovery checker with ``--debug --include-route-refinement --require-complete``. Do not use generic/API slices to investigate equilibrium runtime; they intentionally do not run the full ``tests/api/frontend/test_equilibrium.py`` route-solve file or native result-file sweeps under ``tests/native/equilibrium/results``. The wrapper rejects broad targets, slice-backed debug runs, and multi-node debug runs; long-suite opt-in is for deliberate sweep validation, not debug diagnosis. The checker records bounded Ipopt iteration history in its diagnostics payload so convergence can be audited without broad pytest runs. For neutral TP flash fixture diagnosis, run ``uv run python scripts/validation/check_neutral_tp_flash_fixture.py --phase-discovery-json <payload> --json --debug --require-complete``; debug native output is routed to stderr and JSON fixture output stays on stdout.
+- Equilibrium convergence diagnosis: use one explicit equilibrium test node with ``uv run python run_pytest.py --equilibrium-debug -q -s <target>`` or the phase-discovery checker with ``--debug --include-route-refinement --require-complete``. Do not use generic/API slices to investigate equilibrium runtime; they intentionally do not run the full ``packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`` route-solve file or native result-file sweeps under ``tests/native/equilibrium/results``. The wrapper rejects broad targets, slice-backed debug runs, and multi-node debug runs; long-suite opt-in is for deliberate sweep validation, not debug diagnosis. The checker records bounded Ipopt iteration history in its diagnostics payload so convergence can be audited without broad pytest runs. For neutral TP flash fixture diagnosis, run ``uv run python scripts/validation/check_neutral_tp_flash_fixture.py --phase-discovery-json <payload> --json --debug --require-complete``; debug native output is routed to stderr and JSON fixture output stays on stdout.
 - Equation traceability changes: ``uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`` then ``uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q``.
 - Performance claims: add or restore an explicit benchmark or analysis workflow first. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.

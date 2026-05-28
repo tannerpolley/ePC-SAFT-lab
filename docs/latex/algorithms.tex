@@ -78,7 +78,7 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 % Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
 % Solver role: Production selector-dispatched neutral bubble/dew constrained NLP route specs
 % Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py; src/epcsaft/native/equilibrium/core/selector_core.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp
-% Validation: tests/api/frontend/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; tests/native/contracts/test_equilibrium_activation_capabilities.py
+% Validation: packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
 % Capability key: bubble_dew_derived_routes
 % Description: Solves production neutral bubble/dew pressure and temperature route specs through the native selector core.
 % Change note: Neutral VLE selector expansion promotes bubble/dew pressure and temperature routes through the shared thermodynamic constrained core.
@@ -99,7 +99,7 @@ derivatives plus postsolve certification.
 % Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
 % Solver role: Production selector-dispatched neutral two-phase TP flash route spec
 % Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py; src/epcsaft/native/equilibrium/core/selector_core.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp
-% Validation: tests/api/frontend/test_equilibrium.py::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; tests/native/contracts/test_equilibrium_activation_capabilities.py
+% Validation: packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_flash_recovers_shared_two_phase_hydrocarbon_point; tests/native/equilibrium/diagnostics/test_selector_core_contracts.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
 % Capability key: neutral_tp_flash
 % Description: Solves certified neutral two-phase TP flash through the native selector core.
 % Change note: Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification.
@@ -123,7 +123,7 @@ acceptance criterion.
 % Derivative backend: Exact native objective gradient, constraint Jacobian, and Hessian callbacks
 % Solver role: Production selector-dispatched neutral nonassociating LLE route spec
 % Implementation owner: packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py; src/epcsaft/native/equilibrium/core/selector_core.cpp; src/epcsaft/native/equilibrium/core/activation_matrix.h; src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/register_bindings.cpp
-% Validation: tests/api/frontend/test_equilibrium.py::test_equilibrium_lle_route_returns_named_liquid_phase_helpers; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; tests/native/contracts/test_equilibrium_activation_capabilities.py
+% Validation: packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_lle_route_returns_named_liquid_phase_helpers; tests/native/equilibrium/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py
 % Capability key: neutral_lle
 % Description: Solves certified neutral nonassociating LLE through the native selector core.
 % Change note: Neutral LLE is production-exposed only for the current neutral nonassociating activation-row proof.

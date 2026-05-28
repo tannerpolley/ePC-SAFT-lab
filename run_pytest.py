@@ -21,6 +21,9 @@ FAST_TEST_TARGETS = GENERIC_TEST_TARGETS
 CONFIDENCE_TEST_TARGETS = registry_targets("confidence")
 EQUILIBRIUM_CONFIDENCE_TEST_TARGETS = registry_targets("equilibrium-confidence")
 EQUILIBRIUM_API_TEST_TARGETS = registry_targets("equilibrium-api")
+PROVIDER_API_TEST_TARGETS = registry_targets("provider-api")
+REGRESSION_TEST_TARGETS = registry_targets("regression")
+INTEGRATION_TEST_TARGETS = registry_targets("integration")
 ALL_TEST_TARGETS = registry_targets("all")
 RUNTIME_TEST_TARGETS = registry_targets("runtime")
 API_TEST_TARGETS = registry_targets("api")
@@ -32,6 +35,9 @@ PREDEFINED_TARGETS = {
     "confidence": CONFIDENCE_TEST_TARGETS,
     "equilibrium_confidence": EQUILIBRIUM_CONFIDENCE_TEST_TARGETS,
     "equilibrium_api": EQUILIBRIUM_API_TEST_TARGETS,
+    "provider_api": PROVIDER_API_TEST_TARGETS,
+    "regression": REGRESSION_TEST_TARGETS,
+    "integration": INTEGRATION_TEST_TARGETS,
     "generic": GENERIC_TEST_TARGETS,
     "runtime": RUNTIME_TEST_TARGETS,
     "api": API_TEST_TARGETS,
@@ -42,13 +48,13 @@ LONG_NATIVE_TARGETS = {
     "tests/native/equilibrium",
 }
 LONG_EQUILIBRIUM_ROUTE_TARGETS = {
-    "tests/api/frontend/test_equilibrium.py",
+    "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
     "tests/native/equilibrium/results",
     "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
     "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
 }
 EQUILIBRIUM_DEBUG_TARGET_PREFIXES = (
-    "tests/api/frontend/test_equilibrium.py",
+    "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
     "tests/native/equilibrium/",
 )
 LONG_NATIVE_TARGETS_NOTE = (
@@ -134,6 +140,9 @@ def _pytest_args(
     confidence: bool = False,
     equilibrium_confidence: bool = False,
     equilibrium_api: bool = False,
+    provider_api: bool = False,
+    regression: bool = False,
+    integration: bool = False,
     runtime: bool = False,
     api: bool = False,
     native: bool = False,
@@ -148,6 +157,9 @@ def _pytest_args(
         confidence,
         equilibrium_confidence,
         equilibrium_api,
+        provider_api,
+        regression,
+        integration,
         runtime,
         api,
         native,
@@ -159,6 +171,9 @@ def _pytest_args(
         confidence=confidence,
         equilibrium_confidence=equilibrium_confidence,
         equilibrium_api=equilibrium_api,
+        provider_api=provider_api,
+        regression=regression,
+        integration=integration,
         runtime=runtime,
         api=api,
         native=native,
@@ -181,6 +196,9 @@ def _pytest_args(
         confidence=confidence,
         equilibrium_confidence=equilibrium_confidence,
         equilibrium_api=equilibrium_api,
+        provider_api=provider_api,
+        regression=regression,
+        integration=integration,
         runtime=runtime,
         api=api,
         native=native,
@@ -242,19 +260,25 @@ def _normalize_equilibrium_debug_selection(
     confidence: bool,
     equilibrium_confidence: bool,
     equilibrium_api: bool,
+    provider_api: bool,
+    regression: bool,
+    integration: bool,
     runtime: bool,
     api: bool,
     native: bool,
     native_contracts: bool,
     all_tests: bool,
     equilibrium_debug: bool,
-) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool, bool]:
+) -> tuple[bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool]:
     if not equilibrium_debug:
         return (
             generic,
             confidence,
             equilibrium_confidence,
             equilibrium_api,
+            provider_api,
+            regression,
+            integration,
             runtime,
             api,
             native,
@@ -266,6 +290,9 @@ def _normalize_equilibrium_debug_selection(
         or confidence
         or equilibrium_confidence
         or equilibrium_api
+        or provider_api
+        or regression
+        or integration
         or runtime
         or api
         or native
@@ -287,6 +314,9 @@ def _normalize_equilibrium_debug_selection(
         confidence,
         equilibrium_confidence,
         equilibrium_api,
+        provider_api,
+        regression,
+        integration,
         runtime,
         api,
         native,
@@ -309,8 +339,8 @@ def _validate_equilibrium_debug_targets(positional_targets: list[str]) -> None:
         )
     if not any(target_path.startswith(prefix) for prefix in EQUILIBRIUM_DEBUG_TARGET_PREFIXES):
         raise SystemExit(
-            "--equilibrium-debug explicit targets must be equilibrium tests under tests/api/frontend/test_equilibrium.py "
-            "or tests/native/equilibrium/."
+            "--equilibrium-debug explicit targets must be equilibrium tests under "
+            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py or tests/native/equilibrium/."
         )
 
 
@@ -408,10 +438,25 @@ def main() -> int:
     predefined.add_argument(
         "--equilibrium-api",
         action="store_true",
-        help="Run fast equilibrium/speciation API tests for downstream-agent workflows",
+        help="Run fast package-owned equilibrium API and capability tests",
+    )
+    predefined.add_argument(
+        "--provider-api",
+        action="store_true",
+        help="Run provider-owned API tests without importing extension packages",
+    )
+    predefined.add_argument(
+        "--regression",
+        action="store_true",
+        help="Run transition regression tests that will move to epcsaft-regression",
+    )
+    predefined.add_argument(
+        "--integration",
+        action="store_true",
+        help="Run package-extension integration and ownership-boundary tests",
     )
     predefined.add_argument("--runtime", action="store_true", help="Run runtime API and native contract tests")
-    predefined.add_argument("--api", action="store_true", help="Run public API and regression API tests")
+    predefined.add_argument("--api", action="store_true", help="Run provider-owned API tests")
     predefined.add_argument("--native", action="store_true", help="Run native runtime contract tests")
     predefined.add_argument(
         "--native-contracts",
@@ -422,7 +467,7 @@ def main() -> int:
         "--all",
         dest="all_tests",
         action="store_true",
-        help="Run every retained pytest contract under tests/; this is intentionally opt-in",
+        help="Run every retained pytest contract under tests/ and package-local test trees; this is intentionally opt-in",
     )
     parser.add_argument(
         "--list-slices", action="store_true", help="Print named test slices and exit without running pytest"
@@ -452,9 +497,14 @@ def main() -> int:
     pytest_temp = _pytest_temp(repo_root)
     env = _pytest_env(pytest_temp)
     _apply_equilibrium_debug_env(env, args.equilibrium_debug)
-    src_root = repo_root / "src"
-    sys.path.insert(0, str(src_root))
-    env["PYTHONPATH"] = str(src_root)
+    import_roots = (
+        repo_root / "src",
+        repo_root / "packages" / "epcsaft-equilibrium" / "src",
+        repo_root / "packages" / "epcsaft-regression" / "src",
+    )
+    for import_root in import_roots:
+        sys.path.insert(0, str(import_root))
+    env["PYTHONPATH"] = os.pathsep.join(str(path) for path in import_roots)
 
     cmd = _pytest_args(
         pytest_args,
@@ -463,6 +513,9 @@ def main() -> int:
         confidence=args.confidence,
         equilibrium_confidence=args.equilibrium_confidence,
         equilibrium_api=args.equilibrium_api,
+        provider_api=args.provider_api,
+        regression=args.regression,
+        integration=args.integration,
         runtime=args.runtime,
         api=args.api,
         native=args.native,

@@ -173,11 +173,11 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="--list-slices",
     ),
     RunConfigSpec(
-        name="Test API",
+        name="Test Provider API",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_TESTS,
         command="run_pytest.py",
-        parameters="--api -q",
+        parameters="--provider-api -q",
     ),
     RunConfigSpec(
         name="Test Equilibrium API",
@@ -185,6 +185,20 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--equilibrium-api -q",
+    ),
+    RunConfigSpec(
+        name="Test Regression",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_TESTS,
+        command="run_pytest.py",
+        parameters="--regression -q",
+    ),
+    RunConfigSpec(
+        name="Test Integration",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_TESTS,
+        command="run_pytest.py",
+        parameters="--integration -q",
     ),
     RunConfigSpec(
         name="Test Runtime",

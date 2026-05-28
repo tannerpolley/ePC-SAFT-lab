@@ -369,7 +369,7 @@ tasks:
         - "Ipopt-free package boundary proof exists only as a release/smoke lane today; it is not an equilibrium production proof."
       validation_lane_map:
         - "Generic/quick: uv run python scripts/dev/validate_project.py quick, which runs doctor plus the generic pytest slice and samples API, native, regression, equilibrium metadata, workflow structure, and build-command contracts."
-        - "Provider/API: uv run python run_pytest.py --api -q and --runtime -q cover frontend provider wrappers and state/native derivative runtime contracts."
+        - "Provider/API: uv run python run_pytest.py --provider-api -q and --runtime -q cover frontend provider wrappers and state/native derivative runtime contracts."
         - "Native metadata/results: uv run python run_pytest.py --native-contracts -q covers GFPE registry, activation capabilities, selector diagnostics, and route diagnostics without broad route sweeps."
         - "Equilibrium API: uv run python run_pytest.py --equilibrium-api -q covers route construction, solver options, derivative-backend contracts, and capability reporting without full route solves."
         - "Equilibrium convergence: uv run python scripts/dev/validate_project.py equilibrium-confidence or run_pytest.py --equilibrium-confidence -q -s, one target per selector-admitted family; debug requires one explicit equilibrium node or phase-discovery checker."
@@ -450,7 +450,7 @@ tasks:
         - "tests/workflows/repo/test_project_structure.py::test_production_equilibrium_routes_delegate_ipopt_acceptance_to_adapter"
         - "tests/workflows/repo/test_project_structure.py::test_equilibrium_routes_delegate_result_acceptance_to_result_builder"
         - "tests/workflows/repo/test_project_structure.py::test_native_equilibrium_python_diagnostics_bridge_stays_centralized"
-        - "tests/native/contracts/test_equilibrium_activation_capabilities.py"
+        - "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py"
         - "tests/native/contracts/test_equilibrium_native_contracts.py"
         - "tests/native/contracts/test_generalized_equilibrium_registry.py"
         - "tests/native/contracts/test_equilibrium_benchmark_registry.py"

@@ -121,6 +121,9 @@ TEST_SUBGROUP_ROOTS = {
     "tests/native/equilibrium/results",
     "tests/native/regression",
     "tests/native/state",
+    "packages/epcsaft-equilibrium/tests",
+    "packages/epcsaft-equilibrium/tests/api",
+    "packages/epcsaft-equilibrium/tests/contracts",
     "tests/support",
     "tests/workflows/build",
     "tests/workflows/repo",
@@ -138,6 +141,7 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/api/test_reactive_electrolyte_bubble.py",
     "tests/api/test_cppad_api_reset.py",
     "tests/api/frontend/test_cppad_api_reset.py",
+    "tests/api/frontend/test_equilibrium.py",
     "tests/equilibrium",
     "tests/regression",
     "tests/helpers",
@@ -146,6 +150,7 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/native/runtime",
     "tests/native/test_runtime_contracts.py",
     "tests/native/test_chemical_equilibrium_native.py",
+    "tests/native/contracts/test_equilibrium_activation_capabilities.py",
     "tests/workflows/benchmarks",
 }
 
