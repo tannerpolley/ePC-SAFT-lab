@@ -476,7 +476,7 @@ if(MSVC)
 endif()
 
 set(EPCSAFT_NATIVE_TARGETS
-    epcsaft_provider_native
+    ${EPCSAFT_NATIVE_OBJECT_TARGETS}
     _core
 )
 
@@ -509,7 +509,7 @@ if(EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE)
     if(EPCSAFT_ENABLE_IPOPT)
         target_compile_definitions(epcsaft_equilibrium_native_core PRIVATE EPCSAFT_HAS_IPOPT=1)
     endif()
-    list(APPEND EPCSAFT_NATIVE_TARGETS epcsaft_equilibrium_native epcsaft_equilibrium_native_core)
+    list(APPEND EPCSAFT_NATIVE_TARGETS epcsaft_equilibrium_native_core)
     if(MSVC)
         set_source_files_properties(
             "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/module.cpp"
@@ -548,7 +548,7 @@ if(EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE)
         target_link_libraries(epcsaft_regression_native_core PRIVATE Ceres::ceres)
         target_compile_definitions(epcsaft_regression_native_core PRIVATE EPCSAFT_HAS_CERES=1 EPCSAFT_HAS_REGRESSION_NATIVE=1)
     endif()
-    list(APPEND EPCSAFT_NATIVE_TARGETS epcsaft_regression_native epcsaft_regression_native_core)
+    list(APPEND EPCSAFT_NATIVE_TARGETS epcsaft_regression_native_core)
     if(MSVC)
         set_source_files_properties(
             "${EPCSAFT_REGRESSION_NATIVE_ROOT}/module.cpp"
