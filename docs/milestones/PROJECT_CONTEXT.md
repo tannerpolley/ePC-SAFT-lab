@@ -1,4 +1,4 @@
-# ePC-SAFT Master Context Map and Roadmap
+# ePC-SAFT Project Context And Milestone Plan
 
 ## Purpose of this document
 
@@ -12,13 +12,13 @@ This document explains:
 4. What prior agents got wrong.
 5. What “complete” means now.
 
-This document is authoritative over older roadmap language that allowed audit-only closure, inventory-only closure, staged-only closure, diagnostic-only closure, or documented limitations as completion.
+This document is authoritative over older planning language that allowed audit-only closure, inventory-only closure, staged-only closure, diagnostic-only closure, or documented limitations as completion.
 
-`docs/roadmaps/generalized_fluid_phase_equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation policy, and staged implementation roadmap for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, Ipopt/numerics layer, staged HELD requirements, postsolve certification, and collapsed roadmap family labels. Those labels are roadmap labels only, not runtime route keys.
+`docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation policy, and staged implementation plan for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, Ipopt/numerics layer, staged HELD requirements, postsolve certification, and collapsed family labels. Those labels are planning labels only, not runtime route keys.
 
-`docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable registry for the collapsed generalized roadmap. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash fixture for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
+`docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` is the executable registry for the collapsed generalized equilibrium plan. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash fixture for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
 
-`docs/roadmaps/stage_by_stage_implementation_plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master roadmap as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
+`docs/milestones/M4-equilibrium/plans/stage-by-stage-implementation-plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master context as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
 Its Stage 8 gate must complete route-owned user scaling, Ipopt option profiles,
 scaled numerical acceptance diagnostics, barrier/active-bound diagnostics, and
 exact-Hessian profile gating before Stage 9 real-mixture HELD validation work starts.
@@ -35,7 +35,7 @@ not completion evidence. Current bubble/dew `P-x` and `T-x` route-point validati
 available only through the explicit Stage 11 checker sweep opt-in, not through
 routine validation.
 
-`docs/roadmaps/gfpe_package_cleanup_plan.md` is the module cleanup overlay for
+`docs/milestones/M4-equilibrium/plans/gfpe-package-cleanup-plan.md` is the module cleanup overlay for
 that same GFPE doctrine. It keeps selector admission, shared NLP ownership,
 Ipopt numerics, result certification, capability reporting, and validation
 lanes aligned around one modular equilibrium core.
@@ -47,7 +47,7 @@ core provider, `epcsaft-equilibrium` for Ipopt-backed equilibrium, and
 `epcsaft-regression` for Ceres-backed regression. CppAD/exact derivative
 provider support stays core-owned.
 
-`docs/roadmaps/explicit_association_closure_for_pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium roadmap.
+`docs/milestones/M3-eos/plans/explicit-association-closure-for-pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium plan.
 
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
 
@@ -463,34 +463,33 @@ Required benchmark families:
 # 8. Required milestones
 
 GitHub milestones use short dashboard names. This file owns the detailed
-meaning behind each name; issues and slice roadmaps must not invent a separate
+meaning behind each name; issues and slice plans must not invent a separate
 milestone taxonomy.
 
-Every GitHub issue must belong to exactly one milestone. Smaller roadmap files
+Every GitHub issue must belong to exactly one milestone. Larger local plan files
 map to one tracking issue inside the matching milestone, and implementation
 issues are the micro changes that move that tracking issue forward. The
 GitHub Project is the operating dashboard: group and sort by Milestone,
 Package, Capability, Backend, Readiness, and Release target. Keep technical
-precision in issue bodies and roadmap checklists, not in milestone titles.
+precision in issue bodies and plan checklists, not in milestone titles.
 Use the repository issue templates for tracking, micro, and gate issues, and
-use the pull request template so PRs carry issue, milestone, Project, roadmap,
+use the pull request template so PRs carry issue, milestone, Project, plan,
 validation, and capability evidence explicitly.
 
-`docs/milestones/` is the local agent-facing mirror of the GitHub milestone
-dashboard. It mirrors open issues as concise handoff files for navigation only;
-GitHub Issues and the `ePC-SAFT Roadmap` Project remain authoritative for live
-tracker state. `docs/roadmaps/` remains the home for this full roadmap,
-architecture roadmaps, registry files, and slice plans.
+`docs/milestones/` is the local planning root for the GitHub milestone
+dashboard. It stores package context, milestone-owned plans, optional issue
+handoff files, and milestone-owned registries. GitHub Issues and the
+`ePC-SAFT Roadmap` Project remain authoritative for live tracker state.
 
 For generalized fluid-phase equilibrium work, use
-`docs/roadmaps/stage_by_stage_implementation_plan.md` as the GFPE-first
+`docs/milestones/M4-equilibrium/plans/stage-by-stage-implementation-plan.md` as the GFPE-first
 execution plan. The milestones below define the package completion envelope;
 the stage plan breaks GFPE into concrete pretreatment, implementation gates,
 and exit evidence.
 
 ## M0 - Governance
 
-Roadmap hygiene, tracker setup, labels, issue templates, completion rules,
+Planning hygiene, tracker setup, labels, issue templates, completion rules,
 GoalBuddy/project discipline, and repo-wide process gates.
 
 - purge banned literal tokens from the repo
@@ -499,7 +498,7 @@ GoalBuddy/project discipline, and repo-wide process gates.
 - remove classification-as-completion language
 - update future prompts
 - ensure no merged goal remains active
-- keep issue, milestone, Project, roadmap, and capability state aligned
+- keep issue, milestone, Project, plan, and capability state aligned
 
 ## M1 - Packages
 
@@ -507,7 +506,7 @@ Monorepo package layout, package ownership, test relocation, provider-only
 build proof, extension-native boundaries, and package CI/docs/release
 structure.
 
-- keep the monorepo package layout aligned with `docs/roadmaps/monorepo_package_migration.md`
+- keep the monorepo package layout aligned with `docs/milestones/M1-packages/plans/monorepo-package-migration.md`
 - prove root `epcsaft` can build as a provider-only package
 - keep package-local tests under the package that owns the behavior
 - split extension-native ownership from provider `_core`

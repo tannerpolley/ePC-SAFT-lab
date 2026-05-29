@@ -25,9 +25,9 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: roadmap-milestone
+    id: plan-milestone
     attributes:
-      label: Roadmap milestone
+      label: GitHub milestone
       description: Select the GitHub milestone that should be assigned after filing.
       options:
         - M0 - Governance

@@ -7,9 +7,13 @@ from typing import Any
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-REGISTRY_PATH = REPO_ROOT / "docs" / "roadmaps" / "equilibrium_benchmark_registry.yaml"
-GFPE_PATH = REPO_ROOT / "docs" / "roadmaps" / "generalized_fluid_phase_equilibrium.md"
-STAGE_PLAN_PATH = REPO_ROOT / "docs" / "roadmaps" / "stage_by_stage_implementation_plan.md"
+REGISTRY_PATH = (
+    REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "registries" / "equilibrium-benchmark-registry.yaml"
+)
+GFPE_PATH = REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "plans" / "generalized-fluid-phase-equilibrium.md"
+STAGE_PLAN_PATH = (
+    REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "plans" / "stage-by-stage-implementation-plan.md"
+)
 
 EXPECTED_FAMILY_LABELS = {
     "PE-Neutral TP Flash",
@@ -59,14 +63,14 @@ def test_family_labels_replace_numeric_matrix_ids() -> None:
     assert "PE-01" not in gfpe_text
     assert "CE-01" not in gfpe_text
     assert "CPE-01" not in gfpe_text
-    assert "roadmap labels only" in gfpe_text
+    assert "planning labels only" in gfpe_text
 
 
 def test_gfpe_plan_is_pretreatment_centered() -> None:
     stage_text = STAGE_PLAN_PATH.read_text(encoding="utf-8")
 
     assert "GFPE is the organizing spine for this file." in stage_text
-    assert "`FULL_ROADMAP.md` is a boundary" in stage_text
+    assert "`PROJECT_CONTEXT.md` is a boundary" in stage_text
     assert "document: it explains package identity" in stage_text
     assert (
         "Package-wide milestones are intentionally not used as stage names." in stage_text

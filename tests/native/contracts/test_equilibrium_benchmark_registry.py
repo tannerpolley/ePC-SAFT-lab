@@ -9,7 +9,9 @@ import pytest
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-REGISTRY_PATH = REPO_ROOT / "docs" / "roadmaps" / "equilibrium_benchmark_registry.yaml"
+REGISTRY_PATH = (
+    REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "registries" / "equilibrium-benchmark-registry.yaml"
+)
 PEREIRA_SOURCE_AUDIT_PATH = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
 )
@@ -257,12 +259,12 @@ def test_available_benchmark_source_paths_exist_and_source_needed_cases_have_tod
         assert benchmark["todo"], benchmark["case_label"]
 
 
-def test_stale_deleted_roadmap_sources_are_not_referenced() -> None:
+def test_stale_deleted_plan_sources_are_not_referenced() -> None:
     registry_text = REGISTRY_PATH.read_text(encoding="utf-8")
 
     stale_paths = {
-        "docs/roadmaps/association_derivative_goal_roadmap.md",
-        "docs/roadmaps/gross2002_associating_vle_redo_plan.md",
+        "docs/milestones/association_derivative_goal_plan.md",
+        "docs/milestones/gross2002_associating_vle_redo_plan.md",
         "docs/adr/0005-narrow-associating-bubble-pressure-admission.md",
     }
 

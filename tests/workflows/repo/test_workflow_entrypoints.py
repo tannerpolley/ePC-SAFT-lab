@@ -132,13 +132,13 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
 def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
     protocol = _read("docs/protocols/build_package_dependency_protocol.rst")
     docs_index = _read("docs/pages/index.rst")
-    full_roadmap = _read("docs/roadmaps/FULL_ROADMAP.md")
+    full_plan = _read("docs/milestones/PROJECT_CONTEXT.md")
     development_workflows = _read("docs/pages/development_workflows.rst")
     native_debugging = _read("docs/pages/native_debugging.rst")
     workflow = _read(".github/workflows/native-build-profiles.yml")
 
     assert "../protocols/build_package_dependency_protocol" in docs_index
-    assert "docs/protocols/build_package_dependency_protocol.rst" in full_roadmap
+    assert "docs/protocols/build_package_dependency_protocol.rst" in full_plan
     assert ":doc:`../protocols/build_package_dependency_protocol`" in development_workflows
     assert ":doc:`../protocols/build_package_dependency_protocol`" in native_debugging
     assert "Root ``CMAKE.md`` is the direct CMake execution protocol." in protocol

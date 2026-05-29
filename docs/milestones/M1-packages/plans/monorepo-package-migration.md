@@ -1,4 +1,4 @@
-# Monorepo Package Migration Roadmap
+# Monorepo Package Migration Plan
 
 Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/150
 
@@ -95,7 +95,7 @@ Gates:
   provider-native build symbols.
 - [x] CMake reads transitional extension native sources from `packages/`.
 - [x] Pytest, Sphinx, scripts, and workflow tests use `packages/` paths.
-- [x] Active path audit finds no sibling checkout dependency outside roadmap
+- [x] Active path audit finds no sibling checkout dependency outside plan
   history or archived discussion documents.
 
 Validation:
@@ -188,5 +188,5 @@ Validation passed:
 
 The active path audit found no live build, test, script, docs-config, or
 workflow dependency on sibling extension checkouts. The only remaining sibling
-checkout references are this roadmap's source inventory/forbidden-path gate and
-the explicitly superseded historical transfer roadmap.
+checkout references are this plan's source inventory/forbidden-path gate and
+the explicitly superseded historical transfer plan.

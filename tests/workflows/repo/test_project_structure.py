@@ -173,18 +173,6 @@ MILESTONE_MIRROR_FOLDERS = {
     "M6-validation": "M6 - Validation",
     "M7-release": "M7 - Release",
 }
-MILESTONE_MIRRORED_OPEN_ISSUES = {
-    145: "M4-equilibrium",
-    148: "M4-equilibrium",
-    154: "M1-packages",
-    155: "M6-validation",
-    156: "M2-python-api",
-    157: "M2-python-api",
-    158: "M3-eos",
-    159: "M6-validation",
-    160: "M7-release",
-    161: "M3-eos",
-}
 MILESTONE_FRONT_MATTER_FIELDS = {
     "issue",
     "title",
@@ -198,6 +186,19 @@ MILESTONE_FRONT_MATTER_FIELDS = {
     "readiness",
     "release_target",
     "last_synced",
+}
+MILESTONE_PLAN_FILES = {
+    "PROJECT_CONTEXT.md",
+    "M1-packages/plans/monorepo-package-migration.md",
+    "M1-packages/plans/package-extension-transfer-superseded-plan.md",
+    "M1-packages/plans/test-ownership-relocation.md",
+    "M3-eos/plans/explicit-association-closure-for-pcsaft.md",
+    "M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md",
+    "M4-equilibrium/plans/gfpe-package-cleanup-plan.md",
+    "M4-equilibrium/plans/stage-by-stage-implementation-plan.md",
+}
+MILESTONE_REGISTRY_FILES = {
+    "M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
 }
 
 
@@ -1376,18 +1377,26 @@ def test_replaced_flat_test_modules_are_absent_from_the_working_tree() -> None:
         assert not (REPO_ROOT / relpath).exists(), relpath
 
 
-def test_milestone_mirror_layout_matches_local_contract() -> None:
+def test_milestone_plan_layout_matches_local_contract() -> None:
     milestone_root = REPO_ROOT / "docs" / "milestones"
     assert milestone_root.is_dir()
     assert (milestone_root / "README.md").is_file()
     assert "GitHub Issues and the `ePC-SAFT Roadmap` Project remain authoritative" in (
         milestone_root / "README.md"
     ).read_text(encoding="utf-8")
+    assert not (REPO_ROOT / "docs" / "plans").exists()
+    assert (milestone_root / "PROJECT_CONTEXT.md").is_file()
 
     actual_folders = {path.name for path in milestone_root.iterdir() if path.is_dir()}
     assert actual_folders == set(MILESTONE_MIRROR_FOLDERS)
 
-    issue_numbers: set[int] = set()
+    missing_plans = sorted(path for path in MILESTONE_PLAN_FILES if not (milestone_root / path).is_file())
+    assert missing_plans == []
+    missing_registries = sorted(
+        path for path in MILESTONE_REGISTRY_FILES if not (milestone_root / path).is_file()
+    )
+    assert missing_registries == []
+
     for folder, milestone in MILESTONE_MIRROR_FOLDERS.items():
         milestone_dir = milestone_root / folder
         readme = milestone_dir / "README.md"
@@ -1402,16 +1411,12 @@ def test_milestone_mirror_layout_matches_local_contract() -> None:
             assert set(fields) == MILESTONE_FRONT_MATTER_FIELDS
             issue = fields["issue"]
             assert isinstance(issue, int)
-            issue_numbers.add(issue)
             assert path.name.startswith(f"{issue:04d}-")
             assert fields["url"] == f"https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue}"
             assert fields["state"] == "open"
             assert fields["project"] == "ePC-SAFT Roadmap"
             assert fields["milestone"] == milestone
-            assert MILESTONE_MIRRORED_OPEN_ISSUES[issue] == folder
             assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
-
-    assert issue_numbers == set(MILESTONE_MIRRORED_OPEN_ISSUES)
 
 
 def test_generated_output_roots_are_not_tracked_in_analyses() -> None:

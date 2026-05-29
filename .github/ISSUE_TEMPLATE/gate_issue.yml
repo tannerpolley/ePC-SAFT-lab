@@ -1,4 +1,4 @@
-name: Roadmap gate issue
+name: Milestone gate issue
 description: Prove a CI, docs, benchmark, capability, release, or downstream gate.
 title: "Gate: <proof target>"
 labels: ["validation"]
@@ -7,19 +7,19 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this for proof work. A gate issue closes only when evidence exists and the linked roadmap/tracking issue is updated.
+        Use this for proof work. A gate issue closes only when evidence exists and the linked milestone tracking issue is updated.
   - type: input
     id: parent-tracking-issue
     attributes:
       label: Parent tracking issue
-      description: Issue number for the roadmap tracking issue this gate proves.
+      description: Issue number for the milestone tracking issue this gate proves.
       placeholder: "#123"
     validations:
       required: true
   - type: dropdown
-    id: roadmap-milestone
+    id: plan-milestone
     attributes:
-      label: Roadmap milestone
+      label: GitHub milestone
       description: Must match the parent tracking issue's milestone.
       options:
         - M0 - Governance
@@ -62,9 +62,9 @@ body:
     validations:
       required: true
   - type: textarea
-    id: roadmap-sync
+    id: plan-sync
     attributes:
-      label: Roadmap and Project sync
-      description: Which roadmap checklist, issue checklist, capability row, Project field, or release note must be updated after proof passes?
+      label: Plan and Project sync
+      description: Which milestone plan checklist, issue checklist, capability row, Project field, or release note must be updated after proof passes?
     validations:
       required: true

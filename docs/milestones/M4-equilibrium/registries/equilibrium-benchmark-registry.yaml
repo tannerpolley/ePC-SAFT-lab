@@ -1,8 +1,8 @@
 schema_version: 2
-source_document: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
+source_document: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
 
 policy:
-  label_policy: "family_label values are roadmap labels only, not runtime keys or public route strings."
+  label_policy: "family_label values are planning labels only, not runtime keys or public route strings."
   generalized_status_policy: "Generalized family rows stay planned_not_public until full HELD-stage phase discovery, exact derivatives, and postsolve certification are proven."
   current_public_route_policy: "Existing public utility routes remain implemented and tested, but this registry does not treat them as generalized production exposure."
   deterministic_screening_policy: "Current deterministic TPD/candidate screening is seed and certification support, not full HELD."
@@ -18,7 +18,7 @@ excluded_current_runtime_route_keys:
   - dew_temperature
 
 activation_status_vocabulary:
-  planned_not_public: "Roadmap family with no generalized production exposure."
+  planned_not_public: "Planning family with no generalized production exposure."
   implemented_utility_not_generalized: "Existing public utility behavior may exist, but does not satisfy generalized admission gates."
   diagnostic_only: "Internal helper or diagnostic layer only."
   source_data_needed: "A source-backed target exists but local executable fixture data are missing."
@@ -221,7 +221,7 @@ family_rows:
     reference_cases:
       - case_label: "Representative neutral/associating/electrolyte replay"
         evidence_tier: T0
-        source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
+        source: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
         fixture_status: source_data_needed
         acceptance_checks:
           - all_eligible_phases_considered
@@ -251,7 +251,7 @@ family_rows:
     reference_cases:
       - case_label: "Chemical equilibrium placeholder"
         evidence_tier: T0
-        source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
+        source: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
         fixture_status: source_data_needed
         acceptance_checks: [standard_state_convention, reaction_affinity]
     forbidden_shortcuts:
@@ -277,7 +277,7 @@ family_rows:
     reference_cases:
       - case_label: "Combined phase-chemical placeholder"
         evidence_tier: T0
-        source: "docs/roadmaps/generalized_fluid_phase_equilibrium.md"
+        source: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
         fixture_status: source_data_needed
         acceptance_checks: [phase_equilibrium, reaction_affinity, coupled_certification]
     forbidden_shortcuts:

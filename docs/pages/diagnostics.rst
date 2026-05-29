@@ -79,7 +79,7 @@ hard constraints, and postsolve certification were used:
 * ``postsolve_certification`` is present and accepted.
 
 Associating, electrolyte, reactive, and generalized stability route families
-are declared for roadmap context only. Neutral nonassociating LLE is already a
+are declared for plan context only. Neutral nonassociating LLE is already a
 selector-owned production route; broader associating LLE, electrolyte LLE, and
 reactive routes are not callable production diagnostics until a future ADR and
 activation-matrix proof expose them through the selector core.

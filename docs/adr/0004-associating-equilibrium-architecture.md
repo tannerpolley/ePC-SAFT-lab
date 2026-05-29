@@ -45,7 +45,7 @@ that uses lifted `X_A` must first prove site count, site-component ownership,
 mass-action residuals, Jacobians, objective Hessian terms, and constraint
 Hessian rows for the exact variable model it exposes.
 
-The generalized phase-equilibrium roadmap now keeps associating phase
+The generalized phase-equilibrium plan now keeps associating phase
 equilibrium behind the shared TP-flash architecture rather than a narrow
 associating `bubble_pressure` admission path. Gross/Sadowski 2002 remains the
 first associating validation target, but it must enter through exact association

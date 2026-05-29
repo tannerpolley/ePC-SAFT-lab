@@ -14,7 +14,7 @@ When a skill mentions a role, use the corresponding label string from this table
 
 Edit the right-hand column if the GitHub label vocabulary changes.
 
-Roadmap routing labels:
+Milestone routing labels:
 
 - Use `area:*` labels for the owning package or subsystem.
 - Use `backend:*` labels for CppAD, Ceres, or Ipopt-specific work.

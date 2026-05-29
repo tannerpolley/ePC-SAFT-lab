@@ -1,25 +1,25 @@
 # Generalized Fluid-Phase Equilibrium
 
-This is the canonical roadmap, mathematical doctrine, implementation contract,
+This is the canonical plan, mathematical doctrine, implementation contract,
 and activation policy for generalized fluid-phase equilibrium in `ePC-SAFT`.
 It is written for future implementers and agents, not as a runtime API
 reference.
 
-`docs/roadmaps/equilibrium_benchmark_registry.yaml` is the executable
-roadmap registry. Its family labels are roadmap labels only. They are not
+`docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` is the executable
+milestone registry. Its family labels are planning labels only. They are not
 Python route strings, C++ selector keys, capability keys, or dictionary keys
 that production code must consume.
 
 `docs/latex/equations.tex` remains the equation source of truth for EOS
-contribution details. This roadmap repeats only the core equilibrium,
+contribution details. This plan repeats only the core equilibrium,
 stability, NLP, and Ipopt equations needed to implement the family plan.
 
-`docs/roadmaps/stage_by_stage_implementation_plan.md` is the companion
-GFPE-first execution overlay. It uses `FULL_ROADMAP.md` only as package
+`docs/milestones/M4-equilibrium/plans/stage-by-stage-implementation-plan.md` is the companion
+GFPE-first execution overlay. It uses `PROJECT_CONTEXT.md` only as package
 context and lists concrete pretreatment, implementation, and exit-evidence
 steps for each GFPE stage.
 
-`docs/roadmaps/gfpe_package_cleanup_plan.md` is the companion package cleanup
+`docs/milestones/M4-equilibrium/plans/gfpe-package-cleanup-plan.md` is the companion package cleanup
 overlay. It translates this doctrine into module boundaries for selector
 admission, the shared NLP core, Ipopt numerics, certified results, capability
 reporting, and validation lanes.
@@ -29,10 +29,10 @@ reporting, and validation lanes.
 The current public package still exposes the existing selector-backed neutral
 utility routes such as `bubble_pressure`, `bubble_temperature`,
 `dew_pressure`, `dew_temperature`, `flash`, and neutral nonassociating `lle`.
-This roadmap does not remove those routes and does not change their runtime
+This plan does not remove those routes and does not change their runtime
 behavior.
 
-The generalized equilibrium roadmap is stricter than the current public
+The generalized equilibrium plan is stricter than the current public
 surface. A route family is not generalized-production-ready until it has:
 
 - a source-backed validation case;
@@ -50,11 +50,11 @@ Current deterministic TPD/candidate screening is useful seed and certification
 support. It must not be described as full HELD. Full HELD is the staged
 algorithm described below.
 
-## Roadmap Families
+## Plan Families
 
-The collapsed roadmap has six visible family labels:
+The collapsed plan has six visible family labels:
 
-| Roadmap label | Scope | Current generalized status |
+| Planning label | Scope | Current generalized status |
 | --- | --- | --- |
 | `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `planned_not_public` |
 | `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `planned_not_public` |
@@ -64,8 +64,8 @@ The collapsed roadmap has six visible family labels:
 | `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium | `planned_not_public` |
 
 The family labels are deliberately descriptive. They replace the old numeric
-PE/CE/CPE row identifiers in the roadmap and registry. They are stable enough
-for documentation tests and proof-case references, but they are still roadmap
+PE/CE/CPE row identifiers in the plan and registry. They are stable enough
+for documentation tests and proof-case references, but they are still plan
 labels, not runtime keys.
 
 ## Core Phase-Equilibrium Form
@@ -252,7 +252,7 @@ contract to the Ipopt adapter.
 ## Ipopt And Numerical Method Layer
 
 Ipopt is the production nonlinear programming backend for the generalized phase
-NLP. The roadmap separates thermodynamic equations from optimizer mechanics so
+NLP. The plan separates thermodynamic equations from optimizer mechanics so
 the objective remains physically interpretable.
 
 All generalized routes must use all three domain-safety mechanisms:
@@ -373,7 +373,7 @@ Implementation must proceed in this order:
    equilibrium after PE and CE proofs exist.
 
 The detailed stage-by-stage execution plan is in
-`docs/roadmaps/stage_by_stage_implementation_plan.md`. Keep this section short:
+`docs/milestones/M4-equilibrium/plans/stage-by-stage-implementation-plan.md`. Keep this section short:
 it defines order; the companion plan defines work packages and exit evidence.
 
 ## Derived Boundary Workflows
@@ -412,7 +412,7 @@ point is requested; multi-point `T-x` or `P-x` route points require
 `--allow-route-sweep` and an explicit `--route-point-count`.
 
 The neutral TP flash fixture gate is explicit in
-`docs/roadmaps/equilibrium_benchmark_registry.yaml`. A neutral TP-flash case is
+`docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`. A neutral TP-flash case is
 not executable until it supplies source-backed species, pure-component
 parameters, binary interactions, temperature, pressure, feed composition,
 expected phase count, expected phase compositions, expected phase fractions,
@@ -502,12 +502,12 @@ routine validation lane.
 
 `CE Chemical Equilibrium Placeholder`
 
-- keep as roadmap-only until homogeneous reaction/speciation equations,
+- keep as planning-only until homogeneous reaction/speciation equations,
   standard-state conventions, and acceptance tests are written.
 
 `CPE Combined Phase-Chemical Placeholder`
 
-- keep as roadmap-only until PE and CE proofs can be solved in one simultaneous
+- keep as planning-only until PE and CE proofs can be solved in one simultaneous
   route with both transfer equilibrium and reaction affinity certification.
 
 ## Registry And Test Acceptance

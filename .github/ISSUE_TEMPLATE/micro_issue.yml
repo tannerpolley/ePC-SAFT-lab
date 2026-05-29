@@ -12,14 +12,14 @@ body:
     id: parent-tracking-issue
     attributes:
       label: Parent tracking issue
-      description: Issue number for the roadmap tracking issue this moves forward.
+      description: Issue number for the milestone tracking issue this moves forward.
       placeholder: "#123"
     validations:
       required: true
   - type: dropdown
-    id: roadmap-milestone
+    id: plan-milestone
     attributes:
-      label: Roadmap milestone
+      label: GitHub milestone
       description: Must match the parent tracking issue's milestone.
       options:
         - M0 - Governance

@@ -7,7 +7,7 @@ from nonlinear mass-action equations. That is the thermodynamic reference
 model, but it makes exact route Jacobians and Hessians more expensive because
 `X_A` is a solved internal state.
 
-This roadmap defines explicit reduced association closures for EOS diagnostics
+This plan defines explicit reduced association closures for EOS diagnostics
 and experimental associating-equilibrium work. The closures replace the solved
 site fractions with algebraic expressions:
 
@@ -23,7 +23,7 @@ the exact mass-action solution.
 
 The LaTeX-ready Stage 1 derivation lives at
 `docs/derivation/explicit_association_closure_for_pcsaft.tex`. Keep that file
-and this roadmap synchronized until the derivation is promoted into the main
+and this plan synchronized until the derivation is promoted into the main
 equation source.
 
 Use these labels consistently:
@@ -57,7 +57,7 @@ Chapman et al. and Huang/Radosz provide the SAFT association foundation:
 association is represented by association site fractions, association energy,
 and association volume. The current package equation ownership remains the
 local LaTeX equation source and native association implementation, not this
-roadmap.
+plan.
 
 Primary local references:
 

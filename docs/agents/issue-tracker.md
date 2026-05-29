@@ -17,16 +17,16 @@ clone.
 
 Infer the repo from `git remote -v`. The GitHub CLI does this automatically when run inside this clone.
 
-## Roadmap Milestones
+## Milestones
 
-GitHub milestones mirror `docs/roadmaps/FULL_ROADMAP.md` and use short
-dashboard names. `docs/milestones/` is the local agent-facing mirror for open
-issue navigation, but GitHub Issues and the `ePC-SAFT Roadmap` Project remain
-authoritative for live state.
+GitHub milestones follow `docs/milestones/PROJECT_CONTEXT.md` and use short
+dashboard names. `docs/milestones/` is the local planning root for milestone
+plans, optional issue handoffs, and milestone-owned registries. GitHub Issues
+and the `ePC-SAFT Roadmap` Project remain authoritative for live state.
 
 | Milestone | Tracker meaning |
 | --- | --- |
-| `M0 - Governance` | Roadmap hygiene, tracker setup, labels, issue templates, completion rules, GoalBuddy/project discipline, and repo-wide process gates. |
+| `M0 - Governance` | Planning hygiene, tracker setup, labels, issue templates, completion rules, GoalBuddy/project discipline, and repo-wide process gates. |
 | `M1 - Packages` | Monorepo package layout, package ownership, test relocation, provider-only build proof, extension-native boundaries, and package CI/docs/release structure. |
 | `M2 - Python API` | Public Python package surface, user-facing workflow ergonomics, result schemas, diagnostics, examples, import stability, and package-level user experience. |
 | `M3 - EOS` | Provider EOS/state/parameters, native SDK contract, exact derivatives, CppAD/implicit sensitivities, and provider-only capability claims. |
@@ -43,16 +43,16 @@ milestone and split the later work into child issues.
 
 - Canonical Project: `ePC-SAFT Roadmap`
   (`https://github.com/orgs/ePC-SAFT/projects/1`).
-- Do not use untitled organization Projects for roadmap work. They are scratch
+- Do not use untitled organization Projects for milestone work. They are scratch
   or closed state, not the tracker source of truth.
 - Use the issue templates for new work:
-  - `Roadmap tracking issue` for a smaller roadmap or major tranche.
+  - `Milestone tracking issue` for a milestone plan or major tranche.
   - `Micro implementation issue` for one PR-sized implementation slice.
-  - `Roadmap gate issue` for CI, docs, benchmark, capability, release, or
+  - `Milestone gate issue` for CI, docs, benchmark, capability, release, or
     downstream proof.
   - `Upstream ePC-SAFT package request` and `Downstream ePC-SAFT dependency
     bug` for downstream-driven package work.
-- Smaller roadmap files map to one tracking issue in the matching milestone.
+- Larger milestone plan files map to one tracking issue in the matching milestone.
 - Micro issues are implementation slices that close one checklist item or gate
   on the tracking issue.
 - Gate issues prove CI, docs, benchmark, capability, release, or downstream
@@ -64,22 +64,22 @@ milestone and split the later work into child issues.
   state and dashboard grouping.
 - The organization Project groups and sorts by Milestone, Package, Capability,
   Backend, Readiness, and Release target.
-- Use `docs/milestones/M*/issues/*.md` for concise local handoff context on
-  current open issues. Refresh those files from GitHub when issue scope or
-  Project fields change.
-- Keep `docs/roadmaps/` for full-scope, architecture, registry, and slice
-  roadmap documents rather than live issue mirrors.
+- Use `docs/milestones/M*/plans/*.md` for durable plans created for larger
+  issues or tranches, and link the GitHub issue to the plan.
+- Use `docs/milestones/M*/issues/*.md` only for optional concise handoff
+  context. Refresh those files from GitHub when issue scope or Project fields
+  change.
 
 ## Pull Requests
 
-- Every roadmap PR should close one micro or gate issue when possible.
-- The PR body must name the issue, milestone, tracking issue or roadmap, and
+- Every milestone PR should close one micro or gate issue when possible.
+- The PR body must name the issue, milestone, tracking issue or plan, and
   relevant Project fields.
 - Keep milestone and Project state current before requesting review and before
   merge.
 - Do not close an issue by documenting incompleteness; split remaining work
   into child issues or keep the issue open.
-- Answer the required PR questions from `docs/roadmaps/FULL_ROADMAP.md`.
+- Answer the required PR questions from `docs/milestones/PROJECT_CONTEXT.md`.
 
 ## When a skill says "publish to the issue tracker"
 

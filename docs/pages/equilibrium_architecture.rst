@@ -104,7 +104,7 @@ Associating Equilibrium Boundary
 Associating mixtures remain selector-ineligible for generalized production
 equilibrium routes under the ADR 0004 boundary. The prior narrow associating
 ``bubble_pressure`` admission path has been retired in favor of the shared GFPE
-TP-flash roadmap. Gross/Sadowski 2002 remains the first associating proof
+TP-flash plan. Gross/Sadowski 2002 remains the first associating proof
 target, but it must enter through exact association derivatives, phase NLP
 certification, and the collapsed GFPE registry gates. Association site
 fractions remain solved internal variables, and direct CppAD recording through
@@ -117,7 +117,7 @@ first- and second-order derivatives for all Ipopt objective and constraint
 residuals, or lift site fractions as explicit NLP variables with exact
 mass-action constraints, true site topology, and exact Lagrangian Hessian rows.
 See ``docs/adr/0004-associating-equilibrium-architecture.md`` and
-``docs/roadmaps/generalized_fluid_phase_equilibrium.md``.
+``docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md``.
 
 Repeated State Work
 -------------------

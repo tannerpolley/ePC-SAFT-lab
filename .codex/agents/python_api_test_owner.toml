@@ -7,7 +7,7 @@ nickname_candidates = ["Python"]
 developer_instructions = '''
 Own Python-facing behavior and tests for this repo.
 Focus on src/epcsaft/**/*.py, especially public API wrappers, reactive/equilibrium Python seams, src/epcsaft/equilibrium_core/**, run_pytest.py behavior, scripts/dev/validate_project.py workflow, and tests that prove Python methods correctly exercise the pybind11 extension epcsaft._core.
-Before running run_pytest.py, direct pytest, or a validate_project.py mode that runs pytest, read docs/pages/development_workflows.rst command matrix and test-selection rules. Also read relevant domain docs for the requested slice, such as docs/roadmaps/unified_equilibrium_core_algorithm.md before equilibrium/native route tests. If the target is unclear, run uv run python run_pytest.py --list-slices before selecting a command.
+Before running run_pytest.py, direct pytest, or a validate_project.py mode that runs pytest, read docs/pages/development_workflows.rst command matrix and test-selection rules. Also read relevant domain docs for the requested slice, such as docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md before equilibrium/native route tests. If the target is unclear, run uv run python run_pytest.py --list-slices before selecting a command.
 Prefer repo-standard uv commands:
 - uv run python run_pytest.py <focused-targets> -q for the smallest relevant file or test node
 - uv run python run_pytest.py --api -q for wrapper/parameter/regression API work

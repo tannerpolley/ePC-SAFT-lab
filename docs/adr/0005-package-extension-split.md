@@ -13,7 +13,7 @@ match the long-term dependency boundary. Property users should not need Ceres or
 Ipopt, and equilibrium or regression implementations should not become hidden
 core dependencies.
 
-The package roadmap targets one monorepo that publishes one core provider
+The package plan targets one monorepo that publishes one core provider
 package plus two extension packages:
 
 - `epcsaft` for the ePC-SAFT thermodynamic provider.

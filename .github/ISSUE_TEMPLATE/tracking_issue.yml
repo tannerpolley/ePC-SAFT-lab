@@ -1,18 +1,18 @@
-name: Roadmap tracking issue
-description: Track one smaller roadmap or major tranche under a single roadmap milestone.
-title: "Tracking: <roadmap tranche>"
+name: Milestone tracking issue
+description: Track one milestone plan or major tranche under a single GitHub milestone.
+title: "Tracking: <milestone tranche>"
 labels: ["needs-triage"]
 projects: ["ePC-SAFT/1"]
 body:
   - type: markdown
     attributes:
       value: |
-        Use this for a slice roadmap or major tranche. A tracking issue owns the checklist of micro issues and gates for one roadmap milestone.
-        Use `docs/milestones/` for local milestone/issue navigation. Use `docs/roadmaps/` for full-scope, architecture, registry, or slice roadmap documents.
+        Use this for a milestone plan or major tranche. A tracking issue owns the checklist of micro issues and gates for one GitHub milestone.
+        Use `docs/milestones/Mx-name/plans/` for local plan documents when the issue needs more durable context than the issue body.
   - type: dropdown
-    id: roadmap-milestone
+    id: plan-milestone
     attributes:
-      label: Roadmap milestone
+      label: GitHub milestone
       description: Assign this same GitHub milestone after filing.
       options:
         - M0 - Governance
@@ -26,11 +26,11 @@ body:
     validations:
       required: true
   - type: input
-    id: slice-roadmap
+    id: milestone-plan
     attributes:
-      label: Slice roadmap
-      description: Path to the roadmap file this tracking issue owns.
-      placeholder: docs/roadmaps/<slice>.md or docs/milestones/Mx-name/issues/NNNN-slug.md
+      label: Milestone plan
+      description: Path to the local plan file this tracking issue owns, when a plan file exists.
+      placeholder: docs/milestones/Mx-name/plans/<plan>.md
     validations:
       required: true
   - type: dropdown
@@ -66,14 +66,14 @@ body:
     id: acceptance
     attributes:
       label: Tracking acceptance criteria
-      description: Gates that prove the whole roadmap tranche is complete.
+      description: Gates that prove the whole milestone tranche is complete.
     validations:
       required: true
   - type: textarea
     id: validation
     attributes:
       label: Required validation
-      description: Commands, docs checks, CI checks, Project updates, and roadmap evidence required before closing.
+      description: Commands, docs checks, CI checks, Project updates, and plan evidence required before closing.
       render: powershell
     validations:
       required: true

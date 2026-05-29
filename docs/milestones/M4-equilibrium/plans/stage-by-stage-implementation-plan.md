@@ -1,9 +1,9 @@
 # GFPE Stage-by-Stage Implementation Plan
 
 This is the GFPE-first execution plan for
-`docs/roadmaps/generalized_fluid_phase_equilibrium.md`.
+`docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`.
 
-GFPE is the organizing spine for this file. `FULL_ROADMAP.md` is a boundary
+GFPE is the organizing spine for this file. `PROJECT_CONTEXT.md` is a boundary
 document: it explains package identity, derivative policy, benchmark
 standards, and downstream consequences, but it does not define the stage order
 here. Package-wide milestones are intentionally not used as stage names.
@@ -23,12 +23,12 @@ names.
 Use this order when two documents disagree:
 
 1. `docs/latex/equations.tex` for EOS contribution equations.
-2. `docs/roadmaps/generalized_fluid_phase_equilibrium.md` for GFPE doctrine,
+2. `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md` for GFPE doctrine,
    mathematical form, family order, and admission policy.
-3. `docs/roadmaps/equilibrium_benchmark_registry.yaml` for executable family
+3. `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` for executable family
    rows, derived subworkflows, reference cases, and production flags.
 4. This file for implementation sequencing and stage exit evidence.
-5. `docs/roadmaps/FULL_ROADMAP.md` for package-wide boundaries and completion
+5. `docs/milestones/PROJECT_CONTEXT.md` for package-wide boundaries and completion
    standards.
 6. Generated views such as `docs/equations.md`, `docs/equations_registry.yaml`,
    `docs/algorithms.md`, and `docs/algorithms_registry.yaml` for navigation
@@ -43,8 +43,8 @@ benchmark fixture records.
 
 GFPE doctrine and registry:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 
@@ -104,7 +104,7 @@ Parameter, mixture, and capability seams:
 
 Association and electrolyte constraints:
 
-- `docs/roadmaps/explicit_association_closure_for_pcsaft.md`
+- `docs/milestones/M3-eos/plans/explicit-association-closure-for-pcsaft.md`
 - `docs/adr/0004-associating-equilibrium-architecture.md`
 - `analyses/paper_validation/2026_khudaida/`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
@@ -140,8 +140,8 @@ registry support.
 
 These rules apply to every stage:
 
-- Family labels are roadmap labels only.
-- Public route strings remain separate from roadmap labels.
+- Family labels are planning labels only.
+- Public route strings remain separate from planning labels.
 - Current `bubble_*`, `dew_*`, `flash`, and neutral `lle` utility behavior is
   preserved unless a later implementation explicitly migrates it with tests.
 - Current deterministic TPD/candidate screening is seed and certification
@@ -222,9 +222,9 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
-- `docs/roadmaps/FULL_ROADMAP.md`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
+- `docs/milestones/PROJECT_CONTEXT.md`
 - `docs/latex/algorithms.tex`
 - `docs/algorithms.md`
 - `docs/algorithms_registry.yaml`
@@ -233,8 +233,8 @@ References:
 
 Substeps:
 
-1. State that GFPE, not the package-wide roadmap, controls this stage order.
-2. Keep `FULL_ROADMAP.md` as a boundary for package identity, derivative
+1. State that GFPE, not the package-wide context plan, controls this stage order.
+2. Keep `PROJECT_CONTEXT.md` as a boundary for package identity, derivative
    policy, benchmark expectations, and downstream consequences.
 3. Keep `equilibrium_benchmark_registry.yaml` on schema version 2.
 4. Keep registry top-level sections as `family_rows`,
@@ -244,13 +244,13 @@ Substeps:
    `PE-Electrolyte LLE/TP Flash`, `PE-Generalized Multiphase`,
    `CE Chemical Equilibrium Placeholder`, and
    `CPE Combined Phase-Chemical Placeholder`.
-6. State that those labels are roadmap labels only in GFPE, the registry, and
+6. State that those labels are planning labels only in GFPE, the registry, and
    this plan.
 7. Keep public route strings out of the registry family-label namespace.
 8. Keep bubble, dew, cloud, and shadow under `derived_subworkflows`.
 9. Keep generalized family rows `planned_not_public` with
    `production_exposed: false` until HELD and derivative gates pass.
-10. Remove stale narrow-roadmap references when they appear in registry-facing
+10. Remove stale narrow-plan references when they appear in registry-facing
     docs or tests.
 11. Keep raw AI-response notes uncited.
 12. Update `docs/latex/algorithms.tex` before regenerating algorithm views.
@@ -270,7 +270,7 @@ Stop conditions:
 - A generalized family row is production-exposed before HELD and exact
   derivative evidence exists.
 - Public route strings are presented as GFPE family labels.
-- This file starts using package-wide roadmap milestones as the stage spine.
+- This file starts using package-wide milestone sequence as the stage spine.
 
 ## Stage 1 - Public Request Pretreatment
 
@@ -314,7 +314,7 @@ Substeps:
 10. Make errors identify the failed pretreatment layer:
     route shape, composition basis, mixture family, parameter readiness,
     derivative coverage, or production exposure.
-11. Preserve current public route names. Do not introduce roadmap
+11. Preserve current public route names. Do not introduce plan
     `family_label` values as public route names.
 
 Acceptance checks:
@@ -382,7 +382,7 @@ Stop conditions:
 ## Stage 3 - Species, Phase Eligibility, And Family Classification
 
 Purpose: classify the pretreated thermodynamic problem without leaking
-roadmap labels into runtime keys.
+planning labels into runtime keys.
 
 Primary output:
 
@@ -436,7 +436,7 @@ Stop conditions:
 
 - Association, electrolyte, or reactive markers are ignored to force a neutral
   route.
-- Runtime keys are renamed only to match roadmap labels.
+- Runtime keys are renamed only to match planning labels.
 - Selector-ineligible failures are discovered only after optimizer execution.
 
 ## Stage 4 - Parameter And EOS Contribution Pretreatment
@@ -457,7 +457,7 @@ References:
 - `src/epcsaft/model/options.py`
 - `src/epcsaft/frontend/mixture.py`
 - `src/epcsaft/native/`
-- `docs/roadmaps/explicit_association_closure_for_pcsaft.md`
+- `docs/milestones/M3-eos/plans/explicit-association-closure-for-pcsaft.md`
 - `tests/native/contracts/test_equation_registry.py`
 
 Substeps:
@@ -519,7 +519,7 @@ References:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h`
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 
 Substeps:
 
@@ -592,7 +592,7 @@ References:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/variable_transform.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 
 Substeps:
 
@@ -818,7 +818,7 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 - `docs/algorithms.md`
 - `docs/latex/algorithms.tex`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
@@ -911,8 +911,8 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
 - `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
@@ -1014,8 +1014,8 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
@@ -1091,8 +1091,8 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/variable_layout.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - future generalized phase-set route owner created after Stage 9
@@ -1139,11 +1139,11 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/explicit_association_closure_for_pcsaft.md`
+- `docs/milestones/M3-eos/plans/explicit-association-closure-for-pcsaft.md`
 - `docs/adr/0004-associating-equilibrium-architecture.md`
 - `docs/latex/equations.tex`
 - `docs/algorithms.md`
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 
 Substeps:
 
@@ -1199,8 +1199,8 @@ Primary output:
 References:
 
 - `docs/latex/equations.tex`
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `analyses/paper_validation/2026_khudaida/`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
 
@@ -1254,7 +1254,7 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `analyses/paper_validation/2026_khudaida/`
 - `docs/papers/` source material when a fixture is promoted
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
@@ -1307,9 +1307,9 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
+- `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 - `docs/latex/equations.tex`
-- future CE/CPE roadmap files when created
+- future CE/CPE plan files when created
 
 Substeps:
 
@@ -1359,7 +1359,7 @@ Primary output:
 
 References:
 
-- `docs/roadmaps/equilibrium_benchmark_registry.yaml`
+- `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `src/epcsaft/runtime/capability_evidence.py`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
@@ -1381,7 +1381,7 @@ Substeps:
 4. Keep `epcsaft.capabilities()` honest:
    current public utility routes are separate from generalized GFPE rows.
 5. Preserve existing public route behavior when a GFPE family remains planned.
-6. Add negative tests for stale source references, deleted narrow roadmap file
+6. Add negative tests for stale source references, deleted narrow plan file
    references, and raw-response note citations.
 7. Add positive tests for derived subworkflow placement after Stage 10 neutral
    TP flash proof.

@@ -215,7 +215,7 @@ LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
 - Dependency: None
 - Derivative backend: EOS/provider chemical-potential and free-energy derivatives as required by the selected trial problem
 - Solver role: Neutral tangent-plane stability evaluator for phase discovery and postsolve certification
-- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/roadmaps/generalized_fluid_phase_equilibrium.md
+- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:neutral_tpd_stability
 - Description: Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance.
@@ -330,7 +330,7 @@ certification is evaluated.
 - Dependency: None
 - Derivative backend: EOS/provider derivatives for volume-composition trial phases
 - Solver role: Deterministic neutral candidate generation, de-duplication, and seed construction
-- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h; docs/roadmaps/generalized_fluid_phase_equilibrium.md
+- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:neutral_deterministic_phase_candidate_screening
 - Description: Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes.
@@ -363,7 +363,7 @@ used as generalized production evidence by itself.
 - Dependency: None
 - Derivative backend: Not applicable for the first LP/active-set feasibility selector
 - Solver role: Selects candidate phase sets whose phase fractions satisfy feed material balance
-- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium.md
+- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py
 - Capability key: internal:phase_candidate_mass_balance_selection
 - Description: Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly.
@@ -400,7 +400,7 @@ finite candidate bound gap open.
 - Dependency: None
 - Derivative backend: EOS/provider derivatives required by the selected TPD backend
 - Solver role: Converts finite optimizer outputs into production_accepted, unstable, metastable, or uncertified statuses
-- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp; docs/roadmaps/generalized_fluid_phase_equilibrium.md
+- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:postsolve_tpd_certification
 - Description: Adds phase-set stability certification after current neutral Ipopt solves.
@@ -429,7 +429,7 @@ blocks before assigning a production-accepted status.
 - Dependency: None
 - Derivative backend: Exact derivatives required before production row exposure
 - Solver role: Records descriptive generalized family labels, derived subworkflows, reference cases, evidence tiers, and benchmark status
-- Implementation owner: docs/roadmaps/generalized_fluid_phase_equilibrium.md; docs/roadmaps/equilibrium_benchmark_registry.yaml
+- Implementation owner: docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md; docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml
 - Validation: tests/native/contracts/test_generalized_equilibrium_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py
 - Capability key: docs:generalized_equilibrium_activation_registry
 - Description: Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry.
@@ -464,7 +464,7 @@ planned until HELD and derivative gates pass.
 - Dependency: CppAD for exact derivatives of the approximate closure
 - Derivative backend: CppAD explicit derivatives of approximate association closures
 - Solver role: Seeds, diagnoses, or continues associating routes without claiming exact PC-SAFT association
-- Implementation owner: docs/roadmaps/explicit_association_closure_for_pcsaft.md; docs/derivation/explicit_association_closure_for_pcsaft.tex
+- Implementation owner: docs/milestones/M3-eos/plans/explicit-association-closure-for-pcsaft.md; docs/derivation/explicit_association_closure_for_pcsaft.tex
 - Validation: Planned explicit-vs-implicit association diagnostics against Gross/Sadowski 2002 EOS cases
 - Capability key: planned:explicit_association_closure_diagnostics
 - Description: Records explicit association closures as approximate Helmholtz diagnostics, not production exact association.

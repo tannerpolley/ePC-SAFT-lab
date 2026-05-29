@@ -1,4 +1,4 @@
-# Test Ownership Relocation Roadmap
+# Test Ownership Relocation Plan
 
 Issue: [#152](https://github.com/ePC-SAFT/ePC-SAFT/issues/152)
 
@@ -10,7 +10,7 @@ repository, build, integration, registry, and workflow contracts. Extension
 packages own their own API, native, solver-dependency, and result-contract tests
 inside their package-local `tests/` trees.
 
-This roadmap is intentionally limited to test ownership and validation routing.
+This plan is intentionally limited to test ownership and validation routing.
 It does not move the core package into `packages/epcsaft`, split native modules,
 change solver behavior, change public imports, or prepare releases.
 
@@ -37,7 +37,7 @@ change solver behavior, change public imports, or prepare releases.
 - No solver algorithm changes.
 - No public package API changes.
 - No PyPI, release, or publishing workflow changes.
-- No removal of global registry, roadmap, or integration tests that govern the
+- No removal of global registry, plan, or integration tests that govern the
   whole monorepo.
 
 ## Ownership Matrix
@@ -51,7 +51,7 @@ change solver behavior, change public imports, or prepare releases.
 | `tests/native/equilibrium/diagnostics/**` | Equilibrium diagnostics tests | `packages/epcsaft-equilibrium/tests/native/diagnostics/` |
 | `tests/native/equilibrium/results/**` | Equilibrium result tests | `packages/epcsaft-equilibrium/tests/native/results/` |
 | `tests/native/contracts/test_equilibrium_native_contracts.py` | Equilibrium native/result contracts | `packages/epcsaft-equilibrium/tests/contracts/` |
-| Root registry and roadmap tests | Global capability and documentation governance | `tests/` |
+| Root registry and plan tests | Global capability and documentation governance | `tests/` |
 | Root provider, build, repo, docs, workflow, and integration tests | Provider/repo/cross-package contracts | `tests/` |
 
 ## Gates

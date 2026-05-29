@@ -6,11 +6,11 @@ admission layer, one shared equilibrium NLP, one Ipopt adapter, one certified
 result shape, and one capability source of truth.
 
 This document is implementation guidance. Runtime route labels and family keys
-remain owned by the selector activation metadata, not by roadmap prose.
+remain owned by the selector activation metadata, not by planning prose.
 
 ## Source Order
 
-1. `docs/roadmaps/generalized_fluid_phase_equilibrium.md` defines the GFPE
+1. `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md` defines the GFPE
    architecture, equations, gates, and staged production policy.
 2. `docs/adr/0003-selector-core-activation-capabilities.md` makes selector
    admission and the native activation matrix the capability authority.
@@ -201,7 +201,7 @@ Users do not see:
 - derivative backend flags;
 - Ipopt internal knobs unless explicitly configuring solver options;
 - native request payloads;
-- roadmap family labels.
+- planning family labels.
 
 ### 8. Deletion Pass
 

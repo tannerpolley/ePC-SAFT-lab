@@ -1,24 +1,24 @@
-# ePC-SAFT Package Extension Transfer Roadmap
+# ePC-SAFT Package Extension Transfer Superseded Plan
 
 > Superseded for active execution by
-> `docs/roadmaps/monorepo_package_migration.md`. This document records the
+> `docs/milestones/M1-packages/plans/monorepo-package-migration.md`. This document records the
 > previous sibling-repo transfer direction and should not be used as the active
 > source of truth for the current monorepo consolidation work.
 
 Date: 2026-05-28
 
 This document is retained historical context for the previous sibling-repo
-package-extension transfer direction. The active roadmap for package execution
-is now `docs/roadmaps/monorepo_package_migration.md`.
+package-extension transfer direction. The active plan for package execution
+is now `docs/milestones/M1-packages/plans/monorepo-package-migration.md`.
 
-Do not use this roadmap to control new extraction sequencing unless the
-monorepo migration roadmap explicitly reactivates a section.
+Do not use this plan to control new extraction sequencing unless the
+monorepo migration plan explicitly reactivates a section.
 
 ## Historical Target State (Superseded)
 
 The following layout was the prior extraction target. It is no longer the active
 execution target for package migration. Use
-`docs/roadmaps/monorepo_package_migration.md` for current gates and source
+`docs/milestones/M1-packages/plans/monorepo-package-migration.md` for current gates and source
 layout decisions.
 
 ### Former GitHub Organization Layout
@@ -80,7 +80,7 @@ The current checkout is still a transition monorepo, not real extraction:
   capability data is staged under `packages/epcsaft-regression`;
 - this is not yet true provider/extension extraction.
 
-These facts are the starting point for the roadmap. They are not acceptable as
+These facts are the starting point for the plan. They are not acceptable as
 the final state.
 
 ## End-State Ownership
@@ -400,17 +400,17 @@ The cleanup is part of completion, not optional follow-up work.
 
 ## Phase Gates
 
-### Phase 0: Roadmap And Governance Freeze
+### Phase 0: Plan And Governance Freeze
 
 Goal:
 
-- make this roadmap authoritative before more extraction-facing work;
+- make this plan authoritative before more extraction-facing work;
 - prepare the GitHub organization, labels, boards, permissions, and publisher
   preflight.
 
 Exit gate:
 
-- the roadmap, ADR, build protocol, and package architecture docs agree on the
+- the plan, ADR, build protocol, and package architecture docs agree on the
   target state;
 - organization prerequisites are either completed or explicitly blocked with
   evidence.
@@ -512,7 +512,7 @@ Exit gate:
 
 The first implementation slice starts here:
 
-1. update this roadmap until it fully defines the target state and gates;
+1. update this plan until it fully defines the target state and gates;
 2. inspect the current CMake target split and native symbol surface;
 3. make the core build support a provider-only profile with Ceres OFF and Ipopt
    OFF;

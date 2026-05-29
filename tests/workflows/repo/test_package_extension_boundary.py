@@ -31,17 +31,19 @@ def test_package_extension_contract_docs_exist_and_share_status() -> None:
     assert "Target Native Ownership" in _read(CONTRACTS["native"])
 
 
-def test_transfer_roadmap_current_state_matches_runtime_boundary_progress() -> None:
-    roadmap = _read(REPO_ROOT / "docs" / "roadmaps" / "package_extension_transfer_roadmap.md")
+def test_transfer_plan_current_state_matches_runtime_boundary_progress() -> None:
+    plan = _read(
+        REPO_ROOT / "docs" / "milestones" / "M1-packages" / "plans" / "package-extension-transfer-superseded-plan.md"
+    )
 
-    assert "provider runtime metadata is provider-scoped" in roadmap
-    assert "provider runtime metadata still reports regression transition capability data" not in roadmap
+    assert "provider runtime metadata is provider-scoped" in plan
+    assert "provider runtime metadata still reports regression transition capability data" not in plan
 
 
 def test_adr_and_source_docs_agree_on_package_owners() -> None:
     files = [
         REPO_ROOT / "docs" / "adr" / "0005-package-extension-split.md",
-        REPO_ROOT / "docs" / "roadmaps" / "FULL_ROADMAP.md",
+        REPO_ROOT / "docs" / "milestones" / "PROJECT_CONTEXT.md",
         REPO_ROOT / "docs" / "pages" / "package_architecture.rst",
         REPO_ROOT / "docs" / "protocols" / "build_package_dependency_protocol.rst",
         REPO_ROOT / "README.md",
