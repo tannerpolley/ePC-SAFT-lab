@@ -1,11 +1,18 @@
 [build-system]
-requires = ["uv_build>=0.11.16,<0.12"]
-build-backend = "uv_build"
+requires = [
+    "scikit-build-core>=0.12",
+    "pybind11>=3.0",
+    "numpy>=2.0",
+    "includeigen>=0.1",
+]
+build-backend = "epcsaft_equilibrium_build_backend"
+backend-path = ["build_backend"]
 
 [project]
 name = "epcsaft-equilibrium"
 version = "0.1.0"
 description = "Ipopt-backed equilibrium extension package for ePC-SAFT."
+readme = "README.md"
 requires-python = ">=3.9"
 license = "GPL-3.0-only"
 dependencies = [
@@ -18,7 +25,32 @@ epcsaft = { workspace = true }
 
 [tool.epcsaft.extension]
 publish = false
-monorepo_transition_only = true
+monorepo_transition_only = false
+package_local_native_build = true
 requires_provider_native_sdk = "provider_native_sdk_v1"
 native_module = "epcsaft_equilibrium._native_core"
 build_option = "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=ON"
+
+[tool.scikit-build]
+minimum-version = "0.12"
+build-dir = "../../build/{wheel_tag}/epcsaft-equilibrium"
+wheel.packages = ["src/epcsaft_equilibrium"]
+cmake.source-dir = "."
+cmake.version = ">=3.20"
+ninja.version = ">=1.11"
+
+[tool.scikit-build.sdist]
+include = [
+    "CMakeLists.txt",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+    "build_backend/*.py",
+    "src/epcsaft_equilibrium/**/*.py",
+    "src/epcsaft_equilibrium/**/*.pyi",
+    "src/epcsaft_equilibrium/native/**/*.cpp",
+    "src/epcsaft_equilibrium/native/**/*.h",
+]
+exclude = [
+    "src/epcsaft_equilibrium/*.pyd",
+]

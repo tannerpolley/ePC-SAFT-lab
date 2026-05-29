@@ -16,6 +16,10 @@ into `epcsaft_equilibrium._native_core`; regression/Ceres symbols link into
 That current shape is a transition state. It is not evidence that Ceres or
 Ipopt are core provider dependencies after the split.
 
+Extension packages also have package-local build metadata. Root CMake remains
+the source-checkout orchestrator, but it is no longer the only executable path
+for extension-native modules.
+
 The package-boundary proof lanes may disable Ceres and/or Ipopt while keeping
 CppAD enabled. The provider-only proof is stricter: it disables equilibrium and
 regression native registration entirely so provider `_core` exposes only the
@@ -98,6 +102,7 @@ Before repository extraction:
 Current local proof commands:
 
 - provider dependency lane: ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` or ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF --config-setting=cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF --config-setting=cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF``;
-- equilibrium dependency lane: ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF`` with a documented Ipopt root or config package;
-- regression dependency lane: ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF``;
+- equilibrium dependency lane: ``uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-equilibrium --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"``;
+- regression dependency lane: ``uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"``;
+- installed-provider extension lane: ``uv run python scripts/dev/build_extension_dists.py --mode installed-provider --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"``;
 - integration lane: the normal native source build with Ceres, CppAD, and Ipopt enabled.

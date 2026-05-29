@@ -188,7 +188,7 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE" in cmake_text
     assert 'ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_equilibrium"' in cmake_text
     assert 'ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_regression"' in cmake_text
-    assert "packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp" not in cmake_text
+    assert "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp" not in cmake_text
     assert "unset(Ceres_BINARY_DIR CACHE)" in cmake_text
     assert "unset(Ceres_SOURCE_DIR CACHE)" in cmake_text
     assert "EPCSAFT_ENABLE_CERES" not in root_pyproject_text

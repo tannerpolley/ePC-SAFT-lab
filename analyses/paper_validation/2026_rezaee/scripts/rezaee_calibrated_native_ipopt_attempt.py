@@ -31,7 +31,7 @@ from scripts.dev.native_runtime_env import apply_to_current_process  # noqa: E40
 apply_to_current_process(cache_path=REPO_ROOT / "build" / "dev" / "CMakeCache.txt")
 
 import epcsaft  # noqa: E402
-from epcsaft.equilibrium import SolutionError  # noqa: E402
+from epcsaft import SolutionError  # noqa: E402
 
 import rezaee_reactive_equilibrium_replay as replay  # noqa: E402
 

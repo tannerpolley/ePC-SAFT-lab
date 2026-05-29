@@ -148,6 +148,15 @@ def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() ->
     assert sdk["equilibrium_native_enabled"] is False
     assert sdk["regression_native_enabled"] is False
     assert sdk["native_metadata"]["native_target"] == "epcsaft_provider_native"
+    assert sdk["source_sdk_kind"] == "source_cmake_sdk"
+    assert sdk["source_sdk_version"] == "provider_native_sdk_v1"
+    assert sdk["cmake_config_path"].endswith("epcsaft_provider_sdk.cmake")
+    assert sdk["source_manifest_path"].endswith("provider_sources.json")
+    assert Path(sdk["include_root"]).as_posix().endswith("epcsaft/native")
+    assert sdk["supported_extension_native_modules"] == [
+        "epcsaft_equilibrium._native_core",
+        "epcsaft_regression._native_core",
+    ]
 
 
 def test_provider_owns_pure_neutral_parameter_derivative_native_symbol() -> None:

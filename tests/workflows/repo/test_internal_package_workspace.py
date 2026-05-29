@@ -16,6 +16,7 @@ EXTENSION_PACKAGES = {
         "forbidden_reexports": {"Regression"},
         "native_module": "epcsaft_equilibrium._native_core",
         "build_option": "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=ON",
+        "build_backend": "epcsaft_equilibrium_build_backend",
     },
     "epcsaft-regression": {
         "directory": REPO_ROOT / "packages" / "epcsaft-regression",
@@ -25,6 +26,7 @@ EXTENSION_PACKAGES = {
         "forbidden_reexports": {"Equilibrium"},
         "native_module": "epcsaft_regression._native_core",
         "build_option": "EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=ON",
+        "build_backend": "epcsaft_regression_build_backend",
     },
 }
 
@@ -65,6 +67,8 @@ def test_provider_package_owns_distribution_build_metadata() -> None:
     assert provider["tool"]["scikit-build"]["wheel"]["packages"] == ["src/epcsaft"]
     assert "CMakeLists.txt" in sdist_include
     assert "build_backend/*.py" in sdist_include
+    assert "src/epcsaft/**/*.cmake" in sdist_include
+    assert "src/epcsaft/**/*.json" in sdist_include
     assert "src/epcsaft/**/*.cpp" in sdist_include
     assert "src/epcsaft/**/*.h" in sdist_include
     assert "src/epcsaft/*.pyd" in provider["tool"]["scikit-build"]["sdist"]["exclude"]
@@ -78,16 +82,27 @@ def test_extension_package_manifests_depend_on_provider_workspace_source() -> No
         normalized_dependencies = {item.lower() for item in dependencies}
 
         assert pyproject["project"]["name"] == package_name
+        assert pyproject["build-system"]["build-backend"] == metadata["build_backend"]
+        assert pyproject["build-system"]["backend-path"] == ["build_backend"]
         assert "epcsaft==0.2.*" in dependencies
         assert metadata["required_dependencies"] <= dependencies
         assert pyproject["tool"]["uv"]["sources"]["epcsaft"] == {"workspace": True}
         assert metadata["forbidden_dependencies"].isdisjoint(normalized_dependencies)
         extension = pyproject["tool"]["epcsaft"]["extension"]
         assert extension["publish"] is False
-        assert extension["monorepo_transition_only"] is True
+        assert extension["monorepo_transition_only"] is False
+        assert extension["package_local_native_build"] is True
         assert extension["requires_provider_native_sdk"] == "provider_native_sdk_v1"
         assert extension["native_module"] == metadata["native_module"]
         assert extension["build_option"] == metadata["build_option"]
+        assert (package_dir / "CMakeLists.txt").is_file()
+        assert (package_dir / "build_backend").is_dir()
+        assert pyproject["tool"]["scikit-build"]["cmake"]["source-dir"] == "."
+        assert not (package_dir / "native").exists()
+        assert (package_dir / "src" / metadata["module"] / "native").is_dir()
+        sdist_include = set(pyproject["tool"]["scikit-build"]["sdist"]["include"])
+        assert f"src/{metadata['module']}/native/**/*.cpp" in sdist_include
+        assert f"src/{metadata['module']}/native/**/*.h" in sdist_include
 
 
 def test_extension_package_shells_do_not_reexport_transition_core_objects() -> None:

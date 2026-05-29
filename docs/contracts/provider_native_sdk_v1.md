@@ -27,6 +27,20 @@ Extension packages may reference that target only through the SDK contract and
 workspace build metadata while this repository remains a monorepo transition
 build.
 
+The SDK is a versioned source/CMake SDK, not a binary ABI. The runtime payload
+must expose:
+
+- `source_sdk_kind`, currently `source_cmake_sdk`;
+- `source_sdk_version`, currently `provider_native_sdk_v1`;
+- `cmake_config_path`, pointing at `epcsaft_provider_sdk.cmake`;
+- `source_manifest_path`, pointing at `provider_sources.json`;
+- `include_root`, pointing at the provider native include/source root;
+- `supported_extension_native_modules`.
+
+Extension package builds must include the CMake config through
+`EPCSAFT_PROVIDER_SDK_CMAKE_CONFIG`. Missing SDK files are build failures, not
+silent package downgrades.
+
 The native SDK payload reports the provider `_core` boundary:
 
 - `provider_only_core`

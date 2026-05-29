@@ -64,32 +64,32 @@ Public request seam:
 
 Selector and family-admission seam:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/activation_plan.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_plan.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp`
 - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`
 - `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 
 Shared phase-NLP seam:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_layout.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_layout.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/second_order.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_transform.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_transform.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/second_order.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_transform.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_transform.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
 
 Current neutral utility-route anchors:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
 - `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
 - `packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py`
 - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py`
@@ -285,8 +285,8 @@ Primary output:
 References:
 
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp`
 - `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`
 
@@ -391,11 +391,11 @@ Primary output:
 
 References:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/activation_plan.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_plan.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp`
 - `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_route_metadata_contracts.py`
 
@@ -514,11 +514,11 @@ Primary output:
 
 References:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_layout.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_layout.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h`
 - `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 
 Substeps:
@@ -587,10 +587,10 @@ Primary output:
 
 References:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/second_order.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_transform.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/second_order.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_transform.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
 - `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 
@@ -662,7 +662,7 @@ Primary output:
 
 References:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `docs/algorithms.md`
 - `docs/latex/algorithms.tex`
 - `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
@@ -721,11 +721,11 @@ Primary output:
 
 References:
 
-- `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/second_order.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/second_order.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
 
@@ -821,7 +821,7 @@ References:
 - `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 - `docs/algorithms.md`
 - `docs/latex/algorithms.tex`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`
 
@@ -913,8 +913,8 @@ References:
 
 - `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 - `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp`
 - `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
 - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py`
 
@@ -1016,7 +1016,7 @@ References:
 
 - `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 - `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
-- `packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
 - `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
@@ -1093,8 +1093,8 @@ References:
 
 - `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md`
 - `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/variable_layout.h`
-- `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.h`
+- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - future generalized phase-set route owner created after Stage 9
 
 Substeps:

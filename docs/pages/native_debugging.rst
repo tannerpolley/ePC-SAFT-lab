@@ -18,10 +18,10 @@ exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, and contribution
 result structs through the private provider ``epcsaft._core`` module.
 Equilibrium bindings are registered into
 ``epcsaft_equilibrium._native_core`` by
-``packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp``.
+``packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp``.
 Regression Ceres bindings are registered into
 ``epcsaft_regression._native_core`` by
-``packages/epcsaft-regression/native/regression/module.cpp``.
+``packages/epcsaft-regression/src/epcsaft_regression/native/regression/module.cpp``.
 
 The provider native implementation lives under domain folders in ``packages/epcsaft/src/epcsaft/native``. High-traffic files are:
 
@@ -30,8 +30,8 @@ The provider native implementation lives under domain folders in ``packages/epcs
 - ``eos/compressibility.cpp`` for compressibility factor and pressure from density.
 - ``eos/chemical_potential.cpp`` and ``eos/fugacity.cpp`` for residual chemical potential and fugacity.
 - ``eos/activity.cpp`` for activity, osmotic, and solvation outputs.
-- ``packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h`` for native route family activation metadata.
-- ``packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`` and ``packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`` for the trusted bubble/dew Ipopt route.
+- ``packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`` for native route family activation metadata.
+- ``packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`` and ``packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`` for the trusted bubble/dew Ipopt route.
 
 Validation commands
 -------------------

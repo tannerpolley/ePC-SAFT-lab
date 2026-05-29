@@ -56,8 +56,17 @@ def test_solver_libraries_are_linked_to_extension_owned_native_targets() -> None
     assert "target_link_libraries(epcsaft_provider_native PUBLIC Ceres::ceres)" not in cmake
     assert 'target_link_libraries(epcsaft_provider_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")' not in cmake
     assert "EPCSAFT_ENABLE_CERES=OFF is not supported" not in cmake
-    provider_module = _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
-    regression_module = _read(REPO_ROOT / "packages" / "epcsaft-regression" / "native" / "regression" / "module.cpp")
+    provider_module = _read(REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
+    regression_module = _read(
+        REPO_ROOT
+        / "packages"
+        / "epcsaft-regression"
+        / "src"
+        / "epcsaft_regression"
+        / "native"
+        / "regression"
+        / "module.cpp"
+    )
     assert "EPCSAFT_HAS_EQUILIBRIUM_NATIVE" not in provider_module
     assert "EPCSAFT_HAS_REGRESSION_NATIVE" not in provider_module
     assert "_fit_generic_native_ceres" not in provider_module
@@ -65,7 +74,7 @@ def test_solver_libraries_are_linked_to_extension_owned_native_targets() -> None
 
 
 def test_provider_distribution_metadata_has_no_runtime_solver_packages() -> None:
-    pyproject = tomllib.loads(_read(REPO_ROOT / "pyproject.toml"))
+    pyproject = tomllib.loads(_read(REPO_ROOT / "packages" / "epcsaft" / "pyproject.toml"))
     dependencies = {str(item).split(">=", 1)[0].split("==", 1)[0].lower() for item in pyproject["project"]["dependencies"]}
 
     assert dependencies == {"numpy", "pandas"}
@@ -91,10 +100,11 @@ def test_native_boundary_contract_defines_extraction_proof_matrix() -> None:
 
 def test_provider_native_sdk_contract_is_bound_to_runtime_and_native_metadata() -> None:
     contract = _read(REPO_ROOT / "docs" / "contracts" / "provider_native_sdk_v1.md")
-    runtime_init = _read(REPO_ROOT / "src" / "epcsaft" / "runtime" / "__init__.py")
-    package_init = _read(REPO_ROOT / "src" / "epcsaft" / "__init__.py")
-    native_stub = _read(REPO_ROOT / "src" / "epcsaft" / "_core.pyi")
-    native_module = _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
+    provider_root = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft"
+    runtime_init = _read(provider_root / "runtime" / "__init__.py")
+    package_init = _read(provider_root / "__init__.py")
+    native_stub = _read(provider_root / "_core.pyi")
+    native_module = _read(provider_root / "native" / "bindings" / "module.cpp")
 
     assert "Provider native SDK contract id: `provider_native_sdk_v1`." in contract
     assert "epcsaft_provider_native" in contract
@@ -103,3 +113,4 @@ def test_provider_native_sdk_contract_is_bound_to_runtime_and_native_metadata() 
     assert "provider_native_sdk" in package_init
     assert "_native_provider_sdk_contract" in native_stub
     assert "_native_provider_sdk_contract" in native_module
+    assert "source_cmake_sdk" in contract

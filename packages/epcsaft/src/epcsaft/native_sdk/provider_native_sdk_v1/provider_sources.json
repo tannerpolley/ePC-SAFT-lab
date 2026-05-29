@@ -1,0 +1,35 @@
+{
+  "contract_id": "provider_native_sdk_v1",
+  "native_target": "epcsaft_provider_native",
+  "source_root": "native",
+  "sources": [
+    "native/model/parameter_setup.cpp",
+    "native/eos/activity.cpp",
+    "native/eos/chemical_potential.cpp",
+    "native/eos/compressibility.cpp",
+    "native/eos/density.cpp",
+    "native/eos/derivatives/born_ssmds.cpp",
+    "native/eos/fugacity.cpp",
+    "native/eos/pure_neutral_parameter_derivatives.cpp",
+    "native/eos/residual_helmholtz.cpp",
+    "native/eos/residual_properties.cpp",
+    "native/eos/state.cpp",
+    "native/eos/contributions/association.cpp",
+    "native/eos/contributions/born.cpp",
+    "native/eos/contributions/dispersion.cpp",
+    "native/eos/contributions/hard_chain.cpp",
+    "native/eos/contributions/ion.cpp",
+    "native/autodiff/cppad_smoke_checks.cpp",
+    "native/autodiff/implicit_sensitivity.cpp"
+  ],
+  "include_dirs": [
+    "native",
+    "native/autodiff",
+    "native/bindings",
+    "native/eos",
+    "native/eos/contributions",
+    "native/model",
+    "native/runtime"
+  ]
+}
+

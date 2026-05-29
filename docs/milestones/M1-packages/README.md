@@ -12,6 +12,5 @@ proof, extension-native boundaries, and package CI/docs/release structure.
 
 ## Current Open Issues
 
-No open M1 package-layout issues remain after #169 closes the #154 parent
-tracker. Add new M1 issue mirrors here only for newly opened package-layout
-work.
+- None after the package-transfer transition audit PR merges and closes
+  [#177](https://github.com/ePC-SAFT/ePC-SAFT/issues/177).

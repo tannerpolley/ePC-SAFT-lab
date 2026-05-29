@@ -270,7 +270,7 @@ constraints. It does not mean adding a permanent custom barrier term to
 final certification solve on the unmodified thermodynamic objective.
 
 The reusable coordinate wrapper contract is implemented at
-`packages/epcsaft-equilibrium/native/equilibrium/core/variable_transform.h`. Current neutral
+`packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_transform.h`. Current neutral
 routes declare the identity physical-coordinate transform; the native smoke
 contract also proves a positive-log map so future positive-domain coordinates
 reuse the same chain-rule path.

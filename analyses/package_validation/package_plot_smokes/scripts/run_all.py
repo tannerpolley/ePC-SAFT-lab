@@ -17,7 +17,6 @@ def main() -> None:
         "baygi_outputs",
         "api_parity",
         "contribution_outputs",
-        "equilibrium_confidence",
         "equilibrium_outputs",
         "native_outputs",
         "property_outputs",

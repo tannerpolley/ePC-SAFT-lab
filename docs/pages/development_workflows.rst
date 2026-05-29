@@ -128,6 +128,21 @@ native modules OFF. Source-checkout native builds still use
 ``scripts/dev/build_epcsaft.py`` when equilibrium/regression extension modules,
 Ceres, or Ipopt are needed.
 
+Extension package wheel/sdist proof goes through package-local scikit-build
+metadata in ``packages/epcsaft-equilibrium`` and
+``packages/epcsaft-regression``. Use the repository helper so both the monorepo
+provider SDK and installed-provider SDK paths are exercised:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/build_dist.py --parallel 1
+   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+
+The extension helper fails if the provider SDK CMake metadata is missing.
+Equilibrium package builds require a real Ipopt SDK; regression package builds
+require Ceres through the package-local CMake configuration.
+
 .. list-table::
    :header-rows: 1
    :widths: 16 22 22 40

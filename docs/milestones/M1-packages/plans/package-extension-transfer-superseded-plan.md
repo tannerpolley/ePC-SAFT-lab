@@ -64,8 +64,8 @@ C:\Users\Tanner\Documents\Workspaces\Engineering\epcsaft-regression
 
 The current checkout is still a transition monorepo, not real extraction:
 
-- equilibrium C++ lives under `packages/epcsaft-equilibrium/native/equilibrium`;
-- regression C++ lives under `packages/epcsaft-regression/native/regression`;
+- equilibrium C++ lives under `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium`;
+- regression C++ lives under `packages/epcsaft-regression/src/epcsaft_regression/native/regression`;
 - `CMakeLists.txt` defines object targets
   `epcsaft_provider_native`, `epcsaft_equilibrium_native`, and
   `epcsaft_regression_native`, but still links them into one provider-owned

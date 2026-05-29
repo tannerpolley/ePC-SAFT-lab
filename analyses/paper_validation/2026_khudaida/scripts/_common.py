@@ -49,8 +49,6 @@ platform.machine = _fast_machine
 
 import scripts._epcsaft_oop as pcs
 import epcsaft
-from scripts.validation.equilibrium_core.confidence import explicit_to_formula
-from scripts.validation.equilibrium_core.confidence import formula_to_explicit
 from epcsaft.parameters import get_prop_dict
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
@@ -98,6 +96,14 @@ SCALED_FIGURE_OVERRIDES: dict[int, dict] = {
     6: dict(ORGANIC_SIDE_SCALED_RANGE_10WT),
     7: dict(ORGANIC_SIDE_SCALED_RANGE_10WT),
 }
+
+
+def explicit_to_formula(x_ion: np.ndarray) -> np.ndarray:
+    return ion_to_formula_basis(x_ion)
+
+
+def formula_to_explicit(x_formula: np.ndarray) -> np.ndarray:
+    return formula_to_ion_basis(x_formula)
 
 
 def configure_style() -> None:
