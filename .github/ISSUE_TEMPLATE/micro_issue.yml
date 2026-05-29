@@ -1,0 +1,87 @@
+name: Micro implementation issue
+description: Define one PR-sized implementation slice under a tracking issue.
+title: "Implement: <small deliverable>"
+labels: ["agent-ready"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for one concrete implementation slice. It should be small enough for one PR and tied to one tracking issue.
+  - type: input
+    id: parent-tracking-issue
+    attributes:
+      label: Parent tracking issue
+      description: Issue number for the roadmap tracking issue this moves forward.
+      placeholder: "#123"
+    validations:
+      required: true
+  - type: dropdown
+    id: roadmap-milestone
+    attributes:
+      label: Roadmap milestone
+      description: Must match the parent tracking issue's milestone.
+      options:
+        - M0 - Governance
+        - M1 - Packages
+        - M2 - Core
+        - M3 - Equilibrium
+        - M4 - Regression
+        - M5 - Validation
+        - M6 - Release
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Project package field
+      options:
+        - core
+        - equilibrium
+        - regression
+        - benchmark
+        - downstream
+    validations:
+      required: true
+  - type: dropdown
+    id: capability
+    attributes:
+      label: Project capability field
+      options:
+        - eos
+        - derivatives
+        - vle
+        - lle
+        - electrolyte
+        - reactive
+        - regression
+    validations:
+      required: true
+  - type: textarea
+    id: implementation-slice
+    attributes:
+      label: Implementation slice
+      description: Exact behavior, API, native path, docs path, or test ownership change this issue implements.
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: Work that must not be pulled into this PR.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete checks that must be true before the PR can close this issue.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation commands
+      description: Focused tests, docs checks, native checks, or path audits required for this slice.
+      render: powershell
+    validations:
+      required: true

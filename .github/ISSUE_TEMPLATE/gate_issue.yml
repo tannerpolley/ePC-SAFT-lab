@@ -1,0 +1,68 @@
+name: Roadmap gate issue
+description: Prove a CI, docs, benchmark, capability, release, or downstream gate.
+title: "Gate: <proof target>"
+labels: ["validation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for proof work. A gate issue closes only when evidence exists and the linked roadmap/tracking issue is updated.
+  - type: input
+    id: parent-tracking-issue
+    attributes:
+      label: Parent tracking issue
+      description: Issue number for the roadmap tracking issue this gate proves.
+      placeholder: "#123"
+    validations:
+      required: true
+  - type: dropdown
+    id: roadmap-milestone
+    attributes:
+      label: Roadmap milestone
+      description: Must match the parent tracking issue's milestone.
+      options:
+        - M0 - Governance
+        - M1 - Packages
+        - M2 - Core
+        - M3 - Equilibrium
+        - M4 - Regression
+        - M5 - Validation
+        - M6 - Release
+    validations:
+      required: true
+  - type: dropdown
+    id: gate-type
+    attributes:
+      label: Gate type
+      options:
+        - CI
+        - docs
+        - tests
+        - benchmark
+        - capability evidence
+        - release
+        - downstream integration
+    validations:
+      required: true
+  - type: textarea
+    id: proof-target
+    attributes:
+      label: Proof target
+      description: What claim does this gate prove, and what claim must remain unmade until it passes?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Required evidence
+      description: Commands, artifacts, registry rows, docs, CI checks, or downstream runs required to close.
+      render: powershell
+    validations:
+      required: true
+  - type: textarea
+    id: roadmap-sync
+    attributes:
+      label: Roadmap and Project sync
+      description: Which roadmap checklist, issue checklist, capability row, Project field, or release note must be updated after proof passes?
+    validations:
+      required: true

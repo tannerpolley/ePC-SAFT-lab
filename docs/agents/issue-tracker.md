@@ -1,9 +1,9 @@
 # Issue Tracker: GitHub
 
 Issues and PRDs for this repo live in GitHub Issues for the repository shown by
-`git remote -v`. Before the organization transfer this is
-`tannerpolley/ePC-SAFT`; after transfer it should be `ePC-SAFT/ePC-SAFT`. Use
-the `gh` CLI for issue operations from inside this clone.
+`git remote -v`. The active organization repository is
+`ePC-SAFT/ePC-SAFT`. Use the `gh` CLI for issue operations from inside this
+clone.
 
 ## Conventions
 
@@ -38,6 +38,13 @@ milestone and split the later work into child issues.
 
 ## Project And Issue Shape
 
+- Use the issue templates for new work:
+  - `Roadmap tracking issue` for a smaller roadmap or major tranche.
+  - `Micro implementation issue` for one PR-sized implementation slice.
+  - `Roadmap gate issue` for CI, docs, benchmark, capability, release, or
+    downstream proof.
+  - `Upstream ePC-SAFT package request` and `Downstream ePC-SAFT dependency
+    bug` for downstream-driven package work.
 - Smaller roadmap files map to one tracking issue in the matching milestone.
 - Micro issues are implementation slices that close one checklist item or gate
   on the tracking issue.
@@ -47,6 +54,17 @@ milestone and split the later work into child issues.
   state and dashboard grouping.
 - The organization Project groups and sorts by Milestone, Package, Capability,
   Backend, Readiness, and Release target.
+
+## Pull Requests
+
+- Every roadmap PR should close one micro or gate issue when possible.
+- The PR body must name the issue, milestone, tracking issue or roadmap, and
+  relevant Project fields.
+- Keep milestone and Project state current before requesting review and before
+  merge.
+- Do not close an issue by documenting incompleteness; split remaining work
+  into child issues or keep the issue open.
+- Answer the required PR questions from `docs/roadmaps/FULL_ROADMAP.md`.
 
 ## When a skill says "publish to the issue tracker"
 

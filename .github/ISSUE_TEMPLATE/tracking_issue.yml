@@ -1,0 +1,76 @@
+name: Roadmap tracking issue
+description: Track one smaller roadmap or major tranche under a single roadmap milestone.
+title: "Tracking: <roadmap tranche>"
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for a slice roadmap or major tranche. A tracking issue owns the checklist of micro issues and gates for one roadmap milestone.
+  - type: dropdown
+    id: roadmap-milestone
+    attributes:
+      label: Roadmap milestone
+      description: Assign this same GitHub milestone after filing.
+      options:
+        - M0 - Governance
+        - M1 - Packages
+        - M2 - Core
+        - M3 - Equilibrium
+        - M4 - Regression
+        - M5 - Validation
+        - M6 - Release
+    validations:
+      required: true
+  - type: input
+    id: slice-roadmap
+    attributes:
+      label: Slice roadmap
+      description: Path to the roadmap file this tracking issue owns.
+      placeholder: docs/roadmaps/<slice>.md
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Project package field
+      options:
+        - core
+        - equilibrium
+        - regression
+        - benchmark
+        - downstream
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What must be true when this tracking issue closes?
+    validations:
+      required: true
+  - type: textarea
+    id: child-issues
+    attributes:
+      label: Child micro issues and gates
+      description: List known micro issues, gate issues, or TODO issue titles. Update with issue numbers after filing.
+      placeholder: |
+        - [ ] #123 Implement ...
+        - [ ] #124 Prove ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Tracking acceptance criteria
+      description: Gates that prove the whole roadmap tranche is complete.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Required validation
+      description: Commands, docs checks, CI checks, Project updates, and roadmap evidence required before closing.
+      render: powershell
+    validations:
+      required: true

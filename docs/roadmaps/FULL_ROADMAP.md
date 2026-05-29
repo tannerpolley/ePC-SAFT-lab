@@ -472,6 +472,9 @@ issues are the micro changes that move that tracking issue forward. The
 GitHub Project is the operating dashboard: group and sort by Milestone,
 Package, Capability, Backend, Readiness, and Release target. Keep technical
 precision in issue bodies and roadmap checklists, not in milestone titles.
+Use the repository issue templates for tracking, micro, and gate issues, and
+use the pull request template so PRs carry issue, milestone, Project, roadmap,
+validation, and capability evidence explicitly.
 
 For generalized fluid-phase equilibrium work, use
 `docs/roadmaps/stage_by_stage_implementation_plan.md` as the GFPE-first

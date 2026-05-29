@@ -14,7 +14,7 @@
 
 ### Issue tracker
 
-Issues and PRDs are tracked in GitHub Issues for `tannerpolley/ePC-SAFT`. See `docs/agents/issue-tracker.md`.
+Issues and PRDs are tracked in GitHub Issues for `ePC-SAFT/ePC-SAFT`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
