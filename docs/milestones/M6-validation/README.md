@@ -12,7 +12,4 @@ docs/test proof, and release-quality validation gates.
 
 ## Current Open Issues
 
-| Issue | Readiness | Release target | Summary |
-| --- | --- | --- | --- |
-| [#155](issues/0155-rebase-figiel-validation-branch-onto-current-main.md) | `ready` | `future` | Rebase Figiel validation work onto current main. |
-| [#159](issues/0159-migrate-validation-and-template-parameter-bundles-to-new-schema.md) | `ready` | `future` | Migrate validation and template parameter bundles to the new schema. |
+No open GitHub issues are currently mirrored for this milestone.

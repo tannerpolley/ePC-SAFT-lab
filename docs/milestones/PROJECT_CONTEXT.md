@@ -541,7 +541,7 @@ CppAD/implicit sensitivities, and provider-only capability claims.
 
 ## M4 - Equilibrium
 
-`epcsaft-equilibrium`, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase
+epcsaft-equilibrium, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase
 discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 - GFPE infrastructure gate: sparse NLP contracts, route scaling, domain bounds, smooth variable maps, Ipopt barrier constraints, diagnostics, and exact derivative policy
@@ -556,7 +556,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 ## M5 - Regression
 
-`epcsaft-regression`, TargetDataset/result contracts, Ceres optimizer,
+epcsaft-regression, TargetDataset/result contracts, Ceres optimizer,
 parameter sensitivities, and pure/binary/electrolyte regression workflows.
 
 - Ceres owns production optimizer loops

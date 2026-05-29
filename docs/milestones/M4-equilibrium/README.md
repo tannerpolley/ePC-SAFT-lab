@@ -1,6 +1,6 @@
 # M4 - Equilibrium
 
-`epcsaft-equilibrium`, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase
+epcsaft-equilibrium, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase
 discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 ## Project Field Defaults

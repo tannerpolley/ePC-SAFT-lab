@@ -11,6 +11,7 @@ Use this folder for fast local orientation:
 - `docs/milestones/M*/plans/*.md` stores durable plans created for larger issues or tranches.
 - `docs/milestones/M*/issues/*.md` stores optional concise handoff notes for issues that need local context.
 - `docs/milestones/M*/registries/*` stores milestone-owned registry files when a milestone has executable evidence.
+- `docs/milestones/_templates/` stores the reusable local plan and issue-mirror shapes.
 
 Do not require an exact Markdown file for every GitHub issue. Small issues can
 live only in GitHub. If a local file disagrees with GitHub, update the local
@@ -32,6 +33,8 @@ file from GitHub rather than treating the Markdown as authoritative.
 ## Planning Rules
 
 - Put full plans from the plan-goal-implement-merge workflow under the matching milestone folder.
+- Use `docs/milestones/_templates/plan.md` when creating a durable local plan.
+- Use `docs/milestones/_templates/issue-mirror.md` only when a GitHub issue needs local handoff context.
 - Link the GitHub issue to the local plan file when a plan exists.
 - Keep `last_synced` current when the mirror is intentionally refreshed.
 - Do not close a GitHub issue from Markdown state alone.

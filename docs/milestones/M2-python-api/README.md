@@ -12,7 +12,4 @@ diagnostics, examples, import stability, and package-level user experience.
 
 ## Current Open Issues
 
-| Issue | Capability | Backend | Readiness | Summary |
-| --- | --- | --- | --- | --- |
-| [#156](issues/0156-add-folder-loadable-model-options-and-one-call-mixture-loading.md) | blank | blank | `ready` | Add folder-loadable model options and one-call mixture loading. |
-| [#157](issues/0157-replace-user-facing-derivative-and-born-option-schema.md) | `derivatives` | `CppAD` | `ready` | Replace the user-facing derivative and Born option schema. |
+No open GitHub issues are currently mirrored for this milestone.

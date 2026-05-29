@@ -1,6 +1,6 @@
 # M0 - Governance
 
-Plan hygiene, tracker setup, labels, issue templates, completion rules,
+Planning hygiene, tracker setup, labels, issue templates, completion rules,
 GoalBuddy/project discipline, and repo-wide process gates.
 
 ## Operating Rule

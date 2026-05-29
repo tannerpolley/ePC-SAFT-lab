@@ -25,3 +25,12 @@ wrappers or duplicate provider source trees should remain after the move.
 
 Next useful agent action: design the package-move slice only after provider-only
 build and extension-native boundary gates are stable.
+
+Child package slices:
+
+- #164: prove provider-only build without Ceres or Ipopt.
+- #165: remove extension native objects from provider `_core`.
+- #166: finish extension-owned test routing after package consolidation.
+- #167: design root workspace controller and `packages/epcsaft` move.
+- #168: move provider distribution into `packages/epcsaft`.
+- #169: post-move cleanup and install proof.
