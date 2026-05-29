@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, TypeAlias
 
 InputError: TypeAlias = Any
+BornModelOptions: Any
 MissingModelParameterError: TypeAlias = Any
 Mixture: Any
 ModelOptions: Any

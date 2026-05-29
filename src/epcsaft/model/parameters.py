@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
@@ -399,6 +400,83 @@ class ParameterSet:
         payload = get_prop_dict(dataset_name, species, composition, T, user_options=user_options)
         return cls.from_dict(payload, species=species, metadata={"dataset": str(dataset_name), "T": float(T)})
 
+    @classmethod
+    def from_folder(
+        cls,
+        path: str | Path,
+        *,
+        components: Sequence[str] | None = None,
+        x: Sequence[float] | None = None,
+        T: float = 298.15,
+        user_options: Mapping[str, Any] | None = None,
+    ) -> ParameterSet:
+        """Load parameters from a canonical, reset-template, or catalog folder."""
+
+        root = Path(path).expanduser()
+        if not root.is_dir():
+            raise InputError(f"Parameter folder '{root}' does not exist.")
+        if (root / "parameter_set.json").exists():
+            params = cls.from_json(root / "parameter_set.json", species=components)
+            if user_options:
+                return _parameter_set_with_runtime_options(params, user_options)
+            return params
+        if (root / "pure_parameters.csv").exists():
+            return cls._from_input_template_folder(root, components=components, user_options=user_options)
+        if components is None:
+            raise InputError("components must be provided for catalog-style parameter folders.")
+        return cls.from_dataset(root, components, x=x, T=T, user_options=user_options)
+
+    @classmethod
+    def _from_input_template_folder(
+        cls,
+        root: Path,
+        *,
+        components: Sequence[str] | None,
+        user_options: Mapping[str, Any] | None,
+    ) -> ParameterSet:
+        pure_rows = _read_csv_rows(root / "pure_parameters.csv")
+        if not pure_rows:
+            raise InputError(f"Input template '{root / 'pure_parameters.csv'}' must contain parameter rows.")
+        row_by_component = {str(row.get("component", "")).strip(): row for row in pure_rows}
+        labels = tuple(str(item).strip() for item in (components or row_by_component.keys()) if str(item).strip())
+        if not labels:
+            raise InputError("Input template folder must define at least one component.")
+        missing = [label for label in labels if label not in row_by_component]
+        if missing:
+            raise InputError(f"Input template folder is missing pure parameter rows for: {', '.join(missing)}.")
+
+        permittivity = _input_template_permittivity(root / "permittivity_parameters.csv")
+        pure_records = []
+        for label in labels:
+            row = row_by_component[label]
+            eps_value = _optional_csv_float(row, "relative_permittivity", 1.0)
+            if label in permittivity:
+                eps_value = permittivity[label]
+            pure_records.append(
+                PureRecord(
+                    component=label,
+                    molar_mass=_required_csv_float(row, "molar_mass_kg_per_mol", label),
+                    m=_required_csv_float(row, "m", label),
+                    sigma=_required_csv_float(row, "sigma", label),
+                    epsilon_k=_required_csv_float(row, "epsilon_k", label),
+                    charge=_optional_csv_float(row, "charge", 0.0),
+                    epsilon_k_ab=_optional_csv_float(row, "epsilon_k_ab", 0.0),
+                    kappa_ab=_optional_csv_float(row, "kappa_ab", 0.0),
+                    association_scheme=_optional_csv_text(row, "association_scheme"),
+                    relative_permittivity=eps_value,
+                    born_diameter=_optional_csv_float(row, "born_diameter", 0.0),
+                    solvation_factor=_optional_csv_float(row, "solvation_factor", 1.0),
+                )
+            )
+
+        binary_records = _input_template_binary_records(root / "binary_parameters.csv", labels)
+        return cls.from_records(
+            pure_records,
+            binary_records,
+            metadata={"source": str(root), "schema": "reset_input_template"},
+            runtime_options=user_options or {},
+        )
+
     def validate(self) -> dict[str, Any]:
         errors: list[str] = []
         seen = set()
@@ -411,8 +489,6 @@ class ParameterSet:
                 value = float(getattr(record, field_name))
                 if not np.isfinite(value) or value <= 0.0:
                     errors.append(f"{label}.{field_name} must be finite and positive.")
-            if abs(float(record.charge)) > 1.0e-12 and float(record.born_diameter) <= 0.0:
-                errors.append(f"{label}.born_diameter must be positive for charged species.")
         missing = [label for label in self.components if label not in seen]
         if missing:
             errors.append(f"Missing pure records for components: {', '.join(missing)}.")
@@ -466,7 +542,7 @@ class ParameterSet:
             matrices["l_ij"][i, j] = matrices["l_ij"][j, i] = record.l_ij
             matrices["k_hb"][i, j] = matrices["k_hb"][j, i] = record.k_hb_ij
         payload.update(matrices)
-        runtime_options = _deep_update_mapping(self.runtime_options, user_options or {})
+        runtime_options = _normalize_runtime_user_options(_deep_update_mapping(self.runtime_options, user_options or {}))
         reserved = sorted(set(runtime_options) & _PARAMETER_PAYLOAD_KEYS)
         if reserved:
             raise InputError(f"runtime_options cannot override parameter payload keys: {', '.join(reserved)}.")
@@ -617,6 +693,67 @@ def _optional_float(payload: Mapping[str, Any], key: str, default: float) -> flo
     return float(value)
 
 
+def _read_csv_rows(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        return [{str(key): str(value or "").strip() for key, value in row.items()} for row in csv.DictReader(handle)]
+
+
+def _required_csv_float(row: Mapping[str, str], key: str, component: str) -> float:
+    value = row.get(key, "")
+    if value in (None, ""):
+        raise InputError(f"{component}.{key} must be filled in input template data.")
+    return float(value)
+
+
+def _optional_csv_float(row: Mapping[str, str], key: str, default: float) -> float:
+    value = row.get(key, "")
+    if value in (None, ""):
+        return float(default)
+    return float(value)
+
+
+def _optional_csv_text(row: Mapping[str, str], key: str) -> str | None:
+    value = str(row.get(key, "")).strip()
+    return value or None
+
+
+def _input_template_permittivity(path: Path) -> dict[str, float]:
+    values: dict[str, float] = {}
+    for row in _read_csv_rows(path):
+        component = str(row.get("component", "")).strip()
+        if not component:
+            continue
+        model = str(row.get("epsilon_i_model", "constant")).strip().lower()
+        if model != "constant":
+            raise InputError("permittivity_parameters.csv currently supports only constant epsilon_i_model values.")
+        value = row.get("epsilon_i_value", "")
+        if value not in (None, ""):
+            values[component] = float(value)
+    return values
+
+
+def _input_template_binary_records(path: Path, components: Sequence[str]) -> tuple[BinaryRecord, ...]:
+    known = set(components)
+    records: list[BinaryRecord] = []
+    for row in _read_csv_rows(path):
+        left = str(row.get("component_i", "")).strip()
+        right = str(row.get("component_j", "")).strip()
+        if not left and not right:
+            continue
+        if left not in known or right not in known:
+            raise InputError(f"binary_parameters.csv references unknown pair {left!r}, {right!r}.")
+        record = BinaryRecord(
+            (left, right),
+            k_ij=_optional_csv_float(row, "k_ij", 0.0),
+            l_ij=_optional_csv_float(row, "l_ij", 0.0),
+            k_hb_ij=_optional_csv_float(row, "k_hb_ij", 0.0),
+        )
+        records.append(record)
+    return tuple(records)
+
+
 def _resolve_parameter_source_species(
     base: Sequence[str] | None,
     override: Sequence[str] | None,
@@ -662,6 +799,30 @@ def _runtime_options_from_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
         str(key): _copy_payload_value(value)
         for key, value in payload.items()
         if str(key) not in _PARAMETER_PAYLOAD_KEYS
+    }
+
+
+def _normalize_runtime_user_options(runtime_options: Mapping[str, Any]) -> dict[str, Any]:
+    if not runtime_options:
+        return {}
+    option_keys = {
+        "elec_model",
+        "solvated_ion_diameter_mixing_rule",
+        "ion_dispersion_mixing_rule",
+        "differential_mode",
+        "relative_permittivity_rule",
+        "born_model",
+    }
+    if not (set(runtime_options) & option_keys):
+        return _copy_payload_mapping(runtime_options)
+
+    from .datasets import _resolve_runtime_options
+
+    resolved = _resolve_runtime_options(dict(runtime_options))
+    return {
+        "elec_model": resolved["model"],
+        "solvated_ion_diameter_mixing_rule": bool(resolved["runtime"]["solvated_ion_diameter_mixing_rule"]),
+        "ion_dispersion_mixing_rule": bool(resolved["runtime"]["ion_dispersion_mixing_rule"]),
     }
 
 

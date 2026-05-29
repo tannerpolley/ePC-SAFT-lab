@@ -27,11 +27,6 @@ from shared import _common as common
 from shared import figure_data
 
 OUTPUT = Path(__file__).with_name("figure_8.png")
-OUTPUTS = [
-    Path(__file__).with_name("figure_8a.png"),
-    Path(__file__).with_name("figure_8b.png"),
-    Path(__file__).with_name("figure_8c.png"),
-]
 PANELS = figure_data.FIG8_PANELS
 
 
@@ -40,7 +35,7 @@ def _payload():
     return tuple(figure_data.read_payload("figure_8"))
 
 
-def _plot_panel(ax, label, salt, m_max, y_max, include_legend: bool = False):
+def _plot_panel(ax, label, salt, m_max, y_max):
     rows = list(_payload())
     x_data_meoh, y_data_meoh = figure_data.xy(
         figure_data.select_rows(rows, panel_id=label, series_id=f"data_{salt}_methanol")
@@ -80,16 +75,6 @@ def _plot_panel(ax, label, salt, m_max, y_max, include_legend: bool = False):
     ax.set_title(salt, fontsize=10)
     ax.set_xlabel(r"$\bar{m}_{salt}$ / mol kg$^{-1}$")
     ax.set_ylabel(r"$\gamma_{\pm}^{m,*}$ / -")
-    if include_legend:
-        ax.legend(
-            loc="upper center",
-            bbox_to_anchor=(0.5, 1.20),
-            ncol=2,
-            fontsize=7.5,
-            frameon=False,
-            columnspacing=1.0,
-            handletextpad=0.5,
-        )
 
 
 def main() -> None:
@@ -139,11 +124,6 @@ def main() -> None:
     fig.subplots_adjust(left=0.07, right=0.99, bottom=0.17, top=0.80, wspace=0.26)
     common.save_figure(fig, OUTPUT)
     plt.close(fig)
-
-    for cfg, out in zip(PANELS, OUTPUTS):
-        common.save_panel_figure(
-            lambda ax, cfg=cfg: _plot_panel(ax, *cfg, include_legend=True), out, figsize=(4.1, 3.9)
-        )
 
 
 if __name__ == "__main__":

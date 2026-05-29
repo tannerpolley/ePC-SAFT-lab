@@ -1,0 +1,8 @@
+{
+  "eps_ion": 8.0,
+  "eps_bulk": 78.0,
+  "shell_position": 1.0,
+  "domain_max": 2.0,
+  "paper_basis": "Scripted recreation of the Figure 1 dielectric step profile.",
+  "source_image": "analyses/paper_validation/2025_figiel/figures/figure_01/source/paper_source_01_figiel_2025_figure_002.png"
+}

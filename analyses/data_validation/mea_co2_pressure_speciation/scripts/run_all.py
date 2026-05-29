@@ -97,21 +97,13 @@ def _json_like(value: Any) -> Any:
 def _normalized_user_options() -> dict[str, Any]:
     source = json.loads((DATASET_DIR / "user_options.json").read_text(encoding="utf-8"))
     normalized = json.loads(json.dumps(source))
-    rel_perm = normalized.get("elec_model", {}).get("rel_perm", {})
-    born = normalized.get("elec_model", {}).get("born_model", {})
-    if rel_perm.get("differential_mode") == "numerical":
-        rel_perm["differential_mode"] = "auto"
-    mu_born = born.get("mu_born_model", {})
-    if mu_born.get("differential_mode") == "numerical":
-        mu_born["differential_mode"] = "auto"
     _write_json(
         PROCESSED_DIR / "normalized_user_options.json",
         {
             "source_user_options": source,
             "runtime_user_options": normalized,
             "normalization_policy": (
-                "The copied Phase 2 artifact records differential_mode='numerical'. The current package "
-                "accepts exact modes only, so the analysis uses 'auto' to request the package-owned exact route."
+                "SSM+DS Born uses public differential_mode='autodiff', which selects the package-owned CppAD route."
             ),
         },
     )

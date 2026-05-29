@@ -1,0 +1,5 @@
+figure_id,panel_id,series_id,series_label,source_type,dataset,parameter_set,salt,ion,solvent_system,composition,composition_basis,target_w_org,x_name,x_value,x_units,y_name,y_value,y_units,curve_points,user_options,source_file,category,display_order
+figure_1,main,profile,Schematic profile,schematic,,,,,,,,,radial_position,0,-,epsilon_r,8,-,4,{},analyses/paper_validation/2025_figiel/figures/figure_01/source/schematic_profile.json,step_profile,0
+figure_1,main,profile,Schematic profile,schematic,,,,,,,,,radial_position,1,-,epsilon_r,8,-,4,{},analyses/paper_validation/2025_figiel/figures/figure_01/source/schematic_profile.json,step_profile,1
+figure_1,main,profile,Schematic profile,schematic,,,,,,,,,radial_position,1,-,epsilon_r,78,-,4,{},analyses/paper_validation/2025_figiel/figures/figure_01/source/schematic_profile.json,step_profile,2
+figure_1,main,profile,Schematic profile,schematic,,,,,,,,,radial_position,2,-,epsilon_r,78,-,4,{},analyses/paper_validation/2025_figiel/figures/figure_01/source/schematic_profile.json,step_profile,3

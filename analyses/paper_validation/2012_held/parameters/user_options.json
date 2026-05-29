@@ -1,9 +1,10 @@
 {
   "solvated_ion_diameter_mixing_rule": true,
   "elec_model": {
-    "rel_perm": {
-      "rule": "constant"
-    },
-    "include_born_model": false
+    "differential_mode": "autodiff",
+    "relative_permittivity_rule": "constant",
+    "born_model": {
+      "enabled": false
+    }
   }
 }

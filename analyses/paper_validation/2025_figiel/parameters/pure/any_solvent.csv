@@ -1,5 +1,5 @@
 component,m,s,e,e_assoc,vol_a,assoc_scheme,z,dielc,d_born,f_solv,MW,source
-H2O,1,2.7927,0,0,0,2B,0,78.09,0,1.5,0.01801528,2025_Figiel reference dataset
+H2O,1.2047,2.79706,353.95,2425.7,0.04509,2B,0,78.09,0,1.5,0.01801528,2025_Figiel catalog salt_2025 water_sigma_2008 evaluated at 298.15 K
 Methanol,1.5255,3.2300,188.90,2899.5,0.035176,2B,0,33.05,0,1.4,0.032042,2025_Figiel reference dataset; Gross2002 Table1 default fill
 Ethanol,2.3827,3.1771,198.24,2653.4,0.032384,2B,0,24.88,0,1.6,0.046069,2025_Figiel reference dataset; Gross2002 Table1 default fill
 Li+,1,2.8449,360,0,0,,1,8,2.784,1,0.00694,2025_Figiel reference dataset

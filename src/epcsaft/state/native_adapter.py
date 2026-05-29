@@ -1572,14 +1572,14 @@ def create_struct(params):
                 "include_born_model": True,
                 "born_model": {
                     "d_Born_mode": 0,
-                    "solvation_shell_model": False,
-                    "dielectric_saturation": False,
+                    "solvation_shell_model": True,
+                    "dielectric_saturation": True,
                     "bulk_mode": "mix",
                     "mu_born_model": {
                         "differential_mode": "auto",
                         "comp_dep_rel_perm": True,
                         "include_sum_term": True,
-                        "comp_dep_delta_d": False,
+                        "comp_dep_delta_d": True,
                     },
                 },
             }
@@ -1742,15 +1742,15 @@ def create_struct(params):
     cppargs.d_born_mode = _as_int_alias(born_model_dict.get("d_Born_mode", 0), d_born_alias)
     if cppargs.d_born_mode not in (0, 1, 2, 3):
         raise ValueError("Unknown d_Born_mode. Supported values are 0,1,2,3.")
-    cppargs.born_solvation_shell_model = int(_as_bool(born_model_dict.get("solvation_shell_model", False)))
-    cppargs.born_dielectric_saturation = int(_as_bool(born_model_dict.get("dielectric_saturation", False)))
+    cppargs.born_solvation_shell_model = int(_as_bool(born_model_dict.get("solvation_shell_model", True)))
+    cppargs.born_dielectric_saturation = int(_as_bool(born_model_dict.get("dielectric_saturation", True)))
     cppargs.born_bulk_mode = _as_int_alias(born_model_dict.get("bulk_mode", "mix"), bulk_alias)
     cppargs.mu_born_diff_mode = _as_int_alias(mu_born.get("differential_mode", "auto"), diff_alias)
     if cppargs.mu_born_diff_mode not in (0, 2, 3):
         raise ValueError("Unknown mu_born differential_mode. Supported values are analytic/cppad/auto (0/2/3).")
     cppargs.mu_born_comp_dep_rel_perm = int(_as_bool(mu_born.get("comp_dep_rel_perm", True)))
     cppargs.mu_born_include_sum_term = int(_as_bool(mu_born.get("include_sum_term", True)))
-    cppargs.mu_born_comp_dep_delta_d = int(_as_bool(mu_born.get("comp_dep_delta_d", False)))
+    cppargs.mu_born_comp_dep_delta_d = int(_as_bool(mu_born.get("comp_dep_delta_d", True)))
 
     if cppargs.include_born_model == 0:
         cppargs.born_model = 0
@@ -1758,10 +1758,7 @@ def create_struct(params):
         cppargs.born_diff_mode = 0
         cppargs.born_eps_mode = cppargs.born_bulk_mode
     else:
-        if cppargs.born_solvation_shell_model or cppargs.born_dielectric_saturation:
-            cppargs.born_model = 2
-        else:
-            cppargs.born_model = 1
+        cppargs.born_model = 2
 
         # Project the canonical Born radius mode into the current native runtime encoding.
         if cppargs.d_born_mode == 0:

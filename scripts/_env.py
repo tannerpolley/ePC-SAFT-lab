@@ -6,7 +6,7 @@ def require_epcsaft_install() -> None:
         import epcsaft  # noqa: F401
         from epcsaft import Mixture  # noqa: F401
         from epcsaft import State  # noqa: F401
-        import epcsaft.parameters  # noqa: F401
+        import epcsaft.model.datasets  # noqa: F401
     except Exception as exc:
         raise RuntimeError(
             "epcsaft must be importable from the active environment with the reset frontend API. "

@@ -290,6 +290,14 @@ void dielectric_inputs_valid_cpp(const vector<double> &x, const add_args &cpparg
     if (cppargs.born_model < 0 || cppargs.born_model > 2) {
         throw ValueError("Unknown born_model. Supported values are 0, 1, 2.");
     }
+    if (cppargs.born_model == 2 &&
+        (cppargs.born_diff_mode != 4 && cppargs.born_diff_mode != 5)) {
+        throw ValueError("SSM/DS Born requires CppAD mu_born differential_mode (cppad or auto).");
+    }
+    if (cppargs.born_model == 2 &&
+        (cppargs.mu_born_diff_mode != 2 && cppargs.mu_born_diff_mode != 3)) {
+        throw ValueError("SSM/DS Born requires CppAD mu_born differential_mode (cppad or auto).");
+    }
     if (cppargs.born_model > 0 && cppargs.z.size() != static_cast<size_t>(ncomp)) {
         throw ValueError("Born contribution requires params['z'] as an array with length equal to ncomp.");
     }
@@ -806,10 +814,6 @@ vector<double> contribution_dadx_cppad_cpp(AresContributionKind kind, double t, 
     if (kind == AresContributionKind::ASSOC) {
         throw ValueError("CppAD differential_mode requires an association contribution tape route.");
     }
-    if (kind == AresContributionKind::BORN && cppargs.born_model == 2) {
-        throw ValueError("CppAD differential_mode requires an SSM/DS Born composition derivative tape route.");
-    }
-
     vector<double> dadx(ncomp, 0.0);
     vector<CppADScalar> ax(ncomp);
     for (int j = 0; j < ncomp; ++j) {
@@ -857,14 +861,59 @@ vector<double> contribution_dadx_cppad_cpp(AresContributionKind kind, double t, 
         CppADScalar eps = (cppargs.born_eps_mode == 1)
             ? reference_solvent_dielectric_constant_cppad_cpp(ax, cppargs)
             : dielectric_constant_rule_cppad_cpp(cppargs.dielc_rule, ax, cppargs);
-        CppADScalar charge_radius_sum = make_cppad_scalar(0.0);
-        for (int k = 0; k < ncomp; ++k) {
-            if (is_ion_species(cppargs, k)) {
-                charge_radius_sum += ax[k] * cppargs.z[k] * cppargs.z[k] / ion_born_radius_cpp(k, t, cppargs);
+        if (cppargs.born_model == 1) {
+            CppADScalar charge_radius_sum = make_cppad_scalar(0.0);
+            for (int k = 0; k < ncomp; ++k) {
+                if (is_ion_species(cppargs, k)) {
+                    charge_radius_sum += ax[k] * cppargs.z[k] * cppargs.z[k] / ion_born_radius_cpp(k, t, cppargs);
+                }
             }
+            const double Kborn = E_CHRG * E_CHRG / (4.0 * PI * kb * t * perm_vac);
+            value = -Kborn * (1.0 - 1.0 / eps) * charge_radius_sum;
+        } else if (cppargs.born_model == 2) {
+            if (cppargs.born_eps_mode == 1) {
+                throw ValueError("unsupported: CppAD SSM/DS Born reference-solvent dielectric routing requires a tape route.");
+            }
+            const bool use_ssm = (cppargs.born_solvation_shell_model != 0);
+            const bool use_ds = (cppargs.born_dielectric_saturation != 0);
+            const CppADScalar eps_ion = make_cppad_scalar(8.0);
+            CppADScalar f_mix = make_cppad_scalar(0.0);
+            for (int k = 0; k < ncomp; ++k) {
+                CppADScalar f_i = make_cppad_scalar(1.0);
+                if (!is_ion_species(cppargs, k) && cppargs.f_solv.size() > static_cast<size_t>(k)) {
+                    f_i = make_cppad_scalar(cppargs.f_solv[k]);
+                }
+                f_mix += ax[k] * f_i;
+            }
+
+            CppADScalar sum_bracket = make_cppad_scalar(0.0);
+            for (int k = 0; k < ncomp; ++k) {
+                if (!is_ion_species(cppargs, k)) {
+                    continue;
+                }
+                const double d_born_i = ion_born_radius_cpp(k, t, cppargs);
+                const double absz = std::abs(cppargs.z[k]);
+                const double z2 = cppargs.z[k] * cppargs.z[k];
+                CppADScalar delta_di = use_ssm
+                    ? ((f_mix - 1.0) * d_born_i / absz)
+                    : make_cppad_scalar(0.0);
+                CppADScalar D_i = d_born_i + delta_di;
+                if (scalar_value(D_i) <= 0.0) {
+                    throw ValueError("Born model generated a non-positive d_born + Delta d.");
+                }
+                CppADScalar invD = 1.0 / D_i;
+                CppADScalar gap = 1.0 / d_born_i - invD;
+                CppADScalar base_term = (1.0 - 1.0 / eps) * invD;
+                CppADScalar ds_term = use_ds
+                    ? ((1.0 - 1.0 / eps_ion) * gap)
+                    : make_cppad_scalar(0.0);
+                sum_bracket += ax[k] * z2 * (base_term + ds_term);
+            }
+            const double Kborn = E_CHRG * E_CHRG / (4.0 * PI * kb * t * perm_vac);
+            value = -Kborn * sum_bracket;
+        } else if (cppargs.born_model != 0) {
+            throw ValueError("Unknown born_model. Supported values are 0, 1, 2.");
         }
-        const double Kborn = E_CHRG * E_CHRG / (4.0 * PI * kb * t * perm_vac);
-        value = -Kborn * (1.0 - 1.0 / eps) * charge_radius_sum;
     }
 
     vector<CppADScalar> ay(1);

@@ -1268,13 +1268,20 @@ std::string association_backend_name(const add_args &cppargs) {
     return "unsupported";
 }
 
+std::string born_backend_name(const add_args &cppargs) {
+    if (cppargs.born_model == 2 && cppargs.born_diff_mode == 5) {
+        return "cppad";
+    }
+    return contribution_backend_name(cppargs.born_diff_mode);
+}
+
 std::map<std::string, std::string> composition_derivative_backend_map(const add_args &cppargs) {
     std::map<std::string, std::string> backends;
     backends["hc"] = contribution_backend_name(cppargs.hc_dadx_diff_mode);
     backends["disp"] = contribution_backend_name(cppargs.disp_dadx_diff_mode);
     backends["assoc"] = association_backend_name(cppargs);
     backends["ion"] = contribution_backend_name(cppargs.mu_DH_diff_mode);
-    backends["born"] = contribution_backend_name(cppargs.born_diff_mode);
+    backends["born"] = born_backend_name(cppargs);
     return backends;
 }
 
@@ -1593,9 +1600,6 @@ epcsaft::native::cppad_support::CppADDerivativeResult cppad_eos_contribution_der
                 throw ValueError("unsupported: CppAD association recording requires implicit site-fraction sensitivities.");
             }
         }
-    }
-    if (!cppargs.z.empty() && cppargs.born_model > 1) {
-        throw ValueError("unsupported: CppAD Born recording supports direct Born model=1 formulas only.");
     }
     int ncomp = static_cast<int>(x.size());
     std::vector<CppADScalar> ax(ncomp);
