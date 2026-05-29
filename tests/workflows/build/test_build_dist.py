@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -39,7 +40,6 @@ def test_dist_build_env_sets_conservative_parallel_level(monkeypatch) -> None:
     monkeypatch.delenv("PYTHONPATH", raising=False)
     monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_ROOT", "C:/ipopt")
     monkeypatch.setenv("EPCSAFT_RUNTIME_DLL_DIRS", "C:/ipopt/bin")
-    monkeypatch.setattr(build_dist, "resolve_default_system_ceres_config_dir", lambda source_root: None)
 
     env = build_dist._env("1")
 
@@ -49,60 +49,29 @@ def test_dist_build_env_sets_conservative_parallel_level(monkeypatch) -> None:
     assert "EPCSAFT_RUNTIME_DLL_DIRS" not in env
 
 
-def test_dist_build_env_uses_default_repo_system_ceres(tmp_path, monkeypatch) -> None:
-    ceres_dir = tmp_path / "build" / "system-ceres" / "2.2.0" / "install" / "lib" / "cmake" / "Ceres"
-    ceres_dir.mkdir(parents=True)
-    (ceres_dir / "CeresConfig.cmake").write_text("# test config\n", encoding="utf-8")
-    monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
-    monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
-    monkeypatch.delenv("Ceres_DIR", raising=False)
-    monkeypatch.setattr(build_dist, "resolve_default_system_ceres_config_dir", lambda source_root: ceres_dir)
+def test_dist_build_env_uses_provider_only_pep517_build_dir(monkeypatch) -> None:
+    monkeypatch.delenv("EPCSAFT_PEP517_BUILD_DIR", raising=False)
+    env = build_dist._env("1")
+
+    assert Path(env["EPCSAFT_PEP517_BUILD_DIR"]).parts[-3:] == ("build", "pep517", "provider-only")
+
+
+def test_dist_build_env_preserves_explicit_pep517_build_dir(monkeypatch, tmp_path) -> None:
+    custom_build_dir = tmp_path / "pep517"
+    monkeypatch.setenv("EPCSAFT_PEP517_BUILD_DIR", str(custom_build_dir))
 
     env = build_dist._env("1")
 
-    assert env["EPCSAFT_PEP517_CERES_DIR"] == str(ceres_dir)
-    assert env["EPCSAFT_PEP517_USE_SYSTEM_CERES"] == "1"
-    assert "no-ipopt-system-ceres-" in env["EPCSAFT_PEP517_BUILD_DIR"]
-
-
-def test_dist_build_env_preserves_explicit_system_ceres(tmp_path, monkeypatch) -> None:
-    explicit_ceres_dir = tmp_path / "explicit" / "lib" / "cmake" / "Ceres"
-    default_ceres_dir = tmp_path / "default" / "lib" / "cmake" / "Ceres"
-    explicit_ceres_dir.mkdir(parents=True)
-    default_ceres_dir.mkdir(parents=True)
-    (explicit_ceres_dir / "CeresConfig.cmake").write_text("# explicit config\n", encoding="utf-8")
-    (default_ceres_dir / "CeresConfig.cmake").write_text("# default config\n", encoding="utf-8")
-    monkeypatch.setenv("EPCSAFT_PEP517_CERES_DIR", str(explicit_ceres_dir))
-    monkeypatch.setattr(build_dist, "resolve_default_system_ceres_config_dir", lambda source_root: default_ceres_dir)
-
-    env = build_dist._env("1")
-
-    assert env["EPCSAFT_PEP517_CERES_DIR"] == str(explicit_ceres_dir)
-    assert "system-ceres-" in env["EPCSAFT_PEP517_BUILD_DIR"]
-
-
-def test_dist_build_env_uses_reusable_fetchcontent_build_dir(monkeypatch) -> None:
-    monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
-    monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
-    monkeypatch.delenv("Ceres_DIR", raising=False)
-    monkeypatch.setattr(build_dist, "resolve_default_system_ceres_config_dir", lambda source_root: None)
-
-    env = build_dist._env("1")
-
-    assert env["EPCSAFT_PEP517_BUILD_DIR"].endswith("no-ipopt-fetchcontent-ceres")
+    assert env["EPCSAFT_PEP517_BUILD_DIR"] == str(custom_build_dir)
 
 
 def test_dist_build_uses_provider_only_release_baseline() -> None:
-    cmd = build_dist._uv_build_command(with_local_ipopt=False)
+    cmd = build_dist._uv_build_command()
 
-    assert cmd[:2] == ["uv", "build"]
+    assert cmd[:3] == ["uv", "build", str(build_dist.PROVIDER_PACKAGE_DIR)]
     assert "cmake.define.EPCSAFT_ENABLE_CERES=OFF" in cmd
     assert "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF" in cmd
     assert "cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF" in cmd
     assert "cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF" in cmd
     assert "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT=OFF" in cmd
     assert "cmake.define.EPCSAFT_IPOPT_ROOT=" in cmd
-
-
-def test_dist_build_can_opt_into_local_ipopt() -> None:
-    assert build_dist._uv_build_command(with_local_ipopt=True) == ["uv", "build"]

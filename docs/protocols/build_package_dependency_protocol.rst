@@ -14,11 +14,13 @@ changes.
 Current transition dependency contract
 --------------------------------------
 
-This source checkout is still a monorepo transition build. It compiles the
-current provider, regression, and equilibrium native capability set into one
-``_core`` module, with logical native object targets separating provider/CppAD,
-equilibrium/Ipopt, and regression/Ceres ownership while ADR 0005 moves final
-package ownership to separate packages.
+This source checkout is still a monorepo transition build. It builds the
+provider ``epcsaft._core`` module from provider-owned native code and builds
+package-owned native modules for ``epcsaft-equilibrium`` and
+``epcsaft-regression`` when those extension lanes are enabled. ADR 0005 assigns
+final Ceres-backed regression ownership to ``epcsaft-regression`` and
+Ipopt-backed equilibrium ownership to ``epcsaft-equilibrium``; provider
+``_core`` must not carry extension-native symbols.
 
 Ceres is currently required for native regression builds in this checkout.
 CppAD is required for derivative-capable provider builds and remains core-owned
@@ -31,11 +33,11 @@ The default source-checkout build command remains:
 
    uv run python scripts/dev/build_epcsaft.py
 
-That command uses the fast profile: transition equilibrium and regression
-native surfaces enabled, Ceres ON, CppAD ON, and Ipopt ON when a native Ipopt
+That command uses the fast profile: package-owned equilibrium and regression
+native modules enabled, Ceres ON, CppAD ON, and Ipopt ON when a native Ipopt
 install is discoverable. ``--disable-ipopt`` is allowed only for a diagnostic
-or smoke lane that intentionally excludes Ipopt. A no-Ipopt smoke lane must
-not be described as production equilibrium validation.
+or smoke lane that intentionally excludes Ipopt. A no-Ipopt smoke lane must not
+be described as production equilibrium validation.
 
 The provider-only boundary proof now has an explicit direct-build profile:
 
