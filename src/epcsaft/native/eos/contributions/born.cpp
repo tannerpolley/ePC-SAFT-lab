@@ -266,29 +266,13 @@ ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, do
             }
         }
     } else if (born_state.model == 2) {
-        const double eps_r_ion = 8.0;
         const double Kborn = E_CHRG * E_CHRG / (4.0 * PI * kb * t * perm_vac);
         result.ares = -Kborn * born_state.shell.sum_bracket;
 
-        if (cppargs.born_diff_mode == 1) {
-            throw ValueError("unsupported: Born composition derivative backend is not enabled.");
-        } else if (cppargs.born_diff_mode == 4) {
+        if (cppargs.born_diff_mode == 4 || cppargs.born_diff_mode == 5) {
             result.dadx = contribution_dadx_cppad_cpp(AresContributionKind::BORN, t, rho, x, cppargs);
         } else {
-            const double inv_eps2 = 1.0 / (born_state.eps_value * born_state.eps_value);
-            const double shell_coeff = 1.0 / eps_r_ion - 1.0 / born_state.eps_value;
-            const bool use_deps = (cppargs.mu_born_comp_dep_rel_perm != 0);
-            const bool use_shell_chain = (cppargs.mu_born_comp_dep_delta_d != 0);
-            const double deps_multiplier = (cppargs.mu_born_include_sum_term != 0) ? born_state.shell.sum_gap : 1.0;
-            for (int k = 0; k < ncomp; ++k) {
-                double direct_part = 0.0;
-                if (std::abs(cppargs.z[k]) > 1e-12) {
-                    direct_part = cppargs.z[k] * cppargs.z[k] * born_state.shell.bracket[k];
-                }
-                double deps_part = use_deps ? deps_multiplier * born_state.deps_dx[k] * inv_eps2 : 0.0;
-                double ddelta_part = use_shell_chain ? shell_coeff * born_state.shell.sum_dpref_over_D2 * born_state.shell.f_k[k] : 0.0;
-                result.dadx[k] = -Kborn * (direct_part + deps_part + ddelta_part);
-            }
+            throw ValueError("SSM/DS Born requires CppAD mu_born differential_mode (cppad or auto).");
         }
     } else if (born_state.model != 0) {
         throw ValueError("Unknown born_model. Supported values are 0, 1, 2.");

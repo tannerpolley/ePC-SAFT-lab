@@ -1,0 +1,18 @@
+# Matplotlib plot-set style contract.
+# Edit this sidecar, then rerun the owning render script.
+figure:
+  file: "figure_8.png"
+  format: "png"
+axes:
+  - index: 0
+    title: "LiBr"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ / -"
+  - index: 1
+    title: "NaI"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ / -"
+  - index: 2
+    title: "NaBr"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ / -"

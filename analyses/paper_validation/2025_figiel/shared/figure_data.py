@@ -19,10 +19,14 @@ else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
 from scripts.plot_outputs import analysis_root
 from scripts.plot_outputs import REPO_ROOT
+from scripts.dev.native_runtime_env import apply_to_current_process
 from typing import Iterable
 
 import numpy as np
 import pandas as pd
+
+apply_to_current_process()
+from scripts._epcsaft_oop import epcsaft_relative_permittivity
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -90,18 +94,46 @@ FIG9_CURVE_MAX_BY_PANEL = {
     "c)": {0.8: 0.6},
     "d)": {0.8: 0.3},
 }
+PURE_SOLVENT_DIELC = {
+    "water": 78.09,
+    "methanol": 33.05,
+    "ethanol": 24.88,
+}
+FIG2_SERIES = (
+    ("Nortemann", "NaCl", "gray circles"),
+    ("Haggis", "NaBr", "green squares"),
+    ("Buchner", "NaCl", "blue triangles"),
+    ("Wei", "LiCl", "orange upside-down triangles"),
+)
+
+
+def figure_number(figure_id: str) -> int:
+    suffix = str(figure_id).rsplit("_", 1)[-1]
+    return int(suffix)
+
+
+def figure_dirname(figure_id: str) -> str:
+    return f"figure_{figure_number(figure_id):02d}"
+
+
+def figure_root(figure_id: str) -> Path:
+    return FIGURES_ROOT / figure_dirname(figure_id)
 
 
 def payload_path(figure_id: str) -> Path:
-    return FIGURES_ROOT / figure_id / "results" / f"{figure_id}_series.csv"
+    return figure_root(figure_id) / "results" / f"{figure_id}_series.csv"
 
 
 def figure_input_dir(figure_id: str) -> Path:
-    return FIGURES_ROOT / figure_id / "source"
+    return figure_root(figure_id) / "source"
 
 
 def figure_input_path(figure_id: str, *parts: str) -> Path:
     return figure_input_dir(figure_id).joinpath(*parts)
+
+
+def figure_script_path(figure_id: str, script_name: str) -> Path:
+    return figure_root(figure_id) / "scripts" / script_name
 
 
 def _format_value(value: object) -> str:
@@ -221,6 +253,254 @@ def rows_by_key(rows: Iterable[dict[str, str]], key: str) -> dict[str, list[dict
     return {name: select_rows(values) for name, values in grouped.items()}
 
 
+def _salt_xion_to_species_molefraction(x_ion: float, salt: str, solvent_system: str) -> np.ndarray:
+    species = common.species_for_combo(salt, solvent_system)
+    nu_cat, nu_an = common.stoich_for_salt(salt)
+    ion_total = float(x_ion)
+    if not 0.0 <= ion_total < 1.0:
+        raise ValueError(f"x_ion must lie in [0, 1). Got {x_ion!r}")
+    solvent_fraction = 1.0 - ion_total
+    species_x = np.zeros(len(species), dtype=float)
+    ion_denom = float(nu_cat + nu_an)
+    species_x[0] = ion_total * float(nu_cat) / ion_denom
+    species_x[1] = ion_total * float(nu_an) / ion_denom
+    for index in range(2, len(species)):
+        species_x[index] = solvent_fraction / float(len(species) - 2)
+    return species_x
+
+
+def _relative_permittivity_curve(
+    dataset_name: str,
+    salt: str,
+    solvent_system: str,
+    x_ion_grid: Iterable[float],
+    *,
+    user_options: dict | None = None,
+) -> np.ndarray:
+    comp = {solvent_system: 1.0}
+    params = common.build_params(dataset_name, salt, solvent_system, comp, user_options=user_options)
+    values = []
+    for x_ion in x_ion_grid:
+        x = _salt_xion_to_species_molefraction(float(x_ion), salt, solvent_system)
+        eps_r = float(epcsaft_relative_permittivity(x, params)[0])
+        values.append(eps_r)
+    return np.asarray(values, dtype=float)
+
+
+def _figure1_profile_rows() -> list[dict[str, str]]:
+    config_path = figure_input_path("figure_1", "schematic_profile.json")
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    eps_ion = float(config["eps_ion"])
+    eps_bulk = float(config["eps_bulk"])
+    shell_position = float(config["shell_position"])
+    domain_max = float(config["domain_max"])
+    points = [
+        (0.0, eps_ion),
+        (shell_position, eps_ion),
+        (shell_position, eps_bulk),
+        (domain_max, eps_bulk),
+    ]
+    rows: list[dict[str, str]] = []
+    for order, (x_value, y_value) in enumerate(points):
+        rows.append(
+            _row(
+                figure_id="figure_1",
+                panel_id="main",
+                series_id="profile",
+                series_label="Schematic profile",
+                source_type="schematic",
+                x_name="radial_position",
+                x_value=float(x_value),
+                x_units="-",
+                y_name="epsilon_r",
+                y_value=float(y_value),
+                y_units="-",
+                curve_points=len(points),
+                source_file=config_path,
+                category="step_profile",
+                display_order=order,
+            )
+        )
+    return rows
+
+
+def generate_figure_1() -> list[dict[str, str]]:
+    return _figure1_profile_rows()
+
+
+def generate_figure_2() -> list[dict[str, str]]:
+    figure_id = "figure_2"
+    source = figure_input_path(figure_id, "dielc_salts_in_water.csv")
+    _, raw_rows = common.read_csv_rows(source)
+
+    rows: list[dict[str, str]] = []
+    order = 0
+    for source_label, salt, _caption_label in FIG2_SERIES:
+        for raw in raw_rows:
+            row_source = str(raw.get("source", "")).strip()
+            row_salt = str(raw.get("Salt", raw.get("salt", ""))).strip()
+            x_ion = common.parse_float(raw.get("x_ion"))
+            eps_r = common.parse_float(raw.get("dielc"))
+            if row_source != source_label or row_salt != salt or x_ion is None or eps_r is None:
+                continue
+            rows.append(
+                _row(
+                    figure_id=figure_id,
+                    panel_id="main",
+                    series_id=f"data_{source_label}_{salt}",
+                    series_label=f"{salt} ({source_label})",
+                    source_type="literature",
+                    salt=salt,
+                    solvent_system="water",
+                    composition={"water": 1.0},
+                    composition_basis="mole_fraction",
+                    x_name="x_ion",
+                    x_value=float(x_ion),
+                    x_units="mol/mol",
+                    y_name="epsilon_r",
+                    y_value=float(eps_r),
+                    y_units="-",
+                    source_file=source,
+                    category=source_label,
+                    display_order=order,
+                )
+            )
+            order += 1
+
+    x_grid = np.linspace(0.0, 0.30, 400)
+    curve_specs = (
+        ("model_rule1", "Rule 1", {"elec_model": {"relative_permittivity_rule": "linear"}}),
+        ("model_empirical", "Eq. 11 fit", None),
+    )
+    for series_id, label, options in curve_specs:
+        eps_curve = _relative_permittivity_curve(DATASET, "NaCl", "water", x_grid, user_options=options)
+        for x_value, y_value in zip(x_grid, eps_curve):
+            rows.append(
+                _row(
+                    figure_id=figure_id,
+                    panel_id="main",
+                    series_id=series_id,
+                    series_label=label,
+                    source_type="model",
+                    dataset=DATASET,
+                    parameter_set=DATASET,
+                    salt="NaCl",
+                    solvent_system="water",
+                    composition={"water": 1.0},
+                    composition_basis="mole_fraction",
+                    x_name="x_ion",
+                    x_value=float(x_value),
+                    x_units="mol/mol",
+                    y_name="epsilon_r",
+                    y_value=float(y_value),
+                    y_units="-",
+                    curve_points=len(x_grid),
+                    user_options=options,
+                    category=series_id,
+                    display_order=order,
+                )
+            )
+            order += 1
+    return rows
+
+
+def generate_figure_3() -> list[dict[str, str]]:
+    figure_id = "figure_3"
+    water_source = figure_input_path(figure_id, "dielc_salts_in_water.csv")
+    organic_source = figure_input_path(figure_id, "dielc_single_solvent_digitized.csv")
+    rows: list[dict[str, str]] = []
+    order = 0
+
+    _, water_rows = common.read_csv_rows(water_source)
+    for raw in water_rows:
+        x_ion = common.parse_float(raw.get("x_ion"))
+        eps_r = common.parse_float(raw.get("dielc"))
+        salt = str(raw.get("Salt", raw.get("salt", ""))).strip()
+        if x_ion is None or eps_r is None or not salt:
+            continue
+        rows.append(
+            _row(
+                figure_id=figure_id,
+                panel_id="main",
+                series_id="data_water",
+                series_label="Water data",
+                source_type="literature",
+                salt=salt,
+                solvent_system="water",
+                composition={"water": 1.0},
+                composition_basis="mole_fraction",
+                x_name="x_ion",
+                x_value=float(x_ion),
+                x_units="mol/mol",
+                y_name="epsilon_ratio",
+                y_value=float(eps_r) / PURE_SOLVENT_DIELC["water"],
+                y_units="-",
+                source_file=water_source,
+                category="water",
+                display_order=order,
+            )
+        )
+        order += 1
+
+    _, organic_rows = common.read_csv_rows(organic_source)
+    for raw in organic_rows:
+        solvent = str(raw.get("solvent", "")).strip().lower()
+        salt = str(raw.get("salt", "")).strip()
+        x_ion = common.parse_float(raw.get("x_ion"))
+        eps_ratio = common.parse_float(raw.get("epsilon_ratio"))
+        if solvent not in {"methanol", "ethanol"} or x_ion is None or eps_ratio is None:
+            continue
+        rows.append(
+            _row(
+                figure_id=figure_id,
+                panel_id="main",
+                series_id=f"data_{solvent}",
+                series_label=f"{solvent.title()} data",
+                source_type="digitized",
+                salt=salt,
+                solvent_system=solvent,
+                composition={solvent: 1.0},
+                composition_basis="mole_fraction",
+                x_name="x_ion",
+                x_value=float(x_ion),
+                x_units="mol/mol",
+                y_name="epsilon_ratio",
+                y_value=float(eps_ratio),
+                y_units="-",
+                source_file=organic_source,
+                category=solvent,
+                display_order=order,
+            )
+        )
+        order += 1
+
+    x_grid = np.linspace(0.0, 0.20, 400)
+    y_curve = 1.0 / (1.0 + 7.01 * x_grid)
+    for x_value, y_value in zip(x_grid, y_curve):
+        rows.append(
+            _row(
+                figure_id=figure_id,
+                panel_id="main",
+                series_id="model_empirical_ratio",
+                series_label="Eq. 11",
+                source_type="model",
+                dataset=DATASET,
+                parameter_set=DATASET,
+                x_name="x_ion",
+                x_value=float(x_value),
+                x_units="mol/mol",
+                y_name="epsilon_ratio",
+                y_value=float(y_value),
+                y_units="-",
+                curve_points=len(x_grid),
+                category="eq11",
+                display_order=order,
+            )
+        )
+        order += 1
+    return rows
+
+
 def generate_figure_4() -> list[dict[str, str]]:
     figure_id = "figure_4"
     source = figure_input_path(figure_id, "water.csv")
@@ -288,7 +568,7 @@ def generate_figure_4() -> list[dict[str, str]]:
 
 def generate_figure_5() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
-    source_root = figure_input_dir("figure_5") / "water"
+    source_root = figure_input_dir("figure_5")
     order = 0
     for panel_id, salts, _title in FIG5_PANELS:
         for salt in salts:
@@ -361,12 +641,12 @@ def _load_transfer_xy(path: Path) -> tuple[np.ndarray, np.ndarray]:
 
 
 def generate_figure_6() -> list[dict[str, str]]:
-    data_root = figure_input_dir("figure_6") / "G_trans" / "water"
+    data_root = figure_input_dir("figure_6")
     panels = [
-        ("a)", "K+", "methanol", data_root / "methanol" / "K.csv"),
-        ("b)", "Br-", "methanol", data_root / "methanol" / "Br.csv"),
-        ("c)", "Na+", "ethanol", data_root / "ethanol" / "Na.csv"),
-        ("d)", "Cl-", "ethanol", data_root / "ethanol" / "Cl.csv"),
+        ("a)", "K+", "methanol", data_root / "K.csv"),
+        ("b)", "Br-", "methanol", data_root / "Br.csv"),
+        ("c)", "Na+", "ethanol", data_root / "Na.csv"),
+        ("d)", "Cl-", "ethanol", data_root / "Cl.csv"),
     ]
     rows: list[dict[str, str]] = []
     order = 0
@@ -426,7 +706,7 @@ def generate_figure_6() -> list[dict[str, str]]:
 
 
 def generate_figure_7() -> list[dict[str, str]]:
-    source = figure_input_path("figure_7", "methanol", "methanol-NaBr.csv")
+    source = figure_input_path("figure_7", "methanol-NaBr.csv")
     data = common.read_miac_dataset(source, "methanol")
     m_max = max(float(row["molality"]) for row in data)
     rows: list[dict[str, str]] = []
@@ -457,7 +737,7 @@ def generate_figure_7() -> list[dict[str, str]]:
         order += 1
     for series_id, label, options in (
         ("model_default", "Figiel 2025", None),
-        ("model_rule1", "Rule 1", {"elec_model": {"rel_perm": {"rule": 1}}}),
+        ("model_rule1", "Rule 1", {"elec_model": {"relative_permittivity_rule": "linear"}}),
     ):
         m_grid, y_model = common.mean_ionic_activity_curve(
             DATASET, "NaBr", "methanol", {"methanol": 1.0}, m_max, points=500, user_options=options
@@ -498,7 +778,7 @@ def generate_figure_8() -> list[dict[str, str]]:
     order = 0
     for panel_id, salt, m_max, _y_max in FIG8_PANELS:
         for solvent, label in (("methanol", "Methanol"), ("ethanol", "Ethanol")):
-            source = source_root / solvent / f"{solvent}-{salt}.csv"
+            source = source_root / f"{solvent}-{salt}.csv"
             for entry in common.read_miac_dataset(source, solvent):
                 rows.append(
                     _row(
@@ -632,7 +912,7 @@ def generate_figure_9() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     order = 0
     for panel_id, salt, solvent_system, m_max in FIG9_PANELS:
-        source = source_root / solvent_system / f"{solvent_system}-{salt}.csv"
+        source = source_root / f"{solvent_system}-{salt}.csv"
         entries = _read_weight_fraction_dataset(source, solvent_system) if source.exists() else []
         for target_w_org in FIG9_TARGETS:
             selected = _closest_group(entries, target_w_org) if entries else None
@@ -694,78 +974,13 @@ def generate_figure_9() -> list[dict[str, str]]:
                     )
                 )
                 order += 1
-
-    for solvent_system, salts, x_max in (
-        ("water-methanol", ["NaBr", "NaCl"], 3.3),
-        ("water-ethanol", ["NaBr", "NaCl"], 4.4),
-    ):
-        comp_model = common.target_weight_fraction_to_comp(solvent_system, 0.4)
-        for salt in salts:
-            source = source_root / solvent_system / f"{solvent_system}-{salt}.csv"
-            entries = _read_weight_fraction_dataset(source, solvent_system) if source.exists() else []
-            selected = _closest_group(entries, 0.4) if entries else None
-            if not selected:
-                continue
-            for entry in selected:
-                rows.append(
-                    _row(
-                        figure_id="figure_9",
-                        panel_id=f"40wt_{solvent_system}",
-                        series_id=f"data_{salt}_{solvent_system}_40wt",
-                        series_label=f"{salt} data",
-                        source_type="literature",
-                        salt=salt,
-                        solvent_system=solvent_system,
-                        composition=entry["weight_comp"],
-                        composition_basis="salt_free_weight_fraction",
-                        target_w_org=0.4,
-                        x_name="molality",
-                        x_value=float(entry["molality"]),
-                        x_units="mol/kg",
-                        y_name="miac_m",
-                        y_value=float(entry["miac_m"]),
-                        y_units="-",
-                        source_file=source,
-                        category=f"{salt}_{solvent_system}_40wt",
-                        display_order=order,
-                    )
-                )
-                order += 1
-            curve_max = min(x_max, max(float(entry["molality"]) for entry in selected) * 1.1)
-            m_grid, y_model = common.mean_ionic_activity_curve(
-                DATASET, salt, solvent_system, comp_model, curve_max, points=600
-            )
-            for m, y in zip(m_grid, y_model):
-                rows.append(
-                    _row(
-                        figure_id="figure_9",
-                        panel_id=f"40wt_{solvent_system}",
-                        series_id=f"model_{salt}_{solvent_system}_40wt",
-                        series_label=f"{salt} fit",
-                        source_type="model",
-                        dataset=DATASET,
-                        parameter_set=DATASET,
-                        salt=salt,
-                        solvent_system=solvent_system,
-                        composition=comp_model,
-                        composition_basis="salt_free_weight_fraction",
-                        target_w_org=0.4,
-                        x_name="molality",
-                        x_value=float(m),
-                        x_units="mol/kg",
-                        y_name="miac_m",
-                        y_value=float(y),
-                        y_units="-",
-                        curve_points=600,
-                        category=f"{salt}_{solvent_system}_40wt",
-                        display_order=order,
-                    )
-                )
-                order += 1
     return rows
 
 
 GENERATORS = {
+    "figure_1": generate_figure_1,
+    "figure_2": generate_figure_2,
+    "figure_3": generate_figure_3,
     "figure_4": generate_figure_4,
     "figure_5": generate_figure_5,
     "figure_6": generate_figure_6,

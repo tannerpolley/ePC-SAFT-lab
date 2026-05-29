@@ -26,7 +26,10 @@ def test_create_input_template_writes_parameters_and_workflow_options(tmp_path) 
     }
     assert {path.name for path in root.iterdir()} == expected_files
     assert (root / "pure_parameters.csv").read_text(encoding="utf-8").splitlines()[0].startswith("component,")
-    assert json.loads((root / "model_options.json").read_text(encoding="utf-8"))["relative_permittivity_rule"]
+    model_options = json.loads((root / "model_options.json").read_text(encoding="utf-8"))
+    assert model_options["differential_mode"] == "autodiff"
+    assert model_options["relative_permittivity_rule"] == "component_linear"
+    assert model_options["born_model"]["enabled"] is True
     assert "Methane" in (root / "pure_parameters.csv").read_text(encoding="utf-8")
 
 

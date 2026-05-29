@@ -326,21 +326,31 @@ _CANONICAL_ELEC_MODEL = {
     "include_born_model": True,
     "born_model": {
         "d_Born_mode": 0,
-        "solvation_shell_model": False,
-        "dielectric_saturation": False,
+        "solvation_shell_model": True,
+        "dielectric_saturation": True,
         "bulk_mode": "mix",
         "mu_born_model": {
             "differential_mode": "auto",
             "comp_dep_rel_perm": True,
             "include_sum_term": True,
-            "comp_dep_delta_d": False,
+            "comp_dep_delta_d": True,
         },
     },
 }
 _DEFAULT_USER_OPTIONS = {
     "solvated_ion_diameter_mixing_rule": False,
     "ion_dispersion_mixing_rule": True,
-    "elec_model": copy.deepcopy(_CANONICAL_ELEC_MODEL),
+    "elec_model": {
+        "differential_mode": "autodiff",
+        "relative_permittivity_rule": "component_linear",
+        "born_model": {
+            "enabled": True,
+            "born_diameter_rule": "sigma",
+            "solvation_shell_model": True,
+            "dielectric_saturation": True,
+            "bulk_mode": "mix",
+        },
+    },
 }
 
 _DATASET_CACHE: dict[str, dict] = {}
@@ -1164,12 +1174,59 @@ def _flatten_model_to_runtime(model: dict) -> dict:
     }
 
 
+_PUBLIC_MODEL_OPTION_KEYS = {"differential_mode", "relative_permittivity_rule", "born_model"}
+
+
+def _looks_like_public_model_options(user_options: dict) -> bool:
+    if not user_options:
+        return True
+    if set(user_options) & _PUBLIC_MODEL_OPTION_KEYS:
+        return True
+    elec_model = user_options.get("elec_model")
+    if isinstance(elec_model, dict):
+        if set(elec_model) & _PUBLIC_MODEL_OPTION_KEYS:
+            return True
+        born_model = elec_model.get("born_model")
+        if isinstance(born_model, dict) and set(born_model) & {
+            "enabled",
+            "born_diameter_rule",
+            "solvation_shell_model",
+            "dielectric_saturation",
+        }:
+            return True
+    return False
+
+
+def _public_model_options_to_internal(user_options: dict) -> dict:
+    from .options import ModelOptions
+
+    model_payload: dict
+    if "elec_model" in user_options:
+        model_payload = {"elec_model": copy.deepcopy(user_options.get("elec_model", {}))}
+    else:
+        model_payload = {
+            key: copy.deepcopy(user_options[key])
+            for key in user_options
+            if key in _PUBLIC_MODEL_OPTION_KEYS
+        }
+    internal = ModelOptions.from_user_options(model_payload).to_runtime_options()
+    internal["elec_model"]["assoc_model"]["dadx_differential_mode"] = "auto"
+    if "solvated_ion_diameter_mixing_rule" in user_options:
+        internal["solvated_ion_diameter_mixing_rule"] = _coerce_bool(user_options["solvated_ion_diameter_mixing_rule"])
+    if "ion_dispersion_mixing_rule" in user_options:
+        internal["ion_dispersion_mixing_rule"] = _coerce_bool(user_options["ion_dispersion_mixing_rule"])
+    return internal
+
+
 def _resolve_runtime_options(user_options=None) -> dict:
     """Normalize user options into the canonical runtime model schema."""
     if user_options is None:
         user_options = {}
     if not isinstance(user_options, dict):
         raise TypeError("user_options must be a dict.")
+
+    if _looks_like_public_model_options(user_options):
+        user_options = _public_model_options_to_internal(user_options)
 
     allowed = {
         "elec_model",

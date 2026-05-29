@@ -557,8 +557,7 @@ def write_mpl_style_contract(fig: Any, image_path: str | Path) -> Path:
         "",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
-    if not path.exists():
-        path.write_text("\n".join(content), encoding="utf-8", newline="\n")
+    path.write_text("\n".join(content), encoding="utf-8", newline="\n")
     return path
 
 

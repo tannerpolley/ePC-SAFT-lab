@@ -29,14 +29,6 @@ from shared import _common as common
 from shared import figure_data
 
 OUTPUT = Path(__file__).with_name("figure_6.png")
-OUTPUT_METHANOL = Path(__file__).with_name("figure_6_methanol.png")
-OUTPUT_ETHANOL = Path(__file__).with_name("figure_6_ethanol.png")
-OUTPUTS = [
-    Path(__file__).with_name("figure_6a.png"),
-    Path(__file__).with_name("figure_6b.png"),
-    Path(__file__).with_name("figure_6c.png"),
-    Path(__file__).with_name("figure_6d.png"),
-]
 PANELS = [
     ("a)", "K+", "methanol", r"$x_{MeOH}$ / -", (0.0, 12.5)),
     ("b)", "Br-", "methanol", r"$x_{MeOH}$ / -", (0.0, 12.0)),
@@ -44,10 +36,7 @@ PANELS = [
     ("d)", "Cl-", "ethanol", r"$x_{EtOH}$ / -", (0.0, 30.0)),
 ]
 
-
 TITLE_ALL = "Gibbs energies of transfer at infinite dilution from water to water + organic solvent systems\n$\\Delta G_i^{trans,\\infty}$ of different ions at 298.15 K and 1 bar."
-TITLE_METHANOL = "Gibbs energies of transfer at infinite dilution from water to water + $\\mathbf{methanol}$ systems\n$\\Delta G_i^{trans,\\infty}$ of different ions at 298.15 K and 1 bar."
-TITLE_ETHANOL = "Gibbs energies of transfer at infinite dilution from water to water + $\\mathbf{ethanol}$ systems\n$\\Delta G_i^{trans,\\infty}$ of different ions at 298.15 K and 1 bar."
 
 
 @lru_cache(maxsize=1)
@@ -101,11 +90,6 @@ def _save_combined(
 
 def main() -> None:
     _save_combined(PANELS, OUTPUT, TITLE_ALL, (2, 2), (7.6, 6.3), 0.87, 0.945)
-    _save_combined(PANELS[:2], OUTPUT_METHANOL, TITLE_METHANOL, (1, 2), (7.6, 3.8), 0.72, 0.88)
-    _save_combined(PANELS[2:], OUTPUT_ETHANOL, TITLE_ETHANOL, (1, 2), (7.6, 3.8), 0.72, 0.88)
-
-    for cfg, out in zip(PANELS, OUTPUTS):
-        common.save_panel_figure(lambda ax, cfg=cfg: _plot_panel(ax, *cfg), out, figsize=(3.8, 3.3))
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@ else:
     raise ModuleNotFoundError("Could not locate repo root containing scripts/plot_outputs.py")
 from scripts.plot_outputs import REPO_ROOT
 from typing import Dict, Iterable, List, Tuple
+from scripts.dev.native_runtime_env import apply_to_current_process
 
 import matplotlib
 import numpy as np
@@ -37,9 +38,10 @@ if str(SRC_ROOT) not in sys.path:
 from scripts._env import require_epcsaft_install
 from scripts.plot_outputs import figure_output_path, save_plot_figure
 
+apply_to_current_process()
 require_epcsaft_install()
 
-from epcsaft.parameters import get_prop_dict
+from epcsaft.model.datasets import get_prop_dict
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 from scripts._epcsaft_oop import as_mixture
 
@@ -124,6 +126,10 @@ def panel_label(ax, label: str) -> None:
 def save_figure(fig, path: Path) -> None:
     path = figure_output_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.suffix.lower() in {".png", ".svg"}:
+        alternate = path.with_suffix(".svg" if path.suffix.lower() == ".png" else ".png")
+        if alternate.exists():
+            alternate.unlink()
     save_plot_figure(fig, path, dpi=300)
 
 

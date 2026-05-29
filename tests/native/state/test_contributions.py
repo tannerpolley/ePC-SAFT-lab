@@ -66,8 +66,8 @@ def test_native_residual_helmholtz_and_compressibility_contributions_match_ionic
     ares = state.ares(return_contribution_terms=True)
     z = state.z(return_contribution_terms=True)
 
-    assert ares["total"] == pytest.approx(-9.7214027218058, rel=0.0, abs=1e-12)
-    assert z["total"] == pytest.approx(0.000728884077611683, rel=0.0, abs=1e-12)
+    assert ares["total"] == pytest.approx(-9.719900002343923, rel=0.0, abs=1e-12)
+    assert z["total"] == pytest.approx(0.0007288840776046301, rel=0.0, abs=1e-12)
     _assert_close_terms(
         ares["terms"],
         {
@@ -75,7 +75,7 @@ def test_native_residual_helmholtz_and_compressibility_contributions_match_ionic
             "disp": -8.862194941025747,
             "assoc": -5.369357675632981,
             "ion": -1.1229434731248254e-05,
-            "born": -0.03967317341704953,
+            "born": -0.03817045395517711,
         },
     )
     _assert_close_terms(

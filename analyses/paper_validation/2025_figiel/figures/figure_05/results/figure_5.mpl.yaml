@@ -1,0 +1,14 @@
+# Matplotlib plot-set style contract.
+# Edit this sidecar, then rerun the owning render script.
+figure:
+  file: "figure_5.png"
+  format: "png"
+axes:
+  - index: 0
+    title: "Cl$^-$ salts in water"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ / -"
+  - index: 1
+    title: "Br$^-$ salts in water"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ / -"

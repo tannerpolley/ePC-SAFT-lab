@@ -27,9 +27,6 @@ from shared import _common as common
 from shared import figure_data
 
 OUTPUT = Path(__file__).with_name("figure_4.png")
-OUTPUT_COMBINED = Path(__file__).with_name("figure_4_combined.png")
-OUTPUT_A = Path(__file__).with_name("figure_4a.png")
-OUTPUT_B = Path(__file__).with_name("figure_4b.png")
 
 
 def _bar_values(ions):
@@ -102,15 +99,6 @@ def _draw_bars(ax, ions, title: str | None = None, ylim=(0.0, 800.0)):
     ax.set_ylim(*ylim)
     ax.set_ylabel(r"$-\Delta G_i^{solv,\infty,x}$ / kJ mol$^{-1}$")
 
-
-def _plot_cations(ax) -> None:
-    _draw_bars(ax, ["Li+", "Na+", "K+"], "Cations in water")
-
-
-def _plot_anions(ax) -> None:
-    _draw_bars(ax, ["Cl-", "Br-", "I-"], "Anions in water")
-
-
 def _plot_combined(ax) -> None:
     _draw_bars(
         ax,
@@ -130,25 +118,7 @@ def main() -> None:
     )
     fig_combined.subplots_adjust(left=0.09, right=0.98, bottom=0.14, top=0.82)
     common.save_figure(fig_combined, OUTPUT)
-    common.save_figure(fig_combined, OUTPUT_COMBINED)
     plt.close(fig_combined)
-
-    common.save_panel_figure(
-        _plot_cations,
-        OUTPUT_A,
-        figsize=(4.1, 3.6),
-        legend_handles=handles,
-        legend_labels=labels,
-        legend_kwargs={"loc": "upper right", "fontsize": 7},
-    )
-    common.save_panel_figure(
-        _plot_anions,
-        OUTPUT_B,
-        figsize=(4.1, 3.6),
-        legend_handles=handles,
-        legend_labels=labels,
-        legend_kwargs={"loc": "upper right", "fontsize": 7},
-    )
 
 
 if __name__ == "__main__":

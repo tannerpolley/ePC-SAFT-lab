@@ -48,7 +48,7 @@ def test_association_composition_derivative_includes_solved_site_fraction_respon
     assert np.any(np.abs(association_jacobian) > 1.0e-8)
 
     public_result = mix.state(T=temperature, x=composition, rho=density).ares_composition_derivative_result()
-    assert public_result["backend"] == "analytic_implicit"
+    assert public_result["backend"] == "cppad"
     assert public_result["backend_details"]["assoc"] == "analytic_implicit"
     public_jacobian = np.asarray(public_result["jacobian"], dtype=float)
     assert public_jacobian.shape == (1, composition.size)

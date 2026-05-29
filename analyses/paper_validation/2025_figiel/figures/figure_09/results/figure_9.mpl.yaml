@@ -1,0 +1,22 @@
+# Matplotlib plot-set style contract.
+# Edit this sidecar, then rerun the owning render script.
+figure:
+  file: "figure_9.png"
+  format: "png"
+axes:
+  - index: 0
+    title: "NaBr in aqueous methanol"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ of salt / -"
+  - index: 1
+    title: "NaBr in aqueous ethanol"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ of salt / -"
+  - index: 2
+    title: "NaCl in aqueous methanol"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ of salt / -"
+  - index: 3
+    title: "NaCl in aqueous ethanol"
+    xlabel: "$\\bar{m}_{salt}$ / mol kg$^{-1}$"
+    ylabel: "$\\gamma_{\\pm}^{m,*}$ of salt / -"
