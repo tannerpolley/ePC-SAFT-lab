@@ -62,6 +62,34 @@ def test_build_script_provider_profile_disables_extension_native_surfaces() -> N
     assert settings.parallel == "4"
 
 
+def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
+    captured: dict[str, list[str]] = {}
+
+    monkeypatch.setattr(build_epcsaft, "_capture", lambda cmd, env: "C:/pybind11")
+    monkeypatch.setattr(build_epcsaft, "_cmake_command", lambda: ["cmake"])
+    monkeypatch.setattr(build_epcsaft, "_pyproject_version", lambda: "0.2.0")
+    monkeypatch.setattr(build_epcsaft, "_generator_args", lambda env, configured_generator=None: [])
+    monkeypatch.setattr(build_epcsaft, "_run", lambda cmd, env: captured.setdefault("cmd", cmd))
+
+    build_epcsaft._configure(
+        {},
+        build_profile="provider",
+        enable_ceres=False,
+        enable_equilibrium_native=False,
+        enable_regression_native=False,
+        use_system_ceres=False,
+        ceres_dir=None,
+        use_system_cppad=False,
+        enable_ipopt=False,
+        use_system_ipopt=False,
+        ipopt_dir=None,
+        ipopt_root=None,
+        build_type="Release",
+    )
+
+    assert "-DEPCSAFT_BUILD_PROFILE=provider" in captured["cmd"]
+
+
 def test_build_script_rejects_solver_overrides_when_provider_profile_disables_their_native_surfaces() -> None:
     with pytest.raises(ValueError, match="Ipopt cannot be enabled"):
         build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "provider", "--enable-ipopt"]))
@@ -121,6 +149,8 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert 'option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)' in cmake_text
     assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE" in cmake_text
     assert "EPCSAFT_ENABLE_REGRESSION_NATIVE" in cmake_text
+    assert "EPCSAFT_BUILD_PROFILE" in cmake_text
+    assert 'EPCSAFT_BUILD_PROFILE STREQUAL "provider"' in cmake_text
     assert "EPCSAFT_ENABLE_CERES=OFF is not supported" not in cmake_text
     assert "derivative-capable package builds require CppAD" in cmake_text
     assert 'set(EPCSAFT_CERES_VERSION "2.2.0")' in cmake_text
@@ -197,6 +227,7 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
         "\n".join(
             [
                 "CMAKE_GENERATOR:INTERNAL=Ninja",
+                "EPCSAFT_BUILD_PROFILE:STRING=provider",
                 "EPCSAFT_ENABLE_CERES:BOOL=ON",
                 "EPCSAFT_ENABLE_REGRESSION_NATIVE:BOOL=ON",
                 "EPCSAFT_USE_SYSTEM_CERES:BOOL=OFF",
@@ -219,6 +250,7 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
 
     assert "configured_generator: Ninja" in lines
     assert "native_core: present" in lines
+    assert "build_profile: provider" in lines
     assert "ceres_configured: ON" in lines
     assert "regression_native_configured: ON" in lines
     assert "system_ceres_configured: OFF" in lines
