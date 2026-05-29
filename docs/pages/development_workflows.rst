@@ -29,6 +29,22 @@ The current development and CI smoke baseline is Python 3.13, while ``pyproject.
 
 Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` and JetBrains pytest runs also work because ``tests/conftest.py`` applies the native runtime DLL setup before test collection, but the wrapper uses a per-run pytest temp directory that is safer for Windows and parallel local runs.
 
+PR gate policy
+--------------
+
+Ordinary early package-development PRs use local proof first. The default merge
+policy is risk-based focused validation in the PR body, not waiting for every
+Ceres, Ipopt, package, wheel, release, or installed-provider lane to run in
+GitHub Actions. As of 2026-05-29, branch protection has no required status
+checks or required reviews.
+
+Only the lightweight local-development smoke workflow runs automatically on
+``pull_request``. Heavy native/profile builds, package build lanes, full wheel
+matrices, publish workflows, and installed-provider extension proofs are
+manual-only workflows. They remain required before a PR claims release
+readiness, capability support, or production native behavior. Ordinary PRs do
+not need boilerplate notes for skipped heavy lanes.
+
 Command matrix
 --------------
 

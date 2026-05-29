@@ -145,17 +145,27 @@ core derivative provider substrate.
 CI lane policy
 --------------
 
-Normal PR CI should have separate lane names for separate claims:
+The current early package-development merge policy is local proof first. As of
+2026-05-29, GitHub branch protection has no required status checks or required
+reviews. Ordinary PRs should carry risk-based focused local proof in the PR
+body, and only lightweight smoke checks run automatically on ``pull_request``.
+Heavy native, package, release, and installed-provider lanes are manual-only
+unless a PR explicitly claims release readiness, capability support, or
+production native behavior.
+
+CI lane names still separate different claims:
 
 ``native production Ipopt``
-   The future merge-relevant production equilibrium lane. It should download a
+   The production equilibrium lane. It should download a
    pinned non-Conda Ipopt SDK artifact, verify checksum and provenance, set
    ``EPCSAFT_IPOPT_ROOT`` or ``Ipopt_DIR``, run
    ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt``, and
-   run native contracts plus focused selector/equilibrium tests.
+   run native contracts plus focused selector/equilibrium tests. It is
+   manual-only during early package development and required before production
+   Ipopt capability or release claims.
 
 ``native no-Ipopt smoke``
-   A cheap PR smoke lane that intentionally runs with ``--disable-ipopt``. It
+   A cheap smoke lane that intentionally runs with ``--disable-ipopt``. It
    may prove package import, Ceres, CppAD, and non-Ipopt contracts, but it does
    not prove production Ipopt equilibrium behavior.
 
@@ -186,13 +196,13 @@ Normal PR CI should have separate lane names for separate claims:
 
 ``package build lanes``
    GitHub Actions lanes named provider package build, regression package build,
-   equilibrium package build, and installed-provider extension builds. Provider
-   and regression lanes can run on ordinary PR/push events. Equilibrium and
-   installed-provider extension lanes require a real Ipopt SDK path or artifact
-   and must not substitute a no-Ipopt success path for production equilibrium
-   package proof. Equilibrium wheels must install the audited runtime
-   dependency closure for ``epcsaft_equilibrium._native_core`` and Ipopt, not a
-   broad ``bin/*.dll`` payload from the SDK.
+   equilibrium package build, and installed-provider extension builds. These
+   lanes run by ``workflow_dispatch`` during early package development.
+   Equilibrium and installed-provider extension lanes require a real Ipopt SDK
+   path or artifact and must not substitute a no-Ipopt success path for
+   production equilibrium package proof. Equilibrium wheels must install the
+   audited runtime dependency closure for ``epcsaft_equilibrium._native_core``
+   and Ipopt, not a broad ``bin/*.dll`` payload from the SDK.
 
 No-Conda Ipopt policy
 ---------------------
@@ -204,21 +214,23 @@ MSYS2/MinGW setup, BLAS/LAPACK, sparse symmetric indefinite linear solver
 requirements, and source builds. The coinbrew documentation describes a helper
 that fetches, builds, and installs COIN-OR projects and dependencies.
 
-Option B is the accepted normal PR CI direction: normal PR CI should fetch a
-pinned prebuilt non-Conda Ipopt SDK artifact, verify checksum and provenance,
-set ``EPCSAFT_IPOPT_ROOT`` or ``Ipopt_DIR``, and run the production Ipopt native
-lane. The source build belongs in a separate manual/scheduled builder workflow
-that publishes the pinned SDK artifact and provenance manifest.
+Option B is the accepted production Ipopt lane direction: the manual production
+Ipopt lane should fetch a pinned prebuilt non-Conda Ipopt SDK artifact, verify
+checksum and provenance, set ``EPCSAFT_IPOPT_ROOT`` or ``Ipopt_DIR``, and run
+the production Ipopt native lane. The source build belongs in a separate manual
+SDK artifact-builder workflow that publishes the pinned SDK artifact and
+provenance manifest.
 
 Decision ledger
 ---------------
 
 2026-05-22 - Native PR CI dependency direction
-   Status: Pending workflow.
+   Status: Superseded for ordinary PR gating by the 2026-05-29 local-proof-first
+   policy; retained as the production Ipopt lane direction.
 
-   Decision: use Option B for normal PR CI. Build Ipopt from source in a
-   separate manual/scheduled no-Conda SDK artifact-builder workflow, then let
-   normal PR CI consume that pinned artifact with checksum/provenance
+   Decision: use Option B for production Ipopt proof. Build Ipopt from source
+   in a separate manual no-Conda SDK artifact-builder workflow, then let the
+   production Ipopt lane consume that pinned artifact with checksum/provenance
    verification.
 
 2026-05-22 - ``--disable-ipopt`` CI meaning
@@ -229,12 +241,20 @@ Decision ledger
    behavior is being validated.
 
 2026-05-22 - CppAD PR lane
-   Status: Implemented for stale command and PR scheduling; expandable test
-   coverage remains lane-specific maintenance.
+   Status: Superseded for ordinary PR gating by the 2026-05-29 local-proof-first
+   policy; retained as a manual heavy proof lane.
 
-   Decision: the focused CppAD lane runs on PRs, uses current build flags, and
-   protects derivative/autodiff contracts rather than duplicating the future
-   production Ipopt lane.
+   Decision: the focused CppAD lane uses current build flags and protects
+   derivative/autodiff contracts rather than duplicating the production Ipopt
+   lane.
+
+2026-05-29 - Early package PR gates
+   Status: Implemented as policy.
+
+   Decision: ordinary early package-development PRs use local proof first.
+   Heavy native, package, release, and installed-provider GitHub Actions lanes
+   run manually and are required before release readiness, capability support,
+   or production native behavior claims, not before every ordinary PR.
 
 2026-05-22 - Release package boundary
    Status: Accepted.

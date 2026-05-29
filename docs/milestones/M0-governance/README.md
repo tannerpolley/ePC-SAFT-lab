@@ -10,4 +10,5 @@ Project fields, local docs, templates, and completion standards agree.
 
 ## Current Open Issues
 
-No open GitHub issues are currently mirrored for this milestone.
+- [#182](https://github.com/ePC-SAFT/ePC-SAFT/issues/182) - make early
+  package PR checks advisory by default.
