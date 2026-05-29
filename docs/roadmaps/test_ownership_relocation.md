@@ -73,7 +73,7 @@ change solver behavior, change public imports, or prepare releases.
 - [x] Structural tests prevent extension-owned tests from returning to root
   native/API trees.
 - [x] Obsolete shallow root support files are removed when no imports remain.
-- [ ] Pull request body contains `Closes #152`.
+- [x] Pull request body contains `Closes #152`.
 
 ## Proof Oracle
 
