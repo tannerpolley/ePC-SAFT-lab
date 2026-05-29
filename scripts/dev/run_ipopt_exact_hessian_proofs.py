@@ -196,7 +196,7 @@ def _run_parent(cases: list[str], output_dir: Path) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     apply_native_runtime_env(env)
-    src_path = str(REPO_ROOT / "src")
+    src_path = str(REPO_ROOT / "packages" / "epcsaft" / "src")
     equilibrium_src_path = str(REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src")
     existing_pythonpath = env.get("PYTHONPATH", "")
     pythonpath_entries = [src_path, equilibrium_src_path]

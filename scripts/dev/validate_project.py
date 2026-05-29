@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SRC_ROOT = REPO_ROOT / "src"
+SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 for import_root in (REPO_ROOT, SRC_ROOT):
     import_path = str(import_root)
     if import_path not in sys.path:

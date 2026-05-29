@@ -1,18 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
-import os
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BACKEND_PATH = REPO_ROOT / "build_backend" / "epcsaft_build_backend.py"
-
-
-@pytest.fixture(autouse=True)
-def _isolate_default_windows_ipopt_sdk(monkeypatch, tmp_path) -> None:
-    monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
+BACKEND_PATH = REPO_ROOT / "packages" / "epcsaft" / "build_backend" / "epcsaft_build_backend.py"
 
 
 def _load_backend():
@@ -57,145 +51,8 @@ def test_pep517_build_backend_honors_persistent_build_dir_env(tmp_path, monkeypa
     assert requested.exists()
 
 
-def test_pep517_build_backend_uses_prebuilt_ceres_env(tmp_path, monkeypatch) -> None:
+def test_pep517_build_backend_defaults_to_provider_only_native_config(tmp_path, monkeypatch) -> None:
     backend = _load_backend()
-    ceres_dir = tmp_path / "ceres" / "lib" / "cmake" / "Ceres"
-    ceres_dir.mkdir(parents=True)
-    (ceres_dir / "CeresConfig.cmake").write_text("# test config\n", encoding="utf-8")
-    monkeypatch.setenv("EPCSAFT_PEP517_CERES_DIR", str(ceres_dir))
-
-    config = backend._isolated_build_config(None)
-
-    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "ON"
-    assert config["cmake.define.EPCSAFT_USE_SYSTEM_CERES"] == "ON"
-    assert Path(config["cmake.define.Ceres_DIR"]) == ceres_dir.resolve()
-
-
-def test_pep517_build_backend_uses_default_repo_system_ceres(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    ceres_dir = tmp_path / "build" / "system-ceres" / "2.2.0" / "install" / "lib" / "cmake" / "Ceres"
-    ceres_dir.mkdir(parents=True)
-    (ceres_dir / "CeresConfig.cmake").write_text("# test config\n", encoding="utf-8")
-    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
-    monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
-    monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
-    monkeypatch.delenv("Ceres_DIR", raising=False)
-
-    config = backend._isolated_build_config(None)
-
-    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "ON"
-    assert config["cmake.define.EPCSAFT_USE_SYSTEM_CERES"] == "ON"
-    assert Path(config["cmake.define.Ceres_DIR"]) == ceres_dir.resolve()
-
-
-def test_pep517_build_backend_prefers_explicit_ceres_env_over_default(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    default_ceres_dir = tmp_path / "build" / "system-ceres" / "2.2.0" / "install" / "lib" / "cmake" / "Ceres"
-    explicit_ceres_dir = tmp_path / "explicit" / "lib" / "cmake" / "Ceres"
-    default_ceres_dir.mkdir(parents=True)
-    explicit_ceres_dir.mkdir(parents=True)
-    (default_ceres_dir / "CeresConfig.cmake").write_text("# default config\n", encoding="utf-8")
-    (explicit_ceres_dir / "CeresConfig.cmake").write_text("# explicit config\n", encoding="utf-8")
-    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
-    monkeypatch.setenv("EPCSAFT_PEP517_CERES_DIR", str(explicit_ceres_dir))
-
-    config = backend._isolated_build_config(None)
-
-    assert Path(config["cmake.define.Ceres_DIR"]) == explicit_ceres_dir.resolve()
-
-
-def test_pep517_build_backend_skips_mingw_default_ceres_for_windows_wheels(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    policy_os = backend.resolve_default_system_ceres_config_dir.__globals__["os"]
-    ceres_dir = tmp_path / "build" / "system-ceres" / "2.2.0" / "install" / "lib" / "cmake" / "Ceres"
-    ceres_dir.mkdir(parents=True)
-    (ceres_dir / "CeresConfig.cmake").write_text("# test config\n", encoding="utf-8")
-    (ceres_dir / "CeresTargets-release.cmake").write_text(
-        'set_target_properties(Ceres::ceres PROPERTIES IMPORTED_LOCATION_RELEASE "${_IMPORT_PREFIX}/lib/libceres.a")\n',
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
-    monkeypatch.setattr(policy_os, "name", "nt")
-    monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
-    monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
-    monkeypatch.delenv("Ceres_DIR", raising=False)
-
-    config = backend._isolated_build_config(None)
-
-    assert "cmake.define.EPCSAFT_USE_SYSTEM_CERES" not in config
-    assert "cmake.define.Ceres_DIR" not in config
-
-
-def test_pep517_build_backend_uses_system_ipopt_env(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    ipopt_dir = tmp_path / "ipopt" / "lib" / "cmake" / "Ipopt"
-    ipopt_dir.mkdir(parents=True)
-    (ipopt_dir / "IpoptConfig.cmake").write_text("# test config\n", encoding="utf-8")
-    monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_DIR", str(ipopt_dir))
-
-    config = backend._isolated_build_config(None)
-
-    assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "ON"
-    assert config["cmake.define.EPCSAFT_USE_SYSTEM_IPOPT"] == "ON"
-    assert Path(config["cmake.define.Ipopt_DIR"]) == ipopt_dir.resolve()
-
-
-def test_pep517_build_backend_uses_system_ipopt_root_env(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    ipopt_root = tmp_path / "ipopt"
-    include_dir = ipopt_root / "include" / "coin-or"
-    lib_dir = ipopt_root / "lib"
-    bin_dir = ipopt_root / "bin"
-    include_dir.mkdir(parents=True)
-    lib_dir.mkdir()
-    bin_dir.mkdir()
-    (include_dir / "IpIpoptApplication.hpp").write_text("// test header\n", encoding="utf-8")
-    (lib_dir / "ipopt.lib").write_text("", encoding="utf-8")
-    monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_ROOT", str(ipopt_root))
-    original_path = "C:\\tools"
-    monkeypatch.setenv("PATH", original_path)
-    monkeypatch.setattr(backend, "_load_msvc_env_for_ipopt_root", lambda root: None)
-
-    config = backend._isolated_build_config(None)
-
-    assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "ON"
-    assert config["cmake.define.EPCSAFT_USE_SYSTEM_IPOPT"] == "ON"
-    assert Path(config["cmake.define.EPCSAFT_IPOPT_ROOT"]) == ipopt_root.resolve()
-    assert str(bin_dir.resolve()) in os.environ["PATH"]
-    assert str(bin_dir.resolve()) in os.environ["EPCSAFT_RUNTIME_DLL_DIRS"]
-    assert original_path in os.environ["PATH"]
-
-
-def test_pep517_build_backend_uses_local_windows_ipopt_sdk_default(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    ipopt_root = tmp_path / "Documents" / "deps" / "ipopt-msvc"
-    include_dir = ipopt_root / "include" / "coin-or"
-    lib_dir = ipopt_root / "lib"
-    bin_dir = ipopt_root / "bin"
-    include_dir.mkdir(parents=True)
-    lib_dir.mkdir()
-    bin_dir.mkdir()
-    (include_dir / "IpIpoptApplication.hpp").write_text("// test header\n", encoding="utf-8")
-    (lib_dir / "ipopt.lib").write_text("", encoding="utf-8")
-    monkeypatch.delenv("EPCSAFT_PEP517_IPOPT_DIR", raising=False)
-    monkeypatch.delenv("EPCSAFT_PEP517_IPOPT_ROOT", raising=False)
-    monkeypatch.delenv("Ipopt_DIR", raising=False)
-    monkeypatch.delenv("EPCSAFT_IPOPT_ROOT", raising=False)
-    monkeypatch.setattr(backend.os, "name", "nt")
-    monkeypatch.setattr(backend, "_load_msvc_env_for_ipopt_root", lambda root: None)
-
-    config = backend._isolated_build_config(None)
-
-    assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "ON"
-    assert config["cmake.define.EPCSAFT_USE_SYSTEM_IPOPT"] == "ON"
-    assert Path(config["cmake.define.EPCSAFT_IPOPT_ROOT"]) == ipopt_root.resolve()
-    assert str(bin_dir.resolve()) in os.environ["PATH"]
-    assert str(bin_dir.resolve()) in os.environ["EPCSAFT_RUNTIME_DLL_DIRS"]
-
-
-def test_pep517_build_backend_keeps_ceres_default_and_requires_cppad(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    monkeypatch.setattr(backend, "_source_root", lambda: tmp_path)
     monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
     monkeypatch.delenv("EPCSAFT_PEP517_USE_SYSTEM_CERES", raising=False)
     monkeypatch.delenv("Ceres_DIR", raising=False)
@@ -208,10 +65,12 @@ def test_pep517_build_backend_keeps_ceres_default_and_requires_cppad(tmp_path, m
 
     config = backend._isolated_build_config(None)
 
-    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "ON"
     assert config["cmake.define.EPCSAFT_ENABLE_CPPAD"] == "ON"
+    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "OFF"
     assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "OFF"
     assert config["cmake.define.EPCSAFT_USE_SYSTEM_IPOPT"] == "OFF"
+    assert config["cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE"] == "OFF"
+    assert config["cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE"] == "OFF"
     assert "cmake.define.EPCSAFT_USE_SYSTEM_CERES" not in config
     assert "cmake.define.Ceres_DIR" not in config
     assert "cmake.define.Ipopt_DIR" not in config
@@ -237,32 +96,20 @@ def test_pep517_build_backend_allows_provider_build_without_ceres() -> None:
     assert "cmake.define.Ceres_DIR" not in config
 
 
-def test_pep517_build_backend_disables_regression_native_when_ceres_is_off() -> None:
+@pytest.mark.parametrize(
+    ("key", "label"),
+    [
+        ("cmake.define.EPCSAFT_ENABLE_CERES", "Ceres"),
+        ("cmake.define.EPCSAFT_ENABLE_IPOPT", "Ipopt"),
+        ("cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE", "equilibrium native module"),
+        ("cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE", "regression native module"),
+    ],
+)
+def test_pep517_build_backend_rejects_extension_native_dependency_flags(key: str, label: str) -> None:
     backend = _load_backend()
 
-    config = backend._isolated_build_config(
-        {
-            "cmake.define.EPCSAFT_ENABLE_CERES": "OFF",
-            "cmake.define.EPCSAFT_ENABLE_IPOPT": "ON",
-        }
-    )
-
-    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "OFF"
-    assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "ON"
-    assert config["cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE"] == "OFF"
-    assert "cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE" not in config
-
-
-def test_pep517_build_backend_rejects_regression_native_without_ceres() -> None:
-    backend = _load_backend()
-
-    with pytest.raises(ValueError, match="Regression native package builds require Ceres"):
-        backend._isolated_build_config(
-            {
-                "cmake.define.EPCSAFT_ENABLE_CERES": "OFF",
-                "cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE": "ON",
-            }
-        )
+    with pytest.raises(ValueError, match=label):
+        backend._isolated_build_config({key: "ON"})
 
 
 def test_pep517_build_backend_rejects_disabled_required_cppad() -> None:
@@ -270,54 +117,6 @@ def test_pep517_build_backend_rejects_disabled_required_cppad() -> None:
 
     with pytest.raises(ValueError, match="CppAD is required"):
         backend._isolated_build_config({"cmake.define.EPCSAFT_ENABLE_CPPAD": "OFF"})
-
-
-def test_pep517_build_backend_rejects_bad_ceres_dir_env(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    bad_dir = tmp_path / "missing-config"
-    bad_dir.mkdir()
-    monkeypatch.setenv("EPCSAFT_PEP517_CERES_DIR", str(bad_dir))
-
-    with pytest.raises(FileNotFoundError) as excinfo:
-        backend._isolated_build_config(None)
-    assert "CeresConfig.cmake" in str(excinfo.value)
-
-
-def test_pep517_build_backend_rejects_bad_ipopt_dir_env(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    bad_dir = tmp_path / "missing-config"
-    bad_dir.mkdir()
-    monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_DIR", str(bad_dir))
-
-    with pytest.raises(FileNotFoundError) as excinfo:
-        backend._isolated_build_config(None)
-    assert "IpoptConfig.cmake" in str(excinfo.value)
-
-
-def test_pep517_build_backend_rejects_bad_ipopt_root_env(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    bad_root = tmp_path / "ipopt"
-    (bad_root / "include").mkdir(parents=True)
-    (bad_root / "lib").mkdir()
-    monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_ROOT", str(bad_root))
-
-    with pytest.raises(FileNotFoundError) as excinfo:
-        backend._isolated_build_config(None)
-    assert "Ipopt C++ headers" in str(excinfo.value)
-
-
-def test_pep517_build_backend_rejects_competing_ipopt_envs(tmp_path, monkeypatch) -> None:
-    backend = _load_backend()
-    ipopt_dir = tmp_path / "ipopt" / "lib" / "cmake" / "Ipopt"
-    ipopt_root = tmp_path / "ipopt-root"
-    ipopt_dir.mkdir(parents=True)
-    ipopt_root.mkdir()
-    (ipopt_dir / "IpoptConfig.cmake").write_text("# test config\n", encoding="utf-8")
-    monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_DIR", str(ipopt_dir))
-    monkeypatch.setenv("EPCSAFT_PEP517_IPOPT_ROOT", str(ipopt_root))
-
-    with pytest.raises(ValueError, match="Use either"):
-        backend._isolated_build_config(None)
 
 
 def test_pep660_editable_hook_uses_isolated_build_dir(tmp_path, monkeypatch) -> None:

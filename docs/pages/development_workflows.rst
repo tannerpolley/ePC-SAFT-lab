@@ -45,7 +45,7 @@ Command matrix
      - ``uv run python run_pytest.py --provider-api -q`` or ``uv run python scripts/dev/validate_project.py provider``
      - Core provider package imports, state, mixture, parameter-template, and root export checks. This slice must not import ``epcsaft_equilibrium``.
    * - Provider-only boundary proof
-     - ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` then ``uv run python run_pytest.py tests/native/contracts/test_provider_only_core_symbols.py -q``
+     - ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` then ``uv run python run_pytest.py packages/epcsaft/tests/native/contracts/test_provider_only_core_symbols.py -q``
      - Prove provider ``_core`` builds without Ceres and Ipopt and does not export equilibrium/regression native symbols.
    * - Equilibrium extension contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
@@ -121,15 +121,12 @@ Root ``CMAKE.md`` is the source of truth for direct CMake preset operations. Dir
 
 Strawberry may remain installed for unrelated tooling, but it is not the ePC-SAFT CMake standard. Do not select a Strawberry MinGW toolchain or rely on Strawberry's ``cmake.exe`` / ``ninja.exe`` for ``build/dev``.
 
-Wheel/editable/path installs go through the PEP 517/scikit-build backend and
-use the same transition Ceres/CppAD policy. On Windows, the backend also uses
-the local Ipopt SDK default when it exists; otherwise set
-``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` explicitly for
-Ipopt package builds. Repeated package builds avoid rebuilding Ceres when the
-default repo-local Ceres package exists at
-``build/system-ceres/2.2.0/install/lib/cmake/Ceres`` or when an explicit
-``EPCSAFT_PEP517_CERES_DIR``/``Ceres_DIR`` points at a valid Ceres package
-config.
+Provider wheel/editable/path installs go through the package-local
+PEP 517/scikit-build backend in ``packages/epcsaft``. That backend builds the
+provider-only distribution: CppAD ON, Ceres OFF, Ipopt OFF, and extension-owned
+native modules OFF. Source-checkout native builds still use
+``scripts/dev/build_epcsaft.py`` when equilibrium/regression extension modules,
+Ceres, or Ipopt are needed.
 
 .. list-table::
    :header-rows: 1
@@ -172,7 +169,10 @@ For IDE run configurations, keep commands explicit instead of relying on one ove
 
 Do not use ``--clean`` for routine validation. ``uv run python scripts/dev/build_epcsaft.py --clean`` is a repair action for stale CMake state or stale/locked ``_core`` artifacts. A clean dev build deletes the reusable CMake tree, so Ceres source/configuration/build work under ``build/dev/_deps`` may run again unless you use a prebuilt system Ceres package. If Windows reports that ``_core*.pyd`` is locked, stop Python REPLs, tests, IDE run configurations, or parallel workers that imported ``epcsaft._core`` before retrying. If ``--status`` reports a stale Ninja lock, inspect the listed process ids and stop only repo-owned build processes before retrying.
 
-If Ceres becomes part of a repeated local workflow, build Ceres once outside ``build/dev`` and use the system-Ceres path instead of vendoring it through ``FetchContent`` on every clean full-profile configure. The default helper output is auto-detected by package builds and can also be used explicitly by the dev build:
+If Ceres becomes part of a repeated local source-checkout workflow, build Ceres
+once outside ``build/dev`` and use the system-Ceres path instead of vendoring it
+through ``FetchContent`` on every clean full-profile configure. The default
+helper output can be used explicitly by the dev build:
 
 .. code-block:: powershell
 
@@ -181,20 +181,14 @@ If Ceres becomes part of a repeated local workflow, build Ceres once outside ``b
 
 ``--ceres-dir`` should point at the directory containing ``CeresConfig.cmake``. Ceres' own CMake documentation supports consuming either an installed Ceres package or an exported Ceres build directory through ``find_package(Ceres)`` and ``Ceres::ceres``.
 
-On Windows, ``build_system_ceres.py`` prefers the MSVC build environment for the default reusable package. Request ``--generator mingw`` only when you intend to consume that Ceres package from a MinGW build. The package backend ignores a default repo-local Ceres package that exports MinGW ``libceres.a`` so MSVC wheel builds do not link against an incompatible archive.
+On Windows, ``build_system_ceres.py`` prefers the MSVC build environment for
+the default reusable package. Request ``--generator mingw`` only when you
+intend to consume that Ceres package from a MinGW source-checkout build.
 
-The same default prebuilt Ceres package is auto-used by local wheel/editable/path installs from this source checkout. Set the environment variables only when the consuming checkout cannot see ``build/system-ceres/2.2.0`` or when you want a custom Ceres package:
-
-.. code-block:: powershell
-
-   $env:EPCSAFT_PEP517_CERES_DIR = "C:\path\to\lib\cmake\Ceres"
-   $env:EPCSAFT_PEP517_USE_SYSTEM_CERES = "1"
-   $env:EPCSAFT_PEP517_BUILD_DIR = "$PWD\.uv-cache\epcsaft-build"
-   uv sync --reinstall-package epcsaft
-
-``scripts/dev/build_dist.py`` also uses the default prebuilt Ceres package when present and keeps its config-specific PEP 517 build state under ``build/pep517`` for inspection. Strict isolated release builds may still reconfigure and rebuild the package objects; the main speed win is avoiding a repeated Ceres compile.
-
-On Windows, Ipopt uses the local SDK default when present; otherwise set ``EPCSAFT_PEP517_IPOPT_ROOT`` or ``EPCSAFT_PEP517_IPOPT_DIR`` before installing if the package build needs Ipopt.
+``scripts/dev/build_dist.py`` builds the provider package from
+``packages/epcsaft`` with the provider-only release baseline. It keeps its
+PEP 517 build state under ``build/pep517/provider-only`` for inspection and
+does not consume Ceres or Ipopt.
 
 LaTeX and Overleaf mirror
 -------------------------
@@ -259,7 +253,10 @@ native/equilibrium route tests. If the right target is unclear, run
 - Performance claims: add or restore an explicit benchmark or analysis workflow first. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.
 
-- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to the provider-only release baseline with Ceres OFF, Ipopt OFF, and extension-owned native modules OFF, and it uses ``--parallel 1`` for isolated PEP 517 builds; raise parallelism only after confirming Ceres builds are not memory-bound. Use ``--with-local-ipopt`` only for an explicit local Ipopt artifact check.
+- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command
+  defaults to the provider-only release baseline with Ceres OFF, Ipopt OFF, and
+  extension-owned native modules OFF, and it uses ``--parallel 1`` for isolated
+  PEP 517 builds.
 
 Keep generated plot assets and generated CSV workflows out of normal validation unless the task explicitly asks for them. There is no named plot validation slice; target the owning script or test file directly when plot output work is in scope.
 

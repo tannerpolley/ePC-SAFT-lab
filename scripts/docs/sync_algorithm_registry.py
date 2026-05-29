@@ -20,7 +20,7 @@ REGISTRY_PATH = REPO_ROOT / "docs" / "algorithms_registry.yaml"
 LEGACY_RENDER_DIR = REPO_ROOT / "docs" / "rendered_math" / "algorithms"
 LEGACY_RENDER_ROOT = REPO_ROOT / "docs" / "rendered_math"
 SCAN_ROOTS = (
-    REPO_ROOT / "src" / "epcsaft",
+    REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft",
     REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium",
     REPO_ROOT / "packages" / "epcsaft-equilibrium" / "native",
     REPO_ROOT / "packages" / "epcsaft-regression" / "src" / "epcsaft_regression",

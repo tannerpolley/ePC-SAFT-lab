@@ -17,7 +17,7 @@ TEX_PATH = REPO_ROOT / "docs" / "latex" / "equations.tex"
 MARKDOWN_PATH = REPO_ROOT / "docs" / "equations.md"
 REGISTRY_PATH = REPO_ROOT / "docs" / "equations_registry.yaml"
 LEGACY_RENDER_DIR = REPO_ROOT / "docs" / "rendered_math" / "equations"
-NATIVE_ROOT = REPO_ROOT / "src" / "epcsaft" / "native"
+NATIVE_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft" / "native"
 
 SECTION_RE = re.compile(r"\\section\{(.+?)\}")
 SUBSECTION_RE = re.compile(r"\\subsection\{(.+?)\}")

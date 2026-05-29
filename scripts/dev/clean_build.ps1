@@ -33,5 +33,5 @@ foreach ($root in $scanRoots) {
         ForEach-Object { Remove-PathIfPresent $_.FullName }
 }
 
-Get-ChildItem -Path src\epcsaft -File -Filter "_core*.pyd" -ErrorAction SilentlyContinue | Remove-Item -Force
-Get-ChildItem -Path src\epcsaft -File -Filter "_core*.so" -ErrorAction SilentlyContinue | Remove-Item -Force
+Get-ChildItem -Path packages\epcsaft\src\epcsaft -File -Filter "_core*.pyd" -ErrorAction SilentlyContinue | Remove-Item -Force
+Get-ChildItem -Path packages\epcsaft\src\epcsaft -File -Filter "_core*.so" -ErrorAction SilentlyContinue | Remove-Item -Force

@@ -28,6 +28,8 @@ EXTENSION_PACKAGES = {
     },
 }
 
+PROVIDER_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft"
+
 
 def _pyproject(path: Path) -> dict:
     return tomllib.loads(path.read_text(encoding="utf-8"))
@@ -35,24 +37,37 @@ def _pyproject(path: Path) -> dict:
 
 def test_provider_repo_uses_monorepo_extension_workspace_members() -> None:
     root = _pyproject(REPO_ROOT / "pyproject.toml")
+    provider = _pyproject(PROVIDER_PACKAGE_DIR / "pyproject.toml")
 
-    assert root["project"]["name"] == "epcsaft"
+    assert "project" not in root
+    assert root["tool"]["uv"]["package"] is False
+    assert provider["project"]["name"] == "epcsaft"
     assert root["tool"]["uv"]["workspace"]["members"] == [
+        "packages/epcsaft",
         "packages/epcsaft-equilibrium",
         "packages/epcsaft-regression",
     ]
+    assert "packages/epcsaft/src" in root["tool"]["pytest"]["ini_options"]["pythonpath"]
     assert "packages/epcsaft-equilibrium/src" in root["tool"]["pytest"]["ini_options"]["pythonpath"]
     assert "packages/epcsaft-regression/src" in root["tool"]["pytest"]["ini_options"]["pythonpath"]
 
 
-def test_provider_sdist_includes_transitional_extension_native_sources() -> None:
+def test_provider_package_owns_distribution_build_metadata() -> None:
     root = _pyproject(REPO_ROOT / "pyproject.toml")
-    sdist_include = set(root["tool"]["scikit-build"]["sdist"]["include"])
+    provider = _pyproject(PROVIDER_PACKAGE_DIR / "pyproject.toml")
+    sdist_include = set(provider["tool"]["scikit-build"]["sdist"]["include"])
 
-    assert "packages/epcsaft-equilibrium/native/**/*.cpp" in sdist_include
-    assert "packages/epcsaft-equilibrium/native/**/*.h" in sdist_include
-    assert "packages/epcsaft-regression/native/**/*.cpp" in sdist_include
-    assert "packages/epcsaft-regression/native/**/*.h" in sdist_include
+    assert "build-system" not in root
+    assert "scikit-build" not in root.get("tool", {})
+    assert provider["build-system"]["build-backend"] == "epcsaft_build_backend"
+    assert provider["build-system"]["backend-path"] == ["build_backend"]
+    assert provider["tool"]["scikit-build"]["cmake"]["source-dir"] == "."
+    assert provider["tool"]["scikit-build"]["wheel"]["packages"] == ["src/epcsaft"]
+    assert "CMakeLists.txt" in sdist_include
+    assert "build_backend/*.py" in sdist_include
+    assert "src/epcsaft/**/*.cpp" in sdist_include
+    assert "src/epcsaft/**/*.h" in sdist_include
+    assert "src/epcsaft/*.pyd" in provider["tool"]["scikit-build"]["sdist"]["exclude"]
 
 
 def test_extension_package_manifests_depend_on_provider_workspace_source() -> None:
@@ -104,8 +119,8 @@ def test_equilibrium_extension_owns_python_workflow_modules() -> None:
 
     missing = sorted(path.relative_to(REPO_ROOT).as_posix() for path in expected_files if not path.is_file())
     assert missing == []
-    assert not (REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py").exists()
-    assert not (REPO_ROOT / "src" / "epcsaft" / "equilibrium").exists()
+    assert not (PROVIDER_PACKAGE_DIR / "src" / "epcsaft" / "frontend" / "equilibrium.py").exists()
+    assert not (PROVIDER_PACKAGE_DIR / "src" / "epcsaft" / "equilibrium").exists()
 
 
 def test_equilibrium_extension_native_access_is_isolated_behind_package_native_bridge() -> None:

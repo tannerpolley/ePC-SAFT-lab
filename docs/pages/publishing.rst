@@ -28,14 +28,14 @@ workflow allows the 404 first-publish case and relies on the trusted-publisher
 exchange to fail loudly if the pending publisher is missing or mismatched.
 
 If the PyPI project already exists, the workflow checks the version in
-``pyproject.toml`` and stops before building artifacts when that version has
+``packages/epcsaft/pyproject.toml`` and stops before building artifacts when that version has
 already been published. PyPI files are immutable, so duplicate-version retries
 must use a new version.
 
 Publish a release
 -----------------
 
-1. Update ``pyproject.toml`` and ``uv.lock`` to the new version.
+1. Update ``packages/epcsaft/pyproject.toml`` and ``uv.lock`` to the new version.
 2. Update ``CHANGELOG.md`` and add ``docs/releases/vX.Y.Z.md``.
 3. Commit and push ``main``.
 4. Run ``uv run python scripts/dev/build_dist.py``. The default release

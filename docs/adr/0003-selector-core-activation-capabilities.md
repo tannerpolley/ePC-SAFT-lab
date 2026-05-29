@@ -14,9 +14,9 @@ deleted or unproven families looking available.
 ## Decision
 
 - The native activation matrix in
-  `src/epcsaft/native/equilibrium/core/activation_matrix.h` is the source of
+  `packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h` is the source of
   truth for equilibrium route-family exposure.
-- The selector core in `src/epcsaft/native/equilibrium/core/selector_core.cpp`
+- The selector core in `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
   owns production route admission, activation checks, exact-derivative
   requirements, density-closure diagnostics, and certification gating.
 - The production public neutral VLE surface is limited to one

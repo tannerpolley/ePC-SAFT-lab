@@ -14,7 +14,7 @@ The LaTeX document remains the current source of truth; this Markdown view and `
 - Description: Provides a supporting relation used in hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:27`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -35,7 +35,7 @@ $$
 - Description: Provides a supporting relation used in relative-permittivity and electrolyte reference calculations.
 - Change note: This mean-molecular-weight helper is used to evaluate weighted relative-permittivity rules but is not a separately numbered equation in the paper.
 - LaTeX: `docs/latex/equations.tex:38`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -56,7 +56,7 @@ $$
 - Description: Provides a supporting relation used in relative-permittivity and electrolyte reference calculations.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:49`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -77,7 +77,7 @@ $$
 - Description: Provides a supporting relation used in relative-permittivity and electrolyte reference calculations.
 - Change note: This solvent/ion index-set definition is implementation notation introduced in this documentation.
 - LaTeX: `docs/latex/equations.tex:60`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -98,7 +98,7 @@ $$
 - Description: Provides a supporting relation used in relative-permittivity and electrolyte reference calculations.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:71`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -123,7 +123,7 @@ $$
 - Description: Provides a supporting relation used in hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:89`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -144,7 +144,7 @@ $$
 - Description: Provides a differential relation needed for temperature differential calculations.
 - Change note: Computed by differentiating Eq. (A.9) with respect to temperature.
 - LaTeX: `docs/latex/equations.tex:100`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -192,7 +192,7 @@ $$
 - Description: Provides the grouped ion-diameter rule used in Debye-Huckel electrolyte calculations.
 - Change note: Consolidates the documented sigma, constant-factor, and Barker-Henderson ion-diameter options into one visible case-set presentation.
 - LaTeX: `docs/latex/equations.tex:127`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -248,7 +248,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 - LaTeX: `docs/latex/equations.tex:158`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -269,7 +269,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: This is the base Berthelot-style pair-dispersion combining rule before any ePC-SAFT ionic override is applied.
 - LaTeX: `docs/latex/equations.tex:169`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -294,7 +294,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: The active implementation suppresses short-range dispersion for same-sign ionic pairs by overriding the base combining rule with zero; this is why the second equation is simply \(=0\).
 - LaTeX: `docs/latex/equations.tex:182`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -317,7 +317,7 @@ $$
 - Description: Provides a supporting relation used in association contribution.
 - Change note: Mapped manually to the Gross 2002 cross-association energy combining rule.
 - LaTeX: `docs/latex/equations.tex:196`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:420` (double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:420` (double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -338,7 +338,7 @@ $$
 - Description: Provides a supporting relation used in association contribution.
 - Change note: Mapped manually to the Gross 2002 cross-association volume combining rule.
 - LaTeX: `docs/latex/equations.tex:207`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:420` (double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:420` (double association_volume_cpp(int comp_i, int comp_j, int ncomp, const vector<double> &s_ij, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -361,7 +361,7 @@ $$
 - Description: Provides the grouped relative-permittivity mixing rule used by the electrolyte contributions.
 - Change note: Consolidates the documented upstream relative-permittivity options into one visible grouped display while keeping helper quantities upstream.
 - LaTeX: `docs/latex/equations.tex:222`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:16` (Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:16` (Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -396,7 +396,7 @@ $$
 - Description: Specifies dielectric-property mixing or derivative form for debye and huckel electrolyte term contribution.
 - Change note: Direct derivative of the mole-fraction dielectric mixing rule.
 - LaTeX: `docs/latex/equations.tex:242`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -421,7 +421,7 @@ $$
 - Description: Specifies dielectric-property mixing or derivative form for debye and huckel electrolyte term contribution.
 - Change note: Direct derivative of the mass-fraction dielectric mixing rule.
 - LaTeX: `docs/latex/equations.tex:257`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -448,7 +448,7 @@ $$
 - Description: Specifies dielectric-property mixing or derivative form for debye and huckel electrolyte term contribution.
 - Change note: Direct derivative of the mixed solvent-plus-ion dielectric mixing rule.
 - LaTeX: `docs/latex/equations.tex:273`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -481,7 +481,7 @@ $$
 - Description: Provides a supporting relation used in relative-permittivity calculations for electrolyte contributions.
 - Change note: Algebraic expansion of Eq. (13) introducing explicit solvent-only weighted relative permittivity.
 - LaTeX: `docs/latex/equations.tex:290`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -504,7 +504,7 @@ $$
 - Description: Provides a supporting relation used in relative-permittivity calculations for electrolyte contributions.
 - Change note: Salt-free solvent-mixture relative permittivity used by the ion-suppressed upstream rule.
 - LaTeX: `docs/latex/equations.tex:304`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -525,7 +525,7 @@ $$
 - Description: Provides a supporting relation used in debye and huckel electrolyte term contribution.
 - Change note: Changed from earlier dielectric-mixing rules to the 2025 ion-suppression mixing form.
 - LaTeX: `docs/latex/equations.tex:315`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:16` (Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:16` (Scalar mixed_dielectric_constant_scalar_cpp(const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -554,7 +554,7 @@ $$
 - Description: Provides a supporting relation used in debye and huckel electrolyte term contribution.
 - Change note: Mapped manually to the salt-free solvent dielectric mixture definition.
 - LaTeX: `docs/latex/equations.tex:330`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -591,7 +591,7 @@ $$
 - Description: Provides a differential relation needed for debye and huckel electrolyte term contribution calculations.
 - Change note: Ion-fraction helper used in the Eq. (11) differential form.
 - LaTeX: `docs/latex/equations.tex:349`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:104` (Scalar dielectric_constant_rule_scalar_cpp(int rule, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -626,7 +626,7 @@ $$
 - Description: Provides a differential relation needed for debye and huckel electrolyte term contribution calculations.
 - Change note: Derivative of solvent-mixture dielectric expression in Eq. (12).
 - LaTeX: `docs/latex/equations.tex:366`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -663,7 +663,7 @@ $$
 - Description: Provides a differential relation needed for debye and huckel electrolyte term contribution calculations.
 - Change note: Derivative of the 2025 dielectric mixing rule via chain rule.
 - LaTeX: `docs/latex/equations.tex:385`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -694,7 +694,7 @@ $$
 - Description: Provides a differential relation needed for debye and huckel electrolyte term contribution calculations.
 - Change note: Piecewise closed-form derivative obtained by combining Eq. (11) and Eq. (12).
 - LaTeX: `docs/latex/equations.tex:401`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:620` (vector<double> dielectric_derivative_rule_cpp(int rule, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -737,7 +737,7 @@ $$
 - Description: Provides a supporting relation used in hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:429`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:32` (static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:32` (static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -758,7 +758,7 @@ $$
 - Description: Provides a differential relation needed for composition differential calculations.
 - Change note: Ownership moved upstream so the composition derivatives are defined before the downstream property sections that use them.
 - LaTeX: `docs/latex/equations.tex:440`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:32` (static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:32` (static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -779,7 +779,7 @@ $$
 - Description: Provides a differential relation needed for temperature differential calculations.
 - Change note: Mapped manually to the temperature derivative of zeta moments.
 - LaTeX: `docs/latex/equations.tex:451`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:213` (vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:213` (vector<double> dzeta_dt_cpp(const MixtureState &thermo, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -802,7 +802,7 @@ $$
 - Description: Provides the canonical packing-fraction identity used before evaluating contribution expressions.
 - Change note: Makes the \zeta_3 and \eta notation equivalence explicit in the new initial-density section.
 - LaTeX: `docs/latex/equations.tex:465`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:32` (static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:32` (static HardChainStateScalar<Scalar> hard_chain_state_scalar_cpp(double den, const vector<double> &d, const vector<Scalar> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -825,7 +825,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:479`
-- C++: `src/epcsaft/native/eos/density.cpp:644` (double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/density.cpp:644` (double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -846,7 +846,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:490`
-- C++: `src/epcsaft/native/eos/density.cpp:644` (double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/density.cpp:644` (double reduced_density_to_molar(double nu, double t, int ncomp, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -873,7 +873,7 @@ $$
 - Description: Provides the pressure closure used in the initial density solve.
 - Change note: Moved upstream from the pressure section so the density-solver closure lives with the rest of the initial density-setup equations.
 - LaTeX: `docs/latex/equations.tex:506`
-- C++: `src/epcsaft/native/eos/compressibility.cpp:79` (double p_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/compressibility.cpp:79` (double p_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -894,7 +894,7 @@ $$
 - Description: Provides the combined compressibility-factor closure used in the initial density solve.
 - Change note: The packing-fraction and density forms are now shown together in one equation so the closure reads as one relation instead of three separate displayed identities.
 - LaTeX: `docs/latex/equations.tex:517`
-- C++: `src/epcsaft/native/eos/compressibility.cpp:66` (CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/compressibility.cpp:66` (CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -923,7 +923,7 @@ $$
 - Description: Provides the explicit scalar residual used to locate density roots at specified \(T\), \(P\), and \(\mathbf{x}\).
 - Change note: Added as a solver-facing closeout equation so the initial-density section ends with the actual root-finding constraint rather than only helper relations.
 - LaTeX: `docs/latex/equations.tex:534`
-- C++: `src/epcsaft/native/eos/density.cpp:796` (double density_root_residual_cpp(double rhomolar, double t, double p, vector<double> x, const add_args &cppargs){)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/density.cpp:796` (double density_root_residual_cpp(double rhomolar, double t, double p, vector<double> x, const add_args &cppargs){)
 
 **LaTeX source**
 
@@ -962,7 +962,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:562`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:431` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:431` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -1001,7 +1001,7 @@ $$
 - Description: Provides the density differential of the hard-sphere Helmholtz term.
 - Change note: Renamed and re-homed so the hard-sphere density differential sits directly below the owning hard-sphere expression.
 - LaTeX: `docs/latex/equations.tex:582`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:90` (static double dadrho_hs_cpp(const HardChainState &hc_state) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:90` (static double dadrho_hs_cpp(const HardChainState &hc_state) {)
 
 **LaTeX source**
 
@@ -1034,7 +1034,7 @@ $$
 - Description: Provides the composition differential of the hard-sphere Helmholtz term.
 - Change note: Renamed and re-homed so the hard-sphere composition differential sits directly below the owning hard-sphere expression.
 - LaTeX: `docs/latex/equations.tex:599`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:111` (static vector<double> dadx_hs_cpp(const MixtureState &thermo, const HardChainState &hc_state, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:111` (static vector<double> dadx_hs_cpp(const MixtureState &thermo, const HardChainState &hc_state, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1087,7 +1087,7 @@ $$
 - Description: Provides the temperature differential of the hard-sphere Helmholtz term.
 - Change note: Renamed and re-homed so the hard-sphere temperature differential sits directly below the owning hard-sphere expression.
 - LaTeX: `docs/latex/equations.tex:626`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:98` (static double dadt_hs_cpp(const HardChainState &hc_state, const vector<double> &dzeta_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:98` (static double dadt_hs_cpp(const HardChainState &hc_state, const vector<double> &dzeta_dt) {)
 
 **LaTeX source**
 
@@ -1138,7 +1138,7 @@ $$
 - Description: Provides a supporting relation used in hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:654`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:63` (double hs_contact_value_cpp(double pair_diameter, double zeta2, double zeta3) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:63` (double hs_contact_value_cpp(double pair_diameter, double zeta2, double zeta3) {)
 
 **LaTeX source**
 
@@ -1159,7 +1159,7 @@ $$
 - Description: Provides the density differential of the hard-sphere contact value.
 - Change note: Renamed and re-homed so the contact-value density differential sits directly below the owning contact-value relation.
 - LaTeX: `docs/latex/equations.tex:665`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:172` (double hs_contact_density_derivative_cpp(double pair_diameter, double zeta2, double zeta3) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:172` (double hs_contact_density_derivative_cpp(double pair_diameter, double zeta2, double zeta3) {)
 
 **LaTeX source**
 
@@ -1218,7 +1218,7 @@ $$
 - Description: Provides the composition differential of the hard-sphere contact value.
 - Change note: Renamed and re-homed so the contact-value composition differential sits directly below the owning contact-value relation.
 - LaTeX: `docs/latex/equations.tex:695`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:194` (double hs_contact_composition_derivative_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:194` (double hs_contact_composition_derivative_cpp()
 
 **LaTeX source**
 
@@ -1255,7 +1255,7 @@ $$
 - Description: Provides the temperature differential of the hard-sphere contact value.
 - Change note: Renamed and re-homed so the contact-value temperature differential sits directly below the owning contact-value relation.
 - LaTeX: `docs/latex/equations.tex:714`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:179` (double hs_contact_time_derivative_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:179` (double hs_contact_time_derivative_cpp()
 
 **LaTeX source**
 
@@ -1298,7 +1298,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 - LaTeX: `docs/latex/equations.tex:742`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1319,7 +1319,7 @@ $$
 - Description: Provides a differential relation needed for dispersion contribution calculations.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:753`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1350,7 +1350,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Mapped manually to the composition derivative of \(C_1\).
 - LaTeX: `docs/latex/equations.tex:769`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1377,7 +1377,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:785`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -1398,7 +1398,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Mapped by appendix sequence as the first dispersion composition derivative moment.
 - LaTeX: `docs/latex/equations.tex:796`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1425,7 +1425,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:812`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:562` (MixtureState mixture_state_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs, bool include_dt) {)
 
 **LaTeX source**
 
@@ -1446,7 +1446,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Mapped by appendix sequence as the second dispersion composition derivative moment.
 - LaTeX: `docs/latex/equations.tex:823`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1473,7 +1473,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:839`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1494,7 +1494,7 @@ $$
 - Description: Provides a differential relation needed for dispersion contribution calculations.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:850`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1515,7 +1515,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:861`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1542,7 +1542,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:877`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1563,7 +1563,7 @@ $$
 - Description: Provides a differential relation needed for dispersion contribution calculations.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:888`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1584,7 +1584,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:899`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1611,7 +1611,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:915`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1632,7 +1632,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:926`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1659,7 +1659,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:942`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:13` (DispersionPolynomialState dispersion_polynomials_cpp(double m_avg, double eta) {)
 
 **LaTeX source**
 
@@ -1680,7 +1680,7 @@ $$
 - Description: Provides a supporting relation used in dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:953`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -1709,7 +1709,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Mass-action site-fraction relation from SAFT association theory; exact numbered equation unavailable in the local PDF set.
 - LaTeX: `docs/latex/equations.tex:974`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:25` (static vector<double> association_site_fractions_cpp(vector<double> XA_guess, vector<double> delta_ij, double den, vector<double> x) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:25` (static vector<double> association_site_fractions_cpp(vector<double> XA_guess, vector<double> delta_ij, double den, vector<double> x) {)
 
 **LaTeX source**
 
@@ -1744,7 +1744,7 @@ $$
 - Description: Provides a differential relation needed for association contribution calculations.
 - Change note: Site-fraction density derivative closure used in association compressibility calculations; exact numbered reference unavailable locally.
 - LaTeX: `docs/latex/equations.tex:992`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:212` (static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dt, vector<double> x) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:212` (static vector<double> association_site_fraction_dt_cpp(vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dt, vector<double> x) {)
 
 **LaTeX source**
 
@@ -1787,7 +1787,7 @@ $$
 - Description: Provides a differential relation needed for association contribution calculations.
 - Change note: Site-fraction composition derivative closure from SAFT association machinery; local progression PDFs do not provide this as a numbered equation.
 - LaTeX: `docs/latex/equations.tex:1014`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:238` (static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:238` (static vector<double> association_site_fraction_dx_cpp(vector<int> assoc_num, vector<double> delta_ij, double den, vector<double> XA, vector<double> ddelta_dx, vector<double> x) {)
 
 **LaTeX source**
 
@@ -1840,7 +1840,7 @@ $$
 - Description: Provides a supporting relation used in association contribution.
 - Change note: Component density relation used with association equations; no directly numbered counterpart found in local Chapman-accessible sources.
 - LaTeX: `docs/latex/equations.tex:1043`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
 
 **LaTeX source**
 
@@ -1863,7 +1863,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Association strength definition used in SAFT implementations; exact numbered Chapman equation not available in local PDFs.
 - LaTeX: `docs/latex/equations.tex:1057`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:296` (AssociationSetup association_setup_cpp(const vector<double> &x, const add_args &cppargs, const vector<double> &s_ij, const vector<double> &ghs, double t) {)
 
 **LaTeX source**
 
@@ -1884,7 +1884,7 @@ $$
 - Description: Defines the density differential of the association strength term.
 - Change note: Re-homed under the association-strength definition so the \(\Delta^{A_iB_j}\) density derivative stays local to its owning baseline.
 - LaTeX: `docs/latex/equations.tex:1068`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:333` (static vector<double> association_site_fraction_density_terms_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:333` (static vector<double> association_site_fraction_density_terms_cpp()
 
 **LaTeX source**
 
@@ -1905,7 +1905,7 @@ $$
 - Description: Defines the composition differential of the association strength term.
 - Change note: Re-homed under the association-strength definition so the \(\Delta^{A_iB_j}\) composition derivative stays local to its owning baseline.
 - LaTeX: `docs/latex/equations.tex:1079`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:366` (static vector<double> association_site_fraction_composition_terms_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:366` (static vector<double> association_site_fraction_composition_terms_cpp()
 
 **LaTeX source**
 
@@ -1938,7 +1938,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1102`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:9` (double dh_kappa_cpp(double den, double t, double eps, double q2_sum) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:9` (double dh_kappa_cpp(double den, double t, double eps, double q2_sum) {)
 
 **LaTeX source**
 
@@ -1959,7 +1959,7 @@ $$
 - Description: Provides the explicit density derivative of the Debye screening parameter in debye and huckel electrolyte term contribution.
 - Change note: Re-homed under the screening-parameter definition so the \(\kappa\) density derivative is owned locally.
 - LaTeX: `docs/latex/equations.tex:1113`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:9` (double dh_kappa_cpp(double den, double t, double eps, double q2_sum) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:9` (double dh_kappa_cpp(double den, double t, double eps, double q2_sum) {)
 
 **LaTeX source**
 
@@ -2038,7 +2038,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Re-homed under the screening-parameter definition so the \(\kappa\) composition differential is owned locally.
 - LaTeX: `docs/latex/equations.tex:1153`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:23` (IonIntermediateState ion_intermediate_state_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:23` (IonIntermediateState ion_intermediate_state_cpp()
 
 **LaTeX source**
 
@@ -2115,7 +2115,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Mapped manually to the ion-size function definition in the concentration-dependent dielectric derivation.
 - LaTeX: `docs/latex/equations.tex:1194`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:16` (double dh_chi_cpp(double kappa, double diameter) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:16` (double dh_chi_cpp(double kappa, double diameter) {)
 
 **LaTeX source**
 
@@ -2136,7 +2136,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1205`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:16` (double dh_chi_cpp(double kappa, double diameter) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:16` (double dh_chi_cpp(double kappa, double diameter) {)
 
 **LaTeX source**
 
@@ -2157,7 +2157,7 @@ $$
 - Description: Provides the explicit density derivative of the Debye-Huckel \(\chi_i\) function.
 - Change note: Re-homed under the finite-size-correction definition so the \(\chi_i\) density derivative is owned locally.
 - LaTeX: `docs/latex/equations.tex:1216`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:16` (double dh_chi_cpp(double kappa, double diameter) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:16` (double dh_chi_cpp(double kappa, double diameter) {)
 
 **LaTeX source**
 
@@ -2182,7 +2182,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Re-homed under the finite-size-correction definition so the \(\chi_i\) composition differential is owned locally.
 - LaTeX: `docs/latex/equations.tex:1229`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:23` (IonIntermediateState ion_intermediate_state_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:23` (IonIntermediateState ion_intermediate_state_cpp()
 
 **LaTeX source**
 
@@ -2261,7 +2261,7 @@ $$
 - Description: Provides the selectable Born-diameter rule used in born electrolyte term contribution.
 - Change note: Groups the repeated-left-hand-side Born-diameter setup equations into one visible case set so the selectable diameter definition is documented as one variable with alternative parameterization choices.
 - LaTeX: `docs/latex/equations.tex:1275`
-- C++: `src/epcsaft/native/model/parameter_setup.cpp:467` (double ion_born_radius_cpp(int i, double t, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/model/parameter_setup.cpp:467` (double ion_born_radius_cpp(int i, double t, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2296,7 +2296,7 @@ $$
 - Description: Provides a supporting relation used in born electrolyte term contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1295`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
 
 **LaTeX source**
 
@@ -2319,7 +2319,7 @@ $$
 - Description: Provides a supporting relation used in born electrolyte term contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1309`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
 
 **LaTeX source**
 
@@ -2340,7 +2340,7 @@ $$
 - Description: Provides a differential relation needed for born electrolyte term contribution calculations.
 - Change note: Re-homed under the shell-shift definition so the \(\Delta d_i\) composition differential is owned locally.
 - LaTeX: `docs/latex/equations.tex:1320`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
 
 **LaTeX source**
 
@@ -2367,7 +2367,7 @@ $$
 - Description: Provides the base inverse-diameter term used in the modular Born Helmholtz expression.
 - Change note: Names the base Born inverse-diameter contribution explicitly so the modular Born sum can reference a consistent symbol family.
 - LaTeX: `docs/latex/equations.tex:1336`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
 
 **LaTeX source**
 
@@ -2394,7 +2394,7 @@ $$
 - Description: Provides the SSM inverse-diameter correction used in the modular Born Helmholtz expression.
 - Change note: Restored as its own named option term because the SSM and DS contributions are distinct quantities rather than alternative definitions of one variable.
 - LaTeX: `docs/latex/equations.tex:1352`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
 
 **LaTeX source**
 
@@ -2425,7 +2425,7 @@ $$
 - Description: Provides the DS inverse-diameter correction used in the modular Born Helmholtz expression.
 - Change note: Restored as its own named option term because the SSM and DS contributions are distinct quantities rather than alternative definitions of one variable.
 - LaTeX: `docs/latex/equations.tex:1370`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:14` (BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {)
 
 **LaTeX source**
 
@@ -2456,7 +2456,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for residual helmholz energy.
 - Change note: No explicit citation on this equation block in the source file.
 - LaTeX: `docs/latex/equations.tex:1390`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:1555` (AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:1555` (AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2477,7 +2477,7 @@ $$
 - Description: Provides the total temperature differential of the residual Helmholtz energy.
 - Change note: Moved here from the removed standalone temperature-differential section so one downstream total-\(d\tilde a^\mathrm{res}/dT\) summary relation remains available.
 - LaTeX: `docs/latex/equations.tex:1402`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:3297` (ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:3297` (ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2506,7 +2506,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1418`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:442` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:442` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2537,7 +2537,7 @@ $$
 - Description: Provides the density differential of the hard-chain Helmholtz contribution.
 - Change note: Moved back under the hard-chain Helmholtz contribution so Section 4 owns all equations carrying the hard-chain contribution label.
 - LaTeX: `docs/latex/equations.tex:1435`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:251` (double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:251` (double dadrho_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2568,7 +2568,7 @@ $$
 - Description: Provides the composition differential of the hard-chain Helmholtz contribution.
 - Change note: Moved back under the hard-chain Helmholtz contribution so Section 4 owns all equations carrying the hard-chain contribution label.
 - LaTeX: `docs/latex/equations.tex:1451`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:274` (ContributionDadxResult dadx_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:274` (ContributionDadxResult dadx_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2603,7 +2603,7 @@ $$
 - Description: Provides the temperature differential of the hard-chain Helmholtz contribution.
 - Change note: Moved back under the hard-chain Helmholtz contribution so Section 4 owns all equations carrying the hard-chain contribution label.
 - LaTeX: `docs/latex/equations.tex:1469`
-- C++: `src/epcsaft/native/eos/contributions/hard_chain.cpp:263` (double dadt_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &dzeta_dt, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/hard_chain.cpp:263` (double dadt_hc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const vector<double> &dzeta_dt, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2636,7 +2636,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1488`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:453` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:453` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2657,7 +2657,7 @@ $$
 - Description: Provides the density differential of the dispersion Helmholtz contribution.
 - Change note: Moved back under the dispersion Helmholtz contribution so Section 4 owns all equations carrying the dispersion contribution label.
 - LaTeX: `docs/latex/equations.tex:1500`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:41` (double dadrho_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:41` (double dadrho_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion) {)
 
 **LaTeX source**
 
@@ -2688,7 +2688,7 @@ $$
 - Description: Provides the composition differential of the dispersion Helmholtz contribution.
 - Change note: Moved back under the dispersion Helmholtz contribution so Section 4 owns all equations carrying the dispersion contribution label.
 - LaTeX: `docs/latex/equations.tex:1516`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:63` (ContributionDadxResult dadx_disp_cpp(const MixtureState &thermo, const HardChainState &hc_state, const DispersionPolynomialState &dispersion, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2719,7 +2719,7 @@ $$
 - Description: Provides the temperature differential of the dispersion Helmholtz contribution.
 - Change note: Moved back under the dispersion Helmholtz contribution so Section 4 owns all equations carrying the dispersion contribution label.
 - LaTeX: `docs/latex/equations.tex:1532`
-- C++: `src/epcsaft/native/eos/contributions/dispersion.cpp:47` (double dadt_disp_cpp(const MixtureState &thermo, double deta_dt, double t, const DispersionPolynomialState &dispersion) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/dispersion.cpp:47` (double dadt_disp_cpp(const MixtureState &thermo, double deta_dt, double t, const DispersionPolynomialState &dispersion) {)
 
 **LaTeX source**
 
@@ -2750,7 +2750,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Association Helmholtz form is traced to Chapman/Wertheim SAFT association theory, but the exact numbered equation is not present in the local progression PDFs.
 - LaTeX: `docs/latex/equations.tex:1550`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:501` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:501` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2771,7 +2771,7 @@ $$
 - Description: Provides the density differential of the association Helmholtz contribution.
 - Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
 - LaTeX: `docs/latex/equations.tex:1562`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:502` (double dadrho_assoc_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:502` (double dadrho_assoc_cpp()
 
 **LaTeX source**
 
@@ -2794,7 +2794,7 @@ $$
 - Description: Provides the composition differential of the association Helmholtz contribution.
 - Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
 - LaTeX: `docs/latex/equations.tex:1574`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:564` (ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:564` (ContributionDadxResult dadx_assoc_cpp(const MixtureState &thermo, const HardChainState &hc_state, const AssociationIntermediateState &assoc_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2827,7 +2827,7 @@ $$
 - Description: Provides the analytical temperature differential of the association Helmholtz contribution.
 - Change note: Moved back under the association Helmholtz contribution so Section 4 owns all equations carrying the association contribution label.
 - LaTeX: `docs/latex/equations.tex:1591`
-- C++: `src/epcsaft/native/eos/contributions/association.cpp:552` (double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/association.cpp:552` (double dadt_assoc_cpp(const AssociationIntermediateState &assoc_state, const vector<double> &x) {)
 
 **LaTeX source**
 
@@ -2858,7 +2858,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1609`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:948` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:948` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 
@@ -2879,7 +2879,7 @@ $$
 - Description: Provides the explicit density differential of the Debye-Huckel Helmholtz contribution in chain-rule form.
 - Change note: Moved back under the Debye-Huckel Helmholtz contribution so Section 4 owns all equations carrying the Debye-Huckel contribution label.
 - LaTeX: `docs/latex/equations.tex:1621`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:79` (double dadrho_ion_cpp(double t, const IonIntermediateState &ion_state) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:79` (double dadrho_ion_cpp(double t, const IonIntermediateState &ion_state) {)
 
 **LaTeX source**
 
@@ -2914,7 +2914,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Moved back under the Debye-Huckel Helmholtz contribution so Section 4 owns all equations carrying the Debye-Huckel contribution label.
 - LaTeX: `docs/latex/equations.tex:1639`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:104` (ContributionDadxResult dadx_ion_cpp(const IonIntermediateState &ion_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:104` (ContributionDadxResult dadx_ion_cpp(const IonIntermediateState &ion_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2975,7 +2975,7 @@ $$
 - Description: Provides the temperature differential of the Debye-Huckel Helmholtz contribution.
 - Change note: Moved back under the Debye-Huckel Helmholtz contribution so Section 4 owns all equations carrying the Debye-Huckel contribution label.
 - LaTeX: `docs/latex/equations.tex:1670`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:87` (double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:87` (double dadt_ion_cpp(const IonIntermediateState &ion_state, double t, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3002,7 +3002,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for born electrolyte term contribution.
 - Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 - LaTeX: `docs/latex/equations.tex:1686`
-- C++: `src/epcsaft/native/eos/residual_helmholtz.cpp:1021` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_helmholtz.cpp:1021` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 
@@ -3039,7 +3039,7 @@ $$
 - Description: Provides the density differential of the Born Helmholtz contribution.
 - Change note: Moved back under the Born Helmholtz contribution so Section 4 owns all equations carrying the Born contribution label.
 - LaTeX: `docs/latex/equations.tex:1706`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:211` (double dadrho_born_cpp() {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:211` (double dadrho_born_cpp() {)
 
 **LaTeX source**
 
@@ -3060,7 +3060,7 @@ $$
 - Description: Provides a differential relation needed for born electrolyte term contribution calculations.
 - Change note: Moved back under the Born Helmholtz contribution so Section 4 owns all equations carrying the Born contribution label.
 - LaTeX: `docs/latex/equations.tex:1717`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:234` (ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:234` (ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3105,7 +3105,7 @@ $$
 - Description: Provides a differential relation needed for born electrolyte term contribution calculations.
 - Change note: Moved back under the Born Helmholtz contribution so Section 4 owns all equations carrying the Born contribution label.
 - LaTeX: `docs/latex/equations.tex:1740`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:234` (ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:234` (ContributionDadxResult dadx_born_cpp(const BornIntermediateState &born_state, double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3190,7 +3190,7 @@ $$
 - Description: Provides the temperature differential of the Born Helmholtz contribution.
 - Change note: Moved back under the Born Helmholtz contribution so Section 4 owns all equations carrying the Born contribution label.
 - LaTeX: `docs/latex/equations.tex:1783`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:216` (double dadt_born_cpp(double t, const BornIntermediateState &born_state) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:216` (double dadt_born_cpp(double t, const BornIntermediateState &born_state) {)
 
 **LaTeX source**
 
@@ -3241,7 +3241,7 @@ $$
 - Description: Defines the set of active Born subterms used in the modular Helmholtz expression.
 - Change note: Documents the current option-driven Born-term set directly rather than the legacy version naming.
 - LaTeX: `docs/latex/equations.tex:1812`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:168` (BornIntermediateState born_intermediate_state_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:168` (BornIntermediateState born_intermediate_state_cpp()
 
 **LaTeX source**
 
@@ -3278,7 +3278,7 @@ $$
 - Description: Defines the medium assignment used by each active Born subterm in the modular Helmholtz expression.
 - Change note: Makes the bulk-vs-ion medium choice explicit for the modular Born documentation.
 - LaTeX: `docs/latex/equations.tex:1831`
-- C++: `src/epcsaft/native/eos/contributions/born.cpp:168` (BornIntermediateState born_intermediate_state_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/born.cpp:168` (BornIntermediateState born_intermediate_state_cpp()
 
 **LaTeX source**
 
@@ -3311,7 +3311,7 @@ $$
 - Description: Provides a supporting relation used in pressure (compressibility factor).
 - Change note: Mapped to Eq. (A.24) and extended here by adding association, Debye-Huckel, and Born compressibility contributions.
 - LaTeX: `docs/latex/equations.tex:1860`
-- C++: `src/epcsaft/native/eos/compressibility.cpp:66` (CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/compressibility.cpp:66` (CompressibilityFactorResult compressibility_factor_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3342,7 +3342,7 @@ $$
 - Description: Gives the generic contribution compressibility bridge identity in compressibility factor.
 - Change note: Replaces the five redundant contribution-specific bridge equations with one generic \(Z^\alpha\) form covering \(\alpha\in\{hc,disp,assoc,DH,Born\}\).
 - LaTeX: `docs/latex/equations.tex:1876`
-- C++: `src/epcsaft/native/eos/compressibility.cpp:53` (ScalarContributionTerms compressibility_terms_from_dadrho_cpp(const DadrhoResult &result) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/compressibility.cpp:53` (ScalarContributionTerms compressibility_terms_from_dadrho_cpp(const DadrhoResult &result) {)
 
 **LaTeX source**
 
@@ -3375,7 +3375,7 @@ $$
 - Description: Gives a chemical-potential contribution in chemical potential.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1897`
-- C++: `src/epcsaft/native/eos/chemical_potential.cpp:58` (ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/chemical_potential.cpp:58` (ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3396,7 +3396,7 @@ $$
 - Description: Gives a chemical-potential contribution in chemical potential.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1908`
-- C++: `src/epcsaft/native/eos/chemical_potential.cpp:6` (static vector<double> mu_contribution_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/chemical_potential.cpp:6` (static vector<double> mu_contribution_cpp()
 
 **LaTeX source**
 
@@ -3429,7 +3429,7 @@ $$
 - Description: Gives the explicit residual chemical-potential decomposition in chemical potential.
 - Change note: Written in explicit non-summation form to match the style used for the other property families in this section.
 - LaTeX: `docs/latex/equations.tex:1925`
-- C++: `src/epcsaft/native/eos/chemical_potential.cpp:58` (ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/chemical_potential.cpp:58` (ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3450,7 +3450,7 @@ $$
 - Description: Gives the generic contribution chemical-potential relation in chemical potential.
 - Change note: Replaces the five redundant contribution-specific chemical-potential equations with one generic \(\alpha\)-form covering \(\alpha\in\{hc,disp,assoc,DH,Born\}\).
 - LaTeX: `docs/latex/equations.tex:1936`
-- C++: `src/epcsaft/native/eos/chemical_potential.cpp:20` (static vector<double> mu_hc_cpp(const CompositionContributionResult &composition) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/chemical_potential.cpp:20` (static vector<double> mu_hc_cpp(const CompositionContributionResult &composition) {)
 
 **LaTeX source**
 
@@ -3495,7 +3495,7 @@ $$
 - Description: Gives the total fugacity-coefficient relation in fugacity coefficient.
 - Change note: Mapped manually to the residual-chemical-potential form used in the PC-SAFT appendix.
 - LaTeX: `docs/latex/equations.tex:1962`
-- C++: `src/epcsaft/native/eos/fugacity.cpp:88` (FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/fugacity.cpp:88` (FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3532,7 +3532,7 @@ $$
 - Description: Gives the explicit fugacity-coefficient decomposition in fugacity coefficient.
 - Change note: Written in explicit non-summation form to match the contribution-by-contribution structure used throughout this section.
 - LaTeX: `docs/latex/equations.tex:1983`
-- C++: `src/epcsaft/native/eos/fugacity.cpp:88` (FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/fugacity.cpp:88` (FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3573,7 +3573,7 @@ $$
 - Description: Gives the generic contribution fugacity-coefficient relation in fugacity coefficient.
 - Change note: Uses only the explicit $Z^\alpha$ allocation requested for the contribution-resolved fugacity-coefficient terms.
 - LaTeX: `docs/latex/equations.tex:2004`
-- C++: `src/epcsaft/native/eos/fugacity.cpp:38` (static vector<double> lnfug_contribution_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/fugacity.cpp:38` (static vector<double> lnfug_contribution_cpp()
 
 **LaTeX source**
 
@@ -3606,7 +3606,7 @@ $$
 - Description: Gives the near-ideal approximation for a contribution fugacity coefficient in fugacity coefficient.
 - Change note: Retained explicitly as an approximation only, using the $Z\rightarrow 1$ limit requested for documentation.
 - LaTeX: `docs/latex/equations.tex:2021`
-- C++: `src/epcsaft/native/eos/fugacity.cpp:14` (static double stable_logz_over_zminus1(double Z) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/fugacity.cpp:14` (static double stable_logz_over_zminus1(double Z) {)
 
 **LaTeX source**
 
@@ -3643,7 +3643,7 @@ $$
 - Description: Gives the symmetric-reference activity-coefficient definition in activity coefficient.
 - Change note: Added explicitly in non-log form so the activity section mirrors the fugacity-coefficient organization.
 - LaTeX: `docs/latex/equations.tex:2047`
-- C++: `src/epcsaft/native/eos/activity.cpp:60` (vector<double> miac_gamma_vector_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:60` (vector<double> miac_gamma_vector_cpp()
 
 **LaTeX source**
 
@@ -3668,7 +3668,7 @@ $$
 - Description: Gives the symmetric-reference logarithmic activity-coefficient definition in activity coefficient.
 - Change note: Expressed only in terms of fugacity coefficients, as requested for the activity section.
 - LaTeX: `docs/latex/equations.tex:2060`
-- C++: `src/epcsaft/native/eos/activity.cpp:60` (vector<double> miac_gamma_vector_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:60` (vector<double> miac_gamma_vector_cpp()
 
 **LaTeX source**
 
@@ -3699,7 +3699,7 @@ $$
 - Description: Gives the infinite-dilution activity-coefficient definition in activity coefficient.
 - Change note: Added explicitly in non-log form for ions and solutes referenced to infinite dilution.
 - LaTeX: `docs/latex/equations.tex:2077`
-- C++: `src/epcsaft/native/eos/activity.cpp:468` (ActivityCoefficientNative activity_coefficient_values_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:468` (ActivityCoefficientNative activity_coefficient_values_cpp()
 
 **LaTeX source**
 
@@ -3724,7 +3724,7 @@ $$
 - Description: Gives the infinite-dilution logarithmic activity-coefficient definition in activity coefficient.
 - Change note: Expressed only in terms of fugacity coefficients, as requested for the activity section.
 - LaTeX: `docs/latex/equations.tex:2090`
-- C++: `src/epcsaft/native/eos/activity.cpp:468` (ActivityCoefficientNative activity_coefficient_values_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:468` (ActivityCoefficientNative activity_coefficient_values_cpp()
 
 **LaTeX source**
 
@@ -3753,7 +3753,7 @@ $$
 - Description: Gives the explicit infinite-dilution activity-coefficient decomposition in activity coefficient.
 - Change note: Written in explicit non-summation form to mirror the fugacity-coefficient decomposition.
 - LaTeX: `docs/latex/equations.tex:2107`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -3794,7 +3794,7 @@ $$
 - Description: Gives the generic contribution activity-coefficient definition in activity coefficient.
 - Change note: Defined only from contribution fugacity coefficients, not from chemical-potential expressions.
 - LaTeX: `docs/latex/equations.tex:2128`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -3819,7 +3819,7 @@ $$
 - Description: Gives the generic logarithmic contribution activity-coefficient definition in activity coefficient.
 - Change note: Written only in terms of contribution fugacity coefficients, consistent with the requested section logic.
 - LaTeX: `docs/latex/equations.tex:2141`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -3850,7 +3850,7 @@ $$
 - Description: Gives the mean-ionic infinite-dilution activity coefficient in activity coefficient.
 - Change note: Added in non-log form to parallel the logarithmic mean-ionic relation already used in electrolyte work.
 - LaTeX: `docs/latex/equations.tex:2158`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -3881,7 +3881,7 @@ $$
 - Description: Gives the logarithmic mean-ionic infinite-dilution activity coefficient in activity coefficient.
 - Change note: Written explicitly in the standard stoichiometric-weighted logarithmic form.
 - LaTeX: `docs/latex/equations.tex:2174`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -3906,7 +3906,7 @@ $$
 - Description: Gives the logarithmic contribution mean-ionic activity coefficient in activity coefficient.
 - Change note: Contribution form written directly from the contribution activity-coefficient terms.
 - LaTeX: `docs/latex/equations.tex:2187`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -3935,7 +3935,7 @@ $$
 - Description: Provides a differential relation needed for entropy calculations.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:2208`
-- C++: `src/epcsaft/native/eos/residual_properties.cpp:4` (double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_properties.cpp:4` (double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3977,7 +3977,7 @@ $$
 - Description: Provides a differential relation needed for entropy calculations.
 - Change note: Mapped manually to the residual-entropy temperature-derivative form.
 - LaTeX: `docs/latex/equations.tex:2232`
-- C++: `src/epcsaft/native/eos/residual_properties.cpp:18` (double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_properties.cpp:18` (double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -4021,7 +4021,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for gibbs free energy.
 - Change note: Mapped manually to the residual Gibbs relation in Helmholtz/compressibility form.
 - LaTeX: `docs/latex/equations.tex:2256`
-- C++: `src/epcsaft/native/eos/residual_properties.cpp:11` (double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/residual_properties.cpp:11` (double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -4042,7 +4042,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for gibbs free energy.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:2269`
-- C++: `src/epcsaft/native/eos/activity.cpp:104` (vector<double> gsolv_values_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:104` (vector<double> gsolv_values_cpp()
 
 **LaTeX source**
 
@@ -4063,7 +4063,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for gibbs free energy.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:2281`
-- C++: `src/epcsaft/native/eos/activity.cpp:104` (vector<double> gsolv_values_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:104` (vector<double> gsolv_values_cpp()
 
 **LaTeX source**
 
@@ -4208,7 +4208,7 @@ $$
 - Description: Gives the mean-ionic activity-coefficient conversion from cation and anion activity coefficients.
 - Change note: Added to gather the general mean-ionic property conversions in one dedicated section.
 - LaTeX: `docs/latex/equations.tex:2360`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -4241,7 +4241,7 @@ $$
 - Description: Gives the mean-ionic activity-coefficient conversion from mole-fraction to molality basis.
 - Change note: Kept as the primary mole-fraction to molality conversion for mean-ionic activity coefficients.
 - LaTeX: `docs/latex/equations.tex:2380`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -4266,7 +4266,7 @@ $$
 - Description: Gives the logarithmic mean-ionic activity-coefficient conversion from mole-fraction to molality basis.
 - Change note: Added as the direct log-form companion to the existing salt-basis \(\gamma_{\pm}\) conversion.
 - LaTeX: `docs/latex/equations.tex:2393`
-- C++: `src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/activity.cpp:409` (ActivityCoefficientNative activity_coefficient_values_impl_cpp()
 
 **LaTeX source**
 
@@ -4301,7 +4301,7 @@ $$
 - Description: Gives the compact paper-direct Debye-Huckel density differential retained for traceability.
 - Change note: Moved out of the main density-differential section because the active document now shows the explicit \(\kappa\)- and \(\chi_i\)-based chain-rule construction there.
 - LaTeX: `docs/latex/equations.tex:2417`
-- C++: `src/epcsaft/native/eos/contributions/ion.cpp:79` (double dadrho_ion_cpp(double t, const IonIntermediateState &ion_state) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/contributions/ion.cpp:79` (double dadrho_ion_cpp(double t, const IonIntermediateState &ion_state) {)
 
 **LaTeX source**
 

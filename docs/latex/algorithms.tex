@@ -22,7 +22,7 @@ navigation artifacts; update this file and owner comments first.
 % Dependency: None
 % Derivative backend: Route-provided exact gradient and Jacobian callbacks
 % Solver role: Shared interface for Ipopt-owned constrained NLP routes
-% Implementation owner: src/epcsaft/native/equilibrium/core/nlp_problem.h
+% Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h
 % Validation: packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py
 % Capability key: native_nlp_problem_contract
 % Description: Defines the common native NLP shape consumed by the Ipopt adapter.
@@ -40,7 +40,7 @@ Ipopt-backed production routes.
 % Dependency: Ipopt
 % Derivative backend: Route-provided exact gradient and Jacobian callbacks
 % Solver role: Maps NlpProblem into Ipopt::TNLP and returns IpoptSolveResult
-% Implementation owner: src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp
+% Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp
 % Validation: packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py
 % Capability key: native_ipopt_equilibrium_nlp
 % Description: Bridges the package NLP contract to Ipopt without owning route equations.
@@ -145,7 +145,7 @@ LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
 % Dependency: None
 % Derivative backend: EOS/provider chemical-potential and free-energy derivatives as required by the selected trial problem
 % Solver role: Neutral tangent-plane stability evaluator for phase discovery and postsolve certification
-% Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
+% Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
 % Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 % Capability key: internal:neutral_tpd_stability
 % Description: Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance.
@@ -166,7 +166,7 @@ lower-free-energy candidates and mass-balance incompleteness.
 % Dependency: None
 % Derivative backend: EOS/provider chemical-potential and free-energy derivatives through pressure-root phase-block evaluation
 % Solver role: Refines deterministic TPD starts through continuous composition-space minimization with trial density/volume from the EOS pressure root
-% Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h
+% Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h
 % Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py
 % Capability key: internal:neutral_continuous_tpd_minimization
 % Description: Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening.
@@ -317,7 +317,7 @@ same tolerance as the exact solve.
 % Dependency: Ceres
 % Derivative backend: Native residual Jacobian for supported target families
 % Solver role: Native least-squares pure-neutral parameter regression
-% Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp
+% Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp
 % Validation: packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api
 % Capability key: regression:pure_neutral
 % Description: Fits currently supported pure-neutral parameter targets through native Ceres.
@@ -336,7 +336,7 @@ optimizer for association-energy \verb|e_assoc| or association-volume
 % Dependency: Ceres
 % Derivative backend: CppAD implicit residual Jacobian for supported pure-ion targets
 % Solver role: Native least-squares pure-ion parameter regression
-% Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp
+% Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp
 % Validation: packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py
 % Capability key: regression:pure_ion
 % Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
@@ -354,7 +354,7 @@ native target-kind registry knows their labels.
 % Dependency: Ceres
 % Derivative backend: CppAD-backed binary k_ij residual Jacobian
 % Solver role: Native least-squares constant-k_ij binary regression
-% Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp
+% Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp
 % Validation: packages/epcsaft-regression/tests/native/test_binary.py
 % Capability key: regression:binary_pair
 % Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.

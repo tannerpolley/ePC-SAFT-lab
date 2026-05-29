@@ -8,12 +8,12 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOTS = (
-    REPO_ROOT / "src",
+    REPO_ROOT / "packages" / "epcsaft" / "src",
     REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src",
     REPO_ROOT / "packages" / "epcsaft-regression" / "src",
 )
 EXPECTED_MODULE_ROOTS = {
-    "epcsaft": REPO_ROOT / "src" / "epcsaft",
+    "epcsaft": REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft",
     "epcsaft_equilibrium": REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium",
     "epcsaft_regression": REPO_ROOT / "packages" / "epcsaft-regression" / "src" / "epcsaft_regression",
 }

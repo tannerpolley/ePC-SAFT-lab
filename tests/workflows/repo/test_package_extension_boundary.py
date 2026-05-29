@@ -7,6 +7,7 @@ import epcsaft_equilibrium
 import epcsaft_regression
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+PROVIDER_NATIVE_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft" / "native"
 
 CONTRACTS = {
     "provider": REPO_ROOT / "docs" / "contracts" / "provider_api_v1.md",
@@ -152,12 +153,16 @@ def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() ->
 def test_provider_owns_pure_neutral_parameter_derivative_native_symbol() -> None:
     definition_fragment = "CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp("
     definitions: list[str] = []
-    for root in (REPO_ROOT / "src" / "epcsaft" / "native", REPO_ROOT / "packages"):
+    for root in (
+        PROVIDER_NATIVE_ROOT,
+        REPO_ROOT / "packages" / "epcsaft-equilibrium",
+        REPO_ROOT / "packages" / "epcsaft-regression",
+    ):
         for path in sorted(root.rglob("*.cpp")):
             if definition_fragment in _read(path):
                 definitions.append(path.relative_to(REPO_ROOT).as_posix())
 
-    assert definitions == ["src/epcsaft/native/eos/pure_neutral_parameter_derivatives.cpp"]
+    assert definitions == ["packages/epcsaft/src/epcsaft/native/eos/pure_neutral_parameter_derivatives.cpp"]
 
 
 def test_issue_tracker_and_downstream_docs_are_transfer_aware() -> None:

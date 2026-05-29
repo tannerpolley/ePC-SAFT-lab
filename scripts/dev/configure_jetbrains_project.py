@@ -58,7 +58,7 @@ TRANSIENT_PATHS: tuple[str, ...] = (
 # Keep tests under the module content root, not as a source root. Marking
 # tests as a source root makes tests/api, tests/native, and tests/support look
 # like top-level namespace packages in IntelliJ.
-PROVIDER_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (("src", False),)
+PROVIDER_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (("packages/epcsaft/src", False),)
 
 
 @dataclass(frozen=True)
@@ -77,7 +77,7 @@ CANONICAL_PYTHON_MODULES: tuple[ModuleSpec, ...] = (
         name=PROVIDER_MODULE_NAME,
         iml_path=IDEA_DIR / f"{PROVIDER_MODULE_NAME}.iml",
         module_type="PYTHON_MODULE",
-        content_root="",
+        content_root="packages/epcsaft",
         source_roots=PROVIDER_SOURCE_ROOTS,
     ),
     ModuleSpec(
@@ -100,10 +100,7 @@ CANONICAL_PYTHON_MODULES: tuple[ModuleSpec, ...] = (
 
 
 def _runtime_python_modules(transient_paths: tuple[str, ...]) -> tuple[ModuleSpec, ...]:
-    return tuple(
-        replace(spec, exclude_roots=transient_paths) if spec.name == PROVIDER_MODULE_NAME else spec
-        for spec in CANONICAL_PYTHON_MODULES
-    )
+    return CANONICAL_PYTHON_MODULES
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -208,7 +205,7 @@ def _is_owned_legacy_provider_iml(path: Path) -> bool:
     manager = _find_child(module_root, "component", name="NewModuleRootManager")
     if manager is None:
         return False
-    content = _find_child(manager, "content", url=CONTENT_URL)
+    content = _find_child(manager, "content", url=_module_url("packages/epcsaft"))
     if content is None:
         return False
 
@@ -216,7 +213,7 @@ def _is_owned_legacy_provider_iml(path: Path) -> bool:
         (source.get("url"), "true" if source.get("isTestSource") == "true" else "false")
         for source in content.findall("sourceFolder")
     }
-    if source_roots != {(f"{MODULE_URL_PREFIX}/src", "false")}:
+    if source_roots != {(f"{MODULE_URL_PREFIX}/packages/epcsaft/src", "false")}:
         return False
 
     jdk = _find_child(manager, "orderEntry", type="jdk", jdkName=PYTHON_SDK_NAME, jdkType="Python SDK")

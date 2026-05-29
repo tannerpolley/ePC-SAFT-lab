@@ -26,7 +26,7 @@ change solver behavior, change public imports, or prepare releases.
   Ceres/backend, result-schema, and regression contract tests.
 - Package-local tests do not import `tests.support`; each extension package owns
   any fixtures required for its local test tree.
-- `run_pytest.py`, `src/epcsaft/runtime/capability_evidence.py`, structural
+- `run_pytest.py`, `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py`, structural
   tests, and workflow docs route extension validation through package-local
   paths.
 
@@ -66,7 +66,7 @@ change solver behavior, change public imports, or prepare releases.
 - [x] `run_pytest.py` routes `--regression`, `--equilibrium-api`,
   `--native-contracts`, `--all`, debug target prefixes, long-target guards, and
   equilibrium confidence paths to current owners.
-- [x] `src/epcsaft/runtime/capability_evidence.py` names package-local
+- [x] `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py` names package-local
   validation targets for extension-owned lanes.
 - [x] Workflow and package-architecture docs describe the package-local test
   ownership model.

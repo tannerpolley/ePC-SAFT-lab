@@ -9,11 +9,14 @@ move to extension packages after provider/native boundaries are proven.
 Package Surfaces
 ----------------
 
-``src/epcsaft/``
-    Public Python package code, pure-Python helpers, and native-extension wrappers. During the transition it still contains equilibrium and regression modules; after extraction, core provider code remains here and extension-owned workflow code moves to its owning package.
+``packages/epcsaft/src/epcsaft/``
+    Public provider package code, pure-Python helpers, and native-extension wrappers for the ``epcsaft`` distribution. The repository root is now the workspace/controller, not the provider distribution root.
+
+``packages/epcsaft-equilibrium/`` and ``packages/epcsaft-regression/``
+    Extension distributions that own their Python APIs, native modules, and package-local tests.
 
 ``tests/``
-    Package/API/native/workflow contracts. ``tests/api/`` is intentionally narrow and uses only reset public frontend objects; ``tests/native/`` owns C++/pybind contracts; ``tests/workflows/`` owns build and repository commands; shared fixtures live under ``tests/support/``. Default tests should stay fast and should not reproduce full scientific studies, benchmark scripts, regenerate plot galleries, or run long fitting/equilibrium sweeps.
+    Repository/workflow, docs/registry, integration, and cross-package governance contracts. Provider tests live under ``packages/epcsaft/tests``; extension tests live under their package-local ``tests`` trees. Default tests should stay fast and should not reproduce full scientific studies, benchmark scripts, regenerate plot galleries, or run long fitting/equilibrium sweeps.
 
 ``scripts/``
     Repository tooling only: native builds, doctor checks, validation orchestration, packaging, docs, reference-data curation, LaTeX sync, and issue triage. Analysis-specific coordinators may live under ``analyses/<category>/<short_id>/scripts/``, while figure-local generation and rendering scripts belong under ``analyses/<category>/<short_id>/figures/<figure_id>/scripts/``.
