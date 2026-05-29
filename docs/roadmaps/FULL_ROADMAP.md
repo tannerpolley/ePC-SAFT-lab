@@ -507,7 +507,20 @@ structure.
 - split extension-native ownership from provider `_core`
 - keep package docs, CI lanes, and release choreography aligned with ownership
 
-## M2 - Core
+## M2 - Python API
+
+Public Python package surface, user-facing workflow ergonomics, result schemas,
+diagnostics, examples, import stability, and package-level user experience.
+
+- keep public imports stable and generic
+- keep Python wrappers thin, typed, and aligned with native/provider contracts
+- standardize result, diagnostic, and capability payloads before public claims
+- keep examples, docs, and validation commands aligned with actual package
+  behavior
+- improve input validation and error messages without hiding missing production
+  code behind fake defaults
+
+## M3 - EOS
 
 Provider EOS/state/parameters, native SDK contract, exact derivatives,
 CppAD/implicit sensitivities, and provider-only capability claims.
@@ -521,7 +534,7 @@ CppAD/implicit sensitivities, and provider-only capability claims.
 - derivative coverage tests
 - provider-native SDK contract and capability evidence
 
-## M3 - Equilibrium
+## M4 - Equilibrium
 
 `epcsaft-equilibrium`, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase
 discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
@@ -536,7 +549,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 - native coupled reactive electrolyte LLE
 - real residual/Jacobian diagnostics
 
-## M4 - Regression
+## M5 - Regression
 
 `epcsaft-regression`, TargetDataset/result contracts, Ceres optimizer,
 parameter sensitivities, and pure/binary/electrolyte regression workflows.
@@ -549,7 +562,7 @@ parameter sensitivities, and pure/binary/electrolyte regression workflows.
 - real parameter movement tests
 - regression result schemas and capability evidence stay honest
 
-## M5 - Validation
+## M6 - Validation
 
 Executable literature benchmarks, registry evidence, capability evidence,
 docs/test proof, and release-quality validation gates.
@@ -559,7 +572,7 @@ docs/test proof, and release-quality validation gates.
 - benchmark suite proves parameter/equilibrium behavior
 - capability registries and generated docs reflect only proven workflows
 
-## M6 - Release
+## M7 - Release
 
 Downstream integration, install proofs, PyPI/release choreography, migration
 docs, and no private downstream workarounds.

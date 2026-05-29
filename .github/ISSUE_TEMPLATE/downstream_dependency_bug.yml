@@ -32,11 +32,12 @@ body:
       options:
         - M0 - Governance
         - M1 - Packages
-        - M2 - Core
-        - M3 - Equilibrium
-        - M4 - Regression
-        - M5 - Validation
-        - M6 - Release
+        - M2 - Python API
+        - M3 - EOS
+        - M4 - Equilibrium
+        - M5 - Regression
+        - M6 - Validation
+        - M7 - Release
     validations:
       required: true
   - type: textarea

@@ -12,7 +12,7 @@ clone.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments`
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
 - **Apply or remove labels**: `gh issue edit <number> --add-label "..."` or `--remove-label "..."`
-- **Assign a milestone**: `gh issue edit <number> --milestone "M3 - Equilibrium"`
+- **Assign a milestone**: `gh issue edit <number> --milestone "M4 - Equilibrium"`
 - **Close an issue**: `gh issue close <number> --comment "..."`
 
 Infer the repo from `git remote -v`. The GitHub CLI does this automatically when run inside this clone.
@@ -26,11 +26,12 @@ dashboard names:
 | --- | --- |
 | `M0 - Governance` | Roadmap hygiene, tracker setup, labels, issue templates, completion rules, GoalBuddy/project discipline, and repo-wide process gates. |
 | `M1 - Packages` | Monorepo package layout, package ownership, test relocation, provider-only build proof, extension-native boundaries, and package CI/docs/release structure. |
-| `M2 - Core` | Provider EOS/state/parameters, native SDK contract, exact derivatives, CppAD/implicit sensitivities, and provider-only capability claims. |
-| `M3 - Equilibrium` | `epcsaft-equilibrium`, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase discovery, and phase-equilibrium workflows. |
-| `M4 - Regression` | `epcsaft-regression`, TargetDataset/result contracts, Ceres optimizer, parameter sensitivities, and regression workflows. |
-| `M5 - Validation` | Executable literature benchmarks, registry evidence, capability evidence, docs/test proof, and release-quality validation gates. |
-| `M6 - Release` | Downstream integration, install proofs, PyPI/release choreography, migration docs, and no private downstream workarounds. |
+| `M2 - Python API` | Public Python package surface, user-facing workflow ergonomics, result schemas, diagnostics, examples, import stability, and package-level user experience. |
+| `M3 - EOS` | Provider EOS/state/parameters, native SDK contract, exact derivatives, CppAD/implicit sensitivities, and provider-only capability claims. |
+| `M4 - Equilibrium` | `epcsaft-equilibrium`, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase discovery, and phase-equilibrium workflows. |
+| `M5 - Regression` | `epcsaft-regression`, TargetDataset/result contracts, Ceres optimizer, parameter sensitivities, and regression workflows. |
+| `M6 - Validation` | Executable literature benchmarks, registry evidence, capability evidence, docs/test proof, and release-quality validation gates. |
+| `M7 - Release` | Downstream integration, install proofs, PyPI/release choreography, migration docs, and no private downstream workarounds. |
 
 Every GitHub issue should have exactly one milestone. If a new issue seems to
 span multiple milestones, create a tracking issue in the earliest blocking
