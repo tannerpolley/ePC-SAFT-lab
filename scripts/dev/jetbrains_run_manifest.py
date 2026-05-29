@@ -224,6 +224,13 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/dev/generate_equilibrium_activation.py",
     ),
     RunConfigSpec(
+        name="Check IntelliJ Contract",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/dev/configure_jetbrains_project.py",
+        parameters="--check",
+    ),
+    RunConfigSpec(
         name="Configure IntelliJ Runs (Dry Run)",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_MAINTENANCE,

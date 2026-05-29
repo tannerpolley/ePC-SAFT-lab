@@ -95,6 +95,7 @@ uv run python run_pytest.py tests/workflows/repo/test_workflow_entrypoints.py te
 
 When IntelliJ is ready, run the equivalent shared Services entries:
 
+- `Check IntelliJ Contract`;
 - `Configure IntelliJ Runs (Dry Run)`;
 - `Test Workflow Guards`;
 - `Doctor`;

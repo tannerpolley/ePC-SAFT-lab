@@ -117,11 +117,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Report pending changes without writing files.",
     )
     mode.add_argument(
+        "--check",
+        action="store_true",
+        help="Report pending changes and exit nonzero if metadata is not normalized.",
+    )
+    mode.add_argument(
         "--apply",
         action="store_true",
         help="Rewrite module files in place.",
     )
     return parser
+
+
+def _mode_prefix(args: argparse.Namespace) -> str:
+    if args.apply:
+        return "APPLY"
+    if args.check:
+        return "CHECK"
+    return "DRY-RUN"
 
 
 def _module_url(relative_path: str) -> str:
@@ -1128,7 +1141,7 @@ def main(argv: list[str] | None = None) -> int:
             for path in paths:
                 pending_changes += 1
                 relative_path = path.relative_to(REPO_ROOT).as_posix()
-                prefix = "APPLY" if args.apply else "DRY-RUN"
+                prefix = _mode_prefix(args)
                 print(f"{prefix} {relative_path}: delete stale shared run configuration")
                 if args.apply:
                     path.unlink()
@@ -1136,7 +1149,7 @@ def main(argv: list[str] | None = None) -> int:
         for duplicate_path in paths[1:]:
             pending_changes += 1
             relative_path = duplicate_path.relative_to(REPO_ROOT).as_posix()
-            prefix = "APPLY" if args.apply else "DRY-RUN"
+            prefix = _mode_prefix(args)
             print(f"{prefix} {relative_path}: delete duplicate shared run configuration '{name}'")
             if args.apply:
                 duplicate_path.unlink()
@@ -1154,7 +1167,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"OK {relative_name}: no changes")
             continue
         pending_changes += 1
-        prefix = "APPLY" if args.apply else "DRY-RUN"
+        prefix = _mode_prefix(args)
         for action in actions:
             print(f"{prefix} {relative_name}: {action}")
         if args.apply and proposed_text is not None:
@@ -1170,7 +1183,7 @@ def main(argv: list[str] | None = None) -> int:
         print("OK .idea/workspace.xml: no changes")
     else:
         pending_changes += 1
-        prefix = "APPLY" if args.apply else "DRY-RUN"
+        prefix = _mode_prefix(args)
         for action in workspace_actions:
             print(f"{prefix} .idea/workspace.xml: {action}")
         if args.apply and proposed_workspace_text is not None:
@@ -1188,7 +1201,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
 
         pending_changes += 1
-        prefix = "APPLY" if args.apply else "DRY-RUN"
+        prefix = _mode_prefix(args)
         for action in actions:
             print(f"{prefix} {relative_path}: {action}")
         if args.apply and proposed_text is not None:
@@ -1201,7 +1214,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"WARNING {warning}")
     if legacy_actions:
         pending_changes += 1
-        prefix = "APPLY" if args.apply else "DRY-RUN"
+        prefix = _mode_prefix(args)
         for action in legacy_actions:
             print(f"{prefix} .idea/{LEGACY_PROVIDER_MODULE_NAME}.iml: {action}")
         if args.apply and legacy_delete_path is not None:
@@ -1215,7 +1228,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
 
         pending_changes += 1
-        prefix = "APPLY" if args.apply else "DRY-RUN"
+        prefix = _mode_prefix(args)
         for action in actions:
             print(f"{prefix} {relative_path}: {action}")
         if args.apply and proposed_text is not None:
@@ -1226,6 +1239,8 @@ def main(argv: list[str] | None = None) -> int:
         print("No pending module metadata changes.")
     if warnings_found == 0:
         print("No metadata warnings.")
+    if args.check and (pending_changes or warnings_found):
+        return 1
     return 0
 
 

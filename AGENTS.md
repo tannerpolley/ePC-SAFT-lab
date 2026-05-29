@@ -117,6 +117,7 @@ Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `d
 - Read and follow `docs/agents/INTELLIJ.md` before IntelliJ-backed semantic navigation, diagnostics, refactors, durable run-configuration execution, Services dashboard maintenance, terminal MCP checks, or debugger MCP work.
 - Hard rule: use IntelliJ MCP first by default for repo work when the IDE is ready and the relevant tool is exposed.
 - Hard rule: durable scripts, tests, validation commands, build commands, docs/report commands, analysis commands, package commands, and maintenance commands must run through shared IntelliJ run configurations when a matching configuration exists or should exist.
+- Run the shared `Check IntelliJ Contract` configuration before handoff or before changing Services-sensitive workflows; it must fail rather than silently allowing `.idea`/`.run` drift.
 - Use `intellij-index` for semantic reads/search, definitions, references, implementations, hierarchy, diagnostics, formatting/import cleanup, safe refactors, and IDE synchronization.
 - Use `jetbrains-bundled` for `get_run_configurations`, `execute_run_configuration`, debugger tools, file opening, project/module/dependency inspection, file problems, and IDE-owned execution.
 - Use the `ij-debugger` skill and debugger MCP when runtime values, branch reachability, call order, stack evidence, or expression evaluation are needed.

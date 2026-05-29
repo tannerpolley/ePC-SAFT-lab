@@ -242,6 +242,9 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "delete legacy provider module" in normalizer
     assert "not deleting non-owned legacy provider module" in normalizer
     assert 'actions.append(f"set module={PROVIDER_MODULE_NAME}")' in normalizer
+    assert '"--check"' in normalizer
+    assert "def _mode_prefix" in normalizer
+    assert "if args.check and (pending_changes or warnings_found)" in normalizer
     assert "clear stale Python source-root detection paths" in normalizer
     assert "set VCS mapping to project root only" in normalizer
     assert "disable Services Run Dashboard for" in normalizer
@@ -271,6 +274,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         "packages/epcsaft-regression",
     }
     assert "Configure IntelliJ Runs (Dry Run)" in manifest
+    assert "Check IntelliJ Contract" in manifest
     assert "Sync Workspace Packages" in manifest
     assert "Check Package Imports" in manifest
     assert "Test Equilibrium Confidence" in manifest
@@ -294,6 +298,8 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "Try the relevant indexed action at least twice" in intellij_guidance
     assert "durable scripts, tests, validation commands, build commands" in combined_guidance
     assert "Do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in intellij_guidance
+    assert "Check IntelliJ Contract" in intellij_guidance
+    assert "exits nonzero" in intellij_guidance
     assert "Use shell only for" in combined_guidance
     assert "shared `.run` configs use single-level" in intellij_guidance
     assert "project/folder identity as `ePC-SAFT`" in intellij_guidance
@@ -507,6 +513,10 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     dry_run = _run_config_options(run_configs["Configure IntelliJ Runs (Dry Run)"][1])
     assert dry_run["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"
     assert dry_run["PARAMETERS"] == "--dry-run"
+
+    contract_check = _run_config_options(run_configs["Check IntelliJ Contract"][1])
+    assert contract_check["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"
+    assert contract_check["PARAMETERS"] == "--check"
 
     apply_run = _run_config_options(run_configs["Configure IntelliJ Runs (Apply)"][1])
     assert apply_run["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"

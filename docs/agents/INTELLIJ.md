@@ -89,6 +89,11 @@ Default sequence:
 4. Run the normalizer dry-run and apply configurations.
 5. Execute the new named run configuration through MCP.
 
+Before starting or handing off IntelliJ-backed work, run `Check IntelliJ
+Contract` when Services/dashboard drift would affect the task. It is the
+non-mutating gate for the repo-owned `.idea` and `.run` contract and exits nonzero
+when `Configure IntelliJ Runs (Apply)` would change anything.
+
 Do not run an equivalent ad hoc `uv run python ...` or PowerShell command for a
 durable repo workflow unless the IntelliJ run-configuration path is unavailable
 after concrete attempts or the command is still being bootstrapped into
@@ -122,8 +127,9 @@ When adding, editing, deleting, or grouping durable run configurations:
 1. edit the manifest/normalizer;
 2. run `Configure IntelliJ Runs (Dry Run)`;
 3. run `Configure IntelliJ Runs (Apply)`;
-4. verify XML/idempotence;
-5. execute the intended named configuration through MCP.
+4. run `Check IntelliJ Contract`;
+5. verify XML/idempotence;
+6. execute the intended named configuration through MCP.
 
 In the standalone `ePC-SAFT` project, shared `.run` configs use single-level
 workflow folders only: `Setup & Health`, `Build & Package`, `Validation`,
