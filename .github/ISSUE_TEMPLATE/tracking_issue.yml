@@ -8,6 +8,7 @@ body:
     attributes:
       value: |
         Use this for a slice roadmap or major tranche. A tracking issue owns the checklist of micro issues and gates for one roadmap milestone.
+        Use `docs/milestones/` for local milestone/issue navigation. Use `docs/roadmaps/` for full-scope, architecture, registry, or slice roadmap documents.
   - type: dropdown
     id: roadmap-milestone
     attributes:
@@ -29,7 +30,7 @@ body:
     attributes:
       label: Slice roadmap
       description: Path to the roadmap file this tracking issue owns.
-      placeholder: docs/roadmaps/<slice>.md
+      placeholder: docs/roadmaps/<slice>.md or docs/milestones/Mx-name/issues/NNNN-slug.md
     validations:
       required: true
   - type: dropdown

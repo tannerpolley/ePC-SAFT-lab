@@ -20,7 +20,9 @@ Infer the repo from `git remote -v`. The GitHub CLI does this automatically when
 ## Roadmap Milestones
 
 GitHub milestones mirror `docs/roadmaps/FULL_ROADMAP.md` and use short
-dashboard names:
+dashboard names. `docs/milestones/` is the local agent-facing mirror for open
+issue navigation, but GitHub Issues and the `ePC-SAFT Roadmap` Project remain
+authoritative for live state.
 
 | Milestone | Tracker meaning |
 | --- | --- |
@@ -62,6 +64,11 @@ milestone and split the later work into child issues.
   state and dashboard grouping.
 - The organization Project groups and sorts by Milestone, Package, Capability,
   Backend, Readiness, and Release target.
+- Use `docs/milestones/M*/issues/*.md` for concise local handoff context on
+  current open issues. Refresh those files from GitHub when issue scope or
+  Project fields change.
+- Keep `docs/roadmaps/` for full-scope, architecture, registry, and slice
+  roadmap documents rather than live issue mirrors.
 
 ## Pull Requests
 

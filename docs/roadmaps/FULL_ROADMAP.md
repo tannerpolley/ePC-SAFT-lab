@@ -476,6 +476,12 @@ Use the repository issue templates for tracking, micro, and gate issues, and
 use the pull request template so PRs carry issue, milestone, Project, roadmap,
 validation, and capability evidence explicitly.
 
+`docs/milestones/` is the local agent-facing mirror of the GitHub milestone
+dashboard. It mirrors open issues as concise handoff files for navigation only;
+GitHub Issues and the `ePC-SAFT Roadmap` Project remain authoritative for live
+tracker state. `docs/roadmaps/` remains the home for this full roadmap,
+architecture roadmaps, registry files, and slice plans.
+
 For generalized fluid-phase equilibrium work, use
 `docs/roadmaps/stage_by_stage_implementation_plan.md` as the GFPE-first
 execution plan. The milestones below define the package completion envelope;

@@ -163,6 +163,42 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/native/contracts/test_equilibrium_activation_capabilities.py",
     "tests/workflows/benchmarks",
 }
+MILESTONE_MIRROR_FOLDERS = {
+    "M0-governance": "M0 - Governance",
+    "M1-packages": "M1 - Packages",
+    "M2-python-api": "M2 - Python API",
+    "M3-eos": "M3 - EOS",
+    "M4-equilibrium": "M4 - Equilibrium",
+    "M5-regression": "M5 - Regression",
+    "M6-validation": "M6 - Validation",
+    "M7-release": "M7 - Release",
+}
+MILESTONE_MIRRORED_OPEN_ISSUES = {
+    145: "M4-equilibrium",
+    148: "M4-equilibrium",
+    154: "M1-packages",
+    155: "M6-validation",
+    156: "M2-python-api",
+    157: "M2-python-api",
+    158: "M3-eos",
+    159: "M6-validation",
+    160: "M7-release",
+    161: "M3-eos",
+}
+MILESTONE_FRONT_MATTER_FIELDS = {
+    "issue",
+    "title",
+    "url",
+    "state",
+    "milestone",
+    "project",
+    "package",
+    "capability",
+    "backend",
+    "readiness",
+    "release_target",
+    "last_synced",
+}
 
 
 def _probe_epcsaft_import_modules(source: str) -> set[str]:
@@ -206,6 +242,26 @@ def _tracked_files(*paths: str) -> list[str]:
         check=True,
     )
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def _markdown_front_matter(path: Path) -> dict[str, object]:
+    text = path.read_text(encoding="utf-8")
+    assert text.startswith("---\n"), f"{_workspace_rel(path)} must start with front matter"
+    _, raw_front_matter, _ = text.split("---", 2)
+    fields: dict[str, object] = {}
+    for line in raw_front_matter.splitlines():
+        if not line.strip():
+            continue
+        key, value = line.split(":", 1)
+        value = value.strip()
+        if value == "null":
+            parsed: object = None
+        elif value.startswith('"') and value.endswith('"'):
+            parsed = value[1:-1]
+        else:
+            parsed = int(value) if value.isdigit() else value
+        fields[key.strip()] = parsed
+    return fields
 
 
 def _equilibrium_activation_rows() -> list[dict[str, object]]:
@@ -1318,6 +1374,44 @@ def test_test_tree_uses_namespace_packages_without_init_markers() -> None:
 def test_replaced_flat_test_modules_are_absent_from_the_working_tree() -> None:
     for relpath in sorted(REPLACED_FLAT_TEST_FILES):
         assert not (REPO_ROOT / relpath).exists(), relpath
+
+
+def test_milestone_mirror_layout_matches_local_contract() -> None:
+    milestone_root = REPO_ROOT / "docs" / "milestones"
+    assert milestone_root.is_dir()
+    assert (milestone_root / "README.md").is_file()
+    assert "GitHub Issues and the `ePC-SAFT Roadmap` Project remain authoritative" in (
+        milestone_root / "README.md"
+    ).read_text(encoding="utf-8")
+
+    actual_folders = {path.name for path in milestone_root.iterdir() if path.is_dir()}
+    assert actual_folders == set(MILESTONE_MIRROR_FOLDERS)
+
+    issue_numbers: set[int] = set()
+    for folder, milestone in MILESTONE_MIRROR_FOLDERS.items():
+        milestone_dir = milestone_root / folder
+        readme = milestone_dir / "README.md"
+        assert readme.is_file(), f"{_workspace_rel(readme)} is required"
+        assert milestone in readme.read_text(encoding="utf-8")
+
+        issues_dir = milestone_dir / "issues"
+        if not issues_dir.exists():
+            continue
+        for path in sorted(issues_dir.glob("*.md")):
+            fields = _markdown_front_matter(path)
+            assert set(fields) == MILESTONE_FRONT_MATTER_FIELDS
+            issue = fields["issue"]
+            assert isinstance(issue, int)
+            issue_numbers.add(issue)
+            assert path.name.startswith(f"{issue:04d}-")
+            assert fields["url"] == f"https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue}"
+            assert fields["state"] == "open"
+            assert fields["project"] == "ePC-SAFT Roadmap"
+            assert fields["milestone"] == milestone
+            assert MILESTONE_MIRRORED_OPEN_ISSUES[issue] == folder
+            assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
+
+    assert issue_numbers == set(MILESTONE_MIRRORED_OPEN_ISSUES)
 
 
 def test_generated_output_roots_are_not_tracked_in_analyses() -> None:
