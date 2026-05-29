@@ -121,12 +121,11 @@ When adding, editing, deleting, or grouping durable run configurations:
 4. verify XML/idempotence;
 5. execute the intended named configuration through MCP.
 
-In the standalone `ePC-SAFT` project, shared `.run` configs must not set
-`folderName`, because Services already has the repo as the project boundary and
-extra folders create redundant nested `ePC-SAFT` groups.
-
-Use a single-level repo folder such as `ePC-SAFT` only when intentionally
-configuring a multi-repo Engineering workspace view.
+In the standalone `ePC-SAFT` project, shared `.run` configs use single-level
+workflow folders only: `Setup & Health`, `Build & Package`, `Validation`,
+`Tests`, `Docs & Reports`, `Analysis & Figures`, and `Maintenance`. Do not use a
+repo-name folder such as `ePC-SAFT` inside the standalone project; use that only
+when intentionally configuring a multi-repo Engineering workspace view.
 
 Use Python or Shell Script run configurations for durable pytest/test workflows.
 Do not add native Pytest configuration types to Services by default, because
@@ -152,6 +151,12 @@ as a generic filesystem indexer.
 Use the `ij-debugger` skill when runtime evidence is needed or when the user
 explicitly asks for debugger work.
 
+The debugger MCP server is `intellij-debugger`. Its current tool names include
+`list_run_configurations`, `start_debug_session`, `set_breakpoint`,
+`wait_for_pause`, `get_debug_session_status`, `get_stack_trace`,
+`get_variables`, `evaluate_expression`, stepping tools, and
+`stop_debug_session`.
+
 Debugger MCP is worth using for:
 
 - confirming whether a code location is reached;
@@ -162,17 +167,16 @@ Debugger MCP is worth using for:
 
 Required first sequence:
 
-1. `xdebug_get_debugger_status`;
-2. `xdebug_list_breakpoints`;
+1. `get_debug_session_status`;
+2. `list_breakpoints`;
 3. choose the narrowest run configuration or run point via
-   `get_run_configurations`;
+   `list_run_configurations` or `get_run_configurations`;
 4. set at most a small number of agent-owned breakpoints with
-   `xdebug_set_breakpoint`;
-5. start with `xdebug_start_debugger_session`;
-6. wait with `xdebug_control_session(action=WAIT_FOR_PAUSE)`;
-7. collect stack and values with `xdebug_get_stack` and
-   `xdebug_get_frame_values`, `xdebug_get_value_by_path`, or
-   `xdebug_evaluate_expression`;
+   `set_breakpoint`;
+5. start with `start_debug_session`;
+6. wait with `wait_for_pause`;
+7. collect stack and values with `get_stack_trace` and
+   `get_variables` or `evaluate_expression`;
 8. remove agent-owned breakpoints and stop or resume to completion.
 
 Leave user-owned breakpoints alone unless they block the investigation. If user

@@ -4,12 +4,12 @@ import argparse
 import io
 import json
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
 from jetbrains_run_manifest import (
     CANONICAL_RUN_CONFIGS,
     PYTHON_RUNNER,
-    RUN_CONFIG_FOLDER_ATTRIBUTE,
     SHELL_RUNNER,
     RunConfigSpec,
     canonical_run_config_names,
@@ -24,9 +24,12 @@ MODULE_URL_PREFIX = "file://$MODULE_DIR$"
 CONTENT_URL = MODULE_URL_PREFIX
 MODULE_DIR_MACRO = "$MODULE_DIR$"
 MODULE_NAME = "ePC-SAFT"
+EQUILIBRIUM_MODULE_NAME = "epcsaft-equilibrium"
+REGRESSION_MODULE_NAME = "epcsaft-regression"
 PYTHON_CONFIG_TYPE = "PythonConfigurationType"
 SHELL_CONFIG_TYPE = "ShConfigurationType"
 CMAKE_CONFIG_TYPE = "CMakeRunConfiguration"
+PYTEST_CONFIG_TYPE = "tests"
 RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)
 RUN_CONFIG_EXECUTOR_PREFIXES = ("Python.", "Shell Script.")
 CMAKE_EXECUTION_TARGET_PREFIX = "CMakeBuildProfile:"
@@ -53,7 +56,52 @@ TRANSIENT_PATHS: tuple[str, ...] = (
 # Keep tests under the module content root, not as a source root. Marking
 # tests as a source root makes tests/api, tests/native, and tests/support look
 # like top-level namespace packages in IntelliJ.
-CANONICAL_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (("src", False),)
+PROVIDER_SOURCE_ROOTS: tuple[tuple[str, bool], ...] = (("src", False),)
+
+
+@dataclass(frozen=True)
+class ModuleSpec:
+    name: str
+    iml_path: Path
+    module_type: str
+    content_root: str
+    source_roots: tuple[tuple[str, bool], ...]
+    exclude_roots: tuple[str, ...] = ()
+    dependencies: tuple[str, ...] = ()
+
+
+CANONICAL_PYTHON_MODULES: tuple[ModuleSpec, ...] = (
+    ModuleSpec(
+        name=MODULE_NAME,
+        iml_path=IDEA_DIR / f"{MODULE_NAME}.iml",
+        module_type="PYTHON_MODULE",
+        content_root="",
+        source_roots=PROVIDER_SOURCE_ROOTS,
+    ),
+    ModuleSpec(
+        name=EQUILIBRIUM_MODULE_NAME,
+        iml_path=IDEA_DIR / f"{EQUILIBRIUM_MODULE_NAME}.iml",
+        module_type="PYTHON_MODULE",
+        content_root="packages/epcsaft-equilibrium",
+        source_roots=(("packages/epcsaft-equilibrium/src", False),),
+        dependencies=(MODULE_NAME,),
+    ),
+    ModuleSpec(
+        name=REGRESSION_MODULE_NAME,
+        iml_path=IDEA_DIR / f"{REGRESSION_MODULE_NAME}.iml",
+        module_type="PYTHON_MODULE",
+        content_root="packages/epcsaft-regression",
+        source_roots=(("packages/epcsaft-regression/src", False),),
+        dependencies=(MODULE_NAME,),
+    ),
+)
+
+
+def _runtime_python_modules(transient_paths: tuple[str, ...]) -> tuple[ModuleSpec, ...]:
+    return tuple(
+        replace(spec, exclude_roots=transient_paths) if spec.name == MODULE_NAME else spec
+        for spec in CANONICAL_PYTHON_MODULES
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -111,10 +159,21 @@ def _existing_transient_paths() -> tuple[str, ...]:
     return tuple(existing)
 
 
-def _discover_iml_files() -> tuple[Path, ...]:
-    candidates = list(IDEA_DIR.glob("*.iml"))
-    candidates.extend(REPO_ROOT.glob("*.iml"))
-    return tuple(sorted(path.resolve() for path in candidates))
+def _existing_non_python_module_paths() -> tuple[Path, ...]:
+    paths: list[Path] = []
+    for path in sorted(IDEA_DIR.glob("*.iml")):
+        if path in {spec.iml_path for spec in CANONICAL_PYTHON_MODULES}:
+            continue
+        if not path.exists():
+            continue
+        try:
+            module_root = ET.parse(path).getroot()
+        except ET.ParseError:
+            paths.append(path)
+            continue
+        if module_root.get("type") != "PYTHON_MODULE":
+            paths.append(path)
+    return tuple(paths)
 
 
 def _find_child(parent: ET.Element, tag: str, **attrs: str) -> ET.Element | None:
@@ -173,6 +232,20 @@ def _prune_run_dashboard_statuses(
             actions.append(f"remove stale configuration status {config_type}.{name}")
 
 
+def _prune_run_dashboard_disallowed_types(dashboard: ET.Element, actions: list[str]) -> None:
+    statuses = _find_child(dashboard, "option", name="configurationStatuses")
+    if statuses is None:
+        return
+    status_parent = statuses.find("./map")
+    if status_parent is None:
+        return
+    for type_entry in list(status_parent.findall("entry")):
+        config_type = type_entry.get("key")
+        if config_type and config_type not in RUN_DASHBOARD_CONFIG_TYPES:
+            status_parent.remove(type_entry)
+            actions.append(f"remove Services configuration statuses for {config_type}")
+
+
 def _ensure_root_manager(module_root: ET.Element, actions: list[str]) -> ET.Element:
     manager = _find_child(module_root, "component", name="NewModuleRootManager")
     if manager is None:
@@ -192,59 +265,85 @@ def _ensure_exclude_output(manager: ET.Element, actions: list[str]) -> None:
         actions.append("add exclude-output element")
 
 
-def _ensure_content_root(manager: ET.Element, actions: list[str]) -> ET.Element:
-    content = _find_child(manager, "content", url=CONTENT_URL)
+def _ensure_content_root(manager: ET.Element, content_root: str, actions: list[str]) -> ET.Element:
+    content_url = _module_url(content_root)
+    content = _find_child(manager, "content", url=content_url)
     if content is not None:
         return content
 
     first_content = manager.find("content")
     if first_content is not None:
-        if first_content.get("url") != CONTENT_URL:
-            first_content.set("url", CONTENT_URL)
-            actions.append(f"set content root to {CONTENT_URL}")
+        if first_content.get("url") != content_url:
+            first_content.set("url", content_url)
+            actions.append(f"set content root to {content_url}")
         return first_content
 
-    content = ET.Element("content", {"url": CONTENT_URL})
+    content = ET.Element("content", {"url": content_url})
     insert_at = 1 if manager.find("exclude-output") is not None else 0
     manager.insert(insert_at, content)
-    actions.append(f"create content root {CONTENT_URL}")
+    actions.append(f"create content root {content_url}")
     return content
 
 
-def _ensure_source_folder_order_entry(manager: ET.Element, actions: list[str]) -> None:
-    for entry in manager.findall("orderEntry"):
-        if entry.get("type") == "sourceFolder":
-            return
-    manager.append(ET.Element("orderEntry", {"type": "sourceFolder", "forTests": "false"}))
-    actions.append("add sourceFolder orderEntry")
+def _ensure_order_entries(manager: ET.Element, spec: ModuleSpec, declared_modules: set[str], actions: list[str]) -> None:
+    for entry in list(manager.findall("orderEntry")):
+        entry_type = entry.get("type")
+        if entry_type == "inheritedJdk":
+            manager.remove(entry)
+            actions.append("remove inheritedJdk orderEntry")
+        elif entry_type == "jdk" and (
+            entry.get("jdkName") != PYTHON_SDK_NAME or entry.get("jdkType") != "Python SDK"
+        ):
+            manager.remove(entry)
+            actions.append("remove stale Python SDK orderEntry")
 
+    if _find_child(manager, "orderEntry", type="jdk", jdkName=PYTHON_SDK_NAME, jdkType="Python SDK") is None:
+        manager.append(ET.Element("orderEntry", {"type": "jdk", "jdkName": PYTHON_SDK_NAME, "jdkType": "Python SDK"}))
+        actions.append(f"add Python SDK orderEntry {PYTHON_SDK_NAME}")
 
-def _prune_stale_module_dependencies(manager: ET.Element, declared_modules: set[str], actions: list[str]) -> None:
-    if not declared_modules:
-        return
+    if _find_child(manager, "orderEntry", type="sourceFolder") is None:
+        manager.append(ET.Element("orderEntry", {"type": "sourceFolder", "forTests": "false"}))
+        actions.append("add sourceFolder orderEntry")
+
+    desired_dependencies = set(spec.dependencies)
     for entry in list(manager.findall("orderEntry")):
         if entry.get("type") != "module":
             continue
         module_name = entry.get("module-name")
-        if module_name and module_name not in declared_modules:
+        if module_name not in desired_dependencies:
             manager.remove(entry)
             actions.append(f"remove stale module dependency {module_name}")
+            continue
+        desired_dependencies.remove(module_name)
+
+    for module_name in spec.dependencies:
+        if module_name not in declared_modules:
+            continue
+        if _find_child(manager, "orderEntry", type="module", **{"module-name": module_name}) is not None:
+            continue
+        manager.append(ET.Element("orderEntry", {"type": "module", "module-name": module_name}))
+        actions.append(f"add module dependency {module_name}")
 
 
-def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...], actions: list[str]) -> None:
+def _replace_content_roots(
+    content: ET.Element,
+    source_roots: tuple[tuple[str, bool], ...],
+    exclude_roots: tuple[str, ...],
+    actions: list[str],
+) -> None:
     existing_source_folders = list(content.findall("sourceFolder"))
     existing_exclude_folders = list(content.findall("excludeFolder"))
     preserved_children = [child for child in list(content) if child.tag not in {"sourceFolder", "excludeFolder"}]
     canonical_source_keys = {
         (_module_url(relative_path), "true" if is_test else "false")
-        for relative_path, is_test in CANONICAL_SOURCE_ROOTS
+        for relative_path, is_test in source_roots
     }
 
     desired_sources: dict[tuple[str, str], ET.Element] = {}
     for source in existing_source_folders:
         url = source.get("url")
         is_test = "true" if source.get("isTestSource") == "true" else "false"
-        if any(_is_under_path(url, path) for path in transient_paths):
+        if any(_is_under_path(url, path) for path in exclude_roots):
             actions.append(f"remove transient sourceFolder {url}")
             continue
         key = (url or "", is_test)
@@ -259,7 +358,7 @@ def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...]
             {"url": url or "", "isTestSource": is_test},
         )
 
-    for relative_path, is_test in CANONICAL_SOURCE_ROOTS:
+    for relative_path, is_test in source_roots:
         url = _module_url(relative_path)
         key = (url, "true" if is_test else "false")
         if key not in desired_sources:
@@ -278,7 +377,7 @@ def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...]
         nested_transient_parent = next(
             (
                 relative_path
-                for relative_path in TRANSIENT_PATHS
+                for relative_path in exclude_roots
                 if _is_under_path(url, relative_path) and url != _module_url(relative_path)
             ),
             None,
@@ -291,7 +390,7 @@ def _replace_content_roots(content: ET.Element, transient_paths: tuple[str, ...]
         else:
             actions.append(f"remove duplicate excludeFolder {url}")
 
-    for relative_path in transient_paths:
+    for relative_path in exclude_roots:
         url = _module_url(relative_path)
         if url not in desired_excludes:
             desired_excludes[url] = ET.Element("excludeFolder", {"url": url})
@@ -336,11 +435,186 @@ def _serialize_tree(tree: ET.ElementTree) -> str:
     return buffer.getvalue().decode("UTF-8")
 
 
+def _load_or_new_project_tree(path: Path) -> tuple[ET.ElementTree, str]:
+    if path.exists():
+        original_text = path.read_text(encoding="UTF-8")
+        return ET.ElementTree(ET.fromstring(original_text)), original_text
+    return ET.ElementTree(ET.Element("project", {"version": "4"})), ""
+
+
+def _desired_module_paths() -> tuple[Path, ...]:
+    paths = [spec.iml_path for spec in CANONICAL_PYTHON_MODULES]
+    paths.extend(_existing_non_python_module_paths())
+    return tuple(sorted(path for path in paths if path.exists() or path in {spec.iml_path for spec in CANONICAL_PYTHON_MODULES}))
+
+
+def _module_file_attributes(path: Path) -> tuple[str, str]:
+    relative = path.relative_to(REPO_ROOT).as_posix()
+    return f"file://$PROJECT_DIR$/{relative}", f"$PROJECT_DIR$/{relative}"
+
+
+def _normalize_modules_xml() -> tuple[list[str], list[str], str | None]:
+    modules_path = IDEA_DIR / "modules.xml"
+    try:
+        tree, original_text = _load_or_new_project_tree(modules_path)
+    except ET.ParseError as exc:
+        return [], [f".idea/modules.xml: invalid XML ({exc})"], None
+
+    root = tree.getroot()
+    if root.tag != "project":
+        return [], [".idea/modules.xml: root element is not <project>"], None
+
+    actions: list[str] = []
+    manager = _find_child(root, "component", name="ProjectModuleManager")
+    if manager is None:
+        manager = ET.Element("component", {"name": "ProjectModuleManager"})
+        root.append(manager)
+        actions.append("create ProjectModuleManager component")
+
+    modules = manager.find("modules")
+    if modules is None:
+        modules = ET.Element("modules")
+        manager.append(modules)
+        actions.append("create modules list")
+
+    desired_paths = _desired_module_paths()
+    desired_filepaths = {_module_file_attributes(path)[1] for path in desired_paths}
+    existing_by_filepath = {
+        module.get("filepath"): module
+        for module in modules.findall("module")
+        if module.get("filepath")
+    }
+
+    for module in list(modules.findall("module")):
+        filepath = module.get("filepath")
+        if filepath in desired_filepaths:
+            continue
+        modules.remove(module)
+        actions.append(f"remove stale module {filepath or module.get('fileurl') or '<unnamed>'}")
+
+    for path in desired_paths:
+        fileurl, filepath = _module_file_attributes(path)
+        module = existing_by_filepath.get(filepath)
+        if module is None:
+            modules.append(ET.Element("module", {"fileurl": fileurl, "filepath": filepath}))
+            actions.append(f"add module {filepath}")
+            continue
+        if module.get("fileurl") != fileurl:
+            module.set("fileurl", fileurl)
+            actions.append(f"set module fileurl {filepath}")
+
+    sorted_modules = sorted(list(modules.findall("module")), key=lambda element: element.get("filepath", ""))
+    for child in list(modules):
+        modules.remove(child)
+    for module in sorted_modules:
+        modules.append(module)
+
+    proposed_text = _serialize_tree(tree)
+    if proposed_text == original_text:
+        actions = []
+    return actions, [], proposed_text if proposed_text != original_text else None
+
+
+def _normalize_vcs_xml() -> tuple[list[str], list[str], str | None]:
+    vcs_path = IDEA_DIR / "vcs.xml"
+    try:
+        tree, original_text = _load_or_new_project_tree(vcs_path)
+    except ET.ParseError as exc:
+        return [], [f".idea/vcs.xml: invalid XML ({exc})"], None
+
+    root = tree.getroot()
+    if root.tag != "project":
+        return [], [".idea/vcs.xml: root element is not <project>"], None
+
+    actions: list[str] = []
+    component = _find_child(root, "component", name="VcsDirectoryMappings")
+    if component is None:
+        component = ET.Element("component", {"name": "VcsDirectoryMappings"})
+        root.append(component)
+        actions.append("create VcsDirectoryMappings component")
+
+    desired = {("$PROJECT_DIR$", "Git")}
+    existing = {(mapping.get("directory"), mapping.get("vcs")) for mapping in component.findall("mapping")}
+    if existing != desired:
+        for mapping in list(component.findall("mapping")):
+            component.remove(mapping)
+        component.append(ET.Element("mapping", {"directory": "$PROJECT_DIR$", "vcs": "Git"}))
+        actions.append("set VCS mapping to project root only")
+
+    proposed_text = _serialize_tree(tree)
+    if proposed_text == original_text:
+        actions = []
+    return actions, [], proposed_text if proposed_text != original_text else None
+
+
+def _normalize_py_source_root_detection_xml() -> tuple[list[str], list[str], str | None]:
+    path = IDEA_DIR / "pySourceRootDetection.xml"
+    if not path.exists():
+        return [], [], None
+    try:
+        tree, original_text = _load_or_new_project_tree(path)
+    except ET.ParseError as exc:
+        return [], [f".idea/pySourceRootDetection.xml: invalid XML ({exc})"], None
+
+    root = tree.getroot()
+    if root.tag != "project":
+        return [], [".idea/pySourceRootDetection.xml: root element is not <project>"], None
+
+    actions: list[str] = []
+    component = _find_child(root, "component", name="PySourceRootDetectionService")
+    if component is None:
+        return [], [], None
+    source_paths = _find_child(component, "option", name="sourcePathsSet")
+    if source_paths is None:
+        return [], [], None
+    current_set = source_paths.find("set")
+    if current_set is not None and len(list(current_set)) > 0:
+        for child in list(current_set):
+            current_set.remove(child)
+        actions.append("clear stale Python source-root detection paths")
+
+    proposed_text = _serialize_tree(tree)
+    if proposed_text == original_text:
+        actions = []
+    return actions, [], proposed_text if proposed_text != original_text else None
+
+
 def _load_workspace_tree() -> tuple[ET.ElementTree, str]:
     if WORKSPACE_PATH.exists():
         original_text = WORKSPACE_PATH.read_text(encoding="UTF-8")
         return ET.ElementTree(ET.fromstring(original_text)), original_text
     return ET.ElementTree(ET.Element("project", {"version": "4"})), ""
+
+
+def _run_manager_item_matches_name(itemvalue: str | None, name: str) -> bool:
+    if not itemvalue:
+        return False
+    return itemvalue == name or itemvalue.endswith(f".{name}") or itemvalue.endswith(name)
+
+
+def _remove_run_manager_item_values(run_manager: ET.Element | None, names: set[str], actions: list[str]) -> None:
+    if run_manager is None or not names:
+        return
+    for list_tag in ("list", "recent_temporary/list"):
+        for run_list in run_manager.findall(list_tag):
+            for item in list(run_list.findall("item")):
+                itemvalue = item.get("itemvalue")
+                if not any(_run_manager_item_matches_name(itemvalue, name) for name in names):
+                    continue
+                run_list.remove(item)
+                actions.append(f"remove generated run manager item {itemvalue}")
+
+
+def _remove_executor_properties_for_names(properties: dict[str, object], names: set[str], actions: list[str]) -> None:
+    key_to_string = properties.get("keyToString")
+    if not isinstance(key_to_string, dict):
+        return
+    for key in list(key_to_string):
+        if not key.endswith(".executor"):
+            continue
+        if any(name in key for name in names):
+            del key_to_string[key]
+            actions.append(f"remove generated executor property {key}")
 
 
 def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
@@ -366,7 +640,7 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
             if (
                 config.get("temporary") == "true"
                 and config.get("nameIsGenerated") == "true"
-                and config.get("type") in RUN_DASHBOARD_CONFIG_TYPES
+                and config.get("type") in (*RUN_DASHBOARD_CONFIG_TYPES, PYTEST_CONFIG_TYPE)
                 and name not in canonical_names
             ):
                 run_manager.remove(config)
@@ -377,6 +651,7 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
         if selected and any(selected.endswith(f".{name}") for name in removed_run_manager_names):
             del run_manager.attrib["selected"]
             actions.append("clear stale selected temporary run configuration")
+        _remove_run_manager_item_values(run_manager, set(removed_run_manager_names), actions)
     active_run_manager_names = set(canonical_names)
     if run_manager is not None:
         active_run_manager_names.update(
@@ -393,6 +668,7 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
         except json.JSONDecodeError:
             properties = None
         if isinstance(properties, dict):
+            _remove_executor_properties_for_names(properties, set(removed_run_manager_names), actions)
             key_to_string = properties.get("keyToString")
             if isinstance(key_to_string, dict):
                 for key in list(key_to_string):
@@ -430,6 +706,11 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
         for child in values.findall("option")
         if child.get("value")
     }
+    for child in list(values.findall("option")):
+        config_type = child.get("value")
+        if config_type and config_type not in RUN_DASHBOARD_CONFIG_TYPES:
+            values.remove(child)
+            actions.append(f"disable Services Run Dashboard for {config_type}")
     for config_type in RUN_DASHBOARD_CONFIG_TYPES:
         if config_type in existing_values:
             continue
@@ -438,6 +719,7 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
 
     _prune_run_manager_items(run_manager, active_run_manager_names, actions)
     _prune_run_dashboard_statuses(dashboard, active_run_manager_names, actions)
+    _prune_run_dashboard_disallowed_types(dashboard, actions)
     _normalize_cmake_workspace(root, actions)
 
     if not actions:
@@ -546,9 +828,8 @@ def _python_configuration(spec: RunConfigSpec) -> ET.Element:
         "name": spec.name,
         "type": PYTHON_CONFIG_TYPE,
         "factoryName": PYTHON_RUNNER,
+        "folderName": spec.folder_name,
     }
-    if RUN_CONFIG_FOLDER_ATTRIBUTE:
-        attrs["folderName"] = RUN_CONFIG_FOLDER_ATTRIBUTE
     config = ET.Element(
         "configuration",
         attrs,
@@ -594,9 +875,8 @@ def _shell_configuration(spec: RunConfigSpec) -> ET.Element:
         "name": spec.name,
         "type": SHELL_CONFIG_TYPE,
         "factoryName": SHELL_RUNNER,
+        "folderName": spec.folder_name,
     }
-    if RUN_CONFIG_FOLDER_ATTRIBUTE:
-        attrs["folderName"] = RUN_CONFIG_FOLDER_ATTRIBUTE
     config = ET.Element(
         "configuration",
         attrs,
@@ -695,11 +975,8 @@ def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) 
         actions.append(f"set runner type to {spec.runner}")
     if current_config.get("factoryName") != spec.runner:
         actions.append(f"set factoryName={spec.runner}")
-    if RUN_CONFIG_FOLDER_ATTRIBUTE:
-        if current_config.get("folderName") != RUN_CONFIG_FOLDER_ATTRIBUTE:
-            actions.append(f"set folderName={RUN_CONFIG_FOLDER_ATTRIBUTE}")
-    elif current_config.get("folderName") is not None:
-        actions.append("remove folderName")
+    if current_config.get("folderName") != spec.folder_name:
+        actions.append(f"set folderName={spec.folder_name}")
     for option_name, expected_value in _expected_option_values(spec).items():
         if _option_value(current_config, option_name) != expected_value:
             actions.append(f"set {option_name}={expected_value}")
@@ -730,19 +1007,9 @@ def _normalize_run_config(
 
 
 def _load_declared_modules() -> set[str]:
-    modules_path = IDEA_DIR / "modules.xml"
-    if not modules_path.exists():
-        return set()
-    tree = ET.parse(modules_path)
-    root = tree.getroot()
-    names: set[str] = set()
-    for module in root.findall(".//module"):
-        for attr_name in ("filepath", "fileurl"):
-            value = module.get(attr_name)
-            if not value or not value.endswith(".iml"):
-                continue
-            names.add(Path(value).stem)
-            break
+    names = {spec.name for spec in CANONICAL_PYTHON_MODULES}
+    for path in _existing_non_python_module_paths():
+        names.add(path.stem)
     return names
 
 
@@ -758,18 +1025,27 @@ def _module_dependency_warnings(iml_path: Path, module_root: ET.Element, declare
 
 
 def _normalize_iml(
-    iml_path: Path, transient_paths: tuple[str, ...], declared_modules: set[str]
+    spec: ModuleSpec, declared_modules: set[str]
 ) -> tuple[list[str], list[str], str | None]:
-    original_text = iml_path.read_text(encoding="UTF-8")
-    tree = ET.parse(iml_path)
+    iml_path = spec.iml_path
+    original_text = iml_path.read_text(encoding="UTF-8") if iml_path.exists() else ""
+    if iml_path.exists():
+        tree = ET.parse(iml_path)
+    else:
+        tree = ET.ElementTree(ET.Element("module", {"type": spec.module_type, "version": "4"}))
     module_root = tree.getroot()
     actions: list[str] = []
+    if module_root.get("type") != spec.module_type:
+        module_root.set("type", spec.module_type)
+        actions.append(f"set module type {spec.module_type}")
+    if module_root.get("version") != "4":
+        module_root.set("version", "4")
+        actions.append("set module version 4")
     manager = _ensure_root_manager(module_root, actions)
     _ensure_exclude_output(manager, actions)
-    content = _ensure_content_root(manager, actions)
-    _ensure_source_folder_order_entry(manager, actions)
-    _prune_stale_module_dependencies(manager, declared_modules, actions)
-    _replace_content_roots(content, transient_paths, actions)
+    content = _ensure_content_root(manager, spec.content_root, actions)
+    _ensure_order_entries(manager, spec, declared_modules, actions)
+    _replace_content_roots(content, spec.source_roots, spec.exclude_roots, actions)
     warnings = _module_dependency_warnings(iml_path, module_root, declared_modules)
     proposed_text = _serialize_tree(tree)
     if proposed_text == original_text:
@@ -780,8 +1056,8 @@ def _normalize_iml(
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     transient_paths = _existing_transient_paths()
+    module_specs = _runtime_python_modules(transient_paths)
     declared_modules = _load_declared_modules()
-    iml_files = _discover_iml_files()
     run_configs_by_name, run_config_warnings = _load_shared_run_config_paths()
 
     pending_changes = 0
@@ -809,6 +1085,27 @@ def main(argv: list[str] | None = None) -> int:
             if args.apply:
                 duplicate_path.unlink()
 
+    metadata_targets = (
+        (".idea/modules.xml", _normalize_modules_xml()),
+        (".idea/vcs.xml", _normalize_vcs_xml()),
+        (".idea/pySourceRootDetection.xml", _normalize_py_source_root_detection_xml()),
+    )
+    for relative_name, (actions, warnings, proposed_text) in metadata_targets:
+        for warning in warnings:
+            warnings_found += 1
+            print(f"WARNING {warning}")
+        if not actions:
+            print(f"OK {relative_name}: no changes")
+            continue
+        pending_changes += 1
+        prefix = "APPLY" if args.apply else "DRY-RUN"
+        for action in actions:
+            print(f"{prefix} {relative_name}: {action}")
+        if args.apply and proposed_text is not None:
+            target_path = REPO_ROOT / relative_name
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.write_text(proposed_text, encoding="UTF-8", newline="\n")
+
     workspace_actions, workspace_warnings, proposed_workspace_text = _normalize_workspace()
     for warning in workspace_warnings:
         warnings_found += 1
@@ -824,9 +1121,9 @@ def main(argv: list[str] | None = None) -> int:
             WORKSPACE_PATH.parent.mkdir(parents=True, exist_ok=True)
             WORKSPACE_PATH.write_text(proposed_workspace_text, encoding="UTF-8", newline="\n")
 
-    for iml_path in iml_files:
-        actions, warnings, proposed_text = _normalize_iml(iml_path, transient_paths, declared_modules)
-        relative_path = iml_path.relative_to(REPO_ROOT).as_posix()
+    for spec in module_specs:
+        actions, warnings, proposed_text = _normalize_iml(spec, declared_modules)
+        relative_path = spec.iml_path.relative_to(REPO_ROOT).as_posix()
         for warning in warnings:
             warnings_found += 1
             print(f"WARNING {relative_path}: {warning}")
@@ -839,7 +1136,8 @@ def main(argv: list[str] | None = None) -> int:
         for action in actions:
             print(f"{prefix} {relative_path}: {action}")
         if args.apply and proposed_text is not None:
-            iml_path.write_text(proposed_text, encoding="UTF-8", newline="\n")
+            spec.iml_path.parent.mkdir(parents=True, exist_ok=True)
+            spec.iml_path.write_text(proposed_text, encoding="UTF-8", newline="\n")
 
     for spec in CANONICAL_RUN_CONFIGS:
         path, actions, proposed_text = _normalize_run_config(spec, run_configs_by_name)

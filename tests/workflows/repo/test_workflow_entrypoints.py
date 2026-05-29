@@ -220,10 +220,17 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     intellij_guidance = _read("docs/agents/INTELLIJ.md")
     combined_guidance = agents_md + "\n" + intellij_guidance
 
-    assert f'RUN_CONFIG_FOLDER = "{manifest_data["RUN_CONFIG_FOLDER"]}"' in manifest
-    assert f"RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = {manifest_data['RUN_CONFIG_FOLDER_ATTRIBUTE']!r}" in manifest
     assert "CMAKE_CONFIG_TYPE = \"CMakeRunConfiguration\"" in normalizer
     assert "RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)" in normalizer
+    assert "CANONICAL_PYTHON_MODULES" in normalizer
+    assert 'EQUILIBRIUM_MODULE_NAME = "epcsaft-equilibrium"' in normalizer
+    assert 'REGRESSION_MODULE_NAME = "epcsaft-regression"' in normalizer
+    assert 'iml_path=IDEA_DIR / f"{EQUILIBRIUM_MODULE_NAME}.iml"' in normalizer
+    assert 'iml_path=IDEA_DIR / f"{REGRESSION_MODULE_NAME}.iml"' in normalizer
+    assert "clear stale Python source-root detection paths" in normalizer
+    assert "set VCS mapping to project root only" in normalizer
+    assert "disable Services Run Dashboard for" in normalizer
+    assert "PYTEST_CONFIG_TYPE" in normalizer
     assert 'CMAKE_ACTIVE_PROFILE = "dev-native"' in normalizer
     assert 'CMAKE_EXECUTION_TARGET_PREFIX = "CMakeBuildProfile:"' in normalizer
     assert 'STALE_CMAKE_PROFILE_NAMES = frozenset({"ePC-SAFT dev MinGW"})' in normalizer
@@ -242,6 +249,22 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "delete stale shared run configuration" in normalizer
     assert "CANONICAL_RUN_CONFIGS" in normalizer
     assert "Configure IntelliJ Runs (Dry Run)" in manifest
+    assert "Sync Workspace Packages" in manifest
+    assert "Check Package Imports" in manifest
+    assert "Test Equilibrium Confidence" in manifest
+    for removed_config in (
+        "Association Goal 1+2 Tests",
+        "Doctor Script",
+        "Build System Ceres",
+        "Validate Hydrocarbon Regression",
+        "Run Ipopt Exact Hessian Checks",
+        "Check Phase Discovery",
+        "Curate Paper Validation Parameters",
+        "Sync MIAC Variants",
+        "Sync LaTeX Mirror",
+        "Create Dev Worktree",
+    ):
+        assert removed_config not in manifest
     assert "docs/agents/INTELLIJ.md" in agents_md
     assert "IntelliJ MCP Workflow" in intellij_guidance
     assert "Hard rule: use IntelliJ MCP first by default for repo work" in combined_guidance
@@ -250,10 +273,26 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "durable scripts, tests, validation commands, build commands" in combined_guidance
     assert "Do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in intellij_guidance
     assert "Use shell only for" in combined_guidance
-    assert "In the standalone `ePC-SAFT` project, shared `.run` configs must not set" in intellij_guidance
+    assert "shared `.run` configs use single-level" in intellij_guidance
+    for folder_name in (
+        "Setup & Health",
+        "Build & Package",
+        "Validation",
+        "Tests",
+        "Docs & Reports",
+        "Analysis & Figures",
+        "Maintenance",
+    ):
+        assert folder_name in intellij_guidance
     assert "use every relevant index action family before finalizing" in intellij_guidance
     assert "Use the `ij-debugger` skill and debugger MCP" in combined_guidance
-    assert "xdebug_start_debugger_session" in intellij_guidance
+    assert "intellij-debugger" in intellij_guidance
+    assert "start_debug_session" in intellij_guidance
+    assert "set_breakpoint" in intellij_guidance
+    assert "wait_for_pause" in intellij_guidance
+    assert "get_variables" in intellij_guidance
+    assert "evaluate_expression" in intellij_guidance
+    assert "xdebug_" not in intellij_guidance
     assert "C:\\Program Files\\PowerShell\\7\\pwsh.exe" in intellij_guidance
     assert "JetBrains MCP exposes VCS root discovery" in combined_guidance
     for tool_name in (
@@ -302,7 +341,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     specs_by_name = {spec.name: spec for spec in run_config_specs}
     for name, (path, config) in run_configs.items():
         spec = specs_by_name[name]
-        assert config.get("folderName") is None, name
+        assert config.get("folderName") == spec.folder_name, name
         assert config.get("type") in {"PythonConfigurationType", "ShConfigurationType"}, name
         assert config.get("type") != "tests", name
         options = _run_config_options(config)
@@ -328,9 +367,20 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert build_native["SCRIPT_PATH"].endswith("/.codex/environments/setup.ps1")
     assert build_native["SCRIPT_OPTIONS"] == "-Step Build"
 
+    sync_workspace = _run_config_options(run_configs["Sync Workspace Packages"][1])
+    assert sync_workspace["SCRIPT_TEXT"] == "uv sync --all-packages"
+
+    check_imports = _run_config_options(run_configs["Check Package Imports"][1])
+    assert check_imports["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/check_package_imports.py"
+    assert check_imports["PARAMETERS"] == ""
+
     build_provider_only = _run_config_options(run_configs["Build Provider-Only Core"][1])
     assert build_provider_only["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/build_epcsaft.py"
     assert build_provider_only["PARAMETERS"] == "--clean --profile provider"
+
+    equilibrium_confidence = _run_config_options(run_configs["Test Equilibrium Confidence"][1])
+    assert equilibrium_confidence["SCRIPT_NAME"] == "$MODULE_DIR$/run_pytest.py"
+    assert equilibrium_confidence["PARAMETERS"] == "--equilibrium-confidence -q"
 
     cmake_wrapper = _read("scripts/dev/cmake_preset.ps1")
     assert "Assert-NoNinjaLock" in cmake_wrapper

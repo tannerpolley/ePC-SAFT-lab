@@ -4,8 +4,6 @@ from dataclasses import dataclass
 
 PYTHON_RUNNER = "Python"
 SHELL_RUNNER = "Shell Script"
-RUN_CONFIG_FOLDER = "ePC-SAFT"
-RUN_CONFIG_FOLDER_ATTRIBUTE: str | None = None
 FOLDER_SETUP_HEALTH = "Setup & Health"
 FOLDER_BUILD_PACKAGE = "Build & Package"
 FOLDER_VALIDATION = "Validation"
@@ -26,16 +24,16 @@ class RunConfigSpec:
 
 CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
     RunConfigSpec(
-        name="Sync Environment",
+        name="Sync Workspace Packages",
         runner=SHELL_RUNNER,
         folder_name=FOLDER_SETUP_HEALTH,
-        command="uv sync --no-install-project",
+        command="uv sync --all-packages",
     ),
     RunConfigSpec(
-        name="Bootstrap uv",
-        runner=SHELL_RUNNER,
+        name="Check Package Imports",
+        runner=PYTHON_RUNNER,
         folder_name=FOLDER_SETUP_HEALTH,
-        command="scripts/dev/bootstrap_uv.ps1",
+        command="scripts/dev/check_package_imports.py",
     ),
     RunConfigSpec(
         name="Doctor",
@@ -45,10 +43,11 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="-Step Doctor",
     ),
     RunConfigSpec(
-        name="Doctor Script",
+        name="Build Status",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_SETUP_HEALTH,
-        command="scripts/dev/doctor.py",
+        command="scripts/dev/build_epcsaft.py",
+        parameters="--status",
     ),
     RunConfigSpec(
         name="Build Native Extension",
@@ -58,25 +57,18 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="-Step Build",
     ),
     RunConfigSpec(
-        name="Build Provider-Only Core",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_epcsaft.py",
-        parameters="--clean --profile provider",
-    ),
-    RunConfigSpec(
-        name="Build Status",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_epcsaft.py",
-        parameters="--status",
-    ),
-    RunConfigSpec(
         name="Build Native Incremental",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_BUILD_PACKAGE,
         command="scripts/dev/build_epcsaft.py",
         parameters="--build-only --parallel 10",
+    ),
+    RunConfigSpec(
+        name="Build Provider-Only Core",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/build_epcsaft.py",
+        parameters="--clean --profile provider",
     ),
     RunConfigSpec(
         name="CMake Configure dev-native",
@@ -100,17 +92,10 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="-Action Build -Preset dev-native -Parallel 10",
     ),
     RunConfigSpec(
-        name="Build System Ceres",
+        name="Build Distribution",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_system_ceres.py",
-        parameters="--parallel 4",
-    ),
-    RunConfigSpec(
-        name="Clean Build Artifacts",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/dev/clean_build.ps1",
+        command="scripts/dev/build_dist.py",
     ),
     RunConfigSpec(
         name="Validate Quick",
@@ -133,46 +118,6 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/dev/check_text_gates.py",
     ),
     RunConfigSpec(
-        name="Validate Hydrocarbon Regression",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/validation/validate_hydrocarbon_regression.py",
-    ),
-    RunConfigSpec(
-        name="Run Ipopt Exact Hessian Checks",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/dev/run_ipopt_exact_hessian_proofs.py",
-    ),
-    RunConfigSpec(
-        name="Check Phase Discovery",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/validation/check_phase_discovery.py",
-        parameters="--json",
-    ),
-    RunConfigSpec(
-        name="Check Phase Discovery Debug",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/validation/check_phase_discovery.py",
-        parameters="--debug --include-route-refinement --require-complete",
-    ),
-    RunConfigSpec(
-        name="Check Neutral TP Flash Fixture",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/validation/check_neutral_tp_flash_fixture.py",
-        parameters="--generate-phase-discovery --require-complete",
-    ),
-    RunConfigSpec(
-        name="Check Neutral TP Flash Fixture Debug",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_VALIDATION,
-        command="scripts/validation/check_neutral_tp_flash_fixture.py",
-        parameters="--generate-phase-discovery --debug --require-complete",
-    ),
-    RunConfigSpec(
         name="Test List Slices",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_TESTS,
@@ -192,6 +137,13 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         folder_name=FOLDER_TESTS,
         command="run_pytest.py",
         parameters="--equilibrium-api -q",
+    ),
+    RunConfigSpec(
+        name="Test Equilibrium Confidence",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_TESTS,
+        command="run_pytest.py",
+        parameters="--equilibrium-confidence -q",
     ),
     RunConfigSpec(
         name="Test Regression",
@@ -266,52 +218,10 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/docs/sync_algorithm_registry.py",
     ),
     RunConfigSpec(
-        name="Curate Paper Validation Parameters",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/curate_paper_validation_parameters.py",
-    ),
-    RunConfigSpec(
-        name="Sync MIAC Variants",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/data/sync_miac_variants.py",
-    ),
-    RunConfigSpec(
-        name="Sync LaTeX Mirror",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_DOCS_REPORTS,
-        command="scripts/docs/sync_latex_mirror.ps1",
-    ),
-    RunConfigSpec(
-        name="Setup LaTeX Mirror",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/docs/setup_latex_mirror.ps1",
-    ),
-    RunConfigSpec(
-        name="Install LaTeX Sync Hook",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/docs/install_latex_sync_hook.ps1",
-    ),
-    RunConfigSpec(
-        name="Build Distribution",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_BUILD_PACKAGE,
-        command="scripts/dev/build_dist.py",
-    ),
-    RunConfigSpec(
         name="Generate Equilibrium Activation",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_ANALYSIS_FIGURES,
         command="scripts/dev/generate_equilibrium_activation.py",
-    ),
-    RunConfigSpec(
-        name="Create Dev Worktree",
-        runner=SHELL_RUNNER,
-        folder_name=FOLDER_MAINTENANCE,
-        command="scripts/dev/create_dev_worktree.ps1",
     ),
     RunConfigSpec(
         name="Configure IntelliJ Runs (Dry Run)",
@@ -328,62 +238,10 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="--apply",
     ),
     RunConfigSpec(
-        name="Association Goal 1+2 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/contracts/test_association_implicit_derivative_contract.py "
-            "tests/native/state/test_eos_contributions.py "
-            "tests/native/state/test_phase_state_sensitivities.py "
-            "tests/native/equilibrium/blocks/test_eos_phase_block.py "
-            "tests/api/frontend/test_state_properties.py -q"
-        ),
-    ),
-    RunConfigSpec(
-        name="Association Goal 3 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters="tests/native/contracts tests/native/regression tests/api/frontend/test_regression.py -q",
-    ),
-    RunConfigSpec(
-        name="Association Goal 4 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/state/test_fugacity_derivatives.py "
-            "tests/native/state/test_association_parameter_derivative_validation.py "
-            "tests/native/state/test_pressure_derivatives.py "
-            "tests/native/state/test_phase_state_sensitivities.py "
-            "tests/native/contracts/test_association_implicit_derivative_contract.py "
-            "tests/native/contracts/test_ceres_cppad_build_contract.py -q"
-        ),
-    ),
-    RunConfigSpec(
-        name="Association Goal 5 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/state/test_fugacity_derivatives.py "
-            "tests/native/state/test_association_parameter_derivative_validation.py "
-            "tests/native/state/test_pressure_derivatives.py "
-            "tests/native/regression/test_binary.py "
-            "tests/native/contracts/test_ceres_cppad_build_contract.py -q"
-        ),
-    ),
-    RunConfigSpec(
-        name="Association Goal 6 Tests",
-        runner=PYTHON_RUNNER,
-        folder_name=FOLDER_TESTS,
-        command="run_pytest.py",
-        parameters=(
-            "tests/native/equilibrium/blocks/test_association_block.py "
-            "tests/native/equilibrium/blocks/test_eos_phase_block.py "
-            "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py -q"
-        ),
+        name="Clean Build Artifacts",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_MAINTENANCE,
+        command="scripts/dev/clean_build.ps1",
     ),
 )
 
