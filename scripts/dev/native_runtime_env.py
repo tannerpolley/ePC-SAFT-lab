@@ -7,26 +7,19 @@ from dataclasses import dataclass
 from pathlib import Path
 
 try:
-    from build_backend.native_dependency_policy import (
-        DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE as _DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE,
-    )
-    from build_backend.native_dependency_policy import (
-        default_windows_ipopt_sdk_root as _default_windows_ipopt_sdk_root,
-    )
-    from build_backend.native_dependency_policy import ipopt_root_prefers_msvc as _ipopt_root_prefers_msvc
-    from build_backend.native_dependency_policy import (
-        resolve_default_windows_ipopt_sdk_root as _resolve_default_windows_ipopt_sdk_root,
-    )
+    from scripts.dev.package_paths import PROVIDER_BUILD_BACKEND_DIR
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "build_backend"))
-    from native_dependency_policy import (
-        DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE as _DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE,
-    )
-    from native_dependency_policy import default_windows_ipopt_sdk_root as _default_windows_ipopt_sdk_root
-    from native_dependency_policy import ipopt_root_prefers_msvc as _ipopt_root_prefers_msvc
-    from native_dependency_policy import (
-        resolve_default_windows_ipopt_sdk_root as _resolve_default_windows_ipopt_sdk_root,
-    )
+    from package_paths import PROVIDER_BUILD_BACKEND_DIR
+
+sys.path.insert(0, str(PROVIDER_BUILD_BACKEND_DIR))
+from native_dependency_policy import (
+    DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE as _DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE,
+)
+from native_dependency_policy import default_windows_ipopt_sdk_root as _default_windows_ipopt_sdk_root
+from native_dependency_policy import ipopt_root_prefers_msvc as _ipopt_root_prefers_msvc
+from native_dependency_policy import (
+    resolve_default_windows_ipopt_sdk_root as _resolve_default_windows_ipopt_sdk_root,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEV_BUILD_CACHE = REPO_ROOT / "build" / "dev" / "CMakeCache.txt"

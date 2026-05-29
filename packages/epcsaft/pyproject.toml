@@ -1,0 +1,57 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.12",
+    "pybind11>=3.0",
+    "numpy>=2.0",
+    "includeigen>=0.1",
+]
+build-backend = "epcsaft_build_backend"
+backend-path = ["build_backend"]
+
+[project]
+name = "epcsaft"
+version = "0.2.0"
+description = "The ePC-SAFT equation of state, including dipole, association, and ion terms."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "GPL-3.0-only"
+authors = [
+    { name = "Tanner Polley" },
+]
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Operating System :: Microsoft :: Windows",
+]
+
+[project.urls]
+Homepage = "https://github.com/ePC-SAFT/ePC-SAFT"
+Documentation = "https://epcsaft.readthedocs.io/en/latest/"
+Repository = "https://github.com/ePC-SAFT/ePC-SAFT"
+
+[tool.scikit-build]
+minimum-version = "0.12"
+build-dir = "../../build/{wheel_tag}"
+wheel.packages = ["src/epcsaft"]
+cmake.source-dir = "."
+cmake.version = ">=3.20"
+ninja.version = ">=1.11"
+
+[tool.scikit-build.sdist]
+include = [
+    "CMakeLists.txt",
+    "README.md",
+    "pyproject.toml",
+    "build_backend/*.py",
+    "src/epcsaft/**/*.py",
+    "src/epcsaft/**/*.pyi",
+    "src/epcsaft/**/*.cpp",
+    "src/epcsaft/**/*.h",
+]
+exclude = [
+    "src/epcsaft/*.pyd",
+]

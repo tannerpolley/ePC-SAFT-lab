@@ -8,12 +8,12 @@ For build dependency policy, CMake package-management rules, and native CI lane 
 Runtime flow
 ------------
 
-The public API starts in ``src/epcsaft/frontend/``. ``Mixture`` normalizes
+The public API starts in ``packages/epcsaft/src/epcsaft/frontend/``. ``Mixture`` normalizes
 ``ParameterSet`` and ``ModelOptions`` inputs and owns the internal native
 runtime bridge. ``State`` validates ``T/x/P`` or ``T/x/rho`` inputs and exposes
 pressure, density, fugacity, and derivative payloads.
 
-The pybind11 boundary starts in ``src/epcsaft/native/bindings/module.cpp``. It
+The pybind11 boundary starts in ``packages/epcsaft/src/epcsaft/native/bindings/module.cpp``. It
 exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, and contribution
 result structs through the private provider ``epcsaft._core`` module.
 Equilibrium bindings are registered into
@@ -23,7 +23,7 @@ Regression Ceres bindings are registered into
 ``epcsaft_regression._native_core`` by
 ``packages/epcsaft-regression/native/regression/module.cpp``.
 
-The native implementation lives under domain folders in ``src/epcsaft/native``. High-traffic files are:
+The provider native implementation lives under domain folders in ``packages/epcsaft/src/epcsaft/native``. High-traffic files are:
 
 - ``eos/density.cpp`` for pressure-to-density closure.
 - ``eos/residual_helmholtz.cpp`` for residual Helmholtz contribution totals.
@@ -89,8 +89,8 @@ Debugging checklist
 
 - Reproduce the behavior through a public ``Mixture`` / ``State`` call before debugging private native functions.
 - Compare pressure-created and density-created states when investigating density closure. Start with the same ``T`` and ``x`` and compare density, pressure, ``z()``, and ``ares()``. Use ``State(mixture, ..., P=..., rho_guess=...)`` to test seeded pressure closure and ``State(mixture, ..., rho=...)`` to audit an externally supplied density against a target pressure.
-- Inspect ``src/epcsaft/native/eos/density.cpp`` and ``src/epcsaft/native/eos/state.cpp`` for pressure-to-density root selection, warm-start behavior, and phase-branch policy before changing contribution code.
+- Inspect ``packages/epcsaft/src/epcsaft/native/eos/density.cpp`` and ``packages/epcsaft/src/epcsaft/native/eos/state.cpp`` for pressure-to-density root selection, warm-start behavior, and phase-branch policy before changing contribution code.
 - Request contribution terms with ``return_contribution_terms=True`` when debugging residual Helmholtz, compressibility factor, chemical potential, or fugacity totals.
 - Request contribution terms and compare ``hc``, ``disp``, ``assoc``, ``ion``, and ``born`` totals before adding temporary native instrumentation.
 - Run ``uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`` before making equation ownership claims. If that check passes but registry entries still show ``cpp_refs: []``, treat those EqIDs as documentation or supplemental equations unless the task proves they should map to implementation code.
-- Use ``tests/native/state/`` for fast neutral closure, contribution-map, derivative, and runtime-cache regression coverage.
+- Use ``packages/epcsaft/tests/native/state/`` for fast neutral closure, contribution-map, derivative, and runtime-cache regression coverage.

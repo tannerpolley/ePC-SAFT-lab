@@ -13,7 +13,7 @@ The LaTeX document remains the current source of truth; this Markdown view and `
 - Dependency: None
 - Derivative backend: Route-provided exact gradient and Jacobian callbacks
 - Solver role: Shared interface for Ipopt-owned constrained NLP routes
-- Implementation owner: src/epcsaft/native/equilibrium/core/nlp_problem.h
+- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h
 - Validation: packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py
 - Capability key: native_nlp_problem_contract
 - Description: Defines the common native NLP shape consumed by the Ipopt adapter.
@@ -42,7 +42,7 @@ Ipopt-backed production routes.
 - Dependency: Ipopt
 - Derivative backend: Route-provided exact gradient and Jacobian callbacks
 - Solver role: Maps NlpProblem into Ipopt::TNLP and returns IpoptSolveResult
-- Implementation owner: src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp
+- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp
 - Validation: packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py
 - Capability key: native_ipopt_equilibrium_nlp
 - Description: Bridges the package NLP contract to Ipopt without owning route equations.
@@ -77,7 +77,7 @@ Jacobians remain in their route problem owners.
 - Description: Shared adapter pattern for currently supported native Ceres regression routes.
 - Change note: Initial algorithm-registry entry for native Ceres regression dispatch.
 - LaTeX: `docs/latex/algorithms.tex:53`
-- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:399` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:511` (ceres::Solver::Options ceres_regression_options_cpp(int max_num_iterations) {)
+- Code owners: `packages/epcsaft-regression/native/regression/ceres_regression.cpp:511` (ceres::Solver::Options ceres_regression_options_cpp(int max_num_iterations) {)
 
 The Ceres adapter family owns native least-squares solve setup for supported
 regression routes. It is separate from Ipopt and does not call Ipopt routes.
@@ -215,7 +215,7 @@ LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
 - Dependency: None
 - Derivative backend: EOS/provider chemical-potential and free-energy derivatives as required by the selected trial problem
 - Solver role: Neutral tangent-plane stability evaluator for phase discovery and postsolve certification
-- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
+- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py
 - Capability key: internal:neutral_tpd_stability
 - Description: Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance.
@@ -250,7 +250,7 @@ lower-free-energy candidates and mass-balance incompleteness.
 - Dependency: None
 - Derivative backend: EOS/provider chemical-potential and free-energy derivatives through pressure-root phase-block evaluation
 - Solver role: Refines deterministic TPD starts through continuous composition-space minimization with trial density/volume from the EOS pressure root
-- Implementation owner: src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h
+- Implementation owner: packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h
 - Validation: packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py
 - Capability key: internal:neutral_continuous_tpd_minimization
 - Description: Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening.
@@ -501,13 +501,13 @@ same tolerance as the exact solve.
 - Dependency: Ceres
 - Derivative backend: Native residual Jacobian for supported target families
 - Solver role: Native least-squares pure-neutral parameter regression
-- Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp
+- Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp
 - Validation: packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api
 - Capability key: regression:pure_neutral
 - Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-neutral regression.
 - LaTeX: `docs/latex/algorithms.tex:312`
-- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:397` (m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2404` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2739` (def fit_pure_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2404` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2739` (def fit_pure_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
 
 This entry covers the implemented nonassociating pure-neutral native Ceres route
 for `m`, `\sigma`, and `\epsilon/k_B`. It is not a production Ceres
@@ -546,13 +546,13 @@ $$
 - Dependency: Ceres
 - Derivative backend: CppAD implicit residual Jacobian for supported pure-ion targets
 - Solver role: Native least-squares pure-ion parameter regression
-- Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp
+- Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp
 - Validation: packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py
 - Capability key: regression:pure_ion
 - Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
 - LaTeX: `docs/latex/algorithms.tex:331`
-- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:399` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2787` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2990` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1483` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2787` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2990` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1483` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
 
 This entry is limited to the currently implemented pure-ion target surface. It
 does not claim support for association-affecting target kinds merely because the
@@ -575,13 +575,13 @@ native target-kind registry knows their labels.
 - Dependency: Ceres
 - Derivative backend: CppAD-backed binary k_ij residual Jacobian
 - Solver role: Native least-squares constant-k_ij binary regression
-- Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp
+- Implementation owner: packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp
 - Validation: packages/epcsaft-regression/tests/native/test_binary.py
 - Capability key: regression:binary_pair
 - Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 - Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.
 - LaTeX: `docs/latex/algorithms.tex:349`
-- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:399` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2816` (def fit_binary_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1606` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
+- Code owners: `packages/epcsaft-regression/src/epcsaft_regression/core.py:2816` (def fit_binary_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1606` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
 
 This entry intentionally does not claim native optimizer support for every
 binary parameter family. It is not a production Ceres optimizer for `l_{ij}`

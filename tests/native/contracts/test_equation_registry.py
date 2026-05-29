@@ -211,9 +211,9 @@ def test_native_equation_family_coverage_matrix_is_documented_and_complete() -> 
     native_contracts = "\n".join(
         (REPO_ROOT / relpath).read_text(encoding="utf-8")
         for relpath in (
-            "tests/native/state/test_properties.py",
-            "tests/native/state/test_contributions.py",
-            "tests/native/state/test_runtime_cache.py",
+            "packages/epcsaft/tests/native/state/test_properties.py",
+            "packages/epcsaft/tests/native/state/test_contributions.py",
+            "packages/epcsaft/tests/native/state/test_runtime_cache.py",
         )
     )
 

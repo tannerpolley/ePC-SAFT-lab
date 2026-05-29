@@ -73,13 +73,13 @@ locally:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 Source builds require Python ``>=3.9``, a C++ compiler, CMake, and Ninja or
 another CMake generator. Python 3.13 is the current project smoke-test
@@ -91,18 +91,18 @@ For a normal local source install:
 
    git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
-   python -m pip install .
+   python -m pip install packages/epcsaft
 
 For an editable install while changing Python files:
 
 .. code-block:: powershell
 
-   python -m pip install -e .
+   python -m pip install -e packages/epcsaft
 
 Editable installs use the same native build backend as wheel installs. Python
 source changes are picked up from the checkout. If you change C++ sources,
 pybind bindings, CMake files, or build metadata, rerun
-``python -m pip install -e .``.
+``python -m pip install -e packages/epcsaft``.
 
 Equilibrium and regression workflows live in monorepo workspace packages under
 ``packages/``. In a source checkout, use the uv workspace environment before

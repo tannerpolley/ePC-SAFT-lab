@@ -16,10 +16,8 @@ boundaries are completed.
 Organization Boundary
 ---------------------
 
-``epcsaft`` currently remains the root package while the monorepo package
-layout is stabilized. That is a transition-state implementation detail, not the
-long-term package ownership model. The target repository layout is one
-organization-owned monorepo with three installable distributions:
+The repository root is the workspace/controller. The target repository layout is
+one organization-owned monorepo with three installable distributions:
 
 .. code-block:: text
 
@@ -36,7 +34,7 @@ The target internal shape is:
 
 .. code-block:: text
 
-   src/epcsaft/
+   packages/epcsaft/src/epcsaft/
      frontend/
      model/
      state/
@@ -176,9 +174,10 @@ without probing private modules.
 Repository Layout
 -----------------
 
-``src/epcsaft`` contains the provider package. Root ``tests`` contains provider,
-repo/workflow, build/package, docs/registry, integration, and cross-package
-boundary contracts. ``packages/epcsaft-equilibrium/tests`` and
+``packages/epcsaft/src/epcsaft`` contains the provider package and
+``packages/epcsaft/tests`` contains provider-owned API/native tests. Root
+``tests`` contains repo/workflow, build/package, docs/registry, integration,
+and cross-package boundary contracts. ``packages/epcsaft-equilibrium/tests`` and
 ``packages/epcsaft-regression/tests`` contain extension-owned API, native, and
 solver-dependency tests. ``data/reference`` is the canonical source-checkout
 reference-data library. ``analyses`` contains paper-validation and analysis workflows with

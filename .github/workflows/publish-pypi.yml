@@ -43,7 +43,7 @@ jobs:
 
           project = "epcsaft"
           repository = os.environ.get("GITHUB_REPOSITORY", "ePC-SAFT/ePC-SAFT")
-          version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          version = tomllib.loads(Path("packages/epcsaft/pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
           url = f"https://pypi.org/pypi/{project}/json"
           try:
               with urllib.request.urlopen(url, timeout=30) as response:
@@ -87,7 +87,7 @@ jobs:
         run: uv python install 3.13
 
       - name: Build sdist
-        run: uv build --sdist
+        run: uv build packages/epcsaft --sdist
 
       - name: Upload sdist
         uses: actions/upload-artifact@v7.0.1
@@ -121,7 +121,7 @@ jobs:
         run: uv sync --locked --no-install-project
 
       - name: Build wheels
-        run: uv run --locked cibuildwheel --output-dir wheelhouse
+        run: uv run --locked cibuildwheel packages/epcsaft --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp313-*"
           CIBW_ARCHS_WINDOWS: "AMD64"

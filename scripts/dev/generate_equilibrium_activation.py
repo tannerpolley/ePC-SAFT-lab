@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SRC_ROOT = REPO_ROOT / "src"
+SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 OUTPUT = (
     REPO_ROOT
     / "packages"

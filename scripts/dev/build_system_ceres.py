@@ -9,10 +9,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 try:
-    from build_backend.native_dependency_policy import CERES_VERSION, default_system_ceres_root
+    from scripts.dev.package_paths import PROVIDER_BUILD_BACKEND_DIR
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    sys.path.insert(0, str(REPO_ROOT / "build_backend"))
-    from native_dependency_policy import CERES_VERSION, default_system_ceres_root
+    from package_paths import PROVIDER_BUILD_BACKEND_DIR
+
+sys.path.insert(0, str(PROVIDER_BUILD_BACKEND_DIR))
+from native_dependency_policy import CERES_VERSION, default_system_ceres_root
 
 CERES_REPOSITORY = "https://github.com/ceres-solver/ceres-solver.git"
 DEFAULT_ROOT = default_system_ceres_root(REPO_ROOT)
@@ -248,13 +250,8 @@ def _build_and_install(root: Path, parallel: str, env: dict[str, str]) -> None:
 def _print_usage(root: Path) -> None:
     config_dir = _ceres_config_dir(root / "install")
     print(f"CeresConfigDir: {config_dir}")
-    print("Default source-checkout package builds auto-detect this path when it is compiler-compatible.")
-    print("For a custom Ceres package or another checkout, set:")
-    print(f'  $env:EPCSAFT_PEP517_CERES_DIR = "{config_dir}"')
-    print('  $env:EPCSAFT_PEP517_USE_SYSTEM_CERES = "1"')
-    print('  # Optional for external/checkout-specific reuse:')
-    print('  $env:EPCSAFT_PEP517_BUILD_DIR = "$PWD\\.uv-cache\\epcsaft-build"')
-    print("  uv sync --reinstall-package epcsaft")
+    print("Use this package with the source-checkout native build:")
+    print(f"  uv run python scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir {config_dir}")
 
 
 def _parser() -> argparse.ArgumentParser:

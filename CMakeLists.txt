@@ -3,11 +3,22 @@ cmake_minimum_required(VERSION 3.20...4.2)
 if(NOT DEFINED SKBUILD_PROJECT_NAME)
     set(SKBUILD_PROJECT_NAME epcsaft)
 endif()
+set(
+    EPCSAFT_PROVIDER_PACKAGE_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/packages/epcsaft"
+    CACHE PATH
+    "Monorepo package directory that owns the epcsaft provider distribution"
+)
+set(EPCSAFT_PROVIDER_SOURCE_ROOT "${EPCSAFT_PROVIDER_PACKAGE_ROOT}/src/epcsaft")
+set(EPCSAFT_PROVIDER_NATIVE_ROOT "${EPCSAFT_PROVIDER_SOURCE_ROOT}/native")
+if(NOT EXISTS "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp")
+    message(FATAL_ERROR "EPCSAFT_PROVIDER_PACKAGE_ROOT must point at packages/epcsaft with provider native sources.")
+endif()
 if(NOT DEFINED SKBUILD_PROJECT_VERSION)
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml" EPCSAFT_PYPROJECT_TOML)
+    file(READ "${EPCSAFT_PROVIDER_PACKAGE_ROOT}/pyproject.toml" EPCSAFT_PYPROJECT_TOML)
     string(REGEX MATCH "version[ \t]*=[ \t]*\"([^\"]+)\"" EPCSAFT_VERSION_MATCH "${EPCSAFT_PYPROJECT_TOML}")
     if(NOT CMAKE_MATCH_1)
-        message(FATAL_ERROR "Could not derive SKBUILD_PROJECT_VERSION from pyproject.toml")
+        message(FATAL_ERROR "Could not derive SKBUILD_PROJECT_VERSION from packages/epcsaft/pyproject.toml")
     endif()
     set(SKBUILD_PROJECT_VERSION "${CMAKE_MATCH_1}")
 endif()
@@ -17,7 +28,7 @@ project(${SKBUILD_PROJECT_NAME}
     LANGUAGES CXX
 )
 
-option(EPCSAFT_DEV_INPLACE "Copy the compiled extension into src/epcsaft for local development" OFF)
+option(EPCSAFT_DEV_INPLACE "Copy compiled native modules into package-local src trees for local development" OFF)
 option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support for native regression solves" ON)
 option(EPCSAFT_USE_SYSTEM_CERES "Use an installed Ceres Solver package instead of FetchContent" OFF)
 option(EPCSAFT_ENABLE_CPPAD "Enable package-wide CppAD support" ON)
@@ -285,28 +296,28 @@ if(EPCSAFT_ENABLE_CPPAD)
 endif()
 
 set(EPCSAFT_NATIVE_MODEL_SOURCES
-    src/epcsaft/native/model/parameter_setup.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/model/parameter_setup.cpp
 )
 set(EPCSAFT_NATIVE_EOS_SOURCES
-    src/epcsaft/native/eos/activity.cpp
-    src/epcsaft/native/eos/chemical_potential.cpp
-    src/epcsaft/native/eos/compressibility.cpp
-    src/epcsaft/native/eos/density.cpp
-    src/epcsaft/native/eos/derivatives/born_ssmds.cpp
-    src/epcsaft/native/eos/fugacity.cpp
-    src/epcsaft/native/eos/pure_neutral_parameter_derivatives.cpp
-    src/epcsaft/native/eos/residual_helmholtz.cpp
-    src/epcsaft/native/eos/residual_properties.cpp
-    src/epcsaft/native/eos/state.cpp
-    src/epcsaft/native/eos/contributions/association.cpp
-    src/epcsaft/native/eos/contributions/born.cpp
-    src/epcsaft/native/eos/contributions/dispersion.cpp
-    src/epcsaft/native/eos/contributions/hard_chain.cpp
-    src/epcsaft/native/eos/contributions/ion.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/activity.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/chemical_potential.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/compressibility.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/density.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/born_ssmds.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/fugacity.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/pure_neutral_parameter_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual_helmholtz.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual_properties.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/state.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/association.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/born.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/dispersion.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/hard_chain.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/ion.cpp
 )
 set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
-    src/epcsaft/native/autodiff/cppad_smoke_checks.cpp
-    src/epcsaft/native/autodiff/implicit_sensitivity.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/cppad_smoke_checks.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff/implicit_sensitivity.cpp
 )
 set(
     EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT
@@ -371,13 +382,13 @@ if(EPCSAFT_CPPAD_SOURCE_FILE)
 endif()
 
 set(EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/autodiff"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/bindings"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos/contributions"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/model"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/runtime"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/autodiff"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/model"
+    "${EPCSAFT_PROVIDER_NATIVE_ROOT}/runtime"
 )
 set(EPCSAFT_EQUILIBRIUM_NATIVE_INCLUDE_DIRS
     ${EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS}
@@ -454,7 +465,7 @@ if(EPCSAFT_CPPAD_LIBRARY)
 endif()
 
 set(EPCSAFT_PYBIND_SOURCES
-    src/epcsaft/native/bindings/module.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp
 )
 pybind11_add_module(_core NO_EXTRAS ${EPCSAFT_PYBIND_SOURCES})
 target_link_libraries(
@@ -470,7 +481,7 @@ target_include_directories(_core
 target_compile_features(_core PRIVATE cxx_std_17)
 if(MSVC)
     set_source_files_properties(
-        src/epcsaft/native/bindings/module.cpp
+        ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp
         PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
     )
 endif()
@@ -493,6 +504,7 @@ if(EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE)
             OUTPUT_NAME "_native_core"
             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_equilibrium"
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_equilibrium"
+            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_equilibrium"
     )
     target_link_libraries(
         epcsaft_equilibrium_native_core
@@ -531,6 +543,7 @@ if(EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE)
             OUTPUT_NAME "_native_core"
             LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_regression"
             RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_regression"
+            ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_regression"
     )
     target_link_libraries(
         epcsaft_regression_native_core
@@ -631,10 +644,10 @@ endif()
 
 if(EPCSAFT_DEV_INPLACE)
     add_custom_command(TARGET _core POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${EPCSAFT_PROVIDER_SOURCE_ROOT}"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:_core>"
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/$<TARGET_FILE_NAME:_core>"
+            "${EPCSAFT_PROVIDER_SOURCE_ROOT}/$<TARGET_FILE_NAME:_core>"
         VERBATIM
     )
     if(EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE)

@@ -51,13 +51,13 @@ locally:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 Source builds require:
 
@@ -77,7 +77,7 @@ Download the release source archive, extract it, then run:
 .. code-block:: powershell
 
    cd C:\path\to\ePC-SAFT-0.2.0
-   python -m pip install .
+   python -m pip install packages/epcsaft
 
 Editable source install
 -----------------------
@@ -89,13 +89,13 @@ come directly from the checkout:
 
    git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
-   python -m pip install -e .
+   python -m pip install -e packages/epcsaft
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv pip install -e .
+   uv pip install -e packages/epcsaft
 
 Editable installs use the same native build backend as wheel installs. Python
 source changes are picked up from the checkout. If you change C++ sources,

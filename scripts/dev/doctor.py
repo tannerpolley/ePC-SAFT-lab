@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SRC_ROOT = REPO_ROOT / "src"
+SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 DEV_BUILD_CACHE = REPO_ROOT / "build" / "dev" / "CMakeCache.txt"
 STALE_TRACKED_REPORTS: tuple[Path, ...] = ()
 REQUIRED_CORE_SYMBOLS = (

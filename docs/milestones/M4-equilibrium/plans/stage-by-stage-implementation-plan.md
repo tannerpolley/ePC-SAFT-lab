@@ -96,10 +96,10 @@ Current neutral utility-route anchors:
 
 Parameter, mixture, and capability seams:
 
-- `src/epcsaft/model/parameters.py`
-- `src/epcsaft/model/options.py`
-- `src/epcsaft/frontend/mixture.py`
-- `src/epcsaft/runtime/capability_evidence.py`
+- `packages/epcsaft/src/epcsaft/model/parameters.py`
+- `packages/epcsaft/src/epcsaft/model/options.py`
+- `packages/epcsaft/src/epcsaft/frontend/mixture.py`
+- `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py`
 - `tests/support/equilibrium_cases.py`
 
 Association and electrolyte constraints:
@@ -343,8 +343,8 @@ Primary output:
 References:
 
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
-- `src/epcsaft/frontend/mixture.py`
-- `src/epcsaft/model/options.py`
+- `packages/epcsaft/src/epcsaft/frontend/mixture.py`
+- `packages/epcsaft/src/epcsaft/model/options.py`
 - `tests/support/equilibrium_cases.py`
 - `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 
@@ -453,10 +453,10 @@ References:
 
 - `docs/latex/equations.tex`
 - `docs/equations_registry.yaml`
-- `src/epcsaft/model/parameters.py`
-- `src/epcsaft/model/options.py`
-- `src/epcsaft/frontend/mixture.py`
-- `src/epcsaft/native/`
+- `packages/epcsaft/src/epcsaft/model/parameters.py`
+- `packages/epcsaft/src/epcsaft/model/options.py`
+- `packages/epcsaft/src/epcsaft/frontend/mixture.py`
+- `packages/epcsaft/src/epcsaft/native/`
 - `docs/milestones/M3-eos/plans/explicit-association-closure-for-pcsaft.md`
 - `tests/native/contracts/test_equation_registry.py`
 
@@ -1360,7 +1360,7 @@ Primary output:
 References:
 
 - `docs/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
-- `src/epcsaft/runtime/capability_evidence.py`
+- `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 - `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`

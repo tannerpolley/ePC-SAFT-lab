@@ -13,13 +13,13 @@ checkout:
 .. code-block:: powershell
 
    cd C:\path\to\ePC-SAFT
-   python -m pip install -e .
+   python -m pip install -e packages/epcsaft
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv pip install -e .
+   uv pip install -e packages/epcsaft
 
 Editable installs use the same native build backend as wheel installs. Python
 source changes are picked up from the checkout. If you change C++ sources,
@@ -35,7 +35,7 @@ checkout:
 .. code-block:: toml
 
    dependencies = [
-       "epcsaft @ file:///C:/Users/Tanner/Documents/git/ePC-SAFT",
+       "epcsaft @ file:///C:/Users/Tanner/Documents/git/ePC-SAFT/packages/epcsaft",
    ]
 
 Recommended local dependency loop
@@ -79,41 +79,22 @@ If you intentionally want a persistent build directory for a downstream reinstal
    $env:EPCSAFT_PEP517_BUILD_DIR = "$PWD\.uv-cache\epcsaft-build"
    uv sync --reinstall-package epcsaft
 
-This keeps the package-install build tree around so a repeated full install can
-reuse CMake/Ninja dependency state instead of rebuilding Ceres from scratch.
+This keeps the package-install build tree around so repeated provider installs
+can reuse CMake/Ninja provider build state.
 
 Reusable Ceres package
 ----------------------
 
-Full package installs keep Ceres enabled by default. When repeated local or
-downstream path installs spend most of their time compiling Ceres, build Ceres
-once in the ePC-SAFT checkout. Package installs from that checkout auto-detect
-the default helper output:
+Provider package installs are provider-only and do not compile Ceres or Ipopt.
+When repeated source-checkout development builds need Ceres for the regression
+extension, build Ceres once in the ePC-SAFT checkout and pass the result to the
+dev build:
 
 .. code-block:: powershell
 
    cd C:\path\to\ePC-SAFT
    uv run python scripts\dev\build_system_ceres.py --parallel 4
-
-The helper prints the exact environment variables to reuse the result from a
-custom location, from another checkout, or from tooling that cannot see
-``build\system-ceres\2.2.0``. The manual form is:
-
-.. code-block:: powershell
-
-   $env:EPCSAFT_PEP517_CERES_DIR = "C:\path\to\ePC-SAFT\build\system-ceres\2.2.0\install\lib\cmake\Ceres"
-   $env:EPCSAFT_PEP517_USE_SYSTEM_CERES = "1"
-   $env:EPCSAFT_PEP517_BUILD_DIR = "$PWD\.uv-cache\epcsaft-build"
-   uv sync --reinstall-package epcsaft
-
-``EPCSAFT_PEP517_CERES_DIR`` must point at the directory containing
-``CeresConfig.cmake``. The build backend then passes
-``EPCSAFT_USE_SYSTEM_CERES=ON`` and ``Ceres_DIR=...`` to CMake. If neither the
-default helper output nor the environment variables are available, package
-installs still use the package default Ceres ``FetchContent`` path. On Windows,
-the default helper output is built with MSVC when Visual Studio Build Tools are
-available; use a custom ``EPCSAFT_PEP517_CERES_DIR`` only when the downstream
-build is intentionally using another compiler toolchain.
+   uv run python scripts\dev\build_epcsaft.py --use-system-ceres --ceres-dir C:\path\to\lib\cmake\Ceres
 
 For normal ePC-SAFT source development, keep using the explicit in-place dev build:
 
@@ -122,7 +103,16 @@ For normal ePC-SAFT source development, keep using the explicit in-place dev bui
    uv run python scripts\dev\build_epcsaft.py
    uv run python scripts\dev\build_epcsaft.py --build-only --parallel 10
 
-The default dev-script build is the required native dependency profile: Ceres ON, CppAD ON, and Ipopt ON when ``EPCSAFT_IPOPT_ROOT``, ``EPCSAFT_PEP517_IPOPT_ROOT``, ``--ipopt-dir``, or the Windows local SDK default ``%USERPROFILE%\Documents\deps\ipopt-msvc`` provides a native Ipopt install. Editable, wheel, and downstream path installs follow the same Ceres/CppAD requirement and use the same local Ipopt SDK default on Windows. Ipopt-enabled native equilibrium routes require an Ipopt-enabled build. New dev build configurations prefer Ninja when available. Existing ``build/dev`` trees keep their configured generator until you run the coordinated repair command ``uv run python scripts\dev\build_epcsaft.py --clean --generator ninja``.
+The default dev-script build is the required source-checkout native dependency
+profile: Ceres ON, CppAD ON, and Ipopt ON when ``EPCSAFT_IPOPT_ROOT``,
+``EPCSAFT_PEP517_IPOPT_ROOT``, ``--ipopt-dir``, or the Windows local SDK default
+``%USERPROFILE%\Documents\deps\ipopt-msvc`` provides a native Ipopt install.
+Editable, wheel, and downstream path installs of ``epcsaft`` remain
+provider-only; Ipopt-enabled native equilibrium routes require an explicit
+source-checkout build with Ipopt enabled. New dev build configurations prefer
+Ninja when available. Existing ``build/dev`` trees keep their configured
+generator until you run the coordinated repair command
+``uv run python scripts\dev\build_epcsaft.py --clean --generator ninja``.
 
 Windows ``_core`` lock failures
 -------------------------------

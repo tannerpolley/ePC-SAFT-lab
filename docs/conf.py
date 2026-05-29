@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "packages" / "epcsaft" / "src"))
 sys.path.insert(0, str(ROOT / "packages" / "epcsaft-equilibrium" / "src"))
 sys.path.insert(0, str(ROOT / "packages" / "epcsaft-regression" / "src"))
 
@@ -27,7 +27,7 @@ copyright = "2020-2026, Tanner Polley"
 author = "Tanner Polley"
 
 # The full version, including alpha/beta/rc tags
-_pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+_pyproject = (ROOT / "packages" / "epcsaft" / "pyproject.toml").read_text(encoding="utf-8")
 _match = re.search(r'^version = "([^"]+)"$', _pyproject, re.MULTILINE)
 if not _match:
     raise RuntimeError("Could not derive documentation release from pyproject.toml")

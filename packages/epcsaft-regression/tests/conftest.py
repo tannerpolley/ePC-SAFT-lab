@@ -6,7 +6,7 @@ from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 PROVIDER_ROOT = Path(__file__).resolve().parents[3]
-SRC_ROOT = PROVIDER_ROOT / "src"
+SRC_ROOT = PROVIDER_ROOT / "packages" / "epcsaft" / "src"
 PACKAGE_SRC_ROOT = PACKAGE_ROOT / "src"
 PACKAGE_TEST_ROOT = PACKAGE_ROOT / "tests"
 

@@ -6,7 +6,8 @@ from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[4]
+PROVIDER_MODULE_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft"
 EQUILIBRIUM_PACKAGE_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium"
 EQUILIBRIUM_MODULE_ROOT = EQUILIBRIUM_PACKAGE_ROOT / "src" / "epcsaft_equilibrium"
 EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_ROOT / "native" / "equilibrium"
@@ -47,7 +48,7 @@ def test_package_runtime_has_no_external_optimizer_dependency_or_imports() -> No
     docs_requirements = (REPO_ROOT / "docs" / "requirements.txt").read_text(encoding="utf-8")
     package_sources = "\n".join(
         path.read_text(encoding="utf-8")
-        for path in (REPO_ROOT / "src" / "epcsaft").rglob("*.py")
+        for path in PROVIDER_MODULE_ROOT.rglob("*.py")
         if path.name != "__pycache__"
     )
 
@@ -59,7 +60,7 @@ def test_package_runtime_has_no_external_optimizer_dependency_or_imports() -> No
 
 
 def test_public_equilibrium_does_not_expose_python_backend_tokens() -> None:
-    source = (REPO_ROOT / "src" / "epcsaft" / "__init__.py").read_text(encoding="utf-8")
+    source = (PROVIDER_MODULE_ROOT / "__init__.py").read_text(encoding="utf-8")
     equilibrium_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (
@@ -75,7 +76,7 @@ def test_public_equilibrium_does_not_expose_python_backend_tokens() -> None:
 
 def test_native_route_result_serialization_uses_bridge_module() -> None:
     bridge = EQUILIBRIUM_NATIVE_ROOT / "results" / "route_result_bridge.h"
-    bindings = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
+    bindings = (PROVIDER_MODULE_ROOT / "native" / "bindings" / "module.cpp").read_text(
         encoding="utf-8"
     )
     equilibrium_registration = (EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp").read_text(encoding="utf-8")

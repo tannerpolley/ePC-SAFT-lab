@@ -141,7 +141,10 @@ def test_build_script_profiles_resolve_optional_native_dependency_state() -> Non
 
 def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     cmake_text = (build_epcsaft.REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
-    pyproject_text = (build_epcsaft.REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    root_pyproject_text = (build_epcsaft.REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    pyproject_text = (build_epcsaft.REPO_ROOT / "packages" / "epcsaft" / "pyproject.toml").read_text(
+        encoding="utf-8"
+    )
     presets = json.loads((build_epcsaft.REPO_ROOT / "CMakePresets.json").read_text(encoding="utf-8"))
 
     assert 'option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support for native regression solves" ON)' in cmake_text
@@ -180,11 +183,15 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "src/epcsaft/native/equilibrium_nlp" not in cmake_text
     assert "pybind11_add_module(_core NO_EXTRAS src/epcsaft/bindings.cpp)" not in cmake_text
     assert "pybind11_add_module(_core NO_EXTRAS" in cmake_text
-    assert "src/epcsaft/native/bindings/module.cpp" in cmake_text
+    assert "EPCSAFT_PROVIDER_NATIVE_ROOT" in cmake_text
+    assert "bindings/module.cpp" in cmake_text
     assert "EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE" in cmake_text
+    assert 'ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_equilibrium"' in cmake_text
+    assert 'ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_regression"' in cmake_text
     assert "packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp" not in cmake_text
     assert "unset(Ceres_BINARY_DIR CACHE)" in cmake_text
     assert "unset(Ceres_SOURCE_DIR CACHE)" in cmake_text
+    assert "EPCSAFT_ENABLE_CERES" not in root_pyproject_text
     assert "EPCSAFT_ENABLE_CERES" not in pyproject_text
 
     native_default = next(p for p in presets["configurePresets"] if p["name"] == "native-default")
@@ -266,3 +273,24 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
     assert "ninja_lock: present" in lines
     assert "stale_ninja_lock: true" in lines
     assert "last_ninja_target: CMakeFiles/example.cpp.obj" in lines
+
+
+def test_source_checkout_build_syncs_editable_native_import_target(tmp_path, monkeypatch) -> None:
+    source_package = tmp_path / "packages" / "epcsaft" / "src" / "epcsaft"
+    editable_site = tmp_path / "venv" / "Lib" / "site-packages"
+    editable_package = editable_site / "epcsaft"
+    source_package.mkdir(parents=True)
+    editable_package.mkdir(parents=True)
+    (editable_site / "_epcsaft_editable.py").write_text("# editable marker\n", encoding="utf-8")
+    source_artifact = source_package / "_core.cp313-win_amd64.pyd"
+    source_artifact.write_bytes(b"source-build")
+    stale_artifact = editable_package / "_core.cp312-win_amd64.pyd"
+    stale_artifact.write_bytes(b"stale")
+
+    monkeypatch.setattr(build_epcsaft, "PACKAGE_DIR", source_package)
+    monkeypatch.setattr(build_epcsaft.sysconfig, "get_path", lambda name: str(editable_site) if name == "purelib" else None)
+
+    build_epcsaft._sync_editable_native_artifacts()
+
+    assert (editable_package / source_artifact.name).read_bytes() == b"source-build"
+    assert not stale_artifact.exists()

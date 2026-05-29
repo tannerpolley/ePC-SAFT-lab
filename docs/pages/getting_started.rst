@@ -17,7 +17,7 @@ extension locally:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 After the package is published on PyPI, use the standard package-manager
 command:
@@ -32,7 +32,7 @@ For a local editable checkout:
 
    git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
-   python -m pip install -e .
+   python -m pip install -e packages/epcsaft
 
 Source and editable installs build a native C++ extension. They require Python
 ``>=3.9``, a C++ compiler, CMake, and Ninja or another CMake generator. See

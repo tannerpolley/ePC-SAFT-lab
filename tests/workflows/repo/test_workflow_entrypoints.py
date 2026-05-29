@@ -70,17 +70,17 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "The `v0.2.0` GitHub release provides a Windows CPython 3.13 wheel" in readme
     assert "If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above." in readme
     assert "python -m pip install epcsaft" in readme
-    assert "python -m pip install -e ." in readme
+    assert "python -m pip install -e packages/epcsaft" in readme
     assert "README intentionally stays focused on package users" in readme
     assert "Editable source install" in release_installation
-    assert "python -m pip install -e ." in release_installation
+    assert "python -m pip install -e packages/epcsaft" in release_installation
     assert "Source and editable installs build a native C++ extension" in getting_started
     assert "default source-checkout validation sequence" not in getting_started
     assert "``run_pytest.py -q`` is the default fast contract suite" not in getting_started
     assert "Current package version: ``0.2.0``" in overview
     assert "If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above." in overview
     assert "The ``v0.2.0`` tag supports source installs" in overview
-    assert "python -m pip install -e ." in overview
+    assert "python -m pip install -e packages/epcsaft" in overview
     assert "For the current release, install the Windows CPython 3.13 wheel from GitHub" in getting_started
     assert "After the package is published on PyPI" in getting_started
     assert "Current package version: ``0.2.0``" in release_installation
@@ -210,7 +210,7 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert "Do not set ``EPCSAFT_PEP517_CERES_DIR``" in env_readme
     assert "build_epcsaft.py --use-system-ceres" in env_readme
     assert ".codex/environments/setup.ps1 builds or reuses scripts/dev/build_system_ceres.py output" in build_owner
-    assert "scripts/dev/build_dist.py auto-detects the default build/system-ceres/2.2.0" in command_runner
+    assert "scripts/dev/build_dist.py builds the provider-only packages/epcsaft distribution" in command_runner
     assert "plus EPCSAFT_PEP517_CERES_DIR" not in build_owner
     assert "prefer a persistent EPCSAFT_PEP517_BUILD_DIR and prebuilt Ceres via EPCSAFT_PEP517_CERES_DIR" not in command_runner
 
@@ -221,6 +221,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     manifest_data = runpy.run_path(str(REPO_ROOT / "scripts" / "dev" / "jetbrains_run_manifest.py"))
     run_config_specs = tuple(manifest_data["CANONICAL_RUN_CONFIGS"])
     root_pyproject = _toml("pyproject.toml")
+    provider_pyproject = _toml("packages/epcsaft/pyproject.toml")
     equilibrium_pyproject = _toml("packages/epcsaft-equilibrium/pyproject.toml")
     regression_pyproject = _toml("packages/epcsaft-regression/pyproject.toml")
     agents_md = _read("AGENTS.md")
@@ -266,10 +267,12 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "enable Services Run Dashboard for" in normalizer
     assert "delete stale shared run configuration" in normalizer
     assert "CANONICAL_RUN_CONFIGS" in normalizer
-    assert root_pyproject["project"]["name"] == "epcsaft"
+    assert "project" not in root_pyproject
+    assert provider_pyproject["project"]["name"] == "epcsaft"
     assert equilibrium_pyproject["project"]["name"] == "epcsaft-equilibrium"
     assert regression_pyproject["project"]["name"] == "epcsaft-regression"
     assert set(root_pyproject["tool"]["uv"]["workspace"]["members"]) == {
+        "packages/epcsaft",
         "packages/epcsaft-equilibrium",
         "packages/epcsaft-regression",
     }
@@ -396,8 +399,8 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         assert module.attrib["type"] == "PYTHON_MODULE"
         assert module.find(".//orderEntry[@type='jdk']").attrib["jdkName"] == "uv (ePC-SAFT)"
 
-    assert content_root(provider_module).attrib["url"] == "file://$MODULE_DIR$"
-    assert source_roots(provider_module) == {("file://$MODULE_DIR$/src", "false")}
+    assert content_root(provider_module).attrib["url"] == "file://$MODULE_DIR$/packages/epcsaft"
+    assert source_roots(provider_module) == {("file://$MODULE_DIR$/packages/epcsaft/src", "false")}
     assert module_dependencies(provider_module) == set()
 
     assert content_root(equilibrium_module).attrib["url"] == "file://$MODULE_DIR$/packages/epcsaft-equilibrium"
@@ -550,7 +553,7 @@ def test_github_default_smoke_uses_downstream_path_install_not_wheel_build() -> 
     assert "uv python install 3.13" in workflow
     assert old_python not in workflow
     assert '$repoUrl = "file:///"' in workflow
-    assert "epcsaft @ $repoUrl" in workflow
+    assert "epcsaft @ ${repoUrl}/packages/epcsaft" in workflow
     assert "UV_CACHE_DIR" in workflow
     assert "EPCSAFT_PEP517_BUILD_DIR" in workflow
     assert "uv sync --python 3.13" in workflow
@@ -600,7 +603,7 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
         "merge-multiple: true",
         'CIBW_BUILD: "cp313-*"',
         'CIBW_ARCHS_WINDOWS: "AMD64"',
-        "uv build --sdist",
+        "uv build packages/epcsaft --sdist",
         "pypi-preflight:",
         "PyPI trusted publisher preflight",
         "https://pypi.org/pypi/{project}/json",

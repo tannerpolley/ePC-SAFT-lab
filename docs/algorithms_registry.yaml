@@ -11,7 +11,7 @@
   dependency: "None"
   derivative_backend: "Route-provided exact gradient and Jacobian callbacks"
   solver_role: "Shared interface for Ipopt-owned constrained NLP routes"
-  implementation_owner: "src/epcsaft/native/equilibrium/core/nlp_problem.h"
+  implementation_owner: "packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h"
   validation: "packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py"
   capability_key: "native_nlp_problem_contract"
   description: "Defines the common native NLP shape consumed by the Ipopt adapter."
@@ -38,7 +38,7 @@
   dependency: "Ipopt"
   derivative_backend: "Route-provided exact gradient and Jacobian callbacks"
   solver_role: "Maps NlpProblem into Ipopt::TNLP and returns IpoptSolveResult"
-  implementation_owner: "src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp"
+  implementation_owner: "packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp"
   validation: "packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py"
   capability_key: "native_ipopt_equilibrium_nlp"
   description: "Bridges the package NLP contract to Ipopt without owning route equations."
@@ -76,10 +76,6 @@
     The Ceres adapter family owns native least-squares solve setup for supported
     regression routes. It is separate from Ipopt and does not call Ipopt routes.
   owner_refs:
-    - file: "packages/epcsaft-regression/native/regression/module.cpp"
-      line: 399
-      comment_line: 396
-      context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "packages/epcsaft-regression/native/regression/ceres_regression.cpp"
       line: 511
       comment_line: 510
@@ -214,7 +210,7 @@
   dependency: "None"
   derivative_backend: "EOS/provider chemical-potential and free-energy derivatives as required by the selected trial problem"
   solver_role: "Neutral tangent-plane stability evaluator for phase discovery and postsolve certification"
-  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
+  implementation_owner: "packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h; docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
   validation: "packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
   capability_key: "internal:neutral_tpd_stability"
   description: "Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance."
@@ -244,7 +240,7 @@
   dependency: "None"
   derivative_backend: "EOS/provider chemical-potential and free-energy derivatives through pressure-root phase-block evaluation"
   solver_role: "Refines deterministic TPD starts through continuous composition-space minimization with trial density/volume from the EOS pressure root"
-  implementation_owner: "src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp; src/epcsaft/native/equilibrium/core/two_phase_eos_route.h"
+  implementation_owner: "packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h"
   validation: "packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py"
   capability_key: "internal:neutral_continuous_tpd_minimization"
   description: "Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening."
@@ -461,10 +457,6 @@
     optimizer for association-energy \verb|e_assoc| or association-volume
     \verb|vol_a| targets until the association parameter-sensitivity work lands.
   owner_refs:
-    - file: "packages/epcsaft-regression/native/regression/module.cpp"
-      line: 397
-      comment_line: 396
-      context: "m.def(\"_fit_pure_neutral_native_ceres\", &fit_pure_neutral_native_ceres_binding);"
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
       line: 2404
       comment_line: 2403
@@ -500,10 +492,6 @@
     does not claim support for association-affecting target kinds merely because the
     native target-kind registry knows their labels.
   owner_refs:
-    - file: "packages/epcsaft-regression/native/regression/module.cpp"
-      line: 399
-      comment_line: 396
-      context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
       line: 2787
       comment_line: 2786
@@ -540,10 +528,6 @@
     or \(k^{hb}_{ij}\), and active-association \(l_{ij}\) remains pending until
     derivative and optimizer evidence both exist.
   owner_refs:
-    - file: "packages/epcsaft-regression/native/regression/module.cpp"
-      line: 399
-      comment_line: 396
-      context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
       line: 2816
       comment_line: 2815

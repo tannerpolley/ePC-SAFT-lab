@@ -80,7 +80,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "not_claimed",
         "tests": (
-            "tests/native/state/test_fugacity_derivatives.py::test_associating_pure_parameter_derivative_results_support_e_assoc_and_vol_a",
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_pure_parameter_derivative_results_support_e_assoc_and_vol_a",
         ),
         "revisit_after_issue": "#136",
     },
@@ -95,7 +95,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "not_claimed",
         "tests": (
-            "tests/native/state/test_fugacity_derivatives.py::test_associating_pure_parameter_derivative_results_support_e_assoc_and_vol_a",
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_pure_parameter_derivative_results_support_e_assoc_and_vol_a",
         ),
         "revisit_after_issue": "#136",
     },
@@ -140,7 +140,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "not_claimed",
         "tests": (
-            "tests/native/state/test_fugacity_derivatives.py::test_associating_binary_parameter_derivative_results_support_lij_and_khb",
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_binary_parameter_derivative_results_support_lij_and_khb",
         ),
         "revisit_after_issue": "#137",
     },
@@ -155,7 +155,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "not_claimed",
         "tests": (
-            "tests/native/state/test_fugacity_derivatives.py::test_associating_binary_parameter_derivative_results_support_lij_and_khb",
+            "packages/epcsaft/tests/native/state/test_fugacity_derivatives.py::test_associating_binary_parameter_derivative_results_support_lij_and_khb",
         ),
         "revisit_after_issue": "#137",
     },

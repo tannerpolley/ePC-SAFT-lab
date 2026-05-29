@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+import sysconfig
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,12 +18,14 @@ try:
         ipopt_root_prefers_msvc,
         resolve_ipopt_root_for_build,
     )
+    from scripts.dev.package_paths import PROVIDER_MODULE_DIR, PROVIDER_PYPROJECT
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from native_runtime_env import apply_native_runtime_env, ipopt_root_prefers_msvc, resolve_ipopt_root_for_build
+    from package_paths import PROVIDER_MODULE_DIR, PROVIDER_PYPROJECT
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BUILD_DIR = REPO_ROOT / "build" / "dev"
-PACKAGE_DIR = REPO_ROOT / "src" / "epcsaft"
+PACKAGE_DIR = PROVIDER_MODULE_DIR
 LOG_FILE_NAME = "build_epcsaft.log"
 STALE_LOCK_SECONDS = 120
 
@@ -150,10 +153,10 @@ def _cmake_command() -> list[str]:
 
 
 def _pyproject_version() -> str:
-    text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    text = PROVIDER_PYPROJECT.read_text(encoding="utf-8")
     match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', text)
     if not match:
-        raise RuntimeError("Could not derive package version from pyproject.toml")
+        raise RuntimeError(f"Could not derive package version from {PROVIDER_PYPROJECT}")
     return match.group(1)
 
 
@@ -268,9 +271,9 @@ def _apply_toolchain_env(
 def _clean() -> None:
     # Remove the importable extension first. If Windows has it locked, fail
     # before deleting the reusable CMake build tree.
-    for artifact in PACKAGE_DIR.glob("_core*.pyd"):
+    for artifact in _native_artifacts():
         _remove_extension_artifact(artifact)
-    for artifact in PACKAGE_DIR.glob("_core*.so"):
+    for artifact in _editable_native_artifacts():
         _remove_extension_artifact(artifact)
     shutil.rmtree(BUILD_DIR, ignore_errors=True)
 
@@ -305,6 +308,49 @@ def _cmake_cache_value(name: str) -> str | None:
 
 def _native_artifacts() -> list[Path]:
     return sorted([*PACKAGE_DIR.glob("_core*.pyd"), *PACKAGE_DIR.glob("_core*.so")])
+
+
+def _editable_package_dir() -> Path | None:
+    purelib = sysconfig.get_path("purelib")
+    if not purelib:
+        return None
+    site_root = Path(purelib)
+    if not (site_root / "_epcsaft_editable.py").is_file():
+        return None
+    package_dir = site_root / "epcsaft"
+    return package_dir if package_dir.is_dir() else None
+
+
+def _editable_native_artifacts() -> list[Path]:
+    package_dir = _editable_package_dir()
+    if package_dir is None:
+        return []
+    return sorted([*package_dir.glob("_core*.pyd"), *package_dir.glob("_core*.so")])
+
+
+def _sync_editable_native_artifacts() -> None:
+    package_dir = _editable_package_dir()
+    if package_dir is None:
+        return
+    source_artifacts = _native_artifacts()
+    if not source_artifacts:
+        raise FileNotFoundError(f"No source-checkout native _core artifact found under {PACKAGE_DIR}.")
+    package_dir.mkdir(parents=True, exist_ok=True)
+    source_names = {artifact.name for artifact in source_artifacts}
+    for stale in _editable_native_artifacts():
+        if stale.name not in source_names:
+            _remove_extension_artifact(stale)
+    for artifact in source_artifacts:
+        target = package_dir / artifact.name
+        try:
+            shutil.copy2(artifact, target)
+        except PermissionError as exc:
+            message = (
+                f"Unable to update editable native artifact {target}. The compiled extension is probably "
+                "loaded by an active Python process. Close Python terminals, IDE test runners, or parallel "
+                "workers that imported epcsaft._core, then rerun the build."
+            )
+            raise PermissionError(message) from exc
 
 
 def _last_ninja_target() -> str | None:
@@ -797,6 +843,7 @@ def main() -> int:
         print("Build profile does not reconfigure an existing CMake tree when --build-only is used.", flush=True)
     if not args.configure_only:
         _timed("build", lambda: _build(env, settings.parallel))
+        _timed("editable native sync", _sync_editable_native_artifacts)
         _timed("native import", lambda: _verify_native_import(env))
     else:
         print("Timing: build skipped (--configure-only)", flush=True)

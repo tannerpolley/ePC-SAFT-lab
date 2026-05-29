@@ -12,6 +12,10 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 WORKSPACE_ROOT = REPO_ROOT
+PROVIDER_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft"
+PROVIDER_PACKAGE_ROOT = PROVIDER_PACKAGE_DIR / "src" / "epcsaft"
+PROVIDER_TEST_ROOT = PROVIDER_PACKAGE_DIR / "tests"
+PROVIDER_NATIVE_ROOT = PROVIDER_PACKAGE_ROOT / "native"
 EQUILIBRIUM_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft-equilibrium"
 EQUILIBRIUM_PACKAGE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "src" / "epcsaft_equilibrium"
 EQUILIBRIUM_TEST_ROOT = EQUILIBRIUM_PACKAGE_DIR / "tests"
@@ -19,7 +23,7 @@ EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "native" / "equilibrium"
 REGRESSION_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft-regression"
 REGRESSION_PACKAGE_ROOT = REGRESSION_PACKAGE_DIR / "src" / "epcsaft_regression"
 REGRESSION_TEST_ROOT = REGRESSION_PACKAGE_DIR / "tests"
-ALLOWED_ROOT_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_core.pyi", "_types.py"}
+ALLOWED_PROVIDER_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_core.pyi", "_types.py"}
 ALLOWED_NATIVE_DOMAIN_FOLDERS = {
     "autodiff",
     "bindings",
@@ -116,11 +120,15 @@ PAPER_VALIDATION_PARAMETER_NUMERIC_COLUMNS = {
 }
 PAPER_VALIDATION_PARAMETER_REQUIRED_VALUE_COLUMNS = PAPER_VALIDATION_PARAMETER_NUMERIC_COLUMNS | {"s", "dielc"}
 TEST_SUBGROUP_ROOTS = {
-    REPO_ROOT / "tests" / "api",
-    REPO_ROOT / "tests" / "api" / "frontend",
-    REPO_ROOT / "tests" / "api" / "package",
+    PROVIDER_TEST_ROOT,
+    PROVIDER_TEST_ROOT / "api",
+    PROVIDER_TEST_ROOT / "api" / "frontend",
+    PROVIDER_TEST_ROOT / "api" / "package",
+    PROVIDER_TEST_ROOT / "native",
+    PROVIDER_TEST_ROOT / "native" / "contracts",
+    PROVIDER_TEST_ROOT / "native" / "state",
+    PROVIDER_TEST_ROOT / "support",
     REPO_ROOT / "tests" / "native" / "contracts",
-    REPO_ROOT / "tests" / "native" / "state",
     EQUILIBRIUM_TEST_ROOT,
     EQUILIBRIUM_TEST_ROOT / "api",
     EQUILIBRIUM_TEST_ROOT / "contracts",
@@ -134,7 +142,6 @@ TEST_SUBGROUP_ROOTS = {
     REGRESSION_TEST_ROOT / "contracts",
     REGRESSION_TEST_ROOT / "native",
     REGRESSION_TEST_ROOT / "regression_support",
-    REPO_ROOT / "tests" / "support",
     REPO_ROOT / "tests" / "workflows" / "build",
     REPO_ROOT / "tests" / "workflows" / "repo",
 }
@@ -152,6 +159,8 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/api/test_cppad_api_reset.py",
     "tests/api/frontend/test_cppad_api_reset.py",
     "tests/api/frontend/test_equilibrium.py",
+    "tests/api/frontend",
+    "tests/api/package",
     "tests/equilibrium",
     "tests/regression",
     "tests/helpers",
@@ -161,6 +170,8 @@ REPLACED_FLAT_TEST_FILES = {
     "tests/native/test_runtime_contracts.py",
     "tests/native/test_chemical_equilibrium_native.py",
     "tests/native/contracts/test_equilibrium_activation_capabilities.py",
+    "tests/native/state",
+    "tests/support",
     "tests/workflows/benchmarks",
 }
 MILESTONE_MIRROR_FOLDERS = {
@@ -197,6 +208,7 @@ MILESTONE_PLAN_FILES = {
     "M1-packages/plans/monorepo-package-migration.md",
     "M1-packages/plans/package-extension-transfer-superseded-plan.md",
     "M1-packages/plans/test-ownership-relocation.md",
+    "M1-packages/plans/move-provider-distribution-into-packages-epcsaft.md",
     "M3-eos/plans/explicit-association-closure-for-pcsaft.md",
     "M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md",
     "M4-equilibrium/plans/gfpe-package-cleanup-plan.md",
@@ -219,7 +231,7 @@ print(json.dumps(sorted(name for name in watchlist if name in sys.modules)))
 """
     env = os.environ.copy()
     pythonpath_entries = [
-        str(REPO_ROOT / "src"),
+        str(PROVIDER_PACKAGE_DIR / "src"),
         str(EQUILIBRIUM_PACKAGE_DIR / "src"),
         str(REGRESSION_PACKAGE_DIR / "src"),
     ]
@@ -371,7 +383,7 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
         )
     )
     assert not (REPO_ROOT / removed_fit_script).exists()
-    assert not (REPO_ROOT / "src" / "epcsaft" / ("_optional" + "_backends")).exists()
+    assert not (PROVIDER_PACKAGE_ROOT / ("_optional" + "_backends")).exists()
     removed_ipopt_helper = REPO_ROOT / "scripts" / "dev" / ("setup_windows_" + removed_python_ipopt_wrapper + "_uv.ps1")
     assert not removed_ipopt_helper.exists()
 
@@ -379,22 +391,24 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
 def test_root_package_contains_only_entry_python_files() -> None:
     root_files = {
         path.name
-        for path in (REPO_ROOT / "src" / "epcsaft").iterdir()
+        for path in PROVIDER_PACKAGE_ROOT.iterdir()
         if path.is_file() and path.suffix in {".py", ".pyi"}
     }
-    assert root_files == ALLOWED_ROOT_PYTHON_ENTRY_FILES
-    assert not (REPO_ROOT / "src" / "epcsaft" / "equilibrium_core").exists()
-    assert not (REPO_ROOT / "src" / "epcsaft" / "equilibrium").exists()
+    assert root_files == ALLOWED_PROVIDER_PYTHON_ENTRY_FILES
+    assert not (REPO_ROOT / "src" / "epcsaft").exists()
+    assert not (REPO_ROOT / "epcsaft").exists()
+    assert not (PROVIDER_PACKAGE_ROOT / "equilibrium_core").exists()
+    assert not (PROVIDER_PACKAGE_ROOT / "equilibrium").exists()
     assert (EQUILIBRIUM_PACKAGE_ROOT / "core").is_dir()
 
 
 def test_native_cpp_sources_live_under_domain_workflow_modules() -> None:
-    native_root = REPO_ROOT / "src" / "epcsaft" / "native"
+    native_root = PROVIDER_NATIVE_ROOT
     root_native_impl_files = sorted(
         path.name for path in native_root.iterdir() if path.is_file() and path.suffix in {".cpp", ".h", ".hpp"}
     )
     assert root_native_impl_files == []
-    assert not (REPO_ROOT / "src" / "epcsaft" / "bindings.cpp").exists()
+    assert not (PROVIDER_PACKAGE_ROOT / "bindings.cpp").exists()
     assert (native_root / "bindings" / "module.cpp").is_file()
 
     invalid_native_locations: list[str] = []
@@ -403,13 +417,13 @@ def test_native_cpp_sources_live_under_domain_workflow_modules() -> None:
             continue
         rel = path.relative_to(REPO_ROOT).as_posix()
         parts = Path(rel).parts
-        if len(parts) < 5 or parts[3] not in ALLOWED_NATIVE_DOMAIN_FOLDERS:
+        if len(parts) < 7 or parts[5] not in ALLOWED_NATIVE_DOMAIN_FOLDERS:
             invalid_native_locations.append(rel)
     assert invalid_native_locations == []
 
 
 def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None:
-    native_root = REPO_ROOT / "src" / "epcsaft" / "native"
+    native_root = PROVIDER_NATIVE_ROOT
     native_sources = [
         path.relative_to(REPO_ROOT).as_posix()
         for path in sorted(native_root.rglob("*"))
@@ -430,7 +444,7 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
         "epcsaft_electrolyte.h",
     )
     pybind_allowed = {
-        "src/epcsaft/native/bindings/module.cpp",
+        "packages/epcsaft/src/epcsaft/native/bindings/module.cpp",
     }
 
     legacy_offenders: list[str] = []
@@ -448,13 +462,11 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
 
 
 def test_native_equilibrium_bindings_are_registered_through_selector_domain_units() -> None:
-    provider_module = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
-        encoding="utf-8"
-    )
+    provider_module = (PROVIDER_NATIVE_ROOT / "bindings" / "module.cpp").read_text(encoding="utf-8")
     extension_module = (EQUILIBRIUM_NATIVE_ROOT / "module.cpp").read_text(
         encoding="utf-8"
     )
-    bindings_root = REPO_ROOT / "src" / "epcsaft" / "native" / "bindings"
+    bindings_root = PROVIDER_NATIVE_ROOT / "bindings"
     forbidden_includes = (
         "equilibrium/blocks/",
         "equilibrium/routes/",
@@ -476,26 +488,26 @@ def test_native_equilibrium_bindings_are_registered_through_selector_domain_unit
     assert "register_equilibrium_bindings(m);" not in provider_module
     assert "register_equilibrium_bindings(m);" in extension_module
     assert (EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp").exists()
-    assert not (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "equilibrium_binding_types.h").exists()
-    assert not (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "equilibrium_bindings.cpp").exists()
+    assert not (PROVIDER_NATIVE_ROOT / "bindings" / "equilibrium_binding_types.h").exists()
+    assert not (PROVIDER_NATIVE_ROOT / "bindings" / "equilibrium_bindings.cpp").exists()
     assert offenders == []
 
 
 def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
     deleted_sources = (
-        "src/epcsaft/native/equilibrium/facade.h",
-        "src/epcsaft/native/equilibrium/workflows.cpp",
-        "src/epcsaft/native/equilibrium/routes/route_builders.cpp",
-        "src/epcsaft/native/equilibrium/routes/route_builders.h",
-        "src/epcsaft/native/equilibrium/routes/reactive",
-        "src/epcsaft/native/equilibrium/routes/stability",
+        "packages/epcsaft/src/epcsaft/native/equilibrium/facade.h",
+        "packages/epcsaft/src/epcsaft/native/equilibrium/workflows.cpp",
+        "packages/epcsaft/src/epcsaft/native/equilibrium/routes/route_builders.cpp",
+        "packages/epcsaft/src/epcsaft/native/equilibrium/routes/route_builders.h",
+        "packages/epcsaft/src/epcsaft/native/equilibrium/routes/reactive",
+        "packages/epcsaft/src/epcsaft/native/equilibrium/routes/stability",
     )
     for relpath in deleted_sources:
         assert not (REPO_ROOT / relpath).exists(), relpath
 
     binding_source_paths = [
         path
-        for path in sorted((REPO_ROOT / "src" / "epcsaft" / "native" / "bindings").rglob("*"))
+        for path in sorted((PROVIDER_NATIVE_ROOT / "bindings").rglob("*"))
         if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}
     ]
     binding_source_paths.append(
@@ -719,7 +731,7 @@ def test_activation_matrix_families_do_not_gain_direct_pybind_route_entrypoints(
     activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
     binding_source_paths = [
         path
-        for path in sorted((REPO_ROOT / "src" / "epcsaft" / "native" / "bindings").rglob("*"))
+        for path in sorted((PROVIDER_NATIVE_ROOT / "bindings").rglob("*"))
         if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}
     ]
     binding_source_paths.append(
@@ -775,7 +787,7 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
     inspected_paths = (
         EQUILIBRIUM_PACKAGE_ROOT / "equilibrium.py",
         EQUILIBRIUM_PACKAGE_ROOT / "workflows.py",
-        REPO_ROOT / "src" / "epcsaft" / "state" / "native_adapter.py",
+        PROVIDER_PACKAGE_ROOT / "state" / "native_adapter.py",
     )
 
     offenders: list[str] = []
@@ -843,7 +855,7 @@ def test_regression_package_keeps_downstream_application_benchmarks_out_of_core(
 
 
 def test_state_native_adapter_does_not_own_regression_native_wrappers() -> None:
-    state_path = REPO_ROOT / "src" / "epcsaft" / "state" / "native_adapter.py"
+    state_path = PROVIDER_PACKAGE_ROOT / "state" / "native_adapter.py"
     tree = ast.parse(state_path.read_text(encoding="utf-8"), filename=state_path.relative_to(REPO_ROOT).as_posix())
     regression_wrapper_names = {
         "_evaluate_generic_native_debug",
@@ -1033,8 +1045,8 @@ def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None
 
 def test_custom_scalar_solver_tokens_are_limited_to_density_closure_exception() -> None:
     allowed_paths = {
-        "src/epcsaft/native/eos/density.cpp",
-        "src/epcsaft/native/model/native_types.h",
+        "packages/epcsaft/src/epcsaft/native/eos/density.cpp",
+        "packages/epcsaft/src/epcsaft/native/model/native_types.h",
     }
     blocked_terms = (
         "br" + "ent",
@@ -1049,7 +1061,7 @@ def test_custom_scalar_solver_tokens_are_limited_to_density_closure_exception() 
         "multi" + "start",
         "multi" + "_start",
     )
-    tracked = _tracked_files("src/epcsaft")
+    tracked = _tracked_files("packages/epcsaft/src/epcsaft")
 
     offenders: list[str] = []
     for relpath in tracked:

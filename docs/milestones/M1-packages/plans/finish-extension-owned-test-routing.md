@@ -24,7 +24,7 @@ finds drift.
 - Root `tests/` remains limited to provider, repository/workflow, build,
   package-boundary, docs/registry, integration, and cross-package governance
   tests.
-- `run_pytest.py` and `src/epcsaft/runtime/capability_evidence.py` route
+- `run_pytest.py` and `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py` route
   extension validation lanes to package-owned test paths.
 
 ## Non-Goals

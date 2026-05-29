@@ -23,6 +23,12 @@ EQUILIBRIUM_NATIVE_VLE_RESULTS_TEST = (
 EQUILIBRIUM_SELECTOR_CONTRACT_TEST = (
     "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
 )
+PROVIDER_API_IMPORTS_TEST = "packages/epcsaft/tests/api/frontend/test_imports.py"
+PROVIDER_API_STATE_PROPERTIES_TEST = "packages/epcsaft/tests/api/frontend/test_state_properties.py"
+PROVIDER_NATIVE_CONTRIBUTIONS_TEST = (
+    "packages/epcsaft/tests/native/state/test_contributions.py::"
+    "test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract"
+)
 REGRESSION_API_TEST_FILE = "packages/epcsaft-regression/tests/api/test_regression.py"
 REGRESSION_NATIVE_PURE_TEST = "packages/epcsaft-regression/tests/native/test_pure.py"
 REGRESSION_NATIVE_BINARY_TEST = "packages/epcsaft-regression/tests/native/test_binary.py"
@@ -35,11 +41,11 @@ def test_confidence_slice_extends_generic_targets_without_changing_generic():
     confidence_args = run_pytest._pytest_args(["-q"], pytest_temp, confidence=True)
 
     assert generic_args[: len(run_pytest.GENERIC_TEST_TARGETS)] == list(run_pytest.GENERIC_TEST_TARGETS)
-    assert "tests/native/state/test_properties.py" not in generic_args
+    assert "packages/epcsaft/tests/native/state/test_properties.py" not in generic_args
     assert "tests/api/frontend" not in generic_args
     assert "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py" not in generic_args
     assert confidence_args[: len(run_pytest.CONFIDENCE_TEST_TARGETS)] == list(run_pytest.CONFIDENCE_TEST_TARGETS)
-    assert "tests/native/state/test_contributions.py::test_native_residual_helmholtz_and_compressibility_contributions_match_neutral_contract" in confidence_args
+    assert PROVIDER_NATIVE_CONTRIBUTIONS_TEST in confidence_args
     assert confidence_args[-3:] == ["-q", "--basetemp", str(pytest_temp)]
 
 
@@ -63,7 +69,7 @@ def test_predefined_pytest_targets_reference_existing_files():
 
     for targets in run_pytest.SLICE_TARGETS.values():
         for target in targets:
-            if target == "tests":
+            if target in {"tests", "packages/epcsaft/tests"}:
                 continue
             target_path = target.split("::", 1)[0]
             if not (repo_root / target_path).exists():
@@ -80,6 +86,7 @@ def test_all_shortcut_is_the_explicit_exhaustive_pytest_route():
     assert all_args[: len(run_pytest.ALL_TEST_TARGETS)] == list(run_pytest.ALL_TEST_TARGETS)
     assert all_args == [
         "tests",
+        "packages/epcsaft/tests",
         "packages/epcsaft-equilibrium/tests",
         "packages/epcsaft-regression/tests",
         "-q",
@@ -224,7 +231,7 @@ def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():
 def test_native_ceres_sources_have_no_ceres_nonexact_derivative_route():
     source = "\n".join(
         path.read_text(encoding="utf-8")
-        for root in (Path("src/epcsaft/native"), Path("packages/epcsaft-regression/native"))
+        for root in (Path("packages/epcsaft/src/epcsaft/native"), Path("packages/epcsaft-regression/native"))
         for path in sorted(root.rglob("*"))
         if path.suffix in {".cpp", ".h", ".hpp"}
     )
@@ -326,6 +333,7 @@ def test_slice_targets_use_grouped_test_subpackages():
         target.startswith(
             (
                 "tests/",
+                "packages/epcsaft/tests/",
                 "packages/epcsaft-equilibrium/tests/",
                 "packages/epcsaft-regression/tests/",
             )
@@ -337,13 +345,13 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert "tests/api/frontend" not in run_pytest.GENERIC_TEST_TARGETS
     assert "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py" not in run_pytest.API_TEST_TARGETS
     assert "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py" not in run_pytest.GENERIC_TEST_TARGETS
-    assert "tests/api/frontend/test_imports.py" in run_pytest.API_TEST_TARGETS
+    assert PROVIDER_API_IMPORTS_TEST in run_pytest.API_TEST_TARGETS
     assert "tests/api/frontend/test_regression.py" not in run_pytest.API_TEST_TARGETS
     assert "tests/api/frontend/test_regression.py" not in run_pytest.REGRESSION_TEST_TARGETS
     assert REGRESSION_API_TEST_FILE in run_pytest.REGRESSION_TEST_TARGETS
     assert "packages/epcsaft-equilibrium/tests/api/test_imports.py" in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert EQUILIBRIUM_CAPABILITY_TEST_FILE in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
-    assert "tests/api/frontend/test_state_properties.py" in run_pytest.GENERIC_TEST_TARGETS
+    assert PROVIDER_API_STATE_PROPERTIES_TEST in run_pytest.GENERIC_TEST_TARGETS
     assert "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py" not in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert (
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_constructor_configures_route_before_solve"
@@ -376,7 +384,7 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
-    assert "tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives" in (
+    assert "packages/epcsaft/tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives" in (
         run_pytest.RUNTIME_TEST_TARGETS
     )
     assert "tests/workflows/repo/test_run_pytest.py" not in run_pytest.GENERIC_TEST_TARGETS
@@ -633,7 +641,7 @@ def test_equilibrium_debug_rejects_sweeps_and_non_equilibrium_targets():
 
     with pytest.raises(SystemExit, match="must be equilibrium tests"):
         run_pytest._pytest_args(
-            ["tests/api/frontend/test_state_properties.py::test_state_properties_use_molar_units", "-q"],
+            ["packages/epcsaft/tests/api/frontend/test_state_properties.py::test_state_properties_use_molar_units", "-q"],
             pytest_temp,
             equilibrium_debug=True,
         )
@@ -666,6 +674,7 @@ def test_equilibrium_debug_rejects_non_equilibrium_slices():
 def test_generic_and_api_slices_do_not_run_equilibrium_route_sweeps():
     blocked = {
         "tests/api/frontend",
+        "packages/epcsaft/tests/api/frontend",
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
     }
 

@@ -15,6 +15,5 @@ proof, extension-native boundaries, and package CI/docs/release structure.
 | Issue | Readiness | Release target | Summary |
 | --- | --- | --- | --- |
 | [#154](issues/0154-move-core-provider-package-into-packages-epcsaft.md) | `needs design` | `future` | Track the eventual move of the root provider package into `packages/epcsaft`. |
-| [#167](issues/0167-design-root-workspace-controller-and-packages-epcsaft-move.md) | `needs design` | `future` | Design the root workspace-controller shape before moving the provider package. |
-| [#168](issues/0168-move-provider-distribution-into-packages-epcsaft.md) | `blocked` | `future` | Move the provider distribution into `packages/epcsaft` after prerequisites. |
+| [#168](issues/0168-move-provider-distribution-into-packages-epcsaft.md) | `ready` | `future` | Move the provider distribution into `packages/epcsaft` after prerequisites. |
 | [#169](issues/0169-post-move-cleanup-and-install-proof.md) | `blocked` | `future` | Prove final installs and remove stale post-move compatibility residue. |

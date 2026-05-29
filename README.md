@@ -61,13 +61,13 @@ If PyPI returns 404 for `epcsaft`, use the GitHub release wheel above.
 The `v0.2.0` tag supports source installs that build the native extension locally. Source installs require Python `>=3.9`, a C++ compiler, CMake, and Ninja or another CMake generator:
 
 ```powershell
-python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 ```
 
 With `uv`:
 
 ```powershell
-uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 ```
 
 ### Local Clone
@@ -77,13 +77,13 @@ For a local source install:
 ```powershell
 git clone https://github.com/ePC-SAFT/ePC-SAFT.git
 cd ePC-SAFT
-python -m pip install .
+python -m pip install packages/epcsaft
 ```
 
 For editable development:
 
 ```powershell
-python -m pip install -e .
+python -m pip install -e packages/epcsaft
 ```
 
 Editable installs use the same native build backend as wheel installs. If you change C++ sources, pybind bindings, CMake files, or build metadata, rerun the editable install command so the native extension is rebuilt.

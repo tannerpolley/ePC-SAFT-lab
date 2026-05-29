@@ -62,7 +62,7 @@ jobs:
               "windows install smoke",
               "uv python install 3.13",
               '$repoUrl = "file:///"',
-              "epcsaft @ $repoUrl",
+              "epcsaft @ ${repoUrl}/packages/epcsaft",
               "UV_CACHE_DIR",
               "EPCSAFT_PEP517_BUILD_DIR",
               "uv sync",
@@ -89,7 +89,7 @@ jobs:
           if old_python in workflow or old_cibw in workflow:
               raise SystemExit("workflow must use the Python 3.13 smoke baseline")
 
-          pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          pyproject = tomllib.loads(Path("packages/epcsaft/pyproject.toml").read_text(encoding="utf-8"))
           project = pyproject["project"]
           if project["name"] != "epcsaft":
               raise SystemExit("unexpected project name")
@@ -100,7 +100,7 @@ jobs:
           if blocked in deps:
               raise SystemExit("runtime dependencies must not include the external optimizer stack")
 
-          init_tree = ast.parse(Path("src/epcsaft/__init__.py").read_text(encoding="utf-8"))
+          init_tree = ast.parse(Path("packages/epcsaft/src/epcsaft/__init__.py").read_text(encoding="utf-8"))
           exported = {
               alias.name
               for node in init_tree.body
@@ -184,7 +184,7 @@ jobs:
           version = "0.0.0"
           requires-python = ">=3.13"
           dependencies = [
-              "epcsaft @ $repoUrl",
+              "epcsaft @ ${repoUrl}/packages/epcsaft",
           ]
           "@ | Set-Content -LiteralPath (Join-Path $downstream "pyproject.toml") -Encoding UTF8
           $env:UV_CACHE_DIR = Join-Path $env:RUNNER_TEMP "uv-cache"
@@ -226,7 +226,7 @@ jobs:
         run: uv sync --locked --no-install-project
 
       - name: Build wheels
-        run: uv run --locked cibuildwheel --output-dir wheelhouse
+        run: uv run --locked cibuildwheel packages/epcsaft --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp313-*"
           CIBW_ARCHS_WINDOWS: "AMD64"
@@ -258,7 +258,7 @@ jobs:
         run: uv python install 3.13
 
       - name: Build sdist
-        run: uv build --sdist
+        run: uv build packages/epcsaft --sdist
 
       - name: Upload sdist
         uses: actions/upload-artifact@v7.0.1
