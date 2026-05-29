@@ -80,7 +80,7 @@ not rely on Strawberry `cmake.exe`, `ninja.exe`, `gcc.exe`, or `g++.exe` for
   other agents may import `epcsaft._core`.
 - Do not delete `build/dev/.ninja_lock` by hand. Stop the owning repo build
   process, then rerun the wrapper.
-- Use `Doctor Script` after build or configuration repair.
+- Use `Doctor` after build or configuration repair.
 - Use `Test Workflow Guards` after changing CMake workflow docs, wrappers,
   presets, build helpers, run manifests, or `.run` files.
 
@@ -97,7 +97,7 @@ When IntelliJ is ready, run the equivalent shared Services entries:
 
 - `Configure IntelliJ Runs (Dry Run)`;
 - `Test Workflow Guards`;
-- `Doctor Script`;
+- `Doctor`;
 - the specific `CMake ... dev-native` entry that changed.
 
 ## Decision Log

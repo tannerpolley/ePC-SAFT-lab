@@ -27,6 +27,10 @@ entrypoint protocol for the wrapper-backed Services workflow.
   `projectPath` / `project_path` for repo-specific work.
 - Open this repo as its own IntelliJ project for repo-specific commands,
   semantic navigation, diagnostics, run configurations, and debugging.
+- Keep the standalone IntelliJ project/folder identity as `ePC-SAFT`, but keep
+  the root provider Python module named `epcsaft`. The extension modules are
+  `epcsaft-equilibrium` and `epcsaft-regression`, and both depend on
+  `epcsaft`.
 - Use the Engineering workspace root only for workspace-level stewardship such
   as module wiring, SDK consistency, or IDE container repair.
 - Do not route repo-specific commands through a nested repo path inside the

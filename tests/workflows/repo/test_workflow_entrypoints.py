@@ -13,6 +13,10 @@ def _read(path: str) -> str:
     return (REPO_ROOT / path).read_text(encoding="utf-8")
 
 
+def _toml(path: str) -> dict:
+    return tomllib.loads(_read(path))
+
+
 def _run_config_options(config: ET.Element) -> dict[str, str]:
     return {
         option.attrib["name"]: option.attrib.get("value", "")
@@ -216,6 +220,9 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     manifest = _read("scripts/dev/jetbrains_run_manifest.py")
     manifest_data = runpy.run_path(str(REPO_ROOT / "scripts" / "dev" / "jetbrains_run_manifest.py"))
     run_config_specs = tuple(manifest_data["CANONICAL_RUN_CONFIGS"])
+    root_pyproject = _toml("pyproject.toml")
+    equilibrium_pyproject = _toml("packages/epcsaft-equilibrium/pyproject.toml")
+    regression_pyproject = _toml("packages/epcsaft-regression/pyproject.toml")
     agents_md = _read("AGENTS.md")
     intellij_guidance = _read("docs/agents/INTELLIJ.md")
     combined_guidance = agents_md + "\n" + intellij_guidance
@@ -223,10 +230,18 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "CMAKE_CONFIG_TYPE = \"CMakeRunConfiguration\"" in normalizer
     assert "RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)" in normalizer
     assert "CANONICAL_PYTHON_MODULES" in normalizer
+    assert 'PROJECT_NAME = "ePC-SAFT"' in normalizer
+    assert 'PROVIDER_MODULE_NAME = "epcsaft"' in normalizer
+    assert 'LEGACY_PROVIDER_MODULE_NAME = PROJECT_NAME' in normalizer
+    assert 'MODULE_NAME = "ePC-SAFT"' not in normalizer
     assert 'EQUILIBRIUM_MODULE_NAME = "epcsaft-equilibrium"' in normalizer
     assert 'REGRESSION_MODULE_NAME = "epcsaft-regression"' in normalizer
+    assert 'iml_path=IDEA_DIR / f"{PROVIDER_MODULE_NAME}.iml"' in normalizer
     assert 'iml_path=IDEA_DIR / f"{EQUILIBRIUM_MODULE_NAME}.iml"' in normalizer
     assert 'iml_path=IDEA_DIR / f"{REGRESSION_MODULE_NAME}.iml"' in normalizer
+    assert "delete legacy provider module" in normalizer
+    assert "not deleting non-owned legacy provider module" in normalizer
+    assert 'actions.append(f"set module={PROVIDER_MODULE_NAME}")' in normalizer
     assert "clear stale Python source-root detection paths" in normalizer
     assert "set VCS mapping to project root only" in normalizer
     assert "disable Services Run Dashboard for" in normalizer
@@ -248,6 +263,13 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "enable Services Run Dashboard for" in normalizer
     assert "delete stale shared run configuration" in normalizer
     assert "CANONICAL_RUN_CONFIGS" in normalizer
+    assert root_pyproject["project"]["name"] == "epcsaft"
+    assert equilibrium_pyproject["project"]["name"] == "epcsaft-equilibrium"
+    assert regression_pyproject["project"]["name"] == "epcsaft-regression"
+    assert set(root_pyproject["tool"]["uv"]["workspace"]["members"]) == {
+        "packages/epcsaft-equilibrium",
+        "packages/epcsaft-regression",
+    }
     assert "Configure IntelliJ Runs (Dry Run)" in manifest
     assert "Sync Workspace Packages" in manifest
     assert "Check Package Imports" in manifest
@@ -274,6 +296,8 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "Do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in intellij_guidance
     assert "Use shell only for" in combined_guidance
     assert "shared `.run` configs use single-level" in intellij_guidance
+    assert "project/folder identity as `ePC-SAFT`" in intellij_guidance
+    assert "provider Python module named `epcsaft`" in intellij_guidance
     for folder_name in (
         "Setup & Health",
         "Build & Package",
@@ -326,6 +350,77 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "For direct CMake preset execution, also read root `CMAKE.md`" in intellij_guidance
     assert "Do not create raw `cmake --preset` or `cmake --build` Services entries" in intellij_guidance
     assert "Do not use IDE-generated `CMake Application` targets as the repo standard" in intellij_guidance
+    assert "Doctor Script" not in _read("CMAKE.md")
+
+    modules_xml = ET.parse(REPO_ROOT / ".idea" / "modules.xml")
+    module_filepaths = {
+        module.attrib["filepath"]
+        for module in modules_xml.findall(".//module")
+    }
+    assert module_filepaths == {
+        "$PROJECT_DIR$/.idea/epcsaft.iml",
+        "$PROJECT_DIR$/.idea/epcsaft-equilibrium.iml",
+        "$PROJECT_DIR$/.idea/epcsaft-regression.iml",
+    }
+    assert not (REPO_ROOT / ".idea" / "ePC-SAFT.iml").exists()
+    assert not any(".CMake" in filepath for filepath in module_filepaths)
+
+    provider_module = ET.parse(REPO_ROOT / ".idea" / "epcsaft.iml").getroot()
+    equilibrium_module = ET.parse(REPO_ROOT / ".idea" / "epcsaft-equilibrium.iml").getroot()
+    regression_module = ET.parse(REPO_ROOT / ".idea" / "epcsaft-regression.iml").getroot()
+
+    def content_root(module: ET.Element) -> ET.Element:
+        content = module.find(".//content")
+        assert content is not None
+        return content
+
+    def source_roots(module: ET.Element) -> set[tuple[str, str]]:
+        return {
+            (source.attrib["url"], source.attrib.get("isTestSource", "false"))
+            for source in content_root(module).findall("sourceFolder")
+        }
+
+    def module_dependencies(module: ET.Element) -> set[str]:
+        return {
+            entry.attrib["module-name"]
+            for entry in module.findall(".//orderEntry[@type='module']")
+        }
+
+    for module in (provider_module, equilibrium_module, regression_module):
+        assert module.attrib["type"] == "PYTHON_MODULE"
+        assert module.find(".//orderEntry[@type='jdk']").attrib["jdkName"] == "uv (ePC-SAFT)"
+
+    assert content_root(provider_module).attrib["url"] == "file://$MODULE_DIR$"
+    assert source_roots(provider_module) == {("file://$MODULE_DIR$/src", "false")}
+    assert module_dependencies(provider_module) == set()
+
+    assert content_root(equilibrium_module).attrib["url"] == "file://$MODULE_DIR$/packages/epcsaft-equilibrium"
+    assert source_roots(equilibrium_module) == {
+        ("file://$MODULE_DIR$/packages/epcsaft-equilibrium/src", "false")
+    }
+    assert module_dependencies(equilibrium_module) == {"epcsaft"}
+
+    assert content_root(regression_module).attrib["url"] == "file://$MODULE_DIR$/packages/epcsaft-regression"
+    assert source_roots(regression_module) == {
+        ("file://$MODULE_DIR$/packages/epcsaft-regression/src", "false")
+    }
+    assert module_dependencies(regression_module) == {"epcsaft"}
+
+    workspace_text = _read(".idea/workspace.xml")
+    workspace_xml = ET.fromstring(workspace_text)
+    dashboard = next(component for component in workspace_xml.findall("component") if component.attrib.get("name") == "RunDashboard")
+    dashboard_types = {
+        option.attrib["value"]
+        for option in dashboard.findall("./option[@name='configurationTypes']/set/option")
+    }
+    dashboard_status_types = {
+        entry.attrib["key"]
+        for entry in dashboard.findall("./option[@name='configurationStatuses']/map/entry")
+    }
+    assert dashboard_types == {"PythonConfigurationType", "ShConfigurationType"}
+    assert "tests" not in dashboard_status_types
+    assert "CMakeRunConfiguration" not in dashboard_status_types
+    assert "pytest for " not in workspace_text
 
     run_configs: dict[str, tuple[Path, ET.Element]] = {}
     for path in sorted((REPO_ROOT / ".run").glob("*.run.xml")):
@@ -347,6 +442,9 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         options = _run_config_options(config)
         if spec.runner == "Python":
             assert config.get("type") == "PythonConfigurationType", name
+            module = config.find("module")
+            assert module is not None, name
+            assert module.attrib["name"] == "epcsaft", name
             assert options["WORKING_DIRECTORY"] == "$MODULE_DIR$", name
             assert options["SCRIPT_NAME"] == _module_script_path(spec.command), name
             assert options["PARAMETERS"] == spec.parameters, name

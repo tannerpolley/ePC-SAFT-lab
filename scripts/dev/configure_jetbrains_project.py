@@ -23,7 +23,9 @@ RUN_WORKING_DIRECTORY = REPO_ROOT.as_posix()
 MODULE_URL_PREFIX = "file://$MODULE_DIR$"
 CONTENT_URL = MODULE_URL_PREFIX
 MODULE_DIR_MACRO = "$MODULE_DIR$"
-MODULE_NAME = "ePC-SAFT"
+PROJECT_NAME = "ePC-SAFT"
+PROVIDER_MODULE_NAME = "epcsaft"
+LEGACY_PROVIDER_MODULE_NAME = PROJECT_NAME
 EQUILIBRIUM_MODULE_NAME = "epcsaft-equilibrium"
 REGRESSION_MODULE_NAME = "epcsaft-regression"
 PYTHON_CONFIG_TYPE = "PythonConfigurationType"
@@ -72,8 +74,8 @@ class ModuleSpec:
 
 CANONICAL_PYTHON_MODULES: tuple[ModuleSpec, ...] = (
     ModuleSpec(
-        name=MODULE_NAME,
-        iml_path=IDEA_DIR / f"{MODULE_NAME}.iml",
+        name=PROVIDER_MODULE_NAME,
+        iml_path=IDEA_DIR / f"{PROVIDER_MODULE_NAME}.iml",
         module_type="PYTHON_MODULE",
         content_root="",
         source_roots=PROVIDER_SOURCE_ROOTS,
@@ -84,7 +86,7 @@ CANONICAL_PYTHON_MODULES: tuple[ModuleSpec, ...] = (
         module_type="PYTHON_MODULE",
         content_root="packages/epcsaft-equilibrium",
         source_roots=(("packages/epcsaft-equilibrium/src", False),),
-        dependencies=(MODULE_NAME,),
+        dependencies=(PROVIDER_MODULE_NAME,),
     ),
     ModuleSpec(
         name=REGRESSION_MODULE_NAME,
@@ -92,14 +94,14 @@ CANONICAL_PYTHON_MODULES: tuple[ModuleSpec, ...] = (
         module_type="PYTHON_MODULE",
         content_root="packages/epcsaft-regression",
         source_roots=(("packages/epcsaft-regression/src", False),),
-        dependencies=(MODULE_NAME,),
+        dependencies=(PROVIDER_MODULE_NAME,),
     ),
 )
 
 
 def _runtime_python_modules(transient_paths: tuple[str, ...]) -> tuple[ModuleSpec, ...]:
     return tuple(
-        replace(spec, exclude_roots=transient_paths) if spec.name == MODULE_NAME else spec
+        replace(spec, exclude_roots=transient_paths) if spec.name == PROVIDER_MODULE_NAME else spec
         for spec in CANONICAL_PYTHON_MODULES
     )
 
@@ -174,6 +176,38 @@ def _existing_non_python_module_paths() -> tuple[Path, ...]:
         if module_root.get("type") != "PYTHON_MODULE":
             paths.append(path)
     return tuple(paths)
+
+
+def _legacy_provider_iml_path() -> Path:
+    return IDEA_DIR / f"{LEGACY_PROVIDER_MODULE_NAME}.iml"
+
+
+def _is_owned_legacy_provider_iml(path: Path) -> bool:
+    if not path.exists() or path == IDEA_DIR / f"{PROVIDER_MODULE_NAME}.iml":
+        return False
+    try:
+        module_root = ET.parse(path).getroot()
+    except ET.ParseError:
+        return False
+    if module_root.tag != "module" or module_root.get("type") != "PYTHON_MODULE":
+        return False
+
+    manager = _find_child(module_root, "component", name="NewModuleRootManager")
+    if manager is None:
+        return False
+    content = _find_child(manager, "content", url=CONTENT_URL)
+    if content is None:
+        return False
+
+    source_roots = {
+        (source.get("url"), "true" if source.get("isTestSource") == "true" else "false")
+        for source in content.findall("sourceFolder")
+    }
+    if source_roots != {(f"{MODULE_URL_PREFIX}/src", "false")}:
+        return False
+
+    jdk = _find_child(manager, "orderEntry", type="jdk", jdkName=PYTHON_SDK_NAME, jdkType="Python SDK")
+    return jdk is not None
 
 
 def _find_child(parent: ET.Element, tag: str, **attrs: str) -> ET.Element | None:
@@ -834,7 +868,7 @@ def _python_configuration(spec: RunConfigSpec) -> ET.Element:
         "configuration",
         attrs,
     )
-    config.append(ET.Element("module", {"name": MODULE_NAME}))
+    config.append(ET.Element("module", {"name": PROVIDER_MODULE_NAME}))
     _add_option(config, "ENV_FILES", "")
     _add_option(config, "INTERPRETER_OPTIONS", "")
     _add_option(config, "PARENT_ENVS", "true")
@@ -977,6 +1011,11 @@ def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) 
         actions.append(f"set factoryName={spec.runner}")
     if current_config.get("folderName") != spec.folder_name:
         actions.append(f"set folderName={spec.folder_name}")
+    if spec.runner == PYTHON_RUNNER:
+        module = current_config.find("module")
+        module_name = module.get("name") if module is not None else None
+        if module_name != PROVIDER_MODULE_NAME:
+            actions.append(f"set module={PROVIDER_MODULE_NAME}")
     for option_name, expected_value in _expected_option_values(spec).items():
         if _option_value(current_config, option_name) != expected_value:
             actions.append(f"set {option_name}={expected_value}")
@@ -1024,17 +1063,25 @@ def _module_dependency_warnings(iml_path: Path, module_root: ET.Element, declare
     return warnings
 
 
+def _load_module_tree(spec: ModuleSpec, actions: list[str]) -> tuple[ET.ElementTree, str]:
+    if spec.iml_path.exists():
+        return ET.parse(spec.iml_path), spec.iml_path.read_text(encoding="UTF-8")
+
+    legacy_path = _legacy_provider_iml_path()
+    if spec.name == PROVIDER_MODULE_NAME and _is_owned_legacy_provider_iml(legacy_path):
+        actions.append(f"migrate legacy provider module {legacy_path.relative_to(REPO_ROOT).as_posix()}")
+        return ET.parse(legacy_path), ""
+
+    return ET.ElementTree(ET.Element("module", {"type": spec.module_type, "version": "4"})), ""
+
+
 def _normalize_iml(
     spec: ModuleSpec, declared_modules: set[str]
 ) -> tuple[list[str], list[str], str | None]:
     iml_path = spec.iml_path
-    original_text = iml_path.read_text(encoding="UTF-8") if iml_path.exists() else ""
-    if iml_path.exists():
-        tree = ET.parse(iml_path)
-    else:
-        tree = ET.ElementTree(ET.Element("module", {"type": spec.module_type, "version": "4"}))
-    module_root = tree.getroot()
     actions: list[str] = []
+    tree, original_text = _load_module_tree(spec, actions)
+    module_root = tree.getroot()
     if module_root.get("type") != spec.module_type:
         module_root.set("type", spec.module_type)
         actions.append(f"set module type {spec.module_type}")
@@ -1051,6 +1098,15 @@ def _normalize_iml(
     if proposed_text == original_text:
         actions = []
     return actions, warnings, proposed_text if proposed_text != original_text else None
+
+
+def _legacy_provider_cleanup() -> tuple[list[str], list[str], Path | None]:
+    legacy_path = _legacy_provider_iml_path()
+    if not legacy_path.exists():
+        return [], [], None
+    if not _is_owned_legacy_provider_iml(legacy_path):
+        return [], [f"{legacy_path.relative_to(REPO_ROOT).as_posix()}: not deleting non-owned legacy provider module"], None
+    return [f"delete legacy provider module {legacy_path.relative_to(REPO_ROOT).as_posix()}"], [], legacy_path
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1138,6 +1194,18 @@ def main(argv: list[str] | None = None) -> int:
         if args.apply and proposed_text is not None:
             spec.iml_path.parent.mkdir(parents=True, exist_ok=True)
             spec.iml_path.write_text(proposed_text, encoding="UTF-8", newline="\n")
+
+    legacy_actions, legacy_warnings, legacy_delete_path = _legacy_provider_cleanup()
+    for warning in legacy_warnings:
+        warnings_found += 1
+        print(f"WARNING {warning}")
+    if legacy_actions:
+        pending_changes += 1
+        prefix = "APPLY" if args.apply else "DRY-RUN"
+        for action in legacy_actions:
+            print(f"{prefix} .idea/{LEGACY_PROVIDER_MODULE_NAME}.iml: {action}")
+        if args.apply and legacy_delete_path is not None:
+            legacy_delete_path.unlink()
 
     for spec in CANONICAL_RUN_CONFIGS:
         path, actions, proposed_text = _normalize_run_config(spec, run_configs_by_name)
