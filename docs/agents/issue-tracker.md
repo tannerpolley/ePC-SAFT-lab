@@ -38,6 +38,10 @@ milestone and split the later work into child issues.
 
 ## Project And Issue Shape
 
+- Canonical Project: `ePC-SAFT Roadmap`
+  (`https://github.com/orgs/ePC-SAFT/projects/1`).
+- Do not use untitled organization Projects for roadmap work. They are scratch
+  or closed state, not the tracker source of truth.
 - Use the issue templates for new work:
   - `Roadmap tracking issue` for a smaller roadmap or major tranche.
   - `Micro implementation issue` for one PR-sized implementation slice.
@@ -50,6 +54,9 @@ milestone and split the later work into child issues.
   on the tracking issue.
 - Gate issues prove CI, docs, benchmark, capability, release, or downstream
   evidence.
+- Structured issue templates include `projects: ["ePC-SAFT/1"]`, so new issues
+  filed through those templates are added to the canonical Project
+  automatically.
 - Use labels for stable facts and routing. Use the GitHub Project for workflow
   state and dashboard grouping.
 - The organization Project groups and sorts by Milestone, Package, Capability,

@@ -2,6 +2,7 @@ name: Roadmap gate issue
 description: Prove a CI, docs, benchmark, capability, release, or downstream gate.
 title: "Gate: <proof target>"
 labels: ["validation"]
+projects: ["ePC-SAFT/1"]
 body:
   - type: markdown
     attributes:

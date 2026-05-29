@@ -2,6 +2,7 @@ name: Roadmap tracking issue
 description: Track one smaller roadmap or major tranche under a single roadmap milestone.
 title: "Tracking: <roadmap tranche>"
 labels: ["needs-triage"]
+projects: ["ePC-SAFT/1"]
 body:
   - type: markdown
     attributes:

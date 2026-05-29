@@ -2,6 +2,7 @@ name: Downstream ePC-SAFT dependency bug
 description: Report a downstream project failure that appears to require an upstream epcsaft package fix.
 title: "Downstream failure: <consumer> hits <short epcsaft issue>"
 labels: ["downstream-bug", "agent-ready"]
+projects: ["ePC-SAFT/1"]
 body:
   - type: markdown
     attributes:
