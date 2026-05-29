@@ -58,6 +58,9 @@ Focused proof:
 ```powershell
 uv run python run_pytest.py tests/workflows/repo/test_project_structure.py::test_extension_owned_tests_are_package_local tests/workflows/repo/test_project_structure.py::test_package_local_extension_tests_do_not_import_root_test_support tests/workflows/repo/test_run_pytest.py::test_pytest_slices_are_adapted_from_capability_evidence_registry tests/workflows/repo/test_run_pytest.py::test_slice_targets_use_grouped_test_subpackages tests/workflows/repo/test_run_pytest.py::test_regression_slice_is_package_owned -q
 rg "from tests\.support|import tests\.support" packages/epcsaft-equilibrium/tests packages/epcsaft-regression/tests
+if ($LASTEXITCODE -eq 0) { throw "package-local extension tests import root tests.support" }
+if ($LASTEXITCODE -gt 1) { exit $LASTEXITCODE }
+Write-Output "no package-local tests.support imports found"
 if (Test-Path -LiteralPath 'tests\native\equilibrium') { rg --files tests/native/equilibrium }
 if (Test-Path -LiteralPath 'tests\native\regression') { rg --files tests/native/regression }
 ```
