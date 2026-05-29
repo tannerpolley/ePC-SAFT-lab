@@ -45,9 +45,9 @@ The provider-only boundary proof now has an explicit direct-build profile:
 
 That profile keeps CppAD ON while setting
 ``EPCSAFT_ENABLE_CERES=OFF``, ``EPCSAFT_ENABLE_IPOPT=OFF``,
-``EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF``, and
-``EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF`` so provider ``epcsaft._core`` exports
-provider-owned symbols only. The repo build helper also writes
+``EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF``, and
+``EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF`` so provider ``epcsaft._core``
+exports provider-owned symbols only. The repo build helper also writes
 ``EPCSAFT_BUILD_PROFILE=provider`` into CMake cache so Ninja regeneration keeps
 the provider-only flags pinned instead of falling back to transition defaults.
 
@@ -90,9 +90,9 @@ Keep the CMake dependency contract explicit and loud:
 - ``EPCSAFT_ENABLE_CERES`` stays ON by default for the transition checkout, but
   OFF is supported for provider-only and equilibrium-extension package-boundary
   proof lanes.
-- ``EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE`` stays ON by default for the transition
-  checkout, but OFF is required for provider-only build/install proof.
-- ``EPCSAFT_ENABLE_REGRESSION_NATIVE`` stays ON by default for the transition
+- ``EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE`` stays ON by default for the
+  source checkout, but OFF is required for provider-only build/install proof.
+- ``EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE`` stays ON by default for the source
   checkout, but OFF is required for provider-only build/install proof.
 - ``EPCSAFT_ENABLE_CPPAD`` stays ON and unsupported when OFF.
 - ``EPCSAFT_ENABLE_IPOPT`` stays ON for Ipopt-capable source validation.

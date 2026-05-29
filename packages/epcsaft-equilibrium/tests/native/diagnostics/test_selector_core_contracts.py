@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import pytest
+import epcsaft._core as _provider_core
 
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
+
+_core = extension_native_core()
 from epcsaft.frontend import Mixture
 from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
@@ -209,7 +212,7 @@ def test_selector_core_rejects_old_scalar_composition_boundary() -> None:
 def test_selector_core_rejects_invalid_route_family_before_solver_dispatch() -> None:
     mix = _neutral_binary_mixture()
 
-    with pytest.raises(_core.NativeValueError, match="selector-ineligible"):
+    with pytest.raises(_provider_core.NativeValueError, match="selector-ineligible"):
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
@@ -224,7 +227,7 @@ def test_selector_core_rejects_invalid_route_family_before_solver_dispatch() -> 
 def test_selector_core_rejects_active_association_before_solver_dispatch() -> None:
     mix = _methanol_cyclohexane_mixture()
 
-    with pytest.raises(_core.NativeValueError, match="selector-ineligible"):
+    with pytest.raises(_provider_core.NativeValueError, match="selector-ineligible"):
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
@@ -239,7 +242,7 @@ def test_selector_core_rejects_active_association_before_solver_dispatch() -> No
 def test_selector_core_rejects_ionic_lle_before_solver_dispatch() -> None:
     mix = _ionic_mixture()
 
-    with pytest.raises(_core.NativeValueError, match="selector-ineligible"):
+    with pytest.raises(_provider_core.NativeValueError, match="selector-ineligible"):
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
@@ -262,7 +265,7 @@ def test_selector_core_rejects_missing_binary_interactions_before_solver_dispatc
         species=["Methane", "Ethane"],
     )
 
-    with pytest.raises(_core.NativeValueError, match="binary_interaction_matrix"):
+    with pytest.raises(_provider_core.NativeValueError, match="binary_interaction_matrix"):
         _core._native_equilibrium_selector_contract(
             mix._native,
             {
@@ -458,7 +461,7 @@ def test_neutral_lle_activation_plan_contract_matches_matrix() -> None:
 def test_activation_plan_builder_rejects_non_activation_routes(route: str, composition_role: str) -> None:
     mix = _neutral_binary_mixture()
 
-    with pytest.raises(_core.NativeValueError, match="activation-plan-ineligible"):
+    with pytest.raises(_provider_core.NativeValueError, match="activation-plan-ineligible"):
         _core._native_equilibrium_activation_plan_contract(
             mix._native,
             {
@@ -544,7 +547,7 @@ def test_activated_neutral_tp_flash_nlp_matches_trusted_contract_shape() -> None
 def test_selector_core_rejects_incompatible_composition_role_before_solver_dispatch() -> None:
     mix = _neutral_binary_mixture()
 
-    with pytest.raises(_core.NativeValueError, match="composition_role"):
+    with pytest.raises(_provider_core.NativeValueError, match="composition_role"):
         _core._native_equilibrium_selector_contract(
             mix._native,
             {

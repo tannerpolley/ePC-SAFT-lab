@@ -19,5 +19,6 @@ epcsaft = { workspace = true }
 [tool.epcsaft.extension]
 publish = false
 monorepo_transition_only = true
-requires_provider_native = ["regression"]
-requires_provider_build_option = "EPCSAFT_ENABLE_REGRESSION_NATIVE=ON"
+requires_provider_native_sdk = "provider_native_sdk_v1"
+native_module = "epcsaft_regression._native_core"
+build_option = "EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=ON"

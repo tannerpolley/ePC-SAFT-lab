@@ -1,4 +1,4 @@
-"""Provider-native bridge for the equilibrium extension."""
+"""Package-owned native bridge for the equilibrium extension."""
 
 from __future__ import annotations
 
@@ -20,28 +20,55 @@ def provider_contract() -> dict[str, object]:
         "provider_package": "epcsaft",
         "provider_api_contract_id": str(sdk.get("provider_api_contract_id", "")),
         "provider_native_sdk_contract_id": str(sdk.get("contract_id", "")),
+        "provider_only_core": bool(sdk.get("provider_only_core", False)),
     }
 
 
-def provider_native_core() -> Any:
+def extension_native_core() -> Any:
     sdk = provider_native_sdk()
     if sdk.get("contract_id") != "provider_native_sdk_v1":
         raise RuntimeError("epcsaft-equilibrium requires provider_native_sdk_v1.")
     if sdk.get("native_contract_exported") is not True:
         raise RuntimeError("epcsaft provider native SDK contract is not exported.")
-    if sdk.get("equilibrium_native_enabled") is not True:
-        raise RuntimeError(
-            "epcsaft-equilibrium is a monorepo transition package and requires "
-            "an epcsaft build with equilibrium native symbols "
-            "(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON)."
-        )
-    core = import_module("epcsaft._core")
-    missing = [name for name in _REQUIRED_EQUILIBRIUM_SYMBOLS if not hasattr(core, name)]
+    native = import_module("epcsaft_equilibrium._native_core")
+    missing = [name for name in _REQUIRED_EQUILIBRIUM_SYMBOLS if not hasattr(native, name)]
     if missing:
         raise RuntimeError(
-            "epcsaft-equilibrium requires provider native symbols: "
+            "epcsaft-equilibrium requires package-owned native symbols: "
             + ", ".join(_REQUIRED_EQUILIBRIUM_SYMBOLS)
-            + ". Missing from epcsaft._core: "
+            + ". Missing from epcsaft_equilibrium._native_core: "
             + ", ".join(missing)
         )
-    return core
+    return native
+
+
+def native_ipopt_backend_info() -> dict[str, object]:
+    try:
+        smoke = extension_native_core()._native_ipopt_smoke()
+    except (AttributeError, ImportError, OSError, RuntimeError):
+        return {
+            "backend": "ipopt",
+            "status": "equilibrium_native_module_missing",
+            "required": True,
+            "compiled": False,
+            "available": False,
+            "adapter_available": False,
+            "adapter_kind": "native_tnlp_adapter",
+            "adapter_source_available": False,
+            "requires_exact_gradient": True,
+            "requires_exact_jacobian": True,
+        }
+    status = str(smoke.get("status", "ipopt_probe_missing"))
+    compiled = bool(smoke.get("compiled", False))
+    return {
+        "backend": "ipopt",
+        "status": status,
+        "required": True,
+        "compiled": compiled,
+        "available": status == "enabled_available" and compiled,
+        "adapter_available": bool(smoke.get("adapter_available", False)),
+        "adapter_kind": str(smoke.get("adapter_kind", "native_tnlp_adapter")),
+        "adapter_source_available": bool(smoke.get("adapter_source_available", False)),
+        "requires_exact_gradient": bool(smoke.get("requires_exact_gradient", True)),
+        "requires_exact_jacobian": bool(smoke.get("requires_exact_jacobian", True)),
+    }

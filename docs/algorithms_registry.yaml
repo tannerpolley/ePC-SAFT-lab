@@ -76,9 +76,9 @@
     The Ceres adapter family owns native least-squares solve setup for supported
     regression routes. It is separate from Ipopt and does not call Ipopt routes.
   owner_refs:
-    - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1071
-      comment_line: 1068
+    - file: "packages/epcsaft-regression/native/regression/module.cpp"
+      line: 399
+      comment_line: 396
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "packages/epcsaft-regression/native/regression/ceres_regression.cpp"
       line: 511
@@ -448,7 +448,7 @@
   dependency: "Ceres"
   derivative_backend: "Native residual Jacobian for supported target families"
   solver_role: "Native least-squares pure-neutral parameter regression"
-  implementation_owner: "packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp"
+  implementation_owner: "packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp"
   validation: "packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api"
   capability_key: "regression:pure_neutral"
   description: "Fits currently supported pure-neutral parameter targets through native Ceres."
@@ -461,9 +461,9 @@
     optimizer for association-energy \verb|e_assoc| or association-volume
     \verb|vol_a| targets until the association parameter-sensitivity work lands.
   owner_refs:
-    - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1066
-      comment_line: 1065
+    - file: "packages/epcsaft-regression/native/regression/module.cpp"
+      line: 397
+      comment_line: 396
       context: "m.def(\"_fit_pure_neutral_native_ceres\", &fit_pure_neutral_native_ceres_binding);"
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
       line: 2404
@@ -488,7 +488,7 @@
   dependency: "Ceres"
   derivative_backend: "CppAD implicit residual Jacobian for supported pure-ion targets"
   solver_role: "Native least-squares pure-ion parameter regression"
-  implementation_owner: "packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp"
+  implementation_owner: "packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp"
   validation: "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py"
   capability_key: "regression:pure_ion"
   description: "Fits currently supported pure-ion and Born-related target sets through native Ceres."
@@ -500,9 +500,9 @@
     does not claim support for association-affecting target kinds merely because the
     native target-kind registry knows their labels.
   owner_refs:
-    - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1071
-      comment_line: 1069
+    - file: "packages/epcsaft-regression/native/regression/module.cpp"
+      line: 399
+      comment_line: 396
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
       line: 2787
@@ -527,7 +527,7 @@
   dependency: "Ceres"
   derivative_backend: "CppAD-backed binary k_ij residual Jacobian"
   solver_role: "Native least-squares constant-k_ij binary regression"
-  implementation_owner: "packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; src/epcsaft/native/bindings/module.cpp"
+  implementation_owner: "packages/epcsaft-regression/src/epcsaft_regression/core.py; packages/epcsaft-regression/native/regression/ceres_regression.cpp; packages/epcsaft-regression/native/regression/module.cpp"
   validation: "packages/epcsaft-regression/tests/native/test_binary.py"
   capability_key: "regression:binary_pair"
   description: "Fits the currently implemented constant-k_ij binary parameter route through native Ceres."
@@ -540,9 +540,9 @@
     or \(k^{hb}_{ij}\), and active-association \(l_{ij}\) remains pending until
     derivative and optimizer evidence both exist.
   owner_refs:
-    - file: "src/epcsaft/native/bindings/module.cpp"
-      line: 1071
-      comment_line: 1070
+    - file: "packages/epcsaft-regression/native/regression/module.cpp"
+      line: 399
+      comment_line: 396
       context: "m.def(\"_fit_generic_native_ceres\", &fit_generic_native_ceres_binding);"
     - file: "packages/epcsaft-regression/src/epcsaft_regression/core.py"
       line: 2816

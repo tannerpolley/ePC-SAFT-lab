@@ -25,13 +25,16 @@ def _load_native_rows() -> list[dict[str, object]]:
         sys.path.insert(0, str(REPO_ROOT))
     if str(SRC_ROOT) not in sys.path:
         sys.path.insert(0, str(SRC_ROOT))
+    equilibrium_src_root = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src"
+    if str(equilibrium_src_root) not in sys.path:
+        sys.path.insert(0, str(equilibrium_src_root))
 
     from scripts.dev.native_runtime_env import apply_native_runtime_env
 
     apply_native_runtime_env(os.environ)
-    from epcsaft import _core
+    from epcsaft_equilibrium._native import extension_native_core
 
-    return [dict(row) for row in _core._native_equilibrium_activation_matrix()]
+    return [dict(row) for row in extension_native_core()._native_equilibrium_activation_matrix()]
 
 
 def _render(rows: list[dict[str, object]]) -> str:

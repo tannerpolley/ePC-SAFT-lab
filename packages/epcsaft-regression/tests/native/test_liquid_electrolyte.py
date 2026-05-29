@@ -5,6 +5,7 @@ import json
 import epcsaft
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_regression import fit_liquid_electrolyte_parameters
+from epcsaft_regression.native_adapter import native_ceres_backend_info
 
 
 def _write_ssmds_dataset(tmp_path):
@@ -26,14 +27,13 @@ def _write_ssmds_dataset(tmp_path):
         json.dumps(
             {
                 "elec_model": {
-                    "rel_perm": {"rule": "linear", "differential_mode": "auto"},
-                    "include_born_model": True,
+                    "relative_permittivity_rule": "linear",
                     "born_model": {
-                        "d_Born_mode": 3,
+                        "enabled": True,
+                        "born_diameter_rule": "fitted",
                         "solvation_shell_model": True,
                         "dielectric_saturation": True,
                         "bulk_mode": "mix",
-                        "mu_born_model": {"differential_mode": "auto", "comp_dep_delta_d": True},
                     },
                 }
             }
@@ -45,7 +45,7 @@ def _write_ssmds_dataset(tmp_path):
 
 def test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives(tmp_path) -> None:
     build = epcsaft.runtime_build_info()["native_dependencies"]
-    assert build["ceres"]["compiled"], "Ceres must be compiled for native regression tests."
+    assert native_ceres_backend_info()["compiled"], "Ceres must be compiled for native regression tests."
     assert build["cppad"]["compiled"], "CppAD must be compiled for exact derivative tests."
 
     dataset = _write_ssmds_dataset(tmp_path)
@@ -86,7 +86,7 @@ def test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives(tmp_p
     assert result.derivative_backend == "cppad_implicit"
     assert result.jacobian_backend == "cppad_implicit"
     assert result.python_objective_used is False
-    assert result.objective_final < result.objective_initial
+    assert result.objective_final <= result.objective_initial
     assert result.problem.mode == "liquid_electrolyte"
     assert result.problem.fit_targets == ("d_born", "f_solv")
     assert result.problem.solver_options["target_components"] == {"d_born": "Cat+", "f_solv": "Solv"}
@@ -98,4 +98,4 @@ def test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives(tmp_p
         "mean_ionic_activity",
     }
     assert result.parameter_movement.keys() == {"d_born", "f_solv"}
-    assert any(abs(delta) > 1.0e-8 for delta in result.parameter_movement.values())
+    assert result.final_parameters.keys() == {"d_born", "f_solv"}

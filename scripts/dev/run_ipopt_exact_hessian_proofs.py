@@ -132,10 +132,11 @@ def _summary_from_payload(case: str, request: dict[str, Any], payload: dict[str,
 
 
 def _run_selector_child(case: str) -> dict[str, Any]:
-    from epcsaft import _core
+    from epcsaft_equilibrium._native import extension_native_core
 
     mix = _hydrocarbon_workbook_mixture()
     request = _selector_request(case)
+    _core = extension_native_core()
     payload = _core._native_equilibrium_selector_route_result(
         mix._native,
         request,
@@ -196,8 +197,12 @@ def _run_parent(cases: list[str], output_dir: Path) -> int:
     env = os.environ.copy()
     apply_native_runtime_env(env)
     src_path = str(REPO_ROOT / "src")
+    equilibrium_src_path = str(REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src")
     existing_pythonpath = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = src_path if not existing_pythonpath else os.pathsep.join([src_path, existing_pythonpath])
+    pythonpath_entries = [src_path, equilibrium_src_path]
+    if existing_pythonpath:
+        pythonpath_entries.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_entries)
     summaries: list[dict[str, Any]] = []
     for case in cases:
         command = [sys.executable, str(Path(__file__).resolve()), "--case", case, "--child"]

@@ -199,12 +199,14 @@ def test_continuous_tpd_debug_trace_is_gated_by_equilibrium_debug_env():
 def test_doctor_tracks_native_symbols_added_by_recent_workflows():
     required = set(doctor.REQUIRED_CORE_SYMBOLS)
 
-    assert "_fit_pure_neutral_native_ceres" in required
+    assert "_native_cppad_smoke" in required
+    assert "NativeSolutionError" in required
+    assert "_fit_pure_neutral_native_ceres" not in required
     assert "_fit_pure_neutral_native_least" + "_squares" not in required
     assert "_fit_generic_native_least" + "_squares" not in required
-    assert "_fit_generic_native_ceres" in required
-    assert "_evaluate_generic_native_debug" in required
-    assert "_native_ipopt_smoke" in required
+    assert "_fit_generic_native_ceres" not in required
+    assert "_evaluate_generic_native_debug" not in required
+    assert "_native_ipopt_smoke" not in required
 
 
 def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():

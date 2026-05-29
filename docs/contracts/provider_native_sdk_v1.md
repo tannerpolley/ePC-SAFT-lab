@@ -19,23 +19,23 @@ boundary as `provider_api_v1`; it is not owned by `epcsaft-equilibrium` or
 The stable Python discovery surface is `epcsaft.provider_native_sdk()`.
 
 `epcsaft._core` is not the provider-native SDK. Extension packages must not
-import private pybind modules, private native object names, or native memory
-layouts as their compatibility surface.
+import private provider pybind names, private native object names, or native
+memory layouts as their compatibility surface.
 
 The current transition native target name is `epcsaft_provider_native`.
 Extension packages may reference that target only through the SDK contract and
 workspace build metadata while this repository remains a monorepo transition
 build.
 
-The native SDK payload also reports whether the current `_core` build still has
-transition equilibrium or regression native registration enabled:
+The native SDK payload reports the provider `_core` boundary:
 
 - `provider_only_core`
 - `equilibrium_native_enabled`
 - `regression_native_enabled`
 
-The provider-only proof requires `provider_only_core=true` and both extension
-flags `false`.
+Current provider builds require `provider_only_core=true` and both extension
+flags `false`; extension native symbols live in package-owned `_native_core`
+modules.
 
 ## Native Dependency Rules
 

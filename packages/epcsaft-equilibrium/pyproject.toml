@@ -19,5 +19,6 @@ epcsaft = { workspace = true }
 [tool.epcsaft.extension]
 publish = false
 monorepo_transition_only = true
-requires_provider_native = ["equilibrium"]
-requires_provider_build_option = "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON"
+requires_provider_native_sdk = "provider_native_sdk_v1"
+native_module = "epcsaft_equilibrium._native_core"
+build_option = "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=ON"

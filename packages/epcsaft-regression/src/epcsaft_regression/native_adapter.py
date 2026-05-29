@@ -17,6 +17,7 @@ __all__ = [
     "_fit_pure_neutral_native_debug",
     "check_association",
     "create_struct",
+    "native_ceres_backend_info",
 ]
 
 _REQUIRED_REGRESSION_SYMBOLS = (
@@ -27,28 +28,46 @@ _REQUIRED_REGRESSION_SYMBOLS = (
 )
 
 
-def _provider_regression_core() -> Any:
+def _regression_native_core() -> Any:
     sdk = provider_native_sdk()
     if sdk.get("contract_id") != "provider_native_sdk_v1":
         raise RuntimeError("epcsaft-regression requires provider_native_sdk_v1.")
     if sdk.get("native_contract_exported") is not True:
         raise RuntimeError("epcsaft provider native SDK contract is not exported.")
-    if sdk.get("regression_native_enabled") is not True:
-        raise RuntimeError(
-            "epcsaft-regression is a monorepo transition package and requires "
-            "an epcsaft build with regression native symbols "
-            "(EPCSAFT_ENABLE_REGRESSION_NATIVE=ON)."
-        )
-    core = import_module("epcsaft._core")
+    core = import_module("epcsaft_regression._native_core")
     missing = [name for name in _REQUIRED_REGRESSION_SYMBOLS if not hasattr(core, name)]
     if missing:
         raise RuntimeError(
-            "epcsaft-regression requires provider native symbols: "
+            "epcsaft-regression requires package-owned native symbols: "
             + ", ".join(_REQUIRED_REGRESSION_SYMBOLS)
-            + ". Missing from epcsaft._core: "
+            + ". Missing from epcsaft_regression._native_core: "
             + ", ".join(missing)
         )
     return core
+
+
+def native_ceres_backend_info() -> dict[str, object]:
+    try:
+        smoke = _regression_native_core()._native_ceres_smoke()
+    except (AttributeError, ImportError, OSError, RuntimeError):
+        return {
+            "backend": "ceres",
+            "status": "regression_native_module_missing",
+            "required": True,
+            "required_for": ["epcsaft-regression"],
+            "compiled": False,
+            "available": False,
+        }
+    status = str(smoke.get("status", "ceres_probe_missing"))
+    compiled = bool(smoke.get("compiled", False))
+    return {
+        "backend": "ceres",
+        "status": status,
+        "required": True,
+        "required_for": ["epcsaft-regression"],
+        "compiled": compiled,
+        "available": status == "enabled_available" and compiled,
+    }
 
 
 def _fit_pure_neutral_native_debug(
@@ -65,7 +84,7 @@ def _fit_pure_neutral_native_debug(
 ) -> dict[str, Any]:
     params = check_association(dict(fixed_payload))
     cppargs = create_struct(params)
-    core = _provider_regression_core()
+    core = _regression_native_core()
     result = core._fit_pure_neutral_native_debug(
         cppargs,
         np.asarray(density_T, dtype=float),
@@ -113,7 +132,7 @@ def _fit_generic_native_ceres(
     max_nfev = int(max_nfev)
     if max_nfev < 1:
         raise InputError("Native Ceres generic regression requires max_nfev >= 1.")
-    core = _provider_regression_core()
+    core = _regression_native_core()
     result = core._fit_generic_native_ceres(
         _native_args_sequence(fixed_payloads),
         list(records),
@@ -154,7 +173,7 @@ def _evaluate_generic_native_debug(
     target_indices_2: Sequence[int],
     x: Sequence[float],
 ) -> dict[str, Any]:
-    core = _provider_regression_core()
+    core = _regression_native_core()
     result = core._evaluate_generic_native_debug(
         _native_args_sequence(fixed_payloads),
         list(records),

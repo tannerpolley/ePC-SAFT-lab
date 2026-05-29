@@ -1184,9 +1184,21 @@ def _looks_like_public_model_options(user_options: dict) -> bool:
         return True
     elec_model = user_options.get("elec_model")
     if isinstance(elec_model, dict):
+        internal_elec_keys = {
+            "rel_perm",
+            "hc_model",
+            "disp_model",
+            "assoc_model",
+            "DH_model",
+            "include_born_model",
+        }
+        if set(elec_model) & internal_elec_keys:
+            return False
         if set(elec_model) & _PUBLIC_MODEL_OPTION_KEYS:
             return True
         born_model = elec_model.get("born_model")
+        if isinstance(born_model, dict) and set(born_model) & {"d_Born_mode", "mu_born_model"}:
+            return False
         if isinstance(born_model, dict) and set(born_model) & {
             "enabled",
             "born_diameter_rule",

@@ -448,7 +448,10 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
 
 
 def test_native_equilibrium_bindings_are_registered_through_selector_domain_units() -> None:
-    module = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
+    provider_module = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
+        encoding="utf-8"
+    )
+    extension_module = (EQUILIBRIUM_NATIVE_ROOT / "module.cpp").read_text(
         encoding="utf-8"
     )
     bindings_root = REPO_ROOT / "src" / "epcsaft" / "native" / "bindings"
@@ -470,7 +473,8 @@ def test_native_equilibrium_bindings_are_registered_through_selector_domain_unit
                 if token in text:
                     offenders.append(f"{path.relative_to(REPO_ROOT).as_posix()}: {token}")
 
-    assert "register_equilibrium_bindings(m);" in module
+    assert "register_equilibrium_bindings(m);" not in provider_module
+    assert "register_equilibrium_bindings(m);" in extension_module
     assert (EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp").exists()
     assert not (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "equilibrium_binding_types.h").exists()
     assert not (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "equilibrium_bindings.cpp").exists()

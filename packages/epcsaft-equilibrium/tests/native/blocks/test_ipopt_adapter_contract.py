@@ -4,7 +4,9 @@ import math
 
 import pytest
 
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
+
+_core = extension_native_core()
 import epcsaft_equilibrium
 
 

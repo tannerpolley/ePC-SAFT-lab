@@ -521,7 +521,9 @@ def test_neutral_flash_checker_requires_complete_phase_discovery_payload(
 def test_neutral_flash_checker_runs_source_backed_workbook_fixture(
     tmp_path: Path,
 ) -> None:
-    import epcsaft._core as _core
+    from epcsaft_equilibrium._native import extension_native_core
+
+    _core = extension_native_core()
 
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")

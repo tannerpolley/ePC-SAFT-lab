@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import pytest
 
@@ -35,6 +36,25 @@ def test_model_options_are_owned_by_mixture_not_parameter_set() -> None:
 def test_model_options_reject_retired_public_keys() -> None:
     with pytest.raises(epcsaft.InputError, match="retired public option"):
         epcsaft.ModelOptions.from_user_options({"elec_model": {"rel_perm": {"rule": 1}}})
+
+
+def test_parameter_set_round_trips_resolved_runtime_options_without_reparsing_public_schema() -> None:
+    parameters = hydrocarbon_parameter_set()
+    runtime_options = epcsaft.ModelOptions(
+        relative_permittivity_rule="linear",
+        born_model=epcsaft.BornModelOptions(
+            enabled=True,
+            born_diameter_rule="fitted",
+            solvation_shell_model=False,
+            dielectric_saturation=False,
+        ),
+    ).to_runtime_options(parameters)
+
+    configured = replace(parameters, runtime_options=runtime_options)
+    payload = configured.to_runtime_dict()
+
+    assert payload["elec_model"]["include_born_model"] is True
+    assert payload["elec_model"]["born_model"]["d_Born_mode"] == 3
 
 
 def test_model_options_help_and_explain_describe_autodiff_born_defaults() -> None:

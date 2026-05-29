@@ -6,6 +6,8 @@ from typing import Any
 
 import epcsaft
 
+from .native_adapter import native_ceres_backend_info
+
 REGRESSION_CAPABILITY_KEYS = (
     "pure_neutral",
     "binary_pair_constant_kij",
@@ -200,7 +202,7 @@ def _provider_cppad_capability() -> dict[str, object]:
 
 
 def _ceres_capability() -> dict[str, object]:
-    ceres = dict(epcsaft.runtime_build_info()["native_dependencies"]["ceres"])
+    ceres = native_ceres_backend_info()
     ceres_available = bool(ceres.get("available", False))
     out: dict[str, object] = {
         **ceres,

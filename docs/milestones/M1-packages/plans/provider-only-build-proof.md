@@ -16,8 +16,8 @@ not the package move itself.
 
 - [x] `uv run python scripts/dev/build_epcsaft.py --clean --profile provider`
   configures with `EPCSAFT_ENABLE_CERES=OFF`, `EPCSAFT_ENABLE_IPOPT=OFF`,
-  `EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF`,
-  `EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF`, and `EPCSAFT_ENABLE_CPPAD=ON`.
+  `EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF`,
+  `EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF`, and `EPCSAFT_ENABLE_CPPAD=ON`.
 - [x] `import epcsaft` and `import epcsaft._core` work after the provider-only
   build.
 - [x] `provider_native_sdk()` reports `provider_only_core=True`,

@@ -5,6 +5,7 @@ import json
 import epcsaft
 import epcsaft_regression
 import epcsaft_regression.core as regression_core
+from epcsaft_regression.native_adapter import native_ceres_backend_info
 
 
 REGRESSION_CAPABILITY_DIMENSIONS = (
@@ -16,18 +17,17 @@ REGRESSION_CAPABILITY_DIMENSIONS = (
 
 
 def test_runtime_reports_ceres_build_contract() -> None:
-    info = epcsaft.runtime_build_info()
-    ceres = info["native_dependencies"]["ceres"]
+    ceres = native_ceres_backend_info()
 
     assert ceres["backend"] == "ceres"
     assert ceres["status"] == "enabled_available"
-    assert ceres["required"] is False
+    assert ceres["required"] is True
     assert ceres["required_for"] == ["epcsaft-regression"]
     assert ceres["compiled"] is True
     assert ceres["available"] is True
 
     capabilities = epcsaft_regression.capabilities()
-    assert capabilities["native_dependencies"]["ceres"]["required"] is False
+    assert capabilities["native_dependencies"]["ceres"]["required"] is True
     assert capabilities["forbidden_default_dependencies"] == ["ipopt"]
     assert capabilities["optimizers"]["ceres"]["status"] == ceres["status"]
     assert capabilities["optimizers"]["ceres"]["compiled"] is ceres["compiled"]

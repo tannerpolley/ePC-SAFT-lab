@@ -8,7 +8,9 @@ import numpy as np
 import pytest
 
 import epcsaft
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
+
+_core = extension_native_core()
 import epcsaft_equilibrium as equilibrium_module
 from equilibrium_support.hydrocarbon_cases import (
     HYDROCARBON_BUBBLE_P,

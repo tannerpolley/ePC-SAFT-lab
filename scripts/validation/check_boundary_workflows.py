@@ -20,9 +20,11 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.core.native_results import native_route_solved_pressure, native_route_solved_temperature
 from scripts.validation import equilibrium_validation_runtime as runtime
+
+_core = extension_native_core()
 
 DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
 

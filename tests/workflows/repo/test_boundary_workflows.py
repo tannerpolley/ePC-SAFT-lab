@@ -62,7 +62,9 @@ def test_boundary_checker_rejects_route_sweeps_without_explicit_opt_in() -> None
 @pytest.mark.native_solver
 @pytest.mark.slow
 def test_boundary_route_reports_strict_convergence_and_debug_output() -> None:
-    import epcsaft._core as _core
+    from epcsaft_equilibrium._native import extension_native_core
+
+    _core = extension_native_core()
 
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
@@ -114,7 +116,9 @@ def test_boundary_route_reports_strict_convergence_and_debug_output() -> None:
 @pytest.mark.native_solver
 @pytest.mark.slow
 def test_boundary_route_points_complete_only_with_explicit_opt_in() -> None:
-    import epcsaft._core as _core
+    from epcsaft_equilibrium._native import extension_native_core
+
+    _core = extension_native_core()
 
     if not _core._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")

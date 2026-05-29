@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ._native import provider_contract
+from ._native import native_ipopt_backend_info, provider_contract
 from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
 
 
@@ -119,7 +119,7 @@ def capabilities() -> dict[str, object]:
 
     native_dependencies = runtime_build_info()["native_dependencies"]  # type: ignore[index]
     cppad = dict(native_dependencies["cppad"])  # type: ignore[index]
-    ipopt = dict(native_dependencies["ipopt"])  # type: ignore[index]
+    ipopt = native_ipopt_backend_info()
     ipopt_route_available = bool(ipopt.get("available", False))
     activation = _activation_capabilities(ipopt_route_available=ipopt_route_available)
     public_routes_by_family = dict(activation["public_routes_by_family"])

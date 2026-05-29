@@ -6,11 +6,12 @@ import pytest
 
 import epcsaft
 from epcsaft_regression import fit_pure_ion, fit_pure_neutral
+from epcsaft_regression.native_adapter import native_ceres_backend_info
 from regression_support.regression_cases import _methane_like_records, _minimal_neutral_metadata
 
 
 def test_ceres_pure_neutral_regression_owns_optimizer_loop() -> None:
-    ceres = epcsaft.runtime_build_info()["native_dependencies"]["ceres"]
+    ceres = native_ceres_backend_info()
     assert ceres["compiled"], "Ceres must be compiled for native regression tests."
     initial_guess = {"m": 1.08, "s": 3.55, "e": 155.0}
 
@@ -44,7 +45,7 @@ def test_ceres_pure_neutral_regression_owns_optimizer_loop() -> None:
 
 def test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac(tmp_path) -> None:
     build = epcsaft.runtime_build_info()["native_dependencies"]
-    assert build["ceres"]["compiled"], "Ceres must be compiled for native regression tests."
+    assert native_ceres_backend_info()["compiled"], "Ceres must be compiled for native regression tests."
     assert build["cppad"]["compiled"], "CppAD must be compiled for exact derivative tests."
 
     dataset = tmp_path / "synthetic_ion_dataset"
@@ -65,13 +66,12 @@ def test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac(
         json.dumps(
             {
                 "elec_model": {
-                    "rel_perm": {"rule": "constant"},
-                    "include_born_model": True,
+                    "relative_permittivity_rule": "constant",
                     "born_model": {
-                        "d_Born_mode": 3,
+                        "enabled": True,
+                        "born_diameter_rule": "fitted",
                         "solvation_shell_model": False,
                         "dielectric_saturation": False,
-                        "mu_born_model": {"differential_mode": "auto", "comp_dep_delta_d": False},
                     },
                 }
             }

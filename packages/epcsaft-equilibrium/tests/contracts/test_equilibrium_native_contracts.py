@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
+
+_core = extension_native_core()
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 EQUILIBRIUM_PACKAGE_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium"

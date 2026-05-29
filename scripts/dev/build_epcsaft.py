@@ -29,8 +29,8 @@ STALE_LOCK_SECONDS = 120
 
 class BuildProfile(NamedTuple):
     enable_ceres: bool
-    enable_equilibrium_native: bool
-    enable_regression_native: bool
+    build_equilibrium_native_module: bool
+    build_regression_native_module: bool
     enable_ipopt: bool
     windows_parallel: str
     description: str
@@ -38,8 +38,8 @@ class BuildProfile(NamedTuple):
 
 class BuildSettings(NamedTuple):
     enable_ceres: bool
-    enable_equilibrium_native: bool
-    enable_regression_native: bool
+    build_equilibrium_native_module: bool
+    build_regression_native_module: bool
     enable_ipopt: bool
     parallel: str | None
 
@@ -47,35 +47,35 @@ class BuildSettings(NamedTuple):
 BUILD_PROFILES: dict[str, BuildProfile] = {
     "fast": BuildProfile(
         enable_ceres=True,
-        enable_equilibrium_native=True,
-        enable_regression_native=True,
+        build_equilibrium_native_module=True,
+        build_regression_native_module=True,
         enable_ipopt=True,
         windows_parallel="4",
-        description="default native dependency profile: Ceres, CppAD, and native Ipopt enabled when available",
+        description="default source-checkout profile: provider _core plus extension-owned native modules",
     ),
     "full": BuildProfile(
         enable_ceres=True,
-        enable_equilibrium_native=True,
-        enable_regression_native=True,
+        build_equilibrium_native_module=True,
+        build_regression_native_module=True,
         enable_ipopt=True,
         windows_parallel="4",
-        description="full native dependency profile: Ceres, CppAD, and native Ipopt enabled when available",
+        description="full source-checkout profile: provider _core plus extension-owned native modules",
     ),
     "ipopt": BuildProfile(
         enable_ceres=True,
-        enable_equilibrium_native=True,
-        enable_regression_native=True,
+        build_equilibrium_native_module=True,
+        build_regression_native_module=True,
         enable_ipopt=True,
         windows_parallel="4",
-        description="native solver dependency profile: Ceres, CppAD, and native Ipopt enabled",
+        description="native Ipopt source-checkout profile with extension-owned native modules",
     ),
     "provider": BuildProfile(
         enable_ceres=False,
-        enable_equilibrium_native=False,
-        enable_regression_native=False,
+        build_equilibrium_native_module=False,
+        build_regression_native_module=False,
         enable_ipopt=False,
         windows_parallel="4",
-        description="provider-only boundary profile: CppAD ON, Ceres OFF, Ipopt OFF, extension native surfaces OFF",
+        description="provider-only boundary profile: CppAD ON, Ceres OFF, Ipopt OFF, extension native modules OFF",
     ),
 }
 
@@ -362,12 +362,12 @@ def _status_lines(*, stale_lock_seconds: int = STALE_LOCK_SECONDS) -> list[str]:
     build_type = _cmake_cache_value("CMAKE_BUILD_TYPE") or "<unconfigured>"
     build_profile = _cmake_cache_value("EPCSAFT_BUILD_PROFILE") or "<unconfigured>"
     ceres = _cmake_cache_value("EPCSAFT_ENABLE_CERES") or "<unconfigured>"
-    regression_native = _cmake_cache_value("EPCSAFT_ENABLE_REGRESSION_NATIVE") or "<unconfigured>"
+    regression_native = _cmake_cache_value("EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE") or "<unconfigured>"
     system_ceres = _cmake_cache_value("EPCSAFT_USE_SYSTEM_CERES") or "<unconfigured>"
     ceres_dir = _cmake_cache_value("Ceres_DIR") or "<unconfigured>"
     cppad = _cmake_cache_value("EPCSAFT_ENABLE_CPPAD") or "<unconfigured>"
     ipopt = _cmake_cache_value("EPCSAFT_ENABLE_IPOPT") or "<unconfigured>"
-    equilibrium_native = _cmake_cache_value("EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE") or "<unconfigured>"
+    equilibrium_native = _cmake_cache_value("EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE") or "<unconfigured>"
     system_ipopt = _cmake_cache_value("EPCSAFT_USE_SYSTEM_IPOPT") or "<unconfigured>"
     ipopt_dir = _cmake_cache_value("Ipopt_DIR") or "<unconfigured>"
     ipopt_root = _cmake_cache_value("EPCSAFT_IPOPT_ROOT") or "<unconfigured>"
@@ -391,12 +391,12 @@ def _status_lines(*, stale_lock_seconds: int = STALE_LOCK_SECONDS) -> list[str]:
         f"build_type: {build_type}",
         f"build_profile: {build_profile}",
         f"ceres_configured: {ceres}",
-        f"regression_native_configured: {regression_native}",
+        f"regression_native_module_configured: {regression_native}",
         f"system_ceres_configured: {system_ceres}",
         f"ceres_dir: {ceres_dir}",
         f"cppad_configured: {cppad}",
         f"ipopt_configured: {ipopt}",
-        f"equilibrium_native_configured: {equilibrium_native}",
+        f"equilibrium_native_module_configured: {equilibrium_native}",
         f"system_ipopt_configured: {system_ipopt}",
         f"ipopt_dir: {ipopt_dir}",
         f"ipopt_root: {ipopt_root}",
@@ -498,8 +498,8 @@ def _configure(
     *,
     build_profile: str,
     enable_ceres: bool,
-    enable_equilibrium_native: bool,
-    enable_regression_native: bool,
+    build_equilibrium_native_module: bool,
+    build_regression_native_module: bool,
     use_system_ceres: bool,
     ceres_dir: Path | None,
     use_system_cppad: bool,
@@ -524,8 +524,8 @@ def _configure(
         f"-DEPCSAFT_USE_SYSTEM_CPPAD={'ON' if use_system_cppad else 'OFF'}",
         f"-DEPCSAFT_ENABLE_IPOPT={'ON' if enable_ipopt else 'OFF'}",
         f"-DEPCSAFT_USE_SYSTEM_IPOPT={'ON' if use_system_ipopt else 'OFF'}",
-        f"-DEPCSAFT_ENABLE_EQUILIBRIUM_NATIVE={'ON' if enable_equilibrium_native else 'OFF'}",
-        f"-DEPCSAFT_ENABLE_REGRESSION_NATIVE={'ON' if enable_regression_native else 'OFF'}",
+        f"-DEPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE={'ON' if build_equilibrium_native_module else 'OFF'}",
+        f"-DEPCSAFT_BUILD_REGRESSION_NATIVE_MODULE={'ON' if build_regression_native_module else 'OFF'}",
         "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY",
         f"-DCMAKE_BUILD_TYPE={build_type}",
         f"-DSKBUILD_PROJECT_VERSION={_pyproject_version()}",
@@ -588,8 +588,8 @@ def _timed(label: str, action) -> float:
 def _resolve_settings(args: argparse.Namespace) -> BuildSettings:
     profile = BUILD_PROFILES[args.profile]
     enable_ceres = profile.enable_ceres
-    enable_equilibrium_native = profile.enable_equilibrium_native
-    enable_regression_native = profile.enable_regression_native
+    build_equilibrium_native_module = profile.build_equilibrium_native_module
+    build_regression_native_module = profile.build_regression_native_module
     enable_ipopt = profile.enable_ipopt if args.enable_ipopt is None else bool(args.enable_ipopt)
     if (
         args.use_system_ipopt
@@ -599,10 +599,10 @@ def _resolve_settings(args: argparse.Namespace) -> BuildSettings:
         or os.environ.get("EPCSAFT_PEP517_IPOPT_ROOT")
     ):
         enable_ipopt = True
-    if enable_ipopt and not enable_equilibrium_native:
-        raise ValueError("Ipopt cannot be enabled when the selected profile disables equilibrium native code.")
-    if enable_ceres and not enable_regression_native:
-        raise ValueError("Ceres cannot be enabled when the selected profile disables regression native code.")
+    if enable_ipopt and not build_equilibrium_native_module:
+        raise ValueError("Ipopt cannot be enabled when the selected profile disables the equilibrium native module.")
+    if enable_ceres and not build_regression_native_module:
+        raise ValueError("Ceres cannot be enabled when the selected profile disables the regression native module.")
 
     parallel = args.parallel
     if parallel is None:
@@ -614,8 +614,8 @@ def _resolve_settings(args: argparse.Namespace) -> BuildSettings:
             parallel = BUILD_PROFILES["full"].windows_parallel
     return BuildSettings(
         enable_ceres=enable_ceres,
-        enable_equilibrium_native=enable_equilibrium_native,
-        enable_regression_native=enable_regression_native,
+        build_equilibrium_native_module=build_equilibrium_native_module,
+        build_regression_native_module=build_regression_native_module,
         enable_ipopt=enable_ipopt,
         parallel=parallel,
     )
@@ -644,8 +644,8 @@ def _parser() -> argparse.ArgumentParser:
         choices=tuple(BUILD_PROFILES),
         default="fast",
         help=(
-            "Native dependency profile. Transition profiles keep equilibrium and regression native surfaces enabled; "
-            "the provider profile disables extension native surfaces and their solver dependencies."
+            "Native dependency profile. Source-checkout profiles build extension-owned native modules; "
+            "the provider profile disables extension native modules and their solver dependencies."
         ),
     )
     parser.add_argument(
@@ -729,7 +729,7 @@ def main() -> int:
     except ValueError as exc:
         parser.error(str(exc))
     if not settings.enable_ceres and (args.use_system_ceres or args.ceres_dir is not None):
-        parser.error("Ceres options cannot be used when the selected profile disables regression native code.")
+        parser.error("Ceres options cannot be used when the selected profile disables the regression native module.")
     use_system_ceres = bool(args.use_system_ceres or args.ceres_dir is not None)
     ipopt_root_env = os.environ.get("EPCSAFT_IPOPT_ROOT") or os.environ.get("EPCSAFT_PEP517_IPOPT_ROOT")
     ipopt_root = resolve_ipopt_root_for_build(
@@ -759,11 +759,11 @@ def main() -> int:
     print(
         "Build profile: "
         f"{args.profile} ({BUILD_PROFILES[args.profile].description}); "
-        f"RegressionNative={'ON' if settings.enable_regression_native else 'OFF'}, "
+        f"RegressionNativeModule={'ON' if settings.build_regression_native_module else 'OFF'}, "
         f"Ceres={'ON' if settings.enable_ceres else 'OFF'}, "
         f"CeresSource={('system' if use_system_ceres else 'FetchContent') if settings.enable_ceres else 'disabled'}, "
         "CppAD=ON, "
-        f"EquilibriumNative={'ON' if settings.enable_equilibrium_native else 'OFF'}, "
+        f"EquilibriumNativeModule={'ON' if settings.build_equilibrium_native_module else 'OFF'}, "
         f"Ipopt={'ON' if settings.enable_ipopt else 'OFF'}, "
         f"IpoptSource={('system' if use_system_ipopt else 'disabled') if settings.enable_ipopt else 'disabled'}, "
         f"IpoptRoot={ipopt_root if ipopt_root is not None else '<none>'}, "
@@ -780,8 +780,8 @@ def main() -> int:
                 env,
                 build_profile=args.profile,
                 enable_ceres=settings.enable_ceres,
-                enable_equilibrium_native=settings.enable_equilibrium_native,
-                enable_regression_native=settings.enable_regression_native,
+                build_equilibrium_native_module=settings.build_equilibrium_native_module,
+                build_regression_native_module=settings.build_regression_native_module,
                 use_system_ceres=use_system_ceres,
                 ceres_dir=args.ceres_dir,
                 use_system_cppad=args.use_system_cppad,
