@@ -11,7 +11,8 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
-for import_root in (REPO_ROOT, SRC_ROOT):
+EQUILIBRIUM_SRC_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src"
+for import_root in (REPO_ROOT, SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
     import_path = str(import_root)
     if import_path not in sys.path:
         sys.path.insert(0, import_path)
@@ -20,10 +21,12 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
 from scripts.validation import check_equilibrium_benchmark_fixture as fixture_checker
 from scripts.validation import check_phase_discovery as phase_discovery_checker
 from scripts.validation import equilibrium_validation_runtime as runtime
+
+_core = extension_native_core()
 
 DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
 

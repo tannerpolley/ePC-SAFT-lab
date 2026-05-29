@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 import epcsaft
 import epcsaft._core as _core
 
@@ -15,7 +13,9 @@ BLOCKED_EXTENSION_SYMBOLS = (
     "_native_variable_transform_smoke",
     "_native_ceres_smoke",
     "_fit_pure_neutral_native_ceres",
+    "_fit_pure_neutral_native_debug",
     "_fit_generic_native_ceres",
+    "_evaluate_generic_native_debug",
 )
 
 
@@ -27,10 +27,6 @@ def test_provider_native_sdk_reports_provider_only_surface_flags() -> None:
     assert "regression_native_enabled" in sdk
 
 
-@pytest.mark.skipif(
-    not epcsaft.provider_native_sdk()["provider_only_core"],
-    reason="provider-only symbol proof requires a provider profile build",
-)
 def test_provider_only_core_does_not_export_extension_native_symbols() -> None:
     sdk = epcsaft.provider_native_sdk()
 

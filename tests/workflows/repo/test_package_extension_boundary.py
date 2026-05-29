@@ -143,9 +143,9 @@ def test_provider_native_sdk_is_runtime_visible_without_extension_ownership() ->
     assert sdk["extension_consumers"] == ["epcsaft-equilibrium", "epcsaft-regression"]
     assert "epcsaft._core" not in sdk["stable_python_surface"]
     assert sdk["native_contract_exported"] is True
-    assert isinstance(sdk["provider_only_core"], bool)
-    assert isinstance(sdk["equilibrium_native_enabled"], bool)
-    assert isinstance(sdk["regression_native_enabled"], bool)
+    assert sdk["provider_only_core"] is True
+    assert sdk["equilibrium_native_enabled"] is False
+    assert sdk["regression_native_enabled"] is False
     assert sdk["native_metadata"]["native_target"] == "epcsaft_provider_native"
 
 

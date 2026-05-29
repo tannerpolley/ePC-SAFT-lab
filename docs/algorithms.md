@@ -77,7 +77,7 @@ Jacobians remain in their route problem owners.
 - Description: Shared adapter pattern for currently supported native Ceres regression routes.
 - Change note: Initial algorithm-registry entry for native Ceres regression dispatch.
 - LaTeX: `docs/latex/algorithms.tex:53`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1071` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:511` (ceres::Solver::Options ceres_regression_options_cpp(int max_num_iterations) {)
+- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:399` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:511` (ceres::Solver::Options ceres_regression_options_cpp(int max_num_iterations) {)
 
 The Ceres adapter family owns native least-squares solve setup for supported
 regression routes. It is separate from Ipopt and does not call Ipopt routes.
@@ -507,7 +507,7 @@ same tolerance as the exact solve.
 - Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-neutral regression.
 - LaTeX: `docs/latex/algorithms.tex:312`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1066` (m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2404` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2739` (def fit_pure_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
+- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:397` (m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2404` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2739` (def fit_pure_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
 
 This entry covers the implemented nonassociating pure-neutral native Ceres route
 for `m`, `\sigma`, and `\epsilon/k_B`. It is not a production Ceres
@@ -552,7 +552,7 @@ $$
 - Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
 - LaTeX: `docs/latex/algorithms.tex:331`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1071` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2787` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2990` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1483` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
+- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:399` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2787` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2990` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1483` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
 
 This entry is limited to the currently implemented pure-ion target surface. It
 does not claim support for association-affecting target kinds merely because the
@@ -581,7 +581,7 @@ native target-kind registry knows their labels.
 - Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 - Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.
 - LaTeX: `docs/latex/algorithms.tex:349`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1071` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2816` (def fit_binary_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1606` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
+- Code owners: `packages/epcsaft-regression/native/regression/module.cpp:399` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2816` (def fit_binary_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1606` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
 
 This entry intentionally does not claim native optimizer support for every
 binary parameter family. It is not a production Ceres optimizer for `l_{ij}`

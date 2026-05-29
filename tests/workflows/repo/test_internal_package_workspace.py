@@ -14,8 +14,8 @@ EXTENSION_PACKAGES = {
         "required_dependencies": {"numpy>=2.0"},
         "forbidden_dependencies": {"ceres", "epcsaft-regression"},
         "forbidden_reexports": {"Regression"},
-        "required_provider_native": ["equilibrium"],
-        "required_provider_build_option": "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON",
+        "native_module": "epcsaft_equilibrium._native_core",
+        "build_option": "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=ON",
     },
     "epcsaft-regression": {
         "directory": REPO_ROOT / "packages" / "epcsaft-regression",
@@ -23,8 +23,8 @@ EXTENSION_PACKAGES = {
         "required_dependencies": {"numpy>=2.0"},
         "forbidden_dependencies": {"ipopt", "epcsaft-equilibrium"},
         "forbidden_reexports": {"Equilibrium"},
-        "required_provider_native": ["regression"],
-        "required_provider_build_option": "EPCSAFT_ENABLE_REGRESSION_NATIVE=ON",
+        "native_module": "epcsaft_regression._native_core",
+        "build_option": "EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=ON",
     },
 }
 
@@ -70,8 +70,9 @@ def test_extension_package_manifests_depend_on_provider_workspace_source() -> No
         extension = pyproject["tool"]["epcsaft"]["extension"]
         assert extension["publish"] is False
         assert extension["monorepo_transition_only"] is True
-        assert extension["requires_provider_native"] == metadata["required_provider_native"]
-        assert extension["requires_provider_build_option"] == metadata["required_provider_build_option"]
+        assert extension["requires_provider_native_sdk"] == "provider_native_sdk_v1"
+        assert extension["native_module"] == metadata["native_module"]
+        assert extension["build_option"] == metadata["build_option"]
 
 
 def test_extension_package_shells_do_not_reexport_transition_core_objects() -> None:
@@ -107,7 +108,7 @@ def test_equilibrium_extension_owns_python_workflow_modules() -> None:
     assert not (REPO_ROOT / "src" / "epcsaft" / "equilibrium").exists()
 
 
-def test_equilibrium_extension_native_access_is_isolated_behind_provider_sdk_bridge() -> None:
+def test_equilibrium_extension_native_access_is_isolated_behind_package_native_bridge() -> None:
     module_dir = EXTENSION_PACKAGES["epcsaft-equilibrium"]["directory"] / "src" / "epcsaft_equilibrium"
     offenders: list[str] = []
     for path in sorted(module_dir.rglob("*.py")):
@@ -120,11 +121,13 @@ def test_equilibrium_extension_native_access_is_isolated_behind_provider_sdk_bri
     assert offenders == []
     assert "provider_native_sdk()" in native_bridge
     assert "provider_native_sdk_v1" in native_bridge
-    assert "equilibrium_native_enabled" in native_bridge
-    assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON" in native_bridge
+    assert "extension_native_core" in native_bridge
+    assert "epcsaft_equilibrium._native_core" in native_bridge
+    assert "equilibrium_native_enabled" not in native_bridge
+    assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON" not in native_bridge
 
 
-def test_equilibrium_extension_native_bridge_rejects_provider_core_without_equilibrium_symbols(monkeypatch) -> None:
+def test_equilibrium_extension_native_bridge_rejects_extension_module_without_equilibrium_symbols(monkeypatch) -> None:
     import epcsaft_equilibrium._native as native_bridge
 
     monkeypatch.setattr(
@@ -133,15 +136,16 @@ def test_equilibrium_extension_native_bridge_rejects_provider_core_without_equil
         lambda: {
             "contract_id": "provider_native_sdk_v1",
             "native_contract_exported": True,
-            "equilibrium_native_enabled": False,
+            "provider_only_core": True,
         },
     )
+    monkeypatch.setattr(native_bridge, "import_module", lambda name: object())
 
-    with pytest.raises(RuntimeError, match="EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON"):
-        native_bridge.provider_native_core()
+    with pytest.raises(RuntimeError, match="epcsaft_equilibrium\\._native_core"):
+        native_bridge.extension_native_core()
 
 
-def test_regression_extension_native_bridge_rejects_provider_core_without_regression_symbols(monkeypatch) -> None:
+def test_regression_extension_native_bridge_rejects_extension_module_without_regression_symbols(monkeypatch) -> None:
     import epcsaft_regression.native_adapter as native_bridge
 
     monkeypatch.setattr(
@@ -150,12 +154,13 @@ def test_regression_extension_native_bridge_rejects_provider_core_without_regres
         lambda: {
             "contract_id": "provider_native_sdk_v1",
             "native_contract_exported": True,
-            "regression_native_enabled": False,
+            "provider_only_core": True,
         },
     )
+    monkeypatch.setattr(native_bridge, "import_module", lambda name: object())
 
-    with pytest.raises(RuntimeError, match="EPCSAFT_ENABLE_REGRESSION_NATIVE=ON"):
-        native_bridge._provider_regression_core()
+    with pytest.raises(RuntimeError, match="epcsaft_regression\\._native_core"):
+        native_bridge._regression_native_core()
 
 
 def test_equilibrium_extension_uses_public_provider_imports_only() -> None:

@@ -5,7 +5,9 @@ import pytest
 
 import epcsaft
 from epcsaft.state.native_adapter import ePCSAFTMixture
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
+
+_core = extension_native_core()
 from equilibrium_support.runtime_cases import _ionic_params
 
 

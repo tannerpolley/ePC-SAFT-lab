@@ -30,14 +30,14 @@ def test_build_script_help_lists_incremental_workflow_flags(capsys) -> None:
     assert "--status" in help_text
 
 
-def test_build_script_default_profile_keeps_transition_extension_surfaces_enabled() -> None:
+def test_build_script_default_profile_builds_extension_native_modules() -> None:
     args = build_epcsaft._parser().parse_args([])
     settings = build_epcsaft._resolve_settings(args)
 
     assert args.profile == "fast"
     assert settings.enable_ceres is True
-    assert settings.enable_equilibrium_native is True
-    assert settings.enable_regression_native is True
+    assert settings.build_equilibrium_native_module is True
+    assert settings.build_regression_native_module is True
     assert settings.enable_ipopt is True
     assert settings.parallel == "4"
 
@@ -46,18 +46,18 @@ def test_build_script_can_disable_only_ipopt() -> None:
     args = build_epcsaft._parser().parse_args(["--disable-ipopt"])
     settings = build_epcsaft._resolve_settings(args)
 
-    assert settings.enable_equilibrium_native is True
-    assert settings.enable_regression_native is True
+    assert settings.build_equilibrium_native_module is True
+    assert settings.build_regression_native_module is True
     assert settings.enable_ipopt is False
 
 
-def test_build_script_provider_profile_disables_extension_native_surfaces() -> None:
+def test_build_script_provider_profile_disables_extension_native_modules() -> None:
     args = build_epcsaft._parser().parse_args(["--profile", "provider"])
     settings = build_epcsaft._resolve_settings(args)
 
     assert settings.enable_ceres is False
-    assert settings.enable_equilibrium_native is False
-    assert settings.enable_regression_native is False
+    assert settings.build_equilibrium_native_module is False
+    assert settings.build_regression_native_module is False
     assert settings.enable_ipopt is False
     assert settings.parallel == "4"
 
@@ -75,8 +75,8 @@ def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
         {},
         build_profile="provider",
         enable_ceres=False,
-        enable_equilibrium_native=False,
-        enable_regression_native=False,
+        build_equilibrium_native_module=False,
+        build_regression_native_module=False,
         use_system_ceres=False,
         ceres_dir=None,
         use_system_cppad=False,
@@ -90,7 +90,7 @@ def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
     assert "-DEPCSAFT_BUILD_PROFILE=provider" in captured["cmd"]
 
 
-def test_build_script_rejects_solver_overrides_when_provider_profile_disables_their_native_surfaces() -> None:
+def test_build_script_rejects_solver_overrides_when_provider_profile_disables_their_native_modules() -> None:
     with pytest.raises(ValueError, match="Ipopt cannot be enabled"):
         build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "provider", "--enable-ipopt"]))
 
@@ -132,8 +132,8 @@ def test_build_script_profiles_resolve_optional_native_dependency_state() -> Non
     assert ipopt.enable_ipopt is True
     assert ipopt.parallel == "4"
     assert provider.enable_ceres is False
-    assert provider.enable_equilibrium_native is False
-    assert provider.enable_regression_native is False
+    assert provider.build_equilibrium_native_module is False
+    assert provider.build_regression_native_module is False
     assert provider.enable_ipopt is False
     assert system_ceres.enable_ipopt is True
     assert system_ipopt.enable_ipopt is True
@@ -147,8 +147,8 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert 'option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support for native regression solves" ON)' in cmake_text
     assert 'option(EPCSAFT_ENABLE_CPPAD "Enable package-wide CppAD support" ON)' in cmake_text
     assert 'option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)' in cmake_text
-    assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE" in cmake_text
-    assert "EPCSAFT_ENABLE_REGRESSION_NATIVE" in cmake_text
+    assert "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE" in cmake_text
+    assert "EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE" in cmake_text
     assert "EPCSAFT_BUILD_PROFILE" in cmake_text
     assert 'EPCSAFT_BUILD_PROFILE STREQUAL "provider"' in cmake_text
     assert "EPCSAFT_ENABLE_CERES=OFF is not supported" not in cmake_text
@@ -169,7 +169,9 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "add_library(epcsaft_regression_native OBJECT" in cmake_text
     assert "target_link_libraries(epcsaft_regression_native PUBLIC Ceres::ceres)" in cmake_text
     assert 'target_link_libraries(epcsaft_equilibrium_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")' in cmake_text
-    assert "EPCSAFT_NATIVE_INCLUDE_DIRS" in cmake_text
+    assert "EPCSAFT_PROVIDER_NATIVE_INCLUDE_DIRS" in cmake_text
+    assert "EPCSAFT_EQUILIBRIUM_NATIVE_INCLUDE_DIRS" in cmake_text
+    assert "EPCSAFT_REGRESSION_NATIVE_INCLUDE_DIRS" in cmake_text
     assert "file(GLOB EPCSAFT_NATIVE_SOURCES" not in cmake_text
     assert "src/epcsaft/native/*.cpp" not in cmake_text
     assert "src/epcsaft/native/cppad/*.cpp" not in cmake_text
@@ -229,11 +231,11 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
                 "CMAKE_GENERATOR:INTERNAL=Ninja",
                 "EPCSAFT_BUILD_PROFILE:STRING=provider",
                 "EPCSAFT_ENABLE_CERES:BOOL=ON",
-                "EPCSAFT_ENABLE_REGRESSION_NATIVE:BOOL=ON",
+                "EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE:BOOL=ON",
                 "EPCSAFT_USE_SYSTEM_CERES:BOOL=OFF",
                 "EPCSAFT_ENABLE_CPPAD:BOOL=ON",
                 "EPCSAFT_ENABLE_IPOPT:BOOL=OFF",
-                "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE:BOOL=ON",
+                "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE:BOOL=ON",
                 "EPCSAFT_USE_SYSTEM_IPOPT:BOOL=ON",
                 "Ipopt_DIR:PATH=C:/ipopt/lib/cmake/Ipopt",
                 "Ceres_DIR:PATH=C:/ceres/lib/cmake/Ceres",
@@ -252,12 +254,12 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
     assert "native_core: present" in lines
     assert "build_profile: provider" in lines
     assert "ceres_configured: ON" in lines
-    assert "regression_native_configured: ON" in lines
+    assert "regression_native_module_configured: ON" in lines
     assert "system_ceres_configured: OFF" in lines
     assert "ceres_dir: C:/ceres/lib/cmake/Ceres" in lines
     assert "cppad_configured: ON" in lines
     assert "ipopt_configured: OFF" in lines
-    assert "equilibrium_native_configured: ON" in lines
+    assert "equilibrium_native_module_configured: ON" in lines
     assert "system_ipopt_configured: ON" in lines
     assert "ipopt_dir: C:/ipopt/lib/cmake/Ipopt" in lines
     assert "profile_hint: fast/full-no-ipopt" in lines

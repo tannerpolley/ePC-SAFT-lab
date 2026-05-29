@@ -12,11 +12,7 @@ SRC_ROOT = REPO_ROOT / "src"
 DEV_BUILD_CACHE = REPO_ROOT / "build" / "dev" / "CMakeCache.txt"
 STALE_TRACKED_REPORTS: tuple[Path, ...] = ()
 REQUIRED_CORE_SYMBOLS = (
-    "_fit_pure_neutral_native_ceres",
-    "_fit_generic_native_ceres",
-    "_evaluate_generic_native_debug",
     "_native_cppad_smoke",
-    "_native_ipopt_smoke",
     "NativeSolutionError",
 )
 
@@ -86,26 +82,27 @@ def _runtime_native_dependency_status(name: str) -> str:
 
 
 def _ceres_status() -> str:
-    return _runtime_native_dependency_status("ceres")
+    try:
+        from epcsaft_regression.native_adapter import native_ceres_backend_info
+    except Exception:
+        return "<extension module absent>"
+    return str(native_ceres_backend_info().get("status", "<unknown>"))
 
 
 def _ipopt_status() -> str:
-    return _runtime_native_dependency_status("ipopt")
+    try:
+        from epcsaft_equilibrium._native import native_ipopt_backend_info
+    except Exception:
+        return "<extension module absent>"
+    return str(native_ipopt_backend_info().get("status", "<unknown>"))
 
 
 def _ipopt_available() -> bool:
     try:
-        import epcsaft
-
-        info = epcsaft.runtime_build_info()
+        from epcsaft_equilibrium._native import native_ipopt_backend_info
     except Exception:
         return False
-    native_dependencies = info.get("native_dependencies", {})
-    if not isinstance(native_dependencies, dict):
-        return False
-    payload = native_dependencies.get("ipopt", {})
-    if not isinstance(payload, dict):
-        return False
+    payload = native_ipopt_backend_info()
     return payload.get("status") == "enabled_available" and bool(payload.get("available"))
 
 

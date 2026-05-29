@@ -155,88 +155,6 @@ def _native_cppad_backend_info() -> dict[str, object]:
     }
 
 
-def _native_ceres_backend_info() -> dict[str, object]:
-    try:
-        from .. import _core
-    except (ImportError, OSError):
-        return {
-            "backend": "ceres",
-            "status": "native_extension_missing",
-            "required": False,
-            "required_for": ["epcsaft-regression"],
-            "compiled": False,
-            "available": False,
-        }
-    try:
-        smoke = _core._native_ceres_smoke()
-    except AttributeError:
-        return {
-            "backend": "ceres",
-            "status": "ceres_probe_missing",
-            "required": False,
-            "required_for": ["epcsaft-regression"],
-            "compiled": False,
-            "available": False,
-        }
-    status = str(smoke.get("status", "ceres_probe_missing"))
-    compiled = bool(smoke.get("compiled", False))
-    return {
-        "backend": "ceres",
-        "status": status,
-        "required": False,
-        "required_for": ["epcsaft-regression"],
-        "compiled": compiled,
-        "available": status == "enabled_available" and compiled,
-    }
-
-
-def _native_ipopt_backend_info() -> dict[str, object]:
-    try:
-        from .. import _core
-    except (ImportError, OSError):
-        return {
-            "backend": "ipopt",
-            "status": "native_extension_missing",
-            "required": False,
-            "compiled": False,
-            "available": False,
-            "adapter_available": False,
-            "adapter_kind": "native_tnlp_adapter",
-            "adapter_source_available": False,
-            "requires_exact_gradient": True,
-            "requires_exact_jacobian": True,
-        }
-    try:
-        smoke = _core._native_ipopt_smoke()
-    except AttributeError:
-        return {
-            "backend": "ipopt",
-            "status": "ipopt_probe_missing",
-            "required": False,
-            "compiled": False,
-            "available": False,
-            "adapter_available": False,
-            "adapter_kind": "native_tnlp_adapter",
-            "adapter_source_available": False,
-            "requires_exact_gradient": True,
-            "requires_exact_jacobian": True,
-        }
-    status = str(smoke.get("status", "ipopt_probe_missing"))
-    compiled = bool(smoke.get("compiled", False))
-    return {
-        "backend": "ipopt",
-        "status": status,
-        "required": False,
-        "compiled": compiled,
-        "available": status == "enabled_available" and compiled,
-        "adapter_available": bool(smoke.get("adapter_available", False)),
-        "adapter_kind": str(smoke.get("adapter_kind", "native_tnlp_adapter")),
-        "adapter_source_available": bool(smoke.get("adapter_source_available", False)),
-        "requires_exact_gradient": bool(smoke.get("requires_exact_gradient", True)),
-        "requires_exact_jacobian": bool(smoke.get("requires_exact_jacobian", True)),
-    }
-
-
 def _mtime_utc(path: Path) -> str:
     return datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()
 
@@ -248,7 +166,6 @@ def runtime_build_info() -> dict[str, object]:
     direct_url = _direct_url_payload()
     source_root = _source_checkout_from_package() or _source_checkout_from_direct_url(direct_url)
     native_path = _native_extension_path()
-    ceres = _native_ceres_backend_info()
     direct_url_info = direct_url.get("dir_info") if isinstance(direct_url.get("dir_info"), dict) else {}
     return {
         "package_version": __version__,
@@ -264,9 +181,7 @@ def runtime_build_info() -> dict[str, object]:
         "platform": _platform_label(),
         "machine": _machine_label(),
         "native_dependencies": {
-            "ceres": ceres,
             "cppad": _native_cppad_backend_info(),
-            "ipopt": _native_ipopt_backend_info(),
         },
     }
 

@@ -31,7 +31,7 @@ from .native_adapter import (
     _evaluate_generic_native_debug,
     _fit_generic_native_ceres,
     _fit_pure_neutral_native_debug,
-    _provider_regression_core,
+    _regression_native_core,
 )
 
 PURE_NEUTRAL_MODE = "pure_neutral"
@@ -2237,7 +2237,7 @@ def _fit_pure_neutral_native_ceres(
 ) -> dict[str, Any]:
     params = check_association(dict(fixed_payload))
     cppargs = create_struct(params)
-    core = _provider_regression_core()
+    core = _regression_native_core()
     result = core._fit_pure_neutral_native_ceres(
         cppargs,
         np.asarray(density_T, dtype=float),

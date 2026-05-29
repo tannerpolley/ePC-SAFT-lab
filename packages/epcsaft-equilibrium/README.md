@@ -9,4 +9,5 @@ provider root does not re-export `Equilibrium`.
 
 This package is not a standalone PyPI artifact in the current tranche. Install
 it through the repository uv workspace so it uses the matching `epcsaft`
-provider build with `EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON`.
+provider SDK and the package-owned native module built with
+`EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=ON`.

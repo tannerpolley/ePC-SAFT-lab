@@ -3,7 +3,9 @@ from __future__ import annotations
 import pytest
 
 import epcsaft
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
+
+_core = extension_native_core()
 import epcsaft_equilibrium
 from equilibrium_support.hydrocarbon_cases import HYDROCARBON_LIQUID_X, HYDROCARBON_T, hydrocarbon_parameter_set
 
@@ -20,7 +22,7 @@ def test_neutral_bubble_uses_native_ipopt_route_gate() -> None:
     if not _core._native_ipopt_smoke()["compiled"]:
         with pytest.raises(
             epcsaft.InputError,
-            match=r"bubble_pressure requires a native Ipopt selector equilibrium route",
+            match=r"bubble_pressure requires the native Ipopt selector equilibrium route",
         ):
             equilibrium.solve()
         return

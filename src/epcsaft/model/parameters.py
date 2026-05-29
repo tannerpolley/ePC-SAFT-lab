@@ -813,17 +813,26 @@ def _normalize_runtime_user_options(runtime_options: Mapping[str, Any]) -> dict[
         "relative_permittivity_rule",
         "born_model",
     }
+    metadata_keys = {"elec_model_dataset"}
     if not (set(runtime_options) & option_keys):
         return _copy_payload_mapping(runtime_options)
 
     from .datasets import _resolve_runtime_options
 
-    resolved = _resolve_runtime_options(dict(runtime_options))
-    return {
+    metadata = {
+        str(key): _copy_payload_value(value)
+        for key, value in runtime_options.items()
+        if str(key) in metadata_keys
+    }
+    option_payload = {str(key): value for key, value in runtime_options.items() if str(key) not in metadata_keys}
+    resolved = _resolve_runtime_options(option_payload)
+    normalized = {
         "elec_model": resolved["model"],
         "solvated_ion_diameter_mixing_rule": bool(resolved["runtime"]["solvated_ion_diameter_mixing_rule"]),
         "ion_dispersion_mixing_rule": bool(resolved["runtime"]["ion_dispersion_mixing_rule"]),
     }
+    normalized.update(metadata)
+    return normalized
 
 
 def _runtime_parameter_provenance_payload(metadata: Mapping[str, Any], has_binary_records: bool) -> dict[str, Any]:

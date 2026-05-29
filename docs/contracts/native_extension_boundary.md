@@ -8,10 +8,10 @@ transition implementation inside one source repository.
 
 ## Current State
 
-The current source checkout builds one native `_core` module from logical
-native object targets. Provider/CppAD, equilibrium/Ipopt, and regression/Ceres
-code now compile under separate native targets and are linked into the same
-pybind module for local development.
+The current source checkout builds provider `_core` plus extension-owned native modules.
+Provider/CppAD code links into `epcsaft._core`; equilibrium/Ipopt symbols link
+into `epcsaft_equilibrium._native_core`; regression/Ceres symbols link into
+`epcsaft_regression._native_core`.
 
 That current shape is a transition state. It is not evidence that Ceres or
 Ipopt are core provider dependencies after the split.
@@ -23,8 +23,8 @@ provider-owned symbol surface.
 
 ## Target Native Ownership
 
-The first implementation target is logical target separation inside this
-repository while keeping one pybind module temporarily. The target groups are:
+The first implementation target is native target and package-owned pybind modules
+separation inside this repository. The target groups are:
 
 - provider/autodiff target: core EoS, state, property, contribution, CppAD, and
   provider derivative support;
@@ -33,8 +33,8 @@ repository while keeping one pybind module temporarily. The target groups are:
 - regression/Ceres target: regression problem assembly, Ceres residual blocks,
   optimizer diagnostics, regression pybind registration.
 
-This target is deliberately before separate pybind modules or separate
-repositories. It proves ownership without introducing cross-repo churn.
+This target is deliberately before separate repositories. It proves ownership
+without introducing cross-repo churn.
 
 ## Linkage Rules
 
@@ -63,19 +63,21 @@ Regression target:
 
 ## Pybind Boundary
 
-During the transition, one `_core` module may remain. The binding registrar must
-make ownership clear enough that provider, equilibrium, and regression symbols
-can later move without hidden compatibility paths.
+During the transition, one monorepo build may produce multiple pybind modules.
+Provider `_core` must stay provider-only; extension pybind registrars live in
+package-owned `_native_core` modules.
 
-Extensions must not use private `_core` names as a stable Python API. A future
-native adapter may be documented only after provider-owned symbols and extension
-symbols are separated and tested.
+Extensions must not use private provider `_core` names as a stable Python API.
+Extension native adapters import their package-owned native modules and consume
+the provider-native SDK for compatibility checks.
 
 Provider-only build rule:
 
-- when `EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF` and
-  `EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF`, provider `_core` must not export
-  equilibrium or regression native entrypoints, probes, or fit bindings.
+- provider `_core` must not export equilibrium or regression native entrypoints,
+  probes, or fit bindings in any profile.
+- when `EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF` and
+  `EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF`, no extension-owned native module
+  is built.
 
 The provider-native SDK discovery surface is `provider_native_sdk_v1`, exposed
 through `epcsaft.provider_native_sdk()` and mirrored by the native
@@ -95,7 +97,7 @@ Before repository extraction:
 
 Current local proof commands:
 
-- provider dependency lane: ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` or ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF``;
+- provider dependency lane: ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` or ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF --config-setting=cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF --config-setting=cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF``;
 - equilibrium dependency lane: ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF`` with a documented Ipopt root or config package;
 - regression dependency lane: ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF``;
 - integration lane: the normal native source build with Ceres, CppAD, and Ipopt enabled.

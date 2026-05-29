@@ -15,11 +15,13 @@ pressure, density, fugacity, and derivative payloads.
 
 The pybind11 boundary starts in ``src/epcsaft/native/bindings/module.cpp``. It
 exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, and contribution
-result structs through the private ``epcsaft._core`` module. Equilibrium
-bindings are registered by the domain-owned
-``packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp`` unit
-so the generic binding file does not include route, block, solver, or result
-internals.
+result structs through the private provider ``epcsaft._core`` module.
+Equilibrium bindings are registered into
+``epcsaft_equilibrium._native_core`` by
+``packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp``.
+Regression Ceres bindings are registered into
+``epcsaft_regression._native_core`` by
+``packages/epcsaft-regression/native/regression/module.cpp``.
 
 The native implementation lives under domain folders in ``src/epcsaft/native``. High-traffic files are:
 
@@ -46,11 +48,11 @@ The normal local dev build is the fast profile: Ceres ON, CppAD ON, and Ipopt
 ON when ``EPCSAFT_IPOPT_ROOT``, ``EPCSAFT_PEP517_IPOPT_ROOT``,
 ``--ipopt-dir``, or the Windows local SDK default
 ``%USERPROFILE%\Documents\deps\ipopt-msvc`` provides a native Ipopt install.
-In this transition checkout, Ceres is enabled by default for native regression
-builds, CppAD is required for derivative-capable provider builds, and
-Ipopt-enabled builds own the production native equilibrium routes. ADR 0005
-assigns final Ceres ownership to ``epcsaft-regression`` and final Ipopt
-ownership to ``epcsaft-equilibrium``. Use
+In this transition checkout, Ceres is enabled by default for the regression
+extension native module, CppAD is required for derivative-capable provider
+builds, and Ipopt-enabled builds own the equilibrium extension native routes.
+ADR 0005 assigns final Ceres ownership to ``epcsaft-regression`` and final
+Ipopt ownership to ``epcsaft-equilibrium``. Use
 ``uv run python scripts/dev/build_epcsaft.py --disable-ipopt`` only when the
 debug task intentionally excludes native Ipopt coverage. Use Ceres-disabled
 builds only for package-boundary proof lanes that intentionally exclude native

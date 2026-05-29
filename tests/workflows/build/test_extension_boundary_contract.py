@@ -16,14 +16,14 @@ def test_native_boundary_contract_names_current_transition_state() -> None:
     normalized = " ".join(text.split())
     cmake = _read(REPO_ROOT / "CMakeLists.txt")
 
-    assert "one native `_core` module" in text
-    assert "logical native object targets" in normalized
+    assert "provider `_core` plus extension-owned native modules" in text
+    assert "package-owned pybind modules" in normalized
     assert "epcsaft_provider_native" in cmake
     assert "epcsaft_equilibrium_native" in cmake
     assert "epcsaft_regression_native" in cmake
     assert "EPCSAFT_ENABLE_IPOPT" in cmake
-    assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE" in cmake
-    assert "EPCSAFT_ENABLE_REGRESSION_NATIVE" in cmake
+    assert "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE" in cmake
+    assert "EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE" in cmake
 
 
 def test_native_boundary_contract_defines_logical_target_split() -> None:
@@ -56,9 +56,12 @@ def test_solver_libraries_are_linked_to_extension_owned_native_targets() -> None
     assert "target_link_libraries(epcsaft_provider_native PUBLIC Ceres::ceres)" not in cmake
     assert 'target_link_libraries(epcsaft_provider_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")' not in cmake
     assert "EPCSAFT_ENABLE_CERES=OFF is not supported" not in cmake
-    assert "#ifdef EPCSAFT_HAS_EQUILIBRIUM_NATIVE" in _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
-    assert "#ifdef EPCSAFT_HAS_REGRESSION_NATIVE" in _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
-    assert '#ifdef EPCSAFT_HAS_CERES' in _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
+    provider_module = _read(REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp")
+    regression_module = _read(REPO_ROOT / "packages" / "epcsaft-regression" / "native" / "regression" / "module.cpp")
+    assert "EPCSAFT_HAS_EQUILIBRIUM_NATIVE" not in provider_module
+    assert "EPCSAFT_HAS_REGRESSION_NATIVE" not in provider_module
+    assert "_fit_generic_native_ceres" not in provider_module
+    assert '#ifdef EPCSAFT_HAS_CERES' in regression_module
 
 
 def test_provider_distribution_metadata_has_no_runtime_solver_packages() -> None:
@@ -80,8 +83,8 @@ def test_native_boundary_contract_defines_extraction_proof_matrix() -> None:
         "capability reports are package-owned and evidence-backed",
         "cmake.define.EPCSAFT_ENABLE_CERES=OFF",
         "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF",
-        "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF",
-        "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF",
+        "cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF",
+        "cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF",
     ):
         assert proof in text
 

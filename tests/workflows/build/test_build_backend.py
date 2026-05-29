@@ -231,8 +231,8 @@ def test_pep517_build_backend_allows_provider_build_without_ceres() -> None:
     assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "OFF"
     assert config["cmake.define.EPCSAFT_ENABLE_CPPAD"] == "ON"
     assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "OFF"
-    assert config["cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE"] == "OFF"
-    assert config["cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE"] == "OFF"
+    assert config["cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE"] == "OFF"
+    assert config["cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE"] == "OFF"
     assert "cmake.define.EPCSAFT_USE_SYSTEM_CERES" not in config
     assert "cmake.define.Ceres_DIR" not in config
 
@@ -249,8 +249,8 @@ def test_pep517_build_backend_disables_regression_native_when_ceres_is_off() -> 
 
     assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "OFF"
     assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "ON"
-    assert config["cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE"] == "OFF"
-    assert "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE" not in config
+    assert config["cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE"] == "OFF"
+    assert "cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE" not in config
 
 
 def test_pep517_build_backend_rejects_regression_native_without_ceres() -> None:
@@ -260,7 +260,7 @@ def test_pep517_build_backend_rejects_regression_native_without_ceres() -> None:
         backend._isolated_build_config(
             {
                 "cmake.define.EPCSAFT_ENABLE_CERES": "OFF",
-                "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE": "ON",
+                "cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE": "ON",
             }
         )
 

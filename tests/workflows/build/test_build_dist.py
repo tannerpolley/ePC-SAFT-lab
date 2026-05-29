@@ -98,8 +98,8 @@ def test_dist_build_uses_provider_only_release_baseline() -> None:
     assert cmd[:2] == ["uv", "build"]
     assert "cmake.define.EPCSAFT_ENABLE_CERES=OFF" in cmd
     assert "cmake.define.EPCSAFT_ENABLE_IPOPT=OFF" in cmd
-    assert "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF" in cmd
-    assert "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF" in cmd
+    assert "cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF" in cmd
+    assert "cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF" in cmd
     assert "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT=OFF" in cmd
     assert "cmake.define.EPCSAFT_IPOPT_ROOT=" in cmd
 

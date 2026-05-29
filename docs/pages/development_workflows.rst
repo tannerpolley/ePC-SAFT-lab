@@ -140,25 +140,25 @@ config.
      - Default Windows parallelism
      - Use when
    * - ``fast``
-     - Ceres ON, CppAD ON, Ipopt ON when available, transition equilibrium/regression native surfaces ON
+     - Ceres ON, CppAD ON, Ipopt ON when available, extension-owned native modules ON
      - ``4``
      - Normal source-checkout setup, C++ iteration, and most validation.
    * - ``full``
-     - Ceres ON, CppAD ON, Ipopt ON when available, transition equilibrium/regression native surfaces ON
+     - Ceres ON, CppAD ON, Ipopt ON when available, extension-owned native modules ON
      - ``4``
      - Alias for the required Ceres + CppAD dependency profile.
    * - ``ipopt``
-     - Ceres ON, CppAD ON, Ipopt ON, transition equilibrium/regression native surfaces ON
+     - Ceres ON, CppAD ON, Ipopt ON, extension-owned native modules ON
      - ``4``
      - Native Ipopt adapter development or validation with the local SDK or another native Ipopt package.
    * - ``provider``
-     - Ceres OFF, CppAD ON, Ipopt OFF, equilibrium/regression native surfaces OFF
+     - Ceres OFF, CppAD ON, Ipopt OFF, extension-owned native modules OFF
      - ``4``
      - Provider-only boundary proof for the future core package.
 
 Use ``--build-only --parallel 10`` only after the CMake tree already exists. ``--build-only`` does not reconfigure profile flags; it builds whatever ``build/dev/CMakeCache.txt`` already says. Use ``--configure-only`` when you need to refresh CMake configuration without compiling. For a new ``build/dev`` tree on Windows, ``scripts/dev/build_epcsaft.py`` now loads the repo-standard MSVC environment and prefers Ninja when ``ninja`` is available on ``PATH`` instead of inheriting Strawberry/MinGW from ``PATH``. Existing CMake trees keep their original generator and compiler family; doctor reports ``build_generator_recommendation`` when ``uv run python scripts/dev/build_epcsaft.py --clean --generator ninja`` is the appropriate one-time migration from an older MinGW tree.
 
-Every native build writes ``build/dev/build_epcsaft.log`` and finishes with an ``epcsaft._core`` import check when compilation runs. Use ``uv run python scripts/dev/build_epcsaft.py --status`` when you need a non-mutating check of the configured generator, named build profile, Ceres/CppAD flags, system-Ceres/Ceres_DIR state, importable ``_core`` artifacts, stale ``.ninja_lock`` state, last Ninja target, and live repo-owned build processes. This is the safest first check when an IDE run or interrupted terminal build appears hung. The provider profile persists ``EPCSAFT_BUILD_PROFILE=provider`` so CMake/Ninja regeneration keeps Ceres, Ipopt, and extension-native objects disabled.
+Every native build writes ``build/dev/build_epcsaft.log`` and finishes with an ``epcsaft._core`` import check when compilation runs. Source-checkout profiles also copy extension-owned ``_native_core`` modules into the package source trees when those modules are enabled. Use ``uv run python scripts/dev/build_epcsaft.py --status`` when you need a non-mutating check of the configured generator, named build profile, Ceres/CppAD flags, system-Ceres/Ceres_DIR state, importable ``_core`` artifacts, stale ``.ninja_lock`` state, last Ninja target, and live repo-owned build processes. This is the safest first check when an IDE run or interrupted terminal build appears hung. The provider profile persists ``EPCSAFT_BUILD_PROFILE=provider`` so CMake/Ninja regeneration keeps Ceres, Ipopt, and extension-native modules disabled.
 
 For IDE run configurations, keep commands explicit instead of relying on one overloaded target:
 
@@ -259,7 +259,7 @@ native/equilibrium route tests. If the right target is unclear, run
 - Performance claims: add or restore an explicit benchmark or analysis workflow first. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.
 
-- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to the provider-only release baseline with Ceres OFF, Ipopt OFF, and transition equilibrium/regression native surfaces OFF, and it uses ``--parallel 1`` for isolated PEP 517 builds; raise parallelism only after confirming Ceres builds are not memory-bound. Use ``--with-local-ipopt`` only for an explicit local Ipopt artifact check.
+- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to the provider-only release baseline with Ceres OFF, Ipopt OFF, and extension-owned native modules OFF, and it uses ``--parallel 1`` for isolated PEP 517 builds; raise parallelism only after confirming Ceres builds are not memory-bound. Use ``--with-local-ipopt`` only for an explicit local Ipopt artifact check.
 
 Keep generated plot assets and generated CSV workflows out of normal validation unless the task explicitly asks for them. There is no named plot validation slice; target the owning script or test file directly when plot output work is in scope.
 

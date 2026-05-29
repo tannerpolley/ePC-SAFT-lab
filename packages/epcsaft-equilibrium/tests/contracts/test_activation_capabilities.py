@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-import epcsaft._core as _core
+from epcsaft_equilibrium._native import extension_native_core
+
+_core = extension_native_core()
 import epcsaft_equilibrium
 from epcsaft_equilibrium.workflows import _EQUILIBRIUM_ROUTE_SPECS
 
