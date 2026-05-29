@@ -12,6 +12,4 @@ docs, and no private downstream workarounds.
 
 ## Current Open Issues
 
-| Issue | Package | Readiness | Release target | Summary |
-| --- | --- | --- | --- | --- |
-| [#160](issues/0160-document-and-prove-folder-import-workflow.md) | `core` | `ready` | `core-0.x` | Document and prove the folder import workflow. |
+No open GitHub issues are currently mirrored for this milestone.

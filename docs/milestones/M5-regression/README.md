@@ -1,6 +1,6 @@
 # M5 - Regression
 
-`epcsaft-regression`, TargetDataset/result contracts, Ceres optimizer,
+epcsaft-regression, TargetDataset/result contracts, Ceres optimizer,
 parameter sensitivities, and pure/binary/electrolyte regression workflows.
 
 ## Project Field Defaults

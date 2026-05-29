@@ -14,5 +14,4 @@ CppAD/implicit sensitivities, and provider-only capability claims.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#158](issues/0158-consolidate-canonical-born-ssm-ds-behavior-in-eos-runtime.md) | `eos` | `CppAD` | `ready` | Consolidate canonical Born SSM+DS behavior in EOS runtime. |
 | [#161](issues/0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md) | `eos` | `analytic` | `needs design` | Design explicit PC-SAFT association-site closures for EOS evaluation. |

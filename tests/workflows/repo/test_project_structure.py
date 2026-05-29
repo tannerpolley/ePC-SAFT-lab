@@ -187,8 +187,13 @@ MILESTONE_FRONT_MATTER_FIELDS = {
     "release_target",
     "last_synced",
 }
+MILESTONE_TEMPLATE_FILES = {
+    "_templates/plan.md",
+    "_templates/issue-mirror.md",
+}
 MILESTONE_PLAN_FILES = {
     "PROJECT_CONTEXT.md",
+    "M0-governance/plans/milestone-tracker-hardening.md",
     "M1-packages/plans/monorepo-package-migration.md",
     "M1-packages/plans/package-extension-transfer-superseded-plan.md",
     "M1-packages/plans/test-ownership-relocation.md",
@@ -1384,11 +1389,19 @@ def test_milestone_plan_layout_matches_local_contract() -> None:
     assert "GitHub Issues and the `ePC-SAFT Roadmap` Project remain authoritative" in (
         milestone_root / "README.md"
     ).read_text(encoding="utf-8")
+    assert not (REPO_ROOT / "docs" / "roadmaps").exists()
     assert not (REPO_ROOT / "docs" / "plans").exists()
     assert (milestone_root / "PROJECT_CONTEXT.md").is_file()
 
     actual_folders = {path.name for path in milestone_root.iterdir() if path.is_dir()}
-    assert actual_folders == set(MILESTONE_MIRROR_FOLDERS)
+    assert actual_folders == set(MILESTONE_MIRROR_FOLDERS) | {"_templates"}
+
+    missing_templates = sorted(
+        path for path in MILESTONE_TEMPLATE_FILES if not (milestone_root / path).is_file()
+    )
+    assert missing_templates == []
+    issue_template_fields = _markdown_front_matter(milestone_root / "_templates" / "issue-mirror.md")
+    assert set(issue_template_fields) == MILESTONE_FRONT_MATTER_FIELDS
 
     missing_plans = sorted(path for path in MILESTONE_PLAN_FILES if not (milestone_root / path).is_file())
     assert missing_plans == []
@@ -1405,6 +1418,8 @@ def test_milestone_plan_layout_matches_local_contract() -> None:
 
         issues_dir = milestone_dir / "issues"
         if not issues_dir.exists():
+            continue
+        if not any(issues_dir.glob("*.md")):
             continue
         for path in sorted(issues_dir.glob("*.md")):
             fields = _markdown_front_matter(path)
