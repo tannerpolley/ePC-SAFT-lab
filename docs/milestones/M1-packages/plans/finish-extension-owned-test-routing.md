@@ -2,7 +2,7 @@
 
 Milestone: `M1 - Packages`
 Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/166`
-Status: `local proof passed, PR pending`
+Status: `PR opened`
 Last synced: `2026-05-29`
 
 ## Summary
@@ -49,7 +49,7 @@ finds drift.
 - [x] Root `tests/` ownership remains provider, repo/workflow, build/package,
   docs/registry, integration, and boundary-governance only.
 - [x] GitHub issue #166 and the local issue mirror contain proof receipts.
-- [ ] Pull request body contains `Closes #166`; parent #154 remains open.
+- [x] Pull request body contains `Closes #166`; parent #154 remains open.
 
 ## Proof Oracle
 
@@ -120,3 +120,6 @@ Proof passed on branch `codex/finish-extension-owned-test-routing` on
   build passed.
 - Implementation decision: no additional test relocation or structural guard
   was needed; existing repository tests already enforce the ownership boundary.
+- Pull request proof: [#173](https://github.com/ePC-SAFT/ePC-SAFT/pull/173)
+  contains `Closes #166`. Parent issue #154 remains open until the final
+  package-move tracking issue is complete.
