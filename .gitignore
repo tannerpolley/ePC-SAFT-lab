@@ -34,8 +34,8 @@ docs/latex/out/
 docs/latex/references.bib
 docs/ChatGPT_Gemini_Responses/
 docs/goals/*
-!docs/goals/README.md
 docs/goals/**/.goalbuddy-board/
+.goalbuddy-board/
 graphify-out/
 **/graphify-out/
 data/MIAC/*/plot_fits/

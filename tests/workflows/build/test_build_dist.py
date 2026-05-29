@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from scripts.dev import build_dist
+from scripts.dev import check_release_installs
 
 
 def _wheel(path, names: list[str]) -> None:
@@ -75,3 +76,26 @@ def test_dist_build_uses_provider_only_release_baseline() -> None:
     assert "cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF" in cmd
     assert "cmake.define.EPCSAFT_USE_SYSTEM_IPOPT=OFF" in cmd
     assert "cmake.define.EPCSAFT_IPOPT_ROOT=" in cmd
+
+
+def test_release_install_proof_requires_all_requested_artifacts(tmp_path) -> None:
+    provider = tmp_path / "epcsaft-0.2.0-cp313-win_amd64.whl"
+    provider.write_text("", encoding="utf-8")
+
+    check_release_installs._assert_artifacts(tmp_path, ("epcsaft",))
+
+    with pytest.raises(RuntimeError, match="epcsaft-equilibrium"):
+        check_release_installs._assert_artifacts(tmp_path, ("epcsaft", "epcsaft-equilibrium"))
+
+
+def test_release_install_proof_imports_extension_native_modules() -> None:
+    code = check_release_installs._smoke_code(
+        Path("C:/target"),
+        ("epcsaft", "epcsaft-equilibrium", "epcsaft-regression"),
+    )
+
+    assert "import epcsaft" in code
+    assert "import epcsaft._core" in code
+    assert "import epcsaft_equilibrium._native_core" in code
+    assert "import epcsaft_regression._native_core" in code
+    assert "provider_native_sdk_v1" in code

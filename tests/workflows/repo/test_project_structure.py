@@ -211,6 +211,7 @@ MILESTONE_PLAN_FILES = {
     "M1-packages/plans/move-provider-distribution-into-packages-epcsaft.md",
     "M1-packages/plans/post-move-cleanup-install-proof.md",
     "M1-packages/plans/package-transfer-transition-audit.md",
+    "M1-packages/plans/package-onboarding-release-ergonomics.md",
     "M3-eos/plans/explicit-association-closure-for-pcsaft.md",
     "M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md",
     "M4-equilibrium/plans/gfpe-package-cleanup-plan.md",

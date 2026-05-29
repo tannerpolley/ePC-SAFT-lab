@@ -3,28 +3,85 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE = Path("Documents") / "deps" / "ipopt-msvc"
+PREFERRED_WINDOWS_IPOPT_LOCALAPPDATA_RELATIVE = Path("ePC-SAFT") / "deps" / "ipopt-msvc"
+PREFERRED_WINDOWS_IPOPT_USER_CACHE_RELATIVE = Path(".epcsaft") / "deps" / "ipopt-msvc"
 CERES_VERSION = "2.2.0"
 DEFAULT_SYSTEM_CERES_RELATIVE = Path("build") / "system-ceres" / CERES_VERSION
 
 
+@dataclass(frozen=True)
+class IpoptSdkResolution:
+    root: Path | None
+    source: str
+    candidates: tuple[tuple[str, Path], ...]
+
+
 def default_windows_ipopt_sdk_root(home: Path | None = None) -> Path:
-    """Return the machine-local default Windows Ipopt SDK root."""
+    """Return the legacy machine-local Windows Ipopt SDK root."""
     return (Path.home() if home is None else home).expanduser() / DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE
+
+
+def windows_ipopt_sdk_candidates(
+    *,
+    home: Path | None = None,
+    local_app_data: Path | None = None,
+    platform_name: str | None = None,
+) -> tuple[tuple[str, Path], ...]:
+    """Return default Windows Ipopt SDK probe paths in preference order."""
+    if (os.name if platform_name is None else platform_name) != "nt":
+        return ()
+    base_home = (Path.home() if home is None else home).expanduser()
+    raw_local_app_data = local_app_data
+    if raw_local_app_data is None and os.environ.get("LOCALAPPDATA"):
+        raw_local_app_data = Path(os.environ["LOCALAPPDATA"])
+    candidates: list[tuple[str, Path]] = []
+    if raw_local_app_data is not None:
+        candidates.append(
+            (
+                "default-localappdata",
+                raw_local_app_data.expanduser() / PREFERRED_WINDOWS_IPOPT_LOCALAPPDATA_RELATIVE,
+            )
+        )
+    candidates.append(("default-user-cache", base_home / PREFERRED_WINDOWS_IPOPT_USER_CACHE_RELATIVE))
+    candidates.append(("legacy-documents", base_home / DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE))
+    return tuple(candidates)
 
 
 def resolve_default_windows_ipopt_sdk_root(
     *,
     home: Path | None = None,
+    local_app_data: Path | None = None,
     platform_name: str | None = None,
 ) -> Path | None:
     """Return the default Windows Ipopt SDK root when it exists."""
-    if (os.name if platform_name is None else platform_name) != "nt":
-        return None
-    root = default_windows_ipopt_sdk_root(home)
-    return root.resolve() if root.is_dir() else None
+    resolution = resolve_default_windows_ipopt_sdk_root_with_source(
+        home=home,
+        local_app_data=local_app_data,
+        platform_name=platform_name,
+    )
+    return resolution.root
+
+
+def resolve_default_windows_ipopt_sdk_root_with_source(
+    *,
+    home: Path | None = None,
+    local_app_data: Path | None = None,
+    platform_name: str | None = None,
+) -> IpoptSdkResolution:
+    """Return the first existing default Windows Ipopt SDK root with provenance."""
+    candidates = windows_ipopt_sdk_candidates(
+        home=home,
+        local_app_data=local_app_data,
+        platform_name=platform_name,
+    )
+    for source, root in candidates:
+        if root.is_dir():
+            return IpoptSdkResolution(root.resolve(), source, candidates)
+    return IpoptSdkResolution(None, "missing", candidates)
 
 
 def default_system_ceres_root(source_root: Path | str) -> Path:

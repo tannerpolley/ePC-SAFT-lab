@@ -12,5 +12,5 @@ proof, extension-native boundaries, and package CI/docs/release structure.
 
 ## Current Open Issues
 
-- None after the package-transfer transition audit PR merges and closes
-  [#177](https://github.com/ePC-SAFT/ePC-SAFT/issues/177).
+- [#179](https://github.com/ePC-SAFT/ePC-SAFT/issues/179) - harden package
+  onboarding and release ergonomics after the package-transfer transition.

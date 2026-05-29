@@ -272,9 +272,48 @@ install(TARGETS epcsaft_equilibrium_native_core
     RUNTIME DESTINATION epcsaft_equilibrium
 )
 if(WIN32 AND EPCSAFT_IPOPT_ROOT)
-    file(GLOB EPCSAFT_IPOPT_RUNTIME_DLLS "${EPCSAFT_IPOPT_ROOT}/bin/*.dll")
-    if(NOT EPCSAFT_IPOPT_RUNTIME_DLLS)
+    file(TO_CMAKE_PATH "${EPCSAFT_IPOPT_ROOT}/bin" EPCSAFT_IPOPT_BIN_DIR)
+    if(NOT IS_DIRECTORY "${EPCSAFT_IPOPT_BIN_DIR}")
         message(FATAL_ERROR "EPCSAFT_IPOPT_ROOT did not provide runtime DLLs under bin/: ${EPCSAFT_IPOPT_ROOT}")
     endif()
-    install(FILES ${EPCSAFT_IPOPT_RUNTIME_DLLS} DESTINATION epcsaft_equilibrium)
+    install(CODE "
+        set(_epcsaft_module \"$<TARGET_FILE:epcsaft_equilibrium_native_core>\")
+        set(_epcsaft_ipopt_bin \"${EPCSAFT_IPOPT_BIN_DIR}\")
+        if(POLICY CMP0207)
+            cmake_policy(SET CMP0207 NEW)
+        endif()
+        file(GET_RUNTIME_DEPENDENCIES
+            MODULES \"\${_epcsaft_module}\"
+            DIRECTORIES \"\${_epcsaft_ipopt_bin}\"
+            RESOLVED_DEPENDENCIES_VAR _epcsaft_resolved_runtime_deps
+            UNRESOLVED_DEPENDENCIES_VAR _epcsaft_unresolved_runtime_deps
+            POST_EXCLUDE_REGEXES
+                [[.*[\\\\/]System32[\\\\/].*]]
+                [[.*[\\\\/]Windows[\\\\/].*]]
+                [[.*[\\\\/]python[0-9]+[.]dll$]]
+                [[.*[\\\\/]Python[0-9]+[.]dll$]]
+        )
+        if(_epcsaft_unresolved_runtime_deps)
+            list(FILTER _epcsaft_unresolved_runtime_deps EXCLUDE REGEX [[^[Pp]ython[0-9]+[.]dll$]])
+        endif()
+        if(_epcsaft_unresolved_runtime_deps)
+            message(FATAL_ERROR \"Unresolved epcsaft-equilibrium runtime dependencies: \${_epcsaft_unresolved_runtime_deps}\")
+        endif()
+        set(_epcsaft_runtime_payload \"\")
+        foreach(_dependency IN LISTS _epcsaft_resolved_runtime_deps)
+            get_filename_component(_dependency_dir \"\${_dependency}\" DIRECTORY)
+            file(TO_CMAKE_PATH \"\${_dependency_dir}\" _dependency_dir_cmake)
+            if(_dependency_dir_cmake STREQUAL _epcsaft_ipopt_bin)
+                list(APPEND _epcsaft_runtime_payload \"\${_dependency}\")
+            endif()
+        endforeach()
+        if(_epcsaft_runtime_payload)
+            list(REMOVE_DUPLICATES _epcsaft_runtime_payload)
+            file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/epcsaft_equilibrium\" TYPE FILE FILES \${_epcsaft_runtime_payload})
+            list(LENGTH _epcsaft_runtime_payload _epcsaft_runtime_payload_count)
+            message(STATUS \"Installed audited Ipopt runtime dependency payload: \${_epcsaft_runtime_payload_count} DLLs\")
+        else()
+            message(STATUS \"No Ipopt runtime DLL payload was required from \${_epcsaft_ipopt_bin}\")
+        endif()
+    ")
 endif()

@@ -65,6 +65,16 @@ source/CMake metadata. The installed-provider mode consumes the same SDK from
 an installed provider wheel. The equilibrium extension proof requires a real
 Ipopt SDK; disabling Ipopt is not production equilibrium package evidence.
 
+Release/install proof from local artifacts is executable through:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/check_release_installs.py --dist-dir dist
+
+The helper installs from the local ``dist/`` directory with
+``--no-index --find-links`` and proves the supported provider and extension
+combinations. It is not a PyPI publish step.
+
 Regression and equilibrium are transition capabilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -112,6 +122,10 @@ Keep the CMake dependency contract explicit and loud:
 - ``EPCSAFT_ENABLE_IPOPT`` stays ON for Ipopt-capable source validation.
 - Vendored Ipopt builds are not supported by the package CMake project.
 - System Ipopt is supplied through ``EPCSAFT_IPOPT_ROOT`` or ``Ipopt_DIR``.
+  On Windows, default discovery probes
+  ``%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc``,
+  ``%USERPROFILE%\.epcsaft\deps\ipopt-msvc``, and the legacy
+  ``%USERPROFILE%\Documents\deps\ipopt-msvc`` path, in that order.
 - Reusable local Ceres packages are preferred over repeated clean FetchContent
   Ceres builds when a workflow repeatedly rebuilds native code.
 - CppAD may use FetchContent or an installed include tree, but the package
@@ -165,7 +179,20 @@ Normal PR CI should have separate lane names for separate claims:
    Package-local wheel/sdist validation for ``epcsaft-equilibrium`` and
    ``epcsaft-regression``. It builds extension wheels from their package roots
    in monorepo-provider and installed-provider SDK modes and smoke-imports
-   their package-owned ``_native_core`` modules.
+   their package-owned ``_native_core`` modules. Regression package builds
+   should consume the repo-local reusable Ceres package through
+   ``EPCSAFT_PEP517_CERES_DIR`` or helper auto-detection when it exists, rather
+   than recompiling Ceres source for every extension proof.
+
+``package build lanes``
+   GitHub Actions lanes named provider package build, regression package build,
+   equilibrium package build, and installed-provider extension builds. Provider
+   and regression lanes can run on ordinary PR/push events. Equilibrium and
+   installed-provider extension lanes require a real Ipopt SDK path or artifact
+   and must not substitute a no-Ipopt success path for production equilibrium
+   package proof. Equilibrium wheels must install the audited runtime
+   dependency closure for ``epcsaft_equilibrium._native_core`` and Ipopt, not a
+   broad ``bin/*.dll`` payload from the SDK.
 
 No-Conda Ipopt policy
 ---------------------

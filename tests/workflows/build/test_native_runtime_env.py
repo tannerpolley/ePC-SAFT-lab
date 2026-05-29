@@ -8,6 +8,7 @@ from scripts.dev import build_epcsaft
 from scripts.dev import doctor
 from scripts.dev.native_runtime_env import apply_native_runtime_env
 from scripts.dev.native_runtime_env import resolve_default_windows_ipopt_sdk_root
+from scripts.dev.native_runtime_env import resolve_default_windows_ipopt_sdk_root_with_source
 
 
 def test_native_runtime_env_injects_ipopt_bin_from_cmake_cache(tmp_path: Path) -> None:
@@ -65,6 +66,24 @@ def test_native_runtime_env_resolves_local_windows_ipopt_sdk_default(tmp_path: P
 
     assert resolve_default_windows_ipopt_sdk_root(home=tmp_path, platform_name="nt") == ipopt_root.resolve()
     assert resolve_default_windows_ipopt_sdk_root(home=tmp_path, platform_name="posix") is None
+
+
+def test_native_runtime_env_prefers_explicit_ipopt_cache_roots(tmp_path: Path) -> None:
+    local_app_data = tmp_path / "localappdata"
+    preferred = local_app_data / "ePC-SAFT" / "deps" / "ipopt-msvc"
+    legacy = tmp_path / "Documents" / "deps" / "ipopt-msvc"
+    preferred.mkdir(parents=True)
+    legacy.mkdir(parents=True)
+
+    resolution = resolve_default_windows_ipopt_sdk_root_with_source(
+        home=tmp_path,
+        local_app_data=local_app_data,
+        platform_name="nt",
+    )
+
+    assert resolution.root == preferred.resolve()
+    assert resolution.source == "default-localappdata"
+    assert ("legacy-documents", legacy) in resolution.candidates
 
 
 def test_doctor_resolves_module_paths_by_importing(monkeypatch, tmp_path: Path) -> None:

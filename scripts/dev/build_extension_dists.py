@@ -10,12 +10,41 @@ import zipfile
 from pathlib import Path
 
 try:
-    from scripts.dev.package_paths import EQUILIBRIUM_PACKAGE_DIR, PROVIDER_PACKAGE_DIR, REGRESSION_PACKAGE_DIR, REPO_ROOT
+    from scripts.dev.package_paths import (
+        EQUILIBRIUM_PACKAGE_DIR,
+        PROVIDER_BUILD_BACKEND_DIR,
+        PROVIDER_PACKAGE_DIR,
+        REGRESSION_PACKAGE_DIR,
+        REPO_ROOT,
+    )
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from package_paths import EQUILIBRIUM_PACKAGE_DIR, PROVIDER_PACKAGE_DIR, REGRESSION_PACKAGE_DIR, REPO_ROOT
+    from package_paths import (
+        EQUILIBRIUM_PACKAGE_DIR,
+        PROVIDER_BUILD_BACKEND_DIR,
+        PROVIDER_PACKAGE_DIR,
+        REGRESSION_PACKAGE_DIR,
+        REPO_ROOT,
+    )
+
+if str(PROVIDER_BUILD_BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(PROVIDER_BUILD_BACKEND_DIR))
+
+from native_dependency_policy import (  # noqa: E402
+    ipopt_root_prefers_msvc,
+    resolve_default_system_ceres_config_dir,
+    validate_ceres_dir,
+)
 
 DIST_ROOT = REPO_ROOT / "dist"
-BUILD_ROOT = REPO_ROOT / "build" / "extension-dist"
+BUILD_ROOT = REPO_ROOT / "build" / "xd"
+BUILD_MODE_DIRS = {
+    "monorepo": "m",
+    "installed-provider": "i",
+}
+BUILD_PACKAGE_DIRS = {
+    "epcsaft-equilibrium": "eq",
+    "epcsaft-regression": "rg",
+}
 EXTENSION_PACKAGES = {
     "epcsaft-equilibrium": {
         "package_dir": EQUILIBRIUM_PACKAGE_DIR,
@@ -36,7 +65,7 @@ def _run(cmd: list[str], *, env: dict[str, str] | None = None) -> None:
 
 
 def _env(parallel: str | None) -> dict[str, str]:
-    temp_root = BUILD_ROOT / "temp"
+    temp_root = BUILD_ROOT / "tmp"
     temp_root.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     env["TMP"] = str(temp_root.resolve())
@@ -46,6 +75,83 @@ def _env(parallel: str | None) -> dict[str, str]:
     if parallel:
         env["CMAKE_BUILD_PARALLEL_LEVEL"] = str(parallel)
     return env
+
+
+def _configure_reusable_ceres(env: dict[str, str], explicit_ceres_dir: Path | None = None) -> None:
+    if explicit_ceres_dir is not None:
+        ceres_dir = validate_ceres_dir(str(explicit_ceres_dir), env_name="--ceres-dir")
+        env["EPCSAFT_PEP517_CERES_DIR"] = str(ceres_dir)
+        print(f"ceres_reuse: explicit --ceres-dir {ceres_dir}", flush=True)
+        return
+    raw_ceres_dir = env.get("EPCSAFT_PEP517_CERES_DIR") or env.get("Ceres_DIR")
+    if raw_ceres_dir:
+        ceres_dir = validate_ceres_dir(raw_ceres_dir)
+        env["EPCSAFT_PEP517_CERES_DIR"] = str(ceres_dir)
+        print(f"ceres_reuse: explicit env {ceres_dir}", flush=True)
+        return
+    default_ceres_dir = resolve_default_system_ceres_config_dir(REPO_ROOT)
+    if default_ceres_dir is not None:
+        env["EPCSAFT_PEP517_CERES_DIR"] = str(default_ceres_dir)
+        print(f"ceres_reuse: repo-local cache {default_ceres_dir}", flush=True)
+        return
+    print("ceres_reuse: repo-local cache missing; regression package build will use Ceres FetchContent", flush=True)
+
+
+def _find_vsdevcmd() -> Path:
+    explicit = os.environ.get("EPCSAFT_VSDEVCMD")
+    if explicit:
+        path = Path(explicit).expanduser().resolve()
+        if path.is_file():
+            return path
+    vswhere = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / (
+        "Microsoft Visual Studio/Installer/vswhere.exe"
+    )
+    if vswhere.is_file():
+        output = subprocess.check_output(
+            [
+                str(vswhere),
+                "-latest",
+                "-products",
+                "*",
+                "-requires",
+                "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                "-property",
+                "installationPath",
+            ],
+            text=True,
+        ).strip()
+        if output:
+            candidate = Path(output) / "Common7" / "Tools" / "VsDevCmd.bat"
+            if candidate.is_file():
+                return candidate
+    default_path = Path(r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat")
+    if default_path.is_file():
+        return default_path
+    raise FileNotFoundError("MSVC toolchain requested, but VsDevCmd.bat was not found.")
+
+
+def _load_msvc_env(env: dict[str, str]) -> dict[str, str]:
+    vsdevcmd = _find_vsdevcmd()
+    command = f'call "{vsdevcmd}" -arch=x64 -host_arch=x64 >nul && set'
+    output = subprocess.check_output(command, env=env, text=True, shell=True)
+    updated = env.copy()
+    for line in output.splitlines():
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        updated[key] = value
+    return updated
+
+
+def _configure_extension_toolchain(env: dict[str, str], packages: list[str], ipopt_root: Path) -> dict[str, str]:
+    if os.name != "nt" or "epcsaft-equilibrium" not in packages:
+        return env
+    if not ipopt_root_prefers_msvc(ipopt_root):
+        return env
+    updated = _load_msvc_env(env)
+    updated.setdefault("CMAKE_GENERATOR", "Ninja")
+    print("toolchain: loaded MSVC environment for MSVC Ipopt SDK", flush=True)
+    return updated
 
 
 def _newest_wheel(prefix: str) -> Path:
@@ -77,7 +183,7 @@ def _clean_extension_artifacts() -> None:
 
 
 def _install_provider_for_sdk(provider_wheel: Path, env: dict[str, str]) -> Path:
-    target = BUILD_ROOT / "installed-provider-sdk"
+    target = BUILD_ROOT / "sdk"
     shutil.rmtree(target, ignore_errors=True)
     target.mkdir(parents=True, exist_ok=True)
     _run(["uv", "pip", "install", "--target", str(target), str(provider_wheel)], env=env)
@@ -114,7 +220,7 @@ def _build_package(
     metadata = EXTENSION_PACKAGES[package_name]
     package_env = env.copy()
     package_env["EPCSAFT_PROVIDER_SDK_MODE"] = mode
-    build_dir = BUILD_ROOT / mode / package_name
+    build_dir = BUILD_ROOT / BUILD_MODE_DIRS[mode] / BUILD_PACKAGE_DIRS[package_name]
     shutil.rmtree(build_dir, ignore_errors=True)
     package_env["EPCSAFT_PEP517_BUILD_DIR"] = str(build_dir.resolve())
     if provider_sdk_config is not None:
@@ -151,7 +257,7 @@ def _smoke_extension_wheels(
     package_names: list[str],
     env: dict[str, str],
 ) -> None:
-    target = BUILD_ROOT / "wheel-smoke-target"
+    target = BUILD_ROOT / "smoke"
     shutil.rmtree(target, ignore_errors=True)
     target.mkdir(parents=True, exist_ok=True)
     _run(["uv", "pip", "install", "--target", str(target), str(provider_wheel), *map(str, extension_wheels)], env=env)
@@ -183,6 +289,11 @@ def main() -> int:
     parser.add_argument("--parallel", default=os.environ.get("EPCSAFT_BUILD_DIST_PARALLEL", "1"))
     parser.add_argument("--ipopt-root", default=os.environ.get("EPCSAFT_IPOPT_ROOT", ""))
     parser.add_argument(
+        "--ceres-dir",
+        type=Path,
+        help="Directory containing CeresConfig.cmake for reusable regression extension package builds.",
+    )
+    parser.add_argument(
         "--package",
         choices=sorted(EXTENSION_PACKAGES),
         action="append",
@@ -193,7 +304,9 @@ def main() -> int:
 
     packages = args.package or sorted(EXTENSION_PACKAGES)
     env = _env(args.parallel)
+    _configure_reusable_ceres(env, args.ceres_dir)
     ipopt_root = Path(args.ipopt_root).expanduser()
+    env = _configure_extension_toolchain(env, packages, ipopt_root)
     ipopt_bin = ipopt_root / "bin"
     if ipopt_bin.is_dir():
         env["PATH"] = os.pathsep.join([str(ipopt_bin.resolve()), env.get("PATH", "")])

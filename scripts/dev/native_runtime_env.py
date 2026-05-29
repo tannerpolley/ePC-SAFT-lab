@@ -20,6 +20,10 @@ from native_dependency_policy import ipopt_root_prefers_msvc as _ipopt_root_pref
 from native_dependency_policy import (
     resolve_default_windows_ipopt_sdk_root as _resolve_default_windows_ipopt_sdk_root,
 )
+from native_dependency_policy import (
+    resolve_default_windows_ipopt_sdk_root_with_source as _resolve_default_windows_ipopt_sdk_root_with_source,
+)
+from native_dependency_policy import windows_ipopt_sdk_candidates as _windows_ipopt_sdk_candidates
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEV_BUILD_CACHE = REPO_ROOT / "build" / "dev" / "CMakeCache.txt"
@@ -27,6 +31,8 @@ DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE = _DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE
 default_windows_ipopt_sdk_root = _default_windows_ipopt_sdk_root
 ipopt_root_prefers_msvc = _ipopt_root_prefers_msvc
 resolve_default_windows_ipopt_sdk_root = _resolve_default_windows_ipopt_sdk_root
+resolve_default_windows_ipopt_sdk_root_with_source = _resolve_default_windows_ipopt_sdk_root_with_source
+windows_ipopt_sdk_candidates = _windows_ipopt_sdk_candidates
 
 
 @dataclass(frozen=True)
