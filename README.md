@@ -3,8 +3,10 @@
 `epcsaft` is a Windows-first Python package for PC-SAFT and electrolyte PC-SAFT thermodynamic calculations. The public API is Python; the equation-of-state runtime is implemented in native C++ through `pybind11`.
 
 This release is still a monorepo transition build. Ipopt-backed equilibrium is
-owned by `epcsaft-equilibrium`, while regression remains a temporary `epcsaft`
-root export until it moves to `epcsaft-regression`.
+owned by `epcsaft-equilibrium`, and Ceres-backed regression is owned by
+`epcsaft-regression`. Those extension packages are workspace-transition
+packages in this tranche; install them from this checkout, not against a
+provider-only `epcsaft` wheel.
 
 Current package version: `0.2.0`
 
@@ -13,13 +15,12 @@ Current package version: `0.2.0`
 - Build PC-SAFT/ePC-SAFT mixtures from user-owned parameter data.
 - Evaluate pressure, density, residual properties, fugacity coefficients, activity coefficients, and derivatives.
 - Use the constructor-configured neutral equilibrium API from `epcsaft_equilibrium`, including neutral nonassociating LLE, when the package is built with optional native Ipopt.
-- Run supported pure-neutral parameter-regression workflows.
+- Run supported pure-neutral parameter-regression workflows from `epcsaft_regression`.
 - Inspect runtime capabilities with `capabilities()` before selecting optional native solver paths.
 
 The main provider objects are `ParameterSet`, `ModelOptions`, `Mixture`,
 `State`, and `create_input_template(...)`. Import `Equilibrium` from
-`epcsaft_equilibrium`; `Regression` remains a planned extension-owned transition
-surface.
+`epcsaft_equilibrium` and `Regression` from `epcsaft_regression`.
 
 ## Install
 
@@ -87,21 +88,24 @@ python -m pip install -e .
 
 Editable installs use the same native build backend as wheel installs. If you change C++ sources, pybind bindings, CMake files, or build metadata, rerun the editable install command so the native extension is rebuilt.
 
-Equilibrium workflows now live in the sibling `epcsaft-equilibrium` workspace
-package. In a source checkout, use the uv workspace environment or install the
-built `epcsaft-equilibrium` wheel alongside `epcsaft` before importing
-`epcsaft_equilibrium`.
+Equilibrium and regression workflows live in the monorepo workspace packages
+under `packages/`. In a source checkout, use the uv workspace environment before
+importing `epcsaft_equilibrium` or `epcsaft_regression`. Do not install these
+transition packages against provider-only `epcsaft` wheels; they require the
+matching workspace provider build with the relevant native symbols enabled.
 
 ## Verify The Install
 
 ```python
 import epcsaft
 import epcsaft_equilibrium
+import epcsaft_regression
 
 print(epcsaft.__version__)
 print(epcsaft.runtime_build_info())
 print(epcsaft.capabilities())
 print(epcsaft_equilibrium.capabilities())
+print(epcsaft_regression.capabilities())
 ```
 
 ## Quick Example

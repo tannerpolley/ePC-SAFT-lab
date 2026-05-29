@@ -11,7 +11,6 @@ from typing import Any
 
 import numpy as np
 
-from epcsaft import _core
 from epcsaft._types import InputError, phase_to_int
 from epcsaft._types import vector_to_array
 from epcsaft.state.native_adapter import check_association, create_struct
@@ -32,6 +31,7 @@ from .native_adapter import (
     _evaluate_generic_native_debug,
     _fit_generic_native_ceres,
     _fit_pure_neutral_native_debug,
+    _provider_regression_core,
 )
 
 PURE_NEUTRAL_MODE = "pure_neutral"
@@ -2237,7 +2237,8 @@ def _fit_pure_neutral_native_ceres(
 ) -> dict[str, Any]:
     params = check_association(dict(fixed_payload))
     cppargs = create_struct(params)
-    result = _core._fit_pure_neutral_native_ceres(
+    core = _provider_regression_core()
+    result = core._fit_pure_neutral_native_ceres(
         cppargs,
         np.asarray(density_T, dtype=float),
         np.asarray(density_P, dtype=float),

@@ -6,8 +6,10 @@ PC-SAFT thermodynamic calculations. The public interface is Python, while the
 equation-of-state runtime is implemented in native C++ through ``pybind11``.
 
 This release is still a monorepo transition build. Ipopt-backed equilibrium is
-owned by ``epcsaft-equilibrium``, while regression remains a temporary
-``epcsaft`` root export until it moves to ``epcsaft-regression``.
+owned by ``epcsaft-equilibrium``, and Ceres-backed regression is owned by
+``epcsaft-regression``. Those extension packages are workspace-transition
+packages in this tranche; install them from this checkout, not against a
+provider-only ``epcsaft`` wheel.
 
 Current package version: ``0.2.0``
 
@@ -16,9 +18,9 @@ What the package does
 
 Use ``epcsaft`` to build PC-SAFT/ePC-SAFT mixtures, evaluate thermodynamic
 states, compute fugacity and activity coefficients, fit supported pure-neutral
-parameter sets against tabular data, and pair it with ``epcsaft_equilibrium``
-for constructor-configured neutral equilibrium routes when native Ipopt is
-available.
+parameter sets against tabular data through ``epcsaft_regression``, and pair it
+with ``epcsaft_equilibrium`` for constructor-configured neutral equilibrium
+routes when native Ipopt is available.
 
 The main user objects are:
 
@@ -29,8 +31,8 @@ The main user objects are:
   payloads.
 - ``Equilibrium``: configured workflow object imported from
   ``epcsaft_equilibrium``.
-- ``Regression``: configured workflow object imported from ``epcsaft`` during
-  the remaining regression transition.
+- ``Regression``: configured workflow object imported from
+  ``epcsaft_regression``.
 - ``create_input_template(...)``: creates reset CSV/JSON input scaffolds.
 - ``capabilities()``: reports available runtime and solver paths.
 
@@ -102,10 +104,12 @@ source changes are picked up from the checkout. If you change C++ sources,
 pybind bindings, CMake files, or build metadata, rerun
 ``python -m pip install -e .``.
 
-Equilibrium workflows live in the monorepo ``packages/epcsaft-equilibrium`` workspace
-package. In a source checkout, use the uv workspace environment or install the
-built ``epcsaft-equilibrium`` wheel alongside ``epcsaft`` before importing
-``epcsaft_equilibrium``.
+Equilibrium and regression workflows live in monorepo workspace packages under
+``packages/``. In a source checkout, use the uv workspace environment before
+importing ``epcsaft_equilibrium`` or ``epcsaft_regression``. Do not install
+these transition packages against provider-only ``epcsaft`` wheels; they
+require the matching workspace provider build with the relevant native symbols
+enabled.
 
 Verify the install
 ------------------
@@ -114,11 +118,13 @@ Verify the install
 
    import epcsaft
    import epcsaft_equilibrium
+   import epcsaft_regression
 
    print(epcsaft.__version__)
    print(epcsaft.runtime_build_info())
    print(epcsaft.capabilities())
    print(epcsaft_equilibrium.capabilities())
+   print(epcsaft_regression.capabilities())
 
 Quick example
 -------------
@@ -187,7 +193,7 @@ Most users should create and own their parameter folders:
 After filling in the generated files, construct a ``ParameterSet`` from the
 parameter data and pass thermodynamic conditions to ``State(...)`` or workflow
 defaults to ``Equilibrium(...)`` from ``epcsaft_equilibrium`` and
-``Regression(...)`` from ``epcsaft``.
+``Regression(...)`` from ``epcsaft_regression``.
 
 Equilibrium and speciation
 --------------------------

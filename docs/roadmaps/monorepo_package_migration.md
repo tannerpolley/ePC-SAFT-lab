@@ -10,7 +10,7 @@ The canonical source of truth is one GitHub organization repository:
 ePC-SAFT/ePC-SAFT
 ```
 
-The repository publishes three Python distributions:
+The final monorepo package ecosystem publishes three Python distributions:
 
 ```text
 epcsaft
@@ -56,6 +56,8 @@ ownership are already stable.
   `../epcsaft-equilibrium` or `../epcsaft-regression`.
 - Extension package import names remain `epcsaft_equilibrium` and
   `epcsaft_regression`.
+- Extension packages stay unpublished transition packages until their native
+  modules no longer depend on provider-owned `_core` extension symbols.
 - Native extension behavior may remain transitional during source consolidation,
   but native sources must be read from monorepo package directories.
 - Ipopt belongs to `epcsaft-equilibrium`; Ceres belongs to
@@ -89,6 +91,8 @@ Gates:
 - [x] Root uv workspace includes both extension package members.
 - [x] Extension metadata uses `epcsaft==0.2.*` and
   `epcsaft = { workspace = true }`.
+- [x] Extension metadata declares transition-only publication state and required
+  provider-native build symbols.
 - [x] CMake reads transitional extension native sources from `packages/`.
 - [x] Pytest, Sphinx, scripts, and workflow tests use `packages/` paths.
 - [x] Active path audit finds no sibling checkout dependency outside roadmap

@@ -64,17 +64,18 @@ C:\Users\Tanner\Documents\Workspaces\Engineering\epcsaft-regression
 
 The current checkout is still a transition monorepo, not real extraction:
 
-- equilibrium C++ still lives under `src/epcsaft/native/equilibrium`;
-- regression C++ still lives under `src/epcsaft/native/regression`;
+- equilibrium C++ lives under `packages/epcsaft-equilibrium/native/equilibrium`;
+- regression C++ lives under `packages/epcsaft-regression/native/regression`;
 - `CMakeLists.txt` defines object targets
   `epcsaft_provider_native`, `epcsaft_equilibrium_native`, and
   `epcsaft_regression_native`, but still links them into one provider-owned
   `epcsaft._core` module;
 - `packages/epcsaft-equilibrium` is currently a Python extension-package shell
   around provider-owned native bindings exposed through `epcsaft._core`;
-- `packages/epcsaft-regression` is currently a thin shell and does not own the
-  native regression implementation;
-- root `epcsaft` still exports `Regression`;
+- `packages/epcsaft-regression` owns the Python regression API and stages the
+  native regression implementation through the transitional provider `_core`
+  build;
+- root `epcsaft` no longer exports `Regression`;
 - provider runtime metadata is provider-scoped, while regression transition
   capability data is staged under `packages/epcsaft-regression`;
 - this is not yet true provider/extension extraction.

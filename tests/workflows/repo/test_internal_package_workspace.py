@@ -3,6 +3,8 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 EXTENSION_PACKAGES = {
@@ -12,6 +14,8 @@ EXTENSION_PACKAGES = {
         "required_dependencies": {"numpy>=2.0"},
         "forbidden_dependencies": {"ceres", "epcsaft-regression"},
         "forbidden_reexports": {"Regression"},
+        "required_provider_native": ["equilibrium"],
+        "required_provider_build_option": "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON",
     },
     "epcsaft-regression": {
         "directory": REPO_ROOT / "packages" / "epcsaft-regression",
@@ -19,6 +23,8 @@ EXTENSION_PACKAGES = {
         "required_dependencies": {"numpy>=2.0"},
         "forbidden_dependencies": {"ipopt", "epcsaft-equilibrium"},
         "forbidden_reexports": {"Equilibrium"},
+        "required_provider_native": ["regression"],
+        "required_provider_build_option": "EPCSAFT_ENABLE_REGRESSION_NATIVE=ON",
     },
 }
 
@@ -61,6 +67,11 @@ def test_extension_package_manifests_depend_on_provider_workspace_source() -> No
         assert metadata["required_dependencies"] <= dependencies
         assert pyproject["tool"]["uv"]["sources"]["epcsaft"] == {"workspace": True}
         assert metadata["forbidden_dependencies"].isdisjoint(normalized_dependencies)
+        extension = pyproject["tool"]["epcsaft"]["extension"]
+        assert extension["publish"] is False
+        assert extension["monorepo_transition_only"] is True
+        assert extension["requires_provider_native"] == metadata["required_provider_native"]
+        assert extension["requires_provider_build_option"] == metadata["required_provider_build_option"]
 
 
 def test_extension_package_shells_do_not_reexport_transition_core_objects() -> None:
@@ -109,6 +120,42 @@ def test_equilibrium_extension_native_access_is_isolated_behind_provider_sdk_bri
     assert offenders == []
     assert "provider_native_sdk()" in native_bridge
     assert "provider_native_sdk_v1" in native_bridge
+    assert "equilibrium_native_enabled" in native_bridge
+    assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON" in native_bridge
+
+
+def test_equilibrium_extension_native_bridge_rejects_provider_core_without_equilibrium_symbols(monkeypatch) -> None:
+    import epcsaft_equilibrium._native as native_bridge
+
+    monkeypatch.setattr(
+        native_bridge,
+        "provider_native_sdk",
+        lambda: {
+            "contract_id": "provider_native_sdk_v1",
+            "native_contract_exported": True,
+            "equilibrium_native_enabled": False,
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON"):
+        native_bridge.provider_native_core()
+
+
+def test_regression_extension_native_bridge_rejects_provider_core_without_regression_symbols(monkeypatch) -> None:
+    import epcsaft_regression.native_adapter as native_bridge
+
+    monkeypatch.setattr(
+        native_bridge,
+        "provider_native_sdk",
+        lambda: {
+            "contract_id": "provider_native_sdk_v1",
+            "native_contract_exported": True,
+            "regression_native_enabled": False,
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="EPCSAFT_ENABLE_REGRESSION_NATIVE=ON"):
+        native_bridge._provider_regression_core()
 
 
 def test_equilibrium_extension_uses_public_provider_imports_only() -> None:
