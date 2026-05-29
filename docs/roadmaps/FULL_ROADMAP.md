@@ -462,15 +462,27 @@ Required benchmark families:
 
 # 8. Required milestones
 
+GitHub milestones use short dashboard names. This file owns the detailed
+meaning behind each name; issues and slice roadmaps must not invent a separate
+milestone taxonomy.
+
+Every GitHub issue must belong to exactly one milestone. Smaller roadmap files
+map to one tracking issue inside the matching milestone, and implementation
+issues are the micro changes that move that tracking issue forward. The
+GitHub Project is the operating dashboard: group and sort by Milestone,
+Package, Capability, Backend, Readiness, and Release target. Keep technical
+precision in issue bodies and roadmap checklists, not in milestone titles.
+
 For generalized fluid-phase equilibrium work, use
 `docs/roadmaps/stage_by_stage_implementation_plan.md` as the GFPE-first
 execution plan. The milestones below define the package completion envelope;
 the stage plan breaks GFPE into concrete pretreatment, implementation gates,
 and exit evidence.
 
-## Milestone 0 — Process hard gates
+## M0 - Governance
 
-Complete before more feature work.
+Roadmap hygiene, tracker setup, labels, issue templates, completion rules,
+GoalBuddy/project discipline, and repo-wide process gates.
 
 - purge banned literal tokens from the repo
 - add lexical guard
@@ -478,27 +490,38 @@ Complete before more feature work.
 - remove classification-as-completion language
 - update future prompts
 - ensure no merged goal remains active
+- keep issue, milestone, Project, roadmap, and capability state aligned
 
-## Milestone 1 — Native derivative substrate
+## M1 - Packages
+
+Monorepo package layout, package ownership, test relocation, provider-only
+build proof, extension-native boundaries, and package CI/docs/release
+structure.
+
+- keep the monorepo package layout aligned with `docs/roadmaps/monorepo_package_migration.md`
+- prove root `epcsaft` can build as a provider-only package
+- keep package-local tests under the package that owns the behavior
+- split extension-native ownership from provider `_core`
+- keep package docs, CI lanes, and release choreography aligned with ownership
+
+## M2 - Core
+
+Provider EOS/state/parameters, native SDK contract, exact derivatives,
+CppAD/implicit sensitivities, and provider-only capability claims.
 
 - package-wide CppAD scalar support
 - scalar-templated EOS residuals
 - association implicit sensitivities
 - density-root implicit sensitivities
-- bubble/dew sensitivities
+- bubble/dew sensitivities where provider-owned contracts require them
 - property derivative result APIs
 - derivative coverage tests
+- provider-native SDK contract and capability evidence
 
-## Milestone 2 — Native regression backend
+## M3 - Equilibrium
 
-- Ceres owns production optimizer loops
-- CppAD/implicit derivatives feed Jacobians
-- Python only validates/serializes
-- all required target families supported
-- all binary parameter families supported
-- real parameter movement tests
-
-## Milestone 3 — Production equilibrium backend
+`epcsaft-equilibrium`, GFPE, selector/admission, Ipopt NLP, HELD/TPD, phase
+discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 - GFPE infrastructure gate: sparse NLP contracts, route scaling, domain bounds, smooth variable maps, Ipopt barrier constraints, diagnostics, and exact derivative policy
 - staged HELD phase discovery and postsolve phase-set certification before generalized neutral production admission
@@ -510,19 +533,40 @@ Complete before more feature work.
 - native coupled reactive electrolyte LLE
 - real residual/Jacobian diagnostics
 
-## Milestone 4 — Literature benchmarks
+## M4 - Regression
+
+`epcsaft-regression`, TargetDataset/result contracts, Ceres optimizer,
+parameter sensitivities, and pure/binary/electrolyte regression workflows.
+
+- Ceres owns production optimizer loops
+- CppAD/implicit derivatives feed Jacobians
+- Python only validates/serializes
+- all required target families supported
+- all binary parameter families supported
+- real parameter movement tests
+- regression result schemas and capability evidence stay honest
+
+## M5 - Validation
+
+Executable literature benchmarks, registry evidence, capability evidence,
+docs/test proof, and release-quality validation gates.
 
 - every named benchmark executable
 - every benchmark has fixture, command, expected result, tolerance
 - benchmark suite proves parameter/equilibrium behavior
+- capability registries and generated docs reflect only proven workflows
 
-## Milestone 5 — Real downstream integration
+## M6 - Release
+
+Downstream integration, install proofs, PyPI/release choreography, migration
+docs, and no private downstream workarounds.
 
 - install local package into each downstream repository
 - run one real workflow per downstream repo
 - prove generic APIs are sufficient
 - no copied EOS implementation
 - no private workaround for required package behavior
+- publish and migration docs match the monorepo package release model
 
 ---
 

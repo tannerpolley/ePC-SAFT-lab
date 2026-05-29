@@ -6,10 +6,19 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | -------------------------- | -------------------- | ---------------------------------------- |
 | `needs-triage`             | `needs-triage`       | Maintainer needs to evaluate this issue  |
 | `needs-info`               | `needs-info`         | Waiting on reporter for more information |
-| `ready-for-agent`          | `ready-for-agent`    | Fully specified, ready for an AFK agent  |
+| `ready-for-agent`          | `agent-ready`        | Fully specified, ready for an AFK agent  |
 | `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
 When a skill mentions a role, use the corresponding label string from this table.
 
 Edit the right-hand column if the GitHub label vocabulary changes.
+
+Roadmap routing labels:
+
+- Use `area:*` labels for the owning package or subsystem.
+- Use `backend:*` labels for CppAD, Ceres, or Ipopt-specific work.
+- Use `status:*` labels only for durable issue state that should remain visible
+  outside the GitHub Project.
+- Use `release:blocker` only for work that blocks the issue's target milestone
+  or release gate.

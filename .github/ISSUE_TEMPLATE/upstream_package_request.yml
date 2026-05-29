@@ -17,6 +17,21 @@ body:
     validations:
       required: true
   - type: dropdown
+    id: roadmap-milestone
+    attributes:
+      label: Roadmap milestone
+      description: Select the GitHub milestone that should be assigned after filing.
+      options:
+        - M0 - Governance
+        - M1 - Packages
+        - M2 - Core
+        - M3 - Equilibrium
+        - M4 - Regression
+        - M5 - Validation
+        - M6 - Release
+    validations:
+      required: true
+  - type: dropdown
     id: request-area
     attributes:
       label: Request area
