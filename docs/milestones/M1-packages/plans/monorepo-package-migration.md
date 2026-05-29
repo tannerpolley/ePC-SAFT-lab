@@ -2,6 +2,10 @@
 
 Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/150
 
+Status: completed historical source-consolidation plan. It records the path
+from sibling extension checkouts back to the monorepo. Current package-layout
+truth lives in #154 and the child M1 package slices #164-#169.
+
 ## Target State
 
 The canonical source of truth is one GitHub organization repository:
@@ -18,7 +22,7 @@ epcsaft-equilibrium
 epcsaft-regression
 ```
 
-The temporary package layout for the first consolidation tranche is:
+The temporary package layout for the first consolidation tranche was:
 
 ```text
 ePC-SAFT/
@@ -42,9 +46,8 @@ ePC-SAFT/
     epcsaft-regression/
 ```
 
-Do not move root `epcsaft` into `packages/epcsaft` until source consolidation,
-package-local test ownership, provider-only build proof, and extension-native
-ownership are already stable.
+The root provider move is now owned by #168 and #169. Do not use the temporary
+root-owned layout above as current workflow guidance.
 
 ## Invariants
 
@@ -56,10 +59,10 @@ ownership are already stable.
   `../epcsaft-equilibrium` or `../epcsaft-regression`.
 - Extension package import names remain `epcsaft_equilibrium` and
   `epcsaft_regression`.
-- Extension packages stay unpublished transition packages until their native
-  modules no longer depend on provider-owned `_core` extension symbols.
-- Native extension behavior may remain transitional during source consolidation,
-  but native sources must be read from monorepo package directories.
+- Extension packages stay unpublished transition packages until release
+  choreography is complete.
+- Native extension modules are package-owned and native sources are read from
+  monorepo package directories.
 - Ipopt belongs to `epcsaft-equilibrium`; Ceres belongs to
   `epcsaft-regression`.
 
@@ -116,16 +119,16 @@ uv run python scripts/dev/validate_project.py docs
 
 ## Phase 2: Provider-Only Build Reproof
 
-Goal: after source consolidation, prove again that the root provider package can
+Goal: after source consolidation, prove again that the provider package can
 build and import without Ipopt, Ceres, equilibrium-native symbols, or
 regression-native symbols.
 
 Gates:
 
-- [ ] Provider-only build profile configures with Ceres off and Ipopt off.
-- [ ] `epcsaft._core` exposes provider-owned symbols only in the provider profile.
-- [ ] Provider tests fail if equilibrium or regression symbols leak into core.
-- [ ] Docs and CI name this as the core install proof.
+- [x] Provider-only build profile configures with Ceres off and Ipopt off.
+- [x] `epcsaft._core` exposes provider-owned symbols only in the provider profile.
+- [x] Provider tests fail if equilibrium or regression symbols leak into core.
+- [x] Docs and CI name this as the core install proof.
 
 ## Phase 3: Extension Native Package Ownership
 
@@ -134,12 +137,12 @@ ground after the monorepo source layout is stable.
 
 Gates:
 
-- [ ] `epcsaft-equilibrium` owns its Ipopt-facing native module or target.
-- [ ] `epcsaft-regression` owns its Ceres-facing native module or target.
-- [ ] Extension modules consume the provider contract instead of private core
+- [x] `epcsaft-equilibrium` owns its Ipopt-facing native module or target.
+- [x] `epcsaft-regression` owns its Ceres-facing native module or target.
+- [x] Extension modules consume the provider contract instead of private core
   implementation internals.
-- [ ] Package-local tests prove each extension independently.
-- [ ] Cross-package integration tests prove combined workflows explicitly.
+- [x] Package-local tests prove each extension independently.
+- [x] Cross-package integration tests prove combined workflows explicitly.
 
 ## Phase 4: CI, Docs, Release, And Repo Cleanup
 
@@ -151,8 +154,12 @@ Gates:
 - [ ] PyPI/release docs publish `epcsaft`, `epcsaft-equilibrium`, and
   `epcsaft-regression` from one repo.
 - [ ] Old sibling GitHub repos are archived or clearly point to the monorepo.
-- [ ] User-facing docs stop implying sibling repo source checkouts.
-- [ ] Root package move to `packages/epcsaft` is separately planned and gated.
+- [x] User-facing docs stop implying sibling repo source checkouts.
+- [x] Root package move to `packages/epcsaft` is separately planned and gated.
+
+Remaining release-lane work belongs to later milestone issues, not issue #150:
+separate package CI lanes, PyPI/release docs, and old sibling repository
+archival.
 
 ## Non-Goals For Issue 150
 

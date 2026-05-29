@@ -47,8 +47,8 @@ remain owned by #168 and #169.
   package builds must resolve source, native output, and install paths from the
   provider package root.
 - Replace hard-coded root provider paths in `scripts/dev/build_epcsaft.py`,
-  `run_pytest.py`, `src/epcsaft/runtime/capability_evidence.py`, docs, and CI
-  with an explicit package-root map.
+  `run_pytest.py`, `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py`,
+  docs, and CI with an explicit package-root map.
 - Keep the existing extension-native boundary: provider `_core` remains
   provider-only, and extension-native modules remain package-owned.
 

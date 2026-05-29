@@ -209,6 +209,7 @@ MILESTONE_PLAN_FILES = {
     "M1-packages/plans/package-extension-transfer-superseded-plan.md",
     "M1-packages/plans/test-ownership-relocation.md",
     "M1-packages/plans/move-provider-distribution-into-packages-epcsaft.md",
+    "M1-packages/plans/post-move-cleanup-install-proof.md",
     "M3-eos/plans/explicit-association-closure-for-pcsaft.md",
     "M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md",
     "M4-equilibrium/plans/gfpe-package-cleanup-plan.md",
@@ -400,6 +401,60 @@ def test_root_package_contains_only_entry_python_files() -> None:
     assert not (PROVIDER_PACKAGE_ROOT / "equilibrium_core").exists()
     assert not (PROVIDER_PACKAGE_ROOT / "equilibrium").exists()
     assert (EQUILIBRIUM_PACKAGE_ROOT / "core").is_dir()
+
+
+def test_active_workflows_do_not_require_retired_root_provider_paths() -> None:
+    assert _tracked_files("src/epcsaft", "epcsaft", "build_backend") == []
+
+    scanned_roots = (
+        "scripts",
+        ".github/workflows",
+        "analyses",
+        "tests/workflows",
+        "run_pytest.py",
+        "CMakeLists.txt",
+        "pyproject.toml",
+        "README.md",
+        "CMAKE.md",
+    )
+    allowed_contexts = (
+        "packages/epcsaft/src/epcsaft",
+        "${EPCSAFT_PROVIDER_PACKAGE_ROOT}/src/epcsaft",
+        '"src/epcsaft"',
+        "'src/epcsaft'",
+        "src/epcsaft/**/*.cpp",
+        "src/epcsaft/**/*.h",
+        "src/epcsaft/*.pyd",
+    )
+
+    offenders: list[str] = []
+    for relpath in _tracked_files(*scanned_roots):
+        if relpath in {
+            "tests/workflows/repo/test_project_structure.py",
+            "tests/workflows/build/test_build_epcsaft.py",
+        }:
+            continue
+        path = REPO_ROOT / relpath
+        if not path.is_file() or path.suffix.lower() not in {
+            ".md",
+            ".py",
+            ".ps1",
+            ".rst",
+            ".toml",
+            ".txt",
+            ".yaml",
+            ".yml",
+        }:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if "src/epcsaft" in text and not any(context in text for context in allowed_contexts):
+            offenders.append(relpath)
+        if "Could not locate repo root containing src/epcsaft" in text:
+            offenders.append(relpath)
+        if "root build_backend" in text:
+            offenders.append(relpath)
+
+    assert sorted(set(offenders)) == []
 
 
 def test_native_cpp_sources_live_under_domain_workflow_modules() -> None:

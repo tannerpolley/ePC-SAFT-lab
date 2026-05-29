@@ -12,8 +12,6 @@ proof, extension-native boundaries, and package CI/docs/release structure.
 
 ## Current Open Issues
 
-| Issue | Readiness | Release target | Summary |
-| --- | --- | --- | --- |
-| [#154](issues/0154-move-core-provider-package-into-packages-epcsaft.md) | `needs design` | `future` | Track the eventual move of the root provider package into `packages/epcsaft`. |
-| [#168](issues/0168-move-provider-distribution-into-packages-epcsaft.md) | `ready` | `future` | Move the provider distribution into `packages/epcsaft` after prerequisites. |
-| [#169](issues/0169-post-move-cleanup-and-install-proof.md) | `blocked` | `future` | Prove final installs and remove stale post-move compatibility residue. |
+No open M1 package-layout issues remain after #169 closes the #154 parent
+tracker. Add new M1 issue mirrors here only for newly opened package-layout
+work.
