@@ -237,6 +237,34 @@ def test_pep517_build_backend_allows_provider_build_without_ceres() -> None:
     assert "cmake.define.Ceres_DIR" not in config
 
 
+def test_pep517_build_backend_disables_regression_native_when_ceres_is_off() -> None:
+    backend = _load_backend()
+
+    config = backend._isolated_build_config(
+        {
+            "cmake.define.EPCSAFT_ENABLE_CERES": "OFF",
+            "cmake.define.EPCSAFT_ENABLE_IPOPT": "ON",
+        }
+    )
+
+    assert config["cmake.define.EPCSAFT_ENABLE_CERES"] == "OFF"
+    assert config["cmake.define.EPCSAFT_ENABLE_IPOPT"] == "ON"
+    assert config["cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE"] == "OFF"
+    assert "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE" not in config
+
+
+def test_pep517_build_backend_rejects_regression_native_without_ceres() -> None:
+    backend = _load_backend()
+
+    with pytest.raises(ValueError, match="Regression native package builds require Ceres"):
+        backend._isolated_build_config(
+            {
+                "cmake.define.EPCSAFT_ENABLE_CERES": "OFF",
+                "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE": "ON",
+            }
+        )
+
+
 def test_pep517_build_backend_rejects_disabled_required_cppad() -> None:
     backend = _load_backend()
 

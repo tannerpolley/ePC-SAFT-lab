@@ -363,8 +363,6 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
     )
     pybind_allowed = {
         "src/epcsaft/native/bindings/module.cpp",
-        "src/epcsaft/native/equilibrium/register_bindings.cpp",
-        "src/epcsaft/native/equilibrium/results/route_result_bridge.h",
     }
 
     legacy_offenders: list[str] = []

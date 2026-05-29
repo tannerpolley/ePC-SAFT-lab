@@ -283,7 +283,7 @@ def regressed_parameter_rows(path: Path) -> list[dict[str, str]]:
     if os.environ.get("EPCSAFT_RECOMPUTE_BAYGI_REGRESSION") != "1" and path.exists():
         return read_csv_rows(path)
 
-    from epcsaft.regression import _fit_pure_neutral_associating_native
+    from epcsaft_regression.core import _fit_pure_neutral_associating_native
 
     records = baygi_mea_fit_records()
     max_nfev = int(os.environ.get("EPCSAFT_BAYGI_REGRESSION_MAX_NFEV", "1"))

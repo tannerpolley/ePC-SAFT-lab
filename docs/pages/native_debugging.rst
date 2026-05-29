@@ -17,8 +17,9 @@ The pybind11 boundary starts in ``src/epcsaft/native/bindings/module.cpp``. It
 exposes ``NativeArgs``, ``NativeMixture``, ``NativeState``, and contribution
 result structs through the private ``epcsaft._core`` module. Equilibrium
 bindings are registered by the domain-owned
-``src/epcsaft/native/equilibrium/register_bindings.cpp`` unit so the generic
-binding file does not include route, block, solver, or result internals.
+``packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp`` unit
+so the generic binding file does not include route, block, solver, or result
+internals.
 
 The native implementation lives under domain folders in ``src/epcsaft/native``. High-traffic files are:
 
@@ -27,8 +28,8 @@ The native implementation lives under domain folders in ``src/epcsaft/native``. 
 - ``eos/compressibility.cpp`` for compressibility factor and pressure from density.
 - ``eos/chemical_potential.cpp`` and ``eos/fugacity.cpp`` for residual chemical potential and fugacity.
 - ``eos/activity.cpp`` for activity, osmotic, and solvation outputs.
-- ``equilibrium/core/activation_matrix.h`` for native route family activation metadata.
-- ``equilibrium/routes/derived/bubble_dew.cpp`` and ``equilibrium/solvers/ipopt_adapter.cpp`` for the trusted bubble/dew Ipopt route.
+- ``packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h`` for native route family activation metadata.
+- ``packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`` and ``packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`` for the trusted bubble/dew Ipopt route.
 
 Validation commands
 -------------------
