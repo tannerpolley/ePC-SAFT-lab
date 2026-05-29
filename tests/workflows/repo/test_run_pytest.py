@@ -216,6 +216,27 @@ def test_doctor_tracks_native_symbols_added_by_recent_workflows():
     assert "_native_ipopt_smoke" not in required
 
 
+def test_doctor_exposes_provider_sdk_and_extension_native_requirements():
+    source = Path("scripts/dev/doctor.py").read_text(encoding="utf-8")
+
+    for token in (
+        "--require-provider-sdk",
+        "--require-extension-native",
+        "provider_sdk_contract_id",
+        "provider_sdk_cmake_config",
+        "provider_sdk_missing_paths",
+        "epcsaft_equilibrium_native_core",
+        "epcsaft_regression_native_core",
+        "ceres_reusable_config_found",
+        "ipopt_default_sdk_root",
+        "ipopt_default_sdk_candidates",
+        "ipopt_active_root_source",
+        "ipopt_change_command",
+        "artifact_freshness",
+    ):
+        assert token in source
+
+
 def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():
     source = Path("packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp").read_text(encoding="utf-8")
 

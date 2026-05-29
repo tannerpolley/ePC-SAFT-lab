@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Setup", "Build", "Doctor")]
+    [ValidateSet("Setup", "Sync", "IntelliJ", "Build", "Doctor")]
     [string]$Step = "Setup"
 )
 
@@ -8,19 +8,6 @@ Set-StrictMode -Version Latest
 
 $repoRoot = (git rev-parse --show-toplevel).Trim()
 Set-Location $repoRoot
-
-function Invoke-CheckedNative {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath,
-        [string[]]$ArgumentList = @()
-    )
-
-    & $FilePath @ArgumentList
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
-}
 
 function Resolve-UvCommand {
     $command = Get-Command uv -ErrorAction SilentlyContinue
@@ -35,124 +22,9 @@ function Resolve-UvCommand {
 }
 
 $uv = Resolve-UvCommand
+$bootstrapStep = $Step.ToLowerInvariant()
 
-function Test-CompatibleCeresConfig {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$CeresDir
-    )
-
-    $configPath = Join-Path $CeresDir "CeresConfig.cmake"
-    $lowerConfigPath = Join-Path $CeresDir "ceres-config.cmake"
-    if (-not (Test-Path -LiteralPath $configPath) -and -not (Test-Path -LiteralPath $lowerConfigPath)) {
-        return $false
-    }
-
-    $targets = Get-ChildItem -LiteralPath $CeresDir -Filter "CeresTargets*.cmake" -File -ErrorAction SilentlyContinue
-    foreach ($target in $targets) {
-        $text = Get-Content -LiteralPath $target.FullName -Raw -ErrorAction Stop
-        if ($text -match "libceres\.a" -or $text -match "\.dll\.a") {
-            return $false
-        }
-    }
-    return $true
-}
-
-function Resolve-DefaultCeresConfigDir {
-    $defaultRoot = Join-Path $repoRoot "build\system-ceres\2.2.0\install"
-    $candidates = @(
-        (Join-Path $defaultRoot "lib\cmake\Ceres"),
-        (Join-Path $defaultRoot "lib64\cmake\Ceres")
-    )
-
-    foreach ($candidate in $candidates) {
-        if ((Test-Path -LiteralPath $candidate) -and (Test-CompatibleCeresConfig -CeresDir $candidate)) {
-            return (Resolve-Path -LiteralPath $candidate).Path
-        }
-    }
-    return $null
-}
-
-function Invoke-ReusableCeresBuild {
-    $ceresDir = Resolve-DefaultCeresConfigDir
-    if (-not [string]::IsNullOrWhiteSpace($ceresDir)) {
-        Write-Host "Using reusable Ceres package: $ceresDir"
-        return $ceresDir
-    }
-
-    Write-Host "Building reusable Ceres package for this worktree."
-    Invoke-CheckedNative $uv @("run", "python", "scripts/dev/build_system_ceres.py", "--parallel", "4")
-    $ceresDir = Resolve-DefaultCeresConfigDir
-    if ([string]::IsNullOrWhiteSpace($ceresDir)) {
-        throw "Reusable Ceres build did not produce a compiler-compatible CeresConfig.cmake under build\system-ceres\2.2.0."
-    }
-    return $ceresDir
-}
-
-function Set-NativeIpoptEnvironment {
-    $defaultIpoptRoot = Join-Path $env:USERPROFILE "Documents\deps\ipopt-msvc"
-    $candidate = $env:EPCSAFT_IPOPT_ROOT
-
-    if ([string]::IsNullOrWhiteSpace($candidate)) {
-        $candidate = $env:EPCSAFT_PEP517_IPOPT_ROOT
-    }
-    if ([string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $defaultIpoptRoot)) {
-        $candidate = $defaultIpoptRoot
-    }
-    if ([string]::IsNullOrWhiteSpace($candidate)) {
-        throw "Native Ipopt is required for this ePC-SAFT setup. Set EPCSAFT_IPOPT_ROOT or install the local Ipopt SDK at $defaultIpoptRoot."
-    }
-
-    $ipoptRoot = (Resolve-Path -LiteralPath $candidate).Path
-    $ipoptBin = Join-Path $ipoptRoot "bin"
-    $ipoptLib = Join-Path $ipoptRoot "lib"
-
-    if (-not (Test-Path -LiteralPath $ipoptBin)) {
-        throw "Native Ipopt runtime DLL directory was not found: $ipoptBin"
-    }
-    if (-not (Test-Path -LiteralPath $ipoptLib)) {
-        throw "Native Ipopt library directory was not found: $ipoptLib"
-    }
-
-    $env:EPCSAFT_IPOPT_ROOT = $ipoptRoot
-    $env:EPCSAFT_RUNTIME_DLL_DIRS = $ipoptBin
-
-    $pathEntries = $env:PATH -split ";"
-    if ($pathEntries -notcontains $ipoptBin) {
-        $env:PATH = "$ipoptBin;$env:PATH"
-    }
-
-    Write-Host "Using native Ipopt root: $ipoptRoot"
-}
-
-function Invoke-NativeBuild {
-    $ceresDir = Invoke-ReusableCeresBuild
-    Set-NativeIpoptEnvironment
-    Invoke-CheckedNative $uv @(
-        "run",
-        "python",
-        "scripts/dev/build_epcsaft.py",
-        "--use-system-ceres",
-        "--ceres-dir",
-        $ceresDir
-    )
-}
-
-function Invoke-NativeDoctor {
-    Set-NativeIpoptEnvironment
-    Invoke-CheckedNative $uv @("run", "python", "scripts/dev/doctor.py", "--require-ipopt")
-}
-
-switch ($Step) {
-    "Setup" {
-        Invoke-CheckedNative $uv @("sync", "--no-install-project")
-        Invoke-NativeBuild
-        Invoke-NativeDoctor
-    }
-    "Build" {
-        Invoke-NativeBuild
-    }
-    "Doctor" {
-        Invoke-NativeDoctor
-    }
+& $uv run python scripts/dev/bootstrap.py --step $bootstrapStep
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
 }

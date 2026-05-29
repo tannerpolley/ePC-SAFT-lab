@@ -7,6 +7,14 @@ import pytest
 from scripts.dev import build_extension_dists
 
 
+def test_extension_dist_builder_uses_short_windows_build_root() -> None:
+    relative = build_extension_dists.BUILD_ROOT.relative_to(build_extension_dists.REPO_ROOT).as_posix()
+
+    assert relative == "build/xd"
+    assert build_extension_dists.BUILD_MODE_DIRS["installed-provider"] == "i"
+    assert build_extension_dists.BUILD_PACKAGE_DIRS["epcsaft-equilibrium"] == "eq"
+
+
 def test_extension_dist_builder_requires_existing_provider_wheel(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(build_extension_dists, "DIST_ROOT", tmp_path)
 
@@ -52,6 +60,42 @@ def test_extension_dist_builder_sets_provider_sdk_mode_and_ipopt_root(monkeypatc
     assert env["EPCSAFT_PROVIDER_SDK_MODE"] == "installed-provider"
     assert env["EPCSAFT_PROVIDER_SDK_CMAKE_CONFIG"].endswith("epcsaft_provider_sdk.cmake")
     assert env["EPCSAFT_PEP517_IPOPT_ROOT"] == str(ipopt_root.resolve())
+
+
+def test_extension_dist_builder_prefers_repo_local_ceres_cache(monkeypatch, tmp_path) -> None:
+    ceres_dir = tmp_path / "install" / "lib" / "cmake" / "Ceres"
+    ceres_dir.mkdir(parents=True)
+    (ceres_dir / "CeresConfig.cmake").write_text("# test\n", encoding="utf-8")
+    env: dict[str, str] = {}
+
+    monkeypatch.setattr(build_extension_dists, "resolve_default_system_ceres_config_dir", lambda root: ceres_dir)
+
+    build_extension_dists._configure_reusable_ceres(env)
+
+    assert env["EPCSAFT_PEP517_CERES_DIR"] == str(ceres_dir)
+
+
+def test_extension_dist_builder_loads_msvc_for_msvc_ipopt_sdk(monkeypatch, tmp_path) -> None:
+    ipopt_root = tmp_path / "ipopt"
+    (ipopt_root / "lib").mkdir(parents=True)
+    (ipopt_root / "lib" / "ipopt.lib").write_text("", encoding="utf-8")
+
+    def fake_load_msvc_env(env: dict[str, str]) -> dict[str, str]:
+        updated = env.copy()
+        updated["VSCMD_VER"] = "test"
+        return updated
+
+    monkeypatch.setattr(build_extension_dists.os, "name", "nt")
+    monkeypatch.setattr(build_extension_dists, "_load_msvc_env", fake_load_msvc_env)
+
+    result = build_extension_dists._configure_extension_toolchain(
+        {},
+        ["epcsaft-equilibrium"],
+        ipopt_root,
+    )
+
+    assert result["VSCMD_VER"] == "test"
+    assert result["CMAKE_GENERATOR"] == "Ninja"
 
 
 def test_extension_dist_builder_rejects_equilibrium_without_ipopt_root(tmp_path) -> None:

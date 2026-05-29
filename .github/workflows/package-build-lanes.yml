@@ -1,0 +1,144 @@
+name: package-build-lanes
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_ipopt_lanes:
+        description: "Run Ipopt-dependent equilibrium and installed-provider extension lanes"
+        required: false
+        default: false
+        type: boolean
+      ipopt_root:
+        description: "Ipopt SDK root on the runner; required when run_ipopt_lanes is true"
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  provider-package:
+    name: provider package build
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Build provider package artifacts
+        run: uv run python scripts/dev/build_dist.py --parallel 1
+
+      - name: Check provider release install
+        run: uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination provider
+
+      - name: Upload provider dist
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: provider-dist
+          path: dist/epcsaft-*
+
+  regression-package:
+    name: regression package build
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Build provider package artifacts
+        run: uv run python scripts/dev/build_dist.py --parallel 1
+
+      - name: Build reusable Ceres package
+        run: uv run python scripts/dev/build_system_ceres.py --parallel 2
+
+      - name: Build regression package artifacts from monorepo provider SDK
+        run: uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression --parallel 1
+
+      - name: Check regression release install
+        run: uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination regression
+
+  equilibrium-package:
+    name: equilibrium package build
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ipopt_lanes }}
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Require Ipopt SDK
+        shell: pwsh
+        run: |
+          if ("${{ inputs.ipopt_root }}" -eq "" -or -not (Test-Path -LiteralPath "${{ inputs.ipopt_root }}")) {
+            throw "equilibrium package build requires a real Ipopt SDK root; no no-Ipopt package proof is accepted"
+          }
+
+      - name: Build provider package artifacts
+        run: uv run python scripts/dev/build_dist.py --parallel 1
+
+      - name: Build equilibrium package artifacts from monorepo provider SDK
+        run: uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-equilibrium --parallel 1 --ipopt-root "${{ inputs.ipopt_root }}"
+
+      - name: Check equilibrium release install
+        run: uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination equilibrium
+
+  installed-provider-extensions:
+    name: installed-provider extension builds
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_ipopt_lanes }}
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Require Ipopt SDK
+        shell: pwsh
+        run: |
+          if ("${{ inputs.ipopt_root }}" -eq "" -or -not (Test-Path -LiteralPath "${{ inputs.ipopt_root }}")) {
+            throw "installed-provider extension builds require a real Ipopt SDK root; no no-Ipopt package proof is accepted"
+          }
+
+      - name: Build provider package artifacts
+        run: uv run python scripts/dev/build_dist.py --parallel 1
+
+      - name: Build reusable Ceres package
+        run: uv run python scripts/dev/build_system_ceres.py --parallel 2
+
+      - name: Build extension artifacts from installed provider SDK
+        run: uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "${{ inputs.ipopt_root }}"
+
+      - name: Check combined release install
+        run: uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination all

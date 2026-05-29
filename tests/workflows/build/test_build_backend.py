@@ -223,6 +223,21 @@ def test_regression_extension_backend_defaults_to_ceres_and_provider_sdk(tmp_pat
     assert config["cmake.define.EPCSAFT_PROVIDER_SDK_CMAKE_CONFIG"].endswith("epcsaft_provider_sdk.cmake")
 
 
+def test_regression_extension_backend_auto_detects_repo_local_ceres(monkeypatch, tmp_path) -> None:
+    backend = _load_module(REGRESSION_BACKEND_PATH, "epcsaft_regression_build_backend_for_test_auto_ceres")
+    ceres_dir = tmp_path / "install" / "lib" / "cmake" / "Ceres"
+    ceres_dir.mkdir(parents=True)
+    (ceres_dir / "CeresConfig.cmake").write_text("# test\n", encoding="utf-8")
+    monkeypatch.delenv("EPCSAFT_PEP517_CERES_DIR", raising=False)
+    monkeypatch.delenv("Ceres_DIR", raising=False)
+    monkeypatch.setattr(backend, "_repo_local_ceres_config_dir", lambda: ceres_dir)
+
+    config = backend._apply_build_config({"build-dir": str(tmp_path / "build")})
+
+    assert config["cmake.define.EPCSAFT_USE_SYSTEM_CERES"] == "ON"
+    assert config["cmake.define.Ceres_DIR"] == str(ceres_dir.resolve())
+
+
 def test_regression_extension_backend_uses_system_ceres_dir(monkeypatch, tmp_path) -> None:
     backend = _load_module(REGRESSION_BACKEND_PATH, "epcsaft_regression_build_backend_for_test")
     ceres_dir = tmp_path / "ceres"
@@ -257,3 +272,15 @@ def test_regression_extension_editable_backend_disables_native_build(monkeypatch
     assert captured["wheel_directory"] == str(wheel_dir)
     assert captured["config_settings"]["cmake.define.EPCSAFT_BUILD_EXTENSION_NATIVE"] == "OFF"
     assert "cmake.define.Ceres_DIR" not in captured["config_settings"]
+
+
+def test_equilibrium_cmake_installs_audited_ipopt_runtime_payload() -> None:
+    cmake = (REPO_ROOT / "packages" / "epcsaft-equilibrium" / "CMakeLists.txt").read_text(encoding="utf-8")
+
+    assert 'file(GLOB EPCSAFT_IPOPT_RUNTIME_DLLS "${EPCSAFT_IPOPT_ROOT}/bin/*.dll")' not in cmake
+    assert "file(GET_RUNTIME_DEPENDENCIES" in cmake
+    assert "MODULES" in cmake
+    assert "_epcsaft_module" in cmake
+    assert "cmake_policy(SET CMP0207 NEW)" in cmake
+    assert 'EXCLUDE REGEX [[^[Pp]ython[0-9]+[.]dll$]]' in cmake
+    assert "Installed audited Ipopt runtime dependency payload" in cmake

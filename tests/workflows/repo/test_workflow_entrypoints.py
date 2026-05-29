@@ -46,6 +46,27 @@ def test_bootstrap_scripts_use_normal_build_and_fast_suite() -> None:
         assert "run_pytest.py tests\\test_runtime.py -q" not in content
 
 
+def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> None:
+    bootstrap = _read("scripts/dev/bootstrap.py")
+    development_workflows = _read("docs/pages/development_workflows.rst")
+    new_agent_start = _read("docs/agents/new-agent-start-here.md")
+
+    for token in (
+        "uv sync --no-install-project",
+        "uv run python scripts/dev/build_epcsaft.py",
+        "uv run python scripts/dev/doctor.py",
+        "uv run python scripts/dev/validate_project.py quick",
+    ):
+        assert token in bootstrap.replace('", "', " ")
+        assert token in development_workflows
+        assert token in new_agent_start
+    assert "--dry-run" in bootstrap
+    assert "bootstrap_state: current" in bootstrap
+    assert "next_command:" in bootstrap
+    assert "ipopt_sdk_root_source" in bootstrap
+    assert "ipopt_change_command" in bootstrap
+
+
 def test_clean_scripts_announce_repair_only_scope() -> None:
     for path in ("scripts/dev/clean_build.ps1", "scripts/dev/clean_build.sh"):
         content = _read(path)
@@ -136,6 +157,7 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
     development_workflows = _read("docs/pages/development_workflows.rst")
     native_debugging = _read("docs/pages/native_debugging.rst")
     workflow = _read(".github/workflows/native-build-profiles.yml")
+    package_lanes = _read(".github/workflows/package-build-lanes.yml")
 
     assert "../protocols/build_package_dependency_protocol" in docs_index
     assert "docs/protocols/build_package_dependency_protocol.rst" in full_plan
@@ -166,10 +188,25 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
     assert "native CppAD derivative contract" in workflow
     assert "workflow_dispatch || github.event_name == 'schedule'" not in workflow
     assert "--profile full --disable-ipopt" in workflow
+    for token in (
+        "provider package build",
+        "regression package build",
+        "equilibrium package build",
+        "installed-provider extension builds",
+        "scripts/dev/build_dist.py --parallel 1",
+        "scripts/dev/build_system_ceres.py --parallel 2",
+        "scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression --parallel 1",
+        "scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-equilibrium --parallel 1 --ipopt-root",
+        "scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root",
+        "scripts/dev/check_release_installs.py --dist-dir dist --combination all",
+        "requires a real Ipopt SDK root; no no-Ipopt package proof is accepted",
+    ):
+        assert token in package_lanes
 
 
 def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> None:
     agents_md = _read("AGENTS.md")
+    new_agent_start = _read("docs/agents/new-agent-start-here.md")
     env_toml = _read(".codex/environments/environment.toml")
     env_setup = _read(".codex/environments/setup.ps1")
     env_readme = _read(".codex/environments/README.md")
@@ -200,13 +237,26 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     ):
         assert stale not in agents_md
 
+    for token in (
+        "uv run python scripts/dev/bootstrap.py",
+        "uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
+        "uv run python scripts/dev/check_release_installs.py --dist-dir dist",
+        "docs/milestones/PROJECT_CONTEXT.md",
+        "EPCSAFT_PEP517_CERES_DIR",
+        "audited dependency closure",
+    ):
+        assert token in new_agent_start
+
+    assert "docs/roadmaps" not in new_agent_start
+
     assert 'name = "Build Native Extension (Bounded)"' not in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build" in env_toml
-    assert "Invoke-ReusableCeresBuild" in env_setup
-    assert "scripts/dev/build_system_ceres.py" in env_setup
-    assert "--use-system-ceres" in env_setup
-    assert "--ceres-dir" in env_setup
-    assert "libceres\\.a" in env_setup
+    assert "scripts/dev/bootstrap.py --step $bootstrapStep" in env_setup
+    assert "Invoke-ReusableCeresBuild" not in env_setup
+    assert "scripts/dev/build_system_ceres.py" in _read("scripts/dev/bootstrap.py")
+    assert "--use-system-ceres" in _read("scripts/dev/bootstrap.py")
+    assert "--ceres-dir" in _read("scripts/dev/bootstrap.py")
+    assert "libceres.a" in _read("packages/epcsaft/build_backend/native_dependency_policy.py")
     assert "Do not set ``EPCSAFT_PEP517_CERES_DIR``" in env_readme
     assert "build_epcsaft.py --use-system-ceres" in env_readme
     assert ".codex/environments/setup.ps1 builds or reuses scripts/dev/build_system_ceres.py output" in build_owner
@@ -586,6 +636,26 @@ def test_github_default_events_run_windows_package_boundary_smoke() -> None:
     assert workflow.count("runs-on: windows-latest") >= 3
     assert workflow.count("name: windows install smoke") == 1
     assert workflow.count("name: fast workflow smoke") == 1
+
+
+def test_package_build_lanes_are_split_by_distribution_and_sdk_mode() -> None:
+    workflow = _read(".github/workflows/package-build-lanes.yml")
+
+    assert "name: package-build-lanes" in workflow
+    assert "provider-package:" in workflow
+    assert "regression-package:" in workflow
+    assert "equilibrium-package:" in workflow
+    assert "installed-provider-extensions:" in workflow
+    assert "run_ipopt_lanes:" in workflow
+    assert "ipopt_root:" in workflow
+    assert "uv run python scripts/dev/build_dist.py --parallel 1" in workflow
+    assert "uv run python scripts/dev/build_system_ceres.py --parallel 2" in workflow
+    assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination provider" in workflow
+    assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination regression" in workflow
+    assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination equilibrium" in workflow
+    assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination all" in workflow
+    assert "--disable-ipopt" not in workflow
+    assert "no no-Ipopt package proof is accepted" in workflow
 
 
 def test_pypi_publish_workflow_uses_trusted_publishing() -> None:

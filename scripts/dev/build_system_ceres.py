@@ -252,6 +252,11 @@ def _print_usage(root: Path) -> None:
     print(f"CeresConfigDir: {config_dir}")
     print("Use this package with the source-checkout native build:")
     print(f"  uv run python scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir {config_dir}")
+    print("Use this package with extension PEP 517 builds:")
+    print(f"  $env:EPCSAFT_PEP517_CERES_DIR = \"{config_dir}\"")
+    print("Optional for external/checkout-specific reuse:")
+    print(f"  $env:EPCSAFT_PEP517_BUILD_DIR = \"{(REPO_ROOT / 'build' / 'pep517').resolve()}\"")
+    print("Regression extension builds auto-detect this repo-local reusable Ceres package when it exists.")
 
 
 def _parser() -> argparse.ArgumentParser:

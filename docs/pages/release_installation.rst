@@ -103,10 +103,30 @@ pybind bindings, CMake files, or build metadata, rerun the editable install
 command so the native extension is rebuilt.
 
 Equilibrium and regression workflows live in monorepo workspace packages under
-``packages/``. In a source checkout, use the uv workspace environment before
-importing ``epcsaft_equilibrium`` or ``epcsaft_regression``. These transition
-packages require the matching workspace provider build with the relevant native
-symbols enabled.
+``packages/``. Their local distribution artifacts can be built and installed
+from ``dist/`` alongside the provider artifact before PyPI publication:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/build_dist.py --parallel 1
+   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+   uv run python scripts/dev/check_release_installs.py --dist-dir dist
+
+The release install proof covers these package combinations from local
+artifacts:
+
+.. code-block:: powershell
+
+   python -m pip install epcsaft
+   python -m pip install epcsaft epcsaft-equilibrium
+   python -m pip install epcsaft epcsaft-regression
+   python -m pip install epcsaft epcsaft-equilibrium epcsaft-regression
+
+The commands above describe the release target. Until the extension packages
+are published, use the local ``dist/`` proof or the monorepo uv workspace.
+Production equilibrium extension artifacts require a real Ipopt SDK; no-Ipopt
+builds are not production equilibrium package evidence.
 
 Local path dependency
 ---------------------
@@ -134,10 +154,14 @@ Native IPOPT SDK support
 IPOPT support is a native build dependency for constrained-NLP equilibrium
 routes in the current transition build, not a Python extra. Long term, Ipopt
 belongs to the ``epcsaft-equilibrium`` extension package. On Windows, the
-preferred local dependency is the SDK root at
-``%USERPROFILE%\Documents\deps\ipopt-msvc``. Source and editable installs use
-that SDK automatically when the directory exists; otherwise point the build
-backend at an Ipopt install root explicitly:
+supported default SDK probes are
+``%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc``,
+``%USERPROFILE%\.epcsaft\deps\ipopt-msvc``, and the legacy
+``%USERPROFILE%\Documents\deps\ipopt-msvc`` path. Explicit
+``EPCSAFT_IPOPT_ROOT`` / ``EPCSAFT_PEP517_IPOPT_ROOT`` values take precedence
+and are preferred for reproducible release proof. Source and editable installs
+use a discovered SDK automatically when the directory exists; otherwise point
+the build backend at an Ipopt install root explicitly:
 
 .. code-block:: powershell
 
@@ -149,6 +173,14 @@ Use ``EPCSAFT_PEP517_IPOPT_DIR`` instead when the install provides an
 Runtime processes that execute Ipopt on Windows must expose the SDK ``bin``
 directory through both ``PATH`` and ``EPCSAFT_RUNTIME_DLL_DIRS``; repo build
 scripts do this automatically for the local SDK.
+
+``epcsaft-equilibrium`` wheels must package only the audited runtime dependency
+closure for ``epcsaft_equilibrium._native_core`` and Ipopt. The package CMake
+install step uses runtime dependency inspection and does not blindly copy every
+DLL in the SDK ``bin`` directory. Large build-time source trees such as Ceres
+``FetchContent`` checkouts are not release payload; use
+``scripts/dev/build_system_ceres.py`` or ``EPCSAFT_PEP517_CERES_DIR`` to reuse
+the local Ceres package for repeated regression extension builds.
 
 When Ipopt is compiled, import ``Equilibrium`` from ``epcsaft_equilibrium`` and
 use the certified route specs and ordinary solver tolerances for native

@@ -12,6 +12,13 @@ Start every fresh source checkout with this sequence:
 
 .. code-block:: powershell
 
+   uv run python scripts/dev/bootstrap.py
+
+The bootstrap entrypoint runs the current setup sequence and prints the next
+exact validation command:
+
+.. code-block:: powershell
+
    uv sync --no-install-project
    uv run python scripts/dev/build_epcsaft.py
    uv run python scripts/dev/doctor.py
@@ -33,8 +40,8 @@ Command matrix
      - Command
      - Use when
    * - First setup or uncertain state
-     - ``uv sync --no-install-project`` then ``uv run python scripts/dev/build_epcsaft.py`` then ``uv run python scripts/dev/doctor.py``
-     - Starting a fresh thread, after dependency changes, or after a failed import.
+     - ``uv run python scripts/dev/bootstrap.py``
+     - Starting a fresh thread, after dependency changes, or after a failed import. The command runs sync, native build, doctor, and prints the next exact command.
    * - Handoff validation
      - ``uv run python scripts/dev/validate_project.py confidence``
      - Before claiming repo runtime confidence. This includes doctor and the confidence slice.
@@ -83,6 +90,9 @@ Command matrix
    * - Package boundary
      - ``uv run python scripts/dev/build_dist.py``
      - Wheel/sdist and smoke-import validation. The default release baseline disables local Ipopt so wheels do not require Ipopt runtime DLLs. Isolated package builds default to serial native compilation to avoid Windows Ceres memory spikes; use ``--parallel N`` only when the machine has enough headroom.
+   * - Release install proof
+     - ``uv run python scripts/dev/check_release_installs.py --dist-dir dist``
+     - Local built-artifact install proof for ``epcsaft``, ``epcsaft-equilibrium``, ``epcsaft-regression``, and the combined install set. Run after provider and extension dist builds.
    * - Installed/source diagnostic
      - ``uv run python -m epcsaft``
      - Confirm package and ``epcsaft._core`` paths.
@@ -99,8 +109,12 @@ The canonical local native build command is:
 That command uses ``--profile fast`` by default: Ceres and CppAD are enabled,
 and Ipopt is enabled when a native install is available. On Windows, the script
 first honors explicit ``EPCSAFT_IPOPT_ROOT`` /
-``EPCSAFT_PEP517_IPOPT_ROOT`` values and otherwise uses the local SDK default
-``%USERPROFILE%\Documents\deps\ipopt-msvc`` when present. In this transition
+``EPCSAFT_PEP517_IPOPT_ROOT`` values and otherwise probes
+``%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc``,
+``%USERPROFILE%\.epcsaft\deps\ipopt-msvc``, then the legacy
+``%USERPROFILE%\Documents\deps\ipopt-msvc`` SDK path. ``bootstrap.py`` and
+``doctor.py`` report the active Ipopt SDK root, its source, all default probe
+paths, and the exact environment assignment to change it. In this transition
 checkout, Ceres is enabled by default for native regression builds, CppAD is
 required for derivative-capable provider builds, and Ipopt-enabled equilibrium
 routes require an Ipopt-enabled native build. ADR 0005 assigns final Ceres
@@ -141,7 +155,23 @@ provider SDK and installed-provider SDK paths are exercised:
 
 The extension helper fails if the provider SDK CMake metadata is missing.
 Equilibrium package builds require a real Ipopt SDK; regression package builds
-require Ceres through the package-local CMake configuration.
+require Ceres through the package-local CMake configuration. The helper accepts
+``--ceres-dir`` or ``EPCSAFT_PEP517_CERES_DIR`` and otherwise auto-detects the
+repo-local reusable Ceres package built by
+``uv run python scripts/dev/build_system_ceres.py``. If that cache is missing,
+only the regression package build uses Ceres ``FetchContent``; this is
+build-time dependency work, not runtime wheel payload.
+
+After building provider and extension distributions, prove the install matrix
+from local artifacts without PyPI:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/check_release_installs.py --dist-dir dist
+
+That helper installs from ``dist/`` with ``--no-index --find-links`` and smoke
+imports the requested provider and extension native modules. It does not publish
+to PyPI.
 
 .. list-table::
    :header-rows: 1
@@ -187,12 +217,15 @@ Do not use ``--clean`` for routine validation. ``uv run python scripts/dev/build
 If Ceres becomes part of a repeated local source-checkout workflow, build Ceres
 once outside ``build/dev`` and use the system-Ceres path instead of vendoring it
 through ``FetchContent`` on every clean full-profile configure. The default
-helper output can be used explicitly by the dev build:
+helper output can be used explicitly by the dev build and is auto-detected by
+``scripts/dev/build_extension_dists.py`` for regression extension package
+proof:
 
 .. code-block:: powershell
 
    uv run python scripts/dev/build_system_ceres.py --parallel 4
    uv run python scripts/dev/build_epcsaft.py --profile full --use-system-ceres --ceres-dir C:\path\to\lib\cmake\Ceres
+   uv run python scripts/dev/build_extension_dists.py --mode monorepo --ceres-dir C:\path\to\lib\cmake\Ceres --ipopt-root C:\path\to\ipopt-msvc
 
 ``--ceres-dir`` should point at the directory containing ``CeresConfig.cmake``. Ceres' own CMake documentation supports consuming either an installed Ceres package or an exported Ceres build directory through ``find_package(Ceres)`` and ``Ceres::ceres``.
 
@@ -303,6 +336,13 @@ and representative solver certification.
 Troubleshooting
 ---------------
 
-Run ``uv run python scripts/dev/doctor.py`` whenever imports, tool paths, ``_core`` state, or generated-output tracking are unclear. It reports the active Python, git ref, uv/cmake/ninja paths, ``epcsaft`` import path, ``epcsaft._core`` path, required native symbol presence, generated artifact state, and the next recommended command.
+Run ``uv run python scripts/dev/doctor.py`` whenever imports, tool paths,
+``_core`` state, extension-native state, provider SDK metadata, or
+generated-output tracking are unclear. It reports the active Python, git ref,
+uv/cmake/ninja paths, provider and extension native module paths, provider SDK
+CMake/source metadata, local Ceres/Ipopt SDK discovery, native artifact
+freshness, generated artifact state, and the next recommended command. Use
+``--require-provider-sdk --require-extension-native`` when package-boundary
+proof needs both provider SDK metadata and extension-owned native modules.
 
 If ``scripts/dev/build_epcsaft.py`` appears slow, run ``uv run python scripts/dev/build_epcsaft.py --status`` first. If the status output shows a stale Ninja lock and live repo-owned build processes, resolve those processes before retrying. If the status output is clean, check whether ``build/dev/CMakeCache.txt`` reports ``CMAKE_GENERATOR:INTERNAL=MinGW Makefiles``. A clean one-time switch to Ninja can materially reduce rebuild overhead on Windows systems where Ninja is already installed. Clean Ceres configure/builds can still take longer than incremental rebuilds; ``--build-only --parallel 10`` is the intended C++ edit loop after the tree is configured.

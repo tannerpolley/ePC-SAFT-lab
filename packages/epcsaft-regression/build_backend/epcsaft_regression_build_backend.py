@@ -12,6 +12,8 @@ from scikit_build_core import build as _scikit_build
 
 PACKAGE_NAME = "epcsaft-regression"
 PROVIDER_SDK_RELATIVE_CONFIG = Path("src") / "epcsaft" / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake"
+CERES_VERSION = "2.2.0"
+DEFAULT_SYSTEM_CERES_RELATIVE = Path("build") / "system-ceres" / CERES_VERSION
 
 
 def _sandbox_safe_mkdtemp(suffix=None, prefix=None, dir=None):
@@ -45,6 +47,22 @@ def _source_root() -> Path:
 
 def _packages_root() -> Path:
     return _source_root().parent
+
+
+def _repo_root() -> Path:
+    return _source_root().parents[1]
+
+
+def _repo_local_ceres_config_dir() -> Path | None:
+    install_dir = _repo_root() / DEFAULT_SYSTEM_CERES_RELATIVE / "install"
+    candidates = (
+        install_dir / "lib" / "cmake" / "Ceres",
+        install_dir / "lib64" / "cmake" / "Ceres",
+    )
+    for candidate in candidates:
+        if any((candidate / name).is_file() for name in ("CeresConfig.cmake", "ceres-config.cmake")):
+            return candidate.resolve()
+    return None
 
 
 def _has_build_dir(config: dict) -> bool:
@@ -145,7 +163,7 @@ def _apply_build_config(config_settings=None, *, native_required: bool = True) -
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_CPPAD", "ON")
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_CERES", "ON")
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_IPOPT", "OFF")
-    ceres_dir = os.environ.get("EPCSAFT_PEP517_CERES_DIR") or os.environ.get("Ceres_DIR")
+    ceres_dir = os.environ.get("EPCSAFT_PEP517_CERES_DIR") or os.environ.get("Ceres_DIR") or _repo_local_ceres_config_dir()
     if ceres_dir:
         _set_config_default(config, "cmake.define.EPCSAFT_USE_SYSTEM_CERES", "ON")
         _set_config_default(config, "cmake.define.Ceres_DIR", str(Path(ceres_dir).expanduser().resolve()))
