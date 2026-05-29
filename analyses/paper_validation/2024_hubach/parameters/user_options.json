@@ -2,7 +2,7 @@
   "elec_model": {
     "rel_perm": {
       "rule": "combined",
-      "differential_mode": "analytical"
+      "differential_mode": "cppad"
     },
     "hc_model": {
       "dadx_differential_mode": "analytical"
@@ -29,7 +29,7 @@
       "dielectric_saturation": true,
       "bulk_mode": "mix",
       "mu_born_model": {
-        "differential_mode": "analytical",
+        "differential_mode": "cppad",
         "comp_dep_rel_perm": true,
         "include_sum_term": true,
         "comp_dep_delta_d": true

@@ -1,0 +1,22 @@
+# Matplotlib plot-set style contract.
+# Edit this sidecar, then rerun the owning render script.
+figure:
+  file: "figure_6.png"
+  format: "png"
+axes:
+  - index: 0
+    title: ""
+    xlabel: "$x_{MeOH}$ / -"
+    ylabel: "$\\Delta G_i^{trans,\\infty,x}$ / kJ mol$^{-1}$"
+  - index: 1
+    title: ""
+    xlabel: "$x_{MeOH}$ / -"
+    ylabel: "$\\Delta G_i^{trans,\\infty,x}$ / kJ mol$^{-1}$"
+  - index: 2
+    title: ""
+    xlabel: "$x_{EtOH}$ / -"
+    ylabel: "$\\Delta G_i^{trans,\\infty,x}$ / kJ mol$^{-1}$"
+  - index: 3
+    title: ""
+    xlabel: "$x_{EtOH}$ / -"
+    ylabel: "$\\Delta G_i^{trans,\\infty,x}$ / kJ mol$^{-1}$"

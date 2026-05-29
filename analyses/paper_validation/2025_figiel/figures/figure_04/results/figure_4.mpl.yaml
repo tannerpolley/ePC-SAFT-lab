@@ -1,0 +1,10 @@
+# Matplotlib plot-set style contract.
+# Edit this sidecar, then rerun the owning render script.
+figure:
+  file: "figure_4.png"
+  format: "png"
+axes:
+  - index: 0
+    title: "Gibbs energy of solvation at infinite dilution in water of different ions at 298.15 K and 1 bar."
+    xlabel: ""
+    ylabel: "$-\\Delta G_i^{solv,\\infty,x}$ / kJ mol$^{-1}$"

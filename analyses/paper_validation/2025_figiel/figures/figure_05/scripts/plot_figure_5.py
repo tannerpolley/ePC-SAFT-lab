@@ -27,8 +27,6 @@ from shared import _common as common
 from shared import figure_data
 
 OUTPUT = Path(__file__).with_name("figure_5.png")
-OUTPUT_A = Path(__file__).with_name("figure_5a.png")
-OUTPUT_B = Path(__file__).with_name("figure_5b.png")
 SERIES = {
     "Li": {"color": common.ORGANIC_COLOR, "marker": "^"},
     "Na": {"color": common.GREEN_COLOR, "marker": "s"},
@@ -93,33 +91,6 @@ def main() -> None:
     fig.subplots_adjust(left=0.08, right=0.98, bottom=0.16, top=0.84, wspace=0.16)
     common.save_figure(fig, OUTPUT)
     plt.close(fig)
-
-    handles_a, labels_a = [], []
-    tmp_fig, tmp_ax = plt.subplots()
-    _plot_panel_a(tmp_ax)
-    handles_a, labels_a = tmp_ax.get_legend_handles_labels()
-    plt.close(tmp_fig)
-    tmp_fig, tmp_ax = plt.subplots()
-    _plot_panel_b(tmp_ax)
-    handles_b, labels_b = tmp_ax.get_legend_handles_labels()
-    plt.close(tmp_fig)
-
-    common.save_panel_figure(
-        _plot_panel_a,
-        OUTPUT_A,
-        figsize=(4.1, 3.6),
-        legend_handles=handles_a,
-        legend_labels=labels_a,
-        legend_kwargs={"loc": "upper left", "fontsize": 8},
-    )
-    common.save_panel_figure(
-        _plot_panel_b,
-        OUTPUT_B,
-        figsize=(4.1, 3.6),
-        legend_handles=handles_b,
-        legend_labels=labels_b,
-        legend_kwargs={"loc": "upper left", "fontsize": 8},
-    )
 
 
 if __name__ == "__main__":
