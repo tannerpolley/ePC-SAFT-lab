@@ -32,7 +32,7 @@ jobs:
         run: uv run python scripts/dev/build_epcsaft.py --clean --disable-ipopt
 
       - name: Validate no-Ipopt native smoke contracts
-        run: uv run python run_pytest.py tests/api/package/test_root_exports.py tests/native/state/test_derivative_runtime_contract.py tests/native/contracts/test_ceres_cppad_build_contract.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
+        run: uv run python run_pytest.py tests/api/package/test_root_exports.py tests/native/state/test_derivative_runtime_contract.py packages/epcsaft-regression/tests/contracts/test_ceres_cppad_build_contract.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
 
   cppad-build:
     name: native CppAD derivative contract
