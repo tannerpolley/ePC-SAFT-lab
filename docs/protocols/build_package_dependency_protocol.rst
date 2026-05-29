@@ -47,7 +47,9 @@ That profile keeps CppAD ON while setting
 ``EPCSAFT_ENABLE_CERES=OFF``, ``EPCSAFT_ENABLE_IPOPT=OFF``,
 ``EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF``, and
 ``EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF`` so provider ``epcsaft._core`` exports
-provider-owned symbols only.
+provider-owned symbols only. The repo build helper also writes
+``EPCSAFT_BUILD_PROFILE=provider`` into CMake cache so Ninja regeneration keeps
+the provider-only flags pinned instead of falling back to transition defaults.
 
 Regression and equilibrium are transition capabilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -360,6 +360,7 @@ def _status_lines(*, stale_lock_seconds: int = STALE_LOCK_SECONDS) -> list[str]:
     generator = _configured_generator() or "<unconfigured>"
     compiler = _configured_cxx_compiler() or "<unconfigured>"
     build_type = _cmake_cache_value("CMAKE_BUILD_TYPE") or "<unconfigured>"
+    build_profile = _cmake_cache_value("EPCSAFT_BUILD_PROFILE") or "<unconfigured>"
     ceres = _cmake_cache_value("EPCSAFT_ENABLE_CERES") or "<unconfigured>"
     regression_native = _cmake_cache_value("EPCSAFT_ENABLE_REGRESSION_NATIVE") or "<unconfigured>"
     system_ceres = _cmake_cache_value("EPCSAFT_USE_SYSTEM_CERES") or "<unconfigured>"
@@ -388,6 +389,7 @@ def _status_lines(*, stale_lock_seconds: int = STALE_LOCK_SECONDS) -> list[str]:
         f"configured_generator: {generator}",
         f"configured_cxx_compiler: {compiler}",
         f"build_type: {build_type}",
+        f"build_profile: {build_profile}",
         f"ceres_configured: {ceres}",
         f"regression_native_configured: {regression_native}",
         f"system_ceres_configured: {system_ceres}",
@@ -494,6 +496,7 @@ def _generator_args(env: dict[str, str], configured_generator: str | None = None
 def _configure(
     env: dict[str, str],
     *,
+    build_profile: str,
     enable_ceres: bool,
     enable_equilibrium_native: bool,
     enable_regression_native: bool,
@@ -514,6 +517,7 @@ def _configure(
         "-B",
         str(BUILD_DIR),
         "-DEPCSAFT_DEV_INPLACE=ON",
+        f"-DEPCSAFT_BUILD_PROFILE={build_profile}",
         f"-DEPCSAFT_ENABLE_CERES={'ON' if enable_ceres else 'OFF'}",
         f"-DEPCSAFT_USE_SYSTEM_CERES={'ON' if use_system_ceres else 'OFF'}",
         "-DEPCSAFT_ENABLE_CPPAD=ON",
@@ -774,6 +778,7 @@ def main() -> int:
             "configure",
             lambda: _configure(
                 env,
+                build_profile=args.profile,
                 enable_ceres=settings.enable_ceres,
                 enable_equilibrium_native=settings.enable_equilibrium_native,
                 enable_regression_native=settings.enable_regression_native,

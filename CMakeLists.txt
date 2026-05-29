@@ -24,6 +24,19 @@ option(EPCSAFT_ENABLE_CPPAD "Enable package-wide CppAD support" ON)
 option(EPCSAFT_USE_SYSTEM_CPPAD "Use installed CppAD instead of FetchContent" OFF)
 option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)
 option(EPCSAFT_USE_SYSTEM_IPOPT "Use an installed Ipopt package for native equilibrium NLP solves" ON)
+if(DEFINED EPCSAFT_BUILD_PROFILE)
+    set(EPCSAFT_BUILD_PROFILE_INITIAL "${EPCSAFT_BUILD_PROFILE}")
+else()
+    set(EPCSAFT_BUILD_PROFILE_INITIAL "custom")
+endif()
+set(
+    EPCSAFT_BUILD_PROFILE
+    "${EPCSAFT_BUILD_PROFILE_INITIAL}"
+    CACHE STRING
+    "Named native dependency profile used by repo build helpers; provider forces the core-only boundary lane"
+    FORCE
+)
+set_property(CACHE EPCSAFT_BUILD_PROFILE PROPERTY STRINGS custom fast full ipopt provider)
 option(
     EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE
     "Enable transition equilibrium native code and pybind registration in this monorepo checkout"
@@ -38,6 +51,14 @@ set(EPCSAFT_IPOPT_ROOT "" CACHE PATH "Root directory for an installed Ipopt tree
 option(EPCSAFT_WARNINGS_AS_ERRORS "Treat native warnings as errors" OFF)
 option(EPCSAFT_ENABLE_SANITIZERS "Enable ASAN/UBSAN in debug builds" OFF)
 set(EPCSAFT_CERES_VERSION "2.2.0")
+
+if(EPCSAFT_BUILD_PROFILE STREQUAL "provider")
+    set(EPCSAFT_ENABLE_CERES OFF CACHE BOOL "Enable Ceres Solver support for native regression solves" FORCE)
+    set(EPCSAFT_ENABLE_IPOPT OFF CACHE BOOL "Enable native Ipopt support for production equilibrium NLP solves" FORCE)
+    set(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE OFF CACHE BOOL "Enable transition equilibrium native code and pybind registration in this monorepo checkout" FORCE)
+    set(EPCSAFT_ENABLE_REGRESSION_NATIVE OFF CACHE BOOL "Enable transition regression native code and pybind registration in this monorepo checkout" FORCE)
+    set(EPCSAFT_USE_SYSTEM_IPOPT OFF CACHE BOOL "Use an installed Ipopt package for native equilibrium NLP solves" FORCE)
+endif()
 
 if(NOT EPCSAFT_ENABLE_CPPAD)
     message(FATAL_ERROR "EPCSAFT_ENABLE_CPPAD=OFF is not supported; derivative-capable package builds require CppAD.")
