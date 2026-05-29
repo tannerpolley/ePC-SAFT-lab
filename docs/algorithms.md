@@ -19,7 +19,7 @@ The LaTeX document remains the current source of truth; this Markdown view and `
 - Description: Defines the common native NLP shape consumed by the Ipopt adapter.
 - Change note: Initial algorithm-registry entry for the shared native NLP contract.
 - LaTeX: `docs/latex/algorithms.tex:17`
-- Code owners: `src/epcsaft/native/equilibrium/core/nlp_problem.h:33` (class NlpProblem {)
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/nlp_problem.h:33` (class NlpProblem {)
 
 The `NlpProblem` contract is the common native interface for objective,
 constraint, Jacobian, bounds, scaling, and diagnostics payloads used by
@@ -48,7 +48,7 @@ Ipopt-backed production routes.
 - Description: Bridges the package NLP contract to Ipopt without owning route equations.
 - Change note: Initial algorithm-registry entry for native Ipopt dispatch.
 - LaTeX: `docs/latex/algorithms.tex:35`
-- Code owners: `src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp:524` (class IpoptTnlpAdapter final : public Ipopt::TNLP {)
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp:524` (class IpoptTnlpAdapter final : public Ipopt::TNLP {)
 
 The Ipopt adapter owns solver invocation, option transfer, status mapping, and
 diagnostic capture for constrained NLP routes. Route-specific residuals and
@@ -77,7 +77,7 @@ Jacobians remain in their route problem owners.
 - Description: Shared adapter pattern for currently supported native Ceres regression routes.
 - Change note: Initial algorithm-registry entry for native Ceres regression dispatch.
 - LaTeX: `docs/latex/algorithms.tex:53`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1059` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `src/epcsaft/native/regression/ceres_regression.cpp:563` (ceres::Solver::Options ceres_regression_options_cpp(int max_num_iterations) {)
+- Code owners: `src/epcsaft/native/bindings/module.cpp:1071` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:511` (ceres::Solver::Options ceres_regression_options_cpp(int max_num_iterations) {)
 
 The Ceres adapter family owns native least-squares solve setup for supported
 regression routes. It is separate from Ipopt and does not call Ipopt routes.
@@ -106,7 +106,7 @@ regression routes. It is separate from Ipopt and does not call Ipopt routes.
 - Description: Solves production neutral bubble/dew pressure and temperature route specs through the native selector core.
 - Change note: Neutral VLE selector expansion promotes bubble/dew pressure and temperature routes through the shared thermodynamic constrained core.
 - LaTeX: `docs/latex/algorithms.tex:72`
-- Code owners: `src/epcsaft/native/equilibrium/core/selector_core.cpp:566` (SelectorContract evaluate_selector_contract(), `src/epcsaft/native/equilibrium/core/selector_core.cpp:626` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `src/epcsaft/native/equilibrium/register_bindings.cpp:1250` (m.def("_native_equilibrium_selector_contract", [](), `src/epcsaft/native/equilibrium/register_bindings.cpp:1300` (m.def("_native_equilibrium_selector_route_result", [](), `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:2790` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:2919` (NeutralTwoPhaseEosRouteResult solve_temperature_route(), `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py:442` (def _solve_selector_route()
+- Code owners: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py:442` (def _solve_selector_route(), `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp:566` (SelectorContract evaluate_selector_contract(), `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp:626` (epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_selector_route(), `packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp:1250` (m.def("_native_equilibrium_selector_contract", [](), `packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp:1300` (m.def("_native_equilibrium_selector_route_result", [](), `packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:2790` (NeutralTwoPhaseEosRouteResult solve_pressure_route(), `packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:2919` (NeutralTwoPhaseEosRouteResult solve_temperature_route()
 
 This entry exposes the trusted neutral bubble/dew proof set through route specs
 configured by `Equilibrium(mixture, route=..., ...)` and executed by
@@ -141,7 +141,7 @@ derivatives plus postsolve certification.
 - Description: Solves certified neutral two-phase TP flash through the native selector core.
 - Change note: Neutral VLE selector expansion exposes TP flash only after selector-owned seed generation, residual closure, and postsolve certification.
 - LaTeX: `docs/latex/algorithms.tex:93`
-- Code owners: `src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp:3044` (NeutralTwoPhaseEosRouteResult solve_flash_route()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp:3044` (NeutralTwoPhaseEosRouteResult solve_flash_route()
 
 This entry exposes the trusted neutral two-phase TP flash proof through the
 `flash` route spec configured by
@@ -182,7 +182,7 @@ acceptance criterion.
 - Description: Solves certified neutral nonassociating LLE through the native selector core.
 - Change note: Neutral LLE is production-exposed only for the current neutral nonassociating activation-row proof.
 - LaTeX: `docs/latex/algorithms.tex:117`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2785` (NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:2785` (NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route()
 
 This entry exposes the trusted neutral nonassociating LLE proof through the
 `lle` route spec configured by
@@ -221,7 +221,7 @@ LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
 - Description: Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance.
 - Change note: Current deterministic screening supports existing neutral routes but is not full HELD; generalized neutral, associating, electrolyte, and reactive families still require separate admission.
 - LaTeX: `docs/latex/algorithms.tex:140`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:718` (void append_tpd_candidates_for_reference_block()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:718` (void append_tpd_candidates_for_reference_block()
 
 This algorithm evaluates neutral tangent-plane distance candidates for route
 discovery and certification in the current neutral two-phase TP flash and
@@ -256,7 +256,7 @@ lower-free-energy candidates and mass-balance incompleteness.
 - Description: Adds continuous neutral TPD refinement diagnostics distinct from deterministic candidate screening.
 - Change note: This is the Stage 9 continuous-TPD layer. It does not satisfy the HELD Stage II dual cutting-plane requirement by itself.
 - LaTeX: `docs/latex/algorithms.tex:161`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:577` (NeutralTpdCandidate refine_neutral_tpd_candidate()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:577` (NeutralTpdCandidate refine_neutral_tpd_candidate()
 
 This algorithm starts from deterministic neutral TPD trial compositions and
 performs a bounded coordinate search on the composition simplex. Each trial
@@ -289,7 +289,7 @@ TPD value, start source, iteration count, and convergence status.
 - Description: Exposes Stage 9 phase-discovery status fields for deterministic screening, continuous TPD, HELD Stage I, HELD Stage II, and HELD Stage III.
 - Change note: Stage II now reports an executable candidate bound-gap audit; an open gap remains incomplete HELD evidence until the outer/inner dual loop converges. Stage III diagnostics require the current Ipopt route to report Ipopt success and solve_succeeded before postsolve certification can be counted.
 - LaTeX: `docs/latex/algorithms.tex:181`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:997` (void finalize_stage9_phase_discovery()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:997` (void finalize_stage9_phase_discovery()
 
 This diagnostic layer makes the phase-discovery ladder auditable. Current
 deterministic screening remains seed and certification support. Continuous TPD
@@ -336,7 +336,7 @@ certification is evaluated.
 - Description: Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes.
 - Change note: Deterministic screening remains distinct from continuous TPD and must not be promoted as full HELD evidence.
 - LaTeX: `docs/latex/algorithms.tex:208`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2348` (NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:2348` (NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery()
 
 This algorithm reduces dependence on user-supplied phase guesses by using
 neutral TPD or volume-composition trial problems to generate deterministic
@@ -369,7 +369,7 @@ used as generalized production evidence by itself.
 - Description: Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly.
 - Change note: Current utility-route support prevents accepting locally stable but mass-balance-incomplete phase sets; among mass-feasible pairs it now chooses the pair that closes the finite candidate TPD bound audit before route assembly. Generalized admission still requires full HELD.
 - LaTeX: `docs/latex/algorithms.tex:228`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:813` (void select_two_phase_candidate_set()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:813` (void select_two_phase_candidate_set()
 
 This algorithm solves the small candidate phase-fraction feasibility problem
 before final route assembly. A candidate set that cannot reconstruct the feed
@@ -406,7 +406,7 @@ finite candidate bound gap open.
 - Description: Adds phase-set stability certification after current neutral Ipopt solves.
 - Change note: Establishes optimizer success as insufficient for generalized phase-equilibrium acceptance; current implementation is limited to neutral TP flash and neutral nonassociating LLE.
 - LaTeX: `docs/latex/algorithms.tex:250`
-- Code owners: `src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp:2527` (NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve()
+- Code owners: `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp:2527` (NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve()
 
 This algorithm runs after an Ipopt route returns finite variables. It checks
 stability, phase distinctness, candidate completeness, and route certification
@@ -507,7 +507,7 @@ same tolerance as the exact solve.
 - Description: Fits currently supported pure-neutral parameter targets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-neutral regression.
 - LaTeX: `docs/latex/algorithms.tex:312`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1054` (m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);), `src/epcsaft/native/regression/ceres_regression.cpp:576` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {), `src/epcsaft/regression/core.py:2402` (def fit_pure_neutral(), `src/epcsaft/regression/core.py:2737` (def fit_pure_parameters()
+- Code owners: `src/epcsaft/native/bindings/module.cpp:1066` (m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2404` (def fit_pure_neutral(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2739` (def fit_pure_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:524` (class PureNeutralCeresCostFunction final : public ceres::CostFunction {)
 
 This entry covers the implemented nonassociating pure-neutral native Ceres route
 for `m`, `\sigma`, and `\epsilon/k_B`. It is not a production Ceres
@@ -552,7 +552,7 @@ $$
 - Description: Fits currently supported pure-ion and Born-related target sets through native Ceres.
 - Change note: Initial algorithm-registry entry for pure-ion regression; caveat preserves current target-family limits.
 - LaTeX: `docs/latex/algorithms.tex:331`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1059` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `src/epcsaft/native/regression/ceres_regression.cpp:1535` (class PureIonCeresCostFunction final : public ceres::CostFunction {), `src/epcsaft/regression/core.py:2785` (def fit_pure_ion(), `src/epcsaft/regression/core.py:2988` (def fit_liquid_electrolyte_parameters()
+- Code owners: `src/epcsaft/native/bindings/module.cpp:1071` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2787` (def fit_pure_ion(), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2990` (def fit_liquid_electrolyte_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1483` (class PureIonCeresCostFunction final : public ceres::CostFunction {)
 
 This entry is limited to the currently implemented pure-ion target surface. It
 does not claim support for association-affecting target kinds merely because the
@@ -581,7 +581,7 @@ native target-kind registry knows their labels.
 - Description: Fits the currently implemented constant-k_ij binary parameter route through native Ceres.
 - Change note: Initial algorithm-registry entry keeps l_ij and k_hb_ij out of the claim until implementation evidence exists.
 - LaTeX: `docs/latex/algorithms.tex:349`
-- Code owners: `src/epcsaft/native/bindings/module.cpp:1059` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `src/epcsaft/native/regression/ceres_regression.cpp:1658` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {), `src/epcsaft/regression/core.py:2814` (def fit_binary_parameters()
+- Code owners: `src/epcsaft/native/bindings/module.cpp:1071` (m.def("_fit_generic_native_ceres", &fit_generic_native_ceres_binding);), `packages/epcsaft-regression/src/epcsaft_regression/core.py:2816` (def fit_binary_parameters(), `packages/epcsaft-regression/native/regression/ceres_regression.cpp:1606` (class BinaryKijCeresCostFunction final : public ceres::CostFunction {)
 
 This entry intentionally does not claim native optimizer support for every
 binary parameter family. It is not a production Ceres optimizer for `l_{ij}`
