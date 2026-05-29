@@ -61,8 +61,14 @@ rg "from tests\.support|import tests\.support" packages/epcsaft-equilibrium/test
 if ($LASTEXITCODE -eq 0) { throw "package-local extension tests import root tests.support" }
 if ($LASTEXITCODE -gt 1) { exit $LASTEXITCODE }
 Write-Output "no package-local tests.support imports found"
-if (Test-Path -LiteralPath 'tests\native\equilibrium') { rg --files tests/native/equilibrium }
-if (Test-Path -LiteralPath 'tests\native\regression') { rg --files tests/native/regression }
+$legacyNativeTests = @()
+foreach ($path in @('tests\native\equilibrium', 'tests\native\regression')) {
+  if (Test-Path -LiteralPath $path) {
+    $legacyNativeTests += @(Get-ChildItem -LiteralPath $path -Recurse -File)
+  }
+}
+if ($legacyNativeTests.Count -gt 0) { $legacyNativeTests.FullName; throw "root extension-owned native tests remain" }
+Write-Output "no root extension-owned native tests found"
 ```
 
 Closure proof:
