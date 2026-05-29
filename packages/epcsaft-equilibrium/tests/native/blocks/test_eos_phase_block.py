@@ -6,7 +6,7 @@ import pytest
 import epcsaft
 from epcsaft.state.native_adapter import ePCSAFTMixture
 import epcsaft._core as _core
-from tests.support.runtime_cases import _ionic_params
+from equilibrium_support.runtime_cases import _ionic_params
 
 
 def _neutral_binary_mixture() -> ePCSAFTMixture:

@@ -6,7 +6,7 @@ import epcsaft._core as _core
 from epcsaft.frontend import Mixture
 from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
-from tests.support.equilibrium_cases import (
+from equilibrium_support.equilibrium_cases import (
     _ionic_mixture,
     _methanol_cyclohexane_mixture,
     _neutral_binary_mixture,

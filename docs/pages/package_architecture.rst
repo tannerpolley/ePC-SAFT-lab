@@ -176,9 +176,12 @@ without probing private modules.
 Repository Layout
 -----------------
 
-``src/epcsaft`` contains the package. ``tests`` contains package/API/native
-contracts. ``data/reference`` is the canonical source-checkout reference-data
-library. ``analyses`` contains paper-validation and analysis workflows with
+``src/epcsaft`` contains the provider package. Root ``tests`` contains provider,
+repo/workflow, build/package, docs/registry, integration, and cross-package
+boundary contracts. ``packages/epcsaft-equilibrium/tests`` and
+``packages/epcsaft-regression/tests`` contain extension-owned API, native, and
+solver-dependency tests. ``data/reference`` is the canonical source-checkout
+reference-data library. ``analyses`` contains paper-validation and analysis workflows with
 analysis-owned ``parameters``, ``figures/<figure_id>/source``,
 ``figures/<figure_id>/results``, ``tables``, and ``shared`` artifacts.
 

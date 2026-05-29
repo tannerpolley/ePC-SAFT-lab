@@ -69,7 +69,7 @@ Selector and family-admission seam:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp`
-- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
+- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`
 - `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 
 Shared phase-NLP seam:
@@ -83,16 +83,16 @@ Shared phase-NLP seam:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/variable_transform.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
-- `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
+- `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
 
 Current neutral utility-route anchors:
 
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
-- `tests/native/equilibrium/results/test_neutral_vle_reference_values.py`
-- `tests/native/equilibrium/results/test_neutral_lle_reference_values.py`
-- `tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py`
+- `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
+- `packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py`
+- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py`
 
 Parameter, mixture, and capability seams:
 
@@ -288,7 +288,7 @@ References:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/register_bindings.cpp`
 - `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
-- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
+- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`
 
 Substeps:
 
@@ -397,7 +397,7 @@ References:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/activated_equilibrium_nlp.cpp`
 - `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
-- `tests/native/equilibrium/diagnostics/test_route_metadata_contracts.py`
+- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_route_metadata_contracts.py`
 
 Substeps:
 
@@ -591,7 +591,7 @@ References:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/second_order.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/variable_transform.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
-- `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
+- `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
 - `docs/roadmaps/generalized_fluid_phase_equilibrium.md`
 
 Substeps:
@@ -665,9 +665,9 @@ References:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `docs/algorithms.md`
 - `docs/latex/algorithms.tex`
-- `tests/native/equilibrium/results/test_neutral_vle_reference_values.py`
-- `tests/native/equilibrium/results/test_neutral_lle_reference_values.py`
-- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
+- `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
+- `packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py`
+- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`
 
 Substeps:
 
@@ -726,7 +726,7 @@ References:
 - `packages/epcsaft-equilibrium/native/equilibrium/core/second_order.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.h`
 - `packages/epcsaft-equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
-- `tests/native/equilibrium/blocks/test_ipopt_adapter_contract.py`
+- `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
 
 Substeps:
@@ -823,7 +823,7 @@ References:
 - `docs/latex/algorithms.tex`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
-- `tests/native/equilibrium/diagnostics/test_selector_core_contracts.py`
+- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`
 
 Substeps:
 
@@ -915,8 +915,8 @@ References:
 - `docs/roadmaps/equilibrium_benchmark_registry.yaml`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `packages/epcsaft-equilibrium/native/equilibrium/core/selector_core.cpp`
-- `tests/native/equilibrium/results/test_neutral_vle_reference_values.py`
-- `tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py`
+- `packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py`
+- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py`
 
 Substeps:
 

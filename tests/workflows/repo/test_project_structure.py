@@ -18,6 +18,7 @@ EQUILIBRIUM_TEST_ROOT = EQUILIBRIUM_PACKAGE_DIR / "tests"
 EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "native" / "equilibrium"
 REGRESSION_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft-regression"
 REGRESSION_PACKAGE_ROOT = REGRESSION_PACKAGE_DIR / "src" / "epcsaft_regression"
+REGRESSION_TEST_ROOT = REGRESSION_PACKAGE_DIR / "tests"
 ALLOWED_ROOT_PYTHON_ENTRY_FILES = {"__init__.py", "__init__.pyi", "__main__.py", "_core.pyi", "_types.py"}
 ALLOWED_NATIVE_DOMAIN_FOLDERS = {
     "autodiff",
@@ -119,15 +120,20 @@ TEST_SUBGROUP_ROOTS = {
     REPO_ROOT / "tests" / "api" / "frontend",
     REPO_ROOT / "tests" / "api" / "package",
     REPO_ROOT / "tests" / "native" / "contracts",
-    REPO_ROOT / "tests" / "native" / "equilibrium",
-    REPO_ROOT / "tests" / "native" / "equilibrium" / "blocks",
-    REPO_ROOT / "tests" / "native" / "equilibrium" / "diagnostics",
-    REPO_ROOT / "tests" / "native" / "equilibrium" / "results",
-    REPO_ROOT / "tests" / "native" / "regression",
     REPO_ROOT / "tests" / "native" / "state",
     EQUILIBRIUM_TEST_ROOT,
     EQUILIBRIUM_TEST_ROOT / "api",
     EQUILIBRIUM_TEST_ROOT / "contracts",
+    EQUILIBRIUM_TEST_ROOT / "equilibrium_support",
+    EQUILIBRIUM_TEST_ROOT / "native",
+    EQUILIBRIUM_TEST_ROOT / "native" / "blocks",
+    EQUILIBRIUM_TEST_ROOT / "native" / "diagnostics",
+    EQUILIBRIUM_TEST_ROOT / "native" / "results",
+    REGRESSION_TEST_ROOT,
+    REGRESSION_TEST_ROOT / "api",
+    REGRESSION_TEST_ROOT / "contracts",
+    REGRESSION_TEST_ROOT / "native",
+    REGRESSION_TEST_ROOT / "regression_support",
     REPO_ROOT / "tests" / "support",
     REPO_ROOT / "tests" / "workflows" / "build",
     REPO_ROOT / "tests" / "workflows" / "repo",
@@ -1266,20 +1272,43 @@ def test_reorganized_test_subgroup_roots_exist() -> None:
         assert path.is_dir(), _workspace_rel(path)
 
 
-def test_native_equilibrium_tests_stay_in_named_subfolders() -> None:
-    root = REPO_ROOT / "tests" / "native" / "equilibrium"
-    allowed_subdirs = {"blocks", "diagnostics", "results"}
-    direct_python_files = sorted(
-        path.relative_to(REPO_ROOT).as_posix() for path in root.glob("*.py")
-    )
-    actual_subdirs = sorted(
-        path.name
-        for path in root.iterdir()
-        if path.is_dir() and path.name != "__pycache__"
-    )
+def test_extension_owned_tests_are_package_local() -> None:
+    forbidden_root_extension_tests = [
+        *(_tracked_files("tests/native/equilibrium")),
+        *(_tracked_files("tests/native/regression")),
+        "tests/api/frontend/test_regression.py" if (REPO_ROOT / "tests/api/frontend/test_regression.py").exists() else "",
+        "tests/native/contracts/test_equilibrium_native_contracts.py"
+        if (REPO_ROOT / "tests/native/contracts/test_equilibrium_native_contracts.py").exists()
+        else "",
+        "tests/native/contracts/test_ceres_cppad_build_contract.py"
+        if (REPO_ROOT / "tests/native/contracts/test_ceres_cppad_build_contract.py").exists()
+        else "",
+    ]
+    assert [path for path in forbidden_root_extension_tests if path] == []
 
-    assert direct_python_files == []
-    assert actual_subdirs == sorted(allowed_subdirs)
+    expected_package_tests = {
+        EQUILIBRIUM_TEST_ROOT / "contracts" / "test_equilibrium_native_contracts.py",
+        EQUILIBRIUM_TEST_ROOT / "native" / "blocks" / "test_ipopt_adapter_contract.py",
+        EQUILIBRIUM_TEST_ROOT / "native" / "diagnostics" / "test_selector_core_contracts.py",
+        EQUILIBRIUM_TEST_ROOT / "native" / "results" / "test_neutral_lle_reference_values.py",
+        REGRESSION_TEST_ROOT / "api" / "test_regression.py",
+        REGRESSION_TEST_ROOT / "contracts" / "test_ceres_cppad_build_contract.py",
+        REGRESSION_TEST_ROOT / "native" / "test_pure.py",
+        REGRESSION_TEST_ROOT / "native" / "test_binary.py",
+        REGRESSION_TEST_ROOT / "native" / "test_liquid_electrolyte.py",
+    }
+    missing = sorted(_workspace_rel(path) for path in expected_package_tests if not path.is_file())
+    assert missing == []
+
+
+def test_package_local_extension_tests_do_not_import_root_test_support() -> None:
+    offenders: list[str] = []
+    for root in (EQUILIBRIUM_TEST_ROOT, REGRESSION_TEST_ROOT):
+        for path in sorted(root.rglob("*.py")):
+            text = path.read_text(encoding="utf-8")
+            if "tests.support" in text or "from tests" in text or "import tests" in text:
+                offenders.append(path.relative_to(REPO_ROOT).as_posix())
+    assert offenders == []
 
 
 def test_test_tree_uses_namespace_packages_without_init_markers() -> None:

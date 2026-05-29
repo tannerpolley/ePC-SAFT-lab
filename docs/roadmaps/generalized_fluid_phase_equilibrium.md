@@ -186,7 +186,7 @@ test node>` when investigating Ipopt iteration limits, seed attempts, or
 continuous TPD behavior. The debug lane requires one explicit test node; it
 cannot run a pytest slice. It enables verbose Ipopt output, stores Ipopt
 iteration history, and prints continuous-TPD trace rows.
-Whole equilibrium result files under `tests/native/equilibrium/results` are
+Whole equilibrium result files under `packages/epcsaft-equilibrium/tests/native/results` are
 guarded as opt-in sweeps.
 
 The executable Stage 9 snapshot is

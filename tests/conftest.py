@@ -9,7 +9,6 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 EQUILIBRIUM_NATIVE_TRANSITION_FILES = {
-    "tests/native/contracts/test_equilibrium_native_contracts.py",
     "tests/native/contracts/test_equilibrium_benchmark_registry.py",
     "tests/native/contracts/test_generalized_equilibrium_registry.py",
 }
@@ -28,5 +27,5 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
             relpath = Path(str(item.path)).resolve().relative_to(REPO_ROOT).as_posix()
         except ValueError:
             continue
-        if relpath.startswith("tests/native/equilibrium/") or relpath in EQUILIBRIUM_NATIVE_TRANSITION_FILES:
+        if relpath in EQUILIBRIUM_NATIVE_TRANSITION_FILES:
             item.add_marker(pytest.mark.equilibrium_native_transition)

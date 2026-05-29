@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import epcsaft._core as _core
-from tests.support.equilibrium_cases import (
+from equilibrium_support.equilibrium_cases import (
     WORKBOOK_BUBBLE_PRESSURE,
     WORKBOOK_TEMPERATURE,
     _hydrocarbon_workbook_mixture,

@@ -4,8 +4,8 @@ import pytest
 
 import epcsaft
 from epcsaft_regression import Regression
-from tests.support.hydrocarbon_cases import hydrocarbon_parameter_set
-from tests.support.regression_cases import (
+from regression_support.hydrocarbon_cases import hydrocarbon_parameter_set
+from regression_support.regression_cases import (
     _load_workbook_reference_rows,
     _neutral_fixed_parameters,
     _real_saturation_records,

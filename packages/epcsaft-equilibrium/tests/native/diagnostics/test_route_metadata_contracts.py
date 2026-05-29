@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import epcsaft._core as _core
-from tests.support.equilibrium_cases import _neutral_binary_mixture, _nonideal_lle_binary_mixture
+from equilibrium_support.equilibrium_cases import _neutral_binary_mixture, _nonideal_lle_binary_mixture
 
 pytestmark = pytest.mark.native_contract
 

@@ -11,7 +11,7 @@ import pytest
 import epcsaft
 import epcsaft._core as _core
 import epcsaft_equilibrium
-from tests.support.hydrocarbon_cases import (
+from equilibrium_support.hydrocarbon_cases import (
     HYDROCARBON_BUBBLE_P,
     HYDROCARBON_FLASH_Z,
     HYDROCARBON_LIQUID_RHO,
