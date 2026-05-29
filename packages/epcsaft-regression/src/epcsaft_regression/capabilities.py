@@ -33,8 +33,8 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
-            "tests/api/frontend/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api",
         ),
     },
     {
@@ -48,8 +48,8 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
-            "tests/native/regression/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
         ),
     },
     {
@@ -63,8 +63,8 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
-            "tests/native/regression/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
         ),
     },
     {
@@ -108,8 +108,8 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
-            "tests/native/regression/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
+            "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
         ),
     },
     {
@@ -123,8 +123,8 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_binary.py::test_ceres_binary_kij_regression_uses_native_cppad_implicit_jacobian",
-            "tests/native/regression/test_binary.py::test_ceres_binary_kij_regression_accepts_associating_neutral_rows",
+            "packages/epcsaft-regression/tests/native/test_binary.py::test_ceres_binary_kij_regression_uses_native_cppad_implicit_jacobian",
+            "packages/epcsaft-regression/tests/native/test_binary.py::test_ceres_binary_kij_regression_accepts_associating_neutral_rows",
         ),
     },
     {
@@ -168,7 +168,7 @@ REGRESSION_TARGET_KIND_ROWS = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
+            "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
         ),
     },
     {

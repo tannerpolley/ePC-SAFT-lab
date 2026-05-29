@@ -5,7 +5,7 @@ import pytest
 import epcsaft
 import epcsaft._core as _core
 import epcsaft_equilibrium
-from tests.support.hydrocarbon_cases import HYDROCARBON_LIQUID_X, HYDROCARBON_T, hydrocarbon_parameter_set
+from equilibrium_support.hydrocarbon_cases import HYDROCARBON_LIQUID_X, HYDROCARBON_T, hydrocarbon_parameter_set
 
 
 def test_neutral_bubble_uses_native_ipopt_route_gate() -> None:

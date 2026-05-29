@@ -6,7 +6,7 @@ import pytest
 
 import epcsaft
 from epcsaft_regression import fit_pure_ion, fit_pure_neutral
-from tests.support.regression_cases import _methane_like_records, _minimal_neutral_metadata
+from regression_support.regression_cases import _methane_like_records, _minimal_neutral_metadata
 
 
 def test_ceres_pure_neutral_regression_owns_optimizer_loop() -> None:

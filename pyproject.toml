@@ -104,7 +104,7 @@ pythonpath = ["src", "packages/epcsaft-equilibrium/src", "packages/epcsaft-regre
 addopts = "-ra -p no:cacheprovider"
 markers = [
     "native_contract: fast native metadata/result-contract tests that should not run broad solver route suites",
-    "equilibrium_native_transition: root-owned native equilibrium tests kept with the monorepo native source until native targets split",
+    "equilibrium_native_transition: equilibrium-extension native tests kept on the provider native bridge until native targets split",
     "native_solver: native solver or route-builder tests that may run Ipopt or expensive route setup",
     "ipopt: tests that require or exercise native Ipopt route behavior",
     "slow: tests that are intentionally excluded from routine focused validation unless explicitly targeted",

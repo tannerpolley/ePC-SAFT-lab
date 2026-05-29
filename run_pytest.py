@@ -45,17 +45,17 @@ PREDEFINED_TARGETS = {
     "native_contracts": NATIVE_CONTRACT_TEST_TARGETS,
 }
 LONG_NATIVE_TARGETS = {
-    "tests/native/equilibrium",
+    "packages/epcsaft-equilibrium/tests/native",
 }
 LONG_EQUILIBRIUM_ROUTE_TARGETS = {
     "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
-    "tests/native/equilibrium/results",
-    "tests/native/equilibrium/results/test_neutral_vle_reference_values.py",
-    "tests/native/equilibrium/results/test_neutral_lle_reference_values.py",
+    "packages/epcsaft-equilibrium/tests/native/results",
+    "packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py",
+    "packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py",
 }
 EQUILIBRIUM_DEBUG_TARGET_PREFIXES = (
     "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
-    "tests/native/equilibrium/",
+    "packages/epcsaft-equilibrium/tests/native/",
 )
 LONG_NATIVE_TARGETS_NOTE = (
     "Broad native equilibrium route-builder targets are intentionally guarded because they can take a long time. "
@@ -340,7 +340,8 @@ def _validate_equilibrium_debug_targets(positional_targets: list[str]) -> None:
     if not any(target_path.startswith(prefix) for prefix in EQUILIBRIUM_DEBUG_TARGET_PREFIXES):
         raise SystemExit(
             "--equilibrium-debug explicit targets must be equilibrium tests under "
-            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py or tests/native/equilibrium/."
+            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py or "
+            "packages/epcsaft-equilibrium/tests/native/."
         )
 
 
@@ -448,7 +449,7 @@ def main() -> int:
     predefined.add_argument(
         "--regression",
         action="store_true",
-        help="Run transition regression tests that will move to epcsaft-regression",
+        help="Run epcsaft-regression package API, native, and Ceres contract tests",
     )
     predefined.add_argument(
         "--integration",

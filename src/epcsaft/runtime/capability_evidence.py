@@ -71,7 +71,7 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
         "supported": True,
         "classification": "production_supported",
         "reason": "validated CppAD plus implicit density-sensitivity regression slice",
-        "tests": ("tests/native/regression/test_pure.py",),
+        "tests": ("packages/epcsaft-regression/tests/native/test_pure.py",),
     },
     {
         "row_family": "regression",
@@ -82,7 +82,7 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
         "supported": True,
         "classification": "production_supported",
         "reason": "validated Ceres route with CppAD and implicit density/association sensitivities",
-        "tests": ("tests/native/regression/test_binary.py",),
+        "tests": ("packages/epcsaft-regression/tests/native/test_binary.py",),
     },
     {
         "row_family": "electrolyte_property",
@@ -139,8 +139,8 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
-            "tests/api/frontend/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/api/test_regression.py::test_regression_hydrocarbon_anchor_routes_through_new_object_api",
         ),
     },
     {
@@ -154,8 +154,8 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
-            "tests/native/regression/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
         ),
     },
     {
@@ -169,8 +169,8 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
-            "tests/native/regression/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_neutral_regression_owns_optimizer_loop",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
         ),
     },
     {
@@ -214,8 +214,8 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
-            "tests/native/regression/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
+            "packages/epcsaft-regression/tests/native/test_pure.py::test_ceres_pure_ion_regression_uses_cppad_implicit_for_density_osmotic_miac",
+            "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
         ),
     },
     {
@@ -229,8 +229,8 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_binary.py::test_ceres_binary_kij_regression_uses_native_cppad_implicit_jacobian",
-            "tests/native/regression/test_binary.py::test_ceres_binary_kij_regression_accepts_associating_neutral_rows",
+            "packages/epcsaft-regression/tests/native/test_binary.py::test_ceres_binary_kij_regression_uses_native_cppad_implicit_jacobian",
+            "packages/epcsaft-regression/tests/native/test_binary.py::test_ceres_binary_kij_regression_accepts_associating_neutral_rows",
         ),
     },
     {
@@ -274,7 +274,7 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
         "derivative_backend": "cppad_implicit",
         "optimizer_backend": "native_ceres",
         "tests": (
-            "tests/native/regression/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
+            "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py::test_ceres_liquid_electrolyte_regression_uses_native_ssmds_derivatives",
         ),
     },
     {
@@ -296,8 +296,8 @@ NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/contracts/test_generalized_equilibrium_registry.py",
     "tests/native/contracts/test_equilibrium_benchmark_registry.py",
     "tests/native/contracts/test_provider_only_core_symbols.py",
-    "tests/native/equilibrium/diagnostics/test_selector_core_contracts.py",
-    "tests/native/equilibrium/diagnostics/test_native_route_diagnostics_contract.py",
+    "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+    "packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py",
 )
 
 PROVIDER_API_TEST_TARGETS: Final[tuple[str, ...]] = (
@@ -309,15 +309,16 @@ PROVIDER_API_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/api/frontend/test_state_properties.py",
 )
 
-REGRESSION_TRANSITION_TEST_TARGETS: Final[tuple[str, ...]] = (
-    "tests/api/frontend/test_regression.py",
+REGRESSION_API_TEST_TARGETS: Final[tuple[str, ...]] = (
+    "packages/epcsaft-regression/tests/api/test_regression.py",
 )
 
 REGRESSION_TEST_TARGETS: Final[tuple[str, ...]] = (
-    *REGRESSION_TRANSITION_TEST_TARGETS,
-    "tests/native/regression/test_pure.py",
-    "tests/native/regression/test_binary.py",
-    "tests/native/regression/test_liquid_electrolyte.py",
+    *REGRESSION_API_TEST_TARGETS,
+    "packages/epcsaft-regression/tests/native/test_pure.py",
+    "packages/epcsaft-regression/tests/native/test_binary.py",
+    "packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py",
+    "packages/epcsaft-regression/tests/contracts/test_ceres_cppad_build_contract.py",
 )
 
 EQUILIBRIUM_PACKAGE_CONTRACT_TARGETS: Final[tuple[str, ...]] = (
@@ -331,7 +332,6 @@ INTEGRATION_TEST_TARGETS: Final[tuple[str, ...]] = (
 
 FRONTEND_API_TEST_TARGETS: Final[tuple[str, ...]] = (
     *PROVIDER_API_TEST_TARGETS,
-    *REGRESSION_TRANSITION_TEST_TARGETS,
 )
 
 GENERIC_TEST_TARGETS: Final[tuple[str, ...]] = (
@@ -383,7 +383,10 @@ NATIVE_TEST_TARGETS: Final[tuple[str, ...]] = (
 )
 TEST_SLICES: Final[dict[str, dict[str, object]]] = {
     "generic": {"targets": GENERIC_TEST_TARGETS, "cheap_by_default": True},
-    "all": {"targets": ("tests", "packages/epcsaft-equilibrium/tests"), "cheap_by_default": False},
+    "all": {
+        "targets": ("tests", "packages/epcsaft-equilibrium/tests", "packages/epcsaft-regression/tests"),
+        "cheap_by_default": False,
+    },
     "confidence": {"targets": CONFIDENCE_TEST_TARGETS, "cheap_by_default": False},
     "provider-api": {"targets": PROVIDER_API_TEST_TARGETS, "cheap_by_default": True},
     "equilibrium-confidence": {"targets": EQUILIBRIUM_CONFIDENCE_TEST_TARGETS, "cheap_by_default": False},
@@ -415,7 +418,7 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
     "regression": {
         "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--regression", "-q")),
         "cheap_by_default": False,
-        "evidence": "doctor plus transition regression pytest slice",
+        "evidence": "doctor plus regression-extension pytest slice",
     },
     "integration": {
         "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--integration", "-q")),
@@ -442,8 +445,8 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
             ("scripts/dev/build_epcsaft.py", "--profile", "full"),
             (
                 "run_pytest.py",
-                "tests/native/regression/test_pure.py",
-                "tests/native/regression/test_binary.py",
+                "packages/epcsaft-regression/tests/native/test_pure.py",
+                "packages/epcsaft-regression/tests/native/test_binary.py",
                 "-q",
             ),
         ),

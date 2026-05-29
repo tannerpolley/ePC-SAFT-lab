@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import epcsaft._core as _core
-from tests.support.equilibrium_cases import _nonideal_lle_binary_mixture
+from equilibrium_support.equilibrium_cases import _nonideal_lle_binary_mixture
 
 
 def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None:
