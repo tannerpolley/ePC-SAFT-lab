@@ -22,13 +22,14 @@ _add_runtime_dll_directories()
 
 from epcsaft._types import InputError, SolutionError
 from epcsaft.frontend import Mixture, State
-from epcsaft.model.options import MissingModelParameterError, ModelOptions
+from epcsaft.model.options import BornModelOptions, MissingModelParameterError, ModelOptions
 from epcsaft.model.parameters import ParameterSet
 from epcsaft.model.templates import create_input_template
 from epcsaft.runtime import __version__, capabilities, provider_native_sdk, runtime_build_info
 
 __all__ = [
     "InputError",
+    "BornModelOptions",
     "MissingModelParameterError",
     "Mixture",
     "ModelOptions",

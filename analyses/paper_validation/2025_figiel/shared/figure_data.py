@@ -369,7 +369,7 @@ def generate_figure_2() -> list[dict[str, str]]:
 
     x_grid = np.linspace(0.0, 0.30, 400)
     curve_specs = (
-        ("model_rule1", "Rule 1", {"elec_model": {"rel_perm": {"rule": 1}}}),
+        ("model_rule1", "Rule 1", {"elec_model": {"relative_permittivity_rule": "linear"}}),
         ("model_empirical", "Eq. 11 fit", None),
     )
     for series_id, label, options in curve_specs:
@@ -737,7 +737,7 @@ def generate_figure_7() -> list[dict[str, str]]:
         order += 1
     for series_id, label, options in (
         ("model_default", "Figiel 2025", None),
-        ("model_rule1", "Rule 1", {"elec_model": {"rel_perm": {"rule": 1}}}),
+        ("model_rule1", "Rule 1", {"elec_model": {"relative_permittivity_rule": "linear"}}),
     ):
         m_grid, y_model = common.mean_ionic_activity_curve(
             DATASET, "NaBr", "methanol", {"methanol": 1.0}, m_max, points=500, user_options=options

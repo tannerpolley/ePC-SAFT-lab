@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -34,6 +35,32 @@ class Mixture:
             raise InputError("Mixture components must match the ParameterSet components.")
         self._runtime_parameters = _runtime_payload(parameters, self.components, self.model_options)
         self._runtime = None
+
+    @classmethod
+    def from_folder(
+        cls,
+        path: str | Path,
+        *,
+        components: Sequence[str],
+        model_options: ModelOptions | Mapping[str, object] | str | Path | None = None,
+        reference_temperature: float = 298.15,
+        reference_composition: Sequence[float] | None = None,
+    ) -> Mixture:
+        """Load a configured mixture from a parameter/options folder."""
+
+        labels = tuple(str(component) for component in components)
+        if not labels:
+            raise InputError("Mixture.from_folder requires at least one component.")
+        root = Path(path).expanduser()
+        options = coerce_model_options(root if model_options is None else model_options)
+        params = ParameterSet.from_folder(
+            root,
+            components=labels,
+            x=reference_composition,
+            T=float(reference_temperature),
+            user_options=options.to_json_dict(),
+        )
+        return cls(params, model_options=options, components=labels)
 
     @property
     def ncomp(self) -> int:

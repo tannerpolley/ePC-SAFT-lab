@@ -235,8 +235,15 @@ def create_input_template(
     _write_json(
         root / "model_options.json",
         {
+            "differential_mode": "autodiff",
             "relative_permittivity_rule": "component_linear",
-            "born_formulation": "disabled",
+            "born_model": {
+                "enabled": True,
+                "born_diameter_rule": "sigma",
+                "solvation_shell_model": True,
+                "dielectric_saturation": True,
+                "bulk_mode": "mix",
+            },
         },
     )
     if "state" in workflow_list:
