@@ -24,6 +24,16 @@ option(EPCSAFT_ENABLE_CPPAD "Enable package-wide CppAD support" ON)
 option(EPCSAFT_USE_SYSTEM_CPPAD "Use installed CppAD instead of FetchContent" OFF)
 option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)
 option(EPCSAFT_USE_SYSTEM_IPOPT "Use an installed Ipopt package for native equilibrium NLP solves" ON)
+option(
+    EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE
+    "Enable transition equilibrium native code and pybind registration in this monorepo checkout"
+    ON
+)
+option(
+    EPCSAFT_ENABLE_REGRESSION_NATIVE
+    "Enable transition regression native code and pybind registration in this monorepo checkout"
+    ON
+)
 set(EPCSAFT_IPOPT_ROOT "" CACHE PATH "Root directory for an installed Ipopt tree with include/, lib/, and bin/")
 option(EPCSAFT_WARNINGS_AS_ERRORS "Treat native warnings as errors" OFF)
 option(EPCSAFT_ENABLE_SANITIZERS "Enable ASAN/UBSAN in debug builds" OFF)
@@ -31,6 +41,12 @@ set(EPCSAFT_CERES_VERSION "2.2.0")
 
 if(NOT EPCSAFT_ENABLE_CPPAD)
     message(FATAL_ERROR "EPCSAFT_ENABLE_CPPAD=OFF is not supported; derivative-capable package builds require CppAD.")
+endif()
+if(NOT EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE AND EPCSAFT_ENABLE_IPOPT)
+    message(FATAL_ERROR "EPCSAFT_ENABLE_IPOPT=ON requires EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON.")
+endif()
+if(NOT EPCSAFT_ENABLE_REGRESSION_NATIVE AND EPCSAFT_ENABLE_CERES)
+    message(FATAL_ERROR "EPCSAFT_ENABLE_CERES=ON requires EPCSAFT_ENABLE_REGRESSION_NATIVE=ON.")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -257,6 +273,7 @@ set(EPCSAFT_NATIVE_EOS_SOURCES
     src/epcsaft/native/eos/density.cpp
     src/epcsaft/native/eos/derivatives/born_ssmds.cpp
     src/epcsaft/native/eos/fugacity.cpp
+    src/epcsaft/native/eos/pure_neutral_parameter_derivatives.cpp
     src/epcsaft/native/eos/residual_helmholtz.cpp
     src/epcsaft/native/eos/residual_properties.cpp
     src/epcsaft/native/eos/state.cpp
@@ -270,27 +287,58 @@ set(EPCSAFT_NATIVE_AUTODIFF_SOURCES
     src/epcsaft/native/autodiff/cppad_smoke_checks.cpp
     src/epcsaft/native/autodiff/implicit_sensitivity.cpp
 )
+set(
+    EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/packages/epcsaft-equilibrium"
+    CACHE PATH
+    "Monorepo package directory that owns the equilibrium extension sources"
+)
+set(
+    EPCSAFT_REGRESSION_PACKAGE_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/packages/epcsaft-regression"
+    CACHE PATH
+    "Monorepo package directory that owns the regression extension sources"
+)
+set(EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT}/native")
+set(EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_PACKAGE_ROOT}/native")
+set(EPCSAFT_EQUILIBRIUM_NATIVE_ROOT "${EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT}/equilibrium")
+set(EPCSAFT_REGRESSION_NATIVE_ROOT "${EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT}/regression")
+set(EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/register_bindings.cpp")
+if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE AND NOT EXISTS "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}")
+    message(
+        FATAL_ERROR
+        "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE requires the monorepo epcsaft-equilibrium package at "
+        "${EPCSAFT_EQUILIBRIUM_PACKAGE_ROOT}."
+    )
+endif()
+if(EPCSAFT_ENABLE_REGRESSION_NATIVE AND NOT EXISTS "${EPCSAFT_REGRESSION_NATIVE_ROOT}/ceres_regression.cpp")
+    message(
+        FATAL_ERROR
+        "EPCSAFT_ENABLE_REGRESSION_NATIVE requires the monorepo epcsaft-regression package at "
+        "${EPCSAFT_REGRESSION_PACKAGE_ROOT}."
+    )
+endif()
 set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
-    src/epcsaft/native/equilibrium/blocks/association_block.cpp
-    src/epcsaft/native/equilibrium/blocks/electrolyte_block.cpp
-    src/epcsaft/native/equilibrium/blocks/eos_phase_block.cpp
-    src/epcsaft/native/equilibrium/blocks/gibbs_blocks.cpp
-    src/epcsaft/native/equilibrium/blocks/reaction_block.cpp
-    src/epcsaft/native/equilibrium/core/activated_equilibrium_nlp.cpp
-    src/epcsaft/native/equilibrium/core/activation_plan.cpp
-    src/epcsaft/native/equilibrium/core/helpers.cpp
-    src/epcsaft/native/equilibrium/core/nlp_problem.cpp
-    src/epcsaft/native/equilibrium/core/selector_core.cpp
-    src/epcsaft/native/equilibrium/core/second_order.cpp
-    src/epcsaft/native/equilibrium/core/two_phase_eos_route.cpp
-    src/epcsaft/native/equilibrium/core/variable_transform.cpp
-    src/epcsaft/native/equilibrium/core/variable_layout.cpp
-    src/epcsaft/native/equilibrium/results/result_builder.cpp
-    src/epcsaft/native/equilibrium/routes/derived/bubble_dew.cpp
-    src/epcsaft/native/equilibrium/solvers/ipopt_adapter.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/association_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/electrolyte_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/eos_phase_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/gibbs_blocks.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/reaction_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activated_equilibrium_nlp.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activation_plan.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/helpers.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/nlp_problem.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/selector_core.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/second_order.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/two_phase_eos_route.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_transform.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_layout.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results/result_builder.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived/bubble_dew.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers/ipopt_adapter.cpp
 )
 set(EPCSAFT_NATIVE_REGRESSION_SOURCES
-    src/epcsaft/native/regression/ceres_regression.cpp
+    ${EPCSAFT_REGRESSION_NATIVE_ROOT}/ceres_regression.cpp
 )
 set(EPCSAFT_PROVIDER_NATIVE_SOURCES
     ${EPCSAFT_NATIVE_MODEL_SOURCES}
@@ -307,27 +355,33 @@ set(EPCSAFT_NATIVE_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/bindings"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/eos/contributions"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/blocks"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/core"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/results"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/routes/derived"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/equilibrium/solvers"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/model"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/regression"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft/native/runtime"
+    "${EPCSAFT_EQUILIBRIUM_EXTENSION_NATIVE_ROOT}"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers"
+    "${EPCSAFT_REGRESSION_EXTENSION_NATIVE_ROOT}"
+    "${EPCSAFT_REGRESSION_NATIVE_ROOT}"
 )
 
 add_library(epcsaft_provider_native OBJECT ${EPCSAFT_PROVIDER_NATIVE_SOURCES})
-add_library(epcsaft_equilibrium_native OBJECT ${EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES})
-add_library(epcsaft_regression_native OBJECT ${EPCSAFT_NATIVE_REGRESSION_SOURCES})
 add_library(epcsaft_native INTERFACE)
 
 set(EPCSAFT_NATIVE_OBJECT_TARGETS
     epcsaft_provider_native
-    epcsaft_equilibrium_native
-    epcsaft_regression_native
 )
+if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE)
+    add_library(epcsaft_equilibrium_native OBJECT ${EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES})
+    list(APPEND EPCSAFT_NATIVE_OBJECT_TARGETS epcsaft_equilibrium_native)
+endif()
+if(EPCSAFT_ENABLE_REGRESSION_NATIVE)
+    add_library(epcsaft_regression_native OBJECT ${EPCSAFT_NATIVE_REGRESSION_SOURCES})
+    list(APPEND EPCSAFT_NATIVE_OBJECT_TARGETS epcsaft_regression_native)
+endif()
 target_link_libraries(epcsaft_native INTERFACE ${EPCSAFT_NATIVE_OBJECT_TARGETS})
 
 foreach(target_name IN LISTS EPCSAFT_NATIVE_OBJECT_TARGETS)
@@ -340,31 +394,35 @@ foreach(target_name IN LISTS EPCSAFT_NATIVE_OBJECT_TARGETS)
     set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endforeach()
 
-target_link_libraries(epcsaft_equilibrium_native PUBLIC epcsaft_provider_native)
-target_link_libraries(epcsaft_regression_native PUBLIC epcsaft_provider_native)
-
-if(EPCSAFT_ENABLE_CERES)
-    target_link_libraries(epcsaft_regression_native PUBLIC Ceres::ceres)
-    target_compile_definitions(epcsaft_regression_native PUBLIC EPCSAFT_HAS_CERES=1)
+if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE)
+    target_link_libraries(epcsaft_equilibrium_native PUBLIC epcsaft_provider_native)
+    if(EPCSAFT_ENABLE_IPOPT)
+        target_link_libraries(epcsaft_equilibrium_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")
+        target_compile_definitions(epcsaft_equilibrium_native PUBLIC EPCSAFT_HAS_IPOPT=1)
+    endif()
 endif()
-if(EPCSAFT_ENABLE_IPOPT)
-    target_link_libraries(epcsaft_equilibrium_native PUBLIC "${EPCSAFT_IPOPT_TARGET}")
-    target_compile_definitions(epcsaft_equilibrium_native PUBLIC EPCSAFT_HAS_IPOPT=1)
+if(EPCSAFT_ENABLE_REGRESSION_NATIVE)
+    target_link_libraries(epcsaft_regression_native PUBLIC epcsaft_provider_native)
+    if(EPCSAFT_ENABLE_CERES)
+        target_link_libraries(epcsaft_regression_native PUBLIC Ceres::ceres)
+        target_compile_definitions(epcsaft_regression_native PUBLIC EPCSAFT_HAS_CERES=1)
+    endif()
 endif()
 if(EPCSAFT_CPPAD_LIBRARY)
     target_link_libraries(epcsaft_provider_native PUBLIC "${EPCSAFT_CPPAD_LIBRARY}")
 endif()
 
-pybind11_add_module(_core NO_EXTRAS
+set(EPCSAFT_PYBIND_SOURCES
     src/epcsaft/native/bindings/module.cpp
-    src/epcsaft/native/equilibrium/register_bindings.cpp
 )
+if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE)
+    list(APPEND EPCSAFT_PYBIND_SOURCES "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}")
+endif()
+pybind11_add_module(_core NO_EXTRAS ${EPCSAFT_PYBIND_SOURCES})
 target_link_libraries(
     _core
     PRIVATE
-        epcsaft_provider_native
-        epcsaft_equilibrium_native
-        epcsaft_regression_native
+        ${EPCSAFT_NATIVE_OBJECT_TARGETS}
 )
 target_include_directories(_core
     PRIVATE
@@ -372,12 +430,23 @@ target_include_directories(_core
         "${EPCSAFT_EIGEN_INCLUDE}"
 )
 target_compile_features(_core PRIVATE cxx_std_17)
+if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE)
+    target_compile_definitions(_core PRIVATE EPCSAFT_HAS_EQUILIBRIUM_NATIVE=1)
+endif()
+if(EPCSAFT_ENABLE_REGRESSION_NATIVE AND EPCSAFT_ENABLE_CERES)
+    target_compile_definitions(_core PRIVATE EPCSAFT_HAS_REGRESSION_NATIVE=1)
+endif()
 if(MSVC)
     set_source_files_properties(
         src/epcsaft/native/bindings/module.cpp
-        src/epcsaft/native/equilibrium/register_bindings.cpp
         PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
     )
+    if(EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE)
+        set_source_files_properties(
+            "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}"
+            PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
+        )
+    endif()
 endif()
 
 set(EPCSAFT_NATIVE_TARGETS

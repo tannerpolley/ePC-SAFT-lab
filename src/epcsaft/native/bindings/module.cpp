@@ -31,11 +31,6 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_composition_sensi
     int phase,
     const add_args& cppargs
 );
-epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
-    double t,
-    double rho,
-    const add_args& cppargs
-);
 NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives_cpp(
     double t,
     double rho,
@@ -758,13 +753,25 @@ PYBIND11_MODULE(_core, m) {
 
     py::register_exception<ValueError>(m, "NativeValueError");
     py::register_exception<SolutionError>(m, "NativeSolutionError");
+#ifdef EPCSAFT_HAS_EQUILIBRIUM_NATIVE
     register_equilibrium_bindings(m);
+#endif
 
     m.def("_native_cppad_smoke", []() {
         return cppad_smoke_to_dict(epcsaft::native::cppad_support::cppad_square_smoke_derivative(3.0));
     });
     m.def("_native_provider_sdk_contract", []() {
         py::dict out;
+#ifdef EPCSAFT_HAS_EQUILIBRIUM_NATIVE
+        const bool equilibrium_native_enabled = true;
+#else
+        const bool equilibrium_native_enabled = false;
+#endif
+#ifdef EPCSAFT_HAS_REGRESSION_NATIVE
+        const bool regression_native_enabled = true;
+#else
+        const bool regression_native_enabled = false;
+#endif
         out["contract_id"] = "provider_native_sdk_v1";
         out["provider_api_contract_id"] = "provider_api_v1";
         out["owner_package"] = "epcsaft";
@@ -773,8 +780,12 @@ PYBIND11_MODULE(_core, m) {
         out["required_native_dependencies"] = std::vector<std::string>{"cppad", "eigen"};
         out["forbidden_native_dependencies"] = std::vector<std::string>{"ceres", "ipopt"};
         out["extension_consumers"] = std::vector<std::string>{"epcsaft-equilibrium", "epcsaft-regression"};
+        out["equilibrium_native_enabled"] = equilibrium_native_enabled;
+        out["regression_native_enabled"] = regression_native_enabled;
+        out["provider_only_core"] = !equilibrium_native_enabled && !regression_native_enabled;
         return out;
     });
+#ifdef EPCSAFT_HAS_REGRESSION_NATIVE
     m.def("_native_ceres_smoke", []() {
         py::dict out;
 #ifdef EPCSAFT_HAS_CERES
@@ -788,6 +799,7 @@ PYBIND11_MODULE(_core, m) {
         out["status"] = compiled ? "enabled_available" : "disabled";
         return out;
     });
+#endif
     m.def("_native_cppad_eos_contributions", [](double t, double rho, const std::vector<double>& x, const add_args& args) {
         return cppad_smoke_to_dict(cppad_eos_contribution_derivatives_cpp(t, rho, x, args));
     });
@@ -1049,7 +1061,7 @@ PYBIND11_MODULE(_core, m) {
             py::arg("solvent_override_index") = -1
         );
 
-#ifdef EPCSAFT_HAS_CERES
+#if defined(EPCSAFT_HAS_REGRESSION_NATIVE) && defined(EPCSAFT_HAS_CERES)
     // AlgID: pure_neutral_ceres_regression
     m.def("_fit_pure_neutral_native_ceres", &fit_pure_neutral_native_ceres_binding);
     m.def("_fit_pure_neutral_native_debug", &evaluate_pure_neutral_objective_debug_binding);

@@ -27,6 +27,16 @@ Extension packages may reference that target only through the SDK contract and
 workspace build metadata while this repository remains a monorepo transition
 build.
 
+The native SDK payload also reports whether the current `_core` build still has
+transition equilibrium or regression native registration enabled:
+
+- `provider_only_core`
+- `equilibrium_native_enabled`
+- `regression_native_enabled`
+
+The provider-only proof requires `provider_only_core=true` and both extension
+flags `false`.
+
 ## Native Dependency Rules
 
 Required provider-native dependencies:

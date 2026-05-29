@@ -9,8 +9,15 @@ description = "Ceres-backed regression extension package for ePC-SAFT."
 requires-python = ">=3.9"
 license = "GPL-3.0-only"
 dependencies = [
-    "epcsaft==0.2.0",
+    "epcsaft==0.2.*",
+    "numpy>=2.0",
 ]
 
 [tool.uv.sources]
 epcsaft = { workspace = true }
+
+[tool.epcsaft.extension]
+publish = false
+monorepo_transition_only = true
+requires_provider_native = ["regression"]
+requires_provider_build_option = "EPCSAFT_ENABLE_REGRESSION_NATIVE=ON"

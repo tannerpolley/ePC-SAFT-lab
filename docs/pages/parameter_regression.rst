@@ -1,10 +1,9 @@
 Parameter Regression
 ====================
 
-Public regression currently runs through ``Regression(mixture, ...)`` in the
-monorepo transition release. ADR 0005 assigns final ownership of this surface
-to the ``epcsaft-regression`` extension package. The reset frontend does not
-expose free ``fit_*`` functions or backend-selection flags.
+Public regression now runs through ``Regression(mixture, ...)`` in the
+``epcsaft-regression`` extension package. The reset frontend does not expose
+free ``fit_*`` functions or backend-selection flags.
 
 Current Public Proof
 --------------------
@@ -16,7 +15,8 @@ core-owned:
 
 .. code-block:: python
 
-   from epcsaft import Mixture, Regression
+   from epcsaft import Mixture
+   from epcsaft_regression import Regression
 
    result = Regression(Mixture(parameters)).fit_pure_neutral(
        records,

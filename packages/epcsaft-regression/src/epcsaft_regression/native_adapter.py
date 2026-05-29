@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 from typing import Any, Mapping, Sequence
 
 import numpy as np
 
-from .. import _core
-from .._types import InputError, vector_to_array
-from ..state.native_adapter import check_association, create_struct
+from epcsaft import provider_native_sdk
+from epcsaft._types import InputError, vector_to_array
+from epcsaft.state.native_adapter import check_association, create_struct
 
 __all__ = [
     "_evaluate_generic_native_debug",
@@ -17,6 +18,37 @@ __all__ = [
     "check_association",
     "create_struct",
 ]
+
+_REQUIRED_REGRESSION_SYMBOLS = (
+    "_evaluate_generic_native_debug",
+    "_fit_generic_native_ceres",
+    "_fit_pure_neutral_native_ceres",
+    "_fit_pure_neutral_native_debug",
+)
+
+
+def _provider_regression_core() -> Any:
+    sdk = provider_native_sdk()
+    if sdk.get("contract_id") != "provider_native_sdk_v1":
+        raise RuntimeError("epcsaft-regression requires provider_native_sdk_v1.")
+    if sdk.get("native_contract_exported") is not True:
+        raise RuntimeError("epcsaft provider native SDK contract is not exported.")
+    if sdk.get("regression_native_enabled") is not True:
+        raise RuntimeError(
+            "epcsaft-regression is a monorepo transition package and requires "
+            "an epcsaft build with regression native symbols "
+            "(EPCSAFT_ENABLE_REGRESSION_NATIVE=ON)."
+        )
+    core = import_module("epcsaft._core")
+    missing = [name for name in _REQUIRED_REGRESSION_SYMBOLS if not hasattr(core, name)]
+    if missing:
+        raise RuntimeError(
+            "epcsaft-regression requires provider native symbols: "
+            + ", ".join(_REQUIRED_REGRESSION_SYMBOLS)
+            + ". Missing from epcsaft._core: "
+            + ", ".join(missing)
+        )
+    return core
 
 
 def _fit_pure_neutral_native_debug(
@@ -33,7 +65,8 @@ def _fit_pure_neutral_native_debug(
 ) -> dict[str, Any]:
     params = check_association(dict(fixed_payload))
     cppargs = create_struct(params)
-    result = _core._fit_pure_neutral_native_debug(
+    core = _provider_regression_core()
+    result = core._fit_pure_neutral_native_debug(
         cppargs,
         np.asarray(density_T, dtype=float),
         np.asarray(density_P, dtype=float),
@@ -80,7 +113,8 @@ def _fit_generic_native_ceres(
     max_nfev = int(max_nfev)
     if max_nfev < 1:
         raise InputError("Native Ceres generic regression requires max_nfev >= 1.")
-    result = _core._fit_generic_native_ceres(
+    core = _provider_regression_core()
+    result = core._fit_generic_native_ceres(
         _native_args_sequence(fixed_payloads),
         list(records),
         np.asarray(target_kinds, dtype=int),
@@ -120,7 +154,8 @@ def _evaluate_generic_native_debug(
     target_indices_2: Sequence[int],
     x: Sequence[float],
 ) -> dict[str, Any]:
-    result = _core._evaluate_generic_native_debug(
+    core = _provider_regression_core()
+    result = core._evaluate_generic_native_debug(
         _native_args_sequence(fixed_payloads),
         list(records),
         np.asarray(target_kinds, dtype=int),

@@ -11,18 +11,10 @@ from typing import Any
 
 import numpy as np
 
-from .. import _core
-from .._types import InputError, phase_to_int
-from .._types import vector_to_array
-from ..state.native_adapter import check_association, create_struct
-from .native_adapter import (
-    _evaluate_generic_native_debug,
-    _fit_generic_native_ceres,
-    _fit_pure_neutral_native_debug,
-)
-from ..model.parameters import ParameterSet, ParameterSource
-from ..model.templates import _infer_pure_template_name
-from ..model.datasets import (
+from epcsaft._types import InputError, phase_to_int
+from epcsaft._types import vector_to_array
+from epcsaft.state.native_adapter import check_association, create_struct
+from epcsaft.model.datasets import (
     _MISSING,
     _deterministic_default,
     _invalidate_dataset_cache,
@@ -31,6 +23,15 @@ from ..model.datasets import (
     _normalize_component,
     _resolve_component_field_with_source,
     molality_to_molefraction,
+)
+from epcsaft.model.parameters import ParameterSet, ParameterSource
+from epcsaft.model.templates import _infer_pure_template_name
+
+from .native_adapter import (
+    _evaluate_generic_native_debug,
+    _fit_generic_native_ceres,
+    _fit_pure_neutral_native_debug,
+    _provider_regression_core,
 )
 
 PURE_NEUTRAL_MODE = "pure_neutral"
@@ -2236,7 +2237,8 @@ def _fit_pure_neutral_native_ceres(
 ) -> dict[str, Any]:
     params = check_association(dict(fixed_payload))
     cppargs = create_struct(params)
-    result = _core._fit_pure_neutral_native_ceres(
+    core = _provider_regression_core()
+    result = core._fit_pure_neutral_native_ceres(
         cppargs,
         np.asarray(density_T, dtype=float),
         np.asarray(density_P, dtype=float),

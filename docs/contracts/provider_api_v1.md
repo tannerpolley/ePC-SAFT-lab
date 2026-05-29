@@ -18,12 +18,13 @@ It records the boundary that must be preserved before `epcsaft-equilibrium` or
 - `create_input_template(...)`
 - `runtime_build_info()`
 - `provider_native_sdk()`
+- `epcsaft.runtime.RouteDiagnosticsView`
 - provider-scoped `capabilities()`
 - `InputError`, `SolutionError`, and model-parameter errors
 
 `Equilibrium` is owned by `epcsaft-equilibrium` and is no longer exported from
-the provider package root. `Regression` remains a remaining transition export
-under ADR 0005 until the regression extension migration lands.
+the provider package root. `Regression` is owned by `epcsaft-regression` and
+is no longer exported from the provider package root.
 
 ## Version
 
@@ -70,6 +71,10 @@ Extensions must not reinterpret private native state layouts as public schema.
 
 Provider result payloads are dictionary-like, JSON-compatible where practical,
 and include enough shape metadata for extension validation.
+
+`RouteDiagnosticsView` is the provider-owned typed view over public route and
+solver diagnostics. `SolutionError.route_diagnostics` must return that
+provider-owned view instead of reaching into an extension-owned module path.
 
 Derivative result payloads must include:
 
@@ -128,15 +133,14 @@ After the split:
 - `epcsaft-regression` reports regression and Ceres capabilities;
 - any aggregate capability view must be explicit and test-backed.
 
-Dependency presence alone is not capability evidence.
-
-During the remaining transition, the runtime capability payload exposes the
-provider view and the not-yet-migrated regression view. The provider view is the
-future core report and must not require Ceres or Ipopt to be present.
+Dependency presence alone is not capability evidence. The transition runtime now
+keeps provider capability reporting in `epcsaft.capabilities()` and regression
+capability reporting in `epcsaft-regression`.
 
 ## Error Contract
 
 Provider input errors use `InputError`. Solver or provider execution failures
 use `SolutionError` with diagnostics when available. Extensions may wrap these
 errors, but they must preserve the provider diagnostics needed to reproduce the
-input and state contract.
+input and state contract. Extensions may consume typed diagnostics through
+`epcsaft.runtime.RouteDiagnosticsView` or `SolutionError.route_diagnostics`.

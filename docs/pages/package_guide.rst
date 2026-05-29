@@ -2,13 +2,11 @@ Package Guide
 =============
 
 This guide groups the reset public package surface by task. The current
-transition release exports ``Mixture``, ``State``, ``Regression``,
-``ParameterSet``, ``ModelOptions``, and ``create_input_template`` from the
-provider package root.
+provider release exports ``Mixture``, ``State``, ``ParameterSet``,
+``ModelOptions``, and ``create_input_template`` from the provider package root.
 
-``Equilibrium`` is imported from ``epcsaft_equilibrium``. ADR 0005 assigns
-final ownership of ``Regression`` to ``epcsaft-regression``; that migration is
-still pending.
+``Equilibrium`` is imported from ``epcsaft_equilibrium`` and ``Regression`` is
+imported from ``epcsaft_regression``.
 
 Constructing A Model
 --------------------
@@ -71,12 +69,11 @@ Regression
 ----------
 
 Construct ``Regression`` directly from a ``Mixture``. The current public proof
-is pure-neutral hydrocarbon regression through the CppAD/Ceres route. This is a
-current transition API; final ownership moves to ``epcsaft-regression``:
+is pure-neutral hydrocarbon regression through the CppAD/Ceres route:
 
 .. code-block:: python
 
-   from epcsaft import Regression
+   from epcsaft_regression import Regression
 
    result = Regression(mixture).fit_pure_neutral(
        records,

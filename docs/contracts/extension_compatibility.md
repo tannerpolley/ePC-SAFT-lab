@@ -14,8 +14,9 @@ Final package ownership:
 - `epcsaft-regression`: Ceres-backed regression extension.
 
 The current repository is a monorepo transition build. `Equilibrium` is owned
-by `epcsaft-equilibrium`; `Regression` remains a root transition export until a
-coordinated regression migration moves it to `epcsaft-regression`.
+by `epcsaft-equilibrium`, and `Regression` is owned by `epcsaft-regression`.
+The extension packages remain workspace-transition packages until their native
+modules no longer depend on provider-owned `_core` extension symbols.
 
 ## Dependency Rules
 
@@ -50,7 +51,9 @@ Core provider imports must not import extension packages by default.
 
 Extensions must consume the public provider contract. They must not use private
 core modules, private pybind names, or native memory layouts as a compatibility
-surface.
+surface. Public provider diagnostics are consumed through
+`epcsaft.runtime.RouteDiagnosticsView` or `SolutionError.route_diagnostics`,
+not through extension-owned module paths.
 
 The migration must not leave hidden long-lived compatibility wrappers in core.
 When a public object moves to an extension package, the old core-owned path is
@@ -71,10 +74,11 @@ An aggregate report may exist only when it is explicit, opt-in, and tested.
 
 ## Version Rules
 
-Extension packages must declare compatible `epcsaft` versions. During sibling
-checkout development, tests may use path dependencies, but published packages
-must depend on released compatible versions unless a release plan explicitly
-coordinates pre-release artifacts.
+Extension packages must declare compatible `epcsaft` versions. During monorepo
+checkout development, tests may use workspace/path dependencies. They must not
+be published as standalone packages while they still require provider-owned
+`_core` extension symbols; the extension-native split must land before public
+extension releases.
 
 Breaking movement of `Equilibrium`, `Regression`, target rows, or result
 schemas must happen at a coordinated release boundary with matching docs and

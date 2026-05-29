@@ -17,9 +17,9 @@ That current shape is a transition state. It is not evidence that Ceres or
 Ipopt are core provider dependencies after the split.
 
 The package-boundary proof lanes may disable Ceres and/or Ipopt while keeping
-CppAD enabled. In a Ceres-disabled build, regression optimizer bindings are not
-exported and regression capability reports must mark Ceres-backed routes
-unavailable.
+CppAD enabled. The provider-only proof is stricter: it disables equilibrium and
+regression native registration entirely so provider `_core` exposes only the
+provider-owned symbol surface.
 
 ## Target Native Ownership
 
@@ -71,6 +71,12 @@ Extensions must not use private `_core` names as a stable Python API. A future
 native adapter may be documented only after provider-owned symbols and extension
 symbols are separated and tested.
 
+Provider-only build rule:
+
+- when `EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF` and
+  `EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF`, provider `_core` must not export
+  equilibrium or regression native entrypoints, probes, or fit bindings.
+
 The provider-native SDK discovery surface is `provider_native_sdk_v1`, exposed
 through `epcsaft.provider_native_sdk()` and mirrored by the native
 `_native_provider_sdk_contract` probe. That probe describes the provider-owned
@@ -89,7 +95,7 @@ Before repository extraction:
 
 Current local proof commands:
 
-- provider dependency lane: ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF``;
+- provider dependency lane: ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` or ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE=OFF``;
 - equilibrium dependency lane: ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF`` with a documented Ipopt root or config package;
 - regression dependency lane: ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF``;
 - integration lane: the normal native source build with Ceres, CppAD, and Ipopt enabled.

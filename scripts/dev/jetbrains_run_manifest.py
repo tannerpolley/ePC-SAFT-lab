@@ -58,6 +58,13 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         parameters="-Step Build",
     ),
     RunConfigSpec(
+        name="Build Provider-Only Core",
+        runner=PYTHON_RUNNER,
+        folder_name=FOLDER_BUILD_PACKAGE,
+        command="scripts/dev/build_epcsaft.py",
+        parameters="--clean --profile provider",
+    ),
+    RunConfigSpec(
         name="Build Status",
         runner=PYTHON_RUNNER,
         folder_name=FOLDER_BUILD_PACKAGE,

@@ -6,9 +6,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from .._types import InputError
-from ..model.options import require_cppad_backend
-from .mixture import Mixture
+from epcsaft import InputError, Mixture
+from epcsaft.model.options import require_cppad_backend
 
 
 @dataclass(slots=True)
@@ -27,7 +26,7 @@ class Regression:
     def evaluate_pure_neutral_derivatives(self, records: Any, *, component: str, **overrides: Any) -> dict[str, Any]:
         """Evaluate pure-component neutral regression derivatives."""
 
-        from ..regression import evaluate_pure_neutral_derivatives as _evaluate
+        from . import evaluate_pure_neutral_derivatives as _evaluate
 
         payload = dict(self.defaults)
         payload.update(_reject_backend_options(overrides, context="Regression"))
@@ -38,7 +37,7 @@ class Regression:
     def fit_pure_neutral(self, records: Any, *, component: str, **overrides: Any) -> Any:
         """Fit pure-component neutral parameters."""
 
-        from ..regression import fit_pure_neutral as _fit
+        from . import fit_pure_neutral as _fit
 
         payload = dict(self.defaults)
         payload.update(_reject_backend_options(overrides, context="Regression"))

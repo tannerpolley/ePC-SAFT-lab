@@ -9,8 +9,7 @@ Issue intake
 ------------
 
 Downstream projects should file GitHub issues against the current upstream
-repository shown by ``git remote -v``. Before the organization transfer this is
-``tannerpolley/ePC-SAFT``; after transfer it should be
+repository shown by ``git remote -v``. The organization-owned upstream is
 ``ePC-SAFT/ePC-SAFT``. A complete report includes the downstream repo or path,
 task goal, failing command, error or bad result, minimal reproducer, imported
 ``epcsaft`` path, expected behavior, actual behavior, downstream validation

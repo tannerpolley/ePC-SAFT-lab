@@ -6,14 +6,14 @@ The reset provider API is intentionally small. Import these names from
 
 - ``Mixture``
 - ``State``
-- ``Regression``
 - ``ParameterSet``
 - ``ModelOptions``
 - ``create_input_template``
 - ``provider_native_sdk``
 
-Import equilibrium workflows from ``epcsaft_equilibrium``. Native bridge modules
-are internal implementation details.
+Import equilibrium workflows from ``epcsaft_equilibrium`` and regression
+workflows from ``epcsaft_regression``. Native bridge modules are internal
+implementation details.
 
 Mixture
 -------
@@ -54,13 +54,14 @@ limited to liquid/vapor routes.
 Regression
 ----------
 
-.. autoclass:: epcsaft.Regression
+.. autoclass:: epcsaft_regression.Regression
    :members:
    :undoc-members:
    :no-index:
 
 The trusted public regression proof is
-``Regression(mixture, ...).fit_pure_neutral(...)`` for the hydrocarbon
+``Regression(mixture, ...).fit_pure_neutral(...)`` from ``epcsaft_regression``
+for the hydrocarbon
 Gross/Sadowski anchor.
 
 Parameters And Model Options

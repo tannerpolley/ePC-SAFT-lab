@@ -39,7 +39,6 @@ using ResidualJacobian = Eigen::MatrixXd;
 double scalar_value(double x) {
     return x;
 }
-
 #ifdef EPCSAFT_HAS_CPPAD
 double scalar_value(const CppADScalar &x) {
     return CppAD::Value(x);
@@ -329,57 +328,6 @@ PureNeutralFusedState evaluate_fused_state_cpp(double t, double rho, const vecto
         out.dlnfugdtheta[static_cast<size_t>(j)] = jacobian[1 * kSeedCount + j + 1];
     }
     return out;
-}
-
-epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
-    double t,
-    double rho,
-    const add_args &base_args
-) {
-    if (base_args.m.size() != 1 || base_args.s.size() != 1 || base_args.e.size() != 1) {
-        throw ValueError("unsupported: pure-neutral m/sigma/epsilon derivatives require exactly one component.");
-    }
-    if (!base_args.z.empty() && (base_args.z.size() != 1 || std::abs(base_args.z[0]) > 1.0e-12)) {
-        throw ValueError("unsupported: pure-neutral m/sigma/epsilon derivatives support only neutral components.");
-    }
-    if (!base_args.assoc_num.empty() || !base_args.assoc_matrix.empty() || !base_args.k_hb.empty() || !base_args.e_assoc.empty() || !base_args.vol_a.empty()) {
-        throw ValueError("unsupported: pure-neutral m/sigma/epsilon derivatives support only nonassociating components.");
-    }
-    using CppADScalar = CppAD::AD<double>;
-    std::vector<CppADScalar> ax(kThetaSize);
-    ax[0] = base_args.m[0];
-    ax[1] = base_args.s[0];
-    ax[2] = base_args.e[0];
-    CppAD::Independent(ax);
-
-    auto state = pure_neutral_state_scalar_cpp<CppADScalar>(
-        t,
-        CppADScalar(rho),
-        ax[0],
-        ax[1],
-        ax[2]
-    );
-    std::vector<CppADScalar> ay(3);
-    ay[0] = state.pressure;
-    ay[1] = state.mures;
-    ay[2] = state.lnfug;
-
-    CppAD::ADFun<double> function(ax, ay);
-    std::vector<double> point = {base_args.m[0], base_args.s[0], base_args.e[0]};
-    auto value = function.Forward(0, point);
-    auto jacobian = function.Jacobian(point);
-
-    epcsaft::native::cppad_support::CppADDerivativeResult result;
-    result.supported = true;
-    result.backend = "cppad";
-    result.message = "CppAD pure-neutral m/sigma/epsilon property derivatives available";
-    result.value = std::move(value);
-    result.jacobian_row_major = std::move(jacobian);
-    result.outputs = {"pressure", "mu_res", "ln_fugacity"};
-    result.variables = {"m", "sigma", "epsilon"};
-    result.rows = 3;
-    result.cols = kThetaSize;
-    return result;
 }
 
 add_args pure_neutral_args_with_theta_cpp(const add_args &base_args, const vector<double> &x) {
@@ -1800,14 +1748,6 @@ using regression_detail::solve_one_binary_kij_ceres_start_cpp;
 using regression_detail::solve_one_pure_ion_ceres_start_cpp;
 #endif
 
-epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
-    double t,
-    double rho,
-    const add_args &base_args
-) {
-    return regression_detail::cppad_pure_neutral_parameter_derivatives_cpp(t, rho, base_args);
-}
-
 PureNeutralRegressionDebugResult evaluate_pure_neutral_objective_debug_cpp(
     const add_args &base_args,
     const vector<PureNeutralRegressionDensityRecord> &density_records,
@@ -1997,4 +1937,3 @@ GenericRegressionResult fit_generic_ceres_cpp(
     return result;
 #endif
 }
-

@@ -44,12 +44,15 @@ Command matrix
    * - Provider API work
      - ``uv run python run_pytest.py --provider-api -q`` or ``uv run python scripts/dev/validate_project.py provider``
      - Core provider package imports, state, mixture, parameter-template, and root export checks. This slice must not import ``epcsaft_equilibrium``.
+   * - Provider-only boundary proof
+     - ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` then ``uv run python run_pytest.py tests/native/contracts/test_provider_only_core_symbols.py -q``
+     - Prove provider ``_core`` builds without Ceres and Ipopt and does not export equilibrium/regression native symbols.
    * - Equilibrium extension contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
      - Package-owned metadata/API check under ``packages/epcsaft-equilibrium/tests`` for neutral equilibrium route construction, solver-option validation, derivative-backend contracts, and capability reporting. This slice does not run the full route-solve file.
-   * - Regression transition tests
+   * - Regression extension tests
      - ``uv run python run_pytest.py --regression -q`` or ``uv run python scripts/dev/validate_project.py regression``
-     - Transition Ceres/regression tests that remain in this repo until ``epcsaft-regression`` owns them.
+     - Regression-extension Ceres tests routed through ``epcsaft_regression``.
    * - Package integration checks
      - ``uv run python run_pytest.py --integration -q`` or ``uv run python scripts/dev/validate_project.py integration``
      - Cross-package workspace, provider/extension capability, and ownership-boundary checks.
@@ -105,6 +108,15 @@ ownership to ``epcsaft-regression`` and final Ipopt ownership to
 ``epcsaft-equilibrium``. Explicit package-boundary proof lanes may disable
 Ceres or Ipopt to prove the future provider and extension dependency split.
 
+The provider-only boundary proof uses:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/build_epcsaft.py --clean --profile provider
+
+That profile keeps CppAD ON while disabling Ceres, Ipopt, and the transition
+equilibrium/regression native registration surfaces.
+
 Root ``CMAKE.md`` is the source of truth for direct CMake preset operations. Direct CMake preset operations must use ``scripts/dev/cmake_preset.ps1`` or the matching JetBrains Services entries: ``CMake Configure dev-native``, ``CMake Build _core dev-native``, and ``CMake Build dev-native``. Do not call raw ``cmake --preset`` or ``cmake --build`` from ad hoc shells for this repo. The wrapper loads the Visual Studio developer environment, uses the repo-local ``.venv\Scripts\cmake.exe`` and ``.venv\Scripts\ninja.exe``, pins ``CMAKE_MAKE_PROGRAM`` for ``dev-native``, and refuses to run while ``build/dev/.ninja_lock`` exists.
 
 Strawberry may remain installed for unrelated tooling, but it is not the ePC-SAFT CMake standard. Do not select a Strawberry MinGW toolchain or rely on Strawberry's ``cmake.exe`` / ``ninja.exe`` for ``build/dev``.
@@ -128,19 +140,23 @@ config.
      - Default Windows parallelism
      - Use when
    * - ``fast``
-     - Ceres ON, CppAD ON, Ipopt ON when available
+     - Ceres ON, CppAD ON, Ipopt ON when available, transition equilibrium/regression native surfaces ON
      - ``4``
      - Normal source-checkout setup, C++ iteration, and most validation.
    * - ``full``
-     - Ceres ON, CppAD ON, Ipopt ON when available
+     - Ceres ON, CppAD ON, Ipopt ON when available, transition equilibrium/regression native surfaces ON
      - ``4``
      - Alias for the required Ceres + CppAD dependency profile.
    * - ``ipopt``
-     - Ceres ON, CppAD ON, Ipopt ON
+     - Ceres ON, CppAD ON, Ipopt ON, transition equilibrium/regression native surfaces ON
      - ``4``
      - Native Ipopt adapter development or validation with the local SDK or another native Ipopt package.
+   * - ``provider``
+     - Ceres OFF, CppAD ON, Ipopt OFF, equilibrium/regression native surfaces OFF
+     - ``4``
+     - Provider-only boundary proof for the future core package.
 
-Use ``--build-only --parallel 10`` only after the CMake tree already exists. ``--build-only`` does not reconfigure profile flags; it builds whatever ``build/dev/CMakeCache.txt`` already says. Use ``--configure-only`` when you need to refresh CMake configuration without compiling. For a new ``build/dev`` tree, ``scripts/dev/build_epcsaft.py`` now prefers Ninja when ``ninja`` is available on ``PATH`` because it is usually faster than MinGW Makefiles for repeated local rebuilds. Existing CMake trees keep their original generator; doctor reports ``build_generator_recommendation`` when ``uv run python scripts/dev/build_epcsaft.py --clean --generator ninja`` is the appropriate one-time migration from an older MinGW tree.
+Use ``--build-only --parallel 10`` only after the CMake tree already exists. ``--build-only`` does not reconfigure profile flags; it builds whatever ``build/dev/CMakeCache.txt`` already says. Use ``--configure-only`` when you need to refresh CMake configuration without compiling. For a new ``build/dev`` tree on Windows, ``scripts/dev/build_epcsaft.py`` now loads the repo-standard MSVC environment and prefers Ninja when ``ninja`` is available on ``PATH`` instead of inheriting Strawberry/MinGW from ``PATH``. Existing CMake trees keep their original generator and compiler family; doctor reports ``build_generator_recommendation`` when ``uv run python scripts/dev/build_epcsaft.py --clean --generator ninja`` is the appropriate one-time migration from an older MinGW tree.
 
 Every native build writes ``build/dev/build_epcsaft.log`` and finishes with an ``epcsaft._core`` import check when compilation runs. Use ``uv run python scripts/dev/build_epcsaft.py --status`` when you need a non-mutating check of the configured generator, Ceres/CppAD flags, system-Ceres/Ceres_DIR state, importable ``_core`` artifacts, stale ``.ninja_lock`` state, last Ninja target, and live repo-owned build processes. This is the safest first check when an IDE run or interrupted terminal build appears hung.
 
@@ -234,7 +250,7 @@ native/equilibrium route tests. If the right target is unclear, run
 
 - Provider wrapper/API changes: ``uv run python run_pytest.py --provider-api -q`` first, then ``uv run python run_pytest.py --confidence -q``. The older ``--api`` shortcut is retained as a provider-owned API alias during the transition.
 - Equilibrium extension API changes: ``uv run python run_pytest.py --equilibrium-api -q`` first. Package-facing equilibrium tests live under ``packages/epcsaft-equilibrium/tests``; root ``tests/native/equilibrium`` remains the native-equilibrium transition lane until the native target split lands.
-- Regression transition changes: ``uv run python run_pytest.py --regression -q`` first. These tests are classified for future ``epcsaft-regression`` ownership even while the code remains in this repo.
+- Regression extension changes: ``uv run python run_pytest.py --regression -q`` first. These tests exercise the monorepo ``packages/epcsaft-regression`` package through the provider contract and current native bridge.
 - Cross-package ownership changes: ``uv run python run_pytest.py --integration -q`` first, then the smallest package-specific slice that matches the edit.
 - Native/equation changes: ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`` first, then ``uv run python run_pytest.py --runtime -q``, then ``uv run python run_pytest.py --confidence -q``.
 - Native route metadata, result-adapter diagnostics, or pybind payload-shape changes: run ``uv run python run_pytest.py --native-contracts -q`` first. Do not run broad route-builder files under ``tests/native/equilibrium`` for these changes; the wrapper rejects those broad targets unless ``--allow-long-native-tests`` or ``EPCSAFT_ALLOW_LONG_NATIVE_TESTS=1`` is set.
@@ -243,7 +259,7 @@ native/equilibrium route tests. If the right target is unclear, run
 - Performance claims: add or restore an explicit benchmark or analysis workflow first. Do not rely on pytest, skipped tests, or code inspection for speed claims.
 - Plot asset changes: run the owning ``analyses/<category>/<short_id>/scripts`` coordinator or the figure-local ``analyses/<category>/<short_id>/figures/<figure_id>/scripts`` entrypoint, plus any targeted opt-in test under ``analyses/package_validation/package_plot_smokes/tests``, only when regenerating local plot outputs is explicitly part of the task.
 
-- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to the no-local-Ipopt release baseline and ``--parallel 1`` for isolated PEP 517 builds; raise parallelism only after confirming Ceres builds are not memory-bound. Use ``--with-local-ipopt`` only for an explicit local Ipopt artifact check.
+- Packaging changes: ``uv run python scripts/dev/build_dist.py``. The command defaults to the provider-only release baseline with Ceres OFF, Ipopt OFF, and transition equilibrium/regression native surfaces OFF, and it uses ``--parallel 1`` for isolated PEP 517 builds; raise parallelism only after confirming Ceres builds are not memory-bound. Use ``--with-local-ipopt`` only for an explicit local Ipopt artifact check.
 
 Keep generated plot assets and generated CSV workflows out of normal validation unless the task explicitly asks for them. There is no named plot validation slice; target the owning script or test file directly when plot output work is in scope.
 

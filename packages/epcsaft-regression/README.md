@@ -1,7 +1,13 @@
 # epcsaft-regression
 
-Internal workspace shell for the future Ceres-backed regression extension.
+Monorepo transition package for the Ceres-backed regression extension.
 
-This package does not re-export the current monorepo `Regression` object. The
-real migration must move regression ownership here through the provider API and
-provider-native SDK contracts.
+Use `from epcsaft_regression import Regression` for the current regression
+workflow object and related fitting helpers. This checkout still consumes a
+transition provider-native bridge while the native/provider contract is
+tightened, but the source ownership now lives here instead of under the core
+provider package.
+
+This package is not a standalone PyPI artifact in the current tranche. Install
+it through the repository uv workspace so it uses the matching `epcsaft`
+provider build with `EPCSAFT_ENABLE_REGRESSION_NATIVE=ON`.

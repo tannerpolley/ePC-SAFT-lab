@@ -216,7 +216,18 @@ def _apply_system_ipopt_config(config: dict) -> dict:
 
 
 def _apply_native_dependency_config(config: dict) -> dict:
-    return _apply_system_ipopt_config(_apply_system_ceres_config(_apply_required_native_dependency_config(config)))
+    config = _apply_system_ipopt_config(_apply_system_ceres_config(_apply_required_native_dependency_config(config)))
+    ceres_enabled = _cmake_truthy(_config_value(config, "cmake.define.EPCSAFT_ENABLE_CERES"))
+    ipopt_enabled = _cmake_truthy(_config_value(config, "cmake.define.EPCSAFT_ENABLE_IPOPT"))
+    regression_native_key = "cmake.define.EPCSAFT_ENABLE_REGRESSION_NATIVE"
+    regression_native = _config_value(config, regression_native_key)
+    if not ceres_enabled:
+        if regression_native is not None and _cmake_truthy(regression_native):
+            raise ValueError("Regression native package builds require Ceres.")
+        _set_config_default(config, regression_native_key, "OFF")
+    if not ceres_enabled and not ipopt_enabled:
+        _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE", "OFF")
+    return config
 
 
 def _source_root() -> Path:

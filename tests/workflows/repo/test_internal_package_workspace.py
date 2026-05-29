@@ -3,6 +3,8 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 EXTENSION_PACKAGES = {
@@ -12,13 +14,17 @@ EXTENSION_PACKAGES = {
         "required_dependencies": {"numpy>=2.0"},
         "forbidden_dependencies": {"ceres", "epcsaft-regression"},
         "forbidden_reexports": {"Regression"},
+        "required_provider_native": ["equilibrium"],
+        "required_provider_build_option": "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON",
     },
     "epcsaft-regression": {
         "directory": REPO_ROOT / "packages" / "epcsaft-regression",
         "module": "epcsaft_regression",
-        "required_dependencies": set(),
+        "required_dependencies": {"numpy>=2.0"},
         "forbidden_dependencies": {"ipopt", "epcsaft-equilibrium"},
-        "forbidden_reexports": {"Equilibrium", "Regression"},
+        "forbidden_reexports": {"Equilibrium"},
+        "required_provider_native": ["regression"],
+        "required_provider_build_option": "EPCSAFT_ENABLE_REGRESSION_NATIVE=ON",
     },
 }
 
@@ -27,7 +33,7 @@ def _pyproject(path: Path) -> dict:
     return tomllib.loads(path.read_text(encoding="utf-8"))
 
 
-def test_uv_workspace_names_extension_package_members() -> None:
+def test_provider_repo_uses_monorepo_extension_workspace_members() -> None:
     root = _pyproject(REPO_ROOT / "pyproject.toml")
 
     assert root["project"]["name"] == "epcsaft"
@@ -35,11 +41,21 @@ def test_uv_workspace_names_extension_package_members() -> None:
         "packages/epcsaft-equilibrium",
         "packages/epcsaft-regression",
     ]
+    assert "packages/epcsaft-equilibrium/src" in root["tool"]["pytest"]["ini_options"]["pythonpath"]
+    assert "packages/epcsaft-regression/src" in root["tool"]["pytest"]["ini_options"]["pythonpath"]
 
 
-def test_extension_package_manifests_depend_on_provider_workspace_member() -> None:
-    root_version = _pyproject(REPO_ROOT / "pyproject.toml")["project"]["version"]
+def test_provider_sdist_includes_transitional_extension_native_sources() -> None:
+    root = _pyproject(REPO_ROOT / "pyproject.toml")
+    sdist_include = set(root["tool"]["scikit-build"]["sdist"]["include"])
 
+    assert "packages/epcsaft-equilibrium/native/**/*.cpp" in sdist_include
+    assert "packages/epcsaft-equilibrium/native/**/*.h" in sdist_include
+    assert "packages/epcsaft-regression/native/**/*.cpp" in sdist_include
+    assert "packages/epcsaft-regression/native/**/*.h" in sdist_include
+
+
+def test_extension_package_manifests_depend_on_provider_workspace_source() -> None:
     for package_name, metadata in EXTENSION_PACKAGES.items():
         package_dir = metadata["directory"]
         pyproject = _pyproject(package_dir / "pyproject.toml")
@@ -47,10 +63,15 @@ def test_extension_package_manifests_depend_on_provider_workspace_member() -> No
         normalized_dependencies = {item.lower() for item in dependencies}
 
         assert pyproject["project"]["name"] == package_name
-        assert f"epcsaft=={root_version}" in dependencies
+        assert "epcsaft==0.2.*" in dependencies
         assert metadata["required_dependencies"] <= dependencies
         assert pyproject["tool"]["uv"]["sources"]["epcsaft"] == {"workspace": True}
         assert metadata["forbidden_dependencies"].isdisjoint(normalized_dependencies)
+        extension = pyproject["tool"]["epcsaft"]["extension"]
+        assert extension["publish"] is False
+        assert extension["monorepo_transition_only"] is True
+        assert extension["requires_provider_native"] == metadata["required_provider_native"]
+        assert extension["requires_provider_build_option"] == metadata["required_provider_build_option"]
 
 
 def test_extension_package_shells_do_not_reexport_transition_core_objects() -> None:
@@ -99,3 +120,58 @@ def test_equilibrium_extension_native_access_is_isolated_behind_provider_sdk_bri
     assert offenders == []
     assert "provider_native_sdk()" in native_bridge
     assert "provider_native_sdk_v1" in native_bridge
+    assert "equilibrium_native_enabled" in native_bridge
+    assert "EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON" in native_bridge
+
+
+def test_equilibrium_extension_native_bridge_rejects_provider_core_without_equilibrium_symbols(monkeypatch) -> None:
+    import epcsaft_equilibrium._native as native_bridge
+
+    monkeypatch.setattr(
+        native_bridge,
+        "provider_native_sdk",
+        lambda: {
+            "contract_id": "provider_native_sdk_v1",
+            "native_contract_exported": True,
+            "equilibrium_native_enabled": False,
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="EPCSAFT_ENABLE_EQUILIBRIUM_NATIVE=ON"):
+        native_bridge.provider_native_core()
+
+
+def test_regression_extension_native_bridge_rejects_provider_core_without_regression_symbols(monkeypatch) -> None:
+    import epcsaft_regression.native_adapter as native_bridge
+
+    monkeypatch.setattr(
+        native_bridge,
+        "provider_native_sdk",
+        lambda: {
+            "contract_id": "provider_native_sdk_v1",
+            "native_contract_exported": True,
+            "regression_native_enabled": False,
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="EPCSAFT_ENABLE_REGRESSION_NATIVE=ON"):
+        native_bridge._provider_regression_core()
+
+
+def test_equilibrium_extension_uses_public_provider_imports_only() -> None:
+    module_dir = EXTENSION_PACKAGES["epcsaft-equilibrium"]["directory"] / "src" / "epcsaft_equilibrium"
+    forbidden_import_fragments = (
+        "from epcsaft._types import",
+        "import epcsaft._types",
+        "from epcsaft.frontend.mixture import",
+        "import epcsaft.frontend.mixture",
+    )
+    offenders: list[str] = []
+    for path in sorted(module_dir.rglob("*.py")):
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        for fragment in forbidden_import_fragments:
+            if fragment in text:
+                offenders.append(f"{rel}: {fragment}")
+
+    assert offenders == []

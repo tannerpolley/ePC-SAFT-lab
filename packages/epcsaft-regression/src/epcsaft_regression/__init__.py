@@ -1,28 +1,40 @@
-"""Workspace shell for the future ePC-SAFT regression extension."""
+"""Ceres-backed regression extension for ePC-SAFT."""
 
 from __future__ import annotations
 
+from .capabilities import capabilities, provider_contract
+from .workflow import Regression
+
 __version__ = "0.1.0"
 
+_CORE_EXPORTS = {
+    "FitResult",
+    "TargetDataset",
+    "TargetRow",
+    "evaluate_pure_neutral_derivatives",
+    "fit_binary_pair",
+    "fit_binary_parameters",
+    "fit_liquid_electrolyte_parameters",
+    "fit_pure_ion",
+    "fit_pure_neutral",
+    "fit_pure_parameters",
+    "write_fit_result",
+}
 
-def provider_contract() -> dict[str, object]:
-    return {
-        "provider_package": "epcsaft",
-        "provider_api_contract_id": "provider_api_v1",
-        "provider_native_sdk_contract_id": "provider_native_sdk_v1",
-    }
+__all__ = [
+    "Regression",
+    "__version__",
+    "capabilities",
+    "provider_contract",
+    *_CORE_EXPORTS,
+]
 
 
-def capabilities() -> dict[str, object]:
-    return {
-        "package": "epcsaft-regression",
-        "owner": "regression_extension",
-        "status": "workspace_shell_pre_migration",
-        "provider_contract": provider_contract(),
-        "requires": ["epcsaft", "cppad", "ceres"],
-        "forbidden_default_dependencies": ["ipopt"],
-        "production_routes_available": False,
-    }
+def __getattr__(name: str):
+    if name in _CORE_EXPORTS:
+        from . import core
 
-
-__all__ = ["__version__", "capabilities", "provider_contract"]
+        value = getattr(core, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

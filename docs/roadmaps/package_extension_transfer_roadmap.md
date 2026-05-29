@@ -1,148 +1,121 @@
-# ePC-SAFT Organization Transfer Roadmap
+# ePC-SAFT Package Extension Transfer Roadmap
 
-Date: 2026-05-27
+> Superseded for active execution by
+> `docs/roadmaps/monorepo_package_migration.md`. This document records the
+> previous sibling-repo transfer direction and should not be used as the active
+> source of truth for the current monorepo consolidation work.
 
-Purpose: summarize the package-split advice in
-`docs/ChatGPT_Gemini_Responses/ePC-SAFT_Organization.md`, give a direct
-technical opinion, and define the staged roadmap for moving the project into the
-`ePC-SAFT` GitHub organization and eventually into core, equilibrium, and
-regression repositories.
+Date: 2026-05-28
 
-This document is a planning roadmap. It does not by itself change the current
-package contract. Contract changes must land through an ADR, roadmap updates,
-build-protocol updates, tests, and release documentation.
+This document is retained historical context for the previous sibling-repo
+package-extension transfer direction. The active roadmap for package execution
+is now `docs/roadmaps/monorepo_package_migration.md`.
 
-## Current Public Organization State
+Do not use this roadmap to control new extraction sequencing unless the
+monorepo migration roadmap explicitly reactivates a section.
 
-The public `ePC-SAFT` GitHub organization currently exists at
-<https://github.com/ePC-SAFT>. On 2026-05-27, the public organization page
-reported no public repositories and no public members. That empty public state
-is useful: configure governance before transferring the current repository or
-creating extension repositories.
+## Historical Target State (Superseded)
 
-GitHub's transfer documentation matters for this migration:
+The following layout was the prior extraction target. It is no longer the active
+execution target for package migration. Use
+`docs/roadmaps/monorepo_package_migration.md` for current gates and source
+layout decisions.
 
-- A repository transfer preserves repository contents, issues, pull requests,
-  releases, projects, settings, stars, watchers, wiki, webhooks, secrets, deploy
-  keys, and commit history.
-- Existing web and Git URLs redirect after transfer, but local clones should
-  still update `origin` to the new URL.
-- GitHub Pages URLs are not redirected by repository transfer.
-- Creating a new repository or fork at the previous location permanently
-  removes the redirect.
-- Transferring into an organization requires permission to create repositories
-  in the target organization.
-- Organization default repository permissions apply after transfer.
-
-## Conversation Summary
-
-The ChatGPT/Gemini conversation makes one strong recommendation:
-
-`epcsaft` should become the core thermodynamic provider, while Ceres-backed
-regression and Ipopt-backed equilibrium should become extension packages and,
-eventually, separate repositories.
-
-Suggested end-state:
+### Former GitHub Organization Layout
 
 ```text
-ePC-SAFT/ePC-SAFT              # current repo, core EoS/provider package
-ePC-SAFT/epcsaft-equilibrium   # Ipopt-backed equilibrium extension
-ePC-SAFT/epcsaft-regression    # Ceres-backed regression extension
+ePC-SAFT/ePC-SAFT
+  Core provider repo and PyPI package: epcsaft
+
+ePC-SAFT/epcsaft-equilibrium
+  Equilibrium extension repo and PyPI package: epcsaft-equilibrium
+
+ePC-SAFT/epcsaft-regression
+  Regression extension repo and PyPI package: epcsaft-regression
 ```
 
-The conversation also correctly identifies that the split should not start as a
-repo extraction. It should start with internal package boundaries, dependency
-boundaries, tests, and a provider contract. The current public equilibrium and
-regression APIs are still moving, so extracting first would create cross-repo
-churn before the interfaces are stable.
-
-Important details from the conversation:
-
-- Keep CppAD/exact derivative support close to the core EoS provider because
-  both regression and equilibrium need derivative-capable thermodynamic
-  functions.
-- Make `epcsaft-equilibrium` own phase discovery, GFPE route assembly,
-  stability checks, Ipopt options, postsolve certification, and equilibrium
-  result schemas.
-- Make `epcsaft-regression` own target datasets, parameter maps, Ceres residual
-  blocks, optimizer diagnostics, and regression result schemas.
-- Allow `epcsaft-regression` to optionally integrate with
-  `epcsaft-equilibrium` for target rows that require phase or reactive
-  equilibrium solves.
-- Use one organization-level GitHub Project for coordination, but keep source of
-  truth in docs, ADRs, issues, PRs, CI, and releases.
-- Use CODEOWNERS, protected `main`, consistent labels, shared issue templates,
-  deliberate releases, and Dependabot/dependency graph settings across repos.
-
-## Opinion
-
-I agree with the split target. It is the right long-term architecture.
-
-The scientific boundary is real: the EoS provides thermodynamic functions;
-regression and equilibrium are algorithms that consume those functions. Ceres
-and Ipopt should not burden users who only need property evaluation, fugacity
-coefficients, activity coefficients, chemical potentials, or density/pressure
-closure.
-
-I do not think the code should be split into separate repos immediately. The
-current roadmap and build protocol still define native regression and production
-equilibrium as package-owned transition capabilities. The current repo has public docs,
-release docs, build workflows, issue-tracker docs, PyPI trusted-publisher text,
-and package metadata that still point at `tannerpolley/ePC-SAFT`. Moving folders
-before changing those contracts would produce a partially split project with
-contradictory instructions.
-
-The right sequence is:
+### Former Local Sibling-Repo Layout
 
 ```text
-1. Decide the contract in an ADR.
-2. Update source-of-truth docs so future agents stop treating Ceres and Ipopt
-   as core-package dependencies.
-3. Freeze a provider API and derivative/result contract.
-4. Enforce import and dependency boundaries inside this repo.
-5. Move code into internal package roots.
-6. Transfer the current repository to the organization once org governance and
-   publishing checks are ready.
-7. Extract extension repositories only after internal boundaries pass tests.
-8. Cut coordinated releases.
+C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT
+C:\Users\Tanner\Documents\Workspaces\Engineering\epcsaft-equilibrium
+C:\Users\Tanner\Documents\Workspaces\Engineering\epcsaft-regression
 ```
 
-Do not keep long-lived compatibility wrappers in the core package. If
-`Equilibrium`, `TargetDataset`, and `fit_*` ownership moves to extension
-packages, make that a documented breaking change at a coordinated release
-boundary and remove the old core-owned path in the same migration.
+### Hard Rules
+
+- No Git submodules. Use normal Python dependencies, editable installs, `uv`
+  path sources, and CI checkout/install steps.
+- `packages/epcsaft-equilibrium` and `packages/epcsaft-regression` are
+  temporary monorepo staging folders only. They are not the final package
+  layout, they are not the final local development layout, and they are not the
+  final GitHub repository layout.
+- The provider package is a provider-only core after extraction. It must not
+  permanently keep extension-owned code, symbols, wrappers, or hidden import
+  paths.
+- The split is not complete until local sibling repos, remote GitHub repos,
+  native ownership, tests, CI, docs, package metadata, release choreography,
+  and install proofs all agree.
+- Prefer loud failure over fake defaults. Do not leave hidden compatibility
+  wrappers, duplicated native code, dead CMake branches, or stale capability
+  claims behind the migration.
+
+## Current Verified State In This Repo
+
+The current checkout is still a transition monorepo, not real extraction:
+
+- equilibrium C++ lives under `packages/epcsaft-equilibrium/native/equilibrium`;
+- regression C++ lives under `packages/epcsaft-regression/native/regression`;
+- `CMakeLists.txt` defines object targets
+  `epcsaft_provider_native`, `epcsaft_equilibrium_native`, and
+  `epcsaft_regression_native`, but still links them into one provider-owned
+  `epcsaft._core` module;
+- `packages/epcsaft-equilibrium` is currently a Python extension-package shell
+  around provider-owned native bindings exposed through `epcsaft._core`;
+- `packages/epcsaft-regression` owns the Python regression API and stages the
+  native regression implementation through the transitional provider `_core`
+  build;
+- root `epcsaft` no longer exports `Regression`;
+- provider runtime metadata is provider-scoped, while regression transition
+  capability data is staged under `packages/epcsaft-regression`;
+- this is not yet true provider/extension extraction.
+
+These facts are the starting point for the roadmap. They are not acceptable as
+the final state.
 
 ## End-State Ownership
 
-### Core Repository: `ePC-SAFT/ePC-SAFT`
+### Core Provider Repo: `ePC-SAFT/ePC-SAFT`
 
 Public package/distribution: `epcsaft`
 
 Owns:
 
-- residual Helmholtz energy and contribution maps
-- hard-chain, dispersion, association, Debye-Huckel, Born, and related EoS terms
-- `ParameterSet`
-- mixture and state construction
-- property evaluation
-- fugacity coefficients
-- activity coefficients
-- chemical potentials
-- density and pressure closure
-- derivative-capable provider functions
-- contribution-level traces
-- core `capabilities()` for provider-level behavior
-- provider API contract consumed by extensions
+- EOS, model, state, parameters, density/pressure closure;
+- fugacity, activity, and chemical-potential evaluation;
+- contribution traces and derivative-capable provider functions;
+- CppAD and exact provider derivative support;
+- provider diagnostics, provider capabilities, and provider result schemas;
+- `provider_native_sdk` and the versioned provider contract consumed by
+  extensions.
 
-Does not own after the split:
+Must build and install without:
 
-- Ceres optimizer loops
-- Ipopt equilibrium routes
-- GFPE route solvers
-- parameter-regression target packing
-- application-specific MEA, lithium, or absorption-column workflows
+- Ceres;
+- Ipopt;
+- extension-package imports;
+- extension-owned native symbols.
 
-### Equilibrium Repository: `ePC-SAFT/epcsaft-equilibrium`
+Must not own after extraction:
+
+- equilibrium result schemas, route assembly, or solver acceptance logic;
+- regression datasets, target rows, residual blocks, or optimizer logic;
+- permanent extension code under `src/epcsaft/native/equilibrium`;
+- permanent extension code under `src/epcsaft/native/regression`;
+- permanent `packages/epcsaft-equilibrium` or `packages/epcsaft-regression`
+  staging folders.
+
+### Equilibrium Extension Repo: `ePC-SAFT/epcsaft-equilibrium`
 
 Public package/distribution: `epcsaft-equilibrium`
 
@@ -150,28 +123,28 @@ Import package: `epcsaft_equilibrium`
 
 Owns:
 
-- `Equilibrium(...)`
-- route specs for bubble, dew, flash, LLE, electrolyte LLE, speciation,
-  reactive equilibrium, reactive LLE, and reactive electrolyte LLE
-- GFPE route assembly
-- phase eligibility masks
-- phase discovery and stability checks
-- Ipopt NLP assembly and option profiles
-- postsolve certification
-- route diagnostics
-- equilibrium result and capability schemas
+- `Equilibrium`;
+- route specs;
+- GFPE assembly;
+- phase discovery and stability/TPD evidence;
+- Ipopt NLP assembly and Ipopt option profiles;
+- postsolve certification;
+- equilibrium result schemas, diagnostics, and capabilities;
+- the equilibrium native C++ that currently lives under
+  `src/epcsaft/native/equilibrium`.
 
 Depends on:
 
-- `epcsaft`
-- Ipopt
+- `epcsaft`;
+- Ipopt.
 
-Does not depend on:
+Must not depend on:
 
-- Ceres
-- downstream MEA or lithium repositories
+- Ceres;
+- private provider internals;
+- downstream repo code.
 
-### Regression Repository: `ePC-SAFT/epcsaft-regression`
+### Regression Extension Repo: `ePC-SAFT/epcsaft-regression`
 
 Public package/distribution: `epcsaft-regression`
 
@@ -179,489 +152,402 @@ Import package: `epcsaft_regression`
 
 Owns:
 
-- `TargetDataset`
-- `TargetRow`
-- `RegressionProblem`
-- parameter maps and bounds
-- Ceres residual blocks
-- optimizer diagnostics
-- parameter movement reports
-- regression result and capability schemas
-- pure, binary, ion, Born, association, and other generic parameter-fit workflows
+- `Regression`;
+- `TargetDataset` and `TargetRow`;
+- parameter maps and bounds;
+- Ceres residual blocks;
+- optimizer diagnostics;
+- regression result schemas and capabilities;
+- the regression native C++ that currently lives under
+  `src/epcsaft/native/regression`.
 
 Depends on:
 
-- `epcsaft`
-- Ceres
+- `epcsaft`;
+- Ceres.
 
 Optional integration:
 
-- `epcsaft-equilibrium` for VLE, LLE, electrolyte LLE, speciation, reactive
-  pressure, and reactive phase-equilibrium target rows.
-
-The default regression install must not require Ipopt. The
-equilibrium-target regression lane may require both extension packages.
-
-## Roadmap
-
-### Phase 0: Organization Preparation
-
-Goal: make the empty organization ready before any repository moves.
-
-Actions:
-
-- Set organization display name, description, avatar, contact email, and profile
-  README if desired.
-- Create teams:
-  - `maintainers`
-  - `core`
-  - `equilibrium`
-  - `regression`
-  - `build-release`
-- Set organization base repository permission to no broad write access.
-- Restrict repository creation to maintainers until the split is complete.
-- Create one organization Project named `ePC-SAFT Roadmap`.
-- Add Project fields:
-  - `Package`: core, equilibrium, regression, benchmark, downstream
-  - `Capability`: eos, derivatives, vle, lle, electrolyte, reactive, regression
-  - `Backend`: analytic, CppAD, implicit, Ceres, Ipopt
-  - `Status`: blocked, ready, in progress, review, merged
-  - `Release target`: core-0.x, equilibrium-0.x, regression-0.x, future
-- Prepare shared labels:
-  - `area:core`
-  - `area:equilibrium`
-  - `area:regression`
-  - `area:derivatives`
-  - `area:build`
-  - `area:docs`
-  - `area:benchmark`
-  - `backend:cppad`
-  - `backend:ceres`
-  - `backend:ipopt`
-  - `status:blocked`
-  - `status:needs-design`
-  - `status:ready`
-  - `status:breaking-change`
-  - `release:blocker`
-- Decide the transferred core repo name:
-  - Recommended immediate transfer name: `ePC-SAFT/ePC-SAFT`, preserving the
-    current repository name and minimizing release-history confusion.
-  - Optional later rename: `ePC-SAFT/epcsaft`, only in a release window.
-- Do not create a placeholder repository at `tannerpolley/ePC-SAFT` after
-  transfer, because that would destroy GitHub's redirect.
-
-Exit criteria:
-
-- The organization has maintainers and team permissions configured.
-- The org Project and shared labels exist.
-- No repo with a conflicting target name exists in the organization.
-- The transfer owner has permission to create repositories in `ePC-SAFT`.
-
-### Phase 1: Contract Decision PR
-
-Goal: make the repo's source-of-truth docs agree on the package split before
-moving code.
-
-Create or maintain:
-
-- `docs/adr/0005-package-extension-split.md`
-
-Modify:
-
-- `docs/roadmaps/FULL_ROADMAP.md`
-- `docs/protocols/build_package_dependency_protocol.rst`
-- `docs/pages/project_structure.rst`
-- `docs/pages/development_workflows.rst`
-- `docs/pages/publishing.rst`
-- `README.md`
-- `pyproject.toml`
-- `.github/workflows/publish-pypi.yml`
-- `docs/agents/issue-tracker.md`
-
-Decision to record:
-
-```text
-epcsaft core owns the EoS/provider contract.
-epcsaft-equilibrium owns Ipopt-backed equilibrium.
-epcsaft-regression owns Ceres-backed regression.
-CppAD/exact derivative provider support remains in core where the EoS algebra
-and implicit EoS states live.
-```
-
-Documentation changes:
-
-- Replace language that says Ceres and Ipopt are core package dependencies with
-  language that assigns them to the regression and equilibrium packages.
-- Keep the current completion standard, but scope it to the package that owns
-  the capability.
-- Keep downstream-facing generic API requirements, and continue forbidding
-  application-specific MEA, lithium, and absorption-column public APIs.
-- Define how `capabilities()` works after split:
-  - core `epcsaft.capabilities()` reports provider capability only.
-  - extension packages expose their own capability reports.
-  - any aggregate capability view must be explicit and test-backed.
-
-Exit criteria:
-
-- No source-of-truth doc contradicts the ADR.
-- Build documentation clearly separates provider, regression, and equilibrium
-  dependency ownership.
-- Publishing docs identify the future organization repository and PyPI trusted
-  publisher changes.
-- A search for old repository URLs identifies only intentional release history
-  references or entries scheduled for the transfer PR.
-
-Suggested validation:
-
-```powershell
-rg -n "tannerpolley/ePC-SAFT|github.com/tannerpolley" README.md pyproject.toml docs .github
-rg -n "Ceres|Ipopt|core package capabilities|core capabilities" docs README.md
-```
-
-### Phase 2: Provider API Contract
-
-Goal: define the smallest stable contract extensions need from core.
-
-Create:
-
-- `docs/contracts/provider_api_v1.md`
-- `docs/contracts/extension_compatibility.md`
-- `tests/native/contracts/test_provider_api_contract.py`
-- `tests/workflows/build/test_extension_boundary_contract.py`
-
-Contract must cover:
-
-- package version and provider contract version
-- `ParameterSet` schema
-- mixture/state input schema
-- core property result schema
-- derivative result schema
-- contribution trace schema
-- error and diagnostic schema
-- capability evidence schema
-- native ABI expectations for extension builds
-
-Testing must prove:
-
-- core imports without Ceres or Ipopt loaded as runtime requirements
-- core provider functions expose the derivative information required by both
-  extension packages
-- provider schemas are serializable and versioned
-- capability claims cannot silently broaden without evidence updates
-
-Exit criteria:
-
-- Provider contract tests pass.
-- Core public API is narrow enough for extension consumption.
-- Every existing equilibrium/regression call that will move has a mapped future
-  owner.
-
-### Phase 3: Internal Package Boundary Split
-
-Goal: prove package boundaries inside this repo before repo extraction.
-
-Recommended intermediate layout:
-
-```text
-packages/
-  epcsaft/
-    pyproject.toml
-    src/epcsaft/
-  epcsaft-equilibrium/
-    pyproject.toml
-    src/epcsaft_equilibrium/
-  epcsaft-regression/
-    pyproject.toml
-    src/epcsaft_regression/
-```
-
-This is a large change. If the first implementation needs a smaller step, start
-with import-boundary tests against the current `src/epcsaft/` layout, then move
-to `packages/` once the tests define the boundary.
-
-Boundary rules:
-
-- `epcsaft` must not import `epcsaft_equilibrium`.
-- `epcsaft` must not import `epcsaft_regression`.
-- `epcsaft` must not reference Ceres or Ipopt in public provider runtime paths.
-- `epcsaft_equilibrium` may depend on `epcsaft` and Ipopt.
-- `epcsaft_equilibrium` must not depend on Ceres.
-- `epcsaft_regression` may depend on `epcsaft` and Ceres.
-- `epcsaft_regression` must not require Ipopt unless the equilibrium-target
-  integration lane is explicitly selected.
-
-Current internal workspace checkpoint:
-
-- The root project is now a uv workspace with extension package shells at
-  `packages/epcsaft-equilibrium` and `packages/epcsaft-regression`.
-- `epcsaft-equilibrium` owns the current `Equilibrium` Python workflow,
-  route specs, diagnostics bridge, activation mirror, and equilibrium
-  capability report.
-- `epcsaft-regression` remains a packaging/build shell and does not re-export
-  the current monorepo `Regression` object.
-- `provider_native_sdk_v1` is the provider-owned native SDK discovery contract,
-  exposed through `epcsaft.provider_native_sdk()` and backed by a native
-  `_native_provider_sdk_contract` probe.
-- Full migration still requires moving regression Python/native implementation,
-  splitting native extension targets by package owner, and proving extraction
-  lanes at a coordinated release boundary.
-
-Implementation order:
-
-1. Add import-boundary tests.
-2. Move core-only Python provider code into the core package root.
-3. Move equilibrium native code under an extension-owned native tree.
-4. Move regression Python frontends into `epcsaft_regression`.
-5. Move regression native code under an extension-owned native tree.
-6. Update CMake targets so Ceres and Ipopt belong to the extension builds.
-7. Update validation orchestration to run provider, equilibrium, regression, and
-   integration lanes separately.
-
-Exit criteria:
-
-- `uv run python scripts/dev/validate_project.py quick` passes for the adjusted
-  current repo.
-- Provider-only install proof passes without Ceres and Ipopt.
-- Equilibrium extension install proof passes with Ipopt.
-- Regression extension install proof passes with Ceres.
-- Regression-with-equilibrium integration proof passes with both extensions.
-- No moved public API remains in core as a hidden compatibility path.
-
-### Phase 4: Capability Migration
-
-Goal: move functionality ownership without lowering scientific completion
-standards.
-
-Equilibrium migration:
-
-- `Equilibrium(...)` ownership lives in `epcsaft_equilibrium`.
-- Move Ipopt route assembly, option profiles, route diagnostics, phase
-  discovery, postsolve certification, and GFPE-specific capability reporting.
-- Keep provider derivative calls in core.
-- Keep tests that prove every exposed route uses production native code,
-  exact/implicit derivative support, and literature-backed or contract-backed
-  evidence.
-
-Regression migration:
-
-- Move `TargetDataset`, `TargetRow`, fit entrypoints, Ceres residual blocks,
-  parameter maps, bounds, optimizer diagnostics, and regression capability
-  reporting.
-- Add a separate integration module for equilibrium-backed target rows.
-- Keep core-only regression rows independent from Ipopt.
-
-Exit criteria:
-
-- Extension packages can be installed from sibling checkouts.
-- Downstream projects can call the new extension APIs with no private package
-  workaround.
-- `capabilities()` and extension capability reports do not claim unsupported
-  routes.
-- Documentation examples import from the package that owns the workflow.
-
-### Phase 5: Transfer Current Repository To The Organization
-
-Goal: move the current upstream source of truth from
-`tannerpolley/ePC-SAFT` to `ePC-SAFT/ePC-SAFT`.
-
-Preflight:
-
-- Confirm target org permissions.
-- Confirm no target repo name conflict.
-- Audit GitHub Actions environments, especially `pypi`.
-- Update or prepare PyPI trusted-publisher records for the new org/repo.
-- Audit workflow text that expects `tannerpolley/ePC-SAFT`.
-- Audit `pyproject.toml` project URLs.
-- Audit README, Sphinx docs, release docs, downstream protocol docs, and issue
-  tracker docs.
-- Check whether GitHub Pages is enabled; if so, plan a separate Pages URL
-  migration because GitHub transfer redirects do not cover Pages URLs.
-
-Transfer:
-
-1. Transfer `tannerpolley/ePC-SAFT` to the `ePC-SAFT` organization.
-2. Keep the repo name `ePC-SAFT` for the first transfer.
-3. Update local clones:
-
-   ```powershell
-   git remote set-url origin https://github.com/ePC-SAFT/ePC-SAFT.git
-   ```
-
-4. Update docs and metadata from old URLs to the new canonical URL.
-5. Update GitHub Actions and PyPI trusted-publisher configuration.
-6. Run quick validation and release/publishing preflight.
-
-Exit criteria:
-
-- GitHub repository URL is `https://github.com/ePC-SAFT/ePC-SAFT`.
-- Local `origin` points at the organization URL.
-- CI runs in the organization repository.
-- PyPI trusted-publisher preflight references the organization repository.
-- User-facing docs point at the organization repository.
-- Old URL redirects work and no replacement repo exists at the old location.
-
-### Phase 6: Extract Extension Repositories
-
-Goal: create true separate repositories after internal package boundaries pass.
-
-Create:
-
-```text
-ePC-SAFT/epcsaft-equilibrium
-ePC-SAFT/epcsaft-regression
-```
-
-Extraction policy:
-
-- Prefer history-preserving extraction for extension-owned code when practical.
-- Use a clean import only if history preservation would create a misleading or
-  oversized repository.
-- Remove moved extension code from core in the same coordinated migration.
-- Do not leave redirect modules, duplicated native code, or dead CMake branches
-  in core.
-
-Each new repo must have:
-
-- `pyproject.toml`
-- README
-- license file
-- package docs
-- CMake/native build docs if native code exists
-- GitHub Actions CI
-- publish workflow
-- issue templates
-- CODEOWNERS
-- protected `main`
-- Dependabot/dependency graph settings
-- compatibility docs naming required `epcsaft` versions
-- contract tests against the core provider API
-
-Exit criteria:
-
-- `epcsaft-equilibrium` installs against released or sibling-checkout
-  `epcsaft`.
-- `epcsaft-regression` installs against released or sibling-checkout `epcsaft`.
-- `epcsaft-regression` equilibrium-target lane installs only when
-  `epcsaft-equilibrium` is present.
-- Core package install and tests pass without extension packages.
-- Downstream smoke checks pass with explicit extension dependencies.
-
-### Phase 7: Coordinated Releases
-
-Goal: publish usable packages with narrow compatibility windows.
-
-Release set:
-
-```text
-epcsaft             0.x    # provider API v1
-epcsaft-equilibrium 0.1.x  # requires epcsaft >=0.x,<0.y
-epcsaft-regression  0.1.x  # requires epcsaft >=0.x,<0.y
-```
+- `epcsaft-equilibrium` only for explicit equilibrium-backed target lanes.
+
+Must not require by default:
+
+- Ipopt;
+- equilibrium package imports for non-equilibrium regression workflows.
+
+## Provider Contract And Native Boundary
+
+The provider repo is the source of truth for the extension contract. Extensions
+consume the provider contract, not private core internals.
+
+The provider contract must include:
+
+- Python API compatibility surface;
+- `provider_native_sdk` metadata;
+- native target or CMake metadata needed by extensions;
+- supported symbols;
+- error and diagnostic schema;
+- derivative and result schema;
+- compatibility version.
+
+Required boundary rules:
+
+- `epcsaft.capabilities()` is provider-scoped after extraction;
+- extension capability reports are package-owned and evidence-backed;
+- provider `_core` in a provider-only build must expose provider-only symbols;
+- equilibrium and regression native symbols must not leak into provider-only
+  `_core`;
+- core must not import extension packages;
+- extensions may not depend on private provider modules as their contract.
+
+## Native Module Split Target
+
+The current object-target split is only a transition seam. The final native
+ownership split is:
+
+- provider native target:
+  owns EOS/model/state/autodiff/provider contract exports;
+- equilibrium native target or module:
+  owns equilibrium/Ipopt/GFPE/result-certification native code;
+- regression native target or module:
+  owns regression/Ceres/objective/residual native code.
+
+Acceptance requirements for the split:
+
+- provider target does not link Ceres;
+- provider target does not link Ipopt;
+- equilibrium target owns Ipopt linkage;
+- equilibrium target does not link Ceres;
+- regression target owns Ceres linkage;
+- regression target does not require Ipopt by default;
+- extension-owned native code is not compiled into provider-only `_core`;
+- `epcsaft._core` is no longer a dumping ground for extension bindings.
+
+## Temporary Monorepo Staging Policy
+
+The workspace may temporarily use `packages/epcsaft-equilibrium` and
+`packages/epcsaft-regression` to prove Python packaging, ownership boundaries,
+and provider-contract consumption before extraction.
+
+That staging state is temporary only.
+
+Rules for staging folders:
+
+- they exist only to prove the final split before repo extraction;
+- they must not be documented as the final layout;
+- they must not justify keeping extension native code in the provider forever;
+- they must be deleted from the core repo after the true sibling repos exist and
+  the migration lands.
+
+## Test Ownership Matrix
+
+Every test must have one owner:
+
+- core provider repo;
+- equilibrium repo;
+- regression repo;
+- explicit cross-repo integration lane.
+
+Rules:
+
+- provider API, provider contract, provider-only build proof, and provider
+  symbol-surface checks belong to core;
+- equilibrium route/capability/result/Ipopt tests belong to
+  `epcsaft-equilibrium`;
+- regression dataset/optimizer/Ceres/result tests belong to
+  `epcsaft-regression`;
+- only explicit cross-package workflows belong to the integration lane.
+
+No test should remain in the provider repo if it primarily proves extension
+internals after extraction.
+
+## CI And Validation Matrix
+
+### Core CI
+
+Must prove:
+
+- provider-only install/build without Ceres and Ipopt;
+- provider API tests;
+- provider contract tests;
+- provider-only `_core` symbol surface;
+- package boundary and docs as owned by the core repo.
+
+### Equilibrium CI
+
+Must prove:
+
+- install/build against released or sibling-checkout `epcsaft`;
+- Ipopt-backed equilibrium native build;
+- equilibrium API/capability/result/contract tests;
+- no Ceres dependency.
+
+### Regression CI
+
+Must prove:
+
+- install/build against released or sibling-checkout `epcsaft`;
+- Ceres-backed regression native build;
+- regression API/result/contract tests;
+- no default Ipopt requirement.
+
+### Integration CI
+
+Must prove:
+
+- explicit combined workflows only;
+- optional regression-plus-equilibrium lanes when those target families need
+  both packages;
+- no hidden dependency cycle between the two extension packages.
+
+## Documentation Requirements
+
+Core docs must:
+
+- stop describing extension internals as core-owned;
+- explain the provider-only contract and provider-native SDK;
+- document sibling local development using editable installs or `uv` path
+  sources;
+- avoid any submodule language.
+
+Each extension repo must have:
+
+- `README`;
+- docs site or docs tree;
+- package guide;
+- build instructions;
+- capability docs;
+- compatibility docs naming required `epcsaft` versions.
+
+## PyPI And Release Choreography
+
+Release order:
+
+1. release `epcsaft` first;
+2. release `epcsaft-equilibrium` against the supported `epcsaft` range;
+3. release `epcsaft-regression` against the supported `epcsaft` range.
 
 Release requirements:
 
-- Core release notes explain that core no longer owns Ceres regression or Ipopt
-  equilibrium routes.
-- Extension release notes identify supported core versions.
-- PyPI projects and trusted publishers exist for each package.
-- GitHub Releases include wheels/sdists or document source build requirements.
-- Docs show install choices:
+- trusted publishers exist for each package;
+- release notes explain ownership and migration;
+- compatibility ranges are explicit;
+- install examples are user-facing and current:
 
-  ```text
-  pip install epcsaft
-  pip install epcsaft epcsaft-equilibrium
-  pip install epcsaft epcsaft-regression
-  pip install epcsaft epcsaft-equilibrium epcsaft-regression
-  ```
+```text
+pip install epcsaft
+pip install epcsaft epcsaft-equilibrium
+pip install epcsaft epcsaft-regression
+pip install epcsaft epcsaft-equilibrium epcsaft-regression
+```
 
-- Downstream repos pin explicit package dependencies.
+The provider release is not allowed to imply that Ceres regression or Ipopt
+equilibrium remain core-owned.
 
-Exit criteria:
+## Honest Repository Creation Standard
 
-- A clean environment can install each package combination.
-- Downstream MEA, lithium, and column smoke workflows use generic extension
-  APIs.
-- No downstream repo copies EoS, equilibrium, or regression implementation code.
+Create `ePC-SAFT/epcsaft-equilibrium` and `ePC-SAFT/epcsaft-regression` only
+when the contents are honest extension repos, not placeholders.
 
-## First Implementation PR
+Each new repo must include:
 
-The first PR should be docs and tests only. Do not move production code in the
-first PR.
+- `pyproject.toml`;
+- `README`;
+- `LICENSE`;
+- docs;
+- tests;
+- CI workflows;
+- publish workflow;
+- `CODEOWNERS`;
+- issue templates;
+- branch protection;
+- labels;
+- Dependabot and dependency graph settings;
+- project-board linkage;
+- compatibility docs naming required `epcsaft` versions.
 
-Scope:
+## Downstream Migration Gates
 
-- Add `docs/adr/0005-package-extension-split.md`.
-- Update `docs/roadmaps/FULL_ROADMAP.md` to state that the completion standard
-  follows the owning package after the split.
-- Update `docs/protocols/build_package_dependency_protocol.rst` so Ceres belongs
-  to regression and Ipopt belongs to equilibrium.
-- Add import/dependency boundary tests that initially document the current
-  failing state.
-- Update publishing docs with the organization-transfer implications.
+Downstream migration starts only after all of the following are true:
 
-The second PR should make the boundary tests pass without moving files between
-repos. Only after those tests pass should code move into internal package roots.
+- provider contract is frozen and tested;
+- sibling local repos exist and install together without private workarounds;
+- core provider build/install proof passes without Ceres and Ipopt;
+- equilibrium package install/build proof passes with Ipopt;
+- regression package install/build proof passes with Ceres;
+- optional combined integration lane passes;
+- user-facing docs and examples point to the correct package owners.
 
-## Risk Register
+Downstream repos must migrate by normal dependency updates, not by copying code
+or vendoring private internals.
 
-Interface instability:
+## Cleanup And Removal Requirements
 
-- Risk: equilibrium and regression APIs are still evolving.
-- Control: freeze provider/result/derivative contracts before repo extraction.
+After extraction, remove from core:
 
-Native build duplication:
+- `packages/epcsaft-equilibrium`;
+- `packages/epcsaft-regression`;
+- moved equilibrium C++ sources;
+- moved regression C++ sources;
+- stale CMake targets;
+- stale root exports;
+- stale tests;
+- stale scripts;
+- stale capability claims;
+- hidden compatibility wrappers.
 
-- Risk: each repo grows its own inconsistent CMake and dependency logic.
-- Control: extract shared build conventions only after the core provider target
-  and extension targets are clear.
+The cleanup is part of completion, not optional follow-up work.
 
-Regression-equilibrium dependency cycle:
+## Phase Gates
 
-- Risk: regression imports equilibrium by default and pulls Ipopt into all
-  regression installs.
-- Control: make equilibrium-target regression an explicit integration lane.
+### Phase 0: Roadmap And Governance Freeze
 
-Stale docs and old URLs:
+Goal:
 
-- Risk: install docs, PyPI workflow text, release docs, and issue tracker docs
-  continue pointing at `tannerpolley/ePC-SAFT`.
-- Control: transfer PR includes a narrow URL search and updates user-facing docs.
+- make this roadmap authoritative before more extraction-facing work;
+- prepare the GitHub organization, labels, boards, permissions, and publisher
+  preflight.
 
-PyPI trusted publishing:
+Exit gate:
 
-- Risk: OIDC publisher claims no longer match after transfer.
-- Control: update PyPI trusted publisher settings before the first org-owned
-  publish run.
+- the roadmap, ADR, build protocol, and package architecture docs agree on the
+  target state;
+- organization prerequisites are either completed or explicitly blocked with
+  evidence.
 
-GitHub Pages:
+### Phase 1: Provider-Only Core Boundary
 
-- Risk: repository transfer does not redirect Pages URLs.
-- Control: audit Pages separately and document the new URL if Pages is enabled.
+Goal:
 
-Capability overclaims:
+- prove that core can build and install as a provider-only package.
 
-- Risk: core or extensions report routes that moved or are not implemented.
-- Control: capability reports stay package-owned and evidence-backed.
+Required implementation:
 
-Old location reuse:
+- direct build path supports Ceres OFF and Ipopt OFF;
+- provider-only `_core` exports provider-only symbols;
+- provider-only tests fail if equilibrium or regression symbols leak;
+- provider docs and validation commands describe the provider-only proof.
 
-- Risk: creating a placeholder repo at `tannerpolley/ePC-SAFT` destroys the
-  transfer redirect.
-- Control: do not create a replacement repo or fork at the old location.
+Exit gate:
+
+- provider-only build/install proof passes without Ceres and Ipopt;
+- provider-only API and symbol-surface tests pass;
+- no provider runtime path claims extension ownership.
+
+### Phase 2: Contract Freeze And Internal Native Split
+
+Goal:
+
+- freeze the provider contract and make the transition workspace reflect the
+  future split honestly.
+
+Required implementation:
+
+- provider API contract and native SDK contract are versioned and tested;
+- current public surfaces have future owners;
+- internal staging packages consume the provider contract;
+- native target ownership is explicit and enforced by tests.
+
+Exit gate:
+
+- provider contract, native contract, and ownership docs are aligned;
+- extension staging packages are honest consumers of the provider contract;
+- no hidden provider-to-extension import path is required.
+
+### Phase 3: Honest Extension Package Readiness
+
+Goal:
+
+- make the staging packages honest enough that repo extraction can preserve real
+  ownership instead of placeholder shells.
+
+Required implementation:
+
+- equilibrium owns its Python workflow modules and extension-facing tests;
+- regression owns its Python workflow modules and extension-facing tests;
+- native code is split to extension-owned targets or modules;
+- CI lanes are package-specific plus explicit integration.
+
+Exit gate:
+
+- sibling local proof works through explicit dependency wiring;
+- extension repos could be created without immediately violating ownership.
+
+### Phase 4: Repository Creation And Transfer
+
+Goal:
+
+- transfer the provider repo into the organization and create honest extension
+  repos.
+
+Required implementation:
+
+- transfer current repo to `ePC-SAFT/ePC-SAFT`;
+- create extension repos only when contents are real;
+- configure branch protection, labels, templates, CODEOWNERS, workflows,
+  Dependabot, and publishers.
+
+Exit gate:
+
+- organization repos exist with honest contents and working CI/publish flows.
+
+### Phase 5: Coordinated Release And Cleanup
+
+Goal:
+
+- publish the package set and remove moved code from core.
+
+Required implementation:
+
+- coordinated package releases with compatibility pins;
+- downstream migration proof;
+- cleanup/removal of moved core code and staging folders.
+
+Exit gate:
+
+- all three repos, PyPI packages, docs, and install proofs agree;
+- the core repo no longer contains permanent extension code.
+
+## First Implementation Slice
+
+The first implementation slice starts here:
+
+1. update this roadmap until it fully defines the target state and gates;
+2. inspect the current CMake target split and native symbol surface;
+3. make the core build support a provider-only profile with Ceres OFF and Ipopt
+   OFF;
+4. ensure provider-only `epcsaft._core` exposes provider-only symbols only;
+5. add tests that fail if equilibrium/regression symbols leak into provider-only
+   core;
+6. update validation commands and docs to reflect the implemented boundary.
+
+Focused validation for this slice:
+
+```powershell
+uv run python run_pytest.py --provider-api -q
+uv run python run_pytest.py --integration -q
+uv run python run_pytest.py --native-contracts -q
+uv run python scripts/dev/validate_project.py quick
+uv run python scripts/dev/validate_project.py docs
+```
+
+Use the smallest relevant command first. Full docs validation is required when
+docs changed. Native-contract validation is required when the provider/native
+boundary or `_core` symbol surface changes.
 
 ## Completion Definition For The Full Transfer
 
-The full transfer is complete only when all of these are true:
+The transfer is complete only when all of these are true:
 
-- The current upstream repo lives under `ePC-SAFT`.
-- Core provider docs, metadata, workflows, and PyPI publisher settings reference
-  the organization-owned repository.
-- The extension split has an accepted ADR and matching source-of-truth docs.
-- Core can install and validate without Ceres and Ipopt.
-- Equilibrium can install and validate with Ipopt.
-- Regression can install and validate with Ceres.
-- Regression/equilibrium integration is explicit and separately tested.
-- Extension repositories exist only after internal boundaries pass.
-- Downstream smoke workflows use generic APIs from the correct package.
-- No stale core-owned Ceres/Ipopt workflow, dead code, or hidden compatibility
-  path remains in `epcsaft`.
+- `ePC-SAFT/ePC-SAFT` is the core provider repo;
+- `ePC-SAFT/epcsaft-equilibrium` is the equilibrium extension repo;
+- `ePC-SAFT/epcsaft-regression` is the regression extension repo;
+- the final local sibling-repo layout is the real development layout;
+- no Git submodules are used;
+- core builds and installs without Ceres and Ipopt;
+- equilibrium builds and installs against `epcsaft` with Ipopt;
+- regression builds and installs against `epcsaft` with Ceres;
+- optional regression/equilibrium integration is explicit and separately tested;
+- docs, CI, package metadata, publishers, and releases agree on ownership;
+- downstream repos consume the correct packages through generic APIs;
+- no stale provider-owned extension code, wrappers, targets, or claims remain.

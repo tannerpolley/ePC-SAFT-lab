@@ -41,4 +41,7 @@ def provider_native_sdk() -> dict[str, Any]:
     native_payload = _native_provider_sdk_metadata()
     payload["native_contract_exported"] = native_payload is not None
     payload["native_metadata"] = native_payload or {}
+    payload["provider_only_core"] = bool(payload["native_metadata"].get("provider_only_core", False))
+    payload["equilibrium_native_enabled"] = bool(payload["native_metadata"].get("equilibrium_native_enabled", False))
+    payload["regression_native_enabled"] = bool(payload["native_metadata"].get("regression_native_enabled", False))
     return payload

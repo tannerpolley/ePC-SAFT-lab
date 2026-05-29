@@ -328,6 +328,10 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert build_native["SCRIPT_PATH"].endswith("/.codex/environments/setup.ps1")
     assert build_native["SCRIPT_OPTIONS"] == "-Step Build"
 
+    build_provider_only = _run_config_options(run_configs["Build Provider-Only Core"][1])
+    assert build_provider_only["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/build_epcsaft.py"
+    assert build_provider_only["PARAMETERS"] == "--clean --profile provider"
+
     cmake_wrapper = _read("scripts/dev/cmake_preset.ps1")
     assert "Assert-NoNinjaLock" in cmake_wrapper
     assert "Assert-MsvcEnvironment" in cmake_wrapper

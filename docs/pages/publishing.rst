@@ -9,17 +9,15 @@ publisher is configured.
 PyPI trusted publisher setup
 ----------------------------
 
-Before the organization transfer, configure a PyPI trusted publisher for the
-current repository:
+Configure a PyPI trusted publisher for the current organization-owned
+repository:
 
 - PyPI project name: ``epcsaft``
-- Owner: ``tannerpolley``
+- Owner: ``ePC-SAFT``
 - Repository name: ``ePC-SAFT``
 - Workflow filename: ``publish-pypi.yml``
 - Environment name: ``pypi``
 
-After the repository transfers to the ``ePC-SAFT`` organization, update the
-PyPI trusted publisher owner to ``ePC-SAFT`` before the first org-owned publish.
 The package-extension split will later require separate PyPI projects and
 trusted publishers for ``epcsaft-equilibrium`` and ``epcsaft-regression``.
 
@@ -58,10 +56,7 @@ GitHub Actions:
 
 .. code-block:: powershell
 
-   gh workflow run publish-pypi.yml --repo tannerpolley/ePC-SAFT -f ref=vX.Y.Z
-
-After the organization transfer, run the same workflow against
-``ePC-SAFT/ePC-SAFT`` once the PyPI trusted publisher has been updated.
+   gh workflow run publish-pypi.yml --repo ePC-SAFT/ePC-SAFT -f ref=vX.Y.Z
 
 The workflow builds the sdist and Windows CPython 3.13 wheel from the requested
 tag, then publishes the distributions to PyPI through

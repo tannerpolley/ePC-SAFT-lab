@@ -5,6 +5,9 @@ from pathlib import Path
 import epcsaft._core as _core
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+EQUILIBRIUM_PACKAGE_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium"
+EQUILIBRIUM_MODULE_ROOT = EQUILIBRIUM_PACKAGE_ROOT / "src" / "epcsaft_equilibrium"
+EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_ROOT / "native" / "equilibrium"
 
 
 def test_native_equilibrium_entrypoint_is_exposed() -> None:
@@ -17,8 +20,8 @@ def test_equilibrium_runtime_does_not_import_external_optimizers() -> None:
     source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (
-            REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
-            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
+            EQUILIBRIUM_MODULE_ROOT / "equilibrium.py",
+            EQUILIBRIUM_MODULE_ROOT / "workflows.py",
         )
     )
 
@@ -58,8 +61,8 @@ def test_public_equilibrium_does_not_expose_python_backend_tokens() -> None:
     equilibrium_source = "\n".join(
         path.read_text(encoding="utf-8")
         for path in (
-            REPO_ROOT / "src" / "epcsaft" / "frontend" / "equilibrium.py",
-            REPO_ROOT / "src" / "epcsaft" / "equilibrium" / "workflows.py",
+            EQUILIBRIUM_MODULE_ROOT / "equilibrium.py",
+            EQUILIBRIUM_MODULE_ROOT / "workflows.py",
         )
     )
 
@@ -69,13 +72,11 @@ def test_public_equilibrium_does_not_expose_python_backend_tokens() -> None:
 
 
 def test_native_route_result_serialization_uses_bridge_module() -> None:
-    bridge = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "results" / "route_result_bridge.h"
+    bridge = EQUILIBRIUM_NATIVE_ROOT / "results" / "route_result_bridge.h"
     bindings = (REPO_ROOT / "src" / "epcsaft" / "native" / "bindings" / "module.cpp").read_text(
         encoding="utf-8"
     )
-    equilibrium_registration = (
-        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "register_bindings.cpp"
-    ).read_text(encoding="utf-8")
+    equilibrium_registration = (EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp").read_text(encoding="utf-8")
 
     assert bridge.exists()
     assert '#include "equilibrium/results/route_result_bridge.h"' not in bindings
@@ -86,10 +87,8 @@ def test_native_route_result_serialization_uses_bridge_module() -> None:
 
 
 def test_selector_core_and_two_phase_support_have_dedicated_owners() -> None:
-    selector = REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "selector_core.cpp"
-    source = (
-        REPO_ROOT / "src" / "epcsaft" / "native" / "equilibrium" / "core" / "two_phase_eos_route.cpp"
-    ).read_text(encoding="utf-8")
+    selector = EQUILIBRIUM_NATIVE_ROOT / "core" / "selector_core.cpp"
+    source = (EQUILIBRIUM_NATIVE_ROOT / "core" / "two_phase_eos_route.cpp").read_text(encoding="utf-8")
 
     assert selector.exists()
     assert "solve_selector_route" in selector.read_text(encoding="utf-8")

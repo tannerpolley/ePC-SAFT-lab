@@ -9,11 +9,9 @@ Install from a wheel
 The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel and source
 archive:
 
-``https://github.com/tannerpolley/ePC-SAFT/releases/tag/v0.2.0``
+``https://github.com/ePC-SAFT/ePC-SAFT/releases/tag/v0.2.0``
 
-That URL is the current pre-transfer release location. The package roadmap
-targets transfer to the ``ePC-SAFT`` GitHub organization before extension
-packages are extracted.
+That URL is the current organization-owned release location.
 
 Windows users on Python 3.13 can download the wheel and install it directly:
 
@@ -53,13 +51,13 @@ locally:
 
 .. code-block:: powershell
 
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 
 With ``uv``:
 
 .. code-block:: powershell
 
-   uv add "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+   uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 
 Source builds require:
 
@@ -89,7 +87,7 @@ come directly from the checkout:
 
 .. code-block:: powershell
 
-   git clone https://github.com/tannerpolley/ePC-SAFT.git
+   git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
    python -m pip install -e .
 
@@ -104,10 +102,11 @@ source changes are picked up from the checkout. If you change C++ sources,
 pybind bindings, CMake files, or build metadata, rerun the editable install
 command so the native extension is rebuilt.
 
-Equilibrium workflows live in the sibling ``epcsaft-equilibrium`` workspace
-package. In a source checkout, use the uv workspace environment or install the
-built ``epcsaft-equilibrium`` wheel alongside ``epcsaft`` before importing
-``epcsaft_equilibrium``.
+Equilibrium and regression workflows live in monorepo workspace packages under
+``packages/``. In a source checkout, use the uv workspace environment before
+importing ``epcsaft_equilibrium`` or ``epcsaft_regression``. These transition
+packages require the matching workspace provider build with the relevant native
+symbols enabled.
 
 Local path dependency
 ---------------------
@@ -143,7 +142,7 @@ backend at an Ipopt install root explicitly:
 .. code-block:: powershell
 
    $env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-   python -m pip install "epcsaft @ git+https://github.com/tannerpolley/ePC-SAFT.git@v0.2.0"
+   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
 
 Use ``EPCSAFT_PEP517_IPOPT_DIR`` instead when the install provides an
 ``IpoptConfig.cmake`` directory.

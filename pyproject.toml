@@ -30,10 +30,10 @@ classifiers = [
 ]
 
 [project.urls]
-# Current source repository until the organization-transfer phase updates this URL.
-Homepage = "https://github.com/tannerpolley/ePC-SAFT"
+# Current source repository.
+Homepage = "https://github.com/ePC-SAFT/ePC-SAFT"
 Documentation = "https://epcsaft.readthedocs.io/en/latest/"
-Repository = "https://github.com/tannerpolley/ePC-SAFT"
+Repository = "https://github.com/ePC-SAFT/ePC-SAFT"
 
 [dependency-groups]
 test = [
@@ -92,6 +92,10 @@ include = [
     "src/epcsaft/**/*.pyi",
     "src/epcsaft/**/*.cpp",
     "src/epcsaft/**/*.h",
+    "packages/epcsaft-equilibrium/native/**/*.cpp",
+    "packages/epcsaft-equilibrium/native/**/*.h",
+    "packages/epcsaft-regression/native/**/*.cpp",
+    "packages/epcsaft-regression/native/**/*.h",
     "tests/**/*.py",
 ]
 

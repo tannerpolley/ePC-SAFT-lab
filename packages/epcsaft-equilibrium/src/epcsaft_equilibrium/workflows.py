@@ -10,7 +10,8 @@ from typing import Any, Literal
 
 import numpy as np
 
-from epcsaft._types import InputError, SolutionError
+from epcsaft import InputError, SolutionError
+from epcsaft.runtime import RouteDiagnosticsView
 
 from ._native import provider_native_core
 from .core.native_requests import (
@@ -21,7 +22,6 @@ from .core.native_requests import (
     selector_route_solver_tolerances,
 )
 from .core.native_results import (
-    RouteDiagnosticsView,
     native_route_diagnostics,
     native_route_phase_labels,
     native_route_solved_pressure,
