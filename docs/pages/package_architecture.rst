@@ -136,6 +136,10 @@ by default.
 Extension packages that need native-provider build metadata use the
 ``provider_native_sdk_v1`` contract exposed by ``provider_native_sdk()``. The
 private ``_core`` pybind module is not the native SDK or a stable extension ABI.
+The SDK payload includes the source/CMake SDK kind and version, CMake config
+path, source manifest path, include root, and supported extension-native
+consumers so extension package builds can fail loudly when provider SDK material
+is absent.
 
 Compatibility Policy
 --------------------

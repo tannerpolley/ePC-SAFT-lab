@@ -49,6 +49,8 @@ include = [
     "build_backend/*.py",
     "src/epcsaft/**/*.py",
     "src/epcsaft/**/*.pyi",
+    "src/epcsaft/**/*.cmake",
+    "src/epcsaft/**/*.json",
     "src/epcsaft/**/*.cpp",
     "src/epcsaft/**/*.h",
 ]

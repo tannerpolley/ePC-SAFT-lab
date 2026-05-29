@@ -19,7 +19,7 @@ PROVIDER_NATIVE_ROOT = PROVIDER_PACKAGE_ROOT / "native"
 EQUILIBRIUM_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft-equilibrium"
 EQUILIBRIUM_PACKAGE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "src" / "epcsaft_equilibrium"
 EQUILIBRIUM_TEST_ROOT = EQUILIBRIUM_PACKAGE_DIR / "tests"
-EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "native" / "equilibrium"
+EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_DIR / "src" / "epcsaft_equilibrium" / "native" / "equilibrium"
 REGRESSION_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft-regression"
 REGRESSION_PACKAGE_ROOT = REGRESSION_PACKAGE_DIR / "src" / "epcsaft_regression"
 REGRESSION_TEST_ROOT = REGRESSION_PACKAGE_DIR / "tests"
@@ -210,6 +210,7 @@ MILESTONE_PLAN_FILES = {
     "M1-packages/plans/test-ownership-relocation.md",
     "M1-packages/plans/move-provider-distribution-into-packages-epcsaft.md",
     "M1-packages/plans/post-move-cleanup-install-proof.md",
+    "M1-packages/plans/package-transfer-transition-audit.md",
     "M3-eos/plans/explicit-association-closure-for-pcsaft.md",
     "M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md",
     "M4-equilibrium/plans/gfpe-package-cleanup-plan.md",
@@ -455,6 +456,53 @@ def test_active_workflows_do_not_require_retired_root_provider_paths() -> None:
             offenders.append(relpath)
 
     assert sorted(set(offenders)) == []
+
+
+def test_active_files_do_not_import_retired_extension_paths() -> None:
+    retired_patterns = (
+        "from " + "epcsaft.equilibrium",
+        "import " + "epcsaft.equilibrium",
+        "from " + "epcsaft.regression",
+        "import " + "epcsaft.regression",
+        "epcsaft." + "equilibrium_core",
+        "scripts.validation." + "equilibrium_core",
+    )
+    scanned_roots = (
+        "analyses",
+        "packages",
+        "scripts",
+        "tests",
+        "docs/pages",
+        "docs/contracts",
+        "docs/protocols",
+        "README.md",
+    )
+    skipped = {
+        "tests/workflows/repo/test_project_structure.py",
+    }
+
+    offenders: dict[str, list[str]] = {}
+    for relpath in _tracked_files(*scanned_roots):
+        if relpath in skipped:
+            continue
+        path = REPO_ROOT / relpath
+        if not path.is_file() or path.suffix.lower() not in {
+            ".md",
+            ".py",
+            ".ps1",
+            ".rst",
+            ".toml",
+            ".txt",
+            ".yaml",
+            ".yml",
+        }:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        matches = [pattern for pattern in retired_patterns if pattern in text]
+        if matches:
+            offenders[relpath] = matches
+
+    assert offenders == {}
 
 
 def test_native_cpp_sources_live_under_domain_workflow_modules() -> None:

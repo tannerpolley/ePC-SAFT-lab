@@ -195,7 +195,7 @@ def test_equilibrium_debug_flag_sets_opt_in_test_environment():
 
 def test_continuous_tpd_debug_trace_is_gated_by_equilibrium_debug_env():
     source = Path(
-        "packages/epcsaft-equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
+        "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
     ).read_text(encoding="utf-8")
 
     assert "EPCSAFT_EQUILIBRIUM_DEBUG" in source
@@ -217,7 +217,7 @@ def test_doctor_tracks_native_symbols_added_by_recent_workflows():
 
 
 def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():
-    source = Path("packages/epcsaft-regression/native/regression/ceres_regression.cpp").read_text(encoding="utf-8")
+    source = Path("packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp").read_text(encoding="utf-8")
 
     blocked_terms = (
         "unsupported/Eigen/" + "Levenberg" + "Marquardt",
@@ -231,7 +231,7 @@ def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():
 def test_native_ceres_sources_have_no_ceres_nonexact_derivative_route():
     source = "\n".join(
         path.read_text(encoding="utf-8")
-        for root in (Path("packages/epcsaft/src/epcsaft/native"), Path("packages/epcsaft-regression/native"))
+        for root in (Path("packages/epcsaft/src/epcsaft/native"), Path("packages/epcsaft-regression/src/epcsaft_regression/native"))
         for path in sorted(root.rglob("*"))
         if path.suffix in {".cpp", ".h", ".hpp"}
     )

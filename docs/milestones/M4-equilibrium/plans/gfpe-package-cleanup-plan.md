@@ -19,7 +19,7 @@ remain owned by the selector activation metadata, not by planning prose.
 4. `docs/adr/0005-package-extension-split.md` assigns final equilibrium
    ownership to `epcsaft-equilibrium`; this cleanup plan prepares that module
    boundary before extraction.
-5. `packages/epcsaft-equilibrium/native/equilibrium/core/activation_matrix.h` is the executable
+5. `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h` is the executable
    selector-admission inventory.
 6. During the monorepo transition, `epcsaft_equilibrium.capabilities()` mirrors
    that inventory upward for users and downstream projects. The provider

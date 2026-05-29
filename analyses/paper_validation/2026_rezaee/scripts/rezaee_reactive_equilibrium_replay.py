@@ -15,7 +15,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from _epcsaft_properties import get_prop_dict  # noqa: E402
 from epcsaft import ReactionDefinition, _core, ePCSAFTMixture  # noqa: E402
-from epcsaft.equilibrium import _reaction_phase_stoichiometry_matrix  # noqa: E402
 
 INPUT_DIR = ANALYSIS_DIR / "shared" / "source"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
@@ -51,6 +50,29 @@ UNSUPPORTED_FLAT_ELECTROLYTE_KEYS = {
     "dielc_diff_mode",
     "debug",
 }
+
+
+def _reaction_phase_stoichiometry_matrix(
+    species: list[str],
+    reactions: list[ReactionDefinition],
+    route_kind: str,
+) -> tuple[np.ndarray | None, list[str]]:
+    phase_labels = ("aq", "org") if route_kind == "electrolyte_lle" else ()
+    if not phase_labels:
+        return None, []
+    rows: list[list[float]] = []
+    scope: list[str] = []
+    for reaction in reactions:
+        phase_stoichiometry = getattr(reaction, "phase_stoichiometry", None) or {}
+        for phase_label in phase_labels:
+            phase_terms = phase_stoichiometry.get(phase_label)
+            if not phase_terms:
+                continue
+            rows.append([float(phase_terms.get(label, 0.0)) for label in species])
+            scope.append(f"{reaction.name}:{phase_label}")
+    if not rows:
+        return None, []
+    return np.asarray(rows, dtype=float), scope
 
 
 def _safe_log(value: float) -> float:

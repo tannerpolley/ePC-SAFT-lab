@@ -53,6 +53,18 @@ exports provider-owned symbols only. The repo build helper also writes
 ``EPCSAFT_BUILD_PROFILE=provider`` into CMake cache so Ninja regeneration keeps
 the provider-only flags pinned instead of falling back to transition defaults.
 
+Extension package build proof now has package-local entry points:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+
+The monorepo mode consumes the sibling ``packages/epcsaft`` provider SDK
+source/CMake metadata. The installed-provider mode consumes the same SDK from
+an installed provider wheel. The equilibrium extension proof requires a real
+Ipopt SDK; disabling Ipopt is not production equilibrium package evidence.
+
 Regression and equilibrium are transition capabilities
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -148,6 +160,12 @@ Normal PR CI should have separate lane names for separate claims:
    Ipopt runtime coupling so installable artifacts do not require user-local
    Ipopt DLLs. This does not reduce the source/native requirement that
    production equilibrium validation prove Ipopt.
+
+``extension package boundary``
+   Package-local wheel/sdist validation for ``epcsaft-equilibrium`` and
+   ``epcsaft-regression``. It builds extension wheels from their package roots
+   in monorepo-provider and installed-provider SDK modes and smoke-imports
+   their package-owned ``_native_core`` modules.
 
 No-Conda Ipopt policy
 ---------------------
