@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/198
 - Milestone: `M3 - EOS`
 - Full roadmap: `docs/milestones/PROJECT_CONTEXT.md`
-- Roadmap section: `## M3 - EOS`
+- Roadmap section: `Required milestones`
 - Labels: `type:task`, `status:ready`, `agent-ready`, `area:core`, `area:derivatives`, `backend:cppad`
 
 ## Outcome
