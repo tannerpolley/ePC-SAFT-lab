@@ -30,6 +30,13 @@ The current repo must keep clean internal subsystem boundaries so the extension
 packages can be built, tested, and released independently without hidden
 compatibility paths.
 
+No separate GitHub extension repository is authoritative for current
+development. If a historical extension repository is retained or reappears, it
+is an archived or non-authoritative pointer to this monorepo unless a later
+issue explicitly changes the source-of-truth decision. Normal local
+development uses this checkout and the ``packages/`` workspace members, not
+sibling extension checkouts.
+
 The target internal shape is:
 
 .. code-block:: text

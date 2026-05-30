@@ -151,15 +151,15 @@ Goal: make the monorepo package ecosystem visible and releasable.
 Gates:
 
 - [ ] CI has separate core, equilibrium, regression, docs, and integration lanes.
-- [ ] PyPI/release docs publish `epcsaft`, `epcsaft-equilibrium`, and
+- [x] PyPI/release docs publish `epcsaft`, `epcsaft-equilibrium`, and
   `epcsaft-regression` from one repo.
-- [ ] Old sibling GitHub repos are archived or clearly point to the monorepo.
+- [x] Old sibling GitHub repos are absent, archived, or clearly point to the
+  monorepo.
 - [x] User-facing docs stop implying sibling repo source checkouts.
 - [x] Root package move to `packages/epcsaft` is separately planned and gated.
 
 Remaining release-lane work belongs to later milestone issues, not issue #150:
-separate package CI lanes, PyPI/release docs, and old sibling repository
-archival.
+separate package CI lanes and actual PyPI/trusted-publisher activation.
 
 ## Non-Goals For Issue 150
 

@@ -12,6 +12,4 @@ proof, extension-native boundaries, and package CI/docs/release structure.
 
 ## Current Open Issues
 
-| Issue | Package | Backend | Readiness | Summary |
-| --- | --- | --- | --- | --- |
-| [#185](issues/0185-finish-monorepo-package-release-cleanup-and-sibling-repo-archival.md) | `core` | - | `ready` | Finish monorepo package release cleanup and sibling-repo archival guidance. |
+No open M1 package-layout issues are mirrored locally.

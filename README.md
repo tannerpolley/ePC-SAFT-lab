@@ -93,6 +93,8 @@ under `packages/`. In a source checkout, use the uv workspace environment before
 importing `epcsaft_equilibrium` or `epcsaft_regression`. Do not install these
 transition packages against provider-only `epcsaft` wheels; they require the
 matching workspace provider build with the relevant native symbols enabled.
+Retired sibling extension checkouts are not part of the current development,
+release, or install-proof workflow.
 
 ## Verify The Install
 

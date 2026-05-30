@@ -86,4 +86,7 @@ or run a non-equilibrium lane instead.
 
 For implementation work, use the matching GitHub issue and the milestone plan
 under `docs/milestones/M*/plans/`. Do not resurrect superseded roadmap files or
-old source-layout commands.
+old source-layout commands. Current package work stays in this monorepo under
+`packages/epcsaft`, `packages/epcsaft-equilibrium`, and
+`packages/epcsaft-regression`; retired sibling extension checkouts are not
+authoritative inputs.

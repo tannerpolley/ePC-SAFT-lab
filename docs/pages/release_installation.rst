@@ -128,6 +128,10 @@ are published, use the local ``dist/`` proof or the monorepo uv workspace.
 Production equilibrium extension artifacts require a real Ipopt SDK; no-Ipopt
 builds are not production equilibrium package evidence.
 
+All current provider and extension release artifacts are built from this
+monorepo. Retired sibling extension checkouts are not part of release,
+installation, or package-proof workflows.
+
 Local path dependency
 ---------------------
 
@@ -136,7 +140,7 @@ For a project that depends on a local checkout, use a path dependency:
 .. code-block:: toml
 
    dependencies = [
-       "epcsaft @ file:///C:/path/to/ePC-SAFT",
+       "epcsaft @ file:///C:/path/to/ePC-SAFT/packages/epcsaft",
    ]
 
 After package changes, refresh the installed dependency:
