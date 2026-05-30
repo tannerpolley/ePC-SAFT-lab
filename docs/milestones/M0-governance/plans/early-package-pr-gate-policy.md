@@ -2,7 +2,7 @@
 
 Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/182
 Milestone: `M0 - Governance`
-Status: `implementation`
+Status: `complete pending merge`
 Last synced: `2026-05-29`
 
 ## Summary
@@ -20,20 +20,20 @@ capability claims.
 
 ## Acceptance Gates
 
-- [ ] CI policy documents local proof first, lightweight smoke PR checks,
+- [x] CI policy documents local proof first, lightweight smoke PR checks,
       manual-only heavy lanes, and release/capability proof exceptions.
-- [ ] `.github/workflows/native-build-profiles.yml` and
+- [x] `.github/workflows/native-build-profiles.yml` and
       `.github/workflows/package-build-lanes.yml` no longer run automatically on
       `pull_request`.
-- [ ] `.github/workflows/wheels.yml` keeps only lightweight PR smoke behavior on
+- [x] `.github/workflows/wheels.yml` keeps only lightweight PR smoke behavior on
       `pull_request`, with full wheel/package matrix still manual.
-- [ ] Branch protection is audited and remains no required checks/reviews unless
+- [x] Branch protection is audited and remains no required checks/reviews unless
       explicitly changed later.
-- [ ] `.github/PULL_REQUEST_TEMPLATE.md` removes the universal production-proof
+- [x] `.github/PULL_REQUEST_TEMPLATE.md` removes the universal production-proof
       question block.
-- [ ] Docs explain ordinary PRs do not need boilerplate skipped-heavy-lane
+- [x] Docs explain ordinary PRs do not need boilerplate skipped-heavy-lane
       notes.
-- [ ] Structural tests enforce workflow trigger policy and PR template shape.
+- [x] Structural tests enforce workflow trigger policy and PR template shape.
 
 ## Non-Goals
 
