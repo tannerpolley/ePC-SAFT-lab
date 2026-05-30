@@ -31,6 +31,12 @@ command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments
 platform = "win32"
 
 [[actions]]
+name = "Check IntelliJ Contract"
+icon = "inspect"
+command = "uv run python scripts/dev/configure_jetbrains_project.py --check"
+platform = "win32"
+
+[[actions]]
 name = "Validate Quick"
 icon = "test"
 command = "uv run python scripts/dev/validate_project.py quick"
