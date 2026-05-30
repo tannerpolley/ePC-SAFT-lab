@@ -22,7 +22,9 @@ The extension packages also require separate PyPI projects and trusted
 publishers for ``epcsaft-equilibrium`` and ``epcsaft-regression`` before they
 can be published. Until those publishers exist, use local ``dist/`` install
 proof from ``scripts/dev/check_release_installs.py`` rather than claiming a PyPI
-release.
+release. Their source of truth is this monorepo under
+``packages/epcsaft-equilibrium`` and ``packages/epcsaft-regression``; separate
+extension repositories are not authoritative release inputs.
 
 For a new PyPI project, create this as a pending publisher in PyPI before the
 first GitHub Actions publish run. PyPI can still return 404 for
