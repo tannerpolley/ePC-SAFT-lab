@@ -67,6 +67,9 @@ derivative evidence.
 - [ ] Public Born parameter derivative payloads report CppAD-backed coverage
   consistently across state, fugacity, activity, regression, and capability
   evidence.
+- [ ] Provider native type stubs, derivative coverage/backend contract tests,
+  regression extension capability text, and regression electrolyte tests are
+  updated so no stale SSMDS API/test identifiers remain.
 
 ## Non-Goals
 
@@ -79,6 +82,7 @@ derivative evidence.
 
 - `uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`
 - `uv run python run_pytest.py packages/epcsaft/tests/native/state/test_born_parameter_derivatives.py packages/epcsaft/tests/native/state/test_eos_contributions.py packages/epcsaft/tests/native/state/test_phase_state_sensitivities.py tests/workflows/repo/test_package_extension_boundary.py tests/workflows/build/test_build_epcsaft.py -q`
+- `uv run python run_pytest.py packages/epcsaft/tests/native/contracts/test_derivative_coverage_matrix.py packages/epcsaft/tests/native/contracts/test_property_derivative_backend_contract.py packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py -q`
 - `uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`
 - `uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q`
 - `uv run python scripts/dev/validate_project.py quick`
@@ -90,12 +94,17 @@ derivative evidence.
 - `packages/epcsaft/src/epcsaft/native/eos/**`
 - `packages/epcsaft/src/epcsaft/native/bindings/module.cpp`
 - `packages/epcsaft/src/epcsaft/native/model/native_types.h`
+- `packages/epcsaft/src/epcsaft/_core.pyi`
 - `packages/epcsaft/src/epcsaft/state/native_adapter.py`
 - `packages/epcsaft/src/epcsaft/runtime/core.py`
 - `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py`
 - `packages/epcsaft/src/epcsaft/native_sdk/provider_native_sdk_v1/**`
+- `packages/epcsaft-regression/src/epcsaft_regression/capabilities.py`
 - `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp`
+- `packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py`
 - `packages/epcsaft/tests/native/state/**`
+- `packages/epcsaft/tests/native/contracts/test_derivative_coverage_matrix.py`
+- `packages/epcsaft/tests/native/contracts/test_property_derivative_backend_contract.py`
 - `tests/workflows/**`
 - `tests/native/contracts/**`
 - `docs/latex/equations.tex`
