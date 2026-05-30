@@ -65,15 +65,17 @@ derivative evidence.
   saturation, and disabling both reduces the canonical path to direct Born
   behavior.
 - [ ] Public Born parameter derivative payloads report CppAD-backed coverage
-  consistently across state, fugacity, activity, regression, and capability
+  consistently across state, fugacity, activity, and provider capability
   evidence.
 - [ ] Provider native type stubs, derivative coverage/backend contract tests,
-  regression extension capability text, and regression electrolyte tests are
-  updated so no stale SSMDS API/test identifiers remain.
+  and provider-facing capability tests are updated so no stale SSMDS API/test
+  identifiers remain inside the `epcsaft` package.
 
 ## Non-Goals
 
 - No equilibrium route implementation or HELD/GFPE work.
+- No `epcsaft-regression` package or M5 regression work; extension-package
+  references are owned by a separate M5 issue if needed.
 - No public compatibility aliases for old SSMDS names.
 - No package split or release packaging redesign beyond source manifest path
   updates.
@@ -82,7 +84,7 @@ derivative evidence.
 
 - `uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10`
 - `uv run python run_pytest.py packages/epcsaft/tests/native/state/test_born_parameter_derivatives.py packages/epcsaft/tests/native/state/test_eos_contributions.py packages/epcsaft/tests/native/state/test_phase_state_sensitivities.py tests/workflows/repo/test_package_extension_boundary.py tests/workflows/build/test_build_epcsaft.py -q`
-- `uv run python run_pytest.py packages/epcsaft/tests/native/contracts/test_derivative_coverage_matrix.py packages/epcsaft/tests/native/contracts/test_property_derivative_backend_contract.py packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py -q`
+- `uv run python run_pytest.py packages/epcsaft/tests/native/contracts/test_derivative_coverage_matrix.py packages/epcsaft/tests/native/contracts/test_property_derivative_backend_contract.py -q`
 - `uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability`
 - `uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q`
 - `uv run python scripts/dev/validate_project.py quick`
@@ -99,9 +101,6 @@ derivative evidence.
 - `packages/epcsaft/src/epcsaft/runtime/core.py`
 - `packages/epcsaft/src/epcsaft/runtime/capability_evidence.py`
 - `packages/epcsaft/src/epcsaft/native_sdk/provider_native_sdk_v1/**`
-- `packages/epcsaft-regression/src/epcsaft_regression/capabilities.py`
-- `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp`
-- `packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py`
 - `packages/epcsaft/tests/native/state/**`
 - `packages/epcsaft/tests/native/contracts/test_derivative_coverage_matrix.py`
 - `packages/epcsaft/tests/native/contracts/test_property_derivative_backend_contract.py`
