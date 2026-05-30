@@ -751,10 +751,10 @@ class ePCSAFTState:
                 **association_payload,
                 source_equation_ids=("lnphi_total", "ares_disp"),
             )
-        born = self.born_ssmds_liquid_derivatives()
+        born = self.born_parameter_derivatives()
         if not bool(born.get("supported", False)):
             _unsupported_derivative(
-                str(born.get("message", "ln-fugacity parameter derivatives require an analytic or CppAD route."))
+                str(born.get("message", "ln-fugacity parameter derivatives require a CppAD route."))
             )
         jacobian = np.concatenate(
             [
@@ -768,8 +768,8 @@ class ePCSAFTState:
         )
         return _derivative_result_payload(
             supported=True,
-            backend=str(born.get("backend", "analytic")),
-            message=str(born.get("message", "analytic liquid-electrolyte SSM+DS Born parameter derivatives available")),
+            backend=str(born.get("backend", "cppad")),
+            message=str(born.get("message", "CppAD liquid-electrolyte Born parameter derivatives available")),
             value=value,
             jacobian=jacobian,
             shape=[ncomp, 2 * ncomp],
@@ -787,7 +787,7 @@ class ePCSAFTState:
         """Return activity-coefficient parameter derivatives where production support exists."""
         species = self._mixture.species if species is None else [str(s) for s in species]
         ncomp = int(self._x.size)
-        born = self.born_ssmds_liquid_derivatives()
+        born = self.born_parameter_derivatives()
         try:
             gamma = self.activity_coefficient(species=species)
             value = np.log(np.asarray([gamma[label] for label in species], dtype=float))
@@ -795,7 +795,7 @@ class ePCSAFTState:
             value = np.asarray([], dtype=float)
         if not bool(born.get("supported", False)):
             _unsupported_derivative(
-                str(born.get("message", "activity parameter derivatives require an analytic or CppAD route."))
+                str(born.get("message", "activity parameter derivatives require a CppAD route."))
             )
         jacobian = np.concatenate(
             [
@@ -809,8 +809,8 @@ class ePCSAFTState:
         )
         return _derivative_result_payload(
             supported=True,
-            backend=str(born.get("backend", "analytic")),
-            message=str(born.get("message", "analytic liquid-electrolyte SSM+DS Born activity derivatives available")),
+            backend=str(born.get("backend", "cppad")),
+            message=str(born.get("message", "CppAD liquid-electrolyte Born activity derivatives available")),
             value=value,
             jacobian=jacobian,
             shape=[ncomp, 2 * ncomp],
@@ -928,9 +928,9 @@ class ePCSAFTState:
             )
 
         add_result_factory(
-            "born_ssmds_liquid",
+            "born_parameter",
             "d_born/f_solv",
-            self.born_ssmds_liquid_derivatives,
+            self.born_parameter_derivatives,
             source_equation_ids=("ares_born",),
         )
         add_result_factory(
@@ -1217,12 +1217,12 @@ class ePCSAFTState:
             "terms": _public_contribution_terms(payload["terms"]),
         }
 
-    def born_ssmds_liquid_derivatives(self):
-        """Return analytic liquid-electrolyte SSM+DS Born parameter derivatives."""
+    def born_parameter_derivatives(self):
+        """Return CppAD-backed liquid-electrolyte Born parameter derivatives."""
         if self._phase != 0:
-            raise InputError("unsupported: SSM+DS Born derivatives are liquid-electrolyte only.")
+            raise InputError("unsupported: Born parameter derivatives are liquid-electrolyte only.")
         try:
-            payload = dict(self._native.born_ssmds_liquid_derivatives())
+            payload = dict(self._native.born_parameter_derivatives())
         except _NATIVE_CALL_ERRORS as exc:
             _unsupported_derivative(str(exc))
         ncomp = int(payload.get("ncomp", self._x.size))

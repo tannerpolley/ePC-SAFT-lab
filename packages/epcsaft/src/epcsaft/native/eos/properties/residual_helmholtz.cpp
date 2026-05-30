@@ -3171,12 +3171,21 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
     for (int i = 0; i < ncomp; ++i) {
         ax[static_cast<size_t>(i)] = avars[static_cast<size_t>(x_start + i)];
     }
+    const bool active_association = has_association_sites(cppargs);
+    add_args recording_args = cppargs;
+    if (active_association) {
+        recording_args.assoc_num.clear();
+        recording_args.assoc_matrix.clear();
+        recording_args.e_assoc.clear();
+        recording_args.vol_a.clear();
+        recording_args.k_hb.clear();
+    }
     const CppADScalar *no_pair_override = nullptr;
     auto contributions = ares_detail::ares_contributions_scalar_cpp(
         t,
         avars[static_cast<size_t>(rho_index)],
         ax,
-        cppargs,
+        recording_args,
         -1,
         no_pair_override,
         -1,
@@ -3202,20 +3211,34 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
         return hessian[static_cast<size_t>(row * var_count + col)];
     };
 
-    const double ares = values[0];
+    ares_detail::AssociationDensityResponse association_response;
+    if (active_association) {
+        association_response = association_density_response_cppad_cpp(t, rho, x, cppargs);
+        if (association_response.site_count <= 0) {
+            throw ValueError("Native generic component-parameter derivative expected active association site fractions.");
+        }
+    }
+
+    const double base_ares = values[0];
     const double da_drho = jacobian[static_cast<size_t>(rho_index)];
     const double da_dtheta = jacobian[static_cast<size_t>(theta_index)];
     const double d2a_drho2 = h(rho_index, rho_index);
     const double d2a_drho_dtheta = h(rho_index, theta_index);
-    const double z_raw = rho * da_drho;
+    const double base_z_raw = rho * da_drho;
+    const double association_zraw = active_association ? association_response.zraw : 0.0;
+    const double z_raw = base_z_raw + association_zraw;
     const double z = 1.0 + z_raw;
     if (!(z > 0.0)) {
         throw ValueError("Native generic component-parameter derivative evaluation produced non-positive Z.");
     }
-    const double dz_drho = da_drho + rho * d2a_drho2;
+    const double base_dz_drho = da_drho + rho * d2a_drho2;
+    const double dz_drho = base_dz_drho + (active_association ? association_response.dzraw_drho : 0.0);
     const double dz_dtheta = rho * d2a_drho_dtheta;
     const double pressure_factor = kb * t * N_AV;
     NeutralBinaryKijPhaseDerivatives out;
+    const AresContributions total_terms = ares_contributions_cpp(t, rho, x, cppargs);
+    out.ares = total_terms.hc + total_terms.disp + total_terms.assoc + total_terms.ion + total_terms.born;
+    out.dares_dk_fixed_rho = da_dtheta;
     out.rho = rho;
     out.z = z;
     out.pressure = rho * pressure_factor * z;
@@ -3248,8 +3271,13 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
         sum_x_dadx_dtheta += x[static_cast<size_t>(i)] * dadx_dtheta[static_cast<size_t>(i)];
     }
     for (int i = 0; i < ncomp; ++i) {
-        const double mu = ares + z_raw + dadx[static_cast<size_t>(i)] - sum_x_dadx;
-        const double dmu_drho = da_drho + dz_drho + dadx_drho[static_cast<size_t>(i)] - sum_x_dadx_drho;
+        const double base_mu = base_ares + base_z_raw + dadx[static_cast<size_t>(i)] - sum_x_dadx;
+        const double mu = base_mu + (active_association ? association_response.mu[static_cast<size_t>(i)] : 0.0);
+        const double base_dmu_drho =
+            da_drho + base_dz_drho + dadx_drho[static_cast<size_t>(i)] - sum_x_dadx_drho;
+        const double dmu_drho =
+            base_dmu_drho
+            + (active_association ? association_response.dmu_drho[static_cast<size_t>(i)] : 0.0);
         const double dmu_dtheta = da_dtheta + dz_dtheta + dadx_dtheta[static_cast<size_t>(i)] - sum_x_dadx_dtheta;
         out.mu_res[static_cast<size_t>(i)] = mu;
         out.dmu_res_dk_fixed_rho[static_cast<size_t>(i)] = dmu_dtheta;

@@ -112,7 +112,7 @@ struct DensityRootCandidate {
     bool valid = false;
 };
 
-struct BornSSMDSData {
+struct BornGeometryData {
     vector<double> d_born;
     vector<double> D;
     vector<double> ddelta_prefac;
@@ -216,7 +216,7 @@ double ion_born_radius_cpp_dt(int i, double t, const add_args &cppargs);
 using thermo_detail::AresContributionKind;
 using thermo_detail::AresContributions;
 using thermo_detail::AssociationSetup;
-using thermo_detail::BornSSMDSData;
+using thermo_detail::BornGeometryData;
 using thermo_detail::ChargeGroups;
 using thermo_detail::DensityBracket;
 using thermo_detail::DadrhoResult;
@@ -273,7 +273,7 @@ bool density_root_from_seed_cpp(
 inline bool is_ion_species(const add_args &cppargs, int i) { return std::abs(cppargs.z[i]) > 1e-12; }
 double reference_solvent_dielectric_constant_cpp(const vector<double> &x, const add_args &cppargs);
 vector<double> reference_solvent_dielectric_derivative_cpp(const vector<double> &x, const add_args &cppargs);
-BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion);
+BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion);
 double ares_contribution_value_cpp(const AresContributions &terms, AresContributionKind kind);
 AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs);
 epcsaft::native::cppad_support::CppADDerivativeResult cppad_eos_contribution_derivatives_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs);
@@ -365,7 +365,7 @@ ScalarContributionTerms residual_helmholtz_result_cpp(double t, double rho, vect
 CompositionContributionResult composition_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
 ResidualChemicalPotentialResult residual_chemical_potential_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
 FugacityContributionResult fugacity_coefficient_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
-BornSSMDSDerivativeResult born_ssmds_liquid_derivatives_cpp(double t, double rho, int phase, vector<double> x, const add_args &cppargs);
+BornDerivativeResult born_parameter_derivatives_cpp(double t, double rho, int phase, vector<double> x, const add_args &cppargs);
 ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs);
 ActivityCoefficientNative activity_coefficient_values_cpp(
     ePCSAFTMixtureNative* mixture,

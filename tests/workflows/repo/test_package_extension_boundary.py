@@ -171,7 +171,7 @@ def test_provider_owns_pure_neutral_parameter_derivative_native_symbol() -> None
             if definition_fragment in _read(path):
                 definitions.append(path.relative_to(REPO_ROOT).as_posix())
 
-    assert definitions == ["packages/epcsaft/src/epcsaft/native/eos/pure_neutral_parameter_derivatives.cpp"]
+    assert definitions == ["packages/epcsaft/src/epcsaft/native/eos/properties/pure_neutral_parameter_derivatives.cpp"]
 
 
 def test_issue_tracker_and_downstream_docs_are_transfer_aware() -> None:

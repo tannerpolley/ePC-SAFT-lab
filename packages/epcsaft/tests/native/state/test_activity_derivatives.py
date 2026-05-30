@@ -18,7 +18,7 @@ def test_activity_composition_derivative_route_raises_until_supported() -> None:
         state.activity_composition_derivative_result()
 
 
-def test_activity_parameter_derivative_route_raises_without_ssmds_path() -> None:
+def test_activity_parameter_derivative_route_raises_without_born_parameter_path() -> None:
     state = _state()
 
     with pytest.raises(InputError, match="unsupported"):

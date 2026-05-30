@@ -72,7 +72,7 @@ struct BornIntermediateState {
     vector<double> deps_dx;
     double charge_radius_sum = 0.0;
     double charge_radius_sum_dt = 0.0;
-    BornSSMDSData shell;
+    BornGeometryData shell;
 };
 
 }  // namespace thermo_detail

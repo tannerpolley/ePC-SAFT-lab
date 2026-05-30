@@ -1253,7 +1253,7 @@ def test_public_equilibrium_callers_do_not_pass_removed_route_controls() -> None
 
 def test_custom_scalar_solver_tokens_are_limited_to_density_closure_exception() -> None:
     allowed_paths = {
-        "packages/epcsaft/src/epcsaft/native/eos/density.cpp",
+        "packages/epcsaft/src/epcsaft/native/eos/properties/density.cpp",
         "packages/epcsaft/src/epcsaft/native/model/native_types.h",
     }
     blocked_terms = (

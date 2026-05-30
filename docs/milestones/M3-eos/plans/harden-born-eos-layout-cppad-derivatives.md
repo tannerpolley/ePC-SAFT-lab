@@ -53,21 +53,21 @@ derivative evidence.
 
 ## Acceptance Criteria
 
-- [ ] EOS property source files are grouped under `eos/properties/` and all
+- [x] EOS property source files are grouped under `eos/properties/` and all
   CMake/provider SDK manifests use the new paths.
-- [ ] `eos/derivatives/` is removed after Born derivative logic is moved to the
+- [x] `eos/derivatives/` is removed after Born derivative logic is moved to the
   Born owner.
-- [ ] No runtime function, file, public method, capability key, or test name
+- [x] No runtime function, file, public method, capability key, or test name
   uses `ssmds`/`SSMDS` as the Born API name.
-- [ ] SSM/DS wording remains only for option fields, local option logic, or
+- [x] SSM/DS wording remains only for option fields, local option logic, or
   equations/gates that name actual SSM or DS terms.
-- [ ] Default Born options still enable solvation shell and dielectric
+- [x] Default Born options still enable solvation shell and dielectric
   saturation, and disabling both reduces the canonical path to direct Born
   behavior.
-- [ ] Public Born parameter derivative payloads report CppAD-backed coverage
+- [x] Public Born parameter derivative payloads report CppAD-backed coverage
   consistently across state, fugacity, activity, and provider capability
   evidence.
-- [ ] Provider native type stubs, derivative coverage/backend contract tests,
+- [x] Provider native type stubs, derivative coverage/backend contract tests,
   and provider-facing capability tests are updated so no stale SSMDS API/test
   identifiers remain inside the `epcsaft` package.
 

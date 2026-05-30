@@ -24,7 +24,7 @@ def _phase_state_sensitivity(mix, temperature, pressure, composition):
     )
 
 
-def _ssmds_ionic_pressure_state():
+def _canonical_born_ionic_pressure_state():
     species = ["water", "Na+", "Cl-"]
     params = _ionic_params()
     params["elec_model"] = {
@@ -166,8 +166,8 @@ def test_phase_state_sensitivity_supports_active_association_implicit_response()
     assert np.any(np.abs(total_jacobian) > 1.0e-10)
 
 
-def test_phase_state_sensitivity_supports_ssmds_born_composition_response() -> None:
-    mix, pressure, temperature, composition = _ssmds_ionic_pressure_state()
+def test_phase_state_sensitivity_supports_canonical_born_composition_response() -> None:
+    mix, pressure, temperature, composition = _canonical_born_ionic_pressure_state()
     raw = _phase_state_sensitivity(mix, temperature, pressure, composition)
 
     if not _core._native_cppad_smoke()["cppad_compiled"]:

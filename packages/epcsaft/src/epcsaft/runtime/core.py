@@ -237,7 +237,7 @@ def _derivative_coverage_capabilities(cppad: dict[str, object]) -> dict[str, obj
             "production": True,
             "scope": "public frontend requires CppAD-backed solved-state sensitivities; analytic kernels are internal only",
         },
-        "born_ssmds_liquid_derivatives": {
+        "born_parameter_derivatives": {
             "available": True,
             "production": True,
             "phase_scope": "liquid_electrolyte_only",
@@ -273,7 +273,7 @@ def capabilities() -> dict[str, object]:
         "derivatives": {
             "cppad": cppad_capability,
             "coverage_matrix": derivative_coverage,
-            "ssmds_born_derivatives": {
+            "born_parameter_derivatives": {
                 "available": True,
                 "production": True,
                 "backend": "cppad",

@@ -545,10 +545,10 @@ FugacityContributionResult ePCSAFTStateNative::fugacity_coefficient_result()
     return fugacity_coefficient_result_cpp(t_, density(), x_, args);
 }
 
-BornSSMDSDerivativeResult ePCSAFTStateNative::born_ssmds_liquid_derivatives()
+BornDerivativeResult ePCSAFTStateNative::born_parameter_derivatives()
 {
     const add_args& args = mixture_->args();
-    return born_ssmds_liquid_derivatives_cpp(t_, density(), phase_, x_, args);
+    return born_parameter_derivatives_cpp(t_, density(), phase_, x_, args);
 }
 
 vector<double> ePCSAFTStateNative::relative_permittivity()
