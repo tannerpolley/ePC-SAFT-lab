@@ -34,6 +34,22 @@ Required readiness labels:
 - `status:ready`
 - `status:blocked`
 
+## Issue Relationships
+
+Use GitHub native issue dependencies for blocker relationships. The dependency
+edge is authoritative; title prefixes such as `[Blocked]` are forbidden for
+open issues.
+
+Dashboard mirrors are still allowed:
+
+- `status:blocked` label for issue-list filtering.
+- Project `Readiness=blocked` for roadmap views.
+
+Current audited dependency edge:
+
+- #145 is `blocked_by` #148.
+- #148 is `blocking` #145.
+
 ## Issue Forms
 
 Canonical type forms:

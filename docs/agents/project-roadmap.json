@@ -4,6 +4,7 @@
   "source_docs": [
     "https://docs.github.com/en/rest/orgs/issue-types",
     "https://docs.github.com/en/rest/issues/issues",
+    "https://docs.github.com/en/rest/issues/issue-dependencies",
     "https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms",
     "docs/milestones/PROJECT_CONTEXT.md",
     "docs/agents/issue-tracker.md"
@@ -70,6 +71,21 @@
     "number": 1,
     "url": "https://github.com/orgs/ePC-SAFT/projects/1",
     "policy": "dashboard-only"
+  },
+  "issue_relationships": {
+    "dependencies_enabled": true,
+    "canonical_blocker_state": "github_issue_dependencies",
+    "blocked_title_prefix_forbidden": true,
+    "dashboard_mirrors": [
+      "status:blocked",
+      "Project Readiness=blocked"
+    ],
+    "audited_edges": [
+      {
+        "issue": 145,
+        "blocked_by": 148
+      }
+    ]
   },
   "last_setup_audit": "2026-05-30",
   "issue_type_backfill": {

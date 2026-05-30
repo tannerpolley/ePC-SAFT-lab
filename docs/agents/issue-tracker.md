@@ -13,6 +13,9 @@ clone.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
 - **Apply or remove labels**: `gh issue edit <number> --add-label "..."` or `--remove-label "..."`
 - **Assign a milestone**: `gh issue edit <number> --milestone "M4 - Equilibrium"`
+- **List blockers for an issue**: `gh api /repos/ePC-SAFT/ePC-SAFT/issues/<number>/dependencies/blocked_by`
+- **List issues blocked by an issue**: `gh api /repos/ePC-SAFT/ePC-SAFT/issues/<number>/dependencies/blocking`
+- **Mark an issue blocked by another issue**: `gh api -X POST /repos/ePC-SAFT/ePC-SAFT/issues/<blocked-number>/dependencies/blocked_by -F issue_id=<blocking-rest-id>`
 - **Close an issue**: `gh issue close <number> --comment "..."`
 
 Infer the repo from `git remote -v`. The GitHub CLI does this automatically when run inside this clone.
@@ -34,6 +37,12 @@ Keep `type:bug`, `type:feature`, and `type:task` labels as compatibility
 labels because not every CLI or agent skill exposes native GitHub issue types.
 Every active GitHub issue should have exactly one native issue type and, when
 actively routed, the matching `type:*` label.
+
+GitHub native issue dependencies are the source of truth for blocker
+relationships. Do not encode blocker state in issue titles with prefixes such
+as `[Blocked]`. Use `blocked_by`/`blocking` relationships, then mirror the
+state with Project `Readiness=blocked` and `status:blocked` only when useful
+for dashboard filtering.
 
 ## Milestones
 
@@ -83,6 +92,12 @@ milestone and split the later work into child issues.
   state and dashboard grouping.
 - Issue forms set both a native GitHub issue type and a matching `type:*`
   compatibility label.
+- Use GitHub issue relationships for dependencies:
+  - An issue that cannot start because another issue must finish first should
+    be marked `blocked_by` the prerequisite issue.
+  - A prerequisite issue should naturally show the dependent work under
+    `blocking`.
+  - Do not put `[Blocked]`, `Blocked:`, or similar status prefixes in titles.
 - The organization Project groups and sorts by Milestone, Package, Capability,
   Backend, Readiness, and Release target.
 - Use `docs/milestones/M*/plans/*.md` for durable plans created for larger

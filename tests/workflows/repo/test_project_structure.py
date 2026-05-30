@@ -1578,6 +1578,7 @@ def test_milestone_plan_layout_matches_local_contract() -> None:
             assert fields["state"] == "open"
             assert fields["project"] == "ePC-SAFT Roadmap"
             assert fields["milestone"] == milestone
+            assert not str(fields["title"]).startswith("[Blocked]")
             assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
 
 
@@ -1599,6 +1600,12 @@ def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
     assert setup["apply_policy"] == "default-branch-commit-push"
     assert setup["projects_required_by_repo_config"] is False
     assert set(setup["issue_types"]) == {"bug", "feature", "task"}
+    assert setup["issue_relationships"]["canonical_blocker_state"] == "github_issue_dependencies"
+    assert setup["issue_relationships"]["blocked_title_prefix_forbidden"] is True
+    assert {"status:blocked", "Project Readiness=blocked"} <= set(
+        setup["issue_relationships"]["dashboard_mirrors"]
+    )
+    assert {"issue": 145, "blocked_by": 148} in setup["issue_relationships"]["audited_edges"]
     assert {"type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked"}.issubset(
         setup["labels"]
     )
@@ -1606,7 +1613,7 @@ def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
     assert setup["project"]["url"] == "https://github.com/orgs/ePC-SAFT/projects/1"
     assert setup["issue_type_backfill"]["missing_type_count_after_apply"] == 0
 
-    for token in ("Bug", "Feature", "Task", "type:bug", "type:feature", "type:task"):
+    for token in ("Bug", "Feature", "Task", "type:bug", "type:feature", "type:task", "blocked_by"):
         assert token in roadmap_md.read_text(encoding="utf-8")
         assert token in issue_tracker
     for token in ("type:bug", "type:feature", "type:task"):
