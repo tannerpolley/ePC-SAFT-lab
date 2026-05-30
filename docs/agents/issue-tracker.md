@@ -66,6 +66,28 @@ Every GitHub issue should have exactly one milestone. If a new issue seems to
 span multiple milestones, create a tracking issue in the earliest blocking
 milestone and split the later work into child issues.
 
+## Milestone And Package Boundaries
+
+Before creating or updating an issue, durable plan file, proof oracle,
+candidate file list, acceptance criteria, or hidden execution marker, identify
+the owning milestone and package. Search results are evidence of references,
+not evidence of scope.
+
+- `M3 - EOS` is provider/core scope: `packages/epcsaft/**` plus provider-owned
+  repo docs, build metadata, SDK manifests, and provider tests.
+- `M4 - Equilibrium` is equilibrium-extension scope:
+  `packages/epcsaft-equilibrium/**` plus explicitly necessary provider
+  public-contract references.
+- `M5 - Regression` is regression-extension scope:
+  `packages/epcsaft-regression/**` plus explicitly necessary provider
+  public-contract references.
+- Do not add sibling package files, tests, capability text, proof commands, or
+  candidate paths to the current issue unless the user explicitly approves a
+  cross-milestone issue set.
+- If a change appears to require multiple package milestones, stop and ask
+  whether to split the work. Default to separate issues by milestone and
+  package.
+
 ## Project And Issue Shape
 
 - Canonical Project: `ePC-SAFT Roadmap`

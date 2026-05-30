@@ -25,6 +25,14 @@ Durable workflow details belong in the referenced docs, not in this file.
 ## Repo Invariants
 
 - The active package layout is `packages/epcsaft`, `packages/epcsaft-equilibrium`, and `packages/epcsaft-regression`.
+- Before creating or updating any issue, milestone plan, proof oracle, candidate
+  file list, acceptance criteria, or hidden execution marker, identify the
+  owning milestone and package. M3 provider/EOS work is `packages/epcsaft/**`
+  plus provider-owned repo docs/build metadata/SDK manifests/provider tests; M4
+  is `packages/epcsaft-equilibrium/**`; M5 is
+  `packages/epcsaft-regression/**`. Search hits in sibling packages are
+  follow-up candidates only unless the user explicitly approves a
+  cross-milestone issue set.
 - Public repo tools, scripts, tests, and docs must use developer-neutral names. Do not add tracked Codex-branded public workflow files.
 - Do not reintroduce Conda, Cython, setuptools editable installs, `setup.py build_ext`, retired sibling-repo workflows, or old compatibility shims.
 - Keep capability claims honest. Do not broaden provider, equilibrium, regression, native, Ceres, Ipopt, or CppAD claims without matching validation evidence.
