@@ -216,6 +216,8 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
 def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> None:
     agents_md = _read("AGENTS.md")
     new_agent_start = _read("docs/agents/new-agent-start-here.md")
+    development_workflows = _read("docs/pages/development_workflows.rst")
+    cmake_md = _read("CMAKE.md")
     env_toml = _read(".codex/environments/environment.toml")
     env_data = _toml(".codex/environments/environment.toml")
     env_setup = _read(".codex/environments/setup.ps1")
@@ -224,19 +226,27 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     command_runner = _read(".codex/agents/command_runner.toml")
 
     for token in (
-        "uv run python scripts/dev/build_epcsaft.py",
-        "uv run python scripts/dev/doctor.py",
-        "uv run python scripts/dev/validate_project.py quick",
-        "uv run python scripts/dev/validate_project.py confidence",
-        "uv run python scripts/dev/validate_project.py docs",
-        "uv run python scripts/dev/build_dist.py",
-        "native_solver_backend_owner",
-        "Read `CMAKE.md` before changing or running direct CMake preset workflows.",
-        "Direct CMake preset work must use `scripts/dev/cmake_preset.ps1`",
+        "docs/milestones/PROJECT_CONTEXT.md",
+        "docs/agents/new-agent-start-here.md",
+        "docs/pages/development_workflows.rst",
+        "docs/protocols/build_package_dependency_protocol.rst",
+        "docs/agents/issue-tracker.md",
+        "docs/agents/INTELLIJ.md",
+        "docs/pages/project_structure.rst",
+        "packages/epcsaft-equilibrium",
+        "use IntelliJ Bridge/MCP first",
+        "ask the user to open or focus IntelliJ",
     ):
         assert token in agents_md
 
     for stale in (
+        "Machine-Local",
+        "Do Not Commit",
+        "C:\\Users\\Tanner",
+        "Best new-agent workflow",
+        "Git Sandbox Rules",
+        "Sandbox Notes",
+        "Preferred native build",
         "uv run python scripts/build_epcsaft.py",
         "uv run python scripts/doctor.py",
         "uv run python scripts/validate_project.py quick",
@@ -255,12 +265,25 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         "EPCSAFT_PEP517_CERES_DIR",
         "audited dependency closure",
         "The repo-owned Codex app setup contract lives in `.codex/environments/`",
-        "Machine-local Codex, IntelliJ bridge, and MCP policy",
-        "local `AGENTS.md` and user-level `.codex` instructions",
+        "Shared agent routing lives in tracked `AGENTS.md`",
+        "IntelliJ policy lives in `docs/agents/INTELLIJ.md`",
     ):
         assert token in new_agent_start
 
     assert "docs/roadmaps" not in new_agent_start
+
+    for token in (
+        "uv run python scripts/dev/build_epcsaft.py",
+        "uv run python scripts/dev/doctor.py",
+        "uv run python scripts/dev/validate_project.py quick",
+        "uv run python scripts/dev/validate_project.py confidence",
+        "uv run python scripts/dev/validate_project.py docs",
+        "uv run python scripts/dev/build_dist.py",
+    ):
+        assert token in new_agent_start or token in development_workflows
+
+    assert "Direct CMake preset work must use the repo wrapper" in cmake_md
+    assert "scripts/dev/cmake_preset.ps1" in cmake_md
 
     expected_env_actions = [
         "Sync Environment",
@@ -406,7 +429,8 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     ):
         assert folder_name in intellij_guidance
     assert "use every relevant index action family before finalizing" in intellij_guidance
-    assert "Use the `ij-debugger` skill and debugger MCP" in combined_guidance
+    assert "Use the `ij-debugger` skill" in intellij_guidance
+    assert "debugger MCP server is `intellij-debugger`" in intellij_guidance
     assert "intellij-debugger" in intellij_guidance
     assert "start_debug_session" in intellij_guidance
     assert "set_breakpoint" in intellij_guidance
@@ -415,7 +439,8 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "evaluate_expression" in intellij_guidance
     assert "xdebug_" not in intellij_guidance
     assert "C:\\Program Files\\PowerShell\\7\\pwsh.exe" in intellij_guidance
-    assert "JetBrains MCP exposes VCS root discovery" in combined_guidance
+    assert "JetBrains MCP server exposes repository discovery" in intellij_guidance
+    assert "Local Git operations stay in the normal repo-root shell" in intellij_guidance
     for tool_name in (
         "ide_read_file",
         "ide_search_text",

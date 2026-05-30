@@ -251,6 +251,28 @@ PROJECT_ROADMAP_REQUIRED_FIELDS = {
     "apply_policy",
     "projects_required_by_repo_config",
 }
+AGENTS_REQUIRED_DOC_LINKS = {
+    "docs/milestones/PROJECT_CONTEXT.md",
+    "docs/agents/new-agent-start-here.md",
+    "docs/pages/development_workflows.rst",
+    "docs/protocols/build_package_dependency_protocol.rst",
+    "CMAKE.md",
+    "docs/agents/issue-tracker.md",
+    "docs/agents/INTELLIJ.md",
+    "docs/pages/project_structure.rst",
+}
+AGENTS_BANNED_PHRASES = {
+    "Machine-Local",
+    "Do Not Commit",
+    "Best new-agent workflow",
+    "Git Sandbox Rules",
+    "Sandbox Notes",
+    "Preferred native build",
+    "Preferred high-level validation",
+    "Package boundary:",
+    "Repo Owner Agents",
+    "Routing Playbooks",
+}
 
 
 def _probe_epcsaft_import_modules(source: str) -> set[str]:
@@ -1673,6 +1695,24 @@ def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
         assert token in issue_tracker
     for token in ("type:bug", "type:feature", "type:task"):
         assert token in triage_labels
+
+
+def test_agents_md_stays_a_short_tracked_repo_router() -> None:
+    agents_path = REPO_ROOT / "AGENTS.md"
+    text = agents_path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    words = re.findall(r"\S+", text)
+
+    assert lines[0] == "# ePC-SAFT Agent Instructions"
+    assert len(lines) <= 80
+    assert len(words) <= 1200
+
+    missing_links = sorted(link for link in AGENTS_REQUIRED_DOC_LINKS if link not in text)
+    assert missing_links == []
+
+    banned = sorted(phrase for phrase in AGENTS_BANNED_PHRASES if phrase in text)
+    assert banned == []
+    assert not re.search(r"[A-Za-z]:\\Users\\Tanner", text)
 
 
 def test_issue_templates_set_native_issue_types_and_compatibility_labels() -> None:

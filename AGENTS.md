@@ -1,146 +1,51 @@
-# Local Codex Instructions (Machine-Local, Do Not Commit)
+# ePC-SAFT Agent Instructions
 
-## Startup Reads
-- Read `C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\docs\.codex-journal\user_preferences.md`.
-- Read `C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\docs\milestones\PROJECT_CONTEXT.md` before planning, coding, reviewing, or merging any new repo task. Treat it as the authoritative package-context and completion-standard milestone plan unless the user explicitly narrows scope for the current task.
-- Use the user-level `chemical-engineer` skill for ePC-SAFT thermodynamics, phase/chemical equilibrium, equation tracing, Python/pybind/native seams, and scientific validation work. Load only the specific user-level chemical-engineer references needed for the task.
-- Use the user-level `jetbrains` skill when IntelliJ-backed semantic navigation, IDE diagnostics, or safe semantic refactors would materially improve correctness or speed for `ePC-SAFT` work.
+This is tracked repo policy for agents working in this repository. Keep it short.
+Durable workflow details belong in the referenced docs, not in this file.
 
-## Skill Use
-- Always use the user-level `grill-me` skill when the user asks to be grilled, asks to stress-test a plan or design, or explicitly prompts for `grill-me`.
-- If the current thread has not loaded `grill-me`, say that briefly and follow the installed skill's behavior manually: interview the user one question at a time, walk decision branches in dependency order, and include a recommended answer with each question.
+## Start Here
 
-## Agent skills
+- Read `docs/milestones/PROJECT_CONTEXT.md` before planning, coding, reviewing, or merging. It is the package-context and completion-standard document unless the user narrows scope.
+- For fresh setup and first commands, read `docs/agents/new-agent-start-here.md`.
+- For test selection, validation, and routine development workflows, read `docs/pages/development_workflows.rst`.
+- For build, package, CMake, dependency, Ceres, CppAD, Ipopt, CI-lane, wheel, or sdist changes, read `docs/protocols/build_package_dependency_protocol.rst`.
+- For direct CMake preset work, read `CMAKE.md` and use the repo wrapper policy there.
+- For GitHub Issues, milestones, Projects, labels, issue types, dependencies, and PR policy, read `docs/agents/issue-tracker.md`.
+- For IntelliJ-backed work, read `docs/agents/INTELLIJ.md`.
+- For file and analysis layout, read `docs/pages/project_structure.rst`.
 
-### Issue tracker
+## Tooling Rules
 
-Issues and PRDs are tracked in GitHub Issues for `ePC-SAFT/ePC-SAFT`. See `docs/agents/issue-tracker.md`.
+- For non-trivial code, build, native, test, refactor, debug, architecture, or validation work, use IntelliJ Bridge/MCP first when the IDE and tools are available.
+- If a non-trivial task would benefit from IntelliJ but the IDE or MCP tools are not available, ask the user to open or focus IntelliJ before falling back.
+- Simple docs edits, issue checks, status checks, and small Q&A may use shell and `rg` directly.
+- Use the user-level `chemical-engineer` skill for thermodynamics, phase or chemical equilibrium, equation tracing, native seams, and scientific validation.
+- Use the user-level `grill-me` skill when the user asks to be grilled or to stress-test a plan.
 
-### Triage labels
+## Repo Invariants
 
-Use the default five-label triage vocabulary. See `docs/agents/triage-labels.md`.
+- The active package layout is `packages/epcsaft`, `packages/epcsaft-equilibrium`, and `packages/epcsaft-regression`.
+- Public repo tools, scripts, tests, and docs must use developer-neutral names. Do not add tracked Codex-branded public workflow files.
+- Do not reintroduce Conda, Cython, setuptools editable installs, `setup.py build_ext`, retired sibling-repo workflows, or old compatibility shims.
+- Keep capability claims honest. Do not broaden provider, equilibrium, regression, native, Ceres, Ipopt, or CppAD claims without matching validation evidence.
+- Before adding a file, inspect nearby structure and choose the existing category that matches repo conventions.
+- When deleting tracked files, also remove now-empty owned folders and stale references unless the folder is an intentional documented skeleton.
+- Paper-validation parameter snapshots follow `docs/pages/project_structure.rst`; do not duplicate that layout rule here.
+- Downstream projects own application studies and metrics. Upstream fixes should reduce repeated downstream friction to compact public API reproductions before adding package tests or fixtures.
 
-### Domain docs
+## Delegation
 
-Single-context repo; read root `CONTEXT.md` and `docs/adr/` when present. See `docs/agents/domain.md`.
+- Use repo owner/sub-agents for non-trivial work when slices can proceed independently with non-overlapping file ownership.
+- Keep final integration, cross-cutting decisions, GitHub state, and branch/merge/cleanup actions on the main thread.
+- Do not delegate tasks that require coordinated native clean/rebuild actions unless the active issue or goal plan explicitly assigns that ownership.
 
-## Memory Policy
-- `user_preferences.md`: durable user preferences only.
-- Do not write memory for routine Q&A, small one-off edits, placeholder notes, or facts already recorded.
-- Keep memory entries concise, date-stamped, deduplicated, and free of secrets.
+## Validation And Handoff
 
-## Repo Workflow
-- Current backend: uv-managed Python, direct CMake dev builds, pybind11 `_core`, native C++ equations, pure Python public API wrappers.
-- Read `CMAKE.md` before changing or running direct CMake preset workflows.
-- Public repo tools intentionally use developer-neutral names. Do not add new tracked files, tests, scripts, or docs with Codex-specific names unless they are local-only agent instructions.
-- When deleting tracked files, also remove any now-empty parent folders and clearly owned ignored local artifacts unless the folder is an intentional placeholder or documented skeleton.
-- Before adding any new file, inspect the nearest existing directory structure, name the intended category, list the candidate folders, and choose the path that matches existing tests. Do not write the file until that placement is justified.
-- Full paper-validation analyses that use ePC-SAFT parameter datasets or parameter CSVs must keep the execution snapshot directly under `analyses/paper_validation/<category>/<short_id>/parameters/` with `mixed/`, `pure/`, and `user_options.json` at that level.
-  Treat root `data/reference/epcsaft_parameters/` as a retired pointer location only. Full paper-validation parameter bundles live under `analyses/paper_validation/<paper_id>/parameters/`.
-  Small direct dictionaries remain allowed for focused tests and synthetic smoke checks, but not as the parameter source for full validation analysis.
-- Best new-agent workflow: `uv sync --no-install-project`, then `uv run python scripts/dev/build_epcsaft.py`, then `uv run python scripts/dev/doctor.py`, then `uv run python scripts/dev/validate_project.py quick`.
-- Setup or uncertain state: `uv sync --no-install-project`, then `uv run python scripts/dev/build_epcsaft.py`, then `uv run python scripts/dev/doctor.py`.
-- Standard fast validation: `uv run python scripts/dev/validate_project.py quick`.
-- Package boundary: `uv run python scripts/dev/build_dist.py`.
-- Preferred setup: `uv sync --no-install-project`.
-- Preferred native build: `uv run python scripts/dev/build_epcsaft.py`, which defaults to `--profile fast` (Ceres ON, CppAD ON, and Ipopt ON when the local SDK or another native Ipopt install is discoverable). Use `uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10` only after `build/dev` is already configured.
-- Direct CMake preset work must use `scripts/dev/cmake_preset.ps1` or the shared JetBrains Services entries (`CMake Configure dev-native`, `CMake Build _core dev-native`, `CMake Build dev-native`). Do not run raw `cmake --preset` or `cmake --build` from ad hoc shells; the wrapper owns Visual Studio environment loading, repo-local `.venv` CMake/Ninja selection, and `build/dev` lock checks.
-- Provider package install builds are provider-only through `packages/epcsaft`: CppAD ON, Ceres OFF, Ipopt OFF, and extension-native modules OFF.
-- For repeated source-checkout Ceres builds, use the reusable local Ceres package: `uv run python scripts/dev/build_system_ceres.py --parallel 4`. The helper prefers MSVC on Windows, and `scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir <CeresConfig-dir>` consumes the result for full native development builds.
-- Ceres, CppAD, and the local Ipopt SDK are part of the normal native dependency profile. Use `uv run python scripts/dev/validate_project.py ceres-cppad` only for the focused Ceres regression/backend slice.
-- For clean Ipopt proof on Windows, use `uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root $env:USERPROFILE\Documents\deps\ipopt-msvc --parallel 4`.
-- Before running `run_pytest.py`, direct `pytest`, or any `validate_project.py` mode that runs pytest, read `docs/pages/development_workflows.rst`, especially the command matrix and test-selection rules. Also read the relevant domain docs for the slice, for example `docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md` before native/equilibrium tests. If the target is unclear, run `uv run python run_pytest.py --list-slices` before choosing a test command.
-- Preferred tests: `uv run python run_pytest.py <focused-test-targets> -q`. Prefer this wrapper over direct `pytest` for Codex/Windows work because it sets the source path and manages per-run pytest temp state.
-- For native route metadata, result diagnostics, pybind payload shape, or architecture-boundary checks, prefer `uv run python run_pytest.py --native-contracts -q`. Do not run broad package-local equilibrium native result or route-builder files for routine proof; target a single `::test_name` or explicitly opt in with `--allow-long-native-tests` only when the broad route suite is truly required.
-- Preferred high-level validation: `uv run python scripts/dev/validate_project.py quick` for normal fast validation; `uv run python scripts/dev/validate_project.py confidence` before handoff when native runtime confidence matters; `uv run python scripts/dev/validate_project.py docs` for Sphinx.
-- Preferred doctor: `uv run python scripts/dev/doctor.py`.
-- Preferred distribution check: `uv run python scripts/dev/build_dist.py`.
-- Use `.codex\environments\environment.toml` actions when available; they are aligned to the uv/CMake/pybind workflow.
-- Prefer normal native builds. Treat `scripts/dev/build_epcsaft.py --clean`, `Repair Native Build (Clean)`, and `Clean Build Artifacts` as coordinated repair actions, not routine validation.
-- Coordinate native rebuilds through the main thread when multiple agents or processes may be active. Prefer one `_core` builder at a time.
-- Do not run `_core`-deleting clean/repair actions in parallel with tests, Python REPLs, IDE run configurations, or sub-agents that may import `epcsaft._core`.
-- If `_core*.pyd` is locked, stop the importing Python/test/IDE/Codex process, rerun the normal native build, then run doctor.
-- Do not reintroduce Conda, Cython, setuptools editable installs, `setup.py build_ext`, or `tests/test_cython.py` as the normal workflow.
-- Treat `build/dev`, `build/temp`, `build/pytest-temp`, `build/runtime_profile`, and `build/uv-cache` as shared disposable generated state; do not track build artifacts, profile reports, or `_core*.pyd`.
+- Validate in proportion to risk and report skipped validation clearly.
+- Keep user-facing docs updated when public API behavior, install/build/test workflow, package layout, or capability claims change.
+- Before handoff, review `git status --short` and do not leave your own tracked changes unstaged or uncommitted unless the user requested that.
+- Run the repo cleanup hook before reporting completion:
 
-## Sandbox Notes
-- Do not use plot gallery server/index workflows in this repo. Plot assets remain source-owned artifacts; any gallery app should discover them externally.
-- For long-running localhost servers, prefer foreground actions. Do not expect a sandboxed `Start-Process` child to keep running after the shell command returns; request an escalated background start only when the agent must own a persistent server.
-- For live process checks in the sandbox, prefer `Get-Process`, `Get-NetTCPConnection`, and `Invoke-WebRequest` with short explicit timeouts. Avoid WMI/CIM command-line inspection (`Get-CimInstance Win32_Process`) unless escalated; it can be denied by the Windows restricted token.
-- For closed-port checks, prefer `Invoke-WebRequest -TimeoutSec` or a short .NET TCP probe over `Test-NetConnection`, which can outlive short command timeouts and emit noisy warnings.
-
-## Git Sandbox Rules
-- `workspace-write` keeps protected paths such as `.git/` read-only. Do not first try `.git`-writing commands in the sandbox and then retry after failure.
-- Run normal local git write commands with sandbox escalation on the first attempt: `git add`, `git commit`, `git fetch`, `git restore --staged`, `git rm --cached`, `git switch -c <branch>`, and `git checkout -b <branch>`.
-- User-level prefix rules in `C:\Users\Tanner\.codex\rules\default.rules` already allow common local git workflow commands, but rules do not make `.git/` writable if the command still runs inside the sandbox. Use the narrow matching git escalation approval; do not request broad shell or danger-full-access approval for routine git staging/commits.
-- If a git write still reports `.git/index.lock: Permission denied`, check `Test-Path -LiteralPath '.git\index.lock'`. If the file is absent, treat it as sandbox/approval friction, not a stale lock.
-- Keep `git push`, `git pull`, `git merge`, `git rebase`, non-branch-creation `git checkout`/`git switch`, `git stash`, and tags explicit/prompted. Never run destructive commands such as `git reset --hard` or `git clean` unless the user explicitly requests them.
-
-## Documentation And Skill Maintenance
-- Keep user-facing docs updated when public API behavior, install/build/test workflow, or package layout changes.
-- Keep `.codex\environments\*.toml` and `.codex\environments\README.md` aligned with current repo commands whenever build, test, docs, plot, package, or script names change. Remove stale actions immediately when workflows are deleted, especially plot/gallery/server actions and old test paths.
-- After workflow changes, sanity-check local environment configs with TOML parsing and a stale-command search before handoff; at minimum scan for removed scripts, removed flags, old test paths, and obsolete docs/gallery references.
-- Keep the user-level `chemical-engineer` skill current when equation ownership, native contribution structure, Python/native seams, or EoS theory guidance changes.
-- Do not duplicate detailed equation theory in AGENTS.md; put durable science/code navigation details in the user-level `chemical-engineer` skill references.
-- Prefer concise docs that explain the current workflow; remove obsolete workaround history unless it is still needed to avoid a recurring pitfall.
-
-## Plot Math Notation
-- Any new or regenerated project plot should use proper math notation wherever a standard thermodynamic symbol exists. Prefer Matplotlib/Plotly LaTeX-style labels over plain text such as `h-res`, `A-res`, `rho`, `fugacity coefficient`, or `activity coefficient`.
-- Use labels such as `r"$A^{res}$"`, `r"$h^{res}$"`, `r"$g^{res}$"`, `r"$s^{res}$"`, `r"$\rho$"`, `r"$Z$"`, `r"$\phi_i$"` or `r"$\varphi_i$"` for fugacity coefficient, `r"$\gamma_i$"` / `r"$\gamma_{\pm}$"` for activity coefficients, `r"$\mu_i^{res}$"` for residual chemical potential, and `r"$\epsilon_r$"` for relative permittivity when applicable.
-- Keep units outside the math expression when possible, for example `r"$\rho$ / mol m$^{-3}$"` or `r"$P$ / Pa"`. If a paper figure uses a specific published notation, follow the paper unless it conflicts with package-wide clarity.
-- Apply the same convention to titles, axes, legends, colorbars, hover labels, and CSV-backed interactive plot labels when those labels are generated by repo code.
-
-## Sub-Agent Policy
-- Standing user preference: use repo sub-agents for non-trivial ePC-SAFT work when the task has clear non-blocking slices.
-- Main agent acts as orchestrator for cross-cutting work: keep final decisions, integration, sandbox escalation decisions, and immediately blocking implementation on the main thread.
-- Main agent owns `_core` rebuild, clean, and repair coordination. Sub-agents may inspect files and run focused tests, but should not rebuild `_core` or run `_core`-deleting repair/cleanup commands unless explicitly assigned and coordinated.
-- Prefer focused owner agents for sidecar exploration, review, validation, and bounded implementation.
-- Do not use sub-agents for simple Q&A, tiny one-file edits, mechanical text edits, or when the next step is blocked on the delegated result.
-- When using sub-agents, assign explicit ownership by file/module area and avoid overlapping writes.
-- Use multiple sub-agents early only when their work can run in parallel without blocking the main thread.
-
-## Repo Owner Agents
-- `build_packaging_owner`: package/build workflow owner for uv, CMake, pybind, `validate_project`, distribution checks, wheels/sdists, and build scripts.
-- `native_equation_owner`: read-only EqID-backed EOS/state/property kernel reviewer for equation/code mapping, density closure, contribution accounting, cache correctness, and equation-doc consistency.
-- `native_solver_backend_owner`: native equilibrium/regression/autodiff backend owner for solver algorithms, derivative backend completeness, solver/result contracts, and focused native backend edits/tests.
-- `python_api_test_owner`: Python API/test owner for public wrappers, named pytest slices, focused tests, and validation against `epcsaft._core`.
-- `command_runner`: validation-only runner for non-blocking doctor/build/status/test/smoke/package-boundary commands. It should not edit files.
-
-## Routing Playbooks
-- Build/package changes: delegate build/package review or bounded edits to `build_packaging_owner`; delegate independent command validation to `command_runner`.
-- Native/equation changes: delegate EqID-backed thermodynamic-kernel correctness review to `native_equation_owner`; delegate equilibrium/regression/autodiff/backend work to `native_solver_backend_owner`; delegate focused API/test coverage to `python_api_test_owner`.
-- Python API/runtime changes: delegate tests and API risk checks to `python_api_test_owner`; involve `native_equation_owner` for EOS/property-kernel risk and `native_solver_backend_owner` for native solver/backend contract risk.
-- Cross-layer changes: use `native_equation_owner` for thermodynamic-kernel correctness risk, `native_solver_backend_owner` for backend/solver risk, `python_api_test_owner` for API/test evidence, `build_packaging_owner` for build/package impact, and `command_runner` for parallel validation.
-- Branch review/change audit: use owner agents by concern area, then have the main thread synthesize findings and decide edits.
-
-## IntelliJ-Backed Tooling
-- Read and follow `docs/agents/INTELLIJ.md` before IntelliJ-backed semantic navigation, diagnostics, refactors, durable run-configuration execution, Services dashboard maintenance, terminal MCP checks, or debugger MCP work.
-- Hard rule: use IntelliJ MCP first by default for repo work when the IDE is ready and the relevant tool is exposed.
-- Hard rule: durable scripts, tests, validation commands, build commands, docs/report commands, analysis commands, package commands, and maintenance commands must run through shared IntelliJ run configurations when a matching configuration exists or should exist.
-- Run the shared `Check IntelliJ Contract` configuration before handoff or before changing Services-sensitive workflows; it must fail rather than silently allowing `.idea`/`.run` drift.
-- Use `intellij-index` for semantic reads/search, definitions, references, implementations, hierarchy, diagnostics, formatting/import cleanup, safe refactors, and IDE synchronization.
-- Use `jetbrains-bundled` for `get_run_configurations`, `execute_run_configuration`, debugger tools, file opening, project/module/dependency inspection, file problems, and IDE-owned execution.
-- Use the `ij-debugger` skill and debugger MCP when runtime values, branch reachability, call order, stack evidence, or expression evaluation are needed.
-- Keep local Git operations in the normal repo-root shell; JetBrains MCP exposes VCS root discovery, not a full local Git staging/commit/branch workflow.
-- Use shell only for quick one-off probes, raw config reads after MCP lookup, generated file inspection, Git operations, or bootstrapping/fixing the run dashboard before IntelliJ can see it.
-
-## Git Commit Policy
-- For tracked repo changes, finish with local git commits unless explicitly told not to; do not push unless explicitly requested.
-- `docs/latex` is normal tracked content in this repo, not a Git submodule.
-- When LaTeX files should be sent to Overleaf, use `scripts\setup_latex_mirror.ps1` once to create or validate `C:\Users\Tanner\Documents\git\ePC-SAFT-LaTeX`, then run `scripts\sync_latex_mirror.ps1` from the main repo. That external mirror owns the Overleaf Git remote and performs the mirror commit/push.
-- Do not run `git -C docs/latex ...` as an Overleaf submodule workflow; `docs/latex` has no nested Git checkout.
-- Before handoff, review `git status --short` and do not leave modified tracked files uncommitted.
-- If the worktree is already dirty, include all modified tracked files in the commit plan unless the user says otherwise.
-- Split commits by logical concern when tracked changes cover different areas.
-- Do not force ignored local-only files such as `AGENTS.md`, `.codex/**`, or `docs/.codex-journal/**` into git commits.
-- When staging or committing, use the first-attempt escalation rule from `Git Sandbox Rules` so the workflow does not waste a failed sandboxed `.git` write.
-
-## Scope
-- These instructions and `.codex/**` files are machine-local for this repo and should remain untracked unless the user explicitly asks otherwise.
-
-## ePC-SAFT Cross-Repo Integration
-- This repo is the upstream source of truth for the `epcsaft` package. It owns public APIs, native kernels, solver/result contracts, package tests, docs, and release behavior.
-- Downstream repos such as `Lithium_Extraction`, `MEA-Thermodynamics`, and `MEA-Absorption-Column` own their case-study data, project-specific scientific thresholds, process models, and reports.
-- Use the user-level `epcsaft-cross-repo` skill for upstream/downstream contract work, downstream-consumer policy, package feedback loops, and cross-repo handoffs.
-- Do not absorb full downstream studies into normal upstream validation. Reduce repeated downstream friction to compact public-API reproductions before adding upstream tests or fixtures.
-- Keep `capabilities()` honest. Do not broaden package capability claims unless package validation proves the supported path.
+```powershell
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```

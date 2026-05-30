@@ -31,9 +31,9 @@ probes are `%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc`,
 The repo-owned Codex app setup contract lives in `.codex/environments/`:
 `environment.toml` exposes the visible Codex actions, `setup.ps1` dispatches to
 `scripts/dev/bootstrap.py`, and `.codex/environments/README.md` explains the
-fresh-worktree contract. Machine-local Codex, IntelliJ bridge, and MCP policy
-stays in the local `AGENTS.md` and user-level `.codex` instructions; do not
-copy that machine policy into the package setup scripts.
+fresh-worktree contract. Shared agent routing lives in tracked `AGENTS.md`;
+IntelliJ policy lives in `docs/agents/INTELLIJ.md`; machine-local user settings
+stay outside tracked package docs.
 
 When bootstrap succeeds, run the printed next command:
 
