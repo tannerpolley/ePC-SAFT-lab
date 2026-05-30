@@ -19,7 +19,7 @@ def _neutral_args():
     )
 
 
-def _nonassociating_ssmds_ionic_args():
+def _nonassociating_born_ionic_args():
     params = _ionic_params()
     params["e_assoc"] = np.zeros(3)
     params["vol_a"] = np.zeros(3)
@@ -61,8 +61,8 @@ def test_cppad_eos_contribution_recording_matches_double_value_path() -> None:
     assert jacobian[-1] == pytest.approx(jacobian[:-1].sum(axis=0))
 
 
-def test_cppad_eos_contribution_recording_accepts_ssmds_born_model() -> None:
-    args = _nonassociating_ssmds_ionic_args()
+def test_cppad_eos_contribution_recording_accepts_canonical_born_model() -> None:
+    args = _nonassociating_born_ionic_args()
     x = [0.9998, 1.0e-4, 1.0e-4]
     t = 298.15
     rho = 55000.0
@@ -80,8 +80,8 @@ def test_cppad_eos_contribution_recording_accepts_ssmds_born_model() -> None:
     assert np.any(np.abs(jacobian[4]) > 0.0)
 
 
-def test_native_ssmds_born_auto_mode_reports_cppad_composition_backend() -> None:
-    args = _nonassociating_ssmds_ionic_args()
+def test_native_born_auto_mode_reports_cppad_composition_backend() -> None:
+    args = _nonassociating_born_ionic_args()
     args.mu_born_diff_mode = 3
     args.born_diff_mode = 5
     state = _core.NativeState(
@@ -103,8 +103,8 @@ def test_native_ssmds_born_auto_mode_reports_cppad_composition_backend() -> None
     assert np.all(np.isfinite(result.dadx.born))
 
 
-def test_native_ssmds_born_rejects_raw_non_cppad_derivative_mode() -> None:
-    args = _nonassociating_ssmds_ionic_args()
+def test_native_born_rejects_raw_non_cppad_derivative_mode() -> None:
+    args = _nonassociating_born_ionic_args()
     args.mu_born_diff_mode = 0
     args.born_diff_mode = 0
     state = _core.NativeState(

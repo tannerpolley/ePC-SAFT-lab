@@ -134,7 +134,7 @@ py::dict phase_state_sensitivity_to_dict(const PhaseStateCompositionSensitivityR
     return out;
 }
 
-py::dict born_ssmds_derivative_to_dict(const BornSSMDSDerivativeResult& result) {
+py::dict born_parameter_derivative_to_dict(const BornDerivativeResult& result) {
     py::dict out;
     out["supported"] = result.supported;
     out["backend"] = result.backend;
@@ -660,8 +660,8 @@ PYBIND11_MODULE(_core, m) {
         .def("ln_fugacity_coefficient", &ePCSAFTStateNative::ln_fugacity_coefficient)
         .def("fugacity_coefficient", &ePCSAFTStateNative::fugacity_coefficient)
         .def("fugacity_coefficient_result", &ePCSAFTStateNative::fugacity_coefficient_result)
-        .def("born_ssmds_liquid_derivatives", [](ePCSAFTStateNative& state) {
-            return born_ssmds_derivative_to_dict(state.born_ssmds_liquid_derivatives());
+        .def("born_parameter_derivatives", [](ePCSAFTStateNative& state) {
+            return born_parameter_derivative_to_dict(state.born_parameter_derivatives());
         })
         .def("relative_permittivity", &ePCSAFTStateNative::relative_permittivity)
         .def("osmotic_coefficient", &ePCSAFTStateNative::osmotic_coefficient)

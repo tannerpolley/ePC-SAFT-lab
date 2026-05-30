@@ -87,13 +87,13 @@ DERIVATIVE_COVERAGE_ROWS: Final[tuple[dict[str, object], ...]] = (
     {
         "row_family": "electrolyte_property",
         "subsystem": "electrolyte",
-        "quantity": "ssmds_born_liquid",
+        "quantity": "born_parameter_liquid",
         "derivative": "parameter_sensitivity",
         "backend": "cppad",
         "supported": True,
         "classification": "production_supported",
-        "reason": "public derivative reporting is CppAD-only; native analytic kernels may remain internal transition details",
-        "tests": ("packages/epcsaft/tests/native/state/test_born_ssmds_liquid_derivatives.py",),
+        "reason": "public Born parameter derivative reporting is CppAD-backed for d_born and f_solv",
+        "tests": ("packages/epcsaft/tests/native/state/test_born_parameter_derivatives.py",),
     },
 )
 

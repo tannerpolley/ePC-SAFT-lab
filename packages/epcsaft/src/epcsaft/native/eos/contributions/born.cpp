@@ -1,7 +1,7 @@
 #include "contribution_internal.h"
 
 using thermo_detail::BornIntermediateState;
-using thermo_detail::BornSSMDSData;
+using thermo_detail::BornGeometryData;
 using thermo_detail::parameter_setup_detail::ion_born_radius_cpp;
 using thermo_detail::parameter_setup_detail::ion_born_radius_cpp_dt;
 
@@ -11,12 +11,12 @@ using thermo_detail::parameter_setup_detail::ion_born_radius_cpp_dt;
 // EqID: dterm_born
 // EqID: dterm_ssm
 // EqID: dterm_ds
-BornSSMDSData born_shell_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {
+BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cppargs, double t, double eps_r, double eps_r_ion) {
     int ncomp = static_cast<int>(x.size());
     const bool use_ssm = (cppargs.born_solvation_shell_model != 0);
     const bool use_ds = (cppargs.born_dielectric_saturation != 0);
 
-    BornSSMDSData data;
+    BornGeometryData data;
     data.d_born.assign(ncomp, 1.0);
     data.D.assign(ncomp, 1.0);
     data.ddelta_prefac.assign(ncomp, 0.0);
@@ -200,7 +200,7 @@ BornIntermediateState born_intermediate_state_cpp(
 
     if (cppargs.born_model == 2) {
         const double eps_r_ion = 8.0;
-        state.shell = born_shell_data_cpp(x, cppargs, t, state.eps_value, eps_r_ion);
+        state.shell = born_geometry_data_cpp(x, cppargs, t, state.eps_value, eps_r_ion);
         return state;
     }
 

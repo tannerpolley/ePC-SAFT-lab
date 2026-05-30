@@ -142,15 +142,15 @@ set(EPCSAFT_PROVIDER_SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft")
 set(EPCSAFT_PROVIDER_NATIVE_ROOT "${EPCSAFT_PROVIDER_SOURCE_ROOT}/native")
 set(EPCSAFT_PROVIDER_NATIVE_SOURCES
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/model/parameter_setup.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/activity.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/chemical_potential.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/compressibility.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/density.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/born_ssmds.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/fugacity.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/pure_neutral_parameter_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual_helmholtz.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual_properties.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/activity.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/chemical_potential.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/compressibility.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/density.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/born_parameter_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/fugacity.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/pure_neutral_parameter_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_helmholtz.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_properties.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/state.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/association.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/born.cpp

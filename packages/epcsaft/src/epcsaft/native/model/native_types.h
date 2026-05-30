@@ -130,7 +130,7 @@ struct FugacityContributionResult {
     CompositionContributionResult composition;
 };
 
-struct BornSSMDSDerivativeResult {
+struct BornDerivativeResult {
     bool supported = false;
     std::string backend = "unspecified";
     std::string message;
@@ -390,7 +390,7 @@ public:
     vector<double> ln_fugacity_coefficient();
     vector<double> fugacity_coefficient();
     FugacityContributionResult fugacity_coefficient_result();
-    BornSSMDSDerivativeResult born_ssmds_liquid_derivatives();
+    BornDerivativeResult born_parameter_derivatives();
     vector<double> relative_permittivity();
     double osmotic_coefficient();
     vector<double> solvation_free_energy();
