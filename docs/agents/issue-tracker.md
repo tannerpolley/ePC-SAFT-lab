@@ -75,11 +75,17 @@ milestone and split the later work into child issues.
 - Every milestone PR should close one micro or gate issue when possible.
 - The PR body must name the issue, milestone, tracking issue or plan, and
   relevant Project fields.
+- Ordinary early package-development PRs use local proof first. Heavy native,
+  package, release, and installed-provider lanes are manual-only unless the PR
+  claims release readiness, capability support, or production native behavior.
+- Branch protection intentionally has no required status checks or required
+  reviews while this early package policy is active.
 - Keep milestone and Project state current before requesting review and before
   merge.
 - Do not close an issue by documenting incompleteness; split remaining work
   into child issues or keep the issue open.
-- Answer the required PR questions from `docs/milestones/PROJECT_CONTEXT.md`.
+- Use risk-based focused validation in the PR body. Ordinary PRs do not need
+  boilerplate skipped-heavy-lane notes.
 
 ## When a skill says "publish to the issue tracker"
 

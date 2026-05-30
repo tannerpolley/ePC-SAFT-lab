@@ -204,6 +204,7 @@ MILESTONE_TEMPLATE_FILES = {
 }
 MILESTONE_PLAN_FILES = {
     "PROJECT_CONTEXT.md",
+    "M0-governance/plans/early-package-pr-gate-policy.md",
     "M0-governance/plans/milestone-tracker-hardening.md",
     "M1-packages/plans/monorepo-package-migration.md",
     "M1-packages/plans/package-extension-transfer-superseded-plan.md",

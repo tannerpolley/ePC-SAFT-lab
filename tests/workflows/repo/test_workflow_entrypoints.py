@@ -176,10 +176,13 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
         "Do not reframe Ceres, CppAD, or Ipopt as greenfield optional dependencies",
         "package-boundary exceptions",
         "Conda or mamba must not be the normal Ipopt CI provisioning path",
-        "Option B is the accepted normal PR CI direction",
+        "local proof first",
+        "manual-only",
+        "Option B is the accepted production Ipopt lane direction",
         "no-Ipopt smoke lane",
         "focused CppAD derivative lane",
-        "Status: Pending workflow",
+        "2026-05-29 - Early package PR gates",
+        "Status: Implemented as policy",
     ):
         assert token in protocol
 
@@ -187,6 +190,9 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
     assert "native no-Ipopt smoke" in workflow
     assert "native CppAD derivative contract" in workflow
     assert "workflow_dispatch || github.event_name == 'schedule'" not in workflow
+    assert "pull_request:" not in workflow
+    assert "push:" not in workflow
+    assert "schedule:" not in workflow
     assert "--profile full --disable-ipopt" in workflow
     for token in (
         "provider package build",
@@ -202,6 +208,9 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
         "requires a real Ipopt SDK root; no no-Ipopt package proof is accepted",
     ):
         assert token in package_lanes
+    assert "pull_request:" not in package_lanes
+    assert "push:" not in package_lanes
+    assert "schedule:" not in package_lanes
 
 
 def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> None:
@@ -642,6 +651,10 @@ def test_package_build_lanes_are_split_by_distribution_and_sdk_mode() -> None:
     workflow = _read(".github/workflows/package-build-lanes.yml")
 
     assert "name: package-build-lanes" in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "pull_request:" not in workflow
+    assert "push:" not in workflow
+    assert "schedule:" not in workflow
     assert "provider-package:" in workflow
     assert "regression-package:" in workflow
     assert "equilibrium-package:" in workflow
@@ -656,6 +669,29 @@ def test_package_build_lanes_are_split_by_distribution_and_sdk_mode() -> None:
     assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination all" in workflow
     assert "--disable-ipopt" not in workflow
     assert "no no-Ipopt package proof is accepted" in workflow
+
+
+def test_heavy_native_workflow_is_manual_only() -> None:
+    workflow = _read(".github/workflows/native-build-profiles.yml")
+
+    assert "name: native-build-profiles" in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "pull_request:" not in workflow
+    assert "push:" not in workflow
+    assert "schedule:" not in workflow
+    assert "native no-Ipopt smoke" in workflow
+    assert "native CppAD derivative contract" in workflow
+
+
+def test_pr_template_does_not_force_production_proof_answers_on_ordinary_prs() -> None:
+    template = _read(".github/PULL_REQUEST_TEMPLATE.md")
+
+    assert "## Required PR Answers" not in template
+    assert "What downstream workflow can now run" not in template
+    assert "What production native code path now exists" not in template
+    assert "What derivative path is used" not in template
+    assert "What real data or benchmark proves it" not in template
+    assert "This PR does not broaden `capabilities()` or public claims without executable proof" in template
 
 
 def test_pypi_publish_workflow_uses_trusted_publishing() -> None:

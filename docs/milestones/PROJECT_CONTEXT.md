@@ -604,9 +604,11 @@ Every agent must:
 7. Refuse to close by inventory, diagnostics, staging, synthetic fixtures, or limitation text.
 8. Avoid banned exact literals in committed text.
 9. Keep APIs generic.
-10. Open a PR only when the production workflow works.
+10. Open capability, release, benchmark, or production-native PRs only when the
+    claimed production workflow works.
 
-Every final PR must answer:
+PRs that claim release readiness, capability support, benchmark evidence, or
+production native behavior must answer:
 
 ```text
 What downstream workflow can now run that could not run before?
@@ -617,4 +619,6 @@ What public API exercises it?
 What tests would fail if this regressed?
 ```
 
-If those answers are weak, do not merge.
+If those answers are weak for a PR making one of those claims, do not merge.
+Ordinary early package-development PRs use the M0 local-proof-first policy and
+do not need boilerplate production-proof answers.
