@@ -12,4 +12,6 @@ docs, and no private downstream workarounds.
 
 ## Current Open Issues
 
-No open GitHub issues are currently mirrored for this milestone.
+| Issue | Package | Backend | Readiness | Summary |
+| --- | --- | --- | --- | --- |
+| [#195](issues/0195-re-open-downstream-install-pypi-and-migration-proof-backlog.md) | `downstream` | - | `needs design` | Re-open downstream install, PyPI, and migration proof backlog. |

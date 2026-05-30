@@ -12,4 +12,7 @@ docs/test proof, and release-quality validation gates.
 
 ## Current Open Issues
 
-No open GitHub issues are currently mirrored for this milestone.
+| Issue | Package | Backend | Readiness | Summary |
+| --- | --- | --- | --- | --- |
+| [#192](issues/0192-close-gfpe-registry-capability-and-benchmark-evidence.md) | `benchmark` | `Ipopt` | `blocked` | Close GFPE registry, capability, and benchmark evidence after M4 proof gates. |
+| [#194](issues/0194-re-open-executable-literature-benchmark-and-capability-evidence-backlog.md) | `benchmark` | - | `needs design` | Re-open executable literature benchmark and capability evidence backlog. |

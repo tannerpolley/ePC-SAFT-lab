@@ -12,5 +12,6 @@ proof, extension-native boundaries, and package CI/docs/release structure.
 
 ## Current Open Issues
 
-- [#179](https://github.com/ePC-SAFT/ePC-SAFT/issues/179) - harden package
-  onboarding and release ergonomics after the package-transfer transition.
+| Issue | Package | Backend | Readiness | Summary |
+| --- | --- | --- | --- | --- |
+| [#185](issues/0185-finish-monorepo-package-release-cleanup-and-sibling-repo-archival.md) | `core` | - | `ready` | Finish monorepo package release cleanup and sibling-repo archival guidance. |

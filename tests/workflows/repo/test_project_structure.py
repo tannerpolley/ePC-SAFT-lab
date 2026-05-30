@@ -219,6 +219,9 @@ MILESTONE_PLAN_FILES = {
     "M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md",
     "M4-equilibrium/plans/gfpe-package-cleanup-plan.md",
     "M4-equilibrium/plans/stage-by-stage-implementation-plan.md",
+    "M5-regression/plans/regression-production-backlog.md",
+    "M6-validation/plans/validation-benchmark-backlog.md",
+    "M7-release/plans/release-downstream-backlog.md",
 }
 MILESTONE_REGISTRY_FILES = {
     "M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",

@@ -12,4 +12,6 @@ parameter sensitivities, and pure/binary/electrolyte regression workflows.
 
 ## Current Open Issues
 
-No open GitHub issues are currently mirrored for this milestone.
+| Issue | Capability | Backend | Readiness | Summary |
+| --- | --- | --- | --- | --- |
+| [#193](issues/0193-re-open-regression-production-backlog-around-targetdataset-ceres-and-capability-evidence.md) | `regression` | `Ceres` | `needs design` | Re-open the regression production backlog around TargetDataset, Ceres, and capability evidence. |
