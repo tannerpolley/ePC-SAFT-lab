@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "core"
 capability: null
 backend: null
-readiness: "needs design"
+readiness: "ready"
 release_target: "future"
 last_synced: "2026-05-30"
 ---
@@ -21,3 +21,10 @@ and PR linkage.
 
 This issue is process/tooling work: make Codex app worktree environments easier
 to keep aligned with the current package layout and repo-owned commands.
+
+## Local Receipt
+
+Implemented by `docs/milestones/M0-governance/plans/make-codex-app-worktree-environments-frictionless-and-self-upda.md`.
+The tracked environment now exposes the same lean action set documented in the
+environment README, including `Check IntelliJ Contract`, and structural tests
+guard the action list, bootstrap guidance, and repo-owned setup boundary.

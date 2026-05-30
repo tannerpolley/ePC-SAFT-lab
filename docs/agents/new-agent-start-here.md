@@ -28,6 +28,13 @@ probes are `%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc`,
 `%USERPROFILE%\.epcsaft\deps\ipopt-msvc`, and legacy
 `%USERPROFILE%\Documents\deps\ipopt-msvc`.
 
+The repo-owned Codex app setup contract lives in `.codex/environments/`:
+`environment.toml` exposes the visible Codex actions, `setup.ps1` dispatches to
+`scripts/dev/bootstrap.py`, and `.codex/environments/README.md` explains the
+fresh-worktree contract. Machine-local Codex, IntelliJ bridge, and MCP policy
+stays in the local `AGENTS.md` and user-level `.codex` instructions; do not
+copy that machine policy into the package setup scripts.
+
 When bootstrap succeeds, run the printed next command:
 
 ```powershell
