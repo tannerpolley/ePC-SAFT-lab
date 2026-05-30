@@ -22,6 +22,20 @@ Durable workflow details belong in the referenced docs, not in this file.
 - Use the user-level `chemical-engineer` skill for thermodynamics, phase or chemical equilibrium, equation tracing, native seams, and scientific validation.
 - Use the user-level `grill-me` skill when the user asks to be grilled or to stress-test a plan.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues for `ePC-SAFT/ePC-SAFT`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the repo triage vocabulary, including `agent-ready` for AFK-ready issues. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo; read root `CONTEXT.md`, `docs/milestones/PROJECT_CONTEXT.md`, and relevant `docs/adr/` entries. See `docs/agents/domain.md`.
+
 ## Repo Invariants
 
 - The active package layout is `packages/epcsaft`, `packages/epcsaft-equilibrium`, and `packages/epcsaft-regression`.
