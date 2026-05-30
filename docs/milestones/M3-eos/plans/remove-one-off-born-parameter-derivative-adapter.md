@@ -38,15 +38,15 @@ build/SDK manifest references.
 
 ## Acceptance Criteria
 
-- [ ] `packages/epcsaft/src/epcsaft/native/eos/contributions/born_parameter_derivatives.cpp` is deleted.
-- [ ] CMake and provider native SDK manifests no longer reference
+- [x] `packages/epcsaft/src/epcsaft/native/eos/contributions/born_parameter_derivatives.cpp` is deleted.
+- [x] CMake and provider native SDK manifests no longer reference
   `eos/contributions/born_parameter_derivatives.cpp`.
-- [ ] `State.born_parameter_derivatives()` remains public and reports
+- [x] `State.born_parameter_derivatives()` remains public and reports
   CppAD-backed `d_born` and `f_solv` derivative payloads with unchanged field
   names and shapes.
-- [ ] No analytical Born parameter derivative implementation or separate
+- [x] No analytical Born parameter derivative implementation or separate
   `born_parameter_derivatives_cpp` shared EOS helper remains.
-- [ ] No `packages/epcsaft-regression` files, M5 regression scope, new tests,
+- [x] No `packages/epcsaft-regression` files, M5 regression scope, new tests,
   compatibility aliases, or old-name redirectors are added.
 
 ## Non-Goals
@@ -65,4 +65,3 @@ uv run python run_pytest.py packages/epcsaft/tests/native/state/test_born_parame
 rg -n "eos/contributions/born_parameter_derivatives\\.cpp|born_parameter_derivatives_cpp" CMakeLists.txt packages/epcsaft/CMakeLists.txt packages/epcsaft/src/epcsaft/native_sdk packages/epcsaft/src/epcsaft/native/eos
 uv run python scripts/dev/validate_project.py quick
 ```
-

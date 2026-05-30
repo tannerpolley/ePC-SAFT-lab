@@ -8,7 +8,6 @@
     "native/eos/properties/chemical_potential.cpp",
     "native/eos/properties/compressibility.cpp",
     "native/eos/properties/density.cpp",
-    "native/eos/contributions/born_parameter_derivatives.cpp",
     "native/eos/properties/fugacity.cpp",
     "native/eos/properties/pure_neutral_parameter_derivatives.cpp",
     "native/eos/properties/residual_helmholtz.cpp",
