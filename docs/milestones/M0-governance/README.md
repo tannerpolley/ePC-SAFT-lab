@@ -10,4 +10,4 @@ Project fields, local docs, templates, and completion standards agree.
 
 ## Current Open Issues
 
-No open GitHub issues are currently mirrored for this milestone.
+- #184: Make Codex app worktree environments frictionless and self-updating.

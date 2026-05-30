@@ -1,8 +1,9 @@
 name: Micro implementation issue
 description: Define one PR-sized implementation slice under a tracking issue.
 title: "Implement: <small deliverable>"
-labels: ["agent-ready"]
+labels: ["agent-ready", "type:task"]
 projects: ["ePC-SAFT/1"]
+type: task
 body:
   - type: markdown
     attributes:

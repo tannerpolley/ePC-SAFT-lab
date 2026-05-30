@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 WORKSPACE_ROOT = REPO_ROOT
 PROVIDER_PACKAGE_DIR = REPO_ROOT / "packages" / "epcsaft"
@@ -220,6 +222,30 @@ MILESTONE_PLAN_FILES = {
 }
 MILESTONE_REGISTRY_FILES = {
     "M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
+}
+ISSUE_TYPE_FORMS = {
+    "bug.yml": "bug",
+    "feature.yml": "feature",
+    "task.yml": "task",
+    "downstream_dependency_bug.yml": "bug",
+    "upstream_package_request.yml": "feature",
+    "gate_issue.yml": "task",
+    "micro_issue.yml": "task",
+    "tracking_issue.yml": "task",
+}
+PROJECT_ROADMAP_REQUIRED_FIELDS = {
+    "target_repo",
+    "target_repo_root",
+    "source_docs",
+    "full_roadmap",
+    "milestone_policy",
+    "project_policy",
+    "issue_types",
+    "labels",
+    "issue_forms",
+    "local_files",
+    "apply_policy",
+    "projects_required_by_repo_config",
 }
 
 
@@ -1553,6 +1579,56 @@ def test_milestone_plan_layout_matches_local_contract() -> None:
             assert fields["project"] == "ePC-SAFT Roadmap"
             assert fields["milestone"] == milestone
             assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
+
+
+def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
+    roadmap_md = REPO_ROOT / "docs" / "agents" / "project-roadmap.md"
+    roadmap_json = REPO_ROOT / "docs" / "agents" / "project-roadmap.json"
+    issue_tracker = (REPO_ROOT / "docs" / "agents" / "issue-tracker.md").read_text(encoding="utf-8")
+    triage_labels = (REPO_ROOT / "docs" / "agents" / "triage-labels.md").read_text(encoding="utf-8")
+
+    assert roadmap_md.is_file()
+    assert roadmap_json.is_file()
+    setup = json.loads(roadmap_json.read_text(encoding="utf-8"))
+
+    assert PROJECT_ROADMAP_REQUIRED_FIELDS.issubset(setup)
+    assert setup["target_repo"] == "ePC-SAFT/ePC-SAFT"
+    assert setup["full_roadmap"] == "docs/milestones/PROJECT_CONTEXT.md"
+    assert setup["milestone_policy"] == "mirror-existing-full-roadmap"
+    assert setup["project_policy"] == "dashboard-only"
+    assert setup["apply_policy"] == "default-branch-commit-push"
+    assert setup["projects_required_by_repo_config"] is False
+    assert set(setup["issue_types"]) == {"bug", "feature", "task"}
+    assert {"type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked"}.issubset(
+        setup["labels"]
+    )
+    assert {"bug", "feature", "task"}.issubset(setup["issue_forms"])
+    assert setup["project"]["url"] == "https://github.com/orgs/ePC-SAFT/projects/1"
+    assert setup["issue_type_backfill"]["missing_type_count_after_apply"] == 0
+
+    for token in ("Bug", "Feature", "Task", "type:bug", "type:feature", "type:task"):
+        assert token in roadmap_md.read_text(encoding="utf-8")
+        assert token in issue_tracker
+    for token in ("type:bug", "type:feature", "type:task"):
+        assert token in triage_labels
+
+
+def test_issue_templates_set_native_issue_types_and_compatibility_labels() -> None:
+    template_root = REPO_ROOT / ".github" / "ISSUE_TEMPLATE"
+
+    for filename, issue_type in ISSUE_TYPE_FORMS.items():
+        path = template_root / filename
+        assert path.is_file(), filename
+        form = yaml.safe_load(path.read_text(encoding="utf-8"))
+        labels = set(form.get("labels", []))
+        assert form["type"] == issue_type
+        assert f"type:{issue_type}" in labels
+        assert "ePC-SAFT/1" in set(form.get("projects", []))
+
+    for filename in ("bug.yml", "feature.yml", "task.yml"):
+        form = yaml.safe_load((template_root / filename).read_text(encoding="utf-8"))
+        field_ids = {field.get("id") for field in form["body"] if "id" in field}
+        assert {"plan-file", "outcome", "acceptance", "non-goals", "proof-oracle"}.issubset(field_ids)
 
 
 def test_generated_output_roots_are_not_tracked_in_analyses() -> None:

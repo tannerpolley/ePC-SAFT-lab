@@ -17,6 +17,24 @@ clone.
 
 Infer the repo from `git remote -v`. The GitHub CLI does this automatically when run inside this clone.
 
+## Roadmap Setup
+
+The local setup contract for milestones, issue types, labels, issue forms, and
+Project policy lives in `docs/agents/project-roadmap.md` and
+`docs/agents/project-roadmap.json`.
+
+GitHub native issue types are enabled at the organization level and must use
+one of:
+
+- `Bug`
+- `Feature`
+- `Task`
+
+Keep `type:bug`, `type:feature`, and `type:task` labels as compatibility
+labels because not every CLI or agent skill exposes native GitHub issue types.
+Every active GitHub issue should have exactly one native issue type and, when
+actively routed, the matching `type:*` label.
+
 ## Milestones
 
 GitHub milestones follow `docs/milestones/PROJECT_CONTEXT.md` and use short
@@ -46,6 +64,7 @@ milestone and split the later work into child issues.
 - Do not use untitled organization Projects for milestone work. They are scratch
   or closed state, not the tracker source of truth.
 - Use the issue templates for new work:
+  - `Bug`, `Feature`, and `Task` for the canonical native issue-type forms.
   - `Milestone tracking issue` for a milestone plan or major tranche.
   - `Micro implementation issue` for one PR-sized implementation slice.
   - `Milestone gate issue` for CI, docs, benchmark, capability, release, or
@@ -62,6 +81,8 @@ milestone and split the later work into child issues.
   automatically.
 - Use labels for stable facts and routing. Use the GitHub Project for workflow
   state and dashboard grouping.
+- Issue forms set both a native GitHub issue type and a matching `type:*`
+  compatibility label.
 - The organization Project groups and sorts by Milestone, Package, Capability,
   Backend, Readiness, and Release target.
 - Use `docs/milestones/M*/plans/*.md` for durable plans created for larger

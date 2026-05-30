@@ -1,0 +1,64 @@
+name: Task
+description: Define a bounded implementation, setup, audit, cleanup, proof, or docs task.
+title: "Task: <short deliverable>"
+labels: ["agent-ready", "type:task"]
+projects: ["ePC-SAFT/1"]
+type: task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for execution slices and governance/setup work. Use a feature issue for new product capability and a bug issue for defects.
+  - type: dropdown
+    id: plan-milestone
+    attributes:
+      label: GitHub milestone
+      description: Select the milestone that owns this task.
+      options:
+        - M0 - Governance
+        - M1 - Packages
+        - M2 - Python API
+        - M3 - EOS
+        - M4 - Equilibrium
+        - M5 - Regression
+        - M6 - Validation
+        - M7 - Release
+    validations:
+      required: true
+  - type: input
+    id: plan-file
+    attributes:
+      label: Plan file
+      description: Local plan path if this task needs one; write `none` for a small directly actionable task.
+      placeholder: docs/milestones/Mx-name/plans/<plan>.md
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What concrete setup, cleanup, proof, or implementation state exists when this closes?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete checks that must be true before closing.
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: Work that must not be pulled into this task.
+    validations:
+      required: true
+  - type: textarea
+    id: proof-oracle
+    attributes:
+      label: Proof oracle
+      description: Commands, docs checks, audits, or issue/Project updates required before closing.
+      render: powershell
+    validations:
+      required: true

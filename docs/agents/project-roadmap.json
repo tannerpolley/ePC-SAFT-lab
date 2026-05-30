@@ -1,0 +1,84 @@
+{
+  "target_repo": "ePC-SAFT/ePC-SAFT",
+  "target_repo_root": "C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT",
+  "source_docs": [
+    "https://docs.github.com/en/rest/orgs/issue-types",
+    "https://docs.github.com/en/rest/issues/issues",
+    "https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms",
+    "docs/milestones/PROJECT_CONTEXT.md",
+    "docs/agents/issue-tracker.md"
+  ],
+  "full_roadmap": "docs/milestones/PROJECT_CONTEXT.md",
+  "milestone_policy": "mirror-existing-full-roadmap",
+  "project_policy": "dashboard-only",
+  "issue_types": [
+    "bug",
+    "feature",
+    "task"
+  ],
+  "github_issue_types": [
+    {
+      "name": "Bug",
+      "description": "An unexpected problem or behavior",
+      "enabled": true
+    },
+    {
+      "name": "Feature",
+      "description": "A request, idea, or new functionality",
+      "enabled": true
+    },
+    {
+      "name": "Task",
+      "description": "A specific piece of work",
+      "enabled": true
+    }
+  ],
+  "labels": [
+    "type:bug",
+    "type:feature",
+    "type:task",
+    "status:triage",
+    "status:ready",
+    "status:blocked"
+  ],
+  "issue_forms": [
+    "bug",
+    "feature",
+    "task",
+    "tracking_issue",
+    "micro_issue",
+    "gate_issue",
+    "upstream_package_request",
+    "downstream_dependency_bug"
+  ],
+  "local_files": [
+    "docs/agents/project-roadmap.md",
+    "docs/agents/project-roadmap.json",
+    ".github/ISSUE_TEMPLATE/bug.yml",
+    ".github/ISSUE_TEMPLATE/feature.yml",
+    ".github/ISSUE_TEMPLATE/task.yml",
+    ".github/ISSUE_TEMPLATE/tracking_issue.yml",
+    ".github/ISSUE_TEMPLATE/micro_issue.yml",
+    ".github/ISSUE_TEMPLATE/gate_issue.yml",
+    ".github/ISSUE_TEMPLATE/upstream_package_request.yml",
+    ".github/ISSUE_TEMPLATE/downstream_dependency_bug.yml"
+  ],
+  "apply_policy": "default-branch-commit-push",
+  "projects_required_by_repo_config": false,
+  "project": {
+    "name": "ePC-SAFT Roadmap",
+    "number": 1,
+    "url": "https://github.com/orgs/ePC-SAFT/projects/1",
+    "policy": "dashboard-only"
+  },
+  "last_setup_audit": "2026-05-30",
+  "issue_type_backfill": {
+    "scope": "all non-PR GitHub issues",
+    "missing_type_count_after_apply": 0,
+    "counts": {
+      "Bug": 2,
+      "Feature": 46,
+      "Task": 36
+    }
+  }
+}

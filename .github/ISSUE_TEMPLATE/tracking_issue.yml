@@ -1,8 +1,9 @@
 name: Milestone tracking issue
 description: Track one milestone plan or major tranche under a single GitHub milestone.
 title: "Tracking: <milestone tranche>"
-labels: ["needs-triage"]
+labels: ["needs-triage", "type:task"]
 projects: ["ePC-SAFT/1"]
+type: task
 body:
   - type: markdown
     attributes:

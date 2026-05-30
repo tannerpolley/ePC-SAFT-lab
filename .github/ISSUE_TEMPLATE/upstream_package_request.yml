@@ -1,8 +1,9 @@
 name: Upstream ePC-SAFT package request
 description: Request an epcsaft public API, documentation, packaging, numerical, or validation change.
 title: "Package request: <short epcsaft change>"
-labels: ["enhancement", "agent-ready"]
+labels: ["enhancement", "agent-ready", "type:feature"]
 projects: ["ePC-SAFT/1"]
+type: feature
 body:
   - type: markdown
     attributes:

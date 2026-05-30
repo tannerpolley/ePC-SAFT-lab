@@ -1,0 +1,76 @@
+name: Feature
+description: Define a new capability, user-facing improvement, or package behavior.
+title: "Feature: <short capability>"
+labels: ["enhancement", "needs-triage", "type:feature"]
+projects: ["ePC-SAFT/1"]
+type: feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for new or broadened behavior. Keep the scope tied to one milestone and split execution slices later if needed.
+  - type: dropdown
+    id: plan-milestone
+    attributes:
+      label: GitHub milestone
+      description: Select the milestone that owns this capability.
+      options:
+        - M0 - Governance
+        - M1 - Packages
+        - M2 - Python API
+        - M3 - EOS
+        - M4 - Equilibrium
+        - M5 - Regression
+        - M6 - Validation
+        - M7 - Release
+    validations:
+      required: true
+  - type: input
+    id: plan-file
+    attributes:
+      label: Plan file
+      description: Local plan path if this feature needs one; write `none` for a small directly actionable feature.
+      placeholder: docs/milestones/Mx-name/plans/<plan>.md
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Project package field
+      options:
+        - core
+        - equilibrium
+        - regression
+        - benchmark
+        - downstream
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What user, package, solver, validation, or release behavior exists when this is complete?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete checks that must be true before closing.
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: Work that must not be pulled into this issue.
+    validations:
+      required: true
+  - type: textarea
+    id: proof-oracle
+    attributes:
+      label: Proof oracle
+      description: Commands, docs checks, audits, or issue/Project updates required before closing.
+      render: powershell
+    validations:
+      required: true
