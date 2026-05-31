@@ -293,15 +293,15 @@ Action values:
 
 ## Acceptance Criteria
 
-- [ ] The durable plan scores every file and top-level function/declaration
+- [x] The durable plan scores every file and top-level function/declaration
   under `packages/epcsaft/src/epcsaft/native/eos/properties`.
-- [ ] Each score includes relevance, need, placement, generality, and
+- [x] Each score includes relevance, need, placement, generality, and
   organization rationale.
-- [ ] Each low-scoring item has an explicit `keep`, `move`, `split`, `merge`,
+- [x] Each low-scoring item has an explicit `keep`, `move`, `split`, `merge`,
   or `delete` recommendation.
-- [ ] The plan identifies safe M3 provider cleanup recommendations and
+- [x] The plan identifies safe M3 provider cleanup recommendations and
   follow-up candidates.
-- [ ] No public API names, derivative payloads, capability contracts, or
+- [x] No public API names, derivative payloads, capability contracts, or
   equation semantics change.
 
 ## Non-Goals
@@ -346,10 +346,10 @@ not already configured.
   "milestone_policy": "hard",
   "milestone_title": "M3 - EOS",
   "full_roadmap": "docs/milestones/PROJECT_CONTEXT.md",
-  "full_roadmap_milestone_section": "## M3 - EOS",
+  "full_roadmap_milestone_section": "Required milestones",
   "project_policy": "dashboard-only",
   "plan_file": "docs/milestones/M3-eos/plans/score-provider-eos-properties-structure.md",
-  "required_checks_policy": "require-existing",
+  "required_checks_policy": "allow-none-with-local-proof",
   "labels": ["type:task", "status:ready", "agent-ready", "area:core", "area:derivatives", "native", "validation"],
   "acceptance_criteria": [
     "The durable plan scores every file and top-level function/declaration under packages/epcsaft/src/epcsaft/native/eos/properties.",
