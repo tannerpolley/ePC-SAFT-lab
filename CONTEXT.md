@@ -118,6 +118,10 @@ _Avoid_: route-local Ipopt option assembly, acceptable-point success, finite-var
 The validated analytic, CppAD, analytic-implicit, or CppAD-implicit derivative route used by a solver or regression workflow.
 _Avoid_: approximate derivative substitute, unspecified derivative support
 
+**Equilibrium Derivative Assembly**:
+The native equilibrium module family that consumes provider EOS derivative paths and assembles block, route, Jacobian, Hessian, third-derivative tensor, and NLP contract evidence for equilibrium solver workflows. It lives with `epcsaft-equilibrium`, not the provider EOS harness.
+_Avoid_: provider derivative kernel, route-local Hessian helper, regression derivative path
+
 **CppAD-Only Public Derivative Path**:
 The reset public API contract that `State`, `Equilibrium`, and `Regression` property, Jacobian, and Hessian evaluation must use CppAD-backed derivative coverage. Missing CppAD support blocks a public workflow instead of selecting an analytic, automatic, or fallback mode.
 _Avoid_: backend-mode flag, analytic fallback, auto derivative mode
@@ -145,6 +149,7 @@ _Avoid_: documented limitation, honest incompleteness, dependency-only proof
 - A **State** combines a **Mixture**, composition, phase assumptions, and closure information for the **EOS Harness**.
 - An **Equilibrium Problem** becomes public only after the **Selector Core** marks its family production-exposed in the **Native Activation Matrix** and the route has a **Production Solver Path** with derivative and certification evidence.
 - A **Neutral VLE Route Spec** is a route-level view over the **Selector Core** and **Native Activation Matrix**, not a compatibility wrapper.
+- **Equilibrium Derivative Assembly** consumes **EOS Harness** derivative outputs and produces solver-facing Jacobian, Hessian, tensor, and contract payloads for **Equilibrium Workflows**.
 - An **Electrolyte LLE Problem** and a **Reactive LLE Problem** are specialized **Equilibrium Problems**.
 - A **Regression Problem** fits **Parameter Families** to a **Target Dataset** using a **Production Solver Path** and a **CppAD-Only Public Derivative Path**.
 - A **Literature Benchmark** is a high-confidence **Validation Lane** for package behavior.

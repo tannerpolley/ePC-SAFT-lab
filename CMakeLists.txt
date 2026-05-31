@@ -371,6 +371,10 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/two_phase_eos_route.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_transform.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/variable_layout.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/nlp_contract_snapshot.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/phase_block_derivatives.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/phase_system_derivatives.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives/route_second_order.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results/result_builder.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived/bubble_dew.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers/ipopt_adapter.cpp
@@ -402,6 +406,7 @@ set(EPCSAFT_EQUILIBRIUM_NATIVE_INCLUDE_DIRS
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/derivatives"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/results"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/routes/derived"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/solvers"

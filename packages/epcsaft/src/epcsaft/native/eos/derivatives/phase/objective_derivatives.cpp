@@ -31,9 +31,6 @@ void eos_phase_objective_derivatives_cpp(
             }
         }
     }
-    if (!cppargs.z.empty() && cppargs.born_model > 1) {
-        throw ValueError("unsupported: EOS phase objective Hessian supports direct Born model=1 formulas only.");
-    }
     const int ncomp = static_cast<int>(amounts.size());
     const int nvars = ncomp + 1;
     std::vector<CppADScalar> variables(static_cast<std::size_t>(nvars));
@@ -116,9 +113,6 @@ void eos_phase_temperature_variable_derivatives_cpp(
                 throw ValueError("unsupported: EOS phase temperature route Hessian requires association implicit variables.");
             }
         }
-    }
-    if (!cppargs.z.empty() && cppargs.born_model > 1) {
-        throw ValueError("unsupported: EOS phase temperature route Hessian supports direct Born model=1 formulas only.");
     }
     const int ncomp = static_cast<int>(amounts.size());
     const int nvars = ncomp + 2;

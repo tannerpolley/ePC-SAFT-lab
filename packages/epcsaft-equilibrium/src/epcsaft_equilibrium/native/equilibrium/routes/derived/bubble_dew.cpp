@@ -4,6 +4,9 @@
 #include "equilibrium/core/activated_equilibrium_nlp.h"
 #include "equilibrium/core/activation_plan.h"
 #include "eos/core_internal.h"
+#include "equilibrium/derivatives/nlp_contract_snapshot.h"
+#include "equilibrium/derivatives/phase_block_derivatives.h"
+#include "equilibrium/derivatives/route_second_order.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
@@ -31,13 +34,6 @@ constexpr double kMaximumLiquidVolume = 5.0e-4;
 constexpr double kMinimumVaporVolume = 1.0e-3;
 constexpr double kMaximumVaporVolume = 1.0e6;
 constexpr double kMinimumPhaseVolumeGap = 1.0e-7;
-
-void apply_route_metadata(NeutralTwoPhaseEosNlpContract& out, const RouteMetadata& metadata) {
-    out.variable_model = metadata.variable_model;
-    out.density_backend = metadata.density_backend;
-    out.residual_families = metadata.residual_families;
-    out.constraint_families = metadata.constraint_families;
-}
 
 void apply_route_metadata(NeutralTwoPhaseEosPostsolve& out, const RouteMetadata& metadata) {
     out.density_backend = metadata.density_backend;
@@ -1026,221 +1022,6 @@ bool route_has_active_association_sites(const add_args& args) {
 
 bool route_supports_exact_phase_derivatives(const add_args& args) {
     return !route_has_active_association_sites(args) && (args.z.empty() || args.born_model <= 1);
-}
-
-void require_square_block(
-    const std::vector<double>& values,
-    int variable_count,
-    const std::string& label
-) {
-    require_size(
-        values,
-        static_cast<std::size_t>(variable_count) * static_cast<std::size_t>(variable_count),
-        label
-    );
-}
-
-void require_third_derivative_tensor(
-    const std::vector<double>& values,
-    int variable_count,
-    const std::string& label
-) {
-    require_size(
-        values,
-        static_cast<std::size_t>(variable_count)
-            * static_cast<std::size_t>(variable_count)
-            * static_cast<std::size_t>(variable_count),
-        label
-    );
-}
-
-void symmetrize_square_block(std::vector<double>& values, int variable_count) {
-    const std::size_t n = static_cast<std::size_t>(variable_count);
-    for (std::size_t row = 0; row < n; ++row) {
-        for (std::size_t col = 0; col < row; ++col) {
-            const double value = 0.5 * (values[row * n + col] + values[col * n + row]);
-            values[row * n + col] = value;
-            values[col * n + row] = value;
-        }
-    }
-}
-
-std::vector<int> fixed_temperature_global_indices(int phase, int local_variable_count) {
-    std::vector<int> indices;
-    indices.reserve(static_cast<std::size_t>(local_variable_count));
-    const int offset = phase * local_variable_count;
-    for (int local = 0; local < local_variable_count; ++local) {
-        indices.push_back(offset + local);
-    }
-    return indices;
-}
-
-std::vector<int> fixed_pressure_global_indices(
-    int phase,
-    int local_variable_count,
-    int temperature_col
-) {
-    std::vector<int> indices = fixed_temperature_global_indices(phase, local_variable_count);
-    indices.push_back(temperature_col);
-    return indices;
-}
-
-void add_local_hessian_to_dense(
-    std::vector<double>& dense,
-    int variable_count,
-    const std::vector<int>& global_indices,
-    const std::vector<double>& local_hessian,
-    double scale,
-    const std::string& label
-) {
-    const int local_variable_count = static_cast<int>(global_indices.size());
-    require_square_block(local_hessian, local_variable_count, label);
-    const std::size_t n = static_cast<std::size_t>(variable_count);
-    require_square_block(dense, variable_count, "dense route Hessian");
-    for (int local_row = 0; local_row < local_variable_count; ++local_row) {
-        const int global_row = global_indices[static_cast<std::size_t>(local_row)];
-        for (int local_col = 0; local_col < local_variable_count; ++local_col) {
-            const int global_col = global_indices[static_cast<std::size_t>(local_col)];
-            dense[static_cast<std::size_t>(global_row) * n + static_cast<std::size_t>(global_col)] +=
-                scale * local_hessian[
-                    static_cast<std::size_t>(local_row * local_variable_count + local_col)
-                ];
-        }
-    }
-}
-
-void add_local_hessian_to_constraint_tensor(
-    std::vector<double>& tensor,
-    int constraint_row,
-    int variable_count,
-    const std::vector<int>& global_indices,
-    const std::vector<double>& local_hessian,
-    double scale,
-    const std::string& label
-) {
-    const int local_variable_count = static_cast<int>(global_indices.size());
-    require_square_block(local_hessian, local_variable_count, label);
-    const std::size_t n = static_cast<std::size_t>(variable_count);
-    const std::size_t row_offset = static_cast<std::size_t>(constraint_row) * n * n;
-    if (tensor.size() < row_offset + n * n) {
-        throw ValueError(label + " target tensor is smaller than the requested constraint row.");
-    }
-    for (int local_row = 0; local_row < local_variable_count; ++local_row) {
-        const int global_row = global_indices[static_cast<std::size_t>(local_row)];
-        for (int local_col = 0; local_col < local_variable_count; ++local_col) {
-            const int global_col = global_indices[static_cast<std::size_t>(local_col)];
-            tensor[row_offset + static_cast<std::size_t>(global_row) * n + static_cast<std::size_t>(global_col)] +=
-                scale * local_hessian[
-                    static_cast<std::size_t>(local_row * local_variable_count + local_col)
-                ];
-        }
-    }
-}
-
-std::vector<double> third_derivative_slice(
-    const std::vector<double>& tensor,
-    int component,
-    int variable_count,
-    const std::string& label
-) {
-    require_third_derivative_tensor(tensor, variable_count, label);
-    const std::size_t n = static_cast<std::size_t>(variable_count);
-    const std::size_t offset = static_cast<std::size_t>(component) * n * n;
-    return std::vector<double>(
-        tensor.begin() + static_cast<std::ptrdiff_t>(offset),
-        tensor.begin() + static_cast<std::ptrdiff_t>(offset + n * n)
-    );
-}
-
-struct TemperatureRoutePhaseBlock {
-    EosPhaseBlockResult block;
-    std::vector<double> gradient;
-    std::vector<double> objective_hessian_row_major;
-    std::vector<double> objective_third_derivative_tensor_row_major;
-    std::vector<double> pressure_jacobian_row_major;
-    std::vector<double> pressure_hessian_row_major;
-};
-
-TemperatureRoutePhaseBlock evaluate_temperature_route_phase_block(
-    const add_args& args,
-    double temperature,
-    double target_pressure,
-    const std::vector<double>& amounts,
-    double volume
-) {
-    TemperatureRoutePhaseBlock out;
-    out.block = evaluate_eos_phase_block(args, temperature, target_pressure, amounts, volume);
-    double cppad_objective = 0.0;
-    eos_phase_temperature_variable_derivatives_cpp(
-        temperature,
-        target_pressure,
-        amounts,
-        volume,
-        args,
-        &cppad_objective,
-        &out.gradient,
-        &out.objective_hessian_row_major,
-        &out.objective_third_derivative_tensor_row_major
-    );
-    const int local_variable_count = static_cast<int>(amounts.size()) + 2;
-    if (out.gradient.size() != static_cast<std::size_t>(local_variable_count)
-        || out.objective_hessian_row_major.size()
-            != static_cast<std::size_t>(local_variable_count * local_variable_count)) {
-        throw ValueError("fixed-pressure temperature route CppAD derivative shape did not match variables.");
-    }
-    require_third_derivative_tensor(
-        out.objective_third_derivative_tensor_row_major,
-        local_variable_count,
-        "fixed-pressure temperature route CppAD third-derivative tensor"
-    );
-    const double objective_scale = std::max(1.0, std::abs(out.block.objective));
-    if (std::abs(cppad_objective - out.block.objective) > 1.0e-8 * objective_scale) {
-        throw ValueError("fixed-pressure temperature route CppAD value did not match the EOS block value.");
-    }
-
-    const int volume_row = local_variable_count - 2;
-    const int temperature_col = local_variable_count - 1;
-    const double gas_constant = kb * N_AV;
-    out.pressure_jacobian_row_major.reserve(static_cast<std::size_t>(local_variable_count));
-    for (int col = 0; col < local_variable_count; ++col) {
-        double value = -out.block.gas_constant_temperature
-            * out.objective_hessian_row_major[static_cast<std::size_t>(volume_row * local_variable_count + col)];
-        if (col == temperature_col) {
-            value -= gas_constant * out.gradient[static_cast<std::size_t>(volume_row)];
-        }
-        out.pressure_jacobian_row_major.push_back(value);
-    }
-    out.pressure_hessian_row_major.assign(
-        static_cast<std::size_t>(local_variable_count * local_variable_count),
-        0.0
-    );
-    for (int row = 0; row < local_variable_count; ++row) {
-        for (int col = 0; col < local_variable_count; ++col) {
-            double value = -out.block.gas_constant_temperature
-                * out.objective_third_derivative_tensor_row_major[
-                    static_cast<std::size_t>(
-                        volume_row * local_variable_count * local_variable_count
-                        + row * local_variable_count
-                        + col
-                    )
-                ];
-            if (row == temperature_col) {
-                value -= gas_constant * out.objective_hessian_row_major[
-                    static_cast<std::size_t>(volume_row * local_variable_count + col)
-                ];
-            }
-            if (col == temperature_col) {
-                value -= gas_constant * out.objective_hessian_row_major[
-                    static_cast<std::size_t>(volume_row * local_variable_count + row)
-                ];
-            }
-            out.pressure_hessian_row_major[
-                static_cast<std::size_t>(row * local_variable_count + col)
-            ] = value;
-        }
-    }
-    symmetrize_square_block(out.pressure_hessian_row_major, local_variable_count);
-    return out;
 }
 
 class NeutralFixedTemperaturePressureProblem final : public NlpProblem {
@@ -2672,40 +2453,12 @@ private:
 };
 
 NeutralTwoPhaseEosNlpContract make_contract(const NlpProblem& problem, int phase_count, int species_count) {
-    validate_nlp_problem_shape(problem);
-
-    const std::vector<double> initial = problem.initial_point();
-    const NlpBounds bounds = problem.bounds();
-    const NlpJacobianStructure structure = problem.jacobian_structure();
-    const std::map<std::string, std::string> diagnostics = problem.diagnostics();
-
-    NeutralTwoPhaseEosNlpContract out;
-    out.problem_name = problem.name();
-    out.derivative_backend = "analytic_cppad";
-    const auto activation_compiler = diagnostics.find("activation_compiler");
-    out.activation_compiler =
-        activation_compiler == diagnostics.end() ? "" : activation_compiler->second;
-    apply_route_metadata(out, route_metadata_from_diagnostics(diagnostics));
-    out.phase_count = phase_count;
-    out.species_count = species_count;
-    out.variable_count = problem.variable_count();
-    out.constraint_count = problem.constraint_count();
-    out.jacobian_nonzero_count = problem.jacobian_nonzero_count();
-    out.exact_hessian_available = problem.has_exact_hessian();
-    out.hessian_nonzero_count = problem.hessian_nonzero_count();
-    out.hessian_backend = problem.hessian_backend();
-    out.initial_point = initial;
-    out.variable_lower_bounds = bounds.variable_lower;
-    out.variable_upper_bounds = bounds.variable_upper;
-    out.constraint_lower_bounds = bounds.constraint_lower;
-    out.constraint_upper_bounds = bounds.constraint_upper;
-    out.objective_at_initial = problem.objective(initial);
-    out.gradient_at_initial = problem.objective_gradient(initial);
-    out.constraints_at_initial = problem.constraints(initial);
-    out.jacobian_rows = structure.rows;
-    out.jacobian_cols = structure.cols;
-    out.jacobian_values_at_initial = problem.jacobian_values(initial);
-    return out;
+    return make_neutral_two_phase_nlp_contract_snapshot(
+        problem,
+        phase_count,
+        species_count,
+        NlpContractSnapshotDetail::Basic
+    );
 }
 
 NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
