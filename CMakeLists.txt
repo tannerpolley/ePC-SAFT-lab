@@ -305,7 +305,11 @@ set(EPCSAFT_NATIVE_EOS_SOURCES
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/density.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/fugacity.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/pure_neutral_parameter_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_association_sensitivities.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_helmholtz.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_parameter_phase_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_phase_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_property_derivatives.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_properties.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/state.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/association.cpp
@@ -465,6 +469,7 @@ endif()
 
 set(EPCSAFT_PYBIND_SOURCES
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/payload_converters.cpp
 )
 pybind11_add_module(_core NO_EXTRAS ${EPCSAFT_PYBIND_SOURCES})
 target_link_libraries(

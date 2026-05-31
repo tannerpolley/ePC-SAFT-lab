@@ -8,7 +8,7 @@
 
 namespace epcsaft::native::implicit_sensitivity {
 
-namespace {
+namespace implicit_sensitivity_detail {
 
 void require_positive_count(int value, const std::string& label) {
     if (value <= 0) {
@@ -80,7 +80,12 @@ void require_result_finite(const std::vector<double>& values, const std::string&
     }
 }
 
-}  // namespace
+}  // namespace implicit_sensitivity_detail
+
+using implicit_sensitivity_detail::require_positive_count;
+using implicit_sensitivity_detail::require_result_finite;
+using implicit_sensitivity_detail::require_size;
+using implicit_sensitivity_detail::solve_linear_system;
 
 ImplicitSensitivityResult solve_implicit_sensitivity(
     const ImplicitSensitivityProblem& problem,

@@ -742,9 +742,9 @@
             \right]
         \end{aligned}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 431
-      comment_line: 430
+    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h"
+      line: 432
+      comment_line: 431
       context: "template <typename Scalar>"
 - eqid: "hs_ares_dadrho"
   section: "Contribution Intermediates"
@@ -1802,8 +1802,8 @@
     \tilde{a}^{\mathrm{res}}=\tilde{a}^{h c}+\tilde{a}^{\text {disp }}+\tilde{a}^{\text {assoc }}+\tilde{a}^{\text {DH }}+\tilde{a}^{\text {Born }}
   cpp_refs:
     - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 1555
-      comment_line: 1554
+      line: 19
+      comment_line: 18
       context: "AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {"
 - eqid: "dares_dT"
   section: "Residual Helmholtz Energy"
@@ -1822,10 +1822,10 @@
         +\left(\frac{\partial\tilde{a}^\mathrm{DH}}{\partial T}\right)_{\rho,x_{i}}
         +\left(\frac{\partial\tilde{a}^\mathrm{Born}}{\partial T}\right)_{\rho,x_{i}}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 3325
-      comment_line: 3324
-      context: "ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_property_derivatives.cpp"
+      line: 38
+      comment_line: 37
+      context: "ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp("
 - eqid: "ares_hc"
   section: "Residual Helmholtz Energy"
   subsection: "Hard-Chain Reference Contribution"
@@ -1845,9 +1845,9 @@
             -\sum_{i} x_{i}\left(m_{i}-1\right) \ln \mathrm{g}_{i i}^{\mathrm{hs}}\left(\sigma_{i i}\right)
         \end{aligned}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 442
-      comment_line: 441
+    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h"
+      line: 443
+      comment_line: 442
       context: "template <typename Scalar>"
 - eqid: "hc_ares_dadrho"
   section: "Residual Helmholtz Energy"
@@ -1934,9 +1934,9 @@
   latex: |
     \tilde{a}^{\mathrm{disp}}=-2 \pi \rho I_{1}(\eta, \bar{m}) \overline{m^2 \epsilon \sigma^3}-\pi \rho \bar{m} C_{1} I_{2}(\eta, \bar{m}) \overline{m^2 \epsilon^2 \sigma^3}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 453
-      comment_line: 452
+    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h"
+      line: 454
+      comment_line: 453
       context: "template <typename Scalar>"
 - eqid: "disp_ares_dadrho"
   section: "Residual Helmholtz Energy"
@@ -2020,9 +2020,9 @@
   latex: |
     \tilde{a}^{\mathrm{assoc}}= \sum_{i} x_{i}\sum_{\mathrm{A}_{i}}\left(\ln X^{\mathrm{A}_{i}}-\frac{X^{\mathrm{A}_{i}}}{2}+\frac{1}{2}\right)
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 501
-      comment_line: 500
+    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h"
+      line: 502
+      comment_line: 501
       context: "template <typename Scalar>"
 - eqid: "assoc_ares_dadrho"
   section: "Residual Helmholtz Energy"
@@ -2103,9 +2103,9 @@
   latex: |
     \tilde{a}^{DH}=-\frac{\kappa e^{2}}{12\pi\varepsilon_{0}\varepsilon_{r}k_{B}T}\sum_{i}x_{i}z_{i}^{2}\chi_{i}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 948
-      comment_line: 947
+    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h"
+      line: 949
+      comment_line: 948
       context: "template <typename Scalar, typename TemperatureScalar>"
 - eqid: "dh_ares_dadrho"
   section: "Residual Helmholtz Energy"
@@ -2212,9 +2212,9 @@
     \right)
     D_{i,\delta}^{(m_\delta)},
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp"
-      line: 1021
-      comment_line: 1020
+    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h"
+      line: 1022
+      comment_line: 1021
       context: "template <typename Scalar, typename TemperatureScalar>"
 - eqid: "born_ares_dadrho"
   section: "Residual Helmholtz Energy"
