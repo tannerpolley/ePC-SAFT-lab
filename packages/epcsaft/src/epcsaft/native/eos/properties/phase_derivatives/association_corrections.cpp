@@ -1,11 +1,13 @@
-#include "eos/properties/residual_helmholtz_internal.h"
-#include "eos/properties/residual_association_sensitivities.h"
-#include "eos/properties/residual_backend_helpers.h"
+#include "eos/properties/residual/internal.h"
+#include "eos/properties/residual/implicit_association/sensitivities.h"
+#include "eos/properties/residual/backend_helpers.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
 
+// Adds implicit-association Hessian terms that are not present on the base
+// residual tape when site fractions are solved outside the CppAD recording.
 EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_corrections_cpp(
     double t,
     const vector<double> &amounts,

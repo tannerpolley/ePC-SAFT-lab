@@ -1,4 +1,4 @@
-#include "eos/properties/residual_helmholtz_internal.h"
+#include "eos/properties/residual/internal.h"
 double ares_contribution_value_cpp(const AresContributions &terms, AresContributionKind kind) {
     switch (kind) {
         case AresContributionKind::HC:

@@ -1,5 +1,5 @@
 #pragma once
-#include "eos/properties/residual_scalar_state.h"
+#include "eos/properties/residual/cppad_kernels/state.h"
 
 namespace ares_detail {
 template <typename Scalar>

@@ -1,4 +1,4 @@
-#include "eos/properties/residual_association_sensitivities.h"
+#include "eos/properties/residual/implicit_association/sensitivities.h"
 #include "autodiff/implicit_sensitivity.h"
 namespace residual_association_detail {
 #ifdef EPCSAFT_HAS_CPPAD

@@ -962,7 +962,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:562`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_hard_chain_scalar.h:65` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/hard_chain_dispersion.h:65` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2456,7 +2456,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for residual helmholz energy.
 - Change note: No explicit citation on this equation block in the source file.
 - LaTeX: `docs/latex/equations.tex:1390`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp:19` (AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/helmholtz.cpp:19` (AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -2477,7 +2477,7 @@ $$
 - Description: Provides the total temperature differential of the residual Helmholtz energy.
 - Change note: Moved here from the removed standalone temperature-differential section so one downstream total-\(d\tilde a^\mathrm{res}/dT\) summary relation remains available.
 - LaTeX: `docs/latex/equations.tex:1402`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_property_derivatives.cpp:38` (ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp()
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/property_derivatives.cpp:38` (ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp()
 
 **LaTeX source**
 
@@ -2506,7 +2506,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1418`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_hard_chain_scalar.h:76` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/hard_chain_dispersion.h:76` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2636,7 +2636,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1488`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_hard_chain_scalar.h:87` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/hard_chain_dispersion.h:87` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2750,7 +2750,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Association Helmholtz form is traced to Chapman/Wertheim SAFT association theory, but the exact numbered equation is not present in the local progression PDFs.
 - LaTeX: `docs/latex/equations.tex:1550`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_association_scalar.h:6` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/association.h:6` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2858,7 +2858,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1609`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_ionic_scalar.h:6` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/ionic.h:6` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 
@@ -3002,7 +3002,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for born electrolyte term contribution.
 - Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 - LaTeX: `docs/latex/equations.tex:1686`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_born_scalar.h:6` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/born.h:6` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 
@@ -3935,7 +3935,7 @@ $$
 - Description: Provides a differential relation needed for entropy calculations.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:2208`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_properties.cpp:4` (double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/properties.cpp:4` (double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -3977,7 +3977,7 @@ $$
 - Description: Provides a differential relation needed for entropy calculations.
 - Change note: Mapped manually to the residual-entropy temperature-derivative form.
 - LaTeX: `docs/latex/equations.tex:2232`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_properties.cpp:18` (double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/properties.cpp:18` (double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 
@@ -4021,7 +4021,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for gibbs free energy.
 - Change note: Mapped manually to the residual Gibbs relation in Helmholtz/compressibility form.
 - LaTeX: `docs/latex/equations.tex:2256`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_properties.cpp:11` (double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual/properties.cpp:11` (double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {)
 
 **LaTeX source**
 

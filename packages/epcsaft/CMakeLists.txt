@@ -147,16 +147,16 @@ set(EPCSAFT_PROVIDER_NATIVE_SOURCES
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/compressibility.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/density.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/fugacity.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/pure_neutral_parameter_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_association_sensitivities.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_helmholtz.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_parameter_phase_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_phase_association_corrections.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_phase_objective_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_phase_pressure_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_phase_state_sensitivities.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_property_derivatives.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual_properties.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/parameter_derivatives/pure_neutral.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual/implicit_association/sensitivities.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual/helmholtz.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/parameter_derivatives/phase_parameters.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/phase_derivatives/association_corrections.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/phase_derivatives/objective_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/phase_derivatives/pressure_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/phase_derivatives/state_sensitivities.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual/property_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/properties/residual/properties.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/state.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/association.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/contributions/born.cpp

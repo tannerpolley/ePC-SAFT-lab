@@ -6,19 +6,21 @@
 
 ## Problem
 
-The provider native and Python state layers have accumulated several shallow or
-overloaded modules. The most severe case is
-`packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp`,
-which now owns core residual contribution evaluation, CppAD phase objective and
-pressure derivatives, phase-state sensitivities, parameter phase derivatives,
-and residual derivative entrypoints in one large source file.
+The provider native and Python state layers had accumulated several shallow or
+overloaded modules. The original severe case was the old flat residual
+Helmholtz source, which owned core residual contribution evaluation, CppAD phase
+objective and pressure derivatives, phase-state sensitivities, parameter phase
+derivatives, and residual derivative entrypoints in one large source file. That
+work is now split across residual contribution, phase-derivative, and
+parameter-derivative owners.
 
-The current provider scan also found unnamed C++ namespace blocks in:
+The provider scan that created this issue also found unnamed C++ namespace
+blocks in:
 
 - `packages/epcsaft/src/epcsaft/native/autodiff/implicit_sensitivity.cpp`
 - `packages/epcsaft/src/epcsaft/native/bindings/module.cpp`
-- `packages/epcsaft/src/epcsaft/native/eos/properties/pure_neutral_parameter_derivatives.cpp`
-- `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz.cpp`
+- the old pure-neutral parameter derivative source
+- the old residual Helmholtz source
 
 For M3, provider EOS/state/derivative ownership should be explicit and easy to
 navigate. Private implementation regions should live behind named detail
@@ -33,8 +35,9 @@ and workflow structure tests prevent the drift from returning.
 
 ## Key Changes
 
-- Split `residual_helmholtz.cpp` by ownership while preserving behavior:
-  - Keep core residual contribution evaluation in `residual_helmholtz.cpp`.
+- Split the residual Helmholtz implementation by ownership while preserving
+  behavior:
+  - Keep core residual contribution evaluation in the residual Helmholtz owner.
   - Move CppAD phase objective/pressure derivatives, phase-state sensitivities,
     parameter phase derivatives, and residual temperature/composition/density
     derivative entrypoints into focused `eos/properties/*` source files.
@@ -69,7 +72,7 @@ issue is structure-only.
 
 - [x] No `namespace {` block remains under
   `packages/epcsaft/src/epcsaft/native/**`.
-- [x] `residual_helmholtz.cpp` no longer owns phase objective derivatives,
+- [x] The residual Helmholtz source no longer owns phase objective derivatives,
   phase-state sensitivities, parameter phase derivatives, and residual
   derivative entrypoints in one giant source file.
 - [x] `state/native_adapter.py` keeps the public provider facade while helper

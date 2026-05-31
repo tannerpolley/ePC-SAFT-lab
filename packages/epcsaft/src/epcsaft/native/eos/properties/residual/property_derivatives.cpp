@@ -1,6 +1,6 @@
-#include "eos/properties/residual_helmholtz_internal.h"
+#include "eos/properties/residual/internal.h"
 
-#include "eos/properties/residual_backend_helpers.h"
+#include "eos/properties/residual/backend_helpers.h"
 
 #include <utility>
 #include <vector>

@@ -1,11 +1,13 @@
-#include "eos/properties/residual_helmholtz_internal.h"
-#include "eos/properties/residual_association_sensitivities.h"
-#include "eos/properties/residual_backend_helpers.h"
+#include "eos/properties/residual/internal.h"
+#include "eos/properties/residual/implicit_association/sensitivities.h"
+#include "eos/properties/residual/backend_helpers.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
 
+// Equilibrium pressure-consistency constraints consume this as the pressure
+// Jacobian over phase amounts plus volume.
 EosPhasePressureDerivativeResult eos_phase_pressure_derivatives_cpp(
     double t,
     const vector<double> &amounts,

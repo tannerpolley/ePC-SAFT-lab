@@ -1,10 +1,13 @@
-#include "eos/properties/residual_helmholtz_internal.h"
-#include "eos/properties/residual_association_sensitivities.h"
-#include "eos/properties/residual_backend_helpers.h"
+#include "eos/properties/residual/internal.h"
+#include "eos/properties/residual/implicit_association/sensitivities.h"
+#include "eos/properties/residual/backend_helpers.h"
 #include <array>
 #include <cmath>
 #include <string>
 #include <vector>
+
+// Provider parameter sensitivities reuse the phase derivative shape, but target
+// component and pair parameters instead of equilibrium NLP variables.
 NeutralBinaryKijPhaseDerivatives association_parameter_phase_derivatives_cpp(
     double t,
     double rho,

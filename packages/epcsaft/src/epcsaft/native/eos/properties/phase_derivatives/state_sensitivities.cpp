@@ -1,13 +1,15 @@
-#include "eos/properties/residual_helmholtz_internal.h"
-#include "eos/properties/residual_association_sensitivities.h"
-#include "eos/properties/residual_backend_helpers.h"
+#include "eos/properties/residual/internal.h"
+#include "eos/properties/residual/implicit_association/sensitivities.h"
+#include "eos/properties/residual/backend_helpers.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
 
-namespace residual_phase_detail {
+namespace phase_derivative_detail {
 
+// State/API sensitivity route: records residual contributions over density and
+// composition, then applies the pressure-root chain rule when requested.
 PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_density_sensitivity_cpp(
     double t,
     double p,
@@ -329,7 +331,7 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_density_sensitivi
     return out;
 }
 
-}  // namespace residual_phase_detail
+}  // namespace phase_derivative_detail
 
 PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_explicit_density_composition_sensitivity_cpp(
     double t,
@@ -337,7 +339,7 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_explicit_density_
     vector<double> x,
     const add_args &cppargs
 ) {
-    return residual_phase_detail::phase_state_ln_fugacity_density_sensitivity_cpp(
+    return phase_derivative_detail::phase_state_ln_fugacity_density_sensitivity_cpp(
         t,
         0.0,
         rho,
@@ -369,7 +371,7 @@ PhaseStateCompositionSensitivityResult phase_state_ln_fugacity_composition_sensi
         out.density_backend = "selected_density_root";
         return out;
     }
-    return residual_phase_detail::phase_state_ln_fugacity_density_sensitivity_cpp(
+    return phase_derivative_detail::phase_state_ln_fugacity_density_sensitivity_cpp(
         t,
         p,
         density.rho,
