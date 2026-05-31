@@ -5,7 +5,7 @@ using thermo_detail::DensityRootCandidate;
 using thermo_detail::DensityScanPoint;
 using thermo_detail::parameter_setup_detail::ion_diameter_cpp;
 
-vector<double> density_scan_grid_cpp() {
+static vector<double> density_scan_grid_cpp() {
     const double nu_min = 1e-13;
     const double nu_log_max = 5e-3;
     const double nu_linear_start = 5e-3;
@@ -42,7 +42,7 @@ vector<double> density_scan_grid_cpp() {
     return grid;
 }
 
-DensityScanPoint density_scan_point_cpp(double nu, double t, int ncomp, const vector<double> &x, double p, const add_args &cppargs) {
+static DensityScanPoint density_scan_point_cpp(double nu, double t, int ncomp, const vector<double> &x, double p, const add_args &cppargs) {
     DensityScanPoint point;
     point.nu = nu;
     point.rho = ::reduced_density_to_molar(nu, t, ncomp, x, cppargs);
@@ -67,7 +67,7 @@ std::string density_failure_message_cpp(const std::string &outcome, double t, do
         + ").";
 }
 
-vector<DensityBracket> density_brackets_cpp(const vector<DensityScanPoint> &points) {
+static vector<DensityBracket> density_brackets_cpp(const vector<DensityScanPoint> &points) {
     vector<DensityBracket> brackets;
     if (points.size() < 2) {
         return brackets;
@@ -92,7 +92,7 @@ vector<DensityBracket> density_brackets_cpp(const vector<DensityScanPoint> &poin
     return brackets;
 }
 
-void refine_density_brackets_cpp(
+static void refine_density_brackets_cpp(
     const DensityBracket &coarse,
     double t,
     int ncomp,
@@ -130,7 +130,7 @@ void refine_density_brackets_cpp(
     }
 }
 
-bool density_root_valid_cpp(
+static bool density_root_valid_cpp(
     double t,
     double p,
     const vector<double> &x,
@@ -309,7 +309,7 @@ bool density_root_from_seed_cpp(
     }
 }
 
-DensityRootCandidate density_near_root_candidate_cpp(
+static DensityRootCandidate density_near_root_candidate_cpp(
     double t,
     double p,
     const vector<double> &x,
@@ -344,7 +344,7 @@ DensityRootCandidate density_near_root_candidate_cpp(
     return candidate;
 }
 
-DensityCandidateDiagnostics density_candidate_diagnostics_cpp(const DensityRootCandidate &candidate) {
+static DensityCandidateDiagnostics density_candidate_diagnostics_cpp(const DensityRootCandidate &candidate) {
     DensityCandidateDiagnostics out;
     out.rho_sort = candidate.rho_sort;
     out.rho = candidate.rho;
