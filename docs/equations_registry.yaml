@@ -742,7 +742,7 @@
             \right]
         \end{aligned}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/hard_chain_dispersion.h"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/cppad/hard_chain_dispersion.h"
       line: 65
       comment_line: 64
       context: "template <typename Scalar>"
@@ -1801,7 +1801,7 @@
   latex: |
     \tilde{a}^{\mathrm{res}}=\tilde{a}^{h c}+\tilde{a}^{\text {disp }}+\tilde{a}^{\text {assoc }}+\tilde{a}^{\text {DH }}+\tilde{a}^{\text {Born }}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/helmholtz.cpp"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/helmholtz.cpp"
       line: 19
       comment_line: 18
       context: "AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs) {"
@@ -1822,7 +1822,7 @@
         +\left(\frac{\partial\tilde{a}^\mathrm{DH}}{\partial T}\right)_{\rho,x_{i}}
         +\left(\frac{\partial\tilde{a}^\mathrm{Born}}{\partial T}\right)_{\rho,x_{i}}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/property_derivatives.cpp"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/property_derivatives.cpp"
       line: 38
       comment_line: 37
       context: "ScalarContributionTerms temperature_derivative_residual_helmholtz_result_cpp("
@@ -1845,7 +1845,7 @@
             -\sum_{i} x_{i}\left(m_{i}-1\right) \ln \mathrm{g}_{i i}^{\mathrm{hs}}\left(\sigma_{i i}\right)
         \end{aligned}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/hard_chain_dispersion.h"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/cppad/hard_chain_dispersion.h"
       line: 76
       comment_line: 75
       context: "template <typename Scalar>"
@@ -1934,7 +1934,7 @@
   latex: |
     \tilde{a}^{\mathrm{disp}}=-2 \pi \rho I_{1}(\eta, \bar{m}) \overline{m^2 \epsilon \sigma^3}-\pi \rho \bar{m} C_{1} I_{2}(\eta, \bar{m}) \overline{m^2 \epsilon^2 \sigma^3}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/hard_chain_dispersion.h"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/cppad/hard_chain_dispersion.h"
       line: 87
       comment_line: 86
       context: "template <typename Scalar>"
@@ -2020,7 +2020,7 @@
   latex: |
     \tilde{a}^{\mathrm{assoc}}= \sum_{i} x_{i}\sum_{\mathrm{A}_{i}}\left(\ln X^{\mathrm{A}_{i}}-\frac{X^{\mathrm{A}_{i}}}{2}+\frac{1}{2}\right)
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/association.h"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/cppad/association.h"
       line: 6
       comment_line: 5
       context: "template <typename Scalar>"
@@ -2103,7 +2103,7 @@
   latex: |
     \tilde{a}^{DH}=-\frac{\kappa e^{2}}{12\pi\varepsilon_{0}\varepsilon_{r}k_{B}T}\sum_{i}x_{i}z_{i}^{2}\chi_{i}
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/ionic.h"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/cppad/ionic.h"
       line: 6
       comment_line: 5
       context: "template <typename Scalar, typename TemperatureScalar>"
@@ -2212,7 +2212,7 @@
     \right)
     D_{i,\delta}^{(m_\delta)},
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/cppad_kernels/born.h"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/cppad/born.h"
       line: 6
       comment_line: 5
       context: "template <typename Scalar, typename TemperatureScalar>"
@@ -2864,7 +2864,7 @@
   latex: |
     \tilde{h}^{\mathrm{res}} = \frac{\hat{h}^{\mathrm{res}}}{RT}=-T\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho,x_{i}}+(Z-1)
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/properties.cpp"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/thermodynamic_properties.cpp"
       line: 4
       comment_line: 3
       context: "double hres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
@@ -2896,7 +2896,7 @@
   latex: |
     \tilde{s}^{\mathrm{res}} = \frac{\hat{s}^{\mathrm{res}}(P,T)}{R}=-T\left[\left(\frac{\partial\tilde{a}^{\mathrm{res}}}{\partial T}\right)_{\rho,x_{i}}+\frac{\tilde{a}^{\mathrm{res}}}{T}\right]+\ln(Z)
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/properties.cpp"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/thermodynamic_properties.cpp"
       line: 18
       comment_line: 17
       context: "double sres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"
@@ -2928,7 +2928,7 @@
   latex: |
     \tilde{g}^{\mathrm{res}}=\tilde{a}^{\mathrm{res}}+(Z-1)-\ln(Z)
   cpp_refs:
-    - file: "packages/epcsaft/src/epcsaft/native/eos/properties/residual/properties.cpp"
+    - file: "packages/epcsaft/src/epcsaft/native/eos/residual/thermodynamic_properties.cpp"
       line: 11
       comment_line: 10
       context: "double gres_cpp(double t, double rho, vector<double> x, const add_args &cppargs) {"

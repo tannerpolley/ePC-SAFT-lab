@@ -1,8 +1,8 @@
 #pragma once
-#include "eos/properties/residual/cppad_kernels/hard_chain_dispersion.h"
-#include "eos/properties/residual/cppad_kernels/association.h"
-#include "eos/properties/residual/cppad_kernels/ionic.h"
-#include "eos/properties/residual/cppad_kernels/born.h"
+#include "eos/residual/cppad/hard_chain_dispersion.h"
+#include "eos/residual/cppad/association.h"
+#include "eos/residual/cppad/ionic.h"
+#include "eos/residual/cppad/born.h"
 
 namespace ares_detail {
 template <typename Scalar, typename TemperatureScalar>

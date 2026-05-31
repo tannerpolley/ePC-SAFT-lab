@@ -1,6 +1,6 @@
-#include "eos/properties/residual/internal.h"
-#include "eos/properties/residual/implicit_association/sensitivities.h"
-#include "eos/properties/residual/backend_helpers.h"
+#include "eos/residual/internal.h"
+#include "eos/residual/implicit_association/sensitivities.h"
+#include "eos/derivatives/backend_labels.h"
 #include <algorithm>
 #include <cmath>
 #include <string>

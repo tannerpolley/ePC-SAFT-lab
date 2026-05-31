@@ -2,7 +2,7 @@
 #include "eos/core_internal.h"
 #include <map>
 #include <string>
-namespace residual_backend_detail {
+namespace derivative_backend_detail {
 inline std::string contribution_backend_name(int mode) {
     if (mode == 0) return "analytic";
     if (mode == 1) return "unsupported";
@@ -49,4 +49,4 @@ inline std::map<std::string, std::string> composition_derivative_backend_map(con
     backends["born"] = born_backend_name(cppargs);
     return backends;
 }
-}  // namespace residual_backend_detail
+}  // namespace derivative_backend_detail

@@ -1,6 +1,6 @@
-#include "eos/properties/residual/internal.h"
+#include "eos/residual/internal.h"
 
-#include "eos/properties/residual/backend_helpers.h"
+#include "eos/derivatives/backend_labels.h"
 
 #include <utility>
 #include <vector>
@@ -130,7 +130,7 @@ CompositionContributionResult composition_derivative_residual_helmholtz_result_c
         total[i] = hc.dadx[i] + disp.dadx[i] + assoc.dadx[i] + ion.dadx[i] + born.dadx[i];
     }
     result.dadx.total = total;
-    result.derivative_backend = residual_backend_detail::composition_derivative_backend_map(cppargs);
+    result.derivative_backend = derivative_backend_detail::composition_derivative_backend_map(cppargs);
     result.derivative_available = true;
     for (const auto& item : result.derivative_backend) {
         if (item.second == "unsupported") {

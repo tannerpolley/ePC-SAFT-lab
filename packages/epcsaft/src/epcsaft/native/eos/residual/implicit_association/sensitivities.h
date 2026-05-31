@@ -1,5 +1,5 @@
 #pragma once
-#include "eos/properties/residual/internal.h"
+#include "eos/residual/internal.h"
 namespace residual_association_detail {
 ares_detail::AssociationDensityResponse association_density_response_cppad_cpp(
     double t,

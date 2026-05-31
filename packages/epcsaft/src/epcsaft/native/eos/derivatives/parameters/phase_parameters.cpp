@@ -1,6 +1,6 @@
-#include "eos/properties/residual/internal.h"
-#include "eos/properties/residual/implicit_association/sensitivities.h"
-#include "eos/properties/residual/backend_helpers.h"
+#include "eos/residual/internal.h"
+#include "eos/residual/implicit_association/sensitivities.h"
+#include "eos/derivatives/backend_labels.h"
 #include <array>
 #include <cmath>
 #include <string>
@@ -31,7 +31,7 @@ NeutralBinaryKijPhaseDerivatives association_parameter_phase_derivatives_cpp(
             }
         }
     }
-    if (!residual_backend_detail::has_association_sites(cppargs)) {
+    if (!derivative_backend_detail::has_association_sites(cppargs)) {
         throw ValueError("unsupported: association parameter derivatives require active association sites.");
     }
     if (!(t > 0.0) || !(rho > 0.0)) {
@@ -360,7 +360,7 @@ NeutralBinaryKijPhaseDerivatives neutral_binary_pair_parameter_phase_derivatives
     if (!is_kij && !is_lij && !is_khb) {
         throw ValueError("Native binary pair-parameter derivative supports only k_ij, l_ij, and k_hb_ij.");
     }
-    const bool active_association = residual_backend_detail::has_association_sites(cppargs);
+    const bool active_association = derivative_backend_detail::has_association_sites(cppargs);
     if (active_association && (is_lij || is_khb)) {
         return association_parameter_phase_derivatives_cpp(
             t,
@@ -582,7 +582,7 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
     }
     if (target_kind == ares_detail::kGenericTargetEAssocLocal
         || target_kind == ares_detail::kGenericTargetVolALocal) {
-        if (!residual_backend_detail::has_association_sites(cppargs)) {
+        if (!derivative_backend_detail::has_association_sites(cppargs)) {
             throw ValueError("unsupported: association component-parameter derivatives require active association.");
         }
         return association_parameter_phase_derivatives_cpp(
@@ -633,7 +633,7 @@ NeutralBinaryKijPhaseDerivatives generic_component_parameter_phase_derivatives_c
     for (int i = 0; i < ncomp; ++i) {
         ax[static_cast<size_t>(i)] = avars[static_cast<size_t>(x_start + i)];
     }
-    const bool active_association = residual_backend_detail::has_association_sites(cppargs);
+    const bool active_association = derivative_backend_detail::has_association_sites(cppargs);
     add_args recording_args = cppargs;
     if (active_association) {
         recording_args.assoc_num.clear();

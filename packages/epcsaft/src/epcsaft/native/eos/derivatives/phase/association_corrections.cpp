@@ -1,6 +1,6 @@
-#include "eos/properties/residual/internal.h"
-#include "eos/properties/residual/implicit_association/sensitivities.h"
-#include "eos/properties/residual/backend_helpers.h"
+#include "eos/residual/internal.h"
+#include "eos/residual/implicit_association/sensitivities.h"
+#include "eos/derivatives/backend_labels.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -16,7 +16,7 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
 ) {
     EosPhaseAssociationDerivativeCorrectionResult out;
     out.backend = "cppad_implicit_association";
-    if (!residual_backend_detail::has_association_sites(cppargs)) {
+    if (!derivative_backend_detail::has_association_sites(cppargs)) {
         out.message = "No active association sites were present.";
         return out;
     }

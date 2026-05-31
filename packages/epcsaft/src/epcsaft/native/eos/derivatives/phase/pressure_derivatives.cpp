@@ -1,6 +1,6 @@
-#include "eos/properties/residual/internal.h"
-#include "eos/properties/residual/implicit_association/sensitivities.h"
-#include "eos/properties/residual/backend_helpers.h"
+#include "eos/residual/internal.h"
+#include "eos/residual/implicit_association/sensitivities.h"
+#include "eos/derivatives/backend_labels.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -56,7 +56,7 @@ EosPhasePressureDerivativeResult eos_phase_pressure_derivatives_cpp(
     for (int i = 0; i < ncomp; ++i) {
         ax[static_cast<size_t>(i)] = avars[static_cast<size_t>(1 + i)];
     }
-    const bool active_association = residual_backend_detail::has_association_sites(cppargs);
+    const bool active_association = derivative_backend_detail::has_association_sites(cppargs);
     add_args recording_args = cppargs;
     if (active_association) {
         recording_args.assoc_num.clear();

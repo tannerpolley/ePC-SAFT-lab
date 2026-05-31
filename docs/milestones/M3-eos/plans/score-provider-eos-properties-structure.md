@@ -6,22 +6,24 @@
 
 ## Problem
 
-The provider EOS properties folder is cleaner after the Born and source-structure
+The provider EOS source layout is cleaner after the Born and source-structure
 cleanup work, but several source files still concentrate multiple ownership
 concepts. This makes the EOS harness harder to navigate and increases the risk
 that future derivative or property work adds one-off helper logic instead of
 deepening the relevant provider module.
 
 This issue records a complete file/function scorecard for
-`packages/epcsaft/src/epcsaft/native/eos/properties` and uses the scorecard to
-prioritize keep/move/split/merge/delete recommendations. It is an M3 provider
-structure task only; it must not change public EOS behavior.
+`packages/epcsaft/src/epcsaft/native/eos/properties` and then carries the
+low-risk moves into the concept-owned `eos/residual` and `eos/derivatives`
+owners. It is an M3 provider structure task only; it must not change public EOS
+behavior.
 
 ## Intended Outcome
 
-The provider EOS properties folder has a durable scorecard for every file and
-top-level function/declaration, plus provider-owned cleanup that executes the
-highest-value low-risk recommendations without changing public EOS behavior.
+The provider EOS source layout has a durable scorecard for every affected file
+and top-level function/declaration, plus provider-owned cleanup that executes
+the highest-value low-risk recommendations without changing public EOS
+behavior.
 
 ## Implemented Cleanup Scope
 
@@ -30,15 +32,15 @@ through to concrete provider source cleanup where the action is local and
 behavior-preserving:
 
 - split the oversized residual CppAD-recordable substrate out of
-  `residual/internal.h` into `residual/cppad_kernels/` headers for
+  `residual/internal.h` into `residual/cppad/` headers for
   state, CppAD helpers, hard-chain/dispersion, association, ionic, Born, and
   aggregate residual contribution assembly
-- split phase Jacobian/Hessian producers into `phase_derivatives/` source files
+- split phase Jacobian/Hessian producers into `derivatives/phase/` source files
   owned by phase objective derivatives, phase-state sensitivities, pressure
   derivatives, and association correction derivatives; these files are the
   provider-side derivative contracts consumed by equilibrium phase blocks
 - move provider phase-parameter sensitivities to
-  `parameter_derivatives/phase_parameters.cpp` and implicit association
+  `derivatives/parameters/phase_parameters.cpp` and implicit association
   sensitivity support to `residual/implicit_association/`
 - keep density solver scan/bracket/candidate helpers local to `density.cpp`
   instead of advertising them through the shared EOS declaration hub
@@ -58,7 +60,7 @@ Scores are 1-5 health scores.
 | `1` | Likely redundant, dead, or badly placed enough that deletion or replacement should be considered. |
 
 Each score considers provider-EOS relevance, whether the code is still needed,
-placement under `eos/properties`, generality versus one-off logic, and
+placement under the provider `eos` source tree, generality versus one-off logic, and
 organization/readability.
 
 Action values:
@@ -78,25 +80,25 @@ Action values:
 | `compressibility.cpp` | 4 | keep | Focused compressibility/pressure ownership with CppAD density derivative entrypoint. Some helper declarations may not need the shared hub. |
 | `density.cpp` | 2 | split | Needed density closure path, but root scanning, bracket refinement, candidate diagnostics, seed solving, Brent fallback, and public solve reporting are all concentrated together. |
 | `fugacity.cpp` | 4 | keep | Focused fugacity coefficient assembly from residual chemical potentials and compressibility corrections. |
-| `parameter_derivatives/pure_neutral.cpp` | 3 | keep | Needed provider CppAD pure-neutral parameter path, but hyper-specific enough that future pure-parameter derivative families should share a clearer parameter-derivative owner. |
+| `derivatives/parameters/pure_neutral.cpp` | 3 | keep | Needed provider CppAD pure-neutral parameter path, but hyper-specific enough that future pure-parameter derivative families should share a clearer parameter-derivative owner. |
 | `residual/implicit_association/sensitivities.cpp` | 4 | keep | Focused CppAD association implicit sensitivity implementation used by residual derivative routes. |
 | `residual/implicit_association/sensitivities.h` | 4 | keep | Small internal declaration header with clear association sensitivity ownership. |
-| `residual/backend_helpers.h` | 3 | move | Needed backend-label helpers, but not all helpers are residual-specific and the header may be better owned by derivative metadata or capability evidence support. |
+| `derivatives/backend_labels.h` | 3 | move | Needed backend-label helpers, but not all helpers are residual-specific and the header may be better owned by derivative metadata or capability evidence support. |
 | `residual/helmholtz.cpp` | 4 | keep | Focused public residual Helmholtz contribution entrypoints after #202. |
 | `residual/internal.h` | 4 | keep | Tiny include hub for residual CppAD kernels; no implementation remains here. |
-| `residual/cppad_kernels/state.h` | 3 | split | Needed scalar state and parameter-override substrate, but still central enough that future parameter-family work should deepen it carefully. |
-| `residual/cppad_kernels/helpers.h` | 3 | move | Needed CppAD tensor helpers, but these are derivative mechanics rather than residual thermodynamic equations. |
-| `residual/cppad_kernels/hard_chain_dispersion.h` | 4 | keep | Focused hard-chain and dispersion scalar kernels with double wrappers. |
-| `residual/cppad_kernels/association.h` | 3 | split | Needed association scalar and implicit-term substrate, but still mixes association contribution, contact derivatives, and small linear algebra. |
-| `residual/cppad_kernels/ionic.h` | 4 | keep | Focused Debye-Huckel scalar kernel with dielectric routing and double wrapper. |
-| `residual/cppad_kernels/born.h` | 3 | split | Needed Born scalar kernel, but still combines direct Born, SSM/DS geometry, dielectric routing, and parameter override behavior. |
-| `residual/cppad_kernels/contributions.h` | 4 | keep | Focused aggregate residual contribution assembler over the scalar kernels. |
-| `parameter_derivatives/phase_parameters.cpp` | 2 | split | Needed CppAD parameter phase derivatives, but neutral binary, association, generic component, Born, dielectric, and pure-parameter routing are still concentrated in long functions. |
-| `phase_derivatives/objective_derivatives.cpp` | 4 | keep | Focused provider contract for equilibrium phase objective gradient, Hessian, and third-derivative tensors. |
-| `phase_derivatives/pressure_derivatives.cpp` | 4 | keep | Focused provider contract for pressure-consistency Jacobians over phase amounts and volume. |
-| `phase_derivatives/state_sensitivities.cpp` | 4 | keep | Focused phase-state fugacity sensitivity route with pressure-root chain rule support. |
-| `phase_derivatives/association_corrections.cpp` | 4 | keep | Focused implicit-association Hessian correction route for associating phases. |
-| `residual/properties.cpp` | 5 | keep | Minimal residual property wrappers for `hres`, `gres`, and `sres`; focused and easy to audit. |
+| `residual/cppad/state.h` | 3 | split | Needed scalar state and parameter-override substrate, but still central enough that future parameter-family work should deepen it carefully. |
+| `residual/cppad/helpers.h` | 3 | move | Needed CppAD tensor helpers, but these are derivative mechanics rather than residual thermodynamic equations. |
+| `residual/cppad/hard_chain_dispersion.h` | 4 | keep | Focused hard-chain and dispersion scalar kernels with double wrappers. |
+| `residual/cppad/association.h` | 3 | split | Needed association scalar and implicit-term substrate, but still mixes association contribution, contact derivatives, and small linear algebra. |
+| `residual/cppad/ionic.h` | 4 | keep | Focused Debye-Huckel scalar kernel with dielectric routing and double wrapper. |
+| `residual/cppad/born.h` | 3 | split | Needed Born scalar kernel, but still combines direct Born, SSM/DS geometry, dielectric routing, and parameter override behavior. |
+| `residual/cppad/contributions.h` | 4 | keep | Focused aggregate residual contribution assembler over the scalar kernels. |
+| `derivatives/parameters/phase_parameters.cpp` | 2 | split | Needed CppAD parameter phase derivatives, but neutral binary, association, generic component, Born, dielectric, and pure-parameter routing are still concentrated in long functions. |
+| `derivatives/phase/objective_derivatives.cpp` | 4 | keep | Focused provider contract for equilibrium phase objective gradient, Hessian, and third-derivative tensors. |
+| `derivatives/phase/pressure_derivatives.cpp` | 4 | keep | Focused provider contract for pressure-consistency Jacobians over phase amounts and volume. |
+| `derivatives/phase/state_sensitivities.cpp` | 4 | keep | Focused phase-state fugacity sensitivity route with pressure-root chain rule support. |
+| `derivatives/phase/association_corrections.cpp` | 4 | keep | Focused implicit-association Hessian correction route for associating phases. |
+| `residual/thermodynamic_properties.cpp` | 5 | keep | Minimal residual property wrappers for `hres`, `gres`, and `sres`; focused and easy to audit. |
 | `residual/property_derivatives.cpp` | 4 | keep | Focused residual density, temperature, and composition derivative entrypoints. |
 
 ## Function Scorecard
@@ -186,7 +188,7 @@ Action values:
 | `lnfug_cpp` | 5 | keep | Public native log-fugacity convenience entrypoint. |
 | `fugcoef_cpp` | 5 | keep | Public native fugacity coefficient convenience entrypoint. |
 
-### `parameter_derivatives/pure_neutral.cpp`
+### `derivatives/parameters/pure_neutral.cpp`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -208,7 +210,7 @@ Action values:
 | `association_density_response_cppad_cpp` | 4 | keep | Internal declaration needed by parameter derivative route. |
 | `association_phase_state_response_cppad_cpp` | 4 | keep | Internal declaration needed by phase derivative route. |
 
-### `residual/backend_helpers.h`
+### `derivatives/backend_labels.h`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -234,7 +236,7 @@ Action values:
 | --- | ---: | --- | --- |
 | include hub | 4 | keep | No top-level functions remain; this header intentionally centralizes residual CppAD kernel includes for current callers. |
 
-### `residual/cppad_kernels/state.h`
+### `residual/cppad/state.h`
 
 | Function/Declaration | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -252,14 +254,14 @@ Action values:
 | `ion_born_radius_scalar_cpp` | 3 | move | Needed scalar Born radius route; could move to the Born kernel if target routing is localized there. |
 | `mixture_state_scalar_cpp` | 3 | split | Needed central scalar mixture-state builder; still mixes pure parameters, ion diameter routing, and binary interaction overrides. |
 
-### `residual/cppad_kernels/helpers.h`
+### `residual/cppad/helpers.h`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
 | `vector_output_component_hessian_cppad` | 3 | move | Useful CppAD tensor helper; should move to a derivative utility owner if reused outside residual kernels. |
 | `scalar_function_third_derivative_tensor_cppad` | 3 | move | Useful high-order CppAD helper; should move to a phase derivative or autodiff utility owner if reuse expands. |
 
-### `residual/cppad_kernels/hard_chain_dispersion.h`
+### `residual/cppad/hard_chain_dispersion.h`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -272,7 +274,7 @@ Action values:
 | `ares_hc_cpp` | 4 | keep | Lightweight double wrapper for hard-chain contribution assembly. |
 | `ares_disp_cpp` | 4 | keep | Lightweight double wrapper for dispersion contribution assembly. |
 
-### `residual/cppad_kernels/association.h`
+### `residual/cppad/association.h`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -286,27 +288,27 @@ Action values:
 | `association_site_fraction_composition_terms_scalar_cpp` | 3 | move | Needed association implicit composition terms; could move with association sensitivities. |
 | `association_implicit_terms_scalar_cpp` | 2 | split | Needed, but long and central; should be split into association delta construction, density terms, and composition terms. |
 
-### `residual/cppad_kernels/ionic.h`
+### `residual/cppad/ionic.h`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
 | `ares_ion_scalar_cpp` | 4 | keep | Focused Debye-Huckel scalar contribution kernel. |
 | `ares_ion_cpp` | 4 | keep | Lightweight double wrapper for ionic contribution assembly. |
 
-### `residual/cppad_kernels/born.h`
+### `residual/cppad/born.h`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
 | `ares_born_scalar_cpp` | 2 | split | Needed Born scalar contribution, but long and mixes direct Born, SSM/DS geometry, dielectric routing, and parameter override behavior. |
 | `ares_born_cpp` | 4 | keep | Lightweight double wrapper for Born contribution assembly. |
 
-### `residual/cppad_kernels/contributions.h`
+### `residual/cppad/contributions.h`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
 | `ares_contributions_scalar_cpp` | 4 | keep | Focused aggregate scalar contribution assembly over the concept-owned residual CppAD kernels. |
 
-### `parameter_derivatives/phase_parameters.cpp`
+### `derivatives/parameters/phase_parameters.cpp`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -315,7 +317,7 @@ Action values:
 | `neutral_binary_pair_parameter_phase_derivatives_cpp` | 2 | split | Needed binary parameter phase derivative path, but it combines binary validation, association special-casing, CppAD tape construction, and payload assembly. |
 | `generic_component_parameter_phase_derivatives_cpp` | 2 | split | Needed generic component-parameter path for Born/dielectric/pure component parameters, but it combines target validation, CppAD tape construction, association corrections, and phase payload assembly. |
 
-### `phase_derivatives/*.cpp`
+### `derivatives/phase/*.cpp`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -327,7 +329,7 @@ Action values:
 | `eos_phase_pressure_derivatives_cpp` | 3 | split | Needed pressure derivative result, but should delegate tape setup and result validation to focused helpers. |
 | `eos_phase_association_derivative_corrections_cpp` | 3 | move | Needed association correction path; belongs with association sensitivity ownership rather than general phase derivatives. |
 
-### `residual/properties.cpp`
+### `residual/thermodynamic_properties.cpp`
 
 | Function | Score | Action | Rationale |
 | --- | ---: | --- | --- |
@@ -347,18 +349,18 @@ Action values:
 ## Recommended Cleanup Order
 
 1. Keep stable files as-is unless a nearby implementation change needs them:
-   `residual/properties.cpp`, `chemical_potential.cpp`, `compressibility.cpp`,
+   `residual/thermodynamic_properties.cpp`, `chemical_potential.cpp`, `compressibility.cpp`,
    `fugacity.cpp`, `residual/helmholtz.cpp`, and
    `residual/property_derivatives.cpp`.
 2. Keep `residual/internal.h` as an include hub only; residual CppAD kernel
-   implementation belongs in `residual/cppad_kernels/`.
+   implementation belongs in `residual/cppad/`.
 3. Deepen the remaining long residual CppAD kernels only where the next change
    needs it: `state.h` parameter override routing, `association.h` implicit
    association terms, and `born.h` Born/SSM/DS geometry.
-4. Split `phase_derivatives/*.cpp` further by objective derivatives,
+4. Split `derivatives/phase/*.cpp` further by objective derivatives,
    phase-state fugacity sensitivity, pressure derivatives, and association
    correction ownership when those functions change.
-5. Split `parameter_derivatives/phase_parameters.cpp` by association parameter,
+5. Split `derivatives/parameters/phase_parameters.cpp` by association parameter,
    binary pair parameter, and generic component parameter derivative ownership.
 6. Split `density.cpp` into scan/bracket, root solve, diagnostics/reporting,
    and public density entrypoint ownership. Remove shared declarations for
@@ -366,7 +368,7 @@ Action values:
 7. Split `activity.cpp` only where it improves locality: MIAC/reference-state,
    gsolv auxiliary values, pair activity/osmotic coefficient, metadata shaping,
    and public dispatch.
-8. Revisit `residual/backend_helpers.h` once derivative metadata ownership is
+8. Revisit `derivatives/backend_labels.h` once derivative metadata ownership is
    clearer; move backend label helpers to that owner if it exists.
 
 ## Acceptance Criteria
@@ -471,7 +473,7 @@ not already configured.
   "doc_grill_evidence": {
     "docs_read": ["CONTEXT.md", "docs/agents/issue-tracker.md", "docs/milestones/PROJECT_CONTEXT.md", "docs/milestones/M3-eos/README.md", "docs/adr/0002-hard-public-api-reset-cppad-only-frontend.md", "docs/adr/0005-package-extension-split.md"],
     "constraints_found": ["M3 owns provider EOS/state/parameters, native SDK contract, exact derivatives, CppAD/implicit sensitivities, and provider-only capability claims.", "ADR 0005 keeps provider EOS and CppAD derivative support in packages/epcsaft.", "ADR 0002 requires public derivative workflows to remain CppAD-backed without fallback/backend-mode surfaces."],
-    "contradictions_found": ["The properties folder is structurally cleaner after #202, but residual/cppad_kernels state/association/Born kernels and derivative-heavy sources still concentrate several ownership concepts."],
+    "contradictions_found": ["The properties folder is structurally cleaner after #202, but residual/cppad state/association/Born kernels and derivative-heavy sources still concentrate several ownership concepts."],
     "questions_derived": ["Whether to create one issue or an issue set.", "How exhaustive the scoring should be.", "Whether low scores should force cleanup or produce recommendations."]
   },
   "decision_log": [

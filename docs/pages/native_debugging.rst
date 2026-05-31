@@ -26,7 +26,7 @@ Regression Ceres bindings are registered into
 The provider native implementation lives under domain folders in ``packages/epcsaft/src/epcsaft/native``. High-traffic files are:
 
 - ``eos/properties/density.cpp`` for pressure-to-density closure.
-- ``eos/properties/residual_helmholtz.cpp`` for residual Helmholtz contribution totals.
+- ``eos/residual/helmholtz.cpp`` for residual Helmholtz contribution totals.
 - ``eos/properties/compressibility.cpp`` for compressibility factor and pressure from density.
 - ``eos/properties/chemical_potential.cpp`` and ``eos/properties/fugacity.cpp`` for residual chemical potential and fugacity.
 - ``eos/properties/activity.cpp`` for activity, osmotic, and solvation outputs.

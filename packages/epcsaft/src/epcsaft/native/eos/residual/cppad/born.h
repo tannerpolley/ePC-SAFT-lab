@@ -1,5 +1,5 @@
 #pragma once
-#include "eos/properties/residual/cppad_kernels/state.h"
+#include "eos/residual/cppad/state.h"
 
 namespace ares_detail {
 // EqID: ares_born
