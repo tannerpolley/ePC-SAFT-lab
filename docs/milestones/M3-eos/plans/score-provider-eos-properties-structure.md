@@ -20,8 +20,26 @@ structure task only; it must not change public EOS behavior.
 ## Intended Outcome
 
 The provider EOS properties folder has a durable scorecard for every file and
-top-level function/declaration, plus prioritized cleanup recommendations that
-future implementation agents can execute without re-litigating scope.
+top-level function/declaration, plus provider-owned cleanup that executes the
+highest-value low-risk recommendations without changing public EOS behavior.
+
+## Implemented Cleanup Scope
+
+This issue is not audit-only. The implementation must carry the scorecard
+through to concrete provider source cleanup where the action is local and
+behavior-preserving:
+
+- split the oversized residual scalar substrate out of
+  `residual_helmholtz_internal.h` into concept-owned internal headers for
+  scalar state, CppAD helpers, hard-chain/dispersion, association, ionic, Born,
+  and aggregate residual contribution assembly
+- split `residual_phase_derivatives.cpp` into source files owned by phase
+  objective derivatives, phase-state sensitivities, pressure derivatives, and
+  association correction derivatives
+- keep density solver scan/bracket/candidate helpers local to `density.cpp`
+  instead of advertising them through the shared EOS declaration hub
+- update provider CMake/source SDK manifests and equation traceability outputs
+  for moved EqID comments
 
 ## Scoring Model
 

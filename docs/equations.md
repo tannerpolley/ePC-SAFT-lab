@@ -962,7 +962,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:562`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h:432` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_hard_chain_scalar.h:65` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2506,7 +2506,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for hard-chain reference contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1418`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h:443` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_hard_chain_scalar.h:76` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2636,7 +2636,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for dispersion contribution.
 - Change note: High textual similarity to a tagged equation in the cited local paper export.
 - LaTeX: `docs/latex/equations.tex:1488`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h:454` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_hard_chain_scalar.h:87` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2750,7 +2750,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for association contribution.
 - Change note: Association Helmholtz form is traced to Chapman/Wertheim SAFT association theory, but the exact numbered equation is not present in the local progression PDFs.
 - LaTeX: `docs/latex/equations.tex:1550`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h:502` (template <typename Scalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_association_scalar.h:6` (template <typename Scalar>)
 
 **LaTeX source**
 
@@ -2858,7 +2858,7 @@ $$
 - Description: Defines the Debye screening quantity used in debye and huckel electrolyte term contribution.
 - Change note: Lower similarity; likely algebraically adapted for implementation or combined terms.
 - LaTeX: `docs/latex/equations.tex:1609`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h:949` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_ionic_scalar.h:6` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 
@@ -3002,7 +3002,7 @@ $$
 - Description: Provides a residual Helmholtz-energy relation for born electrolyte term contribution.
 - Change note: Moderate-to-high similarity; notation/arrangement appears adapted from the cited equation.
 - LaTeX: `docs/latex/equations.tex:1686`
-- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_helmholtz_internal.h:1022` (template <typename Scalar, typename TemperatureScalar>)
+- C++: `packages/epcsaft/src/epcsaft/native/eos/properties/residual_born_scalar.h:6` (template <typename Scalar, typename TemperatureScalar>)
 
 **LaTeX source**
 
