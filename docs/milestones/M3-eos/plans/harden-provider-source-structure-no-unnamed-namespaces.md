@@ -67,21 +67,21 @@ issue is structure-only.
 
 ## Acceptance Criteria
 
-- [ ] No `namespace {` block remains under
+- [x] No `namespace {` block remains under
   `packages/epcsaft/src/epcsaft/native/**`.
-- [ ] `residual_helmholtz.cpp` no longer owns phase objective derivatives,
+- [x] `residual_helmholtz.cpp` no longer owns phase objective derivatives,
   phase-state sensitivities, parameter phase derivatives, and residual
   derivative entrypoints in one giant source file.
-- [ ] `state/native_adapter.py` keeps the public provider facade while helper
+- [x] `state/native_adapter.py` keeps the public provider facade while helper
   payload/option/derivative shaping code is moved into focused provider-owned
   modules.
-- [ ] `native/bindings/module.cpp` is focused on module registration and no
+- [x] `native/bindings/module.cpp` is focused on module registration and no
   longer owns the large pybind payload-converter block.
-- [ ] CMake source lists and provider native SDK manifests reference the new
+- [x] CMake source lists and provider native SDK manifests reference the new
   provider file layout.
-- [ ] A lightweight workflow structure guard fails on unnamed provider native
+- [x] A lightweight workflow structure guard fails on unnamed provider native
   namespaces and renewed oversized provider files.
-- [ ] No public API names, derivative payload shapes, or capability contracts
+- [x] No public API names, derivative payload shapes, or capability contracts
   change.
 
 ## Non-Goals

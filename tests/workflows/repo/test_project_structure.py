@@ -653,6 +653,8 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
     )
     pybind_allowed = {
         "packages/epcsaft/src/epcsaft/native/bindings/module.cpp",
+        "packages/epcsaft/src/epcsaft/native/bindings/payload_converters.cpp",
+        "packages/epcsaft/src/epcsaft/native/bindings/payload_converters.h",
     }
 
     legacy_offenders: list[str] = []
@@ -1075,6 +1077,40 @@ def test_state_native_adapter_does_not_own_regression_native_wrappers() -> None:
     }
 
     assert regression_wrapper_names.isdisjoint(defined_names)
+
+
+def test_provider_native_sources_do_not_use_unnamed_namespaces() -> None:
+    offenders: list[str] = []
+    for path in sorted(PROVIDER_NATIVE_ROOT.rglob("*")):
+        if path.suffix not in {".cpp", ".h", ".hpp"}:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for match in re.finditer(r"(?m)^\s*namespace\s*\{", text):
+            line = text.count("\n", 0, match.start()) + 1
+            offenders.append(f"{_workspace_rel(path)}:{line}")
+
+    assert offenders == []
+
+
+def test_m3_provider_source_files_stay_below_large_file_limit() -> None:
+    native_cpp_limit = 1000
+    state_facade_limit = 1250
+    offenders: list[str] = []
+
+    for path in sorted(PROVIDER_NATIVE_ROOT.rglob("*.cpp")):
+        line_count = len(path.read_text(encoding="utf-8", errors="ignore").splitlines())
+        if line_count > native_cpp_limit:
+            offenders.append(f"{_workspace_rel(path)} has {line_count} lines; limit is {native_cpp_limit}")
+
+    for path in (
+        PROVIDER_PACKAGE_ROOT / "state" / "native_adapter.py",
+        PROVIDER_PACKAGE_ROOT / "state" / "native_payload.py",
+    ):
+        line_count = len(path.read_text(encoding="utf-8", errors="ignore").splitlines())
+        if line_count > state_facade_limit:
+            offenders.append(f"{_workspace_rel(path)} has {line_count} lines; limit is {state_facade_limit}")
+
+    assert offenders == []
 
 
 def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_helpers() -> None:

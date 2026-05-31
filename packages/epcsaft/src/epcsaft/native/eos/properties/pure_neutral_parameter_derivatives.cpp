@@ -7,7 +7,7 @@ using thermo_detail::kDispersionB0;
 using thermo_detail::kDispersionB1;
 using thermo_detail::kDispersionB2;
 
-namespace {
+namespace pure_neutral_parameter_detail {
 
 constexpr int kThetaSize = 3;
 
@@ -157,7 +157,11 @@ PureNeutralStateScalar<Scalar> pure_neutral_state_scalar_cpp(
     return state;
 }
 
-}  // namespace
+}  // namespace pure_neutral_parameter_detail
+
+using pure_neutral_parameter_detail::kThetaSize;
+using pure_neutral_parameter_detail::pure_neutral_state_scalar_cpp;
+using pure_neutral_parameter_detail::validate_pure_neutral_parameter_args;
 
 epcsaft::native::cppad_support::CppADDerivativeResult cppad_pure_neutral_parameter_derivatives_cpp(
     double t,
