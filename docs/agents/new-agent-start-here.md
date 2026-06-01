@@ -43,7 +43,15 @@ uv run python scripts/dev/validate_project.py quick
 
 ## Diagnostics
 
-Use doctor when package/native state is unclear:
+Use lightweight Doctor when package/provider-native state is unclear in a fresh
+worktree:
+
+```powershell
+uv run python scripts/dev/doctor.py --require-provider-sdk
+```
+
+Use strict native Doctor after the native build step when extension-owned native
+modules are expected to import:
 
 ```powershell
 uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native

@@ -19,9 +19,21 @@ command = "uv sync --no-install-project"
 platform = "win32"
 
 [[actions]]
+name = "Environment Smoke"
+icon = "inspect"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Smoke"
+platform = "win32"
+
+[[actions]]
 name = "Doctor"
 icon = "inspect"
 command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Doctor"
+platform = "win32"
+
+[[actions]]
+name = "Doctor Full Native"
+icon = "inspect"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step DoctorFull"
 platform = "win32"
 
 [[actions]]

@@ -61,6 +61,10 @@ def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> No
         assert token in development_workflows
         assert token in new_agent_start
     assert "--dry-run" in bootstrap
+    assert "BASE_DOCTOR_COMMAND" in bootstrap
+    assert "STRICT_DOCTOR_COMMAND" in bootstrap
+    assert 'if step == "smoke":' in bootstrap
+    assert 'if step == "doctorfull":' in bootstrap
     assert "bootstrap_state: current" in bootstrap
     assert "next_command:" in bootstrap
     assert "ipopt_sdk_root_source" in bootstrap
@@ -287,7 +291,9 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
 
     expected_env_actions = [
         "Sync Environment",
+        "Environment Smoke",
         "Doctor",
+        "Doctor Full Native",
         "Build Native Extension",
         "Check IntelliJ Contract",
         "Validate Quick",
@@ -300,16 +306,22 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     for action_name in expected_env_actions:
         assert f"- `{action_name}`" in env_readme
     assert env_actions[0]["command"] == "uv sync --no-install-project"
-    assert env_actions[1]["command"].endswith(".codex/environments/setup.ps1 -Step Doctor")
-    assert env_actions[2]["command"].endswith(".codex/environments/setup.ps1 -Step Build")
-    assert env_actions[3]["command"] == "uv run python scripts/dev/configure_jetbrains_project.py --check"
-    assert env_actions[4]["command"] == "uv run python scripts/dev/validate_project.py quick"
-    assert env_actions[5]["command"] == "uv run python scripts/dev/validate_project.py confidence"
-    assert env_actions[6]["command"] == "uv run python scripts/dev/validate_project.py docs"
-    assert env_actions[7]["command"] == "uv run python scripts/dev/build_dist.py"
+    assert env_actions[1]["command"].endswith(".codex/environments/setup.ps1 -Step Smoke")
+    assert env_actions[2]["command"].endswith(".codex/environments/setup.ps1 -Step Doctor")
+    assert env_actions[3]["command"].endswith(".codex/environments/setup.ps1 -Step DoctorFull")
+    assert env_actions[4]["command"].endswith(".codex/environments/setup.ps1 -Step Build")
+    assert env_actions[5]["command"] == "uv run python scripts/dev/configure_jetbrains_project.py --check"
+    assert env_actions[6]["command"] == "uv run python scripts/dev/validate_project.py quick"
+    assert env_actions[7]["command"] == "uv run python scripts/dev/validate_project.py confidence"
+    assert env_actions[8]["command"] == "uv run python scripts/dev/validate_project.py docs"
+    assert env_actions[9]["command"] == "uv run python scripts/dev/build_dist.py"
 
     assert 'name = "Build Native Extension (Bounded)"' not in env_toml
+    assert 'name = "Environment Smoke"' in env_toml
+    assert 'name = "Doctor Full Native"' in env_toml
     assert 'name = "Check IntelliJ Contract"' in env_toml
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Smoke" in env_toml
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step DoctorFull" in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build" in env_toml
     assert "uv run python scripts/dev/configure_jetbrains_project.py --check" in env_toml
     assert "scripts/dev/bootstrap.py --step $bootstrapStep" in env_setup

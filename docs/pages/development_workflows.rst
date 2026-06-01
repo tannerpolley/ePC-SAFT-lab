@@ -353,12 +353,15 @@ Troubleshooting
 ---------------
 
 Run ``uv run python scripts/dev/doctor.py`` whenever imports, tool paths,
-``_core`` state, extension-native state, provider SDK metadata, or
-generated-output tracking are unclear. It reports the active Python, git ref,
-uv/cmake/ninja paths, provider and extension native module paths, provider SDK
+provider ``_core`` state, provider SDK metadata, or generated-output tracking
+are unclear. It reports the active Python, git ref, uv/cmake/ninja paths,
+provider and extension native module paths when available, provider SDK
 CMake/source metadata, local Ceres/Ipopt SDK discovery, native artifact
 freshness, generated artifact state, and the next recommended command. Use
-``--require-provider-sdk --require-extension-native`` when package-boundary
-proof needs both provider SDK metadata and extension-owned native modules.
+``uv run python scripts/dev/doctor.py --require-provider-sdk`` for fresh
+worktree provider/core smoke checks. Use
+``--require-provider-sdk --require-extension-native`` only after native
+extension builds or when package-boundary proof needs both provider SDK metadata
+and extension-owned native modules.
 
 If ``scripts/dev/build_epcsaft.py`` appears slow, run ``uv run python scripts/dev/build_epcsaft.py --status`` first. If the status output shows a stale Ninja lock and live repo-owned build processes, resolve those processes before retrying. If the status output is clean, check whether ``build/dev/CMakeCache.txt`` reports ``CMAKE_GENERATOR:INTERNAL=MinGW Makefiles``. A clean one-time switch to Ninja can materially reduce rebuild overhead on Windows systems where Ninja is already installed. Clean Ceres configure/builds can still take longer than incremental rebuilds; ``--build-only --parallel 10`` is the intended C++ edit loop after the tree is configured.

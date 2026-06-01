@@ -19,7 +19,14 @@ Command = tuple[str, ...]
 
 SYNC_COMMAND: Command = ("uv", "sync", "--no-install-project")
 CERES_BUILD_COMMAND: Command = ("uv", "run", "python", "scripts/dev/build_system_ceres.py", "--parallel", "4")
-DOCTOR_COMMAND: Command = (
+BASE_DOCTOR_COMMAND: Command = (
+    "uv",
+    "run",
+    "python",
+    "scripts/dev/doctor.py",
+    "--require-provider-sdk",
+)
+STRICT_DOCTOR_COMMAND: Command = (
     "uv",
     "run",
     "python",
@@ -38,7 +45,8 @@ SETUP_COMMAND_SUMMARY = (
     "uv sync --no-install-project",
     "uv run python scripts/dev/build_system_ceres.py --parallel 4",
     "uv run python scripts/dev/build_epcsaft.py",
-    "uv run python scripts/dev/doctor.py",
+    "uv run python scripts/dev/doctor.py --require-provider-sdk",
+    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
     NEXT_COMMAND,
 )
 
@@ -136,6 +144,8 @@ def _run_build(*, dry_run: bool, env: dict[str, str]) -> int:
 
 
 def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
+    if step == "smoke":
+        return _run_commands((SYNC_COMMAND, BASE_DOCTOR_COMMAND), dry_run=dry_run, env=env)
     if step == "sync":
         return _run_commands((SYNC_COMMAND,), dry_run=dry_run, env=env)
     if step == "intellij":
@@ -143,9 +153,11 @@ def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
     if step == "build":
         return _run_build(dry_run=dry_run, env=env)
     if step == "doctor":
-        return _run_commands((DOCTOR_COMMAND,), dry_run=dry_run, env=env)
+        return _run_commands((BASE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
+    if step == "doctorfull":
+        return _run_commands((STRICT_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
     if step == "setup":
-        for nested_step in ("sync", "intellij", "build", "doctor"):
+        for nested_step in ("sync", "intellij", "build", "doctorfull"):
             exit_code = _run_step(nested_step, dry_run=dry_run, env=env)
             if exit_code != 0:
                 return exit_code
@@ -159,7 +171,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--step",
-        choices=("setup", "sync", "intellij", "build", "doctor"),
+        choices=("setup", "smoke", "sync", "intellij", "build", "doctor", "doctorfull"),
         default="setup",
         help="Run one bootstrap step instead of the full setup sequence.",
     )

@@ -42,6 +42,16 @@ to ``PATH`` and ``EPCSAFT_RUNTIME_DLL_DIRS`` when a default SDK is available.
 Use ``uv run python scripts/dev/validate_project.py ceres-cppad`` when the task
 needs the focused Ceres regression/backend slice.
 
+Use `Environment Smoke` for a fresh Codex worktree check. It runs
+`uv sync --no-install-project` followed by the lightweight provider/core Doctor:
+
+```powershell
+uv run python scripts/dev/doctor.py --require-provider-sdk
+```
+
+Use `Doctor Full Native` after `Build Native Extension` or full setup when the
+equilibrium and regression extension-native modules are expected to import.
+
 Fresh Codex worktree setup builds or reuses the default local Ceres package
 with ``uv run python scripts/dev/build_system_ceres.py --parallel 4`` and passes
 that package to the native build via ``build_epcsaft.py --use-system-ceres
@@ -63,7 +73,9 @@ coordinated clean build repair before enabling this setup on an old checkout.
 The action list should stay lean and limited to the normal project workflow:
 
 - `Sync Environment`
+- `Environment Smoke`
 - `Doctor`
+- `Doctor Full Native`
 - `Build Native Extension`
 - `Check IntelliJ Contract`
 - `Validate Quick`

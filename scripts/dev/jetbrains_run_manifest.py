@@ -36,11 +36,25 @@ CANONICAL_RUN_CONFIGS: tuple[RunConfigSpec, ...] = (
         command="scripts/dev/check_package_imports.py",
     ),
     RunConfigSpec(
+        name="Environment Smoke",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_SETUP_HEALTH,
+        command=".codex/environments/setup.ps1",
+        parameters="-Step Smoke",
+    ),
+    RunConfigSpec(
         name="Doctor",
         runner=SHELL_RUNNER,
         folder_name=FOLDER_SETUP_HEALTH,
         command=".codex/environments/setup.ps1",
         parameters="-Step Doctor",
+    ),
+    RunConfigSpec(
+        name="Doctor Full Native",
+        runner=SHELL_RUNNER,
+        folder_name=FOLDER_SETUP_HEALTH,
+        command=".codex/environments/setup.ps1",
+        parameters="-Step DoctorFull",
     ),
     RunConfigSpec(
         name="Build Status",
