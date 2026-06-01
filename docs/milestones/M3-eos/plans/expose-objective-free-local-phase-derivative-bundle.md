@@ -27,15 +27,15 @@ terms separately.
 
 ## Acceptance Criteria
 
-- Provider EOS derivative APIs no longer expose solver-objective names, target
+- [x] Provider EOS derivative APIs no longer expose solver-objective names, target
   pressure, or pressure-work terms.
-- A local phase derivative bundle exposes the derivative orders needed by
+- [x] A local phase derivative bundle exposes the derivative orders needed by
   equilibrium without making provider EOS own an NLP objective.
-- Born, SSM/DS, relative-permittivity, and implicit association chain-rule
+- [x] Born, SSM/DS, relative-permittivity, and implicit association chain-rule
   coverage remains provider-owned and CppAD-backed.
-- Provider build lists, native SDK manifests, declarations, and focused provider
+- [x] Provider build lists, native SDK manifests, declarations, and focused provider
   tests use the new provider derivative interface.
-- No `packages/epcsaft-equilibrium` or `packages/epcsaft-regression`
+- [x] No `packages/epcsaft-equilibrium` or `packages/epcsaft-regression`
   implementation behavior is changed except through documented provider
   contracts.
 
