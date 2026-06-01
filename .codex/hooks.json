@@ -1,3 +1,15 @@
 {
-  "hooks": {}
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\.codex\\hooks\\epcsaft-session-start.cmd",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }
