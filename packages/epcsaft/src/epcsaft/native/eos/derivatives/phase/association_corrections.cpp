@@ -139,7 +139,7 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
     };
 
     out.variable_count = phase_var_count;
-    out.objective_hessian_row_major.assign(static_cast<size_t>(phase_var_count * phase_var_count), 0.0);
+    out.helmholtz_hessian_row_major.assign(static_cast<size_t>(phase_var_count * phase_var_count), 0.0);
     out.pressure_hessian_row_major.assign(static_cast<size_t>(phase_var_count * phase_var_count), 0.0);
 
     for (int row = 0; row < ncomp; ++row) {
@@ -148,7 +148,7 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
             for (int q = 0; q < base_var_count; ++q) {
                 value += mu_first(row, q) * q1_value(q, col);
             }
-            out.objective_hessian_row_major[static_cast<size_t>(row * phase_var_count + col)] = value;
+            out.helmholtz_hessian_row_major[static_cast<size_t>(row * phase_var_count + col)] = value;
         }
     }
     for (int col = 0; col < phase_var_count; ++col) {
@@ -156,16 +156,16 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
         for (int q = 0; q < base_var_count; ++q) {
             value -= pressure_reduced_first(q) * q1_value(q, col);
         }
-        out.objective_hessian_row_major[static_cast<size_t>(ncomp * phase_var_count + col)] = value;
+        out.helmholtz_hessian_row_major[static_cast<size_t>(ncomp * phase_var_count + col)] = value;
     }
     for (int row = 0; row < phase_var_count; ++row) {
         for (int col = 0; col < row; ++col) {
             const double symmetric = 0.5 * (
-                out.objective_hessian_row_major[static_cast<size_t>(row * phase_var_count + col)]
-                + out.objective_hessian_row_major[static_cast<size_t>(col * phase_var_count + row)]
+                out.helmholtz_hessian_row_major[static_cast<size_t>(row * phase_var_count + col)]
+                + out.helmholtz_hessian_row_major[static_cast<size_t>(col * phase_var_count + row)]
             );
-            out.objective_hessian_row_major[static_cast<size_t>(row * phase_var_count + col)] = symmetric;
-            out.objective_hessian_row_major[static_cast<size_t>(col * phase_var_count + row)] = symmetric;
+            out.helmholtz_hessian_row_major[static_cast<size_t>(row * phase_var_count + col)] = symmetric;
+            out.helmholtz_hessian_row_major[static_cast<size_t>(col * phase_var_count + row)] = symmetric;
         }
     }
 
@@ -196,9 +196,9 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
         }
     }
 
-    for (double value : out.objective_hessian_row_major) {
+    for (double value : out.helmholtz_hessian_row_major) {
         if (!std::isfinite(value)) {
-            out.message = "Association objective Hessian correction was not finite.";
+            out.message = "Association local Helmholtz Hessian correction was not finite.";
             return out;
         }
     }
@@ -209,6 +209,6 @@ EosPhaseAssociationDerivativeCorrectionResult eos_phase_association_derivative_c
         }
     }
     out.active = true;
-    out.message = "Association implicit objective and pressure Hessian corrections are available.";
+    out.message = "Association implicit local Helmholtz and pressure Hessian corrections are available.";
     return out;
 }
