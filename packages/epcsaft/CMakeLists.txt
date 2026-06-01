@@ -152,7 +152,7 @@ set(EPCSAFT_PROVIDER_NATIVE_SOURCES
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/helmholtz.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/parameters/phase_parameters.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/association_corrections.cpp
-    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/objective_derivatives.cpp
+    ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/local_helmholtz_derivatives.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/pressure_derivatives.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/derivatives/phase/state_sensitivities.cpp
     ${EPCSAFT_PROVIDER_NATIVE_ROOT}/eos/residual/property_derivatives.cpp

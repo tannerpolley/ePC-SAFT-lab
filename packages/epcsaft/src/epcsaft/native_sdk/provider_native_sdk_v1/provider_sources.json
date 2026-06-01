@@ -14,7 +14,7 @@
     "native/eos/residual/helmholtz.cpp",
     "native/eos/derivatives/parameters/phase_parameters.cpp",
     "native/eos/derivatives/phase/association_corrections.cpp",
-    "native/eos/derivatives/phase/objective_derivatives.cpp",
+    "native/eos/derivatives/phase/local_helmholtz_derivatives.cpp",
     "native/eos/derivatives/phase/pressure_derivatives.cpp",
     "native/eos/derivatives/phase/state_sensitivities.cpp",
     "native/eos/residual/property_derivatives.cpp",

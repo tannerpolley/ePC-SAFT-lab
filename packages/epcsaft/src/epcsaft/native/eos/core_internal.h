@@ -80,12 +80,22 @@ struct EosPhasePressureDerivativeResult {
     vector<double> pressure_jacobian_row_major;
 };
 
+struct EosLocalPhaseDerivativeBundle {
+    std::string backend = "unspecified";
+    int variable_count = 0;
+    bool includes_temperature = false;
+    double helmholtz = 0.0;
+    vector<double> gradient;
+    vector<double> hessian_row_major;
+    vector<double> third_derivative_tensor_row_major;
+};
+
 struct EosPhaseAssociationDerivativeCorrectionResult {
     bool active = false;
     std::string backend = "unspecified";
     std::string message;
     int variable_count = 0;
-    vector<double> objective_hessian_row_major;
+    vector<double> helmholtz_hessian_row_major;
     vector<double> pressure_hessian_row_major;
 };
 
@@ -224,6 +234,7 @@ using thermo_detail::DensityRootCandidate;
 using thermo_detail::DensityScanPoint;
 using thermo_detail::DielectricState;
 using thermo_detail::DispersionPolynomialState;
+using thermo_detail::EosLocalPhaseDerivativeBundle;
 using thermo_detail::EosPhaseAssociationDerivativeCorrectionResult;
 using thermo_detail::EosPhasePressureDerivativeResult;
 using thermo_detail::MixtureState;
@@ -264,27 +275,12 @@ BornGeometryData born_geometry_data_cpp(vector<double> x, const add_args &cpparg
 double ares_contribution_value_cpp(const AresContributions &terms, AresContributionKind kind);
 AresContributions ares_contributions_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs);
 epcsaft::native::cppad_support::CppADDerivativeResult cppad_eos_contribution_derivatives_cpp(double t, double rho, const vector<double> &x, const add_args &cppargs);
-void eos_phase_objective_derivatives_cpp(
+EosLocalPhaseDerivativeBundle eos_local_phase_helmholtz_derivatives_cpp(
     double t,
-    double target_pressure,
     const vector<double> &amounts,
     double volume,
     const add_args &cppargs,
-    double *objective,
-    vector<double> *gradient,
-    vector<double> *hessian_row_major,
-    vector<double> *third_derivative_tensor_row_major
-);
-void eos_phase_temperature_variable_derivatives_cpp(
-    double t,
-    double target_pressure,
-    const vector<double> &amounts,
-    double volume,
-    const add_args &cppargs,
-    double *objective,
-    vector<double> *gradient,
-    vector<double> *hessian_row_major,
-    vector<double> *third_derivative_tensor_row_major
+    bool include_temperature
 );
 EosPhasePressureDerivativeResult eos_phase_pressure_derivatives_cpp(
     double t,
