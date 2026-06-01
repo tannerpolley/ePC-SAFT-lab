@@ -65,24 +65,24 @@ and workflow-docs issue.
 
 ## Acceptance Criteria
 
-- `.codex/environments/environment.toml` exposes provider, equilibrium,
+- [ ] `.codex/environments/environment.toml` exposes provider, equilibrium,
   regression, and full-native setup actions with clear names.
-- `.codex/environments/setup.ps1` delegates profile behavior instead of owning
+- [ ] `.codex/environments/setup.ps1` delegates profile behavior instead of owning
   growing package-specific logic.
-- `scripts/dev/bootstrap.py` or a dedicated helper can dry-run each package
+- [ ] `scripts/dev/bootstrap.py` or a dedicated helper can dry-run each package
   lane and prints the exact commands it would execute.
-- `scripts/dev/doctor.py` supports package-specific strictness flags for
+- [ ] `scripts/dev/doctor.py` supports package-specific strictness flags for
   provider native, equilibrium native, and regression native checks.
-- Fresh worktree smoke setup does not fail solely because equilibrium or
+- [ ] Fresh worktree smoke setup does not fail solely because equilibrium or
   regression native modules are absent.
-- Equilibrium and regression setup lanes require only their own extension
+- [ ] Equilibrium and regression setup lanes require only their own extension
   native module plus provider prerequisites, not the sibling extension module.
-- Full-native setup remains available for cross-package proof and requires both
+- [ ] Full-native setup remains available for cross-package proof and requires both
   extension-native modules.
-- Reusable Codex thread prompts or launch guidance tell agents which lane to
+- [ ] Reusable Codex thread prompts or launch guidance tell agents which lane to
   choose for M1/M3 provider, M4 equilibrium, M5 regression, and cross-package
   work.
-- Workflow tests guard the action list, profile dry-runs, Doctor strictness,
+- [ ] Workflow tests guard the action list, profile dry-runs, Doctor strictness,
   and docs wording.
 
 ## Non-Goals
