@@ -16,8 +16,8 @@ Durable workflow details belong in the referenced docs, not in this file.
 
 ## Tooling Rules
 
-- For non-trivial code, build, native, test, refactor, debug, architecture, or validation work, use IntelliJ Bridge/MCP first when the IDE and tools are available.
-- If a non-trivial task would benefit from IntelliJ but the IDE or MCP tools are not available, ask the user to open or focus IntelliJ before falling back.
+- For non-trivial code, build, native, test, refactor, debug, architecture, or validation work, use IntelliJ Bridge/MCP first. Before falling back to shell, run tool discovery for IntelliJ/JetBrains MCP tools and record a short receipt: `IntelliJ MCP available: yes/no`, `tools found: ...`, and `fallback approved by user: yes/no`.
+- If IntelliJ/JetBrains MCP tools are not exposed for a non-trivial task, stop and ask the user to open or focus IntelliJ on this repo. Do not continue with shell fallback unless the user explicitly approves fallback for that task.
 - Simple docs edits, issue checks, status checks, and small Q&A may use shell and `rg` directly.
 - Use the user-level `chemical-engineer` skill for thermodynamics, phase or chemical equilibrium, equation tracing, native seams, and scientific validation.
 - Use the user-level `grill-me` skill when the user asks to be grilled or to stress-test a plan.
