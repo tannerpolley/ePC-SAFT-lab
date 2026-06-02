@@ -18,7 +18,7 @@ It runs:
 ```powershell
 uv sync --no-install-project
 uv run python scripts/dev/build_epcsaft.py
-uv run python scripts/dev/doctor.py
+uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
 ```
 
 Bootstrap and doctor print the active Ipopt SDK root, where it came from, and
@@ -43,21 +43,26 @@ uv run python scripts/dev/validate_project.py quick
 
 ## Diagnostics
 
-Use lightweight Doctor when package/provider-native state is unclear in a fresh
+Use lightweight Doctor when package/provider SDK state is unclear in a fresh
 worktree:
 
 ```powershell
 uv run python scripts/dev/doctor.py --require-provider-sdk
 ```
 
-Use strict native Doctor after the native build step when extension-owned native
-modules are expected to import:
+Use package-native Doctor checks for lane-specific worktrees:
 
 ```powershell
+uv run python scripts/dev/doctor.py --require-provider-sdk --require-provider-native
+uv run python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native
+uv run python scripts/dev/doctor.py --require-provider-sdk --require-regression-native
 uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
 ```
 
-For production equilibrium proof, also require Ipopt:
+The Codex app actions expose the same lanes as `Provider Native`,
+`Equilibrium Native`, `Regression Native`, and `Full Native`. Use `Full Native`
+for cross-package source-checkout proof. For production equilibrium proof, also
+require Ipopt:
 
 ```powershell
 uv run python scripts/dev/doctor.py --require-ipopt --require-provider-sdk --require-extension-native

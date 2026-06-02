@@ -26,7 +26,31 @@ BASE_DOCTOR_COMMAND: Command = (
     "scripts/dev/doctor.py",
     "--require-provider-sdk",
 )
-STRICT_DOCTOR_COMMAND: Command = (
+PROVIDER_NATIVE_DOCTOR_COMMAND: Command = (
+    "uv",
+    "run",
+    "python",
+    "scripts/dev/doctor.py",
+    "--require-provider-sdk",
+    "--require-provider-native",
+)
+EQUILIBRIUM_NATIVE_DOCTOR_COMMAND: Command = (
+    "uv",
+    "run",
+    "python",
+    "scripts/dev/doctor.py",
+    "--require-provider-sdk",
+    "--require-equilibrium-native",
+)
+REGRESSION_NATIVE_DOCTOR_COMMAND: Command = (
+    "uv",
+    "run",
+    "python",
+    "scripts/dev/doctor.py",
+    "--require-provider-sdk",
+    "--require-regression-native",
+)
+FULL_NATIVE_DOCTOR_COMMAND: Command = (
     "uv",
     "run",
     "python",
@@ -46,6 +70,9 @@ SETUP_COMMAND_SUMMARY = (
     "uv run python scripts/dev/build_system_ceres.py --parallel 4",
     "uv run python scripts/dev/build_epcsaft.py",
     "uv run python scripts/dev/doctor.py --require-provider-sdk",
+    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-provider-native",
+    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native",
+    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-regression-native",
     "uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
     NEXT_COMMAND,
 )
@@ -125,6 +152,28 @@ def _native_build_command(ceres_dir: Path) -> Command:
     )
 
 
+def _profile_build_command(profile: str) -> Command:
+    return ("uv", "run", "python", "scripts/dev/build_epcsaft.py", "--profile", profile)
+
+
+def _provider_native_build_command() -> Command:
+    return ("uv", "run", "python", "scripts/dev/build_epcsaft.py", "--clean", "--profile", "provider")
+
+
+def _regression_native_build_command(ceres_dir: Path) -> Command:
+    return (
+        "uv",
+        "run",
+        "python",
+        "scripts/dev/build_epcsaft.py",
+        "--profile",
+        "regression",
+        "--use-system-ceres",
+        "--ceres-dir",
+        str(ceres_dir),
+    )
+
+
 def _run_commands(commands: tuple[Command, ...], *, dry_run: bool, env: dict[str, str]) -> int:
     for command in commands:
         exit_code = _run(command, dry_run=dry_run, env=env)
@@ -143,6 +192,17 @@ def _run_build(*, dry_run: bool, env: dict[str, str]) -> int:
     return _run_commands((_native_build_command(ceres_dir),), dry_run=dry_run, env=env)
 
 
+def _run_regression_native(*, dry_run: bool, env: dict[str, str]) -> int:
+    exit_code, ceres_dir = _ensure_ceres(dry_run=dry_run, env=env)
+    if exit_code != 0:
+        return exit_code
+    return _run_commands(
+        (_regression_native_build_command(ceres_dir), REGRESSION_NATIVE_DOCTOR_COMMAND),
+        dry_run=dry_run,
+        env=env,
+    )
+
+
 def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
     if step == "smoke":
         return _run_commands((SYNC_COMMAND, BASE_DOCTOR_COMMAND), dry_run=dry_run, env=env)
@@ -154,10 +214,29 @@ def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
         return _run_build(dry_run=dry_run, env=env)
     if step == "doctor":
         return _run_commands((BASE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
+    if step == "provider-native":
+        return _run_commands(
+            (_provider_native_build_command(), PROVIDER_NATIVE_DOCTOR_COMMAND),
+            dry_run=dry_run,
+            env=env,
+        )
+    if step == "equilibrium-native":
+        return _run_commands(
+            (_profile_build_command("equilibrium"), EQUILIBRIUM_NATIVE_DOCTOR_COMMAND),
+            dry_run=dry_run,
+            env=env,
+        )
+    if step == "regression-native":
+        return _run_regression_native(dry_run=dry_run, env=env)
+    if step == "full-native":
+        exit_code = _run_build(dry_run=dry_run, env=env)
+        if exit_code != 0:
+            return exit_code
+        return _run_commands((FULL_NATIVE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
     if step == "doctorfull":
-        return _run_commands((STRICT_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
+        return _run_commands((FULL_NATIVE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
     if step == "setup":
-        for nested_step in ("sync", "intellij", "build", "doctorfull"):
+        for nested_step in ("sync", "intellij", "full-native"):
             exit_code = _run_step(nested_step, dry_run=dry_run, env=env)
             if exit_code != 0:
                 return exit_code
@@ -171,7 +250,23 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--step",
-        choices=("setup", "smoke", "sync", "intellij", "build", "doctor", "doctorfull"),
+        choices=(
+            "setup",
+            "smoke",
+            "sync",
+            "intellij",
+            "build",
+            "doctor",
+            "provider-native",
+            "equilibrium-native",
+            "regression-native",
+            "full-native",
+            "providernative",
+            "equilibriumnative",
+            "regressionnative",
+            "fullnative",
+            "doctorfull",
+        ),
         default="setup",
         help="Run one bootstrap step instead of the full setup sequence.",
     )
@@ -186,7 +281,14 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     env = _bootstrap_env()
-    exit_code = _run_step(args.step, dry_run=args.dry_run, env=env)
+    step_aliases = {
+        "providernative": "provider-native",
+        "equilibriumnative": "equilibrium-native",
+        "regressionnative": "regression-native",
+        "fullnative": "full-native",
+    }
+    step = step_aliases.get(args.step, args.step)
+    exit_code = _run_step(step, dry_run=args.dry_run, env=env)
     if exit_code != 0:
         return exit_code
     state = "bootstrap_state: dry-run" if args.dry_run else BOOTSTRAP_CURRENT_STATE

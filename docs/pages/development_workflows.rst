@@ -21,10 +21,18 @@ exact validation command:
 
    uv sync --no-install-project
    uv run python scripts/dev/build_epcsaft.py
-   uv run python scripts/dev/doctor.py
+   uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
    uv run python scripts/dev/validate_project.py quick
 
-This is the expected healthy baseline. It creates the uv environment, builds the in-place pybind11 ``epcsaft._core`` extension, verifies imports/tool paths and generated-output state through doctor, then runs the fast contract suite. The default test route intentionally samples representative API, native, regression, equilibrium metadata, and workflow contracts instead of running full equilibrium route sweeps, regression reproductions, or generated plot production. Use ``uv run python scripts/dev/validate_project.py confidence`` before release or broad runtime claims when extra native runtime contracts should be included.
+This is the expected healthy full-native baseline. It creates the uv
+environment, builds the in-place pybind11 ``epcsaft._core`` extension plus the
+extension-owned native modules, verifies imports/tool paths and generated-output
+state through doctor, then runs the fast contract suite. The default test route
+intentionally samples representative API, native, regression, equilibrium
+metadata, and workflow contracts instead of running full equilibrium route
+sweeps, regression reproductions, or generated plot production. Use ``uv run
+python scripts/dev/validate_project.py confidence`` before release or broad
+runtime claims when extra native runtime contracts should be included.
 The current development and CI smoke baseline is Python 3.13, while ``pyproject.toml`` still declares package compatibility with Python ``>=3.9``.
 
 Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` and JetBrains pytest runs also work because ``tests/conftest.py`` applies the native runtime DLL setup before test collection, but the wrapper uses a per-run pytest temp directory that is safer for Windows and parallel local runs.
@@ -70,6 +78,18 @@ Command matrix
    * - Provider-only boundary proof
      - ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` then ``uv run python run_pytest.py packages/epcsaft/tests/native/contracts/test_provider_only_core_symbols.py -q``
      - Prove provider ``_core`` builds without Ceres and Ipopt and does not export equilibrium/regression native symbols.
+   * - Provider Codex worktree lane
+     - ``uv run python scripts/dev/bootstrap.py --step provider-native`` or Codex action ``Provider Native``
+     - Build the provider-only native profile and require provider SDK plus provider ``_core``.
+   * - Equilibrium Codex worktree lane
+     - ``uv run python scripts/dev/bootstrap.py --step equilibrium-native`` or Codex action ``Equilibrium Native``
+     - Build the equilibrium native profile and require ``epcsaft_equilibrium._native_core`` without building regression native code.
+   * - Regression Codex worktree lane
+     - ``uv run python scripts/dev/bootstrap.py --step regression-native`` or Codex action ``Regression Native``
+     - Build the regression native profile with the reusable Ceres package and require ``epcsaft_regression._native_core`` without building equilibrium native code.
+   * - Full native Codex worktree lane
+     - ``uv run python scripts/dev/bootstrap.py --step full-native`` or Codex action ``Full Native``
+     - Build the transition source-checkout native profile and require both extension-owned native modules.
    * - Equilibrium extension contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
      - Package-owned metadata/API check under ``packages/epcsaft-equilibrium/tests`` for neutral equilibrium route construction, solver-option validation, derivative-backend contracts, and capability reporting. This slice does not run the full route-solve file.
@@ -147,6 +167,20 @@ The provider-only boundary proof uses:
 That profile keeps CppAD ON while disabling Ceres, Ipopt, and the transition
 equilibrium/regression native registration surfaces.
 
+The package-specific source-checkout profiles are:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/build_epcsaft.py --profile equilibrium
+   uv run python scripts/dev/build_epcsaft.py --profile regression
+
+The ``equilibrium`` profile builds provider ``_core`` plus
+``epcsaft_equilibrium._native_core`` with Ipopt enabled and Ceres/regression
+disabled. The ``regression`` profile builds provider ``_core`` plus
+``epcsaft_regression._native_core`` with Ceres enabled and Ipopt/equilibrium
+disabled. The Codex app setup actions route through ``scripts/dev/bootstrap.py``
+so each package lane also runs the matching Doctor requirement.
+
 Root ``CMAKE.md`` is the source of truth for direct CMake preset operations. Direct CMake preset operations must use ``scripts/dev/cmake_preset.ps1`` or the matching JetBrains Services entries: ``CMake Configure dev-native``, ``CMake Build _core dev-native``, and ``CMake Build dev-native``. Do not call raw ``cmake --preset`` or ``cmake --build`` from ad hoc shells for this repo. The wrapper loads the Visual Studio developer environment, uses the repo-local ``.venv\Scripts\cmake.exe`` and ``.venv\Scripts\ninja.exe``, pins ``CMAKE_MAKE_PROGRAM`` for ``dev-native``, and refuses to run while ``build/dev/.ninja_lock`` exists.
 
 Strawberry may remain installed for unrelated tooling, but it is not the ePC-SAFT CMake standard. Do not select a Strawberry MinGW toolchain or rely on Strawberry's ``cmake.exe`` / ``ninja.exe`` for ``build/dev``.
@@ -209,6 +243,14 @@ to PyPI.
      - Ceres ON, CppAD ON, Ipopt ON, extension-owned native modules ON
      - ``4``
      - Native Ipopt adapter development or validation with the local SDK or another native Ipopt package.
+   * - ``equilibrium``
+     - Ceres OFF, CppAD ON, Ipopt ON, equilibrium native module ON, regression native module OFF
+     - ``4``
+     - Equilibrium package-native worktree lane.
+   * - ``regression``
+     - Ceres ON, CppAD ON, Ipopt OFF, regression native module ON, equilibrium native module OFF
+     - ``4``
+     - Regression package-native worktree lane.
    * - ``provider``
      - Ceres OFF, CppAD ON, Ipopt OFF, extension-owned native modules OFF
      - ``4``
@@ -224,6 +266,8 @@ For IDE run configurations, keep commands explicit instead of relying on one ove
 - Native incremental build: ``uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10``
 - Native configure/build: ``uv run python scripts/dev/build_epcsaft.py --profile fast``
 - Clean Ceres + CppAD proof: ``uv run python scripts/dev/build_epcsaft.py --clean --profile full --parallel 4``
+- Equilibrium package-native lane: ``uv run python scripts/dev/build_epcsaft.py --profile equilibrium``
+- Regression package-native lane: ``uv run python scripts/dev/build_epcsaft.py --profile regression``
 - Native Ipopt proof with the local SDK: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root $env:USERPROFILE\Documents\deps\ipopt-msvc``
 - Native Ipopt proof with another install root: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root C:\path\to\Ipopt``
 - Native Ipopt proof with an ``IpoptConfig.cmake`` directory: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-dir C:\path\to\lib\cmake\Ipopt``
@@ -359,9 +403,18 @@ provider and extension native module paths when available, provider SDK
 CMake/source metadata, local Ceres/Ipopt SDK discovery, native artifact
 freshness, generated artifact state, and the next recommended command. Use
 ``uv run python scripts/dev/doctor.py --require-provider-sdk`` for fresh
-worktree provider/core smoke checks. Use
-``--require-provider-sdk --require-extension-native`` only after native
-extension builds or when package-boundary proof needs both provider SDK metadata
-and extension-owned native modules.
+worktree provider/core smoke checks. Use the package-specific native checks
+after the matching build lane:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/doctor.py --require-provider-sdk --require-provider-native
+   uv run python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native
+   uv run python scripts/dev/doctor.py --require-provider-sdk --require-regression-native
+   uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
+
+The extension-native shorthand requires both equilibrium and regression native
+modules and should be used after full-native setup or when package-boundary
+proof needs both extension-owned native modules.
 
 If ``scripts/dev/build_epcsaft.py`` appears slow, run ``uv run python scripts/dev/build_epcsaft.py --status`` first. If the status output shows a stale Ninja lock and live repo-owned build processes, resolve those processes before retrying. If the status output is clean, check whether ``build/dev/CMakeCache.txt`` reports ``CMAKE_GENERATOR:INTERNAL=MinGW Makefiles``. A clean one-time switch to Ninja can materially reduce rebuild overhead on Windows systems where Ninja is already installed. Clean Ceres configure/builds can still take longer than incremental rebuilds; ``--build-only --parallel 10`` is the intended C++ edit loop after the tree is configured.

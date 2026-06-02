@@ -72,6 +72,22 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         windows_parallel="4",
         description="native Ipopt source-checkout profile with extension-owned native modules",
     ),
+    "equilibrium": BuildProfile(
+        enable_ceres=False,
+        build_equilibrium_native_module=True,
+        build_regression_native_module=False,
+        enable_ipopt=True,
+        windows_parallel="4",
+        description="equilibrium native lane: provider _core plus epcsaft-equilibrium native module, Ceres/regression OFF",
+    ),
+    "regression": BuildProfile(
+        enable_ceres=True,
+        build_equilibrium_native_module=False,
+        build_regression_native_module=True,
+        enable_ipopt=False,
+        windows_parallel="4",
+        description="regression native lane: provider _core plus epcsaft-regression native module, Ipopt/equilibrium OFF",
+    ),
     "provider": BuildProfile(
         enable_ceres=False,
         build_equilibrium_native_module=False,
