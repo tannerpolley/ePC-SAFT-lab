@@ -33,6 +33,24 @@ bool has_active_association_sites(const ::add_args& args) {
     return args;
 }
 
+void require_local_phase_bundle_shape(
+    const EosLocalPhaseDerivativeBundle& bundle,
+    int expected_variable_count,
+    const std::string& label
+) {
+    if (bundle.variable_count != expected_variable_count
+        || bundle.gradient.size() != static_cast<std::size_t>(expected_variable_count)
+        || bundle.hessian_row_major.size()
+            != static_cast<std::size_t>(expected_variable_count * expected_variable_count)) {
+        throw ::ValueError(label + " shape did not match the phase variable model.");
+    }
+    require_third_derivative_tensor(
+        bundle.third_derivative_tensor_row_major,
+        expected_variable_count,
+        label + " third-derivative tensor"
+    );
+}
+
 }  // namespace phase_block_derivatives_detail
 
 void populate_eos_phase_block_derivatives(
@@ -46,27 +64,22 @@ void populate_eos_phase_block_derivatives(
     const int nvars = static_cast<int>(amounts.size()) + 1;
     if (phase_block_derivatives_detail::has_active_association_sites(args)) {
         const ::add_args non_associating_args = phase_block_derivatives_detail::without_solved_association(args);
-        double base_objective = 0.0;
-        std::vector<double> base_gradient;
         std::vector<double> base_hessian;
         std::vector<double> base_third_derivative;
-        eos_phase_objective_derivatives_cpp(
+        const EosLocalPhaseDerivativeBundle base_bundle = eos_local_phase_helmholtz_derivatives_cpp(
             temperature,
-            target_pressure,
             amounts,
             volume,
             non_associating_args,
-            &base_objective,
-            &base_gradient,
-            &base_hessian,
-            &base_third_derivative
+            false
         );
-        if (base_hessian.size() != static_cast<std::size_t>(nvars * nvars)) {
-            throw ::ValueError("EOS phase base objective Hessian shape did not match associating phase variables.");
-        }
-        if (base_third_derivative.size() != static_cast<std::size_t>(nvars * nvars * nvars)) {
-            throw ::ValueError("EOS phase base objective third-derivative shape did not match associating phase variables.");
-        }
+        phase_block_derivatives_detail::require_local_phase_bundle_shape(
+            base_bundle,
+            nvars,
+            "EOS phase base local Helmholtz derivative bundle"
+        );
+        base_hessian = base_bundle.hessian_row_major;
+        base_third_derivative = base_bundle.third_derivative_tensor_row_major;
         const EosPhaseAssociationDerivativeCorrectionResult association_corrections =
             eos_phase_association_derivative_corrections_cpp(temperature, amounts, volume, args);
         if (!association_corrections.active) {
@@ -75,7 +88,7 @@ void populate_eos_phase_block_derivatives(
                 : association_corrections.message;
             throw ::ValueError(message);
         }
-        if (association_corrections.objective_hessian_row_major.size()
+        if (association_corrections.helmholtz_hessian_row_major.size()
                 != static_cast<std::size_t>(nvars * nvars)
             || association_corrections.pressure_hessian_row_major.size()
                 != static_cast<std::size_t>(nvars * nvars)) {
@@ -98,7 +111,7 @@ void populate_eos_phase_block_derivatives(
         result.objective_curvature_row_major = std::move(base_hessian);
         for (std::size_t index = 0; index < result.objective_curvature_row_major.size(); ++index) {
             result.objective_curvature_row_major[index] +=
-                association_corrections.objective_hessian_row_major[index];
+                association_corrections.helmholtz_hessian_row_major[index];
         }
         result.constraint_jacobian_backend = pressure_derivatives.backend;
         result.constraint_jacobian_rows = 1;
@@ -126,23 +139,25 @@ void populate_eos_phase_block_derivatives(
         std::vector<double> cppad_gradient;
         std::vector<double> cppad_hessian;
         std::vector<double> cppad_third_derivative;
-        eos_phase_objective_derivatives_cpp(
+        const EosLocalPhaseDerivativeBundle cppad_bundle = eos_local_phase_helmholtz_derivatives_cpp(
             temperature,
-            target_pressure,
             amounts,
             volume,
             args,
-            &cppad_objective,
-            &cppad_gradient,
-            &cppad_hessian,
-            &cppad_third_derivative
+            false
         );
-        if (cppad_gradient.size() != result.gradient.size()
-            || cppad_hessian.size() != static_cast<std::size_t>(nvars * nvars)) {
+        phase_block_derivatives_detail::require_local_phase_bundle_shape(
+            cppad_bundle,
+            nvars,
+            "EOS phase local Helmholtz derivative bundle"
+        );
+        cppad_objective = cppad_bundle.helmholtz + target_pressure * volume / result.gas_constant_temperature;
+        cppad_gradient = cppad_bundle.gradient;
+        cppad_gradient[static_cast<std::size_t>(nvars - 1)] += target_pressure / result.gas_constant_temperature;
+        cppad_hessian = cppad_bundle.hessian_row_major;
+        cppad_third_derivative = cppad_bundle.third_derivative_tensor_row_major;
+        if (cppad_gradient.size() != result.gradient.size()) {
             throw ::ValueError("EOS phase objective CppAD derivative shape did not match the phase variable model.");
-        }
-        if (cppad_third_derivative.size() != static_cast<std::size_t>(nvars * nvars * nvars)) {
-            throw ::ValueError("EOS phase objective CppAD third-derivative shape did not match the phase variable model.");
         }
         const double objective_scale = std::max(1.0, std::abs(result.objective));
         if (std::abs(cppad_objective - result.objective) > 1.0e-8 * objective_scale) {
@@ -200,37 +215,69 @@ TemperatureRoutePhaseBlock evaluate_temperature_route_phase_block(
 ) {
     TemperatureRoutePhaseBlock out;
     out.block = evaluate_eos_phase_block(args, temperature, target_pressure, amounts, volume);
-    double cppad_objective = 0.0;
-    eos_phase_temperature_variable_derivatives_cpp(
+    const EosLocalPhaseDerivativeBundle cppad_bundle = eos_local_phase_helmholtz_derivatives_cpp(
         temperature,
-        target_pressure,
         amounts,
         volume,
         args,
-        &cppad_objective,
-        &out.gradient,
-        &out.objective_hessian_row_major,
-        &out.objective_third_derivative_tensor_row_major
+        true
     );
     const int local_variable_count = static_cast<int>(amounts.size()) + 2;
-    if (out.gradient.size() != static_cast<std::size_t>(local_variable_count)
-        || out.objective_hessian_row_major.size()
-            != static_cast<std::size_t>(local_variable_count * local_variable_count)) {
-        throw ::ValueError("fixed-pressure temperature route CppAD derivative shape did not match variables.");
-    }
-    require_third_derivative_tensor(
-        out.objective_third_derivative_tensor_row_major,
+    phase_block_derivatives_detail::require_local_phase_bundle_shape(
+        cppad_bundle,
         local_variable_count,
-        "fixed-pressure temperature route CppAD third-derivative tensor"
+        "fixed-pressure temperature route local Helmholtz derivative bundle"
     );
+    out.gradient = cppad_bundle.gradient;
+    out.objective_hessian_row_major = cppad_bundle.hessian_row_major;
+    out.objective_third_derivative_tensor_row_major = cppad_bundle.third_derivative_tensor_row_major;
+
+    const int volume_row = local_variable_count - 2;
+    const int temperature_col = local_variable_count - 1;
+    const double gas_constant = kb * N_AV;
+    const double pressure_work_scale = target_pressure / gas_constant;
+    const double pressure_work = pressure_work_scale * volume / temperature;
+    double cppad_objective = cppad_bundle.helmholtz + pressure_work;
+    out.gradient[static_cast<std::size_t>(volume_row)] += pressure_work_scale / temperature;
+    out.gradient[static_cast<std::size_t>(temperature_col)] +=
+        -pressure_work_scale * volume / (temperature * temperature);
+    const auto hessian_index = [local_variable_count](int row, int col) {
+        return static_cast<std::size_t>(row * local_variable_count + col);
+    };
+    out.objective_hessian_row_major[hessian_index(volume_row, temperature_col)] +=
+        -pressure_work_scale / (temperature * temperature);
+    out.objective_hessian_row_major[hessian_index(temperature_col, volume_row)] +=
+        -pressure_work_scale / (temperature * temperature);
+    out.objective_hessian_row_major[hessian_index(temperature_col, temperature_col)] +=
+        2.0 * pressure_work_scale * volume / (temperature * temperature * temperature);
+    const auto third_index = [local_variable_count](int first, int second, int third) {
+        return static_cast<std::size_t>(
+            first * local_variable_count * local_variable_count
+            + second * local_variable_count
+            + third
+        );
+    };
+    const double volume_temperature_temperature =
+        2.0 * pressure_work_scale / (temperature * temperature * temperature);
+    out.objective_third_derivative_tensor_row_major[
+        third_index(volume_row, temperature_col, temperature_col)
+    ] += volume_temperature_temperature;
+    out.objective_third_derivative_tensor_row_major[
+        third_index(temperature_col, volume_row, temperature_col)
+    ] += volume_temperature_temperature;
+    out.objective_third_derivative_tensor_row_major[
+        third_index(temperature_col, temperature_col, volume_row)
+    ] += volume_temperature_temperature;
+    out.objective_third_derivative_tensor_row_major[
+        third_index(temperature_col, temperature_col, temperature_col)
+    ] += -6.0 * pressure_work_scale * volume
+        / (temperature * temperature * temperature * temperature);
+
     const double objective_scale = std::max(1.0, std::abs(out.block.objective));
     if (std::abs(cppad_objective - out.block.objective) > 1.0e-8 * objective_scale) {
         throw ::ValueError("fixed-pressure temperature route CppAD value did not match the EOS block value.");
     }
 
-    const int volume_row = local_variable_count - 2;
-    const int temperature_col = local_variable_count - 1;
-    const double gas_constant = kb * N_AV;
     out.pressure_jacobian_row_major.reserve(static_cast<std::size_t>(local_variable_count));
     for (int col = 0; col < local_variable_count; ++col) {
         double value = -out.block.gas_constant_temperature
