@@ -5,7 +5,7 @@ Durable workflow details belong in the referenced docs, not in this file.
 
 ## Start Here
 
-- Read `docs/milestones/PROJECT_CONTEXT.md` before planning, coding, reviewing, or merging. It is the package-context and completion-standard document unless the user narrows scope.
+- Read `docs/superpowers/PROJECT_CONTEXT.md` before planning, coding, reviewing, or merging. It is the package-context and completion-standard document unless the user narrows scope.
 - For fresh setup and first commands, read `docs/agents/new-agent-start-here.md`.
 - For test selection, validation, and routine development workflows, read `docs/pages/development_workflows.rst`.
 - For build, package, CMake, dependency, Ceres, CppAD, Ipopt, CI-lane, wheel, or sdist changes, read `docs/protocols/build_package_dependency_protocol.rst`.
@@ -35,7 +35,7 @@ Use the repo triage vocabulary, including `agent-ready` for AFK-ready issues. Se
 
 ### Domain docs
 
-Single-context repo; read root `CONTEXT.md`, `docs/milestones/PROJECT_CONTEXT.md`, and relevant `docs/adr/` entries. See `docs/agents/domain.md`.
+Single-context repo; read root `CONTEXT.md`, `docs/superpowers/PROJECT_CONTEXT.md`, and relevant `docs/adr/` entries. See `docs/agents/domain.md`.
 
 ## Repo Invariants
 

@@ -5,7 +5,7 @@ How engineering skills should consume this repo's domain documentation when expl
 ## Before exploring, read these
 
 - **`CONTEXT.md`** at the repo root.
-- **`docs/milestones/PROJECT_CONTEXT.md`** at the repo root. Treat it as the package-context and completion-standard milestone plan unless the active task is explicitly narrower.
+- **`docs/superpowers/PROJECT_CONTEXT.md`** at the repo root. Treat it as the package-context and completion-standard milestone plan unless the active task is explicitly narrower.
 - **`docs/adr/`** at the repo root. Start with `docs/adr/README.md`, then read any numbered ADRs relevant to the current topic.
 - **`CONTEXT-MAP.md`** only if this repo later becomes multi-context and adds one.
 

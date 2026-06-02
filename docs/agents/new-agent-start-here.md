@@ -2,7 +2,7 @@
 
 This is the current entry point for a new ePC-SAFT repo thread. GitHub Issues
 and the `ePC-SAFT Roadmap` Project are authoritative for live tracker state;
-`docs/milestones/PROJECT_CONTEXT.md` is the package-context and completion
+`docs/superpowers/PROJECT_CONTEXT.md` is the package-context and completion
 standard.
 
 ## Fresh Checkout
@@ -99,8 +99,9 @@ or run a non-equilibrium lane instead.
 
 ## Tracker
 
-For implementation work, use the matching GitHub issue and the milestone plan
-under `docs/milestones/M*/ideas/`. Do not resurrect superseded roadmap files or
+For implementation work, use the matching GitHub issue, source spec under
+`docs/superpowers/specs/`, and implementation plan under
+`docs/superpowers/plans/` when one exists. Do not resurrect superseded roadmap files or
 old source-layout commands. Current package work stays in this monorepo under
 `packages/epcsaft`, `packages/epcsaft-equilibrium`, and
 `packages/epcsaft-regression`; retired sibling extension checkouts are not

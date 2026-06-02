@@ -10,7 +10,13 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = (
-    REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "registries" / "equilibrium-benchmark-registry.yaml"
+    REPO_ROOT
+    / "docs"
+    / "superpowers"
+    / "milestones"
+    / "M4-equilibrium"
+    / "registries"
+    / "equilibrium-benchmark-registry.yaml"
 )
 PEREIRA_SOURCE_AUDIT_PATH = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
@@ -263,8 +269,8 @@ def test_stale_deleted_plan_sources_are_not_referenced() -> None:
     registry_text = REGISTRY_PATH.read_text(encoding="utf-8")
 
     stale_paths = {
-        "docs/milestones/association_derivative_goal_plan.md",
-        "docs/milestones/gross2002_associating_vle_redo_plan.md",
+        "docs/superpowers/milestones/association_derivative_goal_plan.md",
+        "docs/superpowers/milestones/gross2002_associating_vle_redo_plan.md",
         "docs/adr/0005-narrow-associating-bubble-pressure-admission.md",
     }
 

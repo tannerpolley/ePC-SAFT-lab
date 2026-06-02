@@ -46,9 +46,9 @@ for dashboard filtering.
 
 ## Milestones
 
-GitHub milestones follow `docs/milestones/PROJECT_CONTEXT.md` and use short
-dashboard names. `docs/milestones/` is the local planning root for milestone
-idea briefs, optional issue handoffs, and milestone-owned registries. GitHub
+GitHub milestones follow `docs/superpowers/PROJECT_CONTEXT.md` and use short
+dashboard names. `docs/superpowers/` is the local Superpowers Project root for
+milestone pages, specs, plans, issue mirrors, and milestone-owned registries. GitHub
 Issues and the `ePC-SAFT Roadmap` Project remain authoritative for live state.
 
 | Milestone | Tracker meaning |
@@ -102,7 +102,7 @@ not evidence of scope.
     downstream proof.
   - `Upstream ePC-SAFT package request` and `Downstream ePC-SAFT dependency
     bug` for downstream-driven package work.
-- Larger milestone idea files map to one tracking issue in the matching milestone.
+- Larger specs map to one tracking issue in the matching milestone.
 - Micro issues are implementation slices that close one checklist item or gate
   on the tracking issue.
 - Gate issues prove CI, docs, benchmark, capability, release, or downstream
@@ -122,10 +122,11 @@ not evidence of scope.
   - Do not put `[Blocked]`, `Blocked:`, or similar status prefixes in titles.
 - The organization Project groups and sorts by Milestone, Package, Capability,
   Backend, Readiness, and Release target.
-- Use `docs/milestones/M*/ideas/*.md` for durable idea briefs and planning
-  notes created for larger issues or tranches, and link the GitHub issue to
-  the idea file.
-- Use `docs/milestones/M*/issues/*.md` only for optional concise handoff
+- Use `docs/superpowers/specs/*.md` for durable specs and planning notes
+  created for larger issues or tranches, and link the GitHub issue to the
+  source spec when one exists.
+- Use `docs/superpowers/plans/*.md` for executable implementation plans.
+- Use `docs/superpowers/issues/*.md` only for optional concise handoff
   context. Refresh those files from GitHub when issue scope or Project fields
   change.
 

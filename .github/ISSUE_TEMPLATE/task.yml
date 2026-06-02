@@ -30,7 +30,7 @@ body:
     attributes:
       label: Plan file
       description: Local plan path if this task needs one; write `none` for a small directly actionable task.
-      placeholder: docs/milestones/Mx-name/ideas/<plan>.md
+      placeholder: docs/superpowers/plans/<plan>.md
     validations:
       required: true
   - type: textarea

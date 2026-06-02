@@ -7,7 +7,7 @@ Issues and the `ePC-SAFT Roadmap` Project remain authoritative for live state.
 
 - Target repository: `ePC-SAFT/ePC-SAFT`
 - Default branch: `main`
-- Full roadmap/context: `docs/milestones/PROJECT_CONTEXT.md`
+- Full roadmap/context: `docs/superpowers/PROJECT_CONTEXT.md`
 - Local tracker guide: `docs/agents/issue-tracker.md`
 - Project: `ePC-SAFT Roadmap` at `https://github.com/orgs/ePC-SAFT/projects/1`
 

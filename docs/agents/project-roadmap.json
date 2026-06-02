@@ -6,10 +6,10 @@
     "https://docs.github.com/en/rest/issues/issues",
     "https://docs.github.com/en/rest/issues/issue-dependencies",
     "https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms",
-    "docs/milestones/PROJECT_CONTEXT.md",
+    "docs/superpowers/PROJECT_CONTEXT.md",
     "docs/agents/issue-tracker.md"
   ],
-  "full_roadmap": "docs/milestones/PROJECT_CONTEXT.md",
+  "full_roadmap": "docs/superpowers/PROJECT_CONTEXT.md",
   "milestone_policy": "mirror-existing-full-roadmap",
   "project_policy": "dashboard-only",
   "issue_types": [

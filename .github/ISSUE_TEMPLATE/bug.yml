@@ -30,7 +30,7 @@ body:
     attributes:
       label: Plan file
       description: Local plan path if this bug needs one; write `none` for a small directly actionable bug.
-      placeholder: docs/milestones/Mx-name/ideas/<plan>.md
+      placeholder: docs/superpowers/specs/<spec>.md
     validations:
       required: true
   - type: textarea

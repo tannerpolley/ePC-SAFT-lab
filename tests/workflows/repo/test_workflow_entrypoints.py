@@ -168,7 +168,7 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
 def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
     protocol = _read("docs/protocols/build_package_dependency_protocol.rst")
     docs_index = _read("docs/pages/index.rst")
-    full_plan = _read("docs/milestones/PROJECT_CONTEXT.md")
+    full_plan = _read("docs/superpowers/PROJECT_CONTEXT.md")
     development_workflows = _read("docs/pages/development_workflows.rst")
     native_debugging = _read("docs/pages/native_debugging.rst")
     workflow = _read(".github/workflows/native-build-profiles.yml")
@@ -241,7 +241,7 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     command_runner = _read(".codex/agents/command_runner.toml")
 
     for token in (
-        "docs/milestones/PROJECT_CONTEXT.md",
+        "docs/superpowers/PROJECT_CONTEXT.md",
         "docs/agents/new-agent-start-here.md",
         "docs/pages/development_workflows.rst",
         "docs/protocols/build_package_dependency_protocol.rst",
@@ -276,7 +276,7 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         "uv run --no-sync python scripts/dev/bootstrap.py",
         "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
         "uv run python scripts/dev/check_release_installs.py --dist-dir dist",
-        "docs/milestones/PROJECT_CONTEXT.md",
+        "docs/superpowers/PROJECT_CONTEXT.md",
         "EPCSAFT_PEP517_CERES_DIR",
         "audited dependency closure",
         "The repo-owned Codex app setup contract lives in `.codex/environments/`",

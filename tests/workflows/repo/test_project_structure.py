@@ -200,32 +200,33 @@ MILESTONE_FRONT_MATTER_FIELDS = {
     "release_target",
     "last_synced",
 }
-MILESTONE_TEMPLATE_FILES = {
-    "_templates/ideas/idea.md",
-    "_templates/issues/issue-mirror.md",
+SUPERPOWERS_TEMPLATE_FILES = {
+    "_templates/spec.md",
+    "_templates/plan.md",
+    "_templates/issue-mirror.md",
 }
-MILESTONE_PLAN_FILES = {
+SUPERPOWERS_SPEC_FILES = {
     "PROJECT_CONTEXT.md",
-    "M0-governance/ideas/early-package-pr-gate-policy.md",
-    "M0-governance/ideas/milestone-tracker-hardening.md",
-    "M1-packages/ideas/monorepo-package-migration.md",
-    "M1-packages/ideas/package-extension-transfer-superseded-plan.md",
-    "M1-packages/ideas/test-ownership-relocation.md",
-    "M1-packages/ideas/move-provider-distribution-into-packages-epcsaft.md",
-    "M1-packages/ideas/post-move-cleanup-install-proof.md",
-    "M1-packages/ideas/package-transfer-transition-audit.md",
-    "M1-packages/ideas/package-onboarding-release-ergonomics.md",
-    "M1-packages/ideas/monorepo-package-release-cleanup.md",
-    "M3-eos/ideas/explicit-association-closure-for-pcsaft.md",
-    "M4-equilibrium/ideas/generalized-fluid-phase-equilibrium.md",
-    "M4-equilibrium/ideas/gfpe-package-cleanup-plan.md",
-    "M4-equilibrium/ideas/stage-by-stage-implementation-plan.md",
-    "M5-regression/ideas/regression-production-backlog.md",
-    "M6-validation/ideas/validation-benchmark-backlog.md",
-    "M7-release/ideas/release-downstream-backlog.md",
+    "specs/early-package-pr-gate-policy.md",
+    "specs/milestone-tracker-hardening.md",
+    "specs/monorepo-package-migration.md",
+    "specs/package-extension-transfer-superseded-plan.md",
+    "specs/test-ownership-relocation.md",
+    "specs/move-provider-distribution-into-packages-epcsaft.md",
+    "specs/post-move-cleanup-install-proof.md",
+    "specs/package-transfer-transition-audit.md",
+    "specs/package-onboarding-release-ergonomics.md",
+    "specs/monorepo-package-release-cleanup.md",
+    "specs/explicit-association-closure-for-pcsaft.md",
+    "specs/generalized-fluid-phase-equilibrium.md",
+    "specs/gfpe-package-cleanup-plan.md",
+    "specs/stage-by-stage-implementation-plan.md",
+    "specs/regression-production-backlog.md",
+    "specs/validation-benchmark-backlog.md",
+    "specs/release-downstream-backlog.md",
 }
-MILESTONE_REGISTRY_FILES = {
-    "M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
+SUPERPOWERS_REGISTRY_FILES = {
+    "milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
 }
 ISSUE_TYPE_FORMS = {
     "bug.yml": "bug",
@@ -252,7 +253,7 @@ PROJECT_ROADMAP_REQUIRED_FIELDS = {
     "projects_required_by_repo_config",
 }
 AGENTS_REQUIRED_DOC_LINKS = {
-    "docs/milestones/PROJECT_CONTEXT.md",
+    "docs/superpowers/PROJECT_CONTEXT.md",
     "docs/agents/new-agent-start-here.md",
     "docs/pages/development_workflows.rst",
     "docs/protocols/build_package_dependency_protocol.rst",
@@ -1642,31 +1643,38 @@ def test_replaced_flat_test_modules_are_absent_from_the_working_tree() -> None:
         assert not (REPO_ROOT / relpath).exists(), relpath
 
 
-def test_milestone_plan_layout_matches_local_contract() -> None:
-    milestone_root = REPO_ROOT / "docs" / "milestones"
-    assert milestone_root.is_dir()
+def test_superpowers_project_layout_matches_local_contract() -> None:
+    project_root = REPO_ROOT / "docs" / "superpowers"
+    milestone_root = project_root / "milestones"
+    assert project_root.is_dir()
+    assert (project_root / "README.md").is_file()
     assert (milestone_root / "README.md").is_file()
     assert "GitHub Issues and the `ePC-SAFT Roadmap` Project remain authoritative" in (
         milestone_root / "README.md"
     ).read_text(encoding="utf-8")
+    assert not (REPO_ROOT / "docs" / "milestones").exists()
     assert not (REPO_ROOT / "docs" / "roadmaps").exists()
     assert not (REPO_ROOT / "docs" / "plans").exists()
-    assert (milestone_root / "PROJECT_CONTEXT.md").is_file()
+    assert (project_root / "PROJECT_CONTEXT.md").is_file()
+    assert (project_root / "specs").is_dir()
+    assert (project_root / "plans").is_dir()
+    assert (project_root / "issues").is_dir()
 
     actual_folders = {path.name for path in milestone_root.iterdir() if path.is_dir()}
-    assert actual_folders == set(MILESTONE_MIRROR_FOLDERS) | {"_templates"}
+    assert actual_folders == set(MILESTONE_MIRROR_FOLDERS)
 
     missing_templates = sorted(
-        path for path in MILESTONE_TEMPLATE_FILES if not (milestone_root / path).is_file()
+        path for path in SUPERPOWERS_TEMPLATE_FILES if not (project_root / path).is_file()
     )
     assert missing_templates == []
-    issue_template_fields = _markdown_front_matter(milestone_root / "_templates" / "issues" / "issue-mirror.md")
+    issue_template_fields = _markdown_front_matter(project_root / "_templates" / "issue-mirror.md")
     assert set(issue_template_fields) == MILESTONE_FRONT_MATTER_FIELDS
 
-    missing_plans = sorted(path for path in MILESTONE_PLAN_FILES if not (milestone_root / path).is_file())
-    assert missing_plans == []
+    missing_specs = sorted(path for path in SUPERPOWERS_SPEC_FILES if not (project_root / path).is_file())
+    assert missing_specs == []
+    assert (project_root / "plans" / "README.md").is_file()
     missing_registries = sorted(
-        path for path in MILESTONE_REGISTRY_FILES if not (milestone_root / path).is_file()
+        path for path in SUPERPOWERS_REGISTRY_FILES if not (project_root / path).is_file()
     )
     assert missing_registries == []
 
@@ -1676,23 +1684,20 @@ def test_milestone_plan_layout_matches_local_contract() -> None:
         assert readme.is_file(), f"{_workspace_rel(readme)} is required"
         assert milestone in readme.read_text(encoding="utf-8")
 
-        issues_dir = milestone_dir / "issues"
-        if not issues_dir.exists():
-            continue
-        if not any(issues_dir.glob("*.md")):
-            continue
-        for path in sorted(path for path in issues_dir.glob("*.md") if path.name != "README.md"):
-            fields = _markdown_front_matter(path)
-            assert set(fields) == MILESTONE_FRONT_MATTER_FIELDS
-            issue = fields["issue"]
-            assert isinstance(issue, int)
-            assert path.name.startswith(f"{issue:04d}-")
-            assert fields["url"] == f"https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue}"
-            assert fields["state"] == "open"
-            assert fields["project"] == "ePC-SAFT Roadmap"
-            assert fields["milestone"] == milestone
-            assert not str(fields["title"]).startswith("[Blocked]")
-            assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
+    issues_dir = project_root / "issues"
+    assert any(issues_dir.glob("*.md"))
+    for path in sorted(path for path in issues_dir.glob("*.md") if path.name != "README.md"):
+        fields = _markdown_front_matter(path)
+        assert set(fields) == MILESTONE_FRONT_MATTER_FIELDS
+        issue = fields["issue"]
+        assert isinstance(issue, int)
+        assert path.name.startswith(f"{issue:04d}-")
+        assert fields["url"] == f"https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue}"
+        assert fields["state"] == "open"
+        assert fields["project"] == "ePC-SAFT Roadmap"
+        assert fields["milestone"] in set(MILESTONE_MIRROR_FOLDERS.values())
+        assert not str(fields["title"]).startswith("[Blocked]")
+        assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
 
 
 def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
@@ -1707,7 +1712,7 @@ def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
 
     assert PROJECT_ROADMAP_REQUIRED_FIELDS.issubset(setup)
     assert setup["target_repo"] == "ePC-SAFT/ePC-SAFT"
-    assert setup["full_roadmap"] == "docs/milestones/PROJECT_CONTEXT.md"
+    assert setup["full_roadmap"] == "docs/superpowers/PROJECT_CONTEXT.md"
     assert setup["milestone_policy"] == "mirror-existing-full-roadmap"
     assert setup["project_policy"] == "dashboard-only"
     assert setup["apply_policy"] == "default-branch-commit-push"
