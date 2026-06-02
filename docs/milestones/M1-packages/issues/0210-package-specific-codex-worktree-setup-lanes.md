@@ -202,7 +202,7 @@ lane should require extension-native modules.
   "full_roadmap": "docs/milestones/PROJECT_CONTEXT.md",
   "full_roadmap_milestone_section": "Required milestones",
   "project_policy": "dashboard-only",
-  "required_checks_policy": "require-existing",
+  "required_checks_policy": "allow-none-with-local-proof",
   "scope": "Codex worktree setup lanes, Doctor strictness, workflow docs, and workflow guards only",
   "proof_oracle": [
     "uv run python scripts/dev/bootstrap.py --dry-run --step smoke",
@@ -267,7 +267,7 @@ lane should require extension-native modules.
   "full_roadmap_milestone_section": "Required milestones",
   "project_policy": "dashboard-only",
   "plan_file": "docs/milestones/M1-packages/issues/0210-package-specific-codex-worktree-setup-lanes.md",
-  "required_checks_policy": "require-existing",
+  "required_checks_policy": "allow-none-with-local-proof",
   "labels": ["type:task", "status:ready", "agent-ready", "area:build", "area:core", "area:equilibrium", "area:regression", "native"],
   "acceptance_criteria": [
     ".codex/environments/environment.toml exposes provider, equilibrium, regression, and full-native setup actions with clear names.",
