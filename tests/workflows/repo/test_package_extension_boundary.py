@@ -33,11 +33,9 @@ def test_package_extension_contract_docs_exist_and_share_status() -> None:
 
 
 def test_transfer_plan_current_state_matches_runtime_boundary_progress() -> None:
-    plan = _read(
-        REPO_ROOT / "docs" / "superpowers" / "specs" / "package-extension-transfer-superseded-plan.md"
-    )
+    plan = _read(CONTRACTS["provider"])
 
-    assert "provider runtime metadata is provider-scoped" in plan
+    assert "provider-scoped `capabilities()`" in plan
     assert "provider runtime metadata still reports regression transition capability data" not in plan
 
 

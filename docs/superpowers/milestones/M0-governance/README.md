@@ -10,4 +10,4 @@ Project fields, local docs, templates, and completion standards agree.
 
 ## Current Open Issues
 
-- [#184](../../issues/0184-make-codex-app-worktree-environments-frictionless-and-self-updating.md) - make Codex app worktree environments frictionless and self-updating.
+No open M0 issue mirrors are currently tracked.

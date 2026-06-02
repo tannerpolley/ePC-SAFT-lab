@@ -1,7 +1,7 @@
 # GFPE Stage-by-Stage Implementation Plan
 
 This is the GFPE-first execution plan for
-`docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`.
+`docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`.
 
 GFPE is the organizing spine for this file. `PROJECT_CONTEXT.md` is a boundary
 document: it explains package identity, derivative policy, benchmark
@@ -23,7 +23,7 @@ names.
 Use this order when two documents disagree:
 
 1. `docs/latex/equations.tex` for EOS contribution equations.
-2. `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md` for GFPE doctrine,
+2. `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md` for GFPE doctrine,
    mathematical form, family order, and admission policy.
 3. `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` for executable family
    rows, derived subworkflows, reference cases, and production flags.
@@ -43,7 +43,7 @@ benchmark fixture records.
 
 GFPE doctrine and registry:
 
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `tests/native/contracts/test_equilibrium_benchmark_registry.py`
@@ -104,7 +104,7 @@ Parameter, mixture, and capability seams:
 
 Association and electrolyte constraints:
 
-- `docs/superpowers/specs/explicit-association-closure-for-pcsaft.md`
+- `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md`
 - `docs/adr/0004-associating-equilibrium-architecture.md`
 - `analyses/paper_validation/2026_khudaida/`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
@@ -222,7 +222,7 @@ Primary output:
 
 References:
 
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `docs/superpowers/PROJECT_CONTEXT.md`
 - `docs/latex/algorithms.tex`
@@ -457,7 +457,7 @@ References:
 - `packages/epcsaft/src/epcsaft/model/options.py`
 - `packages/epcsaft/src/epcsaft/frontend/mixture.py`
 - `packages/epcsaft/src/epcsaft/native/`
-- `docs/superpowers/specs/explicit-association-closure-for-pcsaft.md`
+- `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md`
 - `tests/native/contracts/test_equation_registry.py`
 
 Substeps:
@@ -519,7 +519,7 @@ References:
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h`
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 
 Substeps:
 
@@ -592,7 +592,7 @@ References:
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_transform.h`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
 - `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 
 Substeps:
 
@@ -818,7 +818,7 @@ Primary output:
 
 References:
 
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/algorithms.md`
 - `docs/latex/algorithms.tex`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
@@ -911,7 +911,7 @@ Primary output:
 
 References:
 
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp`
@@ -1014,7 +1014,7 @@ Primary output:
 
 References:
 
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
@@ -1091,7 +1091,7 @@ Primary output:
 
 References:
 
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.h`
 - `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp`
@@ -1139,7 +1139,7 @@ Primary output:
 
 References:
 
-- `docs/superpowers/specs/explicit-association-closure-for-pcsaft.md`
+- `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md`
 - `docs/adr/0004-associating-equilibrium-architecture.md`
 - `docs/latex/equations.tex`
 - `docs/algorithms.md`
@@ -1199,7 +1199,7 @@ Primary output:
 References:
 
 - `docs/latex/equations.tex`
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - `analyses/paper_validation/2026_khudaida/`
 - `scripts/dev/run_ipopt_exact_hessian_proofs.py`
@@ -1307,7 +1307,7 @@ Primary output:
 
 References:
 
-- `docs/superpowers/specs/generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/latex/equations.tex`
 - future CE/CPE plan files when created
 

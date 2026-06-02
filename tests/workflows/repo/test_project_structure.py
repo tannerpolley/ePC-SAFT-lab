@@ -207,25 +207,18 @@ SUPERPOWERS_TEMPLATE_FILES = {
 }
 SUPERPOWERS_SPEC_FILES = {
     "PROJECT_CONTEXT.md",
-    "specs/2026-06-02-nested-agents-instruction-strategy-design.md",
-    "specs/early-package-pr-gate-policy.md",
-    "specs/milestone-tracker-hardening.md",
-    "specs/monorepo-package-migration.md",
-    "specs/package-extension-transfer-superseded-plan.md",
-    "specs/test-ownership-relocation.md",
-    "specs/move-provider-distribution-into-packages-epcsaft.md",
-    "specs/post-move-cleanup-install-proof.md",
-    "specs/package-transfer-transition-audit.md",
-    "specs/package-onboarding-release-ergonomics.md",
-    "specs/monorepo-package-release-cleanup.md",
-    "specs/explicit-association-closure-for-pcsaft.md",
-    "specs/generalized-fluid-phase-equilibrium.md",
-    "specs/gfpe-package-cleanup-plan.md",
-    "specs/stage-by-stage-implementation-plan.md",
-    "specs/regression-production-backlog.md",
-    "specs/validation-benchmark-backlog.md",
-    "specs/release-downstream-backlog.md",
+    "specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md",
+    "specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md",
+    "specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md",
+    "specs/2026-05-27-m4-equilibrium-gfpe-package-cleanup-plan.md",
+    "specs/2026-05-28-m1-packages-monorepo-package-migration.md",
+    "specs/2026-05-29-m5-regression-regression-production-backlog.md",
+    "specs/2026-05-29-m6-validation-validation-benchmark-backlog.md",
+    "specs/2026-05-29-m7-release-release-downstream-backlog.md",
+    "specs/2026-06-01-m4-equilibrium-move-equilibrium-objective-assembly-to-extension.md",
+    "specs/2026-06-02-m0-governance-nested-agents-instruction-strategy-design.md",
 }
+SUPERPOWERS_SPEC_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+\.md$")
 SUPERPOWERS_REGISTRY_FILES = {
     "milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
 }
@@ -1710,6 +1703,9 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
 
     missing_specs = sorted(path for path in SUPERPOWERS_SPEC_FILES if not (project_root / path).is_file())
     assert missing_specs == []
+    spec_files = sorted(path.name for path in (project_root / "specs").glob("*.md") if path.name != "README.md")
+    bad_spec_names = sorted(name for name in spec_files if not SUPERPOWERS_SPEC_FILENAME_PATTERN.fullmatch(name))
+    assert bad_spec_names == []
     assert (project_root / "plans" / "README.md").is_file()
     missing_registries = sorted(
         path for path in SUPERPOWERS_REGISTRY_FILES if not (project_root / path).is_file()

@@ -106,10 +106,6 @@
     non-associating mixtures for the production contract, and requires exact
     derivatives plus postsolve certification.
   owner_refs:
-    - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py"
-      line: 442
-      comment_line: 441
-      context: "def _solve_selector_route("
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp"
       line: 566
       comment_line: 565
@@ -127,13 +123,17 @@
       comment_line: 1299
       context: "m.def(\"_native_equilibrium_selector_route_result\", []("
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2790
-      comment_line: 2789
+      line: 2543
+      comment_line: 2542
       context: "NeutralTwoPhaseEosRouteResult solve_pressure_route("
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 2919
-      comment_line: 2918
+      line: 2672
+      comment_line: 2671
       context: "NeutralTwoPhaseEosRouteResult solve_temperature_route("
+    - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py"
+      line: 442
+      comment_line: 441
+      context: "def _solve_selector_route("
 - algid: "neutral_tp_flash_ipopt"
   section: "Equilibrium Algorithms"
   subsection: ""
@@ -164,8 +164,8 @@
     acceptance criterion.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp"
-      line: 3044
-      comment_line: 3043
+      line: 2797
+      comment_line: 2796
       context: "NeutralTwoPhaseEosRouteResult solve_flash_route("
 - algid: "neutral_lle_ipopt"
   section: "Equilibrium Algorithms"
@@ -196,8 +196,8 @@
     LLE, electrolyte LLE, and reactive LLE remain out of scope for this entry.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2785
-      comment_line: 2784
+      line: 2690
+      comment_line: 2689
       context: "NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route("
 - algid: "neutral_tpd_stability"
   section: "Equilibrium Algorithms"
@@ -210,7 +210,7 @@
   dependency: "None"
   derivative_backend: "EOS/provider chemical-potential and free-energy derivatives as required by the selected trial problem"
   solver_role: "Neutral tangent-plane stability evaluator for phase discovery and postsolve certification"
-  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h; docs/superpowers/specs/generalized-fluid-phase-equilibrium.md"
+  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h; docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md"
   validation: "packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
   capability_key: "internal:neutral_tpd_stability"
   description: "Defines neutral TPD stability checks for current neutral TP flash and neutral nonassociating LLE acceptance."
@@ -226,8 +226,8 @@
     lower-free-energy candidates and mass-balance incompleteness.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 718
-      comment_line: 717
+      line: 711
+      comment_line: 710
       context: "void append_tpd_candidates_for_reference_block("
 - algid: "neutral_continuous_tpd_minimization"
   section: "Equilibrium Algorithms"
@@ -255,8 +255,8 @@
     TPD value, start source, iteration count, and convergence status.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 577
-      comment_line: 576
+      line: 570
+      comment_line: 569
       context: "NeutralTpdCandidate refine_neutral_tpd_candidate("
 - algid: "neutral_held_stage_ladder_diagnostics"
   section: "Equilibrium Algorithms"
@@ -291,8 +291,8 @@
     certification is evaluated.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 997
-      comment_line: 996
+      line: 990
+      comment_line: 989
       context: "void finalize_stage9_phase_discovery("
 - algid: "neutral_deterministic_phase_candidate_screening"
   section: "Equilibrium Algorithms"
@@ -305,7 +305,7 @@
   dependency: "None"
   derivative_backend: "EOS/provider derivatives for volume-composition trial phases"
   solver_role: "Deterministic neutral candidate generation, de-duplication, and seed construction"
-  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h; docs/superpowers/specs/generalized-fluid-phase-equilibrium.md"
+  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h; docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md"
   validation: "packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
   capability_key: "internal:neutral_deterministic_phase_candidate_screening"
   description: "Adds deterministic neutral volume-composition candidate screening for the current neutral TP flash and neutral nonassociating LLE utility routes."
@@ -320,8 +320,8 @@
     used as generalized production evidence by itself.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2348
-      comment_line: 2347
+      line: 2243
+      comment_line: 2242
       context: "NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery("
 - algid: "phase_candidate_mass_balance_selection"
   section: "Equilibrium Algorithms"
@@ -334,7 +334,7 @@
   dependency: "None"
   derivative_backend: "Not applicable for the first LP/active-set feasibility selector"
   solver_role: "Selects candidate phase sets whose phase fractions satisfy feed material balance"
-  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; docs/superpowers/specs/generalized-fluid-phase-equilibrium.md"
+  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md"
   validation: "packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py"
   capability_key: "internal:phase_candidate_mass_balance_selection"
   description: "Filters deterministic or TPD phase candidates by mass-balance feasibility before Ipopt route assembly."
@@ -351,8 +351,8 @@
     finite candidate bound gap open.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 813
-      comment_line: 812
+      line: 806
+      comment_line: 805
       context: "void select_two_phase_candidate_set("
 - algid: "postsolve_tpd_certification"
   section: "Equilibrium Algorithms"
@@ -365,7 +365,7 @@
   dependency: "None"
   derivative_backend: "EOS/provider derivatives required by the selected TPD backend"
   solver_role: "Converts finite optimizer outputs into production_accepted, unstable, metastable, or uncertified statuses"
-  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp; docs/superpowers/specs/generalized-fluid-phase-equilibrium.md"
+  implementation_owner: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp; packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp; docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md"
   validation: "packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py; packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py; packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py"
   capability_key: "internal:postsolve_tpd_certification"
   description: "Adds phase-set stability certification after current neutral Ipopt solves."
@@ -378,8 +378,8 @@
     blocks before assigning a production-accepted status.
   owner_refs:
     - file: "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.cpp"
-      line: 2527
-      comment_line: 2526
+      line: 2432
+      comment_line: 2431
       context: "NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve("
 - algid: "generalized_equilibrium_activation_registry"
   section: "Equilibrium Algorithms"
@@ -392,7 +392,7 @@
   dependency: "None"
   derivative_backend: "Exact derivatives required before production row exposure"
   solver_role: "Records descriptive generalized family labels, derived subworkflows, reference cases, evidence tiers, and benchmark status"
-  implementation_owner: "docs/superpowers/specs/generalized-fluid-phase-equilibrium.md; docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml"
+  implementation_owner: "docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md; docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml"
   validation: "tests/native/contracts/test_generalized_equilibrium_registry.py; tests/native/contracts/test_equilibrium_benchmark_registry.py"
   capability_key: "docs:generalized_equilibrium_activation_registry"
   description: "Defines collapsed generalized phase-only, chemical-only, and combined phase-chemical family registry."
@@ -418,7 +418,7 @@
   dependency: "CppAD for exact derivatives of the approximate closure"
   derivative_backend: "CppAD explicit derivatives of approximate association closures"
   solver_role: "Seeds, diagnoses, or continues associating routes without claiming exact PC-SAFT association"
-  implementation_owner: "docs/superpowers/specs/explicit-association-closure-for-pcsaft.md; docs/derivation/explicit_association_closure_for_pcsaft.tex"
+  implementation_owner: "docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md; docs/derivation/explicit_association_closure_for_pcsaft.tex"
   validation: "Planned explicit-vs-implicit association diagnostics against Gross/Sadowski 2002 EOS cases"
   capability_key: "planned:explicit_association_closure_diagnostics"
   description: "Records explicit association closures as approximate Helmholtz diagnostics, not production exact association."
@@ -501,8 +501,8 @@
       comment_line: 2989
       context: "def fit_liquid_electrolyte_parameters("
     - file: "packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp"
-      line: 1483
-      comment_line: 1482
+      line: 1464
+      comment_line: 1463
       context: "class PureIonCeresCostFunction final : public ceres::CostFunction {"
 - algid: "binary_kij_ceres_regression"
   section: "Regression Algorithms"
@@ -533,6 +533,6 @@
       comment_line: 2815
       context: "def fit_binary_parameters("
     - file: "packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp"
-      line: 1606
-      comment_line: 1605
+      line: 1601
+      comment_line: 1600
       context: "class BinaryKijCeresCostFunction final : public ceres::CostFunction {"

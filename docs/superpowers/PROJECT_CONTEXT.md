@@ -14,11 +14,11 @@ This document explains:
 
 This document is authoritative over older planning language that allowed audit-only closure, inventory-only closure, staged-only closure, diagnostic-only closure, or documented limitations as completion.
 
-`docs/superpowers/specs/generalized-fluid-phase-equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation policy, and staged implementation plan for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, Ipopt/numerics layer, staged HELD requirements, postsolve certification, and collapsed family labels. Those labels are planning labels only, not runtime route keys.
+`docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md` is the canonical architecture contract, mathematical doctrine, activation policy, and staged implementation plan for generalized fluid-phase equilibrium. It defines the shared equilibrium-core structure, thermodynamic constrained NLP form, Ipopt/numerics layer, staged HELD requirements, postsolve certification, and collapsed family labels. Those labels are planning labels only, not runtime route keys.
 
 `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` is the executable registry for the collapsed generalized equilibrium plan. It uses descriptive `family_label` values, derived subworkflows, and PE-focused benchmark cases. Current deterministic TPD/candidate screening is not full HELD, so generalized family rows stay `planned_not_public` until full HELD-stage phase discovery, exact derivatives, and postsolve certification gates pass. Bubble/dew/cloud/shadow are derived boundary workflows planned after the neutral TP flash fixture for `T-x` and `P-x` diagrams; do not delete existing bubble/dew code or tests.
 
-`docs/superpowers/specs/stage-by-stage-implementation-plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master context as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
+`docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md` is the GFPE-first execution overlay for generalized fluid-phase equilibrium. It uses this master context as package context and completion standard, but GFPE doctrine is the organizing spine for its stages.
 Its Stage 8 gate must complete route-owned user scaling, Ipopt option profiles,
 scaled numerical acceptance diagnostics, barrier/active-bound diagnostics, and
 exact-Hessian profile gating before Stage 9 real-mixture HELD validation work starts.
@@ -35,7 +35,7 @@ not completion evidence. Current bubble/dew `P-x` and `T-x` route-point validati
 available only through the explicit Stage 11 checker sweep opt-in, not through
 routine validation.
 
-`docs/superpowers/specs/gfpe-package-cleanup-plan.md` is the module cleanup overlay for
+`docs/superpowers/specs/2026-05-27-m4-equilibrium-gfpe-package-cleanup-plan.md` is the module cleanup overlay for
 that same GFPE doctrine. It keeps selector admission, shared NLP ownership,
 Ipopt numerics, result certification, capability reporting, and validation
 lanes aligned around one modular equilibrium core.
@@ -47,7 +47,7 @@ core provider, `epcsaft-equilibrium` for Ipopt-backed equilibrium, and
 `epcsaft-regression` for Ceres-backed regression. CppAD/exact derivative
 provider support stays core-owned.
 
-`docs/superpowers/specs/explicit-association-closure-for-pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium plan.
+`docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium plan.
 
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
 
@@ -482,7 +482,7 @@ handoff files, and milestone-owned registries. GitHub Issues and the
 `ePC-SAFT Roadmap` Project remain authoritative for live tracker state.
 
 For generalized fluid-phase equilibrium work, use
-`docs/superpowers/specs/stage-by-stage-implementation-plan.md` as the GFPE-first
+`docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md` as the GFPE-first
 execution plan. The milestones below define the package completion envelope;
 the stage plan breaks GFPE into concrete pretreatment, implementation gates,
 and exit evidence.
@@ -506,7 +506,7 @@ Monorepo package layout, package ownership, test relocation, provider-only
 build proof, extension-native boundaries, and package CI/docs/release
 structure.
 
-- keep the monorepo package layout aligned with `docs/superpowers/specs/monorepo-package-migration.md`
+- keep the monorepo package layout aligned with `docs/superpowers/specs/2026-05-28-m1-packages-monorepo-package-migration.md`
 - prove root `epcsaft` can build as a provider-only package
 - keep package-local tests under the package that owns the behavior
 - split extension-native ownership from provider `_core`

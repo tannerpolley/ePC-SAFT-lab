@@ -14,12 +14,12 @@ that production code must consume.
 contribution details. This plan repeats only the core equilibrium,
 stability, NLP, and Ipopt equations needed to implement the family plan.
 
-`docs/superpowers/specs/stage-by-stage-implementation-plan.md` is the companion
+`docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md` is the companion
 GFPE-first execution overlay. It uses `PROJECT_CONTEXT.md` only as package
 context and lists concrete pretreatment, implementation, and exit-evidence
 steps for each GFPE stage.
 
-`docs/superpowers/specs/gfpe-package-cleanup-plan.md` is the companion package cleanup
+`docs/superpowers/specs/2026-05-27-m4-equilibrium-gfpe-package-cleanup-plan.md` is the companion package cleanup
 overlay. It translates this doctrine into module boundaries for selector
 admission, the shared NLP core, Ipopt numerics, certified results, capability
 reporting, and validation lanes.
@@ -373,7 +373,7 @@ Implementation must proceed in this order:
    equilibrium after PE and CE proofs exist.
 
 The detailed stage-by-stage execution plan is in
-`docs/superpowers/specs/stage-by-stage-implementation-plan.md`. Keep this section short:
+`docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`. Keep this section short:
 it defines order; the companion plan defines work packages and exit evidence.
 
 ## Derived Boundary Workflows

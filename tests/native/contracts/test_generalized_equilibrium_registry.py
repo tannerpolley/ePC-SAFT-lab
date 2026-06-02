@@ -16,9 +16,19 @@ REGISTRY_PATH = (
     / "registries"
     / "equilibrium-benchmark-registry.yaml"
 )
-GFPE_PATH = REPO_ROOT / "docs" / "superpowers" / "specs" / "generalized-fluid-phase-equilibrium.md"
+GFPE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "superpowers"
+    / "specs"
+    / "2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md"
+)
 STAGE_PLAN_PATH = (
-    REPO_ROOT / "docs" / "superpowers" / "specs" / "stage-by-stage-implementation-plan.md"
+    REPO_ROOT
+    / "docs"
+    / "superpowers"
+    / "specs"
+    / "2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md"
 )
 
 EXPECTED_FAMILY_LABELS = {
