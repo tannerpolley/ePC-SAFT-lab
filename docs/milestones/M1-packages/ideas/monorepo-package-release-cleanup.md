@@ -33,7 +33,7 @@ users.
 
 ## Implementation Notes
 
-Use `docs/milestones/M1-packages/plans/monorepo-package-migration.md` as the
+Use `docs/milestones/M1-packages/ideas/monorepo-package-migration.md` as the
 historical source plan. This issue is the focused closeout slice for the
 remaining user-facing and agent-facing cleanup after the package move.
 

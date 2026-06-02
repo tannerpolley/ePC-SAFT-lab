@@ -30,7 +30,7 @@ body:
     attributes:
       label: Plan file
       description: Local plan path if this feature needs one; write `none` for a small directly actionable feature.
-      placeholder: docs/milestones/Mx-name/plans/<plan>.md
+      placeholder: docs/milestones/Mx-name/ideas/<plan>.md
     validations:
       required: true
   - type: dropdown

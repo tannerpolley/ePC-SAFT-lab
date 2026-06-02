@@ -14,12 +14,12 @@ that production code must consume.
 contribution details. This plan repeats only the core equilibrium,
 stability, NLP, and Ipopt equations needed to implement the family plan.
 
-`docs/milestones/M4-equilibrium/plans/stage-by-stage-implementation-plan.md` is the companion
+`docs/milestones/M4-equilibrium/ideas/stage-by-stage-implementation-plan.md` is the companion
 GFPE-first execution overlay. It uses `PROJECT_CONTEXT.md` only as package
 context and lists concrete pretreatment, implementation, and exit-evidence
 steps for each GFPE stage.
 
-`docs/milestones/M4-equilibrium/plans/gfpe-package-cleanup-plan.md` is the companion package cleanup
+`docs/milestones/M4-equilibrium/ideas/gfpe-package-cleanup-plan.md` is the companion package cleanup
 overlay. It translates this doctrine into module boundaries for selector
 admission, the shared NLP core, Ipopt numerics, certified results, capability
 reporting, and validation lanes.
@@ -373,7 +373,7 @@ Implementation must proceed in this order:
    equilibrium after PE and CE proofs exist.
 
 The detailed stage-by-stage execution plan is in
-`docs/milestones/M4-equilibrium/plans/stage-by-stage-implementation-plan.md`. Keep this section short:
+`docs/milestones/M4-equilibrium/ideas/stage-by-stage-implementation-plan.md`. Keep this section short:
 it defines order; the companion plan defines work packages and exit evidence.
 
 ## Derived Boundary Workflows

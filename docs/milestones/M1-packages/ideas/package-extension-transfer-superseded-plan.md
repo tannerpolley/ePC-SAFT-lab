@@ -1,7 +1,7 @@
 # ePC-SAFT Package Extension Transfer Superseded Plan
 
 > Superseded for active execution by
-> `docs/milestones/M1-packages/plans/monorepo-package-migration.md`. This document records the
+> `docs/milestones/M1-packages/ideas/monorepo-package-migration.md`. This document records the
 > previous sibling-repo transfer direction and should not be used as the active
 > source of truth for the current monorepo consolidation work.
 
@@ -9,7 +9,7 @@ Date: 2026-05-28
 
 This document is retained historical context for the previous sibling-repo
 package-extension transfer direction. The active plan for package execution
-is now `docs/milestones/M1-packages/plans/monorepo-package-migration.md`.
+is now `docs/milestones/M1-packages/ideas/monorepo-package-migration.md`.
 
 Do not use this plan to control new extraction sequencing unless the
 monorepo migration plan explicitly reactivates a section.
@@ -18,7 +18,7 @@ monorepo migration plan explicitly reactivates a section.
 
 The following layout was the prior extraction target. It is no longer the active
 execution target for package migration. Use
-`docs/milestones/M1-packages/plans/monorepo-package-migration.md` for current gates and source
+`docs/milestones/M1-packages/ideas/monorepo-package-migration.md` for current gates and source
 layout decisions.
 
 ### Former GitHub Organization Layout

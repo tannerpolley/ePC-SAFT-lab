@@ -34,7 +34,7 @@ def test_package_extension_contract_docs_exist_and_share_status() -> None:
 
 def test_transfer_plan_current_state_matches_runtime_boundary_progress() -> None:
     plan = _read(
-        REPO_ROOT / "docs" / "milestones" / "M1-packages" / "plans" / "package-extension-transfer-superseded-plan.md"
+        REPO_ROOT / "docs" / "milestones" / "M1-packages" / "ideas" / "package-extension-transfer-superseded-plan.md"
     )
 
     assert "provider runtime metadata is provider-scoped" in plan

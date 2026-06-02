@@ -10,9 +10,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = (
     REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "registries" / "equilibrium-benchmark-registry.yaml"
 )
-GFPE_PATH = REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "plans" / "generalized-fluid-phase-equilibrium.md"
+GFPE_PATH = REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "ideas" / "generalized-fluid-phase-equilibrium.md"
 STAGE_PLAN_PATH = (
-    REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "plans" / "stage-by-stage-implementation-plan.md"
+    REPO_ROOT / "docs" / "milestones" / "M4-equilibrium" / "ideas" / "stage-by-stage-implementation-plan.md"
 )
 
 EXPECTED_FAMILY_LABELS = {

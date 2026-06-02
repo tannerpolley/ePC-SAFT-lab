@@ -201,28 +201,28 @@ MILESTONE_FRONT_MATTER_FIELDS = {
     "last_synced",
 }
 MILESTONE_TEMPLATE_FILES = {
-    "_templates/plan.md",
-    "_templates/issue-mirror.md",
+    "_templates/ideas/idea.md",
+    "_templates/issues/issue-mirror.md",
 }
 MILESTONE_PLAN_FILES = {
     "PROJECT_CONTEXT.md",
-    "M0-governance/plans/early-package-pr-gate-policy.md",
-    "M0-governance/plans/milestone-tracker-hardening.md",
-    "M1-packages/plans/monorepo-package-migration.md",
-    "M1-packages/plans/package-extension-transfer-superseded-plan.md",
-    "M1-packages/plans/test-ownership-relocation.md",
-    "M1-packages/plans/move-provider-distribution-into-packages-epcsaft.md",
-    "M1-packages/plans/post-move-cleanup-install-proof.md",
-    "M1-packages/plans/package-transfer-transition-audit.md",
-    "M1-packages/plans/package-onboarding-release-ergonomics.md",
-    "M1-packages/plans/monorepo-package-release-cleanup.md",
-    "M3-eos/plans/explicit-association-closure-for-pcsaft.md",
-    "M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md",
-    "M4-equilibrium/plans/gfpe-package-cleanup-plan.md",
-    "M4-equilibrium/plans/stage-by-stage-implementation-plan.md",
-    "M5-regression/plans/regression-production-backlog.md",
-    "M6-validation/plans/validation-benchmark-backlog.md",
-    "M7-release/plans/release-downstream-backlog.md",
+    "M0-governance/ideas/early-package-pr-gate-policy.md",
+    "M0-governance/ideas/milestone-tracker-hardening.md",
+    "M1-packages/ideas/monorepo-package-migration.md",
+    "M1-packages/ideas/package-extension-transfer-superseded-plan.md",
+    "M1-packages/ideas/test-ownership-relocation.md",
+    "M1-packages/ideas/move-provider-distribution-into-packages-epcsaft.md",
+    "M1-packages/ideas/post-move-cleanup-install-proof.md",
+    "M1-packages/ideas/package-transfer-transition-audit.md",
+    "M1-packages/ideas/package-onboarding-release-ergonomics.md",
+    "M1-packages/ideas/monorepo-package-release-cleanup.md",
+    "M3-eos/ideas/explicit-association-closure-for-pcsaft.md",
+    "M4-equilibrium/ideas/generalized-fluid-phase-equilibrium.md",
+    "M4-equilibrium/ideas/gfpe-package-cleanup-plan.md",
+    "M4-equilibrium/ideas/stage-by-stage-implementation-plan.md",
+    "M5-regression/ideas/regression-production-backlog.md",
+    "M6-validation/ideas/validation-benchmark-backlog.md",
+    "M7-release/ideas/release-downstream-backlog.md",
 }
 MILESTONE_REGISTRY_FILES = {
     "M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
@@ -1660,7 +1660,7 @@ def test_milestone_plan_layout_matches_local_contract() -> None:
         path for path in MILESTONE_TEMPLATE_FILES if not (milestone_root / path).is_file()
     )
     assert missing_templates == []
-    issue_template_fields = _markdown_front_matter(milestone_root / "_templates" / "issue-mirror.md")
+    issue_template_fields = _markdown_front_matter(milestone_root / "_templates" / "issues" / "issue-mirror.md")
     assert set(issue_template_fields) == MILESTONE_FRONT_MATTER_FIELDS
 
     missing_plans = sorted(path for path in MILESTONE_PLAN_FILES if not (milestone_root / path).is_file())
@@ -1681,7 +1681,7 @@ def test_milestone_plan_layout_matches_local_contract() -> None:
             continue
         if not any(issues_dir.glob("*.md")):
             continue
-        for path in sorted(issues_dir.glob("*.md")):
+        for path in sorted(path for path in issues_dir.glob("*.md") if path.name != "README.md"):
             fields = _markdown_front_matter(path)
             assert set(fields) == MILESTONE_FRONT_MATTER_FIELDS
             issue = fields["issue"]

@@ -9,7 +9,7 @@ body:
     attributes:
       value: |
         Use this for a milestone plan or major tranche. A tracking issue owns the checklist of micro issues and gates for one GitHub milestone.
-        Use `docs/milestones/Mx-name/plans/` for local plan documents when the issue needs more durable context than the issue body.
+        Use `docs/milestones/Mx-name/ideas/` for local plan documents when the issue needs more durable context than the issue body.
   - type: dropdown
     id: plan-milestone
     attributes:
@@ -31,7 +31,7 @@ body:
     attributes:
       label: Milestone plan
       description: Path to the local plan file this tracking issue owns, when a plan file exists.
-      placeholder: docs/milestones/Mx-name/plans/<plan>.md
+      placeholder: docs/milestones/Mx-name/ideas/<plan>.md
     validations:
       required: true
   - type: dropdown

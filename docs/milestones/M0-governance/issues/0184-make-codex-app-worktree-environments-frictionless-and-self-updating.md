@@ -24,7 +24,7 @@ to keep aligned with the current package layout and repo-owned commands.
 
 ## Local Receipt
 
-Implemented by `docs/milestones/M0-governance/plans/make-codex-app-worktree-environments-frictionless-and-self-upda.md`.
+Implemented by `docs/milestones/M0-governance/ideas/make-codex-app-worktree-environments-frictionless-and-self-upda.md`.
 The tracked environment now exposes the same lean action set documented in the
 environment README, including `Check IntelliJ Contract`, and structural tests
 guard the action list, bootstrap guidance, and repo-owned setup boundary.

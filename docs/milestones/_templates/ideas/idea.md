@@ -1,4 +1,4 @@
-# <Plan Title>
+# <Idea Title>
 
 Milestone: `M# - Name`
 Issue: `<GitHub issue URL or number>`
@@ -7,7 +7,7 @@ Last synced: `YYYY-MM-DD`
 
 ## Summary
 
-Describe the outcome this plan will make true.
+Describe the outcome this idea or planning note should make true.
 
 ## Acceptance Gates
 

@@ -428,7 +428,7 @@ not already configured.
   "full_roadmap": "docs/milestones/PROJECT_CONTEXT.md",
   "full_roadmap_milestone_section": "Required milestones",
   "project_policy": "dashboard-only",
-  "plan_file": "docs/milestones/M3-eos/plans/score-provider-eos-properties-structure.md",
+  "plan_file": "docs/milestones/M3-eos/ideas/score-provider-eos-properties-structure.md",
   "required_checks_policy": "allow-none-with-local-proof",
   "labels": ["type:task", "status:ready", "agent-ready", "area:core", "area:derivatives", "native", "validation"],
   "acceptance_criteria": [

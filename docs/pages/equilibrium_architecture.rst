@@ -117,7 +117,7 @@ first- and second-order derivatives for all Ipopt objective and constraint
 residuals, or lift site fractions as explicit NLP variables with exact
 mass-action constraints, true site topology, and exact Lagrangian Hessian rows.
 See ``docs/adr/0004-associating-equilibrium-architecture.md`` and
-``docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md``.
+``docs/milestones/M4-equilibrium/ideas/generalized-fluid-phase-equilibrium.md``.
 
 Repeated State Work
 -------------------

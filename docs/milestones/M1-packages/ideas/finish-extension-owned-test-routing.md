@@ -84,7 +84,7 @@ uv run python scripts/dev/validate_project.py docs
 ## Prior Receipt
 
 The prior implementation receipt is
-`docs/milestones/M1-packages/plans/test-ownership-relocation.md`. This plan is
+`docs/milestones/M1-packages/ideas/test-ownership-relocation.md`. This plan is
 the active closure record for issue #166.
 
 ## Current Receipt

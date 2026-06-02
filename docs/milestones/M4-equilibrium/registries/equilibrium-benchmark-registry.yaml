@@ -1,5 +1,5 @@
 schema_version: 2
-source_document: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
+source_document: "docs/milestones/M4-equilibrium/ideas/generalized-fluid-phase-equilibrium.md"
 
 policy:
   label_policy: "family_label values are planning labels only, not runtime keys or public route strings."
@@ -221,7 +221,7 @@ family_rows:
     reference_cases:
       - case_label: "Representative neutral/associating/electrolyte replay"
         evidence_tier: T0
-        source: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
+        source: "docs/milestones/M4-equilibrium/ideas/generalized-fluid-phase-equilibrium.md"
         fixture_status: source_data_needed
         acceptance_checks:
           - all_eligible_phases_considered
@@ -251,7 +251,7 @@ family_rows:
     reference_cases:
       - case_label: "Chemical equilibrium placeholder"
         evidence_tier: T0
-        source: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
+        source: "docs/milestones/M4-equilibrium/ideas/generalized-fluid-phase-equilibrium.md"
         fixture_status: source_data_needed
         acceptance_checks: [standard_state_convention, reaction_affinity]
     forbidden_shortcuts:
@@ -277,7 +277,7 @@ family_rows:
     reference_cases:
       - case_label: "Combined phase-chemical placeholder"
         evidence_tier: T0
-        source: "docs/milestones/M4-equilibrium/plans/generalized-fluid-phase-equilibrium.md"
+        source: "docs/milestones/M4-equilibrium/ideas/generalized-fluid-phase-equilibrium.md"
         fixture_status: source_data_needed
         acceptance_checks: [phase_equilibrium, reaction_affinity, coupled_certification]
     forbidden_shortcuts:
