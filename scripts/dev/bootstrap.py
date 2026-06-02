@@ -18,62 +18,53 @@ from native_dependency_policy import resolve_default_windows_ipopt_sdk_root_with
 Command = tuple[str, ...]
 
 SYNC_COMMAND: Command = ("uv", "sync", "--no-install-project")
-CERES_BUILD_COMMAND: Command = ("uv", "run", "python", "scripts/dev/build_system_ceres.py", "--parallel", "4")
+UV_RUN_PYTHON: Command = ("uv", "run", "--no-sync", "python")
+CERES_BUILD_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/build_system_ceres.py", "--parallel", "2")
 BASE_DOCTOR_COMMAND: Command = (
-    "uv",
-    "run",
-    "python",
+    *UV_RUN_PYTHON,
     "scripts/dev/doctor.py",
     "--require-provider-sdk",
 )
 PROVIDER_NATIVE_DOCTOR_COMMAND: Command = (
-    "uv",
-    "run",
-    "python",
+    *UV_RUN_PYTHON,
     "scripts/dev/doctor.py",
     "--require-provider-sdk",
     "--require-provider-native",
 )
 EQUILIBRIUM_NATIVE_DOCTOR_COMMAND: Command = (
-    "uv",
-    "run",
-    "python",
+    *UV_RUN_PYTHON,
     "scripts/dev/doctor.py",
     "--require-provider-sdk",
     "--require-equilibrium-native",
 )
 REGRESSION_NATIVE_DOCTOR_COMMAND: Command = (
-    "uv",
-    "run",
-    "python",
+    *UV_RUN_PYTHON,
     "scripts/dev/doctor.py",
     "--require-provider-sdk",
     "--require-regression-native",
 )
 FULL_NATIVE_DOCTOR_COMMAND: Command = (
-    "uv",
-    "run",
-    "python",
+    *UV_RUN_PYTHON,
     "scripts/dev/doctor.py",
     "--require-provider-sdk",
     "--require-extension-native",
 )
 INTELLIJ_COMMANDS: tuple[Command, ...] = (
-    ("uv", "run", "python", "scripts/dev/configure_jetbrains_project.py", "--apply"),
-    ("uv", "run", "python", "scripts/dev/configure_jetbrains_project.py", "--check"),
+    (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--apply"),
+    (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--check"),
 )
 NEXT_COMMAND = "uv run python scripts/dev/validate_project.py quick"
 IPOPT_CHANGE_COMMAND = '$env:EPCSAFT_IPOPT_ROOT = "C:\\path\\to\\ipopt-msvc"'
 BOOTSTRAP_CURRENT_STATE = "bootstrap_state: current"
 SETUP_COMMAND_SUMMARY = (
     "uv sync --no-install-project",
-    "uv run python scripts/dev/build_system_ceres.py --parallel 4",
-    "uv run python scripts/dev/build_epcsaft.py",
-    "uv run python scripts/dev/doctor.py --require-provider-sdk",
-    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-provider-native",
-    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native",
-    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-regression-native",
-    "uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
+    "uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2",
+    "uv run --no-sync python scripts/dev/build_epcsaft.py",
+    "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk",
+    "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-provider-native",
+    "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native",
+    "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-regression-native",
+    "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
     NEXT_COMMAND,
 )
 
@@ -130,7 +121,7 @@ def _ensure_ceres(*, dry_run: bool, env: dict[str, str]) -> tuple[int, Path]:
     ceres_dir = resolve_default_system_ceres_config_dir(REPO_ROOT)
     if ceres_dir is None:
         print("bootstrap_state: failed", flush=True)
-        print("failed_command: uv run python scripts/dev/build_system_ceres.py --parallel 4", flush=True)
+        print("failed_command: uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2", flush=True)
         print(
             "failure_reason: reusable Ceres build did not produce CeresConfig.cmake under build/system-ceres/2.2.0",
             flush=True,
@@ -142,9 +133,7 @@ def _ensure_ceres(*, dry_run: bool, env: dict[str, str]) -> tuple[int, Path]:
 
 def _native_build_command(ceres_dir: Path) -> Command:
     return (
-        "uv",
-        "run",
-        "python",
+        *UV_RUN_PYTHON,
         "scripts/dev/build_epcsaft.py",
         "--use-system-ceres",
         "--ceres-dir",
@@ -153,18 +142,16 @@ def _native_build_command(ceres_dir: Path) -> Command:
 
 
 def _profile_build_command(profile: str) -> Command:
-    return ("uv", "run", "python", "scripts/dev/build_epcsaft.py", "--profile", profile)
+    return (*UV_RUN_PYTHON, "scripts/dev/build_epcsaft.py", "--profile", profile)
 
 
 def _provider_native_build_command() -> Command:
-    return ("uv", "run", "python", "scripts/dev/build_epcsaft.py", "--clean", "--profile", "provider")
+    return (*UV_RUN_PYTHON, "scripts/dev/build_epcsaft.py", "--clean", "--profile", "provider")
 
 
 def _regression_native_build_command(ceres_dir: Path) -> Command:
     return (
-        "uv",
-        "run",
-        "python",
+        *UV_RUN_PYTHON,
         "scripts/dev/build_epcsaft.py",
         "--profile",
         "regression",
@@ -186,6 +173,9 @@ def _run_commands(commands: tuple[Command, ...], *, dry_run: bool, env: dict[str
 
 
 def _run_build(*, dry_run: bool, env: dict[str, str]) -> int:
+    sync_exit_code = _run_commands((SYNC_COMMAND,), dry_run=dry_run, env=env)
+    if sync_exit_code != 0:
+        return sync_exit_code
     exit_code, ceres_dir = _ensure_ceres(dry_run=dry_run, env=env)
     if exit_code != 0:
         return exit_code
@@ -193,6 +183,9 @@ def _run_build(*, dry_run: bool, env: dict[str, str]) -> int:
 
 
 def _run_regression_native(*, dry_run: bool, env: dict[str, str]) -> int:
+    sync_exit_code = _run_commands((SYNC_COMMAND,), dry_run=dry_run, env=env)
+    if sync_exit_code != 0:
+        return sync_exit_code
     exit_code, ceres_dir = _ensure_ceres(dry_run=dry_run, env=env)
     if exit_code != 0:
         return exit_code
@@ -216,13 +209,13 @@ def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
         return _run_commands((BASE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
     if step == "provider-native":
         return _run_commands(
-            (_provider_native_build_command(), PROVIDER_NATIVE_DOCTOR_COMMAND),
+            (SYNC_COMMAND, _provider_native_build_command(), PROVIDER_NATIVE_DOCTOR_COMMAND),
             dry_run=dry_run,
             env=env,
         )
     if step == "equilibrium-native":
         return _run_commands(
-            (_profile_build_command("equilibrium"), EQUILIBRIUM_NATIVE_DOCTOR_COMMAND),
+            (SYNC_COMMAND, _profile_build_command("equilibrium"), EQUILIBRIUM_NATIVE_DOCTOR_COMMAND),
             dry_run=dry_run,
             env=env,
         )

@@ -77,24 +77,33 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         build_equilibrium_native_module=True,
         build_regression_native_module=False,
         enable_ipopt=True,
-        windows_parallel="4",
-        description="equilibrium native lane: provider _core plus epcsaft-equilibrium native module, Ceres/regression OFF",
+        windows_parallel="1",
+        description=(
+            "equilibrium native lane: provider _core plus epcsaft-equilibrium native module, "
+            "Ceres/regression OFF, fresh-worktree parallelism bounded"
+        ),
     ),
     "regression": BuildProfile(
         enable_ceres=True,
         build_equilibrium_native_module=False,
         build_regression_native_module=True,
         enable_ipopt=False,
-        windows_parallel="4",
-        description="regression native lane: provider _core plus epcsaft-regression native module, Ipopt/equilibrium OFF",
+        windows_parallel="1",
+        description=(
+            "regression native lane: provider _core plus epcsaft-regression native module, "
+            "Ipopt/equilibrium OFF, fresh-worktree parallelism bounded"
+        ),
     ),
     "provider": BuildProfile(
         enable_ceres=False,
         build_equilibrium_native_module=False,
         build_regression_native_module=False,
         enable_ipopt=False,
-        windows_parallel="4",
-        description="provider-only boundary profile: CppAD ON, Ceres OFF, Ipopt OFF, extension native modules OFF",
+        windows_parallel="1",
+        description=(
+            "provider-only boundary profile: CppAD ON, Ceres OFF, Ipopt OFF, extension native modules OFF, "
+            "fresh-worktree parallelism bounded"
+        ),
     ),
 }
 
@@ -668,9 +677,7 @@ def _resolve_settings(args: argparse.Namespace) -> BuildSettings:
 
     parallel = args.parallel
     if parallel is None:
-        if enable_ipopt:
-            parallel = BUILD_PROFILES["ipopt"].windows_parallel
-        elif os.name == "nt":
+        if os.name == "nt":
             parallel = profile.windows_parallel
         else:
             parallel = BUILD_PROFILES["full"].windows_parallel

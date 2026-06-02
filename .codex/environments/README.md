@@ -14,7 +14,8 @@ The PowerShell wrapper is intentionally thin. The changing project/package setup
 lives in tracked Python code:
 
 ```powershell
-uv run python scripts/dev/bootstrap.py
+uv sync --no-install-project
+uv run --no-sync python scripts/dev/bootstrap.py
 ```
 
 Bootstrap runs the full-native setup sequence:
@@ -23,9 +24,9 @@ Bootstrap runs the full-native setup sequence:
 uv sync --no-install-project
 uv run python scripts/dev/configure_jetbrains_project.py --apply
 uv run python scripts/dev/configure_jetbrains_project.py --check
-uv run python scripts/dev/build_system_ceres.py --parallel 4
-uv run python scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir <CeresConfig-dir>
-uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
+uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2
+uv run --no-sync python scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir <CeresConfig-dir>
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
 ```
 
 This keeps new Codex app worktrees aligned with the current package split and
@@ -46,7 +47,7 @@ Use `Provider Smoke` for a fresh Codex worktree check. It runs
 `uv sync --no-install-project` followed by the lightweight provider/core Doctor:
 
 ```powershell
-uv run python scripts/dev/doctor.py --require-provider-sdk
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk
 ```
 
 Use the package-native actions when a thread is scoped to one package lane:
@@ -64,11 +65,12 @@ Use `Doctor Full Native` after `Build Native Extension` or full setup when the
 equilibrium and regression extension-native modules are expected to import.
 
 Fresh Codex worktree setup builds or reuses the default local Ceres package
-with ``uv run python scripts/dev/build_system_ceres.py --parallel 4`` and passes
-that package to the native build via ``build_epcsaft.py --use-system-ceres
---ceres-dir <CeresConfig-dir>``. The bootstrap uses the current backend policy
-to reject a default Ceres package that exports MinGW ``libceres.a`` for an MSVC
-worktree. Do not set ``EPCSAFT_PEP517_CERES_DIR`` or
+with ``uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2``
+after ``uv sync --no-install-project`` and passes that package to the native
+build via ``build_epcsaft.py --use-system-ceres --ceres-dir
+<CeresConfig-dir>``. The bootstrap uses the current backend policy to reject a
+default Ceres package that exports MinGW ``libceres.a`` for an MSVC worktree.
+Do not set ``EPCSAFT_PEP517_CERES_DIR`` or
 ``EPCSAFT_PEP517_BUILD_DIR`` for normal source-checkout setup; those variables
 are only for a custom Ceres package or a different checkout.
 
@@ -110,5 +112,6 @@ Maintenance rules:
 - Remove stale actions immediately when a workflow is deleted.
 - Do not re-add plot gallery, gallery server, manifest, index, `--plots`, or obsolete test-slice actions to this package.
 - Before handoff after workflow edits, run
-  ``uv run python scripts/dev/bootstrap.py --dry-run`` and
+  ``uv sync --no-install-project``,
+  ``uv run --no-sync python scripts/dev/bootstrap.py --dry-run`` and
   ``uv run python scripts/dev/configure_jetbrains_project.py --check``.

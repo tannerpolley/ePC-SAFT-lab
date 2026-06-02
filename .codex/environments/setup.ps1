@@ -24,7 +24,12 @@ function Resolve-UvCommand {
 $uv = Resolve-UvCommand
 $bootstrapStep = $Step.ToLowerInvariant()
 
-& $uv run python scripts/dev/bootstrap.py --step $bootstrapStep
+& $uv sync --no-install-project
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
+
+& $uv run --no-sync python scripts/dev/bootstrap.py --step $bootstrapStep
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }

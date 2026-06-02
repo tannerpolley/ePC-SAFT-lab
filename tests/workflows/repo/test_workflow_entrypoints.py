@@ -53,13 +53,15 @@ def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> No
 
     for token in (
         "uv sync --no-install-project",
-        "uv run python scripts/dev/build_epcsaft.py",
-        "uv run python scripts/dev/doctor.py",
+        "uv run --no-sync python scripts/dev/build_epcsaft.py",
+        "uv run --no-sync python scripts/dev/doctor.py",
         "uv run python scripts/dev/validate_project.py quick",
     ):
         assert token in bootstrap.replace('", "', " ")
         assert token in development_workflows
         assert token in new_agent_start
+    assert "UV_RUN_PYTHON" in bootstrap
+    assert "uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2" in bootstrap.replace('", "', " ")
     assert "--dry-run" in bootstrap
     assert "BASE_DOCTOR_COMMAND" in bootstrap
     assert "PROVIDER_NATIVE_DOCTOR_COMMAND" in bootstrap
@@ -271,8 +273,8 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         assert stale not in agents_md
 
     for token in (
-        "uv run python scripts/dev/bootstrap.py",
-        "uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
+        "uv run --no-sync python scripts/dev/bootstrap.py",
+        "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native",
         "uv run python scripts/dev/check_release_installs.py --dist-dir dist",
         "docs/milestones/PROJECT_CONTEXT.md",
         "EPCSAFT_PEP517_CERES_DIR",
@@ -349,7 +351,8 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step DoctorFull" in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build" in env_toml
     assert "uv run python scripts/dev/configure_jetbrains_project.py --check" in env_toml
-    assert "scripts/dev/bootstrap.py --step $bootstrapStep" in env_setup
+    assert "uv sync --no-install-project" in env_setup
+    assert "uv run --no-sync python scripts/dev/bootstrap.py --step $bootstrapStep" in env_setup
     assert "Invoke-ReusableCeresBuild" not in env_setup
     assert "scripts/dev/build_system_ceres.py" in _read("scripts/dev/bootstrap.py")
     assert "--use-system-ceres" in _read("scripts/dev/bootstrap.py")

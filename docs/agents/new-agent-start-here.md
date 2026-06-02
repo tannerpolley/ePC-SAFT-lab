@@ -7,18 +7,19 @@ standard.
 
 ## Fresh Checkout
 
-Run the one-command bootstrap first:
+Run the explicit fresh-worktree bootstrap first:
 
 ```powershell
-uv run python scripts/dev/bootstrap.py
+uv sync --no-install-project
+uv run --no-sync python scripts/dev/bootstrap.py
 ```
 
 It runs:
 
 ```powershell
 uv sync --no-install-project
-uv run python scripts/dev/build_epcsaft.py
-uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
+uv run --no-sync python scripts/dev/build_epcsaft.py
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
 ```
 
 Bootstrap and doctor print the active Ipopt SDK root, where it came from, and
@@ -47,16 +48,17 @@ Use lightweight Doctor when package/provider SDK state is unclear in a fresh
 worktree:
 
 ```powershell
-uv run python scripts/dev/doctor.py --require-provider-sdk
+uv sync --no-install-project
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk
 ```
 
 Use package-native Doctor checks for lane-specific worktrees:
 
 ```powershell
-uv run python scripts/dev/doctor.py --require-provider-sdk --require-provider-native
-uv run python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native
-uv run python scripts/dev/doctor.py --require-provider-sdk --require-regression-native
-uv run python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-provider-native
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-regression-native
+uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
 ```
 
 The Codex app actions expose the same lanes as `Provider Native`,
@@ -79,7 +81,7 @@ uv run python scripts/dev/build_dist.py --parallel 1
 Extension package proof with a real local Ipopt SDK:
 
 ```powershell
-uv run python scripts/dev/build_system_ceres.py --parallel 4
+uv run python scripts/dev/build_system_ceres.py --parallel 2
 uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
 uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
 uv run python scripts/dev/check_release_installs.py --dist-dir dist

@@ -59,7 +59,7 @@ def test_build_script_provider_profile_disables_extension_native_modules() -> No
     assert settings.build_equilibrium_native_module is False
     assert settings.build_regression_native_module is False
     assert settings.enable_ipopt is False
-    assert settings.parallel == "4"
+    assert settings.parallel == "1"
 
 
 def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
@@ -117,6 +117,8 @@ def test_build_script_profiles_resolve_optional_native_dependency_state() -> Non
     full = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "full"]))
     fast = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "fast"]))
     ipopt = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "ipopt"]))
+    equilibrium = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "equilibrium"]))
+    regression = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "regression"]))
     provider = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "provider"]))
     system_ceres = build_epcsaft._resolve_settings(
         build_epcsaft._parser().parse_args(["--ceres-dir", "C:/ceres/lib/cmake/Ceres"])
@@ -131,10 +133,17 @@ def test_build_script_profiles_resolve_optional_native_dependency_state() -> Non
     assert fast.parallel == "4"
     assert ipopt.enable_ipopt is True
     assert ipopt.parallel == "4"
+    assert equilibrium.build_equilibrium_native_module is True
+    assert equilibrium.build_regression_native_module is False
+    assert equilibrium.parallel == "1"
+    assert regression.build_equilibrium_native_module is False
+    assert regression.build_regression_native_module is True
+    assert regression.parallel == "1"
     assert provider.enable_ceres is False
     assert provider.build_equilibrium_native_module is False
     assert provider.build_regression_native_module is False
     assert provider.enable_ipopt is False
+    assert provider.parallel == "1"
     assert system_ceres.enable_ipopt is True
     assert system_ipopt.enable_ipopt is True
 
