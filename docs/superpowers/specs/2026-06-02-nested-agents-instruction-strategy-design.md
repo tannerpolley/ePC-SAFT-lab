@@ -5,7 +5,7 @@
 - Root `AGENTS.md` owns repo-wide routing, IntelliJ/MCP policy, tracker rules, package-boundary invariants, and cleanup expectations.
 - `docs/superpowers/PROJECT_CONTEXT.md` defines the package identity, milestone ownership, CppAD-only public derivative policy, and provider/equilibrium/regression split.
 - ADR 0005 assigns long-term package ownership: `epcsaft` is the provider, `epcsaft-equilibrium` owns Ipopt-backed equilibrium, and `epcsaft-regression` owns Ceres-backed regression.
-- `docs/pages/project_structure.rst` defines analysis layout, including the paper-validation exception that uses `source/` and `results/` instead of normal analysis `input/` and `output/`.
+- `docs/pages/project_structure.rst` defines analysis layout, including figure-owned `source/`, `scripts/`, and `results/` folders plus the paper-validation parameter snapshot rules.
 - User-level architecture policy prefers a small number of high-value nested instruction files over blanketing every folder.
 
 ## User Decisions
@@ -77,7 +77,7 @@ route-appropriate focused proof.
 Focused validation:
 - `uv run python run_pytest.py --equilibrium-api -q`
 - `uv run python run_pytest.py --native-contracts -q`
-- Debug one route only: `uv run python run_pytest.py --equilibrium-debug -q -s packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_name`
+- Debug one route only: `uv run python run_pytest.py --equilibrium-debug -q -s packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route`
 ```
 
 ### `packages/epcsaft-regression/AGENTS.md`
@@ -113,10 +113,10 @@ Keep each analysis self-contained under `analyses/{category}/{short_id}/`.
 Use root `data/reference/` only for reusable stable inputs shared across
 analyses or package tests.
 
-For non-paper analyses, figure-owned layout is:
-`figures/{figure_id}/input/`, `figures/{figure_id}/scripts/`, and
-`figures/{figure_id}/output/`. Disposable run payloads go under
-`figures/{figure_id}/output/runs/`.
+Figure-owned layout is:
+`figures/{figure_id}/source/`, `figures/{figure_id}/scripts/`, and
+`figures/{figure_id}/results/`. Disposable run payloads go under
+`figures/{figure_id}/results/runs/`.
 
 Separate data generation from rendering. Retain exact plotted data snapshots
 beside rendered figures and `.mpl.yaml` sidecars.
