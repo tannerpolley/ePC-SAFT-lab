@@ -661,15 +661,16 @@ def _resolve_settings(args: argparse.Namespace) -> BuildSettings:
     enable_ceres = profile.enable_ceres
     build_equilibrium_native_module = profile.build_equilibrium_native_module
     build_regression_native_module = profile.build_regression_native_module
-    enable_ipopt = profile.enable_ipopt if args.enable_ipopt is None else bool(args.enable_ipopt)
-    if (
-        args.use_system_ipopt
-        or args.ipopt_dir is not None
-        or args.ipopt_root is not None
-        or os.environ.get("EPCSAFT_IPOPT_ROOT")
-        or os.environ.get("EPCSAFT_PEP517_IPOPT_ROOT")
-    ):
-        enable_ipopt = True
+    explicit_ipopt_config = args.use_system_ipopt or args.ipopt_dir is not None or args.ipopt_root is not None
+    env_ipopt_root_available = bool(os.environ.get("EPCSAFT_IPOPT_ROOT") or os.environ.get("EPCSAFT_PEP517_IPOPT_ROOT"))
+    if args.enable_ipopt is None:
+        enable_ipopt = profile.enable_ipopt
+        if explicit_ipopt_config or (build_equilibrium_native_module and env_ipopt_root_available):
+            enable_ipopt = True
+    else:
+        enable_ipopt = bool(args.enable_ipopt)
+        if explicit_ipopt_config:
+            enable_ipopt = True
     if enable_ipopt and not build_equilibrium_native_module:
         raise ValueError("Ipopt cannot be enabled when the selected profile disables the equilibrium native module.")
     if enable_ceres and not build_regression_native_module:

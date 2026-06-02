@@ -62,6 +62,21 @@ def test_build_script_provider_profile_disables_extension_native_modules() -> No
     assert settings.parallel == "1"
 
 
+def test_build_script_package_lanes_ignore_ambient_ipopt_root(monkeypatch) -> None:
+    monkeypatch.setenv("EPCSAFT_IPOPT_ROOT", "C:/ipopt-msvc")
+
+    provider = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "provider"]))
+    regression = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "regression"]))
+
+    assert provider.enable_ipopt is False
+    assert regression.enable_ipopt is False
+
+    with pytest.raises(ValueError, match="Ipopt cannot be enabled"):
+        build_epcsaft._resolve_settings(
+            build_epcsaft._parser().parse_args(["--profile", "provider", "--ipopt-root", "C:/ipopt-msvc"])
+        )
+
+
 def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
     captured: dict[str, list[str]] = {}
 
