@@ -22,7 +22,7 @@ function Resolve-RepoTool {
     if (Test-Path -LiteralPath $toolPath -PathType Leaf) {
         return (Resolve-Path -LiteralPath $toolPath).Path
     }
-    throw "Required repo-local tool is missing: $toolPath. Run uv sync --no-install-project before CMake preset work."
+    throw "Required repo-local tool is missing: $toolPath. Run uv sync --no-install-workspace before CMake preset work."
 }
 
 function Assert-NoNinjaLock {

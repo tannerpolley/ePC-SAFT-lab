@@ -10,14 +10,14 @@ standard.
 Run the explicit fresh-worktree bootstrap first:
 
 ```powershell
-uv sync --no-install-project
+uv sync --no-install-workspace
 uv run --no-sync python scripts/dev/bootstrap.py
 ```
 
 It runs:
 
 ```powershell
-uv sync --no-install-project
+uv sync --no-install-workspace
 uv run --no-sync python scripts/dev/build_epcsaft.py
 uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
 ```
@@ -39,7 +39,7 @@ stay outside tracked package docs.
 When bootstrap succeeds, run the printed next command:
 
 ```powershell
-uv run python scripts/dev/validate_project.py quick
+uv run --no-sync python scripts/dev/validate_project.py quick
 ```
 
 ## Diagnostics
@@ -48,7 +48,7 @@ Use lightweight Doctor when package/provider SDK state is unclear in a fresh
 worktree:
 
 ```powershell
-uv sync --no-install-project
+uv sync --no-install-workspace
 uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk
 ```
 

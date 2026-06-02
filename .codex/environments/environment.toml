@@ -15,7 +15,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File ".codex/environments/setup.ps1
 [[actions]]
 name = "Sync Environment"
 icon = "download"
-command = "uv sync --no-install-project"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Sync"
 platform = "win32"
 
 [[actions]]
@@ -69,29 +69,29 @@ platform = "win32"
 [[actions]]
 name = "Check IntelliJ Contract"
 icon = "inspect"
-command = "uv run python scripts/dev/configure_jetbrains_project.py --check"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step IntelliJCheck"
 platform = "win32"
 
 [[actions]]
 name = "Validate Quick"
 icon = "test"
-command = "uv run python scripts/dev/validate_project.py quick"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ValidateQuick"
 platform = "win32"
 
 [[actions]]
 name = "Validate Confidence"
 icon = "test"
-command = "uv run python scripts/dev/validate_project.py confidence"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ValidateConfidence"
 platform = "win32"
 
 [[actions]]
 name = "Build Docs"
 icon = "document"
-command = "uv run python scripts/dev/validate_project.py docs"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ValidateDocs"
 platform = "win32"
 
 [[actions]]
 name = "Build Distribution"
 icon = "package"
-command = "uv run python scripts/dev/build_dist.py"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step BuildDist"
 platform = "win32"

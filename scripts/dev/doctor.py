@@ -438,7 +438,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if package_path is None:
         print("install_state: missing-package")
-        print("next_command: uv sync --no-install-project")
+        print("next_command: uv sync --no-install-workspace")
         return 1
     if core_path is None:
         print("install_state: missing-core")

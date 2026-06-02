@@ -12,7 +12,7 @@ fi
 
 uv --version
 uv python pin 3.13
-uv sync --no-install-project
+uv sync --no-install-workspace
 uv run python scripts/dev/build_epcsaft.py
 uv run python scripts/dev/doctor.py
 uv run python scripts/dev/validate_project.py quick

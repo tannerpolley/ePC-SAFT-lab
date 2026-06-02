@@ -1032,6 +1032,18 @@ double regression_normalize_mw_cpp(double mw) {
     return mw;
 }
 
+bool composition_has_charged_species_cpp(const vector<double> &x, const vector<double> &z) {
+    if (x.size() != z.size()) {
+        throw ValueError("Native Ceres pure-ion charge scan requires aligned composition and charge vectors.");
+    }
+    for (size_t i = 0; i < x.size(); ++i) {
+        if (x[i] > 0.0 && std::abs(z[i]) > 1.0e-12) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void validate_pure_ion_born_ceres_problem_cpp(
     const vector<add_args> &base_args_by_record,
     const vector<GenericRegressionRecord> &records,
@@ -1128,6 +1140,36 @@ PureIonBornResidualEvaluation evaluate_pure_ion_born_residual_jacobian_cpp(
         auto mixture = std::make_shared<ePCSAFTMixtureNative>(args);
         auto state = mixture->state(record.t, record.x, record.phase, true, record.p, false, 0.0);
         const double rho = state->density();
+        const auto phase_derivatives = [&](int target_kind, int target_index, const vector<double> &composition, double density, const char *context) {
+            try {
+                return generic_component_parameter_phase_derivatives_cpp(
+                    record.t,
+                    density,
+                    composition,
+                    args,
+                    target_kind,
+                    target_index
+                );
+            } catch (const std::exception &exc) {
+                std::ostringstream message;
+                message << "Native Ceres pure-ion derivative failed"
+                    << " record=" << r
+                    << " term=" << record.term_name
+                    << " context=" << context
+                    << " target_kind=" << target_kind
+                    << " target_index=" << target_index
+                    << " rho=" << density
+                    << " theta=[";
+                for (size_t i = 0; i < theta.size(); ++i) {
+                    if (i > 0) {
+                        message << ", ";
+                    }
+                    message << theta[i];
+                }
+                message << "]: " << exc.what();
+                throw ValueError(message.str());
+            }
+        };
         double calc = 0.0;
         vector<double> dcalc(theta.size(), 0.0);
         if (record.term == kGenericTermDensity) {
@@ -1148,14 +1190,7 @@ PureIonBornResidualEvaluation evaluate_pure_ion_born_residual_jacobian_cpp(
                     dcalc[j] = 0.0;
                     continue;
                 }
-                NeutralBinaryKijPhaseDerivatives phase = generic_component_parameter_phase_derivatives_cpp(
-                    record.t,
-                    rho,
-                    record.x,
-                    args,
-                    target_kinds[j],
-                    target_indices[j]
-                );
+                NeutralBinaryKijPhaseDerivatives phase = phase_derivatives(target_kinds[j], target_indices[j], record.x, rho, "density");
                 dcalc[j] = density_multiplier * phase.drhodk;
             }
         } else if (record.term == kGenericTermOsmotic) {
@@ -1180,62 +1215,29 @@ PureIonBornResidualEvaluation evaluate_pure_ion_born_residual_jacobian_cpp(
                 const int target = target_indices[j];
                 if ((target_kinds[j] == kGenericTargetDBorn || target_kinds[j] == kGenericTargetFSolv)
                     && args.born_model == 2) {
-                    BornSSMDSDerivativeResult current = born_ssmds_liquid_derivatives_cpp(
-                        record.t,
-                        rho,
-                        record.phase,
-                        record.x,
-                        args
-                    );
-                    if (!current.supported) {
-                        throw ValueError(current.message);
-                    }
-                    const vector<double> &current_row_major = target_kinds[j] == kGenericTargetDBorn
-                        ? current.lnfug_d_d_born_row_major
-                        : current.lnfug_d_f_solv_row_major;
+                    NeutralBinaryKijPhaseDerivatives current =
+                        phase_derivatives(target_kinds[j], target, record.x, rho, "osmotic_current_fixed_rho");
                     double reference_derivative = 0.0;
-                    if (target >= 0 && static_cast<size_t>(target) < x0.size() && x0[static_cast<size_t>(target)] > 0.0) {
-                        BornSSMDSDerivativeResult reference = born_ssmds_liquid_derivatives_cpp(
-                            record.t,
-                            rho_ref,
-                            record.phase,
-                            x0,
-                            args
-                        );
-                        if (!reference.supported) {
-                            throw ValueError(reference.message);
-                        }
-                        const vector<double> &reference_row_major = target_kinds[j] == kGenericTargetDBorn
-                            ? reference.lnfug_d_d_born_row_major
-                            : reference.lnfug_d_f_solv_row_major;
-                        reference_derivative = reference_row_major.at(
-                            static_cast<size_t>(target) * record.x.size() + static_cast<size_t>(solvent)
-                        );
+                    const bool reference_has_charges = composition_has_charged_species_cpp(x0, args.z);
+                    if (reference_has_charges
+                        && target >= 0
+                        && static_cast<size_t>(target) < x0.size()
+                        && x0[static_cast<size_t>(target)] > 0.0) {
+                        NeutralBinaryKijPhaseDerivatives reference =
+                            phase_derivatives(target_kinds[j], target, x0, rho_ref, "osmotic_reference_fixed_rho");
+                        reference_derivative = reference.dlnphi_dk_fixed_rho.at(static_cast<size_t>(solvent));
                     }
-                    const double current_derivative = current_row_major.at(
-                        static_cast<size_t>(target) * record.x.size() + static_cast<size_t>(solvent)
-                    );
+                    const double current_derivative =
+                        current.dlnphi_dk_fixed_rho.at(static_cast<size_t>(solvent));
                     dcalc[j] = -(current_derivative - reference_derivative) / (mw_solvent * molality_sum);
                     continue;
                 }
-                NeutralBinaryKijPhaseDerivatives current = generic_component_parameter_phase_derivatives_cpp(
-                    record.t,
-                    rho,
-                    record.x,
-                    args,
-                    target_kinds[j],
-                    target
-                );
+                NeutralBinaryKijPhaseDerivatives current =
+                    phase_derivatives(target_kinds[j], target, record.x, rho, "osmotic_current_total");
                 double reference_derivative = 0.0;
                 if (target >= 0 && static_cast<size_t>(target) < x0.size() && x0[static_cast<size_t>(target)] > 0.0) {
-                    NeutralBinaryKijPhaseDerivatives reference = generic_component_parameter_phase_derivatives_cpp(
-                        record.t,
-                        rho_ref,
-                        x0,
-                        args,
-                        target_kinds[j],
-                        target
-                    );
+                    NeutralBinaryKijPhaseDerivatives reference =
+                        phase_derivatives(target_kinds[j], target, x0, rho_ref, "osmotic_reference_total");
                     reference_derivative = reference.dlnphi_dk_total.at(static_cast<size_t>(solvent));
                 }
                 const double dln_gamma = current.dlnphi_dk_total.at(static_cast<size_t>(solvent)) - reference_derivative;
@@ -1267,38 +1269,17 @@ PureIonBornResidualEvaluation evaluate_pure_ion_born_residual_jacobian_cpp(
                 const int target = target_indices[j];
                 if ((target_kinds[j] == kGenericTargetDBorn || target_kinds[j] == kGenericTargetFSolv)
                     && args.born_model == 2) {
-                    BornSSMDSDerivativeResult current = born_ssmds_liquid_derivatives_cpp(
-                        record.t,
-                        rho,
-                        record.phase,
-                        record.x,
-                        args
-                    );
-                    if (!current.supported) {
-                        throw ValueError(current.message);
-                    }
-                    const vector<double> &current_row_major = target_kinds[j] == kGenericTargetDBorn
-                        ? current.lnfug_d_d_born_row_major
-                        : current.lnfug_d_f_solv_row_major;
+                    NeutralBinaryKijPhaseDerivatives phase =
+                        phase_derivatives(target_kinds[j], target, record.x, rho, "miac_fixed_rho");
                     const double dln_gamma_pm = (
-                        nu_cat * current_row_major.at(
-                            static_cast<size_t>(target) * record.x.size() + static_cast<size_t>(ic)
-                        )
-                        + nu_an * current_row_major.at(
-                            static_cast<size_t>(target) * record.x.size() + static_cast<size_t>(ia)
-                        )
+                        nu_cat * phase.dlnphi_dk_fixed_rho.at(static_cast<size_t>(ic))
+                        + nu_an * phase.dlnphi_dk_fixed_rho.at(static_cast<size_t>(ia))
                     ) / sum_nu;
                     dcalc[j] = calc * dln_gamma_pm;
                     continue;
                 }
-                NeutralBinaryKijPhaseDerivatives phase = generic_component_parameter_phase_derivatives_cpp(
-                    record.t,
-                    rho,
-                    record.x,
-                    args,
-                    target_kinds[j],
-                    target
-                );
+                NeutralBinaryKijPhaseDerivatives phase =
+                    phase_derivatives(target_kinds[j], target, record.x, rho, "miac_total");
                 const double dln_gamma_pm = (
                     nu_cat * phase.dlnphi_dk_total.at(static_cast<size_t>(ic))
                     + nu_an * phase.dlnphi_dk_total.at(static_cast<size_t>(ia))
@@ -1573,14 +1554,28 @@ GenericRegressionResult solve_one_pure_ion_ceres_start_cpp(
 
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
-        PureIonBornResidualEvaluation final_eval = evaluate_pure_ion_born_residual_jacobian_cpp(
-            base_args_by_record,
-            records,
-            target_kinds,
-            target_indices,
-            target_indices_2,
-            theta
-        );
+        PureIonBornResidualEvaluation final_eval;
+        try {
+            final_eval = evaluate_pure_ion_born_residual_jacobian_cpp(
+                base_args_by_record,
+                records,
+                target_kinds,
+                target_indices,
+                target_indices_2,
+                theta
+            );
+        } catch (const std::exception &exc) {
+            std::ostringstream message;
+            message << "Native Ceres pure-ion final evaluation failed at theta=[";
+            for (size_t i = 0; i < theta.size(); ++i) {
+                if (i > 0) {
+                    message << ", ";
+                }
+                message << theta[i];
+            }
+            message << "]: " << exc.what();
+            throw ValueError(message.str());
+        }
         GenericRegressionResult out;
         out.x = theta;
         out.cost = final_eval.cost;

@@ -34,7 +34,7 @@ def test_bootstrap_scripts_use_normal_build_and_fast_suite() -> None:
         content = _read(path)
 
         assert "python pin 3.13" in content or '"python", "pin", "3.13"' in content
-        assert "sync --no-install-project" in content or '"sync", "--no-install-project"' in content
+        assert "sync --no-install-workspace" in content or '"sync", "--no-install-workspace"' in content
         assert "scripts/dev/build_epcsaft.py --clean" not in content
         assert "scripts\\dev\\build_epcsaft.py --clean" not in content
         assert (
@@ -52,10 +52,10 @@ def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> No
     new_agent_start = _read("docs/agents/new-agent-start-here.md")
 
     for token in (
-        "uv sync --no-install-project",
+        "uv sync --no-install-workspace",
         "uv run --no-sync python scripts/dev/build_epcsaft.py",
         "uv run --no-sync python scripts/dev/doctor.py",
-        "uv run python scripts/dev/validate_project.py quick",
+        "uv run --no-sync python scripts/dev/validate_project.py quick",
     ):
         assert token in bootstrap.replace('", "', " ")
         assert token in development_workflows
@@ -320,7 +320,7 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert [action["name"] for action in env_actions] == expected_env_actions
     for action_name in expected_env_actions:
         assert f"- `{action_name}`" in env_readme
-    assert env_actions[0]["command"] == "uv sync --no-install-project"
+    assert env_actions[0]["command"].endswith(".codex/environments/setup.ps1 -Step Sync")
     assert env_actions[1]["command"].endswith(".codex/environments/setup.ps1 -Step Smoke")
     assert env_actions[2]["command"].endswith(".codex/environments/setup.ps1 -Step ProviderNative")
     assert env_actions[3]["command"].endswith(".codex/environments/setup.ps1 -Step EquilibriumNative")
@@ -329,11 +329,11 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert env_actions[6]["command"].endswith(".codex/environments/setup.ps1 -Step Doctor")
     assert env_actions[7]["command"].endswith(".codex/environments/setup.ps1 -Step DoctorFull")
     assert env_actions[8]["command"].endswith(".codex/environments/setup.ps1 -Step Build")
-    assert env_actions[9]["command"] == "uv run python scripts/dev/configure_jetbrains_project.py --check"
-    assert env_actions[10]["command"] == "uv run python scripts/dev/validate_project.py quick"
-    assert env_actions[11]["command"] == "uv run python scripts/dev/validate_project.py confidence"
-    assert env_actions[12]["command"] == "uv run python scripts/dev/validate_project.py docs"
-    assert env_actions[13]["command"] == "uv run python scripts/dev/build_dist.py"
+    assert env_actions[9]["command"].endswith(".codex/environments/setup.ps1 -Step IntelliJCheck")
+    assert env_actions[10]["command"].endswith(".codex/environments/setup.ps1 -Step ValidateQuick")
+    assert env_actions[11]["command"].endswith(".codex/environments/setup.ps1 -Step ValidateConfidence")
+    assert env_actions[12]["command"].endswith(".codex/environments/setup.ps1 -Step ValidateDocs")
+    assert env_actions[13]["command"].endswith(".codex/environments/setup.ps1 -Step BuildDist")
 
     assert 'name = "Build Native Extension (Bounded)"' not in env_toml
     assert 'name = "Provider Smoke"' in env_toml
@@ -350,8 +350,8 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step FullNative" in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step DoctorFull" in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build" in env_toml
-    assert "uv run python scripts/dev/configure_jetbrains_project.py --check" in env_toml
-    assert "uv sync --no-install-project" in env_setup
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step IntelliJCheck" in env_toml
+    assert "uv sync --no-install-workspace" in env_setup
     assert "uv run --no-sync python scripts/dev/bootstrap.py --step $bootstrapStep" in env_setup
     assert "Invoke-ReusableCeresBuild" not in env_setup
     assert "scripts/dev/build_system_ceres.py" in _read("scripts/dev/bootstrap.py")

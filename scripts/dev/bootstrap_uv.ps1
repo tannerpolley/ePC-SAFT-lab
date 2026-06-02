@@ -33,7 +33,7 @@ $uv = Resolve-UvCommand
 
 Invoke-CheckedNative $uv @("--version")
 Invoke-CheckedNative $uv @("python", "pin", "3.13")
-Invoke-CheckedNative $uv @("sync", "--no-install-project")
+Invoke-CheckedNative $uv @("sync", "--no-install-workspace")
 
 $defaultIpoptRoot = Join-Path $env:USERPROFILE "Documents\deps\ipopt-msvc"
 $ipoptRoot = $env:EPCSAFT_IPOPT_ROOT

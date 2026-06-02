@@ -4,6 +4,7 @@ import argparse
 import os
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -16,8 +17,13 @@ from native_dependency_policy import resolve_default_system_ceres_config_dir  # 
 from native_dependency_policy import resolve_default_windows_ipopt_sdk_root_with_source  # noqa: E402
 
 Command = tuple[str, ...]
+SOURCE_DIRS = (
+    REPO_ROOT / "packages" / "epcsaft" / "src",
+    REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src",
+    REPO_ROOT / "packages" / "epcsaft-regression" / "src",
+)
 
-SYNC_COMMAND: Command = ("uv", "sync", "--no-install-project")
+SYNC_COMMAND: Command = ("uv", "sync", "--no-install-workspace")
 UV_RUN_PYTHON: Command = ("uv", "run", "--no-sync", "python")
 CERES_BUILD_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/build_system_ceres.py", "--parallel", "2")
 BASE_DOCTOR_COMMAND: Command = (
@@ -49,15 +55,18 @@ FULL_NATIVE_DOCTOR_COMMAND: Command = (
     "--require-provider-sdk",
     "--require-extension-native",
 )
-INTELLIJ_COMMANDS: tuple[Command, ...] = (
-    (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--apply"),
-    (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--check"),
-)
-NEXT_COMMAND = "uv run python scripts/dev/validate_project.py quick"
+INTELLIJ_APPLY_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--apply")
+INTELLIJ_CHECK_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--check")
+INTELLIJ_COMMANDS: tuple[Command, ...] = (INTELLIJ_APPLY_COMMAND, INTELLIJ_CHECK_COMMAND)
+VALIDATE_QUICK_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/validate_project.py", "quick")
+VALIDATE_CONFIDENCE_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/validate_project.py", "confidence")
+VALIDATE_DOCS_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/validate_project.py", "docs")
+BUILD_DIST_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/build_dist.py")
+NEXT_COMMAND = "uv run --no-sync python scripts/dev/validate_project.py quick"
 IPOPT_CHANGE_COMMAND = '$env:EPCSAFT_IPOPT_ROOT = "C:\\path\\to\\ipopt-msvc"'
 BOOTSTRAP_CURRENT_STATE = "bootstrap_state: current"
 SETUP_COMMAND_SUMMARY = (
-    "uv sync --no-install-project",
+    "uv sync --no-install-workspace",
     "uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2",
     "uv run --no-sync python scripts/dev/build_epcsaft.py",
     "uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk",
@@ -83,6 +92,8 @@ def _prepend_env_path(env: dict[str, str], name: str, path: Path) -> None:
 
 def _bootstrap_env() -> dict[str, str]:
     env = os.environ.copy()
+    for src_dir in SOURCE_DIRS:
+        _prepend_env_path(env, "PYTHONPATH", src_dir)
     ipopt_resolution = resolve_default_windows_ipopt_sdk_root_with_source()
     print(f"ipopt_sdk_root: {ipopt_resolution.root if ipopt_resolution.root else '<missing>'}", flush=True)
     print(f"ipopt_sdk_root_source: {ipopt_resolution.source}", flush=True)
@@ -96,6 +107,18 @@ def _bootstrap_env() -> dict[str, str]:
             _prepend_env_path(env, "EPCSAFT_RUNTIME_DLL_DIRS", ipopt_bin)
             print(f"ipopt_runtime_bin: {ipopt_bin}", flush=True)
     return env
+
+
+def _install_workspace_source_pth() -> None:
+    site_packages = Path(sysconfig.get_paths()["purelib"])
+    site_packages.mkdir(parents=True, exist_ok=True)
+    pth_path = site_packages / "epcsaft_workspace_sources.pth"
+    content = "".join(f"{src_dir}\n" for src_dir in SOURCE_DIRS)
+    if pth_path.exists() and pth_path.read_text(encoding="utf-8", errors="replace") == content:
+        print(f"workspace_source_pth: current {pth_path}", flush=True)
+        return
+    pth_path.write_text(content, encoding="utf-8")
+    print(f"workspace_source_pth: wrote {pth_path}", flush=True)
 
 
 def _run(command: Command, *, dry_run: bool, env: dict[str, str]) -> int:
@@ -142,7 +165,7 @@ def _native_build_command(ceres_dir: Path) -> Command:
 
 
 def _profile_build_command(profile: str) -> Command:
-    return (*UV_RUN_PYTHON, "scripts/dev/build_epcsaft.py", "--profile", profile)
+    return (*UV_RUN_PYTHON, "scripts/dev/build_epcsaft.py", "--clean", "--profile", profile)
 
 
 def _provider_native_build_command() -> Command:
@@ -153,6 +176,7 @@ def _regression_native_build_command(ceres_dir: Path) -> Command:
     return (
         *UV_RUN_PYTHON,
         "scripts/dev/build_epcsaft.py",
+        "--clean",
         "--profile",
         "regression",
         "--use-system-ceres",
@@ -203,10 +227,20 @@ def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
         return _run_commands((SYNC_COMMAND,), dry_run=dry_run, env=env)
     if step == "intellij":
         return _run_commands(INTELLIJ_COMMANDS, dry_run=dry_run, env=env)
+    if step == "intellij-check":
+        return _run_commands((INTELLIJ_CHECK_COMMAND,), dry_run=dry_run, env=env)
     if step == "build":
         return _run_build(dry_run=dry_run, env=env)
     if step == "doctor":
         return _run_commands((BASE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
+    if step == "validate-quick":
+        return _run_commands((VALIDATE_QUICK_COMMAND,), dry_run=dry_run, env=env)
+    if step == "validate-confidence":
+        return _run_commands((VALIDATE_CONFIDENCE_COMMAND,), dry_run=dry_run, env=env)
+    if step == "validate-docs":
+        return _run_commands((VALIDATE_DOCS_COMMAND,), dry_run=dry_run, env=env)
+    if step == "build-dist":
+        return _run_commands((BUILD_DIST_COMMAND,), dry_run=dry_run, env=env)
     if step == "provider-native":
         return _run_commands(
             (SYNC_COMMAND, _provider_native_build_command(), PROVIDER_NATIVE_DOCTOR_COMMAND),
@@ -248,8 +282,13 @@ def _parser() -> argparse.ArgumentParser:
             "smoke",
             "sync",
             "intellij",
+            "intellij-check",
             "build",
             "doctor",
+            "validate-quick",
+            "validate-confidence",
+            "validate-docs",
+            "build-dist",
             "provider-native",
             "equilibrium-native",
             "regression-native",
@@ -259,6 +298,11 @@ def _parser() -> argparse.ArgumentParser:
             "regressionnative",
             "fullnative",
             "doctorfull",
+            "intellijcheck",
+            "validatequick",
+            "validateconfidence",
+            "validatedocs",
+            "builddist",
         ),
         default="setup",
         help="Run one bootstrap step instead of the full setup sequence.",
@@ -279,11 +323,20 @@ def main(argv: list[str] | None = None) -> int:
         "equilibriumnative": "equilibrium-native",
         "regressionnative": "regression-native",
         "fullnative": "full-native",
+        "intellijcheck": "intellij-check",
+        "validatequick": "validate-quick",
+        "validateconfidence": "validate-confidence",
+        "validatedocs": "validate-docs",
+        "builddist": "build-dist",
     }
     step = step_aliases.get(args.step, args.step)
+    if not args.dry_run and step != "sync":
+        _install_workspace_source_pth()
     exit_code = _run_step(step, dry_run=args.dry_run, env=env)
     if exit_code != 0:
         return exit_code
+    if not args.dry_run:
+        _install_workspace_source_pth()
     state = "bootstrap_state: dry-run" if args.dry_run else BOOTSTRAP_CURRENT_STATE
     print(state, flush=True)
     print(f"next_command: {NEXT_COMMAND}", flush=True)

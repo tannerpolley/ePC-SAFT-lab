@@ -12,7 +12,7 @@ Start every fresh source checkout with this sequence:
 
 .. code-block:: powershell
 
-   uv sync --no-install-project
+   uv sync --no-install-workspace
    uv run --no-sync python scripts/dev/bootstrap.py
 
 The bootstrap entrypoint runs the current setup sequence and prints the next
@@ -20,10 +20,10 @@ exact validation command:
 
 .. code-block:: powershell
 
-   uv sync --no-install-project
+   uv sync --no-install-workspace
    uv run --no-sync python scripts/dev/build_epcsaft.py
    uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
-   uv run python scripts/dev/validate_project.py quick
+   uv run --no-sync python scripts/dev/validate_project.py quick
 
 This is the expected healthy full-native baseline. It creates the uv
 environment, builds the in-place pybind11 ``epcsaft._core`` extension plus the
@@ -65,7 +65,7 @@ Command matrix
      - Command
      - Use when
    * - First setup or uncertain state
-     - ``uv sync --no-install-project`` then ``uv run --no-sync python scripts/dev/bootstrap.py``
+     - ``uv sync --no-install-workspace`` then ``uv run --no-sync python scripts/dev/bootstrap.py``
      - Starting a fresh thread, after dependency changes, or after a failed import. The command runs sync, native build, doctor, and prints the next exact command.
    * - Handoff validation
      - ``uv run python scripts/dev/validate_project.py confidence``
@@ -80,16 +80,16 @@ Command matrix
      - ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` then ``uv run python run_pytest.py packages/epcsaft/tests/native/contracts/test_provider_only_core_symbols.py -q``
      - Prove provider ``_core`` builds without Ceres and Ipopt and does not export equilibrium/regression native symbols.
    * - Provider Codex worktree lane
-     - ``uv sync --no-install-project`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step provider-native`` or Codex action ``Provider Native``
+     - ``uv sync --no-install-workspace`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step provider-native`` or Codex action ``Provider Native``
      - Build the provider-only native profile and require provider SDK plus provider ``_core``.
    * - Equilibrium Codex worktree lane
-     - ``uv sync --no-install-project`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step equilibrium-native`` or Codex action ``Equilibrium Native``
+     - ``uv sync --no-install-workspace`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step equilibrium-native`` or Codex action ``Equilibrium Native``
      - Build the equilibrium native profile and require ``epcsaft_equilibrium._native_core`` without building regression native code.
    * - Regression Codex worktree lane
-     - ``uv sync --no-install-project`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step regression-native`` or Codex action ``Regression Native``
+     - ``uv sync --no-install-workspace`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step regression-native`` or Codex action ``Regression Native``
      - Build the regression native profile with the reusable Ceres package and require ``epcsaft_regression._native_core`` without building equilibrium native code.
    * - Full native Codex worktree lane
-     - ``uv sync --no-install-project`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step full-native`` or Codex action ``Full Native``
+     - ``uv sync --no-install-workspace`` then ``uv run --no-sync python scripts/dev/bootstrap.py --step full-native`` or Codex action ``Full Native``
      - Build the transition source-checkout native profile and require both extension-owned native modules.
    * - Equilibrium extension contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
@@ -403,7 +403,7 @@ are unclear. It reports the active Python, git ref, uv/cmake/ninja paths,
 provider and extension native module paths when available, provider SDK
 CMake/source metadata, local Ceres/Ipopt SDK discovery, native artifact
 freshness, generated artifact state, and the next recommended command. Use
-``uv sync --no-install-project`` then
+``uv sync --no-install-workspace`` then
 ``uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk`` for
 fresh worktree provider/core smoke checks. Use the package-specific native
 checks after the matching build lane:

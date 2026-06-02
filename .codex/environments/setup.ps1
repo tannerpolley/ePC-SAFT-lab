@@ -24,7 +24,7 @@ function Resolve-UvCommand {
 $uv = Resolve-UvCommand
 $bootstrapStep = $Step.ToLowerInvariant()
 
-& $uv sync --no-install-project
+& $uv sync --no-install-workspace
 if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }

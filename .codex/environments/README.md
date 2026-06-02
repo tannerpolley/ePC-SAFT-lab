@@ -14,16 +14,16 @@ The PowerShell wrapper is intentionally thin. The changing project/package setup
 lives in tracked Python code:
 
 ```powershell
-uv sync --no-install-project
+uv sync --no-install-workspace
 uv run --no-sync python scripts/dev/bootstrap.py
 ```
 
 Bootstrap runs the full-native setup sequence:
 
 ```powershell
-uv sync --no-install-project
-uv run python scripts/dev/configure_jetbrains_project.py --apply
-uv run python scripts/dev/configure_jetbrains_project.py --check
+uv sync --no-install-workspace
+uv run --no-sync python scripts/dev/configure_jetbrains_project.py --apply
+uv run --no-sync python scripts/dev/configure_jetbrains_project.py --check
 uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2
 uv run --no-sync python scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir <CeresConfig-dir>
 uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-extension-native
@@ -44,11 +44,16 @@ Use ``uv run python scripts/dev/validate_project.py ceres-cppad`` when the task
 needs the focused Ceres regression/backend slice.
 
 Use `Provider Smoke` for a fresh Codex worktree check. It runs
-`uv sync --no-install-project` followed by the lightweight provider/core Doctor:
+`uv sync --no-install-workspace` followed by the lightweight provider/core Doctor:
 
 ```powershell
 uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk
 ```
+
+The setup wrapper writes a venv `.pth` file pointing at the three package
+`src` directories after no-workspace sync. This keeps source-checkout imports
+working without reinstalling workspace packages or relying on caller
+`PYTHONPATH`.
 
 Use the package-native actions when a thread is scoped to one package lane:
 
@@ -66,7 +71,7 @@ equilibrium and regression extension-native modules are expected to import.
 
 Fresh Codex worktree setup builds or reuses the default local Ceres package
 with ``uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2``
-after ``uv sync --no-install-project`` and passes that package to the native
+after ``uv sync --no-install-workspace`` and passes that package to the native
 build via ``build_epcsaft.py --use-system-ceres --ceres-dir
 <CeresConfig-dir>``. The bootstrap uses the current backend policy to reject a
 default Ceres package that exports MinGW ``libceres.a`` for an MSVC worktree.
@@ -112,6 +117,6 @@ Maintenance rules:
 - Remove stale actions immediately when a workflow is deleted.
 - Do not re-add plot gallery, gallery server, manifest, index, `--plots`, or obsolete test-slice actions to this package.
 - Before handoff after workflow edits, run
-  ``uv sync --no-install-project``,
+  ``uv sync --no-install-workspace``,
   ``uv run --no-sync python scripts/dev/bootstrap.py --dry-run`` and
-  ``uv run python scripts/dev/configure_jetbrains_project.py --check``.
+  ``uv run --no-sync python scripts/dev/configure_jetbrains_project.py --check``.
