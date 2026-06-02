@@ -53,6 +53,21 @@ exports provider-owned symbols only. The repo build helper also writes
 ``EPCSAFT_BUILD_PROFILE=provider`` into CMake cache so Ninja regeneration keeps
 the provider-only flags pinned instead of falling back to transition defaults.
 
+Package-specific source-checkout lanes have explicit direct-build profiles:
+
+.. code-block:: powershell
+
+   uv run python scripts/dev/build_epcsaft.py --profile equilibrium
+   uv run python scripts/dev/build_epcsaft.py --profile regression
+
+The ``equilibrium`` profile builds provider ``_core`` plus the
+``epcsaft-equilibrium`` package-owned native module with Ipopt enabled and
+Ceres/regression disabled. The ``regression`` profile builds provider ``_core``
+plus the ``epcsaft-regression`` package-owned native module with Ceres enabled
+and Ipopt/equilibrium disabled. These profiles are the Codex worktree setup
+lanes for package-scoped threads; the full source-checkout profile remains the
+cross-package native lane.
+
 Extension package build proof now has package-local entry points:
 
 .. code-block:: powershell
@@ -120,6 +135,12 @@ Keep the CMake dependency contract explicit and loud:
   checkout, but OFF is required for provider-only build/install proof.
 - ``EPCSAFT_ENABLE_CPPAD`` stays ON and unsupported when OFF.
 - ``EPCSAFT_ENABLE_IPOPT`` stays ON for Ipopt-capable source validation.
+- ``build_epcsaft.py --profile equilibrium`` is the equilibrium-native lane:
+  Ipopt ON, Ceres OFF, equilibrium native module ON, regression native module
+  OFF.
+- ``build_epcsaft.py --profile regression`` is the regression-native lane:
+  Ceres ON, Ipopt OFF, regression native module ON, equilibrium native module
+  OFF.
 - Vendored Ipopt builds are not supported by the package CMake project.
 - System Ipopt is supplied through ``EPCSAFT_IPOPT_ROOT`` or ``Ipopt_DIR``.
   On Windows, default discovery probes
@@ -173,6 +194,18 @@ CI lane names still separate different claims:
    A focused lane that runs ``uv run python scripts/dev/build_epcsaft.py
    --clean --profile provider`` and then checks that provider ``_core`` omits
    equilibrium and regression native symbols.
+
+``equilibrium-native worktree``
+   A package-scoped lane that runs ``uv run python
+   scripts/dev/build_epcsaft.py --profile equilibrium`` and then checks
+   ``uv run python scripts/dev/doctor.py --require-provider-sdk
+   --require-equilibrium-native``.
+
+``regression-native worktree``
+   A package-scoped lane that runs ``uv run python
+   scripts/dev/build_epcsaft.py --profile regression`` with the reusable Ceres
+   package when available and then checks ``uv run python scripts/dev/doctor.py
+   --require-provider-sdk --require-regression-native``.
 
 ``native CppAD derivative contract``
    A focused CppAD derivative lane for CppAD/autodiff derivative coverage. It should use

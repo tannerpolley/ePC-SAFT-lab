@@ -171,12 +171,29 @@ def _existing_transient_paths() -> tuple[str, ...]:
     return tuple(existing)
 
 
+def _is_stale_legacy_project_cpp_iml(path: Path) -> bool:
+    if path != IDEA_DIR / f"{LEGACY_PROVIDER_MODULE_NAME}.iml":
+        return False
+    try:
+        module_root = ET.parse(path).getroot()
+    except ET.ParseError:
+        return False
+    if module_root.tag != "module" or module_root.get("type") != "CPP_MODULE":
+        return False
+    manager = _find_child(module_root, "component", name="NewModuleRootManager")
+    if manager is None:
+        return False
+    return manager.find("content") is None
+
+
 def _existing_non_python_module_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
     for path in sorted(IDEA_DIR.glob("*.iml")):
         if path in {spec.iml_path for spec in CANONICAL_PYTHON_MODULES}:
             continue
         if not path.exists():
+            continue
+        if _is_stale_legacy_project_cpp_iml(path):
             continue
         try:
             module_root = ET.parse(path).getroot()
@@ -1114,6 +1131,8 @@ def _legacy_provider_cleanup() -> tuple[list[str], list[str], Path | None]:
     legacy_path = _legacy_provider_iml_path()
     if not legacy_path.exists():
         return [], [], None
+    if _is_stale_legacy_project_cpp_iml(legacy_path):
+        return [f"delete legacy provider module {legacy_path.relative_to(REPO_ROOT).as_posix()}"], [], legacy_path
     if not _is_owned_legacy_provider_iml(legacy_path):
         return [], [f"{legacy_path.relative_to(REPO_ROOT).as_posix()}: not deleting non-owned legacy provider module"], None
     return [f"delete legacy provider module {legacy_path.relative_to(REPO_ROOT).as_posix()}"], [], legacy_path

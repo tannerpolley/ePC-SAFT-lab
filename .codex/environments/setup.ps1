@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("Setup", "Smoke", "Sync", "IntelliJ", "Build", "Doctor", "DoctorFull")]
+    [ValidateSet("Setup", "Smoke", "ProviderNative", "EquilibriumNative", "RegressionNative", "FullNative", "Sync", "IntelliJ", "Build", "Doctor", "DoctorFull")]
     [string]$Step = "Setup"
 )
 

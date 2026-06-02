@@ -19,9 +19,33 @@ command = "uv sync --no-install-project"
 platform = "win32"
 
 [[actions]]
-name = "Environment Smoke"
+name = "Provider Smoke"
 icon = "inspect"
 command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Smoke"
+platform = "win32"
+
+[[actions]]
+name = "Provider Native"
+icon = "run"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ProviderNative"
+platform = "win32"
+
+[[actions]]
+name = "Equilibrium Native"
+icon = "run"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step EquilibriumNative"
+platform = "win32"
+
+[[actions]]
+name = "Regression Native"
+icon = "run"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step RegressionNative"
+platform = "win32"
+
+[[actions]]
+name = "Full Native"
+icon = "run"
+command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step FullNative"
 platform = "win32"
 
 [[actions]]

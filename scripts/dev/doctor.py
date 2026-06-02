@@ -189,6 +189,10 @@ def _extension_native_modules_available() -> bool:
     return all(_module_path(module)[0] is not None for module in EXTENSION_NATIVE_MODULES)
 
 
+def _native_module_available(state: dict[str, str]) -> bool:
+    return state["path"] != "<missing>" and state["error"] == "<none>"
+
+
 def _ipopt_root_provenance() -> tuple[str, str, str, str]:
     cache_root = _cmake_cache_value("EPCSAFT_IPOPT_ROOT")
     if cache_root and cache_root != "<unconfigured>":
@@ -251,6 +255,21 @@ def _parser() -> argparse.ArgumentParser:
         "--require-provider-sdk",
         action="store_true",
         help="Fail unless provider_native_sdk() exposes complete source/CMake SDK metadata.",
+    )
+    parser.add_argument(
+        "--require-provider-native",
+        action="store_true",
+        help="Fail unless provider epcsaft._core imports and exports required provider symbols.",
+    )
+    parser.add_argument(
+        "--require-equilibrium-native",
+        action="store_true",
+        help="Fail unless epcsaft-equilibrium package-owned native module imports.",
+    )
+    parser.add_argument(
+        "--require-regression-native",
+        action="store_true",
+        help="Fail unless epcsaft-regression package-owned native module imports.",
     )
     parser.add_argument(
         "--require-extension-native",
@@ -436,6 +455,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.require_provider_sdk and (provider_sdk_error is not None or provider_sdk_missing_paths):
         print("install_state: missing-provider-sdk")
         print("next_command: uv run python scripts\\dev\\build_dist.py --parallel 1")
+        return 1
+    if args.require_provider_native and not _native_module_available({"path": str(core_path), "error": core_error or "<none>"}):
+        print("install_state: missing-provider-native")
+        print("next_command: uv run python scripts\\dev\\build_epcsaft.py --profile provider")
+        return 1
+    if args.require_equilibrium_native and not _native_module_available(equilibrium_native_state):
+        print("install_state: missing-equilibrium-native")
+        print("next_command: uv run python scripts\\dev\\build_epcsaft.py --profile equilibrium")
+        return 1
+    if args.require_regression_native and not _native_module_available(regression_native_state):
+        print("install_state: missing-regression-native")
+        print("next_command: uv run python scripts\\dev\\build_epcsaft.py --profile regression")
         return 1
     if args.require_extension_native and not _extension_native_modules_available():
         print("install_state: missing-extension-native")

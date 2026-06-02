@@ -1,10 +1,25 @@
+---
+issue: 210
+title: "Add package-specific Codex worktree setup lanes"
+url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/210"
+state: "open"
+milestone: "M1 - Packages"
+project: "ePC-SAFT Roadmap"
+package: null
+capability: null
+backend: null
+readiness: "ready"
+release_target: null
+last_synced: "2026-06-01"
+---
+
 # Package-Specific Codex Worktree Setup Lanes
 
 Milestone: `M1 - Packages`
 Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/210`
 Status: `ready`
 Last synced: `2026-06-01`
-Local issue file: `docs/milestones/M1-packages/issues/package-specific-codex-worktree-setup-lanes.md`
+Local issue file: `docs/milestones/M1-packages/issues/0210-package-specific-codex-worktree-setup-lanes.md`
 
 ## Summary
 
@@ -14,7 +29,7 @@ repo should keep one shared Codex environment, but that environment should route
 threads through explicit provider, equilibrium, regression, and full-native
 setup profiles.
 
-The current `Environment Smoke` split is the baseline. This issue extends that
+The current `Provider Smoke` split is the baseline. This issue extends that
 model into package lanes and reusable Codex thread prompts so agents choose the
 right setup path before starting implementation work.
 
@@ -65,24 +80,24 @@ and workflow-docs issue.
 
 ## Acceptance Criteria
 
-- [ ] `.codex/environments/environment.toml` exposes provider, equilibrium,
+- [x] `.codex/environments/environment.toml` exposes provider, equilibrium,
   regression, and full-native setup actions with clear names.
-- [ ] `.codex/environments/setup.ps1` delegates profile behavior instead of owning
+- [x] `.codex/environments/setup.ps1` delegates profile behavior instead of owning
   growing package-specific logic.
-- [ ] `scripts/dev/bootstrap.py` or a dedicated helper can dry-run each package
+- [x] `scripts/dev/bootstrap.py` or a dedicated helper can dry-run each package
   lane and prints the exact commands it would execute.
-- [ ] `scripts/dev/doctor.py` supports package-specific strictness flags for
+- [x] `scripts/dev/doctor.py` supports package-specific strictness flags for
   provider native, equilibrium native, and regression native checks.
-- [ ] Fresh worktree smoke setup does not fail solely because equilibrium or
+- [x] Fresh worktree smoke setup does not fail solely because equilibrium or
   regression native modules are absent.
-- [ ] Equilibrium and regression setup lanes require only their own extension
+- [x] Equilibrium and regression setup lanes require only their own extension
   native module plus provider prerequisites, not the sibling extension module.
-- [ ] Full-native setup remains available for cross-package proof and requires both
+- [x] Full-native setup remains available for cross-package proof and requires both
   extension-native modules.
-- [ ] Reusable Codex thread prompts or launch guidance tell agents which lane to
+- [x] Reusable Codex thread prompts or launch guidance tell agents which lane to
   choose for M1/M3 provider, M4 equilibrium, M5 regression, and cross-package
   work.
-- [ ] Workflow tests guard the action list, profile dry-runs, Doctor strictness,
+- [x] Workflow tests guard the action list, profile dry-runs, Doctor strictness,
   and docs wording.
 
 ## Non-Goals
@@ -155,8 +170,10 @@ selection for each lane, and the fresh worktree smoke lane must be executed.
 - `scripts/dev/doctor.py`
 - `scripts/dev/build_epcsaft.py`
 - `scripts/dev/build_extension_dists.py`
+- `scripts/dev/configure_jetbrains_project.py`
 - `scripts/dev/jetbrains_run_manifest.py`
 - `docs/agents/new-agent-start-here.md`
+- `docs/milestones/M1-packages/issues/0210-package-specific-codex-worktree-setup-lanes.md`
 - `docs/pages/development_workflows.rst`
 - `docs/protocols/build_package_dependency_protocol.rst`
 - `tests/workflows/repo/test_workflow_entrypoints.py`
@@ -178,7 +195,7 @@ lane should require extension-native modules.
   "issue_source_policy": "local-main-sync",
   "target_repo": "ePC-SAFT/ePC-SAFT",
   "target_repo_root": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT",
-  "plan_file": "docs/milestones/M1-packages/issues/package-specific-codex-worktree-setup-lanes.md",
+  "plan_file": "docs/milestones/M1-packages/issues/0210-package-specific-codex-worktree-setup-lanes.md",
   "branch_policy": "create",
   "milestone_policy": "hard",
   "milestone_title": "M1 - Packages",
@@ -213,8 +230,10 @@ lane should require extension-native modules.
     "scripts/dev/doctor.py",
     "scripts/dev/build_epcsaft.py",
     "scripts/dev/build_extension_dists.py",
+    "scripts/dev/configure_jetbrains_project.py",
     "scripts/dev/jetbrains_run_manifest.py",
     "docs/agents/new-agent-start-here.md",
+    "docs/milestones/M1-packages/issues/0210-package-specific-codex-worktree-setup-lanes.md",
     "docs/pages/development_workflows.rst",
     "docs/protocols/build_package_dependency_protocol.rst",
     "tests/workflows/repo/test_workflow_entrypoints.py",
@@ -247,7 +266,7 @@ lane should require extension-native modules.
   "full_roadmap": "docs/milestones/PROJECT_CONTEXT.md",
   "full_roadmap_milestone_section": "Required milestones",
   "project_policy": "dashboard-only",
-  "plan_file": "docs/milestones/M1-packages/issues/package-specific-codex-worktree-setup-lanes.md",
+  "plan_file": "docs/milestones/M1-packages/issues/0210-package-specific-codex-worktree-setup-lanes.md",
   "required_checks_policy": "require-existing",
   "labels": ["type:task", "status:ready", "agent-ready", "area:build", "area:core", "area:equilibrium", "area:regression", "native"],
   "acceptance_criteria": [
@@ -287,8 +306,10 @@ lane should require extension-native modules.
     "scripts/dev/doctor.py",
     "scripts/dev/build_epcsaft.py",
     "scripts/dev/build_extension_dists.py",
+    "scripts/dev/configure_jetbrains_project.py",
     "scripts/dev/jetbrains_run_manifest.py",
     "docs/agents/new-agent-start-here.md",
+    "docs/milestones/M1-packages/issues/0210-package-specific-codex-worktree-setup-lanes.md",
     "docs/pages/development_workflows.rst",
     "docs/protocols/build_package_dependency_protocol.rst",
     "tests/workflows/repo/test_workflow_entrypoints.py",

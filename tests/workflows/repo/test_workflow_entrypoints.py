@@ -62,9 +62,18 @@ def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> No
         assert token in new_agent_start
     assert "--dry-run" in bootstrap
     assert "BASE_DOCTOR_COMMAND" in bootstrap
-    assert "STRICT_DOCTOR_COMMAND" in bootstrap
+    assert "PROVIDER_NATIVE_DOCTOR_COMMAND" in bootstrap
+    assert "EQUILIBRIUM_NATIVE_DOCTOR_COMMAND" in bootstrap
+    assert "REGRESSION_NATIVE_DOCTOR_COMMAND" in bootstrap
+    assert "FULL_NATIVE_DOCTOR_COMMAND" in bootstrap
+    assert "--require-provider-native" in bootstrap
+    assert "--require-equilibrium-native" in bootstrap
+    assert "--require-regression-native" in bootstrap
     assert 'if step == "smoke":' in bootstrap
-    assert 'if step == "doctorfull":' in bootstrap
+    assert 'if step == "provider-native":' in bootstrap
+    assert 'if step == "equilibrium-native":' in bootstrap
+    assert 'if step == "regression-native":' in bootstrap
+    assert 'if step == "full-native":' in bootstrap
     assert "bootstrap_state: current" in bootstrap
     assert "next_command:" in bootstrap
     assert "ipopt_sdk_root_source" in bootstrap
@@ -291,7 +300,11 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
 
     expected_env_actions = [
         "Sync Environment",
-        "Environment Smoke",
+        "Provider Smoke",
+        "Provider Native",
+        "Equilibrium Native",
+        "Regression Native",
+        "Full Native",
         "Doctor",
         "Doctor Full Native",
         "Build Native Extension",
@@ -307,20 +320,32 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         assert f"- `{action_name}`" in env_readme
     assert env_actions[0]["command"] == "uv sync --no-install-project"
     assert env_actions[1]["command"].endswith(".codex/environments/setup.ps1 -Step Smoke")
-    assert env_actions[2]["command"].endswith(".codex/environments/setup.ps1 -Step Doctor")
-    assert env_actions[3]["command"].endswith(".codex/environments/setup.ps1 -Step DoctorFull")
-    assert env_actions[4]["command"].endswith(".codex/environments/setup.ps1 -Step Build")
-    assert env_actions[5]["command"] == "uv run python scripts/dev/configure_jetbrains_project.py --check"
-    assert env_actions[6]["command"] == "uv run python scripts/dev/validate_project.py quick"
-    assert env_actions[7]["command"] == "uv run python scripts/dev/validate_project.py confidence"
-    assert env_actions[8]["command"] == "uv run python scripts/dev/validate_project.py docs"
-    assert env_actions[9]["command"] == "uv run python scripts/dev/build_dist.py"
+    assert env_actions[2]["command"].endswith(".codex/environments/setup.ps1 -Step ProviderNative")
+    assert env_actions[3]["command"].endswith(".codex/environments/setup.ps1 -Step EquilibriumNative")
+    assert env_actions[4]["command"].endswith(".codex/environments/setup.ps1 -Step RegressionNative")
+    assert env_actions[5]["command"].endswith(".codex/environments/setup.ps1 -Step FullNative")
+    assert env_actions[6]["command"].endswith(".codex/environments/setup.ps1 -Step Doctor")
+    assert env_actions[7]["command"].endswith(".codex/environments/setup.ps1 -Step DoctorFull")
+    assert env_actions[8]["command"].endswith(".codex/environments/setup.ps1 -Step Build")
+    assert env_actions[9]["command"] == "uv run python scripts/dev/configure_jetbrains_project.py --check"
+    assert env_actions[10]["command"] == "uv run python scripts/dev/validate_project.py quick"
+    assert env_actions[11]["command"] == "uv run python scripts/dev/validate_project.py confidence"
+    assert env_actions[12]["command"] == "uv run python scripts/dev/validate_project.py docs"
+    assert env_actions[13]["command"] == "uv run python scripts/dev/build_dist.py"
 
     assert 'name = "Build Native Extension (Bounded)"' not in env_toml
-    assert 'name = "Environment Smoke"' in env_toml
+    assert 'name = "Provider Smoke"' in env_toml
+    assert 'name = "Provider Native"' in env_toml
+    assert 'name = "Equilibrium Native"' in env_toml
+    assert 'name = "Regression Native"' in env_toml
+    assert 'name = "Full Native"' in env_toml
     assert 'name = "Doctor Full Native"' in env_toml
     assert 'name = "Check IntelliJ Contract"' in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Smoke" in env_toml
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ProviderNative" in env_toml
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step EquilibriumNative" in env_toml
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step RegressionNative" in env_toml
+    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step FullNative" in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step DoctorFull" in env_toml
     assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build" in env_toml
     assert "uv run python scripts/dev/configure_jetbrains_project.py --check" in env_toml
@@ -403,6 +428,11 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "Check IntelliJ Contract" in manifest
     assert "Sync Workspace Packages" in manifest
     assert "Check Package Imports" in manifest
+    assert "Provider Smoke" in manifest
+    assert "Provider Native" in manifest
+    assert "Equilibrium Native" in manifest
+    assert "Regression Native" in manifest
+    assert "Full Native" in manifest
     assert "Test Equilibrium Confidence" in manifest
     for removed_config in (
         "Association Goal 1+2 Tests",

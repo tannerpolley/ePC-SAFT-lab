@@ -17,7 +17,7 @@ lives in tracked Python code:
 uv run python scripts/dev/bootstrap.py
 ```
 
-Bootstrap runs the current worktree setup sequence:
+Bootstrap runs the full-native setup sequence:
 
 ```powershell
 uv sync --no-install-project
@@ -42,12 +42,23 @@ to ``PATH`` and ``EPCSAFT_RUNTIME_DLL_DIRS`` when a default SDK is available.
 Use ``uv run python scripts/dev/validate_project.py ceres-cppad`` when the task
 needs the focused Ceres regression/backend slice.
 
-Use `Environment Smoke` for a fresh Codex worktree check. It runs
+Use `Provider Smoke` for a fresh Codex worktree check. It runs
 `uv sync --no-install-project` followed by the lightweight provider/core Doctor:
 
 ```powershell
 uv run python scripts/dev/doctor.py --require-provider-sdk
 ```
+
+Use the package-native actions when a thread is scoped to one package lane:
+
+- `Provider Native` runs the provider-only native profile and requires provider
+  SDK plus provider `_core`.
+- `Equilibrium Native` runs the equilibrium native profile and requires only
+  provider prerequisites plus `epcsaft_equilibrium._native_core`.
+- `Regression Native` runs the regression native profile and requires only
+  provider prerequisites plus `epcsaft_regression._native_core`.
+- `Full Native` runs the transition source-checkout native profile and requires
+  both extension-owned native modules.
 
 Use `Doctor Full Native` after `Build Native Extension` or full setup when the
 equilibrium and regression extension-native modules are expected to import.
@@ -73,7 +84,11 @@ coordinated clean build repair before enabling this setup on an old checkout.
 The action list should stay lean and limited to the normal project workflow:
 
 - `Sync Environment`
-- `Environment Smoke`
+- `Provider Smoke`
+- `Provider Native`
+- `Equilibrium Native`
+- `Regression Native`
+- `Full Native`
 - `Doctor`
 - `Doctor Full Native`
 - `Build Native Extension`
