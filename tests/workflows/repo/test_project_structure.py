@@ -207,6 +207,7 @@ SUPERPOWERS_TEMPLATE_FILES = {
 }
 SUPERPOWERS_SPEC_FILES = {
     "PROJECT_CONTEXT.md",
+    "specs/2026-06-02-nested-agents-instruction-strategy-design.md",
     "specs/early-package-pr-gate-policy.md",
     "specs/milestone-tracker-hardening.md",
     "specs/monorepo-package-migration.md",
@@ -273,6 +274,43 @@ AGENTS_BANNED_PHRASES = {
     "Package boundary:",
     "Repo Owner Agents",
     "Routing Playbooks",
+}
+EXPECTED_NESTED_AGENT_FILES = {
+    "packages/epcsaft/AGENTS.md",
+    "packages/epcsaft-equilibrium/AGENTS.md",
+    "packages/epcsaft-regression/AGENTS.md",
+    "analyses/AGENTS.md",
+    "analyses/paper_validation/AGENTS.md",
+}
+EXPECTED_NESTED_AGENT_TOKENS = {
+    "packages/epcsaft/AGENTS.md": (
+        "core `epcsaft` provider package",
+        "Do not add equilibrium route assembly",
+        "Provider public derivatives must remain CppAD-backed",
+        "provider SDK",
+    ),
+    "packages/epcsaft-equilibrium/AGENTS.md": (
+        "`epcsaft-equilibrium`",
+        "Ipopt NLPs",
+        "pressure-transformed objective assembly",
+        "Do not expose declared-not-exposed route families",
+    ),
+    "packages/epcsaft-regression/AGENTS.md": (
+        "`epcsaft-regression`",
+        "Ceres residual blocks",
+        "Regression claims require native optimizer evidence",
+    ),
+    "analyses/AGENTS.md": (
+        "source-controlled scientific analyses",
+        "Separate data generation from rendering",
+        "Do not place analysis scripts in root `scripts/`",
+    ),
+    "analyses/paper_validation/AGENTS.md": (
+        "Paper-validation analyses",
+        "figures/figure_NN/source/",
+        "parameters/mixed/",
+        "Do not add nested dataset-name folders",
+    ),
 }
 
 
@@ -1754,6 +1792,30 @@ def test_agents_md_stays_a_short_tracked_repo_router() -> None:
     banned = sorted(phrase for phrase in AGENTS_BANNED_PHRASES if phrase in text)
     assert banned == []
     assert not re.search(r"[A-Za-z]:\\Users\\Tanner", text)
+
+
+def test_expected_nested_agents_files_are_present_and_scoped() -> None:
+    missing = sorted(
+        relpath for relpath in EXPECTED_NESTED_AGENT_FILES if not (REPO_ROOT / relpath).is_file()
+    )
+    assert missing == []
+
+    allowed = {"AGENTS.md", *EXPECTED_NESTED_AGENT_FILES}
+    actual = {
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in REPO_ROOT.rglob("AGENTS.md")
+        if ".git" not in path.parts
+    }
+    unexpected = sorted(actual - allowed)
+    assert unexpected == []
+
+    for relpath, tokens in EXPECTED_NESTED_AGENT_TOKENS.items():
+        text = (REPO_ROOT / relpath).read_text(encoding="utf-8")
+        missing_tokens = sorted(token for token in tokens if token not in text)
+        assert missing_tokens == [], relpath
+        assert not re.search(r"[A-Za-z]:\\Users\\Tanner", text)
+        assert "docs/superpowers/PROJECT_CONTEXT.md" not in text
+        assert "docs/agents/issue-tracker.md" not in text
 
 
 def test_issue_templates_set_native_issue_types_and_compatibility_labels() -> None:
