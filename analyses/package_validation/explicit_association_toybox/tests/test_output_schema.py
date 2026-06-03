@@ -10,6 +10,7 @@ from analyses.package_validation.explicit_association_toybox.scripts.closure_mod
 from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
 from analyses.package_validation.explicit_association_toybox.scripts.metrics import metric_row
 from analyses.package_validation.explicit_association_toybox.scripts.run_grid import run_grid
+from analyses.package_validation.explicit_association_toybox.scripts.summarize_results import summarize_rows
 
 
 REQUIRED_COLUMNS = {
@@ -98,3 +99,22 @@ def test_run_grid_writes_retained_csv(tmp_path: Path) -> None:
     assert np.isfinite(float(first_row["ares_hc"]))
     assert np.isfinite(float(first_row["ares_disp"]))
     assert np.isfinite(float(first_row["speedup_ratio"]))
+
+
+def test_summary_rows_preserve_total_ares_context(tmp_path: Path) -> None:
+    output = tmp_path / "closure_metrics.csv"
+    run_grid(output_path=output, system_names=("symmetric_2b_pure",), closure_names=("closure_2b_exact_reduction",))
+
+    rows = summarize_rows(output)
+
+    assert rows
+    row = rows[0]
+    assert {
+        "closure",
+        "row_count",
+        "max_ares_total_abs_error",
+        "max_ares_total_rel_error",
+        "max_ares_hc",
+        "max_ares_disp",
+    } <= set(row)
+    assert float(row["max_ares_total_abs_error"]) >= 0.0

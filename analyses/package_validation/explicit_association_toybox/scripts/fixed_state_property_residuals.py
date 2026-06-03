@@ -11,6 +11,7 @@ ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ANALYSIS_ROOT / "shared" / "source" / "public_saturation_properties.csv"
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "property_residuals" / "output" / "property_residuals.csv"
 DEFAULT_CASES = ANALYSIS_ROOT / "config" / "paper_systems.yaml"
+GAS_CONSTANT = 8.31446261815324
 
 
 ProviderEvaluator = Callable[[dict[str, object], dict[str, object]], dict[str, float]]
@@ -53,19 +54,32 @@ def fixed_state_property_residual_rows(
         rho_exp = float(row["rho_sat_liq_mol_m3"])
         p_calc = float(evaluated["provider_pressure_at_exp_density_Pa"])
         rho_calc = float(evaluated["provider_density_at_exp_pressure_mol_m3"])
+        temperature = float(row["T_K"])
+        pressure_residual = p_calc - p_exp
+        density_residual = rho_calc - rho_exp
+        z_exp = p_exp / (rho_exp * GAS_CONSTANT * temperature)
+        z_provider = p_calc / (rho_exp * GAS_CONSTANT * temperature)
         rows.append(
             {
                 "property_workflow": "fixed_state_saturation_property_residual",
                 "component": component,
-                "T_K": float(row["T_K"]),
+                "T_K": temperature,
                 "source_p_sat_Pa": p_exp,
                 "source_rho_sat_liq_mol_m3": rho_exp,
                 "provider_pressure_at_exp_density_Pa": p_calc,
                 "provider_density_at_exp_pressure_mol_m3": rho_calc,
-                "pressure_absolute_residual_Pa": p_calc - p_exp,
-                "pressure_relative_residual": (p_calc - p_exp) / max(abs(p_exp), 1.0),
-                "density_absolute_residual_mol_m3": rho_calc - rho_exp,
-                "density_relative_residual": (rho_calc - rho_exp) / max(abs(rho_exp), 1.0),
+                "pressure_absolute_residual_Pa": pressure_residual,
+                "pressure_relative_residual": pressure_residual / max(abs(p_exp), 1.0),
+                "density_absolute_residual_mol_m3": density_residual,
+                "density_relative_residual": density_residual / max(abs(rho_exp), 1.0),
+                "pressure_residual_pa": pressure_residual,
+                "pressure_residual_mpa": pressure_residual / 1_000_000.0,
+                "pressure_residual_rel": pressure_residual / max(abs(p_exp), 1.0),
+                "z_experimental": z_exp,
+                "z_provider": z_provider,
+                "z_residual_abs": abs(z_provider - z_exp),
+                "density_residual_abs": density_residual,
+                "density_residual_rel": density_residual / max(abs(rho_exp), 1.0),
                 "provider_ares_at_exp_density": float(evaluated["provider_ares_at_exp_density"]),
                 "phase": str(row.get("phase", "liquid")),
                 "source_url": str(row.get("source_url", "")),

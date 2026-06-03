@@ -40,7 +40,14 @@ def test_fixed_state_property_residual_rows_label_fixed_state_workflow() -> None
     assert row["property_workflow"] == "fixed_state_saturation_property_residual"
     assert row["component"] == "methanol"
     assert row["pressure_relative_residual"] == pytest.approx(0.25)
+    assert row["pressure_residual_pa"] == pytest.approx(1500.0)
+    assert row["pressure_residual_mpa"] == pytest.approx(0.0015)
+    assert row["pressure_residual_rel"] == pytest.approx(0.25)
     assert row["density_relative_residual"] == pytest.approx(-0.1)
+    assert row["density_residual_abs"] == pytest.approx(-2450.0)
+    assert row["density_residual_rel"] == pytest.approx(-0.1)
+    assert row["z_provider"] > row["z_experimental"]
+    assert row["z_residual_abs"] == pytest.approx(abs(row["z_provider"] - row["z_experimental"]))
     assert row["provider_ares_at_exp_density"] == pytest.approx(-1.5)
 
 

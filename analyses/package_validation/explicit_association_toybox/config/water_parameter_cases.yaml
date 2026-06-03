@@ -1,0 +1,15 @@
+cases:
+  - case_id: water_assigned_3b_provider_default
+    topology_id: hr_3b
+    parameter_source: provider_default
+    sigma_policy: provider_constant
+    temperature_range_k: [273.18, 647.10]
+    property_source: nist_webbook_public_saturation
+    comparison_role: fixed_state_diagnostic
+  - case_id: water_rigorous_4c_source_label_only
+    topology_id: hr_4c
+    parameter_source: source_label_only
+    sigma_policy: source_metadata_required
+    temperature_range_k: [273.18, 647.10]
+    property_source: nist_webbook_public_saturation
+    comparison_role: topology_reference

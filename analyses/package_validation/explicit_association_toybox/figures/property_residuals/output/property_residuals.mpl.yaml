@@ -5,8 +5,8 @@ title: Fixed-state saturation property residuals
 matplotlib:
   title: Fixed-state saturation property residuals
   x_label: Component and temperature
-  y_label: Absolute relative residual
-  y_scale: log
+  y_label: Pressure residual MPa and absolute Z residual
+  y_scale: mixed linear/log
 files:
   figure: property_residuals.png
   source_data: property_residuals_plotted_data.csv
