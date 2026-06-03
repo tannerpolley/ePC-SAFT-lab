@@ -1,8 +1,13 @@
 # Plans
 
-This folder stores implementation plans written from approved specs or issue
-mirrors. Plans should be executable by an agent and should name exact files,
-tasks, proof commands, and acceptance criteria.
+This folder stores active implementation plans written from approved specs or
+issue mirrors. Plans should be executable by an agent and should name exact
+files, tasks, proof commands, and acceptance criteria.
+
+After a plan is fully implemented and its durable behavior has moved into code,
+tests, ADRs, project context, or package docs, remove the completed plan from
+this folder. This directory should show the work that remains to be done, not
+the historical implementation log.
 
 New issue execution plans should use the GitHub issue creation date, owning
 milestone, and issue number:

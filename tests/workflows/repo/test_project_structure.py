@@ -215,12 +215,10 @@ SUPERPOWERS_SPEC_FILES = {
     "specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md",
     "specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md",
     "specs/2026-05-27-m4-equilibrium-gfpe-package-cleanup-plan.md",
-    "specs/2026-05-28-m1-packages-monorepo-package-migration.md",
     "specs/2026-05-29-m5-regression-regression-production-backlog.md",
     "specs/2026-05-29-m6-validation-validation-benchmark-backlog.md",
     "specs/2026-05-29-m7-release-release-downstream-backlog.md",
     "specs/2026-06-01-m4-equilibrium-move-equilibrium-objective-assembly-to-extension.md",
-    "specs/2026-06-02-m0-governance-nested-agents-instruction-strategy-design.md",
 }
 SUPERPOWERS_SPEC_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+\.md$")
 SUPERPOWERS_ISSUE_FILENAME_PATTERN = re.compile(

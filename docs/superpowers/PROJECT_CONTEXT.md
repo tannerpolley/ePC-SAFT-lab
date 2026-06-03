@@ -504,9 +504,13 @@ GoalBuddy/project discipline, and repo-wide process gates.
 
 Monorepo package layout, package ownership, test relocation, provider-only
 build proof, extension-native boundaries, and package CI/docs/release
-structure.
+structure. Historical source-consolidation specs are removed after completion;
+current package ownership is governed by ADR 0005, package-local instructions,
+and the active M1 issue set.
 
-- keep the monorepo package layout aligned with `docs/superpowers/specs/2026-05-28-m1-packages-monorepo-package-migration.md`
+- keep the monorepo package layout aligned with ADR 0005 and the current
+  `packages/epcsaft`, `packages/epcsaft-equilibrium`, and
+  `packages/epcsaft-regression` ownership boundaries
 - prove root `epcsaft` can build as a provider-only package
 - keep package-local tests under the package that owns the behavior
 - split extension-native ownership from provider `_core`
