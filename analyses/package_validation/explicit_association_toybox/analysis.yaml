@@ -6,6 +6,8 @@ package: epcsaft
 commands:
   generate_data: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/generate_data.py
   render_plots: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py
+  generate_residual_ares_data: uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/generate_data.py
+  render_residual_ares_plot: uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py
   tests: uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q
 outputs:
   figures: figures/<figure_id>/output

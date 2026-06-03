@@ -1,0 +1,7 @@
+closure,max_ares_total_rel_error,max_speedup_ratio
+closure_2b_exact_reduction,6.845102559427763e-10,460.6768470923065
+collapsed_donor_acceptor_mean_field,18.49401252244875,190.90586910529672
+explicit_damped_picard_unroll_3,0.008869936389497669,88.79841720004488
+explicit_damped_picard_unroll_5,0.0032471026354324445,231.04281495009045
+explicit_picard3_diag_newton1,0.0054457732858865454,214.02548728688774
+explicit_picard_unroll_1,0.017401737745051587,239.46434135056992
