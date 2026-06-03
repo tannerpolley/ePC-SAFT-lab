@@ -6,7 +6,15 @@ package: epcsaft
 commands:
   generate_data: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/generate_data.py
   render_plots: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py
+  generate_topology_matrix: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/generate_data.py
+  render_topology_matrix: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py
+  generate_timing_pareto: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/generate_data.py
+  render_timing_pareto: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/render_figure.py
+  fetch_public_property_sources: uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv
+  generate_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py
+  render_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py
   tests: uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q
 outputs:
   figures: figures/<figure_id>/output
+  sources: shared/source
   runs: figures/<figure_id>/output/runs

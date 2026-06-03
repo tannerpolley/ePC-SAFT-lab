@@ -1,0 +1,14 @@
+kind: matplotlib-figure
+version: 1
+plot_id: explicit_association_topology_validation_matrix
+title: Huang/Radosz topology validation matrix
+matplotlib:
+  title: Huang/Radosz topology validation matrix
+  x_label: Table VII topology
+  y_label: Max absolute relative association Helmholtz error
+  y_scale: symlog
+files:
+  figure: topology_validation_matrix.png
+  source_data: topology_validation_matrix_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py

@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: explicit_association_timing_pareto
+title: Association closure timing and error
+matplotlib:
+  title: Association closure timing and error
+  x_label: Median closure elapsed seconds
+  y_label: Max absolute relative association Helmholtz error
+  x_scale: log
+  y_scale: log
+files:
+  figure: timing_pareto.png
+  source_data: timing_pareto_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/render_figure.py

@@ -1,0 +1,14 @@
+kind: matplotlib-figure
+version: 1
+plot_id: explicit_association_fixed_state_property_residuals
+title: Fixed-state saturation property residuals
+matplotlib:
+  title: Fixed-state saturation property residuals
+  x_label: Component and temperature
+  y_label: Absolute relative residual
+  y_scale: log
+files:
+  figure: property_residuals.png
+  source_data: property_residuals_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py
