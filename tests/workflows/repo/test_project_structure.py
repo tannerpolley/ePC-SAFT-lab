@@ -198,6 +198,10 @@ MILESTONE_FRONT_MATTER_FIELDS = {
     "backend",
     "readiness",
     "release_target",
+    "source_spec",
+    "source_plan",
+    "afk_hitl",
+    "branch",
     "last_synced",
 }
 SUPERPOWERS_TEMPLATE_FILES = {
@@ -219,6 +223,12 @@ SUPERPOWERS_SPEC_FILES = {
     "specs/2026-06-02-m0-governance-nested-agents-instruction-strategy-design.md",
 }
 SUPERPOWERS_SPEC_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+\.md$")
+SUPERPOWERS_ISSUE_FILENAME_PATTERN = re.compile(
+    r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+-issue-\d{4}-[a-z0-9-]+\.md$"
+)
+SUPERPOWERS_PLAN_FILENAME_PATTERN = re.compile(
+    r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+-(?:issue-\d{4}-)?[a-z0-9-]+-plan\.md$"
+)
 SUPERPOWERS_REGISTRY_FILES = {
     "milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
 }
@@ -1707,6 +1717,9 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
     bad_spec_names = sorted(name for name in spec_files if not SUPERPOWERS_SPEC_FILENAME_PATTERN.fullmatch(name))
     assert bad_spec_names == []
     assert (project_root / "plans" / "README.md").is_file()
+    plan_files = sorted(path.name for path in (project_root / "plans").glob("*.md") if path.name != "README.md")
+    bad_plan_names = sorted(name for name in plan_files if not SUPERPOWERS_PLAN_FILENAME_PATTERN.fullmatch(name))
+    assert bad_plan_names == []
     missing_registries = sorted(
         path for path in SUPERPOWERS_REGISTRY_FILES if not (project_root / path).is_file()
     )
@@ -1725,13 +1738,33 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
         assert set(fields) == MILESTONE_FRONT_MATTER_FIELDS
         issue = fields["issue"]
         assert isinstance(issue, int)
-        assert path.name.startswith(f"{issue:04d}-")
+        assert SUPERPOWERS_ISSUE_FILENAME_PATTERN.fullmatch(path.name)
+        assert f"issue-{issue:04d}-" in path.name
         assert fields["url"] == f"https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue}"
         assert fields["state"] == "open"
         assert fields["project"] == "ePC-SAFT Roadmap"
         assert fields["milestone"] in set(MILESTONE_MIRROR_FOLDERS.values())
+        milestone_folder = next(folder for folder, title in MILESTONE_MIRROR_FOLDERS.items() if title == fields["milestone"])
+        assert f"-{milestone_folder.lower()}-issue-" in path.name
         assert not str(fields["title"]).startswith("[Blocked]")
+        source_spec = Path(str(fields["source_spec"]))
+        source_plan = Path(str(fields["source_plan"]))
+        assert source_spec.as_posix().startswith("docs/superpowers/specs")
+        assert source_plan.as_posix().startswith("docs/superpowers/plans")
+        assert (REPO_ROOT / source_spec).is_file(), str(source_spec)
+        assert (REPO_ROOT / source_plan).is_file(), str(source_plan)
+        assert fields["afk_hitl"] in {"AFK", "HITL"}
+        assert str(fields["branch"]).startswith(f"codex/issue-{issue:04d}-")
         assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
+        text = path.read_text(encoding="utf-8")
+        for token in (
+            "GitHub Issue:",
+            "Source Plan:",
+            "AFK/HITL:",
+            "## Acceptance Criteria",
+            "## Proof Oracle",
+        ):
+            assert token in text, f"{_workspace_rel(path)} missing {token}"
 
 
 def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:

@@ -1,0 +1,70 @@
+---
+issue: 190
+title: "M4: admit associating GFPE through exact derivative proof gates"
+url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/190"
+state: "open"
+milestone: "M4 - Equilibrium"
+project: "ePC-SAFT Roadmap"
+package: "equilibrium"
+capability: "lle"
+backend: "Ipopt"
+readiness: "blocked"
+release_target: "equilibrium-0.x"
+source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md"
+source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates-plan.md"
+afk_hitl: "HITL"
+branch: codex/issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates
+last_synced: "2026-06-02"
+---
+
+# Admit associating GFPE through exact derivative proof gates
+
+GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/190
+Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md
+Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates-plan.md
+Branch: codex/issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates
+AFK/HITL: HITL
+
+GitHub remains authoritative for state, labels, Project fields, comments,
+dependency edges, and PR linkage. This mirror exists so `project-resolve` can
+start from a durable local source plan.
+
+## Summary
+
+Admit associating GFPE only after the exact-derivative and associating-route proof gates are satisfied, preserving the blocked relationship from associating LLE to its prerequisites.
+
+## Supplemental Context
+
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
+- `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md`
+
+## Acceptance Criteria
+
+- [ ] Associating route admission requires exact association derivative evidence appropriate to the tested association configuration.
+- [ ] Approximate explicit association closures remain labeled approximate and are not accepted as exact production proof.
+- [ ] Associating GFPE diagnostics distinguish EOS closure, derivative, solver, and postsolve certification failures.
+- [ ] Capability evidence names the exact associating configurations proven.
+
+## Proof Oracle
+
+- Run focused associating EOS/derivative tests required by the gate.
+- Run focused associating equilibrium package tests.
+- Run docs validation.
+
+## Non-Goals And Boundaries
+
+- No approximate association closure as production exact proof.
+- No broad associating LLE claim from a single narrow fixture.
+- No electrolyte/reactive admission.
+
+## Tracker Metadata
+
+- Milestone: `M4 - Equilibrium`
+- Package: `equilibrium`
+- Capability: `lle`
+- Backend: `Ipopt`
+- Readiness: `blocked`
+- AFK/HITL: `HITL`
+- Release target: `equilibrium-0.x`
+- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`

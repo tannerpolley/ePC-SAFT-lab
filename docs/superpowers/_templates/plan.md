@@ -14,7 +14,10 @@
 
 - Source Spec: `<docs/superpowers/specs/... or none>`
 - Source Issue: `<docs/superpowers/issues/... or none>`
+- Source Plan: `<this docs/superpowers/plans/... file>`
+- GitHub Issue: `<https://github.com/ePC-SAFT/ePC-SAFT/issues/... or none>`
 - Milestone: `<GitHub milestone>`
+- AFK/HITL: `<AFK or HITL>`
 
 ## Acceptance Criteria
 

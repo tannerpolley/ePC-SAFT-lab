@@ -398,7 +398,7 @@
   If validation finds wording drift in the nested instructions or structure test, commit only those scoped fixes:
 
   ```powershell
-  git add AGENTS.md analyses packages tests/workflows/repo/test_project_structure.py docs/superpowers/plans/2026-06-02-nested-agents-instruction-strategy-plan.md
+  git add AGENTS.md analyses packages tests/workflows/repo/test_project_structure.py docs/superpowers/plans/2026-06-02-m0-governance-nested-agents-instruction-strategy-plan.md
   git commit -m "docs: finalize nested agent instruction strategy"
   ```
 

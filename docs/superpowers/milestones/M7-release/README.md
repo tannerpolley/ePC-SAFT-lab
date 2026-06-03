@@ -14,4 +14,4 @@ docs, and no private downstream workarounds.
 
 | Issue | Package | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#195](../../issues/0195-re-open-downstream-install-pypi-and-migration-proof-backlog.md) | `downstream` | - | `needs design` | Re-open downstream install, PyPI, and migration proof backlog. |
+| [#195](../../issues/2026-05-30-m7-release-issue-0195-re-open-downstream-install-pypi-and-migration-proof-backlog.md) | `downstream` | `-` | `needs design` | Re-open downstream install, PyPI, and migration proof backlog. |

@@ -14,4 +14,4 @@ CppAD/implicit sensitivities, and provider-only capability claims.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#161](../../issues/0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md) | `eos` | `analytic` | `needs design` | Design explicit PC-SAFT association-site closures for EOS evaluation. |
+| [#161](../../issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md) | `eos` | `analytic` | `needs design` | Design explicit PC-SAFT association-site closures for EOS evaluation. |
