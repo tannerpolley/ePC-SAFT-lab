@@ -7,6 +7,11 @@ from analyses.package_validation.explicit_association_toybox.scripts.pcsaft_inpu
     ToyPCSAFTState,
     state_from_config,
 )
+from analyses.package_validation.explicit_association_toybox.scripts.hard_chain import (
+    ares_hc,
+    ares_hs,
+    hard_chain_state,
+)
 
 
 def test_state_from_config_validates_component_shapes() -> None:
@@ -60,3 +65,38 @@ def test_state_from_config_rejects_non_normalized_composition() -> None:
             component_count=2,
             composition=np.array([0.25, 0.70]),
         )
+
+
+def test_hard_chain_reduces_to_hard_sphere_for_monomer() -> None:
+    state = ToyPCSAFTState(
+        temperature=303.15,
+        density=0.01,
+        composition=np.array([1.0]),
+        segments=np.array([1.0]),
+        sigma=np.array([3.0]),
+        epsilon_over_k=np.array([200.0]),
+        k_ij=np.array([[0.0]]),
+    )
+    hc = hard_chain_state(state)
+
+    assert hc.eta > 0.0
+    assert ares_hc(state, hc) == pytest.approx(ares_hs(hc))
+
+
+def test_hard_chain_returns_finite_scalar_for_binary_state() -> None:
+    state = state_from_config(
+        {
+            "temperature": 303.15,
+            "density": 0.01,
+            "segments": [2.0, 1.0],
+            "sigma": [3.0, 3.5],
+            "epsilon_over_k": [200.0, 150.0],
+            "k_ij": [[0.0, 0.0], [0.0, 0.0]],
+        },
+        component_count=2,
+        composition=np.array([0.5, 0.5]),
+    )
+    value = ares_hc(state, hard_chain_state(state))
+
+    assert np.isfinite(value)
+    assert value > 0.0
