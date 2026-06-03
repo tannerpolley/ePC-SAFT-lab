@@ -65,6 +65,11 @@ Single-context repo; read root `CONTEXT.md`, `docs/superpowers/PROJECT_CONTEXT.m
 ## Validation And Handoff
 
 - Validate in proportion to risk and report skipped validation clearly.
+- When creating or updating plots, figures, or visual analysis artifacts, the
+  final chat/handoff must render every new or updated plot inline with absolute
+  filesystem paths and include a compact Markdown table summarizing the real
+  retained data behind the plot. Do not describe plots only in prose. If a plot
+  cannot be rendered, report the exact path and blocker.
 - Keep user-facing docs updated when public API behavior, install/build/test workflow, package layout, or capability claims change.
 - Before handoff, review `git status --short` and do not leave your own tracked changes unstaged or uncommitted unless the user requested that.
 - Run the repo cleanup hook before reporting completion:
