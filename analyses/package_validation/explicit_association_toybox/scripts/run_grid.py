@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import numpy as np
@@ -13,13 +13,27 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
     from analyses.package_validation.explicit_association_toybox.scripts.association_models import AssociationSystem
     from analyses.package_validation.explicit_association_toybox.scripts.closure_models import evaluate_closure
+    from analyses.package_validation.explicit_association_toybox.scripts.dispersion import (
+        ares_disp as dispersion_ares,
+    )
+    from analyses.package_validation.explicit_association_toybox.scripts.dispersion import (
+        mixed_dispersion_moments,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
+    from analyses.package_validation.explicit_association_toybox.scripts.hard_chain import ares_hc as hard_chain_ares
+    from analyses.package_validation.explicit_association_toybox.scripts.hard_chain import hard_chain_state
     from analyses.package_validation.explicit_association_toybox.scripts.metrics import metric_row, timed_closure
+    from analyses.package_validation.explicit_association_toybox.scripts.pcsaft_inputs import state_from_config
 else:
     from .association_models import AssociationSystem
     from .closure_models import evaluate_closure
+    from .dispersion import ares_disp as dispersion_ares
+    from .dispersion import mixed_dispersion_moments
     from .exact_baseline import solve_exact_site_fractions
+    from .hard_chain import ares_hc as hard_chain_ares
+    from .hard_chain import hard_chain_state
     from .metrics import metric_row, timed_closure
+    from .pcsaft_inputs import state_from_config
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "closure_accuracy" / "output" / "closure_metrics.csv"
@@ -70,15 +84,32 @@ def run_grid(
         if not isinstance(raw_system_config, dict):
             raise ValueError(f"{system_name} must be a mapping.")
         system = _system_from_config(raw_system_config)
+        pcsaft_config = raw_system_config.get("pcsaft")
+        if not isinstance(pcsaft_config, Mapping):
+            raise ValueError(f"{system_name} must define a pcsaft mapping.")
         for composition_values in raw_system_config["composition_grid"]:
             composition = np.array(composition_values, dtype=float)
             for density in raw_system_config["density_grid"]:
                 for strength in raw_system_config["strength_grid"]:
                     delta = system.delta_matrix(float(strength))
-                    exact = solve_exact_site_fractions(
-                        density=float(density),
-                        x_assoc=system.x_assoc(composition),
-                        delta=delta,
+                    exact, exact_elapsed = timed_closure(
+                        lambda density=float(density), composition=composition, delta=delta: solve_exact_site_fractions(
+                            density=density,
+                            x_assoc=system.x_assoc(composition),
+                            delta=delta,
+                        )
+                    )
+                    pcsaft_state = state_from_config(
+                        pcsaft_config,
+                        component_count=system.component_count,
+                        composition=composition,
+                    )
+                    hc_state = hard_chain_state(pcsaft_state)
+                    ares_hc_value = hard_chain_ares(pcsaft_state, hc_state)
+                    ares_disp_value = dispersion_ares(
+                        pcsaft_state,
+                        hc_state,
+                        mixed_dispersion_moments(pcsaft_state),
                     )
                     for closure_config in closures:
                         closure_name = str(closure_config["name"])
@@ -107,6 +138,11 @@ def run_grid(
                                 closure=closure,
                                 thresholds=thresholds,
                                 elapsed_seconds=elapsed,
+                                exact_elapsed_seconds=exact_elapsed,
+                                temperature=pcsaft_state.temperature,
+                                pcsaft_density=pcsaft_state.density,
+                                ares_hc=ares_hc_value,
+                                ares_disp=ares_disp_value,
                             )
                         )
     if not rows:
