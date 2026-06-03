@@ -35,7 +35,13 @@ Capture the explicit PC-SAFT association-site closure derivation as later EOS-pr
 
 ## Supplemental Context
 
-- none
+- Related paper-backed validation design:
+  `docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`.
+- Huang/Radosz topology source markdown:
+  `docs/papers/md/ePC-SAFT-Literature/Huang and Radosz - 1990 - Equation of State for Small, Large, Polydisperse, and Associating Molecules.md`.
+- Any provider closure admission path should use the validation matrix to avoid
+  treating the first synthetic toybox grids as sufficient real 2B/3B/4C
+  evidence.
 
 ## Acceptance Criteria
 

@@ -15,10 +15,13 @@
 Source spec:
 
 - `docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-toybox-design.md`
+- Related follow-up spec:
+  `docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`
 
 Issue mirror:
 
-- None yet. This plan is ready for `$project-issue` if the work should be tracked before execution.
+- `docs/superpowers/issues/2026-06-03-m3-eos-issue-0216-add-hc-and-dispersion-context-to-the-explicit-association-toybox.md`
+- GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/216`
 
 Milestone and package ownership:
 
@@ -40,6 +43,9 @@ Reference evidence:
 - No SciPy import or dependency.
 - No provider native cross-check as a required baseline for the Python formulas.
 - No broad analysis folder migration. Preserve the current toybox `figures/<figure_id>/output` convention already recorded in `analysis.yaml`.
+- No full paper-backed topology matrix, real vapor-pressure/liquid-density
+  parity workflow, or production evidence claim for 2B/3B/4C closures. Those
+  belong to the related validation-matrix spec and a separate later plan.
 
 ## File Map
 

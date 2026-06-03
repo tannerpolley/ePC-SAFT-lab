@@ -53,6 +53,13 @@ beside the existing association-only closure metrics.
 This stays under `analyses/package_validation/explicit_association_toybox/**`.
 It is analysis code, not package runtime code.
 
+This issue remains a narrow scalar-context slice. The broader drawing-board
+validation direction is
+`docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`,
+which adds Huang/Radosz topology rows, real association scheme matrices, and a
+staged property-data lane. Do not expand this issue into that whole matrix
+without a separate plan/issue.
+
 ## Acceptance Criteria
 
 - [ ] Add fixed-state neutral PC-SAFT input helpers for `T`, `rho`, `x`, `m`, `sigma`, `epsilon_over_k`, and optional `k_ij` under the explicit association toybox.
@@ -80,6 +87,8 @@ It is analysis code, not package runtime code.
 - No pressure, fugacity, activity, chemical-potential, derivative, Jacobian, Hessian, equilibrium, regression, ionic, Born, dielectric, polar, or public package API work.
 - No provider native cross-check as the primary Python formula baseline.
 - No broad analysis folder migration.
+- No full paper-backed topology matrix, real vapor-pressure/liquid-density
+  parity workflow, or 2B/3B/4C production evidence claim.
 
 ## Tracker Metadata
 

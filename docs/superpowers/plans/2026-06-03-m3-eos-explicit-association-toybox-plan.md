@@ -13,6 +13,7 @@
 ## Intake
 
 - Source Spec: `docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-toybox-design.md`
+- Related follow-up spec: `docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`
 - Source Issue: none yet.
 - Milestone Linkage: `M3 - EOS` primary; possible later `M6 - Validation` if retained grids become benchmark evidence.
 - Package Boundary: analysis-only under `analyses/package_validation`; no `packages/epcsaft/**` runtime edits.
@@ -40,6 +41,9 @@
 - Do not expose new public `epcsaft` APIs.
 - Do not create equilibrium route prototypes.
 - Do not add Gross/Sadowski paper snapshots in this first implementation.
+- Do not add the full Huang/Radosz/Gross paper-backed topology matrix in this
+  first implementation; that belongs to the related validation-matrix spec and
+  a separate later plan.
 - Do not use SciPy in committed analysis runtime code.
 - Do not claim exact PC-SAFT production behavior from approximate closures.
 
