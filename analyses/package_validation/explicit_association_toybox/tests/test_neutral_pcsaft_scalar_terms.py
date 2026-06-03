@@ -12,6 +12,11 @@ from analyses.package_validation.explicit_association_toybox.scripts.hard_chain 
     ares_hs,
     hard_chain_state,
 )
+from analyses.package_validation.explicit_association_toybox.scripts.dispersion import (
+    ares_disp,
+    dispersion_polynomials,
+    mixed_dispersion_moments,
+)
 
 
 def test_state_from_config_validates_component_shapes() -> None:
@@ -100,3 +105,34 @@ def test_hard_chain_returns_finite_scalar_for_binary_state() -> None:
 
     assert np.isfinite(value)
     assert value > 0.0
+
+
+def test_dispersion_polynomials_match_pure_monomer_leading_coefficients() -> None:
+    polynomials = dispersion_polynomials(m_bar=1.0, eta=0.05)
+
+    assert polynomials.a[0] == pytest.approx(0.9105631445)
+    assert polynomials.b[0] == pytest.approx(0.7240946941)
+    assert np.isfinite(polynomials.i1)
+    assert np.isfinite(polynomials.i2)
+    assert np.isfinite(polynomials.c1)
+
+
+def test_dispersion_returns_negative_finite_scalar() -> None:
+    state = state_from_config(
+        {
+            "temperature": 303.15,
+            "density": 0.01,
+            "segments": [2.0, 1.0],
+            "sigma": [3.0, 3.5],
+            "epsilon_over_k": [200.0, 150.0],
+            "k_ij": [[0.0, 0.0], [0.0, 0.0]],
+        },
+        component_count=2,
+        composition=np.array([0.5, 0.5]),
+    )
+    hc = hard_chain_state(state)
+    moments = mixed_dispersion_moments(state)
+    value = ares_disp(state, hc, moments)
+
+    assert np.isfinite(value)
+    assert value < 0.0
