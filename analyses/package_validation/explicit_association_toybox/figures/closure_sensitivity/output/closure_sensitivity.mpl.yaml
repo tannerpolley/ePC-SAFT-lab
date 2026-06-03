@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: explicit_association_closure_sensitivity
+title: Explicit association closure sensitivity ranking
+matplotlib:
+  title: Explicit association closure sensitivity ranking
+  x_label: Median elapsed seconds
+  y_label: Max association ares relative error
+  x_scale: log
+  y_scale: log
+files:
+  figure: closure_sensitivity.png
+  source_data: closure_sensitivity_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/render_figure.py

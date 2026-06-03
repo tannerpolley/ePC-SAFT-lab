@@ -10,8 +10,16 @@ analysis code, not package runtime code.
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/render_figure.py`
 - `uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py`

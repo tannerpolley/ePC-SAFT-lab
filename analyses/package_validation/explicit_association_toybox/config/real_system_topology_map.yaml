@@ -1,0 +1,49 @@
+systems:
+  - system_id: acid_1
+    source_paper: Huang and Radosz 1990 Table VIII
+    component_family: carboxylic_acid
+    representative_components: [acetic_acid]
+    assigned_topology: hr_1
+    rigorous_topology: hr_1
+    parameter_source_status: source_family_assignment
+    validation_role: exact_topology_reference
+  - system_id: alkanol_2b
+    source_paper: Huang and Radosz 1990 Table VIII
+    component_family: alkanol
+    representative_components: [methanol, ethanol]
+    assigned_topology: hr_2b
+    rigorous_topology: hr_2b
+    parameter_source_status: source_family_assignment
+    validation_role: provider_default_screen
+  - system_id: water_3b_assigned_4c_rigorous
+    source_paper: Huang and Radosz 1990 Table VIII
+    component_family: water
+    representative_components: [water]
+    assigned_topology: hr_3b
+    rigorous_topology: hr_4c
+    parameter_source_status: assigned_topology_screen_with_rigorous_reference
+    validation_role: water_topology_sensitivity
+  - system_id: primary_amine_3b
+    source_paper: Huang and Radosz 1990 Table VIII
+    component_family: primary_amine
+    representative_components: [methylamine]
+    assigned_topology: hr_3b
+    rigorous_topology: hr_3b
+    parameter_source_status: source_family_assignment
+    validation_role: nitrogen_family_screen
+  - system_id: secondary_amine_2b
+    source_paper: Huang and Radosz 1990 Table VIII
+    component_family: secondary_amine
+    representative_components: [dimethylamine]
+    assigned_topology: hr_2b
+    rigorous_topology: hr_2b
+    parameter_source_status: source_family_assignment
+    validation_role: nitrogen_family_screen
+  - system_id: gross_methanol_cyclohexane_2b
+    source_paper: Gross and Sadowski 2001 associating binary examples
+    component_family: alkanol_nonassociating_binary
+    representative_components: [methanol, cyclohexane]
+    assigned_topology: hr_2b
+    rigorous_topology: hr_2b
+    parameter_source_status: literature_binary_example
+    validation_role: binary_association_screen

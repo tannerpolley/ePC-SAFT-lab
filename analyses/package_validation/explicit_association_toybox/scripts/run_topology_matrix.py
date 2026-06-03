@@ -40,7 +40,9 @@ DEFAULT_CLOSURES = (
 TOPOLOGY_MATRIX_COLUMNS = (
     "system",
     "paper_topology_type",
+    "topology_id",
     "closure",
+    "closure_name",
     "association_model",
     "association_closure",
     "exact_derivative_of",
@@ -54,19 +56,23 @@ TOPOLOGY_MATRIX_COLUMNS = (
     "derivation_relationship",
     "density",
     "strength",
+    "rho_delta",
     "composition",
     "max_abs_x_error",
     "max_rel_x_error",
     "mass_residual_inf",
+    "mass_action_residual_inf",
     "assoc_helmholtz_exact",
     "assoc_helmholtz_closure",
     "assoc_helmholtz_abs_error",
     "assoc_helmholtz_rel_error",
+    "ares_assoc_rel_error",
     "assoc_compressibility_abs_error",
     "assoc_mu_abs_error",
     "assoc_fugacity_abs_error",
     "exact_iteration_count",
     "exact_residual_norm",
+    "exact_implicit_elapsed_seconds",
     "closure_elapsed_seconds",
     "evidence_band",
 )
@@ -93,10 +99,12 @@ def run_topology_matrix(
         for density in densities:
             for strength in strengths:
                 delta = system.delta_matrix(strength)
-                exact = solve_exact_site_fractions(
-                    density=density,
-                    x_assoc=system.x_assoc(composition),
-                    delta=delta,
+                exact, exact_elapsed = timed_closure(
+                    lambda density=density, composition=composition, delta=delta: solve_exact_site_fractions(
+                        density=density,
+                        x_assoc=system.x_assoc(composition),
+                        delta=delta,
+                    )
                 )
                 reduction = evaluate_topology_reduction(topology_type, density=density, strength=strength)
                 rows.append(
@@ -112,6 +120,7 @@ def run_topology_matrix(
                             closure=reduction.as_closure_result(),
                             thresholds=thresholds,
                             elapsed_seconds=0.0,
+                            exact_elapsed_seconds=exact_elapsed,
                         ),
                         topology_type=topology_type,
                         source_formula_family=reduction.source_formula_family,
@@ -145,10 +154,11 @@ def run_topology_matrix(
                                 composition=composition,
                                 delta=delta,
                                 exact=exact,
-                                closure=closure,
-                                thresholds=thresholds,
-                                elapsed_seconds=elapsed,
-                            ),
+                            closure=closure,
+                            thresholds=thresholds,
+                            elapsed_seconds=elapsed,
+                            exact_elapsed_seconds=exact_elapsed,
+                        ),
                             topology_type=topology_type,
                             source_formula_family="repo_derivation",
                             source_formula_id=str(closure_name),
@@ -194,6 +204,12 @@ def _metadata_row(
     row.update(
         {
             "paper_topology_type": topology_type,
+            "topology_id": f"hr_{topology_type.lower()}",
+            "closure_name": str(row["closure"]),
+            "rho_delta": float(f"{float(row['density']) * float(row['strength']):.12g}"),
+            "mass_action_residual_inf": row["mass_residual_inf"],
+            "ares_assoc_rel_error": row["assoc_helmholtz_rel_error"],
+            "exact_implicit_elapsed_seconds": row["exact_elapsed_seconds"],
             "source_formula_family": source_formula_family,
             "source_formula_id": source_formula_id,
             "derivation_family": derivation_family,

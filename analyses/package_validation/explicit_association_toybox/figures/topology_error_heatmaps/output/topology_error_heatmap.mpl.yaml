@@ -1,0 +1,14 @@
+kind: matplotlib-figure
+version: 1
+plot_id: explicit_association_topology_error_heatmap
+title: Topology-resolved explicit association closure error
+matplotlib:
+  title: Topology-resolved explicit association closure error
+  x_label: Huang/Radosz topology
+  y_label: rho * Delta
+  color_scale: log
+files:
+  figure: topology_error_heatmap.png
+  source_data: topology_error_heatmap_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py

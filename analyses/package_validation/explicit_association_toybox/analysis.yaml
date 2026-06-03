@@ -8,13 +8,23 @@ commands:
   render_plots: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py
   generate_topology_matrix: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/generate_data.py
   render_topology_matrix: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py
+  generate_topology_error_heatmaps: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/generate_data.py
+  render_topology_error_heatmaps: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py
+  generate_closure_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/generate_data.py
+  render_closure_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/render_figure.py
+  generate_derivative_smoothness: uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/generate_data.py
+  render_derivative_smoothness: uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/render_figure.py
   generate_timing_pareto: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/generate_data.py
   render_timing_pareto: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/render_figure.py
+  generate_timing_repeatability: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/generate_data.py
+  render_timing_repeatability: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/render_figure.py
   fetch_public_property_sources: uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv
   generate_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py
   render_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py
   generate_residual_ares_data: uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/generate_data.py
   render_residual_ares_plot: uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py
+  list_real_system_topology_map: uv run python -m analyses.package_validation.explicit_association_toybox.scripts.real_system_topology_map
+  list_water_parameter_cases: uv run python -m analyses.package_validation.explicit_association_toybox.scripts.water_parameter_cases
   tests: uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q
 outputs:
   figures: figures/<figure_id>/output
