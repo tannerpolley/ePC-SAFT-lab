@@ -13,21 +13,21 @@
 ## Intake
 
 - Source Spec: `docs/superpowers/specs/2026-06-02-m0-governance-nested-agents-instruction-strategy-design.md`
-- Source Issue: none yet
+- Source Issue: none; completed through the quick implementation path.
 - Milestone: `M0 - Governance`
 - TDD Policy: Required for the structure guard.
 - Completion Sub-Skill: Use `superpowers:verification-before-completion` before claiming the issue complete.
 
 ## Acceptance Criteria
 
-- [ ] `packages/epcsaft/AGENTS.md` exists and contains provider-only instructions for EOS/state/parameter/native SDK work.
-- [ ] `packages/epcsaft-equilibrium/AGENTS.md` exists and contains equilibrium route, Ipopt, GFPE, solver-status, and derivative-assembly instructions.
-- [ ] `packages/epcsaft-regression/AGENTS.md` exists and contains regression/Ceres/target-dataset instructions.
-- [ ] `analyses/AGENTS.md` exists and contains reproducible analysis artifact-layout instructions.
-- [ ] `analyses/paper_validation/AGENTS.md` exists and contains the paper-validation exception layout from `docs/pages/project_structure.rst`.
-- [ ] `tests/workflows/repo/test_project_structure.py` fails if any expected nested instruction file is missing, if extra nested `AGENTS.md` files appear outside the approved set, or if nested instructions contain machine-local user paths.
-- [ ] `tests/workflows/repo/test_project_structure.py` tracks the source spec under `docs/superpowers/specs`.
-- [ ] Public package APIs, native code, capability claims, and runtime behavior are unchanged.
+- [x] `packages/epcsaft/AGENTS.md` exists and contains provider-only instructions for EOS/state/parameter/native SDK work.
+- [x] `packages/epcsaft-equilibrium/AGENTS.md` exists and contains equilibrium route, Ipopt, GFPE, solver-status, and derivative-assembly instructions.
+- [x] `packages/epcsaft-regression/AGENTS.md` exists and contains regression/Ceres/target-dataset instructions.
+- [x] `analyses/AGENTS.md` exists and contains reproducible analysis artifact-layout instructions.
+- [x] `analyses/paper_validation/AGENTS.md` exists and contains the paper-validation exception layout from `docs/pages/project_structure.rst`.
+- [x] `tests/workflows/repo/test_project_structure.py` fails if any expected nested instruction file is missing, if extra nested `AGENTS.md` files appear outside the approved set, or if nested instructions contain machine-local user paths.
+- [x] `tests/workflows/repo/test_project_structure.py` tracks the source spec under `docs/superpowers/specs`.
+- [x] Public package APIs, native code, capability claims, and runtime behavior are unchanged.
 
 ## Non-Goals
 
@@ -54,7 +54,7 @@
 - Modify: `tests/workflows/repo/test_project_structure.py`
 - Test: `tests/workflows/repo/test_project_structure.py`
 
-- [ ] **Step 1: Register the nested instruction set and source spec**
+- [x] **Step 1: Register the nested instruction set and source spec**
 
   Add the spec to `SUPERPOWERS_SPEC_FILES`, and add exact nested instruction expectations near `AGENTS_BANNED_PHRASES`:
 
@@ -111,7 +111,7 @@
   }
   ```
 
-- [ ] **Step 2: Add the failing nested-AGENTS test**
+- [x] **Step 2: Add the failing nested-AGENTS test**
 
   Add this test after `test_agents_md_stays_a_short_tracked_repo_router`:
 
@@ -140,7 +140,7 @@
           assert "docs/agents/issue-tracker.md" not in text
   ```
 
-- [ ] **Step 3: Run the structure test and verify the expected failure**
+- [x] **Step 3: Run the structure test and verify the expected failure**
 
   Run:
 
@@ -150,7 +150,7 @@
 
   Expected: FAIL with the five missing nested `AGENTS.md` files.
 
-- [ ] **Step 4: Commit the red test**
+- [x] **Step 4: Commit the red test**
 
   ```powershell
   git add tests/workflows/repo/test_project_structure.py
@@ -165,7 +165,7 @@
 - Create: `packages/epcsaft-regression/AGENTS.md`
 - Test: `tests/workflows/repo/test_project_structure.py`
 
-- [ ] **Step 1: Create the provider package instruction file**
+- [x] **Step 1: Create the provider package instruction file**
 
   Write `packages/epcsaft/AGENTS.md`:
 
@@ -195,7 +195,7 @@
   - `uv run python scripts/dev/build_epcsaft.py --clean --profile provider`
   ```
 
-- [ ] **Step 2: Create the equilibrium package instruction file**
+- [x] **Step 2: Create the equilibrium package instruction file**
 
   Write `packages/epcsaft-equilibrium/AGENTS.md`:
 
@@ -224,7 +224,7 @@
   - `uv run python run_pytest.py --equilibrium-debug -q -s packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_bubble_pressure_uses_trusted_cppad_ipopt_route`
   ```
 
-- [ ] **Step 3: Create the regression package instruction file**
+- [x] **Step 3: Create the regression package instruction file**
 
   Write `packages/epcsaft-regression/AGENTS.md`:
 
@@ -248,7 +248,7 @@
   - `uv run python scripts/dev/validate_project.py regression`
   ```
 
-- [ ] **Step 4: Run the nested-AGENTS test**
+- [x] **Step 4: Run the nested-AGENTS test**
 
   Run:
 
@@ -258,7 +258,7 @@
 
   Expected: FAIL with only `analyses/AGENTS.md` and `analyses/paper_validation/AGENTS.md` missing.
 
-- [ ] **Step 5: Commit package instructions**
+- [x] **Step 5: Commit package instructions**
 
   ```powershell
   git add packages/epcsaft/AGENTS.md packages/epcsaft-equilibrium/AGENTS.md packages/epcsaft-regression/AGENTS.md
@@ -272,7 +272,7 @@
 - Create: `analyses/paper_validation/AGENTS.md`
 - Test: `tests/workflows/repo/test_project_structure.py`
 
-- [ ] **Step 1: Create the analysis workflow instruction file**
+- [x] **Step 1: Create the analysis workflow instruction file**
 
   Write `analyses/AGENTS.md`:
 
@@ -298,7 +298,7 @@
   tests. Do not turn downstream metrics into package APIs.
   ```
 
-- [ ] **Step 2: Create the paper-validation instruction file**
+- [x] **Step 2: Create the paper-validation instruction file**
 
   Write `analyses/paper_validation/AGENTS.md`:
 
@@ -321,7 +321,7 @@
   conclusions remain analysis output, not package capability claims.
   ```
 
-- [ ] **Step 3: Run the nested-AGENTS test**
+- [x] **Step 3: Run the nested-AGENTS test**
 
   Run:
 
@@ -331,7 +331,7 @@
 
   Expected: PASS.
 
-- [ ] **Step 4: Commit analysis instructions**
+- [x] **Step 4: Commit analysis instructions**
 
   ```powershell
   git add analyses/AGENTS.md analyses/paper_validation/AGENTS.md tests/workflows/repo/test_project_structure.py
@@ -344,7 +344,7 @@
 - Modify: none expected beyond files from Tasks 1-3
 - Test: `tests/workflows/repo/test_project_structure.py`
 
-- [ ] **Step 1: Confirm the tracked `AGENTS.md` set**
+- [x] **Step 1: Confirm the tracked `AGENTS.md` set**
 
   Run:
 
@@ -363,7 +363,7 @@
   packages/epcsaft-regression/AGENTS.md
   ```
 
-- [ ] **Step 2: Run the focused structure tests**
+- [x] **Step 2: Run the focused structure tests**
 
   Run:
 
@@ -373,7 +373,7 @@
 
   Expected: PASS.
 
-- [ ] **Step 3: Run quick validation**
+- [x] **Step 3: Run quick validation**
 
   Run:
 
@@ -383,7 +383,7 @@
 
   Expected: PASS.
 
-- [ ] **Step 4: Run the cleanup hook**
+- [x] **Step 4: Run the cleanup hook**
 
   Run:
 
@@ -393,7 +393,7 @@
 
   Expected: no leftover processes owned by this repo task.
 
-- [ ] **Step 5: Commit any final validation-only documentation adjustments**
+- [x] **Step 5: Commit any final validation-only documentation adjustments**
 
   If validation finds wording drift in the nested instructions or structure test, commit only those scoped fixes:
 
