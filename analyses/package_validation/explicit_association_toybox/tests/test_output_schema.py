@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 
 import numpy as np
@@ -18,12 +19,25 @@ REQUIRED_COLUMNS = {
     "exact_derivative_of",
     "density",
     "strength",
+    "temperature",
+    "pcsaft_density",
+    "ares_hc",
+    "ares_disp",
+    "ares_assoc_exact",
+    "ares_assoc_closure",
+    "ares_total_exact",
+    "ares_total_closure",
+    "ares_total_abs_error",
+    "ares_total_rel_error",
     "max_abs_x_error",
     "mass_residual_inf",
     "assoc_helmholtz_abs_error",
     "assoc_compressibility_abs_error",
     "assoc_mu_abs_error",
     "assoc_fugacity_abs_error",
+    "exact_elapsed_seconds",
+    "closure_elapsed_seconds",
+    "speedup_ratio",
     "evidence_band",
 }
 
@@ -74,3 +88,13 @@ def test_run_grid_writes_retained_csv(tmp_path: Path) -> None:
     text = output.read_text(encoding="utf-8")
     assert "system,closure," in text
     assert "symmetric_2b_pure,closure_2b_exact_reduction" in text
+    assert "ares_hc" in text
+    assert "ares_disp" in text
+    assert "ares_total_abs_error" in text
+    assert "speedup_ratio" in text
+    with output.open("r", encoding="utf-8", newline="") as handle:
+        first_row = next(csv.DictReader(handle))
+    assert float(first_row["pcsaft_density"]) > 0.0
+    assert np.isfinite(float(first_row["ares_hc"]))
+    assert np.isfinite(float(first_row["ares_disp"]))
+    assert np.isfinite(float(first_row["speedup_ratio"]))

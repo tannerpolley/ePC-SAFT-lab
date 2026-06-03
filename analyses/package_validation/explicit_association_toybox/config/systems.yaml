@@ -7,6 +7,14 @@ systems:
     active_pairs:
       - [0, 1]
       - [1, 0]
+    pcsaft:
+      temperature: 303.15
+      density: 0.01
+      segments: [2.0]
+      sigma: [3.0]
+      epsilon_over_k: [200.0]
+      k_ij:
+        - [0.0]
     composition_grid:
       - [1.0]
     density_grid: [0.001, 0.01, 0.05, 0.1]
@@ -19,6 +27,15 @@ systems:
     active_pairs:
       - [0, 1]
       - [1, 0]
+    pcsaft:
+      temperature: 303.15
+      density: 0.01
+      segments: [2.0, 1.0]
+      sigma: [3.0, 3.5]
+      epsilon_over_k: [200.0, 150.0]
+      k_ij:
+        - [0.0, 0.0]
+        - [0.0, 0.0]
     composition_grid:
       - [0.95, 0.05]
       - [0.50, 0.50]
@@ -37,6 +54,15 @@ systems:
       - [3, 0]
       - [2, 1]
       - [1, 2]
+    pcsaft:
+      temperature: 303.15
+      density: 0.01
+      segments: [2.0, 1.0]
+      sigma: [3.0, 3.5]
+      epsilon_over_k: [200.0, 150.0]
+      k_ij:
+        - [0.0, 0.0]
+        - [0.0, 0.0]
     composition_grid:
       - [0.8, 0.2]
       - [0.5, 0.5]

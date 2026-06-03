@@ -1,0 +1,14 @@
+kind: matplotlib-figure
+version: 1
+plot_id: explicit_association_total_residual_ares_error
+title: Explicit association total residual Helmholtz error
+matplotlib:
+  title: Explicit association total residual Helmholtz error
+  x_label: Closure
+  y_label: Max relative total ares error
+  y_scale: symlog
+files:
+  figure: residual_ares_error_summary.png
+  source_data: residual_ares_error_summary_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py

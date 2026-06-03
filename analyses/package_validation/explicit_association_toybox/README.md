@@ -15,6 +15,8 @@ analysis code, not package runtime code.
 - `uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py`
 - `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q`
 
 ## Boundary
@@ -22,6 +24,9 @@ analysis code, not package runtime code.
 The analysis may import NumPy, Matplotlib, and existing package APIs. It must
 not add provider C++, public API, equilibrium, regression, or dependency
 behavior.
+
+HC and dispersion are scalar fixed-state context terms for total `ares`
+comparison. They do not solve density, pressure, or phase roots.
 
 Huang/Radosz Table VII rows are treated as exact topology reductions only under
 their stated site-interaction assumptions. Closure A is equivalent only for the
