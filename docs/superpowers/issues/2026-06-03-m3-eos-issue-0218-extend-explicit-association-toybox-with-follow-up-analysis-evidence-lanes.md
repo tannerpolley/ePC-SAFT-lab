@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "epcsaft"
 capability: "explicit-association-toybox"
 backend: null
-readiness: "blocked"
+readiness: "ready"
 source_spec: "docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-follow-up-analysis-roadmap.md"
 source_plan: "docs/superpowers/plans/2026-06-03-m3-eos-explicit-association-follow-up-analysis-roadmap-plan.md"
 afk_hitl: "AFK"
@@ -25,8 +25,8 @@ Issue Type: task
 Source Spec: docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-follow-up-analysis-roadmap.md
 Source Plan: docs/superpowers/plans/2026-06-03-m3-eos-explicit-association-follow-up-analysis-roadmap-plan.md
 Classification: AFK
-Labels: status:blocked, type:task, area:core, area:derivatives, validation
-Goal Command: /goal Extend the explicit association toybox with topology heatmaps, real-system topology mapping, closure sensitivity rankings, derivative-smoothness diagnostics, fixed-state property residual reframing, water parameter cases, repeated timing, and total ares context once issue #216 has landed.
+Labels: status:ready, agent-ready, type:task, area:core, area:derivatives, validation
+Goal Command: /goal Extend the explicit association toybox with topology heatmaps, real-system topology mapping, closure sensitivity rankings, derivative-smoothness diagnostics, fixed-state property residual reframing, water parameter cases, repeated timing, and total ares context.
 Execution Mode: Ask at runtime
 Worktree Policy: Native Codex worktree thread first
 Integration Policy: Worker PR reviewed by main thread
@@ -39,7 +39,7 @@ AFK/HITL: AFK
 
 GitHub remains authoritative for state, labels, Project fields, dependencies,
 comments, and PR linkage. This mirror exists so `project-resolve` can start
-from the durable local source plan once the blocker is closed.
+from the durable local source plan.
 
 ## Project Merge
 
@@ -66,7 +66,7 @@ evidence lanes identified from the first matrix results:
   residuals;
 - water parameter cases that record source and diameter policy;
 - repeated timing summaries with median/spread statistics;
-- total neutral `ares` context through the issue #216 HC/dispersion lane.
+- total neutral `ares` context through the merged issue #216 HC/dispersion lane.
 
 This is an analysis evidence issue. It does not admit a production closure or
 change package public behavior.
@@ -87,7 +87,8 @@ change package public behavior.
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/216
+- None. The previous blocker, https://github.com/ePC-SAFT/ePC-SAFT/issues/216,
+  closed through https://github.com/ePC-SAFT/ePC-SAFT/pull/217.
 
 ## Non-goals
 
@@ -121,8 +122,8 @@ change package public behavior.
 - Package: `epcsaft`
 - Capability: `explicit-association-toybox`
 - Backend: none
-- Readiness: `blocked`
+- Readiness: `ready`
 - AFK/HITL: `AFK`
-- Blocked by: `#216`
+- Blocked by: none
 - Release target: none
-- Labels: `status:blocked, type:task, area:core, area:derivatives, validation`
+- Labels: `status:ready, agent-ready, type:task, area:core, area:derivatives, validation`

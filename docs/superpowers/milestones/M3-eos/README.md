@@ -15,9 +15,11 @@ CppAD/implicit sensitivities, and provider-only capability claims.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#161](../../issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md) | `eos` | `analytic` | `needs design` | Design explicit PC-SAFT association-site closures for EOS evaluation. |
+| [#218](../../issues/2026-06-03-m3-eos-issue-0218-extend-explicit-association-toybox-with-follow-up-analysis-evidence-lanes.md) | `explicit-association-toybox` | `none` | `ready` | Extend explicit association toybox with follow-up analysis evidence lanes. |
 
 ## Recently Closed
 
 | Issue | PR | Capability | Backend | Summary |
 | --- | --- | --- | --- | --- |
 | [#214](https://github.com/ePC-SAFT/ePC-SAFT/issues/214) | [#215](https://github.com/ePC-SAFT/ePC-SAFT/pull/215) | `eos` | `analytic` | Built Python toybox for explicit association closure accuracy. |
+| [#216](https://github.com/ePC-SAFT/ePC-SAFT/issues/216) | [#217](https://github.com/ePC-SAFT/ePC-SAFT/pull/217) | `explicit-association-toybox` | `none` | Added hard-chain and dispersion context to the explicit association toybox. |
