@@ -1,0 +1,7 @@
+closure,max_assoc_helmholtz_rel_error
+closure_2b_exact_reduction,1.86518413773051e-09
+collapsed_donor_acceptor_mean_field,18.998100360089826
+explicit_damped_picard_unroll_3,0.00886997463975986
+explicit_damped_picard_unroll_5,0.003247116638072567
+explicit_picard3_diag_newton1,0.005445796769962066
+explicit_picard_unroll_1,0.017401812787419663

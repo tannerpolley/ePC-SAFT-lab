@@ -64,6 +64,7 @@ ANALYSIS_ROOTS = {
     "dielectric_fits": REPO_ROOT / "analyses" / "data_validation" / "dielectric_fits",
     "miac_fits": REPO_ROOT / "analyses" / "data_validation" / "miac_fits",
     "osmotic_validation": REPO_ROOT / "analyses" / "data_validation" / "osmotic_validation",
+    "explicit_association_toybox": REPO_ROOT / "analyses" / "package_validation" / "explicit_association_toybox",
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
 }
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
