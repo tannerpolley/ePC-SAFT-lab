@@ -1,0 +1,45 @@
+systems:
+  symmetric_2b_pure:
+    description: Pure symmetric donor-acceptor 2B system.
+    component_count: 1
+    site_component_index: [0, 0]
+    site_kind: [D, A]
+    active_pairs:
+      - [0, 1]
+      - [1, 0]
+    composition_grid:
+      - [1.0]
+    density_grid: [0.001, 0.01, 0.05, 0.1]
+    strength_grid: [0.1, 1.0, 10.0, 50.0]
+  one_assoc_one_inert:
+    description: One associating component diluted by one inert component.
+    component_count: 2
+    site_component_index: [0, 0]
+    site_kind: [D, A]
+    active_pairs:
+      - [0, 1]
+      - [1, 0]
+    composition_grid:
+      - [0.95, 0.05]
+      - [0.50, 0.50]
+      - [0.05, 0.95]
+    density_grid: [0.001, 0.01, 0.05, 0.1]
+    strength_grid: [0.1, 1.0, 10.0, 50.0]
+  full_matrix_four_site:
+    description: Four-site synthetic full-matrix association stress case.
+    component_count: 2
+    site_component_index: [0, 0, 1, 1]
+    site_kind: [D, A, D, A]
+    active_pairs:
+      - [0, 1]
+      - [1, 0]
+      - [0, 3]
+      - [3, 0]
+      - [2, 1]
+      - [1, 2]
+    composition_grid:
+      - [0.8, 0.2]
+      - [0.5, 0.5]
+      - [0.2, 0.8]
+    density_grid: [0.001, 0.01, 0.05]
+    strength_grid: [0.1, 1.0, 10.0]

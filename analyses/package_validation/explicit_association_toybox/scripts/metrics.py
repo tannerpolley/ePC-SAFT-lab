@@ -1,0 +1,94 @@
+from __future__ import annotations
+
+import time
+from collections.abc import Callable, Mapping
+from typing import TypeVar
+
+import numpy as np
+
+from .association_models import AssociationSystem, association_helmholtz, mass_action_residual
+from .closure_models import ClosureResult
+from .exact_baseline import ExactAssociationResult
+
+T = TypeVar("T")
+
+
+def classify_evidence_band(
+    *,
+    closure: ClosureResult,
+    max_abs_x_error: float,
+    mass_residual_inf: float,
+    assoc_helmholtz_rel_error: float,
+    thresholds: Mapping[str, float],
+) -> str:
+    if closure.association_model == "implicit_exact" and max_abs_x_error <= 1.0e-10 and mass_residual_inf <= 1.0e-10:
+        return "exact_reduction_verified"
+    if not np.isfinite(mass_residual_inf) or np.any(closure.xa <= 0.0) or np.any(closure.xa > 1.0):
+        return "reject_for_provider_path"
+    reference = float(thresholds.get("thermodynamic_relative_reference", 0.03))
+    loose_residual = float(thresholds.get("mass_residual_loose", 1.0e-6))
+    if assoc_helmholtz_rel_error <= reference and mass_residual_inf <= loose_residual:
+        return "promising_eos_approximation"
+    return "diagnostic_only"
+
+
+def metric_row(
+    *,
+    system_name: str,
+    system: AssociationSystem,
+    density: float,
+    strength: float,
+    composition: np.ndarray,
+    delta: np.ndarray,
+    exact: ExactAssociationResult,
+    closure: ClosureResult,
+    thresholds: Mapping[str, float],
+    elapsed_seconds: float | None = None,
+) -> dict[str, object]:
+    residual = mass_action_residual(closure.xa, density=density, x_assoc=system.x_assoc(composition), delta=delta)
+    exact_a = association_helmholtz(exact.xa, composition, system.site_component_index)
+    closure_a = association_helmholtz(closure.xa, composition, system.site_component_index)
+    abs_a = abs(closure_a - exact_a)
+    rel_a = abs_a / max(abs(exact_a), 1.0e-14)
+    max_abs_x = float(np.max(np.abs(closure.xa - exact.xa)))
+    mass_residual_inf = float(np.linalg.norm(residual, ord=np.inf))
+    band = classify_evidence_band(
+        closure=closure,
+        max_abs_x_error=max_abs_x,
+        mass_residual_inf=mass_residual_inf,
+        assoc_helmholtz_rel_error=float(rel_a),
+        thresholds=thresholds,
+    )
+    return {
+        "system": system_name,
+        "closure": closure.name,
+        "association_model": closure.association_model,
+        "association_closure": closure.association_closure,
+        "exact_derivative_of": closure.exact_derivative_of,
+        "information_loss": closure.information_loss,
+        "density": density,
+        "strength": strength,
+        "composition": ";".join(f"{value:.12g}" for value in composition),
+        "max_abs_x_error": max_abs_x,
+        "max_rel_x_error": float(
+            np.max(np.abs(closure.xa - exact.xa) / np.maximum(np.abs(exact.xa), 1.0e-14))
+        ),
+        "mass_residual_inf": mass_residual_inf,
+        "assoc_helmholtz_exact": exact_a,
+        "assoc_helmholtz_closure": closure_a,
+        "assoc_helmholtz_abs_error": abs_a,
+        "assoc_helmholtz_rel_error": float(rel_a),
+        "assoc_compressibility_abs_error": np.nan,
+        "assoc_mu_abs_error": np.nan,
+        "assoc_fugacity_abs_error": np.nan,
+        "exact_iteration_count": exact.iteration_count,
+        "exact_residual_norm": exact.residual_norm,
+        "closure_elapsed_seconds": elapsed_seconds if elapsed_seconds is not None else np.nan,
+        "evidence_band": band,
+    }
+
+
+def timed_closure(callable_obj: Callable[[], T]) -> tuple[T, float]:
+    start = time.perf_counter()
+    result = callable_obj()
+    return result, time.perf_counter() - start

@@ -1,0 +1,12 @@
+analysis_id: explicit_association_toybox
+title: Explicit association closure toybox
+kind: package_validation
+status: active
+package: epcsaft
+commands:
+  generate_data: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/generate_data.py
+  render_plots: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py
+  tests: uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q
+outputs:
+  figures: figures/<figure_id>/output
+  runs: figures/<figure_id>/output/runs
