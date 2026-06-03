@@ -1,0 +1,13 @@
+sources:
+  - component: methanol
+    source_name: nist_chemistry_webbook
+    nist_id: C67561
+    temperature_low_K: 273.15
+    temperature_high_K: 293.15
+    temperature_increment_K: 10.0
+  - component: water
+    source_name: nist_chemistry_webbook
+    nist_id: C7732185
+    temperature_low_K: 273.15
+    temperature_high_K: 293.15
+    temperature_increment_K: 10.0

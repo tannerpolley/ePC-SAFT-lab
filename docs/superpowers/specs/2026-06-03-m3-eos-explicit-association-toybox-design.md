@@ -21,6 +21,13 @@ only so association-closure comparisons can report total `ares` differences.
 They are not a density solver, property package, public API, or general-purpose
 PC-SAFT implementation.
 
+This first toybox slice is not the full validation strategy. The broader
+paper-backed follow-up design lives at
+`docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`.
+That spec adds Huang/Radosz topology formulas, real association scheme rows,
+timing matrices, and a staged property-data lane. Use it before claiming that
+the synthetic toybox grids cover real 2B/3B/4C association behavior.
+
 ## Project Context Evidence Used
 
 - Verified: `docs/superpowers/PROJECT_CONTEXT.md` names the explicit
@@ -58,6 +65,9 @@ PC-SAFT implementation.
   `ares_hc`, `ares_disp`, `ares_assoc`, and total `ares`; it also imports
   SciPy optimizers, so it is reference material only for this repo's
   NumPy-first toybox.
+- Verified: `docs/papers/md/ePC-SAFT-Literature/Huang and Radosz - 1990 - Equation of State for Small, Large, Polydisperse, and Associating Molecules.md`
+  is the paper-backed topology source for future matrix coverage of 1, 2A,
+  2B, 3A, 3B, 4A, 4B, and 4C association schemes.
 
 ## User Decisions
 

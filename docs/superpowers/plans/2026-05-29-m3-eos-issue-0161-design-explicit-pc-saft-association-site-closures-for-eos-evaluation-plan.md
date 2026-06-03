@@ -24,6 +24,10 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 - GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/161`
 - Milestone: `M3 - EOS`
 - AFK/HITL: `HITL`
+- Related validation design:
+  `docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`
+- Huang/Radosz topology source:
+  `docs/papers/md/ePC-SAFT-Literature/Huang and Radosz - 1990 - Equation of State for Small, Large, Polydisperse, and Associating Molecules.md`
 
 ## Acceptance Criteria
 
@@ -51,6 +55,8 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 
 - [ ] Confirm GitHub issue #161 is still `needs design` and verify blocker/design state before code changes.
 - [ ] Read the source spec, issue mirror, GitHub issue, and milestone README.
+- [ ] Read the related paper-backed validation matrix spec before claiming
+      topology coverage or real 2B/3B/4C evidence.
 - [ ] Confirm candidate file ownership and reject unrelated package or milestone scope.
 - [ ] Select the smallest validation slice that proves the issue behavior.
 

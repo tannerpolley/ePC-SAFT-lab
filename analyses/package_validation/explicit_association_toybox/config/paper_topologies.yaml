@@ -1,0 +1,111 @@
+source:
+  paper: Huang and Radosz 1990
+  table: Table VII
+  source_formula_family: huang_radosz_table_vii
+topologies:
+  "1":
+    source_formula_id: huang_radosz_table_vii_1
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [D]
+    active_pairs:
+      - [0, 0]
+    topology_gate: one equivalent self-associating site; delta_AA nonzero
+  2A:
+    source_formula_id: huang_radosz_table_vii_2a
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [D, A]
+    active_pairs:
+      - [0, 0]
+      - [0, 1]
+      - [1, 0]
+      - [1, 1]
+    topology_gate: two equivalent sites with every pair interaction active and equal
+  2B:
+    source_formula_id: huang_radosz_table_vii_2b
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [D, A]
+    active_pairs:
+      - [0, 1]
+      - [1, 0]
+    topology_gate: two donor-acceptor sites with only unlike interactions active and equal
+  3A:
+    source_formula_id: huang_radosz_table_vii_3a
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [D, A, A]
+    active_pairs:
+      - [0, 0]
+      - [0, 1]
+      - [0, 2]
+      - [1, 0]
+      - [1, 1]
+      - [1, 2]
+      - [2, 0]
+      - [2, 1]
+      - [2, 2]
+    topology_gate: three equivalent sites with every pair interaction active and equal
+  3B:
+    source_formula_id: huang_radosz_table_vii_3b
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [A, A, D]
+    active_pairs:
+      - [0, 2]
+      - [2, 0]
+      - [1, 2]
+      - [2, 1]
+    topology_gate: two equivalent acceptor-like sites and one donor-like site; only AC and BC active
+  4A:
+    source_formula_id: huang_radosz_table_vii_4a
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [D, D, A, A]
+    active_pairs:
+      - [0, 0]
+      - [0, 1]
+      - [0, 2]
+      - [0, 3]
+      - [1, 0]
+      - [1, 1]
+      - [1, 2]
+      - [1, 3]
+      - [2, 0]
+      - [2, 1]
+      - [2, 2]
+      - [2, 3]
+      - [3, 0]
+      - [3, 1]
+      - [3, 2]
+      - [3, 3]
+    topology_gate: four equivalent sites with every pair interaction active and equal
+  4B:
+    source_formula_id: huang_radosz_table_vii_4b
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [A, A, A, D]
+    active_pairs:
+      - [0, 3]
+      - [3, 0]
+      - [1, 3]
+      - [3, 1]
+      - [2, 3]
+      - [3, 2]
+    topology_gate: three equivalent acceptor-like sites and one donor-like site; only AD, BD, and CD active
+  4C:
+    source_formula_id: huang_radosz_table_vii_4c
+    derivation_family: topology_reduction
+    comparison_role: exact_topology_reduction
+    site_kind: [A, A, D, D]
+    active_pairs:
+      - [0, 2]
+      - [2, 0]
+      - [0, 3]
+      - [3, 0]
+      - [1, 2]
+      - [2, 1]
+      - [1, 3]
+      - [3, 1]
+    topology_gate: two equivalent acceptor-like and two donor-like sites; only cross-class interactions active

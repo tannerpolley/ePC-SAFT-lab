@@ -62,10 +62,20 @@ plan.
 Primary local references:
 
 - `docs/latex/equations.tex`
-- `docs/papers/md/Gross, Sadowski - 2002 - Application of the PC-SAFT equation of state to associating systems.md`
-- `docs/papers/md/Huang and Radosz - 1990 - Equation of State for Small, Large, Polydisperse, and Associating Molecules.md`
+- `docs/papers/md/ePC-SAFT-Literature/Gross, Sadowski - 2002 - Application of the PC-SAFT equation of state to associating systems.md`
+- `docs/papers/md/ePC-SAFT-Literature/Huang and Radosz - 1990 - Equation of State for Small, Large, Polydisperse, and Associating Molecules.md`
 - `docs/papers/md/Chapman et al. - 1989 - SAFT Equation-of-state solution model for associating fluids.md`
 - `docs/papers/md/Chapman et al. - 1990 - Phase Equilibria in Polymer-Liquid 1-Liquid 2 Systems.md`
+
+Related validation design:
+
+- `docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md`
+
+The validation-matrix spec extends this derivation policy with a paper-backed
+analysis design for Huang/Radosz topology formulas, Gross/Sadowski associating
+systems, closure timing, and fixed-state `ares` error comparisons. Do not treat
+the first synthetic toybox grids as sufficient evidence for production
+association-closure admission.
 
 ## Exact Association Model
 
