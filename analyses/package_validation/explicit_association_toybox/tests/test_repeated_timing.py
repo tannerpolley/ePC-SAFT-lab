@@ -9,9 +9,9 @@ def test_summarize_repeated_timings_reports_spread_and_speedup() -> None:
     samples = [
         {"closure_name": "implicit_exact_mass_action", "elapsed_seconds": 4.0, "exact_elapsed_seconds": 4.0},
         {"closure_name": "implicit_exact_mass_action", "elapsed_seconds": 6.0, "exact_elapsed_seconds": 6.0},
-        {"closure_name": "explicit_damped_picard_unroll_3", "elapsed_seconds": 1.0, "exact_elapsed_seconds": 5.0},
-        {"closure_name": "explicit_damped_picard_unroll_3", "elapsed_seconds": 2.0, "exact_elapsed_seconds": 5.0},
-        {"closure_name": "explicit_damped_picard_unroll_3", "elapsed_seconds": 3.0, "exact_elapsed_seconds": 5.0},
+        {"closure_name": "damped_picard_7_05", "elapsed_seconds": 1.0, "exact_elapsed_seconds": 5.0},
+        {"closure_name": "damped_picard_7_05", "elapsed_seconds": 2.0, "exact_elapsed_seconds": 5.0},
+        {"closure_name": "damped_picard_7_05", "elapsed_seconds": 3.0, "exact_elapsed_seconds": 5.0},
     ]
 
     rows = summarize_repeated_timings(samples)
@@ -27,7 +27,7 @@ def test_summarize_repeated_timings_reports_spread_and_speedup() -> None:
         "speedup_median",
     }
     assert required <= set(rows[0])
-    approx = next(row for row in rows if row["closure_name"] == "explicit_damped_picard_unroll_3")
+    approx = next(row for row in rows if row["closure_name"] == "damped_picard_7_05")
     exact = next(row for row in rows if row["closure_name"] == "implicit_exact_mass_action")
     assert exact["speedup_median"] == 1.0
     assert approx["repeat_count"] == 3

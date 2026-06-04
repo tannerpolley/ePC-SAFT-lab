@@ -17,7 +17,7 @@ def test_run_topology_matrix_writes_paper_metadata_columns(tmp_path: Path) -> No
     run_topology_matrix(
         output_path=output,
         topology_types=("2B",),
-        closure_names=("closure_2b_exact_reduction", "explicit_picard_unroll_1"),
+        closure_names=("closure_2b_exact_reduction", "damped_picard_7_05"),
         density_grid=(0.2,),
         strength_grid=(3.0,),
     )

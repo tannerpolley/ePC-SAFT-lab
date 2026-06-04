@@ -37,8 +37,7 @@ def main() -> None:
     offsets = {closure: idx - (len(closures) - 1) / 2.0 for idx, closure in enumerate(closures)}
     colors = {
         "implicit_exact_mass_action": "#2f6f9f",
-        "explicit_damped_picard_unroll_3": "#b35c1e",
-        "explicit_picard3_diag_newton1": "#6f8f3a",
+        "damped_picard_7_05": "#b35c1e",
     }
     fig, ax = plt.subplots(figsize=(8.6, 4.8))
     for closure in closures:

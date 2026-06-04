@@ -7,19 +7,14 @@ from pathlib import Path
 
 import numpy as np
 
+from .closure_models import CANDIDATE_CLOSURES
 from .propagation_evidence import evaluate_named_closure, timed_closure, write_rows_csv
 from .exact_baseline import solve_exact_site_fractions
 from .topology_reductions import topology_system
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "amortized_timing" / "output" / "amortized_timing.csv"
-DEFAULT_CLOSURES = (
-    "damped_picard_3_05",
-    "damped_picard_5_05",
-    "damped_picard_7_05",
-    "picard3_diag_newton1",
-    "collapsed_donor_acceptor_mean_field",
-)
+DEFAULT_CLOSURES = CANDIDATE_CLOSURES
 DEFAULT_CASES = (
     ("topology_2b_low", "2B", 0.03, 4.0),
     ("topology_2b_moderate", "2B", 0.05, 10.0),

@@ -10,8 +10,6 @@ commands:
   render_topology_matrix: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py
   generate_topology_error_heatmaps: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/generate_data.py
   render_topology_error_heatmaps: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py
-  generate_closure_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/generate_data.py
-  render_closure_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/render_figure.py
   generate_derivative_smoothness: uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/generate_data.py
   render_derivative_smoothness: uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/render_figure.py
   generate_timing_pareto: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/generate_data.py

@@ -21,7 +21,7 @@ def test_metric_row_adds_total_ares_context_when_supplied() -> None:
     delta = system.delta_matrix(strength=2.0)
     exact = solve_exact_site_fractions(density=density, x_assoc=system.x_assoc(composition), delta=delta)
     closure = evaluate_closure(
-        "explicit_damped_picard_unroll_3",
+        "damped_picard_7_05",
         system=system,
         density=density,
         composition=composition,

@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from .association_models import AssociationSystem
+from .closure_models import CANDIDATE_CLOSURES
 from .propagation_evidence import (
     closure_association_value,
     exact_association_value,
@@ -24,7 +25,7 @@ DERIVATIVE_TARGETS = (
     "mu_proxy_composition_0",
     "fugacity_proxy_composition_0",
 )
-DEFAULT_CLOSURES = ("damped_picard_3_05", "damped_picard_5_05", "damped_picard_7_05", "picard3_diag_newton1")
+DEFAULT_CLOSURES = CANDIDATE_CLOSURES
 
 
 def centered_slope(function: Callable[[float], float], *, base_value: float, step_size: float) -> float:

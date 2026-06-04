@@ -52,10 +52,7 @@ def main() -> None:
             label=band,
         )
     aliases = {
-        "damped_picard_3_05": "d3",
-        "damped_picard_5_05": "d5",
         "damped_picard_7_05": "d7",
-        "picard3_diag_newton1": "p3+n",
     }
     for xi, yi, row in zip(x, y, plotted, strict=True):
         if yi < 1.0e-6 and xi < 30.0:

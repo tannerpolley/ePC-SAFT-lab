@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
+from .closure_models import CANDIDATE_CLOSURES, PICARD7_CLOSURE
 from .derivative_agreement import pressure_proxy_from_ares
 from .propagation_evidence import (
     classify_propagated_evidence_band,
@@ -26,7 +27,7 @@ DEFAULT_OUTPUT = (
     / "equilibrium_style_objective_sensitivity.csv"
 )
 OBJECTIVE_COORDINATES = ("density", "composition_component_0")
-DEFAULT_CLOSURES = ("damped_picard_3_05", "damped_picard_5_05", "damped_picard_7_05", "picard3_diag_newton1")
+DEFAULT_CLOSURES = CANDIDATE_CLOSURES
 
 
 def local_objective_value(*, ares_total: float, pressure_proxy: float, pressure_weight: float) -> float:
@@ -45,7 +46,7 @@ def run_objective_sensitivity_cases(*, closure_names: Iterable[str] = DEFAULT_CL
     thresholds = load_propagation_thresholds()
     samples: list[dict[str, object]] = []
     case = _objective_case()
-    exact_value, exact_gradient, exact_hessian, exact_elapsed = _objective_bundle(case, exact=True, closure_name="damped_picard_3_05")
+    exact_value, exact_gradient, exact_hessian, exact_elapsed = _objective_bundle(case, exact=True, closure_name=PICARD7_CLOSURE)
     for closure_name in closure_names:
         closure_value, closure_gradient, closure_hessian, closure_elapsed = _objective_bundle(
             case,

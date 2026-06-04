@@ -12,8 +12,6 @@ analysis code, not package runtime code.
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py`
-- `uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/generate_data.py`
-- `uv run python analyses/package_validation/explicit_association_toybox/figures/closure_sensitivity/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/generate_data.py`
@@ -49,9 +47,8 @@ HC and dispersion are scalar fixed-state context terms for total `ares`
 comparison. They do not solve density, pressure, or phase roots.
 
 Huang/Radosz Table VII rows are treated as exact topology reductions only under
-their stated site-interaction assumptions. Closure A is equivalent only for the
-one-associating-component 2B donor-acceptor topology. Closure B/C/D comparisons
-remain comparisons against the exact mass-action baseline, not new EOS theory.
+their stated site-interaction assumptions. The only retained explicit
+approximation candidate is `damped_picard_7_05`.
 
 Public saturation rows are source data for fixed-state diagnostics. The
 property residual lane evaluates provider pressure at experimental saturated
@@ -62,7 +59,7 @@ or phase coexistence.
 ## Derivative And Property Propagation
 
 This toybox section compares exact implicit association against explicit
-closure candidates after propagation into local derivatives and EOS-like
+`damped_picard_7_05` after propagation into local derivatives and EOS-like
 property proxies. It remains analysis-only evidence.
 
 - `amortized_timing`: exact implicit timing baseline, closure timing, and speedup by topology.
@@ -71,6 +68,7 @@ property proxies. It remains analysis-only evidence.
 - `total_eos_impact`: total neutral `ares`, pressure proxy, chemical-potential proxy, and fugacity proxy ranking.
 - `water_topology_fork`: water-specific 3B/4C and fixed-state residual diagnostics.
 - `equilibrium_style_objective_sensitivity`: local objective gradient and Hessian-proxy diagnostics for future equilibrium discussions.
+- `docs/jax_picard7_autodiff_plan.md`: plan for comparing JAX autodiff Jacobians and Hessians of the explicit Picard7 closure against implicit exact sensitivities.
 
 The water topology fork is a fixed-state diagnostic. It compares topology and
 parameter assumptions against retained pressure and `Z` residuals, but it is

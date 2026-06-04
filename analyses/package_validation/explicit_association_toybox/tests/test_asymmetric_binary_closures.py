@@ -20,7 +20,7 @@ def test_asymmetric_binary_cases_cover_required_roles() -> None:
 
 
 def test_asymmetric_binary_closure_rows_keep_required_columns() -> None:
-    rows = run_asymmetric_binary_closures(closure_names=("damped_picard_3_05",))
+    rows = run_asymmetric_binary_closures(closure_names=("damped_picard_7_05",))
 
     assert rows
     assert {

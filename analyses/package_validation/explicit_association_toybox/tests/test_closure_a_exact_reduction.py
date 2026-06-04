@@ -49,17 +49,11 @@ def test_approximate_closures_are_bounded_and_labeled() -> None:
     composition = np.array([1.0])
     delta = system.delta_matrix(strength=3.0)
 
-    for name in (
-        "explicit_picard_unroll_1",
-        "explicit_damped_picard_unroll_3",
-        "explicit_damped_picard_unroll_5",
-        "explicit_picard3_diag_newton1",
-        "collapsed_donor_acceptor_mean_field",
-    ):
-        closure = evaluate_closure(name, system=system, density=density, composition=composition, delta=delta)
-        assert np.all(closure.xa > 0.0), name
-        assert np.all(closure.xa <= 1.0), name
-        assert closure.association_model == "explicit_approx"
-        assert closure.exact_derivative_of == "approximate_association_closure"
-        residual = mass_action_residual(closure.xa, density=density, x_assoc=system.x_assoc(composition), delta=delta)
-        assert np.isfinite(np.linalg.norm(residual, ord=np.inf))
+    name = "damped_picard_7_05"
+    closure = evaluate_closure(name, system=system, density=density, composition=composition, delta=delta)
+    assert np.all(closure.xa > 0.0)
+    assert np.all(closure.xa <= 1.0)
+    assert closure.association_model == "explicit_approx"
+    assert closure.exact_derivative_of == "approximate_association_closure"
+    residual = mass_action_residual(closure.xa, density=density, x_assoc=system.x_assoc(composition), delta=delta)
+    assert np.isfinite(np.linalg.norm(residual, ord=np.inf))

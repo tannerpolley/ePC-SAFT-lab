@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
+from .closure_models import CANDIDATE_CLOSURES, PICARD7_CLOSURE
 from .derivative_agreement import (
     _target_derivative,
     pressure_proxy_from_ares,
@@ -28,7 +29,7 @@ from .topology_reductions import topology_system
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "total_eos_impact" / "output" / "total_eos_impact.csv"
-DEFAULT_CLOSURES = ("damped_picard_3_05", "damped_picard_5_05", "damped_picard_7_05", "picard3_diag_newton1")
+DEFAULT_CLOSURES = CANDIDATE_CLOSURES
 
 
 def summarize_total_eos_impact(samples: Iterable[Mapping[str, object]]) -> list[dict[str, object]]:
@@ -65,7 +66,7 @@ def run_total_eos_impact(*, closure_names: Iterable[str] = DEFAULT_CLOSURES) -> 
         exact_density_slope = _target_derivative(
             "a_assoc_density",
             exact=True,
-            closure_name="damped_picard_3_05",
+            closure_name=PICARD7_CLOSURE,
             system=system,
             density=density,
             strength=strength,

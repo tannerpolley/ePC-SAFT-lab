@@ -5,25 +5,7 @@ evidence_bands:
   site_fraction_abs_tight: 1.0e-10
   site_fraction_abs_loose: 1.0e-3
 closures:
-  - name: closure_2b_exact_reduction
-    kind: exact_reduction
-  - name: explicit_picard_unroll_1
+  - name: damped_picard_7_05
     kind: explicit_approx
-    picard_steps: 1
-    damping: 1.0
-  - name: explicit_damped_picard_unroll_3
-    kind: explicit_approx
-    picard_steps: 3
+    picard_steps: 7
     damping: 0.5
-  - name: explicit_damped_picard_unroll_5
-    kind: explicit_approx
-    picard_steps: 5
-    damping: 0.5
-  - name: explicit_picard3_diag_newton1
-    kind: explicit_approx
-    picard_steps: 3
-    damping: 0.5
-    diagonal_polish_steps: 1
-    diagonal_polish_damping: 0.5
-  - name: collapsed_donor_acceptor_mean_field
-    kind: explicit_approx

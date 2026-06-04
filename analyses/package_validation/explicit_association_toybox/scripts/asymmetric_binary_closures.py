@@ -8,6 +8,7 @@ import numpy as np
 import yaml
 
 from .association_models import AssociationSystem
+from .closure_models import CANDIDATE_CLOSURES
 from .exact_baseline import solve_exact_site_fractions
 from .propagation_evidence import (
     classify_propagated_evidence_band,
@@ -22,13 +23,7 @@ from .propagation_evidence import (
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ANALYSIS_ROOT / "config" / "asymmetric_binary_cases.yaml"
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "asymmetric_binary_closures" / "output" / "asymmetric_binary_closures.csv"
-DEFAULT_CLOSURES = (
-    "damped_picard_3_05",
-    "damped_picard_5_05",
-    "damped_picard_7_05",
-    "picard3_diag_newton1",
-    "collapsed_donor_acceptor_mean_field",
-)
+DEFAULT_CLOSURES = CANDIDATE_CLOSURES
 
 
 def load_asymmetric_binary_cases(path: Path = DEFAULT_CONFIG) -> list[dict[str, object]]:

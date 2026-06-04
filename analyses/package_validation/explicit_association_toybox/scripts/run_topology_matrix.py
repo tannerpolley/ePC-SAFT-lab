@@ -11,32 +11,30 @@ import yaml
 
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-    from analyses.package_validation.explicit_association_toybox.scripts.closure_models import evaluate_closure
+    from analyses.package_validation.explicit_association_toybox.scripts.closure_models import (
+        CANDIDATE_CLOSURES,
+        PICARD7_CLOSURE,
+    )
     from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
     from analyses.package_validation.explicit_association_toybox.scripts.metrics import metric_row, timed_closure
+    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import evaluate_named_closure
     from analyses.package_validation.explicit_association_toybox.scripts.topology_reductions import (
         HUANG_RADOSZ_TOPOLOGIES,
         evaluate_topology_reduction,
         topology_system,
     )
 else:
-    from .closure_models import evaluate_closure
+    from .closure_models import CANDIDATE_CLOSURES, PICARD7_CLOSURE
     from .exact_baseline import solve_exact_site_fractions
     from .metrics import metric_row, timed_closure
+    from .propagation_evidence import evaluate_named_closure
     from .topology_reductions import HUANG_RADOSZ_TOPOLOGIES, evaluate_topology_reduction, topology_system
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "topology_validation_matrix" / "output" / "topology_matrix.csv"
 DEFAULT_DENSITY_GRID = (0.001, 0.01, 0.05, 0.1)
 DEFAULT_STRENGTH_GRID = (0.1, 1.0, 10.0, 50.0)
-DEFAULT_CLOSURES = (
-    "closure_2b_exact_reduction",
-    "explicit_picard_unroll_1",
-    "explicit_damped_picard_unroll_3",
-    "explicit_damped_picard_unroll_5",
-    "explicit_picard3_diag_newton1",
-    "collapsed_donor_acceptor_mean_field",
-)
+DEFAULT_CLOSURES = CANDIDATE_CLOSURES
 TOPOLOGY_MATRIX_COLUMNS = (
     "system",
     "paper_topology_type",
@@ -136,7 +134,7 @@ def run_topology_matrix(
                     if closure_name == "closure_2b_exact_reduction" and topology_type != "2B":
                         continue
                     closure, elapsed = timed_closure(
-                        lambda closure_name=closure_name: evaluate_closure(
+                        lambda closure_name=closure_name: evaluate_named_closure(
                             closure_name,
                             system=system,
                             density=density,
@@ -225,20 +223,14 @@ def _metadata_row(
 def _closure_derivation_family(closure_name: str) -> str:
     if closure_name == "closure_2b_exact_reduction":
         return "closure_a_2b"
-    if closure_name.startswith("explicit_picard") or closure_name.startswith("explicit_damped_picard"):
-        return "closure_b_picard"
-    if closure_name == "explicit_picard3_diag_newton1":
-        return "closure_c_picard_diagonal_newton"
-    if closure_name == "collapsed_donor_acceptor_mean_field":
-        return "closure_d_collapsed_mean_field"
+    if closure_name == PICARD7_CLOSURE:
+        return "closure_picard7_damped"
     raise ValueError(f"Closure metadata is not mapped for: {closure_name}")
 
 
 def _closure_comparison_role(closure_name: str) -> str:
     if closure_name == "closure_2b_exact_reduction":
         return "exact_topology_reduction"
-    if closure_name == "collapsed_donor_acceptor_mean_field":
-        return "diagnostic_collapse"
     return "explicit_approximation"
 
 

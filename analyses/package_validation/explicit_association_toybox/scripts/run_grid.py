@@ -12,7 +12,6 @@ import yaml
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
     from analyses.package_validation.explicit_association_toybox.scripts.association_models import AssociationSystem
-    from analyses.package_validation.explicit_association_toybox.scripts.closure_models import evaluate_closure
     from analyses.package_validation.explicit_association_toybox.scripts.dispersion import (
         ares_disp as dispersion_ares,
     )
@@ -24,9 +23,9 @@ if __package__ in {None, ""}:
     from analyses.package_validation.explicit_association_toybox.scripts.hard_chain import hard_chain_state
     from analyses.package_validation.explicit_association_toybox.scripts.metrics import metric_row, timed_closure
     from analyses.package_validation.explicit_association_toybox.scripts.pcsaft_inputs import state_from_config
+    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import evaluate_named_closure
 else:
     from .association_models import AssociationSystem
-    from .closure_models import evaluate_closure
     from .dispersion import ares_disp as dispersion_ares
     from .dispersion import mixed_dispersion_moments
     from .exact_baseline import solve_exact_site_fractions
@@ -34,6 +33,7 @@ else:
     from .hard_chain import hard_chain_state
     from .metrics import metric_row, timed_closure
     from .pcsaft_inputs import state_from_config
+    from .propagation_evidence import evaluate_named_closure
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "closure_accuracy" / "output" / "closure_metrics.csv"
@@ -118,7 +118,7 @@ def run_grid(
                         if not _closure_applies(closure_name, system):
                             continue
                         closure, elapsed = timed_closure(
-                            lambda closure_name=closure_name: evaluate_closure(
+                            lambda closure_name=closure_name: evaluate_named_closure(
                                 closure_name,
                                 system=system,
                                 density=float(density),

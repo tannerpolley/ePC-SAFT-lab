@@ -55,7 +55,7 @@ def test_metric_row_contains_required_columns() -> None:
     delta = system.delta_matrix(strength=2.0)
     exact = solve_exact_site_fractions(density=density, x_assoc=system.x_assoc(composition), delta=delta)
     closure = evaluate_closure(
-        "explicit_damped_picard_unroll_3",
+        "damped_picard_7_05",
         system=system,
         density=density,
         composition=composition,
@@ -85,10 +85,10 @@ def test_metric_row_contains_required_columns() -> None:
 
 def test_run_grid_writes_retained_csv(tmp_path: Path) -> None:
     output = tmp_path / "closure_metrics.csv"
-    run_grid(output_path=output, system_names=("symmetric_2b_pure",), closure_names=("closure_2b_exact_reduction",))
+    run_grid(output_path=output, system_names=("symmetric_2b_pure",), closure_names=("damped_picard_7_05",))
     text = output.read_text(encoding="utf-8")
     assert "system,closure," in text
-    assert "symmetric_2b_pure,closure_2b_exact_reduction" in text
+    assert "symmetric_2b_pure,damped_picard_7_05" in text
     assert "ares_hc" in text
     assert "ares_disp" in text
     assert "ares_total_abs_error" in text
@@ -103,7 +103,7 @@ def test_run_grid_writes_retained_csv(tmp_path: Path) -> None:
 
 def test_summary_rows_preserve_total_ares_context(tmp_path: Path) -> None:
     output = tmp_path / "closure_metrics.csv"
-    run_grid(output_path=output, system_names=("symmetric_2b_pure",), closure_names=("closure_2b_exact_reduction",))
+    run_grid(output_path=output, system_names=("symmetric_2b_pure",), closure_names=("damped_picard_7_05",))
 
     rows = summarize_rows(output)
 

@@ -8,19 +8,15 @@ from pathlib import Path
 
 import numpy as np
 
-from .closure_models import evaluate_closure
+from .closure_models import EXACT_MASS_ACTION_BASELINE, PICARD7_CLOSURE
 from .exact_baseline import solve_exact_site_fractions
 from .metrics import timed_closure
+from .propagation_evidence import evaluate_named_closure
 from .topology_reductions import topology_system
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "timing_repeatability" / "output" / "timing_repeatability.csv"
-DEFAULT_CLOSURES = (
-    "implicit_exact_mass_action",
-    "explicit_damped_picard_unroll_3",
-    "explicit_damped_picard_unroll_5",
-    "explicit_picard3_diag_newton1",
-)
+DEFAULT_CLOSURES = (EXACT_MASS_ACTION_BASELINE, PICARD7_CLOSURE)
 
 
 def summarize_repeated_timings(samples: Iterable[Mapping[str, object]]) -> list[dict[str, object]]:
@@ -71,7 +67,7 @@ def run_repeated_timings(
             )
         )
         for closure_name in closure_names:
-            if closure_name == "implicit_exact_mass_action":
+            if closure_name == EXACT_MASS_ACTION_BASELINE:
                 samples.append(
                     {
                         "closure_name": closure_name,
@@ -81,7 +77,7 @@ def run_repeated_timings(
                 )
                 continue
             _, elapsed = timed_closure(
-                lambda closure_name=closure_name: evaluate_closure(
+                lambda closure_name=closure_name: evaluate_named_closure(
                     closure_name,
                     system=system,
                     density=density,

@@ -8,7 +8,7 @@ import numpy as np
 import yaml
 
 from .association_models import AssociationSystem, association_helmholtz, mass_action_residual
-from .closure_models import ClosureResult, _diagonal_polish, _picard, evaluate_closure
+from .closure_models import EXACT_MASS_ACTION_BASELINE, ClosureResult, evaluate_closure
 from .exact_baseline import ExactAssociationResult, solve_exact_site_fractions
 from .metrics import timed_closure
 
@@ -78,7 +78,7 @@ def evaluate_named_closure(
     delta: np.ndarray,
 ) -> ClosureResult:
     x_assoc = system.x_assoc(composition)
-    if closure_name == "implicit_exact_mass_action":
+    if closure_name == EXACT_MASS_ACTION_BASELINE:
         exact = solve_exact_site_fractions(density=density, x_assoc=x_assoc, delta=delta)
         return ClosureResult(
             name=closure_name,
@@ -86,25 +86,6 @@ def evaluate_named_closure(
             association_model="implicit_exact",
             association_closure=closure_name,
             exact_derivative_of="exact_mass_action",
-            information_loss="none",
-        )
-    variant_map = {
-        "damped_picard_3_05": (3, 0.5, False),
-        "damped_picard_5_05": (5, 0.5, False),
-        "damped_picard_7_05": (7, 0.5, False),
-        "picard3_diag_newton1": (3, 0.5, True),
-    }
-    if closure_name in variant_map:
-        steps, damping, polish = variant_map[closure_name]
-        xa = _picard(density, x_assoc, delta, steps=steps, damping=damping)
-        if polish:
-            xa = _diagonal_polish(xa, density, x_assoc, delta, damping=0.5)
-        return ClosureResult(
-            name=closure_name,
-            xa=xa,
-            association_model="explicit_approx",
-            association_closure=closure_name,
-            exact_derivative_of="approximate_association_closure",
             information_loss="none",
         )
     return evaluate_closure(

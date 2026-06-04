@@ -8,13 +8,14 @@ from pathlib import Path
 import numpy as np
 
 from .association_models import AssociationSystem, association_helmholtz
-from .closure_models import evaluate_closure
+from .closure_models import EXACT_MASS_ACTION_BASELINE, PICARD7_CLOSURE
 from .exact_baseline import solve_exact_site_fractions
+from .propagation_evidence import evaluate_named_closure
 from .topology_reductions import topology_system
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "derivative_smoothness" / "output" / "derivative_smoothness.csv"
-DEFAULT_CLOSURES = ("implicit_exact_mass_action", "explicit_damped_picard_unroll_3", "explicit_picard3_diag_newton1")
+DEFAULT_CLOSURES = (EXACT_MASS_ACTION_BASELINE, PICARD7_CLOSURE)
 
 
 def derivative_smoothness_rows(
@@ -164,7 +165,7 @@ def _association_value(
     composition: np.ndarray,
 ) -> float:
     delta = system.delta_matrix(strength)
-    if closure_name == "implicit_exact_mass_action":
+    if closure_name == EXACT_MASS_ACTION_BASELINE:
         result = solve_exact_site_fractions(
             density=density,
             x_assoc=system.x_assoc(composition),
@@ -172,7 +173,7 @@ def _association_value(
         )
         xa = result.xa
     else:
-        result = evaluate_closure(
+        result = evaluate_named_closure(
             closure_name,
             system=system,
             density=density,
