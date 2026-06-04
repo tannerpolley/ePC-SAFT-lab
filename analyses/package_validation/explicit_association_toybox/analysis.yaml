@@ -18,6 +18,18 @@ commands:
   render_timing_pareto: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/render_figure.py
   generate_timing_repeatability: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/generate_data.py
   render_timing_repeatability: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/render_figure.py
+  generate_amortized_timing: uv run python analyses/package_validation/explicit_association_toybox/figures/amortized_timing/scripts/generate_data.py
+  render_amortized_timing: uv run python analyses/package_validation/explicit_association_toybox/figures/amortized_timing/scripts/render_figure.py
+  generate_derivative_agreement: uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_agreement/scripts/generate_data.py
+  render_derivative_agreement: uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_agreement/scripts/render_figure.py
+  generate_asymmetric_binary_closures: uv run python analyses/package_validation/explicit_association_toybox/figures/asymmetric_binary_closures/scripts/generate_data.py
+  render_asymmetric_binary_closures: uv run python analyses/package_validation/explicit_association_toybox/figures/asymmetric_binary_closures/scripts/render_figure.py
+  generate_total_eos_impact: uv run python analyses/package_validation/explicit_association_toybox/figures/total_eos_impact/scripts/generate_data.py
+  render_total_eos_impact: uv run python analyses/package_validation/explicit_association_toybox/figures/total_eos_impact/scripts/render_figure.py
+  generate_water_topology_fork: uv run python analyses/package_validation/explicit_association_toybox/figures/water_topology_fork/scripts/generate_data.py
+  render_water_topology_fork: uv run python analyses/package_validation/explicit_association_toybox/figures/water_topology_fork/scripts/render_figure.py
+  generate_equilibrium_style_objective_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/scripts/generate_data.py
+  render_equilibrium_style_objective_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/scripts/render_figure.py
   fetch_public_property_sources: uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv
   generate_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py
   render_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py

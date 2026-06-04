@@ -1,0 +1,7 @@
+kind: matplotlib-figure
+version: 1
+plot_id: water_topology_fork
+title: Water topology fork fixed-state warnings
+files:
+  figure: water_topology_fork.png
+  source_data: water_topology_fork_plotted_data.csv

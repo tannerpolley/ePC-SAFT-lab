@@ -1,0 +1,17 @@
+evidence_bands:
+  exact_reference:
+    max_assoc_ares_rel_error: 1.0e-12
+    max_derivative_rel_error: 1.0e-10
+    max_property_rel_error: 1.0e-10
+  candidate_accuracy:
+    max_assoc_ares_rel_error: 2.5e-2
+    max_derivative_rel_error: 5.0e-2
+    max_property_rel_error: 5.0e-2
+    min_speedup_vs_exact_implicit: 2.0
+  speed_only_candidate:
+    max_assoc_ares_rel_error: 8.0e-2
+    min_speedup_vs_exact_implicit: 5.0
+  diagnostic_only:
+    reason: interpretation_or_failure_mode
+  reject_for_provider_path:
+    max_mass_action_residual_inf: 1.0e-3

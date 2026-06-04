@@ -1,0 +1,7 @@
+kind: matplotlib-figure
+version: 1
+plot_id: total_eos_impact
+title: Total EOS impact ranking
+files:
+  figure: total_eos_impact.png
+  source_data: total_eos_impact_plotted_data.csv

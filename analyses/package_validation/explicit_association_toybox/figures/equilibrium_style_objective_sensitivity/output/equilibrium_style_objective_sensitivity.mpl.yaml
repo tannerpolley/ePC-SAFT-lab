@@ -1,0 +1,7 @@
+kind: matplotlib-figure
+version: 1
+plot_id: equilibrium_style_objective_sensitivity
+title: Local objective derivative sensitivity
+files:
+  figure: equilibrium_style_objective_sensitivity.png
+  source_data: equilibrium_style_objective_sensitivity_plotted_data.csv

@@ -1,0 +1,7 @@
+kind: matplotlib-figure
+version: 1
+plot_id: derivative_agreement
+title: Derivative agreement against exact implicit association
+files:
+  figure: derivative_agreement.png
+  source_data: derivative_agreement_plotted_data.csv

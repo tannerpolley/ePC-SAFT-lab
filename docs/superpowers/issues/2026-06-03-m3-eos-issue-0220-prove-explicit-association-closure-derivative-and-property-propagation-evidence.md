@@ -1,3 +1,22 @@
+---
+issue: 220
+title: "Prove explicit association closure derivative and property propagation evidence"
+url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/220"
+state: "open"
+milestone: "M3 - EOS"
+project: "ePC-SAFT Roadmap"
+package: "epcsaft"
+capability: "explicit-association-analysis"
+backend: "python"
+readiness: "agent-ready"
+release_target: null
+source_spec: "docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence.md"
+source_plan: "docs/superpowers/plans/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence-plan.md"
+afk_hitl: "AFK"
+branch: "codex/issue-0220-prove-explicit-association-closure-derivative-and-property-propagation-evidence"
+last_synced: "2026-06-03"
+---
+
 # Prove explicit association closure derivative and property propagation evidence
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/220
@@ -5,6 +24,7 @@
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence.md
 **Source Plan:** docs/superpowers/plans/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** type:task, status:ready, agent-ready, area:core, area:derivatives, validation
 **Goal Command:** /goal Implement GitHub issue 220 using docs/superpowers/plans/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence-plan.md; keep all work under analyses/package_validation/explicit_association_toybox; validate the proof oracle; report every new plot inline with retained-data tables.
@@ -78,4 +98,3 @@ Extend the Python-only explicit association toybox with one M3 analysis slice th
 ## GitHub Body Text
 
 This mirror is a close local copy of https://github.com/ePC-SAFT/ePC-SAFT/issues/220. The authoritative execution plan is `docs/superpowers/plans/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence-plan.md`.
-

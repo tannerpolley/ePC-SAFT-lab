@@ -1,0 +1,11 @@
+kind: matplotlib-figure
+version: 1
+plot_id: amortized_timing
+title: Amortized exact implicit and explicit closure timing
+matplotlib:
+  title: Amortized exact implicit and explicit closure timing
+  x_label: Case and closure
+  y_label: Median elapsed seconds
+files:
+  figure: amortized_timing.png
+  source_data: amortized_timing_plotted_data.csv
