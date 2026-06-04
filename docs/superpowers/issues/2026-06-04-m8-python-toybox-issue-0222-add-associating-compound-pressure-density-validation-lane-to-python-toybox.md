@@ -53,12 +53,12 @@ pressure, density, or equilibrium code.
 
 ## Acceptance Criteria
 
-- [ ] Only associating compounds appear in primary validation figures.
-- [ ] Exact implicit and Picard model curves are plotted as dotted lines with distinct colors.
-- [ ] Reference data are plotted as data markers and snapshotted into retained plotted-data files.
-- [ ] Density root results include root status, branch, residual, bracket policy, and pressure evaluation count.
-- [ ] Vapor-pressure, saturated-liquid-density, and pressure-density style figures are readable and do not use bar plots as primary evidence.
-- [ ] No provider, equilibrium, benchmark, or public API files are changed.
+- [x] Only associating compounds appear in primary validation figures.
+- [x] Exact implicit and Picard model curves are plotted as dotted lines with distinct colors.
+- [x] Reference data are plotted as data markers and snapshotted into retained plotted-data files.
+- [x] Density root results include root status, branch, residual, bracket policy, and pressure evaluation count.
+- [x] Vapor-pressure, saturated-liquid-density, and pressure-density style figures are readable and do not use bar plots as primary evidence.
+- [x] No provider, equilibrium, benchmark, or public API files are changed.
 
 ## Blocked by
 
