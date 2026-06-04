@@ -57,6 +57,7 @@ claim provider, equilibrium, or benchmark capability by itself.
 | [#222](https://github.com/ePC-SAFT/ePC-SAFT/issues/222) | closed | none | Added associating-compound pressure-density validation with honest data points and dotted exact-vs-Picard curves. |
 | [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | ready / HITL | none | Decide whether Picard clears the toybox evidence gates for later provider admission. |
 | [#224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) | ready / HITL | none | Probe whether Picard closure error is dangerous for later equilibrium objective, Jacobian, and Hessian work. |
+| [#227](https://github.com/ePC-SAFT/ePC-SAFT/issues/227) | ready / HITL | none | Add a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |
 
 ## Closed Issues
 
