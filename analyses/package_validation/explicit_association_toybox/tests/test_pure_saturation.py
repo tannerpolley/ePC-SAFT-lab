@@ -9,6 +9,10 @@ from analyses.package_validation.explicit_association_toybox.scripts.closure_mod
 from analyses.package_validation.explicit_association_toybox.scripts.pure_saturation import (
     solve_pure_saturation,
 )
+from analyses.package_validation.explicit_association_toybox.figures.pure_saturation_validation.scripts.generate_data import (
+    REQUIRED_RETAINED_COLUMNS,
+    build_pure_saturation_validation_rows,
+)
 
 
 def _methanol_case() -> dict[str, object]:
@@ -83,3 +87,44 @@ def test_pure_saturation_solver_fails_loudly_for_invalid_phase_density_seeds() -
             vapor_density_seed_mol_m3=22_891.0,
             liquid_density_seed_mol_m3=22_891.0,
         )
+
+
+def test_pure_saturation_generation_retains_reference_exact_and_picard_rows() -> None:
+    rows = build_pure_saturation_validation_rows(
+        [
+            {
+                "component": "methanol",
+                "T_K": 352.28,
+                "p_sat_Pa": 175_580.0,
+                "rho_sat_liq_mol_m3": 22_891.0,
+                "phase": "liquid",
+                "source_url": "https://webbook.nist.gov/example",
+            }
+        ],
+        provider_cases={"methanol": _methanol_case()},
+    )
+
+    assert len(rows) == 3
+    assert {row["row_role"] for row in rows} == {"reference_data", "model_curve"}
+    assert {row["closure_name"] for row in rows} == {
+        "reference_data",
+        EXACT_MASS_ACTION_BASELINE,
+        PICARD7_CLOSURE,
+    }
+    for row in rows:
+        assert set(REQUIRED_RETAINED_COLUMNS).issubset(row)
+        assert row["component"] == "methanol"
+        assert row["T_K"] == pytest.approx(352.28)
+        assert row["reference_p_sat_Pa"] == pytest.approx(175_580.0)
+        assert row["reference_rho_liq_mol_m3"] == pytest.approx(22_891.0)
+        assert row["parameter_source"] == "test_case"
+        assert row["source_url"] == "https://webbook.nist.gov/example"
+    for row in rows:
+        if row["row_role"] == "model_curve":
+            assert row["solver_status"] == "computed_toy_pure_saturation"
+            assert row["model_p_sat_Pa"] != ""
+            assert row["model_rho_vap_mol_m3"] != ""
+            assert row["model_rho_liq_mol_m3"] != ""
+            assert row["model_rho_liq_mol_m3"] > row["model_rho_vap_mol_m3"]
+            assert row["solver_iteration_count"] > 0
+            assert row["initial_guess_policy"] == "reference_pressure_liquid_density_ideal_vapor_seed"
