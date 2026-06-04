@@ -47,6 +47,15 @@ claim provider, equilibrium, or benchmark capability by itself.
 | [Explicit closure admission decision plan](../../plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md) | derivative and property plans | Reduce toybox closure scope to retained Picard evidence and document provider admission gates. |
 | [Equilibrium relevance probe for Picard closure error plan](../../plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md) | derivative and property plans | Build a small objective/Jacobian/Hessian probe without creating M4 route behavior. |
 
+## Current Issues
+
+| Issue | Status | Depends On | Summary |
+| --- | --- | --- | --- |
+| [#221](https://github.com/ePC-SAFT/ePC-SAFT/issues/221) | needs design | none | Harden Picard autodiff and exact implicit sensitivity baselines in the Python toybox. |
+| [#222](https://github.com/ePC-SAFT/ePC-SAFT/issues/222) | needs design | none | Add associating-compound pressure-density validation with honest data points and dotted exact-vs-Picard curves. |
+| [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | blocked | #221, #222 | Decide whether Picard clears the toybox evidence gates for later provider admission. |
+| [#224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) | blocked | #221, #222 | Probe whether Picard closure error is dangerous for later equilibrium objective, Jacobian, and Hessian work. |
+
 ## Historical Seed Work
 
 The first explicit-association toybox slices were completed before this
