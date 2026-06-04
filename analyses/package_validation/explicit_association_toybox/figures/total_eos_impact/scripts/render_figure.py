@@ -37,14 +37,37 @@ def main() -> None:
     x = [float(row["speedup_vs_exact_implicit"]) for row in plotted]
     y = [max(float(row["pressure_proxy_rel_error"]), 1.0e-14) for row in plotted]
     fig, ax = plt.subplots(figsize=(8.6, 5.2))
-    ax.scatter(x, y, color="#684f9e", s=55)
+    colors = {
+        "candidate_accuracy": "#327a5b",
+        "reject_for_provider_path": "#9b4f2e",
+    }
+    bands = sorted({row["evidence_band"] for row in plotted})
+    for band in bands:
+        indices = [idx for idx, row in enumerate(plotted) if row["evidence_band"] == band]
+        ax.scatter(
+            [x[idx] for idx in indices],
+            [y[idx] for idx in indices],
+            color=colors.get(band, "#684f9e"),
+            s=55,
+            label=band,
+        )
+    aliases = {
+        "damped_picard_3_05": "d3",
+        "damped_picard_5_05": "d5",
+        "damped_picard_7_05": "d7",
+        "picard3_diag_newton1": "p3+n",
+    }
     for xi, yi, row in zip(x, y, plotted, strict=True):
-        ax.annotate(row["closure_name"], (xi, yi), textcoords="offset points", xytext=(5, 5), fontsize=7)
+        if yi < 1.0e-6 and xi < 30.0:
+            continue
+        label = f"{row['case_id'].split('_')[1]} {aliases.get(row['closure_name'], row['closure_name'])}"
+        ax.annotate(label, (xi, yi), textcoords="offset points", xytext=(5, 5), fontsize=7)
     ax.set_yscale("log")
     ax.set_xlabel("Speedup vs exact implicit")
     ax.set_ylabel("Pressure proxy relative error")
     ax.set_title("Total EOS impact ranking")
     ax.grid(color="#d9d9d9", linewidth=0.6)
+    ax.legend(loc="lower right", fontsize=8)
     fig.tight_layout()
     fig.savefig(FIGURE, dpi=160)
     plt.close(fig)
