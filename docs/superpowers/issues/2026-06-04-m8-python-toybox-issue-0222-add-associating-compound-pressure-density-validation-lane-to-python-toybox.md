@@ -8,11 +8,11 @@ project: "ePC-SAFT Roadmap"
 package: "analysis"
 capability: "explicit-association-toybox"
 backend: "python"
-readiness: "needs design"
+readiness: "ready"
 release_target: "future"
 source_spec: "docs/superpowers/specs/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane.md"
 source_plan: "docs/superpowers/plans/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane-plan.md"
-afk_hitl: "HITL"
+afk_hitl: "AFK"
 last_synced: "2026-06-04"
 ---
 
@@ -23,9 +23,9 @@ last_synced: "2026-06-04"
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane.md
 **Source Plan:** docs/superpowers/plans/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane-plan.md
-**Classification:** HITL
-**Labels:** type:task, status:needs-design, ready-for-human, validation, area:benchmark
-**Goal Command:** None - HITL review required
+**Classification:** AFK
+**Labels:** type:task, status:ready, agent-ready, validation, area:benchmark
+**Goal Command:** /goal Resolve issue 222: add the Python toybox associating-compound pressure-density validation lane according to docs/superpowers/plans/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane-plan.md, preserving analysis-only scope and passing the listed proof oracle.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread

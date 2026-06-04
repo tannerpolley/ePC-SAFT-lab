@@ -8,11 +8,11 @@ project: "ePC-SAFT Roadmap"
 package: "analysis"
 capability: "explicit-association-toybox"
 backend: "python"
-readiness: "needs design"
+readiness: "ready"
 release_target: "future"
 source_spec: "docs/superpowers/specs/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening.md"
 source_plan: "docs/superpowers/plans/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening-plan.md"
-afk_hitl: "HITL"
+afk_hitl: "AFK"
 last_synced: "2026-06-04"
 ---
 
@@ -23,9 +23,9 @@ last_synced: "2026-06-04"
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening.md
 **Source Plan:** docs/superpowers/plans/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening-plan.md
-**Classification:** HITL
-**Labels:** type:task, status:needs-design, ready-for-human, validation, area:derivatives
-**Goal Command:** None - HITL review required
+**Classification:** AFK
+**Labels:** type:task, status:ready, agent-ready, validation, area:derivatives
+**Goal Command:** /goal Resolve issue 221: harden the Python toybox Picard autodiff and exact implicit sensitivity baseline lane according to docs/superpowers/plans/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening-plan.md, preserving analysis-only scope and passing the listed proof oracle.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
