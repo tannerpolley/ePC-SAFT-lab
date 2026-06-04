@@ -13,6 +13,7 @@ release_target: "future"
 source_spec: "docs/superpowers/specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md"
 source_plan: "docs/superpowers/plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md"
 afk_hitl: "HITL"
+branch: codex/issue-0224-probe-equilibrium-relevance-of-picard-closure-error-in-python-toybox
 last_synced: "2026-06-04"
 ---
 
@@ -23,7 +24,8 @@ last_synced: "2026-06-04"
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md
 **Source Plan:** docs/superpowers/plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md
-**Classification:** HITL
+**Branch:** codex/issue-0224-probe-equilibrium-relevance-of-picard-closure-error-in-python-toybox
+**AFK/HITL:** HITL
 **Labels:** type:task, status:blocked, ready-for-human, validation, area:equilibrium, area:derivatives
 **Goal Command:** None - HITL review required
 **Execution Mode:** Ask at runtime
@@ -58,7 +60,6 @@ out of `epcsaft-equilibrium` route APIs.
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/221
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/222
 
 ## Non-goals

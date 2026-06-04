@@ -51,10 +51,10 @@ claim provider, equilibrium, or benchmark capability by itself.
 
 | Issue | Status | Depends On | Summary |
 | --- | --- | --- | --- |
-| [#221](https://github.com/ePC-SAFT/ePC-SAFT/issues/221) | ready | none | Harden Picard autodiff and exact implicit sensitivity baselines in the Python toybox. |
+| [#221](https://github.com/ePC-SAFT/ePC-SAFT/issues/221) | closed | none | Hardened Picard autodiff and exact implicit sensitivity baselines in the Python toybox. |
 | [#222](https://github.com/ePC-SAFT/ePC-SAFT/issues/222) | ready | none | Add associating-compound pressure-density validation with honest data points and dotted exact-vs-Picard curves. |
-| [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | blocked | #221, #222 | Decide whether Picard clears the toybox evidence gates for later provider admission. |
-| [#224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) | blocked | #221, #222 | Probe whether Picard closure error is dangerous for later equilibrium objective, Jacobian, and Hessian work. |
+| [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | blocked | #222 | Decide whether Picard clears the toybox evidence gates for later provider admission. |
+| [#224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) | blocked | #222 | Probe whether Picard closure error is dangerous for later equilibrium objective, Jacobian, and Hessian work. |
 
 ## Historical Seed Work
 

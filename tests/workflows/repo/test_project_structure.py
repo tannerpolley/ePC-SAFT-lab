@@ -186,6 +186,7 @@ MILESTONE_MIRROR_FOLDERS = {
     "M5-regression": "M5 - Regression",
     "M6-validation": "M6 - Validation",
     "M7-release": "M7 - Release",
+    "M8-python-toybox": "M8 - Python Toybox",
 }
 MILESTONE_FRONT_MATTER_FIELDS = {
     "issue",
@@ -221,12 +222,12 @@ SUPERPOWERS_SPEC_FILES = {
     "specs/2026-05-29-m7-release-release-downstream-backlog.md",
     "specs/2026-06-01-m4-equilibrium-move-equilibrium-objective-assembly-to-extension.md",
 }
-SUPERPOWERS_SPEC_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+\.md$")
+SUPERPOWERS_SPEC_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+\.md$")
 SUPERPOWERS_ISSUE_FILENAME_PATTERN = re.compile(
-    r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+-issue-\d{4}-[a-z0-9-]+\.md$"
+    r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-issue-\d{4}-[a-z0-9-]+\.md$"
 )
 SUPERPOWERS_PLAN_FILENAME_PATTERN = re.compile(
-    r"^20\d\d-\d\d-\d\d-m[0-7]-[a-z0-9-]+-(?:issue-\d{4}-)?[a-z0-9-]+-plan\.md$"
+    r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-(?:issue-\d{4}-)?[a-z0-9-]+-plan\.md$"
 )
 SUPERPOWERS_REGISTRY_FILES = {
     "milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
