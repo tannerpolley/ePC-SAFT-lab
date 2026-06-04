@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: explicit_association_pure_saturation_validation
+title: Pure-component saturation validation
+matplotlib:
+  title: Pure-component saturation validation
+  x_label: 10^3/T / K^-1 and rho_l / mol cm^-3
+  y_label: log10 pressure / kPa and temperature / K
+  y_scale: linear transformed pressure
+files:
+  figure: pure_saturation_validation.png
+  svg: pure_saturation_validation.svg
+  source_data: pure_saturation_validation_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/render_figure.py

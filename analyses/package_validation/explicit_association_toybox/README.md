@@ -39,6 +39,8 @@ analysis code, not package runtime code.
 - `uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py`
 - `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q`
@@ -67,6 +69,11 @@ saturated-liquid density and saturation pressure. It solves fixed-state liquid
 density roots, but it does not solve vapor-liquid equilibrium, vapor pressure,
 bubble/dew routes, or phase coexistence. Model curves should be read as
 fixed-state diagnostic curves until a coexistence solve exists.
+
+The `pure_saturation_validation` lane is the first toybox coexistence solve. It
+uses a SciPy pure-component pressure/fugacity-equality solve for exact implicit
+association and Picard on the same path. It remains analysis-only evidence and
+does not add provider or equilibrium package API behavior.
 
 `scripts/toy_property_eos.py` is the pressure/density playground. It is kept
 smaller than the legacy reference script on purpose: hard-chain and dispersion

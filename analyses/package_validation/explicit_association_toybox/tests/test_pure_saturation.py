@@ -13,6 +13,9 @@ from analyses.package_validation.explicit_association_toybox.figures.pure_satura
     REQUIRED_RETAINED_COLUMNS,
     build_pure_saturation_validation_rows,
 )
+from analyses.package_validation.explicit_association_toybox.figures.pure_saturation_validation.scripts.render_figure import (
+    build_plotted_rows,
+)
 
 
 def _methanol_case() -> dict[str, object]:
@@ -128,3 +131,32 @@ def test_pure_saturation_generation_retains_reference_exact_and_picard_rows() ->
             assert row["model_rho_liq_mol_m3"] > row["model_rho_vap_mol_m3"]
             assert row["solver_iteration_count"] > 0
             assert row["initial_guess_policy"] == "reference_pressure_liquid_density_ideal_vapor_seed"
+
+
+def test_pure_saturation_rendering_builds_marker_and_model_curve_rows() -> None:
+    retained_rows = build_pure_saturation_validation_rows(
+        [
+            {
+                "component": "methanol",
+                "T_K": 352.28,
+                "p_sat_Pa": 175_580.0,
+                "rho_sat_liq_mol_m3": 22_891.0,
+                "phase": "liquid",
+                "source_url": "https://webbook.nist.gov/example",
+            }
+        ],
+        provider_cases={"methanol": _methanol_case()},
+    )
+
+    plotted_rows = build_plotted_rows(retained_rows)
+
+    assert len(plotted_rows) == 3
+    assert {row["plot_role"] for row in plotted_rows} == {"reference_marker", "model_curve"}
+    assert {row["series_label"] for row in plotted_rows} == {"Data", "Exact implicit", "Picard"}
+    for row in plotted_rows:
+        assert row["inverse_temperature_1000_per_K"] == pytest.approx(1000.0 / 352.28)
+        assert row["p_sat_kPa"] != ""
+        assert row["log10_p_sat_kPa"] != ""
+        if row["plot_role"] == "model_curve":
+            assert row["rho_vap_mol_m3"] != ""
+            assert row["rho_liq_mol_cm3"] != ""
