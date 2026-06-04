@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "analysis"
 capability: "explicit-association-toybox"
 backend: "python"
-readiness: "blocked"
+readiness: "ready"
 release_target: "future"
 source_spec: "docs/superpowers/specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md"
 source_plan: "docs/superpowers/plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md"
@@ -26,7 +26,7 @@ last_synced: "2026-06-04"
 **Source Plan:** docs/superpowers/plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md
 **Branch:** codex/issue-0224-probe-equilibrium-relevance-of-picard-closure-error-in-python-toybox
 **AFK/HITL:** HITL
-**Labels:** type:task, status:blocked, ready-for-human, validation, area:equilibrium, area:derivatives
+**Labels:** type:task, status:ready, ready-for-human, validation, area:equilibrium, area:derivatives
 **Goal Command:** None - HITL review required
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -60,7 +60,7 @@ out of `epcsaft-equilibrium` route APIs.
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/222
+- None
 
 ## Non-goals
 

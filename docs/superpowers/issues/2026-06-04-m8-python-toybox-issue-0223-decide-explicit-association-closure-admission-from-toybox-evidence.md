@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "analysis"
 capability: "explicit-association-toybox"
 backend: "python"
-readiness: "blocked"
+readiness: "ready"
 release_target: "future"
 source_spec: "docs/superpowers/specs/2026-06-04-m8-python-toybox-explicit-closure-admission-decision.md"
 source_plan: "docs/superpowers/plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md"
@@ -26,7 +26,7 @@ last_synced: "2026-06-04"
 **Source Plan:** docs/superpowers/plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md
 **Branch:** codex/issue-0223-decide-explicit-association-closure-admission-from-toybox-evidence
 **AFK/HITL:** HITL
-**Labels:** type:task, status:blocked, ready-for-human, validation, area:core
+**Labels:** type:task, status:ready, ready-for-human, validation, area:core
 **Goal Command:** None - HITL review required
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -60,7 +60,7 @@ until property and derivative gates pass.
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/222
+- None
 
 ## Non-goals
 
