@@ -51,10 +51,8 @@ The first results are useful, but they are still diagnostic evidence.
 | Finding | Current evidence | Interpretation |
 | --- | ---: | --- |
 | Huang/Radosz exact topology reductions | Topology reductions satisfy mass-action residuals around `1e-13` to `1e-12`. | The source formulas are a strong validation baseline when their topology assumptions are met. |
-| Closure A / 2B exact reduction | Max topology `ares_assoc` relative error about `5.996e-11`; mass-action residual about `2.220e-16`. | This lane can be treated as exact for the one-associating-component 2B topology gate. |
-| Best broad explicit approximation so far | `explicit_damped_picard_unroll_5` had matrix max `ares_assoc` relative error `3.676e-02` and max mass-action residual `1.549e-01`. | It is the best broad candidate in the current set, but not strong enough for universal promotion. |
-| Diagonal Newton polish | `explicit_picard3_diag_newton1` had matrix max `ares_assoc` relative error `5.227e-02`. | The polish did not clearly beat five damped Picard steps in the retained matrix. |
-| Collapsed donor/acceptor mean field | Matrix max `ares_assoc` relative error `1.000e+00`; earlier grid max `1.900e+01`. | This is diagnostic-only and should not be treated as a production approximation candidate. |
+| 2B exact reduction | Max topology `ares_assoc` relative error about `5.996e-11`; mass-action residual about `2.220e-16`. | This lane can be treated as exact for the one-associating-component 2B topology gate. |
+| Active Picard approximation | `damped_picard_7_05` is the only retained explicit approximation candidate. | Follow-up work should test property and derivative propagation for this candidate against exact implicit mass-action. |
 | Fixed-state density residuals | Methanol median absolute density residual about `6.233e-03`; water about `2.342e-02`. | Density residuals are informative but must stay tied to the fixed-state diagnostic label. |
 | Fixed-state pressure residuals | Methanol median absolute pressure residual about `1.521e+02`; water about `1.554e+03`. | Relative pressure residual alone is too harsh and too hard to interpret; absolute MPa and `Z` residuals are needed. |
 | Public source coverage | Methanol and water saturation rows were fetched from public source ranges. | The data path works, but it needs source-status and range filters before claims broaden. |
@@ -121,10 +119,10 @@ The next analysis should add eight lanes:
 The follow-up is useful when it can answer these questions with retained CSVs,
 figures, and compact summaries:
 
-- Which topology and `rho * Delta` ranges break each explicit closure?
-- Does any inexpensive unrolled closure beat five damped Picard steps by both
-  error and timing?
-- Do promising closures remain smooth enough for later CppAD or equilibrium
+- Which topology and `rho * Delta` ranges stress the active Picard candidate?
+- Does the active Picard candidate remain accurate enough to justify its timing
+  benefit?
+- Does the active Picard candidate remain smooth enough for later CppAD or equilibrium
   derivative discussions?
 - Are pressure residuals still alarming when reframed as MPa and `Z` errors?
 - Does water need a separate parameter-source lane before comparing 3B and 4C

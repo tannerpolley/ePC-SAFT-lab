@@ -1,10 +1,10 @@
-closure,comparison_role,median_elapsed_seconds,max_abs_assoc_helmholtz_rel_error
-damped_picard_7_05,explicit_approximation,0.00020064999989699572,0.018611719333789824
-topology_reduction_huang_radosz_1,exact_topology_reduction,0.0,5.0320338674310646e-09
-topology_reduction_huang_radosz_2a,exact_topology_reduction,0.0,5.2746139384149e-10
-topology_reduction_huang_radosz_2b,exact_topology_reduction,0.0,5.0320338674310646e-09
-topology_reduction_huang_radosz_3a,exact_topology_reduction,0.0,4.086846171949387e-10
-topology_reduction_huang_radosz_3b,exact_topology_reduction,0.0,2.75820762328888e-09
-topology_reduction_huang_radosz_4a,exact_topology_reduction,0.0,3.2542542968438794e-10
-topology_reduction_huang_radosz_4b,exact_topology_reduction,0.0,2.7416888120665215e-09
-topology_reduction_huang_radosz_4c,exact_topology_reduction,0.0,5.2746139384149e-10
+closure,comparison_role,median_elapsed_seconds,max_abs_assoc_helmholtz_rel_error,closure_label,comparison_label
+damped_picard_7_05,explicit_approximation,0.00020064999989699572,0.018611719333789824,Picard,Picard
+topology_reduction_huang_radosz_1,exact_topology_reduction,0.0,5.0320338674310646e-09,Huang/Radosz exact,Huang/Radosz exact
+topology_reduction_huang_radosz_2a,exact_topology_reduction,0.0,5.2746139384149e-10,Huang/Radosz exact,Huang/Radosz exact
+topology_reduction_huang_radosz_2b,exact_topology_reduction,0.0,5.0320338674310646e-09,Huang/Radosz exact,Huang/Radosz exact
+topology_reduction_huang_radosz_3a,exact_topology_reduction,0.0,4.086846171949387e-10,Huang/Radosz exact,Huang/Radosz exact
+topology_reduction_huang_radosz_3b,exact_topology_reduction,0.0,2.75820762328888e-09,Huang/Radosz exact,Huang/Radosz exact
+topology_reduction_huang_radosz_4a,exact_topology_reduction,0.0,3.2542542968438794e-10,Huang/Radosz exact,Huang/Radosz exact
+topology_reduction_huang_radosz_4b,exact_topology_reduction,0.0,2.7416888120665215e-09,Huang/Radosz exact,Huang/Radosz exact
+topology_reduction_huang_radosz_4c,exact_topology_reduction,0.0,5.2746139384149e-10,Huang/Radosz exact,Huang/Radosz exact

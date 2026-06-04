@@ -70,14 +70,14 @@ def run_asymmetric_binary_closures(
             delta=delta,
         )
         for closure_name in closure_names:
-            closure, closure_a, closure_elapsed = closure_association_value(
+            closure, closure_assoc, closure_elapsed = closure_association_value(
                 closure_name,
                 system=system,
                 density=density,
                 composition=composition,
                 delta=delta,
             )
-            rel = relative_error(closure_a, exact_a)
+            rel = relative_error(closure_assoc, exact_a)
             residual = mass_residual_inf(
                 closure,
                 system=system,
@@ -94,7 +94,7 @@ def run_asymmetric_binary_closures(
                     "site_count": system.site_count,
                     "composition": ";".join(f"{value:.12g}" for value in composition),
                     "ares_assoc_exact": exact_a,
-                    "ares_assoc_closure": closure_a,
+                    "ares_assoc_closure": closure_assoc,
                     "ares_assoc_rel_error": rel,
                     "mass_action_residual_inf": residual,
                     "exact_iteration_count": exact.iteration_count,

@@ -1,0 +1,488 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{mathtools}
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+
+\geometry{margin=1in}
+\addbibresource{references.bib}
+
+\newcommand{\assoc}{\mathrm{assoc}}
+
+\title{Explicit Association Picard Approximation for PC-SAFT}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Purpose And Roadmap}
+
+This note derives a fully explicit approximation for the PC-SAFT association
+site fractions. The story starts with the exact implicit association Helmholtz
+form used in the literature, then isolates why that form creates an internal
+solve and an implicit-sensitivity burden. The explicit approximation is then
+derived as a full-matrix, seven-step, damped Picard map applied to the same
+mass-action equations. The final reduced site fractions are substituted into
+the standard association Helmholtz-energy expression.
+
+Throughout this note, \(X_a^\star\) denotes the exact implicit mass-action
+solution. The reduced form is defined by a fixed seven-step recursion and then
+uses the ordinary notation \(X_a\) for the reduced site fractions and
+\(a^\assoc\) for the association Helmholtz contribution evaluated with those
+reduced fractions. With this convention, no separate approximation superscript
+or Picard subscript is carried through the final thermodynamic expressions. The
+resulting derivatives are derivatives of the reduced algebraic model; they
+coincide with derivatives of the implicit mass-action solution only in limiting
+cases where the fixed recursion satisfies the original mass-action balance
+exactly.
+
+\section{Exact Implicit Association Model}
+
+\begin{equation}
+    a^\assoc =
+    \sum_{i=1}^{N_c} x_i
+    \sum_{A_i\in\Gamma_i} n_{iA}
+    \left(
+        \ln X^{A_i}
+        - \frac{X^{A_i}}{2}
+        + \frac{1}{2}
+    \right).
+    \tag{4}
+    \label{eq:association_helmholtz_literature}
+\end{equation}
+\setcounter{equation}{4}
+
+Equation~\eqref{eq:association_helmholtz_literature} is the association
+Helmholtz contribution written in the usual site-fraction form
+\cite{Chapman1990,Huang1990,Gross2002}. The outer sum is over mixture
+components, \(x_i\) is the mole fraction of component \(i\), \(\Gamma_i\) is
+the set of association sites on component \(i\), and \(n_{iA}\) is the
+multiplicity of site class \(A_i\). For an explicitly expanded site list,
+\(n_{iA}=1\) for every listed site. The site fraction \(X^{A_i}\) is the
+fraction of molecules of component \(i\) that are not bonded at site \(A_i\).
+
+The component number density is
+\begin{equation}
+    \rho_j=x_j\rho ,
+    \label{eq:component_number_density}
+\end{equation}
+where \(\rho\) is the total molecular number density. If a molar density \(c\)
+is used instead, the corresponding number density is \(\rho=N_Ac\). The exact
+implicit site fractions satisfy the mass-action relation
+\begin{equation}
+    X^{A_i,\star}
+    =
+    \left[
+        1+
+        \sum_j \rho_j\sum_{B_j}
+        X^{B_j,\star}\Delta^{A_iB_j}
+    \right]^{-1}.
+    \label{eq:exact_mass_action}
+\end{equation}
+The inner sum is over all association sites \(B_j\) on component \(j\), and the
+outer sum is over all mixture components. Equivalently, for a site-fraction
+vector \(\mathbf{X}\), the mass-action residual is
+\begin{equation}
+    \mathcal{R}^{A_i}(\mathbf{X};T,\rho,\mathbf{x},\mathbf{p})
+    =
+    X^{A_i}
+    \left(
+        1+\sum_j\rho_j\sum_{B_j}X^{B_j}\Delta^{A_iB_j}
+    \right)-1,
+    \label{eq:mass_action_residual}
+\end{equation}
+and the exact fractions satisfy
+\(\boldsymbol{\mathcal{R}}(\mathbf{X}^{\star};T,\rho,\mathbf{x},\mathbf{p})
+=\mathbf{0}\).
+
+The association strength between site \(A\) on component \(i\) and site \(B\)
+on component \(j\) is
+\begin{equation}
+    \Delta^{A_iB_j}
+    =
+    d_{ij}^{3}\,
+    g_{ij}^{\mathrm{hs}}(d_{ij})\,
+    \kappa^{A_iB_j}
+    \left[
+        \exp\!\left(\frac{\varepsilon^{A_iB_j}}{k_B T}\right)-1
+    \right].
+    \label{eq:association_strength_literature}
+\end{equation}
+This relation is commonly listed as the hydrogen-bond strength equation in
+Gross--Sadowski-style PC-SAFT summaries \cite{Gross2001,Gross2002,Baygi2015}.
+It collects the pair volume \(d_{ij}^3\), the hard-sphere contact value
+\(g_{ij}^{\mathrm{hs}}\), the association volume \(\kappa^{A_iB_j}\), and the
+Mayer factor for the association energy. The Boltzmann constant is \(k_B\), and
+\(T\) is the absolute temperature.
+
+The Mayer factor for the association square-well interaction is
+\begin{equation}
+    F^{A_iB_j}
+    =
+    \exp\!\left(\frac{\varepsilon^{A_iB_j}}{k_B T}\right)-1 ,
+    \label{eq:association_mayer_factor}
+\end{equation}
+where \(\varepsilon^{A_iB_j}\) is the association energy between the two sites
+\cite{Chapman1990,Huang1990,Gross2002}. The temperature-dependent segment
+diameter used in the PC-SAFT hard-sphere contact term is
+\begin{equation}
+    d_i(T)
+    =
+    \sigma_i
+    \left[
+        1-0.12\exp\!\left(-\frac{3\varepsilon_i}{k_B T}\right)
+    \right],
+    \label{eq:segment_diameter_temperature}
+\end{equation}
+where \(\sigma_i\) is the temperature-independent segment diameter and
+\(\varepsilon_i\) is the segment dispersion energy. The association pair
+diameter is the arithmetic mean
+\begin{equation}
+    d_{ij}
+    =
+    \frac{d_i+d_j}{2}.
+    \label{eq:association_pair_diameter}
+\end{equation}
+
+The hard-sphere contact value for the pair is
+\begin{equation}
+    g_{ij}^{\mathrm{hs}}(d_{ij})
+    =
+    \frac{1}{1-\zeta_3}
+    +
+    \frac{3D_{ij}\zeta_2}{(1-\zeta_3)^2}
+    +
+    \frac{2D_{ij}^{2}\zeta_2^{2}}{(1-\zeta_3)^3},
+    \qquad
+    D_{ij}=\frac{d_id_j}{d_i+d_j},
+    \label{eq:hard_sphere_contact_value}
+\end{equation}
+with packing moments
+\begin{equation}
+    \zeta_n
+    =
+    \frac{\pi}{6}\rho\sum_i x_i m_i d_i^n,
+    \qquad n\in\{0,1,2,3\}.
+    \label{eq:packing_moments}
+\end{equation}
+Here \(m_i\) is the segment number.
+
+For cross-association between unlike associating components, Gross and Sadowski
+use the combining rules
+\begin{align}
+    \varepsilon^{A_iB_j}
+    &=
+    \frac{1}{2}
+    \left(
+        \varepsilon^{A_iB_i}
+        +
+        \varepsilon^{A_jB_j}
+    \right),
+    \label{eq:association_energy_mixing}
+    \\
+    \kappa^{A_iB_j}
+    &=
+    \sqrt{\kappa^{A_iB_i}\kappa^{A_jB_j}}
+    \left[
+        \frac{\sqrt{\sigma_i\sigma_j}}
+        {\frac{1}{2}(\sigma_i+\sigma_j)}
+    \right]^3 .
+    \label{eq:association_volume_mixing}
+\end{align}
+The first rule defines the cross association energy from the pure-component
+association energies; the second scales the geometric mean of the association
+volumes by the segment-size ratio \cite{Gross2002}.
+
+\section{Implicit Solve And Derivative Burden}
+
+The Helmholtz expression in \eqref{eq:association_helmholtz_literature} is
+algebraic once the site fractions are known, but the exact site fractions are
+not given by an explicit formula in the general mixture case. They are defined
+implicitly by the coupled residual equations
+\begin{equation}
+    \boldsymbol{\mathcal{R}}
+    \left(
+        \mathbf{X}^{\star};T,\rho,\mathbf{x},\mathbf{p}
+    \right)
+    =
+    \mathbf{0}.
+    \label{eq:implicit_site_fraction_system}
+\end{equation}
+Consequently, the exact association contribution has the nested form
+\begin{equation}
+    a^\assoc_{\star}(q)
+    =
+    a^\assoc
+    \left(
+        \mathbf{X}^{\star}(q),q
+    \right),
+    \qquad
+    q=(T,\rho,\mathbf{x},\mathbf{p}).
+    \label{eq:implicit_assoc_nested_form}
+\end{equation}
+The dependence of \(\mathbf{X}^{\star}\) on the thermodynamic variables and
+parameters is therefore obtained by implicit differentiation, not by direct
+substitution into a closed algebraic expression. For a scalar variable \(q\),
+the first derivative follows from
+\begin{equation}
+    \mathcal{R}_{\mathbf{X}}
+    \frac{\partial \mathbf{X}^{\star}}{\partial q}
+    +
+    \mathcal{R}_{q}
+    =
+    \mathbf{0},
+    \qquad
+    \frac{\partial \mathbf{X}^{\star}}{\partial q}
+    =
+    -
+    \mathcal{R}_{\mathbf{X}}^{-1}
+    \mathcal{R}_{q},
+    \label{eq:implicit_first_derivative}
+\end{equation}
+where \(\mathcal{R}_{\mathbf{X}}\) is the site-fraction residual Jacobian. The
+second derivative in two directions \(q\) and \(r\) requires differentiating
+the same residual relation again:
+\begin{equation}
+    \mathcal{R}_{\mathbf{X}}
+    \frac{\partial^2 \mathbf{X}^{\star}}{\partial q\,\partial r}
+    +
+    \mathcal{R}_{qr}
+    +
+    \mathcal{R}_{q\mathbf{X}}
+    \frac{\partial \mathbf{X}^{\star}}{\partial r}
+    +
+    \mathcal{R}_{r\mathbf{X}}
+    \frac{\partial \mathbf{X}^{\star}}{\partial q}
+    +
+    \mathcal{R}_{\mathbf{X}\mathbf{X}}
+    \left[
+        \frac{\partial \mathbf{X}^{\star}}{\partial q},
+        \frac{\partial \mathbf{X}^{\star}}{\partial r}
+    \right]
+    =
+    \mathbf{0}.
+    \label{eq:implicit_second_derivative}
+\end{equation}
+Thus exact Hessian information requires residual Jacobian solves plus second
+and mixed derivatives of the residual. Third-order information introduces
+additional tensor contractions and repeated differentiated solves.
+
+Direct automatic differentiation through an iterative nonlinear solve does not
+remove this structure. If the iterations are differentiated literally, the
+derivative corresponds to the finite numerical path taken by the solver, which
+can depend on stopping tolerances, damping, iteration count, and convergence
+history. If the exact converged solution is desired instead, the derivative
+must be expressed through the implicit relations above. This is mathematically
+clean, but it is a heavier derivative contract for repeated gradient, Jacobian,
+and Hessian evaluations.
+
+For an IPOPT-style equilibrium nonlinear program, those derivative evaluations
+are called many times while the optimizer changes temperature, density, phase
+amounts, and composition-like variables. A finite explicit association closure
+is worth studying because it replaces the inner implicit association solve with
+a fixed algebraic graph. The reduced graph has predictable cost, fixed
+smoothness wherever its elementary operations are smooth, and gradients and
+Hessians that can be obtained by ordinary chain-rule automatic
+differentiation. The tradeoff is explicit: the derivatives are exact for the
+reduced association model, not for the original implicit model, so the reduced
+model must be validated against the implicit association residuals and the
+resulting thermodynamic properties.
+
+\section{Explicit Closure Matrix Form}
+
+The remaining derivation flattens the component-site notation \(A_i\) into a
+single site index \(a=1,\dots,N_s\). Site \(a\) belongs to component \(i(a)\),
+and the site fraction \(X_a^\star\) is the corresponding
+\(X^{A_i,\star}\). If a flattened site represents \(\nu_a\) equivalent sites,
+define the site weight
+\begin{equation}
+    w_a=x_{i(a)}\nu_a .
+    \label{eq:site_weight}
+\end{equation}
+For an explicitly expanded site list, \(\nu_a=1\). The site-pair association
+strength \(\Delta_{ab}\) is the flattened form of
+\(\Delta^{A_iB_j}\) from \eqref{eq:association_strength_literature}.
+
+Define the nonnegative association matrix
+\begin{equation}
+    K_{ab}(T,\rho,\mathbf{x},\mathbf{p})
+    =
+    \rho\,w_b\,\Delta_{ab}(T,\rho,\mathbf{x},\mathbf{p}) .
+    \label{eq:k_matrix}
+\end{equation}
+Then \eqref{eq:exact_mass_action} becomes the fixed-point system
+\begin{equation}
+    X_a^\star = G_a(\mathbf{X}^\star)
+    =
+    \frac{1}{1+\sum_{b=1}^{N_s}K_{ab}X_b^\star},
+    \qquad a=1,\dots,N_s .
+    \label{eq:fixed_point_map}
+\end{equation}
+The exact PC-SAFT model iterates or otherwise solves \eqref{eq:fixed_point_map}
+until the mass-action residual is sufficiently small. The explicit
+approximation replaces that solve with a finite, predetermined algebraic
+composition of the same map.
+
+\section{Bounded Row-Sum Initializer}
+
+For each site row, define the row-sum association strength
+\begin{equation}
+    S_a = \sum_{b=1}^{N_s}K_{ab}.
+    \label{eq:row_sum_strength}
+\end{equation}
+If every site fraction feeding row \(a\) were approximated by a single scalar
+\(\chi_a\), the scalar balance would be
+\begin{equation}
+    \chi_a = \frac{1}{1+S_a\chi_a}.
+    \label{eq:scalar_row_sum_balance}
+\end{equation}
+Multiplying by the denominator gives
+\begin{equation}
+    S_a\chi_a^2+\chi_a-1=0 .
+    \label{eq:scalar_row_sum_quadratic}
+\end{equation}
+The physical root is
+\begin{equation}
+    \chi_a =
+    \frac{-1+\sqrt{1+4S_a}}{2S_a},
+    \qquad S_a>0 .
+    \label{eq:row_sum_root_direct}
+\end{equation}
+Rationalizing the numerator yields the numerically stable form
+\begin{equation}
+    X_a^{(0)}
+    =
+    \frac{2}{1+\sqrt{1+4S_a}},
+    \qquad a=1,\dots,N_s ,
+    \label{eq:row_sum_initializer}
+\end{equation}
+with the continuous limit \(X_a^{(0)}=1\) when \(S_a=0\). Because
+\(S_a\ge 0\), this initializer satisfies \(0<X_a^{(0)}\le 1\).
+
+\section{Seven-Step Damped Picard Closure}
+
+Starting from \eqref{eq:row_sum_initializer}, the undamped Picard proposal at
+step \(m\) is the exact fixed-point map evaluated at the previous explicit
+iterate:
+\begin{equation}
+    \widehat{X}_a^{(m)}
+    =
+    G_a(\mathbf{X}^{(m-1)})
+    =
+    \frac{1}{
+        1+\sum_{b=1}^{N_s}K_{ab}X_b^{(m-1)}
+    },
+    \qquad m=1,\dots,7 .
+    \label{eq:picard_proposal}
+\end{equation}
+The finite approximation uses fixed damping \(\omega=1/2\):
+\begin{equation}
+    X_a^{(m)}
+    =
+    (1-\omega)X_a^{(m-1)}
+    +
+    \omega\widehat{X}_a^{(m)},
+    \qquad \omega=\frac{1}{2},
+    \qquad m=1,\dots,7 .
+    \label{eq:fixed_damping_picard}
+\end{equation}
+Substituting \(\omega=1/2\) gives the site-wise recurrence
+\begin{equation}
+    X_a^{(m)}
+    =
+    \frac{1}{2}X_a^{(m-1)}
+    +
+    \frac{1}{2}
+    \frac{1}{
+        1+\sum_{b=1}^{N_s}K_{ab}X_b^{(m-1)}
+    },
+    \qquad m=1,\dots,7 .
+    \label{eq:picard7_step}
+\end{equation}
+Since \(K_{ab}\ge 0\) and \(0<X_b^{(m-1)}\le 1\), the proposal lies in
+\((0,1]\), and the convex combination in \eqref{eq:picard7_step} also lies in
+\((0,1]\). The finite explicit approximation is therefore bounded by
+construction.
+
+\section{Reduced Site Fractions}
+
+The reduced site fractions are defined by assigning the seventh Picard iterate
+to the nominal site-fraction notation:
+\begin{equation}
+    X_a = X_a^{(7)},
+    \label{eq:final_picard_site_fraction}
+\end{equation}
+where \(X_a^{(0)}\) is given by \eqref{eq:row_sum_initializer} and each
+\(X_a^{(m)}\), \(m=1,\dots,7\), is given by \eqref{eq:picard7_step}. Equivalently,
+\begin{equation}
+    \mathbf{X}
+    =
+    \left(\mathcal{P}_{1/2}\right)^7
+    \left(\mathbf{X}^{(0)}\right),
+    \label{eq:picard7_map}
+\end{equation}
+where the operator notation means repeated application of the component-wise
+recurrence in \eqref{eq:picard7_step}.
+
+\section{Reduced Energy And Residual Check}
+
+Under the reduced-form convention, the association Helmholtz contribution is
+\eqref{eq:association_helmholtz_literature} evaluated with the reduced site
+fractions \(X_a=X_a^{(7)}\). This is the same algebraic Helmholtz expression
+used for the implicit model; only the site fractions differ. The residual of
+the original mass-action system at the reduced site fractions is
+\begin{equation}
+    r_a
+    =
+    X_a
+    \left(
+        1+\sum_{b=1}^{N_s}K_{ab}X_b
+    \right)-1 .
+    \label{eq:picard_mass_action_residual}
+\end{equation}
+The reduced form matches the exact association balance only in cases where
+\(r_a=0\) for every site \(a\).
+
+\section{Reduced-Model Derivative Meaning}
+
+All quantities in \eqref{eq:association_helmholtz_literature} are explicit
+functions of \(T\), \(\rho\), \(\mathbf{x}\), and the parameter vector
+\(\mathbf{p}\). Therefore repeated application of the chain rule through
+\eqref{eq:row_sum_initializer} and \eqref{eq:picard7_step} gives
+\begin{equation}
+    \frac{\partial a^\assoc}{\partial q},
+    \qquad
+    q\in\{T,\rho,x_i,p_\ell\},
+    \label{eq:picard_derivative_contract}
+\end{equation}
+as an exact derivative of the reduced explicit Helmholtz model. These
+derivatives are not generally equal to the derivatives obtained by implicit
+differentiation of the exact mass-action solution. The two derivative sets
+coincide only when \eqref{eq:picard_mass_action_residual} vanishes under the
+same state and parameter assumptions.
+
+\section{Evaluation Summary}
+
+The complete mathematical evaluation is:
+\begin{enumerate}
+    \item form the full \(K_{ab}\) matrix from
+    \eqref{eq:k_matrix};
+    \item initialize with \eqref{eq:row_sum_initializer};
+    \item apply exactly seven damped Picard steps using
+    \eqref{eq:picard7_step};
+    \item evaluate \(a^\assoc\) with
+    \eqref{eq:association_helmholtz_literature};
+    \item evaluate mass-action residuals with
+    \eqref{eq:picard_mass_action_residual} whenever the approximation is
+    compared against the implicit exact association model.
+\end{enumerate}
+
+\printbibliography
+
+\end{document}

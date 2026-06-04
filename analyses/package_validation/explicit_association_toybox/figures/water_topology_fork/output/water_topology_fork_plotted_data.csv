@@ -1,7 +1,7 @@
-case_id,assigned_topology,rigorous_topology,temperature_k,pressure_residual_mpa,z_residual_abs,water_diagnostic_role
-water_assigned_3b_provider_default,3B,4C,273.18,-0.9520281679629092,0.007552612539796017,fixed_state_screen
-water_assigned_3b_provider_default,3B,4C,347.39,99.34506391362822,0.6353435602234708,fixed_state_warning
-water_assigned_3b_provider_default,3B,4C,364.61,94.8637440672848,0.5846077887500666,fixed_state_warning
-water_rigorous_4c_source_label_only,4C,4C,273.18,-0.9520281679629092,0.007552612539796017,fixed_state_screen
-water_rigorous_4c_source_label_only,4C,4C,347.39,99.34506391362822,0.6353435602234708,fixed_state_warning
-water_rigorous_4c_source_label_only,4C,4C,364.61,94.8637440672848,0.5846077887500666,fixed_state_warning
+case_id,assigned_topology,rigorous_topology,parameter_source,temperature_k,pressure_residual_mpa,z_residual_abs,water_diagnostic_role
+water_assigned_3b_provider_default,3B,4C,provider_default,273.18,-0.9520281679629092,0.007552612539796017,fixed_state_screen
+water_assigned_3b_provider_default,3B,4C,provider_default,347.39,99.34506391362822,0.6353435602234708,fixed_state_warning
+water_assigned_3b_provider_default,3B,4C,provider_default,364.61,94.8637440672848,0.5846077887500666,fixed_state_warning
+water_rigorous_4c_source_label_only,4C,4C,source_label_only,273.18,-0.9520281679629092,0.007552612539796017,fixed_state_screen
+water_rigorous_4c_source_label_only,4C,4C,source_label_only,347.39,99.34506391362822,0.6353435602234708,fixed_state_warning
+water_rigorous_4c_source_label_only,4C,4C,source_label_only,364.61,94.8637440672848,0.5846077887500666,fixed_state_warning

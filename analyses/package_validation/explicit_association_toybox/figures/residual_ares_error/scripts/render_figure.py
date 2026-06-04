@@ -1,11 +1,29 @@
 from __future__ import annotations
 
 import csv
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = ANALYSIS_ROOT.parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from analyses.package_validation.explicit_association_toybox.scripts.plot_style import (
+    BLUE,
+    GREEN,
+    ORANGE,
+    apply_plot_style,
+    case_label,
+    closure_label,
+    log_fit_line,
+    save_png_svg,
+    style_axis,
+    write_sidecar,
+)
+
 OUTPUT = ANALYSIS_ROOT / "figures" / "residual_ares_error" / "output"
 METRICS = OUTPUT / "residual_ares_metrics.csv"
 FIGURE = OUTPUT / "residual_ares_error_summary.png"
@@ -19,54 +37,60 @@ def _load_rows() -> list[dict[str, str]]:
 
 
 def main() -> None:
+    apply_plot_style()
     rows = _load_rows()
-    grouped: dict[str, list[float]] = {}
-    timings: dict[str, list[float]] = {}
-    for row in rows:
-        grouped.setdefault(row["closure"], []).append(float(row["ares_total_rel_error"]))
-        timings.setdefault(row["closure"], []).append(float(row["speedup_ratio"]))
-    names = sorted(grouped)
-    errors = [max(grouped[name]) for name in names]
-    speedups = [max(timings[name]) for name in names]
+    plotted = [
+        {
+            "system": row["system"],
+            "closure": row["closure"],
+            "closure_label": closure_label(row["closure"]),
+            "rho_delta": float(row["density"]) * float(row["strength"]),
+            "ares_total_rel_error": row["ares_total_rel_error"],
+            "max_ares_total_rel_error": row["ares_total_rel_error"],
+            "assoc_helmholtz_rel_error": row["assoc_helmholtz_rel_error"],
+            "speedup_ratio": row["speedup_ratio"],
+        }
+        for row in rows
+    ]
 
     OUTPUT.mkdir(parents=True, exist_ok=True)
     with PLOTTED.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(["closure", "max_ares_total_rel_error", "max_speedup_ratio"])
-        writer.writerows(zip(names, errors, speedups))
+        writer = csv.DictWriter(handle, fieldnames=list(plotted[0]))
+        writer.writeheader()
+        writer.writerows(plotted)
 
-    fig, ax = plt.subplots(figsize=(9, 4.5))
-    ax.bar(names, errors, color="#6f8f3a")
-    ax.set_yscale("symlog", linthresh=0.03, linscale=0.8)
-    ax.set_title("Explicit association total residual Helmholtz error")
-    ax.set_ylabel("Max relative total ares error")
-    ax.set_xlabel("Closure")
-    ax.tick_params(axis="x", rotation=30)
-    ax.grid(axis="y", color="#d9d9d9", linewidth=0.6)
+    systems = sorted({row["system"] for row in plotted})
+    colors = [BLUE, ORANGE, GREEN]
+    fig, ax = plt.subplots(figsize=(8.6, 4.8))
+    for color, system in zip(colors, systems, strict=False):
+        system_rows = sorted((row for row in plotted if row["system"] == system), key=lambda row: row["rho_delta"])
+        x = [row["rho_delta"] for row in system_rows]
+        y = [max(float(row["ares_total_rel_error"]), 1.0e-14) for row in system_rows]
+        ax.scatter(x, y, s=34, color=color, label=case_label(system))
+        fit_x, fit_y = log_fit_line(x, y)
+        if fit_x:
+            ax.plot(fit_x, fit_y, linewidth=1.2, color=color, alpha=0.72)
+    ax.axhline(3.0e-2, color="#111827", linewidth=0.9, linestyle="--", label="3% reference")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_title(r"Total residual Helmholtz error from association closure")
+    ax.set_xlabel(r"$\rho\Delta$")
+    ax.set_ylabel(r"relative error in $a_{\mathrm{res}}$")
+    style_axis(ax, minor=True)
+    ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(FIGURE, dpi=160)
+    save_png_svg(fig, FIGURE)
     plt.close(fig)
-    SIDECAR.write_text(
-        "\n".join(
-            (
-                "kind: matplotlib-figure",
-                "version: 1",
-                "plot_id: explicit_association_total_residual_ares_error",
-                "title: Explicit association total residual Helmholtz error",
-                "matplotlib:",
-                "  title: Explicit association total residual Helmholtz error",
-                "  x_label: Closure",
-                "  y_label: Max relative total ares error",
-                "  y_scale: symlog",
-                "files:",
-                "  figure: residual_ares_error_summary.png",
-                "  source_data: residual_ares_error_summary_plotted_data.csv",
-                "render:",
-                "  command: uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py",
-                "",
-            )
-        ),
-        encoding="utf-8",
+    write_sidecar(
+        SIDECAR,
+        plot_id="explicit_association_total_residual_ares_error",
+        title="Total residual Helmholtz error from association closure",
+        figure=FIGURE,
+        source_data=PLOTTED,
+        x_label="rho Delta",
+        y_label="relative error in a_res",
+        y_scale="log",
+        command="uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py",
     )
     print(FIGURE)
 

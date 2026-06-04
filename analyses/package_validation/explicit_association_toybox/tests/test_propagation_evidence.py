@@ -36,7 +36,7 @@ def test_classify_candidate_accuracy_when_derivatives_and_properties_are_bounded
     assert band == "candidate_accuracy"
 
 
-def test_classify_collapsed_mean_field_as_diagnostic() -> None:
+def test_classify_information_loss_as_diagnostic() -> None:
     thresholds = load_propagation_thresholds()
 
     band = classify_propagated_evidence_band(
@@ -46,7 +46,7 @@ def test_classify_collapsed_mean_field_as_diagnostic() -> None:
         property_rel_error=1.0e-3,
         mass_action_residual_inf=1.0e-6,
         speedup_vs_exact_implicit=12.0,
-        information_loss="closure_specific",
+        information_loss="reduced_site_information",
         thresholds=thresholds,
     )
 

@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: hessian_agreement
+title: Picard Hessian agreement against exact implicit sensitivities
+matplotlib:
+  title: Picard Hessian agreement against exact implicit sensitivities
+  x_label: Hessian target
+  y_label: relative Hessian error
+  y_scale: log
+files:
+  figure: hessian_agreement.png
+  svg: hessian_agreement.svg
+  source_data: hessian_agreement_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/hessian_agreement/scripts/render_figure.py

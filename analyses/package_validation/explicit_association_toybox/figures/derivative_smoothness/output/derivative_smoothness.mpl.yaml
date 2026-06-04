@@ -1,14 +1,15 @@
 kind: matplotlib-figure
 version: 1
 plot_id: explicit_association_derivative_smoothness
-title: Association closure local derivative smoothness
+title: Local derivative smoothness
 matplotlib:
-  title: Association closure local derivative smoothness
-  x_label: Perturbation axis
-  y_label: Relative slope jump
+  title: Local derivative smoothness
+  x_label: perturbation variable
+  y_label: relative slope jump
   y_scale: log
 files:
   figure: derivative_smoothness.png
+  svg: derivative_smoothness.svg
   source_data: derivative_smoothness_plotted_data.csv
 render:
   command: uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/render_figure.py

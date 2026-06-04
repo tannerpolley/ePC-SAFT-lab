@@ -1,14 +1,24 @@
 from __future__ import annotations
 
 import csv
-import math
 import statistics
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = ANALYSIS_ROOT.parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from analyses.package_validation.explicit_association_toybox.scripts.plot_style import (
+    apply_plot_style,
+    save_png_svg,
+    write_sidecar,
+)
+
 OUTPUT = ANALYSIS_ROOT / "figures" / "topology_error_heatmaps" / "output"
 HEATMAP = OUTPUT / "topology_error_heatmap.csv"
 FIGURE = OUTPUT / "topology_error_heatmap.png"
@@ -17,6 +27,7 @@ SIDECAR = OUTPUT / "topology_error_heatmap.mpl.yaml"
 
 
 def main() -> None:
+    apply_plot_style()
     rows = _load_rows()
     plotted = _plotted_rows(rows)
     OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -25,74 +36,46 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(plotted)
 
-    closures = sorted({row["closure_name"] for row in plotted})
-    topologies = sorted({row["topology_id"] for row in plotted})
+    topologies = sorted({row["paper_topology_type"] for row in plotted})
     rho_values = sorted({float(row["rho_delta"]) for row in plotted})
-    columns = min(3, len(closures))
-    rows_count = math.ceil(len(closures) / columns)
-    fig, axes = plt.subplots(
-        rows_count,
-        columns,
-        figsize=(4.1 * columns, 3.2 * rows_count),
-        squeeze=False,
-        constrained_layout=True,
-    )
-    values = [max(float(row["max_abs_ares_assoc_rel_error"]), 1.0e-14) for row in plotted]
-    norm = LogNorm(vmin=min(values), vmax=max(values))
-    image = None
-    for ax, closure in zip(axes.ravel(), closures, strict=False):
-        matrix = []
-        for rho in rho_values:
-            matrix_row = []
-            for topology in topologies:
-                match = next(
-                    (
-                        row
-                        for row in plotted
-                        if row["closure_name"] == closure
-                        and row["topology_id"] == topology
-                        and float(row["rho_delta"]) == rho
-                    ),
-                    None,
-                )
-                matrix_row.append(max(float(match["max_abs_ares_assoc_rel_error"]), 1.0e-14) if match else 1.0e-14)
-            matrix.append(matrix_row)
-        image = ax.imshow(matrix, aspect="auto", norm=norm, cmap="viridis")
-        ax.set_title(closure, fontsize=9)
-        ax.set_xticks(range(len(topologies)))
-        ax.set_xticklabels(topologies, rotation=35, ha="right")
-        ax.set_yticks(range(len(rho_values)))
-        ax.set_yticklabels([f"{value:.3g}" for value in rho_values])
-        ax.set_xlabel("Topology")
-        ax.set_ylabel("rho * Delta")
-    for ax in axes.ravel()[len(closures) :]:
-        ax.axis("off")
-    if image is not None:
-        fig.colorbar(image, ax=axes.ravel().tolist(), shrink=0.82, label="Max |association ares relative error|")
-    fig.suptitle("Topology-resolved explicit association closure error")
-    fig.savefig(FIGURE, dpi=160)
-    plt.close(fig)
-    SIDECAR.write_text(
-        "\n".join(
-            (
-                "kind: matplotlib-figure",
-                "version: 1",
-                "plot_id: explicit_association_topology_error_heatmap",
-                "title: Topology-resolved explicit association closure error",
-                "matplotlib:",
-                "  title: Topology-resolved explicit association closure error",
-                "  x_label: Huang/Radosz topology",
-                "  y_label: rho * Delta",
-                "  color_scale: log",
-                "files:",
-                "  figure: topology_error_heatmap.png",
-                "  source_data: topology_error_heatmap_plotted_data.csv",
-                "render:",
-                "  command: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py",
-                "",
+    matrix = []
+    for rho in rho_values:
+        matrix_row = []
+        for topology in topologies:
+            match = next(
+                (
+                    row
+                    for row in plotted
+                    if row["paper_topology_type"] == topology and float(row["rho_delta"]) == rho
+                ),
+                None,
             )
-        ),
-        encoding="utf-8",
+            matrix_row.append(max(float(match["max_abs_ares_assoc_rel_error"]), 1.0e-14) if match else 1.0e-14)
+        matrix.append(matrix_row)
+    values = [value for row in matrix for value in row]
+    norm = LogNorm(vmin=max(min(values), 1.0e-14), vmax=max(values))
+    fig, ax = plt.subplots(figsize=(8.4, 5.6), constrained_layout=True)
+    image = ax.imshow(matrix, aspect="auto", norm=norm, cmap="viridis")
+    ax.set_title(r"Picard association error across topology and $\rho\Delta$")
+    ax.set_xticks(range(len(topologies)))
+    ax.set_xticklabels(topologies)
+    ax.set_yticks(range(len(rho_values)))
+    ax.set_yticklabels([f"{value:.3g}" for value in rho_values])
+    ax.set_xlabel("Huang/Radosz topology")
+    ax.set_ylabel(r"$\rho\Delta$")
+    fig.colorbar(image, ax=ax, shrink=0.84, label=r"max relative error in $a_{\mathrm{assoc}}$")
+    save_png_svg(fig, FIGURE)
+    plt.close(fig)
+    write_sidecar(
+        SIDECAR,
+        plot_id="explicit_association_topology_error_heatmap",
+        title="Picard association error across topology and rho Delta",
+        figure=FIGURE,
+        source_data=PLOTTED,
+        x_label="Huang/Radosz topology",
+        y_label="rho Delta",
+        y_scale="linear",
+        command="uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py",
     )
     print(FIGURE)
 
@@ -103,9 +86,11 @@ def _load_rows() -> list[dict[str, str]]:
 
 
 def _plotted_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
-    grouped: dict[tuple[str, str, str], list[dict[str, str]]] = {}
+    grouped: dict[tuple[str, str], list[dict[str, str]]] = {}
     for row in rows:
-        key = (row["topology_id"], row["closure_name"], row["rho_delta"])
+        if row["closure_name"] != "damped_picard_7_05":
+            continue
+        key = (row["paper_topology_type"], row["rho_delta"])
         grouped.setdefault(key, []).append(row)
     plotted: list[dict[str, object]] = []
     for key in sorted(grouped):
@@ -116,6 +101,7 @@ def _plotted_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
                 "topology_id": representative["topology_id"],
                 "paper_topology_type": representative["paper_topology_type"],
                 "closure_name": representative["closure_name"],
+                "closure_label": "Picard",
                 "rho_delta": float(representative["rho_delta"]),
                 "max_abs_ares_assoc_rel_error": max(abs(float(row["ares_assoc_rel_error"])) for row in group),
                 "max_mass_action_residual_inf": max(float(row["mass_action_residual_inf"]) for row in group),

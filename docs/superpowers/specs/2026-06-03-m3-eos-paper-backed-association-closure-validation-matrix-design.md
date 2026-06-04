@@ -68,15 +68,15 @@ equilibrium-route claim.
 
 Huang/Radosz Table VII should not be treated as a disconnected closure catalog.
 It is a set of source-backed closed-form topology reductions that must be
-organized against the repo derivation families:
+organized against the exact baseline and the active Picard candidate:
 
 | Huang/Radosz item | Role in this repo | Derivation relationship |
 | --- | --- | --- |
-| `1` | One-site scalar exact reduction under the Table VII assumptions. | New topology reduction used to validate the exact baseline; not Closure A. |
-| `2A` | Two equivalent sites with all pair interactions active and equal. | New scalar/equivalent-site reduction; compare against the generic mass-action baseline, then against Closure B/C as approximations. |
-| `2B` | Donor-acceptor two-site reduction with only unlike association active. | Matches Closure A when one associating component, donor/acceptor grouping, and multiplicities match. |
-| `3A` | Three equivalent sites with all pair interactions active and equal. | New equivalent-site reduction; not Closure A because it is not donor/acceptor 2B. |
-| `3B` | Two equivalent donor/acceptor-like sites coupled to a third site under the source assumptions. | New constrained topology reduction; compare to Closure B/C full-matrix approximations and Closure D only as diagnostic. |
+| `1` | One-site scalar exact reduction under the Table VII assumptions. | Topology reduction used to validate the exact baseline. |
+| `2A` | Two equivalent sites with all pair interactions active and equal. | Scalar/equivalent-site reduction compared against the generic mass-action baseline and active Picard candidate. |
+| `2B` | Donor-acceptor two-site reduction with only unlike association active. | Matches the 2B exact reduction when one associating component, donor/acceptor grouping, and multiplicities match. |
+| `3A` | Three equivalent sites with all pair interactions active and equal. | Equivalent-site reduction compared against the exact baseline and active Picard candidate. |
+| `3B` | Two equivalent donor/acceptor-like sites coupled to a third site under the source assumptions. | Constrained topology reduction compared against the exact baseline and active Picard candidate. |
 | `4A` | Four equivalent sites with all pair interactions active and equal. | New equivalent-site reduction; validates topology handling, not a production closure by itself. |
 | `4B` | Three equivalent sites coupled to a fourth site under the source assumptions. | New constrained topology reduction; compare to full-matrix approximations. |
 | `4C` | Two-by-two donor/acceptor-like topology with specific unlike interactions. | New constrained topology reduction; relevant to water/MEA scheme studies, but only exact under its stated assumptions. |
@@ -87,10 +87,7 @@ The required comparison order is:
    Huang/Radosz Table VII assumptions.
 2. Verify the Huang/Radosz closed form against that exact baseline.
 3. Map the verified formula to a `topology_reduction` label.
-4. Run the repo derivation closures against the same case:
-   - Closure A only where the topology is one-associating-component 2B.
-   - Closure B and Closure C as general full-matrix explicit approximations.
-   - Closure D only as a collapsed donor/acceptor diagnostic.
+4. Run the 2B exact reduction and `damped_picard_7_05` against the same case.
 5. Only after the source topology check passes, add real component rows that
    use Huang/Radosz assigned or rigorous bonding types.
 
@@ -109,13 +106,13 @@ Recommended values:
 
 ```text
 source_formula_family = huang_radosz_table_vii | repo_derivation
-derivation_family = closure_a_2b | closure_b_picard | closure_c_picard_diagonal_newton | closure_d_collapsed_mean_field | topology_reduction
-comparison_role = exact_baseline | exact_topology_reduction | explicit_approximation | diagnostic_collapse
-topology_gate = matched | mismatched_unavailable | diagnostic_only
-exactness_claim = exact_mass_action | exact_for_table_vii_topology | exact_for_approximate_model | none
+derivation_family = exact_2b_reduction | damped_picard_7_05 | topology_reduction
+comparison_role = exact_baseline | exact_topology_reduction | explicit_approximation
+topology_gate = matched | mismatched_topology
+exactness_claim = exact_mass_action | exact_for_table_vii_topology | exact_for_approximate_model
 ```
 
-Do not compare a Huang/Radosz formula directly to a derivation closure without
+Do not compare a Huang/Radosz formula directly to an explicit approximation without
 also comparing both to `implicit_exact`. The exact baseline is the common
 arbiter.
 
@@ -199,18 +196,13 @@ topology_reduction_huang_radosz_3b
 topology_reduction_huang_radosz_4a
 topology_reduction_huang_radosz_4b
 topology_reduction_huang_radosz_4c
-closure_a_2b_exact_reduction
-explicit_picard_unroll_1
-explicit_picard_unroll_3
-explicit_damped_picard_unroll_3
-explicit_damped_picard_unroll_5
-explicit_picard3_diag_newton1
-collapsed_donor_acceptor_mean_field
+exact_2b_reduction
+damped_picard_7_05
 ```
 
 The Huang/Radosz formulas should be treated as exact reductions only for the
 stated topology and simplifying assumptions. Outside those assumptions they
-must either be unavailable or clearly marked diagnostic-only.
+must fail the topology gate instead of producing comparison rows.
 
 ## Metrics
 

@@ -1,14 +1,15 @@
 kind: matplotlib-figure
 version: 1
 plot_id: explicit_association_timing_repeatability
-title: Association closure repeated timing
+title: Repeated association solve timing range
 matplotlib:
-  title: Association closure repeated timing
-  x_label: Closure
-  y_label: Median elapsed seconds
+  title: Repeated association solve timing range
+  x_label: method
+  y_label: elapsed time / s
   y_scale: log
 files:
   figure: timing_repeatability.png
+  svg: timing_repeatability.svg
   source_data: timing_repeatability_plotted_data.csv
 render:
   command: uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/render_figure.py

@@ -1,11 +1,15 @@
 kind: matplotlib-figure
 version: 1
 plot_id: amortized_timing
-title: Amortized exact implicit and explicit closure timing
+title: Exact implicit vs Picard timing by topology
 matplotlib:
-  title: Amortized exact implicit and explicit closure timing
-  x_label: Case and closure
-  y_label: Median elapsed seconds
+  title: Exact implicit vs Picard timing by topology
+  x_label: topology
+  y_label: median elapsed time / s
+  y_scale: log
 files:
   figure: amortized_timing.png
+  svg: amortized_timing.svg
   source_data: amortized_timing_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/amortized_timing/scripts/render_figure.py

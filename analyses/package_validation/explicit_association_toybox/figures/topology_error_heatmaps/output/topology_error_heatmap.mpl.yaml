@@ -1,14 +1,15 @@
 kind: matplotlib-figure
 version: 1
 plot_id: explicit_association_topology_error_heatmap
-title: Topology-resolved explicit association closure error
+title: Picard association error across topology and rho Delta
 matplotlib:
-  title: Topology-resolved explicit association closure error
+  title: Picard association error across topology and rho Delta
   x_label: Huang/Radosz topology
-  y_label: rho * Delta
-  color_scale: log
+  y_label: rho Delta
+  y_scale: linear
 files:
   figure: topology_error_heatmap.png
+  svg: topology_error_heatmap.svg
   source_data: topology_error_heatmap_plotted_data.csv
 render:
   command: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py

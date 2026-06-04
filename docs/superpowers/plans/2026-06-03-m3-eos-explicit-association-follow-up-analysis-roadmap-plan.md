@@ -228,13 +228,12 @@ git commit -m "feat: add real associating system topology map"
 
 - [ ] **Step 1: Write failing sensitivity tests**
 
-Test that the sensitivity runner returns rows with:
+Test that the candidate stress runner returns rows with:
 
 ```text
-closure_variant
+closure_name
 picard_steps
 damping
-diagonal_polish
 max_ares_assoc_rel_error
 max_mass_action_residual_inf
 median_elapsed_seconds
@@ -243,32 +242,19 @@ evidence_band
 
 - [ ] **Step 2: Add sensitivity config**
 
-Create a compact config with variants:
+Create a compact config for the active candidate:
 
 ```yaml
-variants:
-  - closure_variant: damped_picard_3_05
-    picard_steps: 3
-    damping: 0.5
-    diagonal_polish: false
-  - closure_variant: damped_picard_5_05
-    picard_steps: 5
-    damping: 0.5
-    diagonal_polish: false
-  - closure_variant: damped_picard_7_05
-    picard_steps: 7
-    damping: 0.5
-    diagonal_polish: false
-  - closure_variant: picard3_diag_newton1
-    picard_steps: 3
-    damping: 1.0
-    diagonal_polish: true
+candidate:
+  closure_name: damped_picard_7_05
+  picard_steps: 7
+  damping: 0.5
 ```
 
 - [ ] **Step 3: Implement sensitivity runner**
 
-Implement a runner that evaluates variants on the existing topology matrix
-cases and writes aggregate rankings to:
+Implement a runner that evaluates the active candidate on the existing topology
+matrix cases and writes aggregate stress-grid results to:
 
 ```text
 figures/closure_sensitivity/output/closure_sensitivity.csv

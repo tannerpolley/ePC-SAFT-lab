@@ -24,7 +24,7 @@
 ## Acceptance Criteria
 
 - [ ] Huang/Radosz Table VII topology reductions for `1`, `2A`, `2B`, `3A`, `3B`, `4A`, `4B`, and `4C` are implemented as topology reductions and verified against the generic exact mass-action baseline.
-- [ ] Repo derivation closure families remain distinct: Closure A applies only to one-associating-component 2B, Closure B/C are full-matrix explicit approximations, and Closure D is diagnostic collapsed donor/acceptor mean field.
+- [ ] Repo derivation roles remain distinct: the 2B exact reduction applies only to one-associating-component 2B, and `damped_picard_7_05` is the only active full-matrix explicit approximation.
 - [ ] Matrix rows include source formula family, source formula ID, derivation family, comparison role, topology gate, exactness claim, system metadata, site-fraction errors, mass-action residuals, association Helmholtz errors, elapsed times, speedup, and evidence band.
 - [ ] Public saturation-data acquisition tries configured public sources first and writes retained source CSV plus source-status metadata when successful.
 - [ ] Missing or blocked raw data are recorded in `data_request_manifest.csv` with `needs_user_source`, not replaced by paper AAD values.
@@ -123,7 +123,7 @@ topologies:
     site_kind: [D, A]
     active_pairs: [[0, 1], [1, 0]]
     exactness_claim: exact_for_table_vii_topology
-    derivation_relationship: closure_a_2b_when_one_associating_component
+    derivation_relationship: exact_2b_reduction_when_one_associating_component
   hr_3a:
     source_formula_family: huang_radosz_table_vii
     source_formula_id: "3A"
@@ -272,16 +272,15 @@ exactness_claim: str
 
 Populate existing closures:
 
-- `closure_2b_exact_reduction`: `source_formula_family="repo_derivation"`, `source_formula_id="closure_a"`, `derivation_family="closure_a_2b"`, `comparison_role="exact_topology_reduction"`, `topology_gate="matched"`, `exactness_claim="exact_mass_action"`.
-- Picard variants: `derivation_family="closure_b_picard"` or `closure_c_picard_diagonal_newton`, `comparison_role="explicit_approximation"`, `exactness_claim="exact_for_approximate_model"`.
-- Collapsed mean field: `derivation_family="closure_d_collapsed_mean_field"`, `comparison_role="diagnostic_collapse"`, `topology_gate="diagnostic_only"`, `exactness_claim="none"`.
+- `exact_2b_reduction`: `source_formula_family="repo_derivation"`, `source_formula_id="exact_2b_reduction"`, `derivation_family="exact_2b_reduction"`, `comparison_role="exact_topology_reduction"`, `topology_gate="matched"`, `exactness_claim="exact_mass_action"`.
+- `damped_picard_7_05`: `derivation_family="damped_picard_7_05"`, `comparison_role="explicit_approximation"`, `exactness_claim="exact_for_approximate_model"`.
 
 - [ ] **Step 4: Verify and commit**
 
 Run:
 
 ```powershell
-uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_topology_reductions.py analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py -q
+uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_topology_reductions.py analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py -q
 ```
 
 Expected: PASS.
@@ -289,7 +288,7 @@ Expected: PASS.
 Commit:
 
 ```powershell
-git add analyses/package_validation/explicit_association_toybox/scripts/topology_reductions.py analyses/package_validation/explicit_association_toybox/scripts/closure_models.py analyses/package_validation/explicit_association_toybox/tests/test_topology_reductions.py analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py
+git add analyses/package_validation/explicit_association_toybox/scripts/topology_reductions.py analyses/package_validation/explicit_association_toybox/scripts/closure_models.py analyses/package_validation/explicit_association_toybox/tests/test_topology_reductions.py analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py
 git commit -m "feat: add Huang Radosz topology reductions"
 ```
 
@@ -303,7 +302,7 @@ git commit -m "feat: add Huang Radosz topology reductions"
 
 - [ ] **Step 1: Write failing matrix schema tests**
 
-Add a test that runs `run_topology_matrix(output_path=tmp_path / "topology_matrix.csv", topology_ids=("hr_2b",), closure_names=("closure_2b_exact_reduction", "explicit_damped_picard_unroll_3"))` and asserts these columns exist:
+Add a test that runs `run_topology_matrix(output_path=tmp_path / "topology_matrix.csv", topology_ids=("hr_2b",), closure_names=("exact_2b_reduction", "damped_picard_7_05"))` and asserts these columns exist:
 
 ```text
 source_formula_family,source_formula_id,derivation_family,comparison_role,topology_gate,exactness_claim,system,topology_id,closure,max_abs_x_error,mass_residual_inf,assoc_helmholtz_abs_error,exact_elapsed_seconds,model_elapsed_seconds,speedup_ratio,evidence_band
@@ -577,7 +576,7 @@ git commit -m "feat: add fixed state property residual lane"
 Document these explicit boundaries:
 
 - topology reductions are exact only under Huang/Radosz Table VII assumptions;
-- Closure B/C derivatives remain exact derivatives of approximate closures;
+- active Picard derivatives remain exact derivatives of the approximate closure;
 - public saturation rows are source data, not package validation by themselves;
 - fixed-state residuals are not vapor-pressure prediction and not equilibrium validation;
 - missing proprietary data belongs in `shared/source/data_request_manifest.csv`.

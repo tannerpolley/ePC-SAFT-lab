@@ -1,7 +1,15 @@
 kind: matplotlib-figure
 version: 1
 plot_id: total_eos_impact
-title: Total EOS impact ranking
+title: Total EOS propagation for Picard closure
+matplotlib:
+  title: Total EOS propagation for Picard closure
+  x_label: speedup vs exact implicit
+  y_label: relative error in P_proxy
+  y_scale: log
 files:
   figure: total_eos_impact.png
+  svg: total_eos_impact.svg
   source_data: total_eos_impact_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/total_eos_impact/scripts/render_figure.py

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Extend the Python-only explicit association toybox so exact implicit and explicit closure candidates are compared on amortized timing, derivative agreement, propagated EOS property proxies, water topology behavior, and local objective sensitivity before any provider implementation decision.
+**Goal:** Extend the Python-only explicit association toybox so exact implicit association and the active explicit Picard candidate are compared on amortized timing, derivative agreement, propagated EOS property proxies, water topology behavior, and local objective sensitivity before any provider implementation decision.
 
 **Architecture:** Keep the work entirely under `analyses/package_validation/explicit_association_toybox` and add figure-owned analysis lanes that reuse the existing exact mass-action baseline, closure evaluators, hard-chain and dispersion scalar helpers, real-system topology metadata, and fixed-state property residual scaffolding. New modules produce retained CSVs, plotted-data CSVs, PNGs, and `.mpl.yaml` sidecars with exact implicit timing kept as a first-class baseline column.
 
@@ -41,7 +41,7 @@
 - [ ] Total EOS impact output ranks closures by `ares_assoc` error, total `ares` error, pressure proxy error, chemical-potential proxy error, fugacity proxy error, exact implicit timing, closure timing, and evidence band.
 - [ ] Water fork output compares assigned `3B` and rigorous-label `4C` topology rows with pressure residual in MPa and `Z` residual, without presenting fixed-state diagnostics as VLE validation.
 - [ ] Local objective sensitivity output reports exact and closure objective values, gradient max absolute error, Hessian-proxy max absolute error, exact implicit timing, closure timing, and evidence band.
-- [ ] The collapsed donor/acceptor mean-field closure remains diagnostic-only in all new evidence bands unless a row is explicitly marked as a failure-mode diagnostic.
+- [ ] Rows with reduced site information remain diagnostic-only in all new evidence bands unless a row is explicitly marked as a failure-mode diagnostic.
 - [ ] Every new or updated figure workflow writes retained CSV, plotted-data CSV, PNG, and `.mpl.yaml` sidecar files under its figure-owned `output` folder.
 - [ ] `analysis.yaml` and `README.md` list the new commands and state that this remains analysis-only toybox evidence.
 - [ ] Final implementation reporting renders every new or updated plot inline with absolute filesystem paths and includes compact Markdown tables from retained data.
@@ -252,7 +252,7 @@ def test_classify_candidate_accuracy_when_derivatives_and_properties_are_bounded
     assert band == "candidate_accuracy"
 
 
-def test_classify_collapsed_mean_field_as_diagnostic() -> None:
+def test_classify_information_loss_as_diagnostic() -> None:
     thresholds = load_propagation_thresholds()
     band = classify_propagated_evidence_band(
         association_model="explicit_approx",
@@ -261,7 +261,7 @@ def test_classify_collapsed_mean_field_as_diagnostic() -> None:
         property_rel_error=1.0e-3,
         mass_action_residual_inf=1.0e-6,
         speedup_vs_exact_implicit=12.0,
-        information_loss="closure_specific",
+        information_loss="reduced_site_information",
         thresholds=thresholds,
     )
     assert band == "diagnostic_only"
@@ -310,7 +310,7 @@ def test_summarize_amortized_timing_samples_keeps_exact_baseline_columns() -> No
                 "case_id": "two_site",
                 "topology_id": "2B",
                 "site_count": 2,
-                "closure_name": "explicit_damped_picard_unroll_3",
+                "closure_name": "damped_picard_7_05",
                 "exact_implicit_elapsed_seconds": 0.004,
                 "closure_elapsed_seconds": 0.001,
                 "exact_iteration_count": 20,
@@ -319,7 +319,7 @@ def test_summarize_amortized_timing_samples_keeps_exact_baseline_columns() -> No
                 "case_id": "two_site",
                 "topology_id": "2B",
                 "site_count": 2,
-                "closure_name": "explicit_damped_picard_unroll_3",
+                "closure_name": "damped_picard_7_05",
                 "exact_implicit_elapsed_seconds": 0.006,
                 "closure_elapsed_seconds": 0.002,
                 "exact_iteration_count": 22,
@@ -331,7 +331,7 @@ def test_summarize_amortized_timing_samples_keeps_exact_baseline_columns() -> No
             "case_id": "two_site",
             "topology_id": "2B",
             "site_count": 2,
-            "closure_name": "explicit_damped_picard_unroll_3",
+            "closure_name": "damped_picard_7_05",
             "repeat_count": 2,
             "exact_implicit_elapsed_median_seconds": 0.005,
             "closure_elapsed_median_seconds": 0.0015,
@@ -357,10 +357,7 @@ Create `amortized_timing.py` with `summarize_amortized_timing_samples(samples)` 
 
 ```python
 DEFAULT_CLOSURES = (
-    "explicit_damped_picard_unroll_3",
-    "explicit_damped_picard_unroll_5",
-    "explicit_picard3_diag_newton1",
-    "collapsed_donor_acceptor_mean_field",
+    "damped_picard_7_05",
 )
 ```
 
@@ -1068,7 +1065,7 @@ Add a "Derivative And Property Propagation" section to `README.md` with this exa
 ```markdown
 ## Derivative And Property Propagation
 
-This toybox section compares exact implicit association against explicit closure candidates after propagation into local derivatives and EOS-like property proxies. It remains analysis-only evidence.
+This toybox section compares exact implicit association against the active explicit Picard candidate after propagation into local derivatives and EOS-like property proxies. It remains analysis-only evidence.
 
 - `amortized_timing`: exact implicit timing baseline, closure timing, and speedup by topology.
 - `derivative_agreement`: centered perturbation agreement for association, pressure-proxy, composition, chemical-potential-like, and fugacity-like targets.
@@ -1147,8 +1144,7 @@ The summary must answer:
 
 - Which closures are still viable after derivative agreement checks?
 - Whether `damped_picard_7_05` remains the accuracy candidate after propagated property errors.
-- Whether `damped_picard_3_05` is speed-only or candidate-accuracy in low-to-moderate association regimes.
-- Whether diagonal polish beats additional damped Picard steps.
+- Whether `damped_picard_7_05` remains viable in low-to-moderate association regimes.
 - Which topologies and `rho * Delta` ranges fail.
 - Whether water needs a separate future evidence issue.
 - Whether local objective gradients and Hessian proxies are too degraded for future equilibrium discussions.
@@ -1189,4 +1185,3 @@ git commit -m "docs: document association propagation evidence lanes"
 - Water fixed-state pressure residuals are warning evidence. They must not be framed as saturation or VLE validation.
 - The objective diagnostic is local and route-free. It exists to test whether derivative degradation would threaten later M4 work, not to implement M4 equilibrium behavior.
 - All generated plots must be rendered inline in final chat with real retained-data tables because root `AGENTS.md` requires that for new or updated analysis artifacts.
-

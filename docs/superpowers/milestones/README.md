@@ -30,6 +30,7 @@ file from GitHub rather than treating the Markdown as authoritative.
 | `M5-regression` | `M5 - Regression` |
 | `M6-validation` | `M6 - Validation` |
 | `M7-release` | `M7 - Release` |
+| `M8-python-toybox` | `M8 - Python Toybox` |
 
 ## Planning Rules
 

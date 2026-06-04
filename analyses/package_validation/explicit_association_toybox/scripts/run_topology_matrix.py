@@ -13,6 +13,7 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
     from analyses.package_validation.explicit_association_toybox.scripts.closure_models import (
         CANDIDATE_CLOSURES,
+        EXACT_2B_REDUCTION,
         PICARD7_CLOSURE,
     )
     from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
@@ -24,7 +25,7 @@ if __package__ in {None, ""}:
         topology_system,
     )
 else:
-    from .closure_models import CANDIDATE_CLOSURES, PICARD7_CLOSURE
+    from .closure_models import CANDIDATE_CLOSURES, EXACT_2B_REDUCTION, PICARD7_CLOSURE
     from .exact_baseline import solve_exact_site_fractions
     from .metrics import metric_row, timed_closure
     from .propagation_evidence import evaluate_named_closure
@@ -131,7 +132,7 @@ def run_topology_matrix(
                     )
                 )
                 for closure_name in selected_closures:
-                    if closure_name == "closure_2b_exact_reduction" and topology_type != "2B":
+                    if closure_name == EXACT_2B_REDUCTION and topology_type != "2B":
                         continue
                     closure, elapsed = timed_closure(
                         lambda closure_name=closure_name: evaluate_named_closure(
@@ -221,21 +222,21 @@ def _metadata_row(
 
 
 def _closure_derivation_family(closure_name: str) -> str:
-    if closure_name == "closure_2b_exact_reduction":
-        return "closure_a_2b"
+    if closure_name == EXACT_2B_REDUCTION:
+        return "exact_2b_reduction"
     if closure_name == PICARD7_CLOSURE:
         return "closure_picard7_damped"
     raise ValueError(f"Closure metadata is not mapped for: {closure_name}")
 
 
 def _closure_comparison_role(closure_name: str) -> str:
-    if closure_name == "closure_2b_exact_reduction":
+    if closure_name == EXACT_2B_REDUCTION:
         return "exact_topology_reduction"
     return "explicit_approximation"
 
 
 def _closure_exactness_claim(closure_name: str) -> str:
-    if closure_name == "closure_2b_exact_reduction":
+    if closure_name == EXACT_2B_REDUCTION:
         return "exact_when_topology_is_one_component_2b_da"
     return "exact_derivative_of_approximate_closure_only"
 

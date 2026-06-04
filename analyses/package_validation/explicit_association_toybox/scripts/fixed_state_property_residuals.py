@@ -5,7 +5,9 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import numpy as np
-from .paper_systems import load_paper_systems, load_provider_property_cases
+from .closure_models import EXACT_MASS_ACTION_BASELINE, PICARD7_CLOSURE
+from .paper_systems import load_provider_property_cases
+from .toy_property_eos import evaluate_toy_property_coupling
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = ANALYSIS_ROOT / "shared" / "source" / "public_saturation_properties.csv"
@@ -55,19 +57,80 @@ def fixed_state_property_residual_rows(
         p_calc = float(evaluated["provider_pressure_at_exp_density_Pa"])
         rho_calc = float(evaluated["provider_density_at_exp_pressure_mol_m3"])
         temperature = float(row["T_K"])
+        exact_toy = evaluate_toy_property_coupling(case, row, closure_name=EXACT_MASS_ACTION_BASELINE)
+        picard_toy = evaluate_toy_property_coupling(case, row, closure_name=PICARD7_CLOSURE)
         pressure_residual = p_calc - p_exp
         density_residual = rho_calc - rho_exp
+        toy_exact_pressure_residual = exact_toy.pressure_at_density_Pa - p_exp
+        toy_picard_pressure_residual = picard_toy.pressure_at_density_Pa - p_exp
         z_exp = p_exp / (rho_exp * GAS_CONSTANT * temperature)
         z_provider = p_calc / (rho_exp * GAS_CONSTANT * temperature)
         rows.append(
             {
-                "property_workflow": "fixed_state_saturation_property_residual",
+                "property_workflow": "fixed_state_provider_property_residual",
+                "source_role": "experimental_saturation_data",
+                "model_role": "provider_fixed_state_probe",
+                "saturation_validation_status": str(
+                    case.get("saturation_validation_status", "fixed_state_diagnostic")
+                ),
                 "component": component,
                 "T_K": temperature,
                 "source_p_sat_Pa": p_exp,
                 "source_rho_sat_liq_mol_m3": rho_exp,
+                "pressure_probe_input": "experimental_saturated_liquid_density",
+                "density_inverse_input": "experimental_saturation_pressure",
+                "pressure_probe_status": "computed",
+                "density_inverse_status": "computed_provider_density_root",
                 "provider_pressure_at_exp_density_Pa": p_calc,
                 "provider_density_at_exp_pressure_mol_m3": rho_calc,
+                "exact_implicit_pressure_at_exp_density_Pa": p_calc,
+                "exact_implicit_density_at_exp_pressure_mol_m3": rho_calc,
+                "toy_exact_model_role": exact_toy.model_role,
+                "toy_exact_pressure_at_exp_density_Pa": exact_toy.pressure_at_density_Pa,
+                "toy_exact_density_at_exp_pressure_mol_m3": _optional_root_value(
+                    exact_toy.density_root.rho_mol_m3
+                ),
+                "toy_exact_density_root_status": exact_toy.density_root.status,
+                "toy_exact_density_initial_guess_mol_m3": exact_toy.density_root.initial_guess_mol_m3,
+                "toy_exact_density_initial_guess_policy": exact_toy.density_root.initial_guess_policy,
+                "toy_exact_density_bracket_policy": exact_toy.density_root.bracket_policy,
+                "toy_exact_density_pressure_evaluation_count": exact_toy.density_root.pressure_evaluation_count,
+                "toy_exact_density_root_residual_Pa": _optional_root_value(exact_toy.density_root.residual_Pa),
+                "toy_exact_density_root_bracket_count": exact_toy.density_root.bracket_count,
+                "toy_exact_pressure_residual_Pa": toy_exact_pressure_residual,
+                "toy_exact_density_residual_mol_m3": _optional_residual(
+                    exact_toy.density_root.rho_mol_m3, rho_exp
+                ),
+                "toy_exact_ares_at_exp_density": exact_toy.ares_at_density,
+                "toy_exact_z_at_exp_density": exact_toy.z_at_density,
+                "toy_exact_z_ideal": exact_toy.z_terms.ideal,
+                "toy_exact_z_hard_chain": exact_toy.z_terms.hard_chain,
+                "toy_exact_z_dispersion": exact_toy.z_terms.dispersion,
+                "toy_exact_z_association": exact_toy.z_terms.association,
+                "picard_model_role": picard_toy.model_role,
+                "picard_output_status": "computed_toy_pressure_density_coupling",
+                "picard_message": "Toy PC-SAFT pressure-density coupling computed with seven damped Picard site-fraction updates.",
+                "picard_pressure_at_exp_density_Pa": picard_toy.pressure_at_density_Pa,
+                "picard_density_at_exp_pressure_mol_m3": _optional_root_value(
+                    picard_toy.density_root.rho_mol_m3
+                ),
+                "picard_density_root_status": picard_toy.density_root.status,
+                "picard_density_initial_guess_mol_m3": picard_toy.density_root.initial_guess_mol_m3,
+                "picard_density_initial_guess_policy": picard_toy.density_root.initial_guess_policy,
+                "picard_density_bracket_policy": picard_toy.density_root.bracket_policy,
+                "picard_density_pressure_evaluation_count": picard_toy.density_root.pressure_evaluation_count,
+                "picard_density_root_residual_Pa": _optional_root_value(picard_toy.density_root.residual_Pa),
+                "picard_density_root_bracket_count": picard_toy.density_root.bracket_count,
+                "picard_pressure_residual_Pa": toy_picard_pressure_residual,
+                "picard_density_residual_mol_m3": _optional_residual(
+                    picard_toy.density_root.rho_mol_m3, rho_exp
+                ),
+                "picard_ares_at_exp_density": picard_toy.ares_at_density,
+                "picard_z_at_exp_density": picard_toy.z_at_density,
+                "picard_z_ideal": picard_toy.z_terms.ideal,
+                "picard_z_hard_chain": picard_toy.z_terms.hard_chain,
+                "picard_z_dispersion": picard_toy.z_terms.dispersion,
+                "picard_z_association": picard_toy.z_terms.association,
                 "pressure_absolute_residual_Pa": pressure_residual,
                 "pressure_relative_residual": pressure_residual / max(abs(p_exp), 1.0),
                 "density_absolute_residual_mol_m3": density_residual,
@@ -85,7 +148,7 @@ def fixed_state_property_residual_rows(
                 "source_url": str(row.get("source_url", "")),
                 "parameter_source": str(case.get("parameter_source", "inline_provider_case")),
                 "status": "ok",
-                "message": "",
+                "message": "Provider state probes use experimental saturated liquid density or pressure; no coexistence solve is performed.",
             }
         )
     if not rows:
@@ -110,7 +173,6 @@ def generate_property_residuals(
 ) -> Path:
     source_rows = load_public_saturation_rows(source_path)
     provider_cases = load_provider_cases(cases_path)
-    source_rows = _sample_source_rows(source_rows, cases_path=cases_path)
     rows = fixed_state_property_residual_rows(source_rows, provider_cases=provider_cases)
     return write_property_residual_csv(rows, output_path)
 
@@ -134,6 +196,16 @@ def _default_provider_evaluator(case: dict[str, object], row: dict[str, object])
     }
 
 
+def _optional_residual(value: object, reference: float) -> object:
+    if value in {"", None}:
+        return ""
+    return float(value) - reference
+
+
+def _optional_root_value(value: float | None) -> object:
+    return "" if value is None else float(value)
+
+
 def _runtime_params(case: Mapping[str, object]) -> dict[str, object]:
     raw = case.get("parameters")
     if not isinstance(raw, Mapping):
@@ -147,23 +219,3 @@ def _runtime_params(case: Mapping[str, object]) -> dict[str, object]:
         else:
             params[key] = np.asarray([value], dtype=float)
     return params
-
-
-def _sample_source_rows(rows: list[dict[str, object]], *, cases_path: Path) -> list[dict[str, object]]:
-    data = load_paper_systems(cases_path)
-    sampling = data.get("property_residual_sampling", {})
-    if not isinstance(sampling, Mapping) or "max_rows_per_component" not in sampling:
-        return rows
-    max_rows = int(sampling["max_rows_per_component"])
-    if max_rows <= 0:
-        raise ValueError("property_residual_sampling.max_rows_per_component must be positive.")
-    counts: dict[str, int] = {}
-    selected: list[dict[str, object]] = []
-    for row in rows:
-        component = str(row["component"]).lower()
-        count = counts.get(component, 0)
-        if count >= max_rows:
-            continue
-        selected.append(row)
-        counts[component] = count + 1
-    return selected

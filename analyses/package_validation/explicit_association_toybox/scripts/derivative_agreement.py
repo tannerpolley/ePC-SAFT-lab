@@ -7,6 +7,11 @@ import numpy as np
 
 from .association_models import AssociationSystem
 from .closure_models import CANDIDATE_CLOSURES
+from .implicit_sensitivity import (
+    exact_binary_composition_sensitivity,
+    exact_density_sensitivity,
+    exact_strength_sensitivity,
+)
 from .propagation_evidence import (
     closure_association_value,
     exact_association_value,
@@ -120,6 +125,13 @@ def _case_samples(case: Mapping[str, object], closure_name: str) -> list[dict[st
             strength=strength,
             composition=composition,
         )
+        exact_sensitivity = _exact_sensitivity_diagnostics(
+            target,
+            system=system,
+            density=density,
+            strength=strength,
+            composition=composition,
+        )
         rows.append(
             {
                 "case_id": case_id,
@@ -127,6 +139,12 @@ def _case_samples(case: Mapping[str, object], closure_name: str) -> list[dict[st
                 "target": target,
                 "exact_derivative": exact_derivative,
                 "closure_derivative": closure_derivative,
+                "exact_derivative_method": _exact_derivative_method(target),
+                "closure_derivative_method": "centered_finite_difference",
+                "implicit_jacobian_condition_number": exact_sensitivity[
+                    "implicit_jacobian_condition_number"
+                ],
+                "mass_action_residual_inf": exact_sensitivity["mass_action_residual_inf"],
                 "exact_implicit_elapsed_seconds": exact_elapsed,
                 "closure_elapsed_seconds": closure_elapsed,
             }
@@ -144,6 +162,16 @@ def _target_derivative(
     strength: float,
     composition: np.ndarray,
 ) -> float:
+    if exact:
+        direct = _exact_direct_derivative(
+            target,
+            system=system,
+            density=density,
+            strength=strength,
+            composition=composition,
+        )
+        if direct is not None:
+            return direct
     if target == "a_assoc_density":
         return centered_slope(
             lambda value: _association_scalar(
@@ -225,6 +253,129 @@ def _target_derivative(
             step_size=1.0e-4,
         )
     raise ValueError(f"Unknown derivative target: {target}")
+
+
+def _exact_direct_derivative(
+    target: str,
+    *,
+    system: AssociationSystem,
+    density: float,
+    strength: float,
+    composition: np.ndarray,
+) -> float | None:
+    delta = system.delta_matrix(strength)
+    if target == "a_assoc_density":
+        return exact_density_sensitivity(
+            system=system,
+            density=density,
+            composition=composition,
+            delta=delta,
+        ).da_dtheta
+    if target == "a_assoc_strength":
+        return exact_strength_sensitivity(
+            system=system,
+            density=density,
+            composition=composition,
+            delta=delta,
+            strength=strength,
+        ).da_dtheta
+    if target in {"a_assoc_composition_0", "mu_proxy_composition_0"} and system.component_count == 2:
+        return exact_binary_composition_sensitivity(
+            system=system,
+            density=density,
+            composition=composition,
+            delta=delta,
+        ).da_dtheta
+    if target == "pressure_proxy_density":
+        return centered_slope(
+            lambda value: _exact_pressure_proxy_scalar(
+                system=system,
+                density=value,
+                strength=strength,
+                composition=composition,
+            ),
+            base_value=density,
+            step_size=max(1.0e-5, density * 1.0e-3),
+        )
+    if target == "fugacity_proxy_composition_0" and system.component_count == 2:
+        return centered_slope(
+            lambda value: fugacity_proxy_from_mu(
+                mu_proxy_from_composition_slope(
+                    exact_binary_composition_sensitivity(
+                        system=system,
+                        density=density,
+                        composition=np.array([value, 1.0 - value], dtype=float),
+                        delta=delta,
+                    ).da_dtheta
+                )
+            ),
+            base_value=float(composition[0]),
+            step_size=1.0e-4,
+        )
+    return None
+
+
+def _exact_pressure_proxy_scalar(
+    *,
+    system: AssociationSystem,
+    density: float,
+    strength: float,
+    composition: np.ndarray,
+) -> float:
+    sensitivity = exact_density_sensitivity(
+        system=system,
+        density=density,
+        composition=composition,
+        delta=system.delta_matrix(strength),
+    )
+    return pressure_proxy_from_ares(
+        density=density,
+        ares_value=sensitivity.a_assoc,
+        density_slope=sensitivity.da_dtheta,
+    )
+
+
+def _exact_sensitivity_diagnostics(
+    target: str,
+    *,
+    system: AssociationSystem,
+    density: float,
+    strength: float,
+    composition: np.ndarray,
+) -> dict[str, float]:
+    delta = system.delta_matrix(strength)
+    if target in {"a_assoc_strength"}:
+        sensitivity = exact_strength_sensitivity(
+            system=system,
+            density=density,
+            composition=composition,
+            delta=delta,
+            strength=strength,
+        )
+    elif target in {"a_assoc_composition_0", "mu_proxy_composition_0", "fugacity_proxy_composition_0"}:
+        sensitivity = exact_binary_composition_sensitivity(
+            system=system,
+            density=density,
+            composition=composition,
+            delta=delta,
+        )
+    else:
+        sensitivity = exact_density_sensitivity(
+            system=system,
+            density=density,
+            composition=composition,
+            delta=delta,
+        )
+    return {
+        "implicit_jacobian_condition_number": sensitivity.jacobian_condition_number,
+        "mass_action_residual_inf": sensitivity.mass_action_residual_inf,
+    }
+
+
+def _exact_derivative_method(target: str) -> str:
+    if target in {"a_assoc_density", "a_assoc_strength", "a_assoc_composition_0", "mu_proxy_composition_0"}:
+        return "implicit_function_theorem_first_derivative"
+    return "implicit_function_theorem_inside_centered_finite_difference"
 
 
 def _association_scalar(

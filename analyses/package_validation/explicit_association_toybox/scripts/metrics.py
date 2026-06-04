@@ -52,8 +52,8 @@ def metric_row(
 ) -> dict[str, object]:
     residual = mass_action_residual(closure.xa, density=density, x_assoc=system.x_assoc(composition), delta=delta)
     exact_a = association_helmholtz(exact.xa, composition, system.site_component_index)
-    closure_a = association_helmholtz(closure.xa, composition, system.site_component_index)
-    abs_a = abs(closure_a - exact_a)
+    closure_assoc = association_helmholtz(closure.xa, composition, system.site_component_index)
+    abs_a = abs(closure_assoc - exact_a)
     rel_a = abs_a / max(abs(exact_a), 1.0e-14)
     has_pcsaft_context = (
         temperature is not None
@@ -63,7 +63,7 @@ def metric_row(
     )
     if has_pcsaft_context:
         ares_total_exact = float(ares_hc + ares_disp + exact_a)
-        ares_total_closure = float(ares_hc + ares_disp + closure_a)
+        ares_total_closure = float(ares_hc + ares_disp + closure_assoc)
         ares_total_abs_error = abs(ares_total_closure - ares_total_exact)
         ares_total_rel_error = ares_total_abs_error / max(abs(ares_total_exact), 1.0e-14)
     else:
@@ -99,7 +99,7 @@ def metric_row(
         "ares_hc": ares_hc if ares_hc is not None else np.nan,
         "ares_disp": ares_disp if ares_disp is not None else np.nan,
         "ares_assoc_exact": exact_a,
-        "ares_assoc_closure": closure_a,
+        "ares_assoc_closure": closure_assoc,
         "ares_total_exact": ares_total_exact,
         "ares_total_closure": ares_total_closure,
         "ares_total_abs_error": ares_total_abs_error,
@@ -111,7 +111,7 @@ def metric_row(
         ),
         "mass_residual_inf": mass_residual_inf,
         "assoc_helmholtz_exact": exact_a,
-        "assoc_helmholtz_closure": closure_a,
+        "assoc_helmholtz_closure": closure_assoc,
         "assoc_helmholtz_abs_error": abs_a,
         "assoc_helmholtz_rel_error": float(rel_a),
         "assoc_compressibility_abs_error": np.nan,

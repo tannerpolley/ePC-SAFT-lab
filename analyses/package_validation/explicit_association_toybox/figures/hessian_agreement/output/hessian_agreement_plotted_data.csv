@@ -1,0 +1,8 @@
+case_id,case_label,closure_name,closure_label,target,target_label,hessian_abs_error,hessian_rel_error,implicit_jacobian_condition_number,mass_action_residual_inf
+pure_2b_moderate,pure 2B,damped_picard_7_05,Picard,density_density,$\partial^2 a_{\mathrm{assoc}}/\partial \rho^2$,9.948486479061103e-07,2.1961599593966048e-08,1.73205080756888,5.10702591327572e-15
+pure_2b_moderate,pure 2B,damped_picard_7_05,Picard,density_strength,"$\partial^2 a_{\mathrm{assoc}}/\partial \rho\,\partial\Delta$",3.0597746558669314e-10,9.889347130579539e-10,1.73205080756888,5.10702591327572e-15
+pure_2b_moderate,pure 2B,damped_picard_7_05,Picard,strength_strength,$\partial^2 a_{\mathrm{assoc}}/\partial \Delta^2$,1.3542812704603335e-10,1.1958475607560982e-07,1.73205080756888,5.10702591327572e-15
+cross_binary_asymmetric,cross binary,damped_picard_7_05,Picard,density_density,$\partial^2 a_{\mathrm{assoc}}/\partial \rho^2$,0.019405850426590376,0.00209930020967951,1.435564042341744,1.3988810110276972e-14
+cross_binary_asymmetric,cross binary,damped_picard_7_05,Picard,density_strength,"$\partial^2 a_{\mathrm{assoc}}/\partial \rho\,\partial\Delta$",0.00019476998336376283,0.00177892175225495,1.435564042341744,1.3988810110276972e-14
+cross_binary_asymmetric,cross binary,damped_picard_7_05,Picard,strength_strength,$\partial^2 a_{\mathrm{assoc}}/\partial \Delta^2$,4.851538324725235e-07,0.002099332982016568,1.435564042341744,1.3988810110276972e-14
+cross_binary_asymmetric,cross binary,damped_picard_7_05,Picard,composition_composition,$\partial^2 a_{\mathrm{assoc}}/\partial x_1^2$,0.0009513070747813046,0.001155229776182361,1.435564042341744,1.3988810110276972e-14

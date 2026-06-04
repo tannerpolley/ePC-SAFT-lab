@@ -27,8 +27,8 @@
 
 - [ ] `analyses/package_validation/explicit_association_toybox/README.md` and `analysis.yaml` document the analysis purpose, commands, outputs, and analysis-only boundary.
 - [ ] The toybox implements an independent Python exact mass-action baseline with residual diagnostics, site-fraction bounds, and explicit failure on nonconvergence.
-- [ ] Closure evaluators cover one-component 2B exact reduction, full-matrix Picard unroll, damped Picard unroll, Picard plus diagonal polish, and collapsed donor/acceptor mean field.
-- [ ] Tests prove Closure A matches the exact baseline for its declared 2B topology and that approximate closures produce bounded labeled outputs on controlled systems.
+- [ ] Closure evaluators cover one-component 2B exact reduction and `damped_picard_7_05` as the only active explicit approximation candidate.
+- [ ] Tests prove the 2B exact reduction matches the exact baseline for its declared topology and that the active approximate closure produces bounded labeled outputs on controlled systems.
 - [ ] Metrics report site-fraction error, mass-action residual norm, association Helmholtz error, association compressibility contribution error, association residual chemical-potential contribution error, association fugacity contribution error, runtime, and evidence band.
 - [ ] Grid generation writes retained CSV summaries under figure-owned `output/` folders and generated run payloads under ignored `output/runs/`.
 - [ ] Figure rendering produces at least one accuracy summary figure and a plotted-data CSV from retained generated data.
@@ -64,7 +64,7 @@
 - Create: `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/.gitkeep`
 - Create: `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/generate_data.py`
 - Create: `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py`
-- Create: `analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py`
+- Create: `analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py`
 - Create: `analyses/package_validation/explicit_association_toybox/tests/test_mass_action_metrics.py`
 - Create: `analyses/package_validation/explicit_association_toybox/tests/test_output_schema.py`
 - Modify: `tests/workflows/repo/test_project_structure.py` only if a structure guard is needed for the new retained analysis root.
@@ -185,28 +185,12 @@
     site_fraction_abs_tight: 1.0e-10
     site_fraction_abs_loose: 1.0e-3
   closures:
-    - name: closure_2b_exact_reduction
+    - name: exact_2b_reduction
       kind: exact_reduction
-    - name: explicit_picard_unroll_1
+    - name: damped_picard_7_05
       kind: explicit_approx
-      picard_steps: 1
-      damping: 1.0
-    - name: explicit_damped_picard_unroll_3
-      kind: explicit_approx
-      picard_steps: 3
+      picard_steps: 7
       damping: 0.5
-    - name: explicit_damped_picard_unroll_5
-      kind: explicit_approx
-      picard_steps: 5
-      damping: 0.5
-    - name: explicit_picard3_diag_newton1
-      kind: explicit_approx
-      picard_steps: 3
-      damping: 0.5
-      diagonal_polish_steps: 1
-      diagonal_polish_damping: 0.5
-    - name: collapsed_donor_acceptor_mean_field
-      kind: explicit_approx
   ```
 
 - [ ] **Step 4: Run the structure suite**
@@ -462,11 +446,11 @@
 
 **Files:**
 - Create: `analyses/package_validation/explicit_association_toybox/scripts/closure_models.py`
-- Create: `analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py`
+- Create: `analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py`
 
 - [ ] **Step 1: Write closure tests first**
 
-  Write `test_closure_a_exact_reduction.py`:
+  Write `test_exact_2b_reduction.py`:
 
   ```python
   from __future__ import annotations
@@ -494,7 +478,7 @@
       )
 
 
-  def test_closure_a_matches_exact_symmetric_2b_baseline() -> None:
+  def test_exact_2b_reduction_matches_exact_symmetric_2b_baseline() -> None:
       system = _system()
       density = 0.2
       composition = np.array([1.0])
@@ -502,7 +486,7 @@
       exact = solve_exact_site_fractions(density=density, x_assoc=system.x_assoc(composition), delta=delta)
 
       closure = evaluate_closure(
-          "closure_2b_exact_reduction",
+          "exact_2b_reduction",
           system=system,
           density=density,
           composition=composition,
@@ -520,13 +504,7 @@
       composition = np.array([1.0])
       delta = system.delta_matrix(strength=3.0)
 
-      for name in (
-          "explicit_picard_unroll_1",
-          "explicit_damped_picard_unroll_3",
-          "explicit_damped_picard_unroll_5",
-          "explicit_picard3_diag_newton1",
-          "collapsed_donor_acceptor_mean_field",
-      ):
+      for name in ("damped_picard_7_05",):
           closure = evaluate_closure(name, system=system, density=density, composition=composition, delta=delta)
           assert np.all(closure.xa > 0.0), name
           assert np.all(closure.xa <= 1.0), name
@@ -539,7 +517,7 @@
 - [ ] **Step 2: Run the tests and verify the expected failure**
 
   ```powershell
-  uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py -q
+  uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py -q
   ```
 
   Expected: FAIL because `closure_models.py` does not exist.
@@ -582,30 +560,6 @@
       return xa
 
 
-  def _diagonal_polish(xa: np.ndarray, density: float, x_assoc: np.ndarray, delta: np.ndarray, *, damping: float) -> np.ndarray:
-      residual = mass_action_residual(xa, density=density, x_assoc=x_assoc, delta=delta)
-      interaction = density * (delta @ (x_assoc * xa))
-      diagonal = 1.0 + interaction + xa * density * np.diag(delta) * x_assoc
-      return xa - damping * residual / diagonal
-
-
-  def _collapsed_mean_field(system: AssociationSystem, density: float, composition: np.ndarray, delta: np.ndarray) -> np.ndarray:
-      donor_mask = np.array([kind == "D" for kind in system.site_kind], dtype=bool)
-      acceptor_mask = np.array([kind == "A" for kind in system.site_kind], dtype=bool)
-      x_assoc = system.x_assoc(composition)
-      donor_total = float(np.sum(x_assoc[donor_mask]))
-      acceptor_total = float(np.sum(x_assoc[acceptor_mask]))
-      if donor_total <= 0.0 or acceptor_total <= 0.0:
-          return np.ones(system.site_count, dtype=float)
-      weighted = delta[np.ix_(donor_mask, acceptor_mask)] * x_assoc[donor_mask, np.newaxis] * x_assoc[acceptor_mask][np.newaxis, :]
-      delta_eff = float(np.sum(weighted) / (donor_total * acceptor_total))
-      donor_acceptor = stable_two_class_2b_solution(density=density, x_assoc=1.0, delta_da=delta_eff)
-      xa = np.ones(system.site_count, dtype=float)
-      xa[donor_mask] = donor_acceptor[0]
-      xa[acceptor_mask] = donor_acceptor[1]
-      return xa
-
-
   def evaluate_closure(
       name: str,
       *,
@@ -615,31 +569,22 @@
       delta: np.ndarray,
   ) -> ClosureResult:
       x_assoc = system.x_assoc(composition)
-      if name == "closure_2b_exact_reduction":
+      if name == "exact_2b_reduction":
           if system.site_count != 2 or tuple(system.site_kind) != ("D", "A"):
-              raise ValueError("closure_2b_exact_reduction requires a two-site D/A topology.")
+              raise ValueError("exact_2b_reduction requires a two-site D/A topology.")
           xa = stable_two_class_2b_solution(density=density, x_assoc=x_assoc[0], delta_da=delta[0, 1])
           return ClosureResult(name=name, xa=xa, association_model="implicit_exact", association_closure=name, exact_derivative_of="exact_mass_action", information_loss="none")
-      if name == "explicit_picard_unroll_1":
-          xa = _picard(density, x_assoc, delta, steps=1, damping=1.0)
-      elif name == "explicit_damped_picard_unroll_3":
-          xa = _picard(density, x_assoc, delta, steps=3, damping=0.5)
-      elif name == "explicit_damped_picard_unroll_5":
-          xa = _picard(density, x_assoc, delta, steps=5, damping=0.5)
-      elif name == "explicit_picard3_diag_newton1":
-          xa = _picard(density, x_assoc, delta, steps=3, damping=0.5)
-          xa = _diagonal_polish(xa, density, x_assoc, delta, damping=0.5)
-      elif name == "collapsed_donor_acceptor_mean_field":
-          xa = _collapsed_mean_field(system, density, composition, delta)
+      if name == "damped_picard_7_05":
+          xa = _picard(density, x_assoc, delta, steps=7, damping=0.5)
       else:
           raise ValueError(f"Unknown association closure: {name}")
-      return ClosureResult(name=name, xa=xa, association_model="explicit_approx", association_closure=name, exact_derivative_of="approximate_association_closure", information_loss="closure_specific" if name == "collapsed_donor_acceptor_mean_field" else "none")
+      return ClosureResult(name=name, xa=xa, association_model="explicit_approx", association_closure=name, exact_derivative_of="approximate_association_closure", information_loss="none")
   ```
 
 - [ ] **Step 4: Run closure and baseline tests**
 
   ```powershell
-  uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_mass_action_metrics.py analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py -q
+  uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_mass_action_metrics.py analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py -q
   ```
 
   Expected: PASS.
@@ -647,7 +592,7 @@
 - [ ] **Step 5: Commit**
 
   ```powershell
-  git add analyses/package_validation/explicit_association_toybox/scripts/closure_models.py analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py
+  git add analyses/package_validation/explicit_association_toybox/scripts/closure_models.py analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py
   git commit -m "feat: add explicit association closure models"
   ```
 
@@ -697,7 +642,7 @@
       composition = np.array([1.0])
       delta = system.delta_matrix(strength=2.0)
       exact = solve_exact_site_fractions(density=density, x_assoc=system.x_assoc(composition), delta=delta)
-      closure = evaluate_closure("explicit_damped_picard_unroll_3", system=system, density=density, composition=composition, delta=delta)
+      closure = evaluate_closure("damped_picard_7_05", system=system, density=density, composition=composition, delta=delta)
 
       row = metric_row(
           system_name="symmetric_2b_pure",
@@ -779,8 +724,8 @@
   ) -> dict[str, object]:
       residual = mass_action_residual(closure.xa, density=density, x_assoc=system.x_assoc(composition), delta=delta)
       exact_a = association_helmholtz(exact.xa, composition, system.site_component_index)
-      closure_a = association_helmholtz(closure.xa, composition, system.site_component_index)
-      abs_a = abs(closure_a - exact_a)
+      closure_assoc = association_helmholtz(closure.xa, composition, system.site_component_index)
+      abs_a = abs(closure_assoc - exact_a)
       rel_a = abs_a / max(abs(exact_a), 1.0e-14)
       max_abs_x = float(np.max(np.abs(closure.xa - exact.xa)))
       band = classify_evidence_band(
@@ -804,7 +749,7 @@
           "max_rel_x_error": float(np.max(np.abs(closure.xa - exact.xa) / np.maximum(np.abs(exact.xa), 1.0e-14))),
           "mass_residual_inf": float(np.linalg.norm(residual, ord=np.inf)),
           "assoc_helmholtz_exact": exact_a,
-          "assoc_helmholtz_closure": closure_a,
+          "assoc_helmholtz_closure": closure_assoc,
           "assoc_helmholtz_abs_error": abs_a,
           "assoc_helmholtz_rel_error": float(rel_a),
           "assoc_compressibility_abs_error": np.nan,
@@ -857,10 +802,10 @@
 
   def test_run_grid_writes_retained_csv(tmp_path: Path) -> None:
       output = tmp_path / "closure_metrics.csv"
-      run_grid(output_path=output, system_names=("symmetric_2b_pure",), closure_names=("closure_2b_exact_reduction",))
+      run_grid(output_path=output, system_names=("symmetric_2b_pure",), closure_names=("exact_2b_reduction",))
       text = output.read_text(encoding="utf-8")
       assert "system,closure," in text
-      assert "symmetric_2b_pure,closure_2b_exact_reduction" in text
+      assert "symmetric_2b_pure,exact_2b_reduction" in text
   ```
 
 - [ ] **Step 2: Run the grid test and verify the expected failure**

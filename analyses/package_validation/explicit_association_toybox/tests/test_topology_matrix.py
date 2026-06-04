@@ -17,7 +17,7 @@ def test_run_topology_matrix_writes_paper_metadata_columns(tmp_path: Path) -> No
     run_topology_matrix(
         output_path=output,
         topology_types=("2B",),
-        closure_names=("closure_2b_exact_reduction", "damped_picard_7_05"),
+        closure_names=("exact_2b_reduction", "damped_picard_7_05"),
         density_grid=(0.2,),
         strength_grid=(3.0,),
     )
@@ -38,7 +38,7 @@ def test_run_topology_matrix_writes_paper_metadata_columns(tmp_path: Path) -> No
     } <= set(rows[0])
     names = {row["closure"] for row in rows}
     assert "topology_reduction_huang_radosz_2b" in names
-    assert "closure_2b_exact_reduction" in names
+    assert "exact_2b_reduction" in names
     topology_row = next(row for row in rows if row["closure"] == "topology_reduction_huang_radosz_2b")
     assert topology_row["topology_id"] == "hr_2b"
     assert topology_row["closure_name"] == topology_row["closure"]

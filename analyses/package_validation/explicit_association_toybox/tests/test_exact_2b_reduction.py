@@ -23,7 +23,7 @@ def _system() -> AssociationSystem:
     )
 
 
-def test_closure_a_matches_exact_symmetric_2b_baseline() -> None:
+def test_exact_2b_reduction_matches_exact_symmetric_2b_baseline() -> None:
     system = _system()
     density = 0.2
     composition = np.array([1.0])
@@ -31,7 +31,7 @@ def test_closure_a_matches_exact_symmetric_2b_baseline() -> None:
     exact = solve_exact_site_fractions(density=density, x_assoc=system.x_assoc(composition), delta=delta)
 
     closure = evaluate_closure(
-        "closure_2b_exact_reduction",
+        "exact_2b_reduction",
         system=system,
         density=density,
         composition=composition,

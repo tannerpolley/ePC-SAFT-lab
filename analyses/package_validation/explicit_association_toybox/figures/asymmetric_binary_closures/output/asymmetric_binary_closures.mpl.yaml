@@ -1,7 +1,15 @@
 kind: matplotlib-figure
 version: 1
 plot_id: asymmetric_binary_closures
-title: Asymmetric binary closure propagation cases
+title: Asymmetric mixture diagnostics for Picard closure
+matplotlib:
+  title: Asymmetric mixture diagnostics for Picard closure
+  x_label: association error and speedup
+  y_label: case
+  y_scale: linear
 files:
   figure: asymmetric_binary_closures.png
+  svg: asymmetric_binary_closures.svg
   source_data: asymmetric_binary_closures_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/asymmetric_binary_closures/scripts/render_figure.py

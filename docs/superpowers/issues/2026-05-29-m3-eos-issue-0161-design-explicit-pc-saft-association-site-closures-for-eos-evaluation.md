@@ -31,7 +31,7 @@ start from a durable local source plan.
 
 ## Summary
 
-Capture the explicit PC-SAFT association-site closure derivation as later EOS-provider work. Source note: `docs/derivation/explicit_association_closure_for_pcsaft.tex`.
+Capture the explicit PC-SAFT association-site Picard derivation as later EOS-provider work. Source note: `docs/latex/explicit_assocation.tex`.
 
 ## Supplemental Context
 
@@ -47,11 +47,11 @@ Capture the explicit PC-SAFT association-site closure derivation as later EOS-pr
 
 - [ ] Trace the current association implementation owner, site flattening/grouping convention, site multiplicities, active site-pair topology, association-strength matrix construction, and parameter units.
 - [ ] Prove Tier 0 is inactive and bitwise or tolerance-equivalent to current EOS outputs.
-- [ ] For Tier 1, test Closure A against the exact mass-action solve on controlled pure and inert-partner EOS state grids and prove site fractions, `a_assoc`, pressure, residual chemical potentials, and fugacity coefficients match within stated tolerances.
+- [ ] For Tier 1, test the 2B exact reduction against the exact mass-action solve on controlled pure and inert-partner EOS state grids and prove site fractions, `a_assoc`, pressure, residual chemical potentials, and fugacity coefficients match within stated tolerances.
 - [ ] For Tier 2, separately test unequal multiplicities and density/composition-dependent strength terms before making any exactness claim.
-- [ ] For Tier 3, evaluate Closure B/C only as approximate explicit EOS models and report residual/error curves versus fixed depth, damping, density, composition, and association strength.
+- [ ] For Tier 3, evaluate only `damped_picard_7_05` as an approximate explicit EOS model and report residual/error curves versus density, composition, and association strength.
 - [ ] For Tier 4, fail loudly or keep the explicit closure path unavailable until a separate derivation supports that configuration.
-- [ ] For Tier 5, keep mean-field behavior diagnostic-only unless a separate issue defines production criteria.
+- [ ] For Tier 5, keep only the active Picard candidate in the analysis lane unless a separate issue approves another explicit approximation.
 - [ ] Add derivative tests that compare closed-form and CppAD sensitivities of the explicit closure with independent implicit-sensitivity references where available.
 - [ ] Document derivative semantics in code/docs: Explicit-closure derivatives are derivatives of the approximate explicit EOS, not automatically the exact implicit PC-SAFT association derivatives.
 - [ ] Add topology-gating tests that prevent unsupported association configurations from silently using a closure outside its proven assumptions.

@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: quick_phase_equilibrium
+title: Quick toy phase-pair residuals
+matplotlib:
+  title: Quick toy phase-pair residuals
+  x_label: temperature / K
+  y_label: scaled pressure and reduced-chemical-potential residual norm
+  y_scale: log
+files:
+  figure: quick_phase_equilibrium.png
+  svg: quick_phase_equilibrium.svg
+  source_data: quick_phase_equilibrium_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/quick_phase_equilibrium/scripts/render_figure.py

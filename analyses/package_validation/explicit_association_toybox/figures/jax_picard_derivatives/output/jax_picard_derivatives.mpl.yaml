@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: jax_picard_derivatives
+title: JAX Picard derivatives against exact implicit sensitivities
+matplotlib:
+  title: JAX Picard derivatives against exact implicit sensitivities
+  x_label: JAX derivative target
+  y_label: relative derivative error
+  y_scale: log
+files:
+  figure: jax_picard_derivatives.png
+  svg: jax_picard_derivatives.svg
+  source_data: jax_picard_derivatives_plotted_data.csv
+render:
+  command: uv run --group autodiff python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py

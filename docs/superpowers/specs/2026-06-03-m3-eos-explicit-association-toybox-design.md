@@ -37,9 +37,9 @@ the synthetic toybox grids cover real 2B/3B/4C association behavior.
 - Verified: `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md`
   defines `implicit_exact` as the solved mass-action PC-SAFT association model
   and `explicit_approx` as approximate algebraic closures.
-- Verified: `docs/derivation/explicit_association_closure_for_pcsaft.tex`
-  derives Closure A, full-matrix Picard unroll closures, diagonal-polish
-  closures, and collapsed donor/acceptor mean-field closure candidates.
+- Verified: `docs/latex/explicit_assocation.tex` derives the full-matrix,
+  seven-step damped Picard closure that underpins the active explicit
+  approximation candidate.
 - Verified: `docs/latex/equations.tex` owns the association site balance,
   association strength, association Helmholtz contribution, and association
   density/composition/temperature differential equations.
@@ -75,9 +75,8 @@ the synthetic toybox grids cover real 2B/3B/4C association behavior.
 - Baseline: build an independent Python exact mass-action baseline and allow
   optional native output cross-checks.
 - First scope: EOS diagnostics only, not equilibrium route prototypes.
-- Closure set: evaluate all four closure families from the current derivation:
-  one-component 2B, full-matrix Picard unroll, Picard plus diagonal polish, and
-  collapsed donor/acceptor mean field.
+- Closure set: evaluate the exact 2B reduction as a baseline check and
+  `damped_picard_7_05` as the only active explicit approximation candidate.
 - Promotion policy: produce an evidence gate and recommendations, but do not
   admit production behavior directly from the toybox.
 - Dependency policy: a later policy change may permit SciPy only inside this
@@ -122,7 +121,7 @@ analyses/package_validation/explicit_association_toybox/
         generate_data.py
         render_figure.py
   tests/
-    test_closure_a_exact_reduction.py
+    test_exact_2b_reduction.py
     test_mass_action_metrics.py
     test_output_schema.py
 ```
@@ -241,42 +240,30 @@ be auditable:
 - iteration count and solve diagnostics;
 - explicit failure when the exact solve does not converge.
 
-The baseline should also expose a direct grouped 2B exact formula for Closure A
-cases. That formula is the simplest way to prove the toybox equations are wired
-correctly before comparing broader closures.
+The baseline should also expose a direct grouped 2B exact formula. That formula
+is the simplest way to prove the toybox equations are wired correctly before
+comparing the active explicit candidate.
 
 Native provider calls may be used as cross-checks after the independent Python
 baseline exists, but they should not be the only exact reference.
 
-## Closure Candidates
+## Closure Candidate
 
-Evaluate these closures under one consistent interface:
+Evaluate the exact baseline and the active approximation under one consistent
+interface:
 
-1. `closure_2b_exact_reduction`
+1. `exact_2b_reduction`
    - one associating component;
    - donor/acceptor 2B topology;
    - inert partner components;
    - expected to match the exact mass-action solution when the topology
      assumptions match the full site matrix.
 
-2. `explicit_picard_unroll_N`
+2. `damped_picard_7_05`
    - full site matrix;
-   - row-sum bounded initializer;
-   - fixed unroll counts such as `1`, `3`, and `5`.
-
-3. `explicit_damped_picard_unroll_N`
-   - full site matrix;
-   - fixed damping such as `omega = 0.5`;
-   - fixed unroll counts such as `3` and `5`.
-
-4. `explicit_picard3_diag_newton1`
-   - three damped Picard steps;
-   - one diagonal-polish correction;
-   - candidate for the strongest first explicit approximate closure.
-
-5. `collapsed_donor_acceptor_mean_field`
-   - diagnostic and screening closure only;
-   - records component-specific information loss in the output metadata.
+   - seven damped Picard steps;
+   - fixed damping `omega = 0.5`;
+   - the only active explicit approximate closure in this toybox.
 
 All closure outputs must include labels that separate exact reductions from
 approximations:
@@ -371,7 +358,7 @@ global pass/fail result:
 
 ```text
 exact_reduction_verified:
-    Closure A matches the exact Python baseline within tight numerical
+    The 2B exact reduction matches the exact Python baseline within tight numerical
     tolerance for its declared topology.
 
 promising_eos_approximation:
@@ -424,8 +411,8 @@ the guard change.
   but it cannot prove production performance or provider API behavior.
 - An independent exact baseline reduces risk of copying provider mistakes, but
   native cross-checks are still valuable for matching package conventions.
-- Including all closure families gives a useful map, but Closure D should stay
-  clearly labeled as a diagnostic mean-field collapse.
+- Keeping one active explicit candidate keeps the toybox focused on property
+  and derivative propagation instead of closure cataloging.
 - Adding HC and dispersion makes the error scale more thermodynamically
   interpretable, but it also risks turning the analysis into a shadow package.
   Keep the scaffold scalar-only and analysis-owned.

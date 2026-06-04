@@ -57,7 +57,7 @@ def _system_from_config(config: dict[str, object]) -> AssociationSystem:
 
 
 def _closure_applies(closure_name: str, system: AssociationSystem) -> bool:
-    if closure_name == "closure_2b_exact_reduction":
+    if closure_name == "exact_2b_reduction":
         return system.site_count == 2 and tuple(system.site_kind) == ("D", "A")
     return True
 

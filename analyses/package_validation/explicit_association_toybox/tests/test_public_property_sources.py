@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from analyses.package_validation.explicit_association_toybox.scripts.public_property_sources import (
+    _select_source_rows,
     fetch_nist_saturation,
     nist_saturation_url,
     parse_nist_saturation_html,
@@ -71,3 +72,29 @@ def test_nist_saturation_url_encodes_requested_component_and_units() -> None:
 def test_fetch_nist_saturation_requires_explicit_network_permission() -> None:
     with pytest.raises(ValueError, match="allow_network=True"):
         fetch_nist_saturation({"nist_id": "C67561"}, allow_network=False)
+
+
+def test_select_source_rows_applies_declared_temperature_window_and_count() -> None:
+    rows = [
+        {
+            "T_K": float(temperature),
+            "p_sat_Pa": float(temperature) * 1000.0,
+            "rho_sat_liq_mol_m3": 20_000.0,
+            "phase": "liquid",
+            "source_url": "https://webbook.nist.gov/example",
+        }
+        for temperature in range(280, 331, 5)
+    ]
+
+    selected = _select_source_rows(
+        rows,
+        {
+            "temperature_low_K": 290.0,
+            "temperature_high_K": 320.0,
+            "retained_temperature_points": 4,
+        },
+    )
+
+    assert len(selected) == 4
+    assert selected[0]["T_K"] == pytest.approx(290.0)
+    assert selected[-1]["T_K"] == pytest.approx(320.0)

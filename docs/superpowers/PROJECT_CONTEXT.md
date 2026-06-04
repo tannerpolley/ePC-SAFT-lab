@@ -50,6 +50,13 @@ provider support stays core-owned.
 `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md` is the current derivation and policy reference for reduced explicit association closures. Read it before adding approximate `X_A` closures or claiming exact CppAD derivatives of an approximate association model. It is separate from the generalized phase-equilibrium plan.
 `docs/superpowers/specs/2026-06-03-m3-eos-paper-backed-association-closure-validation-matrix-design.md` is the follow-up analysis design for testing those closures against Huang/Radosz topology formulas, Gross/Sadowski associating systems, fixed-state `ares` errors, and timing matrices. Use it before treating the synthetic toybox grids as real 2B/3B/4C closure evidence.
 
+`docs/superpowers/milestones/M8-python-toybox/README.md` is the Python-only
+toybox milestone for exploratory EOS, derivative, property, and
+equilibrium-style analysis that is not yet provider, equilibrium, or benchmark
+implementation work. Use M8 for future explicit-association toybox development
+unless the work is ready to become M3 provider admission, M4 equilibrium
+implementation, or M6 benchmark evidence.
+
 `docs/protocols/build_package_dependency_protocol.rst` is the canonical build, package, dependency, CMake, C++ package-management, and CI-lane protocol. Read it before changing native dependency defaults, GitHub Actions build lanes, package build behavior, or source-checkout build scripts.
 
 ---

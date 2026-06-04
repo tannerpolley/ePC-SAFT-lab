@@ -11,6 +11,9 @@ style = [
 docs = [
     "sphinx>=7.0",
 ]
+autodiff = [
+    "jax[cpu]>=0.4.30",
+]
 build = [
     "build>=1.2",
     "cibuildwheel>=2.23",

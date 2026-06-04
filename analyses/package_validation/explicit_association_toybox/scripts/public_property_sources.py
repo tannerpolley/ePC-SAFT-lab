@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+import numpy as np
 import yaml
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
@@ -99,11 +100,30 @@ def fetch_nist_saturation(source: Mapping[str, object], *, allow_network: bool) 
     request = Request(url, headers={"User-Agent": "ePC-SAFT validation toybox"})
     with urlopen(request, timeout=float(source.get("timeout_seconds", 30.0))) as response:
         html = response.read().decode("utf-8", errors="replace")
-    rows = parse_nist_saturation_html(html, source_url=url)
+    rows = _select_source_rows(parse_nist_saturation_html(html, source_url=url), source)
     for row in rows:
         row["component"] = str(source["component"])
         row["source_name"] = str(source.get("source_name", "nist_chemistry_webbook"))
     return rows
+
+
+def _select_source_rows(rows: list[dict[str, object]], source: Mapping[str, object]) -> list[dict[str, object]]:
+    lo = float(source.get("temperature_low_K", float("-inf")))
+    hi = float(source.get("temperature_high_K", float("inf")))
+    filtered = [row for row in rows if lo <= float(row["T_K"]) <= hi]
+    filtered.sort(key=lambda row: float(row["T_K"]))
+    target_count = source.get("retained_temperature_points")
+    if target_count is None or len(filtered) <= int(target_count):
+        return filtered
+    count = int(target_count)
+    if count < 2:
+        raise ValueError("retained_temperature_points must be at least 2 when provided.")
+    indexes = np.linspace(0, len(filtered) - 1, count)
+    selected_indexes = sorted({int(round(index)) for index in indexes})
+    selected = [filtered[index] for index in selected_indexes]
+    if len(selected) != count:
+        raise ValueError("retained_temperature_points selection collapsed duplicate source rows.")
+    return selected
 
 
 def write_public_saturation_csv(rows: list[dict[str, object]], output_path: Path = DEFAULT_OUTPUT) -> Path:

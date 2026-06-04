@@ -2,12 +2,11 @@ topology_grid:
   density_grid: [0.001, 0.01, 0.05, 0.1]
   strength_grid: [0.1, 1.0, 10.0, 50.0]
   composition: [1.0]
-property_residual_sampling:
-  max_rows_per_component: 3
 provider_property_cases:
   methanol:
     species: [Methanol]
     parameter_source: inline_provider_case_from_epcsaft_defaults
+    saturation_validation_status: fixed_state_diagnostic
     parameters:
       MW: [0.03204]
       m: [1.5255]
@@ -23,6 +22,7 @@ provider_property_cases:
   water:
     species: [water]
     parameter_source: inline_provider_case_from_epcsaft_defaults_fixed_sigma
+    saturation_validation_status: fixed_state_diagnostic
     sigma_policy: fixed_first_pass_sigma_for_property_residual_screening
     parameters:
       MW: [0.01801528]

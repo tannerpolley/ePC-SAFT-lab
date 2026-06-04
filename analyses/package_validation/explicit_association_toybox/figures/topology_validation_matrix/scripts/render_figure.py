@@ -1,11 +1,26 @@
 from __future__ import annotations
 
 import csv
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = ANALYSIS_ROOT.parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from analyses.package_validation.explicit_association_toybox.scripts.plot_style import (
+    BLUE,
+    ORANGE,
+    apply_plot_style,
+    role_label,
+    save_png_svg,
+    style_axis,
+    write_sidecar,
+)
+
 OUTPUT = ANALYSIS_ROOT / "figures" / "topology_validation_matrix" / "output"
 MATRIX = OUTPUT / "topology_matrix.csv"
 FIGURE = OUTPUT / "topology_validation_matrix.png"
@@ -14,6 +29,7 @@ SIDECAR = OUTPUT / "topology_validation_matrix.mpl.yaml"
 
 
 def main() -> None:
+    apply_plot_style()
     rows = _load_rows()
     grouped: dict[tuple[str, str], float] = {}
     for row in rows:
@@ -25,6 +41,7 @@ def main() -> None:
         {
             "paper_topology_type": topology,
             "comparison_role": role,
+            "comparison_label": role_label(role),
             "max_abs_assoc_helmholtz_rel_error": value,
         }
         for (topology, role), value in sorted(grouped.items())
@@ -35,20 +52,14 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(plotted_rows)
 
-    roles = sorted({row["comparison_role"] for row in plotted_rows})
     topologies = sorted({row["paper_topology_type"] for row in plotted_rows})
-    offsets = {role: idx - (len(roles) - 1) / 2.0 for idx, role in enumerate(roles)}
-    colors = {
-        "exact_topology_reduction": "#2f6f9f",
-        "explicit_approximation": "#b35c1e",
-        "diagnostic_collapse": "#7a5aa6",
-    }
+    roles = ["exact_topology_reduction", "explicit_approximation"]
+    colors = {"exact_topology_reduction": BLUE, "explicit_approximation": ORANGE}
 
-    fig, ax = plt.subplots(figsize=(9, 4.8))
+    fig, ax = plt.subplots(figsize=(8.2, 4.8))
     for role in roles:
-        xs: list[float] = []
-        ys: list[float] = []
-        for idx, topology in enumerate(topologies):
+        values = []
+        for topology in topologies:
             match = next(
                 (
                     row
@@ -57,43 +68,36 @@ def main() -> None:
                 ),
                 None,
             )
-            if match is None:
-                continue
-            xs.append(idx + 0.18 * offsets[role])
-            ys.append(float(match["max_abs_assoc_helmholtz_rel_error"]))
-        ax.scatter(xs, ys, label=role, color=colors.get(role, "#404040"), s=42)
+            values.append(max(float(match["max_abs_assoc_helmholtz_rel_error"]), 1.0e-14) if match else 1.0e-14)
+        ax.plot(
+            range(len(topologies)),
+            values,
+            marker="o",
+            linewidth=1.8,
+            color=colors[role],
+            label=role_label(role),
+        )
     ax.set_xticks(range(len(topologies)))
     ax.set_xticklabels(topologies)
-    ax.set_yscale("symlog", linthresh=1.0e-8)
-    ax.set_title("Huang/Radosz topology validation matrix")
+    ax.set_yscale("log")
+    ax.set_title("Huang/Radosz topology validation")
     ax.set_xlabel("Table VII topology")
-    ax.set_ylabel("Max absolute relative association Helmholtz error")
-    ax.grid(axis="y", color="#d9d9d9", linewidth=0.6)
-    ax.legend(fontsize=8)
+    ax.set_ylabel(r"max relative error in $a_{\mathrm{assoc}}$")
+    style_axis(ax, minor=True)
+    ax.legend()
     fig.tight_layout()
-    fig.savefig(FIGURE, dpi=160)
+    save_png_svg(fig, FIGURE)
     plt.close(fig)
-    SIDECAR.write_text(
-        "\n".join(
-            (
-                "kind: matplotlib-figure",
-                "version: 1",
-                "plot_id: explicit_association_topology_validation_matrix",
-                "title: Huang/Radosz topology validation matrix",
-                "matplotlib:",
-                "  title: Huang/Radosz topology validation matrix",
-                "  x_label: Table VII topology",
-                "  y_label: Max absolute relative association Helmholtz error",
-                "  y_scale: symlog",
-                "files:",
-                "  figure: topology_validation_matrix.png",
-                "  source_data: topology_validation_matrix_plotted_data.csv",
-                "render:",
-                "  command: uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py",
-                "",
-            )
-        ),
-        encoding="utf-8",
+    write_sidecar(
+        SIDECAR,
+        plot_id="explicit_association_topology_validation_matrix",
+        title="Huang/Radosz topology validation",
+        figure=FIGURE,
+        source_data=PLOTTED,
+        x_label="Table VII topology",
+        y_label="max relative error in a_assoc",
+        y_scale="log",
+        command="uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py",
     )
     print(FIGURE)
 

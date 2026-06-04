@@ -1,15 +1,15 @@
 kind: matplotlib-figure
 version: 1
 plot_id: explicit_association_closure_accuracy_summary
-title: Explicit association closure accuracy
+title: Picard closure accuracy
 matplotlib:
-  title: Explicit association closure accuracy
-  x_label: Closure
-  y_label: Max relative association Helmholtz error
-  y_scale: symlog
-  reference_line: 0.03
+  title: Picard closure accuracy
+  x_label: rho Delta
+  y_label: relative Helmholtz error
+  y_scale: log
 files:
   figure: closure_accuracy_summary.png
+  svg: closure_accuracy_summary.svg
   source_data: closure_accuracy_summary_plotted_data.csv
 render:
   command: uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py

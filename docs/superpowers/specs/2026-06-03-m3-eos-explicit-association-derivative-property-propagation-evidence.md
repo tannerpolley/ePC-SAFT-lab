@@ -69,11 +69,8 @@ analyses/package_validation/explicit_association_toybox/
 
 | Result area | Retained finding | Interpretation |
 | --- | --- | --- |
-| Timing | Explicit closures are roughly `7x-11x` faster than exact implicit mass-action in retained toybox timing lanes. | Speedup is real in the analysis harness, but the exact solve is only about `1-2 ms`, so equilibrium-scale value still needs proof. |
-| Accuracy | More damped Picard steps reduce association Helmholtz error; `damped_picard_7_05` was best among tested sensitivity variants at about `1.86e-2` max relative association `ares` error. | Accuracy improves with unroll count, but not yet enough for production admission. |
-| Tradeoff | `damped_picard_3_05` was fastest in sensitivity, but had the worst tested sensitivity error, about `7.47e-2`. | A speed candidate and an accuracy candidate may be different closures. |
-| Diagonal polish | `picard3_diag_newton1` did not beat `damped_picard_5_05` or `damped_picard_7_05` on error. | The polish step is not obviously worth its complexity yet. |
-| Collapsed mean field | The collapsed donor/acceptor closure hits `1.0` relative error in topology maps. | Keep it diagnostic-only; do not consider it a provider candidate. |
+| Timing | The active Picard candidate is materially faster than exact implicit mass-action in retained toybox timing lanes. | Speedup is real in the analysis harness, but the exact solve is only about `1-2 ms`, so equilibrium-scale value still needs proof. |
+| Accuracy | `damped_picard_7_05` is the only retained explicit approximation candidate and is the accuracy target for follow-up property propagation. | The candidate still needs derivative and property evidence before any production admission. |
 | Smoothness | Density and strength local slope jumps are about `4.23e-4`; symmetric composition perturbation is smooth. | Smoothness alone is not discriminating enough; derivative agreement against exact implicit is needed. |
 | Property residuals | Fixed-state pressure residuals are very large for high-temperature water. | Water needs isolated source/parameter/topology analysis, and fixed-state residuals must not be presented as VLE validation. |
 
@@ -124,8 +121,7 @@ Recommended comparison groups:
 - one-site, 2B, 3B, 4C, and higher-site topologies;
 - low, moderate, and high `rho * Delta`;
 - exact topology reductions where relevant;
-- `damped_picard_3_05`, `damped_picard_5_05`, `damped_picard_7_05`,
-  `picard3_diag_newton1`, and any new compact variant proposed during planning.
+- `damped_picard_7_05` as the only retained explicit approximation candidate.
 
 ### 2. Derivative Agreement, Not Just Smoothness
 
@@ -287,7 +283,7 @@ Planning should refine thresholds, but the spec recommends starting with:
 | `diagnostic_only` | Useful for interpreting failure modes, not a provider candidate. |
 | `reject_for_provider_path` | Fails boundedness, residual, derivative, or propagated property gates. |
 
-The collapsed donor/acceptor closure should default to `diagnostic_only` unless
+Rows with reduced site information should default to `diagnostic_only` unless
 new evidence proves a narrower role.
 
 ## Tradeoffs
@@ -315,12 +311,9 @@ new evidence proves a narrower role.
 
 This follow-up is useful if retained CSVs and figures can answer:
 
-- Which closures remain viable after derivative agreement checks?
-- Does `damped_picard_7_05` remain the accuracy candidate after propagated
-  property errors are included?
-- Is `damped_picard_3_05` merely fast, or does it preserve enough EOS signal in
-  low-to-moderate association regimes?
-- Does diagonal polish ever outperform simply adding more damped Picard steps?
+- Does `damped_picard_7_05` remain viable after derivative agreement checks?
+- Does `damped_picard_7_05` remain viable after propagated property errors are
+  included?
 - Which topologies and `rho * Delta` ranges make explicit closures fail?
 - Does water need a separate closure/parameter evidence path?
 - Do local objective gradients and Hessian proxies retain enough quality for

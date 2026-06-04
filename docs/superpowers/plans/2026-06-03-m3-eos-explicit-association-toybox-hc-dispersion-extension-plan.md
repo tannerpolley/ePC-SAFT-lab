@@ -83,7 +83,7 @@ Modify:
 
 Test:
 
-- `analyses/package_validation/explicit_association_toybox/tests/test_closure_a_exact_reduction.py`
+- `analyses/package_validation/explicit_association_toybox/tests/test_exact_2b_reduction.py`
 - `analyses/package_validation/explicit_association_toybox/tests/test_mass_action_metrics.py`
 - `analyses/package_validation/explicit_association_toybox/tests/test_output_schema.py`
 - `analyses/package_validation/explicit_association_toybox/tests/test_neutral_pcsaft_scalar_terms.py`
@@ -722,7 +722,7 @@ def test_metric_row_adds_total_ares_context_when_supplied() -> None:
     delta = system.delta_matrix(strength=2.0)
     exact = solve_exact_site_fractions(density=density, x_assoc=system.x_assoc(composition), delta=delta)
     closure = evaluate_closure(
-        "explicit_damped_picard_unroll_3",
+        "damped_picard_7_05",
         system=system,
         density=density,
         composition=composition,
@@ -794,7 +794,7 @@ def metric_row(
 ) -> dict[str, object]:
 ```
 
-Inside the function, after `closure_a` is computed, add:
+Inside the function, after `closure_assoc` is computed, add:
 
 ```python
     has_pcsaft_context = (
@@ -805,7 +805,7 @@ Inside the function, after `closure_a` is computed, add:
     )
     if has_pcsaft_context:
         ares_total_exact = float(ares_hc + ares_disp + exact_a)
-        ares_total_closure = float(ares_hc + ares_disp + closure_a)
+        ares_total_closure = float(ares_hc + ares_disp + closure_assoc)
         ares_total_abs_error = abs(ares_total_closure - ares_total_exact)
         ares_total_rel_error = ares_total_abs_error / max(abs(ares_total_exact), 1.0e-14)
     else:
@@ -823,7 +823,7 @@ Add these keys to the returned dictionary:
         "ares_hc": ares_hc if ares_hc is not None else np.nan,
         "ares_disp": ares_disp if ares_disp is not None else np.nan,
         "ares_assoc_exact": exact_a,
-        "ares_assoc_closure": closure_a,
+        "ares_assoc_closure": closure_assoc,
         "ares_total_exact": ares_total_exact,
         "ares_total_closure": ares_total_closure,
         "ares_total_abs_error": ares_total_abs_error,

@@ -8,6 +8,7 @@ from .association_models import AssociationSystem
 from .exact_baseline import stable_two_class_2b_solution
 
 EXACT_MASS_ACTION_BASELINE = "implicit_exact_mass_action"
+EXACT_2B_REDUCTION = "exact_2b_reduction"
 PICARD7_CLOSURE = "damped_picard_7_05"
 CANDIDATE_CLOSURES = (PICARD7_CLOSURE,)
 
@@ -55,9 +56,9 @@ def evaluate_closure(
     delta: np.ndarray,
 ) -> ClosureResult:
     x_assoc = system.x_assoc(composition)
-    if name == "closure_2b_exact_reduction":
+    if name == EXACT_2B_REDUCTION:
         if system.site_count != 2 or tuple(system.site_kind) != ("D", "A"):
-            raise ValueError("closure_2b_exact_reduction requires a two-site D/A topology.")
+            raise ValueError("exact_2b_reduction requires a two-site D/A topology.")
         xa = stable_two_class_2b_solution(density=density, x_assoc=x_assoc[0], delta_da=delta[0, 1])
         return ClosureResult(
             name=name,
