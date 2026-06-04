@@ -10,6 +10,9 @@ from analyses.package_validation.explicit_association_toybox.scripts.hessian_agr
     generate_hessian_agreement,
     run_hessian_agreement_cases,
 )
+from analyses.package_validation.explicit_association_toybox.scripts.jax_picard_derivatives import (
+    run_jax_picard_derivative_cases,
+)
 from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import exact_association_value
 
 
@@ -44,19 +47,42 @@ def test_exact_density_hessian_matches_direct_second_value_difference() -> None:
     assert exact_hessian == pytest.approx(direct, rel=2.0e-4, abs=1.0e-7)
 
 
-def test_hessian_agreement_rows_retain_exact_jacobian_evidence() -> None:
+def test_hessian_agreement_rows_retain_issue_schema() -> None:
     rows = run_hessian_agreement_cases(closure_names=(PICARD7_CLOSURE,))
 
     assert rows
     assert {
-        "exact_hessian_method",
-        "closure_hessian_method",
+        "target_pair",
+        "derivative_order",
+        "exact_hessian_value",
+        "picard_jax_hessian_value",
+        "absolute_error",
+        "relative_error",
+        "finite_difference_step",
+        "baseline_status",
+        "autodiff_backend",
         "implicit_jacobian_condition_number",
         "mass_action_residual_inf",
     } <= set(rows[0])
-    assert all("implicit_first_derivative" in str(row["exact_hessian_method"]) for row in rows)
+    assert {row["autodiff_backend"] for row in rows} == {"jax"}
+    assert {row["baseline_status"] for row in rows} == {"centered_finite_difference_exact_implicit"}
     assert all(float(row["implicit_jacobian_condition_number"]) >= 1.0 for row in rows)
     assert all(float(row["mass_action_residual_inf"]) <= 1.0e-10 for row in rows)
+
+
+def test_hessian_agreement_rows_use_picard_jax_second_derivatives() -> None:
+    rows = run_hessian_agreement_cases(closure_names=(PICARD7_CLOSURE,))
+    jax_rows = {
+        (row["case_id"], row["target"]): row
+        for row in run_jax_picard_derivative_cases()
+        if int(row["derivative_order"]) == 2
+    }
+
+    assert jax_rows
+    for row in rows:
+        key = (row["case_id"], row["target"])
+        assert key in jax_rows
+        assert float(row["picard_jax_hessian_value"]) == pytest.approx(float(jax_rows[key]["picard_jax_value"]))
 
 
 def test_generate_hessian_agreement_writes_csv(tmp_path) -> None:
@@ -66,8 +92,8 @@ def test_generate_hessian_agreement_writes_csv(tmp_path) -> None:
 
     assert generated == output
     text = output.read_text(encoding="utf-8")
-    assert "density_density" in text
-    assert "strength_strength" in text
+    assert "picard_jax_hessian_value" in text
+    assert "baseline_status" in text
 
 
 def _exact_a_assoc(

@@ -97,7 +97,7 @@ def main() -> None:
         x_label="JAX derivative target",
         y_label="relative derivative error",
         y_scale="log",
-        command="uv run --group autodiff python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py",
+        command="uv run python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py",
     )
     print(FIGURE)
 
