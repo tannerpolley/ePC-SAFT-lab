@@ -10,6 +10,18 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 - Backend: usually `Ipopt`
 - Release target: `equilibrium-0.x`
 
+## Current Specs
+
+| Spec | Capability | Summary |
+| --- | --- | --- |
+| [Single-component VLE route](../../specs/2026-06-04-m4-equilibrium-single-component-vle-route.md) | `vle` | Add production pure-component saturation solving to `epcsaft-equilibrium` using the modular Ipopt/NLP route discipline. |
+
+## Current Plans
+
+| Plan | Capability | Summary |
+| --- | --- | --- |
+| [Single-component VLE route plan](../../plans/2026-06-04-m4-equilibrium-single-component-vle-route-plan.md) | `vle` | Implement production pure-component saturation solving in `epcsaft-equilibrium` as an independent M4 route plan. |
+
 ## Current Open Issues
 
 | Issue | Capability | Backend | Readiness | Summary |

@@ -35,6 +35,7 @@ claim provider, equilibrium, or benchmark capability by itself.
 | --- | --- | --- |
 | [Picard autodiff and exact implicit sensitivity baseline hardening](../../specs/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening.md) | derivatives | Compare JAX autodiff through the explicit Picard model against exact implicit sensitivity baselines and parameter sensitivities. |
 | [Associating-compound pressure density validation lane](../../specs/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane.md) | property validation | Build honest pressure-density and vapor-pressure/liquid-density style plots for associating compounds only. |
+| [Pure-component saturation pressure solver](../../specs/2026-06-04-m8-python-toybox-pure-component-saturation-pressure-solver.md) | property validation | Add a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |
 | [Explicit closure admission decision](../../specs/2026-06-04-m8-python-toybox-explicit-closure-admission-decision.md) | admission | Use toybox evidence to decide whether Picard remains the only closure candidate and what gates block provider admission. |
 | [Equilibrium relevance probe for Picard closure error](../../specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md) | equilibrium probe | Probe whether Picard closure error breaks objective, Jacobian, and Hessian quality before any M4 implementation work. |
 
@@ -44,6 +45,7 @@ claim provider, equilibrium, or benchmark capability by itself.
 | --- | --- | --- |
 | [Picard autodiff and exact implicit sensitivity baseline hardening plan](../../plans/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening-plan.md) | none | Build exact implicit sensitivity, JAX Picard derivative, and Hessian agreement lanes. |
 | [Associating-compound pressure density validation lane plan](../../plans/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane-plan.md) | none | Build associating-compound pressure-density and saturation-style validation plots. |
+| [Pure-component saturation pressure solver plan](../../plans/2026-06-04-m8-python-toybox-pure-component-saturation-pressure-solver-plan.md) | none | Build a SciPy pure-component saturation solver for true toybox vapor-pressure predictions. |
 | [Explicit closure admission decision plan](../../plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md) | derivative and property plans | Reduce toybox closure scope to retained Picard evidence and document provider admission gates. |
 | [Equilibrium relevance probe for Picard closure error plan](../../plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md) | derivative and property plans | Build a small objective/Jacobian/Hessian probe without creating M4 route behavior. |
 
