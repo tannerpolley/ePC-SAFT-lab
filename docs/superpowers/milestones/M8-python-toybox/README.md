@@ -21,6 +21,26 @@ ownership stays with the package milestones:
 M8 may produce evidence that later becomes M3, M4, or M6 work. It must not
 claim provider, equilibrium, or benchmark capability by itself.
 
+## Solver And Derivative Guidance
+
+The toybox should stay light and should validate math shape, data behavior, and
+admission evidence rather than production solver architecture.
+
+- Use SciPy for analysis-only nonlinear solves, root finding, least-squares
+  residual solves, saturation pressure, and pressure-density coupling.
+- Use JAX for derivative evidence: residual Jacobians, selected gradients,
+  selected Hessian diagnostics, smoothness checks, and comparison against exact
+  implicit sensitivity baselines.
+- Prefer Gauss-Newton Hessian diagnostics such as `J.T @ J` for residual
+  objectives when that is the relevant nonlinear-system evidence.
+- Keep full `jax.hessian(...)` checks small and selective. They are diagnostic
+  spot checks, not the default path for figure generation or solver loops.
+- Do not make Python Ipopt bindings a required M8 dependency. If a Python Ipopt
+  adapter is explored, record the environment status plainly and keep the
+  working analysis route independent of that adapter.
+- Production exact Hessian of the Lagrangian and Ipopt callback behavior belong
+  to CppAD/C++ package work, not to the Python toybox.
+
 ## Project Field Defaults
 
 - Package: `analysis`

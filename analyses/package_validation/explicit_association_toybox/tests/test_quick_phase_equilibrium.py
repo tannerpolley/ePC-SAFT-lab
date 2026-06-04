@@ -13,6 +13,9 @@ from analyses.package_validation.explicit_association_toybox.scripts.quick_phase
     reduced_chemical_potential,
     solve_pure_phase_pair,
 )
+from analyses.package_validation.explicit_association_toybox.scripts.equilibrium_style_objective_sensitivity import (
+    run_objective_sensitivity_cases,
+)
 from analyses.package_validation.explicit_association_toybox.scripts.toy_property_eos import (
     pressure_result_from_state,
     state_from_provider_case,
@@ -92,3 +95,26 @@ def test_quick_phase_equilibrium_rows_compare_exact_and_picard() -> None:
     assert all(row["diagnostic_scope"] == "toy_pure_phase_pair_pressure_mu_equality" for row in rows)
     assert all(float(row["residual_reduction_factor"]) >= 1.0 for row in rows)
     assert all("saturation claim" in str(row["message"]) for row in rows)
+
+
+def test_equilibrium_relevance_rows_retain_objective_derivative_schema() -> None:
+    rows = run_objective_sensitivity_cases()
+
+    assert rows
+    assert {
+        "case_id",
+        "topology_id",
+        "state_id",
+        "objective_value_exact",
+        "objective_value_picard",
+        "gradient_norm_exact",
+        "gradient_norm_picard",
+        "gradient_absolute_error_norm",
+        "hessian_frobenius_exact",
+        "hessian_frobenius_picard",
+        "hessian_absolute_error_norm",
+        "hessian_condition_indicator",
+        "picard_mass_action_residual_norm",
+        "admission_status",
+    } <= set(rows[0])
+    assert rows[0]["admission_status"] in {"passes_probe", "needs_more_evidence", "fails_probe"}

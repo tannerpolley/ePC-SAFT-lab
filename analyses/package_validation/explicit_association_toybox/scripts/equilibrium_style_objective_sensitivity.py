@@ -13,6 +13,7 @@ from .propagation_evidence import (
     closure_association_value,
     exact_association_value,
     load_propagation_thresholds,
+    mass_residual_inf,
     relative_error,
     write_rows_csv,
 )
@@ -53,32 +54,46 @@ def run_objective_sensitivity_cases(*, closure_names: Iterable[str] = DEFAULT_CL
             exact=False,
             closure_name=closure_name,
         )
-        gradient_error = float(np.max(np.abs(closure_gradient - exact_gradient)))
-        hessian_error = max_symmetric_matrix_abs_error(exact_hessian, closure_hessian)
+        gradient_error = float(np.linalg.norm(closure_gradient - exact_gradient, ord=2))
+        hessian_error = float(np.linalg.norm(closure_hessian - exact_hessian, ord="fro"))
         objective_abs_error = abs(closure_value - exact_value)
         speedup = exact_elapsed / closure_elapsed if closure_elapsed > 0.0 else np.nan
+        mass_action_residual = _closure_mass_action_residual(case, closure_name=closure_name)
+        evidence_band = classify_propagated_evidence_band(
+            association_model="explicit_approx",
+            assoc_ares_rel_error=relative_error(closure_value, exact_value),
+            derivative_rel_error=gradient_error / max(float(np.linalg.norm(exact_gradient, ord=2)), 1.0e-14),
+            property_rel_error=objective_abs_error / max(abs(exact_value), 1.0e-14),
+            mass_action_residual_inf=mass_action_residual,
+            speedup_vs_exact_implicit=speedup,
+            information_loss="none",
+            thresholds=thresholds,
+        )
         samples.append(
             {
                 "case_id": case["case_id"],
+                "topology_id": "cross_binary_2b",
+                "state_id": "local_density_composition_probe",
                 "closure_name": closure_name,
                 "objective_value_exact": exact_value,
+                "objective_value_picard": closure_value,
                 "objective_value_closure": closure_value,
                 "objective_abs_error": objective_abs_error,
-                "gradient_max_abs_error": gradient_error,
-                "hessian_proxy_max_abs_error": hessian_error,
+                "gradient_norm_exact": float(np.linalg.norm(exact_gradient, ord=2)),
+                "gradient_norm_picard": float(np.linalg.norm(closure_gradient, ord=2)),
+                "gradient_absolute_error_norm": gradient_error,
+                "gradient_max_abs_error": float(np.max(np.abs(closure_gradient - exact_gradient))),
+                "hessian_frobenius_exact": float(np.linalg.norm(exact_hessian, ord="fro")),
+                "hessian_frobenius_picard": float(np.linalg.norm(closure_hessian, ord="fro")),
+                "hessian_absolute_error_norm": hessian_error,
+                "hessian_proxy_max_abs_error": max_symmetric_matrix_abs_error(exact_hessian, closure_hessian),
+                "hessian_condition_indicator": float(np.linalg.cond(closure_hessian)),
+                "picard_mass_action_residual_norm": mass_action_residual,
                 "exact_implicit_elapsed_seconds": exact_elapsed,
                 "closure_elapsed_seconds": closure_elapsed,
                 "speedup_vs_exact_implicit": speedup,
-                "evidence_band": classify_propagated_evidence_band(
-                    association_model="explicit_approx",
-                    assoc_ares_rel_error=relative_error(closure_value, exact_value),
-                    derivative_rel_error=gradient_error / max(float(np.max(np.abs(exact_gradient))), 1.0e-14),
-                    property_rel_error=objective_abs_error / max(abs(exact_value), 1.0e-14),
-                    mass_action_residual_inf=0.0,
-                    speedup_vs_exact_implicit=speedup,
-                    information_loss="none",
-                    thresholds=thresholds,
-                ),
+                "evidence_band": evidence_band,
+                "admission_status": _admission_status(evidence_band),
             }
         )
     return samples
@@ -138,6 +153,38 @@ def _objective_scalar(case: Mapping[str, object], *, exact: bool, closure_name: 
         ),
         elapsed,
     )
+
+
+def _closure_mass_action_residual(case: Mapping[str, object], *, closure_name: str) -> float:
+    system = case["system"]
+    if not hasattr(system, "site_count"):
+        raise ValueError("objective case system must be an AssociationSystem.")
+    density = float(case["density"])
+    strength = float(case["strength"])
+    composition = np.asarray(case["composition"], dtype=float)
+    delta = system.delta_matrix(strength)
+    closure, _, _ = closure_association_value(
+        closure_name,
+        system=system,
+        density=density,
+        composition=composition,
+        delta=delta,
+    )
+    return mass_residual_inf(
+        closure,
+        system=system,
+        density=density,
+        composition=composition,
+        delta=delta,
+    )
+
+
+def _admission_status(evidence_band: str) -> str:
+    if evidence_band in {"candidate_accuracy", "exact_reference"}:
+        return "passes_probe"
+    if evidence_band in {"speed_only_candidate", "diagnostic_only"}:
+        return "needs_more_evidence"
+    return "fails_probe"
 
 
 def _centered_coordinate_slope(case: Mapping[str, object], *, exact: bool, closure_name: str, coordinate: str) -> float:

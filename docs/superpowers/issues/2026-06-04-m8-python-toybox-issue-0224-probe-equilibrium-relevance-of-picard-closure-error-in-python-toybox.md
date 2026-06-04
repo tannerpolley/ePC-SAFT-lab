@@ -26,7 +26,7 @@ last_synced: "2026-06-04"
 **Source Plan:** docs/superpowers/plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md
 **Branch:** codex/issue-0224-probe-equilibrium-relevance-of-picard-closure-error-in-python-toybox
 **AFK/HITL:** HITL
-**Labels:** type:task, status:ready, ready-for-human, validation, area:equilibrium, area:derivatives
+**Labels:** type:task, status:ready, ready-for-human, validation, area:equilibrium, area:derivatives, backend:ipopt
 **Goal Command:** None - HITL review required
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -50,11 +50,17 @@ Build a Python-only objective, Jacobian, and Hessian probe that tests whether
 Picard closure error is dangerous for later equilibrium NLP work while staying
 out of `epcsaft-equilibrium` route APIs.
 
+The probe may include a saturation-style residual solve that uses JAX for
+residual Jacobians and objective gradient/Hessian diagnostics. Python Ipopt
+binding availability should be attempted and retained as evidence; missing
+bindings are a diagnostic status, not a reason to add substitute package routes.
+
 ## Acceptance Criteria
 
 - [ ] The probe uses neutral objective names such as `local_objective`, not bubble, dew, flash, LLE, HELD, or GFPE route names.
 - [ ] Exact implicit and Picard objective values are compared for the same toybox cases.
 - [ ] Gradient and Hessian error norms are retained with admission status bands.
+- [ ] The pure-component saturation toybox retains JAX residual Jacobian, objective gradient, Hessian diagnostic, optimizer backend, and Python-Ipopt availability fields.
 - [ ] The probe reports blocked status when derivative baseline rows are missing.
 - [ ] No provider, equilibrium, benchmark, or public API files are changed.
 
@@ -65,12 +71,15 @@ out of `epcsaft-equilibrium` route APIs.
 ## Non-goals
 
 - No `epcsaft-equilibrium` implementation.
-- No Ipopt integration, route API, HELD, GFPE, bubble, dew, flash, or LLE workflow.
+- No production Ipopt integration, route API, HELD, GFPE, bubble, dew, flash, or LLE workflow.
 - No provider EOS changes.
 
 ## Proof Oracle
 
 - `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_quick_phase_equilibrium.py -q`
+- `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_pure_saturation.py -q`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_relevance_probe/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_relevance_probe/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/render_figure.py`
 - `rg -n "bubble|dew|flash|LLE|HELD|GFPE" analyses/package_validation/explicit_association_toybox/scripts/quick_phase_equilibrium.py analyses/package_validation/explicit_association_toybox/figures/equilibrium_relevance_probe`

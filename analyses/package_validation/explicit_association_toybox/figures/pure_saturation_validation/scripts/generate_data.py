@@ -24,6 +24,10 @@ from analyses.package_validation.explicit_association_toybox.scripts.pure_satura
     PureSaturationResult,
     solve_pure_saturation,
 )
+from analyses.package_validation.explicit_association_toybox.scripts.jax_pure_saturation import (
+    JaxPureSaturationResult,
+    solve_jax_picard_pure_saturation,
+)
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "pure_saturation_validation" / "output"
 RAW_OUTPUT = OUTPUT / "pure_saturation_validation.csv"
@@ -44,6 +48,16 @@ REQUIRED_RETAINED_COLUMNS = (
     "pressure_liq_residual_Pa",
     "log_fugacity_residual",
     "solver_status",
+    "optimizer_backend",
+    "autodiff_backend",
+    "objective_value",
+    "residual_norm",
+    "residual_jacobian_condition_number",
+    "objective_gradient_norm",
+    "objective_hessian_min_eigenvalue",
+    "objective_hessian_max_eigenvalue",
+    "python_ipopt_status",
+    "python_ipopt_message",
     "solver_iteration_count",
     "pressure_evaluation_count",
     "initial_guess_policy",
@@ -71,6 +85,7 @@ def build_pure_saturation_validation_rows(
             (PICARD7_CLOSURE, "Picard"),
         ):
             rows.append(_model_row(source_row, case, closure_name=closure_name, model_label=label))
+        rows.append(_jax_picard_row(source_row, case))
     if not rows:
         raise ValueError("pure saturation validation produced no retained rows.")
     return rows
@@ -115,6 +130,16 @@ def _reference_row(source_row: Mapping[str, object], case: Mapping[str, object])
             "pressure_liq_residual_Pa": "",
             "log_fugacity_residual": "",
             "solver_status": "reference_data",
+            "optimizer_backend": "",
+            "autodiff_backend": "",
+            "objective_value": "",
+            "residual_norm": "",
+            "residual_jacobian_condition_number": "",
+            "objective_gradient_norm": "",
+            "objective_hessian_min_eigenvalue": "",
+            "objective_hessian_max_eigenvalue": "",
+            "python_ipopt_status": "",
+            "python_ipopt_message": "",
             "solver_iteration_count": "",
             "pressure_evaluation_count": "",
             "initial_guess_policy": "",
@@ -149,6 +174,24 @@ def _model_row(
     return row
 
 
+def _jax_picard_row(source_row: Mapping[str, object], case: Mapping[str, object]) -> dict[str, object]:
+    row = _base_row(source_row, case)
+    try:
+        result = solve_jax_picard_pure_saturation(
+            case,
+            temperature=float(source_row["T_K"]),
+            pressure_seed_Pa=float(source_row["p_sat_Pa"]),
+            liquid_density_seed_mol_m3=float(source_row["rho_sat_liq_mol_m3"]),
+        )
+        row.update(_jax_result_fields(result))
+    except Exception as exc:
+        row.update(_failure_fields(closure_name=PICARD7_CLOSURE, model_label="Picard JAX", message=str(exc)))
+        return row
+    row["row_role"] = "model_curve"
+    row["model_label"] = "Picard JAX"
+    return row
+
+
 def _base_row(source_row: Mapping[str, object], case: Mapping[str, object]) -> dict[str, object]:
     return {
         "component": str(source_row["component"]).lower(),
@@ -171,8 +214,46 @@ def _result_fields(result: PureSaturationResult) -> dict[str, object]:
         "pressure_liq_residual_Pa": result.pressure_liq_residual_Pa,
         "log_fugacity_residual": result.log_fugacity_residual,
         "solver_status": result.status,
+        "optimizer_backend": "scipy_least_squares",
+        "autodiff_backend": "",
+        "objective_value": "",
+        "residual_norm": "",
+        "residual_jacobian_condition_number": "",
+        "objective_gradient_norm": "",
+        "objective_hessian_min_eigenvalue": "",
+        "objective_hessian_max_eigenvalue": "",
+        "python_ipopt_status": "",
+        "python_ipopt_message": "",
         "solver_iteration_count": result.solver_iteration_count,
         "pressure_evaluation_count": result.pressure_evaluation_count,
+        "initial_guess_policy": result.initial_guess_policy,
+        "message": result.message,
+    }
+
+
+def _jax_result_fields(result: JaxPureSaturationResult) -> dict[str, object]:
+    return {
+        "closure_name": result.closure_name,
+        "model_role": result.model_role,
+        "model_p_sat_Pa": result.p_sat_Pa,
+        "model_rho_vap_mol_m3": result.rho_vap_mol_m3,
+        "model_rho_liq_mol_m3": result.rho_liq_mol_m3,
+        "pressure_vap_residual_Pa": result.pressure_vap_residual_Pa,
+        "pressure_liq_residual_Pa": result.pressure_liq_residual_Pa,
+        "log_fugacity_residual": result.log_fugacity_residual,
+        "solver_status": result.status,
+        "optimizer_backend": result.optimizer_backend,
+        "autodiff_backend": result.autodiff_backend,
+        "objective_value": result.objective_value,
+        "residual_norm": result.residual_norm,
+        "residual_jacobian_condition_number": result.residual_jacobian_condition_number,
+        "objective_gradient_norm": result.objective_gradient_norm,
+        "objective_hessian_min_eigenvalue": result.objective_hessian_min_eigenvalue,
+        "objective_hessian_max_eigenvalue": result.objective_hessian_max_eigenvalue,
+        "python_ipopt_status": result.python_ipopt_status,
+        "python_ipopt_message": result.python_ipopt_message,
+        "solver_iteration_count": result.solver_iteration_count,
+        "pressure_evaluation_count": "",
         "initial_guess_policy": result.initial_guess_policy,
         "message": result.message,
     }
@@ -191,6 +272,16 @@ def _failure_fields(*, closure_name: str, model_label: str, message: str) -> dic
         "pressure_liq_residual_Pa": "",
         "log_fugacity_residual": "",
         "solver_status": "pure_saturation_solver_failed",
+        "optimizer_backend": "",
+        "autodiff_backend": "",
+        "objective_value": "",
+        "residual_norm": "",
+        "residual_jacobian_condition_number": "",
+        "objective_gradient_norm": "",
+        "objective_hessian_min_eigenvalue": "",
+        "objective_hessian_max_eigenvalue": "",
+        "python_ipopt_status": "",
+        "python_ipopt_message": "",
         "solver_iteration_count": "",
         "pressure_evaluation_count": "",
         "initial_guess_policy": "",

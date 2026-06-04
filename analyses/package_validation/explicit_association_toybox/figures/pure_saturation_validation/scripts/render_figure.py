@@ -7,18 +7,16 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter, MaxNLocator
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[3]
 REPO_ROOT = ANALYSIS_ROOT.parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from analyses.package_validation.explicit_association_toybox.scripts.closure_models import (
-    EXACT_MASS_ACTION_BASELINE,
-    PICARD7_CLOSURE,
-)
 from analyses.package_validation.explicit_association_toybox.scripts.plot_style import (
     BLUE,
+    GREEN,
     ORANGE,
     apply_plot_style,
     save_png_svg,
@@ -32,13 +30,16 @@ FIGURE = OUTPUT / "pure_saturation_validation.png"
 SIDECAR = OUTPUT / "pure_saturation_validation.mpl.yaml"
 MODEL_DOTTED = (0, (1.2, 1.8))
 MODEL_COLORS = {
-    EXACT_MASS_ACTION_BASELINE: BLUE,
-    PICARD7_CLOSURE: ORANGE,
+    "Exact implicit": BLUE,
+    "Picard": ORANGE,
+    "Picard JAX": GREEN,
 }
 MODEL_WIDTHS = {
-    EXACT_MASS_ACTION_BASELINE: 2.3,
-    PICARD7_CLOSURE: 1.25,
+    "Exact implicit": 2.3,
+    "Picard": 1.25,
+    "Picard JAX": 1.6,
 }
+MODEL_LABEL_ORDER = ("Exact implicit", "Picard", "Picard JAX")
 COMPONENT_LABELS = {
     "methanol": "Methanol",
     "water": "Water",
@@ -66,6 +67,8 @@ def build_plotted_rows(rows: Sequence[Mapping[str, object]]) -> list[dict[str, o
                 "rho_vap_mol_m3": "" if rho_vap is None else rho_vap,
                 "rho_liq_mol_cm3": "" if rho_liq is None else rho_liq / 1.0e6,
                 "solver_status": str(row["solver_status"]),
+                "optimizer_backend": str(row.get("optimizer_backend", "")),
+                "autodiff_backend": str(row.get("autodiff_backend", "")),
                 "source_url": str(row["source_url"]),
                 "parameter_source": str(row["parameter_source"]),
             }
@@ -155,27 +158,27 @@ def _render(rows: list[dict[str, object]]) -> None:
             linewidths=0.4,
             zorder=3,
         )
-        for closure_name in (EXACT_MASS_ACTION_BASELINE, PICARD7_CLOSURE):
+        for model_label in MODEL_LABEL_ORDER:
             model_rows = sorted(
-                [row for row in component_rows if row["closure_name"] == closure_name],
+                [row for row in component_rows if row["series_label"] == model_label],
                 key=lambda row: float(row["T_K"]),
             )
             _plot_optional_line(
                 pressure_axis,
                 [row["inverse_temperature_1000_per_K"] for row in model_rows],
                 [row["log10_p_sat_kPa"] for row in model_rows],
-                color=MODEL_COLORS[closure_name],
+                color=MODEL_COLORS[model_label],
                 linestyle=MODEL_DOTTED,
-                linewidth=MODEL_WIDTHS[closure_name],
-                label=str(model_rows[0]["series_label"]) if model_rows else closure_name,
+                linewidth=MODEL_WIDTHS[model_label],
+                label=model_label,
             )
             _plot_optional_line(
                 density_axis,
                 [row["rho_liq_mol_cm3"] for row in model_rows],
                 [row["T_K"] for row in model_rows],
-                color=MODEL_COLORS[closure_name],
+                color=MODEL_COLORS[model_label],
                 linestyle=MODEL_DOTTED,
-                linewidth=MODEL_WIDTHS[closure_name],
+                linewidth=MODEL_WIDTHS[model_label],
             )
         label = COMPONENT_LABELS.get(component, component.replace("_", " ").title())
         pressure_axis.set_title(label)
@@ -183,6 +186,8 @@ def _render(rows: list[dict[str, object]]) -> None:
         pressure_axis.set_ylabel(r"$\log_{10}\!\left(P_{\mathrm{sat}}/\mathrm{kPa}\right)$")
         density_axis.set_xlabel(r"$\rho_\ell\ \left[\mathrm{mol}\,\mathrm{cm}^{-3}\right]$")
         density_axis.set_ylabel(r"$T\ \left[\mathrm{K}\right]$")
+        density_axis.xaxis.set_major_locator(MaxNLocator(nbins=5))
+        density_axis.xaxis.set_major_formatter(FormatStrFormatter("%.3f"))
         _style_chapman_axis(pressure_axis)
         _style_chapman_axis(density_axis)
     axes[0, 0].legend(frameon=False, loc="best", fontsize=8)

@@ -9,6 +9,13 @@ from analyses.package_validation.explicit_association_toybox.scripts.closure_mod
 from analyses.package_validation.explicit_association_toybox.scripts.pure_saturation import (
     solve_pure_saturation,
 )
+from analyses.package_validation.explicit_association_toybox.scripts.jax_pure_saturation import (
+    JAX_AUTODIFF_BACKEND,
+    JAX_SCIPY_BACKEND,
+    jax_pure_saturation_functions,
+    pure_jax_parameters_from_case,
+    solve_jax_picard_pure_saturation,
+)
 from analyses.package_validation.explicit_association_toybox.figures.pure_saturation_validation.scripts.generate_data import (
     REQUIRED_RETAINED_COLUMNS,
     build_pure_saturation_validation_rows,
@@ -80,6 +87,48 @@ def test_picard_uses_same_pure_saturation_solver_contract() -> None:
     assert picard.p_sat_Pa > 0.0
 
 
+def test_jax_picard_saturation_solve_matches_scipy_picard_contract() -> None:
+    scipy_picard = solve_pure_saturation(
+        _methanol_case(),
+        temperature=352.28,
+        closure_name=PICARD7_CLOSURE,
+        pressure_seed_Pa=175_580.0,
+        liquid_density_seed_mol_m3=22_891.0,
+    )
+    jax_picard = solve_jax_picard_pure_saturation(
+        _methanol_case(),
+        temperature=352.28,
+        pressure_seed_Pa=175_580.0,
+        liquid_density_seed_mol_m3=22_891.0,
+    )
+
+    assert jax_picard.status == "computed_toy_pure_saturation"
+    assert jax_picard.optimizer_backend == JAX_SCIPY_BACKEND
+    assert jax_picard.autodiff_backend == JAX_AUTODIFF_BACKEND
+    assert jax_picard.closure_name == PICARD7_CLOSURE
+    assert jax_picard.p_sat_Pa == pytest.approx(scipy_picard.p_sat_Pa, rel=2.0e-5)
+    assert jax_picard.rho_liq_mol_m3 == pytest.approx(scipy_picard.rho_liq_mol_m3, rel=2.0e-5)
+    assert abs(jax_picard.log_fugacity_residual) <= 1.0e-6
+    assert jax_picard.objective_gradient_norm <= 1.0e-6
+    assert jax_picard.residual_jacobian_condition_number >= 1.0
+    assert jax_picard.python_ipopt_status in {"python_ipopt_available", "python_ipopt_missing"}
+
+
+def test_jax_saturation_derivative_surfaces_are_available() -> None:
+    parameters = pure_jax_parameters_from_case(_methanol_case())
+    residuals, objective, jacobian, gradient, hessian = jax_pure_saturation_functions(
+        parameters=parameters,
+        temperature=352.28,
+    )
+    variables = [4.0, 10.0, 12.0]
+
+    assert residuals(variables).shape == (3,)
+    assert objective(variables).shape == ()
+    assert jacobian(variables).shape == (3, 3)
+    assert gradient(variables).shape == (3,)
+    assert hessian(variables).shape == (3, 3)
+
+
 def test_pure_saturation_solver_fails_loudly_for_invalid_phase_density_seeds() -> None:
     with pytest.raises(ValueError, match="vapor density seed must be below liquid density seed"):
         solve_pure_saturation(
@@ -107,13 +156,9 @@ def test_pure_saturation_generation_retains_reference_exact_and_picard_rows() ->
         provider_cases={"methanol": _methanol_case()},
     )
 
-    assert len(rows) == 3
+    assert len(rows) == 4
     assert {row["row_role"] for row in rows} == {"reference_data", "model_curve"}
-    assert {row["closure_name"] for row in rows} == {
-        "reference_data",
-        EXACT_MASS_ACTION_BASELINE,
-        PICARD7_CLOSURE,
-    }
+    assert [row["model_label"] for row in rows] == ["Data", "Exact implicit", "Picard", "Picard JAX"]
     for row in rows:
         assert set(REQUIRED_RETAINED_COLUMNS).issubset(row)
         assert row["component"] == "methanol"
@@ -131,6 +176,10 @@ def test_pure_saturation_generation_retains_reference_exact_and_picard_rows() ->
             assert row["model_rho_liq_mol_m3"] > row["model_rho_vap_mol_m3"]
             assert row["solver_iteration_count"] > 0
             assert row["initial_guess_policy"] == "reference_pressure_liquid_density_ideal_vapor_seed"
+            if row["model_label"] == "Picard JAX":
+                assert row["autodiff_backend"] == JAX_AUTODIFF_BACKEND
+                assert row["optimizer_backend"] == JAX_SCIPY_BACKEND
+                assert row["objective_gradient_norm"] != ""
 
 
 def test_pure_saturation_rendering_builds_marker_and_model_curve_rows() -> None:
@@ -150,9 +199,9 @@ def test_pure_saturation_rendering_builds_marker_and_model_curve_rows() -> None:
 
     plotted_rows = build_plotted_rows(retained_rows)
 
-    assert len(plotted_rows) == 3
+    assert len(plotted_rows) == 4
     assert {row["plot_role"] for row in plotted_rows} == {"reference_marker", "model_curve"}
-    assert {row["series_label"] for row in plotted_rows} == {"Data", "Exact implicit", "Picard"}
+    assert {row["series_label"] for row in plotted_rows} == {"Data", "Exact implicit", "Picard", "Picard JAX"}
     for row in plotted_rows:
         assert row["inverse_temperature_1000_per_K"] == pytest.approx(1000.0 / 352.28)
         assert row["p_sat_kPa"] != ""
