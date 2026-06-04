@@ -11,11 +11,12 @@ if str(REPO_ROOT) not in sys.path:
 from analyses.package_validation.explicit_association_toybox.scripts.hessian_agreement import (
     DEFAULT_OUTPUT,
     generate_hessian_agreement,
+    load_committed_jax_rows,
 )
 
 
 def main() -> None:
-    print(generate_hessian_agreement(DEFAULT_OUTPUT))
+    print(generate_hessian_agreement(DEFAULT_OUTPUT, jax_rows=load_committed_jax_rows()))
 
 
 if __name__ == "__main__":

@@ -12,4 +12,4 @@ files:
   svg: jax_picard_derivatives.svg
   source_data: jax_picard_derivatives_plotted_data.csv
 render:
-  command: uv run --group autodiff python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py

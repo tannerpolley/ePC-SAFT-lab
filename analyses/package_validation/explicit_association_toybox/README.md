@@ -24,8 +24,8 @@ analysis code, not package runtime code.
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_agreement/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/hessian_agreement/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/hessian_agreement/scripts/render_figure.py`
-- `uv run --group autodiff python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/generate_data.py`
-- `uv run --group autodiff python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/asymmetric_binary_closures/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/asymmetric_binary_closures/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/total_eos_impact/scripts/generate_data.py`
@@ -90,9 +90,11 @@ analysis-only evidence.
   targets. The exact baseline is a centered difference of the exact implicit
   first-derivative functions, with retained mass-action Jacobian condition
   numbers and residual norms.
-- `jax_picard_derivatives`: opt-in JAX autodiff comparison for Picard first
-  derivatives and Hessians. Run it with the non-default `autodiff` dependency
-  group; JAX is not part of provider runtime or the default development group.
+- `jax_picard_derivatives`: JAX autodiff comparison for Picard first
+  derivatives and Hessians. The public figure commands run through the default
+  toybox entrypoints; the analysis-only JAX backend still lives in the
+  non-default `autodiff` dependency group and is not part of provider runtime
+  or the default development group.
 - `asymmetric_binary_closures`: asymmetric composition, cross-association, inert-component, and water-like topology cases.
 - `total_eos_impact`: total neutral `ares`, pressure proxy, chemical-potential proxy, and fugacity proxy ranking.
 - `water_topology_fork`: water-specific 3B/4C and fixed-state residual diagnostics.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 
@@ -14,6 +15,8 @@ from .implicit_sensitivity import (
     exact_density_sensitivity,
     exact_strength_sensitivity,
 )
+from .jax_picard_derivatives import DEFAULT_OUTPUT as JAX_SOURCE_OUTPUT
+from .jax_picard_derivatives import run_jax_picard_derivative_cases
 from .propagation_evidence import closure_association_value, relative_error, write_rows_csv
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
@@ -22,19 +25,32 @@ DEFAULT_CLOSURES = CANDIDATE_CLOSURES
 HESSIAN_TARGETS = ("density_density", "density_strength", "strength_strength", "composition_composition")
 
 
-def run_hessian_agreement_cases(*, closure_names: Iterable[str] = DEFAULT_CLOSURES) -> list[dict[str, object]]:
+def run_hessian_agreement_cases(
+    *,
+    closure_names: Iterable[str] = DEFAULT_CLOSURES,
+    jax_rows: Iterable[Mapping[str, object]] | None = None,
+) -> list[dict[str, object]]:
+    jax_index = _index_jax_rows(jax_rows if jax_rows is not None else run_jax_picard_derivative_cases())
     rows: list[dict[str, object]] = []
     for case in _hessian_cases():
         for closure_name in closure_names:
-            rows.extend(_case_rows(case, closure_name))
+            rows.extend(_case_rows(case, closure_name, jax_index))
     return rows
 
 
-def generate_hessian_agreement(output_path: Path = DEFAULT_OUTPUT) -> Path:
-    return write_rows_csv(run_hessian_agreement_cases(), output_path)
+def generate_hessian_agreement(
+    output_path: Path = DEFAULT_OUTPUT,
+    *,
+    jax_rows: Iterable[Mapping[str, object]] | None = None,
+) -> Path:
+    return write_rows_csv(run_hessian_agreement_cases(jax_rows=jax_rows), output_path)
 
 
-def _case_rows(case: Mapping[str, object], closure_name: str) -> list[dict[str, object]]:
+def _case_rows(
+    case: Mapping[str, object],
+    closure_name: str,
+    jax_index: Mapping[tuple[str, str], Mapping[str, object]],
+) -> list[dict[str, object]]:
     case_id = str(case["case_id"])
     system = case["system"]
     if not isinstance(system, AssociationSystem):
@@ -54,14 +70,8 @@ def _case_rows(case: Mapping[str, object], closure_name: str) -> list[dict[str, 
             strength=strength,
             composition=composition,
         )
-        closure_value = _closure_hessian_target(
-            target,
-            closure_name=closure_name,
-            system=system,
-            density=density,
-            strength=strength,
-            composition=composition,
-        )
+        jax_row = jax_index[(case_id, target)]
+        closure_value = float(jax_row["picard_jax_value"])
         diagnostics = _exact_diagnostics(
             target,
             system=system,
@@ -69,17 +79,21 @@ def _case_rows(case: Mapping[str, object], closure_name: str) -> list[dict[str, 
             strength=strength,
             composition=composition,
         )
+        step = hessian_finite_difference_step(target, density=density, strength=strength)
         rows.append(
             {
                 "case_id": case_id,
                 "closure_name": closure_name,
                 "target": target,
-                "exact_hessian": exact_value,
-                "closure_hessian": closure_value,
-                "hessian_abs_error": abs(closure_value - exact_value),
-                "hessian_rel_error": relative_error(closure_value, exact_value),
-                "exact_hessian_method": "centered_difference_of_implicit_first_derivative",
-                "closure_hessian_method": "centered_difference_of_closure_first_derivative",
+                "target_pair": target,
+                "derivative_order": 2,
+                "exact_hessian_value": exact_value,
+                "picard_jax_hessian_value": closure_value,
+                "absolute_error": abs(closure_value - exact_value),
+                "relative_error": relative_error(closure_value, exact_value),
+                "finite_difference_step": step,
+                "baseline_status": hessian_baseline_status(),
+                "autodiff_backend": "jax",
                 "implicit_jacobian_condition_number": diagnostics["implicit_jacobian_condition_number"],
                 "mass_action_residual_inf": diagnostics["mass_action_residual_inf"],
             }
@@ -96,7 +110,7 @@ def exact_hessian_target(
     composition: np.ndarray,
 ) -> float:
     if target == "density_density":
-        step = max(1.0e-5, density * 1.0e-4)
+        step = hessian_finite_difference_step(target, density=density, strength=strength)
         return centered_slope(
             lambda value: exact_density_sensitivity(
                 system=system,
@@ -108,7 +122,7 @@ def exact_hessian_target(
             step_size=step,
         )
     if target == "density_strength":
-        step = max(1.0e-4, strength * 1.0e-4)
+        step = hessian_finite_difference_step(target, density=density, strength=strength)
         return centered_slope(
             lambda value: exact_density_sensitivity(
                 system=system,
@@ -120,7 +134,7 @@ def exact_hessian_target(
             step_size=step,
         )
     if target == "strength_strength":
-        step = max(1.0e-4, strength * 1.0e-4)
+        step = hessian_finite_difference_step(target, density=density, strength=strength)
         return centered_slope(
             lambda value: exact_strength_sensitivity(
                 system=system,
@@ -133,7 +147,7 @@ def exact_hessian_target(
             step_size=step,
         )
     if target == "composition_composition":
-        step = 1.0e-5
+        step = hessian_finite_difference_step(target, density=density, strength=strength)
         return centered_slope(
             lambda x0: exact_binary_composition_sensitivity(
                 system=system,
@@ -145,6 +159,20 @@ def exact_hessian_target(
             step_size=step,
         )
     raise ValueError(f"Unknown hessian target: {target}")
+
+
+def hessian_finite_difference_step(target: str, *, density: float, strength: float) -> float:
+    if target == "density_density":
+        return max(1.0e-5, density * 1.0e-4)
+    if target in {"density_strength", "strength_strength"}:
+        return max(1.0e-4, strength * 1.0e-4)
+    if target == "composition_composition":
+        return 1.0e-5
+    raise ValueError(f"Unknown hessian target: {target}")
+
+
+def hessian_baseline_status() -> str:
+    return "centered_finite_difference_exact_implicit"
 
 
 def _closure_hessian_target(
@@ -358,6 +386,22 @@ def _hessian_cases() -> tuple[dict[str, object], ...]:
             "composition": np.array([0.35, 0.65], dtype=float),
         },
     )
+
+
+def load_committed_jax_rows(source: Path = JAX_SOURCE_OUTPUT) -> list[dict[str, object]]:
+    with source.open("r", encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _index_jax_rows(rows: Iterable[Mapping[str, object]]) -> dict[tuple[str, str], Mapping[str, object]]:
+    indexed = {
+        (str(row["case_id"]), str(row["target"])): row
+        for row in rows
+        if int(row["derivative_order"]) == 2
+    }
+    if not indexed:
+        raise ValueError("No second-derivative JAX rows were provided for Hessian agreement.")
+    return indexed
 
 
 def main() -> None:
