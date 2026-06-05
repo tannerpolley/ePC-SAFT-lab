@@ -54,6 +54,13 @@ def _case_derivative_rows(
     rows = [
         _row(case, "a_assoc_density", "density", 1, float(gradient_pair[0])),
         _row(case, "a_assoc_strength", "association_strength_scale", 1, float(gradient_pair[1])),
+        _row(
+            case,
+            "pressure_proxy_density",
+            "density",
+            1,
+            _pressure_proxy_density_derivative(case, density=density, strength_scale=strength_scale, composition=composition),
+        ),
         _row(case, "a_assoc_density_density", "density", 2, float(hessian_pair[0, 0])),
         _row(case, "a_assoc_density_strength", "density,association_strength_scale", 2, float(hessian_pair[0, 1])),
         _row(case, "a_assoc_strength_strength", "association_strength_scale", 2, float(hessian_pair[1, 1])),
@@ -81,6 +88,15 @@ def _case_derivative_rows(
                 "composition_component_0",
                 1,
                 float(jax.grad(value_composition)(x0)),
+            )
+        )
+        rows.append(
+            _row(
+                case,
+                "fugacity_proxy_composition_0",
+                "composition_component_0",
+                1,
+                float(jax.grad(lambda value: jnp.exp(jnp.clip(value_composition(value), -50.0, 50.0)))(x0)),
             )
         )
         rows.append(
@@ -117,6 +133,24 @@ def _row(
 def _quadratic_prediction(value_pair, base_pair, gradient_pair, hessian_pair) -> float:
     step = jnp.asarray([0.05 * base_pair[0], 0.03 * base_pair[1]], dtype=jnp.float64)
     return float(value_pair(base_pair) + jnp.dot(gradient_pair, step) + 0.5 * step @ hessian_pair @ step)
+
+
+def _pressure_proxy_density_derivative(
+    case: AssociationEvidenceCase,
+    *,
+    density: float,
+    strength_scale: float,
+    composition,
+) -> float:
+    def assoc(rho):
+        return _picard_association_scalar(case, rho, strength_scale, composition)
+
+    def pressure_proxy(rho):
+        ares = assoc(rho)
+        da_drho = jax.grad(assoc)(rho)
+        return rho * (1.0 + ares) + rho * rho * da_drho
+
+    return float(jax.grad(pressure_proxy)(jnp.asarray(density, dtype=jnp.float64)))
 
 
 def _jax_value(case: AssociationEvidenceCase, *, density: float, strength_scale: float) -> float:
