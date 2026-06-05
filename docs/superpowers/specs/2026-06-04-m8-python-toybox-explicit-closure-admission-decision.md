@@ -28,6 +28,9 @@ property and derivative error gates pass.
   approximation candidate.
 - `docs/latex/explicit_assocation.tex` now derives only the full-matrix
   seven-step damped Picard closure and removes unrelated closure clutter.
+- `docs/superpowers/specs/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence.md`
+  defines the broad pure/mixture property and C++/CppAD-shaped derivative
+  evidence lane that must be read before any provider admission claim.
 
 ## User Decisions
 
@@ -73,6 +76,9 @@ No M3 provider implementation should start until M8 evidence proves:
 - total neutral `ares` impact is physically small enough where claimed;
 - pressure and density residuals do not hide root-selection failures;
 - first and second derivative errors are acceptable for local EOS use;
+- CppAD-shaped JAX proxy evidence has been compared against exact implicit
+  baselines for pure and mixture association schemes, with JAX explicitly
+  treated as a proxy rather than provider CppAD proof;
 - equilibrium-style objective/Jacobian/Hessian probe does not show unstable
   derivative behavior.
 

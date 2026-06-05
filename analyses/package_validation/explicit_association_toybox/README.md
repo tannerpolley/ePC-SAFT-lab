@@ -41,6 +41,10 @@ analysis code, not package runtime code.
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/cppad_shaped_picard_property_evidence/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/cppad_shaped_picard_property_evidence/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/cppad_shaped_picard_derivative_evidence/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/cppad_shaped_picard_derivative_evidence/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py`
 - `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q`
@@ -109,6 +113,14 @@ analysis-only evidence.
 - `quick_phase_equilibrium`: pure-component toy phase-pair pressure and
   reduced-chemical-potential equality residuals. This is a fast exact-vs-Picard
   equilibrium playground, not a provider VLE or saturation validation claim.
+- `cppad_shaped_picard_property_evidence`: pure and mixture association case
+  matrix comparing exact implicit, Picard NumPy, and Picard JAX values for
+  association energy, total residual Helmholtz proxy, pressure proxy,
+  fugacity-like proxy, and fixed-density grid status.
+- `cppad_shaped_picard_derivative_evidence`: JAX Jacobian, gradient, Hessian,
+  Hessian-vector-shaped, and local quadratic diagnostics compared against
+  exact implicit finite-difference baselines. This is a CppAD-shaped proxy, not
+  provider CppAD proof.
 - `docs/jax_picard_autodiff_plan.md`: plan for comparing JAX autodiff Jacobians and Hessians of the explicit Picard closure against implicit exact sensitivities.
 - `references/legacy_pcsaft_electrolyte.py`: frozen legacy reference specimen used to inspect pressure-density conventions. The toybox ports only the useful pressure and density-root ideas.
 - `docs/saturation_property_validation_lane.md`: required contract before plotting exact-vs-Picard saturation pressure or liquid-density model curves.
