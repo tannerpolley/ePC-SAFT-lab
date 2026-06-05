@@ -58,6 +58,7 @@ admission evidence rather than production solver architecture.
 | [Pure-component saturation pressure solver](../../specs/2026-06-04-m8-python-toybox-pure-component-saturation-pressure-solver.md) | property validation | Add a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |
 | [Explicit closure admission decision](../../specs/2026-06-04-m8-python-toybox-explicit-closure-admission-decision.md) | admission | Use toybox evidence to decide whether Picard remains the only closure candidate and what gates block provider admission. |
 | [Equilibrium relevance probe for Picard closure error](../../specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md) | equilibrium probe | Probe whether Picard closure error breaks objective, Jacobian, and Hessian quality before any M4 implementation work. |
+| [CppAD-shaped Picard property and derivative evidence](../../specs/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence.md) | derivatives / property validation | Test retained Picard across pure and mixture association schemes and compare NumPy/JAX values, Jacobians, and Hessians as CppAD-shaped evidence. |
 
 ## Current Plans
 
@@ -68,6 +69,7 @@ admission evidence rather than production solver architecture.
 | [Pure-component saturation pressure solver plan](../../plans/2026-06-04-m8-python-toybox-pure-component-saturation-pressure-solver-plan.md) | none | Build a SciPy pure-component saturation solver for true toybox vapor-pressure predictions. |
 | [Explicit closure admission decision plan](../../plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md) | derivative and property plans | Reduce toybox closure scope to retained Picard evidence and document provider admission gates. |
 | [Equilibrium relevance probe for Picard closure error plan](../../plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md) | derivative and property plans | Build a small objective/Jacobian/Hessian probe without creating M4 route behavior. |
+| [CppAD-shaped Picard property and derivative evidence plan](../../plans/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence-plan.md) | derivative, saturation, and equilibrium-probe plans | Build broader pure/mixture property evidence plus JAX derivative evidence shaped like future CppAD provider blocks. |
 
 ## Current Issues
 
