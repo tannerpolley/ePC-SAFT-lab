@@ -56,9 +56,10 @@ admission evidence rather than production solver architecture.
 | [Picard autodiff and exact implicit sensitivity baseline hardening](../../specs/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening.md) | derivatives | Compare JAX autodiff through the explicit Picard model against exact implicit sensitivity baselines and parameter sensitivities. |
 | [Associating-compound pressure density validation lane](../../specs/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane.md) | property validation | Build honest pressure-density and vapor-pressure/liquid-density style plots for associating compounds only. |
 | [Pure-component saturation pressure solver](../../specs/2026-06-04-m8-python-toybox-pure-component-saturation-pressure-solver.md) | property validation | Add a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |
-| [Explicit closure admission decision](../../specs/2026-06-04-m8-python-toybox-explicit-closure-admission-decision.md) | admission | Use toybox evidence to decide whether Picard remains the only closure candidate and what gates block provider admission. |
+| [Explicit closure admission decision](../../specs/2026-06-04-m8-python-toybox-explicit-closure-admission-decision.md) | admission | Use fixed-grid relative-error, simulation-timing, and retained-figure evidence to recommend the final #161 Picard disposition. |
 | [Equilibrium relevance probe for Picard closure error](../../specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md) | equilibrium probe | Probe whether Picard closure error breaks objective, Jacobian, and Hessian quality before any M4 implementation work. |
 | [CppAD-shaped Picard property and derivative evidence](../../specs/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence.md) | derivatives / property validation | Test retained Picard across pure and mixture association schemes and compare NumPy/JAX values, Jacobians, and Hessians as CppAD-shaped evidence. |
+| [Picard stress evidence to rescue or retire](../../specs/2026-06-05-m8-python-toybox-picard-stress-evidence-to-rescue-or-retire.md) | admission / stress testing | Define the harsh post-#223 evidence needed to either rescue Picard for more research or retire it cleanly. |
 
 ## Current Plans
 
@@ -67,9 +68,10 @@ admission evidence rather than production solver architecture.
 | [Picard autodiff and exact implicit sensitivity baseline hardening plan](../../plans/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening-plan.md) | none | Build exact implicit sensitivity, JAX Picard derivative, and Hessian agreement lanes. |
 | [Associating-compound pressure density validation lane plan](../../plans/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane-plan.md) | none | Build associating-compound pressure-density and saturation-style validation plots. |
 | [Pure-component saturation pressure solver plan](../../plans/2026-06-04-m8-python-toybox-pure-component-saturation-pressure-solver-plan.md) | none | Build a SciPy pure-component saturation solver for true toybox vapor-pressure predictions. |
-| [Explicit closure admission decision plan](../../plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md) | derivative and property plans | Reduce toybox closure scope to retained Picard evidence and document provider admission gates. |
+| [Explicit closure admission decision plan](../../plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md) | derivative and property plans | Generate the final Picard policy-grid, simulation-timing, plotted-data, and #161 decision memo packet. |
 | [Equilibrium relevance probe for Picard closure error plan](../../plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md) | derivative and property plans | Build a small objective/Jacobian/Hessian probe without creating M4 route behavior. |
 | [CppAD-shaped Picard property and derivative evidence plan](../../plans/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence-plan.md) | derivative, saturation, and equilibrium-probe plans | Build broader pure/mixture property evidence plus JAX derivative evidence shaped like future CppAD provider blocks. |
+| [Picard stress evidence to rescue or retire plan](../../plans/2026-06-05-m8-python-toybox-picard-stress-evidence-to-rescue-or-retire-plan.md) | issue #223 evidence | Run harsh post-#223 stress evidence that can rescue Picard for more M8 research or retire it cleanly. |
 
 ## Current Issues
 
@@ -77,7 +79,7 @@ admission evidence rather than production solver architecture.
 | --- | --- | --- | --- |
 | [#221](https://github.com/ePC-SAFT/ePC-SAFT/issues/221) | closed | none | Hardened Picard autodiff and exact implicit sensitivity baselines in the Python toybox. |
 | [#222](https://github.com/ePC-SAFT/ePC-SAFT/issues/222) | closed | none | Added associating-compound pressure-density validation with honest data points and dotted exact-vs-Picard curves. |
-| [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | ready / HITL | none | Decide whether Picard clears the toybox evidence gates for later provider admission. |
+| [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | ready / HITL | #231 | Produce the final Picard fixed-grid relative-error and simulation-timing packet for #161 disposition. |
 | [#224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) | closed | none | Probed whether Picard closure error is dangerous for later equilibrium objective, Jacobian, and Hessian work. |
 | [#227](https://github.com/ePC-SAFT/ePC-SAFT/issues/227) | closed | none | Added a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |
 | [#231](https://github.com/ePC-SAFT/ePC-SAFT/issues/231) | closed | #227 | Evaluated Picard explicit-association step-count and damping policy grids with CppAD-shaped handoff evidence. |

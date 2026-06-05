@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: final_picard_admission_report
+title: Final Picard admission evidence
+matplotlib:
+  title: Final Picard admission evidence
+  x_label: 10^3/T / K^-1 and rho_l / mol cm^-3
+  y_label: log10 pressure / kPa and temperature / K
+  y_scale: linear transformed pressure
+files:
+  figure: final_picard_admission_report.png
+  svg: final_picard_admission_report.svg
+  source_data: final_picard_admission_report_plotted_data.csv
+render:
+  command: uv run python analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/scripts/render_figure.py

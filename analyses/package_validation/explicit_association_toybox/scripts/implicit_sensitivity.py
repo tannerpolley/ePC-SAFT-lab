@@ -31,8 +31,8 @@ def mass_action_jacobian(*, xa: np.ndarray, density: float, x_assoc: np.ndarray,
         raise ValueError("density must be positive and finite.")
 
     coupling = delta @ (x_assoc * xa)
-    diagonal = 1.0 + density * coupling
-    jacobian = np.diag(diagonal)
+    main_entries = 1.0 + density * coupling
+    jacobian = np.diag(main_entries)
     jacobian += density * xa[:, np.newaxis] * delta * x_assoc[np.newaxis, :]
     return jacobian
 

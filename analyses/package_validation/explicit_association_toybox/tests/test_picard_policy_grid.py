@@ -55,6 +55,31 @@ def test_picard_default_policy_matches_legacy_closure_name() -> None:
     assert policy.association_closure == PICARD_DEFAULT_POLICY.closure_name
 
 
+def test_every_picard_policy_name_evaluates_through_closure_contract() -> None:
+    case = association_case_by_id("pure_2b_self")
+    density = float(case.density_grid[1])
+    delta = case.scaled_delta(case.strength_scale)
+
+    for policy in PICARD_POLICY_GRID:
+        direct = evaluate_picard_policy(
+            policy,
+            system=case.system,
+            density=density,
+            composition=case.composition,
+            delta=delta,
+        )
+        named = evaluate_closure(
+            policy.closure_name,
+            system=case.system,
+            density=density,
+            composition=case.composition,
+            delta=delta,
+        )
+
+        assert named.name == policy.closure_name
+        assert np.array_equal(named.xa, direct.xa)
+
+
 def test_picard_policy_grid_rows_retain_metrics_and_rankings() -> None:
     rows = run_picard_policy_grid(repeat_count=1)
 

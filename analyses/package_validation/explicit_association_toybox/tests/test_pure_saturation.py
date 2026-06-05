@@ -87,6 +87,20 @@ def test_picard_uses_same_pure_saturation_solver_contract() -> None:
     assert picard.p_sat_Pa > 0.0
 
 
+def test_pure_saturation_accepts_non_default_picard_policy_name() -> None:
+    result = solve_pure_saturation(
+        _methanol_case(),
+        temperature=352.28,
+        closure_name="picard_n11_lambda1",
+        pressure_seed_Pa=175_580.0,
+        liquid_density_seed_mol_m3=22_891.0,
+    )
+
+    assert result.status == "computed_toy_pure_saturation"
+    assert result.closure_name == "picard_n11_lambda1"
+    assert result.rho_liq_mol_m3 > result.rho_vap_mol_m3
+
+
 def test_jax_picard_saturation_solve_matches_scipy_picard_contract() -> None:
     scipy_picard = solve_pure_saturation(
         _methanol_case(),

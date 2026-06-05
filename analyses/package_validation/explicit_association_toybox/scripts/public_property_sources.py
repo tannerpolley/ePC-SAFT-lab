@@ -124,7 +124,7 @@ def _select_source_rows(rows: list[dict[str, object]], source: Mapping[str, obje
     selected_indexes = sorted({int(round(index)) for index in indexes})
     selected = [filtered[index] for index in selected_indexes]
     if len(selected) != count:
-        raise ValueError("retained_temperature_points selection collapsed duplicate source rows.")
+        raise ValueError("retained_temperature_points selection produced duplicate source rows.")
     return selected
 
 

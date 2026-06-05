@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-clos
 source_plan: "docs/superpowers/plans/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation
-last_synced: "2026-06-02"
+last_synced: "2026-06-05"
 ---
 
 # Design explicit PC-SAFT association-site closures for EOS evaluation
@@ -42,6 +42,15 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
 - Any provider closure admission path should use the validation matrix to avoid
   treating the first synthetic toybox grids as sufficient real 2B/3B/4C
   evidence.
+- Final M8 toybox admission evidence is owned by issue #223:
+  `docs/superpowers/issues/2026-06-04-m8-python-toybox-issue-0223-decide-explicit-association-closure-admission-from-toybox-evidence.md`.
+- Final Picard decision memo:
+  `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`.
+- Final retained evidence:
+  `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.csv`.
+- Until the M8 decision memo explicitly recommends a narrow M3 provider
+  admission issue, this issue remains design/admission evidence and is not
+  provider implementation-ready.
 
 ## Acceptance Criteria
 
@@ -49,7 +58,7 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
 - [ ] Prove Tier 0 is inactive and bitwise or tolerance-equivalent to current EOS outputs.
 - [ ] For Tier 1, test the 2B exact reduction against the exact mass-action solve on controlled pure and inert-partner EOS state grids and prove site fractions, `a_assoc`, pressure, residual chemical potentials, and fugacity coefficients match within stated tolerances.
 - [ ] For Tier 2, separately test unequal multiplicities and density/composition-dependent strength terms before making any exactness claim.
-- [ ] For Tier 3, evaluate only `damped_picard_7_05` as an approximate explicit EOS model and report residual/error curves versus density, composition, and association strength.
+- [ ] For Tier 3, evaluate fixed Picard policy settings as approximate explicit EOS models and report residual/error curves versus density, composition, association strength, and end-to-end simulation timing.
 - [ ] For Tier 4, fail loudly or keep the explicit closure path unavailable until a separate derivation supports that configuration.
 - [ ] For Tier 5, keep only the active Picard candidate in the analysis lane unless a separate issue approves another explicit approximation.
 - [ ] Add derivative tests that compare closed-form and CppAD sensitivities of the explicit closure with independent implicit-sensitivity references where available.
@@ -60,6 +69,9 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
 ## Proof Oracle
 
 - uv run python scripts/dev/validate_project.py quick
+- uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_picard_policy_grid.py analyses/package_validation/explicit_association_toybox/tests/test_pure_saturation.py analyses/package_validation/explicit_association_toybox/tests/test_final_picard_admission_report.py -q
+- uv run python analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/scripts/generate_data.py
+- uv run python analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/scripts/render_figure.py
 
 ## Non-Goals And Boundaries
 
