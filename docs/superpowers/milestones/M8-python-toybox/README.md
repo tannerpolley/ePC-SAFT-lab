@@ -60,6 +60,7 @@ admission evidence rather than production solver architecture.
 | [Equilibrium relevance probe for Picard closure error](../../specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md) | equilibrium probe | Probe whether Picard closure error breaks objective, Jacobian, and Hessian quality before any M4 implementation work. |
 | [CppAD-shaped Picard property and derivative evidence](../../specs/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence.md) | derivatives / property validation | Test retained Picard across pure and mixture association schemes and compare NumPy/JAX values, Jacobians, and Hessians as CppAD-shaped evidence. |
 | [Picard stress evidence to rescue or retire](../../specs/2026-06-05-m8-python-toybox-picard-stress-evidence-to-rescue-or-retire.md) | admission / stress testing | Define the harsh post-#223 evidence needed to either rescue Picard for more research or retire it cleanly. |
+| [Topology-aware explicit association model selection](../../specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md) | association / model selection | Reframe #161 follow-up around topology-gated exact reductions, site-class lumped reductions, and fixed-depth undamped Picard candidates. |
 
 ## Current Plans
 
@@ -72,6 +73,13 @@ admission evidence rather than production solver architecture.
 | [Equilibrium relevance probe for Picard closure error plan](../../plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md) | derivative and property plans | Build a small objective/Jacobian/Hessian probe without creating M4 route behavior. |
 | [CppAD-shaped Picard property and derivative evidence plan](../../plans/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence-plan.md) | derivative, saturation, and equilibrium-probe plans | Build broader pure/mixture property evidence plus JAX derivative evidence shaped like future CppAD provider blocks. |
 | [Picard stress evidence to rescue or retire plan](../../plans/2026-06-05-m8-python-toybox-picard-stress-evidence-to-rescue-or-retire-plan.md) | issue #223 evidence | Run harsh post-#223 stress evidence that can rescue Picard for more M8 research or retire it cleanly. |
+
+## Current Artifacts
+
+| Artifact | Status | Summary |
+| --- | --- | --- |
+| [Picard stress evidence](../../../../analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.csv) | retained | Full 66-case, 25-policy stress matrix with exact implicit rows, Picard rows, relative errors, and simulation timing. |
+| [Picard stress decision memo](../../../../analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md) | retained | M8-only decision memo selecting `retire_picard` under the stress gates. |
 
 ## Current Issues
 

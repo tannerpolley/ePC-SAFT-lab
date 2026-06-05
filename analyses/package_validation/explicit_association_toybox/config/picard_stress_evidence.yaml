@@ -1,0 +1,53 @@
+stress_matrix:
+  - case_id: pure_2b_self
+    case_family: pure_self_association
+    decision_role: pure self-association curvature stress
+    simulation_scope: fixed-state closure timing and local property proxies
+    axes:
+      density: source_grid
+      temperature: source_grid
+      association_strength: [0.5, 1.0, 1.5]
+  - case_id: inert_plus_associating_binary
+    case_family: associating_plus_inert
+    decision_role: dilution and inert-component timing stress
+    simulation_scope: fixed-state closure timing and local property proxies
+    axes:
+      density: source_grid
+      temperature: source_grid
+      association_strength: [0.5, 1.0, 1.5]
+      composition_component_0: [0.2, 0.4, 0.7]
+  - case_id: two_self_associating_binary
+    case_family: unequal_associating_binary
+    decision_role: unequal self-association matrix stress
+    simulation_scope: fixed-state closure timing and local property proxies
+    axes:
+      density: source_grid
+      temperature: source_grid
+      association_strength: [0.5, 1.0, 1.5]
+      composition_component_0: [0.3, 0.45, 0.7]
+  - case_id: cross_associating_binary
+    case_family: cross_association
+    decision_role: cross-association and composition coupling stress
+    simulation_scope: fixed-state closure timing and local property proxies
+    axes:
+      density: source_grid
+      temperature: source_grid
+      association_strength: [0.5, 1.0, 1.5]
+      composition_component_0: [0.2, 0.35, 0.7]
+  - case_id: water_like_4c_topology
+    case_family: water_like_strong_association
+    decision_role: strong multi-site topology stress
+    simulation_scope: fixed-state closure timing and local property proxies
+    axes:
+      density: source_grid
+      temperature: source_grid
+      association_strength: [0.75, 1.0, 1.75]
+  - case_id: asymmetric_donor_acceptor_binary
+    case_family: asymmetric_composition
+    decision_role: asymmetric donor-acceptor matrix stress
+    simulation_scope: fixed-state closure timing and local property proxies
+    axes:
+      density: source_grid
+      temperature: source_grid
+      association_strength: [0.5, 1.0, 1.5]
+      composition_component_0: [0.25, 0.7, 0.85]

@@ -49,6 +49,20 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
   `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`.
 - Final retained evidence:
   `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.csv`.
+- Post-#223 Picard stress evidence:
+  `analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.csv`.
+- Post-#223 stress decision memo:
+  `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`.
+- The stress memo selects `retire_picard`, so #161 should close without a
+  provider implementation unless a future spec introduces a different explicit
+  closure candidate with stronger property and derivative evidence.
+- Follow-up M8 selector spec:
+  `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`.
+- That selector spec records the corrected interpretation that the retained
+  policy grid already tested `n` and `lambda`, and that any future #161 path
+  should focus on topology-gated exact reductions, site-class lumped reductions,
+  and narrow fixed-depth undamped Picard candidates rather than the retired
+  `n = 7`, `lambda = 0.5` framing.
 - Until the M8 decision memo explicitly recommends a narrow M3 provider
   admission issue, this issue remains design/admission evidence and is not
   provider implementation-ready.
@@ -65,7 +79,7 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
 - [ ] Add derivative tests that compare closed-form and CppAD sensitivities of the explicit closure with independent implicit-sensitivity references where available.
 - [ ] Document derivative semantics in code/docs: Explicit-closure derivatives are derivatives of the approximate explicit EOS, not automatically the exact implicit PC-SAFT association derivatives.
 - [ ] Add topology-gating tests that prevent unsupported association configurations from silently using a closure outside its proven assumptions.
-- [ ] Do not add fake fallbacks, hidden compatibility wrappers, broad capability claims, or silent clamps that hide invalid site fractions.
+- [ ] Do not add fake alternate routes, hidden compatibility wrappers, broad capability claims, or silent clamps that hide invalid site fractions.
 
 ## Proof Oracle
 
@@ -73,6 +87,9 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
 - uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_picard_policy_grid.py analyses/package_validation/explicit_association_toybox/tests/test_pure_saturation.py analyses/package_validation/explicit_association_toybox/tests/test_final_picard_admission_report.py -q
 - uv run python analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/scripts/generate_data.py
 - uv run python analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/scripts/render_figure.py
+- uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_picard_stress_cases.py analyses/package_validation/explicit_association_toybox/tests/test_picard_stress_evidence.py analyses/package_validation/explicit_association_toybox/tests/test_picard_stress_derivatives.py analyses/package_validation/explicit_association_toybox/tests/test_picard_stress_objective_probe.py analyses/package_validation/explicit_association_toybox/tests/test_picard_stress_report.py -q
+- uv run python analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/scripts/generate_data.py
+- uv run python analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/scripts/render_figure.py
 
 ## Non-Goals And Boundaries
 
