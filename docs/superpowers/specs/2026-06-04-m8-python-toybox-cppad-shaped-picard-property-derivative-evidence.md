@@ -120,9 +120,9 @@ Python lane should compare:
 - JAX Hessians or Hessian-vector products for small retained cases;
 - local quadratic/trust-region model error for small objective proxies, used
   only as a curvature diagnostic;
-- exact implicit first sensitivities where available;
+- exact implicit first sensitivities when the baseline helper emits them;
 - exact implicit finite-difference or analytic second-derivative baselines when
-  feasible.
+  a retained baseline method is implemented for that target.
 
 Derivative targets should include:
 

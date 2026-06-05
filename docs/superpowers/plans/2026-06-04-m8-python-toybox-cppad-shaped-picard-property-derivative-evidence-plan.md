@@ -4,7 +4,7 @@
 
 **Goal:** Build Python-only evidence lanes that compare retained Picard association behavior across property grids and C++/CppAD-shaped autodiff derivative blocks.
 
-**Architecture:** Keep all work inside `analyses/package_validation/explicit_association_toybox`. Add a reusable case-matrix generator, one property/association evidence figure lane, and one derivative evidence figure lane that compares NumPy Picard, JAX Picard, and exact implicit baselines where available. The outputs remain analysis artifacts and do not change provider or equilibrium package behavior.
+**Architecture:** Keep all work inside `analyses/package_validation/explicit_association_toybox`. Add a reusable case-matrix generator, one property/association evidence figure lane, and one derivative evidence figure lane that compares NumPy Picard, JAX Picard, and exact implicit baselines when a retained baseline method exists for the target. The outputs remain analysis artifacts and do not change provider or equilibrium package behavior.
 
 **Tech Stack:** Python, NumPy, SciPy for toybox solves, optional analysis-only JAX, pandas/csv, Matplotlib, pytest.
 
@@ -34,8 +34,8 @@ or any M4 issue that assumes Picard derivative quality.
 ## Acceptance Criteria
 
 - [ ] A reusable association case matrix covers pure and mixture association schemes without reintroducing retired closure families.
-- [ ] Property evidence rows compare exact implicit, Picard NumPy, and Picard JAX values for association energy, total residual Helmholtz proxy, pressure, density-root status, and fugacity-like proxies where available.
-- [ ] Derivative evidence rows compare JAX Picard Jacobians, gradients, Hessians or Hessian-vector products against exact implicit sensitivity or finite-difference baselines where feasible.
+- [ ] Property evidence rows compare exact implicit, Picard NumPy, and Picard JAX values for association energy, total residual Helmholtz proxy, pressure, density-root status, and fugacity-like proxies when the evidence helper emits those targets.
+- [ ] Derivative evidence rows compare JAX Picard Jacobians, gradients, Hessians or Hessian-vector products against exact implicit sensitivity or finite-difference baselines when a retained baseline method exists for the target.
 - [ ] Local quadratic/trust-region model diagnostics report whether Picard curvature error would distort a Newton, SQP, or trust-region step in small objective proxies.
 - [ ] Retained rows explicitly label JAX as a CppAD proxy, not CppAD proof.
 - [ ] Figures use readable pressure/density/property curves with data points and dotted model lines, not bar plots.
