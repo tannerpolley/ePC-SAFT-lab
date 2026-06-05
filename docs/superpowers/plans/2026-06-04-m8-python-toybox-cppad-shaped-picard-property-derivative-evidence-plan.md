@@ -36,6 +36,7 @@ or any M4 issue that assumes Picard derivative quality.
 - [ ] A reusable association case matrix covers pure and mixture association schemes without reintroducing retired closure families.
 - [ ] Property evidence rows compare exact implicit, Picard NumPy, and Picard JAX values for association energy, total residual Helmholtz proxy, pressure, density-root status, and fugacity-like proxies where available.
 - [ ] Derivative evidence rows compare JAX Picard Jacobians, gradients, Hessians or Hessian-vector products against exact implicit sensitivity or finite-difference baselines where feasible.
+- [ ] Local quadratic/trust-region model diagnostics report whether Picard curvature error would distort a Newton, SQP, or trust-region step in small objective proxies.
 - [ ] Retained rows explicitly label JAX as a CppAD proxy, not CppAD proof.
 - [ ] Figures use readable pressure/density/property curves with data points and dotted model lines, not bar plots.
 - [ ] Tests cover schema, topology coverage, backend agreement, and derivative evidence sanity.
@@ -190,6 +191,17 @@ parameters. Compare against exact implicit sensitivity rows or centered
 finite-difference exact implicit baselines when analytic second derivatives
 are not present.
 
+Also compute a small local quadratic model error for selected objective
+proxies:
+
+```text
+m(p) = f(x) + g(x)^T p + 1/2 p^T H(x) p
+```
+
+Compare the exact-implicit and Picard-JAX quadratic predictions for identical
+trial steps. Keep this as a curvature diagnostic for future Newton, SQP, or
+trust-region behavior; do not introduce a production trust-region solver.
+
 - [ ] **Step 4: Generate and render derivative figures**
 
 Run:
@@ -202,7 +214,8 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/cp
 Expected: retained CSV, plotted-data CSV, PNG, SVG, and MPL sidecar under
 `figures/cppad_shaped_picard_derivative_evidence/output`. Figures separate
 value, first-derivative, and Hessian evidence instead of hiding everything in
-one aggregate score.
+one aggregate score. The Hessian panel should include local quadratic model
+error when that diagnostic is generated.
 
 - [ ] **Step 5: Commit**
 
@@ -256,6 +269,9 @@ Stage only summary and admission-linking docs and commit with:
   later agents do not cite M8 as production derivative evidence.
 - Full Hessians can become noisy or expensive. Prefer selected full Hessians for
   small cases and Hessian-vector products for larger variable blocks.
+- Trust-region wording is diagnostic only. It explains why curvature quality
+  matters for future optimization, not a decision to add a trust-region solver
+  to the toybox or packages.
 - Topology coverage must stay honest. Synthetic topology cases are useful for
   math stress but cannot be presented as source-backed compound validation.
 - Iteration-count or damping sensitivity rows can help diagnose the fixed-point

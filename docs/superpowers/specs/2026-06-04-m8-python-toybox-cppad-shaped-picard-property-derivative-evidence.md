@@ -118,6 +118,8 @@ Python lane should compare:
 - JAX residual Jacobians;
 - JAX gradients of selected property/objective proxies;
 - JAX Hessians or Hessian-vector products for small retained cases;
+- local quadratic/trust-region model error for small objective proxies, used
+  only as a curvature diagnostic;
 - exact implicit first sensitivities where available;
 - exact implicit finite-difference or analytic second-derivative baselines when
   feasible.
@@ -130,6 +132,8 @@ Derivative targets should include:
 - density root residuals;
 - saturation residuals over vapor density, liquid density, and pressure;
 - fugacity or chemical-potential-like composition proxies;
+- local objective proxies where Hessian quality controls the reliability of a
+  Newton, SQP, or trust-region step;
 - association strength parameters, including toybox equivalents of
   `epsilon_hb`, `kappa_hb`, `k_hb`, and `l_ij` where those are present in input
   metadata.
@@ -163,6 +167,8 @@ The toybox should use C++/CppAD-shaped evidence, not claim CppAD proof:
 - record branch or clipping events that would affect taped code;
 - keep temperature, density, composition, and parameter derivatives separated;
 - distinguish value agreement from derivative agreement;
+- report local quadratic model error separately from property error so Hessian
+  evidence is not mistaken for an ordinary pressure or density fit;
 - state clearly when a JAX result is only a differentiability proxy and needs
   future provider CppAD confirmation.
 
