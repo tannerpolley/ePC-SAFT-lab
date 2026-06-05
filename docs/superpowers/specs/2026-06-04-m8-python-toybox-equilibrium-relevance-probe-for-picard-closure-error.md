@@ -14,6 +14,9 @@ before any M4 equilibrium implementation work is proposed.
 This is not an equilibrium route. It is a tiny diagnostic that consumes
 provider-like EOS quantities from the toybox and asks whether explicit
 association error would likely damage nonlinear-program derivative quality.
+The toybox may attempt optional Python-compatible Ipopt adapters, but missing
+Python Ipopt bindings must be reported as retained environment evidence rather
+than hidden behind a substitute route.
 
 ## Project Context Evidence Used
 
@@ -38,6 +41,8 @@ association error would likely damage nonlinear-program derivative quality.
 - Block the probe until the M8 EOS/property derivative side is good enough.
 - Do not call the probe bubble, dew, flash, LLE, HELD, or GFPE.
 - Use provider-like quantities and derivative shapes, not package route APIs.
+- Allow analysis-only SciPy/JAX under the toybox and retain Python-Ipopt
+  availability as a diagnostic, not as a package dependency or public API.
 
 ## Recommended Probe Shape
 
@@ -63,6 +68,12 @@ The objective is deliberately synthetic. It exists only to expose whether the
 Picard closure creates derivative errors that would be dangerous for
 IPOPT-style optimization.
 
+For pure-component saturation-style residuals, the preferred toybox shape is a
+three-residual system over vapor density, liquid density, and saturation
+pressure. JAX should provide residual Jacobians and objective gradient/Hessian
+diagnostics; SciPy may drive the local solve while Python Ipopt binding
+availability is tested and recorded.
+
 ## Required Outputs
 
 ```text
@@ -79,6 +90,9 @@ hessian_frobenius_picard
 hessian_absolute_error_norm
 hessian_condition_indicator
 picard_mass_action_residual_norm
+autodiff_backend
+optimizer_backend
+python_ipopt_status
 admission_status
 ```
 
@@ -104,7 +118,7 @@ This spec should wait for:
 ## Non-Goals
 
 - No M4 route implementation.
-- No Ipopt integration.
+- No production Ipopt route integration.
 - No public equilibrium API.
 - No HELD, GFPE, bubble, dew, flash, or LLE workflow.
 - No provider implementation.

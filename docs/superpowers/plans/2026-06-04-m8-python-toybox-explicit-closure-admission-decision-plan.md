@@ -25,6 +25,7 @@ This plan should run after:
 
 - `docs/superpowers/plans/2026-06-04-m8-python-toybox-picard-autodiff-and-exact-implicit-sensitivity-baseline-hardening-plan.md`
 - `docs/superpowers/plans/2026-06-04-m8-python-toybox-associating-compound-pressure-density-validation-lane-plan.md`
+- `docs/superpowers/plans/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence-plan.md`
 
 It may also consume the equilibrium relevance probe if that probe exists
 before the admission decision is finalized. It must not mark provider work as
@@ -36,6 +37,7 @@ evidence.
 - [ ] The toybox active closure registry retains exact implicit baselines, source topology reductions, exact 2B reduction, and seven-step Picard only.
 - [ ] Obsolete diagonal-polish, collapsed-mean-field, and unrelated approximation families do not appear as runnable active closure lanes.
 - [ ] A retained admission summary records each closure family, status, evidence basis, and provider-admission decision.
+- [ ] Admission summary cites the CppAD-shaped Picard property/derivative evidence lane and preserves the rule that JAX is a proxy, not provider CppAD proof.
 - [ ] Issue #161 docs are not marked implementation-ready unless the evidence gates pass.
 - [ ] No provider, equilibrium, benchmark, or public API files are changed.
 

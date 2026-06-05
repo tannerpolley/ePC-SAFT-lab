@@ -1,0 +1,5 @@
+case_id,case_label,metric,metric_label,metric_value,admission_status,evidence_band,closure_name
+local_objective_cross_binary_proxy,cross-binary objective,objective_abs_error,$|\Delta \Phi|$,2.2663741270106952e-05,passes_probe,candidate_accuracy,damped_picard_7_05
+local_objective_cross_binary_proxy,cross-binary objective,gradient_absolute_error_norm,$\|\Delta \nabla \Phi\|_2$,0.0010154177426376753,passes_probe,candidate_accuracy,damped_picard_7_05
+local_objective_cross_binary_proxy,cross-binary objective,hessian_absolute_error_norm,$\|\Delta H_\Phi\|_F$,0.025467474790717218,passes_probe,candidate_accuracy,damped_picard_7_05
+local_objective_cross_binary_proxy,cross-binary objective,picard_mass_action_residual_norm,$\|r_{\mathrm{MA}}\|_\infty$,0.00038903721641903033,passes_probe,candidate_accuracy,damped_picard_7_05
