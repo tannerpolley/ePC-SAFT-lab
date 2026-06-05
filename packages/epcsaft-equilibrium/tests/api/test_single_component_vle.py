@@ -32,6 +32,21 @@ def _binary_parameter_set() -> epcsaft.ParameterSet:
     )
 
 
+def _pure_associating_parameter_set() -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "MW": np.asarray([32.042e-3]),
+            "m": np.asarray([1.5255]),
+            "s": np.asarray([3.2300]),
+            "e": np.asarray([188.90]),
+            "e_assoc": np.asarray([2899.5]),
+            "vol_a": np.asarray([0.035176]),
+            "assoc_scheme": ["2B"],
+        },
+        species=["Methanol"],
+    )
+
+
 def _skip_without_ipopt() -> None:
     if not bool(epcsaft_equilibrium.capabilities()["optimizer"]["ipopt"]["adapter_available"]):
         pytest.skip("single-component VLE route requires the native Ipopt adapter")
@@ -96,6 +111,13 @@ def test_single_component_vle_route_rejects_binary_mixture() -> None:
 
     with pytest.raises(epcsaft.InputError, match="single_component_vle requires exactly one component"):
         epcsaft_equilibrium.Equilibrium(mixture, route="single_component_vle", T=233.15)
+
+
+def test_single_component_vle_route_rejects_associating_component() -> None:
+    mixture = epcsaft.Mixture(_pure_associating_parameter_set())
+
+    with pytest.raises(epcsaft.InputError, match="non-associating"):
+        epcsaft_equilibrium.Equilibrium(mixture, route="single_component_vle", T=298.15)
 
 
 def test_single_component_vle_route_rejects_public_composition_specs() -> None:

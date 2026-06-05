@@ -212,7 +212,7 @@ def capabilities() -> dict[str, object]:
             "entrypoint": "Equilibrium(mixture, route='single_component_vle', T=...).solve()",
             "public_routes": public_routes_by_family["single_component_vle"],
             "selector_core": True,
-            "input_scope": "single neutral non-reactive non-electrolyte component",
+            "input_scope": "single neutral non-reactive non-electrolyte non-associating component",
             "requires": ["cppad", "ipopt"],
         },
         "problem_objects": {

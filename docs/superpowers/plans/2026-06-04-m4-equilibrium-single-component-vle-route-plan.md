@@ -13,9 +13,9 @@
 ## Intake
 
 - Source Spec: `docs/superpowers/specs/2026-06-04-m4-equilibrium-single-component-vle-route.md`
-- Source Issue: `none`
+- Source Issue: `docs/superpowers/issues/2026-06-04-m4-equilibrium-issue-0228-add-single-component-vle-route-to-equilibrium-extension.md`
 - Source Plan: `docs/superpowers/plans/2026-06-04-m4-equilibrium-single-component-vle-route-plan.md`
-- GitHub Issue: `none`
+- GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/228`
 - Milestone: `M4 - Equilibrium`
 - AFK/HITL: `HITL` until route naming and public activation policy are approved for the production surface.
 
@@ -38,13 +38,25 @@ Related M4 work:
 - [ ] Public result payloads include `P_sat`, vapor density, liquid density, residuals, solver status, and route diagnostics without claiming broader binary bubble/dew or GFPE behavior.
 - [ ] CMake/source lists and focused equilibrium tests cover the new files.
 
+## Current Implementation Note
+
+The accepted implementation names the native residual block
+`saturation_block.*` because it owns reusable pure-component saturation
+residuals, while the production `single_component_vle` route is wired through
+the existing derived pressure-route substrate in `routes/derived/bubble_dew.cpp`.
+Do not add a parallel `routes/derived/single_component_vle.cpp` unless a later
+refactor removes real duplication and preserves the activation-matrix contract.
+The route is limited to a single neutral, non-reactive, non-electrolyte,
+non-associating component; associating inputs stay rejected until a separate M4
+association-sensitivity or lifted-site-variable gate lands.
+
 ## Tasks
 
 ### Task 1: Route Contract And Native Block Shape
 
 **Files:**
-- Create: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/single_component_vle_block.h`
-- Create: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/single_component_vle_block.cpp`
+- Create: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/saturation_block.h`
+- Create: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/saturation_block.cpp`
 - Test: `packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py`
 - Modify: `packages/epcsaft-equilibrium/CMakeLists.txt`
 
@@ -83,9 +95,9 @@ Stage only the native block, CMake, and native block tests. Commit with:
 ### Task 2: Route Assembly And Result Payload
 
 **Files:**
-- Create: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/single_component_vle.cpp`
+- Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`
+- Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/two_phase_eos_route.h`
 - Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`
-- Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/route_metadata.h`
 - Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/results/result_builder.cpp`
 - Test: `packages/epcsaft-equilibrium/tests/native/diagnostics/test_route_metadata_contracts.py`
 - Test: `packages/epcsaft-equilibrium/tests/native/results/test_result_builder.py`

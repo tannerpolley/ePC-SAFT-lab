@@ -121,7 +121,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         == "Equilibrium(mixture, route='single_component_vle', T=...).solve()"
     )
     assert capabilities["single_component_vle"]["public_routes"] == ["single_component_vle"]
-    assert capabilities["single_component_vle"]["input_scope"] == "single neutral non-reactive non-electrolyte component"
+    assert (
+        capabilities["single_component_vle"]["input_scope"]
+        == "single neutral non-reactive non-electrolyte non-associating component"
+    )
     assert capabilities["single_component_vle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["problem_objects"]["available"] is True
     assert capabilities["problem_objects"]["entrypoint"] == "Equilibrium(mixture, route=..., ...)"
