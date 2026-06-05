@@ -32,6 +32,7 @@ def apply_plot_style() -> None:
             "axes.spines.top": False,
             "axes.spines.right": False,
             "axes.grid": False,
+            "svg.hashsalt": "epcsaft-explicit-association-toybox",
         }
     )
 
@@ -115,6 +116,20 @@ def case_label(name: str) -> str:
         "unequal_delta_binary_x70": r"unequal $\Delta_{ij}$",
         "non_equimolar_3b_like_binary": "non-equimolar",
         "water_3b_4c_contrast_binary": "water-like topology",
+        "pure_nonassociating_control": "pure nonassociating",
+        "pure_one_site_self": "pure one-site",
+        "pure_2b_self": "pure 2B self",
+        "pure_3b_labeled": "pure 3B",
+        "pure_4c_labeled": "pure 4C",
+        "inert_plus_associating_binary": "associating + inert",
+        "two_self_associating_binary": "two self-associating",
+        "cross_associating_binary": "cross-associating binary",
+        "asymmetric_donor_acceptor_binary": "asymmetric D/A binary",
+        "water_like_3b_topology": "water-like 3B",
+        "water_like_4c_topology": "water-like 4C",
+        "mixed_2b_3b_binary": "mixed 2B+3B",
+        "mixed_2b_4c_binary": "mixed 2B+4C",
+        "mixed_4c_4c_binary": "mixed 4C+4C",
     }
     return labels.get(name, name.replace("_", " "))
 
@@ -122,7 +137,7 @@ def case_label(name: str) -> str:
 def save_png_svg(fig, png_path: Path) -> Path:
     svg_path = png_path.with_suffix(".svg")
     fig.savefig(png_path, dpi=180)
-    fig.savefig(svg_path)
+    fig.savefig(svg_path, metadata={"Date": None})
     return svg_path
 
 

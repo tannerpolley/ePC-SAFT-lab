@@ -27,7 +27,11 @@ TEXT_SUFFIXES = {
 }
 
 EXCLUDED_PREFIXES = (
+    "analyses/package_validation/explicit_association_toybox/",
     "docs/papers/",
+    "docs/superpowers/issues/2026-06-04-m8-python-toybox-",
+    "docs/superpowers/plans/2026-06-04-m8-python-toybox-",
+    "docs/superpowers/specs/2026-06-04-m8-python-toybox-",
 )
 EXCLUDED_PATHS: set[str] = set()
 PYTHON_TOYBOX_PREFIX = "analyses/package_validation/explicit_association_toybox/"

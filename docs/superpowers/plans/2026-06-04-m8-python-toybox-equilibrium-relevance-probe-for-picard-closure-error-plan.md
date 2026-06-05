@@ -4,9 +4,9 @@
 
 **Goal:** Build a Python-only objective, Jacobian, and Hessian probe that tests whether Picard closure error is dangerous for later equilibrium NLP work.
 
-**Architecture:** Keep the probe inside the explicit association toybox and consume provider-like local EOS quantities. Do not create route APIs, Ipopt integrations, HELD/GFPE behavior, or M4 package code.
+**Architecture:** Keep the probe inside the explicit association toybox and consume provider-like local EOS quantities. Do not create route APIs, production Ipopt integrations, HELD/GFPE behavior, or M4 package code. Python-Ipopt binding availability may be attempted and retained as analysis evidence.
 
-**Tech Stack:** Python, NumPy, optional analysis-only JAX, CSV, Matplotlib, pytest.
+**Tech Stack:** Python, NumPy, SciPy for analysis-only local solves, optional analysis-only JAX, optional Python Ipopt binding diagnostics, CSV, Matplotlib, pytest.
 
 ---
 
@@ -37,6 +37,7 @@ than manufacturing an equilibrium-readiness claim.
 - [ ] The probe uses neutral objective names such as `local_objective`, not bubble, dew, flash, LLE, HELD, or GFPE route names.
 - [ ] Exact implicit and Picard objective values are compared for the same toybox cases.
 - [ ] Gradient and Hessian error norms are retained with admission status bands.
+- [ ] The pure-component saturation toybox retains JAX residual Jacobian, objective gradient, Hessian diagnostic, optimizer backend, and Python-Ipopt availability fields.
 - [ ] The probe reports blocked status when derivative baseline rows are missing.
 - [ ] No provider, equilibrium, benchmark, or public API files are changed.
 
@@ -123,9 +124,49 @@ bands without route labels.
 Stage only equilibrium relevance probe figure files and commit with:
 `analysis: render Picard equilibrium relevance probe`
 
+### Task 3: JAX Saturation Residual Probe
+
+**Files:**
+- Create: `analyses/package_validation/explicit_association_toybox/scripts/jax_pure_saturation.py`
+- Update: `analyses/package_validation/explicit_association_toybox/scripts/pure_saturation.py`
+- Update: `analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/generate_data.py`
+- Update: `analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/render_figure.py`
+- Test: `analyses/package_validation/explicit_association_toybox/tests/test_pure_saturation.py`
+
+- [ ] **Step 1: Add JAX saturation tests**
+
+Assert the JAX Picard saturation solve returns the same pressure-density
+contract as the SciPy Picard solve and exposes residual Jacobian, objective
+gradient, and Hessian diagnostic fields.
+
+- [ ] **Step 2: Implement the JAX residual lane**
+
+Use JAX to define the pure-component pressure/fugacity residual and residual
+Jacobian. Use the analysis-only SciPy solver with the exact JAX Jacobian as the
+working route. Retain a Gauss-Newton Hessian diagnostic from `J.T @ J`.
+
+- [ ] **Step 3: Attempt Python Ipopt binding availability**
+
+Check for `cyipopt` importability and retain `python_ipopt_status` and
+`python_ipopt_message`. Do not make `cyipopt` a package dependency and do not
+hide missing Python Ipopt behind fake success.
+
+- [ ] **Step 4: Render the combined saturation figure**
+
+Regenerate the saturation retained-data table and figure with data markers,
+exact implicit, Picard, and Picard JAX dotted model curves.
+
+- [ ] **Step 5: Commit**
+
+Stage only toybox saturation, doc, and structure-guard files and commit with:
+`analysis: add JAX saturation diagnostics`
+
 ## Proof Oracle
 
 - `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_quick_phase_equilibrium.py -q`
+- `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_pure_saturation.py -q`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_relevance_probe/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_relevance_probe/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/render_figure.py`
 - `rg -n "bubble|dew|flash|LLE|HELD|GFPE" analyses/package_validation/explicit_association_toybox/scripts/quick_phase_equilibrium.py analyses/package_validation/explicit_association_toybox/figures/equilibrium_relevance_probe`

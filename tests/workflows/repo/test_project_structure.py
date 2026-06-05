@@ -442,6 +442,14 @@ def test_strict_solver_derivative_text_gate_passes() -> None:
 def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_dependency() -> None:
     removed_dependency_name = "sci" + "py"
     removed_python_ipopt_wrapper = "cy" + "ipopt"
+    scipy_allowed_prefixes = ("analyses/package_validation/explicit_association_toybox/",)
+    python_ipopt_allowed_prefixes = (
+        "analyses/package_validation/explicit_association_toybox/",
+        "docs/superpowers/issues/2026-06-04-m8-python-toybox-",
+        "docs/superpowers/plans/2026-06-04-m8-python-toybox-",
+        "docs/superpowers/specs/2026-06-04-m8-python-toybox-",
+        "docs/superpowers/milestones/M8-python-toybox/",
+    )
     pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8").lower()
     lock_text = (REPO_ROOT / "uv.lock").read_text(encoding="utf-8").lower()
     assert removed_dependency_name not in pyproject_text
@@ -462,15 +470,13 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8", errors="ignore").lower()
-        assert removed_python_ipopt_wrapper not in text, relpath
+        if not normalized_relpath.startswith(python_ipopt_allowed_prefixes):
+            assert removed_python_ipopt_wrapper not in text, relpath
         if not relpath.endswith(".py"):
             continue
-        path = REPO_ROOT / relpath
-        if not path.exists():
-            continue
-        if any(snippet in text for snippet in import_snippets) and not normalized_relpath.startswith(
-            "analyses/package_validation/explicit_association_toybox/"
-        ):
+        if any(snippet in text for snippet in import_snippets):
+            if normalized_relpath.startswith(scipy_allowed_prefixes):
+                continue
             import_offenders.append(relpath)
     assert import_offenders == []
     removed_fit_script = "/".join(
