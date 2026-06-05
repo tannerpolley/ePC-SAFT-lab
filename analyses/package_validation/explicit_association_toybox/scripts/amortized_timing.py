@@ -4,13 +4,27 @@ import argparse
 import statistics
 from collections.abc import Iterable, Mapping
 from pathlib import Path
+import sys
 
 import numpy as np
 
-from .closure_models import CANDIDATE_CLOSURES
-from .propagation_evidence import evaluate_named_closure, timed_closure, write_rows_csv
-from .exact_baseline import solve_exact_site_fractions
-from .topology_reductions import topology_system
+if __package__ in {None, ""}:
+    REPO_ROOT = Path(__file__).resolve().parents[4]
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    from analyses.package_validation.explicit_association_toybox.scripts.closure_models import CANDIDATE_CLOSURES
+    from analyses.package_validation.explicit_association_toybox.scripts.exact_baseline import solve_exact_site_fractions
+    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import (
+        evaluate_named_closure,
+        timed_closure,
+        write_rows_csv,
+    )
+    from analyses.package_validation.explicit_association_toybox.scripts.topology_reductions import topology_system
+else:
+    from .closure_models import CANDIDATE_CLOSURES
+    from .exact_baseline import solve_exact_site_fractions
+    from .propagation_evidence import evaluate_named_closure, timed_closure, write_rows_csv
+    from .topology_reductions import topology_system
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "amortized_timing" / "output" / "amortized_timing.csv"
