@@ -1,0 +1,101 @@
+metric,metric_label,aggregate,step_count,damping,value,stress_decision,case_count,max_case_family
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,3,0.35,0.03121305247366157,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,3,0.5,0.01905178951247294,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,3,0.65,0.009841379112494724,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,3,0.8,0.0036297875363381746,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,3,1.0,0.0008294931794439386,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,5,0.35,0.01669903701491603,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,5,0.5,0.006705915316512595,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,5,0.65,0.0019662386691831147,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,5,0.8,0.0004516145319958945,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,5,1.0,3.117150139948151e-05,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,7,0.35,0.00865344386801644,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,7,0.5,0.002234298736654121,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,7,0.65,0.0004444290891801637,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,7,0.8,5.671469498185344e-05,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,7,1.0,1.171896887952247e-06,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,9,0.35,0.004382925431046598,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,9,0.5,0.0007704938551714665,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,9,0.65,0.00010034811458674907,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,9,0.8,7.142987252813634e-06,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,9,1.0,4.405832064286958e-08,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,11,0.35,0.0021835253881578587,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,11,0.5,0.0002748326756059223,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,11,0.65,2.2683071577622118e-05,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,11,0.8,9.004260043748564e-07,retire_picard,66,asymmetric_composition
+association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ relative error,max,11,1.0,1.6563890123605688e-09,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,3,0.35,0.014057566354740458,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,3,0.5,0.008930572042733965,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,3,0.65,0.005019799743328542,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,3,0.8,0.00230073446609318,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,3,1.0,0.0006822274841087559,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,5,0.35,0.00783265886047765,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,5,0.5,0.0034878587858714525,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,5,0.65,0.0012554733100000625,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,5,0.8,0.0003342769991874876,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,5,1.0,3.3315245817664606e-05,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,7,0.35,0.004294894952064161,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,7,0.5,0.0013334964368647729,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,7,0.65,0.0003111103778560471,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,7,0.8,4.811614732722366e-05,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,7,1.0,1.5414409206584529e-06,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,9,0.35,0.002330261598337112,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,9,0.5,0.000505143819624262,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,9,0.65,7.67265524409596e-05,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,9,0.8,6.831752120055589e-06,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,9,1.0,6.881608057211591e-08,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,11,0.35,0.001255528261027439,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,11,0.5,0.00019046490898652103,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,11,0.65,1.8827688370571375e-05,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,11,0.8,9.583124490855293e-07,retire_picard,66,asymmetric_composition
+pressure_proxy_relative_error,$P_{\mathrm{proxy}}$ relative error,max,11,1.0,2.995313251625068e-09,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,3,0.35,0.1507086834441986,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,3,0.5,0.09877262273609808,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,3,0.65,0.05774211790559396,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,3,0.8,0.027613830945056775,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,3,1.0,0.014018895201461948,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,5,0.35,0.08590610949837398,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,5,0.5,0.03990225825171767,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,5,0.65,0.01487574958624986,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,5,0.8,0.005827753072526392,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,5,1.0,0.0012434545155879798,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,7,0.35,0.04816972970931004,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,7,0.5,0.015574614403128415,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,7,0.65,0.004721576478238586,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,7,0.8,0.0011944159171224317,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,7,1.0,8.48092598519207e-05,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,9,0.35,0.026610637530147974,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,9,0.5,0.006187042788570667,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,9,0.65,0.001509001730184279,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,9,0.8,0.00022125793466008187,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,9,1.0,4.975476554536764e-06,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,11,0.35,0.014520170358883106,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,11,0.5,0.0028422032887749256,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,11,0.65,0.0004564999738787481,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,11,0.8,3.82207062598506e-05,retire_picard,66,asymmetric_composition
+hessian_max_relative_error,max Hessian relative error,max,11,1.0,4.646829352029638e-06,retire_picard,66,associating_plus_inert
+simulation_speedup_vs_exact,median simulation speedup,median,3,0.35,10.207200589159246,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,3,0.5,10.331669048302171,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,3,0.65,10.105937827136081,retire_picard,66,water_like_strong_association
+simulation_speedup_vs_exact,median simulation speedup,median,3,0.8,10.5102653933241,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,3,1.0,10.12344359806309,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,5,0.35,9.004727184637876,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,5,0.5,8.947725873793026,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,5,0.65,8.954620159587266,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,5,0.8,8.650561230505058,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,5,1.0,9.232886394338461,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,7,0.35,8.10013369633642,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,7,0.5,7.851609410988436,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,7,0.65,8.048560255526906,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,7,0.8,7.650280828078689,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,7,1.0,7.981123049084601,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,9,0.35,7.168342467035622,retire_picard,66,associating_plus_inert
+simulation_speedup_vs_exact,median simulation speedup,median,9,0.5,7.3633848870602865,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,9,0.65,6.920067201787557,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,9,0.8,6.897034257936921,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,9,1.0,7.012000779609263,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,11,0.35,6.386839044850681,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,11,0.5,6.313969681333184,retire_picard,66,asymmetric_composition
+simulation_speedup_vs_exact,median simulation speedup,median,11,0.65,6.429296228724164,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,11,0.8,6.1513447223808875,retire_picard,66,cross_association
+simulation_speedup_vs_exact,median simulation speedup,median,11,1.0,6.474377227112075,retire_picard,66,cross_association

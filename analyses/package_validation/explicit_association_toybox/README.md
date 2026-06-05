@@ -47,6 +47,8 @@ analysis code, not package runtime code.
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/cppad_shaped_picard_derivative_evidence/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/scripts/generate_data.py`
+- `uv run python analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/scripts/render_figure.py`
 - `uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests -q`
 
 ## Boundary
@@ -121,6 +123,10 @@ analysis-only evidence.
   Hessian-vector-shaped, and local quadratic diagnostics compared against
   exact implicit finite-difference baselines. This is a CppAD-shaped proxy, not
   provider CppAD proof.
+- `picard_stress_evidence`: final post-#223 stress matrix over topology,
+  density, temperature, strength, composition, policy-grid timing, property
+  proxies, derivative proxies, Hessian proxies, and an M8-only decision memo for
+  #161 closure discussion.
 - `docs/jax_picard_autodiff_plan.md`: plan for comparing JAX autodiff Jacobians and Hessians of the explicit Picard closure against implicit exact sensitivities.
 - `references/legacy_pcsaft_electrolyte.py`: frozen legacy reference specimen used to inspect pressure-density conventions. The toybox ports only the useful pressure and density-root ideas.
 - `docs/saturation_property_validation_lane.md`: required contract before plotting exact-vs-Picard saturation pressure or liquid-density model curves.

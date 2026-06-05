@@ -73,6 +73,13 @@ admission evidence rather than production solver architecture.
 | [CppAD-shaped Picard property and derivative evidence plan](../../plans/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence-plan.md) | derivative, saturation, and equilibrium-probe plans | Build broader pure/mixture property evidence plus JAX derivative evidence shaped like future CppAD provider blocks. |
 | [Picard stress evidence to rescue or retire plan](../../plans/2026-06-05-m8-python-toybox-picard-stress-evidence-to-rescue-or-retire-plan.md) | issue #223 evidence | Run harsh post-#223 stress evidence that can rescue Picard for more M8 research or retire it cleanly. |
 
+## Current Artifacts
+
+| Artifact | Status | Summary |
+| --- | --- | --- |
+| [Picard stress evidence](../../../../analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.csv) | retained | Full 66-case, 25-policy stress matrix with exact implicit rows, Picard rows, relative errors, and simulation timing. |
+| [Picard stress decision memo](../../../../analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md) | retained | M8-only decision memo selecting `retire_picard` under the stress gates. |
+
 ## Current Issues
 
 | Issue | Status | Depends On | Summary |
