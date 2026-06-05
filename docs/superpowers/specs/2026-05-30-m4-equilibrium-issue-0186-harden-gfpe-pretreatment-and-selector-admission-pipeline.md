@@ -3,7 +3,7 @@
 Milestone: `M4 - Equilibrium`
 Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/186`
 Status: `open`
-Last synced: `2026-06-02`
+Last synced: `2026-06-05`
 
 ## Summary
 
@@ -15,7 +15,7 @@ Harden the early GFPE pretreatment, closure, stage-state, and selector/admission
 - [ ] Pretreatment and selector/admission logic has focused tests for admissible and rejected route states.
 - [ ] Legacy route-specific assumptions are either removed or isolated behind explicit tests.
 - [ ] Capability evidence remains conservative and does not broaden production routes.
-- [ ] Docs and local mirrors identify this as the first ready M4 GFPE implementation issue.
+- [ ] Docs and local mirrors identify this as a ready M4 selector/admission verification issue.
 
 ## Source Context
 
@@ -30,6 +30,12 @@ Harden the early GFPE pretreatment, closure, stage-state, and selector/admission
   matching implementation evidence.
 - Use the linked issue mirror and plan as the execution entry points for
   `project-resolve`.
+- Treat current selector/admission code as existing evidence to verify first:
+  request pretreatment, route-shape validation, thermodynamic input
+  classification, parameter readiness checks, activation-plan validation, and
+  activation-matrix production certification.
+- Do not broaden activation-matrix admission, bypass `NlpProblem`, or claim
+  generalized HELD readiness from selector/admission evidence alone.
 
 ## Non-Goals
 
@@ -40,6 +46,7 @@ Harden the early GFPE pretreatment, closure, stage-state, and selector/admission
 
 ## Validation
 
-- Run focused package-local equilibrium API/native tests for selector/admission.
-- Run native contracts for activation/capability boundaries.
-- Run docs validation.
+- `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`
+- `uv run python run_pytest.py --native-contracts -q`
+- `uv run python scripts/dev/validate_project.py docs`
+- `uv run python scripts/dev/validate_project.py quick`
