@@ -42,8 +42,9 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
 - Any provider closure admission path should use the validation matrix to avoid
   treating the first synthetic toybox grids as sufficient real 2B/3B/4C
   evidence.
-- Final M8 toybox admission evidence is owned by issue #223:
-  `docs/superpowers/issues/2026-06-04-m8-python-toybox-issue-0223-decide-explicit-association-closure-admission-from-toybox-evidence.md`.
+- Final M8 toybox admission evidence was closed by
+  [issue #223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) and
+  [PR #233](https://github.com/ePC-SAFT/ePC-SAFT/pull/233).
 - Final Picard decision memo:
   `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`.
 - Final retained evidence:

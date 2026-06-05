@@ -79,7 +79,7 @@ admission evidence rather than production solver architecture.
 | --- | --- | --- | --- |
 | [#221](https://github.com/ePC-SAFT/ePC-SAFT/issues/221) | closed | none | Hardened Picard autodiff and exact implicit sensitivity baselines in the Python toybox. |
 | [#222](https://github.com/ePC-SAFT/ePC-SAFT/issues/222) | closed | none | Added associating-compound pressure-density validation with honest data points and dotted exact-vs-Picard curves. |
-| [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | ready / HITL | #231 | Produce the final Picard fixed-grid relative-error and simulation-timing packet for #161 disposition. |
+| [#223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) | closed | #231 | Produced the final Picard fixed-grid relative-error and simulation-timing packet for #161 disposition. |
 | [#224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) | closed | none | Probed whether Picard closure error is dangerous for later equilibrium objective, Jacobian, and Hessian work. |
 | [#227](https://github.com/ePC-SAFT/ePC-SAFT/issues/227) | closed | none | Added a SciPy pure-component saturation solver so toybox pressure plots become true vapor-pressure predictions. |
 | [#231](https://github.com/ePC-SAFT/ePC-SAFT/issues/231) | closed | #227 | Evaluated Picard explicit-association step-count and damping policy grids with CppAD-shaped handoff evidence. |
@@ -90,6 +90,7 @@ admission evidence rather than production solver architecture.
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/224](https://github.com/ePC-SAFT/ePC-SAFT/issues/224) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/229](https://github.com/ePC-SAFT/ePC-SAFT/pull/229) on 2026-06-05
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/227](https://github.com/ePC-SAFT/ePC-SAFT/issues/227) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/229](https://github.com/ePC-SAFT/ePC-SAFT/pull/229) on 2026-06-05
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/231](https://github.com/ePC-SAFT/ePC-SAFT/issues/231) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/232](https://github.com/ePC-SAFT/ePC-SAFT/pull/232) on 2026-06-05
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/223](https://github.com/ePC-SAFT/ePC-SAFT/issues/223) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/233](https://github.com/ePC-SAFT/ePC-SAFT/pull/233) on 2026-06-05
 
 ## Historical Seed Work
 
