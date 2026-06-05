@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 import epcsaft._core as _provider_core
 
@@ -15,6 +16,16 @@ from equilibrium_support.equilibrium_cases import (
     _neutral_binary_mixture,
     _nonideal_lle_binary_mixture,
 )
+
+
+def _pure_ethane_mixture() -> ePCSAFTMixture:
+    params = {
+        "MW": np.asarray([30.070e-3]),
+        "m": np.asarray([1.6069]),
+        "s": np.asarray([3.5206]),
+        "e": np.asarray([191.42]),
+    }
+    return ePCSAFTMixture.from_params(params, species=["Ethane"])
 
 
 @pytest.mark.parametrize(
@@ -121,6 +132,21 @@ from equilibrium_support.equilibrium_cases import (
             True,
             True,
         ),
+        (
+            {
+                "route": "single_component_vle",
+                "temperature": 233.15,
+                "composition": [1.0],
+                "composition_role": "pure",
+            },
+            "single_component_vle",
+            "single_component_vle_eos",
+            "pure",
+            ["liquid", "vapor"],
+            ["liquid", "vapor"],
+            True,
+            False,
+        ),
     ],
 )
 def test_selector_core_contract_owns_production_vle_metadata(
@@ -133,7 +159,12 @@ def test_selector_core_contract_owns_production_vle_metadata(
     specified_temperature: bool,
     specified_pressure: bool,
 ) -> None:
-    mix = _nonideal_lle_binary_mixture() if selector_request["route"] == "neutral_lle" else _neutral_binary_mixture()
+    if selector_request["route"] == "neutral_lle":
+        mix = _nonideal_lle_binary_mixture()
+    elif selector_request["route"] == "single_component_vle":
+        mix = _pure_ethane_mixture()
+    else:
+        mix = _neutral_binary_mixture()
     payload = _core._native_equilibrium_selector_contract(mix._native, selector_request)
     matrix = {row["key"]: row for row in _core._native_equilibrium_activation_matrix()}
     activation = matrix[family]
@@ -155,24 +186,25 @@ def test_selector_core_contract_owns_production_vle_metadata(
     assert classification["nonreactive"] is True
     assert classification["nonelectrolyte"] is True
     assert classification["nonassociating"] is True
-    assert classification["neutral_species_indices"] == [0, 1]
+    expected_species_indices = [0] if selector_request["route"] == "single_component_vle" else [0, 1]
+    assert classification["neutral_species_indices"] == expected_species_indices
     assert classification["ionic_species_indices"] == []
     assert classification["associating_species_indices"] == []
-    assert classification["phase_eligible_species_indices"] == [0, 1]
-    assert classification["transferable_species_indices"] == [0, 1]
+    assert classification["phase_eligible_species_indices"] == expected_species_indices
+    assert classification["transferable_species_indices"] == expected_species_indices
     assert classification["fixed_species_indices"] == []
     assert classification["active_family_markers"] == ["neutral", "nonreactive"]
 
     request_pretreatment = payload["request_pretreatment"]
     assert request_pretreatment["route_shape_validated"] is True
     assert request_pretreatment["finite_numeric_inputs"] is True
-    assert request_pretreatment["species_count"] == 2
-    assert request_pretreatment["composition_length"] == 2
+    assert request_pretreatment["species_count"] == len(expected_species_indices)
+    assert request_pretreatment["composition_length"] == len(expected_species_indices)
     assert request_pretreatment["composition_normalized_sum"] == pytest.approx(1.0)
     assert request_pretreatment["composition_basis"] == "mole_fraction"
 
     thermodynamic_input = payload["thermodynamic_input"]
-    assert thermodynamic_input["species_indices"] == [0, 1]
+    assert thermodynamic_input["species_indices"] == expected_species_indices
     assert thermodynamic_input["composition_role"] == composition_role
     assert thermodynamic_input["normalized_composition"] == pytest.approx(selector_request["composition"])
     assert thermodynamic_input["extensive_amounts"] == pytest.approx(selector_request["composition"])
@@ -195,6 +227,21 @@ def test_selector_core_contract_owns_production_vle_metadata(
     if family in {"neutral_tp_flash", "neutral_lle"}:
         assert activation["stability_prelayer"] == "deterministic_tpd_candidate_screening"
         assert activation["postsolve_certification"] == "tpd_postsolve"
+
+
+def test_selector_core_rejects_single_component_vle_for_binary_payload() -> None:
+    mix = _neutral_binary_mixture()
+
+    with pytest.raises(_provider_core.NativeValueError, match="single_component_vle requires exactly one component"):
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": "single_component_vle",
+                "temperature": 233.15,
+                "composition": [1.0, 0.0],
+                "composition_role": "pure",
+            },
+        )
 
 
 def test_selector_core_rejects_old_scalar_composition_boundary() -> None:

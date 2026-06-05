@@ -420,6 +420,11 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
     const std::vector<double>& feed_composition
 );
 
+NeutralTwoPhaseEosNlpContract evaluate_neutral_single_component_vle_nlp_contract(
+    const add_args& args,
+    double temperature
+);
+
 NeutralTwoPhaseEosNlpContract evaluate_activated_neutral_tp_flash_nlp_contract(
     const add_args& args,
     const epcsaft::native::equilibrium::ActivationPlan& plan,
@@ -489,7 +494,8 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     bool phase_distance_constraint = false,
     bool stability_certification_required = false,
     std::vector<int> phase_kinds = {},
-    bool continuous_tpd_required = false
+    bool continuous_tpd_required = false,
+    bool ln_fugacity_consistency_required = true
 );
 
 NeutralTwoPhaseEosPostsolve evaluate_neutral_multiphase_eos_postsolve(
@@ -586,6 +592,16 @@ NeutralTwoPhaseEosRouteResult solve_neutral_tp_flash_eos_route(
     const std::vector<double>& feed_composition,
     const IpoptSolveOptions& options,
     double material_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+);
+
+NeutralTwoPhaseEosRouteResult solve_neutral_single_component_vle_route(
+    const add_args& args,
+    double temperature,
+    const IpoptSolveOptions& options,
+    double phase_total_tolerance,
     double pressure_tolerance,
     double chemical_potential_tolerance,
     double phase_distance_tolerance

@@ -36,7 +36,7 @@ analysis code, not package runtime code.
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/quick_phase_equilibrium/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/quick_phase_equilibrium/scripts/render_figure.py`
-- `uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv`
+- `uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py`
 - `uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/generate_data.py`
@@ -113,7 +113,8 @@ not a VLE validation or saturation solver.
 ## Outputs
 
 Retained model CSVs, plotted data snapshots, rendered figures, and MPLGallery
-sidecars live under each `figures/<figure_id>/output/` folder. Public source CSVs
-and source-request status rows live under `shared/source/`. Disposable run
+sidecars live under each `figures/<figure_id>/output/` folder. Public
+water/methanol saturation-pressure and saturated-liquid-density source rows live
+under `data/reference/pure_component/saturation_density/`. Disposable run
 payloads, if added later, belong under a figure-local `output/runs/` folder and
 remain ignored.

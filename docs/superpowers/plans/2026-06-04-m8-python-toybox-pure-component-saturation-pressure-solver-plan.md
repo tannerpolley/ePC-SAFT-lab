@@ -90,7 +90,8 @@ missing.
 
 - [ ] **Step 3: Implement data generation**
 
-Read `shared/source/public_saturation_properties.csv` and provider cases. Write
+Read `data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv`
+and provider cases. Write
 one reference row plus exact implicit and Picard model rows for each retained
 pure associating compound/temperature case.
 

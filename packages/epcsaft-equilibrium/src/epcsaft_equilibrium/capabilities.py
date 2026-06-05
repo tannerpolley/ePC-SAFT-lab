@@ -54,6 +54,21 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py",
         ),
     },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "quantity": "single_component_vle",
+        "derivative": "lagrangian_hessian",
+        "backend": "cppad_phase_blocks",
+        "supported": True,
+        "classification": "production_supported",
+        "reason": "production selector exposes single-component VLE saturation through a fixed-temperature pressure route with exact Ipopt callbacks",
+        "tests": (
+            "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py",
+            "packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py",
+            "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+        ),
+    },
 )
 
 
@@ -189,6 +204,15 @@ def capabilities() -> dict[str, object]:
             "public_routes": public_routes_by_family["neutral_lle"],
             "selector_core": True,
             "input_scope": "neutral non-reactive non-electrolyte non-associating liquid/liquid mixtures",
+            "requires": ["cppad", "ipopt"],
+        },
+        "single_component_vle": {
+            "available": bool(activation["ipopt_available"]),
+            "production": True,
+            "entrypoint": "Equilibrium(mixture, route='single_component_vle', T=...).solve()",
+            "public_routes": public_routes_by_family["single_component_vle"],
+            "selector_core": True,
+            "input_scope": "single neutral non-reactive non-electrolyte component",
             "requires": ["cppad", "ipopt"],
         },
         "problem_objects": {

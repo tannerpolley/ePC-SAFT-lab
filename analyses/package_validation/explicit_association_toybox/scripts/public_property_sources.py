@@ -12,8 +12,10 @@ import numpy as np
 import yaml
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ANALYSIS_ROOT.parents[2]
+REFERENCE_SOURCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component" / "saturation_density"
 DEFAULT_CONFIG = ANALYSIS_ROOT / "config" / "public_property_sources.yaml"
-DEFAULT_OUTPUT = ANALYSIS_ROOT / "shared" / "source" / "public_saturation_properties.csv"
+DEFAULT_OUTPUT = REFERENCE_SOURCE_DIR / "water_methanol_nist_saturation.csv"
 NIST_FLUID_URL = "https://webbook.nist.gov/cgi/fluid.cgi"
 
 

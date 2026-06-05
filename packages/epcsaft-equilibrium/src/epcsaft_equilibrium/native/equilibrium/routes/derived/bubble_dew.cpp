@@ -34,6 +34,13 @@ constexpr double kMaximumLiquidVolume = 5.0e-4;
 constexpr double kMinimumVaporVolume = 1.0e-3;
 constexpr double kMaximumVaporVolume = 1.0e6;
 constexpr double kMinimumPhaseVolumeGap = 1.0e-7;
+constexpr double kMinimumPressure = 1.0;
+constexpr double kMaximumPressure = 1.0e9;
+constexpr double kPureSaturationMinimumVaporVolume = 1.0e-6;
+constexpr double kPureSaturationMaximumVaporVolume = 1.0e8;
+constexpr double kPureSaturationMinimumPressure = 1.0e-6;
+constexpr double kPureSaturationMinimumPhaseVolumeGap = 1.0e-6;
+constexpr double kPureSaturationMinimumReducedDensitySeparation = 1.0e-2;
 
 void apply_route_metadata(NeutralTwoPhaseEosPostsolve& out, const RouteMetadata& metadata) {
     out.density_backend = metadata.density_backend;
@@ -236,7 +243,12 @@ double separated_phase_role_density_seed(double temperature, double pressure, in
 
 bool fixed_temperature_pressure_seed_satisfies_volume_bounds(
     const std::vector<double>& variables,
-    int species_count
+    int species_count,
+    double minimum_liquid_volume = kMinimumLiquidVolume,
+    double maximum_liquid_volume = kMaximumLiquidVolume,
+    double minimum_vapor_volume = kMinimumVaporVolume,
+    double maximum_vapor_volume = kMaximumVaporVolume,
+    double minimum_phase_volume_gap = kMinimumPhaseVolumeGap
 ) {
     const int local_variable_count = species_count + 1;
     if (variables.size() != static_cast<std::size_t>(2 * local_variable_count + 1)) {
@@ -244,11 +256,11 @@ bool fixed_temperature_pressure_seed_satisfies_volume_bounds(
     }
     const double liquid_volume = variables[static_cast<std::size_t>(species_count)];
     const double vapor_volume = variables[static_cast<std::size_t>(local_variable_count + species_count)];
-    return liquid_volume >= kMinimumLiquidVolume
-        && liquid_volume <= kMaximumLiquidVolume
-        && vapor_volume >= kMinimumVaporVolume
-        && vapor_volume <= kMaximumVaporVolume
-        && vapor_volume - liquid_volume >= kMinimumPhaseVolumeGap;
+    return liquid_volume >= minimum_liquid_volume
+        && liquid_volume <= maximum_liquid_volume
+        && vapor_volume >= minimum_vapor_volume
+        && vapor_volume <= maximum_vapor_volume
+        && vapor_volume - liquid_volume >= minimum_phase_volume_gap;
 }
 
 bool fixed_temperature_pressure_flash_seed_satisfies_volume_bounds(
@@ -281,8 +293,10 @@ std::vector<double> build_pressure_route_initial_variables(
     const std::vector<double>& charges,
     const std::string& problem_name,
     double shift_sign,
-    DensitySeedMode density_seed_mode
+    DensitySeedMode density_seed_mode,
+    double seed_pressure
 ) {
+    require_positive_finite(seed_pressure, problem_name + " pressure seed");
     const std::vector<double> shifted = charges.empty()
         ? shifted_composition(fixed_composition, shift_sign)
         : charge_neutral_shifted_composition(
@@ -297,11 +311,11 @@ std::vector<double> build_pressure_route_initial_variables(
         const std::vector<double>& composition = phase == fixed_phase_index ? fixed_composition : shifted;
         out.insert(out.end(), composition.begin(), composition.end());
         const double density = density_seed_mode == DensitySeedMode::PhasePressureRoot
-            ? phase_density_root_seed(args, temperature, kInitialPressure, composition, phase, problem_name)
-            : separated_phase_role_density_seed(temperature, kInitialPressure, phase, problem_name);
+            ? phase_density_root_seed(args, temperature, seed_pressure, composition, phase, problem_name)
+            : separated_phase_role_density_seed(temperature, seed_pressure, phase, problem_name);
         out.push_back(1.0 / density);
     }
-    out.push_back(kInitialPressure);
+    out.push_back(seed_pressure);
     return out;
 }
 
@@ -585,6 +599,22 @@ std::vector<double> build_shifted_flash_route_initial_variables(
     );
 }
 
+std::vector<double> pure_saturation_pressure_seed_values() {
+    return {
+        1.0e-2,
+        1.0e-1,
+        1.0,
+        1.0e1,
+        1.0e2,
+        1.0e3,
+        1.0e4,
+        1.0e5,
+        1.0e6,
+        3.0e6,
+        1.0e7,
+    };
+}
+
 std::vector<NamedInitialVariables> pressure_route_seed_candidates(
     const add_args& args,
     const std::vector<double>& fixed_composition,
@@ -594,60 +624,113 @@ std::vector<NamedInitialVariables> pressure_route_seed_candidates(
     const std::string& problem_name
 ) {
     std::vector<NamedInitialVariables> out;
+    const bool pure_saturation_route =
+        problem_name == "single_component_vle_eos" && fixed_composition.size() == 1 && charges.empty();
+    const double minimum_vapor_volume =
+        pure_saturation_route ? kPureSaturationMinimumVaporVolume : kMinimumVaporVolume;
+    const double maximum_vapor_volume =
+        pure_saturation_route ? kPureSaturationMaximumVaporVolume : kMaximumVaporVolume;
+    const double minimum_phase_volume_gap =
+        pure_saturation_route ? kPureSaturationMinimumPhaseVolumeGap : kMinimumPhaseVolumeGap;
     auto append_if_feasible = [&](std::string seed_name, std::vector<double> variables) {
         if (fixed_temperature_pressure_seed_satisfies_volume_bounds(
                 variables,
-                static_cast<int>(fixed_composition.size())
+                static_cast<int>(fixed_composition.size()),
+                kMinimumLiquidVolume,
+                kMaximumLiquidVolume,
+                minimum_vapor_volume,
+                maximum_vapor_volume,
+                minimum_phase_volume_gap
             )) {
             out.push_back({std::move(seed_name), std::move(variables)});
         }
     };
+    auto append_density_root_seed = [&](std::string seed_name, double seed_pressure, double shift_sign) {
+        try {
+            append_if_feasible(
+                std::move(seed_name),
+                build_pressure_route_initial_variables(
+                    args,
+                    fixed_composition,
+                    fixed_phase_index,
+                    temperature,
+                    charges,
+                    problem_name,
+                    shift_sign,
+                    DensitySeedMode::PhasePressureRoot,
+                    seed_pressure
+                )
+            );
+        } catch (const std::exception&) {
+        }
+    };
+    auto append_separated_phase_seed = [&](std::string seed_name, double seed_pressure, double shift_sign) {
+        append_if_feasible(
+            std::move(seed_name),
+            build_pressure_route_initial_variables(
+                args,
+                fixed_composition,
+                fixed_phase_index,
+                temperature,
+                charges,
+                problem_name,
+                shift_sign,
+                DensitySeedMode::SeparatedPhaseRole,
+                seed_pressure
+            )
+        );
+    };
     if (charges.empty()) {
-        append_if_feasible(
-            "canonical_phase_density_root",
-            build_pressure_route_initial_variables(
+        if (pure_saturation_route) {
+            int seed_index = 0;
+            for (double seed_pressure : pure_saturation_pressure_seed_values()) {
+                append_density_root_seed(
+                    "pressure_density_root_" + std::to_string(seed_index),
+                    seed_pressure,
+                    1.0
+                );
+                append_density_root_seed(
+                    "mirrored_pressure_density_root_" + std::to_string(seed_index),
+                    seed_pressure,
+                    -1.0
+                );
+                append_separated_phase_seed(
+                    "separated_pressure_role_" + std::to_string(seed_index),
+                    seed_pressure,
+                    1.0
+                );
+                append_separated_phase_seed(
+                    "mirrored_separated_pressure_role_" + std::to_string(seed_index),
+                    seed_pressure,
+                    -1.0
+                );
+                ++seed_index;
+            }
+        } else {
+            append_density_root_seed("canonical_phase_density_root", kInitialPressure, 1.0);
+            append_density_root_seed("mirrored_phase_density_root", kInitialPressure, -1.0);
+        }
+        if (fixed_composition.size() > 1) {
+            const std::vector<double> partner = boundary_partner_composition_from_k_values(
                 args,
                 fixed_composition,
                 fixed_phase_index,
-                temperature,
-                charges,
                 problem_name,
-                1.0,
-                DensitySeedMode::PhasePressureRoot
-            )
-        );
-        append_if_feasible(
-            "mirrored_phase_density_root",
-            build_pressure_route_initial_variables(
-                args,
-                fixed_composition,
-                fixed_phase_index,
-                temperature,
-                charges,
-                problem_name,
-                -1.0,
-                DensitySeedMode::PhasePressureRoot
-            )
-        );
-        const std::vector<double> partner = boundary_partner_composition_from_k_values(
-            args,
-            fixed_composition,
-            fixed_phase_index,
-            problem_name,
-            kBoundaryVolatilityKAlpha
-        );
-        append_if_feasible(
-            "volatility_k_partner_density_root",
-            build_pressure_route_initial_variables_with_partner(
-                args,
-                fixed_composition,
-                partner,
-                fixed_phase_index,
-                temperature,
-                problem_name,
-                DensitySeedMode::PhasePressureRoot
-            )
-        );
+                kBoundaryVolatilityKAlpha
+            );
+            append_if_feasible(
+                "volatility_k_partner_density_root",
+                build_pressure_route_initial_variables_with_partner(
+                    args,
+                    fixed_composition,
+                    partner,
+                    fixed_phase_index,
+                    temperature,
+                    problem_name,
+                    DensitySeedMode::PhasePressureRoot
+                )
+            );
+        }
     }
     out.push_back({
         "canonical_shifted_partner_phase",
@@ -659,7 +742,8 @@ std::vector<NamedInitialVariables> pressure_route_seed_candidates(
             charges,
             problem_name,
             1.0,
-            DensitySeedMode::SeparatedPhaseRole
+            DensitySeedMode::SeparatedPhaseRole,
+            kInitialPressure
         )
     });
     out.push_back({
@@ -672,7 +756,8 @@ std::vector<NamedInitialVariables> pressure_route_seed_candidates(
             charges,
             problem_name,
             -1.0,
-            DensitySeedMode::SeparatedPhaseRole
+            DensitySeedMode::SeparatedPhaseRole,
+            kInitialPressure
         )
     });
     return out;
@@ -1033,7 +1118,8 @@ public:
         int fixed_phase_index,
         std::string problem_name,
         std::vector<double> charges = {},
-        double charge_constraint_tolerance = 0.0
+        double charge_constraint_tolerance = 0.0,
+        double initial_pressure = kInitialPressure
     )
         : args_(std::move(args)),
           temperature_(temperature),
@@ -1041,8 +1127,10 @@ public:
           fixed_phase_index_(fixed_phase_index),
           problem_name_(std::move(problem_name)),
           charges_(std::move(charges)),
-          charge_constraint_tolerance_(charge_constraint_tolerance) {
+          charge_constraint_tolerance_(charge_constraint_tolerance),
+          initial_pressure_(initial_pressure) {
         require_positive_finite(temperature_, problem_name_ + " temperature");
+        require_positive_finite(initial_pressure_, problem_name_ + " initial pressure");
         if (!std::isfinite(charge_constraint_tolerance_) || charge_constraint_tolerance_ < 0.0) {
             throw ValueError(problem_name_ + " charge constraint tolerance must be finite and non-negative.");
         }
@@ -1056,6 +1144,12 @@ public:
                 charges_,
                 problem_name_ + " fixed composition"
             );
+        }
+        if (problem_name_ == "single_component_vle_eos" && species_count_ == 1 && charges_.empty()) {
+            minimum_vapor_volume_ = kPureSaturationMinimumVaporVolume;
+            maximum_vapor_volume_ = kPureSaturationMaximumVaporVolume;
+            minimum_pressure_ = kPureSaturationMinimumPressure;
+            minimum_phase_volume_gap_ = kPureSaturationMinimumPhaseVolumeGap;
         }
     }
 
@@ -1107,8 +1201,8 @@ public:
                 throw ValueError(problem_name_ + " phase role is out of range.");
             }
         }
-        out.variable_lower.push_back(1.0);
-        out.variable_upper.push_back(1.0e9);
+        out.variable_lower.push_back(minimum_pressure_);
+        out.variable_upper.push_back(maximum_pressure_);
         out.constraint_lower.assign(static_cast<std::size_t>(constraint_count()), 0.0);
         out.constraint_upper.assign(static_cast<std::size_t>(constraint_count()), 0.0);
         if (charge_constraint_count() > 0 && charge_constraint_tolerance_ > 0.0) {
@@ -1135,9 +1229,18 @@ public:
                 charges_,
                 problem_name_,
                 1.0,
-                DensitySeedMode::PhasePressureRoot
+                DensitySeedMode::PhasePressureRoot,
+                initial_pressure_
             );
-            if (fixed_temperature_pressure_seed_satisfies_volume_bounds(root, species_count_)) {
+            if (fixed_temperature_pressure_seed_satisfies_volume_bounds(
+                    root,
+                    species_count_,
+                    minimum_liquid_volume_,
+                    maximum_liquid_volume_,
+                    minimum_vapor_volume_,
+                    maximum_vapor_volume_,
+                    minimum_phase_volume_gap_
+                )) {
                 return root;
             }
         }
@@ -1149,7 +1252,8 @@ public:
             charges_,
             problem_name_,
             1.0,
-            DensitySeedMode::SeparatedPhaseRole
+            DensitySeedMode::SeparatedPhaseRole,
+            initial_pressure_
         );
     }
 
@@ -1476,13 +1580,13 @@ public:
         NlpScaling out;
         out.objective = 1.0;
         out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
-        out.variables.back() = pressure_constraint_scale(kInitialPressure);
+        out.variables.back() = pressure_constraint_scale(initial_pressure_);
         out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
         apply_pressure_constraint_scaling(
             out,
             composition_constraint_count() + phase_count() + charge_constraint_count(),
             phase_count(),
-            kInitialPressure
+            initial_pressure_
         );
         return out;
     }
@@ -1562,6 +1666,8 @@ private:
     double minimum_vapor_volume_ = kMinimumVaporVolume;
     double maximum_vapor_volume_ = kMaximumVaporVolume;
     double minimum_phase_volume_gap_ = kMinimumPhaseVolumeGap;
+    double minimum_pressure_ = kMinimumPressure;
+    double maximum_pressure_ = kMaximumPressure;
     std::vector<double> fixed_composition_;
     int fixed_phase_index_ = 0;
     std::string problem_name_;
@@ -2474,8 +2580,11 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
     double pressure_tolerance,
     double charge_tolerance,
     double chemical_potential_tolerance,
-    double phase_distance_tolerance
+    double phase_distance_tolerance,
+    const std::string& problem_name
 ) {
+    const bool pure_density_distance_route =
+        problem_name == "single_component_vle_eos" && fixed_composition.size() == 1 && charges.empty();
     NeutralTwoPhaseEosPostsolve out = evaluate_neutral_two_phase_eos_postsolve(
         args,
         temperature,
@@ -2486,22 +2595,45 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
         phase_total_tolerance,
         pressure_tolerance,
         chemical_potential_tolerance,
-        phase_distance_tolerance
+        phase_distance_tolerance,
+        {},
+        false,
+        false,
+        {},
+        false,
+        !pure_density_distance_route
     );
     apply_route_metadata(out, fixed_temperature_pressure_route_metadata(!charges.empty()));
     out.fixed_composition_norm = fixed_composition_norm(phase_amounts, fixed_phase_index, fixed_composition);
     out.phase_amount_total_norm = phase_total_norm(phase_amounts);
     out.charge_balance_norm = phase_charge_norm(phase_amounts, charges);
+    const bool pure_density_distance_postsolve =
+        pure_density_distance_route && out.phase_densities.size() == 2;
+    const bool local_postsolve_accepted = out.accepted;
+    if (pure_density_distance_postsolve) {
+        const double first_density = out.phase_densities[0];
+        const double second_density = out.phase_densities[1];
+        const double density_scale = std::max(1.0, std::max(std::abs(first_density), std::abs(second_density)));
+        out.phase_distance = std::abs(first_density - second_density) / density_scale;
+    }
+    const double effective_phase_distance_tolerance = pure_density_distance_route
+        ? std::max(phase_distance_tolerance, kPureSaturationMinimumReducedDensitySeparation)
+        : phase_distance_tolerance;
+    const bool pure_density_distance_rejected =
+        pure_density_distance_postsolve && out.phase_distance < effective_phase_distance_tolerance;
     out.accepted = out.accepted
         && out.fixed_composition_norm <= phase_total_tolerance
         && out.phase_amount_total_norm <= phase_total_tolerance
-        && (charges.empty() || out.charge_balance_norm <= charge_tolerance);
+        && (charges.empty() || out.charge_balance_norm <= charge_tolerance)
+        && !pure_density_distance_rejected;
     if (!charges.empty() && out.charge_balance_norm > charge_tolerance) {
         out.rejection_reason = "charge_balance";
     } else if (!out.accepted && out.phase_amount_total_norm > phase_total_tolerance) {
         out.rejection_reason = "phase_amount_total";
     } else if (!out.accepted && out.fixed_composition_norm > phase_total_tolerance) {
         out.rejection_reason = "fixed_composition";
+    } else if (local_postsolve_accepted && pure_density_distance_rejected) {
+        out.rejection_reason = "phase_distance";
     }
     return out;
 }
@@ -2590,7 +2722,8 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
             fixed_phase_index,
             problem_name,
             charges,
-            charge_tolerance
+            charge_tolerance,
+            attempt_options.initial_variables.empty() ? kInitialPressure : attempt_options.initial_variables.back()
         );
         const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
         NeutralTwoPhaseEosRouteResult result;
@@ -2628,7 +2761,8 @@ NeutralTwoPhaseEosRouteResult solve_pressure_route(
             pressure_tolerance,
             charge_tolerance,
             chemical_potential_tolerance,
-            phase_distance_tolerance
+            phase_distance_tolerance,
+            problem_name
         );
         apply_neutral_route_postsolve(
             result,
@@ -2753,7 +2887,8 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
             pressure_tolerance,
             0.0,
             chemical_potential_tolerance,
-            phase_distance_tolerance
+            phase_distance_tolerance,
+            problem_name
         );
         apply_neutral_route_postsolve(
             result,
@@ -3198,6 +3333,23 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
     return make_contract(problem, problem.phase_count(), problem.species_count());
 }
 
+NeutralTwoPhaseEosNlpContract evaluate_neutral_single_component_vle_nlp_contract(
+    const add_args& args,
+    double temperature
+) {
+    if (args.m.size() != 1) {
+        throw ValueError("single_component_vle requires exactly one component.");
+    }
+    NeutralFixedTemperaturePressureProblem problem(
+        args,
+        temperature,
+        {1.0},
+        0,
+        "single_component_vle_eos"
+    );
+    return make_contract(problem, problem.phase_count(), problem.species_count());
+}
+
 NeutralTwoPhaseEosRouteResult solve_neutral_bubble_p_eos_route(
     const add_args& args,
     double temperature,
@@ -3293,6 +3445,34 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
         options,
         phase_total_tolerance,
         pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance
+    );
+}
+
+NeutralTwoPhaseEosRouteResult solve_neutral_single_component_vle_route(
+    const add_args& args,
+    double temperature,
+    const IpoptSolveOptions& options,
+    double phase_total_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    if (args.m.size() != 1) {
+        throw ValueError("single_component_vle requires exactly one component.");
+    }
+    return solve_pressure_route(
+        args,
+        temperature,
+        {1.0},
+        0,
+        "single_component_vle_eos",
+        {},
+        options,
+        phase_total_tolerance,
+        pressure_tolerance,
+        0.0,
         chemical_potential_tolerance,
         phase_distance_tolerance
     );

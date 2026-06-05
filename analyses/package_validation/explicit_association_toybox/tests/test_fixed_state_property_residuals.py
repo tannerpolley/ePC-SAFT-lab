@@ -171,7 +171,7 @@ def test_associating_picard_property_outputs_use_toy_pressure_density_coupling()
 
 
 def test_load_public_saturation_rows_fails_loudly_when_source_csv_is_missing(tmp_path: Path) -> None:
-    source = tmp_path / "public_saturation_properties.csv"
+    source = tmp_path / "water_methanol_nist_saturation.csv"
 
-    with pytest.raises(FileNotFoundError, match="shared/source/public_saturation_properties.csv"):
+    with pytest.raises(FileNotFoundError, match="water_methanol_nist_saturation.csv"):
         load_public_saturation_rows(source)
