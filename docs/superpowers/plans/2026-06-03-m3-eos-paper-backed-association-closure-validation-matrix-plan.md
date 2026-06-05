@@ -27,7 +27,7 @@
 - [ ] Repo derivation roles remain distinct: the 2B exact reduction applies only to one-associating-component 2B, and `damped_picard_7_05` is the only active full-matrix explicit approximation.
 - [ ] Matrix rows include source formula family, source formula ID, derivation family, comparison role, topology gate, exactness claim, system metadata, site-fraction errors, mass-action residuals, association Helmholtz errors, elapsed times, speedup, and evidence band.
 - [ ] Public saturation-data acquisition tries configured public sources first and writes retained source CSV plus source-status metadata when successful.
-- [ ] Missing or blocked raw data are recorded in `data_request_manifest.csv` with `needs_user_source`, not replaced by paper AAD values.
+- [ ] Missing or blocked raw data are recorded in `water_methanol_data_request_manifest.csv` with `needs_user_source`, not replaced by paper AAD values.
 - [ ] Fixed-state property residuals compare provider pressure at experimental saturated liquid density and provider liquid density at experimental saturation pressure for configured pure-component rows with provider parameter payloads.
 - [ ] Property residual outputs are labeled `fixed_state_saturation_property_residual` and do not claim vapor-pressure prediction or equilibrium-route validation.
 - [ ] Figure commands write retained plotted-data CSV, PNG, and `.mpl.yaml` sidecars under figure-owned `output/` folders.
@@ -49,7 +49,7 @@ Create:
 - `analyses/package_validation/explicit_association_toybox/config/paper_topologies.yaml`
 - `analyses/package_validation/explicit_association_toybox/config/paper_systems.yaml`
 - `analyses/package_validation/explicit_association_toybox/config/public_property_sources.yaml`
-- `analyses/package_validation/explicit_association_toybox/shared/source/data_request_manifest.csv`
+- `data/reference/pure_component/saturation_density/water_methanol_data_request_manifest.csv`
 - `analyses/package_validation/explicit_association_toybox/scripts/topology_reductions.py`
 - `analyses/package_validation/explicit_association_toybox/scripts/paper_systems.py`
 - `analyses/package_validation/explicit_association_toybox/scripts/public_property_sources.py`
@@ -396,7 +396,7 @@ git commit -m "docs: add association topology matrix figures"
 
 **Files:**
 - Create: `analyses/package_validation/explicit_association_toybox/config/public_property_sources.yaml`
-- Create: `analyses/package_validation/explicit_association_toybox/shared/source/data_request_manifest.csv`
+- Create: `data/reference/pure_component/saturation_density/water_methanol_data_request_manifest.csv`
 - Create: `analyses/package_validation/explicit_association_toybox/scripts/public_property_sources.py`
 - Create: `analyses/package_validation/explicit_association_toybox/tests/test_public_property_sources.py`
 
@@ -432,7 +432,7 @@ sources:
     t_inc: 10.0
 ```
 
-Create `data_request_manifest.csv` with headers:
+Create `water_methanol_data_request_manifest.csv` with headers:
 
 ```text
 system_id,component,property,temperature_range,pressure_range,source_named_in_paper,repo_source_available,public_source_candidate,user_input_needed,status
@@ -455,15 +455,15 @@ Run:
 
 ```powershell
 uv run python run_pytest.py analyses/package_validation/explicit_association_toybox/tests/test_public_property_sources.py -q
-uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv
+uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv
 ```
 
-Expected: tests PASS and the live command writes `public_saturation_properties.csv` with at least one methanol and one water liquid row. When the NIST live request cannot reach the service or the page shape changes, commit the parser/tests and update `data_request_manifest.csv` statuses to `public_source_candidate` without committing partial fetched data.
+Expected: tests PASS and the live command writes `water_methanol_nist_saturation.csv` with at least one methanol and one water liquid row. When the NIST live request cannot reach the service or the page shape changes, commit the parser/tests and update `water_methanol_data_request_manifest.csv` statuses to `public_source_candidate` without committing partial fetched data.
 
 - [ ] **Step 5: Commit**
 
 ```powershell
-git add analyses/package_validation/explicit_association_toybox/config/public_property_sources.yaml analyses/package_validation/explicit_association_toybox/shared/source/data_request_manifest.csv analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv analyses/package_validation/explicit_association_toybox/scripts/public_property_sources.py analyses/package_validation/explicit_association_toybox/tests/test_public_property_sources.py
+git add analyses/package_validation/explicit_association_toybox/config/public_property_sources.yaml data/reference/pure_component/saturation_density/water_methanol_data_request_manifest.csv data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv analyses/package_validation/explicit_association_toybox/scripts/public_property_sources.py analyses/package_validation/explicit_association_toybox/tests/test_public_property_sources.py
 git commit -m "feat: add public saturation data inventory"
 ```
 
@@ -543,7 +543,7 @@ Catch `InputError` and `SolutionError` per row and write `status="failed"` plus 
 
 - [ ] **Step 4: Add property residual figure**
 
-`property_residuals/scripts/generate_data.py` should read `shared/source/public_saturation_properties.csv`, compute residuals, and write `figures/property_residuals/output/property_residuals.csv`. `render_figure.py` should write plotted data and a PNG with component on the x-axis and absolute pressure/density relative residual panels.
+`property_residuals/scripts/generate_data.py` should read `data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv`, compute residuals, and write `figures/property_residuals/output/property_residuals.csv`. `render_figure.py` should write plotted data and a PNG with component on the x-axis and absolute pressure/density relative residual panels.
 
 - [ ] **Step 5: Verify and commit**
 
@@ -555,7 +555,7 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/pr
 uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py
 ```
 
-Expected: tests PASS and property residual artifacts exist when public saturation source CSV exists. When the public source CSV is missing, the generate command must fail loudly with a message naming `shared/source/public_saturation_properties.csv`.
+Expected: tests PASS and property residual artifacts exist when public saturation source CSV exists. When the public source CSV is missing, the generate command must fail loudly with a message naming `data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv`.
 
 Commit:
 
@@ -579,7 +579,7 @@ Document these explicit boundaries:
 - active Picard derivatives remain exact derivatives of the approximate closure;
 - public saturation rows are source data, not package validation by themselves;
 - fixed-state residuals are not vapor-pressure prediction and not equilibrium validation;
-- missing proprietary data belongs in `shared/source/data_request_manifest.csv`.
+- missing proprietary data belongs in `data/reference/pure_component/saturation_density/water_methanol_data_request_manifest.csv`.
 
 - [ ] **Step 2: Run focused tests**
 
@@ -638,7 +638,7 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/to
 uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py
 uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/generate_data.py
 uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/render_figure.py
-uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output analyses/package_validation/explicit_association_toybox/shared/source/public_saturation_properties.csv
+uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv
 uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py
 uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py
 uv run python scripts/dev/validate_project.py quick
@@ -650,7 +650,7 @@ uv run python scripts/dev/validate_project.py quick
 - The fixed-state residual lane uses provider pressure/density states only. It must not claim saturation prediction, phase equilibrium, or vapor pressure solving.
 - The water provider row uses a fixed first-pass sigma. If water residuals are used as validation evidence, a later plan must source the temperature-dependent sigma expression from existing provider data.
 - Existing issue #216 may add HC/dispersion context on a separate branch. Rebase before implementation and keep this matrix plan compatible with any new `ares_hc`, `ares_disp`, and total `ares` columns.
-- When public data cannot be sourced for a target component, write `needs_user_source` in `data_request_manifest.csv` and stop property residual generation for that component.
+- When public data cannot be sourced for a target component, write `needs_user_source` in `water_methanol_data_request_manifest.csv` and stop property residual generation for that component.
 
 ## Required Development Skills
 

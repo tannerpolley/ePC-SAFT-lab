@@ -1617,6 +1617,28 @@ std::vector<double> reduced_ln_fugacity_values(
     return values;
 }
 
+std::vector<double> ln_fugacity_coefficients_for_postsolve(
+    const add_args& args,
+    const EosPhaseBlockResult& block,
+    std::size_t species_count
+) {
+    FugacityContributionResult fugacity = fugacity_coefficient_result_cpp(
+        block.temperature,
+        block.density,
+        block.composition,
+        args
+    );
+    if (fugacity.lnfugcoef.total.size() < species_count) {
+        throw ValueError("Neutral EOS postsolve fugacity payload size did not match species count.");
+    }
+    std::vector<double> values;
+    values.reserve(species_count);
+    for (std::size_t species = 0; species < species_count; ++species) {
+        values.push_back(fugacity.lnfugcoef.total[species]);
+    }
+    return values;
+}
+
 double ln_fugacity_inf_norm(
     const add_args& args,
     const EosPhaseBlockResult& first,
@@ -2444,7 +2466,8 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     bool phase_distance_constraint,
     bool stability_certification_required,
     std::vector<int> phase_kinds,
-    bool continuous_tpd_required
+    bool continuous_tpd_required,
+    bool ln_fugacity_consistency_required
 ) {
     require_positive_finite(material_tolerance, "Neutral EOS postsolve material tolerance");
     require_positive_finite(pressure_tolerance, "Neutral EOS postsolve pressure tolerance");
@@ -2479,13 +2502,19 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     out.constraints = system.constraints;
     out.phase_volumes = volumes;
     out.phase_amount_totals.reserve(system.phase_blocks.size());
+    out.phase_densities.reserve(system.phase_blocks.size());
     out.phase_compositions.reserve(system.phase_blocks.size());
+    out.phase_ln_fugacity_coefficients.reserve(system.phase_blocks.size());
+    const std::size_t species_count = static_cast<std::size_t>(system.species_count);
     for (const EosPhaseBlockResult& block : system.phase_blocks) {
         out.phase_amount_totals.push_back(block.total_amount);
+        out.phase_densities.push_back(block.density);
         out.phase_compositions.push_back(block.composition);
+        out.phase_ln_fugacity_coefficients.push_back(
+            ln_fugacity_coefficients_for_postsolve(args, block, species_count)
+        );
     }
 
-    const std::size_t species_count = static_cast<std::size_t>(system.species_count);
     out.material_balance_norm = vector_infinity_norm(system.constraints, 0, species_count);
     out.pressure_consistency_norm = vector_infinity_norm(
         system.constraints,
@@ -2512,10 +2541,13 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
     const double effective_chemical_tolerance = charges.empty()
         ? chemical_potential_tolerance
         : std::max(chemical_potential_tolerance, 2.0 * std::sqrt(chemical_potential_tolerance));
+    const bool ln_fugacity_consistency_accepted =
+        !ln_fugacity_consistency_required
+        || out.ln_fugacity_consistency_norm <= effective_chemical_tolerance;
     out.accepted = out.material_balance_norm <= material_tolerance
         && out.pressure_consistency_norm <= pressure_tolerance
         && out.chemical_potential_consistency_norm <= effective_chemical_tolerance
-        && out.ln_fugacity_consistency_norm <= effective_chemical_tolerance
+        && ln_fugacity_consistency_accepted
         && (!phase_distance_constraint || out.phase_distance >= phase_distance_tolerance);
     if (out.accepted) {
         out.rejection_reason = "accepted";
@@ -2525,7 +2557,7 @@ NeutralTwoPhaseEosPostsolve evaluate_neutral_two_phase_eos_postsolve(
         out.rejection_reason = "pressure_consistency";
     } else if (out.chemical_potential_consistency_norm > effective_chemical_tolerance) {
         out.rejection_reason = "chemical_potential_consistency";
-    } else if (out.ln_fugacity_consistency_norm > effective_chemical_tolerance) {
+    } else if (ln_fugacity_consistency_required && out.ln_fugacity_consistency_norm > effective_chemical_tolerance) {
         out.rejection_reason = "ln_fugacity_consistency";
     } else if (phase_distance_constraint) {
         out.rejection_reason = "phase_distance";

@@ -460,7 +460,8 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
     import_offenders: list[str] = []
     import_snippets = (f"import {removed_dependency_name}", f"from {removed_dependency_name}")
     for relpath in tracked:
-        if relpath.replace("\\", "/").startswith("docs/papers/"):
+        normalized_relpath = relpath.replace("\\", "/")
+        if normalized_relpath.startswith("docs/papers/"):
             continue
         if not relpath.endswith(".py"):
             if Path(relpath).suffix.lower() not in {".md", ".rst", ".toml", ".yaml", ".yml", ".txt", ".ps1"}:
@@ -469,13 +470,9 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8", errors="ignore").lower()
-        normalized_relpath = relpath.replace("\\", "/")
         if not normalized_relpath.startswith(python_ipopt_allowed_prefixes):
             assert removed_python_ipopt_wrapper not in text, relpath
         if not relpath.endswith(".py"):
-            continue
-        path = REPO_ROOT / relpath
-        if not path.exists():
             continue
         if any(snippet in text for snippet in import_snippets):
             if normalized_relpath.startswith(scipy_allowed_prefixes):

@@ -34,6 +34,11 @@ Implement the Stage 1 equilibrium-doctrine prerequisite: HELD-style neutral phas
   matching implementation evidence.
 - Use the linked issue mirror and plan as the execution entry points for
   `project-resolve`.
+- Treat current Stage 9 neutral evidence as deterministic screening plus
+  continuous TPD, HELD Stage I diagnostics, a finite-candidate Stage II bound
+  audit, and current-route Stage III Ipopt refinement. Do not describe it as
+  full generalized HELD unless the broader GFPE stage plan gates are extended
+  with matching executable evidence.
 
 ## Non-Goals
 
@@ -46,7 +51,8 @@ Implement the Stage 1 equilibrium-doctrine prerequisite: HELD-style neutral phas
 
 ## Validation
 
-- uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q
-- uv run python run_pytest.py --native-contracts -q
-- uv run python scripts/dev/validate_project.py docs
-- uv run python scripts/dev/validate_project.py quick
+- `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`
+- `uv run python run_pytest.py --native-contracts -q`
+- `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement`
+- `uv run python scripts/dev/validate_project.py docs`
+- `uv run python scripts/dev/validate_project.py quick`

@@ -37,6 +37,15 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 - [ ] Capabilities do not broaden public route support.
 - [ ] Algorithm registry and roadmap docs remain synchronized.
 
+## Current Scope Note
+
+This plan should resolve the existing Stage 9 neutral evidence path rather than
+inventing a parallel HELD route. Current code already exposes deterministic
+screening, continuous TPD, HELD Stage I diagnostics, a finite-candidate Stage II
+bound audit, and current-route Stage III Ipopt refinement. Keep the native
+activation matrix as admission control and keep generalized HELD claims limited
+to the evidence proved by the commands below.
+
 ## Tasks
 
 ### Task 1: Preflight And Boundary Check
@@ -80,7 +89,8 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 
 ## Proof Oracle
 
-- uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q
-- uv run python run_pytest.py --native-contracts -q
-- uv run python scripts/dev/validate_project.py docs
-- uv run python scripts/dev/validate_project.py quick
+- `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`
+- `uv run python run_pytest.py --native-contracts -q`
+- `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement`
+- `uv run python scripts/dev/validate_project.py docs`
+- `uv run python scripts/dev/validate_project.py quick`

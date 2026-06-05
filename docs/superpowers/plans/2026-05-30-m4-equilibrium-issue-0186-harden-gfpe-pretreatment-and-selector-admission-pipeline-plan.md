@@ -31,7 +31,18 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 - [ ] Pretreatment and selector/admission logic has focused tests for admissible and rejected route states.
 - [ ] Legacy route-specific assumptions are either removed or isolated behind explicit tests.
 - [ ] Capability evidence remains conservative and does not broaden production routes.
-- [ ] Docs and local mirrors identify this as the first ready M4 GFPE implementation issue.
+- [ ] Docs and local mirrors identify this as a ready M4 selector/admission verification issue.
+
+## Current Scope Note
+
+This plan is now a verification and closure slice for the existing
+selector/admission path, not a broad new GFPE implementation. Current code
+already exposes selector request pretreatment, route-shape validation,
+thermodynamic input classification, parameter readiness checks, activation-plan
+validation, and activation-matrix production-certification enforcement. Keep the
+native activation matrix as the admission source of truth; do not admit
+associating, electrolyte, or reactive routes, bypass `NlpProblem`, or expand
+public capability claims without matching executable evidence.
 
 ## Tasks
 
@@ -39,35 +50,35 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 
 **Files:**
 - `packages/epcsaft-equilibrium/**`
-- `packages/epcsaft/tests/**`
-- `tests/native/contracts/**`
-- `tests/workflows/repo/**`
+- `packages/epcsaft-equilibrium/tests/**`
+- `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `docs/superpowers/**`
 
 - [ ] Read the source spec, issue mirror, GitHub issue, and milestone README.
 - [ ] Confirm candidate file ownership and reject unrelated package or milestone scope.
+- [ ] Confirm current selector/admission evidence before adding code.
 - [ ] Select the smallest validation slice that proves the issue behavior.
 
-### Task 2: Implement The Issue Slice
+### Task 2: Verify Or Implement The Narrow Admission Slice
 
 **Files:**
 - `packages/epcsaft-equilibrium/**`
-- `packages/epcsaft/tests/**`
-- `tests/native/contracts/**`
-- `tests/workflows/repo/**`
+- `packages/epcsaft-equilibrium/tests/**`
+- `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `docs/superpowers/**`
 
-- [ ] Write or identify the failing contract/test that expresses the acceptance criteria.
+- [ ] Identify whether existing selector tests cover route-shape rejection, neutral/ionic/associating classification, binary-interaction readiness, and activation certification.
+- [ ] Write a failing package-local selector/admission contract only for a real uncovered gap.
 - [ ] Implement the smallest behavior change that satisfies the issue without fallback paths.
+- [ ] Preserve `activation_matrix.h` as the production-admission source of truth.
 - [ ] Update docs, registries, source manifests, or capability evidence only when behavior changed.
 
 ### Task 3: Validate And Handoff
 
 **Files:**
 - `packages/epcsaft-equilibrium/**`
-- `packages/epcsaft/tests/**`
-- `tests/native/contracts/**`
-- `tests/workflows/repo/**`
+- `packages/epcsaft-equilibrium/tests/**`
+- `tests/native/contracts/test_generalized_equilibrium_registry.py`
 - `docs/superpowers/**`
 
 - [ ] Run the proof oracle commands that apply to the changed files.
@@ -76,6 +87,7 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 
 ## Proof Oracle
 
-- Run focused package-local equilibrium API/native tests for selector/admission.
-- Run native contracts for activation/capability boundaries.
-- Run docs validation.
+- `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`
+- `uv run python run_pytest.py --native-contracts -q`
+- `uv run python scripts/dev/validate_project.py docs`
+- `uv run python scripts/dev/validate_project.py quick`

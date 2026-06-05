@@ -6,15 +6,21 @@ Current scope:
 
 - species: `Methane`, `Ethane`, `Propane`
 - target parameters from the workbook: `m`, `s`, `e`
-- property data basis: saturation pressure and saturated liquid density
+- property data basis: saturation pressure and saturated liquid density under
+  `saturation_density/`
 
 Files:
 
 - `hydrocarbon_basis_workbook_reference.csv`
   - workbook reference targets for `m`, `s`, and `e`
-- `methane_nist_saturation.csv`
-- `ethane_nist_saturation.csv`
-- `propane_nist_saturation.csv`
+- `saturation_density/methane_nist_saturation.csv`
+- `saturation_density/ethane_nist_saturation.csv`
+- `saturation_density/propane_nist_saturation.csv`
+- `saturation_density/water_methanol_nist_saturation.csv`
+  - public NIST Chemistry WebBook saturation-pressure and saturated-liquid
+    density rows for the explicit association toybox
+- `saturation_density/water_methanol_data_request_manifest.csv`
+  - source-request status for the water/methanol public saturation data
 
 Notes:
 

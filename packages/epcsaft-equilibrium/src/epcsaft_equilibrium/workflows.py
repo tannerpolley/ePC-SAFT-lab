@@ -260,6 +260,36 @@ class EquilibriumResult:
         return float(self.phases["vapor"].phase_fraction)
 
     @property
+    def saturation_pressure(self) -> float:
+        """Return the common saturation pressure for single-component VLE."""
+
+        if self.route != "single_component_vle":
+            raise AttributeError("saturation_pressure is available only for single_component_vle.")
+        return self.pressure
+
+    @property
+    def P_sat(self) -> float:
+        """Return the common saturation pressure for single-component VLE."""
+
+        return self.saturation_pressure
+
+    @property
+    def vapor_density(self) -> float:
+        """Return the vapor density for single-component VLE."""
+
+        if self.route != "single_component_vle" or "vapor" not in self.phases:
+            raise AttributeError("vapor_density is available only for single_component_vle.")
+        return float(self.phases["vapor"].density)
+
+    @property
+    def liquid_density(self) -> float:
+        """Return the liquid density for single-component VLE."""
+
+        if self.route != "single_component_vle" or "liquid" not in self.phases:
+            raise AttributeError("liquid_density is available only for single_component_vle.")
+        return float(self.phases["liquid"].density)
+
+    @property
     def route_diagnostics(self) -> RouteDiagnosticsView:
         """Return a typed view over route diagnostics."""
 
@@ -268,7 +298,7 @@ class EquilibriumResult:
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-like result payload."""
 
-        return {
+        payload = {
             "backend": self.backend,
             "problem_kind": self.problem_kind,
             "route": self.route,
@@ -286,6 +316,18 @@ class EquilibriumResult:
             "vapor_fraction": self.vapor_fraction if "vapor" in self.phases else None,
             "diagnostics": _json_like(self.diagnostics),
         }
+        if self.route == "single_component_vle":
+            payload["P_sat"] = self.P_sat
+            payload["vapor_density"] = self.vapor_density
+            payload["liquid_density"] = self.liquid_density
+            payload["saturation_residuals"] = {
+                "pressure_consistency_norm": float(self.diagnostics.get("pressure_consistency_norm", 0.0)),
+                "chemical_potential_consistency_norm": float(
+                    self.diagnostics.get("chemical_potential_consistency_norm", 0.0)
+                ),
+                "ln_fugacity_consistency_norm": float(self.diagnostics.get("ln_fugacity_consistency_norm", 0.0)),
+            }
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -395,12 +437,25 @@ def configure_equilibrium_problem(
         allowed = ", ".join(sorted(_EQUILIBRIUM_ROUTE_SPECS))
         raise InputError(f"Unknown equilibrium route '{route}'. Expected one of: {allowed}.") from exc
 
-    composition_value = {"x": x, "y": y, "z": z}[spec.composition_key]
     provided_compositions = {key for key, value in {"x": x, "y": y, "z": z}.items() if value is not None}
-    if provided_compositions != {spec.composition_key}:
-        expected = spec.composition_key
-        provided = ", ".join(sorted(provided_compositions)) or "none"
-        raise InputError(f"{spec.route_label} requires only composition '{expected}', got {provided}.")
+    if spec.implicit_pure_composition:
+        if provided_compositions:
+            raise InputError(f"{spec.route_label} must not specify x, y, or z.")
+        if int(mixture.ncomp) != 1:
+            raise InputError(f"{spec.route_label} requires exactly one component.")
+        composition = np.ones(1, dtype=float)
+    else:
+        composition_value = {"x": x, "y": y, "z": z}[spec.composition_key]
+        if provided_compositions != {spec.composition_key}:
+            expected = spec.composition_key
+            provided = ", ".join(sorted(provided_compositions)) or "none"
+            raise InputError(f"{spec.route_label} requires only composition '{expected}', got {provided}.")
+        composition = _normalize_feed(
+            composition_value,
+            mixture.ncomp,
+            EquilibriumSolverOptions().min_composition,
+            spec.route_label,
+        )
     if spec.requires_temperature and T is None:
         raise InputError(f"{spec.route_label} requires T.")
     if not spec.requires_temperature and T is not None:
@@ -410,15 +465,9 @@ def configure_equilibrium_problem(
     if not spec.requires_pressure and P is not None:
         raise InputError(f"{spec.route_label} must not specify P.")
 
-    composition = _normalize_feed(
-        composition_value,
-        mixture.ncomp,
-        EquilibriumSolverOptions().min_composition,
-        spec.route_label,
-    )
     _reject_ion_containing_mixture(mixture)
-    if spec.selector_route == "neutral_lle":
-        _reject_associating_mixture(mixture)
+    if spec.selector_route in {"neutral_lle", "single_component_vle"}:
+        _reject_associating_mixture(mixture, spec.route_label)
     temperature = _positive_scalar(T, "T", spec.route_label) if spec.requires_temperature else None
     pressure = _positive_scalar(P, "P", spec.route_label) if spec.requires_pressure else None
     fixed_specs: dict[str, Any] = {spec.composition_key: composition}
@@ -542,7 +591,11 @@ def _native_selector_route(
         P=pressure,
         feed=feed,
         route=route,
-        tolerances=neutral_two_phase_eos_tolerances(pressure, options),
+        tolerances=(
+            selector_route_solver_tolerances(options)
+            if public_route == "single_component_vle"
+            else neutral_two_phase_eos_tolerances(pressure, options)
+        ),
         public_route=public_route,
         problem_kind=problem_kind,
         route_label=route_label,
@@ -584,14 +637,15 @@ def _accepted_native_selector_two_phase_result(
         pressure_tolerance,
         chemical_potential_tolerance,
         phase_distance_tolerance,
+        public_route != "single_component_vle",
     )
     result = neutral_two_phase_payload_to_result(
         result_payload,
         problem_kind=problem_kind,
         phase_labels=native_route_phase_labels(route, route_label),
     )
-    diagnostics = native_route_diagnostics(route)
-    diagnostics.update(result.diagnostics)
+    diagnostics = dict(result.diagnostics)
+    diagnostics.update(native_route_diagnostics(route))
     certification = diagnostics.get("postsolve_certification", {})
     if str(route.get("selector_family", "")) != selector_family:
         raise SolutionError(f"Native selector {route_label} returned an unexpected route family.", diagnostics)
@@ -780,7 +834,7 @@ def _reject_ion_containing_mixture(mixture: Any) -> None:
         raise InputError("Production equilibrium selector routes support only neutral mixtures.")
 
 
-def _reject_associating_mixture(mixture: Any) -> None:
+def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") -> None:
     parameters = mixture.parameters
     assoc_num = np.asarray(parameters.get("assoc_num", []), dtype=int).flatten()
     assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
@@ -793,7 +847,7 @@ def _reject_associating_mixture(mixture: Any) -> None:
         or (vol_a.size > 0 and np.any(np.abs(vol_a) > 0.0))
     )
     if active:
-        raise InputError("Production neutral LLE requires neutral non-associating mixtures.")
+        raise InputError(f"Production {route_label} requires neutral non-associating mixtures.")
 
 
 def _json_like(value: Any) -> Any:

@@ -15,6 +15,7 @@
 #include "equilibrium/blocks/eos_phase_block.h"
 #include "equilibrium/blocks/gibbs_blocks.h"
 #include "equilibrium/blocks/reaction_block.h"
+#include "equilibrium/blocks/saturation_block.h"
 #include "equilibrium/core/activation_matrix.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/second_order.h"
@@ -336,6 +337,34 @@ py::dict eos_phase_block_to_dict(const epcsaft::native::equilibrium_nlp::EosPhas
     out["pressure_jacobian_shape"] = py::make_tuple(result.pressure_jacobian_rows, result.pressure_jacobian_cols);
     out["pressure_jacobian"] = result.pressure_jacobian_row_major;
     out["pressure_density_derivative"] = result.pressure_density_derivative;
+    return out;
+}
+
+py::dict single_component_vle_block_to_dict(
+    const epcsaft::native::equilibrium_nlp::SingleComponentVleBlockResult& result
+) {
+    py::dict out;
+    out["block"] = result.block;
+    out["derivative_backend"] = result.derivative_backend;
+    out["jacobian_backend"] = result.jacobian_backend;
+    out["variable_names"] = result.variable_names;
+    out["constraint_names"] = result.constraint_names;
+    out["temperature"] = result.temperature;
+    out["vapor_density"] = result.vapor_density;
+    out["liquid_density"] = result.liquid_density;
+    out["p_sat"] = result.p_sat;
+    out["vapor_pressure"] = result.vapor_pressure;
+    out["liquid_pressure"] = result.liquid_pressure;
+    out["vapor_reduced_chemical_potential"] = result.vapor_reduced_chemical_potential;
+    out["liquid_reduced_chemical_potential"] = result.liquid_reduced_chemical_potential;
+    out["vapor_pressure_density_derivative"] = result.vapor_pressure_density_derivative;
+    out["liquid_pressure_density_derivative"] = result.liquid_pressure_density_derivative;
+    out["residuals"] = result.residuals;
+    out["jacobian_shape"] = py::make_tuple(result.jacobian_rows, result.jacobian_cols);
+    out["jacobian_row_major"] = result.jacobian_row_major;
+    out["constraint_scaling"] = result.constraint_scaling;
+    out["vapor_phase_block"] = eos_phase_block_to_dict(result.vapor_phase_block);
+    out["liquid_phase_block"] = eos_phase_block_to_dict(result.liquid_phase_block);
     return out;
 }
 
@@ -1687,6 +1716,26 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             volume
         ));
     });
+    m.def("_native_saturation_block", [](
+        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        double temperature,
+        double log_vapor_density,
+        double log_liquid_density,
+        double log_saturation_pressure
+    ) {
+        if (!mixture) {
+            throw ValueError("single-component VLE block requires a native mixture.");
+        }
+        return single_component_vle_block_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_single_component_vle_block(
+                mixture->args(),
+                temperature,
+                log_vapor_density,
+                log_liquid_density,
+                log_saturation_pressure
+            )
+        );
+    });
     m.def("_native_eos_phase_system", [](
         const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
         double temperature,
@@ -1908,7 +1957,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         double material_tolerance,
         double pressure_tolerance,
         double chemical_potential_tolerance,
-        double phase_distance_tolerance
+        double phase_distance_tolerance,
+        bool phase_distance_constraint
     ) {
         if (!mixture) {
             throw ValueError("Neutral two-phase EOS result builder requires a native mixture.");
@@ -1924,8 +1974,21 @@ void register_equilibrium_bindings(pybind11::module_& m) {
                 material_tolerance,
                 pressure_tolerance,
                 chemical_potential_tolerance,
-                phase_distance_tolerance
+                phase_distance_tolerance,
+                phase_distance_constraint
             )
         );
-    });
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("phase_amounts"),
+        py::arg("volumes"),
+        py::arg("feed_amounts"),
+        py::arg("material_tolerance"),
+        py::arg("pressure_tolerance"),
+        py::arg("chemical_potential_tolerance"),
+        py::arg("phase_distance_tolerance"),
+        py::arg("phase_distance_constraint") = true
+    );
 }

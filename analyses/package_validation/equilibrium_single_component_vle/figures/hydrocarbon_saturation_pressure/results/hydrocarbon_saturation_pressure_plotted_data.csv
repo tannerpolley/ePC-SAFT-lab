@@ -1,0 +1,193 @@
+species,T_K,quantity,series_role,value
+Ethane,100.0,pressure,NIST reference,11.080787
+Ethane,100.0,pressure,single_component_vle route,11.123827459198376
+Ethane,100.0,absolute relative error,absolute relative error,0.3884242084824536
+Ethane,100.0,liquid density,NIST reference,640.94852
+Ethane,100.0,liquid density,single_component_vle route,645.7410533999873
+Ethane,100.0,liquid density absolute relative error,liquid density absolute relative error,0.7477251683157473
+Ethane,120.0,pressure,NIST reference,352.30167
+Ethane,120.0,pressure,single_component_vle route,351.9416749256011
+Ethane,120.0,absolute relative error,absolute relative error,0.1021837547346595
+Ethane,120.0,liquid density,NIST reference,618.94997
+Ethane,120.0,liquid density,single_component_vle route,622.0818191987197
+Ethane,120.0,liquid density absolute relative error,liquid density absolute relative error,0.505993917201368
+Ethane,140.0,pressure,NIST reference,3813.5564
+Ethane,140.0,pressure,single_component_vle route,3814.358999595766
+Ethane,140.0,absolute relative error,absolute relative error,0.021045961081524
+Ethane,140.0,liquid density,NIST reference,596.58156
+Ethane,140.0,liquid density,single_component_vle route,598.8924088082164
+Ethane,140.0,liquid density absolute relative error,liquid density absolute relative error,0.3873483465054478
+Ethane,160.0,pressure,NIST reference,21405.224
+Ethane,160.0,pressure,single_component_vle route,21443.587057903183
+Ethane,160.0,absolute relative error,absolute relative error,0.1792228752344993
+Ethane,160.0,liquid density,NIST reference,573.55144
+Ethane,160.0,liquid density,single_component_vle route,575.8127420383665
+Ethane,160.0,liquid density absolute relative error,liquid density absolute relative error,0.3942631611850857
+Ethane,180.0,pressure,NIST reference,78638.137
+Ethane,180.0,pressure,single_component_vle route,78838.27560436941
+Ethane,180.0,absolute relative error,absolute relative error,0.2545057805342049
+Ethane,180.0,liquid density,NIST reference,549.50874
+Ethane,180.0,liquid density,single_component_vle route,552.2582878981515
+Ethane,180.0,liquid density absolute relative error,liquid density absolute relative error,0.5003647254366674
+Ethane,200.0,pressure,NIST reference,217232.94
+Ethane,200.0,pressure,single_component_vle route,217800.6106852539
+Ethane,200.0,absolute relative error,absolute relative error,0.2613188797490343
+Ethane,200.0,liquid density,NIST reference,523.97698
+Ethane,200.0,liquid density,single_component_vle route,527.4654178194406
+Ethane,200.0,liquid density absolute relative error,liquid density absolute relative error,0.6657616560637082
+Ethane,220.0,pressure,NIST reference,492046.39
+Ethane,220.0,pressure,single_component_vle route,493283.7233185496
+Ethane,220.0,absolute relative error,absolute relative error,0.2514668014431642
+Ethane,220.0,liquid density,NIST reference,496.27145
+Ethane,220.0,liquid density,single_component_vle route,500.41506187799934
+Ethane,220.0,liquid density absolute relative error,liquid density absolute relative error,0.8349486713368902
+Ethane,240.0,pressure,NIST reference,966787.79
+Ethane,240.0,pressure,single_component_vle route,969152.1055945412
+Ethane,240.0,absolute relative error,absolute relative error,0.2445537292667944
+Ethane,240.0,liquid density,NIST reference,465.30887
+Ethane,240.0,liquid density,single_component_vle route,469.5944480057629
+Ethane,240.0,liquid density absolute relative error,liquid density absolute relative error,0.9210179048946197
+Ethane,260.0,pressure,NIST reference,1711835.4
+Ethane,260.0,pressure,single_component_vle route,1715341.9767379232
+Ethane,260.0,absolute relative error,absolute relative error,0.2048431022003234
+Ethane,260.0,liquid density,NIST reference,429.07617
+Ethane,260.0,liquid density,single_component_vle route,432.369032014358
+Ethane,260.0,liquid density absolute relative error,liquid density absolute relative error,0.7674306439245925
+Ethane,280.0,pressure,NIST reference,2806735.8
+Ethane,280.0,pressure,single_component_vle route,2807102.224374943
+Ethane,280.0,absolute relative error,absolute relative error,0.0130551787219564
+Ethane,280.0,liquid density,NIST reference,382.72712
+Ethane,280.0,liquid density,single_component_vle route,382.9489182582049
+Ethane,280.0,liquid density absolute relative error,liquid density absolute relative error,0.0579520620866634
+Methane,100.0,pressure,NIST reference,34375.892
+Methane,100.0,pressure,single_component_vle route,34510.09616184715
+Methane,100.0,absolute relative error,absolute relative error,0.3904019766153224
+Methane,100.0,liquid density,NIST reference,438.88524
+Methane,100.0,liquid density,single_component_vle route,438.1879233381404
+Methane,100.0,liquid density absolute relative error,liquid density absolute relative error,0.1588835983319113
+Methane,110.0,pressure,NIST reference,88130.038
+Methane,110.0,pressure,single_component_vle route,88054.73596156266
+Methane,110.0,absolute relative error,absolute relative error,0.0854442368870164
+Methane,110.0,liquid density,NIST reference,424.77725
+Methane,110.0,liquid density,single_component_vle route,424.6817229367955
+Methane,110.0,liquid density absolute relative error,liquid density absolute relative error,0.0224887427950733
+Methane,120.0,pressure,NIST reference,191430.08
+Methane,120.0,pressure,single_component_vle route,190916.34992460572
+Methane,120.0,absolute relative error,absolute relative error,0.2683643424242627
+Methane,120.0,liquid density,NIST reference,409.90234
+Methane,120.0,liquid density,single_component_vle route,410.5641374531318
+Methane,120.0,liquid density absolute relative error,liquid density absolute relative error,0.1614524701498019
+Methane,130.0,pressure,NIST reference,367319.94
+Methane,130.0,pressure,single_component_vle route,366352.1515254642
+Methane,130.0,absolute relative error,absolute relative error,0.2634728935586242
+Methane,130.0,liquid density,NIST reference,394.03734
+Methane,130.0,liquid density,single_component_vle route,395.5053969140309
+Methane,130.0,liquid density absolute relative error,liquid density absolute relative error,0.3725679688201548
+Methane,140.0,pressure,NIST reference,641181.43
+Methane,140.0,pressure,single_component_vle route,640305.7570944708
+Methane,140.0,absolute relative error,absolute relative error,0.1365717821131012
+Methane,140.0,liquid density,NIST reference,376.86505
+Methane,140.0,liquid density,single_component_vle route,379.0356368496571
+Methane,140.0,liquid density absolute relative error,liquid density absolute relative error,0.5759586487675434
+Methane,150.0,pressure,NIST reference,1039961.3
+Methane,150.0,pressure,single_component_vle route,1040600.380486702
+Methane,150.0,absolute relative error,absolute relative error,0.0614523335341453
+Methane,150.0,liquid density,NIST reference,357.89846
+Methane,150.0,liquid density,single_component_vle route,360.4352830277913
+Methane,150.0,liquid density absolute relative error,liquid density absolute relative error,0.7088108252243628
+Methane,160.0,pressure,NIST reference,1592078.0
+Methane,160.0,pressure,single_component_vle route,1596485.7620885826
+Methane,160.0,absolute relative error,absolute relative error,0.2768559133775241
+Methane,160.0,liquid density,NIST reference,336.31495
+Methane,160.0,liquid density,single_component_vle route,338.4799240605388
+Methane,160.0,liquid density absolute relative error,liquid density absolute relative error,0.6437341130802487
+Methane,170.0,pressure,NIST reference,2328348.8
+Methane,170.0,pressure,single_component_vle route,2338304.214069875
+Methane,170.0,absolute relative error,absolute relative error,0.4275739987872583
+Methane,170.0,liquid density,NIST reference,310.50203
+Methane,170.0,liquid density,single_component_vle route,310.74084550865257
+Methane,170.0,liquid density absolute relative error,liquid density absolute relative error,0.0769127044523923
+Methane,180.0,pressure,NIST reference,3285180.7
+Methane,180.0,pressure,single_component_vle route,3296149.852656765
+Methane,180.0,absolute relative error,absolute relative error,0.3338980000937154
+Methane,180.0,liquid density,NIST reference,276.2285
+Methane,180.0,liquid density,single_component_vle route,271.0342836522084
+Methane,180.0,liquid density absolute relative error,liquid density absolute relative error,1.8804056597315664
+Propane,100.0,pressure,NIST reference,0.025272318
+Propane,100.0,pressure,single_component_vle route,0.0243155769194935
+Propane,100.0,absolute relative error,absolute relative error,3.785727452885165
+Propane,100.0,liquid density,NIST reference,718.14791
+Propane,100.0,liquid density,single_component_vle route,722.6593136873616
+Propane,100.0,liquid density absolute relative error,liquid density absolute relative error,0.6281997934606008
+Propane,120.0,pressure,NIST reference,2.9637555
+Propane,120.0,pressure,single_component_vle route,2.8715783640269086
+Propane,120.0,absolute relative error,absolute relative error,3.11014643323619
+Propane,120.0,liquid density,NIST reference,697.7925
+Propane,120.0,liquid density,single_component_vle route,699.1007808570505
+Propane,120.0,liquid density absolute relative error,liquid density absolute relative error,0.1874885237445912
+Propane,140.0,pressure,NIST reference,78.992466
+Propane,140.0,pressure,single_component_vle route,77.43201230263668
+Propane,140.0,absolute relative error,absolute relative error,1.9754462373200437
+Propane,140.0,liquid density,NIST reference,677.58616
+Propane,140.0,liquid density,single_component_vle route,676.5399223573953
+Propane,140.0,liquid density absolute relative error,liquid density absolute relative error,0.1544065838954912
+Propane,160.0,pressure,NIST reference,850.21946
+Propane,160.0,pressure,single_component_vle route,841.5393991948623
+Propane,160.0,absolute relative error,absolute relative error,1.020920034591741
+Propane,160.0,liquid density,NIST reference,657.27154
+Propane,160.0,liquid density,single_component_vle route,654.8419670415786
+Propane,160.0,liquid density absolute relative error,liquid density absolute relative error,0.369645239533925
+Propane,180.0,pressure,NIST reference,5067.8306
+Propane,180.0,pressure,single_component_vle route,5047.838053535098
+Propane,180.0,absolute relative error,absolute relative error,0.3944991070716188
+Propane,180.0,liquid density,NIST reference,636.61907
+Propane,180.0,liquid density,single_component_vle route,633.6743158745287
+Propane,180.0,liquid density absolute relative error,liquid density absolute relative error,0.4625614066935292
+Propane,200.0,pressure,NIST reference,20192.015
+Propane,200.0,pressure,single_component_vle route,20180.227781366186
+Propane,200.0,absolute relative error,absolute relative error,0.0583756432124956
+Propane,200.0,liquid density,NIST reference,615.42056
+Propane,200.0,liquid density,single_component_vle route,612.6220572631864
+Propane,200.0,liquid density absolute relative error,liquid density absolute relative error,0.4547301339450844
+Propane,220.0,pressure,NIST reference,60574.404
+Propane,220.0,pressure,single_component_vle route,60621.25695938956
+Propane,220.0,absolute relative error,absolute relative error,0.0773477843703724
+Propane,220.0,liquid density,NIST reference,593.44658
+Propane,220.0,liquid density,single_component_vle route,591.2203666419402
+Propane,220.0,liquid density absolute relative error,liquid density absolute relative error,0.3751328987454598
+Propane,240.0,pressure,NIST reference,147999.51
+Propane,240.0,pressure,single_component_vle route,148154.76232927362
+Propane,240.0,absolute relative error,absolute relative error,0.1049005697881128
+Propane,240.0,liquid density,NIST reference,570.39372
+Propane,240.0,liquid density,single_component_vle route,568.9456218726532
+Propane,240.0,liquid density absolute relative error,liquid density absolute relative error,0.2538769408868734
+Propane,260.0,pressure,NIST reference,310683.49
+Propane,260.0,pressure,single_component_vle route,310977.7566314936
+Propane,260.0,absolute relative error,absolute relative error,0.0947158896321255
+Propane,260.0,liquid density,NIST reference,545.83888
+Propane,260.0,liquid density,single_component_vle route,545.1725397485685
+Propane,260.0,liquid density absolute relative error,liquid density absolute relative error,0.1220763627961985
+Propane,280.0,pressure,NIST reference,581684.88
+Propane,280.0,pressure,single_component_vle route,582198.7248393778
+Propane,280.0,absolute relative error,absolute relative error,0.0883373209525051
+Propane,280.0,liquid density,NIST reference,519.17461
+Propane,280.0,liquid density,single_component_vle route,519.0842494425864
+Propane,280.0,liquid density absolute relative error,liquid density absolute relative error,0.0174046564822664
+Propane,300.0,pressure,NIST reference,997681.16
+Propane,300.0,pressure,single_component_vle route,998660.5078024584
+Propane,300.0,absolute relative error,absolute relative error,0.0981624031527598
+Propane,300.0,liquid density,NIST reference,489.44738
+Propane,300.0,liquid density,single_component_vle route,489.48777074219606
+Propane,300.0,liquid density absolute relative error,liquid density absolute relative error,0.0082523155392215
+Propane,320.0,pressure,NIST reference,1598854.6
+Propane,320.0,pressure,single_component_vle route,1600535.1601854132
+Propane,320.0,absolute relative error,absolute relative error,0.1051102573938311
+Propane,320.0,liquid density,NIST reference,454.93644
+Propane,320.0,liquid density,single_component_vle route,454.3869410275013
+Propane,320.0,liquid density absolute relative error,liquid density absolute relative error,0.1207858778027816
+Propane,340.0,pressure,NIST reference,2431048.2
+Propane,340.0,pressure,single_component_vle route,2431975.0226586503
+Propane,340.0,absolute relative error,absolute relative error,0.0381244048822278
+Propane,340.0,liquid density,NIST reference,411.77408
+Propane,340.0,liquid density,single_component_vle route,409.7530616833226
+Propane,340.0,liquid density absolute relative error,liquid density absolute relative error,0.4908075604655449

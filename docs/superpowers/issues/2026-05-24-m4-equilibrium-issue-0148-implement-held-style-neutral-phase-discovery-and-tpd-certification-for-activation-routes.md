@@ -38,6 +38,15 @@ Implement the Stage 1 equilibrium-doctrine prerequisite: HELD-style neutral phas
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
 
+## Current Scope Note
+
+The current package has Stage 9 neutral phase-discovery evidence for
+deterministic screening, continuous TPD, HELD Stage I diagnostics, the current
+finite-candidate Stage II bound audit, and current-route Stage III Ipopt
+refinement. Resolving this issue should verify and close that evidence without
+claiming full generalized HELD, adding public routes, or broadening activation
+matrix admission beyond the existing neutral flash/LLE route families.
+
 ## Acceptance Criteria
 
 - [ ] A neutral TPD evaluator exists with deterministic tests.
@@ -52,10 +61,11 @@ Implement the Stage 1 equilibrium-doctrine prerequisite: HELD-style neutral phas
 
 ## Proof Oracle
 
-- uv run python run_pytest.py tests/native/equilibrium/diagnostics/test_selector_core_contracts.py tests/native/contracts/test_equilibrium_activation_capabilities.py -q
-- uv run python run_pytest.py --native-contracts -q
-- uv run python scripts/dev/validate_project.py docs
-- uv run python scripts/dev/validate_project.py quick
+- `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`
+- `uv run python run_pytest.py --native-contracts -q`
+- `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement`
+- `uv run python scripts/dev/validate_project.py docs`
+- `uv run python scripts/dev/validate_project.py quick`
 
 ## Non-Goals And Boundaries
 

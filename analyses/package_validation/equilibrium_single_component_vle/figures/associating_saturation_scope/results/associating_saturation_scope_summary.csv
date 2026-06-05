@@ -1,0 +1,3 @@
+component,rows,min_temperature_K,max_temperature_K,min_p_sat_Pa,max_p_sat_Pa,min_liquid_density_mol_m3,max_liquid_density_mol_m3,route_status
+methanol,36,293.81,489.97,13506.0,5469900.0,15528.0,24665.0,input_rejected_associating_component
+water,36,347.39,599.84,37385.0,12319000.0,36072.0,54136.0,input_rejected_associating_component

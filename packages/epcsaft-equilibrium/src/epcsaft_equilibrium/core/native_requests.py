@@ -25,6 +25,7 @@ class NativeSelectorRouteSpec:
     route_label: str
     selector_family: str
     phase_labels: tuple[str, ...] = ("liquid", "vapor")
+    implicit_pure_composition: bool = False
 
 
 EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = {
@@ -100,6 +101,19 @@ EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = {
         route_label="lle",
         selector_family="neutral_lle",
         phase_labels=("liquid1", "liquid2"),
+    ),
+    "single_component_vle": NativeSelectorRouteSpec(
+        selector_route="single_component_vle",
+        composition_key="z",
+        composition_role="pure",
+        requires_temperature=True,
+        requires_pressure=False,
+        knowns=("T",),
+        unknowns=("P_sat", "rho_vapor", "rho_liquid"),
+        problem_kind="single_component_vle",
+        route_label="single_component_vle",
+        selector_family="single_component_vle",
+        implicit_pure_composition=True,
     ),
 }
 

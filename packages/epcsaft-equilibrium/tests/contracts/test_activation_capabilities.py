@@ -15,6 +15,7 @@ EXPECTED_PUBLIC_ROUTE_FAMILIES = {
     "dew_temperature": "bubble_dew_derived_routes",
     "flash": "neutral_tp_flash",
     "lle": "neutral_lle",
+    "single_component_vle": "single_component_vle",
 }
 
 
@@ -53,6 +54,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert activation["production_families"] == [
         "neutral_tp_flash",
         "neutral_lle",
+        "single_component_vle",
         "bubble_dew_derived_routes",
     ]
     assert activation["declared_not_exposed_families"] == [
@@ -65,6 +67,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["production_families"] == [
         "neutral_tp_flash",
         "neutral_lle",
+        "single_component_vle",
         "bubble_dew_derived_routes",
     ]
     assert public_route_map == EXPECTED_PUBLIC_ROUTE_FAMILIES
@@ -76,11 +79,13 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "dew_temperature",
         "flash",
         "lle",
+        "single_component_vle",
     ]
     assert activation["public_route_family_map"] == EXPECTED_PUBLIC_ROUTE_FAMILIES
     assert activation["public_routes_by_family"] == {
         "neutral_tp_flash": ["flash"],
         "neutral_lle": ["lle"],
+        "single_component_vle": ["single_component_vle"],
         "bubble_dew_derived_routes": [
             "bubble_pressure",
             "bubble_temperature",
@@ -111,12 +116,23 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["neutral_lle"]["entrypoint"] == "Equilibrium(mixture, route='lle', T=..., P=..., z=...).solve()"
     assert capabilities["neutral_lle"]["public_routes"] == ["lle"]
     assert capabilities["neutral_lle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
+    assert (
+        capabilities["single_component_vle"]["entrypoint"]
+        == "Equilibrium(mixture, route='single_component_vle', T=...).solve()"
+    )
+    assert capabilities["single_component_vle"]["public_routes"] == ["single_component_vle"]
+    assert (
+        capabilities["single_component_vle"]["input_scope"]
+        == "single neutral non-reactive non-electrolyte non-associating component"
+    )
+    assert capabilities["single_component_vle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["problem_objects"]["available"] is True
     assert capabilities["problem_objects"]["entrypoint"] == "Equilibrium(mixture, route=..., ...)"
     assert {row["quantity"] for row in capabilities["route_derivative_evidence"]["rows"]} == {
         "bubble_dew_derived_routes",
         "neutral_tp_flash",
         "neutral_lle",
+        "single_component_vle",
     }
 
     deleted_route_keys = {

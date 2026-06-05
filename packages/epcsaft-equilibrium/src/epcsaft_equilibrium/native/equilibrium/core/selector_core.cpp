@@ -42,6 +42,9 @@ std::string selector_family_for_route(const std::string& route) {
     if (route == "neutral_lle") {
         return "neutral_lle";
     }
+    if (route == "single_component_vle") {
+        return "single_component_vle";
+    }
     throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 
@@ -167,7 +170,8 @@ std::string temperature_role_for_route(const SelectorRouteRequest& request) {
 }
 
 std::string pressure_role_for_route(const SelectorRouteRequest& request) {
-    if (request.route == "bubble_pressure" || request.route == "dew_pressure") {
+    if (request.route == "bubble_pressure" || request.route == "dew_pressure"
+        || request.route == "single_component_vle") {
         return "solved_boundary_pressure";
     }
     return request.has_pressure ? "fixed_pressure" : "not_specified";
@@ -338,6 +342,17 @@ void require_role(const SelectorRouteRequest& request, const std::string& expect
 }
 
 void require_request_shape(const add_args& args, const SelectorRouteRequest& request) {
+    if (request.route == "single_component_vle") {
+        if (args.m.size() != 1) {
+            throw ValueError("selector-ineligible: single_component_vle requires exactly one component.");
+        }
+        require_composition(args, request.composition);
+        require_present(request.has_temperature, "temperature", request.route);
+        require_absent(request.has_pressure, "pressure", request.route);
+        require_positive_finite(request.temperature, "temperature");
+        require_role(request, "pure");
+        return;
+    }
     require_composition(args, request.composition);
     if (request.route == "bubble_pressure") {
         require_present(request.has_temperature, "temperature", request.route);
@@ -471,6 +486,12 @@ epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract evaluate_route_c
             layout
         );
     }
+    if (request.route == "single_component_vle") {
+        return epcsaft::native::equilibrium_nlp::evaluate_neutral_single_component_vle_nlp_contract(
+            args,
+            request.temperature
+        );
+    }
     throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 
@@ -550,6 +571,17 @@ epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult solve_route(
             request.temperature,
             request.pressure,
             request.composition,
+            options,
+            phase_total_tolerance,
+            pressure_tolerance,
+            chemical_potential_tolerance,
+            phase_distance_tolerance
+        );
+    }
+    if (request.route == "single_component_vle") {
+        return epcsaft::native::equilibrium_nlp::solve_neutral_single_component_vle_route(
+            args,
+            request.temperature,
             options,
             phase_total_tolerance,
             pressure_tolerance,

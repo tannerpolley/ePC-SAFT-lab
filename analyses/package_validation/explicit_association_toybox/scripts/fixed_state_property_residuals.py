@@ -10,7 +10,9 @@ from .paper_systems import load_provider_property_cases
 from .toy_property_eos import evaluate_toy_property_coupling
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SOURCE = ANALYSIS_ROOT / "shared" / "source" / "public_saturation_properties.csv"
+REPO_ROOT = ANALYSIS_ROOT.parents[2]
+REFERENCE_SOURCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component" / "saturation_density"
+DEFAULT_SOURCE = REFERENCE_SOURCE_DIR / "water_methanol_nist_saturation.csv"
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "property_residuals" / "output" / "property_residuals.csv"
 DEFAULT_CASES = ANALYSIS_ROOT / "config" / "paper_systems.yaml"
 GAS_CONSTANT = 8.31446261815324
@@ -22,7 +24,8 @@ ProviderEvaluator = Callable[[dict[str, object], dict[str, object]], dict[str, f
 def load_public_saturation_rows(path: Path = DEFAULT_SOURCE) -> list[dict[str, object]]:
     if not path.exists():
         raise FileNotFoundError(
-            "shared/source/public_saturation_properties.csv is required before fixed-state residual generation: "
+            "data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv "
+            "is required before fixed-state residual generation: "
             f"{path}"
         )
     with path.open("r", encoding="utf-8", newline="") as handle:

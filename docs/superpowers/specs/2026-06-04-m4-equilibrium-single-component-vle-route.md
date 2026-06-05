@@ -1,9 +1,9 @@
 # Single-Component VLE Route For Equilibrium Extension
 
 Milestone: `M4 - Equilibrium`
-Issue: `none`
-Status: `draft`
-Last synced: `2026-06-04`
+Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/228`
+Status: `open`
+Last synced: `2026-06-05`
 
 ## Summary
 
@@ -80,6 +80,16 @@ mu(T, rho_v) - mu(T, rho_l) = 0
 The implementation should reuse provider EOS/property calls and derivative
 bundles, while equilibrium owns objective/constraint assembly, scaling,
 initialization, failure diagnostics, and route result formatting.
+
+## Current Implementation Note
+
+The production branch implements the residual block as `saturation_block.*` and
+uses the existing derived pressure-route substrate in `bubble_dew.cpp` for the
+`single_component_vle` route instead of adding a one-route source file. This is
+acceptable as long as route metadata, activation-matrix admission, exact
+derivative evidence, and public result payloads stay specific to
+`single_component_vle`. The first production scope is a single neutral,
+non-reactive, non-electrolyte, non-associating component.
 
 ## Package Boundary
 

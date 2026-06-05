@@ -213,6 +213,32 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
     candidate_set_complete = (
         bool(stability_payload.get("candidate_set_complete", False)) if stability_payload is not None else False
     )
+    raw_stability_certificate = diagnostics.get("stability_certificate", "")
+    if isinstance(raw_stability_certificate, Mapping):
+        certificate_status = str(raw_stability_certificate.get("status", diagnostics.get("phase_set_status", "")))
+        local_postsolve_only = (
+            str(raw_stability_certificate.get("method", "")) == "postsolve_local_only"
+            and (
+                certificate_status == "not_required"
+                or bool(diagnostics.get("stability_checked", True)) is False
+            )
+        )
+    else:
+        local_postsolve_only = (
+            str(raw_stability_certificate) == "postsolve_local_only"
+            and str(diagnostics.get("phase_set_status", "")) == "not_required"
+        )
+    reported_stability_checked = False if local_postsolve_only else stability_checked
+    reported_stability_accepted = (
+        bool(diagnostics.get("stability_accepted", stability_accepted))
+        if local_postsolve_only
+        else stability_accepted
+    )
+    reported_candidate_set_complete = (
+        bool(diagnostics.get("candidate_completeness_accepted", candidate_set_complete))
+        if local_postsolve_only
+        else candidate_set_complete
+    )
     failure_reason = str(
         diagnostics.get(
             "failure_reason",
@@ -224,6 +250,8 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
         status = str(diagnostics.get("route_status", "route_rejected"))
     elif not postsolve_accepted:
         status = "postsolve_rejected"
+    elif local_postsolve_only:
+        status = str(diagnostics.get("route_status", "accepted"))
     elif not stability_checked:
         status = "optimizer_converged_uncertified"
     elif not stability_accepted:
@@ -236,16 +264,14 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
     out = {
         "accepted": route_accepted
         and postsolve_accepted
-        and stability_checked
-        and stability_accepted
-        and candidate_set_complete,
+        and (local_postsolve_only or (stability_checked and stability_accepted and candidate_set_complete)),
         "status": status,
         "route_accepted": route_accepted,
         "postsolve_accepted": postsolve_accepted,
         "solver_accepted": solver_accepted,
-        "stability_checked": stability_checked,
-        "stability_accepted": stability_accepted,
-        "candidate_set_complete": candidate_set_complete,
+        "stability_checked": reported_stability_checked,
+        "stability_accepted": reported_stability_accepted,
+        "candidate_set_complete": reported_candidate_set_complete,
         "stability_source": stability_source,
         "failure_reason": "" if status in {"accepted", "production_accepted"} else failure_reason,
         "active_residuals_reported": bool(diagnostics.get("residual_families"))

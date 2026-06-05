@@ -120,6 +120,7 @@ def test_runtime_capabilities_are_separable_by_future_package_owner() -> None:
         "dew_temperature",
         "flash",
         "lle",
+        "single_component_vle",
     ]
 
     regression_capabilities = epcsaft_regression.capabilities()

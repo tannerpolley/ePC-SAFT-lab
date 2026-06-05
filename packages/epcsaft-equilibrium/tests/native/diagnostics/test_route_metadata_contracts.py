@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import pytest
+import numpy as np
+from epcsaft.state.native_adapter import ePCSAFTMixture
 
 from epcsaft_equilibrium._native import extension_native_core
 
@@ -118,3 +120,51 @@ def test_selector_contract_declares_neutral_lle_metadata_without_solving() -> No
     ]
     assert payload["activation_plan"]["phase_keys"] == ["liquid1", "liquid2"]
     assert payload["activation_plan"]["phase_kinds"] == ["liquid", "liquid"]
+
+
+def test_selector_contract_declares_single_component_vle_shared_pressure_route_metadata() -> None:
+    mix = ePCSAFTMixture.from_params(
+        {
+            "m": np.asarray([1.6069]),
+            "s": np.asarray([3.5206]),
+            "e": np.asarray([191.42]),
+        },
+        species=["Ethane"],
+    )
+
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "single_component_vle",
+            "temperature": 233.15,
+            "composition": [1.0],
+            "composition_role": "pure",
+        },
+    )
+
+    assert payload["selector_family"] == "single_component_vle"
+    assert payload["route"] == "single_component_vle"
+    assert payload["composition_role"] == "pure"
+    assert payload["specified_temperature"] is True
+    assert payload["specified_pressure"] is False
+    assert payload["problem_name"] == "single_component_vle_eos"
+    assert payload["variable_model"] == "phase_species_amounts_plus_phase_volume_plus_route_scalar"
+    assert payload["density_backend"] == "explicit_phase_volume_pressure_constraint"
+    assert payload["exact_derivatives_required"] is True
+    assert payload["certification_required"] is True
+    assert payload["activation"]["stability_prelayer"] == "postsolve_local_only"
+    assert payload["activation"]["split_variables"] == "on"
+    assert payload["residual_families"] == [
+        "fixed_composition",
+        "phase_amount_total",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_distance",
+    ]
+    assert payload["constraint_families"] == [
+        "fixed_composition",
+        "phase_amount_total",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_volume_gap",
+    ]

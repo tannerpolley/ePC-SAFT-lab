@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-06-04-m4-equilibrium-single-component-
 source_plan: "docs/superpowers/plans/2026-06-04-m4-equilibrium-single-component-vle-route-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0228-add-single-component-vle-route-to-equilibrium-extension
-last_synced: "2026-06-04"
+last_synced: "2026-06-05"
 ---
 
 # Add single-component VLE route to equilibrium extension
@@ -50,6 +50,17 @@ Add a production-owned single-component VLE route in `epcsaft-equilibrium`.
 The provider package continues to own EOS state/property evaluation, while the
 equilibrium extension owns coexistence route assembly, Ipopt/NLP discipline,
 result payloads, diagnostics, and failure policy.
+
+## Current Implementation Note
+
+The branch implements the native residual block as
+`packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/saturation_block.*`
+and wires the production route through the existing derived pressure-route
+substrate in
+`packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp`.
+The public route remains `single_component_vle`; association remains rejected
+until exact association sensitivities or lifted association-site variables are
+covered by a separate M4 issue.
 
 ## Acceptance Criteria
 

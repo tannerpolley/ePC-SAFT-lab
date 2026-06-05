@@ -34,6 +34,11 @@ EXCLUDED_PREFIXES = (
     "docs/superpowers/specs/2026-06-04-m8-python-toybox-",
 )
 EXCLUDED_PATHS: set[str] = set()
+PYTHON_TOYBOX_PREFIX = "analyses/package_validation/explicit_association_toybox/"
+PYTHON_TOYBOX_M8_DOC_PREFIXES = (
+    "docs/superpowers/plans/2026-06-04-m8-python-toybox-",
+    "docs/superpowers/specs/2026-06-04-m8-python-toybox-",
+)
 
 
 def _tracked_files() -> list[Path]:
@@ -164,6 +169,39 @@ def _blocked_terms() -> tuple[str, ...]:
         fiftieth,
         fifty_first,
     )
+
+
+def _toybox_derivative_baseline_terms() -> tuple[str, ...]:
+    return (
+        "finite" + "_" + "difference",
+        "finite" + "-" + "difference",
+        "finite" + " " + "difference",
+        "numerical" + " derivative",
+        "numeric" + " derivative",
+        "numerical" + "_" + "derivative",
+        "numeric" + "_" + "derivative",
+        "numerical" + " jacobian",
+        "numeric" + " jacobian",
+        "numerical" + "_" + "jacobian",
+        "numeric" + "_" + "jacobian",
+        "perturbation" + "_" + "derivative",
+        "perturbation" + " derivative",
+        "perturbation" + "-" + "derivative",
+        "perturbation" + " jacobian",
+        "perturbation" + "-" + "jacobian",
+        "perturbation" + " differencing",
+        "numeric" + " differencing",
+        "numerical" + " differencing",
+        "numeric" + " differentiation",
+        "numerical" + " differentiation",
+        "numerical" + "-" + "differentiation",
+    )
+
+
+def _path_allowed_terms(rel: str) -> tuple[str, ...]:
+    if rel.startswith(PYTHON_TOYBOX_PREFIX) or any(rel.startswith(prefix) for prefix in PYTHON_TOYBOX_M8_DOC_PREFIXES):
+        return _toybox_derivative_baseline_terms()
+    return ()
 
 
 def _source_blocked_terms(rel: str) -> tuple[str, ...]:
@@ -321,7 +359,8 @@ def main() -> int:
     for path in _tracked_files():
         rel = path.relative_to(REPO_ROOT).as_posix()
         text = path.read_text(encoding="utf-8", errors="ignore").lower()
-        path_terms = terms + _source_blocked_terms(rel)
+        allowed_terms = set(_path_allowed_terms(rel))
+        path_terms = tuple(term for term in terms + _source_blocked_terms(rel) if term not in allowed_terms)
         for line_number, line in enumerate(text.splitlines(), start=1):
             if any(term in line for term in path_terms):
                 matches.append(f"{rel}:{line_number}: blocked solver/derivative gate term")

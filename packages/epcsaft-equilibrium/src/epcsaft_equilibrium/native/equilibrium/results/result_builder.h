@@ -82,7 +82,8 @@ NeutralTwoPhaseEosResultPayload build_neutral_two_phase_eos_result(
     double material_tolerance,
     double pressure_tolerance,
     double chemical_potential_tolerance,
-    double phase_distance_tolerance
+    double phase_distance_tolerance,
+    bool phase_distance_constraint = true
 );
 
 }  // namespace epcsaft::native::equilibrium_nlp

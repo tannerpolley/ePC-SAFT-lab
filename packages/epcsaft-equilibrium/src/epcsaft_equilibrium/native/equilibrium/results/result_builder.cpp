@@ -443,7 +443,8 @@ NeutralTwoPhaseEosResultPayload build_neutral_two_phase_eos_result(
     double material_tolerance,
     double pressure_tolerance,
     double chemical_potential_tolerance,
-    double phase_distance_tolerance
+    double phase_distance_tolerance,
+    bool phase_distance_constraint
 ) {
     NeutralTwoPhaseEosPostsolve postsolve = evaluate_neutral_two_phase_eos_postsolve(
         args,
@@ -455,7 +456,13 @@ NeutralTwoPhaseEosResultPayload build_neutral_two_phase_eos_result(
         material_tolerance,
         pressure_tolerance,
         chemical_potential_tolerance,
-        phase_distance_tolerance
+        phase_distance_tolerance,
+        {},
+        phase_distance_constraint,
+        false,
+        {},
+        false,
+        phase_distance_constraint
     );
     NeutralTwoPhaseEosResultPayload out;
     out.accepted = postsolve.accepted;
