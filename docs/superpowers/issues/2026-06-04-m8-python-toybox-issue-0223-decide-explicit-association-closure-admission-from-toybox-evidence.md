@@ -52,6 +52,13 @@ narrow M3 provider-admission issue. The packet must compare the same fixed
 Picard policy grid against exact implicit mass-action using relative errors,
 end-to-end simulation timing, solver/root status, and readable retained plots.
 
+Final retained outputs:
+
+- `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.csv`
+- `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report_plotted_data.csv`
+- `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.png`
+- `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`
+
 ## Acceptance Criteria
 
 - [ ] `evaluate_closure(...)`, pressure-density coupling, and pure-saturation solving accept every closure name in `PICARD_POLICY_GRID`.
