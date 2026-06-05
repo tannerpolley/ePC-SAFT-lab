@@ -28,7 +28,13 @@ SOURCE = OUTPUT / "cppad_shaped_picard_derivative_evidence.csv"
 PLOTTED = OUTPUT / "cppad_shaped_picard_derivative_evidence_plotted_data.csv"
 FIGURE = OUTPUT / "cppad_shaped_picard_derivative_evidence.png"
 SIDECAR = OUTPUT / "cppad_shaped_picard_derivative_evidence.mpl.yaml"
-SELECTED_CASES = ("pure_2b_self", "cross_associating_binary", "asymmetric_donor_acceptor_binary")
+SELECTED_CASES = (
+    "pure_2b_self",
+    "cross_associating_binary",
+    "mixed_2b_3b_binary",
+    "mixed_2b_4c_binary",
+    "mixed_4c_4c_binary",
+)
 ORDER_COLORS = {1: BLUE, 2: ORANGE}
 
 
@@ -84,7 +90,7 @@ def _plotted_rows(rows: list[dict[str, str]]) -> list[dict[str, object]]:
 
 def _render(rows: list[dict[str, object]]) -> None:
     cases = [case for case in SELECTED_CASES if any(row["case_id"] == case for row in rows)]
-    fig, axes = plt.subplots(len(cases), 1, figsize=(10.6, 8.6), sharey=True, constrained_layout=True)
+    fig, axes = plt.subplots(len(cases), 1, figsize=(10.8, 12.0), sharey=True, constrained_layout=True)
     if len(cases) == 1:
         axes = [axes]
     for axis, case in zip(axes, cases, strict=True):

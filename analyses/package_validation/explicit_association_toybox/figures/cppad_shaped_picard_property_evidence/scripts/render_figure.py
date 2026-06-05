@@ -27,7 +27,13 @@ SOURCE = OUTPUT / "cppad_shaped_picard_property_evidence.csv"
 PLOTTED = OUTPUT / "cppad_shaped_picard_property_evidence_plotted_data.csv"
 FIGURE = OUTPUT / "cppad_shaped_picard_property_evidence.png"
 SIDECAR = OUTPUT / "cppad_shaped_picard_property_evidence.mpl.yaml"
-SELECTED_CASES = ("pure_2b_self", "cross_associating_binary")
+SELECTED_CASES = (
+    "pure_2b_self",
+    "cross_associating_binary",
+    "mixed_2b_3b_binary",
+    "mixed_2b_4c_binary",
+    "mixed_4c_4c_binary",
+)
 BACKEND_LABELS = {
     "exact": "Exact implicit",
     "numpy": "Picard NumPy",
@@ -108,7 +114,7 @@ def _render(rows: list[dict[str, object]]) -> None:
     fig, axes = plt.subplots(
         len(SELECTED_CASES),
         2,
-        figsize=(9.4, 6.8),
+        figsize=(9.6, 12.0),
         constrained_layout=True,
     )
     for row_index, case_id in enumerate(SELECTED_CASES):

@@ -25,8 +25,12 @@ def test_association_case_matrix_covers_required_topology_families() -> None:
         "asymmetric_donor_acceptor_binary",
         "water_like_3b_topology",
         "water_like_4c_topology",
+        "mixed_2b_3b_binary",
+        "mixed_2b_4c_binary",
+        "mixed_4c_4c_binary",
     } <= case_ids
     assert any(case.mixture_family == "binary_cross_associating" for case in cases)
+    assert any(case.mixture_family == "binary_mixed_topology" for case in cases)
     assert any(case.mixture_family == "pure_component_topology_fork" for case in cases)
 
 

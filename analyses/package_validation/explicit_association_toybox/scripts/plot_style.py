@@ -127,6 +127,9 @@ def case_label(name: str) -> str:
         "asymmetric_donor_acceptor_binary": "asymmetric D/A binary",
         "water_like_3b_topology": "water-like 3B",
         "water_like_4c_topology": "water-like 4C",
+        "mixed_2b_3b_binary": "mixed 2B+3B",
+        "mixed_2b_4c_binary": "mixed 2B+4C",
+        "mixed_4c_4c_binary": "mixed 4C+4C",
     }
     return labels.get(name, name.replace("_", " "))
 

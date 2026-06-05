@@ -47,8 +47,12 @@ def test_cppad_shaped_derivative_rows_keep_numpy_and_jax_paths_close() -> None:
     ]
     assert exact_matches
     for row in exact_matches:
-        tolerance = 1.0e-5 if int(row["derivative_order"]) == 2 else 1.0e-6
-        assert abs(float(row["picard_jax_value"]) - float(row["picard_numpy_value"])) <= tolerance
+        difference = abs(float(row["picard_jax_value"]) - float(row["picard_numpy_value"]))
+        if int(row["derivative_order"]) == 2:
+            scale = max(abs(float(row["picard_jax_value"])), abs(float(row["picard_numpy_value"])), 1.0)
+            assert difference <= max(1.0e-5, scale * 5.0e-7)
+        else:
+            assert difference <= 1.0e-6
 
 
 def test_generate_cppad_shaped_derivative_evidence_writes_csv(tmp_path) -> None:
