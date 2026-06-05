@@ -71,6 +71,7 @@ admission evidence rather than production solver architecture.
 | [Explicit closure admission decision plan](../../plans/2026-06-04-m8-python-toybox-explicit-closure-admission-decision-plan.md) | derivative and property plans | Generate the final Picard policy-grid, simulation-timing, plotted-data, and #161 decision memo packet. |
 | [Equilibrium relevance probe for Picard closure error plan](../../plans/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error-plan.md) | derivative and property plans | Build a small objective/Jacobian/Hessian probe without creating M4 route behavior. |
 | [CppAD-shaped Picard property and derivative evidence plan](../../plans/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence-plan.md) | derivative, saturation, and equilibrium-probe plans | Build broader pure/mixture property evidence plus JAX derivative evidence shaped like future CppAD provider blocks. |
+| [Picard stress evidence to rescue or retire plan](../../plans/2026-06-05-m8-python-toybox-picard-stress-evidence-to-rescue-or-retire-plan.md) | issue #223 evidence | Run harsh post-#223 stress evidence that can rescue Picard for more M8 research or retire it cleanly. |
 
 ## Current Issues
 
