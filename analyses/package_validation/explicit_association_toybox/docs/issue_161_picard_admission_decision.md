@@ -4,9 +4,9 @@ This M8 toybox memo summarizes the final fixed-policy Picard evidence packet for
 
 | Field | Value |
 | --- | --- |
-| Retained rows | 52 |
+| Retained rows | 104 |
 | Best high-accuracy policy | picard_n11_lambda1 at methanol_293.81K |
-| Fastest simulation policy | picard_n3_lambda0p8 at methanol_293.81K |
+| Fastest simulation policy | picard_n3_lambda0p35 at methanol_489.97K |
 | Worst relative-error row | picard_n3_lambda0p35 at methanol_293.81K max_rel=8.221e-02 |
 | Worst simulation residual row | picard_n3_lambda0p35 at methanol_293.81K max_rel=8.221e-02 |
 | Issue #161 recommendation | `close_without_provider_implementation` |
