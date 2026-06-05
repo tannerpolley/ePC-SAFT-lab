@@ -32,6 +32,7 @@ def apply_plot_style() -> None:
             "axes.spines.top": False,
             "axes.spines.right": False,
             "axes.grid": False,
+            "svg.hashsalt": "epcsaft-explicit-association-toybox",
         }
     )
 
@@ -133,7 +134,7 @@ def case_label(name: str) -> str:
 def save_png_svg(fig, png_path: Path) -> Path:
     svg_path = png_path.with_suffix(".svg")
     fig.savefig(png_path, dpi=180)
-    fig.savefig(svg_path)
+    fig.savefig(svg_path, metadata={"Date": None})
     return svg_path
 
 
