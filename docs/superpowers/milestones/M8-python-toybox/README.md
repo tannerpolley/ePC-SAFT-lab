@@ -60,6 +60,7 @@ admission evidence rather than production solver architecture.
 | [Equilibrium relevance probe for Picard closure error](../../specs/2026-06-04-m8-python-toybox-equilibrium-relevance-probe-for-picard-closure-error.md) | equilibrium probe | Probe whether Picard closure error breaks objective, Jacobian, and Hessian quality before any M4 implementation work. |
 | [CppAD-shaped Picard property and derivative evidence](../../specs/2026-06-04-m8-python-toybox-cppad-shaped-picard-property-derivative-evidence.md) | derivatives / property validation | Test retained Picard across pure and mixture association schemes and compare NumPy/JAX values, Jacobians, and Hessians as CppAD-shaped evidence. |
 | [Picard stress evidence to rescue or retire](../../specs/2026-06-05-m8-python-toybox-picard-stress-evidence-to-rescue-or-retire.md) | admission / stress testing | Define the harsh post-#223 evidence needed to either rescue Picard for more research or retire it cleanly. |
+| [Topology-aware explicit association model selection](../../specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md) | association / model selection | Reframe #161 follow-up around topology-gated exact reductions, site-class lumped reductions, and fixed-depth undamped Picard candidates. |
 
 ## Current Plans
 
