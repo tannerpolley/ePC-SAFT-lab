@@ -50,6 +50,11 @@ PICARD_POLICY_GRID = tuple(
     for step_count in PICARD_STEP_COUNTS
     for damping in PICARD_DAMPING_VALUES
 )
+PICARD_POLICY_BY_NAME = {policy.closure_name: policy for policy in PICARD_POLICY_GRID}
+
+
+def picard_policy_from_name(name: str) -> PicardPolicy | None:
+    return PICARD_POLICY_BY_NAME.get(name)
 
 
 def _bounded_site_fractions(xa: np.ndarray) -> np.ndarray:
@@ -97,10 +102,11 @@ def evaluate_closure(
             exact_derivative_of="exact_mass_action",
             information_loss="none",
         )
-    if name != PICARD7_CLOSURE:
+    policy = picard_policy_from_name(name)
+    if policy is None:
         raise ValueError(f"Unknown association closure: {name}")
     return evaluate_picard_policy(
-        PICARD_DEFAULT_POLICY,
+        policy,
         system=system,
         density=density,
         composition=composition,
