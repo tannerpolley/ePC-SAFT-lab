@@ -1,0 +1,19 @@
+case_id,case_label,backend,backend_label,density,association_helmholtz,pressure_proxy,relative_error
+pure_2b_self,pure 2B self,exact,Exact implicit,0.02,-0.13955720994572873,0.017514575388579545,0.0
+pure_2b_self,pure 2B self,numpy,Picard NumPy,0.02,-0.13955720994573761,0.017514575388583805,6.364260363513442e-14
+pure_2b_self,pure 2B self,jax,Picard JAX,0.02,-0.13955720994573761,0.017514575388583805,6.364260363513442e-14
+pure_2b_self,pure 2B self,exact,Exact implicit,0.05,-0.29984821902305603,0.03031706025148939,0.0
+pure_2b_self,pure 2B self,numpy,Picard NumPy,0.05,-0.2998482190230627,0.030317060251477956,2.2215700228116858e-14
+pure_2b_self,pure 2B self,jax,Picard JAX,0.05,-0.2998482190230627,0.030317060251477956,2.2215700228116858e-14
+pure_2b_self,pure 2B self,exact,Exact implicit,0.08,-0.42680982081933294,0.03276232937700236,0.0
+pure_2b_self,pure 2B self,numpy,Picard NumPy,0.08,-0.4268098208193427,0.03276232937701046,2.2890669661598456e-14
+pure_2b_self,pure 2B self,jax,Picard JAX,0.08,-0.4268098208193427,0.03276232937701046,2.2890669661598456e-14
+cross_associating_binary,cross-associating binary,exact,Exact implicit,0.02,-0.037724207806490606,0.021714401072335982,0.0
+cross_associating_binary,cross-associating binary,numpy,Picard NumPy,0.02,-0.037726280837369945,0.021714255303099568,5.495227070036308e-05
+cross_associating_binary,cross-associating binary,jax,Picard JAX,0.02,-0.037726280837369945,0.021714255303099568,5.495227070036308e-05
+cross_associating_binary,cross-associating binary,exact,Exact implicit,0.05,-0.08522585329161314,0.05015884611657073,0.0
+cross_associating_binary,cross-associating binary,numpy,Picard NumPy,0.05,-0.08524385312828348,0.05015596955514103,0.00021120160110038122
+cross_associating_binary,cross-associating binary,jax,Picard JAX,0.05,-0.08524385312828348,0.05015596955514103,0.00021120160110038122
+cross_associating_binary,cross-associating binary,exact,Exact implicit,0.08,-0.1253485936285932,0.07510521176294793,0.0
+cross_associating_binary,cross-associating binary,numpy,Picard NumPy,0.08,-0.12539717034575232,0.07509344159807324,0.00038753300498158667
+cross_associating_binary,cross-associating binary,jax,Picard JAX,0.08,-0.12539717034575232,0.07509344159807324,0.00038753300498158667
