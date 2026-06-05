@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
+import sys
 from typing import Iterable
 
 import numpy as np
 
-from .association_models import AssociationSystem
-from .topology_reductions import topology_system
+if __package__ in {None, ""}:
+    REPO_ROOT = Path(__file__).resolve().parents[4]
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    from analyses.package_validation.explicit_association_toybox.scripts.association_models import AssociationSystem
+    from analyses.package_validation.explicit_association_toybox.scripts.topology_reductions import topology_system
+else:
+    from .association_models import AssociationSystem
+    from .topology_reductions import topology_system
 
 
 @dataclass(frozen=True)
@@ -482,3 +491,12 @@ def _vector(name: str, value: object) -> np.ndarray:
     if not np.all(np.isfinite(array)):
         raise ValueError(f"{name} must contain finite values.")
     return array
+
+
+def main() -> None:
+    for case in association_evidence_cases():
+        print(f"{case.case_id},{case.topology_id},{case.mixture_family},{case.site_count}")
+
+
+if __name__ == "__main__":
+    main()

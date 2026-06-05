@@ -4,20 +4,45 @@ import argparse
 import csv
 from collections.abc import Iterable, Mapping
 from pathlib import Path
+import sys
 
 import numpy as np
 
-from .association_models import AssociationSystem
-from .closure_models import CANDIDATE_CLOSURES
-from .derivative_agreement import centered_slope
-from .implicit_sensitivity import (
-    exact_binary_composition_sensitivity,
-    exact_density_sensitivity,
-    exact_strength_sensitivity,
-)
-from .jax_picard_derivatives import DEFAULT_OUTPUT as JAX_SOURCE_OUTPUT
-from .jax_picard_derivatives import run_jax_picard_derivative_cases
-from .propagation_evidence import closure_association_value, relative_error, write_rows_csv
+if __package__ in {None, ""}:
+    REPO_ROOT = Path(__file__).resolve().parents[4]
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    from analyses.package_validation.explicit_association_toybox.scripts.association_models import AssociationSystem
+    from analyses.package_validation.explicit_association_toybox.scripts.closure_models import CANDIDATE_CLOSURES
+    from analyses.package_validation.explicit_association_toybox.scripts.derivative_agreement import centered_slope
+    from analyses.package_validation.explicit_association_toybox.scripts.implicit_sensitivity import (
+        exact_binary_composition_sensitivity,
+        exact_density_sensitivity,
+        exact_strength_sensitivity,
+    )
+    from analyses.package_validation.explicit_association_toybox.scripts.jax_picard_derivatives import (
+        DEFAULT_OUTPUT as JAX_SOURCE_OUTPUT,
+    )
+    from analyses.package_validation.explicit_association_toybox.scripts.jax_picard_derivatives import (
+        run_jax_picard_derivative_cases,
+    )
+    from analyses.package_validation.explicit_association_toybox.scripts.propagation_evidence import (
+        closure_association_value,
+        relative_error,
+        write_rows_csv,
+    )
+else:
+    from .association_models import AssociationSystem
+    from .closure_models import CANDIDATE_CLOSURES
+    from .derivative_agreement import centered_slope
+    from .implicit_sensitivity import (
+        exact_binary_composition_sensitivity,
+        exact_density_sensitivity,
+        exact_strength_sensitivity,
+    )
+    from .jax_picard_derivatives import DEFAULT_OUTPUT as JAX_SOURCE_OUTPUT
+    from .jax_picard_derivatives import run_jax_picard_derivative_cases
+    from .propagation_evidence import closure_association_value, relative_error, write_rows_csv
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "hessian_agreement" / "output" / "hessian_agreement.csv"

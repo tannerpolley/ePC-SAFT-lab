@@ -11,6 +11,8 @@ EXACT_MASS_ACTION_BASELINE = "implicit_exact_mass_action"
 EXACT_2B_REDUCTION = "exact_2b_reduction"
 PICARD7_CLOSURE = "damped_picard_7_05"
 CANDIDATE_CLOSURES = (PICARD7_CLOSURE,)
+PICARD_STEP_COUNTS = (3, 5, 7, 9, 11)
+PICARD_DAMPING_VALUES = (0.35, 0.5, 0.65, 0.8, 1.0)
 
 
 @dataclass(frozen=True)
@@ -21,6 +23,33 @@ class ClosureResult:
     association_closure: str
     exact_derivative_of: str
     information_loss: str
+
+
+@dataclass(frozen=True)
+class PicardPolicy:
+    step_count: int
+    damping: float
+
+    def __post_init__(self) -> None:
+        if self.step_count <= 0:
+            raise ValueError("Picard step_count must be positive.")
+        if self.damping <= 0.0 or self.damping > 1.0:
+            raise ValueError("Picard damping must be in (0, 1].")
+
+    @property
+    def closure_name(self) -> str:
+        if self.step_count == 7 and self.damping == 0.5:
+            return PICARD7_CLOSURE
+        damping_text = f"{self.damping:.2f}".rstrip("0").rstrip(".").replace(".", "p")
+        return f"picard_n{self.step_count}_lambda{damping_text}"
+
+
+PICARD_DEFAULT_POLICY = PicardPolicy(step_count=7, damping=0.5)
+PICARD_POLICY_GRID = tuple(
+    PicardPolicy(step_count=step_count, damping=damping)
+    for step_count in PICARD_STEP_COUNTS
+    for damping in PICARD_DAMPING_VALUES
+)
 
 
 def _bounded_site_fractions(xa: np.ndarray) -> np.ndarray:
@@ -70,12 +99,30 @@ def evaluate_closure(
         )
     if name != PICARD7_CLOSURE:
         raise ValueError(f"Unknown association closure: {name}")
-    xa = _picard(density, x_assoc, delta, steps=7, damping=0.5)
+    return evaluate_picard_policy(
+        PICARD_DEFAULT_POLICY,
+        system=system,
+        density=density,
+        composition=composition,
+        delta=delta,
+    )
+
+
+def evaluate_picard_policy(
+    policy: PicardPolicy,
+    *,
+    system: AssociationSystem,
+    density: float,
+    composition: np.ndarray,
+    delta: np.ndarray,
+) -> ClosureResult:
+    x_assoc = system.x_assoc(composition)
+    xa = _picard(density, x_assoc, delta, steps=policy.step_count, damping=policy.damping)
     return ClosureResult(
-        name=name,
+        name=policy.closure_name,
         xa=xa,
         association_model="explicit_approx",
-        association_closure=name,
+        association_closure=policy.closure_name,
         exact_derivative_of="approximate_association_closure",
         information_loss="none",
     )
