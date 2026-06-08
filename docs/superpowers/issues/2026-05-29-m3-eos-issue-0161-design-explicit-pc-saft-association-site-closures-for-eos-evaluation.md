@@ -2,19 +2,19 @@
 issue: 161
 title: "Design explicit PC-SAFT association-site closures for EOS evaluation"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/161"
-state: "open"
+state: "closed"
 milestone: "M3 - EOS"
 project: "ePC-SAFT Roadmap"
 package: "core"
 capability: "eos"
 backend: "analytic"
-readiness: "needs design"
+readiness: "closed-design-record"
 release_target: "future"
 source_spec: "docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md"
 source_plan: "docs/superpowers/plans/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation
-last_synced: "2026-06-05"
+last_synced: "2026-06-08"
 ---
 
 # Design explicit PC-SAFT association-site closures for EOS evaluation
@@ -31,7 +31,12 @@ start from a durable local source plan.
 
 ## Summary
 
-Capture the explicit PC-SAFT association-site Picard derivation as later EOS-provider work. Source note: `docs/latex/explicit_assocation.tex`.
+Close this issue as design-record evidence without provider implementation.
+The final M8 Picard admission memo recommends
+`close_without_provider_implementation`, and the stress decision memo selects
+`retire_picard` for the tested Picard framing. Future explicit association
+closure candidates belong in M8 first unless a new candidate earns a narrow M3
+provider-admission issue with stronger property and derivative evidence.
 
 ## Supplemental Context
 
@@ -63,9 +68,22 @@ Capture the explicit PC-SAFT association-site Picard derivation as later EOS-pro
   should focus on topology-gated exact reductions, site-class lumped reductions,
   and narrow fixed-depth undamped Picard candidates rather than the retired
   `n = 7`, `lambda = 0.5` framing.
-- Until the M8 decision memo explicitly recommends a narrow M3 provider
-  admission issue, this issue remains design/admission evidence and is not
-  provider implementation-ready.
+- The final M8 decision memo does not recommend a narrow M3 provider admission
+  issue, so this issue remains design/admission evidence and is not provider
+  implementation-ready.
+
+## Final Disposition
+
+- GitHub #223 and PR #233 produced the final M8 Picard evidence packet.
+- `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`
+  recommends `close_without_provider_implementation`.
+- `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`
+  selects `retire_picard` for the tested Picard framing.
+- `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`
+  keeps future topology-gated exact reductions, site-class reductions, and
+  narrow bounded Picard research in M8 until one earns provider admission.
+- #161 is not a HELD 1.0 prerequisite except as negative evidence for
+  associating route exposure.
 
 ## Acceptance Criteria
 
