@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "derivatives"
 backend: "CppAD"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-01-m4-equilibrium-move-equilibrium-objective-assembly-to-extension.md"
 source_plan: "docs/superpowers/plans/2026-06-01-m4-equilibrium-issue-0208-move-equilibrium-objective-assembly-onto-provider-derivative-bundles-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0208-move-equilibrium-objective-assembly-onto-provider-derivative-bundles
-last_synced: "2026-06-02"
+last_synced: "2026-06-08"
 ---
 
 # Move equilibrium objective assembly onto provider derivative bundles
@@ -44,7 +44,7 @@ start from a durable local source plan.
 - [ ] No provider API called by equilibrium requires `target_pressure` or returns a solver objective value as a provider-owned concept.
 - [ ] `EosPhaseBlockResult` and NLP contract evidence keep existing public/test payload shapes and exact derivative backend labels.
 - [ ] M4 native CMake/source lists and focused equilibrium tests use the new assembly path.
-- [ ] This issue is blocked by the M3 provider derivative bundle issue until that provider contract is merged.
+- [ ] The closed #207 provider derivative bundle contract is verified in the checkout before M4 route-assembly edits begin.
 
 ## Proof Oracle
 
@@ -64,7 +64,7 @@ start from a durable local source plan.
 - Package: `equilibrium`
 - Capability: `derivatives`
 - Backend: `CppAD`
-- Readiness: `blocked`
+- Readiness: `ready`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `native, area:equilibrium, area:derivatives, backend:cppad, backend:ipopt, status:blocked, type:task`
+- Labels: `native, area:equilibrium, area:derivatives, backend:cppad, backend:ipopt, ready-for-human, type:task`
