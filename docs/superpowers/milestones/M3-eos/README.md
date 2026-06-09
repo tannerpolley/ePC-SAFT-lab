@@ -14,7 +14,7 @@ CppAD/implicit sensitivities, and provider-only capability claims.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#161](../../issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md) | `eos` | `CppAD` | `needs direct CppAD proof` | Independent explicit-association CppAD evidence issue; not a HELD, M4, or #208 dependency. |
+| [#161](../../issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md) | `eos` | `CppAD` | `needs direct CppAD proof` | Independent explicit-association and Picard CppAD evidence issue; not a HELD, M4, or #208 dependency. |
 
 ## Recently Closed
 

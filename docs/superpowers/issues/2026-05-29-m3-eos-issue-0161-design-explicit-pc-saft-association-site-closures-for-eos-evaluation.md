@@ -31,12 +31,13 @@ start from a durable local source plan.
 
 ## Summary
 
-Keep this issue open as an independent explicit-association evidence issue.
-The final M8 Picard admission memo rejects provider admission for the tested
-`n = 7`, `lambda = 0.5` damped Picard framing, and the stress decision memo
-selects `retire_picard` for that framing. The remaining issue scope is direct
-provider CppAD testing for any future explicit association closure candidate;
-this issue is not a HELD, M4 equilibrium, or #208 dependency.
+Keep this issue open as an independent explicit-association and Picard evidence
+issue. The final M8 Picard admission memo rejects provider admission from
+toybox evidence alone for the tested `n = 7`, `lambda = 0.5` damped Picard
+framing, and the stress decision memo selects `retire_picard` for that framing
+as a ready-to-admit provider path. Picard remains part of #161 as a fixed-depth
+explicit association candidate family that still needs direct provider CppAD
+testing. This issue is not a HELD, M4 equilibrium, or #208 dependency.
 
 ## Supplemental Context
 
@@ -67,9 +68,10 @@ this issue is not a HELD, M4 equilibrium, or #208 dependency.
   should focus on topology-gated exact reductions, site-class lumped reductions,
   and narrow fixed-depth undamped Picard candidates rather than the retired
   `n = 7`, `lambda = 0.5` framing.
-- The final M8 decision memo does not recommend provider admission for the
-  tested damped Picard framing. #161 remains open only for independent direct
-  CppAD evidence on future explicit association closure candidates.
+- The final M8 decision memo does not recommend provider admission from the
+  toybox-only evidence for the tested damped Picard framing. #161 remains open
+  for independent direct CppAD evidence on explicit association candidates,
+  including fixed-depth Picard variants.
 
 ## Current Disposition
 
@@ -78,9 +80,13 @@ this issue is not a HELD, M4 equilibrium, or #208 dependency.
   recommends `close_without_provider_implementation`.
 - `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`
   selects `retire_picard` for the tested Picard framing.
-- Those decisions retire the tested damped Picard provider-admission path; they
-  do not remove the need for standalone provider CppAD evidence before any
-  future explicit association closure is admitted.
+- Those decisions retire the tested damped Picard toybox result as a sufficient
+  provider-admission proof; they do not remove Picard from the explicit
+  association issue.
+- Picard stays in scope as a fixed-depth explicit association candidate family,
+  including the tested `n = 7`, `lambda = 0.5` baseline and improved undamped
+  variants, but it requires direct provider CppAD/property/derivative evidence
+  before any provider admission.
 - `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`
   keeps future topology-gated exact reductions, site-class reductions, and
   narrow bounded Picard research in M8 until one earns provider admission.
@@ -95,7 +101,7 @@ this issue is not a HELD, M4 equilibrium, or #208 dependency.
 - [ ] For Tier 3, evaluate fixed Picard policy settings as approximate explicit EOS models and report residual/error curves versus density, composition, association strength, and end-to-end simulation timing.
 - [ ] For Tier 4, fail loudly or keep the explicit closure path unavailable until a separate derivation supports that configuration.
 - [ ] For Tier 5, keep only the active Picard candidate in the analysis lane unless a separate issue approves another explicit approximation.
-- [ ] Test any candidate directly with provider CppAD before provider admission; toybox/JAX evidence is supporting evidence only.
+- [ ] Test the Picard family and any other explicit association candidate directly with provider CppAD before provider admission; toybox/JAX evidence is supporting evidence only.
 - [ ] Add derivative tests that compare closed-form and CppAD sensitivities of the explicit closure with independent implicit-sensitivity references where available.
 - [ ] Document derivative semantics in code/docs: Explicit-closure derivatives are derivatives of the approximate explicit EOS, not automatically the exact implicit PC-SAFT association derivatives.
 - [ ] Add topology-gating tests that prevent unsupported association configurations from silently using a closure outside its proven assumptions.

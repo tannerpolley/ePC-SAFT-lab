@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Apply the M3 / HELD 1.0 readiness cleanup by keeping #161 as an independent direct CppAD evidence issue, anchoring #208 to closed provider issue #207, and splitting the capability-registry mismatch into a separate follow-up issue.
+**Goal:** Apply the M3 / HELD 1.0 readiness cleanup by keeping #161 as an independent direct CppAD evidence issue for explicit association and Picard, anchoring #208 to closed provider issue #207, and splitting the capability-registry mismatch into a separate follow-up issue.
 
 **Architecture:** Keep this as tracker and documentation cleanup only. Repo-local mirrors and milestone pages must match live GitHub issue state, while source implementation remains out of scope. #207 is the closed M3 provider derivative-bundle dependency; #208 should become ready after verifying that #207's provider contract is present in the checkout.
 
@@ -21,7 +21,7 @@
 - User Decisions:
   - Include local repo mirrors and live GitHub tracker updates.
   - Find an existing M3 dependency issue before creating one.
-  - Keep #161 open as an independent direct CppAD proof issue.
+  - Keep #161 open as an independent direct CppAD proof issue with the Picard path still present.
   - Mark #208 ready after verifying #207 is present in the checkout.
   - Split the `single_component_vle` provider/equilibrium capability mismatch into a separate follow-up issue.
 
@@ -49,7 +49,7 @@ Required verification:
 
 ## Acceptance Criteria
 
-- [ ] #161 is open on GitHub with a comment that preserves the M8 evidence, retires the tested damped Picard provider-admission path, and records direct provider CppAD proof as independent future work.
+- [ ] #161 is open on GitHub with a comment that preserves the M8 evidence, keeps the Picard path present, and records direct provider CppAD proof as independent future work.
 - [ ] The #161 local mirror and `docs/superpowers/milestones/M3-eos/README.md` no longer imply that the final M8 decision memo is pending or that #161 blocks HELD/M4/#208.
 - [ ] A local #207 mirror exists and records the closed provider derivative-bundle contract.
 - [ ] #208 local mirror, #208 plan, M4 README, and live GitHub labels no longer treat #208 as blocked by missing M3 provider work after #207 is verified.
@@ -206,9 +206,9 @@ last_synced: "2026-06-08"
 - [ ] **Step 2: Replace the #161 local mirror summary**
 
 Replace the current summary paragraph with text that says #161 stays open as an
-independent explicit-association evidence issue. Preserve that the tested
-`n = 7`, `lambda = 0.5` damped Picard framing is not admitted, and state that
-future explicit association closure candidates need direct provider CppAD
+independent explicit-association and Picard evidence issue. Preserve that the
+tested `n = 7`, `lambda = 0.5` damped Picard toybox result is not sufficient for
+provider admission, and state that Picard still needs direct provider CppAD
 testing before provider admission.
 
 - [ ] **Step 3: Update the #161 disposition section**
@@ -218,7 +218,9 @@ Rename `## Final Disposition` to `## Current Disposition` and record:
 - the final M8 memo rejects provider admission for the tested damped Picard
   framing;
 - the stress memo selects `retire_picard` for that framing;
-- those decisions do not remove the independent direct CppAD proof issue;
+- those decisions do not remove Picard from the independent direct CppAD proof
+  issue;
+- Picard stays present as a fixed-depth explicit association candidate family;
 - #161 is not a HELD 1.0, M4, or #208 dependency.
 
 - [ ] **Step 4: Update M3 README current-open and recently-closed tables**
@@ -232,14 +234,14 @@ Run:
 
 ```powershell
 $comment = @'
-Reopening/keeping this as an independent explicit-association CppAD evidence issue.
+Reopening/keeping this as an independent explicit-association and Picard CppAD evidence issue.
 
 The M8 evidence still retires the tested damped Picard provider-admission path:
 
 - `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md` recommends no provider implementation for that tested framing.
 - `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md` selects `retire_picard` for that tested framing.
 
-The remaining scope is direct provider CppAD evidence for any future explicit association closure candidate. This issue is not a HELD 1.0, M4, or #208 dependency.
+The remaining scope includes direct provider CppAD evidence for the fixed-depth Picard path and any other explicit association closure candidate. This issue is not a HELD 1.0, M4, or #208 dependency.
 '@
 gh issue reopen 161 --comment $comment
 ```

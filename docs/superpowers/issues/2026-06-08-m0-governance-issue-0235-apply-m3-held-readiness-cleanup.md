@@ -46,16 +46,16 @@ last_synced: "2026-06-08"
 ## What To Build
 
 Apply the committed M3 / HELD 1.0 readiness cleanup plan. Keep #161 open as an
-independent direct provider CppAD evidence issue, create the local #207 mirror,
-mark #208 ready after verifying #207's provider contract in the checkout, and
-create the separate M6 capability evidence follow-up issue for the
+independent direct provider CppAD evidence issue for explicit association and
+Picard, create the local #207 mirror, mark #208 ready after verifying #207's
+provider contract in the checkout, and create the separate M6 capability evidence follow-up issue for the
 `single_component_vle` registry mismatch.
 
 ## Acceptance Criteria
 
 - [ ] #161 is open on GitHub with a comment that preserves the M8 evidence,
-  retires the tested damped Picard provider-admission path, and records direct
-  provider CppAD proof as independent future work.
+  keeps the Picard path present, and records direct provider CppAD proof as
+  independent future work.
 - [ ] The #161 local mirror and M3 README no longer imply that the final M8
   decision memo is pending or that #161 blocks HELD/M4/#208.
 - [ ] A local #207 mirror exists and records the closed provider

@@ -19,8 +19,8 @@ spec for provider EOS, equilibrium, HELD/GFPE, or public route expansion.
 
 The core direction is:
 
-1. Treat #161 as an independent explicit-association CppAD evidence issue, not
-   as a HELD, M4 equilibrium, or #208 dependency.
+1. Treat #161 as an independent explicit-association and Picard CppAD evidence
+   issue, not as a HELD, M4 equilibrium, or #208 dependency.
 2. Keep #148 narrow: HELD-style neutral phase discovery and TPD certification
    evidence for current activation-matrix neutral flash/LLE route families.
 3. Keep #208 blocked until a concrete M3 provider derivative bundle contract
@@ -41,15 +41,15 @@ The core direction is:
   M3 issue awaiting the M8 final Picard decision memo.
 - `docs/superpowers/issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md`
   records the final Picard and stress memo findings and keeps #161 open for
-  standalone provider CppAD evidence.
+  standalone provider CppAD evidence, with fixed-depth Picard still in scope.
 - `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`
   recommends `close_without_provider_implementation` for #161.
 - `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`
   selects `retire_picard` and records the stress metrics behind that decision.
 - `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`
   clarifies that the retired Picard framing does not reject every future
-  explicit route; future candidates need direct provider CppAD proof before
-  provider admission.
+  explicit route; Picard and other future candidates need direct provider CppAD
+  proof before provider admission.
 - `docs/superpowers/milestones/M4-equilibrium/README.md` lists #148 and #186 as
   ready and #187/#188/#189/#190/#191/#208 as blocked.
 - `docs/superpowers/issues/2026-05-24-m4-equilibrium-issue-0148-implement-held-style-neutral-phase-discovery-and-tpd-certification-for-activation-routes.md`
@@ -88,7 +88,8 @@ The core direction is:
 ### M3 / #161
 
 #161 remains an open M3 EOS issue, but repo-local evidence now supports
-independent direct CppAD proof rather than HELD/M4 dependency treatment.
+independent direct CppAD proof for explicit association and Picard rather than
+HELD/M4 dependency treatment.
 
 Verified points:
 
@@ -113,8 +114,10 @@ Cleanup implication:
 - Update tracker mirrors and M3 summary language so they no longer imply the
   final M8 decision is pending, that the tested Picard framing is provider
   implementation-ready, or that #161 blocks HELD/M4/#208.
-- Preserve #161 as an independent direct CppAD evidence issue and preserve the
-  M8 evidence as negative admission evidence for the tested Picard path.
+- Preserve #161 as an independent direct CppAD evidence issue and preserve
+  Picard as an explicit association candidate family within that issue. Preserve
+  the M8 evidence as negative admission evidence for treating the tested Picard
+  toybox result as sufficient provider proof.
 
 ### M4 / HELD 1.0
 
@@ -227,9 +230,11 @@ Recommendation:
 
 ### #161 Local Mirror And GitHub Issue
 
-- Keep #161 open as an independent direct CppAD evidence issue.
+- Keep #161 open as an independent direct CppAD evidence issue for explicit
+  association, including the Picard path.
 - Preserve the derivation and toybox evidence as historical design evidence.
-- State that future explicit association closure work requires direct provider
+- State that the Picard path remains present with explicit association, and that
+  Picard or any other explicit association closure work requires direct provider
   CppAD evidence before any provider admission.
 - Do not treat #161 as a HELD 1.0 prerequisite, M4 prerequisite, or #208
   prerequisite.
@@ -238,8 +243,8 @@ Recommendation:
 
 - Replace the current "await final M8 Picard decision memo" language with
   wording that says the M8 decision artifacts now exist, the tested damped
-  Picard path is not admitted, and #161 remains open only for independent direct
-  provider CppAD evidence.
+  Picard toybox result is not sufficient provider proof, and #161 remains open
+  for independent direct provider CppAD evidence with Picard still in scope.
 - Add or link the M3 provider derivative bundle issue once it exists.
 
 ### New Or Existing M3 Provider Derivative Bundle Issue
