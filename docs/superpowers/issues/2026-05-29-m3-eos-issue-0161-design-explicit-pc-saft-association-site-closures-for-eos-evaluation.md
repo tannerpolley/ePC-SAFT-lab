@@ -2,13 +2,13 @@
 issue: 161
 title: "Design explicit PC-SAFT association-site closures for EOS evaluation"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/161"
-state: "closed"
+state: "open"
 milestone: "M3 - EOS"
 project: "ePC-SAFT Roadmap"
 package: "core"
 capability: "eos"
-backend: "analytic"
-readiness: "closed-design-record"
+backend: "CppAD"
+readiness: "needs direct CppAD proof"
 release_target: "future"
 source_spec: "docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md"
 source_plan: "docs/superpowers/plans/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation-plan.md"
@@ -31,12 +31,12 @@ start from a durable local source plan.
 
 ## Summary
 
-Close this issue as design-record evidence without provider implementation.
-The final M8 Picard admission memo recommends
-`close_without_provider_implementation`, and the stress decision memo selects
-`retire_picard` for the tested Picard framing. Future explicit association
-closure candidates belong in M8 first unless a new candidate earns a narrow M3
-provider-admission issue with stronger property and derivative evidence.
+Keep this issue open as an independent explicit-association evidence issue.
+The final M8 Picard admission memo rejects provider admission for the tested
+`n = 7`, `lambda = 0.5` damped Picard framing, and the stress decision memo
+selects `retire_picard` for that framing. The remaining issue scope is direct
+provider CppAD testing for any future explicit association closure candidate;
+this issue is not a HELD, M4 equilibrium, or #208 dependency.
 
 ## Supplemental Context
 
@@ -58,9 +58,8 @@ provider-admission issue with stronger property and derivative evidence.
   `analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.csv`.
 - Post-#223 stress decision memo:
   `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`.
-- The stress memo selects `retire_picard`, so #161 should close without a
-  provider implementation unless a future spec introduces a different explicit
-  closure candidate with stronger property and derivative evidence.
+- The stress memo selects `retire_picard` for the tested damped Picard framing,
+  so that framing should not be admitted as provider implementation.
 - Follow-up M8 selector spec:
   `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`.
 - That selector spec records the corrected interpretation that the retained
@@ -68,22 +67,24 @@ provider-admission issue with stronger property and derivative evidence.
   should focus on topology-gated exact reductions, site-class lumped reductions,
   and narrow fixed-depth undamped Picard candidates rather than the retired
   `n = 7`, `lambda = 0.5` framing.
-- The final M8 decision memo does not recommend a narrow M3 provider admission
-  issue, so this issue remains design/admission evidence and is not provider
-  implementation-ready.
+- The final M8 decision memo does not recommend provider admission for the
+  tested damped Picard framing. #161 remains open only for independent direct
+  CppAD evidence on future explicit association closure candidates.
 
-## Final Disposition
+## Current Disposition
 
 - GitHub #223 and PR #233 produced the final M8 Picard evidence packet.
 - `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`
   recommends `close_without_provider_implementation`.
 - `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`
   selects `retire_picard` for the tested Picard framing.
+- Those decisions retire the tested damped Picard provider-admission path; they
+  do not remove the need for standalone provider CppAD evidence before any
+  future explicit association closure is admitted.
 - `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`
   keeps future topology-gated exact reductions, site-class reductions, and
   narrow bounded Picard research in M8 until one earns provider admission.
-- #161 is not a HELD 1.0 prerequisite except as negative evidence for
-  associating route exposure.
+- #161 is not a HELD 1.0 prerequisite and is not a dependency for #208.
 
 ## Acceptance Criteria
 
@@ -94,6 +95,7 @@ provider-admission issue with stronger property and derivative evidence.
 - [ ] For Tier 3, evaluate fixed Picard policy settings as approximate explicit EOS models and report residual/error curves versus density, composition, association strength, and end-to-end simulation timing.
 - [ ] For Tier 4, fail loudly or keep the explicit closure path unavailable until a separate derivation supports that configuration.
 - [ ] For Tier 5, keep only the active Picard candidate in the analysis lane unless a separate issue approves another explicit approximation.
+- [ ] Test any candidate directly with provider CppAD before provider admission; toybox/JAX evidence is supporting evidence only.
 - [ ] Add derivative tests that compare closed-form and CppAD sensitivities of the explicit closure with independent implicit-sensitivity references where available.
 - [ ] Document derivative semantics in code/docs: Explicit-closure derivatives are derivatives of the approximate explicit EOS, not automatically the exact implicit PC-SAFT association derivatives.
 - [ ] Add topology-gating tests that prevent unsupported association configurations from silently using a closure outside its proven assumptions.
@@ -118,8 +120,8 @@ provider-admission issue with stronger property and derivative evidence.
 - Milestone: `M3 - EOS`
 - Package: `core`
 - Capability: `eos`
-- Backend: `analytic`
-- Readiness: `needs design`
+- Backend: `CppAD`
+- Readiness: `needs direct CppAD proof`
 - AFK/HITL: `HITL`
 - Release target: `future`
-- Labels: `enhancement, native, validation, area:core, area:derivatives, status:needs-design, type:feature`
+- Labels: `enhancement, native, validation, area:core, area:derivatives, backend:cppad, status:needs-design, type:feature`

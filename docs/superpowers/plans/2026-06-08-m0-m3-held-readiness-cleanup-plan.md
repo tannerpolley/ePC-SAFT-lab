@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Apply the M3 / HELD 1.0 readiness cleanup by closing #161 as a design record, anchoring #208 to closed provider issue #207, and splitting the capability-registry mismatch into a separate follow-up issue.
+**Goal:** Apply the M3 / HELD 1.0 readiness cleanup by keeping #161 as an independent direct CppAD evidence issue, anchoring #208 to closed provider issue #207, and splitting the capability-registry mismatch into a separate follow-up issue.
 
 **Architecture:** Keep this as tracker and documentation cleanup only. Repo-local mirrors and milestone pages must match live GitHub issue state, while source implementation remains out of scope. #207 is the closed M3 provider derivative-bundle dependency; #208 should become ready after verifying that #207's provider contract is present in the checkout.
 
@@ -21,7 +21,7 @@
 - User Decisions:
   - Include local repo mirrors and live GitHub tracker updates.
   - Find an existing M3 dependency issue before creating one.
-  - Use #161 design-record closure.
+  - Keep #161 open as an independent direct CppAD proof issue.
   - Mark #208 ready after verifying #207 is present in the checkout.
   - Split the `single_component_vle` provider/equilibrium capability mismatch into a separate follow-up issue.
 
@@ -49,8 +49,8 @@ Required verification:
 
 ## Acceptance Criteria
 
-- [ ] #161 is closed on GitHub with a design-record comment that preserves the M8 evidence and future-M8 route.
-- [ ] The #161 local mirror and `docs/superpowers/milestones/M3-eos/README.md` no longer imply that the final M8 decision memo is pending.
+- [ ] #161 is open on GitHub with a comment that preserves the M8 evidence, retires the tested damped Picard provider-admission path, and records direct provider CppAD proof as independent future work.
+- [ ] The #161 local mirror and `docs/superpowers/milestones/M3-eos/README.md` no longer imply that the final M8 decision memo is pending or that #161 blocks HELD/M4/#208.
 - [ ] A local #207 mirror exists and records the closed provider derivative-bundle contract.
 - [ ] #208 local mirror, #208 plan, M4 README, and live GitHub labels no longer treat #208 as blocked by missing M3 provider work after #207 is verified.
 - [ ] #148 is not edited unless the executor finds new ambiguity; the current narrow neutral HELD-style evidence boundary is preserved.
@@ -180,7 +180,7 @@ Expected: matches in equilibrium files only. This confirms #208 is implementatio
 
 No files should be changed by Task 1. Do not commit.
 
-### Task 2: Close #161 As Design Record
+### Task 2: Keep #161 As Independent CppAD Evidence Issue
 
 **Files:**
 - Modify: `docs/superpowers/issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md`
@@ -190,90 +190,63 @@ No files should be changed by Task 1. Do not commit.
 
 - [ ] **Step 1: Update #161 local mirror frontmatter**
 
-Change:
+Keep:
 
 ```yaml
 state: "open"
-readiness: "needs design"
 ```
 
-to:
+Set:
 
 ```yaml
-state: "closed"
-readiness: "closed-design-record"
+readiness: "needs direct CppAD proof"
+last_synced: "2026-06-08"
 ```
-
-Set `last_synced` to `"2026-06-08"`.
 
 - [ ] **Step 2: Replace the #161 local mirror summary**
 
-Replace the current summary paragraph with:
+Replace the current summary paragraph with text that says #161 stays open as an
+independent explicit-association evidence issue. Preserve that the tested
+`n = 7`, `lambda = 0.5` damped Picard framing is not admitted, and state that
+future explicit association closure candidates need direct provider CppAD
+testing before provider admission.
 
-```markdown
-Close this issue as design-record evidence without provider implementation.
-The final M8 Picard admission memo recommends
-`close_without_provider_implementation`, and the stress decision memo selects
-`retire_picard` for the tested Picard framing. Future explicit association
-closure candidates belong in M8 first unless a new candidate earns a narrow M3
-provider-admission issue with stronger property and derivative evidence.
-```
+- [ ] **Step 3: Update the #161 disposition section**
 
-- [ ] **Step 3: Add a #161 disposition section**
+Rename `## Final Disposition` to `## Current Disposition` and record:
 
-Add this section after `## Supplemental Context`:
-
-```markdown
-## Final Disposition
-
-- GitHub #223 and PR #233 produced the final M8 Picard evidence packet.
-- `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`
-  recommends `close_without_provider_implementation`.
-- `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`
-  selects `retire_picard` for the tested Picard framing.
-- `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`
-  keeps future topology-gated exact reductions, site-class reductions, and
-  narrow bounded Picard research in M8 until one earns provider admission.
-- #161 is not a HELD 1.0 prerequisite except as negative evidence for
-  associating route exposure.
-```
+- the final M8 memo rejects provider admission for the tested damped Picard
+  framing;
+- the stress memo selects `retire_picard` for that framing;
+- those decisions do not remove the independent direct CppAD proof issue;
+- #161 is not a HELD 1.0, M4, or #208 dependency.
 
 - [ ] **Step 4: Update M3 README current-open and recently-closed tables**
 
-In `docs/superpowers/milestones/M3-eos/README.md`, replace the #161 row under `## Current Open Issues` with:
+Keep #161 under `## Current Open Issues` with readiness
+`needs direct CppAD proof`, and do not list #161 under `## Recently Closed`.
 
-```markdown
-| _None_ | - | - | - | M3 has no current open provider EOS issues after #161 design-record closure. |
-```
-
-Add this row at the top of `## Recently Closed`:
-
-```markdown
-| [#161](../../issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md) | design record | `eos` | `analytic` | Closed the retired Picard path without provider implementation; future explicit association candidates return through M8 first. |
-```
-
-- [ ] **Step 5: Close live GitHub #161 with the design-record comment**
+- [ ] **Step 5: Reopen or confirm live GitHub #161 as independent**
 
 Run:
 
 ```powershell
 $comment = @'
-Closing as design-record evidence rather than provider implementation.
+Reopening/keeping this as an independent explicit-association CppAD evidence issue.
 
-Repo-local evidence now records the final M8 disposition:
+The M8 evidence still retires the tested damped Picard provider-admission path:
 
-- `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md` recommends `close_without_provider_implementation`.
-- `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md` selects `retire_picard` for the tested Picard framing.
-- `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md` keeps any future explicit association closure candidate in M8 until it earns a narrow M3 provider-admission issue.
+- `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md` recommends no provider implementation for that tested framing.
+- `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md` selects `retire_picard` for that tested framing.
 
-This issue should not block HELD 1.0 except as negative evidence for associating route exposure. No provider EOS implementation is admitted from the retired Picard path.
+The remaining scope is direct provider CppAD evidence for any future explicit association closure candidate. This issue is not a HELD 1.0, M4, or #208 dependency.
 '@
-gh issue close 161 --comment $comment
+gh issue reopen 161 --comment $comment
 ```
 
-Expected: GitHub reports #161 closed.
+Expected: GitHub reports #161 open.
 
-- [ ] **Step 6: Verify #161 closed**
+- [ ] **Step 6: Verify #161 open**
 
 Run:
 
@@ -284,7 +257,7 @@ gh issue view 161 --json state,labels --jq '{state: .state, labels: [.labels[].n
 Expected:
 
 ```json
-state is CLOSED; label set can vary after closure
+state is OPEN
 ```
 
 - [ ] **Step 7: Validate docs after #161 cleanup**
@@ -303,7 +276,7 @@ Run:
 
 ```powershell
 git add -- docs/superpowers/issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md docs/superpowers/milestones/M3-eos/README.md
-git commit -m "Close M3 explicit association design record"
+git commit -m "Keep explicit association CppAD proof independent"
 ```
 
 Expected: commit succeeds and includes only the #161 mirror plus M3 README changes.
@@ -629,7 +602,7 @@ gh api /repos/ePC-SAFT/ePC-SAFT/issues/208/dependencies/blocked_by --jq '.[].num
 Expected:
 
 ```text
-161: CLOSED
+161: OPEN
 207: CLOSED
 208: OPEN, labels include ready-for-human, labels exclude status:blocked
 208 blocked_by includes 207

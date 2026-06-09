@@ -19,9 +19,8 @@ spec for provider EOS, equilibrium, HELD/GFPE, or public route expansion.
 
 The core direction is:
 
-1. Treat #161 as design/admission evidence that should close without provider
-   implementation unless a future M8/M3 candidate earns a new provider
-   admission issue.
+1. Treat #161 as an independent explicit-association CppAD evidence issue, not
+   as a HELD, M4 equilibrium, or #208 dependency.
 2. Keep #148 narrow: HELD-style neutral phase discovery and TPD certification
    evidence for current activation-matrix neutral flash/LLE route families.
 3. Keep #208 blocked until a concrete M3 provider derivative bundle contract
@@ -41,16 +40,16 @@ The core direction is:
 - `docs/superpowers/milestones/M3-eos/README.md` still lists #161 as an open
   M3 issue awaiting the M8 final Picard decision memo.
 - `docs/superpowers/issues/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation.md`
-  already records the final Picard and stress memo findings and says #161 is
-  not provider implementation-ready.
+  records the final Picard and stress memo findings and keeps #161 open for
+  standalone provider CppAD evidence.
 - `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`
   recommends `close_without_provider_implementation` for #161.
 - `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`
   selects `retire_picard` and records the stress metrics behind that decision.
 - `docs/superpowers/specs/2026-06-05-m8-python-toybox-topology-aware-explicit-association-model-selection.md`
   clarifies that the retired Picard framing does not reject every future
-  explicit route; future candidates must return through M8 or a new narrow M3
-  provider-admission issue.
+  explicit route; future candidates need direct provider CppAD proof before
+  provider admission.
 - `docs/superpowers/milestones/M4-equilibrium/README.md` lists #148 and #186 as
   ready and #187/#188/#189/#190/#191/#208 as blocked.
 - `docs/superpowers/issues/2026-05-24-m4-equilibrium-issue-0148-implement-held-style-neutral-phase-discovery-and-tpd-certification-for-activation-routes.md`
@@ -88,9 +87,8 @@ The core direction is:
 
 ### M3 / #161
 
-#161 is still represented as an open M3 EOS issue, but repo-local evidence now
-supports closure or design-disposition cleanup rather than provider
-implementation.
+#161 remains an open M3 EOS issue, but repo-local evidence now supports
+independent direct CppAD proof rather than HELD/M4 dependency treatment.
 
 Verified points:
 
@@ -98,9 +96,8 @@ Verified points:
   derivatives, CppAD/implicit sensitivities, and provider-only capability
   claims.
 - The M3 README still says #161 awaits the M8 final Picard decision memo.
-- The #161 local mirror already records that the stress memo selects
-  `retire_picard` and that #161 should close without provider implementation
-  unless a future spec introduces stronger property and derivative evidence.
+- The #161 local mirror records that the stress memo selects `retire_picard`
+  for the tested damped Picard framing.
 - The final Picard admission memo recommends
   `close_without_provider_implementation`.
 - The stress decision memo selects `retire_picard` and is analysis-only
@@ -114,9 +111,10 @@ Verified points:
 Cleanup implication:
 
 - Update tracker mirrors and M3 summary language so they no longer imply the
-  final M8 decision is pending or that #161 is provider implementation-ready.
-- Preserve #161 and the M8 evidence as design history and negative admission
-  evidence for current associating-route claims.
+  final M8 decision is pending, that the tested Picard framing is provider
+  implementation-ready, or that #161 blocks HELD/M4/#208.
+- Preserve #161 as an independent direct CppAD evidence issue and preserve the
+  M8 evidence as negative admission evidence for the tested Picard path.
 
 ### M4 / HELD 1.0
 
@@ -229,19 +227,19 @@ Recommendation:
 
 ### #161 Local Mirror And GitHub Issue
 
-- Mark #161 for closure or design-disposition cleanup without provider
-  implementation.
+- Keep #161 open as an independent direct CppAD evidence issue.
 - Preserve the derivation and toybox evidence as historical design evidence.
-- State that future explicit association closure work belongs in M8 unless and
-  until a new candidate earns a narrow M3 provider-admission issue.
-- Do not treat #161 as a HELD 1.0 prerequisite except as negative evidence for
-  associating route exposure.
+- State that future explicit association closure work requires direct provider
+  CppAD evidence before any provider admission.
+- Do not treat #161 as a HELD 1.0 prerequisite, M4 prerequisite, or #208
+  prerequisite.
 
 ### M3 README
 
 - Replace the current "await final M8 Picard decision memo" language with
-  wording that says the M8 decision artifacts now exist and #161 is pending
-  tracker closure/design disposition.
+  wording that says the M8 decision artifacts now exist, the tested damped
+  Picard path is not admitted, and #161 remains open only for independent direct
+  provider CppAD evidence.
 - Add or link the M3 provider derivative bundle issue once it exists.
 
 ### New Or Existing M3 Provider Derivative Bundle Issue
@@ -339,8 +337,8 @@ tracker completion.
 
 ## Completion Criteria For The Cleanup Plan
 
-- #161 no longer looks provider implementation-ready in M3 summary or tracker
-  state.
+- #161 remains open but no longer looks provider implementation-ready or tied to
+  HELD/M4/#208 in M3 summary or tracker state.
 - M3 has a concrete derivative bundle issue if #208 continues to depend on one.
 - #208 points to that concrete dependency and remains blocked until the provider
   contract is merged.
