@@ -53,6 +53,6 @@ Implement the Stage 1 equilibrium-doctrine prerequisite: HELD-style neutral phas
 
 - `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`
 - `uv run python run_pytest.py --native-contracts -q`
-- `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement`
+- `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement --require-complete`
 - `uv run python scripts/dev/validate_project.py docs`
 - `uv run python scripts/dev/validate_project.py quick`

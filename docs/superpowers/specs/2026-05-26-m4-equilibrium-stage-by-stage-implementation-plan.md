@@ -860,9 +860,10 @@ Substeps:
     summaries, and continuous-TPD iteration traces. It cannot run pytest slices.
 16. Use
     `uv run python scripts/validation/check_phase_discovery.py --json`
-    as the cheap Stage 9 phase-discovery evidence snapshot. Add
-    `--include-route-refinement` only when the current Stage III Ipopt
-    route-refinement evidence is needed. Use
+    as the cheap Stage 9 phase-discovery evidence snapshot. Use
+    `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement --require-complete`
+    as the Stage 9 closure gate when the current Stage III Ipopt
+    route-refinement evidence is required. Use
     `--debug --include-route-refinement --require-complete` when the question
     is "what is the TPD/Ipopt solver doing?", because that turns on
     continuous-TPD trace rows, route seed-attempt markers, Ipopt
@@ -940,7 +941,7 @@ Substeps:
    composition inconsistency. Its material-balance files separate reported
    material-balance-feasible points from inferred feed-correction candidates.
    First produce the phase-discovery payload with
-   `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement`,
+   `uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement --require-complete`,
    then pass it to the neutral TP flash fixture gate with
    `uv run python scripts/validation/check_equilibrium_benchmark_fixture.py --json --phase-discovery-json <payload>`.
    Use `--require-executable` only when promoting a case to an executable fixture.
