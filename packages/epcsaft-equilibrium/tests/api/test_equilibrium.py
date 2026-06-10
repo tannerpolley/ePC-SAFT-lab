@@ -397,16 +397,30 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
     )
 
 
-def test_equilibrium_lle_constructor_rejects_associating_and_ionic_inputs() -> None:
+@pytest.mark.parametrize(
+    ("route", "kwargs"),
+    (
+        ("bubble_pressure", {"T": HYDROCARBON_T, "x": [0.35, 0.65]}),
+        ("bubble_temperature", {"P": HYDROCARBON_BUBBLE_P, "x": [0.35, 0.65]}),
+        ("dew_pressure", {"T": HYDROCARBON_T, "y": [0.35, 0.65]}),
+        ("dew_temperature", {"P": HYDROCARBON_BUBBLE_P, "y": [0.35, 0.65]}),
+        ("flash", {"T": HYDROCARBON_T, "P": HYDROCARBON_BUBBLE_P, "z": [0.35, 0.65]}),
+        ("lle", {"T": 300.0, "P": 1.0e6, "z": [0.5, 0.5]}),
+    ),
+)
+def test_equilibrium_constructor_rejects_associating_inputs_before_selector_dispatch(
+    route: str,
+    kwargs: dict[str, object],
+) -> None:
     with pytest.raises(epcsaft.InputError, match="non-associating"):
         equilibrium_module.Equilibrium(
             epcsaft.Mixture(_associating_parameter_set()),
-            route="lle",
-            T=300.0,
-            P=1.0e6,
-            z=[0.5, 0.5],
+            route=route,
+            **kwargs,
         )
 
+
+def test_equilibrium_lle_constructor_rejects_ionic_inputs() -> None:
     with pytest.raises(epcsaft.InputError, match="neutral mixtures"):
         equilibrium_module.Equilibrium(
             epcsaft.Mixture(_ionic_parameter_set()),

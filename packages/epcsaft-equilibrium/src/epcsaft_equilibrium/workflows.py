@@ -466,8 +466,7 @@ def configure_equilibrium_problem(
         raise InputError(f"{spec.route_label} must not specify P.")
 
     _reject_ion_containing_mixture(mixture)
-    if spec.selector_route in {"neutral_lle", "single_component_vle"}:
-        _reject_associating_mixture(mixture, spec.route_label)
+    _reject_associating_mixture(mixture, spec.route_label)
     temperature = _positive_scalar(T, "T", spec.route_label) if spec.requires_temperature else None
     pressure = _positive_scalar(P, "P", spec.route_label) if spec.requires_pressure else None
     fixed_specs: dict[str, Any] = {spec.composition_key: composition}
