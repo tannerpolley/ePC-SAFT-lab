@@ -186,7 +186,7 @@ Exact reductions should be admitted only when:
 - `a_assoc`, pressure-like proxies, fugacity-like proxies, and
   chemical-potential-like proxies match;
 - first and second derivatives match the exact implicit sensitivities or an
-  independently verified finite-difference baseline.
+  independently verified reference derivative baseline.
 
 Important: exact reductions are not approximate closures. Where valid, they are
 the preferred route.
