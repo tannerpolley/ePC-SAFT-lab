@@ -31,7 +31,7 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 - [ ] No provider API called by equilibrium requires `target_pressure` or returns a solver objective value as a provider-owned concept.
 - [ ] `EosPhaseBlockResult` and NLP contract evidence keep existing public/test payload shapes and exact derivative backend labels.
 - [ ] M4 native CMake/source lists and focused equilibrium tests use the new assembly path.
-- [ ] This issue is blocked by the M3 provider derivative bundle issue until that provider contract is merged.
+- [ ] The closed #207 provider derivative bundle contract is verified in the checkout before M4 route-assembly edits begin.
 
 ## Tasks
 
@@ -44,7 +44,7 @@ CppAD/Ceres/Ipopt only when required by the issue labels, pytest, GitHub Issues.
 - `tests/workflows/repo/**`
 - `docs/superpowers/**`
 
-- [ ] Confirm GitHub issue #208 is still `blocked` and verify blocker/design state before code changes.
+- [ ] Confirm GitHub issue #208 is `ready`, verify #207 is closed and linked as the completed M3 dependency, and verify the provider derivative bundle exists in the checkout before code changes.
 - [ ] Read the source spec, issue mirror, GitHub issue, and milestone README.
 - [ ] Confirm candidate file ownership and reject unrelated package or milestone scope.
 - [ ] Select the smallest validation slice that proves the issue behavior.
