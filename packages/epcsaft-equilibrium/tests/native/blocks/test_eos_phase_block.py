@@ -189,6 +189,30 @@ def test_eos_phase_block_reports_pressure_constraint_jacobian_from_exact_curvatu
     assert constraint_jacobian[0, :] == pytest.approx(expected_pressure_jacobian, rel=1.0e-11, abs=1.0e-8)
 
 
+def test_eos_phase_block_reports_objective_third_derivatives_from_provider_bundle() -> None:
+    mix = _neutral_binary_mixture()
+    amounts = np.asarray([0.8, 1.2], dtype=float)
+    temperature = 300.0
+    density = 120.0
+    volume = float(amounts.sum() / density)
+    composition = amounts / amounts.sum()
+    state = mix.state(T=temperature, rho=density, x=composition, phase="vapor")
+
+    payload = _core._native_eos_phase_block(mix._native, temperature, state.pressure(), amounts.tolist(), volume)
+
+    third_derivative = np.asarray(payload["objective_third_derivative_tensor_row_major"], dtype=float).reshape(
+        (3, 3, 3)
+    )
+    pressure_hessian = np.asarray(payload["pressure_hessian_row_major"], dtype=float).reshape((3, 3))
+    expected_pressure_hessian = -payload["gas_constant_temperature"] * third_derivative[-1, :, :]
+
+    assert payload["objective_third_derivative_backend"] == "cppad"
+    assert payload["objective_third_derivative_shape"] == (3, 3, 3)
+    assert np.all(np.isfinite(third_derivative))
+    assert third_derivative == pytest.approx(np.swapaxes(third_derivative, 1, 2), rel=1.0e-12, abs=1.0e-8)
+    assert pressure_hessian == pytest.approx(expected_pressure_hessian, rel=1.0e-11, abs=1.0e-8)
+
+
 def test_eos_phase_block_reports_association_implicit_second_order_data() -> None:
     mix = _methanol_cyclohexane_mixture()
     amounts = np.asarray([0.5, 0.5], dtype=float)

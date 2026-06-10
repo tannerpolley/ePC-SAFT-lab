@@ -326,6 +326,13 @@ py::dict eos_phase_block_to_dict(const epcsaft::native::equilibrium_nlp::EosPhas
     out["objective_curvature_shape"] =
         py::make_tuple(result.objective_curvature_rows, result.objective_curvature_cols);
     out["objective_curvature_row_major"] = result.objective_curvature_row_major;
+    out["objective_third_derivative_backend"] = result.objective_third_derivative_backend;
+    out["objective_third_derivative_shape"] = py::make_tuple(
+        result.objective_third_derivative_rows,
+        result.objective_third_derivative_cols,
+        result.objective_third_derivative_cols
+    );
+    out["objective_third_derivative_tensor_row_major"] = result.objective_third_derivative_tensor_row_major;
     out["pressure_hessian_backend"] = result.pressure_hessian_backend;
     out["pressure_hessian_shape"] = py::make_tuple(result.pressure_hessian_rows, result.pressure_hessian_cols);
     out["pressure_hessian_row_major"] = result.pressure_hessian_row_major;

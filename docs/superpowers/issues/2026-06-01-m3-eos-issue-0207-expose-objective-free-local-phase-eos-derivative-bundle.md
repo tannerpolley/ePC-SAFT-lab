@@ -10,10 +10,10 @@ capability: "derivatives"
 backend: "CppAD"
 readiness: "closed"
 release_target: "core-0.x"
-source_spec: Null
-source_plan: Null
+source_spec: null
+source_plan: null
 afk_hitl: "AFK"
-branch: Null
+branch: null
 last_synced: "2026-06-08"
 ---
 
@@ -22,6 +22,7 @@ last_synced: "2026-06-08"
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/207
 Synced Commit: https://github.com/ePC-SAFT/ePC-SAFT/commit/58bcf830
 AFK/HITL: AFK
+**Mirror Retention:** Keep
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This closed mirror exists because #208

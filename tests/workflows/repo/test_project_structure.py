@@ -1750,29 +1750,42 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
         assert SUPERPOWERS_ISSUE_FILENAME_PATTERN.fullmatch(path.name)
         assert f"issue-{issue:04d}-" in path.name
         assert fields["url"] == f"https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue}"
-        assert fields["state"] == "open"
+        text = path.read_text(encoding="utf-8")
+        retained_closed_mirror = fields["state"] == "closed" and "**Mirror Retention:** Keep" in text
+        if retained_closed_mirror:
+            assert fields["readiness"] == "closed"
+            assert fields["source_spec"] is None
+            assert fields["source_plan"] is None
+            assert fields["branch"] is None
+        else:
+            assert fields["state"] == "open"
         assert fields["project"] == "ePC-SAFT Roadmap"
         assert fields["milestone"] in set(MILESTONE_MIRROR_FOLDERS.values())
         milestone_folder = next(folder for folder, title in MILESTONE_MIRROR_FOLDERS.items() if title == fields["milestone"])
         assert f"-{milestone_folder.lower()}-issue-" in path.name
         assert not str(fields["title"]).startswith("[Blocked]")
-        source_spec = Path(str(fields["source_spec"]))
-        source_plan = Path(str(fields["source_plan"]))
-        assert source_spec.as_posix().startswith("docs/superpowers/specs")
-        assert source_plan.as_posix().startswith("docs/superpowers/plans")
-        assert (REPO_ROOT / source_spec).is_file(), str(source_spec)
-        assert (REPO_ROOT / source_plan).is_file(), str(source_plan)
+        if not retained_closed_mirror:
+            source_spec = Path(str(fields["source_spec"]))
+            source_plan = Path(str(fields["source_plan"]))
+            assert source_spec.as_posix().startswith("docs/superpowers/specs")
+            assert source_plan.as_posix().startswith("docs/superpowers/plans")
+            assert (REPO_ROOT / source_spec).is_file(), str(source_spec)
+            assert (REPO_ROOT / source_plan).is_file(), str(source_plan)
         assert fields["afk_hitl"] in {"AFK", "HITL"}
-        assert str(fields["branch"]).startswith(f"codex/issue-{issue:04d}-")
+        if not retained_closed_mirror:
+            assert str(fields["branch"]).startswith(f"codex/issue-{issue:04d}-")
         assert re.fullmatch(r"20\d\d-\d\d-\d\d", str(fields["last_synced"]))
-        text = path.read_text(encoding="utf-8")
-        for token in (
+        required_tokens = [
             "GitHub Issue:",
-            "Source Plan:",
             "AFK/HITL:",
             "## Acceptance Criteria",
             "## Proof Oracle",
-        ):
+        ]
+        if retained_closed_mirror:
+            required_tokens.append("**Mirror Retention:** Keep")
+        else:
+            required_tokens.append("Source Plan:")
+        for token in required_tokens:
             assert token in text, f"{_workspace_rel(path)} missing {token}"
 
 
