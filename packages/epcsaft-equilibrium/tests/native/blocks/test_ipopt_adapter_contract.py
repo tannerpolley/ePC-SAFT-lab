@@ -36,6 +36,7 @@ def test_runtime_capabilities_report_public_ipopt_routes() -> None:
         "dew_temperature": "bubble_dew_derived_routes",
         "flash": "neutral_tp_flash",
         "lle": "neutral_lle",
+        "single_component_vle": "single_component_vle",
     }
 
 
