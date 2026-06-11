@@ -419,7 +419,7 @@ benchmark_cases:
       material_balance_abs: 1.0e-8
       pressure_abs_Pa: 1.0e-2
       ln_fugacity_abs: 1.0e-7
-    todo: "Use with scripts/validation/check_neutral_tp_flash_fixture.py after generating a complete phase-discovery payload; this is the first executable neutral TP flash fixture."
+    todo: "Use with scripts/validation/check_neutral_tp_flash_fixture.py after generating a complete phase-discovery payload; the checker reports held_tpd_admission and fails closed on route candidate-completeness and phase-distance certification."
 
   - case_label: "Pereira 2012 System III"
     family_labels: ["PE-Neutral TP Flash"]

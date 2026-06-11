@@ -71,6 +71,44 @@ def _best_phase_match(
     return best
 
 
+def _positive_finite_float(value: Any) -> bool:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(numeric) and numeric > 0.0
+
+
+def _held_tpd_admission_gate(fixture_payload: dict[str, Any]) -> dict[str, Any]:
+    required = bool(fixture_payload.get("phase_discovery_required", False))
+    return {
+        "required": required,
+        "accepted": bool(fixture_payload.get("phase_discovery_verified", False)) if required else True,
+        "source": "phase_discovery_payload" if required else "phase_discovery_requirement_absent",
+        "requirement_status": dict(fixture_payload.get("phase_discovery_status", {})),
+        "incomplete_requirements": list(fixture_payload.get("phase_discovery_incomplete_requirements", [])),
+    }
+
+
+def _route_certification_blockers(postsolve: dict[str, Any], *, expected_phase_count: int) -> list[str]:
+    blockers: list[str] = []
+    if postsolve.get("stability_certificate") != "tpd_postsolve":
+        blockers.append("neutral_flash_tpd_postsolve_not_certified")
+    if postsolve.get("stability_checked") is not True:
+        blockers.append("neutral_flash_stability_not_checked")
+    if postsolve.get("stability_accepted") is not True:
+        blockers.append("neutral_flash_stability_not_accepted")
+    if postsolve.get("candidate_completeness_accepted") is not True:
+        blockers.append("neutral_flash_candidate_completeness_not_accepted")
+    if postsolve.get("phase_set_status") != "phase_set_certified":
+        blockers.append("neutral_flash_phase_set_not_certified")
+    if not _positive_finite_float(postsolve.get("phase_distance")):
+        blockers.append("neutral_flash_phase_distance_not_distinct")
+    if int(postsolve.get("selected_candidate_count", 0)) != expected_phase_count:
+        blockers.append("neutral_flash_selected_candidate_count_mismatch")
+    return blockers
+
+
 def _run_route_payload(case_dir: Path, metadata: dict[str, Any], *, debug: bool) -> dict[str, Any]:
     rows = runtime.case_rows(case_dir)
     species = runtime.species(rows, metadata)
@@ -130,6 +168,7 @@ def evaluate_neutral_flash(
 ) -> dict[str, Any]:
     metadata = json.loads((case_dir / "metadata.json").read_text(encoding="utf-8"))
     fixture_payload = fixture_checker.evaluate_case_dir(case_dir, phase_discovery_payload=phase_discovery_payload)
+    held_tpd_admission = _held_tpd_admission_gate(fixture_payload)
     blockers = list(fixture_payload["blockers"])
     route_payload: dict[str, Any] | None = None
     comparison: dict[str, Any] | None = None
@@ -161,6 +200,11 @@ def evaluate_neutral_flash(
             expected_fractions,
         )
         tolerances = metadata["acceptance_tolerances"]
+        route_certification_blockers = _route_certification_blockers(
+            postsolve,
+            expected_phase_count=len(expected_compositions),
+        )
+        blockers.extend(route_certification_blockers)
         route_accepted = (
             route_payload.get("status") == "production_accepted"
             and route_payload.get("solver_status") == "success"
@@ -171,6 +215,7 @@ def evaluate_neutral_flash(
             and int(route_payload.get("eval_h_calls", 0)) > 0
             and postsolve.get("accepted") is True
             and postsolve.get("stability_accepted") is True
+            and not route_certification_blockers
             and comparison["max_composition_abs_error"] <= tolerances["composition_abs"]
             and comparison["max_phase_fraction_abs_error"] <= tolerances["phase_fraction_abs"]
             and float(postsolve.get("material_balance_norm", math.inf)) <= tolerances["material_balance_abs"]
@@ -214,6 +259,7 @@ def evaluate_neutral_flash(
         "family_label": metadata["family_label"],
         "status": "complete" if validation_complete else "blocked",
         "complete": validation_complete,
+        "held_tpd_admission": held_tpd_admission,
         "fixture": fixture_payload,
         "route": route_summary,
         "comparison": comparison,

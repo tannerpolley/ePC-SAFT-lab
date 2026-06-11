@@ -416,6 +416,9 @@ def test_native_contract_slice_uses_small_metadata_files_not_full_route_builder_
         run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     )
     assert "tests/native/contracts/test_equilibrium_benchmark_registry.py" in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
+    assert "tests/native/contracts/test_neutral_tp_flash_fixture_checker.py" in (
+        run_pytest.NATIVE_CONTRACT_TEST_TARGETS
+    )
     assert EQUILIBRIUM_CAPABILITY_TEST_FILE not in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     assert EQUILIBRIUM_CAPABILITY_TEST_FILE in run_pytest.EQUILIBRIUM_API_TEST_TARGETS
     assert EQUILIBRIUM_SELECTOR_CONTRACT_TEST in run_pytest.NATIVE_CONTRACT_TEST_TARGETS
