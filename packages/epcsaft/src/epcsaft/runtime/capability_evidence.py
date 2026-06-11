@@ -295,6 +295,7 @@ REGRESSION_TARGET_KIND_EVIDENCE: Final[tuple[dict[str, object], ...]] = (
 NATIVE_CONTRACT_TEST_TARGETS: Final[tuple[str, ...]] = (
     "tests/native/contracts/test_generalized_equilibrium_registry.py",
     "tests/native/contracts/test_equilibrium_benchmark_registry.py",
+    "tests/native/contracts/test_neutral_tp_flash_fixture_checker.py",
     "packages/epcsaft/tests/native/contracts/test_provider_only_core_symbols.py",
     "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
     "packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py",

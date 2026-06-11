@@ -11,6 +11,7 @@ SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 EQUILIBRIUM_NATIVE_TRANSITION_FILES = {
     "tests/native/contracts/test_equilibrium_benchmark_registry.py",
     "tests/native/contracts/test_generalized_equilibrium_registry.py",
+    "tests/native/contracts/test_neutral_tp_flash_fixture_checker.py",
 }
 
 if str(SRC_ROOT) not in sys.path:

@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0188-prove-source-backed-neutral-tp-flash-gfpe-fixture-after-held-gate.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0188-prove-source-backed-neutral-tp-flash-gfpe-fixture-after-held-gate-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0188-prove-source-backed-neutral-tp-flash-gfpe-fixture-after-held-gate
-last_synced: "2026-06-02"
+last_synced: "2026-06-11"
 ---
 
 # Prove source-backed neutral TP-flash GFPE fixture after HELD gate
@@ -40,10 +40,25 @@ After HELD/TPD and shared NLP gates, prove a source-backed neutral TP-flash GFPE
 
 ## Acceptance Criteria
 
-- [ ] Neutral TP-flash fixture is tied to documented source data or a clearly recorded validation source.
-- [ ] HELD/TPD certification is used as an admission prerequisite.
-- [ ] Result diagnostics prove conservation, pressure/fugacity consistency, phase distinctness, and candidate completeness.
-- [ ] Capabilities remain honest about exact supported route scope.
+- [x] Neutral TP-flash fixture is tied to documented source data or a clearly recorded validation source.
+- [x] HELD/TPD certification is used as an admission prerequisite.
+- [x] Result diagnostics prove conservation, pressure/fugacity consistency, phase distinctness, and candidate completeness.
+- [x] Capabilities remain honest about exact supported route scope.
+
+## Resolution Notes
+
+- The hydrocarbon workbook TP-flash fixture remains the source-backed PC-SAFT
+  validation target.
+- `scripts/validation/check_neutral_tp_flash_fixture.py` now reports the
+  `held_tpd_admission` gate from the complete phase-discovery payload before
+  admitting the fixture route.
+- The same checker fails closed unless route diagnostics prove TPD postsolve
+  certification, candidate completeness, a certified phase set, positive phase
+  distance, selected-candidate count, material balance, pressure consistency,
+  fugacity consistency, source phase compositions, and source phase fractions.
+- The M4 registry still keeps generalized PE-Neutral TP Flash
+  `planned_not_public`; this issue does not broaden associating,
+  electrolyte, reactive, multiphase, or benchmark-registry closure claims.
 
 ## Proof Oracle
 
@@ -63,7 +78,7 @@ After HELD/TPD and shared NLP gates, prove a source-backed neutral TP-flash GFPE
 - Package: `equilibrium`
 - Capability: `lle`
 - Backend: `Ipopt`
-- Readiness: `blocked`
+- Readiness: `ready`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`
+- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
