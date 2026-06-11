@@ -52,6 +52,58 @@ namespace py = pybind11;
 
 using namespace epcsaft::native::bindings;
 
+py::dict native_args_payload(const add_args& args) {
+    py::dict out;
+    out["m"] = args.m;
+    out["s"] = args.s;
+    out["e"] = args.e;
+    out["k_ij"] = args.k_ij;
+    out["e_assoc"] = args.e_assoc;
+    out["vol_a"] = args.vol_a;
+    out["z"] = args.z;
+    out["dielc"] = args.dielc;
+    out["mw"] = args.mw;
+    out["mixed_rel_perm_a"] = args.mixed_rel_perm_a;
+    out["mixed_rel_perm_b"] = args.mixed_rel_perm_b;
+    out["mixed_rel_perm_c"] = args.mixed_rel_perm_c;
+    out["mixed_rel_perm_mask"] = args.mixed_rel_perm_mask;
+    out["mixed_rel_perm_water_index"] = args.mixed_rel_perm_water_index;
+    out["dielc_rule"] = args.dielc_rule;
+    out["dielc_diff_mode"] = args.dielc_diff_mode;
+    out["hc_dadx_diff_mode"] = args.hc_dadx_diff_mode;
+    out["disp_dadx_diff_mode"] = args.disp_dadx_diff_mode;
+    out["assoc_dadx_diff_mode"] = args.assoc_dadx_diff_mode;
+    out["d_ion_mode"] = args.d_ion_mode;
+    out["mu_DH_diff_mode"] = args.mu_DH_diff_mode;
+    out["mu_DH_comp_dep_rel_perm"] = args.mu_DH_comp_dep_rel_perm;
+    out["mu_DH_include_sum_term"] = args.mu_DH_include_sum_term;
+    out["include_born_model"] = args.include_born_model;
+    out["d_born_mode"] = args.d_born_mode;
+    out["born_solvation_shell_model"] = args.born_solvation_shell_model;
+    out["born_dielectric_saturation"] = args.born_dielectric_saturation;
+    out["born_bulk_mode"] = args.born_bulk_mode;
+    out["mu_born_diff_mode"] = args.mu_born_diff_mode;
+    out["mu_born_comp_dep_rel_perm"] = args.mu_born_comp_dep_rel_perm;
+    out["mu_born_include_sum_term"] = args.mu_born_include_sum_term;
+    out["mu_born_comp_dep_delta_d"] = args.mu_born_comp_dep_delta_d;
+    out["d_born"] = args.d_born;
+    out["f_solv"] = args.f_solv;
+    out["born_model"] = args.born_model;
+    out["born_radius_model"] = args.born_radius_model;
+    out["born_diff_mode"] = args.born_diff_mode;
+    out["born_eps_mode"] = args.born_eps_mode;
+    out["DH_model"] = args.DH_model;
+    out["assoc_num"] = args.assoc_num;
+    out["assoc_matrix"] = args.assoc_matrix;
+    out["k_hb"] = args.k_hb;
+    out["l_ij"] = args.l_ij;
+    out["parameter_source_label"] = args.parameter_source_label;
+    out["parameter_provenance_status"] = args.parameter_provenance_status;
+    out["binary_interaction_provenance_status"] = args.binary_interaction_provenance_status;
+    out["parameter_provenance_fields"] = args.parameter_provenance_fields;
+    return out;
+}
+
 PYBIND11_MODULE(_core, m) {
     m.doc() = "pybind11 native backend for epcsaft";
 
@@ -283,6 +335,9 @@ PYBIND11_MODULE(_core, m) {
     py::class_<ePCSAFTMixtureNative, std::shared_ptr<ePCSAFTMixtureNative>>(m, "NativeMixture")
         .def(py::init<const add_args&>())
         .def("ncomp", &ePCSAFTMixtureNative::ncomp)
+        .def("_native_args_payload", [](const ePCSAFTMixtureNative& mixture) {
+            return native_args_payload(mixture.args());
+        })
         .def("clear_runtime_caches", &ePCSAFTMixtureNative::clear_runtime_caches)
         .def("reset_runtime_cache_stats", &ePCSAFTMixtureNative::reset_runtime_cache_stats)
         .def("reference_state_cache_hits", &ePCSAFTMixtureNative::reference_state_cache_hits)

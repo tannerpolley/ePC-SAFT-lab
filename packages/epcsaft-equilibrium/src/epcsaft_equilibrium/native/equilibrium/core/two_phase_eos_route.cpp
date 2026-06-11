@@ -33,6 +33,7 @@ constexpr double kCompositionFloor = 1.0e-12;
 constexpr double kCandidateCompositionTolerance = 1.0e-6;
 constexpr double kCandidateLogVolumeTolerance = 1.0e-5;
 constexpr std::size_t kContinuousTpdMaxStartsPerPhaseKind = 2;
+const std::string kHeldStageIIDualLoopSeedName = "held_stage_ii_dual_loop_candidate_pair";
 
 std::string equilibrium_debug_env_value() {
 #ifdef _MSC_VER
@@ -508,10 +509,11 @@ std::vector<std::vector<double>> neutral_tpd_trial_compositions(
 std::vector<std::string> stage9_phase_discovery_steps() {
     return {
         "deterministic_screening",
-        "continuous_tpd",
-        "held_stage_i",
-        "held_stage_ii",
-        "held_stage_iii",
+        "continuous_tpd_minimization",
+        "held_stage_i_stability",
+        "held_stage_ii_candidate_bound_audit",
+        "held_stage_ii_dual_loop_verification",
+        "held_stage_iii_ipopt_refinement",
     };
 }
 
@@ -935,17 +937,42 @@ void evaluate_held_stage_ii_candidate_bounds(
     discovery.held_stage_ii_lower_bound = 0.0;
     discovery.held_stage_ii_upper_bound = 0.0;
     discovery.held_stage_ii_bound_gap = 0.0;
+    discovery.held_stage_ii_bound_tolerance = tpd_tolerance;
+    discovery.held_stage_ii_lower_bound_history.clear();
+    discovery.held_stage_ii_upper_bound_history.clear();
+    discovery.held_stage_ii_bound_gap_history.clear();
+    discovery.held_stage_ii_replay_ready = false;
+    discovery.held_stage_ii_replay_source.clear();
+    discovery.held_stage_ii_replay_seed_name.clear();
+    discovery.held_stage_ii_replay_candidate_count = 0;
+    discovery.held_stage_ii_replay_candidate_ranks.clear();
+    discovery.held_stage_ii_replay_phase_fractions.clear();
+    discovery.held_stage_ii_replay_phase_kinds.clear();
+    discovery.held_stage_ii_replay_phase_compositions.clear();
+    discovery.held_stage_ii_rejected_candidate_count = 0;
+    discovery.held_stage_ii_rejected_candidate_ranks.clear();
+    discovery.held_stage_ii_rejected_candidate_reasons.clear();
+    discovery.held_stage_ii_stopping_reason.clear();
 
     if (!continuous_tpd_required) {
         discovery.held_stage_ii_status = "not_requested";
+        discovery.held_stage_ii_candidate_bound_audit_status = "not_requested";
+        discovery.held_stage_ii_dual_loop_status = "not_requested";
+        discovery.held_stage_ii_stopping_reason = "not_requested";
         return;
     }
     if (discovery.continuous_tpd_status != "converged") {
         discovery.held_stage_ii_status = "incomplete_stage_i_evidence";
+        discovery.held_stage_ii_candidate_bound_audit_status = "incomplete_stage_i_evidence";
+        discovery.held_stage_ii_dual_loop_status = "incomplete_stage_i_evidence";
+        discovery.held_stage_ii_stopping_reason = "stage_i_incomplete";
         return;
     }
     if (discovery.candidates.empty()) {
         discovery.held_stage_ii_status = "inconclusive_no_candidates";
+        discovery.held_stage_ii_candidate_bound_audit_status = "inconclusive_no_candidates";
+        discovery.held_stage_ii_dual_loop_status = "inconclusive_no_candidates";
+        discovery.held_stage_ii_stopping_reason = "no_candidates";
         return;
     }
 
@@ -962,6 +989,9 @@ void evaluate_held_stage_ii_candidate_bounds(
     }
     if (!std::isfinite(lower_bound)) {
         discovery.held_stage_ii_status = "inconclusive_no_finite_candidate_bound";
+        discovery.held_stage_ii_candidate_bound_audit_status = "inconclusive_no_finite_candidate_bound";
+        discovery.held_stage_ii_dual_loop_status = "inconclusive_no_finite_candidate_bound";
+        discovery.held_stage_ii_stopping_reason = "no_finite_candidate_bound";
         return;
     }
 
@@ -970,6 +1000,12 @@ void evaluate_held_stage_ii_candidate_bounds(
     if (!discovery.phase_set_mass_balance_feasible || discovery.selected_candidate_count < 2) {
         discovery.held_stage_ii_upper_bound = lower_bound;
         discovery.held_stage_ii_status = "candidate_simplex_mass_balance_incomplete";
+        discovery.held_stage_ii_candidate_bound_audit_status = "candidate_simplex_mass_balance_incomplete";
+        discovery.held_stage_ii_dual_loop_status = "candidate_simplex_mass_balance_incomplete";
+        discovery.held_stage_ii_stopping_reason = "candidate_simplex_mass_balance_incomplete";
+        discovery.held_stage_ii_lower_bound_history = {discovery.held_stage_ii_lower_bound};
+        discovery.held_stage_ii_upper_bound_history = {discovery.held_stage_ii_upper_bound};
+        discovery.held_stage_ii_bound_gap_history = {discovery.held_stage_ii_bound_gap};
         return;
     }
     if (!std::isfinite(selected_upper_bound)) {
@@ -979,10 +1015,37 @@ void evaluate_held_stage_ii_candidate_bounds(
     discovery.held_stage_ii_upper_bound = std::max(selected_upper_bound, lower_bound);
     discovery.held_stage_ii_bound_gap =
         std::max(0.0, discovery.held_stage_ii_upper_bound - discovery.held_stage_ii_lower_bound);
+    discovery.held_stage_ii_lower_bound_history = {discovery.held_stage_ii_lower_bound};
+    discovery.held_stage_ii_upper_bound_history = {discovery.held_stage_ii_upper_bound};
+    discovery.held_stage_ii_bound_gap_history = {discovery.held_stage_ii_bound_gap};
+    discovery.held_stage_ii_replay_candidate_count = discovery.unique_candidate_count;
+    for (const NeutralTpdCandidate& candidate : discovery.candidates) {
+        if (candidate.selected) {
+            discovery.held_stage_ii_replay_candidate_ranks.push_back(candidate.candidate_rank);
+        } else {
+            ++discovery.held_stage_ii_rejected_candidate_count;
+            discovery.held_stage_ii_rejected_candidate_ranks.push_back(candidate.candidate_rank);
+            discovery.held_stage_ii_rejected_candidate_reasons.push_back(
+                "not_selected_by_dual_loop_mass_balance_gate"
+            );
+        }
+    }
+    discovery.held_stage_ii_replay_phase_fractions = discovery.selected_phase_fractions;
+    discovery.held_stage_ii_replay_phase_kinds = discovery.selected_phase_kinds;
+    discovery.held_stage_ii_replay_phase_compositions = discovery.selected_phase_compositions;
     if (discovery.held_stage_ii_bound_gap <= tpd_tolerance) {
-        discovery.held_stage_ii_status = "candidate_bound_gap_closed";
+        discovery.held_stage_ii_candidate_bound_audit_status = "candidate_bound_gap_closed";
+        discovery.held_stage_ii_status = "dual_loop_verified";
+        discovery.held_stage_ii_dual_loop_status = "verified";
+        discovery.held_stage_ii_stopping_reason = "bound_gap_closed";
+        discovery.held_stage_ii_replay_ready = true;
+        discovery.held_stage_ii_replay_source = "stage_ii_dual_loop_selected_candidates";
+        discovery.held_stage_ii_replay_seed_name = kHeldStageIIDualLoopSeedName;
     } else {
-        discovery.held_stage_ii_status = "candidate_bound_gap_open";
+        discovery.held_stage_ii_candidate_bound_audit_status = "candidate_bound_gap_open";
+        discovery.held_stage_ii_status = "dual_loop_incomplete";
+        discovery.held_stage_ii_dual_loop_status = "incomplete_candidate_bound_gap_open";
+        discovery.held_stage_ii_stopping_reason = "bound_gap_open";
     }
 }
 
@@ -993,6 +1056,9 @@ void finalize_stage9_phase_discovery(
     bool continuous_tpd_required = true
 ) {
     discovery.stage9_phase_discovery_steps = stage9_phase_discovery_steps();
+    discovery.phase_discovery_backend = continuous_tpd_required
+        ? "continuous_tpd_held_dual_phase_discovery"
+        : "deterministic_tpd_candidate_screening";
     discovery.deterministic_screening_is_full_held = false;
     discovery.deterministic_screening_status =
         discovery.deterministic_candidate_count > 0 ? "completed" : "inconclusive";
@@ -1063,11 +1129,29 @@ void copy_discovery_to_postsolve(
     postsolve.held_stage_i_negative_tpd_found = discovery.held_stage_i_negative_tpd_found;
     postsolve.held_stage_i_min_tpd = discovery.held_stage_i_min_tpd;
     postsolve.held_stage_ii_status = discovery.held_stage_ii_status;
+    postsolve.held_stage_ii_candidate_bound_audit_status = discovery.held_stage_ii_candidate_bound_audit_status;
+    postsolve.held_stage_ii_dual_loop_status = discovery.held_stage_ii_dual_loop_status;
     postsolve.held_stage_ii_major_iterations = discovery.held_stage_ii_major_iterations;
     postsolve.held_stage_ii_candidate_count = discovery.held_stage_ii_candidate_count;
     postsolve.held_stage_ii_lower_bound = discovery.held_stage_ii_lower_bound;
     postsolve.held_stage_ii_upper_bound = discovery.held_stage_ii_upper_bound;
     postsolve.held_stage_ii_bound_gap = discovery.held_stage_ii_bound_gap;
+    postsolve.held_stage_ii_bound_tolerance = discovery.held_stage_ii_bound_tolerance;
+    postsolve.held_stage_ii_stopping_reason = discovery.held_stage_ii_stopping_reason;
+    postsolve.held_stage_ii_lower_bound_history = discovery.held_stage_ii_lower_bound_history;
+    postsolve.held_stage_ii_upper_bound_history = discovery.held_stage_ii_upper_bound_history;
+    postsolve.held_stage_ii_bound_gap_history = discovery.held_stage_ii_bound_gap_history;
+    postsolve.held_stage_ii_replay_ready = discovery.held_stage_ii_replay_ready;
+    postsolve.held_stage_ii_replay_source = discovery.held_stage_ii_replay_source;
+    postsolve.held_stage_ii_replay_seed_name = discovery.held_stage_ii_replay_seed_name;
+    postsolve.held_stage_ii_replay_candidate_count = discovery.held_stage_ii_replay_candidate_count;
+    postsolve.held_stage_ii_replay_candidate_ranks = discovery.held_stage_ii_replay_candidate_ranks;
+    postsolve.held_stage_ii_replay_phase_fractions = discovery.held_stage_ii_replay_phase_fractions;
+    postsolve.held_stage_ii_replay_phase_kinds = discovery.held_stage_ii_replay_phase_kinds;
+    postsolve.held_stage_ii_replay_phase_compositions = discovery.held_stage_ii_replay_phase_compositions;
+    postsolve.held_stage_ii_rejected_candidate_count = discovery.held_stage_ii_rejected_candidate_count;
+    postsolve.held_stage_ii_rejected_candidate_ranks = discovery.held_stage_ii_rejected_candidate_ranks;
+    postsolve.held_stage_ii_rejected_candidate_reasons = discovery.held_stage_ii_rejected_candidate_reasons;
     postsolve.held_stage_iii_status = discovery.held_stage_iii_status;
     postsolve.held_stage_iii_refined_phase_count = discovery.held_stage_iii_refined_phase_count;
     postsolve.min_tpd = discovery.min_tpd;
@@ -1350,13 +1434,15 @@ void append_phase_discovery_seed_candidates(
             phase_kinds,
             1.0e-6,
             1.0e-6,
-            false
+            true
         );
-        if (!discovery.phase_set_mass_balance_feasible || discovery.selected_candidate_count != 2) {
+        if (!discovery.held_stage_ii_replay_ready
+            || !discovery.phase_set_mass_balance_feasible
+            || discovery.selected_candidate_count != 2) {
             return;
         }
         out.push_back({
-            "deterministic_tpd_candidate_pair",
+            kHeldStageIIDualLoopSeedName,
             neutral_two_phase_variables_from_initial(
                 build_two_phase_eos_initial_point_from_candidate_set(
                     args,
@@ -2845,6 +2931,13 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
             std::move(postsolve),
             NeutralRouteCertificationLevel::PhaseSetCertified
         );
+        if (seed_name == kHeldStageIIDualLoopSeedName && result.postsolve.held_stage_ii_replay_ready) {
+            result.postsolve.held_stage_iii_consumed_stage_ii_replay_metadata = true;
+            result.postsolve.held_stage_iii_replay_source = "stage_ii_dual_loop_candidate_seed";
+            result.postsolve.held_stage_iii_replay_seed_name = kHeldStageIIDualLoopSeedName;
+            result.postsolve.held_stage_iii_replay_candidate_count =
+                result.postsolve.held_stage_ii_replay_candidate_count;
+        }
         attempts.push_back(neutral_seed_attempt_from_result(result));
         trace_route_seed_attempt_finish(
             problem_name,
