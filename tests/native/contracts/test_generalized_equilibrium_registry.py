@@ -20,8 +20,9 @@ GFPE_PATH = (
     REPO_ROOT
     / "docs"
     / "superpowers"
-    / "specs"
-    / "2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md"
+    / "milestones"
+    / "M4-equilibrium"
+    / "generalized-fluid-phase-equilibrium.md"
 )
 STAGE_PLAN_PATH = (
     REPO_ROOT

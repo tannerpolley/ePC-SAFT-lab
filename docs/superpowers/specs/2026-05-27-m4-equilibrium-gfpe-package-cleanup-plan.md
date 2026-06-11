@@ -10,7 +10,7 @@ remain owned by the selector activation metadata, not by planning prose.
 
 ## Source Order
 
-1. `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md` defines the GFPE
+1. `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md` defines the GFPE
    architecture, equations, gates, and staged production policy.
 2. `docs/adr/0003-selector-core-activation-capabilities.md` makes selector
    admission and the native activation matrix the capability authority.

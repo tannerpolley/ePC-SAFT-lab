@@ -57,7 +57,7 @@ The core direction is:
   explicit no-new-route and no-associating/electrolyte/reactive boundaries.
 - `docs/superpowers/issues/2026-06-01-m4-equilibrium-issue-0208-move-equilibrium-objective-assembly-onto-provider-derivative-bundles.md`
   defines the objective-free provider derivative bundle dependency for #208.
-- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
   says deterministic TPD/candidate screening is useful support but not full
   HELD, and records the staged HELD ladder.
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`

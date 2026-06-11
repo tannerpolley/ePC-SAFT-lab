@@ -19,7 +19,7 @@ Close the GFPE registry/capability/benchmark evidence after the relevant M4 proo
 ## Source Context
 
 - `docs/superpowers/specs/2026-05-29-m6-validation-validation-benchmark-backlog.md`
-- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 
 ## Implementation Notes
 
