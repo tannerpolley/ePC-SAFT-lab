@@ -1,0 +1,18 @@
+id: issue_0188_neutral_tp_flash
+title: Issue 188 neutral TP flash evidence
+category: package_validation
+scope:
+  milestone: M4-equilibrium
+  issue: 188
+  package: epcsaft-equilibrium
+  capability: neutral_tp_flash
+boundaries:
+  - neutral PC-SAFT hydrocarbon TP flash only
+  - no associating route claim
+  - no electrolyte route claim
+  - no reactive route claim
+  - no LLE readiness claim
+source_fixture: data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash
+commands:
+  generate_data: uv run --no-sync python analyses/package_validation/issue_0188_neutral_tp_flash/scripts/generate_data.py
+  render_figures: uv run --no-sync python analyses/package_validation/issue_0188_neutral_tp_flash/scripts/render_figures.py

@@ -1,0 +1,14 @@
+kind: matplotlib-figure
+version: 1
+plot_id: issue_0188_neutral_tp_flash_tolerance_margins
+title: Issue 188 neutral TP-flash tolerance margins
+files:
+  figures:
+    - neutral_tp_flash_tolerance_margins.png
+    - neutral_tp_flash_tolerance_margins.svg
+  data:
+    - ../../../shared/results/neutral_tp_flash_tolerance_summary.csv
+    - ../../../shared/results/neutral_tp_flash_component_errors.csv
+matplotlib:
+  title: Issue 188 neutral TP-flash tolerance margins
+  style: scientific-validation

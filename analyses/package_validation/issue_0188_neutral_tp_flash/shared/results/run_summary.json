@@ -1,0 +1,46 @@
+{
+  "held_1_0": {
+    "case_label": "Synthetic neutral binary phase-discovery case",
+    "complete": false,
+    "diagnostics": {
+      "continuous_tpd_converged_count": 2,
+      "continuous_tpd_min": -0.413572543287361,
+      "held_stage_ii_bound_gap": 0.0,
+      "held_stage_ii_replay_ready": null,
+      "held_stage_ii_status": "candidate_bound_gap_closed",
+      "held_stage_iii_consumed_stage_ii_replay_metadata": null,
+      "held_stage_iii_status": "ipopt_refinement_completed_current_route",
+      "phase_discovery_backend": "deterministic_tpd_candidate_screening",
+      "route_application_status": "solve_succeeded",
+      "route_scaled_acceptance_passed": true,
+      "route_solver_status": "success",
+      "route_status": "production_accepted"
+    },
+    "family_label": "PE-Neutral TP Flash",
+    "incomplete_requirements": [
+      "held_stage_ii_dual_phase_discovery",
+      "held_stage_iii_ipopt_refinement"
+    ]
+  },
+  "neutral_tp_flash": {
+    "application_status": "solve_succeeded",
+    "candidate_completeness_accepted": true,
+    "case_label": "Hydrocarbon workbook derived TP flash",
+    "family_label": "PE-Neutral TP Flash",
+    "note": "Neutral TP flash route evidence only; this is not LLE, associating, electrolyte, or reactive route evidence.",
+    "phase_distance": 0.6246570239604358,
+    "pressure_MPa": 1.2763694735856401,
+    "pressure_Pa": 1276369.47358564,
+    "route_status": "production_accepted",
+    "selected_candidate_count": 2,
+    "solver_status": "success",
+    "species": [
+      "Methane",
+      "Ethane",
+      "Propane"
+    ],
+    "stability_accepted": true,
+    "stability_checked": true,
+    "temperature_K": 233.15
+  }
+}

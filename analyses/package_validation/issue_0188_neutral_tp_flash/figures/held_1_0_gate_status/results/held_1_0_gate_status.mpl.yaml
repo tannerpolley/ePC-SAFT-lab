@@ -1,0 +1,13 @@
+kind: matplotlib-figure
+version: 1
+plot_id: issue_0188_held_1_0_gate_status
+title: Issue 188 HELD 1.0 gate status
+files:
+  figures:
+    - held_1_0_gate_status.png
+    - held_1_0_gate_status.svg
+  data:
+    - ../../../shared/results/held_1_0_gate_status.csv
+matplotlib:
+  title: Issue 188 HELD 1.0 gate status
+  style: scientific-validation

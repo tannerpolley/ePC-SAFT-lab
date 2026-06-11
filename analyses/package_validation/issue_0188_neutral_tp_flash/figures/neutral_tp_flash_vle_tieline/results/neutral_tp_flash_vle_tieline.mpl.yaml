@@ -1,0 +1,13 @@
+kind: matplotlib-figure
+version: 1
+plot_id: issue_0188_neutral_tp_flash_vle_tieline
+title: Issue 188 neutral TP-flash VLE tie-line
+files:
+  figures:
+    - neutral_tp_flash_vle_tieline.png
+    - neutral_tp_flash_vle_tieline.svg
+  data:
+    - ../../../shared/results/neutral_tp_flash_phase_points.csv
+matplotlib:
+  title: Issue 188 neutral TP-flash VLE tie-line
+  style: scientific-validation

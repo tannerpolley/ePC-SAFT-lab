@@ -1,0 +1,6 @@
+metric,observed_abs,tolerance,unit,observed_to_tolerance,accepted
+composition_abs,7.48128441563356e-06,1e-05,mole_fraction,0.7481284415633559,True
+phase_fraction_abs,7.278950359346226e-06,2e-05,phase_fraction,0.36394751796731123,True
+material_balance_abs,1.942890293094024e-16,1e-08,mole_balance,1.942890293094024e-08,True
+pressure_abs_Pa,8.614733815193176e-09,0.01,Pa,8.614733815193176e-07,True
+ln_fugacity_abs,1.2934098236883074e-14,1e-07,ln_fugacity,1.2934098236883074e-07,True
