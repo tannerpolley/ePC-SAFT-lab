@@ -26,7 +26,7 @@ than hidden behind a substitute route.
 - `docs/superpowers/milestones/M4-equilibrium/README.md` keeps actual
   equilibrium route behavior, Ipopt contracts, and exact derivative policy in
   M4.
-- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
   defines the production equilibrium architecture and exact derivative
   expectations.
 - `docs/latex/explicit_assocation.tex` explains why the explicit Picard model

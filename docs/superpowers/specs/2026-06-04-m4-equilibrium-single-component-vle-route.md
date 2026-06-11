@@ -24,7 +24,7 @@ equilibrium extension should own coexistence route assembly and solver policy.
   `epcsaft-equilibrium` while keeping EOS/property evaluation in the provider.
 - `docs/superpowers/milestones/M4-equilibrium/README.md` assigns VLE, Ipopt NLP
   behavior, selector/admission, and exact derivative contracts to M4.
-- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
   defines the modular equilibrium-core discipline and exact derivative
   expectations.
 - `docs/superpowers/specs/2026-06-01-m4-equilibrium-move-equilibrium-objective-assembly-to-extension.md`

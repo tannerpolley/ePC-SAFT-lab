@@ -2,19 +2,19 @@
 issue: 187
 title: "M4: harden shared NLP and Ipopt infrastructure gate"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/187"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "closed"
 release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0187-harden-shared-nlp-and-ipopt-infrastructure-gate.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0187-harden-shared-nlp-and-ipopt-infrastructure-gate-plan.md"
+source_spec: null
+source_plan: null
 afk_hitl: "HITL"
-branch: codex/issue-0187-harden-shared-nlp-and-ipopt-infrastructure-gate
-last_synced: "2026-06-02"
+branch: null
+last_synced: "2026-06-11"
 ---
 
 # Harden shared NLP and Ipopt infrastructure gate
@@ -25,9 +25,14 @@ Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0187-harden-
 Branch: codex/issue-0187-harden-shared-nlp-and-ipopt-infrastructure-gate
 AFK/HITL: HITL
 
+Closed by https://github.com/ePC-SAFT/ePC-SAFT/pull/242 on 2026-06-11.
+
+**Mirror Retention:** Keep this closed mirror as historical context for the
+HELD 1.0 Stage II queue handoff to #241.
+
 GitHub remains authoritative for state, labels, Project fields, comments,
-dependency edges, and PR linkage. This mirror exists so `project-resolve` can
-start from a durable local source plan.
+dependency edges, and PR linkage. This mirror is retained only to preserve the
+closed prerequisite context for the M4 queue.
 
 ## Summary
 
@@ -35,7 +40,7 @@ Build the shared GFPE NLP and Ipopt infrastructure only after the pretreatment/s
 
 ## Supplemental Context
 
-- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
 
 ## Acceptance Criteria
@@ -63,7 +68,7 @@ Build the shared GFPE NLP and Ipopt infrastructure only after the pretreatment/s
 - Package: `equilibrium`
 - Capability: `lle`
 - Backend: `Ipopt`
-- Readiness: `blocked`
+- Readiness: `closed`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`
+- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`

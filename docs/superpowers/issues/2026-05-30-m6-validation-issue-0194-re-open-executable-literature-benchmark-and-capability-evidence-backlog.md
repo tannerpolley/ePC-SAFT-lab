@@ -35,7 +35,7 @@ Re-open the executable literature benchmark and capability evidence backlog so v
 
 ## Supplemental Context
 
-- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 
 ## Acceptance Criteria
 

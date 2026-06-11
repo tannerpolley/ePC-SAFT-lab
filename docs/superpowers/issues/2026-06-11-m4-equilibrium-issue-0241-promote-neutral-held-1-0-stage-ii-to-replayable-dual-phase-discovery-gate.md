@@ -1,0 +1,123 @@
+---
+issue: 241
+title: "M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate"
+url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/241"
+state: "open"
+milestone: "M4 - Equilibrium"
+project: "ePC-SAFT Roadmap"
+package: "equilibrium"
+capability: "lle"
+backend: "Ipopt"
+readiness: "ready"
+release_target: "equilibrium-0.x"
+source_spec: "docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md"
+source_plan: "docs/superpowers/plans/2026-06-11-m4-equilibrium-held-1-0-adoption-and-issue-0187-start-plan.md"
+afk_hitl: "AFK"
+branch: codex/issue-0241-promote-neutral-held-stage-ii-dual-discovery
+last_synced: "2026-06-11"
+---
+
+# M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate
+
+**GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/241
+**GitHub Milestone:** M4 - Equilibrium
+**Issue Type:** feature
+**Source Spec:** docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md
+**Source Plan:** docs/superpowers/plans/2026-06-11-m4-equilibrium-held-1-0-adoption-and-issue-0187-start-plan.md
+Branch: codex/issue-0241-promote-neutral-held-stage-ii-dual-discovery
+AFK/HITL: AFK
+**Classification:** AFK
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
+**Goal Command:** Create a native execution goal for #241 from this mirror.
+**Execution Mode:** Ask at runtime
+**Worktree Policy:** Native Codex worktree thread first
+**Integration Policy:** Worker PR reviewed by main thread
+**TDD Policy:** Required
+**Parallelization Plan:** None
+**Reviewer Role:** Main thread orchestrator
+**Script Gate Mode:** Safety only
+
+## Project Merge
+
+**Merge Owner:** Main thread orchestrator
+**Merge Gate:** Native UI approval required
+**Merge Policy:** Repo default
+**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+
+## What To Build
+
+Implement the missing HELD 1.0 adoption gate between #187 and #188: promote
+neutral Stage II from the current finite candidate bound audit to a replayable
+dual phase-discovery loop with explicit lower and upper bound history,
+candidate storage, stopping criteria, and Stage III replay metadata.
+
+## Acceptance Criteria
+
+- [ ] Stage II reports lower bound, upper bound, bound gap, stopping reason,
+  candidate list, rejected candidates, and replay metadata.
+- [ ] Stage III route refinement consumes Stage II candidate metadata.
+- [ ] Incomplete continuous TPD starts, open Stage II gaps, tiny-step paths,
+  acceptable-level points, feasible-only points, and iteration-limit routes do
+  not satisfy the adoption gate.
+- [ ] Registry and diagnostics distinguish deterministic screening, continuous
+  TPD, Stage I, Stage II audit, Stage II dual-loop verification, and Stage III
+  refinement.
+- [ ] No associating, electrolyte, reactive, CE, CPE, public route, benchmark,
+  or capability broadening occurs in this issue.
+
+## Blocked By
+
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/187
+
+## Blocking
+
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/188
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/189
+
+## Non-Goals
+
+- No source-backed neutral TP flash fixture admission.
+- No boundary workflow or generalized phase-set PE admission.
+- No associating, electrolyte, reactive, CE, or CPE admission.
+- No public route exposure.
+
+## Proof Oracle
+
+```powershell
+uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py -q
+```
+
+```powershell
+uv run python run_pytest.py tests/native/contracts/test_generalized_equilibrium_registry.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q
+```
+
+```powershell
+uv run python scripts/validation/check_phase_discovery.py --json --include-route-refinement --require-complete
+```
+
+```powershell
+uv run python scripts/dev/validate_project.py docs
+```
+
+## GitHub Body Text
+
+Implement the missing HELD 1.0 adoption gate between #187 and #188: promote
+neutral Stage II from the current finite candidate bound audit to a replayable
+dual phase-discovery loop with explicit lower/upper bound history, candidate
+storage, stopping criteria, and Stage III replay metadata.
+
+Source spec:
+docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md
+
+Source plan:
+docs/superpowers/plans/2026-06-11-m4-equilibrium-held-1-0-adoption-and-issue-0187-start-plan.md
+
+Classification:
+Ready after #187 closed by #242. This can run AFK while the proof oracle remains
+sufficient.
+
+Outcome:
+Neutral HELD Stage II can be used as a full adoption gate only when a replayable
+dual phase-discovery loop records bound history, candidate creation and
+rejection, stopping criteria, and route-refinement metadata.

@@ -214,7 +214,6 @@ SUPERPOWERS_TEMPLATE_FILES = {
 SUPERPOWERS_SPEC_FILES = {
     "PROJECT_CONTEXT.md",
     "specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md",
-    "specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md",
     "specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md",
     "specs/2026-05-27-m4-equilibrium-gfpe-package-cleanup-plan.md",
     "specs/2026-05-29-m5-regression-regression-production-backlog.md",
@@ -230,6 +229,7 @@ SUPERPOWERS_PLAN_FILENAME_PATTERN = re.compile(
     r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-(?:issue-\d{4}-)?[a-z0-9-]+-plan\.md$"
 )
 SUPERPOWERS_REGISTRY_FILES = {
+    "milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md",
     "milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml",
 }
 ISSUE_TYPE_FORMS = {

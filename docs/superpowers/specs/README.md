@@ -20,5 +20,5 @@ docs/superpowers/specs/YYYY-MM-DD-m#-milestone-<slug>.md
 Examples:
 
 ```text
-docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md
+docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md
 ```

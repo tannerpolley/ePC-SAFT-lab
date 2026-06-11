@@ -1,9 +1,9 @@
 # Generalized Fluid-Phase Equilibrium
 
-This is the canonical plan, mathematical doctrine, implementation contract,
-and activation policy for generalized fluid-phase equilibrium in `ePC-SAFT`.
-It is written for future implementers and agents, not as a runtime API
-reference.
+This is the M4 milestone doctrine, mathematical contract, implementation
+contract, and activation policy for generalized fluid-phase equilibrium in
+`ePC-SAFT`. It is written for future implementers and agents, not as a
+runtime API reference or an active Superpowers Project spec.
 
 `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml` is the executable
 milestone registry. Its family labels are planning labels only. They are not

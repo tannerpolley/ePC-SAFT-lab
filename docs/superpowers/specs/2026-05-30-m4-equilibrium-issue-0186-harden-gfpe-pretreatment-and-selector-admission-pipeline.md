@@ -19,7 +19,7 @@ Harden the early GFPE pretreatment, closure, stage-state, and selector/admission
 
 ## Source Context
 
-- `docs/superpowers/specs/2026-05-26-m4-equilibrium-generalized-fluid-phase-equilibrium.md`
+- `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
 
 ## Implementation Notes
