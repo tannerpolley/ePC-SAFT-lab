@@ -2,5 +2,5 @@ order,gate,label,status,status_class,accepted
 0,deterministic_screening,Deterministic screening,verified_not_full_held,verified,True
 1,continuous_tpd_minimization,Continuous TPD minimization,verified_converged,verified,True
 2,held_stage_i_stability,HELD Stage I stability,verified_from_converged_continuous_tpd,verified,True
-3,held_stage_ii_dual_phase_discovery,HELD Stage II dual discovery,incomplete_candidate_bound_audit_without_replay,incomplete,False
-4,held_stage_iii_ipopt_refinement,HELD Stage III Ipopt refinement,incomplete_missing_stage_ii_replay_seed,incomplete,False
+3,held_stage_ii_dual_phase_discovery,HELD Stage II dual discovery,verified_dual_loop_replayable,verified,True
+4,held_stage_iii_ipopt_refinement,HELD Stage III Ipopt refinement,verified_current_route_refinement_consumed_stage_ii_replay,verified,True

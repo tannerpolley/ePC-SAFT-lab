@@ -1,26 +1,23 @@
 {
   "held_1_0": {
     "case_label": "Synthetic neutral binary phase-discovery case",
-    "complete": false,
+    "complete": true,
     "diagnostics": {
       "continuous_tpd_converged_count": 2,
       "continuous_tpd_min": -0.413572543287361,
       "held_stage_ii_bound_gap": 0.0,
-      "held_stage_ii_replay_ready": null,
-      "held_stage_ii_status": "candidate_bound_gap_closed",
-      "held_stage_iii_consumed_stage_ii_replay_metadata": null,
+      "held_stage_ii_replay_ready": true,
+      "held_stage_ii_status": "dual_loop_verified",
+      "held_stage_iii_consumed_stage_ii_replay_metadata": true,
       "held_stage_iii_status": "ipopt_refinement_completed_current_route",
-      "phase_discovery_backend": "deterministic_tpd_candidate_screening",
+      "phase_discovery_backend": "continuous_tpd_held_dual_phase_discovery",
       "route_application_status": "solve_succeeded",
       "route_scaled_acceptance_passed": true,
       "route_solver_status": "success",
       "route_status": "production_accepted"
     },
     "family_label": "PE-Neutral TP Flash",
-    "incomplete_requirements": [
-      "held_stage_ii_dual_phase_discovery",
-      "held_stage_iii_ipopt_refinement"
-    ]
+    "incomplete_requirements": []
   },
   "neutral_tp_flash": {
     "application_status": "solve_succeeded",

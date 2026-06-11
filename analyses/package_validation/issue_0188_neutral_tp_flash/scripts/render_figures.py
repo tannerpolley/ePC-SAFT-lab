@@ -59,12 +59,19 @@ matplotlib:
     )
 
 
+def _strip_trailing_whitespace(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    path.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
+
+
 def _save(fig: plt.Figure, output_dir: Path, stem: str, *, plot_id: str, title: str, csv_files: list[str]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     png_name = f"{stem}.png"
     svg_name = f"{stem}.svg"
     fig.savefig(output_dir / png_name, dpi=180, bbox_inches="tight")
-    fig.savefig(output_dir / svg_name, bbox_inches="tight")
+    svg_path = output_dir / svg_name
+    fig.savefig(svg_path, bbox_inches="tight")
+    _strip_trailing_whitespace(svg_path)
     _write_sidecar(
         output_dir / f"{stem}.mpl.yaml",
         plot_id=plot_id,
@@ -193,15 +200,11 @@ def render_held_gate_status() -> None:
     ax.set_title("HELD 1.0 gate status from current main rerun", fontsize=13)
     for y, row in zip(y_positions, rows, strict=True):
         ax.text(0.02, y, row["status"], va="center", ha="left", color="white", fontsize=9)
-    ax.text(
-        0.0,
-        len(rows) + 0.08,
-        "Stage II and III are shown as incomplete here; this figure intentionally avoids a full-adoption claim.",
-        ha="left",
-        va="bottom",
-        fontsize=9,
-        transform=ax.transData,
-    )
+    if any(row["status_class"] == "incomplete" for row in rows):
+        footer = "Incomplete rows block a full HELD 1.0 admission claim for this rerun."
+    else:
+        footer = "Stage II and III are verified here; deterministic screening alone remains non-HELD evidence."
+    ax.text(0.0, len(rows) + 0.08, footer, ha="left", va="bottom", fontsize=9, transform=ax.transData)
     for spine in ax.spines.values():
         spine.set_visible(False)
     fig.tight_layout()
