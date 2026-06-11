@@ -57,7 +57,35 @@ inline pybind11::dict route_physical_evidence_to_dict(const RoutePhysicalEvidenc
     out["continuous_tpd_status"] = evidence.continuous_tpd_status;
     out["held_stage_i_status"] = evidence.held_stage_i_status;
     out["held_stage_ii_status"] = evidence.held_stage_ii_status;
+    out["held_stage_ii_candidate_bound_audit_status"] = evidence.held_stage_ii_candidate_bound_audit_status;
+    out["held_stage_ii_dual_loop_status"] = evidence.held_stage_ii_dual_loop_status;
+    out["held_stage_ii_major_iterations"] = evidence.held_stage_ii_major_iterations;
+    out["held_stage_ii_candidate_count"] = evidence.held_stage_ii_candidate_count;
+    out["held_stage_ii_lower_bound"] = evidence.held_stage_ii_lower_bound;
+    out["held_stage_ii_upper_bound"] = evidence.held_stage_ii_upper_bound;
+    out["held_stage_ii_bound_gap"] = evidence.held_stage_ii_bound_gap;
+    out["held_stage_ii_bound_tolerance"] = evidence.held_stage_ii_bound_tolerance;
+    out["held_stage_ii_stopping_reason"] = evidence.held_stage_ii_stopping_reason;
+    out["held_stage_ii_lower_bound_history"] = evidence.held_stage_ii_lower_bound_history;
+    out["held_stage_ii_upper_bound_history"] = evidence.held_stage_ii_upper_bound_history;
+    out["held_stage_ii_bound_gap_history"] = evidence.held_stage_ii_bound_gap_history;
+    out["held_stage_ii_replay_ready"] = evidence.held_stage_ii_replay_ready;
+    out["held_stage_ii_replay_source"] = evidence.held_stage_ii_replay_source;
+    out["held_stage_ii_replay_seed_name"] = evidence.held_stage_ii_replay_seed_name;
+    out["held_stage_ii_replay_candidate_count"] = evidence.held_stage_ii_replay_candidate_count;
+    out["held_stage_ii_replay_candidate_ranks"] = evidence.held_stage_ii_replay_candidate_ranks;
+    out["held_stage_ii_replay_phase_fractions"] = evidence.held_stage_ii_replay_phase_fractions;
+    out["held_stage_ii_replay_phase_kinds"] = evidence.held_stage_ii_replay_phase_kinds;
+    out["held_stage_ii_replay_phase_compositions"] = evidence.held_stage_ii_replay_phase_compositions;
+    out["held_stage_ii_rejected_candidate_count"] = evidence.held_stage_ii_rejected_candidate_count;
+    out["held_stage_ii_rejected_candidate_ranks"] = evidence.held_stage_ii_rejected_candidate_ranks;
+    out["held_stage_ii_rejected_candidate_reasons"] = evidence.held_stage_ii_rejected_candidate_reasons;
     out["held_stage_iii_status"] = evidence.held_stage_iii_status;
+    out["held_stage_iii_consumed_stage_ii_replay_metadata"] =
+        evidence.held_stage_iii_consumed_stage_ii_replay_metadata;
+    out["held_stage_iii_replay_source"] = evidence.held_stage_iii_replay_source;
+    out["held_stage_iii_replay_seed_name"] = evidence.held_stage_iii_replay_seed_name;
+    out["held_stage_iii_replay_candidate_count"] = evidence.held_stage_iii_replay_candidate_count;
     out["tpd_candidate_count"] = evidence.tpd_candidate_count;
     out["unique_candidate_count"] = evidence.unique_candidate_count;
     out["selected_candidate_count"] = evidence.selected_candidate_count;
@@ -232,12 +260,38 @@ inline pybind11::dict neutral_route_stability_certificate_from_postsolve(
                  "held_stage_i_status",
                  "held_stage_i_start_count",
                  "held_stage_i_negative_tpd_found",
-                 "held_stage_i_min_tpd",
-                 "held_stage_ii_status",
-                 "held_stage_ii_candidate_count",
-                 "held_stage_iii_status",
-                 "held_stage_iii_refined_phase_count",
-             }) {
+                  "held_stage_i_min_tpd",
+                  "held_stage_ii_status",
+                  "held_stage_ii_candidate_bound_audit_status",
+                  "held_stage_ii_dual_loop_status",
+                  "held_stage_ii_major_iterations",
+                  "held_stage_ii_candidate_count",
+                  "held_stage_ii_lower_bound",
+                  "held_stage_ii_upper_bound",
+                  "held_stage_ii_bound_gap",
+                  "held_stage_ii_bound_tolerance",
+                  "held_stage_ii_stopping_reason",
+                  "held_stage_ii_lower_bound_history",
+                  "held_stage_ii_upper_bound_history",
+                  "held_stage_ii_bound_gap_history",
+                  "held_stage_ii_replay_ready",
+                  "held_stage_ii_replay_source",
+                  "held_stage_ii_replay_seed_name",
+                  "held_stage_ii_replay_candidate_count",
+                  "held_stage_ii_replay_candidate_ranks",
+                  "held_stage_ii_replay_phase_fractions",
+                  "held_stage_ii_replay_phase_kinds",
+                  "held_stage_ii_replay_phase_compositions",
+                  "held_stage_ii_rejected_candidate_count",
+                  "held_stage_ii_rejected_candidate_ranks",
+                  "held_stage_ii_rejected_candidate_reasons",
+                  "held_stage_iii_status",
+                  "held_stage_iii_refined_phase_count",
+                  "held_stage_iii_consumed_stage_ii_replay_metadata",
+                  "held_stage_iii_replay_source",
+                  "held_stage_iii_replay_seed_name",
+                  "held_stage_iii_replay_candidate_count",
+              }) {
             if (postsolve_dict.contains(key)) {
                 stability_certificate[key] = postsolve_dict[key];
             }

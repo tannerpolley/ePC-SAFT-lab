@@ -202,13 +202,15 @@ evidence is incomplete; the diagnostics payload includes bounded Ipopt
 iteration-history records so the actual primal/dual residual path is visible
 without running a pytest sweep. JSON debug mode keeps the machine-readable
 payload on stdout and forwards native solver output to stderr. Its current
-synthetic neutral payload reports HELD Stage II as
-`candidate_bound_gap_closed` for the finite candidate audit. When route
-refinement is requested, current Ipopt `success` / `solve_succeeded` convergence
-is required before Stage III can be counted as current-route refinement
-evidence. This still does not make the generalized family production-exposed:
-the source-backed neutral TP flash fixture, full family generalization, exact
-derivatives, and postsolve certification gates still control admission.
+synthetic neutral payload separates the Stage II candidate-bound audit
+(`candidate_bound_gap_closed`) from the Stage II adoption status
+(`dual_loop_verified`) and carries replayable candidate metadata into Stage III.
+When route refinement is requested, current Ipopt `success` / `solve_succeeded`
+convergence and consumption of the Stage II replay seed are required before
+Stage III can be counted as current-route refinement evidence. This still does
+not make the generalized family production-exposed: the source-backed neutral TP
+flash fixture, full family generalization, exact derivatives, and postsolve
+certification gates still control admission.
 
 Until stages 2-5 exist for the relevant family, registry rows must stay
 `planned_not_public` even if existing public utility routes solve useful

@@ -54,17 +54,27 @@ candidate storage, stopping criteria, and Stage III replay metadata.
 
 ## Acceptance Criteria
 
-- [ ] Stage II reports lower bound, upper bound, bound gap, stopping reason,
+- [x] Stage II reports lower bound, upper bound, bound gap, stopping reason,
   candidate list, rejected candidates, and replay metadata.
-- [ ] Stage III route refinement consumes Stage II candidate metadata.
-- [ ] Incomplete continuous TPD starts, open Stage II gaps, tiny-step paths,
+- [x] Stage III route refinement consumes Stage II candidate metadata.
+- [x] Incomplete continuous TPD starts, open Stage II gaps, tiny-step paths,
   acceptable-level points, feasible-only points, and iteration-limit routes do
   not satisfy the adoption gate.
-- [ ] Registry and diagnostics distinguish deterministic screening, continuous
+- [x] Registry and diagnostics distinguish deterministic screening, continuous
   TPD, Stage I, Stage II audit, Stage II dual-loop verification, and Stage III
   refinement.
-- [ ] No associating, electrolyte, reactive, CE, CPE, public route, benchmark,
+- [x] No associating, electrolyte, reactive, CE, CPE, public route, benchmark,
   or capability broadening occurs in this issue.
+
+## Resolution Notes
+
+- Neutral Stage II now exposes candidate-bound audit status separately from
+  replayable dual-loop verification.
+- Stage III neutral LLE route refinement starts from the Stage II replay seed
+  and records replay consumption in postsolve, physical evidence, stability
+  certificates, and validation diagnostics.
+- The Stage 9 proof oracle now requires replay metadata and Stage III replay
+  consumption before reporting completion.
 
 ## Blocked By
 

@@ -879,11 +879,11 @@ Acceptance checks:
   complete.
 - Current neutral evidence reports deterministic screening as seed support,
   continuous TPD and HELD Stage I only when all continuous TPD starts converge,
-  HELD Stage II as an executable candidate bound audit, and current Ipopt
-  solves as Stage III refinement only after the route solve itself converges. A
-  Stage II open candidate bound gap remains incomplete HELD evidence; the
-  current neutral fixture closes only the finite candidate bound audit, not the
-  full generalized dual-loop HELD admission gate.
+  HELD Stage II as a candidate-bound audit plus replayable dual-loop candidate
+  metadata, and current Ipopt solves as Stage III refinement only after the
+  route solve itself converges and consumes the Stage II replay seed. A Stage II
+  open candidate bound gap remains incomplete HELD evidence; a closed audit
+  without replay metadata is not enough to satisfy the Stage II gate.
 - The executable Stage 9 checker reports any iteration-limit continuous TPD
   result as incomplete evidence, not as convergence.
 - Public utility `flash` may keep deterministic TPD postsolve certification

@@ -35,6 +35,10 @@ PHASE_DISCOVERY_REQUIREMENTS = (
     "held_stage_iii_ipopt_refinement",
 )
 
+STAGE_II_REPLAY_SOURCE = "stage_ii_dual_loop_selected_candidates"
+STAGE_II_REPLAY_SEED_NAME = "held_stage_ii_dual_loop_candidate_pair"
+STAGE_III_REPLAY_SOURCE = "stage_ii_dual_loop_candidate_seed"
+
 
 def _nonideal_lle_binary_mixture() -> ePCSAFTMixture:
     params = {
@@ -140,6 +144,13 @@ def _route_solver_converged(route_payload: dict[str, Any]) -> bool:
     )
 
 
+def _float_sequence(payload: dict[str, Any], key: str) -> list[float]:
+    value = payload.get(key)
+    if not isinstance(value, list):
+        return []
+    return [float(item) for item in value]
+
+
 def evaluate_phase_discovery(
     *,
     include_route_refinement: bool = False,
@@ -159,6 +170,20 @@ def evaluate_phase_discovery(
     )
     route_postsolve = None if route_payload is None else dict(route_payload["postsolve"])
     continuous_candidates = _continuous_candidates(discovery)
+    lower_bound_history = _float_sequence(discovery, "held_stage_ii_lower_bound_history")
+    upper_bound_history = _float_sequence(discovery, "held_stage_ii_upper_bound_history")
+    bound_gap_history = _float_sequence(discovery, "held_stage_ii_bound_gap_history")
+    stage_ii_major_iterations = int(discovery.get("held_stage_ii_major_iterations", 0))
+    stage_ii_bound_tolerance = float(discovery.get("held_stage_ii_bound_tolerance", 0.0))
+    stage_ii_bound_gap = float(discovery.get("held_stage_ii_bound_gap", 0.0))
+    rejected_reasons = list(discovery.get("held_stage_ii_rejected_candidate_reasons", ()))
+    replay_candidate_count = int(discovery.get("held_stage_ii_replay_candidate_count", 0))
+    selected_candidate_count = int(discovery.get("selected_candidate_count", 0))
+    route_stage_ii_replay_candidate_count = (
+        0
+        if route_postsolve is None
+        else int(route_postsolve.get("held_stage_ii_replay_candidate_count", 0))
+    )
 
     requirement_status = {
         "deterministic_screening": "missing",
@@ -196,14 +221,41 @@ def evaluate_phase_discovery(
     ):
         requirement_status["held_stage_i_stability"] = "verified_from_converged_continuous_tpd"
 
+    stage_ii_history_complete = (
+        stage_ii_major_iterations > 0
+        and len(lower_bound_history) == stage_ii_major_iterations
+        and len(upper_bound_history) == stage_ii_major_iterations
+        and len(bound_gap_history) == stage_ii_major_iterations
+        and abs(lower_bound_history[-1] - float(discovery.get("held_stage_ii_lower_bound", 0.0))) <= 1.0e-12
+        and abs(upper_bound_history[-1] - float(discovery.get("held_stage_ii_upper_bound", 0.0))) <= 1.0e-12
+        and abs(bound_gap_history[-1] - stage_ii_bound_gap) <= 1.0e-12
+    )
+    stage_ii_replay_ready = (
+        discovery.get("held_stage_ii_replay_ready") is True
+        and discovery.get("held_stage_ii_replay_source") == STAGE_II_REPLAY_SOURCE
+        and discovery.get("held_stage_ii_replay_seed_name") == STAGE_II_REPLAY_SEED_NAME
+        and replay_candidate_count >= selected_candidate_count >= 2
+        and int(discovery.get("held_stage_ii_rejected_candidate_count", 0)) == len(rejected_reasons)
+        and (
+            not rejected_reasons
+            or set(rejected_reasons) == {"not_selected_by_dual_loop_mass_balance_gate"}
+        )
+    )
     if (
-        discovery.get("held_stage_ii_status") == "candidate_bound_gap_closed"
-        and int(discovery.get("held_stage_ii_major_iterations", 0)) > 0
-        and float(discovery.get("held_stage_ii_bound_gap", 0.0)) <= 1.0e-6
+        discovery.get("held_stage_ii_status") == "dual_loop_verified"
+        and discovery.get("held_stage_ii_candidate_bound_audit_status") == "candidate_bound_gap_closed"
+        and discovery.get("held_stage_ii_dual_loop_status") == "verified"
+        and discovery.get("held_stage_ii_stopping_reason") == "bound_gap_closed"
+        and stage_ii_bound_tolerance > 0.0
+        and stage_ii_bound_gap <= stage_ii_bound_tolerance
+        and stage_ii_history_complete
+        and stage_ii_replay_ready
     ):
-        requirement_status["held_stage_ii_dual_phase_discovery"] = "verified_candidate_bound_gap_closed"
-    elif discovery.get("held_stage_ii_status") == "candidate_bound_gap_open":
+        requirement_status["held_stage_ii_dual_phase_discovery"] = "verified_dual_loop_replayable"
+    elif discovery.get("held_stage_ii_candidate_bound_audit_status") == "candidate_bound_gap_open":
         requirement_status["held_stage_ii_dual_phase_discovery"] = "incomplete_candidate_bound_gap_open"
+    elif discovery.get("held_stage_ii_status") == "candidate_bound_gap_closed":
+        requirement_status["held_stage_ii_dual_phase_discovery"] = "incomplete_candidate_bound_audit_without_replay"
 
     if not include_route_refinement:
         if str(requirement_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
@@ -217,14 +269,30 @@ def evaluate_phase_discovery(
         and _route_solver_converged(route_payload)
         and route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
         and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
+        and route_postsolve.get("held_stage_iii_consumed_stage_ii_replay_metadata") is True
+        and route_postsolve.get("held_stage_iii_replay_source") == STAGE_III_REPLAY_SOURCE
+        and route_postsolve.get("held_stage_iii_replay_seed_name") == STAGE_II_REPLAY_SEED_NAME
+        and route_stage_ii_replay_candidate_count >= 2
+        and int(route_postsolve.get("held_stage_iii_replay_candidate_count", 0))
+        == route_stage_ii_replay_candidate_count
         and route_postsolve.get("accepted") is True
     ):
         if str(requirement_status["held_stage_ii_dual_phase_discovery"]).startswith("verified"):
-            requirement_status["held_stage_iii_ipopt_refinement"] = "verified_current_route_refinement_converged"
+            requirement_status["held_stage_iii_ipopt_refinement"] = (
+                "verified_current_route_refinement_consumed_stage_ii_replay"
+            )
         else:
             requirement_status["held_stage_iii_ipopt_refinement"] = (
                 "verified_current_route_refinement_pending_stage_ii_candidates"
             )
+    elif (
+        route_payload is not None
+        and route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
+        and int(route_postsolve.get("held_stage_iii_refined_phase_count", 0)) >= 2
+        and route_postsolve.get("accepted") is True
+        and _route_solver_converged(route_payload)
+    ):
+        requirement_status["held_stage_iii_ipopt_refinement"] = "incomplete_missing_stage_ii_replay_seed"
     elif (
         route_payload is not None
         and route_postsolve.get("held_stage_iii_status") == "ipopt_refinement_completed_current_route"
@@ -265,15 +333,46 @@ def evaluate_phase_discovery(
             "continuous_tpd_min": discovery.get("continuous_tpd_min"),
             "held_stage_i_status": discovery.get("held_stage_i_status"),
             "held_stage_ii_status": discovery.get("held_stage_ii_status"),
+            "held_stage_ii_candidate_bound_audit_status": discovery.get(
+                "held_stage_ii_candidate_bound_audit_status"
+            ),
+            "held_stage_ii_dual_loop_status": discovery.get("held_stage_ii_dual_loop_status"),
             "held_stage_ii_major_iterations": discovery.get("held_stage_ii_major_iterations"),
             "held_stage_ii_candidate_count": discovery.get("held_stage_ii_candidate_count"),
             "held_stage_ii_lower_bound": discovery.get("held_stage_ii_lower_bound"),
             "held_stage_ii_upper_bound": discovery.get("held_stage_ii_upper_bound"),
             "held_stage_ii_bound_gap": discovery.get("held_stage_ii_bound_gap"),
+            "held_stage_ii_bound_tolerance": discovery.get("held_stage_ii_bound_tolerance"),
+            "held_stage_ii_stopping_reason": discovery.get("held_stage_ii_stopping_reason"),
+            "held_stage_ii_lower_bound_history": discovery.get("held_stage_ii_lower_bound_history"),
+            "held_stage_ii_upper_bound_history": discovery.get("held_stage_ii_upper_bound_history"),
+            "held_stage_ii_bound_gap_history": discovery.get("held_stage_ii_bound_gap_history"),
+            "held_stage_ii_replay_ready": discovery.get("held_stage_ii_replay_ready"),
+            "held_stage_ii_replay_source": discovery.get("held_stage_ii_replay_source"),
+            "held_stage_ii_replay_seed_name": discovery.get("held_stage_ii_replay_seed_name"),
+            "held_stage_ii_replay_candidate_count": discovery.get("held_stage_ii_replay_candidate_count"),
+            "held_stage_ii_replay_candidate_ranks": discovery.get("held_stage_ii_replay_candidate_ranks"),
+            "held_stage_ii_rejected_candidate_count": discovery.get("held_stage_ii_rejected_candidate_count"),
+            "held_stage_ii_rejected_candidate_reasons": discovery.get("held_stage_ii_rejected_candidate_reasons"),
             "held_stage_iii_status": None if route_postsolve is None else route_postsolve.get("held_stage_iii_status"),
             "held_stage_iii_refined_phase_count": None
             if route_postsolve is None
             else route_postsolve.get("held_stage_iii_refined_phase_count"),
+            "held_stage_iii_consumed_stage_ii_replay_metadata": None
+            if route_postsolve is None
+            else route_postsolve.get("held_stage_iii_consumed_stage_ii_replay_metadata"),
+            "held_stage_iii_replay_source": None
+            if route_postsolve is None
+            else route_postsolve.get("held_stage_iii_replay_source"),
+            "held_stage_iii_replay_seed_name": None
+            if route_postsolve is None
+            else route_postsolve.get("held_stage_iii_replay_seed_name"),
+            "held_stage_iii_replay_candidate_count": None
+            if route_postsolve is None
+            else route_postsolve.get("held_stage_iii_replay_candidate_count"),
+            "route_held_stage_ii_replay_candidate_count": None
+            if route_postsolve is None
+            else route_postsolve.get("held_stage_ii_replay_candidate_count"),
             "route_solver_status": None if route_payload is None else route_payload.get("solver_status"),
             "route_application_status": None if route_payload is None else route_payload.get("application_status"),
             "route_status": None if route_payload is None else route_payload.get("status"),

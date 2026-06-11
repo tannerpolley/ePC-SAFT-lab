@@ -35,6 +35,87 @@ using epcsaft::native::equilibrium_nlp::route_result_bridge::apply_ipopt_route_s
 using epcsaft::native::equilibrium_nlp::route_result_bridge::apply_ipopt_route_status_fields;
 namespace nlp = epcsaft::native::equilibrium_nlp;
 
+template <typename T>
+T required_native_arg_field(const py::dict& payload, const char* key) {
+    if (!payload.contains(key)) {
+        throw ValueError(std::string("Native mixture argument payload missing field: ") + key);
+    }
+    return py::cast<T>(payload[key]);
+}
+
+add_args native_args_from_payload(const py::dict& payload) {
+    add_args out;
+    out.m = required_native_arg_field<std::vector<double>>(payload, "m");
+    out.s = required_native_arg_field<std::vector<double>>(payload, "s");
+    out.e = required_native_arg_field<std::vector<double>>(payload, "e");
+    out.k_ij = required_native_arg_field<std::vector<double>>(payload, "k_ij");
+    out.e_assoc = required_native_arg_field<std::vector<double>>(payload, "e_assoc");
+    out.vol_a = required_native_arg_field<std::vector<double>>(payload, "vol_a");
+    out.z = required_native_arg_field<std::vector<double>>(payload, "z");
+    out.dielc = required_native_arg_field<std::vector<double>>(payload, "dielc");
+    out.mw = required_native_arg_field<std::vector<double>>(payload, "mw");
+    out.mixed_rel_perm_a = required_native_arg_field<std::vector<double>>(payload, "mixed_rel_perm_a");
+    out.mixed_rel_perm_b = required_native_arg_field<std::vector<double>>(payload, "mixed_rel_perm_b");
+    out.mixed_rel_perm_c = required_native_arg_field<std::vector<double>>(payload, "mixed_rel_perm_c");
+    out.mixed_rel_perm_mask = required_native_arg_field<std::vector<int>>(payload, "mixed_rel_perm_mask");
+    out.mixed_rel_perm_water_index = required_native_arg_field<int>(payload, "mixed_rel_perm_water_index");
+    out.dielc_rule = required_native_arg_field<int>(payload, "dielc_rule");
+    out.dielc_diff_mode = required_native_arg_field<int>(payload, "dielc_diff_mode");
+    out.hc_dadx_diff_mode = required_native_arg_field<int>(payload, "hc_dadx_diff_mode");
+    out.disp_dadx_diff_mode = required_native_arg_field<int>(payload, "disp_dadx_diff_mode");
+    out.assoc_dadx_diff_mode = required_native_arg_field<int>(payload, "assoc_dadx_diff_mode");
+    out.d_ion_mode = required_native_arg_field<int>(payload, "d_ion_mode");
+    out.mu_DH_diff_mode = required_native_arg_field<int>(payload, "mu_DH_diff_mode");
+    out.mu_DH_comp_dep_rel_perm = required_native_arg_field<int>(payload, "mu_DH_comp_dep_rel_perm");
+    out.mu_DH_include_sum_term = required_native_arg_field<int>(payload, "mu_DH_include_sum_term");
+    out.include_born_model = required_native_arg_field<int>(payload, "include_born_model");
+    out.d_born_mode = required_native_arg_field<int>(payload, "d_born_mode");
+    out.born_solvation_shell_model = required_native_arg_field<int>(payload, "born_solvation_shell_model");
+    out.born_dielectric_saturation = required_native_arg_field<int>(payload, "born_dielectric_saturation");
+    out.born_bulk_mode = required_native_arg_field<int>(payload, "born_bulk_mode");
+    out.mu_born_diff_mode = required_native_arg_field<int>(payload, "mu_born_diff_mode");
+    out.mu_born_comp_dep_rel_perm = required_native_arg_field<int>(payload, "mu_born_comp_dep_rel_perm");
+    out.mu_born_include_sum_term = required_native_arg_field<int>(payload, "mu_born_include_sum_term");
+    out.mu_born_comp_dep_delta_d = required_native_arg_field<int>(payload, "mu_born_comp_dep_delta_d");
+    out.d_born = required_native_arg_field<std::vector<double>>(payload, "d_born");
+    out.f_solv = required_native_arg_field<std::vector<double>>(payload, "f_solv");
+    out.born_model = required_native_arg_field<int>(payload, "born_model");
+    out.born_radius_model = required_native_arg_field<int>(payload, "born_radius_model");
+    out.born_diff_mode = required_native_arg_field<int>(payload, "born_diff_mode");
+    out.born_eps_mode = required_native_arg_field<int>(payload, "born_eps_mode");
+    out.DH_model = required_native_arg_field<int>(payload, "DH_model");
+    out.assoc_num = required_native_arg_field<std::vector<int>>(payload, "assoc_num");
+    out.assoc_matrix = required_native_arg_field<std::vector<int>>(payload, "assoc_matrix");
+    out.k_hb = required_native_arg_field<std::vector<double>>(payload, "k_hb");
+    out.l_ij = required_native_arg_field<std::vector<double>>(payload, "l_ij");
+    out.parameter_source_label = required_native_arg_field<std::string>(payload, "parameter_source_label");
+    out.parameter_provenance_status =
+        required_native_arg_field<std::string>(payload, "parameter_provenance_status");
+    out.binary_interaction_provenance_status =
+        required_native_arg_field<std::string>(payload, "binary_interaction_provenance_status");
+    out.parameter_provenance_fields =
+        required_native_arg_field<std::vector<std::string>>(payload, "parameter_provenance_fields");
+    return out;
+}
+
+add_args native_args_from_mixture_object(const py::object& mixture, const std::string& context) {
+    if (mixture.is_none()) {
+        throw ValueError(context + " requires a native mixture.");
+    }
+    if (py::hasattr(mixture, "_native_args_payload")) {
+        return native_args_from_payload(py::cast<py::dict>(mixture.attr("_native_args_payload")()));
+    }
+    try {
+        const auto local = mixture.cast<std::shared_ptr<ePCSAFTMixtureNative>>();
+        if (local) {
+            return local->args();
+        }
+    } catch (const py::cast_error& error) {
+        throw ValueError(context + " requires a native mixture or argument payload snapshot: " + error.what());
+    }
+    throw ValueError(context + " requires a native mixture or argument payload snapshot.");
+}
+
 class NlpShapeValidationSmokeProblem final : public nlp::NlpProblem {
 public:
     explicit NlpShapeValidationSmokeProblem(std::string failure_mode)
@@ -671,13 +752,36 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["held_stage_i_negative_tpd_found"] = result.held_stage_i_negative_tpd_found;
     out["held_stage_i_min_tpd"] = result.held_stage_i_min_tpd;
     out["held_stage_ii_status"] = result.held_stage_ii_status;
+    out["held_stage_ii_candidate_bound_audit_status"] = result.held_stage_ii_candidate_bound_audit_status;
+    out["held_stage_ii_dual_loop_status"] = result.held_stage_ii_dual_loop_status;
     out["held_stage_ii_major_iterations"] = result.held_stage_ii_major_iterations;
     out["held_stage_ii_candidate_count"] = result.held_stage_ii_candidate_count;
     out["held_stage_ii_lower_bound"] = result.held_stage_ii_lower_bound;
     out["held_stage_ii_upper_bound"] = result.held_stage_ii_upper_bound;
     out["held_stage_ii_bound_gap"] = result.held_stage_ii_bound_gap;
+    out["held_stage_ii_bound_tolerance"] = result.held_stage_ii_bound_tolerance;
+    out["held_stage_ii_stopping_reason"] = result.held_stage_ii_stopping_reason;
+    out["held_stage_ii_lower_bound_history"] = result.held_stage_ii_lower_bound_history;
+    out["held_stage_ii_upper_bound_history"] = result.held_stage_ii_upper_bound_history;
+    out["held_stage_ii_bound_gap_history"] = result.held_stage_ii_bound_gap_history;
+    out["held_stage_ii_replay_ready"] = result.held_stage_ii_replay_ready;
+    out["held_stage_ii_replay_source"] = result.held_stage_ii_replay_source;
+    out["held_stage_ii_replay_seed_name"] = result.held_stage_ii_replay_seed_name;
+    out["held_stage_ii_replay_candidate_count"] = result.held_stage_ii_replay_candidate_count;
+    out["held_stage_ii_replay_candidate_ranks"] = result.held_stage_ii_replay_candidate_ranks;
+    out["held_stage_ii_replay_phase_fractions"] = result.held_stage_ii_replay_phase_fractions;
+    out["held_stage_ii_replay_phase_kinds"] = result.held_stage_ii_replay_phase_kinds;
+    out["held_stage_ii_replay_phase_compositions"] = result.held_stage_ii_replay_phase_compositions;
+    out["held_stage_ii_rejected_candidate_count"] = result.held_stage_ii_rejected_candidate_count;
+    out["held_stage_ii_rejected_candidate_ranks"] = result.held_stage_ii_rejected_candidate_ranks;
+    out["held_stage_ii_rejected_candidate_reasons"] = result.held_stage_ii_rejected_candidate_reasons;
     out["held_stage_iii_status"] = result.held_stage_iii_status;
     out["held_stage_iii_refined_phase_count"] = result.held_stage_iii_refined_phase_count;
+    out["held_stage_iii_consumed_stage_ii_replay_metadata"] =
+        result.held_stage_iii_consumed_stage_ii_replay_metadata;
+    out["held_stage_iii_replay_source"] = result.held_stage_iii_replay_source;
+    out["held_stage_iii_replay_seed_name"] = result.held_stage_iii_replay_seed_name;
+    out["held_stage_iii_replay_candidate_count"] = result.held_stage_iii_replay_candidate_count;
     out["derivative_backend"] = result.derivative_backend;
     out["residual_families"] = result.residual_families;
     out["constraint_families"] = result.constraint_families;
@@ -740,7 +844,15 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     seed_and_stability["continuous_tpd_status"] = result.continuous_tpd_status;
     seed_and_stability["held_stage_i_status"] = result.held_stage_i_status;
     seed_and_stability["held_stage_ii_status"] = result.held_stage_ii_status;
+    seed_and_stability["held_stage_ii_candidate_bound_audit_status"] =
+        result.held_stage_ii_candidate_bound_audit_status;
+    seed_and_stability["held_stage_ii_dual_loop_status"] = result.held_stage_ii_dual_loop_status;
+    seed_and_stability["held_stage_ii_stopping_reason"] = result.held_stage_ii_stopping_reason;
+    seed_and_stability["held_stage_ii_replay_ready"] = result.held_stage_ii_replay_ready;
+    seed_and_stability["held_stage_ii_replay_seed_name"] = result.held_stage_ii_replay_seed_name;
     seed_and_stability["held_stage_iii_status"] = result.held_stage_iii_status;
+    seed_and_stability["held_stage_iii_consumed_stage_ii_replay_metadata"] =
+        result.held_stage_iii_consumed_stage_ii_replay_metadata;
     out["seed_and_stability"] = seed_and_stability;
     return out;
 }
@@ -803,11 +915,29 @@ py::dict neutral_phase_discovery_to_dict(
     out["held_stage_i_negative_tpd_found"] = result.held_stage_i_negative_tpd_found;
     out["held_stage_i_min_tpd"] = result.held_stage_i_min_tpd;
     out["held_stage_ii_status"] = result.held_stage_ii_status;
+    out["held_stage_ii_candidate_bound_audit_status"] = result.held_stage_ii_candidate_bound_audit_status;
+    out["held_stage_ii_dual_loop_status"] = result.held_stage_ii_dual_loop_status;
     out["held_stage_ii_major_iterations"] = result.held_stage_ii_major_iterations;
     out["held_stage_ii_candidate_count"] = result.held_stage_ii_candidate_count;
     out["held_stage_ii_lower_bound"] = result.held_stage_ii_lower_bound;
     out["held_stage_ii_upper_bound"] = result.held_stage_ii_upper_bound;
     out["held_stage_ii_bound_gap"] = result.held_stage_ii_bound_gap;
+    out["held_stage_ii_bound_tolerance"] = result.held_stage_ii_bound_tolerance;
+    out["held_stage_ii_stopping_reason"] = result.held_stage_ii_stopping_reason;
+    out["held_stage_ii_lower_bound_history"] = result.held_stage_ii_lower_bound_history;
+    out["held_stage_ii_upper_bound_history"] = result.held_stage_ii_upper_bound_history;
+    out["held_stage_ii_bound_gap_history"] = result.held_stage_ii_bound_gap_history;
+    out["held_stage_ii_replay_ready"] = result.held_stage_ii_replay_ready;
+    out["held_stage_ii_replay_source"] = result.held_stage_ii_replay_source;
+    out["held_stage_ii_replay_seed_name"] = result.held_stage_ii_replay_seed_name;
+    out["held_stage_ii_replay_candidate_count"] = result.held_stage_ii_replay_candidate_count;
+    out["held_stage_ii_replay_candidate_ranks"] = result.held_stage_ii_replay_candidate_ranks;
+    out["held_stage_ii_replay_phase_fractions"] = result.held_stage_ii_replay_phase_fractions;
+    out["held_stage_ii_replay_phase_kinds"] = result.held_stage_ii_replay_phase_kinds;
+    out["held_stage_ii_replay_phase_compositions"] = result.held_stage_ii_replay_phase_compositions;
+    out["held_stage_ii_rejected_candidate_count"] = result.held_stage_ii_rejected_candidate_count;
+    out["held_stage_ii_rejected_candidate_ranks"] = result.held_stage_ii_rejected_candidate_ranks;
+    out["held_stage_ii_rejected_candidate_reasons"] = result.held_stage_ii_rejected_candidate_reasons;
     out["held_stage_iii_status"] = result.held_stage_iii_status;
     out["held_stage_iii_refined_phase_count"] = result.held_stage_iii_refined_phase_count;
     out["min_tpd"] = result.min_tpd;
@@ -1262,15 +1392,13 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         return rows;
     });
     m.def("_native_equilibrium_activation_plan_contract", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         const py::dict& request_payload
     ) {
-        if (!mixture) {
-            throw ValueError("Equilibrium activation plan contract requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Equilibrium activation plan contract");
         const auto request = selector_request_from_dict(request_payload);
         const auto plan = epcsaft::native::equilibrium::build_activation_plan(
-            mixture->args(),
+            args,
             request
         );
         const auto layout = epcsaft::native::equilibrium::build_variable_layout(
@@ -1284,28 +1412,24 @@ void register_equilibrium_bindings(pybind11::module_& m) {
     });
     // AlgID: bubble_dew_ipopt
     m.def("_native_equilibrium_selector_contract", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         const py::dict& request_payload
     ) {
-        if (!mixture) {
-            throw ValueError("Equilibrium selector contract requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Equilibrium selector contract");
         const auto request = selector_request_from_dict(request_payload);
         return selector_contract_to_dict(epcsaft::native::equilibrium::evaluate_selector_contract(
-            mixture->args(),
+            args,
             request
         ));
     });
     m.def("_native_activated_neutral_tp_flash_nlp_contract", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         const py::dict& request_payload
     ) {
-        if (!mixture) {
-            throw ValueError("Activated neutral TP flash contract requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Activated neutral TP flash contract");
         const auto request = selector_request_from_dict(request_payload);
         const auto plan = epcsaft::native::equilibrium::build_activation_plan(
-            mixture->args(),
+            args,
             request
         );
         const auto layout = epcsaft::native::equilibrium::build_variable_layout(
@@ -1317,14 +1441,14 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         out["variable_layout"] = variable_layout_to_dict(layout);
         out["activated"] = neutral_two_phase_eos_nlp_contract_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_activated_neutral_tp_flash_nlp_contract(
-                mixture->args(),
+                args,
                 plan,
                 layout
             )
         );
         out["trusted_reference"] = neutral_two_phase_eos_nlp_contract_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_neutral_tp_flash_eos_nlp_contract(
-                mixture->args(),
+                args,
                 plan.temperature,
                 plan.pressure,
                 plan.feed_composition
@@ -1334,7 +1458,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
     });
     // AlgID: bubble_dew_ipopt
     m.def("_native_equilibrium_selector_route_result", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         const py::dict& request_payload,
         int max_iterations,
         double tolerance,
@@ -1348,9 +1472,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const py::object& continuation_state,
         const py::kwargs& kwargs
     ) {
-        if (!mixture) {
-            throw ValueError("Equilibrium selector route result requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Equilibrium selector route result");
         epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
             ipopt_solve_options_from_scalars(
                 max_iterations,
@@ -1364,12 +1486,12 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         apply_ipopt_continuation_state(options, continuation_state);
         const auto request = selector_request_from_dict(request_payload);
         const auto contract = epcsaft::native::equilibrium::evaluate_selector_contract(
-            mixture->args(),
+            args,
             request
         );
         py::dict out = neutral_two_phase_eos_route_result_to_dict(
             epcsaft::native::equilibrium::solve_selector_route(
-                mixture->args(),
+                args,
                 request,
                 options,
                 phase_total_tolerance,
@@ -1706,17 +1828,15 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         return out;
     });
     m.def("_native_eos_phase_block", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<double>& amounts,
         double volume
     ) {
-        if (!mixture) {
-            throw ValueError("EOS phase block requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "EOS phase block");
         return eos_phase_block_to_dict(epcsaft::native::equilibrium_nlp::evaluate_eos_phase_block(
-            mixture->args(),
+            args,
             temperature,
             target_pressure,
             amounts,
@@ -1724,18 +1844,16 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         ));
     });
     m.def("_native_saturation_block", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double log_vapor_density,
         double log_liquid_density,
         double log_saturation_pressure
     ) {
-        if (!mixture) {
-            throw ValueError("single-component VLE block requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "single-component VLE block");
         return single_component_vle_block_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_single_component_vle_block(
-                mixture->args(),
+                args,
                 temperature,
                 log_vapor_density,
                 log_liquid_density,
@@ -1744,7 +1862,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         );
     });
     m.def("_native_eos_phase_system", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<std::vector<double>>& phase_amounts,
@@ -1754,11 +1872,9 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const std::vector<std::vector<double>>& association_site_fractions,
         const std::vector<double>& association_delta_row_major
     ) {
-        if (!mixture) {
-            throw ValueError("EOS phase system requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "EOS phase system");
         return eos_phase_system_to_dict(epcsaft::native::equilibrium_nlp::evaluate_eos_phase_system(
-            mixture->args(),
+            args,
             temperature,
             target_pressure,
             phase_amounts,
@@ -1794,18 +1910,16 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         );
     });
     m.def("_native_electrolyte_contribution_block", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double density,
         const std::vector<double>& composition,
         const std::vector<double>& amounts
     ) {
-        if (!mixture) {
-            throw ValueError("Electrolyte contribution block requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Electrolyte contribution block");
         return electrolyte_contribution_block_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_electrolyte_contribution_block(
-                mixture->args(),
+                args,
                 temperature,
                 density,
                 composition,
@@ -1814,19 +1928,17 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         );
     });
     m.def("_native_neutral_two_phase_eos_nlp_contract", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<std::vector<double>>& phase_amounts,
         const std::vector<double>& volumes,
         const std::vector<double>& feed_amounts
     ) {
-        if (!mixture) {
-            throw ValueError("Neutral two-phase EOS NLP contract requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Neutral two-phase EOS NLP contract");
         return neutral_two_phase_eos_nlp_contract_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_neutral_two_phase_eos_nlp_contract(
-                mixture->args(),
+                args,
                 temperature,
                 target_pressure,
                 phase_amounts,
@@ -1836,19 +1948,17 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         );
     });
     m.def("_native_neutral_multiphase_eos_nlp_contract", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<std::vector<double>>& phase_amounts,
         const std::vector<double>& volumes,
         const std::vector<double>& feed_amounts
     ) {
-        if (!mixture) {
-            throw ValueError("Neutral multiphase EOS NLP contract requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Neutral multiphase EOS NLP contract");
         return neutral_two_phase_eos_nlp_contract_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_neutral_multiphase_eos_nlp_contract(
-                mixture->args(),
+                args,
                 temperature,
                 target_pressure,
                 phase_amounts,
@@ -1858,7 +1968,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         );
     });
     m.def("_native_neutral_two_phase_eos_postsolve", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<std::vector<double>>& phase_amounts,
@@ -1869,12 +1979,10 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         double chemical_potential_tolerance,
         double phase_distance_tolerance
     ) {
-        if (!mixture) {
-            throw ValueError("Neutral two-phase EOS postsolve requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Neutral two-phase EOS postsolve");
         return neutral_two_phase_eos_postsolve_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_neutral_two_phase_eos_postsolve(
-                mixture->args(),
+                args,
                 temperature,
                 target_pressure,
                 phase_amounts,
@@ -1888,7 +1996,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         );
     });
     m.def("_native_neutral_multiphase_eos_postsolve", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<std::vector<double>>& phase_amounts,
@@ -1900,12 +2008,10 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         double phase_distance_tolerance,
         const std::vector<int>& phase_kinds
     ) {
-        if (!mixture) {
-            throw ValueError("Neutral multiphase EOS postsolve requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Neutral multiphase EOS postsolve");
         return neutral_two_phase_eos_postsolve_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_neutral_multiphase_eos_postsolve(
-                mixture->args(),
+                args,
                 temperature,
                 target_pressure,
                 phase_amounts,
@@ -1920,7 +2026,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         );
     });
     m.def("_native_neutral_tpd_phase_discovery", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<double>& feed_composition,
@@ -1929,12 +2035,10 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         double candidate_mass_balance_tolerance,
         bool continuous_tpd_required
     ) {
-        if (!mixture) {
-            throw ValueError("Neutral TPD phase discovery requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Neutral TPD phase discovery");
         return neutral_phase_discovery_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_neutral_tpd_phase_discovery(
-                mixture->args(),
+                args,
                 temperature,
                 target_pressure,
                 feed_composition,
@@ -1955,7 +2059,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("continuous_tpd_required") = true
     );
     m.def("_native_neutral_two_phase_eos_result", [](
-        const std::shared_ptr<ePCSAFTMixtureNative>& mixture,
+        const py::object& mixture,
         double temperature,
         double target_pressure,
         const std::vector<std::vector<double>>& phase_amounts,
@@ -1967,12 +2071,10 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         double phase_distance_tolerance,
         bool phase_distance_constraint
     ) {
-        if (!mixture) {
-            throw ValueError("Neutral two-phase EOS result builder requires a native mixture.");
-        }
+        const add_args args = native_args_from_mixture_object(mixture, "Neutral two-phase EOS result builder");
         return neutral_two_phase_eos_result_payload_to_dict(
             epcsaft::native::equilibrium_nlp::build_neutral_two_phase_eos_result(
-                mixture->args(),
+                args,
                 temperature,
                 target_pressure,
                 phase_amounts,

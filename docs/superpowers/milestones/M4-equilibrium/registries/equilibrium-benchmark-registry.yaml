@@ -62,13 +62,14 @@ family_rows:
     objective_family: pressure_transformed_helmholtz
     hard_constraints: [material_balance, phase_pressure_consistency, chemical_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_generalized_exposure
-    phase_discovery_status: continuous_tpd_stage_i_stage_ii_candidate_bound_audit_closed_current_fixture
+    phase_discovery_status: continuous_tpd_stage_i_stage_ii_dual_loop_replay_verified_current_fixture
     phase_discovery_gate_status:
       deterministic_screening: implemented_seed_and_certification_support_not_full_held
       continuous_tpd_minimization: implemented_neutral_coordinate_search_convergence_required
       held_stage_i_stability: implemented_neutral_multi_start_convergence_required
-      held_stage_ii_dual_phase_discovery: current_neutral_candidate_bound_audit_closed_pending_full_dual_loop_generalization
-      held_stage_iii_ipopt_refinement: current_route_refinement_verified_with_ipopt_success
+      held_stage_ii_candidate_bound_audit: current_neutral_candidate_bound_audit_closed
+      held_stage_ii_dual_phase_discovery: current_neutral_dual_loop_replay_verified_current_fixture
+      held_stage_iii_ipopt_refinement: current_route_refinement_consumes_stage_ii_replay_with_ipopt_success
     required_gates:
       - infrastructure_gate
       - continuous_tpd_minimization

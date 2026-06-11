@@ -18,6 +18,11 @@ from equilibrium_support.equilibrium_cases import (
 )
 
 
+def _skip_without_ipopt() -> None:
+    if not _core._native_ipopt_smoke()["compiled"]:
+        pytest.skip("Ipopt native adapter is not compiled.")
+
+
 def _pure_ethane_mixture() -> ePCSAFTMixture:
     params = {
         "MW": np.asarray([30.070e-3]),
@@ -359,6 +364,115 @@ def test_selector_core_accepts_source_backed_explicit_zero_binary_convention() -
     assert readiness["explicit_zero_binary_interaction_convention"] is True
     assert readiness["parameter_provenance_fields"] == ["source", "table"]
     assert readiness["required_parameter_families_present"] is True
+
+
+def test_neutral_lle_stage_ii_dual_loop_reports_replayable_candidate_gate() -> None:
+    mix = _nonideal_lle_binary_mixture()
+
+    discovery = _core._native_neutral_tpd_phase_discovery(
+        mix._native,
+        225.0,
+        1.0e6,
+        [0.5, 0.5],
+        [0, 0],
+        1.0e-6,
+        1.0e-6,
+    )
+
+    assert discovery["phase_discovery_backend"] == "continuous_tpd_held_dual_phase_discovery"
+    assert discovery["stage9_phase_discovery_steps"] == [
+        "deterministic_screening",
+        "continuous_tpd_minimization",
+        "held_stage_i_stability",
+        "held_stage_ii_candidate_bound_audit",
+        "held_stage_ii_dual_loop_verification",
+        "held_stage_iii_ipopt_refinement",
+    ]
+    assert discovery["held_stage_ii_candidate_bound_audit_status"] == "candidate_bound_gap_closed"
+    assert discovery["held_stage_ii_status"] == "dual_loop_verified"
+    assert discovery["held_stage_ii_dual_loop_status"] == "verified"
+    assert discovery["held_stage_ii_stopping_reason"] == "bound_gap_closed"
+    assert discovery["held_stage_ii_bound_tolerance"] == pytest.approx(1.0e-6)
+    assert discovery["held_stage_ii_lower_bound_history"]
+    assert discovery["held_stage_ii_upper_bound_history"]
+    assert discovery["held_stage_ii_bound_gap_history"]
+    assert len(discovery["held_stage_ii_lower_bound_history"]) == discovery["held_stage_ii_major_iterations"]
+    assert len(discovery["held_stage_ii_upper_bound_history"]) == discovery["held_stage_ii_major_iterations"]
+    assert len(discovery["held_stage_ii_bound_gap_history"]) == discovery["held_stage_ii_major_iterations"]
+    assert discovery["held_stage_ii_lower_bound_history"][-1] == pytest.approx(
+        discovery["held_stage_ii_lower_bound"]
+    )
+    assert discovery["held_stage_ii_upper_bound_history"][-1] == pytest.approx(
+        discovery["held_stage_ii_upper_bound"]
+    )
+    assert discovery["held_stage_ii_bound_gap_history"][-1] == pytest.approx(
+        discovery["held_stage_ii_bound_gap"]
+    )
+    assert discovery["held_stage_ii_replay_ready"] is True
+    assert discovery["held_stage_ii_replay_source"] == "stage_ii_dual_loop_selected_candidates"
+    assert discovery["held_stage_ii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_pair"
+    assert discovery["held_stage_ii_replay_phase_kinds"] == discovery["selected_phase_kinds"]
+    assert discovery["held_stage_ii_replay_phase_fractions"] == pytest.approx(
+        discovery["selected_phase_fractions"]
+    )
+    np.testing.assert_allclose(
+        np.asarray(discovery["held_stage_ii_replay_phase_compositions"], dtype=float),
+        np.asarray(discovery["selected_phase_compositions"], dtype=float),
+    )
+
+    candidates = [dict(candidate) for candidate in discovery["candidates"]]
+    rejected = [candidate for candidate in candidates if not candidate["selected"]]
+    assert candidates
+    assert rejected
+    assert discovery["held_stage_ii_replay_candidate_count"] == len(candidates)
+    assert discovery["held_stage_ii_rejected_candidate_count"] == len(rejected)
+    assert len(discovery["held_stage_ii_rejected_candidate_ranks"]) == len(rejected)
+    assert len(discovery["held_stage_ii_rejected_candidate_reasons"]) == len(rejected)
+    assert set(discovery["held_stage_ii_rejected_candidate_reasons"]) == {
+        "not_selected_by_dual_loop_mass_balance_gate"
+    }
+
+
+def test_neutral_lle_stage_iii_route_refinement_records_stage_ii_replay_seed() -> None:
+    _skip_without_ipopt()
+    mix = _nonideal_lle_binary_mixture()
+
+    route = _core._native_equilibrium_selector_route_result(
+        mix._native,
+        {
+            "route": "neutral_lle",
+            "temperature": 225.0,
+            "pressure": 1.0e6,
+            "composition": [0.5, 0.5],
+            "composition_role": "feed",
+        },
+        260,
+        1.0e-6,
+        0.0,
+        "auto",
+        50,
+        1.0e-8,
+        1.0e-3,
+        1.0e-6,
+        1.0e-6,
+        {},
+        linear_solver="auto",
+        option_profile="held_refinement",
+        print_level=0,
+        acceptable_tolerance=1.0e-7,
+        constraint_violation_tolerance=1.0e-7,
+        dual_infeasibility_tolerance=1.0e-8,
+        complementarity_tolerance=1.0e-8,
+    )
+
+    postsolve = route["postsolve"]
+    assert postsolve["held_stage_ii_status"] == "dual_loop_verified"
+    assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
+    assert postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
+    assert postsolve["held_stage_iii_replay_source"] == "stage_ii_dual_loop_candidate_seed"
+    assert postsolve["held_stage_iii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_pair"
+    assert postsolve["held_stage_iii_replay_candidate_count"] == postsolve["held_stage_ii_replay_candidate_count"]
+    assert route["seed_attempts"][0]["seed_name"] == "held_stage_ii_dual_loop_candidate_pair"
 
 
 def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:

@@ -134,7 +134,7 @@ def test_no_generalized_family_claims_production_before_held_gates() -> None:
     assert "held_stage_ii_dual_phase_discovery" in neutral["required_gates"]
     assert (
         neutral["phase_discovery_status"]
-        == "continuous_tpd_stage_i_stage_ii_candidate_bound_audit_closed_current_fixture"
+        == "continuous_tpd_stage_i_stage_ii_dual_loop_replay_verified_current_fixture"
     )
     assert neutral["phase_discovery_gate_status"]["deterministic_screening"].endswith("not_full_held")
     assert (
@@ -144,12 +144,16 @@ def test_no_generalized_family_claims_production_before_held_gates() -> None:
     expected_stage_i_status = "implemented_neutral_multi_start_convergence_required"
     assert neutral["phase_discovery_gate_status"]["held_stage_i_stability"] == expected_stage_i_status
     assert (
+        neutral["phase_discovery_gate_status"]["held_stage_ii_candidate_bound_audit"]
+        == "current_neutral_candidate_bound_audit_closed"
+    )
+    assert (
         neutral["phase_discovery_gate_status"]["held_stage_ii_dual_phase_discovery"]
-        == "current_neutral_candidate_bound_audit_closed_pending_full_dual_loop_generalization"
+        == "current_neutral_dual_loop_replay_verified_current_fixture"
     )
     assert (
         neutral["phase_discovery_gate_status"]["held_stage_iii_ipopt_refinement"]
-        == "current_route_refinement_verified_with_ipopt_success"
+        == "current_route_refinement_consumes_stage_ii_replay_with_ipopt_success"
     )
 
 
