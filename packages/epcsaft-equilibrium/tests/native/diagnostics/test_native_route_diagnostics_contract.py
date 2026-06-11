@@ -130,3 +130,38 @@ def test_native_route_diagnostics_preserves_route_metadata_contract() -> None:
         "phase_pressure_consistency",
         "phase_distance",
     ]
+
+
+def test_native_route_diagnostics_preserves_stage8_ipopt_evidence_contract() -> None:
+    route = {
+        "accepted": True,
+        "status": "accepted",
+        "solver_accepted": True,
+        "postsolve_accepted": True,
+        "profile_exact_hessian_gate": True,
+        "variable_scaling_quality_passed": True,
+        "constraint_scaling_quality_passed": True,
+        "restoration_phase_observed": False,
+        "active_lower_bound_count": 1,
+        "active_upper_bound_count": 2,
+        "active_variable_bound_count": 3,
+        "step_trial_count_max": 4,
+        "bound_push": 1.0e-8,
+        "bound_frac": 1.0e-7,
+        "postsolve": {
+            "accepted": True,
+        },
+    }
+
+    diagnostics = native_route_diagnostics(route)
+
+    assert diagnostics["profile_exact_hessian_gate"] is True
+    assert diagnostics["variable_scaling_quality_passed"] is True
+    assert diagnostics["constraint_scaling_quality_passed"] is True
+    assert diagnostics["restoration_phase_observed"] is False
+    assert diagnostics["active_lower_bound_count"] == 1
+    assert diagnostics["active_upper_bound_count"] == 2
+    assert diagnostics["active_variable_bound_count"] == 3
+    assert diagnostics["step_trial_count_max"] == 4
+    assert diagnostics["bound_push"] == 1.0e-8
+    assert diagnostics["bound_frac"] == 1.0e-7

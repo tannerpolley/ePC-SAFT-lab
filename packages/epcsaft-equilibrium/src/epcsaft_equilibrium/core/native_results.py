@@ -46,6 +46,10 @@ _ROUTE_BOOL_DIAGNOSTIC_KEYS = (
     "solver_feasible_point",
     "postsolve_accepted",
     "scaled_acceptance_passed",
+    "profile_exact_hessian_gate",
+    "variable_scaling_quality_passed",
+    "constraint_scaling_quality_passed",
+    "restoration_phase_observed",
 )
 
 _ROUTE_INT_DIAGNOSTIC_KEYS = (
@@ -58,6 +62,10 @@ _ROUTE_INT_DIAGNOSTIC_KEYS = (
     "variable_scaling_count",
     "constraint_scaling_count",
     "eval_h_calls",
+    "active_lower_bound_count",
+    "active_upper_bound_count",
+    "active_variable_bound_count",
+    "step_trial_count_max",
 )
 
 _ROUTE_FLOAT_DIAGNOSTIC_KEYS = (
@@ -78,6 +86,8 @@ _ROUTE_FLOAT_DIAGNOSTIC_KEYS = (
     "barrier_parameter_final",
     "regularization_size_final",
     "regularization_size_max",
+    "bound_push",
+    "bound_frac",
 )
 
 _ROUTE_SEQUENCE_DIAGNOSTIC_KEYS = (
