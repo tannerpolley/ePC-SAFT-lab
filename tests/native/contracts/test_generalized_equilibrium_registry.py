@@ -111,6 +111,17 @@ def test_gfpe_plan_is_pretreatment_centered() -> None:
     )
 
 
+def test_stage9_phase_discovery_checker_requires_complete_exit_status() -> None:
+    stage_text = STAGE_PLAN_PATH.read_text(encoding="utf-8")
+
+    required_command = (
+        "uv run python scripts/validation/check_phase_discovery.py "
+        "--json --include-route-refinement --require-complete"
+    )
+
+    assert required_command in stage_text
+
+
 def test_no_generalized_family_claims_production_before_held_gates() -> None:
     for row in _family_rows():
         assert row["activation_status"] == "planned_not_public", row["family_label"]
