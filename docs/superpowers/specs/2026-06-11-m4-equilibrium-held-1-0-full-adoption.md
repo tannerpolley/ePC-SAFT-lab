@@ -1,482 +1,280 @@
 # M4 Equilibrium HELD 1.0 Full Adoption
 
 Milestone: `M4 - Equilibrium`
-Affected packages: `packages/epcsaft-equilibrium`, provider public derivative
+Affected packages: `packages/epcsaft-equilibrium`, provider derivative
 contracts where explicitly required
 Affected validation milestone: `M6 - Validation`
 Status: `draft`
 Created: `2026-06-11`
+Updated: `2026-06-12`
 
 ## Summary
 
-This spec broadens the local HELD 1.0 framing from the narrow #148 evidence
-slice into a full adoption contract for every equilibrium family or method that
-can claim phase-discovery support.
+This spec is the durable M4 contract for full HELD 1.0 adoption before
+associating GFPE is implemented. It incorporates the comparison against Pereira
+et al. 2012 and updates the local status after #187, #241, and #188 were
+resolved.
 
-The central rule is simple: a closed predecessor issue is evidence, not adoption.
-No family, method, registry row, capability line, or validation gate may claim
-HELD 1.0 coverage only because an earlier issue closed. A family or method is
-covered only when the active implementation path has executable HELD-stage
+The current neutral proof lane is materially stronger than the older blocked
+rows suggested: after a fresh native rebuild, Stage II dual-loop replay and
+Stage III route-refinement replay-consumption are verified for the current
+neutral proof path. That does not yet equal full Pereira-style HELD 1.0
+adoption. Pereira-style adoption also requires explicit all-phase termination,
+reliable nonconvex inner-search behavior, phase-count independence, source-backed
+LLE evidence, and a reliability campaign before the neutral machinery can be
+treated as the pre-associating algorithm base.
+
+The central rule remains: closed issues are evidence, not adoption. A family,
+method, registry row, capability line, or validation gate may claim HELD 1.0
+coverage only when its active implementation path has executable HELD-stage
 evidence, exact derivative coverage where the route requires it, postsolve
 certification, and registry/capability text that matches the evidence.
 
-The nearest resolvable implementation issue remains #187, because #186 and #148
-are closed and #187 is the shared NLP/Ipopt gate that all later HELD adoption
-work needs. The tracker should be refreshed before #187 execution so stale
-blocked state does not hide the real queue.
+## Terminology Guard
+
+`HELD` means the algorithm acronym `Helmholtz free Energy Lagrangian Dual`.
+In this spec, HELD 1.0 refers to the Pereira et al. 2012 algorithmic framing for
+volume-composition Helmholtz-dual phase equilibrium. It is not a reference to
+the author Held in later electrolyte ePC-SAFT papers. Held 2014 and related
+electrolyte papers remain validation literature for electrolyte GFPE and
+HELD2.0-style work, not the source of the HELD 1.0 algorithm name.
 
 ## Project Context Evidence Used
 
 - Verified: `docs/superpowers/PROJECT_CONTEXT.md` defines GFPE doctrine as the
-  M4 organizing contract and says current deterministic TPD/candidate screening
-  is seed and certification support, not full HELD.
+  M4 organizing contract and says deterministic TPD/candidate screening is seed
+  and certification support, not full HELD.
 - Verified:
   `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-  defines the HELD ladder: deterministic support, continuous TPD, Stage I
+  defines the local HELD ladder: deterministic support, continuous TPD, Stage I
   stability, Stage II dual cutting-plane phase discovery, Stage III Ipopt
-  refinement, then HELD2.0 for strong electrolytes.
+  refinement, and HELD2.0 for strong electrolytes.
 - Verified:
   `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
   keeps GFPE family rows unexposed until full HELD-stage phase discovery, exact
   derivatives, and postsolve certification pass.
 - Verified:
-  `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
-  identifies Stage 8 shared NLP/Ipopt as the gate before Stage 9 real-mixture
-  HELD proof, Stage 10 neutral fixture proof, Stage 11 boundary workflows, Stage
-  12 generalized phase-set PE, Stage 13 associating GFPE, Stage 15 electrolyte
-  GFPE, and Stage 17 registry/capability closure.
-- Verified:
-  `docs/superpowers/specs/2026-06-08-m3-held-readiness-cleanup.md` intentionally
-  kept #148 narrow unless a later approved spec broadened HELD 1.0. This file is
-  that broadening spec.
-- Verified: GitHub M4 live state has #148 and #186 closed, while #187, #188,
-  #189, #190, #191, and #145 remain open with blocked labels. #192 is the M6
-  validation closure issue blocked by the M4 proof chain.
-- Inference: the local tracker mirrors still need refresh after #148/#186
-  closure because their readiness fields still describe blocked queues that may
-  now have only downstream implementation dependencies.
+  `docs/papers/md/Equilibrium/Pereira et al. - 2012 - The HELD algorithm for multicomponent, multiphase equilibrium calculations with generic equations of.md`
+  describes HELD as a PT flash algorithm in Helmholtz volume-composition space,
+  with initialization/stability testing, alternating phase identification by
+  linear and nonconvex optimization, acceleration/convergence, tunneling,
+  multistart inner searches, mass-balance termination, and reliability testing
+  over thousands of unstable conditions.
+- Verified: #187 closed the shared NLP/Ipopt infrastructure gate.
+- Verified: #241 closed the neutral Stage II replayable dual phase-discovery
+  gate.
+- Verified: #188 closed the source-backed neutral TP-flash fixture gate.
+- Verified: after the fresh native rebuild following #241/#188, the neutral
+  phase-discovery checker reported Stage II as replayable and Stage III as
+  current-route refinement consuming the Stage II replay seed.
+- Verified: #246 is now the ready evidence-hygiene issue for adding
+  fresh-native receipts to HELD/GFPE validation artifacts.
+- Inference: the remaining full-adoption work is no longer "make Stage II/III
+  exist" for the current neutral proof lane. The remaining work is to harden
+  Pereira-style algorithm parity and expand the proof surface before
+  associating GFPE borrows the neutral HELD machinery.
 
-## User Decisions
+## Pereira 2012 Requirements Imported Into M4
 
-- Broaden HELD 1.0 beyond #148's narrow closure boundary.
-- Treat all equilibrium families and public methods as requiring explicit
-  coverage, derivation from a covered base family, or a documented exclusion
-  from HELD claims.
-- Create one new spec first, before writing a new implementation plan or issue.
-- Make the spec detailed enough that the next closest ready issue can start
-  from it without another broad context reconstruction.
+The following requirements are the paper-derived gaps that must be visible in
+plans and issues before associating GFPE starts.
 
-## Full Adoption Definition
+| Pereira-style requirement | Local current state | Remaining adoption requirement |
+| --- | --- | --- |
+| Helmholtz volume-composition PT flash formulation | GFPE doctrine uses pressure-transformed Helmholtz amount-volume NLP | Keep this as the shared phase-equilibrium objective and reject residual-only completion claims |
+| Initialization/stability testing | Continuous TPD and Stage I diagnostics exist in the neutral proof path | Require converged-start accounting and explicit incomplete-start failure state in every adoption receipt |
+| Alternating outer linear and inner nonconvex phase identification | Neutral Stage II replay path is now verified for the current fixture | Record lower bound, upper bound, best incumbent, bound gap, candidate cuts, rejected candidates, and stopping reason as durable evidence |
+| Nonconvex inner-search reliability | Current proof lane has replayable candidate metadata | Add a Pereira-style reliability harness for multistart/tunneling-like inner-search stress, with no hidden initial-guess carryover |
+| Mass-balance termination to identify all stable phases | Current fixtures certify material balance after solve | Prove the algorithm cannot declare completion while candidate phases fail the global feed mass balance |
+| More-than-two-phase readiness | Generalized phase-set PE remains planned and #189 remains blocked | Extend #189 to arbitrary phase-count feasibility, duplicate/collapsed phase rejection, and LLLE-ready completeness |
+| Stage III acceleration/convergence | Current route refinement consumes Stage II replay seed and requires Ipopt success | Preserve strict `success` and `solve_succeeded`; acceptable-level, tiny-step, feasible-only, and iteration-limit paths remain incomplete evidence |
+| Reliability campaign | Current proof oracles are focused checker/test receipts | Add repeated random unstable-condition and repeated point-calculation receipts before claiming Pereira-style algorithm reliability |
+| Literature breadth | Source-backed neutral TP flash exists; source-backed neutral LLE showcase is specified but not implemented | Add the neutral nonassociating LLE showcase, then use #189 for phase-count breadth before associating admission |
+| Associating preparation | #145/#190 remain blocked | Associating GFPE may reuse the neutral HELD skeleton only after neutral pre-association gates and exact association derivatives are proven |
 
-HELD 1.0 full adoption means every equilibrium family or method sits in exactly
-one of these states:
+## Current Coverage Matrix
 
-1. `held_1_admitted`: the method or family has continuous TPD, Stage I, true
-   Stage II dual phase discovery, Stage III Ipopt refinement, exact route
-   derivatives where required, and postsolve phase-set certification.
-2. `derived_from_held_1`: the method is a boundary or diagram workflow derived
-   from a HELD-admitted base GFPE path and has strict convergence and
-   certification receipts for the degree-of-freedom swap.
-3. `held_variant_required`: the family needs a family-specific extension before
-   it can be admitted, such as HELD2.0 for strong electrolytes or association
-   derivative gates for associating systems.
-4. `outside_phase_discovery`: the workflow does not use phase discovery and
-   cannot borrow HELD completion language.
-5. `blocked_by_missing_evidence`: the family or method is known, but the
-   executable evidence chain is incomplete.
-
-Closed issue state is never one of these states. It can only supply evidence
-for a gate.
-
-## Adoption Gates
-
-### Gate 1 - Selector And Pretreatment
-
-Issue coverage: #186, closed.
-
-The selector and pretreatment pipeline must still be checked by later issues
-when a new family or method enters the route. Closure of #186 means the current
-route-shape and selector admission layer exists; it does not mean later methods
-inherit HELD adoption automatically.
-
-Required carry-forward evidence:
-
-- public request shape is separated from GFPE family admission;
-- mixture classification rejects unsupported association, electrolyte, or
-  reactive inputs before optimizer dispatch;
-- diagnostics identify route shape, input basis, selector admission, parameter
-  readiness, derivative readiness, and exposure state separately.
-
-### Gate 2 - Shared NLP And Ipopt Infrastructure
-
-Issue coverage: #187, open and nearest resolvable.
-
-This is the next implementation gate. It must finish before the HELD proof lane
-is used for source-backed neutral admission, boundary workflows, generalized
-phase sets, associating GFPE, or electrolyte GFPE.
-
-Required evidence:
-
-- `NlpProblem` owns physical variable layout, bounds, scaling, constraints,
-  objective, gradient, sparse Jacobian, and Lagrangian Hessian contracts;
-- sparse Jacobian and Hessian structures have fixed route-owned ordering;
-- route-owned scaling and Ipopt option profiles are testable;
-- exact-Hessian profile selection is visible in diagnostics;
-- scaled numerical acceptance is separate from physical postsolve acceptance;
-- solver failure, inadmissible route state, derivative gap, scaling problem,
-  and postsolve certification failure are distinguishable.
-
-### Gate 3 - True HELD 1.0 Phase Discovery
-
-Issue coverage: #148 closed as baseline evidence, but full adoption still needs
-one open child issue.
-
-The gap is Stage II. Current neutral evidence closes a finite candidate bound
-audit for the current fixture. Full HELD 1.0 adoption needs a replayable dual
-cutting-plane phase-discovery loop.
-
-Required evidence:
-
-- continuous TPD minimization in volume-composition space;
-- Stage I multistart stability with converged-start accounting;
-- Stage II dual phase discovery with lower/upper bound history, gap tolerance,
-  candidate creation, candidate rejection, and stopping reason;
-- persisted candidate phases with route-assembly metadata;
-- Stage III Ipopt refinement using the candidate phase set;
-- relation between Stage II bounds and Stage III refined objective;
-- incomplete TPD starts, open Stage II gaps, tiny-step paths, acceptable-level
-  points, feasible-only points, and iteration-limit routes remain incomplete
-  evidence.
-
-New issue to create from this spec:
-
-```text
-M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate
-```
-
-Recommended placement:
-
-- Milestone: `M4 - Equilibrium`
-- Package: `equilibrium`
-- Type: `Feature`
-- Blocked by: #187
-- Blocks: #188 and #189
-
-Minimum acceptance:
-
-- replace the current Stage II finite candidate audit as the adoption gate with
-  a replayable dual phase-discovery loop;
-- report lower bound, upper bound, bound gap, iteration count, candidates,
-  rejected candidates, and stopping reason;
-- persist candidate phase metadata enough for Stage III replay;
-- keep deterministic screening as seed and postsolve support only;
-- update registry language so `candidate_bound_audit` cannot be confused with
-  `dual_loop_verified`;
-- do not broaden associating, electrolyte, reactive, CE, CPE, or public route
-  capability claims.
-
-### Gate 4 - Source-Backed Neutral TP Flash Admission
-
-Issue coverage: #188, open.
-
-The neutral TP flash fixture is the first real GFPE admission proof. It must use
-source-backed data and a supplied phase-discovery payload instead of hiding a
-separate proof solve inside the fixture command.
-
-Required evidence:
-
-- hydrocarbon workbook-derived TP flash fixture or another accepted
-  ePC-SAFT-compatible source-backed fixture;
-- explicit species, parameters, binary interactions, temperature, pressure,
-  feed composition, expected phase count, phase compositions, phase fractions,
-  source path, and tolerances;
-- material balance, phase pressure consistency, chemical-potential or fugacity
-  equality, phase distinctness, exact derivative evidence, and postsolve
-  stability;
-- registry remains unexposed until the full gate chain passes.
-
-### Gate 5 - Derived Boundary Workflows
-
-Issue coverage: #189, open.
-
-Bubble and dew can be derived from neutral GFPE. Cloud and shadow remain future
-derived workflows until their contracts and route evidence exist.
-
-Required evidence:
-
-- boundary workflows are degree-of-freedom swaps over the shared GFPE core;
-- strict route convergence is required for completion;
-- routine validation stays contract-level unless a named route point or explicit
-  sweep is requested;
-- diagram traces report per-point diagnostics and skipped-point reasons;
-- boundary workflows do not become independent family rows.
-
-### Gate 6 - Generalized Phase-Set PE
-
-Issue coverage: #189, open.
-
-Full adoption requires phase-count independence after phase discovery. Repeated
-two-phase calls are not generalized phase-set evidence.
-
-Required evidence:
-
-- phase-set record with phase count, phase kind, source, amount, volume,
-  composition, objective value, feasibility, and status;
-- arbitrary candidate phase-set feasibility;
-- lower-free-energy feasible phase set rejection tests;
-- duplicate and collapsed phase rejection;
-- candidate completeness certification;
-- replay only after each base family has source-backed validation.
-
-### Gate 7 - Associating GFPE
-
-Issue coverage: #145 and #190, open.
-
-Associating GFPE may reuse neutral HELD machinery only after association
-derivative architecture is proven for the selected association model. Association
-is not covered by neutral HELD alone.
-
-Required evidence:
-
-- selected association architecture: lifted site variables with mass-action
-  constraints or complete implicit association sensitivities;
-- exact first and second derivative coverage for the active association terms;
-- source-backed Gross/Sadowski associating proof target;
-- association-specific postsolve checks for site bounds, mass-action residuals,
-  contribution activation, and derivative block coverage;
-- approximate explicit association closures stay diagnostic unless a route is
-  deliberately exposed as approximate.
-
-### Gate 8 - Electrolyte GFPE And HELD2.0 Bridge
-
-Issue coverage: #191, open.
-
-Strong electrolytes require HELD2.0 and reduced electroneutral variables. HELD
-1.0 neutral evidence cannot be reused as electrolyte admission proof.
-
-Required evidence:
-
-- reduced electroneutral variable basis with lift and back-lift;
-- per-phase charge-balance constraints;
-- projected electrochemical potential equality;
-- Born SSM+DS exact-Hessian evidence before electrolyte validation;
-- electrolyte TPD and HELD2.0 diagnostics;
-- source-backed Khudaida electrolyte fixture first, then Held/Ascani follow-ons
-  after source and convention audits.
-
-### Gate 9 - Registry, Capability, And Benchmark Closure
-
-Issue coverage: #192, open in `M6 - Validation`.
-
-Capabilities may move only after M4 proof gates exist. The registry must not
-advance before executable evidence can point to source-backed fixtures and
-validation commands.
-
-Required evidence:
-
-- family rows distinguish current public utilities from generalized GFPE
-  admission;
-- benchmark fixtures include source, model family, expected behavior,
-  tolerances, and command receipts;
-- capability output separates neutral, associating, electrolyte, reactive, CE,
-  and CPE scope;
-- docs and tests fail when capability claims outpace executable evidence.
-
-## Family And Method Coverage Matrix
-
-| Family or method | Required HELD adoption state | Current issue coverage | Gap |
+| Family or method | Required HELD adoption state | Current issue coverage | Current truth |
 | --- | --- | --- | --- |
-| Public `flash` utility | `held_1_admitted` for proof lane; public cheap route may remain deterministic by default | #148, #187, #188 | full Stage II dual loop and source-backed admission chain |
-| Neutral nonassociating `lle` utility | `held_1_admitted` before any generalized claim | #148, #187, #188, #189 | shared NLP, Stage II dual loop, phase-set completeness |
-| `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature` | `derived_from_held_1` | #189 | strict derived workflow evidence and trace diagnostics |
-| Cloud/shadow workflows | `derived_from_held_1` after implementation | #189 | route contracts and executable evidence |
-| `single_component_vle` | direct boundary-route evidence, no borrowed HELD claim | #228 closed, #192 later | capability registry alignment if exposed separately |
-| PE-Neutral TP Flash | `held_1_admitted` | #187, #188 | shared NLP, Stage II dual loop, supplied phase-discovery payload |
-| PE-Generalized Multiphase | `held_1_admitted` with phase-count independence | #189 | generalized phase-set route and completeness tests |
-| PE-Associating TP Flash | `held_variant_required` | #145, #190 | exact association derivatives and source-backed associating proof |
-| PE-Electrolyte LLE/TP Flash | `held_variant_required` | #191 | HELD2.0, reduced electroneutral basis, Born SSM+DS exact Hessian |
-| CE Chemical Equilibrium | `outside_phase_discovery` | future CE work | standard-state and reaction-affinity proof, no HELD claim |
-| CPE Combined Phase-Chemical | `held_variant_required` for phase part plus CE proof | future CPE work | simultaneous PE/CE proof after base PE and CE gates |
+| Public `flash` utility | `held_1_admitted` for proof lane; cheap public path may remain deterministic by default | #148, #187, #241, #188, #246 | Neutral proof lane verified after fresh build; receipt hardening still open |
+| Neutral nonassociating `lle` utility | `held_1_admitted` before any generalized claim | #148, #187, #241, #188, neutral LLE showcase spec, #189 | Synthetic route proof exists; source-backed neutral LLE showcase and generalized phase-set proof still missing |
+| `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature` | `derived_from_held_1` | #189 | Must be degree-of-freedom swaps over the certified GFPE core with strict per-point diagnostics |
+| Cloud/shadow workflows | `derived_from_held_1` after implementation | #189 | Route contracts and executable evidence still needed |
+| `single_component_vle` | direct boundary-route evidence, no borrowed HELD claim | #228 closed, #192 later | Keep separate from HELD family adoption unless registry text claims phase discovery |
+| PE-Neutral TP Flash | `held_1_admitted` | #187, #241, #188, #246 | Source-backed TP-flash gate exists; fresh-native receipts and broader reliability still open |
+| PE-Generalized Multiphase | `held_1_admitted` with phase-count independence | #189 | Needs all-phase mass-balance termination and LLLE-ready phase-set completeness |
+| PE-Associating TP Flash | `held_variant_required` | #145, #190 | Do not start until neutral pre-association HELD parity gates and exact association derivatives are ready |
+| PE-Electrolyte LLE/TP Flash | `held_variant_required` | #191 | Needs HELD2.0, reduced electroneutral basis, and Born SSM+DS exact Hessian |
+| CE Chemical Equilibrium | `outside_phase_discovery` | future CE work | Must not borrow HELD completion language |
+| CPE Combined Phase-Chemical | `held_variant_required` for phase part plus CE proof | future CPE work | Depends on PE and CE proof chains |
 
-## Recommended Approach
+## Pre-Associating HELD 1.0 Gates
 
-### Option A - Full Adoption Spec Plus One Stage II Child Issue
+These gates define the sequence that should be planned before #145/#190 begins
+implementation work.
 
-Use this spec as the broad adoption contract, refresh stale tracker blockers,
-start #187, and create the Stage II dual-loop issue as a child prerequisite for
-#188/#189.
+### Gate A - Fresh-Native Evidence Receipts
 
-Tradeoff:
+Issue coverage: #246, ready.
 
-- Best queue hygiene and lowest risk of overloading #187.
-- Adds one issue, but that issue owns a real missing algorithm gate instead of
-  burying it in fixture work.
+Purpose:
 
-Recommendation: use Option A.
+- prevent stale native extensions from producing false HELD status;
+- record commit, native module path, build-refresh command or freshness proof,
+  checker command, and pass/fail result;
+- ensure retained plots and CSV/JSON evidence are regenerated from the same
+  native artifact that produced the status rows.
 
-### Option B - Fold Stage II Into #188
+Completion of #246 is a proof-hygiene prerequisite, not a new algorithmic
+Pereira requirement.
 
-Keep the tracker smaller by expanding #188 to include true Stage II dual
-discovery before the neutral fixture.
+### Gate B - Pereira-Style Neutral HELD Reliability Harness
 
-Tradeoff:
+Issue coverage: new issue recommended from this spec after #246.
 
-- Fewer issue objects.
-- Makes #188 too broad because fixture admission and phase-discovery algorithm
-  adoption are different risks.
+Purpose:
 
-### Option C - One HELD Mega-Issue
+- stress Stage I and Stage II on random unstable neutral conditions;
+- repeat point calculations without carrying hidden initial guesses between
+  repeats;
+- compare phase count, objective/free-energy value, material balance,
+  candidate set, and postsolve certification across repeats;
+- retain inner-search diagnostics sufficient to show how local minima,
+  incumbent upper bounds, and rejected candidates were handled.
 
-Create one issue to cover neutral, associating, electrolyte, generalized
-multiphase, CE, CPE, registry, and benchmark closure.
-
-Tradeoff:
-
-- Clear top-level theme.
-- Too large for one PR and likely to recreate the stale blocked-state problem.
-
-## Next Ready Issue Start Packet
-
-Use this packet when starting #187 after refreshing tracker readiness.
-
-### Preflight
-
-- Confirm GitHub #186 is closed and no live dependency still blocks #187.
-- Refresh #187 local mirror and labels if the only blocker was #186.
-- Read:
-  - `docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0187-harden-shared-nlp-and-ipopt-infrastructure-gate.md`
-  - `docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0187-harden-shared-nlp-and-ipopt-infrastructure-gate-plan.md`
-  - this spec
-  - GFPE Stage 8 in
-    `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
-- Keep ownership in `packages/epcsaft-equilibrium/**` unless a public provider
-  contract must be referenced explicitly.
-
-### Candidate Files
-
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.h`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/nlp_problem.cpp`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.h`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_layout.cpp`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_transform.h`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/variable_transform.cpp`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/second_order.h`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.h`
-- `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/solvers/ipopt_adapter.cpp`
-- `packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py`
-- `packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py`
-- `tests/native/contracts/test_generalized_equilibrium_registry.py`
-
-### First Red Tests To Seek Or Add
-
-- NlpProblem bounds/scaling/objective/gradient/constraint/Jacobian/Hessian size
-  contracts.
-- Fixed sparse Jacobian and Hessian ordering.
-- Failure when sparse structure and value vector sizes diverge.
-- Route-owned Ipopt option profile selection.
-- Exact-Hessian profile gate diagnostics.
-- User-scaling diagnostics with real scale magnitudes and scaled residual norms.
-- Active-bound, barrier, regularization, linear-solver, and iteration-history
-  diagnostic payload shape.
-- Distinction between scaled numerical acceptance and physical postsolve
-  certification.
-
-### Completion Criteria For #187
-
-- Shared NLP assembly owns variable layout, constraints, scaling, bounds, and
-  diagnostics for neutral GFPE routes.
-- Ipopt option handling is package-owned and tested.
-- Postsolve payloads preserve enough evidence for later HELD/TPD certification.
-- Route admission fails loudly for missing exact derivatives, scaling-contract
-  violations, sparse structure/value mismatches, and inadmissible route states.
-- The issue does not promote HELD, associating, electrolyte, reactive, CE, CPE,
-  benchmark, or public capability claims.
-
-### Proof Oracle Candidates
-
-Run only the slices matching the changed surface:
-
-```powershell
-uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/blocks/test_ipopt_adapter_contract.py -q
-```
-
-```powershell
-uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_native_route_diagnostics_contract.py -q
-```
-
-```powershell
-uv run python run_pytest.py tests/native/contracts/test_generalized_equilibrium_registry.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q
-```
-
-```powershell
-uv run python scripts/dev/validate_project.py docs
-```
-
-Use the Stage 9 checker only as a regression receipt after #187 touches route
-diagnostics or Ipopt behavior:
-
-```powershell
-uv run python scripts/validation/check_phase_discovery.py --json
-```
-
-## Issue To Create After This Spec
-
-Create this issue before starting #188, or create it now and mark it blocked by
-#187:
+Recommended issue:
 
 ```text
-Title: M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate
+Title: M4: add Pereira-style neutral HELD reliability and inner-search receipts
 Milestone: M4 - Equilibrium
 Type: Feature
 Package: equilibrium
 Backend: Ipopt
-Readiness: blocked until #187 is closed
-Blocks: #188, #189
+Readiness: ready after #246
+Blocks: #189, #145, #190 where they rely on neutral HELD as the base algorithm
 ```
 
-Body outline:
+Minimum acceptance:
 
-```text
-Implement the missing HELD 1.0 adoption gate between #187 and #188: promote
-neutral Stage II from the current finite candidate bound audit to a replayable
-dual phase-discovery loop with explicit lower/upper bound history, candidate
-storage, stopping criteria, and Stage III replay metadata.
+- the reliability driver samples only neutral, nonelectrolyte, nonreactive
+  conditions with declared parameter sources;
+- unstable cases are identified before repeated flash attempts are counted;
+- repeated solves do not reuse hidden initial guesses or prior phase sets;
+- retained output records Stage I converged-start counts, Stage II bound
+  history, upper/lower bound gap, candidate phases, rejected candidates, Stage
+  III seed source, Ipopt status, material balance, phase count, and objective
+  agreement;
+- a failed repeat is loud and carries the first failing condition as a compact
+  reproduction fixture;
+- no associating, electrolyte, reactive, CE, CPE, or capability broadening
+  occurs in this issue.
 
-Acceptance:
-- Stage II reports lower bound, upper bound, bound gap, stopping reason,
-  candidate list, rejected candidates, and replay metadata.
-- Stage III route refinement consumes Stage II candidate metadata.
-- Incomplete continuous TPD starts, open Stage II gaps, tiny-step paths,
-  acceptable-level points, feasible-only points, and iteration-limit routes do
-  not satisfy the adoption gate.
-- Registry and diagnostics distinguish deterministic screening, continuous TPD,
-  Stage I, Stage II audit, Stage II dual-loop verification, and Stage III
-  refinement.
-- No associating, electrolyte, reactive, CE, CPE, public route, or capability
-  broadening occurs in this issue.
+Proof candidates:
 
-Proof:
-- focused phase-discovery tests;
-- registry contract tests for HELD status vocabulary;
-- check_phase_discovery.py with route refinement and require-complete;
-- docs validation.
+```powershell
+uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
+uv run --no-sync python scripts/validation/check_phase_discovery.py --json --include-route-refinement --require-complete
+uv run --no-sync python scripts/validation/check_held_reliability.py --family neutral --json --require-complete
+uv run --no-sync python scripts/dev/validate_project.py docs
 ```
 
-## Tracker Hygiene Task
+### Gate C - Source-Backed Neutral Nonassociating LLE Showcase
 
-Before resolving #187, refresh the M4 tracker state:
+Spec coverage:
+`docs/superpowers/specs/2026-06-11-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase.md`.
 
-- #187 should no longer be blocked by #186 if GitHub dependencies confirm #186
-  was the only prerequisite.
-- #188 should still be blocked by #187 and by the new Stage II dual-loop issue
-  if that issue is created.
-- #189 should remain blocked by #188 and the generalized phase-set readiness
-  path.
-- #145 should be reviewed because #148 is closed, but #145 still has additional
-  associating proof prerequisites.
-- #190 remains blocked by #145 and exact associating derivative evidence.
-- #191 remains blocked by #189 and electrolyte-specific HELD2.0 prerequisites.
-- #192 remains blocked by #188/#189/#190/#191 proof evidence.
+Purpose:
+
+- show neutral LLE without association, electrolyte, or reaction terms;
+- use source-backed data rather than the synthetic A/B mechanics fixture;
+- produce retained-data figures and diagnostic margin evidence.
+
+This is the LLE showcase needed before associating LLE can be framed as an
+extension of the neutral phase-split path.
+
+### Gate D - Generalized All-Phase And LLLE-Ready Phase-Set Completeness
+
+Issue coverage: #189 should own this unless planning decides to split it.
+
+Purpose:
+
+- prove phase-count independence rather than repeated two-phase solving;
+- enforce the Pereira mass-balance termination idea: the algorithm cannot call
+  phase discovery complete while the candidate phase set cannot satisfy the
+  global feed balance;
+- reject duplicate, collapsed, lower-free-energy, and uncertified phase sets;
+- preserve the difference between neutral LLLE readiness and associating LLLE
+  admission.
+
+Recommended #189 expansion:
+
+- boundary workflows remain derived degree-of-freedom swaps;
+- generalized phase-set PE carries phase count, phase kind, source, amount,
+  volume, composition, objective, feasibility, candidate origin, and status;
+- LLLE-ready tests may use neutral systems only until associating derivatives
+  are admitted;
+- the issue must not claim associating GFPE completion.
+
+### Gate E - Associating GFPE Preparation
+
+Issue coverage: #145 and #190.
+
+Purpose:
+
+- make associating GFPE a controlled extension of the neutral HELD path, not a
+  parallel shortcut;
+- require exact association derivatives before associating route admission;
+- require association-specific postsolve checks for site bounds, mass-action
+  residuals, contribution activation, and derivative block coverage.
+
+Start condition:
+
+- #246 complete;
+- Gate B reliability harness accepted or explicitly scoped as the first child
+  of #190;
+- #189 has either completed generalized all-phase readiness or documented why
+  the first associating proof is a strictly two-phase route that cannot claim
+  generalized phase-set adoption;
+- exact association derivative evidence exists for the selected first source
+  system.
+
+## Recommended Planning Shape
+
+### Option A - Update Existing Specs And Create One Reliability Issue
+
+Use this spec as the umbrella, #246 as the immediate ready issue, the neutral
+LLE showcase spec as the source-backed LLE issue source, #189 as the generalized
+phase-set owner, and one new reliability issue for Pereira-style inner-search
+and repeated-condition receipts.
+
+Recommendation: use Option A.
+
+Tradeoff:
+
+- Keeps the current M4 queue readable.
+- Adds only one missing issue instead of making #189 or #190 carry reliability
+  work they do not naturally own.
+
+### Option B - Fold Reliability Into #189
+
+Expand #189 so it owns boundary workflows, generalized phase sets, LLLE
+readiness, and the reliability campaign.
+
+Tradeoff:
+
+- Fewer issue objects.
+- Too broad for one PR if reliability failures expose algorithm work.
+
+### Option C - Defer Reliability Until Associating
+
+Run the current neutral proof lane into #190 and add reliability only when
+associating failures appear.
+
+Tradeoff:
+
+- Faster start on associating.
+- High risk of mixing neutral algorithm gaps with association derivative gaps,
+  making failures harder to diagnose.
 
 ## Non-Goals
 
@@ -488,21 +286,26 @@ Before resolving #187, refresh the M4 tracker state:
 - No broad issue closure by documenting remaining work.
 - No downstream application metrics, wrappers, or private project behavior.
 
-## Open Questions
+## Open Questions For Planning
 
-- Should the Stage II dual-loop issue be created immediately as blocked by #187,
-  or created immediately after #187 lands so its body can cite the final #187
-  diagnostics shape?
-- Should `single_component_vle` receive a separate capability alignment task in
-  #192, or be handled inside the M6 registry closure issue?
-- Should #145's stale #148 dependency be cleaned in the same tracker pass as
-  #187, or deferred until associating derivative evidence is ready?
+- Should the Pereira-style reliability issue sample only the existing
+  source-backed TP-flash fixture neighborhood first, or include a second neutral
+  stress fixture such as methane/H2S only after model-parity constraints are
+  resolved?
+- Should #189 be split into boundary workflows and generalized phase-set
+  completeness if the first planning pass shows overlapping candidate files or
+  validation costs are too high?
+- Should the first associating plan depend on completed generalized phase-set
+  #189, or can it start as a two-phase associating route after explicitly
+  excluding generalized phase-set claims?
 
 ## Self-Review
 
 - Placeholder scan: no unresolved placeholders remain.
-- Scope check: this is a broad adoption spec, but the execution path is split
-  into #187, one new Stage II issue, #188, #189, #145/#190, #191, and #192.
-- Ambiguity check: closed issue state is explicitly evidence only, not adoption.
+- Scope check: this is a broad adoption spec, but execution is split into #246,
+  one recommended reliability issue, the neutral nonassociating LLE showcase,
+  #189, #145/#190, #191, and #192.
+- Ambiguity check: current neutral Stage II/III status is separated from full
+  Pereira-style adoption.
 - Capability check: no family or method receives a new production claim from
   this document.
