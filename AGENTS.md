@@ -65,6 +65,9 @@ Single-context repo; read root `CONTEXT.md`, `docs/superpowers/PROJECT_CONTEXT.m
 ## Validation And Handoff
 
 - Validate in proportion to risk and report skipped validation clearly.
+- Tests that compute model predictions must use real, traceable literature data
+  and must write a retained fit plot showing the literature data and model
+  predictions together.
 - When creating or updating plots, figures, or visual analysis artifacts, the
   final chat/handoff must render every new or updated plot inline with absolute
   filesystem paths and include a compact Markdown table summarizing the real
