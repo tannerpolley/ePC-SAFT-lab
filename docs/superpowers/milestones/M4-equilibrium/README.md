@@ -39,6 +39,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#246](../../issues/2026-06-12-m4-equilibrium-issue-0246-add-fresh-native-receipts-to-held-and-gfpe-validation-artifacts.md) | `lle` | `Ipopt` | `ready` | Add fresh-native receipts to HELD and GFPE validation artifacts. |
+| [#247](../../issues/2026-06-12-m4-equilibrium-issue-0247-add-pereira-style-neutral-lle-held-reliability-campaign.md) | `lle` | `Ipopt` | `blocked` | Add Pereira-style neutral LLE HELD reliability campaign after #246. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `blocked` | Derive boundary workflows and generalized phase-set PE from neutral GFPE. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |

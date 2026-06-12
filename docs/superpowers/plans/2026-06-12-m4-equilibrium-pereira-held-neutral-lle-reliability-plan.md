@@ -487,7 +487,11 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 
 ## Issue Creation Packet
 
-Create one M4 issue from this plan after #246 is complete:
+Published M4 issue:
+
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/247
+
+Execute this issue only after #246 is complete:
 
 ```text
 Title: M4: add Pereira-style neutral LLE HELD reliability campaign
@@ -495,7 +499,7 @@ Milestone: M4 - Equilibrium
 Type: Feature
 Package: equilibrium
 Backend: Ipopt
-Readiness: ready after #246
+Readiness: blocked by #246 until fresh-native receipts are complete
 Blocks: #189 and #190 where they depend on neutral HELD reliability evidence
 ```
 
