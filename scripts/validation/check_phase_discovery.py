@@ -24,6 +24,7 @@ apply_native_runtime_env(os.environ)
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from scripts.validation import equilibrium_validation_runtime as runtime
+from scripts.validation import native_freshness
 
 _core = extension_native_core()
 
@@ -156,6 +157,7 @@ def evaluate_phase_discovery(
     include_route_refinement: bool = False,
     show_native_output: bool = False,
     redirect_native_output_to_stderr: bool = False,
+    checker_command: list[str] | None = None,
 ) -> dict[str, Any]:
     mix = _nonideal_lle_binary_mixture()
     discovery = _phase_discovery_payload(mix)
@@ -313,10 +315,16 @@ def evaluate_phase_discovery(
         if not str(requirement_status[key]).startswith("verified")
     ]
 
+    receipt = native_freshness.build_receipt(
+        native_module=_core,
+        checker_command=checker_command
+        or ["uv", "run", "--no-sync", "python", "scripts/validation/check_phase_discovery.py"],
+    )
     return {
         "case_label": "Synthetic neutral binary phase-discovery case",
         "family_label": "PE-Neutral TP Flash",
         "complete": complete,
+        "native_freshness_receipt": native_freshness.receipt_to_jsonable(receipt),
         "requirement_status": requirement_status,
         "incomplete_requirements": incomplete_requirements,
         "diagnostics": {
@@ -471,13 +479,28 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    checker_command = sys.argv[:] if argv is None else [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_phase_discovery.py",
+        *argv,
+    ]
     if args.debug:
         os.environ["EPCSAFT_EQUILIBRIUM_DEBUG"] = "1"
     payload = evaluate_phase_discovery(
         include_route_refinement=args.include_route_refinement,
         show_native_output=args.debug and not args.json,
         redirect_native_output_to_stderr=args.debug and args.json and args.include_route_refinement,
+        checker_command=checker_command,
     )
+    if args.require_complete:
+        try:
+            native_freshness.require_receipt(dict(payload.get("native_freshness_receipt", {})))
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:
