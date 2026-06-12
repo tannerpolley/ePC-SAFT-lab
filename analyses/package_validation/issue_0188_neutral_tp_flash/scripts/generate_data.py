@@ -48,6 +48,16 @@ from scripts.validation import check_phase_discovery
 
 
 COMPONENTS = ("Methane", "Ethane", "Propane")
+HELD_GATE_NATIVE_RECEIPT_FIELDS = [
+    "native_git_commit",
+    "native_module_path",
+    "native_build_refresh_command",
+    "native_checker_command",
+]
+HELD_GATE_RECEIPT_REQUIRED_GATES = {
+    "held_stage_ii_dual_phase_discovery",
+    "held_stage_iii_ipopt_refinement",
+}
 
 
 def _write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, Any]]) -> None:
@@ -68,6 +78,27 @@ def _status_class(status: str) -> str:
     if status.startswith("not_requested"):
         return "not_requested"
     return "incomplete"
+
+
+def _receipt_checker_command(receipt: dict[str, Any]) -> str:
+    command = receipt.get("checker_command")
+    if isinstance(command, list):
+        return " ".join(str(item) for item in command)
+    return str(command or "")
+
+
+def _native_receipt_fields(payload: dict[str, Any]) -> dict[str, str]:
+    receipt = dict(payload.get("native_freshness_receipt") or {})
+    fields = {
+        "native_git_commit": str(receipt.get("git_commit", "")),
+        "native_module_path": str(receipt.get("native_module_path", "")),
+        "native_build_refresh_command": str(receipt.get("build_refresh_command", "")),
+        "native_checker_command": _receipt_checker_command(receipt),
+    }
+    missing = [key for key, value in fields.items() if not value.strip()]
+    if missing:
+        raise ValueError("native freshness receipt missing required field(s): " + ", ".join(missing))
+    return fields
 
 
 def _run_neutral_flash() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
@@ -197,7 +228,20 @@ def _run_neutral_flash() -> tuple[list[dict[str, Any]], list[dict[str, Any]], li
 
 
 def _run_held_gate_status() -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    payload = check_phase_discovery.evaluate_phase_discovery(include_route_refinement=True)
+    payload = check_phase_discovery.evaluate_phase_discovery(
+        include_route_refinement=True,
+        checker_command=[
+            "uv",
+            "run",
+            "--no-sync",
+            "python",
+            "scripts/validation/check_phase_discovery.py",
+            "--json",
+            "--include-route-refinement",
+            "--require-complete",
+        ],
+    )
+    receipt_fields = _native_receipt_fields(payload)
     rows: list[dict[str, Any]] = []
     labels = {
         "deterministic_screening": "Deterministic screening",
@@ -208,14 +252,23 @@ def _run_held_gate_status() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     }
     for index, key in enumerate(labels):
         status = str(payload["requirement_status"][key])
+        status_class = _status_class(status)
+        if key in HELD_GATE_RECEIPT_REQUIRED_GATES and status_class == "verified":
+            missing = [field for field in HELD_GATE_NATIVE_RECEIPT_FIELDS if not receipt_fields[field]]
+            if missing:
+                raise ValueError(
+                    f"native freshness receipt missing for verified {key}: "
+                    + ", ".join(missing)
+                )
         rows.append(
             {
                 "order": index,
                 "gate": key,
                 "label": labels[key],
                 "status": status,
-                "status_class": _status_class(status),
+                "status_class": status_class,
                 "accepted": status.startswith("verified"),
+                **receipt_fields,
             }
         )
     summary = {
@@ -223,6 +276,7 @@ def _run_held_gate_status() -> tuple[list[dict[str, Any]], dict[str, Any]]:
         "family_label": payload["family_label"],
         "complete": payload["complete"],
         "incomplete_requirements": payload["incomplete_requirements"],
+        "native_freshness_receipt": dict(payload["native_freshness_receipt"]),
         "diagnostics": {
             key: value
             for key, value in dict(payload["diagnostics"]).items()
@@ -268,7 +322,15 @@ def main() -> int:
     )
     _write_csv(
         RESULTS_ROOT / "held_1_0_gate_status.csv",
-        ["order", "gate", "label", "status", "status_class", "accepted"],
+        [
+            "order",
+            "gate",
+            "label",
+            "status",
+            "status_class",
+            "accepted",
+            *HELD_GATE_NATIVE_RECEIPT_FIELDS,
+        ],
         gate_rows,
     )
     (RESULTS_ROOT / "run_summary.json").write_text(
