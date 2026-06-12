@@ -254,6 +254,7 @@ def run_campaign(
         results.append(condition)
         accepted_by_index[condition_index] = condition
         accepted_count += 1
+        _log_progress(f"accepted_conditions={accepted_count}/{conditions}")
         if accepted_count == conditions:
             break
 
@@ -359,14 +360,16 @@ def _run_remaining_repeats(
     if not tasks:
         return
     if jobs <= 1:
-        for task in tasks:
+        for completed, task in enumerate(tasks, start=1):
             accepted_conditions[int(task["condition_index"])].repeats.append(_run_native_repeat(**task))
+            _log_repeat_progress(completed, len(tasks))
     else:
         with ProcessPoolExecutor(max_workers=jobs) as executor:
             futures = {executor.submit(_run_native_repeat, **task): task for task in tasks}
-            for future in as_completed(futures):
+            for completed, future in enumerate(as_completed(futures), start=1):
                 task = futures[future]
                 accepted_conditions[int(task["condition_index"])].repeats.append(future.result())
+                _log_repeat_progress(completed, len(tasks))
     for condition in accepted_conditions.values():
         condition.repeats.sort(key=lambda repeat: repeat.repeat_index)
 
@@ -616,6 +619,16 @@ def _print_human(summary: dict[str, Any]) -> None:
     print(f"  failed_repeats: {summary['failed_repeats']}")
     for blocker in summary["blockers"]:
         print(f"  blocker: {blocker}")
+
+
+def _log_progress(message: str) -> None:
+    print(f"[held-reliability] {message}", file=sys.stderr, flush=True)
+
+
+def _log_repeat_progress(completed: int, total: int) -> None:
+    stride = max(1, min(250, total // 20 if total >= 20 else 1))
+    if completed == total or completed % stride == 0:
+        _log_progress(f"completed_repeats_after_prefilter={completed}/{total}")
 
 
 def _dedupe(values: list[str]) -> list[str]:
