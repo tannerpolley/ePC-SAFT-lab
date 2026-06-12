@@ -2,13 +2,13 @@
 issue: 241
 title: "M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/241"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "closed"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md"
 source_plan: "docs/superpowers/plans/2026-06-11-m4-equilibrium-held-1-0-adoption-and-issue-0187-start-plan.md"
@@ -26,7 +26,7 @@ last_synced: "2026-06-11"
 **Source Plan:** docs/superpowers/plans/2026-06-11-m4-equilibrium-held-1-0-adoption-and-issue-0187-start-plan.md
 Branch: codex/issue-0241-promote-neutral-held-stage-ii-dual-discovery
 AFK/HITL: AFK
-**Classification:** AFK
+**Classification:** Closed
 **Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** Create a native execution goal for #241 from this mirror.
 **Execution Mode:** Ask at runtime
@@ -68,6 +68,7 @@ candidate storage, stopping criteria, and Stage III replay metadata.
 
 ## Resolution Notes
 
+- Closed by https://github.com/ePC-SAFT/ePC-SAFT/pull/244 on 2026-06-11.
 - Neutral Stage II now exposes candidate-bound audit status separately from
   replayable dual-loop verification.
 - Stage III neutral LLE route refinement starts from the Stage II replay seed
