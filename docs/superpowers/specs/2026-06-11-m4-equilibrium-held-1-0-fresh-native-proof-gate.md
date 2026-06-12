@@ -2,7 +2,7 @@
 
 Milestone: `M4 - Equilibrium`
 Affected package: `packages/epcsaft-equilibrium`
-Status: `draft`
+Status: `active`
 Created: `2026-06-11`
 
 ## Summary
@@ -62,6 +62,27 @@ validation hygiene failure:
 Closed issue state was not the proof. The fresh native validation receipts were
 the proof.
 
+## Implemented Enforcement
+
+Issue #246 implements this gate as executable validation evidence:
+
+- `scripts/validation/native_freshness.py` builds the shared receipt with
+  `git_commit`, `native_module_path`, `checker_command`, and
+  `build_refresh_command`.
+- `scripts/validation/check_phase_discovery.py --json
+  --include-route-refinement --require-complete` emits
+  `native_freshness_receipt` and fails closed if the receipt lacks the commit
+  or native module path.
+- `scripts/validation/check_neutral_tp_flash_fixture.py
+  --generate-phase-discovery --json --require-complete` emits the same receipt
+  shape for the neutral TP-flash fixture evidence.
+- `analyses/package_validation/issue_0188_neutral_tp_flash/shared/results/held_1_0_gate_status.csv`
+  carries `native_git_commit`, `native_module_path`,
+  `native_build_refresh_command`, and `native_checker_command` for HELD gate
+  rows.
+- The issue 188 HELD gate figure renderer refuses verified Stage II/III labels
+  when those retained receipt fields are absent.
+
 ## Fresh-Native Evidence Contract
 
 Any future HELD 1.0, GFPE, neutral TP flash, neutral LLE, boundary workflow, or
@@ -78,6 +99,9 @@ is treated as milestone evidence:
 - The evidence records the relevant gate command and its pass/fail result.
 - Generated figures and retained CSVs are regenerated after the fresh build,
   not before it.
+- Closed PRs and closed issues are supporting provenance only. They are not
+  completion evidence unless the receipt-backed local gate has been rerun after
+  the native extension was rebuilt or otherwise proven current.
 
 ## Acceptance Criteria
 
@@ -96,18 +120,18 @@ is treated as milestone evidence:
 - The cleanup hook and `git status --short --branch` are run before any final
   merge or evidence handoff.
 
-## Recommended Implementation Issue
+## Implementation Issue
 
-Create one M4 task if this proof gate should be enforced by scripts instead of
-process discipline:
+The M4 enforcement task is:
 
 ```text
+Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/246
 Title: M4: add fresh-native receipts to HELD and GFPE validation artifacts
 Milestone: M4 - Equilibrium
 Type: Task
 Package: equilibrium
 Backend: Ipopt
-Readiness: ready
+Readiness: in progress
 ```
 
 Issue body:
