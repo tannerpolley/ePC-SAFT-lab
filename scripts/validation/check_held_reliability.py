@@ -38,7 +38,7 @@ DEFAULT_REPEATS = 100
 DEFAULT_SEED = 1729
 DEFAULT_JOBS = max(1, min(8, os.cpu_count() or 1))
 DEFAULT_OUTPUT_DIR = Path("analyses/package_validation/held_lle_reliability/shared/results")
-FEED_GRID = [round(value, 6) for value in np.linspace(0.10, 0.90, 41)]
+FEED_GRID = [round(value, 6) for value in np.linspace(0.10, 0.90, 81)]
 TEMPERATURE_GRID = [215.0, 220.0, 225.0, 230.0, 235.0]
 PRESSURE_GRID = [0.8e6, 1.0e6, 1.2e6]
 
