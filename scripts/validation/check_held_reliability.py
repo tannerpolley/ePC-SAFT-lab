@@ -5,6 +5,8 @@ import csv
 import json
 import os
 import sys
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
@@ -34,6 +36,7 @@ _core = extension_native_core()
 DEFAULT_CONDITIONS = 100
 DEFAULT_REPEATS = 100
 DEFAULT_SEED = 1729
+DEFAULT_JOBS = max(1, min(8, os.cpu_count() or 1))
 DEFAULT_OUTPUT_DIR = Path("analyses/package_validation/held_lle_reliability/shared/results")
 FEED_GRID = [round(value, 6) for value in np.linspace(0.10, 0.90, 41)]
 TEMPERATURE_GRID = [215.0, 220.0, 225.0, 230.0, 235.0]
@@ -208,9 +211,11 @@ def run_campaign(
     seed: int,
     checker_command: list[str],
     output_dir: Path,
+    jobs: int = DEFAULT_JOBS,
 ) -> dict[str, Any]:
     receipt = native_freshness.build_receipt(native_module=_core, checker_command=checker_command)
     results: list[ConditionResult] = []
+    accepted_by_index: dict[int, ConditionResult] = {}
     accepted_count = 0
     for temperature, pressure, feed_z0 in _candidate_conditions(seed):
         condition_index = accepted_count
@@ -238,30 +243,26 @@ def run_campaign(
             continue
 
         repeat_results.append(first_repeat)
-        for repeat_index in range(1, repeats):
-            repeat_results.append(
-                _run_native_repeat(
-                    condition_index=condition_index,
-                    repeat_index=repeat_index,
-                    temperature=temperature,
-                    pressure=pressure,
-                    feed_composition=feed,
-                    random_seed=seed + condition_index * repeats + repeat_index,
-                )
-            )
-        results.append(
-            ConditionResult(
-                condition_index=condition_index,
-                accepted=True,
-                repeats=repeat_results,
-                temperature=temperature,
-                pressure=pressure,
-                feed_composition=feed,
-            )
+        condition = ConditionResult(
+            condition_index=condition_index,
+            accepted=True,
+            repeats=repeat_results,
+            temperature=temperature,
+            pressure=pressure,
+            feed_composition=feed,
         )
+        results.append(condition)
+        accepted_by_index[condition_index] = condition
         accepted_count += 1
         if accepted_count == conditions:
             break
+
+    _run_remaining_repeats(
+        accepted_conditions=accepted_by_index,
+        repeats=repeats,
+        seed=seed,
+        jobs=jobs,
+    )
 
     summary = summarize_campaign(
         conditions=results,
@@ -280,6 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--conditions", type=int, default=DEFAULT_CONDITIONS)
     parser.add_argument("--repeats", type=int, default=DEFAULT_REPEATS)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument("--jobs", type=int, default=DEFAULT_JOBS)
     parser.add_argument("--require-complete", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
@@ -310,6 +312,7 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed,
         checker_command=checker_command,
         output_dir=args.output_dir,
+        jobs=args.jobs,
     )
     if args.json:
         print(json.dumps(summary, indent=2, sort_keys=True))
@@ -333,6 +336,41 @@ def _candidate_conditions(seed: int) -> list[tuple[float, float, float]]:
     return [candidates[int(index)] for index in order]
 
 
+def _run_remaining_repeats(
+    *,
+    accepted_conditions: dict[int, ConditionResult],
+    repeats: int,
+    seed: int,
+    jobs: int,
+) -> None:
+    tasks: list[dict[str, Any]] = []
+    for condition_index, condition in accepted_conditions.items():
+        for repeat_index in range(1, repeats):
+            tasks.append(
+                {
+                    "condition_index": condition_index,
+                    "repeat_index": repeat_index,
+                    "temperature": condition.temperature,
+                    "pressure": condition.pressure,
+                    "feed_composition": condition.feed_composition,
+                    "random_seed": seed + condition_index * repeats + repeat_index,
+                }
+            )
+    if not tasks:
+        return
+    if jobs <= 1:
+        for task in tasks:
+            accepted_conditions[int(task["condition_index"])].repeats.append(_run_native_repeat(**task))
+    else:
+        with ProcessPoolExecutor(max_workers=jobs) as executor:
+            futures = {executor.submit(_run_native_repeat, **task): task for task in tasks}
+            for future in as_completed(futures):
+                task = futures[future]
+                accepted_conditions[int(task["condition_index"])].repeats.append(future.result())
+    for condition in accepted_conditions.values():
+        condition.repeats.sort(key=lambda repeat: repeat.repeat_index)
+
+
 def _run_native_repeat(
     *,
     condition_index: int,
@@ -348,17 +386,6 @@ def _run_native_repeat(
     try:
         mix = runtime.neutral_lle_synthetic_mixture()
         with runtime.suppress_native_stdout():
-            discovery = dict(
-                _core._native_neutral_tpd_phase_discovery(
-                    mix._native,
-                    temperature,
-                    pressure,
-                    feed_composition,
-                    [0, 0],
-                    1.0e-6,
-                    1.0e-6,
-                )
-            )
             route = dict(
                 _core._native_equilibrium_selector_route_result(
                     mix._native,
@@ -404,6 +431,7 @@ def _run_native_repeat(
             process_id=os.getpid(),
         )
 
+    discovery: dict[str, Any] = {}
     postsolve = dict(route.get("postsolve") or {})
     seed_attempts = list(route.get("seed_attempts") or ())
     first_seed_attempt = dict(seed_attempts[0]) if seed_attempts else {}
