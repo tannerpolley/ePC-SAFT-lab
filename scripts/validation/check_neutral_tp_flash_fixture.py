@@ -25,6 +25,7 @@ from epcsaft_equilibrium._native import extension_native_core
 from scripts.validation import check_equilibrium_benchmark_fixture as fixture_checker
 from scripts.validation import check_phase_discovery as phase_discovery_checker
 from scripts.validation import equilibrium_validation_runtime as runtime
+from scripts.validation import native_freshness
 
 _core = extension_native_core()
 
@@ -165,6 +166,7 @@ def evaluate_neutral_flash(
     debug: bool = False,
     show_native_output: bool = False,
     redirect_native_output_to_stderr: bool = False,
+    checker_command: list[str] | None = None,
 ) -> dict[str, Any]:
     metadata = json.loads((case_dir / "metadata.json").read_text(encoding="utf-8"))
     fixture_payload = fixture_checker.evaluate_case_dir(case_dir, phase_discovery_payload=phase_discovery_payload)
@@ -254,11 +256,17 @@ def evaluate_neutral_flash(
             "seed_attempts": seed_attempts,
             "postsolve": route_payload.get("postsolve"),
         }
+    receipt = native_freshness.build_receipt(
+        native_module=_core,
+        checker_command=checker_command
+        or ["uv", "run", "--no-sync", "python", "scripts/validation/check_neutral_tp_flash_fixture.py"],
+    )
     return {
         "case_label": metadata["case_label"],
         "family_label": metadata["family_label"],
         "status": "complete" if validation_complete else "blocked",
         "complete": validation_complete,
+        "native_freshness_receipt": native_freshness.receipt_to_jsonable(receipt),
         "held_tpd_admission": held_tpd_admission,
         "fixture": fixture_payload,
         "route": route_summary,
@@ -300,6 +308,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    checker_command = sys.argv[:] if argv is None else [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_neutral_tp_flash_fixture.py",
+        *argv,
+    ]
     if args.debug:
         os.environ["EPCSAFT_EQUILIBRIUM_DEBUG"] = "1"
     show_native_output = args.debug and not args.json
@@ -309,6 +325,16 @@ def main(argv: list[str] | None = None) -> int:
             include_route_refinement=True,
             show_native_output=show_native_output,
             redirect_native_output_to_stderr=redirect_native_output_to_stderr,
+            checker_command=[
+                "uv",
+                "run",
+                "--no-sync",
+                "python",
+                "scripts/validation/check_phase_discovery.py",
+                "--json",
+                "--include-route-refinement",
+                "--require-complete",
+            ],
         )
         phase_discovery_source = "generated"
     else:
@@ -320,8 +346,15 @@ def main(argv: list[str] | None = None) -> int:
         debug=args.debug,
         show_native_output=show_native_output,
         redirect_native_output_to_stderr=redirect_native_output_to_stderr,
+        checker_command=checker_command,
     )
     payload["phase_discovery_source"] = phase_discovery_source
+    if args.require_complete:
+        try:
+            native_freshness.require_receipt(dict(payload.get("native_freshness_receipt", {})))
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:

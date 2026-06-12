@@ -44,6 +44,14 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
+## Queue Guard
+
+#247 must remain blocked until #246 is merged and the receipt-backed proof
+commands pass on the branch being used to start the reliability campaign. Closed
+#241/#188 PRs are supporting provenance only; they do not replace the
+`native_freshness_receipt` emitted by the local phase-discovery and neutral
+TP-flash checkers.
+
 ## Closed Issues
 
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/228](https://github.com/ePC-SAFT/ePC-SAFT/issues/228) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/230](https://github.com/ePC-SAFT/ePC-SAFT/pull/230) on 2026-06-05T02:56:36Z

@@ -12,6 +12,17 @@ from matplotlib.lines import Line2D
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 SHARED_RESULTS = ANALYSIS_ROOT / "shared" / "results"
 FIGURES_ROOT = ANALYSIS_ROOT / "figures"
+plt.rcParams["svg.hashsalt"] = "issue_0188_neutral_tp_flash"
+HELD_GATE_NATIVE_RECEIPT_FIELDS = (
+    "native_git_commit",
+    "native_module_path",
+    "native_build_refresh_command",
+    "native_checker_command",
+)
+HELD_GATE_RECEIPT_REQUIRED_GATES = {
+    "held_stage_ii_dual_phase_discovery",
+    "held_stage_iii_ipopt_refinement",
+}
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -70,7 +81,7 @@ def _save(fig: plt.Figure, output_dir: Path, stem: str, *, plot_id: str, title: 
     svg_name = f"{stem}.svg"
     fig.savefig(output_dir / png_name, dpi=180, bbox_inches="tight")
     svg_path = output_dir / svg_name
-    fig.savefig(svg_path, bbox_inches="tight")
+    fig.savefig(svg_path, bbox_inches="tight", metadata={"Date": None})
     _strip_trailing_whitespace(svg_path)
     _write_sidecar(
         output_dir / f"{stem}.mpl.yaml",
@@ -81,6 +92,24 @@ def _save(fig: plt.Figure, output_dir: Path, stem: str, *, plot_id: str, title: 
         csv_files=csv_files,
     )
     plt.close(fig)
+
+
+def _require_verified_held_gate_receipts(rows: list[dict[str, str]]) -> None:
+    for row in rows:
+        if row.get("gate") not in HELD_GATE_RECEIPT_REQUIRED_GATES:
+            continue
+        if row.get("status_class") != "verified" and row.get("accepted") != "True":
+            continue
+        missing = [
+            field
+            for field in HELD_GATE_NATIVE_RECEIPT_FIELDS
+            if not row.get(field, "").strip()
+        ]
+        if missing:
+            raise ValueError(
+                f"native freshness receipt missing for verified {row.get('gate', 'HELD gate')}: "
+                + ", ".join(missing)
+            )
 
 
 def render_tieline() -> None:
@@ -182,6 +211,7 @@ def render_tolerance_margins() -> None:
 def render_held_gate_status() -> None:
     rows = _read_csv(SHARED_RESULTS / "held_1_0_gate_status.csv")
     rows.sort(key=lambda row: int(row["order"]))
+    _require_verified_held_gate_receipts(rows)
     colors = {
         "verified": "#15803d",
         "incomplete": "#b91c1c",
@@ -203,7 +233,7 @@ def render_held_gate_status() -> None:
     if any(row["status_class"] == "incomplete" for row in rows):
         footer = "Incomplete rows block a full HELD 1.0 admission claim for this rerun."
     else:
-        footer = "Stage II and III are verified here; deterministic screening alone remains non-HELD evidence."
+        footer = "Stage II and III are verified with a retained native freshness receipt."
     ax.text(0.0, len(rows) + 0.08, footer, ha="left", va="bottom", fontsize=9, transform=ax.transData)
     for spine in ax.spines.values():
         spine.set_visible(False)

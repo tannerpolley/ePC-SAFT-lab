@@ -17,7 +17,23 @@
       "route_status": "production_accepted"
     },
     "family_label": "PE-Neutral TP Flash",
-    "incomplete_requirements": []
+    "incomplete_requirements": [],
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_phase_discovery.py",
+        "--json",
+        "--include-route-refinement",
+        "--require-complete"
+      ],
+      "git_commit": "c17fce6948d35d19f988d2194385c21e2efce822",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    }
   },
   "neutral_tp_flash": {
     "application_status": "solve_succeeded",
