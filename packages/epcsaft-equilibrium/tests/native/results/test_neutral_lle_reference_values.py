@@ -389,6 +389,14 @@ def test_neutral_tpd_phase_discovery_can_run_deterministic_screening_without_con
 
 def test_stage9_phase_discovery_ladder_reports_distinct_layers() -> None:
     mix = _nonideal_lle_binary_mixture()
+    from scripts.validation import equilibrium_validation_runtime as runtime
+
+    runtime_case = runtime.neutral_lle_synthetic_case()
+    assert runtime_case["route"] == "neutral_lle"
+    assert runtime_case["temperature"] == pytest.approx(225.0)
+    assert runtime_case["pressure"] == pytest.approx(1.0e6)
+    assert runtime_case["composition"] == pytest.approx([0.5, 0.5])
+    assert runtime_case["evidence_scope"] == "synthetic_neutral_lle_algorithm"
 
     discovery = _core._native_neutral_tpd_phase_discovery(
         mix._native,

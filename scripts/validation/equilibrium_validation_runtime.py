@@ -24,6 +24,32 @@ DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR = (
 )
 
 
+def neutral_lle_synthetic_parameters() -> dict[str, np.ndarray]:
+    return {
+        "m": np.asarray([1.0, 2.0], dtype=float),
+        "s": np.asarray([3.5, 4.0], dtype=float),
+        "e": np.asarray([150.0, 250.0], dtype=float),
+        "k_ij": np.asarray([[0.0, 0.5], [0.5, 0.0]], dtype=float),
+    }
+
+
+def neutral_lle_synthetic_mixture() -> ePCSAFTMixture:
+    return ePCSAFTMixture.from_params(neutral_lle_synthetic_parameters(), species=["A", "B"])
+
+
+def neutral_lle_synthetic_case() -> dict[str, object]:
+    return {
+        "case_label": "Synthetic neutral binary LLE phase-discovery case",
+        "family_label": "PE-Neutral TP Flash",
+        "route": "neutral_lle",
+        "temperature": 225.0,
+        "pressure": 1.0e6,
+        "composition": [0.5, 0.5],
+        "composition_role": "feed",
+        "evidence_scope": "synthetic_neutral_lle_algorithm",
+    }
+
+
 def read_csv(path: Path) -> list[dict[str, str]]:
     return list(csv.DictReader(path.read_text(encoding="utf-8").splitlines()))
 
