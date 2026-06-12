@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 
 def test_reliability_summary_requires_exact_campaign_size() -> None:
     from scripts.validation import check_held_reliability as checker
@@ -133,3 +135,62 @@ def test_reliability_summary_records_first_failure_reproduction() -> None:
         },
         "rejection_reason": "solver_rejected",
     }
+
+
+def test_reliability_repeat_rows_include_independent_start_receipts() -> None:
+    from scripts.validation import check_held_reliability as checker
+
+    repeat = checker.accepted_repeat_for_test(condition_index=2, repeat_index=3)
+    rows = checker.repeat_rows_for_output(
+        [
+            checker.ConditionResult(
+                condition_index=2,
+                accepted=True,
+                repeats=[repeat],
+            )
+        ]
+    )
+
+    assert len(rows) == 1
+    row = rows[0]
+    for key in (
+        "condition_index",
+        "repeat_index",
+        "run_id",
+        "process_id",
+        "native_start_policy",
+        "stage_i_start_count",
+        "candidate_start_sources",
+        "stage_ii_stopping_reason",
+        "hidden_state_carryover_allowed",
+    ):
+        assert key in row
+    assert row["native_start_policy"] in {"deterministic_multistart", "seeded_multistart"}
+    assert row["hidden_state_carryover_allowed"] is False
+    assert row["stage_i_start_count"] > 0
+    assert json.loads(row["candidate_start_sources"])
+    assert row["stage_ii_stopping_reason"] == "bound_gap_closed"
+
+
+def test_reliability_summary_rejects_missing_start_policy_receipt() -> None:
+    from scripts.validation import check_held_reliability as checker
+
+    repeat = checker.accepted_repeat_for_test()
+    repeat.native_start_policy = ""
+    repeat.stage_i_start_count = 0
+    repeat.candidate_start_sources = []
+
+    summary = checker.summarize_campaign(
+        conditions=[
+            checker.ConditionResult(
+                condition_index=0,
+                accepted=True,
+                repeats=[repeat],
+            )
+        ],
+        required_conditions=1,
+        required_repeats=1,
+    )
+
+    assert summary["complete"] is False
+    assert "missing_start_policy_receipt" in summary["blockers"]

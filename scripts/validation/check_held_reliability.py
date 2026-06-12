@@ -286,6 +286,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def repeat_rows_for_output(conditions: list[ConditionResult]) -> list[dict[str, Any]]:
+    return [
+        _repeat_row(repeat)
+        for condition in conditions
+        for repeat in condition.repeats
+    ]
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     checker_command = sys.argv[:] if argv is None else [
@@ -536,11 +544,7 @@ def _write_outputs(
         encoding="utf-8",
     )
     condition_rows = [_condition_row(condition) for condition in conditions]
-    repeat_rows = [
-        _repeat_row(repeat)
-        for condition in conditions
-        for repeat in condition.repeats
-    ]
+    repeat_rows = repeat_rows_for_output(conditions)
     _write_csv(output_dir / "held_lle_reliability_conditions.csv", condition_rows)
     _write_csv(output_dir / "held_lle_reliability_repeats.csv", repeat_rows)
 
