@@ -38,18 +38,18 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
-| [#247](../../issues/2026-06-12-m4-equilibrium-issue-0247-add-pereira-style-neutral-lle-held-reliability-campaign.md) | `lle` | `Ipopt` | `blocked` | Add Pereira-style neutral LLE HELD reliability campaign after #246. |
+| [#247](../../issues/2026-06-12-m4-equilibrium-issue-0247-add-pereira-style-neutral-lle-held-reliability-campaign.md) | `lle` | `Ipopt` | `ready` | Add Pereira-style neutral LLE HELD reliability campaign after #246. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `blocked` | Derive boundary workflows and generalized phase-set PE from neutral GFPE. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
 ## Queue Guard
 
-#247 must remain blocked until #246 is merged and the receipt-backed proof
-commands pass on the branch being used to start the reliability campaign. Closed
-#241/#188 PRs are supporting provenance only; they do not replace the
-`native_freshness_receipt` emitted by the local phase-discovery and neutral
-TP-flash checkers.
+#247 is ready because #246 closed through #248 on 2026-06-12 and the
+receipt-backed proof commands passed before the reliability campaign branch was
+started. Closed #241/#188 PRs are supporting provenance only; they do not
+replace the `native_freshness_receipt` emitted by the local phase-discovery and
+neutral TP-flash checkers.
 
 ## Closed Issues
 

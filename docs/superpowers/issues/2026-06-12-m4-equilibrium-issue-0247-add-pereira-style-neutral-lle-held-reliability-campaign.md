@@ -6,7 +6,7 @@
 **Source Spec:** docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md
 **Source Plan:** docs/superpowers/plans/2026-06-12-m4-equilibrium-pereira-held-neutral-lle-reliability-plan.md
 **Classification:** AFK
-**Labels:** validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
+**Labels:** validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve M4 issue: add Pereira-style neutral LLE HELD reliability campaign after #246 is complete; implement the checker, retained full-campaign artifacts, docs updates, and proof oracle.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -66,9 +66,10 @@ and associating boundaries.
   not source-backed public LLE showcase evidence, generalized phase-set
   completion, or associating GFPE admission.
 
-## Blocked by
+## Dependency Satisfied
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/246
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/246 closed through
+  https://github.com/ePC-SAFT/ePC-SAFT/pull/248 on 2026-06-12.
 
 ## Non-goals
 
