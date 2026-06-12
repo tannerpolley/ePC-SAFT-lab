@@ -71,7 +71,7 @@ The implementation is complete only when all of these are true:
 - Modify: `docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 
-## Task 1: Extract Shared Neutral LLE Validation Runtime
+### Task 1: Extract Shared Neutral LLE Validation Runtime
 
 **Use Cases:**
 - The phase-discovery checker and reliability checker both need the same neutral LLE synthetic binary without duplicating parameters.
@@ -162,7 +162,7 @@ The implementation is complete only when all of these are true:
   git commit -m "Share neutral LLE validation runtime"
   ```
 
-## Task 2: Add The Full-Campaign Reliability Checker
+### Task 2: Add The Full-Campaign Reliability Checker
 
 **Use Cases:**
 - A milestone worker needs one command that runs the Pereira-style full neutral LLE reliability campaign.
@@ -277,7 +277,7 @@ The implementation is complete only when all of these are true:
   git commit -m "Add HELD LLE reliability checker"
   ```
 
-## Task 3: Add Independent Repeat And Start-Policy Receipts
+### Task 3: Add Independent Repeat And Start-Policy Receipts
 
 **Use Cases:**
 - The campaign must prove that repeats are independent calculations and do not reuse hidden state from a prior accepted solve.
@@ -359,7 +359,7 @@ The implementation is complete only when all of these are true:
   git commit -m "Record HELD reliability start receipts"
   ```
 
-## Task 4: Run And Retain The Full LLE Reliability Campaign
+### Task 4: Run And Retain The Full LLE Reliability Campaign
 
 **Use Cases:**
 - M4 needs retained proof that the neutral LLE HELD path is reliable across the full selected campaign.
@@ -428,7 +428,7 @@ The implementation is complete only when all of these are true:
   git commit -m "Retain HELD LLE reliability campaign"
   ```
 
-## Task 5: Wire The Reliability Gate Into M4 Planning Docs
+### Task 5: Wire The Reliability Gate Into M4 Planning Docs
 
 **Use Cases:**
 - A future M4 worker must see that neutral LLE reliability is now a prerequisite for associating GFPE planning.
