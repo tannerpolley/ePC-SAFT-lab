@@ -1,0 +1,2 @@
+component_i,component_j,k_ij,source_status,source_detail,fit_target_case_key,literature_context_k_ij
+perfluorohexane,hexane,0.0662,source_fitted,"Fitted against the retained Matsuda/NIST paired binodal branch rows using the current neutral PC-SAFT route; Tihic reports kij = 0.073 for the sPC-SAFT perfluorohexane + n-alkane LLE context, which over-splits this route.",matsuda_293p895K_101p3kPa,0.073

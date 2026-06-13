@@ -6,7 +6,7 @@ contracts where explicitly required
 Affected validation milestone: `M6 - Validation`
 Status: `draft`
 Created: `2026-06-11`
-Updated: `2026-06-12`
+Updated: `2026-06-13`
 
 ## Summary
 
@@ -64,6 +64,8 @@ HELD2.0-style work, not the source of the HELD 1.0 algorithm name.
 - Verified: #241 closed the neutral Stage II replayable dual phase-discovery
   gate.
 - Verified: #188 closed the source-backed neutral TP-flash fixture gate.
+- Verified: #250 adds the source-backed neutral nonassociating LLE showcase
+  fixture and retained figures for Matsuda/NIST perfluorohexane + hexane.
 - Verified: after the fresh native rebuild following #241/#188, the neutral
   phase-discovery checker reported Stage II as replayable and Stage III as
   current-route refinement consuming the Stage II replay seed.
@@ -89,7 +91,7 @@ plans and issues before associating GFPE starts.
 | More-than-two-phase readiness | Generalized phase-set PE remains planned and #189 remains blocked | Extend #189 to arbitrary phase-count feasibility, duplicate/collapsed phase rejection, and LLLE-ready completeness |
 | Stage III acceleration/convergence | Current route refinement consumes Stage II replay seed and requires Ipopt success | Preserve strict `success` and `solve_succeeded`; acceptable-level, tiny-step, feasible-only, and iteration-limit paths remain incomplete evidence |
 | Reliability campaign | Current proof oracles are focused checker/test receipts | Add repeated random unstable-condition and repeated point-calculation receipts before claiming Pereira-style algorithm reliability |
-| Literature breadth | Source-backed neutral TP flash exists; source-backed neutral LLE showcase is specified but not implemented | Add the neutral nonassociating LLE showcase, then use #189 for phase-count breadth before associating admission |
+| Literature breadth | Source-backed neutral TP flash exists; #250 adds a source-backed neutral nonassociating LLE showcase | Use #189 for phase-count breadth before associating admission |
 | Associating preparation | #145/#190 remain blocked | Associating GFPE may reuse the neutral HELD skeleton only after neutral pre-association gates and exact association derivatives are proven |
 
 ## Current Coverage Matrix
@@ -97,7 +99,7 @@ plans and issues before associating GFPE starts.
 | Family or method | Required HELD adoption state | Current issue coverage | Current truth |
 | --- | --- | --- | --- |
 | Public `flash` utility | `held_1_admitted` for proof lane; cheap public path may remain deterministic by default | #148, #187, #241, #188, #246 | Neutral proof lane verified after fresh build; receipt hardening still open |
-| Neutral nonassociating `lle` utility | `held_1_admitted` before any generalized claim | #148, #187, #241, #188, neutral LLE showcase spec, #189 | Synthetic route proof exists; source-backed neutral LLE showcase and generalized phase-set proof still missing |
+| Neutral nonassociating `lle` utility | `held_1_admitted` before any generalized claim | #148, #187, #241, #188, #247, #250, #189 | Synthetic route proof and source-backed Matsuda/NIST LLE showcase exist; generalized phase-set proof still missing |
 | `bubble_pressure`, `bubble_temperature`, `dew_pressure`, `dew_temperature` | `derived_from_held_1` | #189 | Must be degree-of-freedom swaps over the certified GFPE core with strict per-point diagnostics |
 | Cloud/shadow workflows | `derived_from_held_1` after implementation | #189 | Route contracts and executable evidence still needed |
 | `single_component_vle` | direct boundary-route evidence, no borrowed HELD claim | #228 closed, #192 later | Keep separate from HELD family adoption unless registry text claims phase discovery |
@@ -189,6 +191,17 @@ Purpose:
 
 This is the LLE showcase needed before associating LLE can be framed as an
 extension of the neutral phase-split path.
+
+Retained evidence after #250:
+
+- `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane`
+- `scripts/validation/check_neutral_lle_showcase.py`
+- `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`
+- `analyses/package_validation/neutral_nonassociating_lle_showcase`
+
+Gate C remains one binary source-backed showcase. It does not prove
+phase-count independence, generalized phase-set completion, associating LLE,
+electrolyte LLE, reactive PE, CE, or CPE behavior.
 
 ### Gate D - Generalized All-Phase And LLLE-Ready Phase-Set Completeness
 

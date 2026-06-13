@@ -1,0 +1,15 @@
+kind: matplotlib-figure
+version: 1
+plot_id: m4_issue_250_neutral_lle_held_stage_status
+title: M4 issue 250 neutral LLE HELD-stage status
+files:
+  figures:
+    - neutral_lle_held_stage_status.png
+    - neutral_lle_held_stage_status.svg
+  data:
+    - held_stage_status_plotted.csv
+render:
+  command: uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py
+matplotlib:
+  title: M4 issue 250 neutral LLE HELD-stage status
+  style: scientific-validation

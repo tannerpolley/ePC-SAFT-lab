@@ -1,0 +1,10 @@
+schema_version: 1
+analysis_id: neutral_nonassociating_lle_showcase
+milestone: M4 - Equilibrium
+issue: 250
+package: packages/epcsaft-equilibrium
+fixture: data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane
+scope: source-backed neutral nonassociating binary LLE showcase
+commands:
+  generate_data: uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/generate_data.py
+  render_figures: uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py

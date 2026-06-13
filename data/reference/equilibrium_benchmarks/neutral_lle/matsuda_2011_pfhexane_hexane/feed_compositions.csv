@@ -1,0 +1,2 @@
+case_key,temperature_K,pressure_Pa,component_1,component_2,z1,z2,liquid1_phase_fraction,liquid2_phase_fraction,construction,source_status
+matsuda_293p895K_101p3kPa,293.895,101300.0,perfluorohexane,hexane,0.37485,0.62515,0.5,0.5,arithmetic_midpoint_of_paired_source_branch_compositions,source_derived

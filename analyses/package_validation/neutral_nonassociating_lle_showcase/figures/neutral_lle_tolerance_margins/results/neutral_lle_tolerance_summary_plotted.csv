@@ -1,0 +1,7 @@
+metric,observed_abs,limit,direction,unit,margin_ratio,accepted
+composition_abs,0.009933966386833692,0.02,max,mole_fraction,0.4966983193416846,True
+phase_fraction_abs,0.025057997082652328,0.03,max,phase_fraction,0.8352665694217443,True
+material_balance_abs,0.0,1e-08,max,mole_balance,0.0,True
+pressure_abs_Pa,8.787901606410742e-08,0.001,max,Pa,8.787901606410742e-05,True
+ln_fugacity_abs,7.473756058473668e-09,1e-06,max,ln_fugacity,0.007473756058473668,True
+phase_distance_min,0.34723404668394015,1e-06,min,mole_fraction,2.879901926524565e-06,True

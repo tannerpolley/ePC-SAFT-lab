@@ -1,0 +1,11 @@
+{
+  "application_status": "solve_succeeded",
+  "case_label": "Matsuda 2011 perfluorohexane + hexane neutral LLE",
+  "complete": true,
+  "family_label": "PE-Neutral TP Flash",
+  "max_composition_abs_error": 0.009933966386833692,
+  "max_phase_fraction_abs_error": 0.025057997082652328,
+  "route_status": "production_accepted",
+  "scope": "neutral nonassociating binary LLE only",
+  "solver_status": "success"
+}

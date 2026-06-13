@@ -39,6 +39,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Evidence | Capability | Scope |
 | --- | --- | --- |
 | [HELD LLE reliability campaign](../../../../analyses/package_validation/held_lle_reliability/README.md) | `lle` | Synthetic neutral LLE algorithm reliability evidence: 100 accepted two-phase conditions, 10,000 independent route-refinement repeats, zero failed repeats. This is not source-backed public LLE showcase evidence, generalized phase-set completion, or associating GFPE admission. |
+| [Neutral nonassociating LLE showcase](../../../../analyses/package_validation/neutral_nonassociating_lle_showcase/README.md) | `lle` | Source-backed Matsuda/NIST perfluorohexane + hexane LLE evidence for the current neutral `route="lle"` utility. This is one binary source-backed showcase, not generalized phase-set completion or associating GFPE admission. |
 
 ## Current Open Issues
 
@@ -57,8 +58,14 @@ HELD reliability campaign accepted 100 conditions, ran 10,000 route-refinement
 repeats, and recorded zero failed repeats. That evidence supports neutral HELD
 algorithm reliability only; it still does not replace source-backed public LLE
 showcase evidence, generalized phase-set completion, or associating GFPE
-admission. #250 is the next ready source-backed neutral LLE showcase slice.
-#189, #190, and #191 remain blocked by their own proof gates.
+admission.
+
+#250 adds the first source-backed neutral nonassociating LLE showcase fixture:
+Matsuda/NIST perfluorohexane + hexane paired binodal branch rows, Tihic-derived
+pure parameters, a source-fitted binary interaction for the current route, a
+checker requiring HELD Stage II replay plus Stage III replay consumption, and
+retained PNG/SVG figures. This closes the public source-backed neutral LLE
+showcase gap only. #189, #190, and #191 remain blocked by their own proof gates.
 
 ## Closed Issues
 

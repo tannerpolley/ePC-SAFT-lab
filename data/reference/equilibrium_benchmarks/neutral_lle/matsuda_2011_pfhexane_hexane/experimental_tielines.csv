@@ -1,0 +1,2 @@
+case_key,source_status,source_basis,source_dataset,source_row_pair,temperature_K,pressure_kPa,pressure_Pa,component_1,component_2,liquid1_x1,liquid1_x2,liquid2_x1,liquid2_x2,liquid1_source_temperature_K,liquid2_source_temperature_K,temperature_difference_K,source_temperature_uncertainty_K
+matsuda_293p895K_101p3kPa,source_backed,paired_binodal_branch_rows,NIST_ThermoML_dataset_2,row_x_pfhex_0p2000_and_row_x_pfhex_0p5497,293.895,101.3,101300.0,perfluorohexane,hexane,0.2000,0.8000,0.5497,0.4503,293.89,293.90,0.01,0.2

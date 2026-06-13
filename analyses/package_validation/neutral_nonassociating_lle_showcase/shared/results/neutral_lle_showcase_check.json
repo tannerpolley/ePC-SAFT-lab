@@ -1,0 +1,760 @@
+{
+  "blockers": [],
+  "case_label": "Matsuda 2011 perfluorohexane + hexane neutral LLE",
+  "comparison": {
+    "max_composition_abs_error": 0.009933966386833692,
+    "max_phase_fraction_abs_error": 0.025057997082652328,
+    "phase_index_by_expected_label": {
+      "liquid1": 0,
+      "liquid2": 1
+    }
+  },
+  "complete": true,
+  "family_label": "PE-Neutral TP Flash",
+  "fixture": {
+    "binary_interaction": {
+      "k_ij": 0.0662,
+      "status": "source_fitted"
+    },
+    "blockers": [],
+    "executable": true,
+    "source_data": {
+      "binodal_point_count": 14,
+      "status": "source_backed",
+      "tieline_count": 1
+    }
+  },
+  "native_freshness_receipt": {
+    "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+    "checker_command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/generate_data.py"
+    ],
+    "git_commit": "052820c4de51d551a06c228a960299bb37bdad88",
+    "native_module_name": "epcsaft_equilibrium._native_core",
+    "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+  },
+  "route": {
+    "accepted": true,
+    "application_status": "solve_succeeded",
+    "eval_h_calls": 23,
+    "exact_hessian_available": true,
+    "hessian_approximation": "exact",
+    "hessian_backend": "cppad_phase_system",
+    "iteration_count": 23,
+    "postsolve": {
+      "accepted": true,
+      "candidate_completeness_accepted": true,
+      "candidate_mass_balance_norm": 0.0,
+      "charge_balance_norm": 0.0,
+      "chemical_potential_consistency_norm": 7.47495310093882e-09,
+      "constraint_families": [
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_distance"
+      ],
+      "constraints": [
+        0.0,
+        0.0,
+        3.3905962482094765e-08,
+        -8.787901606410742e-08
+      ],
+      "continuous_tpd_backend": "continuous_coordinate_search",
+      "continuous_tpd_best_composition": [
+        0.19253198692922618,
+        0.8074680130707738
+      ],
+      "continuous_tpd_best_density": 6879.559309958072,
+      "continuous_tpd_best_molar_volume": 0.00014535814794888288,
+      "continuous_tpd_best_phase_kind": 0,
+      "continuous_tpd_best_source": "accepted_phase_0_continuous_tpd_0",
+      "continuous_tpd_converged_count": 4,
+      "continuous_tpd_iteration_count_max": 33,
+      "continuous_tpd_iteration_count_total": 116,
+      "continuous_tpd_min": 1.5006806080901974e-15,
+      "continuous_tpd_solve_count": 4,
+      "continuous_tpd_start_count": 4,
+      "continuous_tpd_status": "converged",
+      "continuous_tpd_step_final_max": 7.450580596923828e-09,
+      "density_backend": "explicit_phase_volume_pressure_constraint",
+      "derivative_backend": "analytic_cppad",
+      "deterministic_candidate_count": 38,
+      "deterministic_screening_is_full_held": false,
+      "deterministic_screening_status": "completed",
+      "fixed_composition_norm": 0.0,
+      "gibbs_delta": 0.0,
+      "gibbs_feed": 0.0,
+      "gibbs_split": 0.0,
+      "held_stage_i_min_tpd": 1.5006806080901974e-15,
+      "held_stage_i_negative_tpd_found": false,
+      "held_stage_i_start_count": 4,
+      "held_stage_i_status": "no_negative_tpd_candidate_found",
+      "held_stage_ii_bound_gap": 0.0,
+      "held_stage_ii_bound_gap_history": [
+        0.0
+      ],
+      "held_stage_ii_bound_tolerance": 9.999999999999999e-05,
+      "held_stage_ii_candidate_bound_audit_status": "candidate_bound_gap_closed",
+      "held_stage_ii_candidate_count": 22,
+      "held_stage_ii_dual_loop_status": "verified",
+      "held_stage_ii_lower_bound": 1.5006806080901974e-15,
+      "held_stage_ii_lower_bound_history": [
+        1.5006806080901974e-15
+      ],
+      "held_stage_ii_major_iterations": 1,
+      "held_stage_ii_rejected_candidate_count": 22,
+      "held_stage_ii_rejected_candidate_ranks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ],
+      "held_stage_ii_rejected_candidate_reasons": [
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate",
+        "not_selected_by_dual_loop_mass_balance_gate"
+      ],
+      "held_stage_ii_replay_candidate_count": 22,
+      "held_stage_ii_replay_candidate_ranks": [],
+      "held_stage_ii_replay_phase_compositions": [
+        [
+          0.19253198692922618,
+          0.8074680130707738
+        ],
+        [
+          0.5397660336131663,
+          0.46023396638683367
+        ]
+      ],
+      "held_stage_ii_replay_phase_fractions": [
+        0.47494200291734767,
+        0.5250579970826523
+      ],
+      "held_stage_ii_replay_phase_kinds": [
+        0,
+        0
+      ],
+      "held_stage_ii_replay_ready": true,
+      "held_stage_ii_replay_seed_name": "held_stage_ii_dual_loop_candidate_pair",
+      "held_stage_ii_replay_source": "stage_ii_dual_loop_selected_candidates",
+      "held_stage_ii_status": "dual_loop_verified",
+      "held_stage_ii_stopping_reason": "bound_gap_closed",
+      "held_stage_ii_upper_bound": 1.5006806080901974e-15,
+      "held_stage_ii_upper_bound_history": [
+        1.5006806080901974e-15
+      ],
+      "held_stage_iii_consumed_stage_ii_replay_metadata": true,
+      "held_stage_iii_refined_phase_count": 2,
+      "held_stage_iii_replay_candidate_count": 22,
+      "held_stage_iii_replay_seed_name": "held_stage_ii_dual_loop_candidate_pair",
+      "held_stage_iii_replay_source": "stage_ii_dual_loop_candidate_seed",
+      "held_stage_iii_status": "ipopt_refinement_completed_current_route",
+      "ln_fugacity_consistency_norm": 7.473756058473668e-09,
+      "material_balance_norm": 0.0,
+      "min_tpd": 1.5006806080901974e-15,
+      "minimum_phase_fraction": 0.0,
+      "objective": 0.5190791331118586,
+      "phase_amount_total_norm": 0.0,
+      "phase_amount_totals": [
+        0.47494200291734767,
+        0.5250579970826523
+      ],
+      "phase_compositions": [
+        [
+          0.19253198692922618,
+          0.8074680130707738
+        ],
+        [
+          0.5397660336131663,
+          0.46023396638683367
+        ]
+      ],
+      "phase_count": 2,
+      "phase_densities": [
+        6879.559309958071,
+        5951.970744816291
+      ],
+      "phase_discovery_backend": "continuous_tpd_held_dual_phase_discovery",
+      "phase_distance": 0.34723404668394015,
+      "phase_ln_fugacity_coefficients": [
+        [
+          -4.922807851374799,
+          -0.9741296366094332
+        ],
+        [
+          -5.953681321867279,
+          -0.4119611848258131
+        ]
+      ],
+      "phase_set_mass_balance_feasible": true,
+      "phase_set_status": "phase_set_certified",
+      "phase_volumes": [
+        6.903668992719859e-05,
+        8.821582289192827e-05
+      ],
+      "pressure_consistency_norm": 8.787901606410742e-08,
+      "rejection_reason": "accepted",
+      "residual_families": [
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_distance"
+      ],
+      "seed_and_stability": {
+        "candidate_feasibility_statuses": [
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated",
+          "candidate_generated"
+        ],
+        "candidate_iteration_counts": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "candidate_mass_balance_norm": 0.0,
+        "candidate_ranks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ],
+        "candidate_selected": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "candidate_source_count": 22,
+        "candidate_sources": [
+          "accepted_phase_0_trial_0",
+          "accepted_phase_0_trial_1",
+          "accepted_phase_0_trial_2",
+          "accepted_phase_0_trial_3",
+          "accepted_phase_0_trial_4",
+          "accepted_phase_0_trial_5",
+          "accepted_phase_0_trial_6",
+          "accepted_phase_0_trial_7",
+          "accepted_phase_0_trial_8",
+          "accepted_phase_0_trial_9",
+          "accepted_phase_0_trial_10",
+          "accepted_phase_0_trial_11",
+          "accepted_phase_0_trial_12",
+          "accepted_phase_0_trial_13",
+          "accepted_phase_0_trial_14",
+          "accepted_phase_0_trial_15",
+          "accepted_phase_0_trial_16",
+          "accepted_phase_0_trial_17",
+          "accepted_phase_0_trial_18",
+          "accepted_phase_1_trial_0",
+          "accepted_phase_1_trial_1",
+          "accepted_phase_1_trial_2"
+        ],
+        "candidate_step_finals": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "continuous_tpd_status": "converged",
+        "deterministic_screening_is_full_held": false,
+        "deterministic_screening_status": "completed",
+        "held_stage_i_status": "no_negative_tpd_candidate_found",
+        "held_stage_ii_candidate_bound_audit_status": "candidate_bound_gap_closed",
+        "held_stage_ii_dual_loop_status": "verified",
+        "held_stage_ii_replay_ready": true,
+        "held_stage_ii_replay_seed_name": "held_stage_ii_dual_loop_candidate_pair",
+        "held_stage_ii_status": "dual_loop_verified",
+        "held_stage_ii_stopping_reason": "bound_gap_closed",
+        "held_stage_iii_consumed_stage_ii_replay_metadata": true,
+        "held_stage_iii_status": "ipopt_refinement_completed_current_route",
+        "min_tpd": 1.5006806080901974e-15,
+        "phase_discovery_backend": "continuous_tpd_held_dual_phase_discovery",
+        "phase_set_status": "phase_set_certified",
+        "stability_certificate": "tpd_postsolve",
+        "stage9_phase_discovery_steps": [
+          "deterministic_screening",
+          "continuous_tpd_minimization",
+          "held_stage_i_stability",
+          "held_stage_ii_candidate_bound_audit",
+          "held_stage_ii_dual_loop_verification",
+          "held_stage_iii_ipopt_refinement"
+        ]
+      },
+      "selected_candidate_count": 2,
+      "selected_phase_compositions": [
+        [
+          0.19253198692922618,
+          0.8074680130707738
+        ],
+        [
+          0.5397660336131663,
+          0.46023396638683367
+        ]
+      ],
+      "selected_phase_fractions": [
+        0.47494200291734767,
+        0.5250579970826523
+      ],
+      "selected_phase_kinds": [
+        0,
+        0
+      ],
+      "species_count": 2,
+      "stability_accepted": true,
+      "stability_certificate": "tpd_postsolve",
+      "stability_checked": true,
+      "stage9_phase_discovery_steps": [
+        "deterministic_screening",
+        "continuous_tpd_minimization",
+        "held_stage_i_stability",
+        "held_stage_ii_candidate_bound_audit",
+        "held_stage_ii_dual_loop_verification",
+        "held_stage_iii_ipopt_refinement"
+      ],
+      "tpd_candidate_compositions": [
+        [
+          0.19253198692922618,
+          0.8074680130707738
+        ],
+        [
+          0.15402558954338097,
+          0.8459744104566191
+        ],
+        [
+          0.23103838431507143,
+          0.7689616156849286
+        ],
+        [
+          0.0001,
+          0.9999
+        ],
+        [
+          0.001,
+          0.999
+        ],
+        [
+          0.01,
+          0.99
+        ],
+        [
+          0.02,
+          0.98
+        ],
+        [
+          0.05,
+          0.95
+        ],
+        [
+          0.1,
+          0.9
+        ],
+        [
+          0.2,
+          0.8
+        ],
+        [
+          0.35,
+          0.65
+        ],
+        [
+          0.5,
+          0.5
+        ],
+        [
+          0.65,
+          0.35
+        ],
+        [
+          0.8,
+          0.19999999999999996
+        ],
+        [
+          0.9,
+          0.09999999999999998
+        ],
+        [
+          0.95,
+          0.050000000000000044
+        ],
+        [
+          0.98,
+          0.020000000000000018
+        ],
+        [
+          0.99,
+          0.010000000000000009
+        ],
+        [
+          0.999,
+          0.0010000000000000009
+        ],
+        [
+          0.5397660336131663,
+          0.46023396638683367
+        ],
+        [
+          0.4477192403357996,
+          0.5522807596642004
+        ],
+        [
+          0.6318128268905331,
+          0.36818717310946697
+        ]
+      ],
+      "tpd_candidate_count": 42,
+      "tpd_candidate_feasibility_statuses": [
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated",
+        "candidate_generated"
+      ],
+      "tpd_candidate_iteration_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "tpd_candidate_phase_kinds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "tpd_candidate_pressure_residuals": [
+        1.8322316464036703e-07,
+        7.900234777480364e-08,
+        -8.135975804179907e-08,
+        -1.870503183454275e-07,
+        -3.655441105365753e-08,
+        3.0107912607491016e-07,
+        1.3555109035223722e-07,
+        -3.111636033281684e-07,
+        5.471520125865936e-08,
+        -6.781192496418953e-09,
+        -4.2852479964494705e-07,
+        7.137714419513941e-08,
+        -9.790528565645218e-08,
+        1.0612711776047945e-07,
+        1.546140993013978e-07,
+        2.542219590395689e-08,
+        -5.8906152844429016e-08,
+        -7.143535185605288e-08,
+        -1.0717485565692186e-07,
+        1.552689354866743e-08,
+        1.2649979908019304e-07,
+        3.4713593777269125e-07
+      ],
+      "tpd_candidate_ranks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ],
+      "tpd_candidate_selected": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "tpd_candidate_sources": [
+        "accepted_phase_0_trial_0",
+        "accepted_phase_0_trial_1",
+        "accepted_phase_0_trial_2",
+        "accepted_phase_0_trial_3",
+        "accepted_phase_0_trial_4",
+        "accepted_phase_0_trial_5",
+        "accepted_phase_0_trial_6",
+        "accepted_phase_0_trial_7",
+        "accepted_phase_0_trial_8",
+        "accepted_phase_0_trial_9",
+        "accepted_phase_0_trial_10",
+        "accepted_phase_0_trial_11",
+        "accepted_phase_0_trial_12",
+        "accepted_phase_0_trial_13",
+        "accepted_phase_0_trial_14",
+        "accepted_phase_0_trial_15",
+        "accepted_phase_0_trial_16",
+        "accepted_phase_0_trial_17",
+        "accepted_phase_0_trial_18",
+        "accepted_phase_1_trial_0",
+        "accepted_phase_1_trial_1",
+        "accepted_phase_1_trial_2"
+      ],
+      "tpd_candidate_step_finals": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tpd_candidate_values": [
+        1.5006806080901974e-15,
+        0.0006633902459909366,
+        0.0003433040723643836,
+        0.09359486647093183,
+        0.08917863179888133,
+        0.06542581057691144,
+        0.049679843632372676,
+        0.023461573975222364,
+        0.006101643448101959,
+        1.6908377675406514e-05,
+        0.0017219702269491767,
+        0.00023904828930465527,
+        0.00367337412206439,
+        0.03563326878354137,
+        0.0991690514307057,
+        0.16035249557522352,
+        0.21873583944862834,
+        0.24627916143745598,
+        0.2811336248938386,
+        8.689602240360768e-15,
+        0.0009319005191418261,
+        0.0023806057401977165
+      ],
+      "unique_candidate_count": 22
+    },
+    "seed_attempt_count": 1,
+    "solver_status": "success",
+    "status": "production_accepted"
+  },
+  "status": "complete"
+}
