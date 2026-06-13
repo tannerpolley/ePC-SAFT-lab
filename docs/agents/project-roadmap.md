@@ -45,6 +45,13 @@ Dashboard mirrors are still allowed:
 - `status:blocked` label for issue-list filtering.
 - Project `Readiness=blocked` for roadmap views.
 
+Dependency-unblocked and AFK-ready are separate states. The repo-owned
+`sync issue readiness` workflow and
+`scripts/dev/update_issue_dependency_readiness.py` may move an issue from
+`status:blocked` to `status:ready` after all GitHub native blockers close, but
+`agent-ready` is added only when the issue mirror has an AFK classification,
+linked source plan, acceptance criteria, and proof oracle.
+
 Current audited dependency edge:
 
 - #145 is `blocked_by` #148.

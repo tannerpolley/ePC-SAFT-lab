@@ -12,13 +12,20 @@ Project fields, local docs, templates, and completion standards agree.
 
 | Issue | Readiness | Summary |
 | --- | --- | --- |
-| [#253](../../issues/2026-06-13-m0-governance-issue-0253-auto-unblock-dependent-issues-after-clean-merge-closeout.md) | `ready` | Add the GitHub-backed workflow and fallback command that unblock dependent issues and sync local mirrors when their final native GitHub blocker closes. |
+| [#253](../../issues/2026-06-13-m0-governance-issue-0253-auto-unblock-dependent-issues-after-clean-merge-closeout.md) | `ready` | Add the GitHub-backed workflow and local repair command that unblock dependent issues and sync local mirrors when their final native GitHub blocker closes. |
 
 ## Current Plans
 
 | Plan | Summary |
 | --- | --- |
-| [GitHub dependency auto-unblock closeout](../../plans/2026-06-13-m0-github-dependency-auto-unblock-closeout-plan.md) | GitHub Actions plus dry-run/apply fallback for moving dependents from `status:blocked` to `status:ready` and syncing local mirrors after clean merges. |
+| [GitHub dependency auto-unblock closeout](../../plans/2026-06-13-m0-github-dependency-auto-unblock-closeout-plan.md) | GitHub Actions plus dry-run/apply local repair for moving dependents from `status:blocked` to `status:ready` and syncing local mirrors after clean merges. |
+
+## Retained Workflow
+
+`sync issue readiness` runs on issue close, merged PR close, manual dispatch,
+and scheduled reconciliation. The local command is
+`uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py`;
+use `--dry-run --json` before `--apply --json`.
 
 ## Closed Issues
 
