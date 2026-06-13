@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ePC-SAFT: Build Native Extension" type="PowerShellRunType" factoryName="PowerShell" folderName="ePC-SAFT" scriptUrl="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT/.codex/environments/setup.ps1" workingDirectory="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT" commandOptions="-NoProfile -ExecutionPolicy Bypass" scriptParameters="-Step Build">
+    <method v="2" />
+  </configuration>
+</component>
