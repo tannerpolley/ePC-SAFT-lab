@@ -324,7 +324,7 @@ derived_subworkflows:
     diagnostic_policy: "Routine validation is contract-only. Current runtime route solves require one explicit route point unless an explicit sweep opt-in is provided."
     strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
+    acceptance_checks: [dof_swap_contract, boundary_trace_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
   - label: "Dew point"
     workflow_kind: derived_boundary
@@ -339,7 +339,7 @@ derived_subworkflows:
     diagnostic_policy: "Routine validation is contract-only. Current runtime route solves require one explicit route point unless an explicit sweep opt-in is provided."
     strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
+    acceptance_checks: [dof_swap_contract, boundary_trace_contract, boundary_pressure_or_temperature, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
   - label: "Cloud point"
     workflow_kind: derived_boundary

@@ -43,6 +43,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [HELD LLE reliability campaign](../../../../analyses/package_validation/held_lle_reliability/README.md) | `lle` | Synthetic neutral LLE algorithm reliability evidence: 100 accepted two-phase conditions, 10,000 independent route-refinement repeats, zero failed repeats. This is not source-backed public LLE showcase evidence, generalized phase-set completion, or associating GFPE admission. |
 | [Neutral nonassociating LLE showcase](../../../../analyses/package_validation/neutral_nonassociating_lle_showcase/README.md) | `lle` | Source-backed Matsuda/NIST perfluorohexane + hexane LLE evidence for the current neutral `route="lle"` utility. This is one binary source-backed showcase, not generalized phase-set completion or associating GFPE admission. |
 | `scripts/validation/check_generalized_phase_set.py --json --require-complete` | `lle` | Internal neutral generalized phase-set diagnostic record evidence for #252: three selected candidate rows, rejected candidate rows, mass-balance feasibility, noncollapsed selected compositions, and no public `neutral_multiphase_nonassoc` exposure. This keeps `PE-Generalized Multiphase` planned-not-public. |
+| `scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` | `lle` | Retained derived-boundary evidence for #256: current bubble/dew `P-x` and `T-x` route points emit complete `boundary_trace` records with route, DOF swap, source fixture, selector family, shared NLP families, strict Ipopt convergence, finite residuals, and no iteration-limit seed path. Cloud and shadow remain planned-only. |
 
 ## Current Open Issues
 
@@ -74,9 +75,9 @@ showcase gap only.
 records and the retained `check_generalized_phase_set.py` checker. This keeps
 `PE-Generalized Multiphase` planned-not-public and does not close #189.
 
-#256 is the next #189 child. It should certify retained boundary traces for
-current bubble/dew route points and tighten generalized phase-set rejected
-candidate diagnostics while preserving the public capability boundary.
+#256 is the current #189 child. Its implementation certifies retained boundary
+traces for current bubble/dew route points and tightens generalized phase-set
+rejected candidate diagnostics while preserving the public capability boundary.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
 for boundary workflows and generalized phase-set PE. #190 and #191 remain

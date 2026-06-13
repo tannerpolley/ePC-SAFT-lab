@@ -36,6 +36,27 @@ REQUIRED_RECORD_FIELDS = {
     "stability_accepted",
     "candidate_completeness_accepted",
 }
+GENERIC_REJECTED_PHASE_SET_REASONS = {
+    "not_selected_candidate",
+    "not_selected_by_generalized_phase_set_gate",
+    "not_selected",
+}
+LOWER_FREE_ENERGY_REASONS = {
+    "lower_free_energy_omitted_candidate",
+    "omitted_lower_free_energy_candidate",
+}
+
+
+def _finite_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+
+
+def _record_energy(record: dict[str, Any]) -> float | None:
+    for field in ("objective", "tpd"):
+        value = record.get(field)
+        if _finite_number(value):
+            return float(value)
+    return None
 
 
 def _record_composition_key(record: dict[str, Any], *, tolerance: float = 1.0e-8) -> tuple[float, ...]:
@@ -73,6 +94,13 @@ def evaluate_payload(payload: dict[str, Any]) -> dict[str, Any]:
                 break
         if record.get("phase_count") != 3:
             blockers.append("non_three_phase_record")
+        if (
+            record.get("phase_set_status") != "phase_set_certified"
+            or record.get("mass_balance_feasible") is not True
+            or record.get("stability_accepted") is not True
+            or record.get("candidate_completeness_accepted") is not True
+        ):
+            blockers.append("uncertified_phase_set_record")
         composition = record.get("composition")
         if isinstance(composition, list):
             total = sum(float(value) for value in composition)
@@ -91,6 +119,25 @@ def evaluate_payload(payload: dict[str, Any]) -> dict[str, Any]:
                 blockers.append("missing_rejection_reason")
         else:
             blockers.append("unknown_phase_set_selection_status")
+
+    selected_energies = [
+        energy
+        for energy in (_record_energy(record) for record in selected_records)
+        if energy is not None
+    ]
+    if selected_energies:
+        selected_min_energy = min(selected_energies)
+        for record in rejected_records:
+            rejected_energy = _record_energy(record)
+            reason = str(record.get("rejection_reason", ""))
+            if (
+                rejected_energy is not None
+                and rejected_energy < selected_min_energy - 1.0e-12
+                and reason in GENERIC_REJECTED_PHASE_SET_REASONS
+            ):
+                blockers.append("lower_free_energy_omitted_candidate")
+            if rejected_energy is not None and rejected_energy < selected_min_energy - 1.0e-12 and reason in LOWER_FREE_ENERGY_REASONS:
+                blockers.append("lower_free_energy_rejected_candidate")
 
     if len(selected_records) < 3:
         blockers.append("missing_selected_three_phase_rows")
