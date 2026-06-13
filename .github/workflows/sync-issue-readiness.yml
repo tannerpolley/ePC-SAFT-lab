@@ -1,0 +1,94 @@
+name: sync issue readiness
+
+on:
+  issues:
+    types: [closed]
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Resolved issue number to inspect"
+        required: false
+        type: string
+      apply:
+        description: "Apply label and mirror changes"
+        required: true
+        default: false
+        type: boolean
+  schedule:
+    - cron: "17 10 * * *"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  sync-readiness:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Install project dependencies
+        run: uv sync --no-install-workspace
+
+      - name: Build synchronizer arguments
+        id: args
+        shell: pwsh
+        run: |
+          $args = @("--repo", "${{ github.repository }}")
+          if ("${{ github.event_name }}" -eq "schedule") {
+            $args += "--reconcile"
+          } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            if ("${{ inputs.issue }}" -ne "") {
+              $args += @("--issue", "${{ inputs.issue }}")
+            } else {
+              $args += "--reconcile"
+            }
+          } else {
+            $args += @("--event-path", "${{ github.event_path }}", "--event-name", "${{ github.event_name }}")
+          }
+          "script_args=$($args -join ' ')" >> $env:GITHUB_OUTPUT
+
+      - name: Dry-run readiness sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py ${{ steps.args.outputs.script_args }} --dry-run --json
+
+      - name: Apply readiness sync
+        if: github.event_name != 'workflow_dispatch' || inputs.apply
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py ${{ steps.args.outputs.script_args }} --apply --json
+
+      - name: Validate docs after mirror changes
+        if: github.event_name != 'workflow_dispatch' || inputs.apply
+        run: uv run --no-sync python scripts/dev/validate_project.py docs
+
+      - name: Commit mirror changes
+        if: github.event_name != 'workflow_dispatch' || inputs.apply
+        shell: pwsh
+        run: |
+          if (-not (git diff --quiet -- docs/superpowers docs/agents)) {
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/superpowers docs/agents
+            git commit -m "Sync issue readiness mirrors"
+            git push
+          }
