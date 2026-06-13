@@ -24,7 +24,7 @@ Use these shared JetBrains Services entries for direct preset work:
 | Build only `_core` | `CMake Build _core dev-native` |
 | Build all default CMake targets | `CMake Build dev-native` |
 
-These entries are Shell Script run configurations. They are not the
+These entries are PowerShell run configurations. They are not the
 IDE-generated `CMake Application` targets. `CMake Application` targets may
 appear in IntelliJ's run configuration list, but they are not the repo standard
 and should not be added to Services as the normal CMake workflow.
@@ -104,7 +104,11 @@ When IntelliJ is ready, run the equivalent shared Services entries:
 
 ## Decision Log
 
-2026-05-23: Direct CMake work was standardized on wrapper-backed Shell Script
-Services entries. Strawberry MinGW was kept out of the ePC-SAFT CMake standard.
+2026-05-23: Direct CMake work was standardized on wrapper-backed Services
+entries. Strawberry MinGW was kept out of the ePC-SAFT CMake standard.
 IDE-generated `CMake Application` targets are allowed to exist as IDE metadata,
 but they are not the durable repo workflow.
+
+2026-06-12: Wrapper-backed Services entries were moved from generic Shell Script
+to native PowerShell run configurations because every durable CMake entry calls a
+repo-owned `.ps1` wrapper.

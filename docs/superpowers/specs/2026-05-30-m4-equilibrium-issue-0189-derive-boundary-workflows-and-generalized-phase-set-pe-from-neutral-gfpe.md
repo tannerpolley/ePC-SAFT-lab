@@ -16,6 +16,10 @@ adoption until the candidate phase set can satisfy the global feed mass balance,
 reject duplicate or collapsed phases, and prove completeness beyond a fixed
 two-phase route.
 
+The neutral LLE reliability campaign is two-phase reliability evidence;
+generalized phase-set completion still requires #189's arbitrary phase-count
+and LLLE-ready checks.
+
 ## Acceptance Gates
 
 - [ ] Boundary workflows are derived from the certified neutral GFPE path, not special-cased route copies.

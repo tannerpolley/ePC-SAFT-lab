@@ -130,7 +130,7 @@ Pereira requirement.
 
 ### Gate B - Pereira-Style Neutral HELD Reliability Harness
 
-Issue coverage: new issue recommended from this spec after #246.
+Issue coverage: #247.
 
 Purpose:
 
@@ -142,17 +142,15 @@ Purpose:
 - retain inner-search diagnostics sufficient to show how local minima,
   incumbent upper bounds, and rejected candidates were handled.
 
-Recommended issue:
+Retained evidence:
 
-```text
-Title: M4: add Pereira-style neutral HELD reliability and inner-search receipts
-Milestone: M4 - Equilibrium
-Type: Feature
-Package: equilibrium
-Backend: Ipopt
-Readiness: ready after #246
-Blocks: #189, #145, #190 where they rely on neutral HELD as the base algorithm
-```
+- `analyses/package_validation/held_lle_reliability/shared/results/held_lle_reliability_summary.json`
+- `analyses/package_validation/held_lle_reliability/shared/results/held_lle_reliability_conditions.csv`
+- `analyses/package_validation/held_lle_reliability/shared/results/held_lle_reliability_repeats.csv`
+
+Gate B is complete only when the retained summary JSON reports
+`complete: true`, `accepted_conditions: 100`, `attempted_repeats: 10000`, and
+`failed_repeats: 0`.
 
 Minimum acceptance:
 
@@ -174,7 +172,7 @@ Proof candidates:
 ```powershell
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python scripts/validation/check_phase_discovery.py --json --include-route-refinement --require-complete
-uv run --no-sync python scripts/validation/check_held_reliability.py --family neutral --json --require-complete
+uv run --no-sync python scripts/validation/check_held_reliability.py --family neutral-lle --conditions 100 --repeats 100 --seed 1729 --require-complete --json --output-dir analyses/package_validation/held_lle_reliability/shared/results
 uv run --no-sync python scripts/dev/validate_project.py docs
 ```
 

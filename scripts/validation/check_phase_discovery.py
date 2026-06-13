@@ -7,8 +7,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 EQUILIBRIUM_SRC_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src"
@@ -41,16 +39,6 @@ STAGE_II_REPLAY_SEED_NAME = "held_stage_ii_dual_loop_candidate_pair"
 STAGE_III_REPLAY_SOURCE = "stage_ii_dual_loop_candidate_seed"
 
 
-def _nonideal_lle_binary_mixture() -> ePCSAFTMixture:
-    params = {
-        "m": np.asarray([1.0, 2.0]),
-        "s": np.asarray([3.5, 4.0]),
-        "e": np.asarray([150.0, 250.0]),
-        "k_ij": np.asarray([[0.0, 0.5], [0.5, 0.0]]),
-    }
-    return ePCSAFTMixture.from_params(params, species=["A", "B"])
-
-
 def _equilibrium_debug_enabled() -> bool:
     return os.environ.get("EPCSAFT_EQUILIBRIUM_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -65,13 +53,13 @@ def _native_ipopt_compiled(*, show_native_output: bool = False) -> bool:
         return False
 
 
-def _phase_discovery_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
+def _phase_discovery_payload(mix: ePCSAFTMixture, case: dict[str, object]) -> dict[str, Any]:
     return dict(
         _core._native_neutral_tpd_phase_discovery(
             mix._native,
-            225.0,
-            1.0e6,
-            [0.5, 0.5],
+            float(case["temperature"]),
+            float(case["pressure"]),
+            list(case["composition"]),
             [0, 0],
             1.0e-6,
             1.0e-6,
@@ -79,16 +67,16 @@ def _phase_discovery_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
     )
 
 
-def _route_refinement_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
+def _route_refinement_payload(mix: ePCSAFTMixture, case: dict[str, object]) -> dict[str, Any]:
     return dict(
         _core._native_equilibrium_selector_route_result(
             mix._native,
             {
-                "route": "neutral_lle",
-                "temperature": 225.0,
-                "pressure": 1.0e6,
-                "composition": [0.5, 0.5],
-                "composition_role": "feed",
+                "route": str(case["route"]),
+                "temperature": float(case["temperature"]),
+                "pressure": float(case["pressure"]),
+                "composition": list(case["composition"]),
+                "composition_role": str(case["composition_role"]),
             },
             260,
             1.0e-6,
@@ -113,6 +101,7 @@ def _route_refinement_payload(mix: ePCSAFTMixture) -> dict[str, Any]:
 
 def _route_refinement_result(
     mix: ePCSAFTMixture,
+    case: dict[str, object],
     *,
     show_native_output: bool = False,
     redirect_native_output_to_stderr: bool = False,
@@ -120,13 +109,13 @@ def _route_refinement_result(
     if not _native_ipopt_compiled(show_native_output=show_native_output):
         return None
     if show_native_output:
-        route = _route_refinement_payload(mix)
+        route = _route_refinement_payload(mix, case)
     elif redirect_native_output_to_stderr:
         with runtime.redirect_native_stdout_to_stderr():
-            route = _route_refinement_payload(mix)
+            route = _route_refinement_payload(mix, case)
     else:
         with runtime.suppress_native_stdout():
-            route = _route_refinement_payload(mix)
+            route = _route_refinement_payload(mix, case)
     return dict(route)
 
 
@@ -159,11 +148,13 @@ def evaluate_phase_discovery(
     redirect_native_output_to_stderr: bool = False,
     checker_command: list[str] | None = None,
 ) -> dict[str, Any]:
-    mix = _nonideal_lle_binary_mixture()
-    discovery = _phase_discovery_payload(mix)
+    case = runtime.neutral_lle_synthetic_case()
+    mix = runtime.neutral_lle_synthetic_mixture()
+    discovery = _phase_discovery_payload(mix, case)
     route_payload = (
         _route_refinement_result(
             mix,
+            case,
             show_native_output=show_native_output,
             redirect_native_output_to_stderr=redirect_native_output_to_stderr,
         )
@@ -321,8 +312,9 @@ def evaluate_phase_discovery(
         or ["uv", "run", "--no-sync", "python", "scripts/validation/check_phase_discovery.py"],
     )
     return {
-        "case_label": "Synthetic neutral binary phase-discovery case",
-        "family_label": "PE-Neutral TP Flash",
+        "case_label": case["case_label"],
+        "family_label": case["family_label"],
+        "evidence_scope": case["evidence_scope"],
         "complete": complete,
         "native_freshness_receipt": native_freshness.receipt_to_jsonable(receipt),
         "requirement_status": requirement_status,

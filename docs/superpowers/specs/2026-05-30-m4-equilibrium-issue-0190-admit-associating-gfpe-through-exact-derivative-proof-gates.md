@@ -16,6 +16,10 @@ necessary evidence, but associating admission still waits for fresh-native
 receipts, neutral reliability/all-phase gates where claimed, and exact
 association derivative coverage for the chosen source system.
 
+After the neutral LLE reliability gate and exact association derivatives, #190
+may start a narrow two-phase associating proof, but it cannot claim generalized
+phase-set or associating LLLE coverage until #189 closes.
+
 ## Acceptance Gates
 
 - [ ] Associating route admission requires exact association derivative evidence appropriate to the tested association configuration.
