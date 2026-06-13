@@ -33,6 +33,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Fresh-native HELD/GFPE validation receipts plan](../../plans/2026-06-12-m4-equilibrium-fresh-native-held-gfpe-validation-receipts-plan.md) | `lle` | Add receipt-backed validation evidence so stale native artifacts cannot misreport HELD Stage II/III status. |
 | [Pereira-style HELD neutral LLE reliability plan](../../plans/2026-06-12-m4-equilibrium-pereira-held-neutral-lle-reliability-plan.md) | `lle` | Retains the full-campaign neutral LLE reliability gate before associating GFPE borrows the neutral HELD path. |
 | [Neutral nonassociating LLE source-backed showcase plan](../../plans/2026-06-13-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase-plan.md) | `lle` | Adds the first source-backed neutral nonassociating LLE fixture, checker, retained figures, and registry evidence for the current `lle` utility route. |
+| [Issue #189 generalized phase-set diagnostics plan](../../plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md) | `lle` | Splits #189 into an umbrella plus the first AFK child issue for internal neutral generalized phase-set diagnostics. |
 
 ## Retained Evidence
 
@@ -46,7 +47,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
-| [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `blocked` | Derive boundary workflows and generalized phase-set PE from neutral GFPE. |
+| [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
+| [#252](../../issues/2026-06-13-m4-equilibrium-issue-0252-add-neutral-generalized-phase-set-diagnostics-contract.md) | `lle` | `Ipopt` | `ready` | First AFK child under #189: add internal neutral generalized phase-set diagnostic records and checker. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -64,7 +66,13 @@ Matsuda/NIST perfluorohexane + hexane paired binodal branch rows, Tihic-derived
 pure parameters, a source-fitted binary interaction for the current route, a
 checker requiring HELD Stage II replay plus Stage III replay consumption, and
 retained PNG/SVG figures. This closes the public source-backed neutral LLE
-showcase gap only. #189, #190, and #191 remain blocked by their own proof gates.
+showcase gap only.
+
+#189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
+for boundary workflows and generalized phase-set PE. #252 is the first AFK
+child issue and must keep `PE-Generalized Multiphase` planned-not-public while
+adding internal neutral generalized phase-set diagnostics. #190 and #191 remain
+blocked by their own proof gates.
 
 ## Closed Issues
 
