@@ -1,0 +1,1639 @@
+{
+  "accepted_conditions": 100,
+  "attempted_repeats": 10000,
+  "blockers": [],
+  "complete": true,
+  "condition_summaries": [
+    {
+      "accepted": true,
+      "condition_index": 0,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 1,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 2,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 3,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 4,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 5,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 6,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 7,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 8,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 9,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 10,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 11,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 12,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 13,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 14,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 15,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 16,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 17,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 18,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 19,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 20,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 21,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 22,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 23,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 24,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 25,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 26,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 27,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 28,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 29,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 30,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 31,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 32,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 33,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 34,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 35,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 36,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 37,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 38,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 39,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 40,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 41,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 42,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 43,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 44,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 45,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 46,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 47,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 48,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 49,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 50,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 51,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 52,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 53,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 54,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 55,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 56,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 57,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 58,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 59,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 60,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 61,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 62,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 63,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 64,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 65,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 66,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 67,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 68,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 69,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 70,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 71,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 72,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 73,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 74,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 75,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 76,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 77,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 78,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 79,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 80,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 81,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 82,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 83,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 84,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 85,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 86,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 87,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 88,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 89,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 90,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 91,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 92,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 93,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 94,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 95,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 96,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 97,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 98,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    },
+    {
+      "accepted": true,
+      "condition_index": 99,
+      "failed_repeats": 0,
+      "objective_spread": 0.0,
+      "phase_counts": [
+        2
+      ],
+      "repeat_count": 100,
+      "selected_phase_roles": [
+        [
+          "liquid",
+          "liquid"
+        ]
+      ]
+    }
+  ],
+  "failed_repeats": 0,
+  "first_failure": null,
+  "native_receipt": {
+    "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+    "checker_command": [
+      "scripts/validation/check_held_reliability.py",
+      "--family",
+      "neutral-lle",
+      "--conditions",
+      "100",
+      "--repeats",
+      "100",
+      "--seed",
+      "1729",
+      "--require-complete",
+      "--json",
+      "--output-dir",
+      "analyses/package_validation/held_lle_reliability/shared/results"
+    ],
+    "git_commit": "407676333883a3725cfab7caff3c6fcd019989d5",
+    "native_module_name": "epcsaft_equilibrium._native_core",
+    "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+  },
+  "seed": 1729,
+  "thresholds": {
+    "ln_fugacity_consistency_norm": 1e-06,
+    "material_balance_norm": 1e-08,
+    "objective_spread_abs": 1e-06,
+    "phase_distance_min": 1e-06,
+    "pressure_consistency_norm": 0.001
+  }
+}
