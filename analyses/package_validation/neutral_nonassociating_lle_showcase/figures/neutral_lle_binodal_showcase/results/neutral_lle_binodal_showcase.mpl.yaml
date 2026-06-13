@@ -1,0 +1,16 @@
+kind: matplotlib-figure
+version: 1
+plot_id: m4_issue_250_neutral_lle_binodal_showcase
+title: M4 issue 250 neutral LLE binodal showcase
+files:
+  figures:
+    - neutral_lle_binodal_showcase.png
+    - neutral_lle_binodal_showcase.svg
+  data:
+    - neutral_lle_phase_points_plotted.csv
+    - neutral_lle_source_binodal_points_plotted.csv
+render:
+  command: uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py
+matplotlib:
+  title: M4 issue 250 neutral LLE binodal showcase
+  style: scientific-validation

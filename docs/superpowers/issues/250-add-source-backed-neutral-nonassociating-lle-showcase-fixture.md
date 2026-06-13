@@ -54,11 +54,32 @@ associating, electrolyte, reactive, CE, CPE, or generalized phase-set claims.
 
 ## Acceptance Criteria
 
-- [ ] `data/reference/equilibrium_benchmarks/neutral_lle/<source_slug>/` contains source notes, metadata, pure parameters, binary interactions, feed rows, experimental tie-lines, and thresholds.
-- [ ] `scripts/validation/check_neutral_lle_showcase.py --json --require-complete` proves fixture completeness, route acceptance, exact Hessian support, HELD Stage II replay, HELD Stage III replay consumption, material balance, pressure consistency, fugacity consistency, phase distance, and candidate completeness.
-- [ ] Package-level tests prove the source-backed fixture through the current `route="lle"` utility.
-- [ ] `analyses/package_validation/neutral_nonassociating_lle_showcase/` writes retained JSON/CSV data and renders PNG/SVG figures from retained data only.
-- [ ] M4 registry and docs state this is neutral nonassociating LLE showcase evidence only.
+- [x] `data/reference/equilibrium_benchmarks/neutral_lle/<source_slug>/` contains source notes, metadata, pure parameters, binary interactions, feed rows, experimental tie-lines, and thresholds.
+- [x] `scripts/validation/check_neutral_lle_showcase.py --json --require-complete` proves fixture completeness, route acceptance, exact Hessian support, HELD Stage II replay, HELD Stage III replay consumption, material balance, pressure consistency, fugacity consistency, phase distance, and candidate completeness.
+- [x] Package-level tests prove the source-backed fixture through the current `route="lle"` utility.
+- [x] `analyses/package_validation/neutral_nonassociating_lle_showcase/` writes retained JSON/CSV data and renders PNG/SVG figures from retained data only.
+- [x] M4 registry and docs state this is neutral nonassociating LLE showcase evidence only.
+
+## Resolution Evidence
+
+- Fixture: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane`
+- Checker: `scripts/validation/check_neutral_lle_showcase.py`
+- Public API test: `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`
+- Retained analysis: `analyses/package_validation/neutral_nonassociating_lle_showcase`
+- Source comparison: max composition error `0.009933966386833692`, max phase-fraction error `0.025057997082652328`.
+- Scope: neutral nonassociating binary LLE showcase only; no generalized phase-set, associating, electrolyte, reactive, CE, or CPE admission.
+
+Proof run on 2026-06-13:
+
+```powershell
+uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
+uv run --no-sync python run_pytest.py tests/native/contracts/test_neutral_lle_showcase_checker.py -q
+uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py -q
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/generate_data.py
+uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py
+uv run --no-sync python scripts/dev/validate_project.py docs
+```
 
 ## Blocked by
 
@@ -78,8 +99,8 @@ associating, electrolyte, reactive, CE, CPE, or generalized phase-set claims.
 ```powershell
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py tests/native/contracts/test_neutral_lle_showcase_checker.py -q
-uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_showcase_fixture.py -q
-uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --fixture data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2010_perfluoroalkane_alkane --json --require-complete
+uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py -q
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
 uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/generate_data.py
 uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py
 uv run --no-sync python scripts/dev/validate_project.py docs

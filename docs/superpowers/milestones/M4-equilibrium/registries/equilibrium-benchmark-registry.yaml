@@ -90,6 +90,25 @@ family_rows:
           - chemical_potential_equality
           - held_stage_certification
           - exact_hessian
+      - case_label: "Matsuda 2011 perfluorohexane + hexane neutral LLE"
+        evidence_tier: T1
+        source: "data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane"
+        retained_evidence: "analyses/package_validation/neutral_nonassociating_lle_showcase"
+        source_model_family: "PC-SAFT-compatible sPC-SAFT"
+        route: neutral_lle
+        fixture_status: available
+        scope: "Source-backed neutral nonassociating binary LLE showcase with paired NIST binodal branch rows and source-fitted binary interaction."
+        acceptance_checks:
+          - source_backed_binodal_branch_rows
+          - source_backed_pure_parameters
+          - source_fitted_binary_interaction
+          - current_lle_route_acceptance
+          - material_balance
+          - pressure_consistency
+          - chemical_potential_equality
+          - held_stage_ii_replay
+          - held_stage_iii_replay_consumption
+          - exact_hessian
       - case_label: "Pereira 2012 System III"
         evidence_tier: T0
         source: "Pereira et al. 2012 neutral HELD benchmark"

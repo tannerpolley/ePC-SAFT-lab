@@ -1,0 +1,6 @@
+role,series,temperature_K,pressure_Pa,x_perfluorohexane,x_hexane,phase_fraction
+source_liquid1,source,293.895,101300.0,0.2,0.8,0.5
+source_liquid2,source,293.895,101300.0,0.5497,0.4503,0.5
+solved_liquid1,current_route,293.895,101300.0,0.19253198692922618,0.8074680130707738,0.47494200291734767
+solved_liquid2,current_route,293.895,101300.0,0.5397660336131663,0.46023396638683367,0.5250579970826523
+feed,constructed_feed,293.895,101300.0,0.37485,0.62515,1.0

@@ -4,20 +4,43 @@ Milestone: `M4 - Equilibrium`
 Affected package: `packages/epcsaft-equilibrium`
 Validation scope: `M6 - Validation` fixture and plot evidence only where
 needed
-Status: `draft`
+Status: `implemented-by-issue-250`
 Created: `2026-06-11`
+Updated: `2026-06-13`
 
 ## Summary
 
 Current `main` has a production-exposed neutral nonassociating `lle` utility
-route and focused synthetic binary proof. It does not yet have a source-backed
-neutral nonassociating LLE benchmark fixture or a retained LLE showcase figure.
+route and focused synthetic binary proof. Issue #250 adds the first
+source-backed neutral nonassociating LLE benchmark fixture and retained LLE
+showcase figure.
 
-This spec defines the missing source-backed showcase: add a neutral,
-nonelectrolyte, nonreactive, nonassociating binary LLE fixture; run the existing
-`route="lle"` path through fresh native HELD 1.0 diagnostics; and render an LLE
-figure that clearly does not borrow associating, electrolyte, or reactive
-claims.
+This spec defines that source-backed showcase: a neutral, nonelectrolyte,
+nonreactive, nonassociating binary LLE fixture; the existing `route="lle"` path
+through fresh native HELD 1.0 diagnostics; and retained LLE figures that clearly
+do not borrow associating, electrolyte, or reactive claims.
+
+## Implementation Result
+
+Issue #250 implements this showcase with the Matsuda/NIST perfluorohexane +
+hexane source case:
+
+- Fixture:
+  `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane`
+- Checker: `scripts/validation/check_neutral_lle_showcase.py`
+- Public API regression:
+  `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`
+- Retained analysis:
+  `analyses/package_validation/neutral_nonassociating_lle_showcase`
+
+The retained source rows are paired NIST ThermoML binodal/cloud-point branch
+rows at 293.89 K and 293.90 K, inside the reported 0.2 K temperature
+uncertainty. The pure parameters are Tihic PC-SAFT-compatible sPC-SAFT rows and
+family correlations. The binary interaction is explicitly source-fitted for
+the current route (`kij = 0.0662`); it is not imported as the Tihic literature
+`kij = 0.073` value because that value over-splits this route. This distinction
+is retained in `source_notes.md`, `binary_interactions.csv`, and the checker
+payload.
 
 ## Project Context Evidence Used
 

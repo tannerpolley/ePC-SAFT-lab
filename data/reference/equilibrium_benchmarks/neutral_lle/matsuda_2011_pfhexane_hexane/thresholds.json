@@ -1,0 +1,17 @@
+{
+  "solver_max_iterations": 260,
+  "solver_tolerance": 0.000001,
+  "acceptable_tolerance": 0.0000001,
+  "constraint_violation_tolerance": 0.0000001,
+  "dual_infeasibility_tolerance": 0.00000001,
+  "complementarity_tolerance": 0.00000001,
+  "composition_abs": 0.02,
+  "phase_fraction_abs": 0.03,
+  "material_balance_abs": 0.00000001,
+  "pressure_abs_Pa": 0.001,
+  "ln_fugacity_abs": 0.000001,
+  "phase_distance_min": 0.000001,
+  "source_temperature_pair_abs_K": 0.2,
+  "fit_residual_composition_abs": 0.009933966386833692,
+  "fit_residual_phase_fraction_abs": 0.025057997082652328
+}
