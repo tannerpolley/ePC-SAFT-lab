@@ -49,7 +49,6 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
-| [#252](../../issues/2026-06-13-m4-equilibrium-issue-0252-add-neutral-generalized-phase-set-diagnostics-contract.md) | `lle` | `Ipopt` | `ready` | First AFK child under #189: add internal neutral generalized phase-set diagnostic records and checker. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -69,10 +68,12 @@ checker requiring HELD Stage II replay plus Stage III replay consumption, and
 retained PNG/SVG figures. This closes the public source-backed neutral LLE
 showcase gap only.
 
+#252 closed through #255 with internal neutral generalized phase-set diagnostic
+records and the retained `check_generalized_phase_set.py` checker. This keeps
+`PE-Generalized Multiphase` planned-not-public and does not close #189.
+
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
-for boundary workflows and generalized phase-set PE. #252 is the first AFK
-child issue and must keep `PE-Generalized Multiphase` planned-not-public while
-adding internal neutral generalized phase-set diagnostics. #190 and #191 remain
+for boundary workflows and generalized phase-set PE. #190 and #191 remain
 blocked by their own proof gates.
 
 ## Closed Issues
@@ -87,3 +88,4 @@ blocked by their own proof gates.
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/246](https://github.com/ePC-SAFT/ePC-SAFT/issues/246) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/248](https://github.com/ePC-SAFT/ePC-SAFT/pull/248) on 2026-06-12T19:00:55Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/247](https://github.com/ePC-SAFT/ePC-SAFT/issues/247) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/249](https://github.com/ePC-SAFT/ePC-SAFT/pull/249) on 2026-06-13T01:41:13Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/250](https://github.com/ePC-SAFT/ePC-SAFT/issues/250) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/251](https://github.com/ePC-SAFT/ePC-SAFT/pull/251) on 2026-06-13T06:01:01Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/252](https://github.com/ePC-SAFT/ePC-SAFT/issues/252) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/255](https://github.com/ePC-SAFT/ePC-SAFT/pull/255) on 2026-06-13T14:13:58Z

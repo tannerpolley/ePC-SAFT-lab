@@ -2,18 +2,20 @@
 issue: 252
 title: "M4: add neutral generalized phase-set diagnostics contract"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/252"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "closed"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0252-neutral-generalized-phase-set-diagnostics
+closed_at: "2026-06-13T14:13:58Z"
+closed_by_pr: "https://github.com/ePC-SAFT/ePC-SAFT/pull/255"
 last_synced: "2026-06-13"
 ---
 
@@ -63,6 +65,14 @@ Recorded on 2026-06-13 from branch
 - `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_generalized_phase_set_checker.py -q` passed: 7 tests.
 - `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete` passed with no blockers, 3 selected rows, 3 rejected rows, and no public route exposure.
 - `uv run --no-sync python scripts/dev/validate_project.py docs` passed.
+
+## Closeout
+
+Closed by PR https://github.com/ePC-SAFT/ePC-SAFT/pull/255 on
+2026-06-13T14:13:58Z. This advances #189 with internal neutral generalized
+phase-set diagnostic records only; #189 remains open for boundary workflows,
+source-backed generalized phase-set validation, and final public admission
+gates.
 
 ## Non-Goals And Boundaries
 
