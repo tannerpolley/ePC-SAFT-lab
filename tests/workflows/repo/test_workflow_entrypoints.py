@@ -25,20 +25,6 @@ def _run_config_options(config: ET.Element) -> dict[str, str]:
     }
 
 
-def _run_config_list_option(config: ET.Element, name: str) -> list[str]:
-    option = config.find(f"./option[@name='{name}']/list")
-    if option is None:
-        return []
-    return [item.attrib["value"] for item in option.findall("option")]
-
-
-def _run_config_map_option(config: ET.Element, name: str) -> dict[str, str]:
-    option = config.find(f"./option[@name='{name}']/map")
-    if option is None:
-        return {}
-    return {entry.attrib["key"]: entry.attrib["value"] for entry in option.findall("entry")}
-
-
 def _module_script_path(relative_path: str) -> str:
     return "$MODULE_DIR$/" + relative_path.replace("\\", "/").strip("/")
 
@@ -385,7 +371,6 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     manifest = _read("scripts/dev/jetbrains_run_manifest.py")
     manifest_data = runpy.run_path(str(REPO_ROOT / "scripts" / "dev" / "jetbrains_run_manifest.py"))
     run_config_specs = tuple(manifest_data["CANONICAL_RUN_CONFIGS"])
-    repo_run_config_name = manifest_data["repo_run_config_name"]
     root_pyproject = _toml("pyproject.toml")
     provider_pyproject = _toml("packages/epcsaft/pyproject.toml")
     equilibrium_pyproject = _toml("packages/epcsaft-equilibrium/pyproject.toml")
@@ -395,8 +380,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     combined_guidance = agents_md + "\n" + intellij_guidance
 
     assert "CMAKE_CONFIG_TYPE = \"CMakeRunConfiguration\"" in normalizer
-    assert "POWERSHELL_CONFIG_TYPE = \"PowerShellRunType\"" in normalizer
-    assert "RUN_DASHBOARD_CONFIG_TYPES = (POWERSHELL_CONFIG_TYPE, UV_RUN_CONFIG_TYPE)" in normalizer
+    assert "RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)" in normalizer
     assert "CANONICAL_PYTHON_MODULES" in normalizer
     assert 'PROJECT_NAME = "ePC-SAFT"' in normalizer
     assert 'PROVIDER_MODULE_NAME = "epcsaft"' in normalizer
@@ -427,8 +411,7 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert 'actions.append(f"{action} CMake profile {profile_name}")' in normalizer
     assert 'component", {"name": "RunDashboard"}' in normalizer
     assert "remove temporary generated run configuration" in normalizer
-    assert '"PowerShell."' in normalizer
-    assert '"UvRunConfigurationType."' in normalizer
+    assert 'RUN_CONFIG_EXECUTOR_PREFIXES = ("Python.", "Shell Script.")' in normalizer
     assert "remove stale executor property" in normalizer
     assert "remove stale run manager item" in normalizer
     assert "remove stale configuration status" in normalizer
@@ -477,12 +460,19 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "Check IntelliJ Contract" in intellij_guidance
     assert "exits nonzero" in intellij_guidance
     assert "Use shell only for" in combined_guidance
-    assert "Shared `.run` configs use the repo-name Services folder `ePC-SAFT`" in intellij_guidance
-    assert "native PowerShell run configurations (`PowerShellRunType`)" in intellij_guidance
-    assert "native `uv run` run configurations (`UvRunConfigurationType`)" in intellij_guidance
-    assert "wrapper-backed PowerShell entries" in intellij_guidance
+    assert "shared `.run` configs use single-level" in intellij_guidance
     assert "project/folder identity as `ePC-SAFT`" in intellij_guidance
     assert "provider Python module named `epcsaft`" in intellij_guidance
+    for folder_name in (
+        "Setup & Health",
+        "Build & Package",
+        "Validation",
+        "Tests",
+        "Docs & Reports",
+        "Analysis & Figures",
+        "Maintenance",
+    ):
+        assert folder_name in intellij_guidance
     assert "use every relevant index action family before finalizing" in intellij_guidance
     assert "Use the `ij-debugger` skill" in intellij_guidance
     assert "debugger MCP server is `intellij-debugger`" in intellij_guidance
@@ -594,10 +584,9 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
         entry.attrib["key"]
         for entry in dashboard.findall("./option[@name='configurationStatuses']/map/entry")
     }
-    assert dashboard_types == {"PowerShellRunType", "UvRunConfigurationType"}
+    assert dashboard_types == {"PythonConfigurationType", "ShConfigurationType"}
     assert "tests" not in dashboard_status_types
     assert "CMakeRunConfiguration" not in dashboard_status_types
-    assert "ShConfigurationType" not in dashboard_status_types
     assert "pytest for " not in workspace_text
 
     run_configs: dict[str, tuple[Path, ET.Element]] = {}
@@ -615,52 +604,48 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     for name, (path, config) in run_configs.items():
         spec = specs_by_name[name]
         assert config.get("folderName") == spec.folder_name, name
-        assert config.get("type") in {"PowerShellRunType", "UvRunConfigurationType"}, name
+        assert config.get("type") in {"PythonConfigurationType", "ShConfigurationType"}, name
         assert config.get("type") != "tests", name
-        assert config.get("type") != "ShConfigurationType", name
-        assert config.get("type") != "PythonConfigurationType", name
         options = _run_config_options(config)
-        if spec.runner == "uv run":
-            assert config.get("type") == "UvRunConfigurationType", name
-            assert options["runType"] == "SCRIPT", name
-            assert options["scriptOrModule"] == (REPO_ROOT / spec.command).as_posix(), name
-            assert options["checkSync"] == "false", name
-            assert options["uvSdkKey"] == "uv (ePC-SAFT)", name
-            assert options["debugJustMyCode"] == "false", name
-            assert _run_config_list_option(config, "uvArgs") == ["--project", REPO_ROOT.as_posix(), "--no-sync"], name
-            assert _run_config_map_option(config, "env")["PYTHONUNBUFFERED"] == "1", name
-            assert Path(options["scriptOrModule"]).exists(), f"{path.name} points at missing {options['scriptOrModule']}"
+        if spec.runner == "Python":
+            assert config.get("type") == "PythonConfigurationType", name
+            module = config.find("module")
+            assert module is not None, name
+            assert module.attrib["name"] == "epcsaft", name
+            assert options["WORKING_DIRECTORY"] == "$MODULE_DIR$", name
+            assert options["SCRIPT_NAME"] == _module_script_path(spec.command), name
+            assert options["PARAMETERS"] == spec.parameters, name
+            script_path = REPO_ROOT / options["SCRIPT_NAME"].removeprefix("$MODULE_DIR$/")
+            assert script_path.exists(), f"{path.name} points at missing {script_path}"
         else:
-            assert spec.runner == "PowerShell", name
-            assert config.get("type") == "PowerShellRunType", name
-            assert config.get("factoryName") == "PowerShell", name
-            assert config.get("scriptUrl") == (REPO_ROOT / spec.command).as_posix(), name
-            assert config.get("workingDirectory") == REPO_ROOT.as_posix(), name
-            assert config.get("commandOptions") == "-NoProfile -ExecutionPolicy Bypass", name
-            assert config.get("scriptParameters", "") == spec.parameters, name
-            assert Path(config.attrib["scriptUrl"]).exists(), f"{path.name} points at missing {config.attrib['scriptUrl']}"
+            assert config.get("type") == "ShConfigurationType", name
+            assert options["INTERPRETER_PATH"].endswith("/pwsh.exe"), name
+            assert options["SCRIPT_WORKING_DIRECTORY"] == REPO_ROOT.as_posix(), name
+            script_path_text = options.get("SCRIPT_PATH", "")
+            if script_path_text:
+                assert options["SCRIPT_OPTIONS"] == spec.parameters, name
+                assert Path(script_path_text).exists(), f"{path.name} points at missing {script_path_text}"
+            else:
+                assert options["SCRIPT_TEXT"] == spec.command, name
 
-    build_native = run_configs[repo_run_config_name("Build Native Extension")][1]
-    assert build_native.attrib["scriptUrl"].endswith("/.codex/environments/setup.ps1")
-    assert build_native.attrib["scriptParameters"] == "-Step Build"
+    build_native = _run_config_options(run_configs["Build Native Extension"][1])
+    assert build_native["SCRIPT_PATH"].endswith("/.codex/environments/setup.ps1")
+    assert build_native["SCRIPT_OPTIONS"] == "-Step Build"
 
-    sync_workspace = run_configs[repo_run_config_name("Sync Workspace Packages")][1]
-    assert sync_workspace.attrib["scriptUrl"].endswith("/.codex/environments/setup.ps1")
-    assert sync_workspace.attrib["scriptParameters"] == "-Step Sync"
+    sync_workspace = _run_config_options(run_configs["Sync Workspace Packages"][1])
+    assert sync_workspace["SCRIPT_TEXT"] == "uv sync --all-packages"
 
-    check_imports = _run_config_options(run_configs[repo_run_config_name("Check Package Imports")][1])
-    assert check_imports["scriptOrModule"].endswith("/scripts/dev/check_package_imports.py")
-    assert _run_config_list_option(run_configs[repo_run_config_name("Check Package Imports")][1], "args") == []
+    check_imports = _run_config_options(run_configs["Check Package Imports"][1])
+    assert check_imports["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/check_package_imports.py"
+    assert check_imports["PARAMETERS"] == ""
 
-    build_provider_only_config = run_configs[repo_run_config_name("Build Provider-Only Core")][1]
-    build_provider_only = _run_config_options(build_provider_only_config)
-    assert build_provider_only["scriptOrModule"].endswith("/scripts/dev/build_epcsaft.py")
-    assert _run_config_list_option(build_provider_only_config, "args") == ["--clean", "--profile", "provider"]
+    build_provider_only = _run_config_options(run_configs["Build Provider-Only Core"][1])
+    assert build_provider_only["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/build_epcsaft.py"
+    assert build_provider_only["PARAMETERS"] == "--clean --profile provider"
 
-    equilibrium_confidence_config = run_configs[repo_run_config_name("Test Equilibrium Confidence")][1]
-    equilibrium_confidence = _run_config_options(equilibrium_confidence_config)
-    assert equilibrium_confidence["scriptOrModule"].endswith("/run_pytest.py")
-    assert _run_config_list_option(equilibrium_confidence_config, "args") == ["--equilibrium-confidence", "-q"]
+    equilibrium_confidence = _run_config_options(run_configs["Test Equilibrium Confidence"][1])
+    assert equilibrium_confidence["SCRIPT_NAME"] == "$MODULE_DIR$/run_pytest.py"
+    assert equilibrium_confidence["PARAMETERS"] == "--equilibrium-confidence -q"
 
     cmake_wrapper = _read("scripts/dev/cmake_preset.ps1")
     assert "Assert-NoNinjaLock" in cmake_wrapper
@@ -671,32 +656,32 @@ def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
     assert "cmd.exe" in cmake_wrapper
     assert "cmake" in cmake_wrapper
 
-    cmake_configure = run_configs[repo_run_config_name("CMake Configure dev-native")][1]
-    assert cmake_configure.attrib["scriptUrl"].endswith("/scripts/dev/cmake_preset.ps1")
-    assert cmake_configure.attrib["scriptParameters"] == "-Action Configure -Preset dev-native"
+    cmake_configure = _run_config_options(run_configs["CMake Configure dev-native"][1])
+    assert cmake_configure["SCRIPT_TEXT"] == ""
+    assert cmake_configure["SCRIPT_PATH"].endswith("/scripts/dev/cmake_preset.ps1")
+    assert cmake_configure["SCRIPT_OPTIONS"] == "-Action Configure -Preset dev-native"
 
-    cmake_core_build = run_configs[repo_run_config_name("CMake Build _core dev-native")][1]
-    assert cmake_core_build.attrib["scriptUrl"].endswith("/scripts/dev/cmake_preset.ps1")
-    assert cmake_core_build.attrib["scriptParameters"] == "-Action Build -Preset dev-native -Target _core -Parallel 10"
+    cmake_core_build = _run_config_options(run_configs["CMake Build _core dev-native"][1])
+    assert cmake_core_build["SCRIPT_TEXT"] == ""
+    assert cmake_core_build["SCRIPT_PATH"].endswith("/scripts/dev/cmake_preset.ps1")
+    assert cmake_core_build["SCRIPT_OPTIONS"] == "-Action Build -Preset dev-native -Target _core -Parallel 10"
 
-    cmake_build = run_configs[repo_run_config_name("CMake Build dev-native")][1]
-    assert cmake_build.attrib["scriptUrl"].endswith("/scripts/dev/cmake_preset.ps1")
-    assert cmake_build.attrib["scriptParameters"] == "-Action Build -Preset dev-native -Parallel 10"
+    cmake_build = _run_config_options(run_configs["CMake Build dev-native"][1])
+    assert cmake_build["SCRIPT_TEXT"] == ""
+    assert cmake_build["SCRIPT_PATH"].endswith("/scripts/dev/cmake_preset.ps1")
+    assert cmake_build["SCRIPT_OPTIONS"] == "-Action Build -Preset dev-native -Parallel 10"
 
-    dry_run_config = run_configs[repo_run_config_name("Configure IntelliJ Runs (Dry Run)")][1]
-    dry_run = _run_config_options(dry_run_config)
-    assert dry_run["scriptOrModule"].endswith("/scripts/dev/configure_jetbrains_project.py")
-    assert _run_config_list_option(dry_run_config, "args") == ["--dry-run"]
+    dry_run = _run_config_options(run_configs["Configure IntelliJ Runs (Dry Run)"][1])
+    assert dry_run["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"
+    assert dry_run["PARAMETERS"] == "--dry-run"
 
-    contract_check_config = run_configs[repo_run_config_name("Check IntelliJ Contract")][1]
-    contract_check = _run_config_options(contract_check_config)
-    assert contract_check["scriptOrModule"].endswith("/scripts/dev/configure_jetbrains_project.py")
-    assert _run_config_list_option(contract_check_config, "args") == ["--check"]
+    contract_check = _run_config_options(run_configs["Check IntelliJ Contract"][1])
+    assert contract_check["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"
+    assert contract_check["PARAMETERS"] == "--check"
 
-    apply_config = run_configs[repo_run_config_name("Configure IntelliJ Runs (Apply)")][1]
-    apply_run = _run_config_options(apply_config)
-    assert apply_run["scriptOrModule"].endswith("/scripts/dev/configure_jetbrains_project.py")
-    assert _run_config_list_option(apply_config, "args") == ["--apply"]
+    apply_run = _run_config_options(run_configs["Configure IntelliJ Runs (Apply)"][1])
+    assert apply_run["SCRIPT_NAME"] == "$MODULE_DIR$/scripts/dev/configure_jetbrains_project.py"
+    assert apply_run["PARAMETERS"] == "--apply"
 
 
 def test_repo_local_agent_roster_uses_supported_models_and_expected_scopes() -> None:

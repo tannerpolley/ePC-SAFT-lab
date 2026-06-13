@@ -107,7 +107,7 @@ wrapper owns Visual Studio environment loading, repo-local `.venv` CMake/Ninja
 selection, and `build/dev` lock checks.
 Do not use IDE-generated `CMake Application` targets as the repo standard; they
 may exist in IntelliJ's run configuration list, but the Services dashboard
-standard is the wrapper-backed PowerShell entries.
+standard is the wrapper-backed Shell Script entries.
 
 Use shell only for:
 
@@ -131,17 +131,15 @@ When adding, editing, deleting, or grouping durable run configurations:
 5. verify XML/idempotence;
 6. execute the intended named configuration through MCP.
 
-Shared `.run` configs use the repo-name Services folder `ePC-SAFT`. Keep the
-workflow category in the configuration name, not in `folderName`, so the
-multi-repo Workspace Services view has one top-level node per repo.
+In the standalone `ePC-SAFT` project, shared `.run` configs use single-level
+workflow folders only: `Setup & Health`, `Build & Package`, `Validation`,
+`Tests`, `Docs & Reports`, `Analysis & Figures`, and `Maintenance`. Do not use a
+repo-name folder such as `ePC-SAFT` inside the standalone project; use that only
+when intentionally configuring a multi-repo Engineering workspace view.
 
-Use native `uv run` run configurations (`UvRunConfigurationType`) for durable
-Python scripts, validation, analysis, docs registry sync, and pytest wrapper
-workflows. Use native PowerShell run configurations (`PowerShellRunType`) for
-repo setup, CMake wrappers, native-build wrappers, cleanup, equation-PDF builds,
-and other `.ps1` maintenance entry points. Do not add native Pytest
-configuration types to Services by default, because generated gutter configs
-clutter the dashboard.
+Use Python or Shell Script run configurations for durable pytest/test workflows.
+Do not add native Pytest configuration types to Services by default, because
+generated gutter configs clutter the dashboard.
 
 ## Index MCP
 

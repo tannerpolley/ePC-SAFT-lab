@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ePC-SAFT: Build Equations PDF" type="PowerShellRunType" factoryName="PowerShell" folderName="ePC-SAFT" scriptUrl="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT/scripts/docs/build_equations_pdf.ps1" workingDirectory="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT" commandOptions="-NoProfile -ExecutionPolicy Bypass">
-    <method v="2" />
-  </configuration>
-</component>

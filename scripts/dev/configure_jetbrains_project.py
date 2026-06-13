@@ -3,18 +3,15 @@ from __future__ import annotations
 import argparse
 import io
 import json
-import shlex
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
 
 from jetbrains_run_manifest import (
     CANONICAL_RUN_CONFIGS,
-    POWERSHELL_RUNNER,
     PYTHON_RUNNER,
     SHELL_RUNNER,
     RunConfigSpec,
-    UV_RUNNER,
     canonical_run_config_names,
 )
 
@@ -33,20 +30,10 @@ EQUILIBRIUM_MODULE_NAME = "epcsaft-equilibrium"
 REGRESSION_MODULE_NAME = "epcsaft-regression"
 PYTHON_CONFIG_TYPE = "PythonConfigurationType"
 SHELL_CONFIG_TYPE = "ShConfigurationType"
-POWERSHELL_CONFIG_TYPE = "PowerShellRunType"
-UV_RUN_CONFIG_TYPE = "UvRunConfigurationType"
 CMAKE_CONFIG_TYPE = "CMakeRunConfiguration"
 PYTEST_CONFIG_TYPE = "tests"
-MANAGED_RUN_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE, POWERSHELL_CONFIG_TYPE, UV_RUN_CONFIG_TYPE)
-RUN_DASHBOARD_CONFIG_TYPES = (POWERSHELL_CONFIG_TYPE, UV_RUN_CONFIG_TYPE)
-RUN_CONFIG_EXECUTOR_PREFIXES = (
-    "Python.",
-    "Shell Script.",
-    "PowerShell.",
-    "PowerShellRunType.",
-    "UvRunConfigurationType.",
-    "uv run.",
-)
+RUN_DASHBOARD_CONFIG_TYPES = (PYTHON_CONFIG_TYPE, SHELL_CONFIG_TYPE)
+RUN_CONFIG_EXECUTOR_PREFIXES = ("Python.", "Shell Script.")
 CMAKE_EXECUTION_TARGET_PREFIX = "CMakeBuildProfile:"
 CMAKE_ACTIVE_PROFILE = "dev-native"
 CMAKE_ACTIVE_PROFILE_DISPLAY_NAME = "IDE dev build (Windows Ninja)"
@@ -54,7 +41,6 @@ CMAKE_ACTIVE_PROFILE_GENERATION_DIR = "$PROJECT_DIR$/build/dev"
 STALE_CMAKE_PROFILE_NAMES = frozenset({"ePC-SAFT dev MinGW"})
 PYTHON_SDK_HOME = "$MODULE_DIR$/.venv/Scripts/python.exe"
 PYTHON_SDK_NAME = "uv (ePC-SAFT)"
-PYTHON_VIRTUAL_ENV = str(REPO_ROOT / ".venv")
 POWERSHELL_INTERPRETER = "C:/Program Files/PowerShell/7/pwsh.exe"
 TRANSIENT_PATHS: tuple[str, ...] = (
     "build",
@@ -680,52 +666,6 @@ def _remove_run_manager_item_values(run_manager: ET.Element | None, names: set[s
                 actions.append(f"remove generated run manager item {itemvalue}")
 
 
-def _remove_stale_run_manager_items_for_specs(
-    run_manager: ET.Element | None,
-    specs: tuple[RunConfigSpec, ...],
-    actions: list[str],
-) -> None:
-    if run_manager is None:
-        return
-
-    specs_by_name = {spec.name: spec for spec in specs}
-    for list_tag in ("list", "recent_temporary/list"):
-        for run_list in run_manager.findall(list_tag):
-            for item in list(run_list.findall("item")):
-                itemvalue = item.get("itemvalue")
-                name = _qualified_run_config_name(itemvalue)
-                if not itemvalue or not name:
-                    continue
-                spec = specs_by_name.get(name)
-                if spec is None:
-                    continue
-                if itemvalue.startswith(_run_config_executor_prefixes(spec)):
-                    continue
-                run_list.remove(item)
-                actions.append(f"remove stale run manager item {itemvalue}")
-
-
-def _clear_stale_selected_run_manager_item(
-    run_manager: ET.Element | None,
-    specs: tuple[RunConfigSpec, ...],
-    actions: list[str],
-) -> None:
-    if run_manager is None:
-        return
-    selected = run_manager.get("selected")
-    if not selected:
-        return
-    selected_name = _qualified_run_config_name(selected)
-    if selected_name is None:
-        return
-    specs_by_name = {spec.name: spec for spec in specs}
-    selected_spec = specs_by_name.get(selected_name)
-    if selected_spec is None or selected.startswith(_run_config_executor_prefixes(selected_spec)):
-        return
-    del run_manager.attrib["selected"]
-    actions.append(f"clear stale selected run configuration {selected}")
-
-
 def _remove_executor_properties_for_names(properties: dict[str, object], names: set[str], actions: list[str]) -> None:
     key_to_string = properties.get("keyToString")
     if not isinstance(key_to_string, dict):
@@ -759,33 +699,20 @@ def _normalize_workspace() -> tuple[list[str], list[str], str | None]:
         for config in list(run_manager.findall("configuration")):
             name = config.get("name")
             if (
-                name in canonical_names
-                and config.get("default") != "true"
-                and config.get("type") in MANAGED_RUN_CONFIG_TYPES
-                and config.get("type") != _run_config_type(next(spec for spec in CANONICAL_RUN_CONFIGS if spec.name == name))
-            ):
-                run_manager.remove(config)
-                removed_name = name or "<unnamed>"
-                removed_run_manager_names.append(removed_name)
-                actions.append(f"remove stale local run configuration {removed_name}")
-                continue
-            if (
                 config.get("temporary") == "true"
                 and config.get("nameIsGenerated") == "true"
-                and config.get("type") in (*MANAGED_RUN_CONFIG_TYPES, PYTEST_CONFIG_TYPE)
+                and config.get("type") in (*RUN_DASHBOARD_CONFIG_TYPES, PYTEST_CONFIG_TYPE)
                 and name not in canonical_names
             ):
                 run_manager.remove(config)
-                removed_name = name or "<unnamed>"
-                removed_run_manager_names.append(removed_name)
-                actions.append(f"remove temporary generated run configuration {removed_name}")
+                removed_run_manager_names.append(name or "<unnamed>")
+        for name in removed_run_manager_names:
+            actions.append(f"remove temporary generated run configuration {name}")
         selected = run_manager.get("selected")
         if selected and any(selected.endswith(f".{name}") for name in removed_run_manager_names):
             del run_manager.attrib["selected"]
             actions.append("clear stale selected temporary run configuration")
         _remove_run_manager_item_values(run_manager, set(removed_run_manager_names), actions)
-        _remove_stale_run_manager_items_for_specs(run_manager, CANONICAL_RUN_CONFIGS, actions)
-        _clear_stale_selected_run_manager_item(run_manager, CANONICAL_RUN_CONFIGS, actions)
     active_run_manager_names = set(canonical_names)
     if run_manager is not None:
         active_run_manager_names.update(
@@ -938,14 +865,6 @@ def _shell_script_path(relative_path: str) -> str:
     return (REPO_ROOT / normalized).as_posix()
 
 
-def _powershell_script_url(relative_path: str) -> str:
-    return _shell_script_path(relative_path)
-
-
-def _uv_script_path(relative_path: str) -> str:
-    return _shell_script_path(relative_path)
-
-
 def _add_option(parent: ET.Element, name: str, value: str) -> None:
     parent.append(ET.Element("option", {"name": name, "value": value}))
 
@@ -961,30 +880,6 @@ def _run_config_type(spec: RunConfigSpec) -> str:
         return PYTHON_CONFIG_TYPE
     if spec.runner == SHELL_RUNNER:
         return SHELL_CONFIG_TYPE
-    if spec.runner == POWERSHELL_RUNNER:
-        return POWERSHELL_CONFIG_TYPE
-    if spec.runner == UV_RUNNER:
-        return UV_RUN_CONFIG_TYPE
-    raise ValueError(f"Unsupported run config runner: {spec.runner}")
-
-
-def _run_config_factory_name(spec: RunConfigSpec) -> str:
-    if spec.runner == UV_RUNNER:
-        return UV_RUN_CONFIG_TYPE
-    if spec.runner == POWERSHELL_RUNNER:
-        return POWERSHELL_RUNNER
-    return spec.runner
-
-
-def _run_config_executor_prefixes(spec: RunConfigSpec) -> tuple[str, ...]:
-    if spec.runner == PYTHON_RUNNER:
-        return ("Python.",)
-    if spec.runner == SHELL_RUNNER:
-        return ("Shell Script.",)
-    if spec.runner == POWERSHELL_RUNNER:
-        return ("PowerShell.", "PowerShellRunType.")
-    if spec.runner == UV_RUNNER:
-        return ("UvRunConfigurationType.", "uv run.")
     raise ValueError(f"Unsupported run config runner: {spec.runner}")
 
 
@@ -1028,69 +923,6 @@ def _python_configuration(spec: RunConfigSpec) -> ET.Element:
 
 def _is_powershell_script(command: str) -> bool:
     return command.lower().endswith(".ps1")
-
-
-def _split_parameters(parameters: str) -> list[str]:
-    if not parameters.strip():
-        return []
-    return shlex.split(parameters)
-
-
-def _add_string_list_option(parent: ET.Element, name: str, values: list[str]) -> None:
-    option = ET.Element("option", {"name": name})
-    list_element = ET.Element("list")
-    for value in values:
-        list_element.append(ET.Element("option", {"value": value}))
-    option.append(list_element)
-    parent.append(option)
-
-
-def _add_string_map_option(parent: ET.Element, name: str, values: dict[str, str]) -> None:
-    option = ET.Element("option", {"name": name})
-    map_element = ET.Element("map")
-    for key, value in sorted(values.items()):
-        map_element.append(ET.Element("entry", {"key": key, "value": value}))
-    option.append(map_element)
-    parent.append(option)
-
-
-def _uv_configuration(spec: RunConfigSpec) -> ET.Element:
-    attrs = {
-        "default": "false",
-        "name": spec.name,
-        "type": UV_RUN_CONFIG_TYPE,
-        "factoryName": UV_RUN_CONFIG_TYPE,
-        "folderName": spec.folder_name,
-    }
-    config = ET.Element("configuration", attrs)
-    _add_option(config, "runType", "SCRIPT")
-    _add_option(config, "scriptOrModule", _uv_script_path(spec.command))
-    _add_string_list_option(config, "args", _split_parameters(spec.parameters))
-    _add_string_map_option(config, "env", {"PYTHONUNBUFFERED": "1", "VIRTUAL_ENV": PYTHON_VIRTUAL_ENV})
-    _add_option(config, "checkSync", "false")
-    _add_option(config, "uvSdkKey", PYTHON_SDK_NAME)
-    _add_string_list_option(config, "uvArgs", ["--project", RUN_WORKING_DIRECTORY, "--no-sync"])
-    _add_option(config, "debugJustMyCode", "false")
-    config.append(ET.Element("method", {"v": "2"}))
-    return config
-
-
-def _powershell_configuration(spec: RunConfigSpec) -> ET.Element:
-    attrs = {
-        "default": "false",
-        "name": spec.name,
-        "type": POWERSHELL_CONFIG_TYPE,
-        "factoryName": POWERSHELL_RUNNER,
-        "folderName": spec.folder_name,
-        "scriptUrl": _powershell_script_url(spec.command),
-        "workingDirectory": RUN_WORKING_DIRECTORY,
-        "commandOptions": "-NoProfile -ExecutionPolicy Bypass",
-    }
-    if spec.parameters:
-        attrs["scriptParameters"] = spec.parameters
-    config = ET.Element("configuration", attrs)
-    config.append(ET.Element("method", {"v": "2"}))
-    return config
 
 
 def _path_option(parent: ET.Element, name: str, value: str) -> None:
@@ -1140,10 +972,6 @@ def _run_configuration(spec: RunConfigSpec) -> ET.Element:
         return _python_configuration(spec)
     if spec.runner == SHELL_RUNNER:
         return _shell_configuration(spec)
-    if spec.runner == POWERSHELL_RUNNER:
-        return _powershell_configuration(spec)
-    if spec.runner == UV_RUNNER:
-        return _uv_configuration(spec)
     raise ValueError(f"Unsupported run config runner: {spec.runner}")
 
 
@@ -1168,11 +996,6 @@ def _load_shared_run_config_paths() -> tuple[dict[str, list[Path]], list[str]]:
     return configs_by_name, warnings
 
 
-def _run_config_path(name: str) -> Path:
-    safe_name = name.replace(":", " -")
-    return RUN_DIR / f"{safe_name}.run.xml"
-
-
 def _option_value(config: ET.Element, name: str) -> str | None:
     option = _find_child(config, "option", name=name)
     return option.get("value") if option is not None else None
@@ -1184,14 +1007,6 @@ def _expected_option_values(spec: RunConfigSpec) -> dict[str, str]:
             "WORKING_DIRECTORY": MODULE_DIR_MACRO,
             "SCRIPT_NAME": _run_script_path(spec.command),
             "PARAMETERS": spec.parameters,
-        }
-    if spec.runner == UV_RUNNER:
-        return {
-            "runType": "SCRIPT",
-            "scriptOrModule": _uv_script_path(spec.command),
-            "checkSync": "false",
-            "uvSdkKey": PYTHON_SDK_NAME,
-            "debugJustMyCode": "false",
         }
     if spec.runner == SHELL_RUNNER and _is_powershell_script(spec.command):
         return {
@@ -1208,22 +1023,7 @@ def _expected_option_values(spec: RunConfigSpec) -> dict[str, str]:
             "INTERPRETER_PATH": POWERSHELL_INTERPRETER,
             "EXECUTE_SCRIPT_FILE": "false",
         }
-    if spec.runner == POWERSHELL_RUNNER:
-        return {}
     raise ValueError(f"Unsupported run config runner: {spec.runner}")
-
-
-def _expected_attribute_values(spec: RunConfigSpec) -> dict[str, str]:
-    if spec.runner == POWERSHELL_RUNNER:
-        expected = {
-            "scriptUrl": _powershell_script_url(spec.command),
-            "workingDirectory": RUN_WORKING_DIRECTORY,
-            "commandOptions": "-NoProfile -ExecutionPolicy Bypass",
-        }
-        if spec.parameters:
-            expected["scriptParameters"] = spec.parameters
-        return expected
-    return {}
 
 
 def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) -> list[str]:
@@ -1234,9 +1034,8 @@ def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) 
     expected_type = _run_config_type(spec)
     if current_config.get("type") != expected_type:
         actions.append(f"set runner type to {spec.runner}")
-    expected_factory_name = _run_config_factory_name(spec)
-    if current_config.get("factoryName") != expected_factory_name:
-        actions.append(f"set factoryName={expected_factory_name}")
+    if current_config.get("factoryName") != spec.runner:
+        actions.append(f"set factoryName={spec.runner}")
     if current_config.get("folderName") != spec.folder_name:
         actions.append(f"set folderName={spec.folder_name}")
     if spec.runner == PYTHON_RUNNER:
@@ -1247,9 +1046,6 @@ def _run_config_actions(spec: RunConfigSpec, current_config: ET.Element | None) 
     for option_name, expected_value in _expected_option_values(spec).items():
         if _option_value(current_config, option_name) != expected_value:
             actions.append(f"set {option_name}={expected_value}")
-    for attr_name, expected_value in _expected_attribute_values(spec).items():
-        if current_config.get(attr_name) != expected_value:
-            actions.append(f"set {attr_name}={expected_value}")
     return actions
 
 
@@ -1257,7 +1053,7 @@ def _normalize_run_config(
     spec: RunConfigSpec,
     existing_paths: dict[str, list[Path]],
 ) -> tuple[Path, list[str], str | None]:
-    path = existing_paths.get(spec.name, [_run_config_path(spec.name)])[0]
+    path = existing_paths.get(spec.name, [RUN_DIR / f"{spec.name}.run.xml"])[0]
     original_text = path.read_text(encoding="UTF-8") if path.exists() else ""
     current_config: ET.Element | None = None
     if path.exists():
