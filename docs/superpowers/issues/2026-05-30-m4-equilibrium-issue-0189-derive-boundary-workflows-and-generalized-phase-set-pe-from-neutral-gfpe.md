@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252 is the first AFK child issue.
+AFK/HITL: HITL umbrella; #252 completed the first AFK child issue, and #256 is the next AFK child for boundary workflow traces.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -34,8 +34,10 @@ start from a durable local source plan.
 Generalize from the neutral GFPE proof into boundary workflows and phase-set phase-equilibrium behavior without losing route certification or capability honesty.
 
 #189 is no longer dependency-blocked after #188 and #241 closed. It remains the
-HITL umbrella for boundary workflows and generalized phase-set PE; #252 owns the
-first AFK implementation slice for neutral generalized phase-set diagnostics.
+HITL umbrella for boundary workflows and generalized phase-set PE. #252 closed
+the first AFK implementation slice for neutral generalized phase-set
+diagnostics; #256 owns the next AFK slice for retained bubble/dew boundary
+traces and stricter generalized phase-set rejection diagnostics.
 
 ## Supplemental Context
 
@@ -43,6 +45,7 @@ first AFK implementation slice for neutral generalized phase-set diagnostics.
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/252`
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/253`
+- `https://github.com/ePC-SAFT/ePC-SAFT/issues/256`
 
 ## Acceptance Criteria
 
@@ -57,6 +60,7 @@ first AFK implementation slice for neutral generalized phase-set diagnostics.
 - Run native contracts.
 - Run docs validation.
 - For #252, run `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete` after implementation.
+- For #256, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` and keep `check_generalized_phase_set.py --json --require-complete` green.
 
 ## Non-Goals And Boundaries
 
@@ -71,6 +75,6 @@ first AFK implementation slice for neutral generalized phase-set diagnostics.
 - Capability: `lle`
 - Backend: `Ipopt`
 - Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252 is AFK`
+- AFK/HITL: `HITL umbrella; #252 closed, #256 is AFK`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
