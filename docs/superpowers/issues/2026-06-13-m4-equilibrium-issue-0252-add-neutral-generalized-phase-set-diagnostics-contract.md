@@ -37,11 +37,11 @@ without public route admission.
 
 ## Acceptance Criteria
 
-- [ ] `neutral_multiphase_nonassoc` remains internal-only and absent from public route/capability surfaces.
-- [ ] Internal neutral multiphase postsolve diagnostics expose complete phase-set records for at least one three-phase neutral state.
-- [ ] Each selected or rejected record carries phase count, phase kind/role, source, phase amount or fraction, volume or density evidence, composition, objective or TPD evidence, feasibility status, selected/rejected status, and rejection reason when rejected.
-- [ ] A retained checker fails on missing records, malformed rows, mass-balance infeasibility, collapsed or duplicate phases, uncertified phase sets, or accidental public route exposure.
-- [ ] `PE-Generalized Multiphase` remains `planned_not_public`; docs and registry text must not claim public generalized multiphase, associating LLLE, electrolyte, or reactive support.
+- [x] `neutral_multiphase_nonassoc` remains internal-only and absent from public route/capability surfaces.
+- [x] Internal neutral multiphase diagnostics expose complete phase-set records for at least one three-phase neutral state.
+- [x] Each selected or rejected record carries phase count, phase kind/role, source, phase amount or fraction, volume or density evidence, composition, objective or TPD evidence, feasibility status, selected/rejected status, and rejection reason when rejected.
+- [x] A retained checker fails on missing records, malformed rows, mass-balance infeasibility, collapsed or duplicate phases, uncertified phase sets, or accidental public route exposure.
+- [x] `PE-Generalized Multiphase` remains `planned_not_public`; docs and registry text do not claim public generalized multiphase, associating LLLE, electrolyte, or reactive support.
 
 ## Proof Oracle
 
@@ -52,6 +52,17 @@ uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contrac
 uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete
 uv run --no-sync python scripts/dev/validate_project.py docs
 ```
+
+## Validation Evidence
+
+Recorded on 2026-06-13 from branch
+`codex/issue-0252-neutral-generalized-phase-set-diagnostics`.
+
+- `uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4` passed.
+- `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py -q` passed: 3 tests.
+- `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_generalized_phase_set_checker.py -q` passed: 7 tests.
+- `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete` passed with no blockers, 3 selected rows, 3 rejected rows, and no public route exposure.
+- `uv run --no-sync python scripts/dev/validate_project.py docs` passed.
 
 ## Non-Goals And Boundaries
 

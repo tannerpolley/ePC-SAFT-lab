@@ -513,10 +513,16 @@ routine validation lane.
 
 `PE-Generalized Multiphase`
 
+- current retained internal diagnostic: `uv run --no-sync python
+  scripts/validation/check_generalized_phase_set.py --json --require-complete`
+  proves neutral three-candidate phase-set records, selected/rejected row
+  reasons, mass-balance feasibility, noncollapsed selected compositions, and
+  no public `neutral_multiphase_nonassoc` exposure;
 - first validation target: replay representative neutral, associating, and electrolyte
   cases through the same phase-set discovery contract;
 - required before exposure: complete candidate phase set, mass-balance
-  feasibility, and no route-specific phase-count assumptions.
+  feasibility, no route-specific phase-count assumptions, source-backed
+  representative cases, and Stage III Ipopt refinement evidence.
 
 `CE Chemical Equilibrium Placeholder`
 

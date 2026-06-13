@@ -18,6 +18,7 @@
 #include <cmath>
 #include <iostream>
 #include <exception>
+#include <functional>
 #include <limits>
 #include <numeric>
 #include <string>
@@ -34,6 +35,7 @@ constexpr double kCandidateCompositionTolerance = 1.0e-6;
 constexpr double kCandidateLogVolumeTolerance = 1.0e-5;
 constexpr std::size_t kContinuousTpdMaxStartsPerPhaseKind = 2;
 const std::string kHeldStageIIDualLoopSeedName = "held_stage_ii_dual_loop_candidate_pair";
+const std::string kHeldStageIIDualLoopCandidateSetName = "held_stage_ii_dual_loop_candidate_set";
 
 std::string equilibrium_debug_env_value() {
 #ifdef _MSC_VER
@@ -927,6 +929,232 @@ void select_two_phase_candidate_set(
     discovery.phase_set_status = "candidate_mass_balance_feasible";
 }
 
+double candidate_set_mass_balance_norm(
+    const std::vector<double>& feed_composition,
+    const std::vector<NeutralTpdCandidate>& candidates,
+    const std::vector<int>& selected_indices,
+    const std::vector<double>& fractions
+) {
+    require_size(fractions, selected_indices.size(), "Neutral TPD selected candidate fraction");
+    double norm = 0.0;
+    for (std::size_t species = 0; species < feed_composition.size(); ++species) {
+        double reconstructed = 0.0;
+        for (std::size_t selected = 0; selected < selected_indices.size(); ++selected) {
+            const NeutralTpdCandidate& candidate =
+                candidates[static_cast<std::size_t>(selected_indices[selected])];
+            require_size(candidate.composition, feed_composition.size(), "Neutral TPD selected composition");
+            reconstructed += fractions[selected] * candidate.composition[species];
+        }
+        norm = std::max(norm, std::abs(reconstructed - feed_composition[species]));
+    }
+    return norm;
+}
+
+bool solve_candidate_simplex_fractions(
+    const std::vector<double>& feed_composition,
+    const std::vector<NeutralTpdCandidate>& candidates,
+    const std::vector<int>& selected_indices,
+    std::vector<double>& fractions
+) {
+    const std::size_t phase_count = selected_indices.size();
+    if (phase_count == 0) {
+        return false;
+    }
+    const std::size_t row_count = feed_composition.size() + 1;
+    std::vector<std::vector<double>> normal(
+        phase_count,
+        std::vector<double>(phase_count, 0.0)
+    );
+    std::vector<double> rhs(phase_count, 0.0);
+    for (std::size_t row = 0; row < row_count; ++row) {
+        const double target = row < feed_composition.size() ? feed_composition[row] : 1.0;
+        for (std::size_t left = 0; left < phase_count; ++left) {
+            const NeutralTpdCandidate& left_candidate =
+                candidates[static_cast<std::size_t>(selected_indices[left])];
+            const double left_value =
+                row < feed_composition.size() ? left_candidate.composition[row] : 1.0;
+            rhs[left] += left_value * target;
+            for (std::size_t right = 0; right < phase_count; ++right) {
+                const NeutralTpdCandidate& right_candidate =
+                    candidates[static_cast<std::size_t>(selected_indices[right])];
+                const double right_value =
+                    row < feed_composition.size() ? right_candidate.composition[row] : 1.0;
+                normal[left][right] += left_value * right_value;
+            }
+        }
+    }
+
+    for (std::size_t pivot = 0; pivot < phase_count; ++pivot) {
+        std::size_t best_row = pivot;
+        double best_abs = std::abs(normal[pivot][pivot]);
+        for (std::size_t row = pivot + 1; row < phase_count; ++row) {
+            const double candidate_abs = std::abs(normal[row][pivot]);
+            if (candidate_abs > best_abs) {
+                best_abs = candidate_abs;
+                best_row = row;
+            }
+        }
+        if (best_abs <= 1.0e-14) {
+            return false;
+        }
+        if (best_row != pivot) {
+            std::swap(normal[pivot], normal[best_row]);
+            std::swap(rhs[pivot], rhs[best_row]);
+        }
+        const double pivot_value = normal[pivot][pivot];
+        for (std::size_t col = pivot; col < phase_count; ++col) {
+            normal[pivot][col] /= pivot_value;
+        }
+        rhs[pivot] /= pivot_value;
+        for (std::size_t row = 0; row < phase_count; ++row) {
+            if (row == pivot) {
+                continue;
+            }
+            const double factor = normal[row][pivot];
+            for (std::size_t col = pivot; col < phase_count; ++col) {
+                normal[row][col] -= factor * normal[pivot][col];
+            }
+            rhs[row] -= factor * rhs[pivot];
+        }
+    }
+
+    fractions = rhs;
+    double fraction_sum = 0.0;
+    for (double value : fractions) {
+        if (!std::isfinite(value) || value <= 1.0e-10) {
+            return false;
+        }
+        fraction_sum += value;
+    }
+    if (!std::isfinite(fraction_sum) || fraction_sum <= 0.0) {
+        return false;
+    }
+    for (double& value : fractions) {
+        value /= fraction_sum;
+    }
+    return true;
+}
+
+void select_generalized_phase_candidate_set(
+    NeutralPhaseDiscoveryResult& discovery,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    double candidate_mass_balance_tolerance
+) {
+    const std::size_t phase_count = phase_kinds.size();
+    if (phase_count < 2 || discovery.candidates.size() < phase_count) {
+        discovery.phase_set_status = "candidate_mass_balance_incomplete";
+        discovery.candidate_mass_balance_norm = std::numeric_limits<double>::infinity();
+        for (NeutralTpdCandidate& candidate : discovery.candidates) {
+            candidate.feasibility_status = "candidate_mass_balance_incomplete";
+            candidate.selected = false;
+        }
+        return;
+    }
+    if (phase_count == 2) {
+        select_two_phase_candidate_set(discovery, feed_composition, phase_kinds, candidate_mass_balance_tolerance);
+        return;
+    }
+
+    rank_tpd_candidates(discovery);
+    const std::vector<double> z = normalized_trial_composition(feed_composition, "Neutral TPD feed");
+    double best_norm = std::numeric_limits<double>::infinity();
+    double best_selected_bound = std::numeric_limits<double>::infinity();
+    std::vector<int> best_indices;
+    std::vector<double> best_fractions;
+    std::vector<int> current_indices;
+    const double norm_tie_tolerance = std::max(1.0e-12, 0.01 * candidate_mass_balance_tolerance);
+    constexpr double kTpdTieTolerance = 1.0e-12;
+
+    std::function<void(std::size_t)> visit = [&](std::size_t phase) {
+        if (phase == phase_count) {
+            std::vector<double> fractions;
+            if (!solve_candidate_simplex_fractions(z, discovery.candidates, current_indices, fractions)) {
+                return;
+            }
+            const double norm =
+                candidate_set_mass_balance_norm(z, discovery.candidates, current_indices, fractions);
+            double selected_bound = std::numeric_limits<double>::infinity();
+            for (int index : current_indices) {
+                selected_bound = std::min(
+                    selected_bound,
+                    discovery.candidates[static_cast<std::size_t>(index)].tpd
+                );
+            }
+            const bool norm_feasible = norm <= candidate_mass_balance_tolerance;
+            const bool best_norm_feasible = best_norm <= candidate_mass_balance_tolerance;
+            bool better_set = best_indices.empty();
+            if (!better_set && norm_feasible != best_norm_feasible) {
+                better_set = norm_feasible;
+            } else if (!better_set && norm_feasible && best_norm_feasible) {
+                better_set = selected_bound + kTpdTieTolerance < best_selected_bound
+                    || (
+                        std::abs(selected_bound - best_selected_bound) <= kTpdTieTolerance
+                        && norm + norm_tie_tolerance < best_norm
+                    );
+            } else if (!better_set) {
+                better_set = norm + norm_tie_tolerance < best_norm
+                    || (
+                        std::abs(norm - best_norm) <= norm_tie_tolerance
+                        && selected_bound + kTpdTieTolerance < best_selected_bound
+                    );
+            }
+            if (better_set) {
+                best_norm = norm;
+                best_selected_bound = selected_bound;
+                best_indices = current_indices;
+                best_fractions = fractions;
+            }
+            return;
+        }
+
+        for (std::size_t candidate_index = 0; candidate_index < discovery.candidates.size(); ++candidate_index) {
+            const NeutralTpdCandidate& candidate = discovery.candidates[candidate_index];
+            if (candidate.phase_kind != phase_kinds[phase] || !std::isfinite(candidate.tpd)) {
+                continue;
+            }
+            const int index = static_cast<int>(candidate_index);
+            if (std::find(current_indices.begin(), current_indices.end(), index) != current_indices.end()) {
+                continue;
+            }
+            current_indices.push_back(index);
+            visit(phase + 1);
+            current_indices.pop_back();
+        }
+    };
+    visit(0);
+
+    discovery.candidate_mass_balance_norm = best_norm;
+    discovery.phase_set_mass_balance_feasible = best_norm <= candidate_mass_balance_tolerance;
+    discovery.candidate_completeness_accepted = discovery.phase_set_mass_balance_feasible;
+    if (!discovery.phase_set_mass_balance_feasible) {
+        discovery.phase_set_status = "candidate_mass_balance_incomplete";
+        for (NeutralTpdCandidate& candidate : discovery.candidates) {
+            candidate.feasibility_status = "candidate_mass_balance_incomplete";
+            candidate.selected = false;
+        }
+        return;
+    }
+    for (NeutralTpdCandidate& candidate : discovery.candidates) {
+        candidate.feasibility_status = "mass_balance_simplex_unselected";
+        candidate.selected = false;
+    }
+    discovery.selected_phase_fractions.clear();
+    discovery.selected_phase_kinds.clear();
+    discovery.selected_phase_compositions.clear();
+    for (std::size_t selected = 0; selected < best_indices.size(); ++selected) {
+        NeutralTpdCandidate& candidate =
+            discovery.candidates[static_cast<std::size_t>(best_indices[selected])];
+        candidate.selected = true;
+        candidate.feasibility_status = "selected_mass_balance_feasible";
+        discovery.selected_phase_fractions.push_back(best_fractions[selected]);
+        discovery.selected_phase_kinds.push_back(candidate.phase_kind);
+        discovery.selected_phase_compositions.push_back(candidate.composition);
+    }
+    discovery.selected_candidate_count = static_cast<int>(best_indices.size());
+    discovery.phase_set_status = "candidate_mass_balance_feasible";
+}
+
 void evaluate_held_stage_ii_candidate_bounds(
     NeutralPhaseDiscoveryResult& discovery,
     double tpd_tolerance,
@@ -1040,7 +1268,9 @@ void evaluate_held_stage_ii_candidate_bounds(
         discovery.held_stage_ii_stopping_reason = "bound_gap_closed";
         discovery.held_stage_ii_replay_ready = true;
         discovery.held_stage_ii_replay_source = "stage_ii_dual_loop_selected_candidates";
-        discovery.held_stage_ii_replay_seed_name = kHeldStageIIDualLoopSeedName;
+        discovery.held_stage_ii_replay_seed_name = discovery.selected_candidate_count == 2
+            ? kHeldStageIIDualLoopSeedName
+            : kHeldStageIIDualLoopCandidateSetName;
     } else {
         discovery.held_stage_ii_candidate_bound_audit_status = "candidate_bound_gap_open";
         discovery.held_stage_ii_status = "dual_loop_incomplete";
@@ -2400,16 +2630,27 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     for (const NeutralTpdCandidate& candidate : out.candidates) {
         out.min_tpd = std::min(out.min_tpd, candidate.tpd);
     }
-    out.stability_accepted = out.stability_checked && out.min_tpd >= -tpd_tolerance;
-    select_two_phase_candidate_set(out, feed, phase_kinds, candidate_mass_balance_tolerance);
+    const bool feed_stable = out.stability_checked && out.min_tpd >= -tpd_tolerance;
+    out.stability_accepted = feed_stable;
+    select_generalized_phase_candidate_set(out, feed, phase_kinds, candidate_mass_balance_tolerance);
+    finalize_stage9_phase_discovery(out, tpd_tolerance, continuous_tpd_required);
     if (!out.stability_checked) {
         out.phase_set_status = "stability_uncertified";
     } else if (!out.phase_set_mass_balance_feasible) {
         out.phase_set_status = "candidate_mass_balance_incomplete";
-    } else if (out.stability_accepted) {
+    } else if (out.held_stage_ii_replay_ready) {
+        out.stability_accepted = true;
+        out.candidate_completeness_accepted = true;
+        out.phase_set_status = "phase_set_certified";
+    } else if (feed_stable) {
+        out.stability_accepted = true;
+        out.candidate_completeness_accepted = true;
         out.phase_set_status = "single_phase_stable_candidate_set";
+    } else {
+        out.stability_accepted = false;
+        out.candidate_completeness_accepted = false;
+        out.phase_set_status = "candidate_bound_gap_open";
     }
-    finalize_stage9_phase_discovery(out, tpd_tolerance, continuous_tpd_required);
     return out;
 }
 
