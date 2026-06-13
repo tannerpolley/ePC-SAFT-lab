@@ -231,6 +231,12 @@ family_rows:
     hard_constraints: [material_balance, phase_pressure_consistency, transferable_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
     phase_discovery_status: full_held_required
+    internal_diagnostic_evidence:
+      - evidence_label: "Neutral generalized phase-set diagnostic records"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete"
+        scope: "Internal neutral nonassociating three-candidate phase-set record contract only; no public generalized multiphase route exposure."
+        result_requirement: "Three selected records, at least one rejected record, mass-balance feasible, noncollapsed selected compositions, phase_set_certified."
     required_gates:
       - infrastructure_gate
       - held_stage_i_stability

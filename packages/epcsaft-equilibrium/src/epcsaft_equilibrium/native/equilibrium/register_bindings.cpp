@@ -3,6 +3,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -716,6 +717,244 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     return out;
 }
 
+std::string phase_kind_name(int phase_kind) {
+    if (phase_kind == 0) {
+        return "liquid";
+    }
+    if (phase_kind == 1) {
+        return "vapor";
+    }
+    return "unknown";
+}
+
+bool same_phase_composition(
+    const std::vector<double>& first,
+    const std::vector<double>& second,
+    double tolerance = 1.0e-6
+) {
+    if (first.size() != second.size()) {
+        return false;
+    }
+    double distance = 0.0;
+    for (std::size_t index = 0; index < first.size(); ++index) {
+        distance = std::max(distance, std::abs(first[index] - second[index]));
+    }
+    return distance <= tolerance;
+}
+
+double phase_distance_from_compositions(const std::vector<std::vector<double>>& compositions) {
+    double distance = 0.0;
+    for (std::size_t first = 0; first < compositions.size(); ++first) {
+        for (std::size_t second = first + 1; second < compositions.size(); ++second) {
+            if (compositions[first].size() != compositions[second].size()) {
+                continue;
+            }
+            double pair_distance = 0.0;
+            for (std::size_t species = 0; species < compositions[first].size(); ++species) {
+                pair_distance =
+                    std::max(pair_distance, std::abs(compositions[first][species] - compositions[second][species]));
+            }
+            distance = std::max(distance, pair_distance);
+        }
+    }
+    return distance;
+}
+
+std::string rejected_phase_set_reason(
+    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosPostsolve& result,
+    std::size_t candidate_index
+) {
+    if (candidate_index < result.tpd_candidate_feasibility_statuses.size()) {
+        const std::string& status = result.tpd_candidate_feasibility_statuses[candidate_index];
+        if (!status.empty() && status != "candidate_generated" && status != "converged") {
+            return status;
+        }
+    }
+    if (candidate_index < result.tpd_candidate_compositions.size()) {
+        const std::vector<double>& candidate = result.tpd_candidate_compositions[candidate_index];
+        for (const std::vector<double>& selected : result.phase_compositions) {
+            if (same_phase_composition(candidate, selected)) {
+                return "duplicate_or_collapsed";
+            }
+        }
+    }
+    if (result.phase_set_status != "phase_set_certified") {
+        return "phase_set_not_certified";
+    }
+    return "not_selected_candidate";
+}
+
+std::string rejected_discovery_phase_set_reason(
+    const epcsaft::native::equilibrium_nlp::NeutralPhaseDiscoveryResult& result,
+    const epcsaft::native::equilibrium_nlp::NeutralTpdCandidate& candidate
+) {
+    if (!candidate.feasibility_status.empty()
+        && candidate.feasibility_status != "candidate_generated"
+        && candidate.feasibility_status != "converged") {
+        return candidate.feasibility_status;
+    }
+    for (const std::vector<double>& selected : result.selected_phase_compositions) {
+        if (same_phase_composition(candidate.composition, selected)) {
+            return "duplicate_or_collapsed";
+        }
+    }
+    if (result.phase_set_status != "phase_set_certified") {
+        return "phase_set_not_certified";
+    }
+    return "not_selected_by_generalized_phase_set_gate";
+}
+
+py::list phase_set_records_to_list(
+    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosPostsolve& result
+) {
+    py::list records;
+    double total_amount = 0.0;
+    for (double amount : result.phase_amount_totals) {
+        total_amount += amount;
+    }
+    const std::size_t selected_count = result.phase_amount_totals.size();
+    for (std::size_t phase = 0; phase < selected_count; ++phase) {
+        if (phase >= result.phase_volumes.size() || phase >= result.phase_densities.size()
+            || phase >= result.phase_compositions.size()) {
+            throw ValueError("Neutral phase-set record selected phase arrays are misaligned.");
+        }
+        py::dict row;
+        row["record_id"] = "selected-" + std::to_string(phase);
+        row["phase_count"] = result.phase_count;
+        row["phase_index"] = static_cast<int>(phase);
+        const int phase_kind = phase < result.selected_phase_kinds.size() ? result.selected_phase_kinds[phase] : 0;
+        row["phase_kind"] = phase_kind_name(phase_kind);
+        row["phase_role"] = "accepted_phase";
+        row["source"] = result.phase_discovery_backend;
+        row["phase_amount_total"] = result.phase_amount_totals[phase];
+        row["phase_fraction"] = total_amount > 0.0 ? result.phase_amount_totals[phase] / total_amount : 0.0;
+        row["volume"] = result.phase_volumes[phase];
+        row["density"] = result.phase_densities[phase];
+        row["composition"] = result.phase_compositions[phase];
+        row["objective"] = result.objective;
+        row["tpd"] = result.min_tpd;
+        row["feasibility_status"] = "accepted";
+        row["selection_status"] = "selected";
+        row["rejection_reason"] = "accepted";
+        row["phase_set_status"] = result.phase_set_status;
+        row["mass_balance_feasible"] = result.phase_set_mass_balance_feasible;
+        row["stability_accepted"] = result.stability_accepted;
+        row["candidate_completeness_accepted"] = result.candidate_completeness_accepted;
+        records.append(row);
+    }
+    for (std::size_t candidate = 0; candidate < result.tpd_candidate_values.size(); ++candidate) {
+        const bool selected = candidate < result.tpd_candidate_selected.size() && result.tpd_candidate_selected[candidate];
+        if (selected) {
+            continue;
+        }
+        if (candidate >= result.tpd_candidate_compositions.size()
+            || candidate >= result.tpd_candidate_sources.size()
+            || candidate >= result.tpd_candidate_phase_kinds.size()) {
+            throw ValueError("Neutral phase-set record rejected candidate arrays are misaligned.");
+        }
+        py::dict row;
+        row["record_id"] = "rejected-" + std::to_string(candidate);
+        row["phase_count"] = result.phase_count;
+        row["phase_index"] = static_cast<int>(candidate);
+        row["phase_kind"] = phase_kind_name(result.tpd_candidate_phase_kinds[candidate]);
+        row["phase_role"] = "candidate_phase";
+        row["source"] = result.tpd_candidate_sources[candidate];
+        row["phase_amount_total"] = 0.0;
+        row["phase_fraction"] = 0.0;
+        row["volume"] = 0.0;
+        row["density"] = 0.0;
+        row["composition"] = result.tpd_candidate_compositions[candidate];
+        row["objective"] = result.tpd_candidate_values[candidate];
+        row["tpd"] = result.tpd_candidate_values[candidate];
+        row["feasibility_status"] = candidate < result.tpd_candidate_feasibility_statuses.size()
+            ? result.tpd_candidate_feasibility_statuses[candidate]
+            : "candidate_generated";
+        row["selection_status"] = "rejected";
+        row["rejection_reason"] = rejected_phase_set_reason(result, candidate);
+        row["phase_set_status"] = result.phase_set_status;
+        row["mass_balance_feasible"] = result.phase_set_mass_balance_feasible;
+        row["stability_accepted"] = result.stability_accepted;
+        row["candidate_completeness_accepted"] = result.candidate_completeness_accepted;
+        records.append(row);
+    }
+    return records;
+}
+
+py::list phase_discovery_records_to_list(
+    const epcsaft::native::equilibrium_nlp::NeutralPhaseDiscoveryResult& result
+) {
+    py::list records;
+    const std::size_t selected_count = result.selected_phase_compositions.size();
+    std::size_t selected_ordinal = 0;
+    for (std::size_t candidate_index = 0; candidate_index < result.candidates.size(); ++candidate_index) {
+        const auto& candidate = result.candidates[candidate_index];
+        if (!candidate.selected) {
+            continue;
+        }
+        const double phase_fraction = selected_ordinal < result.selected_phase_fractions.size()
+            ? result.selected_phase_fractions[selected_ordinal]
+            : 0.0;
+        const double molar_volume = candidate.molar_volume > 0.0
+            ? candidate.molar_volume
+            : (candidate.density > 0.0 ? 1.0 / candidate.density : 0.0);
+        py::dict row;
+        row["record_id"] = "selected-" + std::to_string(selected_ordinal);
+        row["phase_count"] = static_cast<int>(selected_count);
+        row["phase_index"] = static_cast<int>(selected_ordinal);
+        row["phase_kind"] = phase_kind_name(candidate.phase_kind);
+        row["phase_role"] = "accepted_phase";
+        row["source"] = candidate.source;
+        row["phase_amount_total"] = phase_fraction;
+        row["phase_fraction"] = phase_fraction;
+        row["volume"] = molar_volume > 0.0 ? phase_fraction * molar_volume : 0.0;
+        row["density"] = candidate.density > 0.0 ? candidate.density : (molar_volume > 0.0 ? 1.0 / molar_volume : 0.0);
+        row["composition"] = candidate.composition;
+        row["objective"] = candidate.transformed_objective;
+        row["tpd"] = candidate.tpd;
+        row["feasibility_status"] = candidate.feasibility_status;
+        row["selection_status"] = "selected";
+        row["rejection_reason"] = "accepted";
+        row["phase_set_status"] = result.phase_set_status;
+        row["mass_balance_feasible"] = result.phase_set_mass_balance_feasible;
+        row["stability_accepted"] = result.stability_accepted;
+        row["candidate_completeness_accepted"] = result.candidate_completeness_accepted;
+        records.append(row);
+        ++selected_ordinal;
+    }
+    for (std::size_t candidate_index = 0; candidate_index < result.candidates.size(); ++candidate_index) {
+        const auto& candidate = result.candidates[candidate_index];
+        if (candidate.selected) {
+            continue;
+        }
+        const double molar_volume = candidate.molar_volume > 0.0
+            ? candidate.molar_volume
+            : (candidate.density > 0.0 ? 1.0 / candidate.density : 0.0);
+        py::dict row;
+        row["record_id"] = "rejected-" + std::to_string(candidate_index);
+        row["phase_count"] = static_cast<int>(selected_count);
+        row["phase_index"] = static_cast<int>(candidate_index);
+        row["phase_kind"] = phase_kind_name(candidate.phase_kind);
+        row["phase_role"] = "candidate_phase";
+        row["source"] = candidate.source;
+        row["phase_amount_total"] = 0.0;
+        row["phase_fraction"] = 0.0;
+        row["volume"] = molar_volume;
+        row["density"] = candidate.density > 0.0 ? candidate.density : (molar_volume > 0.0 ? 1.0 / molar_volume : 0.0);
+        row["composition"] = candidate.composition;
+        row["objective"] = candidate.transformed_objective;
+        row["tpd"] = candidate.tpd;
+        row["feasibility_status"] = candidate.feasibility_status;
+        row["selection_status"] = "rejected";
+        row["rejection_reason"] = rejected_discovery_phase_set_reason(result, candidate);
+        row["phase_set_status"] = result.phase_set_status;
+        row["mass_balance_feasible"] = result.phase_set_mass_balance_feasible;
+        row["stability_accepted"] = result.stability_accepted;
+        row["candidate_completeness_accepted"] = result.candidate_completeness_accepted;
+        records.append(row);
+    }
+    return records;
+}
+
 py::dict neutral_two_phase_eos_postsolve_to_dict(
     const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosPostsolve& result
 ) {
@@ -825,6 +1064,7 @@ py::dict neutral_two_phase_eos_postsolve_to_dict(
     out["tpd_candidate_ranks"] = result.tpd_candidate_ranks;
     out["tpd_candidate_feasibility_statuses"] = result.tpd_candidate_feasibility_statuses;
     out["tpd_candidate_selected"] = result.tpd_candidate_selected;
+    out["phase_set_records"] = phase_set_records_to_list(result);
     py::dict seed_and_stability;
     seed_and_stability["phase_discovery_backend"] = result.phase_discovery_backend;
     seed_and_stability["stability_certificate"] = result.stability_certificate;
@@ -942,6 +1182,7 @@ py::dict neutral_phase_discovery_to_dict(
     out["held_stage_iii_refined_phase_count"] = result.held_stage_iii_refined_phase_count;
     out["min_tpd"] = result.min_tpd;
     out["candidate_mass_balance_norm"] = result.candidate_mass_balance_norm;
+    out["phase_distance"] = phase_distance_from_compositions(result.selected_phase_compositions);
     out["tpd_candidate_count"] = result.tpd_candidate_count;
     out["unique_candidate_count"] = result.unique_candidate_count;
     out["selected_candidate_count"] = result.selected_candidate_count;
@@ -953,6 +1194,7 @@ py::dict neutral_phase_discovery_to_dict(
         candidates.append(neutral_tpd_candidate_to_dict(candidate));
     }
     out["candidates"] = candidates;
+    out["phase_set_records"] = phase_discovery_records_to_list(result);
     return out;
 }
 

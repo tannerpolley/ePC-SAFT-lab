@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from epcsaft_equilibrium._native import extension_native_core
+from epcsaft.state.native_adapter import ePCSAFTMixture
 
 _core = extension_native_core()
 from equilibrium_support.equilibrium_cases import (
@@ -28,6 +29,23 @@ def _three_phase_hydrocarbon_case() -> tuple[object, float, float, list[list[flo
     volumes = [float(total / density) for total in phase_totals]
     feed_amounts = np.sum(np.asarray(phase_amounts, dtype=float), axis=0).tolist()
     return mix, WORKBOOK_TEMPERATURE, float(target_pressure), phase_amounts, volumes, feed_amounts
+
+
+def _symmetric_ternary_nonassociating_mixture() -> ePCSAFTMixture:
+    params = {
+        "m": np.asarray([1.5, 1.5, 1.5], dtype=float),
+        "s": np.asarray([3.7, 3.7, 3.7], dtype=float),
+        "e": np.asarray([220.0, 220.0, 220.0], dtype=float),
+        "k_ij": np.asarray(
+            [
+                [0.0, 0.8, 0.8],
+                [0.8, 0.0, 0.8],
+                [0.8, 0.8, 0.0],
+            ],
+            dtype=float,
+        ),
+    }
+    return ePCSAFTMixture.from_params(params, species=["A", "B", "C"])
 
 
 def test_internal_multiphase_activation_plan_contract_builds_three_phase_layout() -> None:
@@ -104,31 +122,68 @@ def test_internal_multiphase_eos_nlp_contract_reports_exact_hessian_for_three_ph
     assert payload["constraint_families"] == ["material_balance", "phase_pressure_consistency"]
 
 
-def test_internal_multiphase_eos_postsolve_certifies_three_phase_shape_without_public_exposure() -> None:
-    mix, temperature, target_pressure, phase_amounts, volumes, feed_amounts = _three_phase_hydrocarbon_case()
+def test_internal_multiphase_phase_set_diagnostics_certify_three_phase_shape_without_public_exposure() -> None:
+    mix = _symmetric_ternary_nonassociating_mixture()
 
-    payload = _core._native_neutral_multiphase_eos_postsolve(
+    payload = _core._native_neutral_tpd_phase_discovery(
         mix._native,
-        temperature,
-        target_pressure,
-        phase_amounts,
-        volumes,
-        feed_amounts,
-        1.0e-8,
-        1.0e-3,
-        1.0e-6,
-        1.0e-6,
+        200.0,
+        1.0e6,
+        [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
         [0, 0, 0],
+        1.0e-6,
+        1.0e-6,
     )
 
-    assert payload["phase_count"] == 3
-    assert payload["species_count"] == 3
-    assert len(payload["phase_amount_totals"]) == 3
-    assert len(payload["phase_volumes"]) == 3
-    assert len(payload["phase_compositions"]) == 3
+    assert payload["phase_set_status"] == "phase_set_certified"
+    assert payload["phase_set_mass_balance_feasible"] is True
+    assert payload["stability_accepted"] is True
+    assert payload["candidate_completeness_accepted"] is True
+    assert payload["held_stage_ii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert payload["phase_distance"] > 0.0
     assert payload["selected_candidate_count"] == 3
     assert payload["selected_phase_kinds"] == [0, 0, 0]
     assert len(payload["selected_phase_compositions"]) == 3
-    assert payload["phase_discovery_backend"] == "deterministic_tpd_candidate_screening"
+    assert len(payload["phase_set_records"]) >= 3
+    selected_records = [row for row in payload["phase_set_records"] if row["selection_status"] == "selected"]
+    rejected_records = [row for row in payload["phase_set_records"] if row["selection_status"] == "rejected"]
+    assert len(selected_records) == 3
+    assert rejected_records
+    required_fields = {
+        "record_id",
+        "phase_count",
+        "phase_index",
+        "phase_kind",
+        "phase_role",
+        "source",
+        "phase_amount_total",
+        "phase_fraction",
+        "volume",
+        "density",
+        "composition",
+        "objective",
+        "tpd",
+        "feasibility_status",
+        "selection_status",
+        "rejection_reason",
+        "phase_set_status",
+        "mass_balance_feasible",
+        "stability_accepted",
+        "candidate_completeness_accepted",
+    }
+    for row in payload["phase_set_records"]:
+        assert required_fields.issubset(row)
+        assert row["phase_count"] == 3
+        assert len(row["composition"]) == 3
+        assert row["selection_status"] in {"selected", "rejected"}
+        if row["selection_status"] == "rejected":
+            assert row["rejection_reason"] not in {"", "accepted"}
+    first_selected = selected_records[0]
+    assert first_selected["phase_amount_total"] == pytest.approx(payload["selected_phase_fractions"][0])
+    assert first_selected["phase_fraction"] == pytest.approx(payload["selected_phase_fractions"][0])
+    assert first_selected["volume"] > 0.0
+    assert first_selected["density"] > 0.0
+    assert first_selected["composition"] == pytest.approx(payload["selected_phase_compositions"][0])
+    assert payload["phase_discovery_backend"] == "continuous_tpd_held_dual_phase_discovery"
     assert payload["stability_certificate"] == "tpd_postsolve"
     assert payload["candidate_mass_balance_norm"] >= 0.0
