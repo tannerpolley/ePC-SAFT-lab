@@ -32,6 +32,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Single-component VLE route plan](../../plans/2026-06-04-m4-equilibrium-single-component-vle-route-plan.md) | `vle` | Implement production pure-component saturation solving in `epcsaft-equilibrium` as an independent M4 route plan. |
 | [Fresh-native HELD/GFPE validation receipts plan](../../plans/2026-06-12-m4-equilibrium-fresh-native-held-gfpe-validation-receipts-plan.md) | `lle` | Add receipt-backed validation evidence so stale native artifacts cannot misreport HELD Stage II/III status. |
 | [Pereira-style HELD neutral LLE reliability plan](../../plans/2026-06-12-m4-equilibrium-pereira-held-neutral-lle-reliability-plan.md) | `lle` | Retains the full-campaign neutral LLE reliability gate before associating GFPE borrows the neutral HELD path. |
+| [Neutral nonassociating LLE source-backed showcase plan](../../plans/2026-06-13-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase-plan.md) | `lle` | Adds the first source-backed neutral nonassociating LLE fixture, checker, retained figures, and registry evidence for the current `lle` utility route. |
 
 ## Retained Evidence
 
@@ -43,6 +44,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
+| [#250](../../issues/250-add-source-backed-neutral-nonassociating-lle-showcase-fixture.md) | `lle` | `Ipopt` | `ready` | Add source-backed neutral nonassociating LLE fixture, checker, retained showcase figures, and registry evidence. |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `blocked` | Derive boundary workflows and generalized phase-set PE from neutral GFPE. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
@@ -55,7 +57,8 @@ HELD reliability campaign accepted 100 conditions, ran 10,000 route-refinement
 repeats, and recorded zero failed repeats. That evidence supports neutral HELD
 algorithm reliability only; it still does not replace source-backed public LLE
 showcase evidence, generalized phase-set completion, or associating GFPE
-admission. #189, #190, and #191 remain blocked by their own proof gates.
+admission. #250 is the next ready source-backed neutral LLE showcase slice.
+#189, #190, and #191 remain blocked by their own proof gates.
 
 ## Closed Issues
 
