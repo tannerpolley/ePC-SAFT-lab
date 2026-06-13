@@ -12,13 +12,13 @@ Project fields, local docs, templates, and completion standards agree.
 
 | Issue | Readiness | Summary |
 | --- | --- | --- |
-| [#253](../../issues/2026-06-13-m0-governance-issue-0253-auto-unblock-dependent-issues-after-clean-merge-closeout.md) | `ready` | Add the closeout command that unblocks dependent issues when their final native GitHub blocker closes. |
+| [#253](../../issues/2026-06-13-m0-governance-issue-0253-auto-unblock-dependent-issues-after-clean-merge-closeout.md) | `ready` | Add the GitHub-backed workflow and fallback command that unblock dependent issues and sync local mirrors when their final native GitHub blocker closes. |
 
 ## Current Plans
 
 | Plan | Summary |
 | --- | --- |
-| [GitHub dependency auto-unblock closeout](../../plans/2026-06-13-m0-github-dependency-auto-unblock-closeout-plan.md) | Dry-run/apply workflow for moving dependents from `status:blocked` to `status:ready` after clean merges. |
+| [GitHub dependency auto-unblock closeout](../../plans/2026-06-13-m0-github-dependency-auto-unblock-closeout-plan.md) | GitHub Actions plus dry-run/apply fallback for moving dependents from `status:blocked` to `status:ready` and syncing local mirrors after clean merges. |
 
 ## Closed Issues
 

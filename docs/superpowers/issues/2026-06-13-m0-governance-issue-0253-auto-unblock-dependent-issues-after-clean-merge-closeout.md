@@ -30,24 +30,26 @@ start from a durable local source plan.
 
 ## Summary
 
-Add a repo-owned closeout check that moves dependent issues from
-`status:blocked` to `status:ready` when a fully resolved issue was their final
-open GitHub native blocker.
+Add GitHub-backed automation that moves dependent issues from `status:blocked`
+to `status:ready` when a fully resolved issue was their final open GitHub
+native blocker, then syncs the local mirror files in the repo.
 
 ## Triggering Example
 
 #189 remained labeled `status:blocked` after its native blockers #188 and #241
-were closed. The auto-unblock command should make that stale state visible in
-dry-run mode and safely apply the label/mirror refresh when requested.
+were closed. The auto-unblock workflow should make that stale state visible in
+dry-run mode, apply the label refresh, and commit the mirror/table sync when
+requested or when a scheduled reconciliation finds drift.
 
 ## Acceptance Criteria
 
 - [ ] A dry-run command lists issues blocked by a resolved issue and shows which dependents have zero open blockers left.
+- [ ] A GitHub Actions workflow runs the same logic on issue close, merged PR close, manual dispatch, and scheduled reconciliation.
 - [ ] An apply command removes `status:blocked` and adds `status:ready` only for dependents whose native blockers are all closed.
 - [ ] `agent-ready` is added only when local mirror/source-plan checks prove the issue is AFK-ready.
-- [ ] Local mirrors and milestone README rows are refreshed or reported as missing.
-- [ ] Merge/resolve closeout docs require running the dependency auto-unblock check after a clean merge.
-- [ ] Tests cover no dependents, dependents with remaining blockers, dependents with all blockers closed, missing local mirrors, and dry-run/apply separation.
+- [ ] Local mirrors and milestone README rows are refreshed and committed by the workflow when changes are needed, or reported as missing.
+- [ ] Merge/resolve closeout docs require checking the GitHub workflow result after a clean merge and give a local fallback command.
+- [ ] Tests cover no dependents, dependents with remaining blockers, dependents with all blockers closed, missing local mirrors, workflow event parsing, local commit/no-commit decisions, and dry-run/apply separation.
 
 ## Proof Oracle
 
@@ -55,6 +57,7 @@ dry-run mode and safely apply the label/mirror refresh when requested.
 uv run --no-sync python run_pytest.py tests/workflows/repo/test_issue_dependency_readiness.py -q
 uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --issue 188 --dry-run --json
 uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --issue 241 --dry-run --json
+uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --reconcile --dry-run --json
 uv run --no-sync python scripts/dev/validate_project.py docs
 ```
 
@@ -64,6 +67,7 @@ uv run --no-sync python scripts/dev/validate_project.py docs
 - No automatic issue closure.
 - No automatic `agent-ready` label from dependency state alone.
 - No product-code changes.
+- No dependence on a GitHub issue-dependency-specific event; scheduled reconciliation must catch dependency drift.
 
 ## Tracker Metadata
 
