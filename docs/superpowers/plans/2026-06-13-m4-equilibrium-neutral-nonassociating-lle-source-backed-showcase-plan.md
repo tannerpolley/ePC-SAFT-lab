@@ -227,8 +227,8 @@ The issue is complete only when all of these are true:
 - [x] Run the full proof oracle in order.
 - [x] Review `git status --short` and ensure generated retained artifacts are intentionally tracked or intentionally excluded by existing policy.
 - [x] Run the repo cleanup hook.
-- [ ] Commit the issue implementation on its feature branch and open a PR.
-- [ ] Do not close the GitHub issue until the PR is merged.
+- [x] Commit the issue implementation on its feature branch and open a PR.
+- [x] Do not close the GitHub issue until the PR is merged.
 
 ## Proof Oracle
 
@@ -250,7 +250,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 Published M4 issue from this plan:
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/250
-- Local mirror: `docs/superpowers/issues/250-add-source-backed-neutral-nonassociating-lle-showcase-fixture.md`
+- Local mirror: deleted during post-merge closeout after PR #251 closed issue #250.
 
 ```text
 Title: M4: add source-backed neutral nonassociating LLE showcase fixture
