@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md"
 source_plan: "docs/superpowers/plans/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs
-last_synced: "2026-06-02"
+last_synced: "2026-06-14"
 ---
 
 # Associating neutral LLE after HELD/TPD and associating VLE proofs
@@ -57,7 +57,7 @@ This issue is blocked by #148 through the native GitHub issue-dependency relatio
 - Package: `equilibrium`
 - Capability: `lle`
 - Backend: `Ipopt`
-- Readiness: `blocked`
+- Readiness: `ready`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `python-api, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`
+- Labels: `python-api, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
