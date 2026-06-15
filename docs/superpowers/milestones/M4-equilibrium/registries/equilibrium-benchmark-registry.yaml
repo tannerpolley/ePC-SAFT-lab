@@ -354,7 +354,7 @@ derived_subworkflows:
     diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
     strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
+    acceptance_checks: [dof_swap_contract, source_backed_cloud_binodal_rows, source_backed_cloud_shadow_pair, native_route_admission_blockers_declared, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
   - label: "Shadow point"
     workflow_kind: derived_boundary
@@ -369,7 +369,7 @@ derived_subworkflows:
     diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
     strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
+    acceptance_checks: [dof_swap_contract, source_backed_cloud_binodal_rows, source_backed_cloud_shadow_pair, native_route_admission_blockers_declared, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
 neutral_tp_flash_fixture_gate:
   target_family_label: "PE-Neutral TP Flash"

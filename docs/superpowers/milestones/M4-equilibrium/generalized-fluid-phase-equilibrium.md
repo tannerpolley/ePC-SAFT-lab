@@ -421,6 +421,14 @@ Routine validation must stay contract-only unless a single named debug route
 point is requested; multi-point `T-x` or `P-x` route points require
 `--allow-route-sweep` and an explicit `--route-point-count`.
 
+The retained cloud/shadow source-data gate is
+`uv run python scripts/validation/check_boundary_workflows.py --json
+--cloud-shadow-gate --require-cloud-shadow-gate`. It checks the Matsuda/NIST
+perfluorohexane + hexane neutral LLE fixture for 14 source-backed cloud-point
+binodal rows and one paired cloud/shadow branch row. Passing this gate means
+the cloud/shadow source-data contract is retained and route-admission blockers
+are named; it does not mean native cloud/shadow routes are executable.
+
 The neutral TP flash fixture gate is explicit in
 `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`. A neutral TP-flash case is
 not executable until it supplies source-backed species, pure-component
@@ -476,6 +484,9 @@ neutral TP flash coverage does not hide a second TPD/Ipopt route solve.
 The boundary workflow checker is
 `uv run python scripts/validation/check_boundary_workflows.py`.
 Use `--json --contracts-only` for the cheap derived-workflow contract check.
+Use `--json --cloud-shadow-gate --require-cloud-shadow-gate` for the retained
+cloud/shadow source-data gate; this command must keep cloud/shadow runtime
+routes empty while reporting explicit route-admission blockers.
 Use `--json --run-current-boundary-route --route <route> --debug
 --require-complete` only when diagnosing one current bubble/dew route; the
 checker forwards Ipopt `print_level=5` output to stderr and fails closed when

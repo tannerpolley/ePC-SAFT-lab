@@ -62,12 +62,12 @@ route admission closed until a separate solver route gate exists.
 
 ## Acceptance Criteria
 
-- [ ] `check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` completes the retained source-data gate.
-- [ ] The gate verifies 14 Matsuda/NIST cloud-point rows and one paired cloud-shadow source branch for perfluorohexane + hexane.
-- [ ] The gate emits separate route-admission blockers for native cloud and shadow route absence.
-- [ ] Cloud/shadow registry rows keep no runtime routes and do not claim native route support.
-- [ ] Existing bubble/dew boundary trace and neutral LLE showcase checks remain green.
-- [ ] #189 remains open after this child unless every umbrella gate is separately complete.
+- [x] `check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` completes the retained source-data gate.
+- [x] The gate verifies 14 Matsuda/NIST cloud-point rows and one paired cloud-shadow source branch for perfluorohexane + hexane.
+- [x] The gate emits separate route-admission blockers for native cloud and shadow route absence.
+- [x] Cloud/shadow registry rows keep no runtime routes and do not claim native route support.
+- [x] Existing bubble/dew boundary trace and neutral LLE showcase checks remain green.
+- [x] #189 remains open after this child unless every umbrella gate is separately complete.
 
 ## Blocked By
 
@@ -90,6 +90,18 @@ uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
+
+## Validation Evidence
+
+Recorded on 2026-06-15 from branch
+`codex/issue-0258-retained-cloud-shadow-boundary-data-gate`.
+
+- `uv run --no-sync python run_pytest.py tests/native/contracts/test_cloud_shadow_boundary_gate_checker.py tests/native/contracts/test_boundary_workflow_checker.py tests/native/contracts/test_generalized_equilibrium_registry.py -q` passed: 27 tests.
+- `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only` passed with no blockers; cloud and shadow remained `planned_not_executable` with empty runtime routes.
+- `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` passed with `complete: true`, 14 binodal rows, one paired branch row, empty source-data blockers, and route-admission blockers `native_cloud_point_route_absent` and `native_shadow_point_route_absent`.
+- `uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete` passed with `complete: true`, 14 source binodal rows, one tie-line, and no fixture blockers.
+- `uv run --no-sync python scripts/dev/validate_project.py docs` passed.
+- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .` passed with no matching leftover Codex processes.
 
 ## GitHub Body Text
 
