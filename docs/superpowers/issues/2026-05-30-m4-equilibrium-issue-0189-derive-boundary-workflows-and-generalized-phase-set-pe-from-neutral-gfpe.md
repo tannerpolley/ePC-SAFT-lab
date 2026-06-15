@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252 and #256 closed as AFK child issues.
+AFK/HITL: HITL umbrella; #252 and #256 closed as AFK child issues; #258 is open as the next AFK child.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -37,9 +37,11 @@ Generalize from the neutral GFPE proof into boundary workflows and phase-set pha
 HITL umbrella for boundary workflows and generalized phase-set PE. #252 closed
 the first AFK implementation slice for neutral generalized phase-set
 diagnostics; #256 closed through #257 with retained bubble/dew boundary traces
-and stricter generalized phase-set rejection diagnostics. The umbrella remains open until
-cloud/shadow, generalized phase-set completion, and public capability admission
-gates are separately proven.
+and stricter generalized phase-set rejection diagnostics. #258 is open for the
+retained cloud/shadow source-data gate and must keep native route admission
+closed. The umbrella remains open until cloud/shadow route admission, generalized
+phase-set completion, and public capability admission gates are separately
+proven.
 
 ## Supplemental Context
 
@@ -48,6 +50,7 @@ gates are separately proven.
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/252`
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/253`
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/256`
+- `https://github.com/ePC-SAFT/ePC-SAFT/issues/258`
 
 ## Acceptance Criteria
 
@@ -63,6 +66,7 @@ gates are separately proven.
 - Run docs validation.
 - For #252, run `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete` after implementation.
 - For #256, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` and keep `check_generalized_phase_set.py --json --require-complete` green.
+- For #258, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` and keep the neutral LLE showcase checker green.
 
 ## Non-Goals And Boundaries
 
