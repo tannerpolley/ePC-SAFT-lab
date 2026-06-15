@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import math
 import os
@@ -27,6 +28,28 @@ from scripts.validation import equilibrium_validation_runtime as runtime
 _core = extension_native_core()
 
 DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
+DEFAULT_CLOUD_SHADOW_CASE_DIR = (
+    REPO_ROOT
+    / "data"
+    / "reference"
+    / "equilibrium_benchmarks"
+    / "neutral_lle"
+    / "matsuda_2011_pfhexane_hexane"
+)
+EXPECTED_CLOUD_SHADOW_SPECIES = ["perfluorohexane", "hexane"]
+EXPECTED_CLOUD_SHADOW_BINODAL_ROWS = 14
+EXPECTED_CLOUD_SHADOW_PRESSURE_KPA = 101.3
+EXPECTED_CLOUD_SHADOW_PRESSURE_PA = 101300.0
+ROUTE_ADMISSION_BLOCKERS = [
+    "native_cloud_point_route_absent",
+    "native_shadow_point_route_absent",
+]
+REQUIRED_CLOUD_SHADOW_FILES = (
+    "metadata.json",
+    "thresholds.json",
+    "source_binodal_points.csv",
+    "experimental_tielines.csv",
+)
 
 BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
     "bubble_pressure": {
@@ -121,6 +144,268 @@ REQUIRED_BOUNDARY_CONSTRAINT_FAMILY_GROUPS = {
 
 def _finite_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+
+
+def _finite_float(value: Any) -> bool:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(numeric)
+
+
+def _positive_finite_float(value: Any) -> bool:
+    return _finite_float(value) and float(value) > 0.0
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    return list(csv.DictReader(path.read_text(encoding="utf-8").splitlines()))
+
+
+def _repo_relative_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
+
+
+def _range(values: list[float]) -> list[float]:
+    if not values:
+        return []
+    return [min(values), max(values)]
+
+
+def _composition_valid(values: list[float]) -> bool:
+    return all(0.0 <= value <= 1.0 for value in values) and math.isclose(
+        sum(values), 1.0, rel_tol=0.0, abs_tol=1.0e-10
+    )
+
+
+def _cloud_shadow_metadata_blockers(metadata: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    if metadata.get("source_status") != "source_backed":
+        blockers.append("cloud_shadow_source_status_not_source_backed")
+    if metadata.get("species") != EXPECTED_CLOUD_SHADOW_SPECIES:
+        blockers.append("cloud_shadow_metadata_species_order_mismatch")
+    if metadata.get("route") != "lle":
+        blockers.append("cloud_shadow_metadata_route_mismatch")
+    if metadata.get("selector_route") != "neutral_lle":
+        blockers.append("cloud_shadow_metadata_selector_route_mismatch")
+    if metadata.get("expected_phase_count") != 2:
+        blockers.append("cloud_shadow_expected_phase_count_mismatch")
+    for field in ("association_active", "electrolyte_active", "reaction_active"):
+        if metadata.get(field) is not False:
+            blockers.append(f"cloud_shadow_forbidden_physics_active:{field}")
+    return blockers
+
+
+def _cloud_shadow_binodal_payload(
+    rows: list[dict[str, str]],
+) -> tuple[dict[str, Any], list[str]]:
+    blockers: list[str] = []
+    temperatures: list[float] = []
+    pressures: list[float] = []
+    compositions: list[float] = []
+    method_set: set[str] = set()
+    source_datasets: set[str] = set()
+
+    if len(rows) != EXPECTED_CLOUD_SHADOW_BINODAL_ROWS:
+        blockers.append("cloud_shadow_source_binodal_rows_count_mismatch")
+
+    for row in rows:
+        if row.get("component_1") != EXPECTED_CLOUD_SHADOW_SPECIES[0] or row.get(
+            "component_2"
+        ) != EXPECTED_CLOUD_SHADOW_SPECIES[1]:
+            blockers.append("cloud_shadow_binodal_species_order_mismatch")
+        method = str(row.get("method", "")).strip()
+        method_set.add(method)
+        if method != "cloud_point":
+            blockers.append("cloud_shadow_binodal_method_rejected")
+        source_dataset = str(row.get("source_dataset", "")).strip()
+        if source_dataset:
+            source_datasets.add(source_dataset)
+        if not _positive_finite_float(row.get("temperature_K")):
+            blockers.append("cloud_shadow_binodal_temperature_invalid")
+        else:
+            temperatures.append(float(row["temperature_K"]))
+        if not _positive_finite_float(row.get("pressure_kPa")):
+            blockers.append("cloud_shadow_binodal_pressure_invalid")
+        else:
+            pressure = float(row["pressure_kPa"])
+            pressures.append(pressure)
+            if not math.isclose(pressure, EXPECTED_CLOUD_SHADOW_PRESSURE_KPA, rel_tol=0.0, abs_tol=1.0e-9):
+                blockers.append("cloud_shadow_binodal_pressure_mismatch")
+        if not _finite_float(row.get("x_perfluorohexane")):
+            blockers.append("cloud_shadow_binodal_composition_invalid")
+        else:
+            composition = float(row["x_perfluorohexane"])
+            compositions.append(composition)
+            if composition < 0.0 or composition > 1.0:
+                blockers.append("cloud_shadow_binodal_composition_invalid")
+
+    pressure_kpa = pressures[0] if pressures and all(math.isclose(value, pressures[0]) for value in pressures) else None
+    return (
+        {
+            "binodal_point_count": len(rows),
+            "pressure_kPa": pressure_kpa,
+            "temperature_range_K": _range(temperatures),
+            "composition_range_x1": _range(compositions),
+            "method_set": sorted(method_set),
+            "source_datasets": sorted(source_datasets),
+        },
+        blockers,
+    )
+
+
+def _cloud_shadow_pair_payload(
+    rows: list[dict[str, str]],
+    thresholds: dict[str, Any],
+) -> tuple[dict[str, Any], list[str]]:
+    blockers: list[str] = []
+    if len(rows) != 1:
+        return (
+            {
+                "paired_cloud_shadow_count": len(rows),
+                "paired_branch_compositions": [],
+                "paired_pressure_Pa": None,
+                "branch_temperature_gap_K": None,
+                "branch_temperature_gap_threshold_K": thresholds.get("source_temperature_pair_abs_K"),
+                "source_row_pair": None,
+                "phase_distance_x1": None,
+            },
+            ["cloud_shadow_paired_branch_rows_missing"],
+        )
+
+    row = rows[0]
+    if row.get("component_1") != EXPECTED_CLOUD_SHADOW_SPECIES[0] or row.get(
+        "component_2"
+    ) != EXPECTED_CLOUD_SHADOW_SPECIES[1]:
+        blockers.append("cloud_shadow_pair_species_order_mismatch")
+    if row.get("source_status") != "source_backed":
+        blockers.append("cloud_shadow_pair_source_status_rejected")
+    if row.get("source_basis") != "paired_binodal_branch_rows":
+        blockers.append("cloud_shadow_pair_source_basis_rejected")
+
+    numeric_fields = (
+        "temperature_K",
+        "pressure_kPa",
+        "pressure_Pa",
+        "liquid1_x1",
+        "liquid1_x2",
+        "liquid2_x1",
+        "liquid2_x2",
+        "temperature_difference_K",
+    )
+    for field in numeric_fields:
+        if not _finite_float(row.get(field)):
+            blockers.append(f"cloud_shadow_pair_field_invalid:{field}")
+
+    liquid1: list[float] = []
+    liquid2: list[float] = []
+    if all(_finite_float(row.get(field)) for field in ("liquid1_x1", "liquid1_x2", "liquid2_x1", "liquid2_x2")):
+        liquid1 = [float(row["liquid1_x1"]), float(row["liquid1_x2"])]
+        liquid2 = [float(row["liquid2_x1"]), float(row["liquid2_x2"])]
+        if not _composition_valid(liquid1) or not _composition_valid(liquid2):
+            blockers.append("cloud_shadow_pair_composition_invalid")
+
+    pressure_pa = float(row["pressure_Pa"]) if _finite_float(row.get("pressure_Pa")) else None
+    if pressure_pa is not None and not math.isclose(
+        pressure_pa, EXPECTED_CLOUD_SHADOW_PRESSURE_PA, rel_tol=0.0, abs_tol=1.0e-6
+    ):
+        blockers.append("cloud_shadow_pair_pressure_mismatch")
+
+    threshold = thresholds.get("source_temperature_pair_abs_K")
+    if not _positive_finite_float(threshold):
+        blockers.append("cloud_shadow_source_temperature_threshold_invalid")
+        threshold_value = None
+    else:
+        threshold_value = float(threshold)
+    gap = float(row["temperature_difference_K"]) if _finite_float(row.get("temperature_difference_K")) else None
+    if gap is not None and threshold_value is not None and abs(gap) > threshold_value:
+        blockers.append("cloud_shadow_pair_temperature_gap_exceeds_threshold")
+
+    phase_distance_min = thresholds.get("phase_distance_min")
+    phase_distance = abs(liquid2[0] - liquid1[0]) if liquid1 and liquid2 else None
+    if phase_distance is not None and _positive_finite_float(phase_distance_min):
+        if phase_distance <= float(phase_distance_min):
+            blockers.append("cloud_shadow_pair_phase_distance_below_threshold")
+
+    return (
+        {
+            "paired_cloud_shadow_count": 1,
+            "paired_branch_compositions": [liquid1, liquid2] if liquid1 and liquid2 else [],
+            "paired_pressure_Pa": pressure_pa,
+            "branch_temperature_gap_K": gap,
+            "branch_temperature_gap_threshold_K": threshold_value,
+            "source_row_pair": row.get("source_row_pair"),
+            "phase_distance_x1": phase_distance,
+        },
+        blockers,
+    )
+
+
+def evaluate_cloud_shadow_gate(
+    case_dir: Path = DEFAULT_CLOUD_SHADOW_CASE_DIR,
+    *,
+    workflows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    case_dir = Path(case_dir)
+    source_data_blockers = [
+        f"missing_required_file:{name}" for name in REQUIRED_CLOUD_SHADOW_FILES if not (case_dir / name).exists()
+    ]
+    metadata: dict[str, Any] = {}
+    thresholds: dict[str, Any] = {}
+    binodal_payload: dict[str, Any] = {
+        "binodal_point_count": 0,
+        "pressure_kPa": None,
+        "temperature_range_K": [],
+        "composition_range_x1": [],
+        "method_set": [],
+        "source_datasets": [],
+    }
+    pair_payload: dict[str, Any] = {
+        "paired_cloud_shadow_count": 0,
+        "paired_branch_compositions": [],
+        "paired_pressure_Pa": None,
+        "branch_temperature_gap_K": None,
+        "branch_temperature_gap_threshold_K": None,
+        "source_row_pair": None,
+        "phase_distance_x1": None,
+    }
+
+    if (case_dir / "metadata.json").exists():
+        metadata = _read_json(case_dir / "metadata.json")
+        source_data_blockers.extend(_cloud_shadow_metadata_blockers(metadata))
+    if (case_dir / "thresholds.json").exists():
+        thresholds = _read_json(case_dir / "thresholds.json")
+    if (case_dir / "source_binodal_points.csv").exists():
+        binodal_payload, blockers = _cloud_shadow_binodal_payload(_read_csv(case_dir / "source_binodal_points.csv"))
+        source_data_blockers.extend(blockers)
+    if (case_dir / "experimental_tielines.csv").exists():
+        pair_payload, blockers = _cloud_shadow_pair_payload(_read_csv(case_dir / "experimental_tielines.csv"), thresholds)
+        source_data_blockers.extend(blockers)
+
+    for workflow in workflows if workflows is not None else _workflow_contracts():
+        if workflow.get("label") in {"Cloud point", "Shadow point"} and workflow.get("routes"):
+            source_data_blockers.append(f"cloud_shadow_unproven_runtime_route_claim:{workflow['label']}")
+
+    source_data_blockers = sorted(set(source_data_blockers))
+    payload = {
+        "complete": not source_data_blockers,
+        "status": "source_data_gate_complete" if not source_data_blockers else "source_data_gate_blocked",
+        "source_fixture": _repo_relative_path(case_dir),
+        "species": metadata.get("species", EXPECTED_CLOUD_SHADOW_SPECIES),
+        "source_data_blockers": source_data_blockers,
+        "route_admission_blockers": ROUTE_ADMISSION_BLOCKERS,
+        **binodal_payload,
+        **pair_payload,
+    }
+    return payload
 
 
 def _string_list(value: Any) -> list[str]:
@@ -603,15 +888,32 @@ def evaluate_boundary_payload(payload: dict[str, Any]) -> dict[str, Any]:
 def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blockers: list[str]) -> dict[str, Any]:
     summary = _route_point_summary(workflows)
     trace_result = evaluate_boundary_payload({"workflows": workflows})
-    all_blockers = list(dict.fromkeys([*blockers, *trace_result["blockers"]]))
-    complete = summary["requested_route_point_count"] > 0 and summary["failed_route_point_count"] == 0 and not all_blockers
-    if not args.run_current_boundary_route:
+    cloud_shadow_gate = (
+        evaluate_cloud_shadow_gate(args.cloud_shadow_case_dir, workflows=workflows)
+        if getattr(args, "cloud_shadow_gate", False)
+        else None
+    )
+    cloud_shadow_blockers = cloud_shadow_gate["source_data_blockers"] if cloud_shadow_gate else []
+    all_blockers = list(dict.fromkeys([*blockers, *trace_result["blockers"], *cloud_shadow_blockers]))
+    route_complete = (
+        summary["requested_route_point_count"] > 0
+        and summary["failed_route_point_count"] == 0
+        and not blockers
+        and not trace_result["blockers"]
+    )
+    if cloud_shadow_gate and not args.run_current_boundary_route:
+        complete = bool(cloud_shadow_gate["complete"])
+    else:
+        complete = route_complete and not all_blockers
+    if cloud_shadow_gate and not args.run_current_boundary_route:
+        status = "cloud_shadow_gate_complete" if complete else "cloud_shadow_gate_blocked"
+    elif not args.run_current_boundary_route:
         status = "contracts_available"
     elif complete:
         status = "complete_route_convergence"
     else:
         status = "blocked_route_convergence"
-    return {
+    payload = {
         "boundary_status": status,
         "complete": complete,
         "source_fixture": _source_fixture(args.case_dir),
@@ -626,9 +928,14 @@ def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blo
         "blockers": all_blockers,
         "workflows": workflows,
     }
+    if cloud_shadow_gate:
+        payload["cloud_shadow_gate"] = cloud_shadow_gate
+    return payload
 
 
 def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    if getattr(args, "require_cloud_shadow_gate", False):
+        args.cloud_shadow_gate = True
     selected_route_count = len(_selected_routes(args.route)) if args.run_current_boundary_route else 0
     requested_route_point_count = selected_route_count * int(args.route_point_count)
     if requested_route_point_count > 1 and not args.allow_route_sweep:
@@ -646,6 +953,8 @@ def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
     if args.contracts_only or not args.run_current_boundary_route:
         payload = _base_payload(args, _workflow_contracts(), [])
+        if args.require_cloud_shadow_gate and not payload.get("cloud_shadow_gate", {}).get("complete", False):
+            return payload, 2
         return payload, 0
 
     if not _native_ipopt_compiled():
@@ -663,8 +972,19 @@ def evaluate(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Check derived boundary workflow contracts.")
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
+    parser.add_argument("--cloud-shadow-case-dir", type=Path, default=DEFAULT_CLOUD_SHADOW_CASE_DIR)
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument("--contracts-only", action="store_true", help="Check workflow contracts without route solves.")
+    parser.add_argument(
+        "--cloud-shadow-gate",
+        action="store_true",
+        help="Check retained cloud/shadow source-data gate without running native cloud/shadow routes.",
+    )
+    parser.add_argument(
+        "--require-cloud-shadow-gate",
+        action="store_true",
+        help="Return nonzero unless the retained cloud/shadow source-data gate passes.",
+    )
     parser.add_argument(
         "--run-current-boundary-route",
         action="store_true",
@@ -699,6 +1019,22 @@ def _print_text(payload: dict[str, Any]) -> None:
         print("blockers:")
         for blocker in payload["blockers"]:
             print(f"  - {blocker}")
+    if "cloud_shadow_gate" in payload:
+        gate = payload["cloud_shadow_gate"]
+        print(f"cloud_shadow_gate: status={gate['status']} complete={gate['complete']}")
+        print(f"  source_fixture: {gate['source_fixture']}")
+        print(
+            f"  binodal_points={gate['binodal_point_count']} "
+            f"paired_cloud_shadow={gate['paired_cloud_shadow_count']}"
+        )
+        if gate["source_data_blockers"]:
+            print("  source_data_blockers:")
+            for blocker in gate["source_data_blockers"]:
+                print(f"    - {blocker}")
+        if gate["route_admission_blockers"]:
+            print("  route_admission_blockers:")
+            for blocker in gate["route_admission_blockers"]:
+                print(f"    - {blocker}")
     for workflow in payload["workflows"]:
         print(
             f"{workflow['label']}: runtime={workflow['runtime_status']} "
