@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-last_synced: "2026-06-13"
+last_synced: "2026-06-15"
 ---
 
 # Derive boundary workflows and generalized phase-set PE from neutral GFPE
@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252 and #256 closed as AFK child issues; #258 is open as the next AFK child.
+AFK/HITL: HITL umbrella; #252, #256, and #258 closed as AFK child issues.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -37,11 +37,11 @@ Generalize from the neutral GFPE proof into boundary workflows and phase-set pha
 HITL umbrella for boundary workflows and generalized phase-set PE. #252 closed
 the first AFK implementation slice for neutral generalized phase-set
 diagnostics; #256 closed through #257 with retained bubble/dew boundary traces
-and stricter generalized phase-set rejection diagnostics. #258 is open for the
-retained cloud/shadow source-data gate and must keep native route admission
-closed. The umbrella remains open until cloud/shadow route admission, generalized
-phase-set completion, and public capability admission gates are separately
-proven.
+and stricter generalized phase-set rejection diagnostics; #258 closed through
+#259 with the retained cloud/shadow source-data gate while keeping native route
+admission closed. The umbrella remains open until cloud/shadow route admission,
+generalized phase-set completion, and public capability admission gates are
+separately proven.
 
 ## Supplemental Context
 
@@ -81,6 +81,6 @@ proven.
 - Capability: `lle`
 - Backend: `Ipopt`
 - Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252 and #256 closed`
+- AFK/HITL: `HITL umbrella; #252, #256, and #258 closed`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
