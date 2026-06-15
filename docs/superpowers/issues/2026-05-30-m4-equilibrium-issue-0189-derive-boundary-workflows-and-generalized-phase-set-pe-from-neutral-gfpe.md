@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252 completed the first AFK child issue, and #256 is the next AFK child for boundary workflow traces.
+AFK/HITL: HITL umbrella; #252 and #256 closed as AFK child issues.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -36,8 +36,8 @@ Generalize from the neutral GFPE proof into boundary workflows and phase-set pha
 #189 is no longer dependency-blocked after #188 and #241 closed. It remains the
 HITL umbrella for boundary workflows and generalized phase-set PE. #252 closed
 the first AFK implementation slice for neutral generalized phase-set
-diagnostics; #256 adds retained bubble/dew boundary traces and stricter
-generalized phase-set rejection diagnostics. The umbrella remains open until
+diagnostics; #256 closed through #257 with retained bubble/dew boundary traces
+and stricter generalized phase-set rejection diagnostics. The umbrella remains open until
 cloud/shadow, generalized phase-set completion, and public capability admission
 gates are separately proven.
 
@@ -77,6 +77,6 @@ gates are separately proven.
 - Capability: `lle`
 - Backend: `Ipopt`
 - Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252 closed, #256 is AFK`
+- AFK/HITL: `HITL umbrella; #252 and #256 closed`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
