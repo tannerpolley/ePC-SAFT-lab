@@ -54,6 +54,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
+| [#260](../../issues/2026-06-15-m4-equilibrium-issue-0260-checker-gated-native-cloud-shadow-isobaric-route-evidence.md) | `lle` | `Ipopt` | `ready` | AFK child for checker-gated native Matsuda/NIST isobaric cloud/shadow route evidence without public route-key exposure. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -84,6 +85,10 @@ This preserves the public capability boundary and does not close #189.
 #258 closed through #259 with a retained cloud/shadow source-data gate from the
 Matsuda/NIST perfluorohexane + hexane neutral LLE fixture. The gate keeps
 cloud/shadow native runtime routes empty and does not close #189.
+
+#260 is the next #189 AFK child. It targets one checker-gated native isobaric
+cloud/shadow route-evidence point against the retained Matsuda/NIST paired
+branch while keeping public cloud/shadow route keys closed.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
 for boundary workflows and generalized phase-set PE. #190 and #191 remain
