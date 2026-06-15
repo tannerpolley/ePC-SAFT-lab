@@ -483,6 +483,14 @@ the route does not strictly converge. Use
 `--json --run-current-boundary-route --allow-route-sweep --route-point-count
 <N> --require-complete` only for intentional boundary route-point validation; it is not a
 routine validation lane.
+Every requested current bubble/dew route point must carry a complete
+`boundary_trace` record. The trace records the route, workflow label, diagram
+target, known and free variables, solved boundary variable, fixed composition
+role, phase roles, source fixture, selector family, problem name, shared NLP
+residual and constraint families, strict solver/application status, seed
+attempt status, and finite residual norms. Missing trace fields, mismatched
+known/free variables, absent residual families, non-strict convergence, or an
+iteration-limit seed path are failed boundary evidence.
 
 ## Family Validation Ladder
 
@@ -516,8 +524,10 @@ routine validation lane.
 - current retained internal diagnostic: `uv run --no-sync python
   scripts/validation/check_generalized_phase_set.py --json --require-complete`
   proves neutral three-candidate phase-set records, selected/rejected row
-  reasons, mass-balance feasibility, noncollapsed selected compositions, and
-  no public `neutral_multiphase_nonassoc` exposure;
+  reasons including duplicate/collapsed, infeasible, lower-free-energy omitted,
+  uncertified, and generic unselected rejected candidates, mass-balance
+  feasibility, noncollapsed selected compositions, and no public
+  `neutral_multiphase_nonassoc` exposure;
 - first validation target: replay representative neutral, associating, and electrolyte
   cases through the same phase-set discovery contract;
 - required before exposure: complete candidate phase set, mass-balance

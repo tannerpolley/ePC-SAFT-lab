@@ -36,8 +36,10 @@ Generalize from the neutral GFPE proof into boundary workflows and phase-set pha
 #189 is no longer dependency-blocked after #188 and #241 closed. It remains the
 HITL umbrella for boundary workflows and generalized phase-set PE. #252 closed
 the first AFK implementation slice for neutral generalized phase-set
-diagnostics; #256 owns the next AFK slice for retained bubble/dew boundary
-traces and stricter generalized phase-set rejection diagnostics.
+diagnostics; #256 adds retained bubble/dew boundary traces and stricter
+generalized phase-set rejection diagnostics. The umbrella remains open until
+cloud/shadow, generalized phase-set completion, and public capability admission
+gates are separately proven.
 
 ## Supplemental Context
 

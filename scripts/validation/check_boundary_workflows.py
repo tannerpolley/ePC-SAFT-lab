@@ -31,6 +31,8 @@ DEFAULT_CASE_DIR = runtime.DEFAULT_NEUTRAL_TP_FLASH_CASE_DIR
 BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
     "bubble_pressure": {
         "workflow_label": "Bubble point",
+        "selector_family": "bubble_dew_derived_routes",
+        "problem_name": "neutral_bubble_p_eos",
         "diagram_target": "P-x",
         "source_phase": "liquid",
         "composition_role": "liquid",
@@ -40,6 +42,8 @@ BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
     },
     "bubble_temperature": {
         "workflow_label": "Bubble point",
+        "selector_family": "bubble_dew_derived_routes",
+        "problem_name": "neutral_bubble_t_eos",
         "diagram_target": "T-x",
         "source_phase": "liquid",
         "composition_role": "liquid",
@@ -49,6 +53,8 @@ BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
     },
     "dew_pressure": {
         "workflow_label": "Dew point",
+        "selector_family": "bubble_dew_derived_routes",
+        "problem_name": "neutral_dew_p_eos",
         "diagram_target": "P-x",
         "source_phase": "vapor",
         "composition_role": "vapor",
@@ -58,6 +64,8 @@ BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
     },
     "dew_temperature": {
         "workflow_label": "Dew point",
+        "selector_family": "bubble_dew_derived_routes",
+        "problem_name": "neutral_dew_t_eos",
         "diagram_target": "T-x",
         "source_phase": "vapor",
         "composition_role": "vapor",
@@ -66,6 +74,59 @@ BOUNDARY_ROUTES: dict[str, dict[str, Any]] = {
         "free_variables": ("T", "x", "phase_volumes"),
     },
 }
+
+BOUNDARY_TRACE_SCHEMA_VERSION = 1
+REQUIRED_BOUNDARY_TRACE_FIELDS = {
+    "schema_version",
+    "route",
+    "workflow_label",
+    "workflow_kind",
+    "diagram_target",
+    "known_variables",
+    "free_variables",
+    "solved_boundary_variable",
+    "fixed_composition_role",
+    "phase_roles",
+    "source_fixture",
+    "selector_family",
+    "problem_name",
+    "variable_model",
+    "density_backend",
+    "residual_families",
+    "constraint_families",
+    "strict_convergence",
+    "solver_status",
+    "application_status",
+    "seed_attempts",
+    "iteration_limit_seed_attempts",
+    "residuals",
+}
+REQUIRED_BOUNDARY_RESIDUALS = (
+    "material_balance_norm",
+    "pressure_consistency_norm",
+    "ln_fugacity_consistency_norm",
+    "scaled_constraint_violation_inf_norm",
+)
+REQUIRED_BOUNDARY_RESIDUAL_FAMILY_GROUPS = {
+    "material_closure": {"material_balance", "phase_amount_total"},
+    "pressure_consistency": {"phase_pressure_consistency"},
+    "phase_equilibrium": {"phase_equilibrium"},
+    "phase_distance": {"phase_distance"},
+}
+REQUIRED_BOUNDARY_CONSTRAINT_FAMILY_GROUPS = {
+    "material_closure": {"material_balance", "phase_amount_total"},
+    "pressure_consistency": {"phase_pressure_consistency"},
+}
+
+
+def _finite_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [str(item) for item in value]
 
 
 def _workflow_contracts(route_points_by_label: dict[str, list[dict[str, Any]]] | None = None) -> list[dict[str, Any]]:
@@ -277,16 +338,64 @@ def _solved_boundary_value(route: str, spec: dict[str, Any], route_payload: dict
     return native_route_solved_temperature(route_payload, route)
 
 
+def _boundary_trace(
+    route: str,
+    spec: dict[str, Any],
+    source_fixture: str,
+    composition: list[float],
+    route_payload: dict[str, Any],
+    seed_attempts: list[dict[str, Any]],
+    iteration_limit_attempts: list[str],
+    strict: bool,
+    residuals: dict[str, float | None],
+) -> dict[str, Any]:
+    physical_evidence = route_payload.get("physical_evidence")
+    physical_evidence = physical_evidence if isinstance(physical_evidence, dict) else {}
+    return {
+        "schema_version": BOUNDARY_TRACE_SCHEMA_VERSION,
+        "route": route,
+        "workflow_label": spec["workflow_label"],
+        "workflow_kind": "derived_boundary",
+        "diagram_target": spec["diagram_target"],
+        "known_variables": list(spec["fixed_variables"]),
+        "free_variables": list(spec["free_variables"]),
+        "solved_boundary_variable": spec["boundary_variable"],
+        "fixed_composition_role": spec["composition_role"],
+        "fixed_composition": composition,
+        "phase_labels": route_payload.get("phase_labels", physical_evidence.get("phase_labels", [])),
+        "phase_roles": route_payload.get("phase_roles", physical_evidence.get("phase_roles", [])),
+        "phase_amounts": route_payload.get("phase_amounts", []),
+        "phase_volumes": route_payload.get("phase_volumes", []),
+        "source_fixture": source_fixture,
+        "selector_family": route_payload.get("selector_family", spec["selector_family"]),
+        "problem_name": route_payload.get("problem_name", spec["problem_name"]),
+        "variable_model": route_payload.get("variable_model"),
+        "density_backend": route_payload.get("density_backend"),
+        "residual_families": route_payload.get("residual_families", []),
+        "constraint_families": route_payload.get("constraint_families", []),
+        "shared_nlp_contract": "neutral_amount_volume_phase_nlp",
+        "derivation": "degree_of_freedom_swap",
+        "strict_convergence": strict,
+        "solver_status": route_payload.get("solver_status"),
+        "application_status": route_payload.get("application_status"),
+        "seed_attempts": seed_attempts,
+        "iteration_limit_seed_attempts": iteration_limit_attempts,
+        "residuals": residuals,
+    }
+
+
 def _route_point_result(
     route: str,
     sample_index: int,
     composition: list[float],
     route_payload: dict[str, Any],
+    source_fixture: str,
 ) -> dict[str, Any]:
     spec = BOUNDARY_ROUTES[route]
     seed_attempts = _seed_attempt_summary(route_payload)
     iteration_limit_attempts = _iteration_limit_seed_attempts(route_payload)
     strict = _strict_convergence(route_payload, iteration_limit_attempts)
+    residuals = _residuals(route_payload)
     selected_seed = route_payload.get("seed_name") or next(
         (attempt["seed_name"] for attempt in seed_attempts if attempt.get("accepted")),
         None,
@@ -314,7 +423,18 @@ def _route_point_result(
         "iteration_history": route_payload.get("iteration_history", []),
         "ipopt_print_level": route_payload.get("ipopt_print_level"),
         "option_profile": route_payload.get("option_profile"),
-        "residuals": _residuals(route_payload),
+        "residuals": residuals,
+        "boundary_trace": _boundary_trace(
+            route,
+            spec,
+            source_fixture,
+            composition,
+            route_payload,
+            seed_attempts,
+            iteration_limit_attempts,
+            strict,
+            residuals,
+        ),
     }
 
 
@@ -331,6 +451,7 @@ def _run_route_points(args: argparse.Namespace) -> tuple[dict[str, list[dict[str
     mix = runtime.mixture(args.case_dir, species)
     blockers: list[str] = []
     route_points_by_label: dict[str, list[dict[str, Any]]] = {}
+    source_fixture = _source_fixture(args.case_dir)
     for route in _selected_routes(args.route):
         spec = BOUNDARY_ROUTES[route]
         row = rows[str(spec["source_phase"])]
@@ -343,7 +464,7 @@ def _run_route_points(args: argparse.Namespace) -> tuple[dict[str, list[dict[str
                 debug=bool(args.debug),
                 max_iterations=int(args.max_iterations),
             )
-            point = _route_point_result(route, sample_index, composition, payload)
+            point = _route_point_result(route, sample_index, composition, payload, source_fixture)
             route_points_by_label.setdefault(str(spec["workflow_label"]), []).append(point)
             if point["status"] != "accepted":
                 blockers.append(f"{route}_strict_convergence_missing")
@@ -367,9 +488,123 @@ def _source_fixture(case_dir: Path) -> str:
         return str(case_dir.resolve())
 
 
+def _trace_points(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    points = []
+    workflows = payload.get("workflows")
+    if not isinstance(workflows, list):
+        return points
+    for workflow in workflows:
+        if not isinstance(workflow, dict):
+            continue
+        route_points = workflow.get("route_points")
+        if not isinstance(route_points, list):
+            continue
+        for point in route_points:
+            if isinstance(point, dict):
+                points.append(point)
+    return points
+
+
+def _validate_boundary_trace(point: dict[str, Any]) -> list[str]:
+    route = str(point.get("route", ""))
+    sample_index = point.get("sample_index", 0)
+    route_label = route if route else "unknown_route"
+    if route not in BOUNDARY_ROUTES:
+        return [f"unknown_boundary_route:{route_label}:{sample_index}"]
+    spec = BOUNDARY_ROUTES[route]
+    trace = point.get("boundary_trace")
+    if not isinstance(trace, dict):
+        return [f"missing_boundary_trace:{route}:{sample_index}"]
+
+    blockers: list[str] = []
+    for field in sorted(REQUIRED_BOUNDARY_TRACE_FIELDS):
+        if field not in trace:
+            blockers.append(f"malformed_boundary_trace:{route}:{field}")
+
+    if trace.get("schema_version") != BOUNDARY_TRACE_SCHEMA_VERSION:
+        blockers.append(f"boundary_trace_schema_version_mismatch:{route}")
+    if trace.get("route") != route:
+        blockers.append(f"boundary_trace_route_mismatch:{route}")
+    if trace.get("workflow_label") != spec["workflow_label"]:
+        blockers.append(f"boundary_trace_workflow_label_mismatch:{route}")
+    if trace.get("workflow_kind") != "derived_boundary":
+        blockers.append(f"boundary_trace_workflow_kind_mismatch:{route}")
+    if trace.get("diagram_target") != spec["diagram_target"]:
+        blockers.append(f"boundary_trace_diagram_target_mismatch:{route}")
+    if _string_list(trace.get("known_variables")) != list(spec["fixed_variables"]):
+        blockers.append(f"boundary_trace_known_variables_mismatch:{route}")
+    if _string_list(trace.get("free_variables")) != list(spec["free_variables"]):
+        blockers.append(f"boundary_trace_free_variables_mismatch:{route}")
+    if trace.get("solved_boundary_variable") != spec["boundary_variable"]:
+        blockers.append(f"boundary_trace_solved_variable_mismatch:{route}")
+    if trace.get("fixed_composition_role") != spec["composition_role"]:
+        blockers.append(f"boundary_trace_composition_role_mismatch:{route}")
+    if trace.get("selector_family") != spec["selector_family"]:
+        blockers.append(f"boundary_trace_selector_family_mismatch:{route}")
+    if trace.get("problem_name") != spec["problem_name"]:
+        blockers.append(f"boundary_trace_problem_name_mismatch:{route}")
+
+    if not _string_list(trace.get("phase_roles")):
+        blockers.append(f"boundary_trace_missing_phase_roles:{route}")
+
+    residual_families = set(_string_list(trace.get("residual_families")))
+    for group_name, aliases in REQUIRED_BOUNDARY_RESIDUAL_FAMILY_GROUPS.items():
+        if not residual_families.intersection(aliases):
+            blockers.append(f"boundary_trace_missing_residual_family:{route}:{group_name}")
+
+    constraint_families = set(_string_list(trace.get("constraint_families")))
+    for group_name, aliases in REQUIRED_BOUNDARY_CONSTRAINT_FAMILY_GROUPS.items():
+        if not constraint_families.intersection(aliases):
+            blockers.append(f"boundary_trace_missing_constraint_family:{route}:{group_name}")
+
+    if trace.get("strict_convergence") is not True or point.get("strict_convergence") is not True:
+        blockers.append(f"boundary_trace_strict_convergence_missing:{route}")
+    if trace.get("solver_status") != "success" or point.get("solver_status") != "success":
+        blockers.append(f"boundary_trace_solver_status_not_success:{route}")
+    if trace.get("application_status") != "solve_succeeded" or point.get("application_status") != "solve_succeeded":
+        blockers.append(f"boundary_trace_application_status_not_succeeded:{route}")
+    if trace.get("iteration_limit_seed_attempts") or point.get("iteration_limit_seed_attempts"):
+        blockers.append(f"boundary_trace_iteration_limit_seed_attempt:{route}")
+
+    solved_boundary_value = point.get("solved_boundary_value")
+    if not _finite_number(solved_boundary_value) or float(solved_boundary_value) <= 0.0:
+        blockers.append(f"boundary_trace_nonfinite_solved_boundary_value:{route}")
+
+    residuals = trace.get("residuals")
+    residuals = residuals if isinstance(residuals, dict) else {}
+    for residual in REQUIRED_BOUNDARY_RESIDUALS:
+        if not _finite_number(residuals.get(residual)):
+            blockers.append(f"boundary_trace_missing_residual:{route}:{residual}")
+
+    return blockers
+
+
+def evaluate_boundary_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    points = _trace_points(payload)
+    blockers: list[str] = []
+    accepted = 0
+    for point in points:
+        point_blockers = _validate_boundary_trace(point)
+        blockers.extend(point_blockers)
+        if not point_blockers and point.get("status") == "accepted":
+            accepted += 1
+    blockers = sorted(set(blockers))
+    return {
+        "complete": bool(points) and not blockers,
+        "blockers": blockers,
+        "trace_summary": {
+            "total": len(points),
+            "accepted": accepted,
+            "failed": len(points) - accepted,
+        },
+    }
+
+
 def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blockers: list[str]) -> dict[str, Any]:
     summary = _route_point_summary(workflows)
-    complete = summary["requested_route_point_count"] > 0 and summary["failed_route_point_count"] == 0 and not blockers
+    trace_result = evaluate_boundary_payload({"workflows": workflows})
+    all_blockers = list(dict.fromkeys([*blockers, *trace_result["blockers"]]))
+    complete = summary["requested_route_point_count"] > 0 and summary["failed_route_point_count"] == 0 and not all_blockers
     if not args.run_current_boundary_route:
         status = "contracts_available"
     elif complete:
@@ -382,7 +617,13 @@ def _base_payload(args: argparse.Namespace, workflows: list[dict[str, Any]], blo
         "source_fixture": _source_fixture(args.case_dir),
         "requested_route_point_count": summary["requested_route_point_count"],
         "route_point_summary": summary,
-        "blockers": blockers,
+        "boundary_trace_status": (
+            "not_requested"
+            if summary["requested_route_point_count"] == 0
+            else ("complete" if trace_result["complete"] else "blocked")
+        ),
+        "boundary_trace_summary": trace_result["trace_summary"],
+        "blockers": all_blockers,
         "workflows": workflows,
     }
 

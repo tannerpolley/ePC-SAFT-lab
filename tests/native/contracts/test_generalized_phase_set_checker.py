@@ -95,3 +95,42 @@ def test_checker_rejects_public_route_exposure() -> None:
 
     assert result["complete"] is False
     assert "neutral_multiphase_public_route_exposed" in result["blockers"]
+
+
+def test_checker_rejects_lower_free_energy_omitted_candidate_without_distinct_diagnostic() -> None:
+    records = [
+        _record(0, selected=True, composition=[0.2, 0.3, 0.5]),
+        _record(1, selected=True, composition=[0.3, 0.3, 0.4]),
+        _record(2, selected=True, composition=[0.4, 0.2, 0.4]),
+        _record(3, selected=False, composition=[0.1, 0.1, 0.8]),
+    ]
+    for selected in records[:3]:
+        selected["objective"] = 0.0
+        selected["tpd"] = 0.0
+    records[3]["objective"] = -1.0
+    records[3]["tpd"] = -1.0
+    records[3]["feasibility_status"] = "converged"
+    records[3]["rejection_reason"] = "not_selected_by_generalized_phase_set_gate"
+
+    result = checker.evaluate_payload(_payload(records=records))
+
+    assert result["complete"] is False
+    assert "lower_free_energy_omitted_candidate" in result["blockers"]
+
+
+def test_checker_rejects_uncertified_phase_set_records_with_named_blocker() -> None:
+    records = [_record(0, selected=True), _record(1, selected=True), _record(2, selected=True), _record(3, selected=False)]
+    for record in records:
+        record["phase_set_status"] = "stability_uncertified"
+        record["stability_accepted"] = False
+        record["candidate_completeness_accepted"] = False
+
+    payload = _payload(records=records)
+    payload["postsolve"]["phase_set_status"] = "stability_uncertified"
+    payload["postsolve"]["stability_accepted"] = False
+    payload["postsolve"]["candidate_completeness_accepted"] = False
+
+    result = checker.evaluate_payload(payload)
+
+    assert result["complete"] is False
+    assert "uncertified_phase_set_record" in result["blockers"]

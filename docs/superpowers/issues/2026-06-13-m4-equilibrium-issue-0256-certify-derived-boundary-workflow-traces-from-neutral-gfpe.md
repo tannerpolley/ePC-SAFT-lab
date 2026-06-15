@@ -54,12 +54,12 @@ without exposing a public generalized multiphase route.
 
 ## Acceptance Criteria
 
-- [ ] `check_boundary_workflows.py` emits a `boundary_trace` row for every requested current bubble/dew route point.
-- [ ] Boundary traces record route, workflow label, diagram target, known variables, free variables, solved boundary variable, fixed composition role, phase roles, source fixture, shared NLP/residual families, selector family, problem name, solver status, application status, strict convergence, and residual norms.
-- [ ] The checker fails when trace fields are missing, known/free variables are mismatched, residual families are absent, strict convergence fails, or any seed attempt hits the iteration limit.
-- [ ] `check_generalized_phase_set.py` distinguishes duplicate/collapsed, infeasible, lower-free-energy omitted, uncertified, and generic unselected rejected candidates with named blockers or rejection reasons.
-- [ ] `neutral_multiphase_nonassoc` remains absent from public routes and capabilities.
-- [ ] `PE-Generalized Multiphase` remains `planned_not_public`; docs and registry text do not claim public generalized multiphase, associating LLLE, electrolyte, or reactive support.
+- [x] `check_boundary_workflows.py` emits a `boundary_trace` row for every requested current bubble/dew route point.
+- [x] Boundary traces record route, workflow label, diagram target, known variables, free variables, solved boundary variable, fixed composition role, phase roles, source fixture, shared NLP/residual families, selector family, problem name, solver status, application status, strict convergence, and residual norms.
+- [x] The checker fails when trace fields are missing, known/free variables are mismatched, residual families are absent, strict convergence fails, or any seed attempt hits the iteration limit.
+- [x] `check_generalized_phase_set.py` distinguishes duplicate/collapsed, infeasible, lower-free-energy omitted, uncertified, and generic unselected rejected candidates with named blockers or rejection reasons.
+- [x] `neutral_multiphase_nonassoc` remains absent from public routes and capabilities.
+- [x] `PE-Generalized Multiphase` remains `planned_not_public`; docs and registry text do not claim public generalized multiphase, associating LLLE, electrolyte, or reactive support.
 
 ## Blocked By
 
@@ -92,7 +92,7 @@ uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/
 ```
 
 ```powershell
-uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py -q
+uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py -q
 ```
 
 ```powershell
@@ -143,11 +143,25 @@ Proof oracle:
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py tests/native/contracts/test_boundary_workflow_checker.py tests/native/contracts/test_generalized_phase_set_checker.py -q
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py -q
-uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py -q
+uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py -q
 uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete
 uv run --no-sync python scripts/dev/validate_project.py docs
+
+## Resolution Evidence
+
+All #256 proof commands passed on branch
+`codex/issue-0256-boundary-workflow-traces`:
+
+- `uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4`
+- `uv run --no-sync python run_pytest.py tests/native/contracts/test_boundary_workflow_checker.py tests/native/contracts/test_generalized_phase_set_checker.py -q` -> 13 passed.
+- `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py -q` -> 31 passed.
+- `uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/epcsaft-equilibrium/tests/native/results/test_neutral_vle_reference_values.py -q` -> 1 passed.
+- `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete` -> complete, selected 3, rejected 3.
+- `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only` -> contracts available.
+- `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` -> complete boundary route convergence, four accepted bubble/dew route points, complete boundary traces.
+- `uv run --no-sync python scripts/dev/validate_project.py docs`
 
 ## Tracker Metadata
 
