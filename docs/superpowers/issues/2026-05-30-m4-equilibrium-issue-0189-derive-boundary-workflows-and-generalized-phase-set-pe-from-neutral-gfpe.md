@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252, #256, #258, and #260 closed as AFK child issues; #263 is the current ready AFK child and blocks #261 until strict residual refinement is merged.
+AFK/HITL: HITL umbrella; #252, #256, #258, #260, and #263 closed as AFK child issues; #261 is the current ready AFK child for generalized phase-set certification.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -41,11 +41,11 @@ and stricter generalized phase-set rejection diagnostics; #258 closed through
 #259 with the retained cloud/shadow source-data gate while keeping native route
 admission closed; #260 closed through #262 with checker-gated native isobaric
 cloud/shadow route evidence while keeping public cloud/shadow route keys
-closed. #263 is the current ready AFK child and owns the strict multiphase
-fugacity-residual route required before #261 can honestly complete generalized
-phase-set certification. #261 is blocked by #263 and will resume after the
-strict residual route proves Stage II candidate-set replay plus strict Stage
-III residual refinement for the requested neutral multiphase phase-kind list.
+closed; #263 closed through #265 with the strict multiphase fugacity-residual
+route required before #261 can honestly complete generalized phase-set
+certification. #261 is now ready and should consume the strict residual proof
+for Stage II candidate-set replay plus strict Stage III residual refinement for
+the requested neutral multiphase phase-kind list.
 The umbrella remains open until generalized phase-set completion and public
 capability admission gates are separately proven.
 
@@ -82,12 +82,12 @@ capability admission gates are separately proven.
 
 ## #263 Evidence Added
 
-#263 adds a private strict neutral multiphase fugacity-residual route for the
+#263 closed through #265 and added a private strict neutral multiphase fugacity-residual route for the
 Stage II candidate-set replay. The retained checker now requires
 `route_refinement_kind: strict_fugacity_residual`, exact reduced residual
 derivative metadata, Stage III replay consumption, accepted postsolve, and no
 public `neutral_multiphase_nonassoc` exposure. This is the immediate proof #261
-should consume after #263 merges; it still does not complete final public
+should consume; it still does not complete final public
 generalized multiphase admission for #189.
 
 ## Non-Goals And Boundaries
@@ -103,6 +103,6 @@ generalized multiphase admission for #189.
 - Capability: `lle`
 - Backend: `Ipopt`
 - Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252, #256, #258, and #260 closed; #263 ready; #261 blocked by #263`
+- AFK/HITL: `HITL umbrella; #252, #256, #258, #260, and #263 closed; #261 ready`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`

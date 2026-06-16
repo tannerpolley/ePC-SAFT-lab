@@ -2,13 +2,13 @@
 issue: 263
 title: "M4: add strict multiphase fugacity residual refinement"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/263"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "closed"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md"
@@ -45,6 +45,8 @@ last_synced: "2026-06-16"
 **Merge Policy:** Repo default
 **Worktree Cleanup Policy:** Remove owned worktree after merge
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
+**Merged PR:** https://github.com/ePC-SAFT/ePC-SAFT/pull/265
+**Closed At:** 2026-06-16T22:04:22Z
 
 ## What To Build
 

@@ -58,8 +58,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
-| [#263](../../issues/2026-06-16-m4-equilibrium-issue-0263-add-strict-multiphase-fugacity-residual-refinement.md) | `lle` | `Ipopt` | `ready` | AFK child adding the private strict fugacity-residual Stage III route that #261 needs. |
-| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `blocked` | AFK child for generalized phase-set certification; resumes after #263 merges strict residual refinement. |
+| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `ready` | AFK child for generalized phase-set certification using #263 strict residual refinement evidence. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -97,14 +96,14 @@ certified neutral LLE source showcase, solves the private cloud-temperature
 route from that parent branch, compares back to the raw source-pair tolerances,
 and keeps public cloud/shadow route keys closed.
 
-#261 is the ready #189 AFK child and targets generalized phase-set
-#263 is the current #189 AFK child that supplies the strict reduced
-fugacity-residual Stage III route for the generalized neutral multiphase
-candidate-set replay. Its checker proof requires exact residual derivative
-metadata, accepted postsolve, Stage II replay consumption, and public
-`neutral_multiphase_nonassoc` route admission closed.
+#263 closed through #265 with the strict reduced fugacity-residual Stage III
+route for the generalized neutral multiphase candidate-set replay. Its checker
+proof requires exact residual derivative metadata, accepted postsolve, Stage II
+replay consumption, and public `neutral_multiphase_nonassoc` route admission
+closed.
 
-#261 remains blocked until #263 merges. Its resume command is
+#261 is the ready #189 AFK child and targets generalized phase-set
+certification. Its resume command is
 `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete`.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
@@ -127,3 +126,4 @@ blocked by their own proof gates.
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/256](https://github.com/ePC-SAFT/ePC-SAFT/issues/256) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/257](https://github.com/ePC-SAFT/ePC-SAFT/pull/257) on 2026-06-15T17:23:27Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/258](https://github.com/ePC-SAFT/ePC-SAFT/issues/258) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/259](https://github.com/ePC-SAFT/ePC-SAFT/pull/259) on 2026-06-15T22:19:05Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/260](https://github.com/ePC-SAFT/ePC-SAFT/issues/260) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/262](https://github.com/ePC-SAFT/ePC-SAFT/pull/262) on 2026-06-16T12:53:23Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/263](https://github.com/ePC-SAFT/ePC-SAFT/issues/263) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/265](https://github.com/ePC-SAFT/ePC-SAFT/pull/265) on 2026-06-16T22:04:22Z
