@@ -14,6 +14,11 @@ from equilibrium_support.equilibrium_cases import (
 )
 
 
+def _skip_without_ipopt() -> None:
+    if not _core._native_ipopt_smoke()["compiled"]:
+        pytest.skip("Ipopt native adapter is not compiled.")
+
+
 def _three_phase_hydrocarbon_case() -> tuple[object, float, float, list[list[float]], list[float], list[float]]:
     mix = _hydrocarbon_workbook_mixture()
     composition = np.asarray([0.2, 0.3, 0.5], dtype=float)
@@ -187,3 +192,60 @@ def test_internal_multiphase_phase_set_diagnostics_certify_three_phase_shape_wit
     assert payload["phase_discovery_backend"] == "continuous_tpd_held_dual_phase_discovery"
     assert payload["stability_certificate"] == "tpd_postsolve"
     assert payload["candidate_mass_balance_norm"] >= 0.0
+
+
+def test_internal_multiphase_strict_fugacity_residual_route_consumes_stage_ii_candidate_set() -> None:
+    _skip_without_ipopt()
+    mix = _symmetric_ternary_nonassociating_mixture()
+
+    payload = _core._native_neutral_multiphase_fugacity_residual_route_result(
+        mix._native,
+        200.0,
+        1.0e6,
+        [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+        [0, 0, 0],
+        320,
+        1.0e-8,
+        0.0,
+        "auto",
+        50,
+        1.0e-8,
+        1.0e-3,
+        1.0e-6,
+        1.0e-6,
+        {},
+        linear_solver="auto",
+        option_profile="held_refinement",
+        print_level=0,
+        acceptable_tolerance=1.0e-8,
+        constraint_violation_tolerance=1.0e-8,
+        dual_infeasibility_tolerance=1.0e-8,
+        complementarity_tolerance=1.0e-8,
+    )
+
+    postsolve = payload["postsolve"]
+    assert payload["route"] == "neutral_multiphase_nonassoc"
+    assert payload["route_refinement_kind"] == "strict_fugacity_residual"
+    assert payload["problem_name"] == "neutral_multiphase_fugacity_residual"
+    assert payload["solver_status"] == "success"
+    assert payload["application_status"] == "solve_succeeded"
+    assert payload["accepted"] is True
+    assert payload["exact_hessian_available"] is True
+    assert payload["hessian_backend"] == "cppad_phase_system_plus_reduced_fugacity_residual"
+    assert payload["residual_exact_jacobian_available"] is True
+    assert payload["residual_exact_hessian_available"] is True
+    assert payload["public_route_admission"] == "closed"
+    assert payload["requested_phase_kinds"] == [0, 0, 0]
+    assert payload["requested_phase_count"] == 3
+    assert payload["seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert payload["seed_attempts"]
+    assert all(attempt["status"] != "max_iterations_exceeded" for attempt in payload["seed_attempts"])
+    assert postsolve["accepted"] is True
+    assert postsolve["ln_fugacity_consistency_norm"] <= 1.0e-6
+    assert postsolve["held_stage_ii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
+    assert postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
+    assert postsolve["held_stage_iii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert postsolve["held_stage_iii_replay_candidate_count"] == postsolve["held_stage_ii_replay_candidate_count"]
+    assert postsolve["selected_candidate_count"] == 3
+    assert postsolve["phase_distance"] > 0.0

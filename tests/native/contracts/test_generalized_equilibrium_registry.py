@@ -253,6 +253,31 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert electrolyte["derivative_contract"] == expected_derivative_contract
 
 
+def test_generalized_multiphase_records_strict_internal_residual_evidence() -> None:
+    generalized = _family_by_label()["PE-Generalized Multiphase"]
+    evidence = {
+        row["evidence_label"]: row
+        for row in generalized["internal_diagnostic_evidence"]
+    }
+
+    assert generalized["production_exposed"] is False
+    assert generalized["existing_public_utility_routes"] == []
+    strict = evidence["Strict neutral multiphase fugacity-residual refinement"]
+    assert strict["command"] == (
+        "uv run --no-sync python scripts/validation/check_generalized_phase_set.py "
+        "--json --phase-kinds liquid,liquid,liquid --run-route-refinement "
+        "--require-route-refinement --require-complete"
+    )
+    assert "strict_multiphase_fugacity_residual_route" in strict["result_requirement"]
+    assert "exact_reduced_fugacity_residual_derivatives" in strict["result_requirement"]
+    assert "stage_ii_candidate_set_replay_consumed" in strict["result_requirement"]
+    assert "public_route_admission_closed" in strict["result_requirement"]
+    assert "strict_multiphase_fugacity_residual_route" in generalized["required_gates"]
+    assert "exact_reduced_fugacity_residual_derivatives" in generalized["required_gates"]
+    assert "stage_ii_candidate_set_replay_consumed" in generalized["required_gates"]
+    assert "public_route_admission_closed" in generalized["required_gates"]
+
+
 def test_benchmark_cases_reference_descriptive_family_labels() -> None:
     family_labels = set(_family_by_label())
 

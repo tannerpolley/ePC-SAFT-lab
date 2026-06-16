@@ -3,6 +3,7 @@
 #include "equilibrium/core/activated_equilibrium_nlp.h"
 #include "equilibrium/core/activation_plan.h"
 #include "equilibrium/blocks/eos_phase_block.h"
+#include "equilibrium/blocks/phase_equilibrium_residual_block.h"
 #include "eos/core_internal.h"
 #include "equilibrium/derivatives/nlp_contract_snapshot.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
@@ -1416,6 +1417,48 @@ void copy_discovery_to_postsolve(
     }
 }
 
+void apply_stage_ii_discovery_certificate_to_refined_postsolve(
+    NeutralTwoPhaseEosPostsolve& postsolve,
+    const NeutralPhaseDiscoveryResult& discovery,
+    int refined_phase_count,
+    const std::string& replay_source,
+    const std::string& replay_seed_name
+) {
+    const bool residual_metrics_accepted = postsolve.accepted;
+    const std::string residual_rejection_reason = postsolve.rejection_reason;
+
+    copy_discovery_to_postsolve(postsolve, discovery);
+    postsolve.held_stage_iii_status = "ipopt_refinement_completed_current_route";
+    postsolve.held_stage_iii_refined_phase_count = refined_phase_count;
+    postsolve.held_stage_iii_consumed_stage_ii_replay_metadata = discovery.held_stage_ii_replay_ready;
+    postsolve.held_stage_iii_replay_source = replay_source;
+    postsolve.held_stage_iii_replay_seed_name = replay_seed_name;
+    postsolve.held_stage_iii_replay_candidate_count = discovery.held_stage_ii_replay_candidate_count;
+
+    if (!residual_metrics_accepted) {
+        postsolve.accepted = false;
+        postsolve.rejection_reason = residual_rejection_reason;
+        return;
+    }
+    if (!discovery.stability_checked) {
+        postsolve.accepted = false;
+        postsolve.rejection_reason = "candidate_completeness";
+        return;
+    }
+    if (!discovery.stability_accepted) {
+        postsolve.accepted = false;
+        postsolve.rejection_reason = "stability_tpd";
+        return;
+    }
+    if (!discovery.candidate_completeness_accepted || !discovery.phase_set_mass_balance_feasible) {
+        postsolve.accepted = false;
+        postsolve.rejection_reason = "candidate_completeness";
+        return;
+    }
+    postsolve.accepted = true;
+    postsolve.rejection_reason = "accepted";
+}
+
 bool candidate_duplicates_accepted_phase(
     const NeutralTpdCandidate& candidate,
     const std::vector<EosPhaseBlockResult>& accepted_phases
@@ -1555,7 +1598,7 @@ NeutralTwoPhaseEosInitialPoint build_neutral_two_phase_eos_initial_point(
     );
 }
 
-NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point_from_candidate_set(
+NeutralTwoPhaseEosInitialPoint build_multiphase_eos_initial_point_from_candidate_set(
     const add_args& args,
     const std::vector<double>& feed_amounts,
     const NeutralPhaseDiscoveryResult& discovery,
@@ -1564,19 +1607,20 @@ NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point_from_candidate_
     const std::string& route_label,
     const std::vector<int>& phase_kinds
 ) {
-    if (discovery.selected_phase_compositions.size() != 2
-        || discovery.selected_phase_fractions.size() != 2
-        || discovery.selected_phase_kinds.size() != 2) {
-        throw ValueError(route_label + " requires a two-candidate phase-discovery seed.");
+    const std::size_t phase_count = phase_kinds.size();
+    if (phase_count < 2) {
+        throw ValueError(route_label + " requires at least two phase kinds.");
     }
-    if (phase_kinds.size() != 2) {
-        throw ValueError(route_label + " phase kind size does not match the neutral two-phase EOS NLP contract.");
+    if (discovery.selected_phase_compositions.size() != phase_count
+        || discovery.selected_phase_fractions.size() != phase_count
+        || discovery.selected_phase_kinds.size() != phase_count) {
+        throw ValueError(route_label + " selected candidate set does not match requested phase kinds.");
     }
     const double total_feed = positive_sum(feed_amounts, route_label + " feed amount");
     NeutralTwoPhaseEosInitialPoint out;
-    out.phase_amounts.assign(2, std::vector<double>(feed_amounts.size(), 0.0));
-    out.volumes.reserve(2);
-    for (std::size_t phase = 0; phase < 2; ++phase) {
+    out.phase_amounts.assign(phase_count, std::vector<double>(feed_amounts.size(), 0.0));
+    out.volumes.reserve(phase_count);
+    for (std::size_t phase = 0; phase < phase_count; ++phase) {
         const std::vector<double> composition = normalized_trial_composition(
             discovery.selected_phase_compositions[phase],
             route_label + " phase-discovery composition"
@@ -1585,6 +1629,9 @@ NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point_from_candidate_
         const double phase_fraction = discovery.selected_phase_fractions[phase];
         if (!(phase_fraction > 0.0 && phase_fraction < 1.0)) {
             throw ValueError(route_label + " phase-discovery phase fraction must be inside (0, 1).");
+        }
+        if (discovery.selected_phase_kinds[phase] != phase_kinds[phase]) {
+            throw ValueError(route_label + " selected candidate phase kind does not match requested phase kind.");
         }
         for (std::size_t species = 0; species < composition.size(); ++species) {
             out.phase_amounts[phase][species] = total_feed * phase_fraction * composition[species];
@@ -1601,6 +1648,29 @@ NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point_from_candidate_
         out.volumes.push_back((total_feed * phase_fraction) / block.density);
     }
     return out;
+}
+
+NeutralTwoPhaseEosInitialPoint build_two_phase_eos_initial_point_from_candidate_set(
+    const add_args& args,
+    const std::vector<double>& feed_amounts,
+    const NeutralPhaseDiscoveryResult& discovery,
+    double temperature,
+    double target_pressure,
+    const std::string& route_label,
+    const std::vector<int>& phase_kinds
+) {
+    if (phase_kinds.size() != 2) {
+        throw ValueError(route_label + " phase kind size does not match the neutral two-phase EOS NLP contract.");
+    }
+    return build_multiphase_eos_initial_point_from_candidate_set(
+        args,
+        feed_amounts,
+        discovery,
+        temperature,
+        target_pressure,
+        route_label,
+        phase_kinds
+    );
 }
 
 NeutralTwoPhaseEosInitialPoint build_charge_neutral_two_phase_eos_initial_point(
@@ -2027,9 +2097,15 @@ std::vector<std::vector<double>> neutral_phase_amounts_from_route_variables(
     std::size_t species_count
 ) {
     const std::size_t local_variable_count = species_count + 1;
-    require_size(variables, 2 * local_variable_count, "Neutral EOS route result variable");
-    std::vector<std::vector<double>> phase_amounts(2, std::vector<double>(species_count, 0.0));
-    for (std::size_t phase = 0; phase < 2; ++phase) {
+    if (local_variable_count == 0 || variables.size() % local_variable_count != 0) {
+        throw ValueError("Neutral EOS route result variable size does not match the phase amount-volume layout.");
+    }
+    const std::size_t phase_count = variables.size() / local_variable_count;
+    if (phase_count < 2) {
+        throw ValueError("Neutral EOS route result variable layout requires at least two phases.");
+    }
+    std::vector<std::vector<double>> phase_amounts(phase_count, std::vector<double>(species_count, 0.0));
+    for (std::size_t phase = 0; phase < phase_count; ++phase) {
         const std::size_t offset = phase * local_variable_count;
         for (std::size_t species = 0; species < species_count; ++species) {
             phase_amounts[phase][species] = variables[offset + species];
@@ -2043,8 +2119,19 @@ std::vector<double> neutral_phase_volumes_from_route_variables(
     std::size_t species_count
 ) {
     const std::size_t local_variable_count = species_count + 1;
-    require_size(variables, 2 * local_variable_count, "Neutral EOS route result variable");
-    return {variables[species_count], variables[local_variable_count + species_count]};
+    if (local_variable_count == 0 || variables.size() % local_variable_count != 0) {
+        throw ValueError("Neutral EOS route result variable size does not match the phase amount-volume layout.");
+    }
+    const std::size_t phase_count = variables.size() / local_variable_count;
+    if (phase_count < 2) {
+        throw ValueError("Neutral EOS route result variable layout requires at least two phases.");
+    }
+    std::vector<double> volumes;
+    volumes.reserve(phase_count);
+    for (std::size_t phase = 0; phase < phase_count; ++phase) {
+        volumes.push_back(variables[phase * local_variable_count + species_count]);
+    }
+    return volumes;
 }
 
 class NeutralTwoPhaseEosProblem final : public NlpProblem {
@@ -2575,6 +2662,404 @@ private:
     int species_count_ = 0;
 };
 
+class NeutralMultiphaseFugacityResidualProblem final : public NlpProblem {
+public:
+    NeutralMultiphaseFugacityResidualProblem(
+        add_args args,
+        double temperature,
+        double target_pressure,
+        std::vector<std::vector<double>> phase_amounts,
+        std::vector<double> volumes,
+        std::vector<double> feed_amounts
+    )
+        : args_(std::move(args)),
+          temperature_(temperature),
+          target_pressure_(target_pressure),
+          initial_phase_amounts_(std::move(phase_amounts)),
+          initial_volumes_(std::move(volumes)),
+          feed_amounts_(std::move(feed_amounts)) {
+        phase_count_ = static_cast<int>(initial_phase_amounts_.size());
+        species_count_ = static_cast<int>(feed_amounts_.size());
+        if (phase_count_ < 3) {
+            throw ValueError("Strict multiphase fugacity residual route requires at least three phases.");
+        }
+        if (species_count_ <= 0) {
+            throw ValueError("Strict multiphase fugacity residual route requires at least one species.");
+        }
+        if (!std::isfinite(temperature_) || temperature_ <= 0.0 || !std::isfinite(target_pressure_)) {
+            throw ValueError("Strict multiphase fugacity residual route received invalid T/P specifications.");
+        }
+        require_size(initial_volumes_, initial_phase_amounts_.size(), "Strict multiphase residual volume");
+        for (const auto& amounts : initial_phase_amounts_) {
+            require_size(amounts, static_cast<std::size_t>(species_count_), "Strict multiphase residual phase amount");
+            for (double amount : amounts) {
+                require_positive_finite(amount, "Strict multiphase residual phase amount");
+            }
+        }
+        for (double volume : initial_volumes_) {
+            require_positive_finite(volume, "Strict multiphase residual phase volume");
+        }
+        for (double amount : feed_amounts_) {
+            if (!std::isfinite(amount) || amount < 0.0) {
+                throw ValueError("Strict multiphase residual feed amounts must be finite and non-negative.");
+            }
+        }
+    }
+
+    std::string name() const override {
+        return "neutral_multiphase_fugacity_residual";
+    }
+
+    int variable_count() const override {
+        return phase_count() * local_variable_count();
+    }
+
+    int constraint_count() const override {
+        return species_count_ + phase_count() + phase_equilibrium_constraint_count();
+    }
+
+    int jacobian_nonzero_count() const override {
+        const int material_nonzeros = phase_count() * species_count_;
+        const int pressure_nonzeros = phase_count() * local_variable_count();
+        const int fugacity_nonzeros =
+            phase_equilibrium_constraint_count() * 2 * local_variable_count();
+        return material_nonzeros + pressure_nonzeros + fugacity_nonzeros;
+    }
+
+    NlpBounds bounds() const override {
+        NlpBounds out;
+        const double total_feed = std::accumulate(feed_amounts_.begin(), feed_amounts_.end(), 0.0);
+        const double amount_upper = std::max(1.0, 10.0 * total_feed);
+        const double volume_upper = std::max(1.0, 1.0e6 * total_feed);
+        out.variable_lower.assign(static_cast<std::size_t>(variable_count()), 1.0e-14);
+        out.variable_upper.reserve(static_cast<std::size_t>(variable_count()));
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            for (int species = 0; species < species_count_; ++species) {
+                out.variable_upper.push_back(amount_upper);
+            }
+            out.variable_upper.push_back(volume_upper);
+        }
+        out.constraint_lower.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        out.constraint_upper.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        return out;
+    }
+
+    std::vector<double> initial_point() const override {
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(variable_count()));
+        for (std::size_t phase = 0; phase < initial_phase_amounts_.size(); ++phase) {
+            out.insert(out.end(), initial_phase_amounts_[phase].begin(), initial_phase_amounts_[phase].end());
+            out.push_back(initial_volumes_[phase]);
+        }
+        return out;
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        (void)variables;
+        return 0.0;
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        require_size(variables, static_cast<std::size_t>(variable_count()), "Strict multiphase residual variable");
+        return std::vector<double>(static_cast<std::size_t>(variable_count()), 0.0);
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        const EosPhaseSystemResult system = phase_system(variables);
+        const PhaseEquilibriumResidualBlockResult residuals = residual_block(variables);
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(constraint_count()));
+        out.insert(out.end(), system.constraints.begin(), system.constraints.begin() + species_count_ + phase_count());
+        out.insert(out.end(), residuals.residuals.begin(), residuals.residuals.end());
+        return out;
+    }
+
+    NlpJacobianStructure jacobian_structure() const override {
+        NlpJacobianStructure out;
+        out.rows.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        out.cols.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                out.rows.push_back(species);
+                out.cols.push_back(phase * local_variable_count() + species);
+            }
+        }
+        const int pressure_row_start = species_count_;
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const int row = pressure_row_start + phase;
+            const int phase_offset = phase * local_variable_count();
+            for (int col = 0; col < local_variable_count(); ++col) {
+                out.rows.push_back(row);
+                out.cols.push_back(phase_offset + col);
+            }
+        }
+        const int fugacity_row_start = species_count_ + phase_count();
+        for (int phase = 1; phase < phase_count(); ++phase) {
+            const int active_offset = phase * local_variable_count();
+            for (int species = 0; species < species_count_; ++species) {
+                const int row = fugacity_row_start + (phase - 1) * species_count_ + species;
+                for (int col = 0; col < local_variable_count(); ++col) {
+                    out.rows.push_back(row);
+                    out.cols.push_back(col);
+                }
+                for (int col = 0; col < local_variable_count(); ++col) {
+                    out.rows.push_back(row);
+                    out.cols.push_back(active_offset + col);
+                }
+            }
+        }
+        return out;
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        const EosPhaseSystemResult system = phase_system(variables);
+        const PhaseEquilibriumResidualBlockResult residuals = residual_block(variables);
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        const int dense_cols = variable_count();
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                out.push_back(
+                    system.constraint_jacobian_row_major[
+                        static_cast<std::size_t>(species) * static_cast<std::size_t>(dense_cols)
+                        + static_cast<std::size_t>(phase * local_variable_count() + species)
+                    ]
+                );
+            }
+        }
+        const int pressure_row_start = species_count_;
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const int row = pressure_row_start + phase;
+            const int phase_offset = phase * local_variable_count();
+            for (int col = 0; col < local_variable_count(); ++col) {
+                out.push_back(
+                    system.constraint_jacobian_row_major[
+                        static_cast<std::size_t>(row) * static_cast<std::size_t>(dense_cols)
+                        + static_cast<std::size_t>(phase_offset + col)
+                    ]
+                );
+            }
+        }
+        for (int phase = 1; phase < phase_count(); ++phase) {
+            const int active_offset = phase * local_variable_count();
+            for (int species = 0; species < species_count_; ++species) {
+                const int residual_row = (phase - 1) * species_count_ + species;
+                for (int col = 0; col < local_variable_count(); ++col) {
+                    out.push_back(
+                        residuals.jacobian_row_major[
+                            static_cast<std::size_t>(residual_row) * static_cast<std::size_t>(dense_cols)
+                            + static_cast<std::size_t>(col)
+                        ]
+                    );
+                }
+                for (int col = 0; col < local_variable_count(); ++col) {
+                    out.push_back(
+                        residuals.jacobian_row_major[
+                            static_cast<std::size_t>(residual_row) * static_cast<std::size_t>(dense_cols)
+                            + static_cast<std::size_t>(active_offset + col)
+                        ]
+                    );
+                }
+            }
+        }
+        return out;
+    }
+
+    bool has_exact_hessian() const override {
+        return args_.z.empty() || args_.born_model <= 1;
+    }
+
+    int hessian_nonzero_count() const override {
+        return LagrangianHessianAssembler(variable_count()).nonzero_count();
+    }
+
+    NlpHessianStructure hessian_structure() const override {
+        return LagrangianHessianAssembler(variable_count()).structure();
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        if (!has_exact_hessian()) {
+            throw ValueError("Strict multiphase residual route exact Hessian requires direct or absent Born phase blocks.");
+        }
+        if (constraint_multipliers.size() != static_cast<std::size_t>(constraint_count())) {
+            throw ValueError("Strict multiphase residual Hessian multiplier vector size does not match constraints.");
+        }
+        const EosPhaseSystemResult system = phase_system(variables);
+        const PhaseEquilibriumResidualBlockResult residuals = residual_block(variables);
+        if (!residuals.exact_hessian_available || !residuals.exact_jacobian_available) {
+            throw ValueError("Strict multiphase residual route requires exact reduced fugacity derivatives.");
+        }
+
+        ObjectiveSecondOrderData objective;
+        objective.variable_count = variable_count();
+        objective.value = 0.0;
+        objective.gradient.assign(static_cast<std::size_t>(variable_count()), 0.0);
+        objective.hessian_row_major.assign(
+            static_cast<std::size_t>(variable_count() * variable_count()),
+            0.0
+        );
+        objective.backend = "zero_objective";
+
+        ConstraintSecondOrderData constraints;
+        constraints.constraint_count = constraint_count();
+        constraints.variable_count = variable_count();
+        constraints.values = this->constraints(variables);
+        constraints.jacobian_row_major.assign(
+            static_cast<std::size_t>(constraint_count() * variable_count()),
+            0.0
+        );
+        constraints.hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(constraint_count() * variable_count() * variable_count()),
+            0.0
+        );
+        constraints.has_hessian.assign(static_cast<std::size_t>(constraint_count()), false);
+        constraints.backend = hessian_backend();
+
+        if (system.constraint_hessian_tensor_row_major.size()
+            != static_cast<std::size_t>(system.constraint_jacobian_rows * variable_count() * variable_count())) {
+            throw ValueError("Strict multiphase residual pressure Hessian tensor shape did not match constraints.");
+        }
+        const int system_constraint_count = species_count_ + phase_count();
+        for (int row = 0; row < system_constraint_count; ++row) {
+            for (int col = 0; col < variable_count(); ++col) {
+                constraints.jacobian_row_major[
+                    static_cast<std::size_t>(row * variable_count() + col)
+                ] = system.constraint_jacobian_row_major[
+                    static_cast<std::size_t>(row * variable_count() + col)
+                ];
+            }
+            constraints.has_hessian[static_cast<std::size_t>(row)] =
+                row < static_cast<int>(system.constraint_has_hessian.size())
+                && system.constraint_has_hessian[static_cast<std::size_t>(row)];
+            const std::size_t offset = static_cast<std::size_t>(row * variable_count() * variable_count());
+            std::copy(
+                system.constraint_hessian_tensor_row_major.begin() + static_cast<std::ptrdiff_t>(offset),
+                system.constraint_hessian_tensor_row_major.begin()
+                    + static_cast<std::ptrdiff_t>(offset + variable_count() * variable_count()),
+                constraints.hessian_tensor_row_major.begin() + static_cast<std::ptrdiff_t>(offset)
+            );
+        }
+        const int fugacity_row_start = species_count_ + phase_count();
+        for (int residual = 0; residual < phase_equilibrium_constraint_count(); ++residual) {
+            const int target_row = fugacity_row_start + residual;
+            constraints.has_hessian[static_cast<std::size_t>(target_row)] = true;
+            for (int col = 0; col < variable_count(); ++col) {
+                constraints.jacobian_row_major[
+                    static_cast<std::size_t>(target_row * variable_count() + col)
+                ] = residuals.jacobian_row_major[
+                    static_cast<std::size_t>(residual * variable_count() + col)
+                ];
+            }
+            const std::size_t target_offset =
+                static_cast<std::size_t>(target_row * variable_count() * variable_count());
+            const std::size_t source_offset =
+                static_cast<std::size_t>(residual * variable_count() * variable_count());
+            std::copy(
+                residuals.hessian_tensor_row_major.begin() + static_cast<std::ptrdiff_t>(source_offset),
+                residuals.hessian_tensor_row_major.begin()
+                    + static_cast<std::ptrdiff_t>(source_offset + variable_count() * variable_count()),
+                constraints.hessian_tensor_row_major.begin() + static_cast<std::ptrdiff_t>(target_offset)
+            );
+        }
+        return LagrangianHessianAssembler(variable_count()).values(
+            objective_factor,
+            objective,
+            constraints,
+            constraint_multipliers
+        );
+    }
+
+    std::string hessian_backend() const override {
+        return "cppad_phase_system_plus_reduced_fugacity_residual";
+    }
+
+    NlpScaling scaling() const override {
+        const double total_feed = std::accumulate(feed_amounts_.begin(), feed_amounts_.end(), 0.0);
+        const double amount_scale = std::max(1.0, total_feed);
+        const double pressure_scale = 1.0 / std::max(1.0, std::abs(target_pressure_));
+        NlpScaling out;
+        out.objective = 1.0;
+        out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0 / amount_scale);
+        out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
+        for (int row = 0; row < species_count_; ++row) {
+            out.constraints[static_cast<std::size_t>(row)] = 1.0 / amount_scale;
+        }
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            out.constraints[static_cast<std::size_t>(species_count_ + phase)] = pressure_scale;
+        }
+        return out;
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        std::map<std::string, std::string> out =
+            route_metadata_diagnostics(phase_amount_volume_route_metadata(false, false, true));
+        out["residual_derivative_backend"] = "cppad_explicit_density";
+        out["residual_exact_jacobian"] = "true";
+        out["residual_exact_hessian"] = "true";
+        return out;
+    }
+
+    int phase_count() const {
+        return phase_count_;
+    }
+
+    int species_count() const {
+        return species_count_;
+    }
+
+private:
+    int local_variable_count() const {
+        return species_count_ + 1;
+    }
+
+    int phase_equilibrium_constraint_count() const {
+        return (phase_count_ - 1) * species_count_;
+    }
+
+    std::vector<std::vector<double>> phase_amounts_from_variables(const std::vector<double>& variables) const {
+        return neutral_phase_amounts_from_route_variables(variables, static_cast<std::size_t>(species_count_));
+    }
+
+    std::vector<double> volumes_from_variables(const std::vector<double>& variables) const {
+        return neutral_phase_volumes_from_route_variables(variables, static_cast<std::size_t>(species_count_));
+    }
+
+    EosPhaseSystemResult phase_system(const std::vector<double>& variables) const {
+        return evaluate_eos_phase_system(
+            args_,
+            temperature_,
+            target_pressure_,
+            phase_amounts_from_variables(variables),
+            volumes_from_variables(variables),
+            feed_amounts_,
+            {}
+        );
+    }
+
+    PhaseEquilibriumResidualBlockResult residual_block(const std::vector<double>& variables) const {
+        return evaluate_phase_equilibrium_residual_block(
+            args_,
+            temperature_,
+            target_pressure_,
+            phase_amounts_from_variables(variables),
+            volumes_from_variables(variables)
+        );
+    }
+
+    add_args args_;
+    double temperature_ = 0.0;
+    double target_pressure_ = 0.0;
+    std::vector<std::vector<double>> initial_phase_amounts_;
+    std::vector<double> initial_volumes_;
+    std::vector<double> feed_amounts_;
+    int phase_count_ = 0;
+    int species_count_ = 0;
+};
+
 }  // namespace
 
 // AlgID: neutral_deterministic_phase_candidate_screening
@@ -3042,6 +3527,134 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         }
     }
     apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
+    return out;
+}
+
+NeutralTwoPhaseEosRouteResult solve_neutral_multiphase_fugacity_residual_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double ln_fugacity_tolerance,
+    double phase_distance_tolerance
+) {
+    const std::string problem_name = "neutral_multiphase_fugacity_residual";
+    if (phase_kinds.size() < 3) {
+        throw ValueError(problem_name + " requires at least three requested phase kinds.");
+    }
+    const IpoptAdapterInfo adapter = native_ipopt_adapter_info();
+    NeutralTwoPhaseEosRouteResult out;
+    out.compiled = adapter.compiled;
+    out.adapter_available = adapter.adapter_available;
+    out.adapter_kind = adapter.adapter_kind;
+    out.exact_gradient_required = adapter.exact_gradient_required;
+    out.exact_jacobian_required = adapter.exact_jacobian_required;
+    out.problem_name = problem_name;
+    out.activation_compiler = "direct_multiphase_candidate_set";
+    out.initial_point_strategy = "stage_ii_candidate_set_replay";
+    out.seed_name = kHeldStageIIDualLoopCandidateSetName;
+    apply_route_metadata(out, phase_amount_volume_route_metadata(false, false, true));
+    if (!adapter.compiled) {
+        mark_neutral_route_ipopt_dependency_required(out);
+        return out;
+    }
+
+    const std::vector<double> feed_amounts =
+        normalized_positive_values(feed_composition, problem_name + " feed composition");
+    const double candidate_mass_balance_tolerance = std::max(1.0e-8, 10.0 * material_tolerance);
+    const double tpd_tolerance = std::max(1.0e-6, 100.0 * ln_fugacity_tolerance);
+    const NeutralPhaseDiscoveryResult discovery = evaluate_neutral_tpd_phase_discovery(
+        args,
+        temperature,
+        target_pressure,
+        feed_amounts,
+        phase_kinds,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance,
+        true
+    );
+    if (!discovery.held_stage_ii_replay_ready
+        || !discovery.phase_set_mass_balance_feasible
+        || discovery.selected_candidate_count != static_cast<int>(phase_kinds.size())) {
+        NeutralTwoPhaseEosPostsolve postsolve;
+        copy_discovery_to_postsolve(postsolve, discovery);
+        postsolve.accepted = false;
+        postsolve.rejection_reason = "stage_ii_candidate_set_replay";
+        apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
+        return out;
+    }
+
+    const NeutralTwoPhaseEosInitialPoint initial = build_multiphase_eos_initial_point_from_candidate_set(
+        args,
+        feed_amounts,
+        discovery,
+        temperature,
+        target_pressure,
+        problem_name,
+        phase_kinds
+    );
+    IpoptSolveOptions route_options = ipopt_solve_options_for_profile(options, "held_refinement");
+    route_options.initial_variables = neutral_two_phase_variables_from_initial(initial);
+    route_options.initial_bound_lower_multipliers.clear();
+    route_options.initial_bound_upper_multipliers.clear();
+    route_options.initial_constraint_multipliers.clear();
+
+    trace_route_seed_attempt_start(problem_name, out.seed_name, 1, 1, route_options);
+    NeutralMultiphaseFugacityResidualProblem problem(
+        args,
+        temperature,
+        target_pressure,
+        initial.phase_amounts,
+        initial.volumes,
+        feed_amounts
+    );
+    const IpoptSolveResult solve = solve_ipopt_nlp(problem, route_options);
+    const bool can_postsolve = apply_neutral_route_solve_result(out, solve);
+    if (!can_postsolve) {
+        out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+        trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+        return out;
+    }
+
+    const std::size_t species_count = feed_amounts.size();
+    out.phase_amounts = neutral_phase_amounts_from_route_variables(solve.variables, species_count);
+    out.phase_volumes = neutral_phase_volumes_from_route_variables(solve.variables, species_count);
+    NeutralTwoPhaseEosPostsolve postsolve = evaluate_neutral_two_phase_eos_postsolve(
+        args,
+        temperature,
+        target_pressure,
+        out.phase_amounts,
+        out.phase_volumes,
+        feed_amounts,
+        material_tolerance,
+        pressure_tolerance,
+        ln_fugacity_tolerance,
+        phase_distance_tolerance,
+        {},
+        false,
+        false,
+        phase_kinds,
+        false,
+        true
+    );
+    if (postsolve.phase_distance <= phase_distance_tolerance) {
+        postsolve.accepted = false;
+        postsolve.rejection_reason = "phase_distance";
+    }
+    apply_stage_ii_discovery_certificate_to_refined_postsolve(
+        postsolve,
+        discovery,
+        postsolve.phase_count,
+        "stage_ii_dual_loop_candidate_set_seed",
+        kHeldStageIIDualLoopCandidateSetName
+    );
+    apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::PhaseSetCertified);
+    out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+    trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
     return out;
 }
 

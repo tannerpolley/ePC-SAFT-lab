@@ -709,4 +709,17 @@ NeutralTwoPhaseEosRouteResult solve_activated_neutral_lle_eos_route(
     double phase_distance_tolerance
 );
 
+NeutralTwoPhaseEosRouteResult solve_neutral_multiphase_fugacity_residual_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<int>& phase_kinds,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double ln_fugacity_tolerance,
+    double phase_distance_tolerance
+);
+
 }  // namespace epcsaft::native::equilibrium_nlp

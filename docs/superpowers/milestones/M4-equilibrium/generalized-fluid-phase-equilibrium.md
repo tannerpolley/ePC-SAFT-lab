@@ -552,11 +552,20 @@ iteration-limit seed path are failed boundary evidence.
   uncertified, and generic unselected rejected candidates, mass-balance
   feasibility, noncollapsed selected compositions, and no public
   `neutral_multiphase_nonassoc` exposure;
+- current retained strict route proof: `uv run --no-sync python
+  scripts/validation/check_generalized_phase_set.py --json --phase-kinds
+  liquid,liquid,liquid --run-route-refinement --require-route-refinement
+  --require-complete` proves private Stage III
+  `strict_fugacity_residual` refinement for the Stage II candidate-set replay,
+  exact reduced fugacity-residual derivative metadata, accepted postsolve,
+  reduced ln-fugacity consistency <= `1.0e-6`, and closed public route
+  admission;
 - first validation target: replay representative neutral, associating, and electrolyte
   cases through the same phase-set discovery contract;
 - required before exposure: complete candidate phase set, mass-balance
-  feasibility, no route-specific phase-count assumptions, source-backed
-  representative cases, and Stage III Ipopt refinement evidence.
+  feasibility, no route-specific phase-count assumptions, strict residual
+  Stage III certification rather than only a thermodynamic-objective route,
+  source-backed representative cases, and final public admission evidence.
 
 `CE Chemical Equilibrium Placeholder`
 

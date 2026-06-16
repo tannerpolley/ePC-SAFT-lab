@@ -38,6 +38,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #189 cloud/shadow boundary gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-cloud-shadow-boundary-gate-plan.md) | `lle` | Defines the next #189 child for a retained Matsuda/NIST cloud/shadow source-data gate without native route admission. |
 | [Issue #189 native cloud/shadow isobaric route evidence plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-native-cloud-shadow-isobaric-route-admission-plan.md) | `lle` | Defines the next #189 child for checker-gated native Matsuda/NIST isobaric cloud/shadow route evidence without public route-key exposure. |
 | [Issue #189 generalized phase-set certification gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md) | `lle` | Defines the next #189 child after #260 for Stage II candidate-set replay and strict Stage III Ipopt refinement of the generalized neutral multiphase phase set. |
+| [Issue #189 strict multiphase fugacity-residual refinement plan](../../plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md) | `lle` | Defines #263: exact reduced fugacity-residual Stage III refinement for the generalized neutral multiphase candidate-set replay before #261 resumes. |
 
 ## Retained Evidence
 
@@ -46,6 +47,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [HELD LLE reliability campaign](../../../../analyses/package_validation/held_lle_reliability/README.md) | `lle` | Synthetic neutral LLE algorithm reliability evidence: 100 accepted two-phase conditions, 10,000 independent route-refinement repeats, zero failed repeats. This is not source-backed public LLE showcase evidence, generalized phase-set completion, or associating GFPE admission. |
 | [Neutral nonassociating LLE showcase](../../../../analyses/package_validation/neutral_nonassociating_lle_showcase/README.md) | `lle` | Source-backed Matsuda/NIST perfluorohexane + hexane LLE evidence for the current neutral `route="lle"` utility. This is one binary source-backed showcase, not generalized phase-set completion or associating GFPE admission. |
 | `scripts/validation/check_generalized_phase_set.py --json --require-complete` | `lle` | Internal neutral generalized phase-set diagnostic record evidence for #252: three selected candidate rows, rejected candidate rows, mass-balance feasibility, noncollapsed selected compositions, and no public `neutral_multiphase_nonassoc` exposure. This keeps `PE-Generalized Multiphase` planned-not-public. |
+| `scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` | `lle` | Internal strict residual evidence for #263: private `strict_fugacity_residual` Stage III refinement consumes the Stage II candidate-set replay, reports exact reduced fugacity-residual derivative metadata, accepts the postsolve with ln-fugacity consistency <= `1.0e-6`, and keeps public generalized route admission closed. |
 | `scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` | `lle` | Retained derived-boundary evidence for #256: current bubble/dew `P-x` and `T-x` route points emit complete `boundary_trace` records with route, DOF swap, source fixture, selector family, shared NLP families, strict Ipopt convergence, finite residuals, and no iteration-limit seed path. Cloud and shadow remain planned-only. |
 | `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, and empty source-data blockers. |
 | `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
@@ -56,7 +58,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
-| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `ready` | AFK child for generalized phase-set certification with Stage II candidate-set replay and strict Stage III route refinement. |
+| [#263](../../issues/2026-06-16-m4-equilibrium-issue-0263-add-strict-multiphase-fugacity-residual-refinement.md) | `lle` | `Ipopt` | `ready` | AFK child adding the private strict fugacity-residual Stage III route that #261 needs. |
+| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `blocked` | AFK child for generalized phase-set certification; resumes after #263 merges strict residual refinement. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -95,9 +98,14 @@ route from that parent branch, compares back to the raw source-pair tolerances,
 and keeps public cloud/shadow route keys closed.
 
 #261 is the ready #189 AFK child and targets generalized phase-set
-certification: Stage II candidate-set replay plus strict Stage III Ipopt
-refinement for requested neutral multiphase phase kinds, while keeping
-`neutral_multiphase_nonassoc` public route exposure closed.
+#263 is the current #189 AFK child that supplies the strict reduced
+fugacity-residual Stage III route for the generalized neutral multiphase
+candidate-set replay. Its checker proof requires exact residual derivative
+metadata, accepted postsolve, Stage II replay consumption, and public
+`neutral_multiphase_nonassoc` route admission closed.
+
+#261 remains blocked until #263 merges. Its resume command is
+`uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete`.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
 for boundary workflows and generalized phase-set PE. #190 and #191 remain

@@ -237,6 +237,11 @@ family_rows:
         command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete"
         scope: "Internal neutral nonassociating three-candidate phase-set record contract only; no public generalized multiphase route exposure."
         result_requirement: "Three selected records, at least one rejected record, mass-balance feasible, noncollapsed selected compositions, phase_set_certified."
+      - evidence_label: "Strict neutral multiphase fugacity-residual refinement"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete"
+        scope: "Internal neutral nonassociating Stage II candidate-set replay refined by the private strict fugacity-residual route; no public generalized multiphase route exposure."
+        result_requirement: "strict_multiphase_fugacity_residual_route, exact_reduced_fugacity_residual_derivatives, stage_ii_candidate_set_replay_consumed, accepted postsolve, ln_fugacity_consistency_norm <= 1.0e-6, public_route_admission_closed."
     required_gates:
       - infrastructure_gate
       - held_stage_i_stability
@@ -244,6 +249,10 @@ family_rows:
       - held_stage_iii_ipopt_refinement
       - mass_balance_candidate_selection
       - phase_set_completeness
+      - strict_multiphase_fugacity_residual_route
+      - exact_reduced_fugacity_residual_derivatives
+      - stage_ii_candidate_set_replay_consumed
+      - public_route_admission_closed
     reference_cases:
       - case_label: "Representative neutral/associating/electrolyte replay"
         evidence_tier: T0

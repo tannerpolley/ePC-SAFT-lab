@@ -8,12 +8,14 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "blocked"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0261-complete-generalized-phase-set-certification-gate
+blocked_by:
+  - 263
 last_synced: "2026-06-16"
 ---
 
@@ -24,9 +26,9 @@ last_synced: "2026-06-16"
 **Issue Type:** Feature
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 **Source Plan:** docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md
-**Classification:** AFK and ready
-**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
-**Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/261 using docs/superpowers/issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md and docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md. Complete proof oracle: issue acceptance criteria checked.
+**Classification:** AFK
+**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
+**Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/261 after #263 closes, using docs/superpowers/issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md and docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md. Complete proof oracle: issue acceptance criteria checked.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -61,6 +63,25 @@ requested neutral phase kinds `liquid,liquid,liquid`, while keeping public
 - [ ] `neutral_multiphase_nonassoc` remains absent from public routes and production-exposed capability rows.
 - [ ] M4 registry and GFPE doctrine record internal generalized certification evidence without final public production exposure.
 - [ ] #189 remains open unless final public capability admission is separately proven.
+
+## Blocked By
+
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/263 owns the strict multiphase fugacity-residual refinement prerequisite exposed during #261 execution.
+
+## Resume Path After #263
+
+After #263 merges, #261 should rerun the retained completion checker with strict
+route refinement:
+
+```powershell
+uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete
+```
+
+The expected proof fields are `route_refinement_kind:
+strict_fugacity_residual`, `residual_exact_hessian_available: true`,
+`held_stage_iii_consumed_stage_ii_replay_metadata: true`,
+`selected_candidate_count: 3`, `blockers: []`, and no public
+`neutral_multiphase_nonassoc` route exposure.
 
 ## Previously blocked by
 
