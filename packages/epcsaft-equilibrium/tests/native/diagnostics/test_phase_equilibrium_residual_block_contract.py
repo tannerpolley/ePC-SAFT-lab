@@ -33,7 +33,7 @@ def _three_phase_amount_volume_case() -> tuple[list[list[float]], list[float]]:
         np.asarray([0.010, 0.005, 0.985], dtype=float),
     ]
     phase_totals = np.asarray([0.34, 0.33, 0.33], dtype=float)
-    density = 14_000.0
+    density = 1_000.0
     phase_amounts = [(total * composition).tolist() for total, composition in zip(phase_totals, phase_compositions)]
     volumes = [float(total / density) for total in phase_totals]
     return phase_amounts, volumes
@@ -117,7 +117,7 @@ def test_phase_equilibrium_residual_block_keeps_trace_component_derivatives_fini
     phase_amounts[2][1] = 1.0e-9
     phase_amounts[2][0] = 0.004999999
     phase_amounts[2][2] = 0.325
-    volumes[2] = float(sum(phase_amounts[2]) / 14_000.0)
+    volumes[2] = float(sum(phase_amounts[2]) / 1_000.0)
 
     payload = _core._native_phase_equilibrium_residual_block_contract(
         mix._native,

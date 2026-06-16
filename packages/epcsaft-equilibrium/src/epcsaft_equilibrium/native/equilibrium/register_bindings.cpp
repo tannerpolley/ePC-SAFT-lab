@@ -15,6 +15,7 @@
 #include "equilibrium/blocks/electrolyte_block.h"
 #include "equilibrium/blocks/eos_phase_block.h"
 #include "equilibrium/blocks/gibbs_blocks.h"
+#include "equilibrium/blocks/phase_equilibrium_residual_block.h"
 #include "equilibrium/blocks/reaction_block.h"
 #include "equilibrium/blocks/saturation_block.h"
 #include "equilibrium/core/activation_matrix.h"
@@ -515,6 +516,42 @@ py::dict eos_phase_system_to_dict(const epcsaft::native::equilibrium_nlp::EosPha
         phase_blocks.append(eos_phase_block_to_dict(block));
     }
     out["phase_blocks"] = phase_blocks;
+    return out;
+}
+
+py::dict phase_equilibrium_residual_block_to_dict(
+    const epcsaft::native::equilibrium_nlp::PhaseEquilibriumResidualBlockResult& result
+) {
+    py::dict out;
+    out["block"] = result.block;
+    out["derivative_backend"] = result.derivative_backend;
+    out["jacobian_backend"] = result.derivative_backend;
+    out["hessian_backend"] = result.derivative_backend;
+    out["phase_count"] = result.phase_count;
+    out["species_count"] = result.species_count;
+    out["variable_count"] = result.variable_count;
+    out["constraint_count"] = result.constraint_count;
+    out["residual_count"] = result.residual_count;
+    out["full_square_constraint_count"] = result.full_square_constraint_count;
+    out["reduced_ln_fugacity_values"] = result.reduced_ln_fugacity_values;
+    out["residuals"] = result.residuals;
+    out["jacobian_row_major"] = result.jacobian_row_major;
+    out["hessian_tensor_row_major"] = result.hessian_tensor_row_major;
+    out["residual_names"] = result.residual_names;
+    out["exact_jacobian_available"] = result.exact_jacobian_available;
+    out["exact_hessian_available"] = result.exact_hessian_available;
+    out["density_amount_jacobian"] = result.density_amount_jacobian;
+    out["composition_amount_jacobian"] = result.composition_amount_jacobian;
+    out["reduced_fugacity_local_jacobian_shape"] =
+        py::make_tuple(result.local_jacobian_rows, result.local_jacobian_cols);
+    out["reduced_fugacity_local_hessian_shape"] =
+        py::make_tuple(result.local_hessian_rows, result.local_hessian_cols, result.local_hessian_depth);
+    out["global_jacobian_shape"] = py::make_tuple(result.global_jacobian_rows, result.global_jacobian_cols);
+    out["global_hessian_shape"] =
+        py::make_tuple(result.global_hessian_rows, result.global_hessian_cols, result.global_hessian_depth);
+    out["residual_jacobian_nonzero_count"] = result.residual_jacobian_nonzero_count;
+    out["residual_hessian_nonzero_count"] = result.residual_hessian_nonzero_count;
+    out["phase_minimum_compositions"] = result.phase_minimum_compositions;
     return out;
 }
 
@@ -2200,6 +2237,24 @@ void register_equilibrium_bindings(pybind11::module_& m) {
        py::arg("charges") = std::vector<double>{},
        py::arg("association_site_fractions") = std::vector<std::vector<double>>{},
        py::arg("association_delta_row_major") = std::vector<double>{});
+    m.def("_native_phase_equilibrium_residual_block_contract", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<std::vector<double>>& phase_amounts,
+        const std::vector<double>& volumes
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Phase-equilibrium residual block");
+        return phase_equilibrium_residual_block_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_phase_equilibrium_residual_block(
+                args,
+                temperature,
+                target_pressure,
+                phase_amounts,
+                volumes
+            )
+        );
+    });
     m.def("_native_association_mass_action_block", [](
         double density,
         const std::vector<double>& site_fractions,

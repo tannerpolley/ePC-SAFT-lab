@@ -187,6 +187,7 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/electrolyte_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/eos_phase_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/gibbs_blocks.cpp"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/phase_equilibrium_residual_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/reaction_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/saturation_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activated_equilibrium_nlp.cpp"
