@@ -37,6 +37,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #189 boundary workflow trace plan](../../plans/2026-06-13-m4-equilibrium-issue-0189-boundary-workflow-trace-contracts-plan.md) | `lle` | Defines the next #189 child for retained bubble/dew boundary traces and stricter generalized phase-set rejection diagnostics after #252. |
 | [Issue #189 cloud/shadow boundary gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-cloud-shadow-boundary-gate-plan.md) | `lle` | Defines the next #189 child for a retained Matsuda/NIST cloud/shadow source-data gate without native route admission. |
 | [Issue #189 native cloud/shadow isobaric route evidence plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-native-cloud-shadow-isobaric-route-admission-plan.md) | `lle` | Defines the next #189 child for checker-gated native Matsuda/NIST isobaric cloud/shadow route evidence without public route-key exposure. |
+| [Issue #189 generalized phase-set certification gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md) | `lle` | Defines the next #189 child after #260 for Stage II candidate-set replay and strict Stage III Ipopt refinement of the generalized neutral multiphase phase set. |
 
 ## Retained Evidence
 
@@ -55,6 +56,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
 | [#260](../../issues/2026-06-15-m4-equilibrium-issue-0260-checker-gated-native-cloud-shadow-isobaric-route-evidence.md) | `lle` | `Ipopt` | `ready` | AFK child for checker-gated native Matsuda/NIST isobaric cloud/shadow route evidence without public route-key exposure. |
+| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `blocked` | AFK child blocked by #260 for generalized phase-set certification with Stage II candidate-set replay and strict Stage III route refinement. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -89,6 +91,11 @@ cloud/shadow native runtime routes empty and does not close #189.
 #260 is the next #189 AFK child. It targets one checker-gated native isobaric
 cloud/shadow route-evidence point against the retained Matsuda/NIST paired
 branch while keeping public cloud/shadow route keys closed.
+
+#261 is created but blocked by #260. It is the next #189 child after #260 and
+targets generalized phase-set certification: Stage II candidate-set replay plus
+strict Stage III Ipopt refinement for requested neutral multiphase phase kinds,
+while keeping `neutral_multiphase_nonassoc` public route exposure closed.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
 for boundary workflows and generalized phase-set PE. #190 and #191 remain

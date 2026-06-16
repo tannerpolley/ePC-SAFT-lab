@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252, #256, and #258 closed as AFK child issues; #260 is open as the next AFK child.
+AFK/HITL: HITL umbrella; #252, #256, and #258 closed as AFK child issues; #260 is open as the current AFK child; #261 is blocked by #260 as the next generalized phase-set certification child.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -40,9 +40,12 @@ diagnostics; #256 closed through #257 with retained bubble/dew boundary traces
 and stricter generalized phase-set rejection diagnostics; #258 closed through
 #259 with the retained cloud/shadow source-data gate while keeping native route
 admission closed. #260 is open for checker-gated native isobaric cloud/shadow
-route evidence while keeping public cloud/shadow route keys closed. The umbrella
-remains open until generalized phase-set completion and public capability
-admission gates are separately proven.
+route evidence while keeping public cloud/shadow route keys closed. #261 is
+blocked by #260 and owns the next generalized phase-set certification gate:
+Stage II candidate-set replay plus strict Stage III Ipopt refinement for the
+requested neutral multiphase phase-kind list. The umbrella remains open until
+generalized phase-set completion and public capability admission gates are
+separately proven.
 
 ## Supplemental Context
 
@@ -53,6 +56,7 @@ admission gates are separately proven.
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/256`
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/258`
 - `https://github.com/ePC-SAFT/ePC-SAFT/issues/260`
+- `https://github.com/ePC-SAFT/ePC-SAFT/issues/261`
 
 ## Acceptance Criteria
 
@@ -70,6 +74,7 @@ admission gates are separately proven.
 - For #256, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` and keep `check_generalized_phase_set.py --json --require-complete` green.
 - For #258, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` and keep the neutral LLE showcase checker green.
 - For #260, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` after implementation and keep the #258 source-data gate green.
+- For #261, after #260 closes, run `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` and keep #260 route evidence green.
 
 ## Non-Goals And Boundaries
 
@@ -84,6 +89,6 @@ admission gates are separately proven.
 - Capability: `lle`
 - Backend: `Ipopt`
 - Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252, #256, and #258 closed; #260 open`
+- AFK/HITL: `HITL umbrella; #252, #256, and #258 closed; #260 open; #261 blocked by #260`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
