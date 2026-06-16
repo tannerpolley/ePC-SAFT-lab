@@ -56,8 +56,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
-| [#260](../../issues/2026-06-15-m4-equilibrium-issue-0260-checker-gated-native-cloud-shadow-isobaric-route-evidence.md) | `lle` | `Ipopt` | `ready` | AFK child for checker-gated native Matsuda/NIST isobaric cloud/shadow route evidence without public route-key exposure. |
-| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `blocked` | AFK child blocked by #260 for generalized phase-set certification with Stage II candidate-set replay and strict Stage III route refinement. |
+| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `ready` | AFK child for generalized phase-set certification with Stage II candidate-set replay and strict Stage III route refinement. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -89,16 +88,16 @@ This preserves the public capability boundary and does not close #189.
 Matsuda/NIST perfluorohexane + hexane neutral LLE fixture. The gate keeps
 cloud/shadow native runtime routes empty and does not close #189.
 
-#260 targets one checker-gated native isobaric cloud/shadow route-evidence
+#260 closed through #262 with one checker-gated native isobaric cloud/shadow route-evidence
 point. The proof derives the current model-refined Matsuda branch pair from the
 certified neutral LLE source showcase, solves the private cloud-temperature
 route from that parent branch, compares back to the raw source-pair tolerances,
 and keeps public cloud/shadow route keys closed.
 
-#261 is created but blocked by #260. It is the next #189 child after #260 and
-targets generalized phase-set certification: Stage II candidate-set replay plus
-strict Stage III Ipopt refinement for requested neutral multiphase phase kinds,
-while keeping `neutral_multiphase_nonassoc` public route exposure closed.
+#261 is the ready #189 AFK child and targets generalized phase-set
+certification: Stage II candidate-set replay plus strict Stage III Ipopt
+refinement for requested neutral multiphase phase kinds, while keeping
+`neutral_multiphase_nonassoc` public route exposure closed.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
 for boundary workflows and generalized phase-set PE. #190 and #191 remain
@@ -119,3 +118,4 @@ blocked by their own proof gates.
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/252](https://github.com/ePC-SAFT/ePC-SAFT/issues/252) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/255](https://github.com/ePC-SAFT/ePC-SAFT/pull/255) on 2026-06-13T14:13:58Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/256](https://github.com/ePC-SAFT/ePC-SAFT/issues/256) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/257](https://github.com/ePC-SAFT/ePC-SAFT/pull/257) on 2026-06-15T17:23:27Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/258](https://github.com/ePC-SAFT/ePC-SAFT/issues/258) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/259](https://github.com/ePC-SAFT/ePC-SAFT/pull/259) on 2026-06-15T22:19:05Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/260](https://github.com/ePC-SAFT/ePC-SAFT/issues/260) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/262](https://github.com/ePC-SAFT/ePC-SAFT/pull/262) on 2026-06-16T12:53:23Z

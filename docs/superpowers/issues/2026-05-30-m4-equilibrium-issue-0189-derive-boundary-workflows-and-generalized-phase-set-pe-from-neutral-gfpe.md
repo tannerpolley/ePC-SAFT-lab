@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252, #256, and #258 closed as AFK child issues; #260 is open as the current AFK child; #261 is blocked by #260 as the next generalized phase-set certification child.
+AFK/HITL: HITL umbrella; #252, #256, #258, and #260 closed as AFK child issues; #261 is the current ready AFK child for generalized phase-set certification.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -39,9 +39,10 @@ the first AFK implementation slice for neutral generalized phase-set
 diagnostics; #256 closed through #257 with retained bubble/dew boundary traces
 and stricter generalized phase-set rejection diagnostics; #258 closed through
 #259 with the retained cloud/shadow source-data gate while keeping native route
-admission closed. #260 is open for checker-gated native isobaric cloud/shadow
-route evidence while keeping public cloud/shadow route keys closed. #261 is
-blocked by #260 and owns the next generalized phase-set certification gate:
+admission closed; #260 closed through #262 with checker-gated native isobaric
+cloud/shadow route evidence while keeping public cloud/shadow route keys
+closed. #261 is the current ready AFK child and owns the next generalized
+phase-set certification gate:
 Stage II candidate-set replay plus strict Stage III Ipopt refinement for the
 requested neutral multiphase phase-kind list. The umbrella remains open until
 generalized phase-set completion and public capability admission gates are
@@ -89,6 +90,6 @@ separately proven.
 - Capability: `lle`
 - Backend: `Ipopt`
 - Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252, #256, and #258 closed; #260 open; #261 blocked by #260`
+- AFK/HITL: `HITL umbrella; #252, #256, #258, and #260 closed; #261 ready`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`

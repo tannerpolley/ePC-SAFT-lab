@@ -2,20 +2,20 @@
 issue: 260
 title: "M4: admit checker-gated native cloud/shadow isobaric route evidence"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/260"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "closed"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-native-cloud-shadow-isobaric-route-admission-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0260-checker-gated-native-cloud-shadow-isobaric-route-evidence
 parent_issue: 189
-last_synced: "2026-06-15"
+last_synced: "2026-06-16"
 ---
 
 # M4: admit checker-gated native cloud/shadow isobaric route evidence
@@ -28,7 +28,7 @@ last_synced: "2026-06-15"
 Parent Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Branch: codex/issue-0260-checker-gated-native-cloud-shadow-isobaric-route-evidence
 AFK/HITL: AFK
-**Classification:** AFK
+**Classification:** Closed
 **Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve issue 260: implement checker-gated native cloud/shadow isobaric route evidence from docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-native-cloud-shadow-isobaric-route-admission-plan.md while keeping public cloud/shadow route keys closed.
 **Execution Mode:** Ask at runtime
@@ -164,7 +164,7 @@ and final public capability admission remain separate gates.
 - Package: `equilibrium`
 - Capability: `lle`
 - Backend: `Ipopt`
-- Readiness: `ready`
+- Readiness: `closed`
 - AFK/HITL: `AFK`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
