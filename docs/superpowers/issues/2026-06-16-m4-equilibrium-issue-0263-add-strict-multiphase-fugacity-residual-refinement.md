@@ -60,12 +60,22 @@ reduced ln-fugacity norm still fails strict phase-equilibrium certification.
 
 ## Acceptance Criteria
 
-- [ ] A native phase-equilibrium residual block evaluates reduced fugacity equalities for arbitrary neutral phase counts using exact provider sensitivity data and amount/volume chain rules.
-- [ ] A private `NlpProblem` solves the square multiphase fugacity-residual system with material balance, phase pressure consistency, and cross-phase reduced fugacity equality constraints.
-- [ ] The route consumes Stage II candidate-set replay metadata and reports Stage III residual-refinement metadata.
-- [ ] The strict route reports Ipopt `success`, application `solve_succeeded`, exact derivative evidence, accepted postsolve, and reduced ln-fugacity consistency norm <= `1.0e-6`.
-- [ ] Checker and native tests reject missing strict residual-route evidence, missing exact derivative metadata, stale Gibbs-objective-only route evidence, public route exposure, collapsed phases, and residual norms above tolerance.
-- [ ] #189 remains open for final public generalized multiphase admission, and #261 is rerouted to use this strict proof after the child merges.
+- [x] A native phase-equilibrium residual block evaluates reduced fugacity equalities for arbitrary neutral phase counts using exact provider sensitivity data and amount/volume chain rules.
+- [x] A private `NlpProblem` solves the square multiphase fugacity-residual system with material balance, phase pressure consistency, and cross-phase reduced fugacity equality constraints.
+- [x] The route consumes Stage II candidate-set replay metadata and reports Stage III residual-refinement metadata.
+- [x] The strict route reports Ipopt `success`, application `solve_succeeded`, exact derivative evidence, accepted postsolve, and reduced ln-fugacity consistency norm <= `1.0e-6`.
+- [x] Checker and native tests reject missing strict residual-route evidence, missing exact derivative metadata, stale Gibbs-objective-only route evidence, public route exposure, collapsed phases, and residual norms above tolerance.
+- [x] #189 remains open for final public generalized multiphase admission, and #261 is rerouted to use this strict proof after the child merges.
+
+## Implementation Evidence
+
+- Strict route binding: `_native_neutral_multiphase_fugacity_residual_route_result`.
+- Route kind: `strict_fugacity_residual`.
+- Hessian backend: `cppad_phase_system_plus_reduced_fugacity_residual`.
+- Residual derivative backend: `cppad_explicit_density`.
+- Stage III replay seed: `held_stage_ii_dual_loop_candidate_set`.
+- Public admission: `closed`.
+- Live checker proof: `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` returned `complete: true`, `blockers: []`, `selected_candidate_count: 3`, and `route_refinement_kind: strict_fugacity_residual`.
 
 ## Blocked By
 

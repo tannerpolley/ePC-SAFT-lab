@@ -80,6 +80,16 @@ capability admission gates are separately proven.
 - For #263, run `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` and require strict fugacity-residual route evidence while keeping public generalized route exposure closed.
 - For #261, after #263 closes, rerun `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` and keep #260 route evidence green.
 
+## #263 Evidence Added
+
+#263 adds a private strict neutral multiphase fugacity-residual route for the
+Stage II candidate-set replay. The retained checker now requires
+`route_refinement_kind: strict_fugacity_residual`, exact reduced residual
+derivative metadata, Stage III replay consumption, accepted postsolve, and no
+public `neutral_multiphase_nonassoc` exposure. This is the immediate proof #261
+should consume after #263 merges; it still does not complete final public
+generalized multiphase admission for #189.
+
 ## Non-Goals And Boundaries
 
 - No associating/electrolyte/reactive route admission unless separately proven.

@@ -68,6 +68,21 @@ requested neutral phase kinds `liquid,liquid,liquid`, while keeping public
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/263 owns the strict multiphase fugacity-residual refinement prerequisite exposed during #261 execution.
 
+## Resume Path After #263
+
+After #263 merges, #261 should rerun the retained completion checker with strict
+route refinement:
+
+```powershell
+uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete
+```
+
+The expected proof fields are `route_refinement_kind:
+strict_fugacity_residual`, `residual_exact_hessian_available: true`,
+`held_stage_iii_consumed_stage_ii_replay_metadata: true`,
+`selected_candidate_count: 3`, `blockers: []`, and no public
+`neutral_multiphase_nonassoc` route exposure.
+
 ## Previously blocked by
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/260 closed through https://github.com/ePC-SAFT/ePC-SAFT/pull/262.
