@@ -23,7 +23,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252, #256, #258, #260, and #263 closed as AFK child issues; #261 is the current ready AFK child for generalized phase-set certification.
+AFK/HITL: HITL umbrella; #252, #256, #258, #260, and #263 closed as AFK child issues; #261 has PR-ready generalized phase-set certification proof; final public generalized multiphase admission remains separate.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -42,12 +42,12 @@ and stricter generalized phase-set rejection diagnostics; #258 closed through
 admission closed; #260 closed through #262 with checker-gated native isobaric
 cloud/shadow route evidence while keeping public cloud/shadow route keys
 closed; #263 closed through #265 with the strict multiphase fugacity-residual
-route required before #261 can honestly complete generalized phase-set
-certification. #261 is now ready and should consume the strict residual proof
-for Stage II candidate-set replay plus strict Stage III residual refinement for
-the requested neutral multiphase phase-kind list.
-The umbrella remains open until generalized phase-set completion and public
-capability admission gates are separately proven.
+route required before #261 could honestly complete generalized phase-set
+certification. #261 now has proof that the strict residual route consumes the
+Stage II candidate-set replay and completes strict Stage III residual refinement
+for the requested neutral multiphase phase-kind list. The umbrella remains open
+until final public generalized multiphase capability admission is separately
+proven.
 
 ## Supplemental Context
 
@@ -78,7 +78,7 @@ capability admission gates are separately proven.
 - For #258, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` and keep the neutral LLE showcase checker green.
 - For #260, run `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` after implementation and keep the #258 source-data gate green.
 - For #263, run `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` and require strict fugacity-residual route evidence while keeping public generalized route exposure closed.
-- For #261, after #263 closes, rerun `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` and keep #260 route evidence green.
+- For #261, rerun `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` and keep #260 route evidence green.
 
 ## #263 Evidence Added
 
@@ -89,6 +89,19 @@ derivative metadata, Stage III replay consumption, accepted postsolve, and no
 public `neutral_multiphase_nonassoc` exposure. This is the immediate proof #261
 should consume; it still does not complete final public
 generalized multiphase admission for #189.
+
+## #261 Evidence Added
+
+#261 records the internal neutral generalized phase-set certification gate:
+`check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid
+--run-route-refinement --require-route-refinement --require-complete` reports
+`complete: true`, `blockers: []`, `selected_candidate_count: 3`,
+`rejected_candidate_count: 3`, `route_refinement_kind:
+strict_fugacity_residual`, `solver_status: success`, `application_status:
+solve_succeeded`, exact Jacobian/Hessian residual evidence, Stage III replay
+consumption of `held_stage_ii_dual_loop_candidate_set`, and
+`public_route_exposure: false`. This closes the internal certification child
+only; #189 remains open for final public generalized multiphase admission.
 
 ## Non-Goals And Boundaries
 
@@ -103,6 +116,6 @@ generalized multiphase admission for #189.
 - Capability: `lle`
 - Backend: `Ipopt`
 - Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252, #256, #258, #260, and #263 closed; #261 ready`
+- AFK/HITL: `HITL umbrella; #252, #256, #258, #260, and #263 closed; #261 proof-ready; final public admission remaining`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
