@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md"
@@ -27,7 +27,7 @@ last_synced: "2026-06-16"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 **Source Plan:** docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md
 **Classification:** AFK
-**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
+**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/261 after #263 closes, using docs/superpowers/issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md and docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md. Complete proof oracle: issue acceptance criteria checked.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
