@@ -58,7 +58,6 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
 | [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
-| [#261](../../issues/2026-06-15-m4-equilibrium-issue-0261-complete-generalized-phase-set-certification-gate.md) | `lle` | `Ipopt` | `ready` | AFK child with PR-ready generalized phase-set certification proof using #263 strict residual refinement evidence. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -102,13 +101,13 @@ proof requires exact residual derivative metadata, accepted postsolve, Stage II
 replay consumption, and public `neutral_multiphase_nonassoc` route admission
 closed.
 
-#261 has PR-ready generalized phase-set certification proof. The retained
-checker reports `complete: true`, `blockers: []`, `selected_candidate_count: 3`,
-`rejected_candidate_count: 3`, strict Stage III replay consumption of
-`held_stage_ii_dual_loop_candidate_set`, exact residual Jacobian/Hessian
-evidence, and public `neutral_multiphase_nonassoc` route admission closed.
-This closes the internal certification child only; final public generalized
-multiphase admission remains separate under #189.
+#261 closed through #266 with generalized phase-set certification proof. The
+retained checker reports `complete: true`, `blockers: []`,
+`selected_candidate_count: 3`, `rejected_candidate_count: 3`, strict Stage III
+replay consumption of `held_stage_ii_dual_loop_candidate_set`, exact residual
+Jacobian/Hessian evidence, and public `neutral_multiphase_nonassoc` route
+admission closed. This closes the internal certification child only; final
+public generalized multiphase admission remains separate under #189.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
 for boundary workflows and generalized phase-set PE. #190 and #191 remain
@@ -130,4 +129,5 @@ blocked by their own proof gates.
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/256](https://github.com/ePC-SAFT/ePC-SAFT/issues/256) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/257](https://github.com/ePC-SAFT/ePC-SAFT/pull/257) on 2026-06-15T17:23:27Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/258](https://github.com/ePC-SAFT/ePC-SAFT/issues/258) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/259](https://github.com/ePC-SAFT/ePC-SAFT/pull/259) on 2026-06-15T22:19:05Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/260](https://github.com/ePC-SAFT/ePC-SAFT/issues/260) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/262](https://github.com/ePC-SAFT/ePC-SAFT/pull/262) on 2026-06-16T12:53:23Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/261](https://github.com/ePC-SAFT/ePC-SAFT/issues/261) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/266](https://github.com/ePC-SAFT/ePC-SAFT/pull/266) on 2026-06-16T23:13:06Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/263](https://github.com/ePC-SAFT/ePC-SAFT/issues/263) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/265](https://github.com/ePC-SAFT/ePC-SAFT/pull/265) on 2026-06-16T22:04:22Z
