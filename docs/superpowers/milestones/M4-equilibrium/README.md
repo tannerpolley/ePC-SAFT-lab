@@ -47,7 +47,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Neutral nonassociating LLE showcase](../../../../analyses/package_validation/neutral_nonassociating_lle_showcase/README.md) | `lle` | Source-backed Matsuda/NIST perfluorohexane + hexane LLE evidence for the current neutral `route="lle"` utility. This is one binary source-backed showcase, not generalized phase-set completion or associating GFPE admission. |
 | `scripts/validation/check_generalized_phase_set.py --json --require-complete` | `lle` | Internal neutral generalized phase-set diagnostic record evidence for #252: three selected candidate rows, rejected candidate rows, mass-balance feasibility, noncollapsed selected compositions, and no public `neutral_multiphase_nonassoc` exposure. This keeps `PE-Generalized Multiphase` planned-not-public. |
 | `scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` | `lle` | Retained derived-boundary evidence for #256: current bubble/dew `P-x` and `T-x` route points emit complete `boundary_trace` records with route, DOF swap, source fixture, selector family, shared NLP families, strict Ipopt convergence, finite residuals, and no iteration-limit seed path. Cloud and shadow remain planned-only. |
-| `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, empty source-data blockers, and explicit native route-admission blockers. This is not native cloud/shadow route admission. |
+| `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, and empty source-data blockers. |
+| `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
 
 ## Current Open Issues
 
@@ -88,9 +89,11 @@ This preserves the public capability boundary and does not close #189.
 Matsuda/NIST perfluorohexane + hexane neutral LLE fixture. The gate keeps
 cloud/shadow native runtime routes empty and does not close #189.
 
-#260 is the next #189 AFK child. It targets one checker-gated native isobaric
-cloud/shadow route-evidence point against the retained Matsuda/NIST paired
-branch while keeping public cloud/shadow route keys closed.
+#260 targets one checker-gated native isobaric cloud/shadow route-evidence
+point. The proof derives the current model-refined Matsuda branch pair from the
+certified neutral LLE source showcase, solves the private cloud-temperature
+route from that parent branch, compares back to the raw source-pair tolerances,
+and keeps public cloud/shadow route keys closed.
 
 #261 is created but blocked by #260. It is the next #189 child after #260 and
 targets generalized phase-set certification: Stage II candidate-set replay plus

@@ -426,8 +426,18 @@ The retained cloud/shadow source-data gate is
 --cloud-shadow-gate --require-cloud-shadow-gate`. It checks the Matsuda/NIST
 perfluorohexane + hexane neutral LLE fixture for 14 source-backed cloud-point
 binodal rows and one paired cloud/shadow branch row. Passing this gate means
-the cloud/shadow source-data contract is retained and route-admission blockers
-are named; it does not mean native cloud/shadow routes are executable.
+the cloud/shadow source-data contract is retained.
+
+The checker-gated native cloud/shadow route-evidence command is
+`uv run python scripts/validation/check_boundary_workflows.py --json
+--run-cloud-shadow-route --require-cloud-shadow-route`. It first obtains the
+model-refined Matsuda branch pair from the existing certified `neutral_lle`
+showcase at 293.895 K and 101300 Pa, then fixes the model-refined parent-liquid
+composition in the private `neutral_cloud_t_eos` route and solves the
+cloud-temperature plus shadow-liquid composition. Passing this gate means one
+internal native isobaric cloud/shadow route point is strict-Ipopt verified
+against the source-backed fixture tolerances. It still does not add public
+`cloud_temperature`, `cloud_point`, or `shadow_point` route keys.
 
 The neutral TP flash fixture gate is explicit in
 `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`. A neutral TP-flash case is
@@ -485,8 +495,11 @@ The boundary workflow checker is
 `uv run python scripts/validation/check_boundary_workflows.py`.
 Use `--json --contracts-only` for the cheap derived-workflow contract check.
 Use `--json --cloud-shadow-gate --require-cloud-shadow-gate` for the retained
-cloud/shadow source-data gate; this command must keep cloud/shadow runtime
-routes empty while reporting explicit route-admission blockers.
+cloud/shadow source-data gate.
+Use `--json --run-cloud-shadow-route --require-cloud-shadow-route` for the
+checker-gated native cloud/shadow isobaric route-evidence point; this command
+must keep public cloud/shadow runtime routes empty while reporting closed public
+route admission in the private route payload.
 Use `--json --run-current-boundary-route --route <route> --debug
 --require-complete` only when diagnosing one current bubble/dew route; the
 checker forwards Ipopt `print_level=5` output to stderr and fails closed when

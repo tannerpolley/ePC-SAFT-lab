@@ -185,14 +185,21 @@ def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> N
     assert subworkflows["Dew point"]["current_convergence_status"] == (
         "current_fixture_strict_route_points_verified"
     )
-    assert subworkflows["Cloud point"]["current_convergence_status"] == "planned_not_executable"
-    assert subworkflows["Shadow point"]["current_convergence_status"] == "planned_not_executable"
+    assert subworkflows["Cloud point"]["current_convergence_status"] == (
+        "checker_gated_native_route_evidence_verified_public_routes_closed"
+    )
+    assert subworkflows["Shadow point"]["current_convergence_status"] == (
+        "checker_gated_native_route_evidence_verified_public_routes_closed"
+    )
     for label in ("Cloud point", "Shadow point"):
         row = subworkflows[label]
         assert row["current_runtime_routes"] == [], label
         assert "source_backed_cloud_binodal_rows" in row["acceptance_checks"], label
         assert "source_backed_cloud_shadow_pair" in row["acceptance_checks"], label
-        assert "native_route_admission_blockers_declared" in row["acceptance_checks"], label
+        assert "model_refined_source_branch_reference" in row["acceptance_checks"], label
+        assert "checker_gated_native_cloud_temperature_route" in row["acceptance_checks"], label
+        assert "public_route_admission_closed" in row["acceptance_checks"], label
+        assert "native_route_admission_blockers_declared" not in row["acceptance_checks"], label
 
 
 def test_deterministic_screening_is_not_called_full_held() -> None:

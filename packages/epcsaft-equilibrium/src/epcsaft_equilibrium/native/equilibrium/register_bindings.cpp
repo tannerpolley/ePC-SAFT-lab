@@ -1746,6 +1746,70 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         return out;
     });
 
+    m.def("_native_equilibrium_cloud_shadow_route_result", [](
+        const py::object& mixture,
+        const py::dict& request_payload,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double phase_total_tolerance,
+        double pressure_tolerance,
+        double chemical_potential_tolerance,
+        double phase_distance_tolerance,
+        const py::object& continuation_state,
+        const py::kwargs& kwargs
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Cloud/shadow private route result");
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                "proof",
+                iteration_history_limit
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        apply_ipopt_continuation_state(options, continuation_state);
+        const auto request = selector_request_from_dict(request_payload);
+        if (request.route != "cloud_temperature") {
+            throw ValueError("Cloud/shadow private route requires route cloud_temperature.");
+        }
+        if (request.composition_role != "parent_liquid") {
+            throw ValueError("Cloud/shadow private route requires composition_role parent_liquid.");
+        }
+        if (!request.has_pressure) {
+            throw ValueError("Cloud/shadow private route requires pressure.");
+        }
+        if (request.has_temperature) {
+            throw ValueError("Cloud/shadow private route solves temperature from pressure and parent liquid composition.");
+        }
+        py::dict out = neutral_two_phase_eos_route_result_to_dict(
+            epcsaft::native::equilibrium_nlp::solve_neutral_cloud_t_eos_route(
+                args,
+                request.pressure,
+                request.composition,
+                options,
+                phase_total_tolerance,
+                pressure_tolerance,
+                chemical_potential_tolerance,
+                phase_distance_tolerance
+            )
+        );
+        out["route"] = "cloud_temperature";
+        out["selector_family"] = "cloud_shadow_derived_routes";
+        out["composition_role"] = "parent_liquid";
+        out["specified_pressure"] = request.pressure;
+        out["specified_temperature"] = py::none();
+        out["phase_labels"] = std::vector<std::string>{"parent_liquid", "shadow_liquid"};
+        out["phase_roles"] = std::vector<std::string>{"parent_liquid", "incipient_liquid"};
+        out["production_exposed"] = false;
+        out["public_route_admission"] = "closed";
+        return out;
+    });
+
     m.def("_native_second_order_assembly_smoke", []() {
         namespace nlp = epcsaft::native::equilibrium_nlp;
         py::dict out;

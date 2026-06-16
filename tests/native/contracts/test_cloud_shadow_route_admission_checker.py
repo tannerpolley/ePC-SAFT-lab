@@ -24,6 +24,8 @@ SOURCE_TEMPERATURE_K = 293.895
 PRESSURE_PA = 101300.0
 PARENT_LIQUID = [0.2, 0.8]
 SHADOW_LIQUID = [0.5497, 0.4503]
+MODEL_PARENT_LIQUID = [0.19253198692922618, 0.8074680130707738]
+MODEL_SHADOW_LIQUID = [0.5397660336131663, 0.46023396638683367]
 PUBLIC_TEST_PRESSURE_PA = 1_276_369.4735856401
 PUBLIC_TEST_COMPOSITION = [0.1, 0.9]
 
@@ -46,6 +48,19 @@ class _MissingCloudShadowCore:
 
 
 class _AcceptedCloudShadowCore:
+    def _native_equilibrium_selector_route_result(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        return {
+            "accepted": True,
+            "status": "production_accepted",
+            "solver_status": "success",
+            "application_status": "solve_succeeded",
+            "postsolve": {
+                "accepted": True,
+                "phase_compositions": [MODEL_PARENT_LIQUID, MODEL_SHADOW_LIQUID],
+                "phase_amount_totals": [0.47494200291734767, 0.5250579970826523],
+            },
+        }
+
     def _native_equilibrium_cloud_shadow_route_result(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
         return {
             "accepted": True,
@@ -74,9 +89,9 @@ class _AcceptedCloudShadowCore:
                 "phase_equilibrium",
                 "phase_volume_gap",
             ],
-            "phase_amounts": [PARENT_LIQUID, SHADOW_LIQUID],
+            "phase_amounts": [MODEL_PARENT_LIQUID, MODEL_SHADOW_LIQUID],
             "phase_volumes": [1.45e-4, 1.70e-4],
-            "variables": [*PARENT_LIQUID, 1.45e-4, *SHADOW_LIQUID, 1.70e-4, SOURCE_TEMPERATURE_K],
+            "variables": [*MODEL_PARENT_LIQUID, 1.45e-4, *MODEL_SHADOW_LIQUID, 1.70e-4, SOURCE_TEMPERATURE_K],
             "seed_name": "source_pair_seed",
             "seed_attempts": [
                 {
@@ -95,19 +110,19 @@ class _AcceptedCloudShadowCore:
                 "pressure_consistency_norm": 0.0,
                 "ln_fugacity_consistency_norm": 0.0,
                 "phase_equilibrium_norm": 0.0,
-                "phase_distance": abs(SHADOW_LIQUID[0] - PARENT_LIQUID[0]),
+                "phase_distance": abs(MODEL_SHADOW_LIQUID[0] - MODEL_PARENT_LIQUID[0]),
                 "scaled_constraint_violation_inf_norm": 0.0,
             },
             "physical_evidence": {
                 "phase_labels": ["parent_liquid", "shadow_liquid"],
                 "phase_roles": ["parent_liquid", "incipient_liquid"],
-                "phase_distance": abs(SHADOW_LIQUID[0] - PARENT_LIQUID[0]),
+                "phase_distance": abs(MODEL_SHADOW_LIQUID[0] - MODEL_PARENT_LIQUID[0]),
                 "material_balance_norm": 0.0,
                 "pressure_consistency_norm": 0.0,
                 "ln_fugacity_consistency_norm": 0.0,
                 "phases": [
-                    {"label": "parent_liquid", "composition": PARENT_LIQUID},
-                    {"label": "shadow_liquid", "composition": SHADOW_LIQUID},
+                    {"label": "parent_liquid", "composition": MODEL_PARENT_LIQUID},
+                    {"label": "shadow_liquid", "composition": MODEL_SHADOW_LIQUID},
                 ],
             },
         }
@@ -162,13 +177,16 @@ def test_cloud_shadow_route_evidence_payload_matches_source_metrics(monkeypatch:
     assert payload["status"] == "native_route_complete"
     assert payload["route"] == "cloud_temperature"
     assert payload["pressure_Pa"] == PRESSURE_PA
-    assert payload["parent_liquid_composition"] == PARENT_LIQUID
+    assert payload["source_parent_liquid_composition"] == PARENT_LIQUID
+    assert payload["parent_liquid_composition"] == MODEL_PARENT_LIQUID
+    assert payload["source_parent_composition_abs_error"] == pytest.approx([0.007468013070773831, 0.007468013070773831])
     assert payload["source_temperature_K"] == SOURCE_TEMPERATURE_K
     assert payload["solved_temperature_K"] == pytest.approx(SOURCE_TEMPERATURE_K)
     assert payload["temperature_abs_error_K"] == pytest.approx(0.0)
     assert payload["source_shadow_composition"] == SHADOW_LIQUID
-    assert payload["solved_shadow_composition"] == pytest.approx(SHADOW_LIQUID)
-    assert payload["shadow_composition_abs_error"] == pytest.approx([0.0, 0.0])
+    assert payload["solved_shadow_composition"] == pytest.approx(MODEL_SHADOW_LIQUID)
+    assert payload["shadow_composition_abs_error"] == pytest.approx([0.009933966386833692, 0.009933966386833636])
+    assert payload["model_reference"]["status"] == "model_reference_complete"
     assert payload["strict_convergence"] is True
     assert payload["solver_status"] == "success"
     assert payload["application_status"] == "solve_succeeded"
