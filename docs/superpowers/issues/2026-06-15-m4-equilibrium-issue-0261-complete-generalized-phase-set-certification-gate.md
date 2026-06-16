@@ -13,7 +13,7 @@ release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md"
 afk_hitl: "AFK"
-branch: codex/issue-0261-complete-generalized-phase-set-certification-gate
+branch: codex/issue-0261-certification-gate-clean
 last_synced: "2026-06-16"
 ---
 
