@@ -2386,6 +2386,81 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             )
         );
     });
+    m.def("_native_neutral_multiphase_fugacity_residual_route_result", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<int>& phase_kinds,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double material_tolerance,
+        double pressure_tolerance,
+        double ln_fugacity_tolerance,
+        double phase_distance_tolerance,
+        const py::object& continuation_state,
+        const py::kwargs& kwargs
+    ) {
+        const add_args args = native_args_from_mixture_object(
+            mixture,
+            "Neutral multiphase fugacity residual route result"
+        );
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                "proof",
+                iteration_history_limit
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        apply_ipopt_continuation_state(options, continuation_state);
+        py::dict out = neutral_two_phase_eos_route_result_to_dict(
+            epcsaft::native::equilibrium_nlp::solve_neutral_multiphase_fugacity_residual_route(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                phase_kinds,
+                options,
+                material_tolerance,
+                pressure_tolerance,
+                ln_fugacity_tolerance,
+                phase_distance_tolerance
+            )
+        );
+        out["route"] = "neutral_multiphase_nonassoc";
+        out["selector_family"] = "neutral_multiphase_nonassoc";
+        out["route_refinement_kind"] = "strict_fugacity_residual";
+        out["requested_phase_kinds"] = phase_kinds;
+        out["requested_phase_count"] = static_cast<int>(phase_kinds.size());
+        out["residual_derivative_backend"] = "cppad_explicit_density";
+        out["residual_exact_jacobian_available"] = true;
+        out["residual_exact_hessian_available"] = true;
+        out["production_exposed"] = false;
+        out["public_route_admission"] = "closed";
+        return out;
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("phase_kinds"),
+        py::arg("max_iterations"),
+        py::arg("tolerance"),
+        py::arg("timeout_seconds"),
+        py::arg("hessian_mode"),
+        py::arg("iteration_history_limit"),
+        py::arg("material_tolerance"),
+        py::arg("pressure_tolerance"),
+        py::arg("ln_fugacity_tolerance"),
+        py::arg("phase_distance_tolerance"),
+        py::arg("continuation_state") = py::none()
+    );
     m.def("_native_neutral_tpd_phase_discovery", [](
         const py::object& mixture,
         double temperature,
