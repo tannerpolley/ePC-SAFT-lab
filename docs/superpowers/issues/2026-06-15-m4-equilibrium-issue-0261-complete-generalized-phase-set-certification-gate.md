@@ -13,7 +13,7 @@ release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md"
 afk_hitl: "AFK"
-branch: codex/issue-0261-complete-generalized-phase-set-certification-gate
+branch: codex/issue-0261-certification-gate-clean
 last_synced: "2026-06-16"
 ---
 
@@ -53,14 +53,14 @@ requested neutral phase kinds `liquid,liquid,liquid`, while keeping public
 
 ## Acceptance Criteria
 
-- [ ] Native generalized phase-set route refinement consumes Stage II candidate-set replay metadata for requested phase kinds `liquid,liquid,liquid`.
-- [ ] Stage III Ipopt route refinement reports `solver_status == "success"`, `application_status == "solve_succeeded"`, exact Hessian evidence, accepted postsolve, and no iteration-limit selected seed attempt.
-- [ ] The retained checker reports requested phase kinds/count, selected/rejected candidate counts, selected phase fractions, replay metadata, route-refinement status, residual norms, native freshness receipt, and public exposure status.
-- [ ] Completion metrics satisfy candidate mass-balance norm <= `1.0e-6`, material-balance norm <= `1.0e-8`, pressure consistency norm <= `1.0e-3 Pa`, ln-fugacity consistency norm <= `1.0e-6`, positive phase distance, normalized compositions, and strictly positive phase fractions.
-- [ ] Checker tests reject missing route refinement, missing replay metadata, hard-coded phase count, duplicate/collapsed phases, lower-free-energy rejected candidates, uncertified records, malformed records, and public route exposure.
-- [ ] `neutral_multiphase_nonassoc` remains absent from public routes and production-exposed capability rows.
-- [ ] M4 registry and GFPE doctrine record internal generalized certification evidence without final public production exposure.
-- [ ] #189 remains open unless final public capability admission is separately proven.
+- [x] Native generalized phase-set route refinement consumes Stage II candidate-set replay metadata for requested phase kinds `liquid,liquid,liquid`.
+- [x] Stage III Ipopt route refinement reports `solver_status == "success"`, `application_status == "solve_succeeded"`, exact Hessian evidence, accepted postsolve, and no iteration-limit selected seed attempt.
+- [x] The retained checker reports requested phase kinds/count, selected/rejected candidate counts, selected phase fractions, replay metadata, route-refinement status, residual norms, native freshness receipt, and public exposure status.
+- [x] Completion metrics satisfy candidate mass-balance norm <= `1.0e-6`, material-balance norm <= `1.0e-8`, pressure consistency norm <= `1.0e-3 Pa`, ln-fugacity consistency norm <= `1.0e-6`, positive phase distance, normalized compositions, and strictly positive phase fractions.
+- [x] Checker tests reject missing route refinement, missing replay metadata, hard-coded phase count, duplicate/collapsed phases, lower-free-energy rejected candidates, uncertified records, malformed records, and public route exposure.
+- [x] `neutral_multiphase_nonassoc` remains absent from public routes and production-exposed capability rows.
+- [x] M4 registry and GFPE doctrine record internal generalized certification evidence without final public production exposure.
+- [x] #189 remains open unless final public capability admission is separately proven.
 
 ## Blocked By
 
@@ -86,6 +86,49 @@ strict_fugacity_residual`, `residual_exact_hessian_available: true`,
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/263 closed through https://github.com/ePC-SAFT/ePC-SAFT/pull/265.
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/260 closed through https://github.com/ePC-SAFT/ePC-SAFT/pull/262.
+
+## Resolution Evidence
+
+Fresh #261 verification from branch `codex/issue-0261-certification-gate-clean`
+at commit `8a4c207dde4cb547928f4d4ae80a081a7f1244de` proves the internal
+neutral generalized phase-set certification gate while keeping public
+`neutral_multiphase_nonassoc` exposure closed. This does not close #189; the
+remaining #189 gate is final public generalized multiphase capability admission
+after separate public-route, source-backed representative-family, and
+capability evidence.
+
+Retained generalized checker result:
+
+- `complete: true`
+- `blockers: []`
+- `requested_phase_kinds: ["liquid", "liquid", "liquid"]`
+- `requested_phase_count: 3`
+- `selected_candidate_count: 3`
+- `rejected_candidate_count: 3`
+- `selected_phase_fractions: [0.8333333333329163, 0.11111111111138908, 0.05555555555569465]`
+- `candidate_mass_balance_norm: 1.1102230246251565e-16`
+- `material_balance_norm: 5.551115123125783e-17`
+- `pressure_consistency_norm: 3.600725904107094e-07`
+- `ln_fugacity_consistency_norm: 6.1978795984352075e-09`
+- `phase_distance: 0.9999944141100124`
+- `held_stage_ii_replay_seed_name: held_stage_ii_dual_loop_candidate_set`
+- `held_stage_ii_replay_candidate_count: 6`
+- `held_stage_iii_status: ipopt_refinement_completed_current_route`
+- `held_stage_iii_consumed_stage_ii_replay_metadata: true`
+- `held_stage_iii_replay_seed_name: held_stage_ii_dual_loop_candidate_set`
+- `held_stage_iii_replay_candidate_count: 6`
+- `route_refinement_kind: strict_fugacity_residual`
+- `solver_status: success`
+- `application_status: solve_succeeded`
+- `accepted: true`
+- `postsolve_accepted: true`
+- `exact_hessian_available: true`
+- `residual_exact_jacobian_available: true`
+- `residual_exact_hessian_available: true`
+- `seed_attempt_statuses: ["production_accepted"]`
+- `public_route_exposure: false`
+- `native_module_name: epcsaft_equilibrium._native_core`
+- `native_module_path: C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\.worktrees\issue-0261-certification-gate-clean\packages\epcsaft-equilibrium\src\epcsaft_equilibrium\_native_core.cp313-win_amd64.pyd`
 
 ## Non-goals
 
