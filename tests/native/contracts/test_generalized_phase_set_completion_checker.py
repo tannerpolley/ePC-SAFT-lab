@@ -108,14 +108,18 @@ def _completion_payload(*, requested_phase_kinds: list[str] | None = None) -> di
             "held_stage_iii_replay_candidate_count": phase_count,
         },
         "route_refinement": {
-            "problem_name": "neutral_multiphase_eos",
+            "problem_name": "neutral_multiphase_fugacity_residual",
+            "route_refinement_kind": "strict_fugacity_residual",
             "solver_status": "success",
             "application_status": "solve_succeeded",
             "accepted": True,
             "exact_hessian_available": True,
-            "hessian_backend": "cppad_phase_system",
+            "hessian_backend": "cppad_phase_system_plus_reduced_fugacity_residual",
+            "residual_derivative_backend": "cppad_explicit_density",
+            "residual_exact_jacobian_available": True,
+            "residual_exact_hessian_available": True,
             "selected_seed_attempt_statuses": ["success"],
-            "postsolve": {"accepted": True},
+            "postsolve": {"accepted": True, "ln_fugacity_consistency_norm": 2.0e-10},
             "public_route_admission": "closed",
         },
     }
@@ -227,6 +231,46 @@ def test_completion_checker_rejects_selected_seed_iteration_limit_attempts() -> 
 
     assert result["complete"] is False
     assert "stage_iii_selected_seed_iteration_limit" in result["blockers"]
+
+
+@pytest.mark.parametrize(
+    ("mutator", "blocker"),
+    [
+        (
+            lambda payload: payload["route_refinement"].pop("route_refinement_kind"),
+            "strict_fugacity_residual_route_missing",
+        ),
+        (
+            lambda payload: payload["route_refinement"].pop("residual_derivative_backend"),
+            "residual_derivative_metadata_missing",
+        ),
+        (
+            lambda payload: payload["route_refinement"].__setitem__("residual_exact_hessian_available", False),
+            "residual_exact_hessian_missing",
+        ),
+        (
+            lambda payload: payload["route_refinement"]["postsolve"].__setitem__(
+                "ln_fugacity_consistency_norm", 2.0e-4
+            ),
+            "stage_iii_ln_fugacity_norm_above_tolerance",
+        ),
+        (
+            lambda payload: payload["route_refinement"].__setitem__("route_refinement_kind", "gibbs_objective"),
+            "gibbs_objective_only_route_not_certifying",
+        ),
+    ],
+)
+def test_completion_checker_requires_strict_residual_refinement_evidence(
+    mutator: Any,
+    blocker: str,
+) -> None:
+    payload = _completion_payload()
+    mutator(payload)
+
+    result = _evaluate(payload)
+
+    assert result["complete"] is False
+    assert blocker in result["blockers"]
 
 
 def test_completion_checker_accepts_four_requested_phases_without_three_phase_hard_coding() -> None:
