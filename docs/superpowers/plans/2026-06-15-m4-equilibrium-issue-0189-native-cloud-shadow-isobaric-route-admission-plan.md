@@ -4,7 +4,7 @@
 
 **Goal:** Add the next #189 child that proves checker-gated native cloud/shadow isobaric `T-x` route evidence from the retained Matsuda/NIST neutral LLE fixture without exposing public cloud/shadow `Equilibrium` route keys.
 
-**Architecture:** Reuse the existing amount-volume neutral two-liquid NLP and derived-boundary checker instead of adding a separate phase-equilibrium path. The native work adds one internal cloud-temperature proof route that fixes pressure and parent-liquid composition, solves the boundary temperature and incipient second-liquid composition, and reports the incipient composition as the matched shadow phase. The Python checker compares that proof route to the retained source pair and keeps public route exposure closed until a later #189 public-admission child.
+**Architecture:** Reuse the existing amount-volume neutral two-liquid NLP and derived-boundary checker instead of adding a separate phase-equilibrium path. The native work adds one internal cloud-temperature proof route that fixes pressure and parent-liquid composition, solves the boundary temperature and incipient second-liquid composition, and reports the incipient composition as the matched shadow phase. The Python checker first derives the current model-refined Matsuda branch pair from the certified `neutral_lle` source showcase, uses that model-refined parent branch as the private route input, compares the result back to the raw source-pair tolerances, and keeps public route exposure closed until a later #189 public-admission child.
 
 **Tech Stack:** C++ native equilibrium routes, pybind11 private bindings, `epcsaft-equilibrium` Python workflow internals, Ipopt exact-Hessian route solves, pytest through `run_pytest.py`, `scripts/validation/check_boundary_workflows.py`, Matsuda/NIST neutral LLE fixture data, Superpowers Project issue mirrors.
 
@@ -48,7 +48,7 @@ This plan is test-complete only when all of the following are true:
 
 - `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` still exits zero and reports the retained source-data gate complete.
 - `uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` exits zero for the Matsuda paired source branch.
-- The route proof uses pressure `101300 Pa`, parent-liquid composition `[0.2000, 0.8000]`, expected shadow composition `[0.5497, 0.4503]`, and source temperature `293.895 K` from the paired branch row.
+- The route proof uses pressure `101300 Pa`, the certified `neutral_lle` model-refined parent-liquid branch derived from source parent `[0.2000, 0.8000]`, expected raw source shadow composition `[0.5497, 0.4503]`, and source temperature `293.895 K` from the paired branch row.
 - The solved cloud temperature is within `0.2 K` of the retained paired source temperature.
 - The solved shadow composition is within `0.02` mole fraction absolute error for each component against the retained paired source shadow branch.
 - The route payload reports `solver_status == "success"`, `application_status == "solve_succeeded"`, exact Hessian evidence, no iteration-limit seed attempt, `pressure_consistency_norm <= 0.001 Pa`, `ln_fugacity_consistency_norm <= 1.0e-6`, `material_balance_norm <= 1.0e-8`, and `phase_distance >= 1.0e-6`.
@@ -58,7 +58,8 @@ This plan is test-complete only when all of the following are true:
 ## Acceptance Criteria
 
 - [ ] A private native cloud-temperature proof route solves the retained Matsuda isobaric cloud/shadow pair with strict Ipopt convergence and exact-Hessian diagnostics.
-- [ ] The proof route fixes pressure and parent-liquid composition, solves boundary temperature, and reports incipient second-liquid composition as the matched shadow phase.
+- [ ] The checker derives the current model-refined Matsuda parent branch from the certified `neutral_lle` source showcase, reports its source-parent error against `[0.2000, 0.8000]`, and uses that model-refined parent as the private cloud-temperature route input.
+- [ ] The proof route fixes pressure and model-refined parent-liquid composition, solves boundary temperature, and reports incipient second-liquid composition as the matched shadow phase against `[0.5497, 0.4503]`.
 - [ ] The checker emits a route evidence payload with source fixture path, source row ids, solved temperature, source temperature error, solved shadow composition, shadow composition error, residual norms, solver statuses, seed attempts, and route trace metadata.
 - [ ] The retained source-data gate from #258 remains green and remains separate from route-evidence completion.
 - [ ] Public cloud/shadow route strings remain closed in `Equilibrium` and in the activation capability mirror.
@@ -295,7 +296,7 @@ This plan is test-complete only when all of the following are true:
 
 - [ ] **Step 1: Add route-evidence constants**
 
-  Add constants for route name `cloud_temperature`, selector family `cloud_shadow_derived_routes`, problem name `neutral_cloud_t_eos`, expected pressure `101300.0`, expected parent branch `[0.2, 0.8]`, expected shadow branch `[0.5497, 0.4503]`, and expected source temperature `293.895`.
+  Add constants for route name `cloud_temperature`, selector family `cloud_shadow_derived_routes`, problem name `neutral_cloud_t_eos`, expected pressure `101300.0`, raw source parent branch `[0.2, 0.8]`, raw source shadow branch `[0.5497, 0.4503]`, and expected source temperature `293.895`.
 
 - [ ] **Step 2: Add `evaluate_cloud_shadow_route_evidence`**
 
@@ -369,7 +370,7 @@ This plan is test-complete only when all of the following are true:
   Run:
 
   ```powershell
-  uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
+  uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
   ```
 
 - [ ] **Step 5: Commit public closure evidence**
@@ -487,7 +488,7 @@ Run these commands from the repo root:
 
 ```powershell
 uv run --no-sync python run_pytest.py tests/native/contracts/test_cloud_shadow_route_admission_checker.py tests/native/contracts/test_cloud_shadow_boundary_gate_checker.py tests/native/contracts/test_boundary_workflow_checker.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
-uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
+uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route
@@ -524,8 +525,9 @@ Add the next #189 child after #258: prove one checker-gated native isobaric clou
 ## Acceptance Criteria
 
 - [ ] A private native cloud-temperature proof route solves the retained Matsuda paired branch at 101300 Pa with strict Ipopt convergence and exact-Hessian diagnostics.
-- [ ] The route fixes parent-liquid composition `[0.2000, 0.8000]`, solves the boundary temperature, and reports matched shadow composition against `[0.5497, 0.4503]`.
-- [ ] The checker reports solved/source temperature, temperature error, solved/source shadow composition, composition error, route residuals, seed attempts, solver status, application status, native receipt, and route trace metadata.
+- [ ] The checker derives the current model-refined Matsuda parent branch from the certified `neutral_lle` source showcase, reports its source-parent error against `[0.2000, 0.8000]`, and uses that model-refined parent as the private cloud-temperature route input.
+- [ ] The route solves the boundary temperature and reports matched shadow composition against the raw source shadow branch `[0.5497, 0.4503]`.
+- [ ] The checker reports solved/source temperature, temperature error, source/model parent composition error, solved/source shadow composition, composition error, route residuals, seed attempts, solver status, application status, native receipt, and route trace metadata.
 - [ ] The route proof satisfies source fixture metrics: temperature error <= 0.2 K, max shadow-composition error <= 0.02, material-balance residual <= 1.0e-8, pressure residual <= 0.001 Pa, ln-fugacity residual <= 1.0e-6, and phase distance >= 1.0e-6.
 - [ ] The retained source-data gate from #258 remains green.
 - [ ] Public cloud/shadow route strings remain closed in `Equilibrium` and activation/capability mirrors.
@@ -536,7 +538,7 @@ Add the next #189 child after #258: prove one checker-gated native isobaric clou
 
 ```powershell
 uv run --no-sync python run_pytest.py tests/native/contracts/test_cloud_shadow_route_admission_checker.py tests/native/contracts/test_cloud_shadow_boundary_gate_checker.py tests/native/contracts/test_boundary_workflow_checker.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
-uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
+uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route

@@ -652,6 +652,17 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
     double phase_distance_tolerance
 );
 
+NeutralTwoPhaseEosRouteResult solve_neutral_cloud_t_eos_route(
+    const add_args& args,
+    double target_pressure,
+    const std::vector<double>& parent_liquid_composition,
+    const IpoptSolveOptions& options,
+    double phase_total_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+);
+
 NeutralTwoPhaseEosRouteResult solve_neutral_tp_flash_eos_route(
     const add_args& args,
     double temperature,

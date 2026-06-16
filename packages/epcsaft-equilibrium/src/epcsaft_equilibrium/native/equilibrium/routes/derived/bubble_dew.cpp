@@ -41,6 +41,7 @@ constexpr double kPureSaturationMaximumVaporVolume = 1.0e8;
 constexpr double kPureSaturationMinimumPressure = 1.0e-6;
 constexpr double kPureSaturationMinimumPhaseVolumeGap = 1.0e-6;
 constexpr double kPureSaturationMinimumReducedDensitySeparation = 1.0e-2;
+constexpr const char* kNeutralCloudTemperatureProblemName = "neutral_cloud_t_eos";
 
 void apply_route_metadata(NeutralTwoPhaseEosPostsolve& out, const RouteMetadata& metadata) {
     out.density_backend = metadata.density_backend;
@@ -59,6 +60,22 @@ enum class DensitySeedMode {
     PhasePressureRoot,
     SeparatedPhaseRole,
 };
+
+bool temperature_route_is_cloud_shadow(const std::string& problem_name) {
+    return problem_name == kNeutralCloudTemperatureProblemName;
+}
+
+double fixed_pressure_temperature_phase1_minimum_volume(const std::string& problem_name) {
+    return temperature_route_is_cloud_shadow(problem_name) ? kMinimumLiquidVolume : kMinimumVaporVolume;
+}
+
+double fixed_pressure_temperature_phase1_maximum_volume(const std::string& problem_name) {
+    return temperature_route_is_cloud_shadow(problem_name) ? kMaximumLiquidVolume : kMaximumVaporVolume;
+}
+
+double fixed_pressure_temperature_minimum_phase_volume_gap(const std::string& problem_name) {
+    return temperature_route_is_cloud_shadow(problem_name) ? -kMaximumLiquidVolume : kMinimumPhaseVolumeGap;
+}
 
 void require_size(const std::vector<double>& values, std::size_t expected, const std::string& label) {
     if (values.size() == expected) {
@@ -205,6 +222,9 @@ int phase_kind_from_index(int phase, const std::string& problem_name) {
         return 0;
     }
     if (phase == 1) {
+        if (temperature_route_is_cloud_shadow(problem_name)) {
+            return 0;
+        }
         return 1;
     }
     throw ValueError(problem_name + " phase index is out of range for density-root seeding.");
@@ -236,6 +256,9 @@ double separated_phase_role_density_seed(double temperature, double pressure, in
         return kSeparatedLiquidDensity;
     }
     if (phase == 1) {
+        if (temperature_route_is_cloud_shadow(problem_name)) {
+            return kSeparatedLiquidDensity;
+        }
         return std::max(pressure / (kGasConstant * temperature), 1.0e-12);
     }
     throw ValueError(problem_name + " phase index is out of range for separated density seeding.");
@@ -771,10 +794,18 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
     const std::string& problem_name
 ) {
     std::vector<NamedInitialVariables> out;
+    const double minimum_phase1_volume = fixed_pressure_temperature_phase1_minimum_volume(problem_name);
+    const double maximum_phase1_volume = fixed_pressure_temperature_phase1_maximum_volume(problem_name);
+    const double minimum_phase_volume_gap = fixed_pressure_temperature_minimum_phase_volume_gap(problem_name);
     auto append_if_feasible = [&](std::string seed_name, std::vector<double> variables) {
         if (fixed_temperature_pressure_seed_satisfies_volume_bounds(
                 variables,
-                static_cast<int>(fixed_composition.size())
+                static_cast<int>(fixed_composition.size()),
+                kMinimumLiquidVolume,
+                kMaximumLiquidVolume,
+                minimum_phase1_volume,
+                maximum_phase1_volume,
+                minimum_phase_volume_gap
             )) {
             out.push_back({std::move(seed_name), std::move(variables)});
         }
@@ -1694,6 +1725,9 @@ public:
         if (fixed_phase_index_ < 0 || fixed_phase_index_ >= phase_count()) {
             throw ValueError(problem_name_ + " fixed phase index is out of range.");
         }
+        minimum_vapor_volume_ = fixed_pressure_temperature_phase1_minimum_volume(problem_name_);
+        maximum_vapor_volume_ = fixed_pressure_temperature_phase1_maximum_volume(problem_name_);
+        minimum_phase_volume_gap_ = fixed_pressure_temperature_minimum_phase_volume_gap(problem_name_);
         species_count_ = static_cast<int>(fixed_composition_.size());
     }
 
@@ -1756,7 +1790,15 @@ public:
             1.0,
             DensitySeedMode::PhasePressureRoot
         );
-        if (fixed_temperature_pressure_seed_satisfies_volume_bounds(root, species_count_)) {
+        if (fixed_temperature_pressure_seed_satisfies_volume_bounds(
+                root,
+                species_count_,
+                minimum_liquid_volume_,
+                maximum_liquid_volume_,
+                minimum_vapor_volume_,
+                maximum_vapor_volume_,
+                minimum_phase_volume_gap_
+            )) {
             return root;
         }
         return build_temperature_route_initial_variables(
@@ -3448,6 +3490,33 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
         chemical_potential_tolerance,
         phase_distance_tolerance
     );
+}
+
+NeutralTwoPhaseEosRouteResult solve_neutral_cloud_t_eos_route(
+    const add_args& args,
+    double target_pressure,
+    const std::vector<double>& parent_liquid_composition,
+    const IpoptSolveOptions& options,
+    double phase_total_tolerance,
+    double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    NeutralTwoPhaseEosRouteResult result = solve_temperature_route(
+        args,
+        target_pressure,
+        parent_liquid_composition,
+        0,
+        kNeutralCloudTemperatureProblemName,
+        options,
+        phase_total_tolerance,
+        pressure_tolerance,
+        chemical_potential_tolerance,
+        phase_distance_tolerance
+    );
+    result.phase_labels = {"parent_liquid", "shadow_liquid"};
+    result.phase_roles = {"parent_liquid", "incipient_liquid"};
+    return result;
 }
 
 NeutralTwoPhaseEosRouteResult solve_neutral_single_component_vle_route(

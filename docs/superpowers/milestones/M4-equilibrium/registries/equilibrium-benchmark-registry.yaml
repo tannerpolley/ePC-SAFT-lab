@@ -346,30 +346,30 @@ derived_subworkflows:
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: []
-    current_convergence_status: planned_not_executable
+    current_convergence_status: checker_gated_native_route_evidence_verified_public_routes_closed
     fixed_variables: [temperature_or_pressure, parent_liquid_composition]
     free_variables: [incipient_second_liquid_composition, phase_volumes, boundary_pressure_or_temperature]
     diagram_targets: ["P-x", "T-x"]
     shared_mixture_policy: "Use the source-backed ePC-SAFT-compatible neutral TP flash mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
-    diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
+    diagnostic_policy: "Routine validation is contract-only. Checker-gated native route evidence uses one model-refined Matsuda neutral_lle source branch; public runtime route keys remain closed. Any multi-point route sweep still requires explicit sweep opt-in."
     strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, source_backed_cloud_binodal_rows, source_backed_cloud_shadow_pair, native_route_admission_blockers_declared, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
+    acceptance_checks: [dof_swap_contract, source_backed_cloud_binodal_rows, source_backed_cloud_shadow_pair, model_refined_source_branch_reference, checker_gated_native_cloud_temperature_route, public_route_admission_closed, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
   - label: "Shadow point"
     workflow_kind: derived_boundary
     planned_after_family: "PE-Neutral TP Flash"
     activation_family_row: false
     current_runtime_routes: []
-    current_convergence_status: planned_not_executable
+    current_convergence_status: checker_gated_native_route_evidence_verified_public_routes_closed
     fixed_variables: [cloud_point_state]
     free_variables: [shadow_phase_composition, shadow_phase_volume]
     diagram_targets: ["P-x", "T-x"]
     shared_mixture_policy: "Use the source-backed ePC-SAFT-compatible neutral TP flash mixture; Pereira 2012 System III remains HELD/SAFT-VR context only until model parity exists."
-    diagnostic_policy: "Routine validation is contract-only. Future route solves require one explicit route point unless an explicit sweep opt-in is provided."
+    diagnostic_policy: "Routine validation is contract-only. Checker-gated native route evidence uses one model-refined Matsuda neutral_lle source branch; public runtime route keys remain closed. Any multi-point route sweep still requires explicit sweep opt-in."
     strict_convergence_gate: "Boundary workflow completion requires Ipopt success, solve_succeeded, and no max_iterations_exceeded seed attempt."
     vlle_test_required: false
-    acceptance_checks: [dof_swap_contract, source_backed_cloud_binodal_rows, source_backed_cloud_shadow_pair, native_route_admission_blockers_declared, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
+    acceptance_checks: [dof_swap_contract, source_backed_cloud_binodal_rows, source_backed_cloud_shadow_pair, model_refined_source_branch_reference, checker_gated_native_cloud_temperature_route, public_route_admission_closed, cloud_shadow_pair_consistency, strict_ipopt_convergence, no_implicit_route_sweep, diagram_trace]
 
 neutral_tp_flash_fixture_gate:
   target_family_label: "PE-Neutral TP Flash"
