@@ -127,7 +127,7 @@ def test_internal_multiphase_eos_nlp_contract_reports_exact_hessian_for_three_ph
     assert payload["constraint_families"] == ["material_balance", "phase_pressure_consistency"]
 
 
-def test_internal_multiphase_phase_set_diagnostics_certify_three_phase_shape_without_public_exposure() -> None:
+def test_internal_multiphase_phase_set_diagnostics_certify_three_phase_shape_with_public_exposure() -> None:
     mix = _symmetric_ternary_nonassociating_mixture()
 
     payload = _core._native_neutral_tpd_phase_discovery(
@@ -234,7 +234,7 @@ def test_internal_multiphase_strict_fugacity_residual_route_consumes_stage_ii_ca
     assert payload["hessian_backend"] == "cppad_phase_system_plus_reduced_fugacity_residual"
     assert payload["residual_exact_jacobian_available"] is True
     assert payload["residual_exact_hessian_available"] is True
-    assert payload["public_route_admission"] == "closed"
+    assert payload["public_route_admission"] == "open"
     assert payload["requested_phase_kinds"] == [0, 0, 0]
     assert payload["requested_phase_count"] == 3
     assert payload["seed_name"] == "held_stage_ii_dual_loop_candidate_set"

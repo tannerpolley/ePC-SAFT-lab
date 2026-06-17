@@ -57,6 +57,20 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     {
         "row_family": "equilibrium",
         "subsystem": "native_ipopt",
+        "quantity": "neutral_multiphase_nonassoc",
+        "derivative": "lagrangian_hessian",
+        "backend": "cppad_explicit_density",
+        "supported": True,
+        "classification": "production_supported",
+        "reason": "production selector exposes explicit neutral nonassociating multiphase sets through the strict reduced-fugacity residual route",
+        "tests": (
+            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+            "packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
         "quantity": "single_component_vle",
         "derivative": "lagrangian_hessian",
         "backend": "cppad_phase_blocks",
@@ -204,6 +218,15 @@ def capabilities() -> dict[str, object]:
             "public_routes": public_routes_by_family["neutral_lle"],
             "selector_core": True,
             "input_scope": "neutral non-reactive non-electrolyte non-associating liquid/liquid mixtures",
+            "requires": ["cppad", "ipopt"],
+        },
+        "neutral_multiphase_nonassoc": {
+            "available": bool(activation["ipopt_available"]),
+            "production": True,
+            "entrypoint": "Equilibrium(mixture, route='multiphase', T=..., P=..., z=..., phase_kinds=[...]).solve()",
+            "public_routes": public_routes_by_family["neutral_multiphase_nonassoc"],
+            "selector_core": True,
+            "input_scope": "neutral non-reactive non-electrolyte non-associating explicit phase-kind sets",
             "requires": ["cppad", "ipopt"],
         },
         "single_component_vle": {
