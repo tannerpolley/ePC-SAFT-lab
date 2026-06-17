@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates
-last_synced: "2026-06-02"
+last_synced: "2026-06-17"
 ---
 
 # Prove electrolyte GFPE and HELD2.0 validation gates
@@ -63,7 +63,7 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - Package: `equilibrium`
 - Capability: `electrolyte`
 - Backend: `Ipopt`
-- Readiness: `blocked`
+- Readiness: `ready`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`
+- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
