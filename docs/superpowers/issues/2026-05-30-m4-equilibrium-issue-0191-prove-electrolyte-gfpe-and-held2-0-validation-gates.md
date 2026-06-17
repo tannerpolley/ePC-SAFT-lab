@@ -33,10 +33,15 @@ start from a durable local source plan.
 
 Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalized phase-set path is certified.
 
+## Child Issues
+
+- [#269](2026-06-17-m4-equilibrium-issue-0269-add-electrolyte-gfpe-closed-admission-source-gate.md) is the first ready #191 child. It proves the Khudaida source fixture, explicit-ion expansion, path-based paper-validation parameter-bundle execution, native electrolyte/charge diagnostics, and closed public route state. It does not admit public electrolyte GFPE, electrolyte TPD, HELD2 phase discovery, or electrolyte postsolve certification.
+
 ## Supplemental Context
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
+- `docs/superpowers/plans/2026-06-17-m4-equilibrium-issue-0191-electrolyte-gfpe-closed-admission-gate-plan.md`
 
 ## Acceptance Criteria
 

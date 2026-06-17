@@ -61,6 +61,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `ready` | Associating neutral LLE after HELD/TPD and associating VLE proofs; former #148 blocker is closed. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase admission blocker closed. |
+| [#269](../../issues/2026-06-17-m4-equilibrium-issue-0269-add-electrolyte-gfpe-closed-admission-source-gate.md) | `electrolyte` | `Ipopt` | `ready` | First #191 child: Khudaida source fixture, parameter-bundle execution, native electrolyte diagnostics, and closed public route state. |
 
 ## Queue Guard
 
@@ -119,6 +120,13 @@ fractions for the requested `liquid,liquid,liquid` phase-kind list.
 admission child merged. #190 remains blocked by #145 associating proof gates;
 #191 is ready for its electrolyte GFPE and HELD2.0 proof scope, but no
 electrolyte public admission claim is made yet.
+
+#269 is the first #191 child. It is ready and AFK-scoped to prove Khudaida
+source-data parsing, explicit-ion expansion, path-based paper-validation
+parameter-bundle execution, native electrolyte/charge diagnostics, and closed
+public electrolyte route state. It must leave electrolyte TPD, HELD2 phase
+discovery, postsolve electrolyte phase-set certification, and public electrolyte
+route admission pending.
 
 ## Closed Issues
 
