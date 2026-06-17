@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-23-m4-equilibrium-issue-0145-associ
 source_plan: "docs/superpowers/plans/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs
-last_synced: "2026-06-14"
+last_synced: "2026-06-17"
 ---
 
 # Associating neutral LLE after HELD/TPD and associating VLE proofs
@@ -31,7 +31,9 @@ start from a durable local source plan.
 
 ## Summary
 
-This issue is blocked by #148 through the native GitHub issue-dependency relationship. Do not encode blocker state in the title; use the Relationships panel/API as the source of truth.
+#148 is closed, so the native GitHub dependency blocker for this issue is
+satisfied. #145 is ready for its own associating neutral LLE proof scope; this
+does not admit associating GFPE or electrolyte GFPE behavior.
 
 ## Supplemental Context
 

@@ -58,9 +58,9 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
+| [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `ready` | Associating neutral LLE after HELD/TPD and associating VLE proofs; former #148 blocker is closed. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase admission blocker closed. |
 
 ## Queue Guard
 
@@ -116,8 +116,9 @@ Jacobian/Hessian evidence, accepted postsolve, and positive three-phase
 fractions for the requested `liquid,liquid,liquid` phase-kind list.
 
 #189 closed through #268 after the final public neutral generalized multiphase
-admission child merged. #190 and #191 remain blocked by their own associating
-and electrolyte proof gates.
+admission child merged. #190 remains blocked by #145 associating proof gates;
+#191 is ready for its electrolyte GFPE and HELD2.0 proof scope, but no
+electrolyte public admission claim is made yet.
 
 ## Closed Issues
 
