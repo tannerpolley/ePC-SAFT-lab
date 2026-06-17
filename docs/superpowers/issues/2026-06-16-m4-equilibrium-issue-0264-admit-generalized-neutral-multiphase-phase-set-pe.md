@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "in_progress"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md"
@@ -27,7 +27,7 @@ last_synced: "2026-06-17"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 **Source Plan:** docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md
 **Classification:** AFK
-**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
+**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:in-progress, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/264 using docs/superpowers/issues/2026-06-16-m4-equilibrium-issue-0264-admit-generalized-neutral-multiphase-phase-set-pe.md and docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md. Complete proof oracle: issue acceptance criteria checked.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -61,14 +61,22 @@ closed.
 
 ## Acceptance Criteria
 
-- [ ] Public `Equilibrium(..., route="multiphase", T=..., P=..., z=..., phase_kinds=[...]).solve()` is implemented for neutral nonassociating generalized multiphase PE.
-- [ ] Public route execution calls the strict multiphase fugacity-residual route from #263 and requires the #261 generalized phase-set certification metrics.
-- [ ] The public result reports route `multiphase`, selector family `neutral_multiphase_nonassoc`, three named phases for the proof case, normalized compositions, positive phase fractions, exact Hessian evidence, and accepted postsolve.
-- [ ] Completion metrics satisfy candidate mass-balance norm <= `1.0e-6`, material-balance norm <= `1.0e-8`, pressure consistency norm <= `1.0e-3 Pa`, ln-fugacity consistency norm <= `1.0e-6`, positive phase distance, normalized compositions, and strictly positive phase fractions.
-- [ ] `epcsaft_equilibrium.capabilities()` reports `multiphase` as a public production route mapped to `neutral_multiphase_nonassoc`.
-- [ ] The generalized phase-set checker has public-admission mode and passes with `--require-public-admission --require-complete`.
-- [ ] M4 registry, GFPE doctrine, M4 README, and #189 mirror record public neutral generalized multiphase admission.
-- [ ] #189 closes only after this child merges; #145/#190/#191 remain separate for associating/electrolyte/reactive follow-up.
+- [x] Public `Equilibrium(..., route="multiphase", T=..., P=..., z=..., phase_kinds=[...]).solve()` is implemented for neutral nonassociating generalized multiphase PE.
+- [x] Public route execution calls the strict multiphase fugacity-residual route from #263 and requires the #261 generalized phase-set certification metrics.
+- [x] The public result reports route `multiphase`, selector family `neutral_multiphase_nonassoc`, three named phases for the proof case, normalized compositions, positive phase fractions, exact Hessian evidence, and accepted postsolve.
+- [x] Completion metrics satisfy candidate mass-balance norm <= `1.0e-6`, material-balance norm <= `1.0e-8`, pressure consistency norm <= `1.0e-3 Pa`, ln-fugacity consistency norm <= `1.0e-6`, positive phase distance, normalized compositions, and strictly positive phase fractions.
+- [x] `epcsaft_equilibrium.capabilities()` reports `multiphase` as a public production route mapped to `neutral_multiphase_nonassoc`.
+- [x] The generalized phase-set checker has public-admission mode and passes with `--require-public-admission --require-complete`.
+- [x] M4 registry, GFPE doctrine, M4 README, and #189 mirror record public neutral generalized multiphase admission.
+- [x] #189 closes only after this child merges; #145/#190/#191 remain separate for associating/electrolyte/reactive follow-up.
+
+## Implementation Evidence
+
+- Public API proof: `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::test_equilibrium_multiphase_route_returns_public_three_phase_result`.
+- Capability proof: `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`.
+- Native strict residual proof: `packages/epcsaft-equilibrium/tests/native/diagnostics/test_internal_multiphase_activation_contracts.py`.
+- Public-admission checker proof: `uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-public-admission --require-complete`.
+- Scope boundary: neutral nonassociating multiphase only; #145/#190/#191 remain separate gates for associating, electrolyte, and reactive families.
 
 ## Blocked By
 

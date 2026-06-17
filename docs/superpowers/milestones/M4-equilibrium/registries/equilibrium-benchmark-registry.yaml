@@ -220,28 +220,33 @@ family_rows:
 
   - family_label: "PE-Generalized Multiphase"
     family_kind: phase_equilibrium
-    activation_status: planned_not_public
-    production_exposed: false
-    existing_public_utility_routes: []
-    scope: "More-than-two-phase discovery and phase-set completeness across representative PE families."
+    activation_status: neutral_public_admitted
+    production_exposed: true
+    existing_public_utility_routes: [multiphase]
+    scope: "More-than-two-phase discovery and phase-set completeness; neutral nonassociating public admission is active while associating, electrolyte, and reactive families remain separate gates."
     primary_problem: "Unknown phase count TP flash with source-backed phase-set certification."
     knowns: [T, P, feed_composition]
     physical_variables: [phase_count, phase_species_amounts, phase_volumes]
     objective_family: pressure_transformed_helmholtz
     hard_constraints: [material_balance, phase_pressure_consistency, transferable_potential_equality]
     derivative_contract: exact_gradient_jacobian_hessian_required_before_exposure
-    phase_discovery_status: full_held_required
-    internal_diagnostic_evidence:
+    phase_discovery_status: neutral_stage_ii_stage_iii_replay_verified_public_admission
+    admission_evidence:
       - evidence_label: "Neutral generalized phase-set diagnostic records"
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --require-complete"
-        scope: "Internal neutral nonassociating three-candidate phase-set record contract only; no public generalized multiphase route exposure."
+        scope: "Neutral nonassociating three-candidate phase-set record contract retained as historical internal certification evidence."
         result_requirement: "Three selected records, at least one rejected record, mass-balance feasible, noncollapsed selected compositions, phase_set_certified."
       - evidence_label: "Strict neutral multiphase fugacity-residual refinement"
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete"
-        scope: "Internal neutral nonassociating Stage II candidate-set replay refined by the private strict fugacity-residual route; no public generalized multiphase route exposure."
-        result_requirement: "strict_multiphase_fugacity_residual_route, exact_reduced_fugacity_residual_derivatives, stage_ii_candidate_set_replay_consumed, accepted postsolve, ln_fugacity_consistency_norm <= 1.0e-6, public_route_admission_closed."
+        scope: "Neutral nonassociating Stage II candidate-set replay refined by the strict fugacity-residual route."
+        result_requirement: "strict_multiphase_fugacity_residual_route, exact_reduced_fugacity_residual_derivatives, stage_ii_candidate_set_replay_consumed, accepted postsolve, ln_fugacity_consistency_norm <= 1.0e-6."
+      - evidence_label: "Public neutral multiphase admission checker"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-public-admission --require-complete"
+        scope: "Public neutral nonassociating `Equilibrium(..., route=\"multiphase\", phase_kinds=[...]).solve()` admission backed by the strict residual route."
+        result_requirement: "public_multiphase_route, neutral_multiphase_nonassoc selector family, exact Hessian evidence, accepted postsolve, ln_fugacity_consistency_norm <= 1.0e-6, generalized_phase_set_public_admission_checker."
     required_gates:
       - infrastructure_gate
       - held_stage_i_stability
@@ -252,7 +257,8 @@ family_rows:
       - strict_multiphase_fugacity_residual_route
       - exact_reduced_fugacity_residual_derivatives
       - stage_ii_candidate_set_replay_consumed
-      - public_route_admission_closed
+      - public_multiphase_route
+      - generalized_phase_set_public_admission_checker
     reference_cases:
       - case_label: "Representative neutral/associating/electrolyte replay"
         evidence_tier: T0

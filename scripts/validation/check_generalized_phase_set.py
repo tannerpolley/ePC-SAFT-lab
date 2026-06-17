@@ -16,6 +16,7 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.validation import native_freshness
 
 NEUTRAL_MULTIPHASE_ROUTE = "neutral_multiphase_nonassoc"
+PUBLIC_MULTIPHASE_ROUTE = "multiphase"
 STAGE_II_CANDIDATE_SET_SEED = "held_stage_ii_dual_loop_candidate_set"
 STRICT_ROUTE_REFINEMENT_KIND = "strict_fugacity_residual"
 MATERIAL_BALANCE_TOLERANCE = 1.0e-8
@@ -76,6 +77,12 @@ def _phase_kind_codes(phase_kinds: list[str]) -> list[int]:
     return [0 if phase_kind == "liquid" else 1 for phase_kind in phase_kinds]
 
 
+def _public_multiphase_route_exposed(public_routes: Any) -> bool:
+    if not isinstance(public_routes, list):
+        return False
+    return PUBLIC_MULTIPHASE_ROUTE in public_routes or NEUTRAL_MULTIPHASE_ROUTE in public_routes
+
+
 def _finite_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
@@ -98,8 +105,6 @@ def _record_composition_key(record: dict[str, Any], *, tolerance: float = 1.0e-8
 def evaluate_payload(payload: dict[str, Any], *, expected_phase_count: int = 3) -> dict[str, Any]:
     blockers: list[str] = []
     public_routes = payload.get("public_routes", [])
-    if NEUTRAL_MULTIPHASE_ROUTE in public_routes:
-        blockers.append("neutral_multiphase_public_route_exposed")
 
     postsolve = payload.get("postsolve")
     if not isinstance(postsolve, dict):
@@ -192,7 +197,7 @@ def evaluate_payload(payload: dict[str, Any], *, expected_phase_count: int = 3) 
             "selected": len(selected_records),
             "rejected": len(rejected_records),
         },
-        "public_route_exposure": NEUTRAL_MULTIPHASE_ROUTE in public_routes,
+        "public_route_exposure": _public_multiphase_route_exposed(public_routes),
     }
 
 
@@ -249,7 +254,48 @@ def _append_norm_blocker(
         blockers.add(blocker)
 
 
-def evaluate_generalized_phase_set_completion(payload: dict[str, Any]) -> dict[str, Any]:
+def _public_admission_blockers(payload: dict[str, Any], *, requested_phase_count: int) -> set[str]:
+    blockers: set[str] = set()
+    public_routes = payload.get("public_routes", [])
+    if not isinstance(public_routes, list) or PUBLIC_MULTIPHASE_ROUTE not in public_routes:
+        blockers.add("public_multiphase_route_missing")
+
+    public_admission = payload.get("public_admission")
+    if not isinstance(public_admission, dict):
+        blockers.add("public_multiphase_solve_failed")
+        return blockers
+
+    if public_admission.get("route") != PUBLIC_MULTIPHASE_ROUTE:
+        blockers.add("public_multiphase_route_missing")
+    if public_admission.get("public_selector_family") != NEUTRAL_MULTIPHASE_ROUTE:
+        blockers.add("public_multiphase_route_wrong_family")
+    if public_admission.get("phase_count") != requested_phase_count:
+        blockers.add("public_multiphase_phase_count_mismatch")
+    if public_admission.get("solve_succeeded") is not True:
+        blockers.add("public_multiphase_solve_failed")
+    if public_admission.get("postsolve_accepted") is not True:
+        blockers.add("public_multiphase_postsolve_not_accepted")
+    if (
+        public_admission.get("exact_hessian_available") is not True
+        or public_admission.get("residual_exact_hessian_available") is not True
+        or public_admission.get("residual_exact_jacobian_available") is not True
+    ):
+        blockers.add("public_multiphase_exact_hessian_missing")
+    _append_norm_blocker(
+        blockers,
+        public_admission,
+        "ln_fugacity_consistency_norm",
+        LN_FUGACITY_CONSISTENCY_TOLERANCE,
+        "public_multiphase_ln_fugacity_norm_above_tolerance",
+    )
+    return blockers
+
+
+def evaluate_generalized_phase_set_completion(
+    payload: dict[str, Any],
+    *,
+    require_public_admission: bool = False,
+) -> dict[str, Any]:
     requested_phase_kinds = _requested_phase_kinds(payload)
     requested_phase_count = int(payload.get("requested_phase_count") or len(requested_phase_kinds))
     record_result = evaluate_payload(payload, expected_phase_count=requested_phase_count)
@@ -281,8 +327,8 @@ def evaluate_generalized_phase_set_completion(payload: dict[str, Any]) -> dict[s
         blockers.add("stage_iii_application_status_not_solve_succeeded")
     if route_refinement and route_refinement.get("accepted") is not True:
         blockers.add("stage_iii_postsolve_not_accepted")
-    if route_refinement and route_refinement.get("public_route_admission") != "closed":
-        blockers.add("neutral_multiphase_public_route_exposed")
+    if route_refinement and require_public_admission and route_refinement.get("public_route_admission") != "open":
+        blockers.add("public_multiphase_route_missing")
 
     route_postsolve = _route_postsolve(route_refinement)
     if route_postsolve and route_postsolve.get("accepted") is not True:
@@ -343,6 +389,8 @@ def evaluate_generalized_phase_set_completion(payload: dict[str, Any]) -> dict[s
         blockers.add("collapsed_phase_distance")
     if any(status == "max_iterations_exceeded" for status in _route_seed_statuses(route_refinement)):
         blockers.add("stage_iii_selected_seed_iteration_limit")
+    if require_public_admission:
+        blockers.update(_public_admission_blockers(payload, requested_phase_count=requested_phase_count))
 
     ordered_blockers = sorted(blockers)
     return {
@@ -355,6 +403,8 @@ def evaluate_generalized_phase_set_completion(payload: dict[str, Any]) -> dict[s
         "selected_candidate_count": postsolve.get("selected_candidate_count", 0),
         "held_stage_iii_status": postsolve.get("held_stage_iii_status"),
         "route_refinement_kind": route_refinement.get("route_refinement_kind"),
+        "public_admission": payload.get("public_admission", {}),
+        "admission_mode": "public_admission" if require_public_admission else "internal_certification",
         "native_freshness_receipt": payload.get("native_freshness_receipt", {}),
     }
 
@@ -376,6 +426,29 @@ def _symmetric_ternary_nonassociating_mixture() -> Any:
         ),
     }
     return ePCSAFTMixture.from_params(params, species=["A", "B", "C"])
+
+
+def _symmetric_ternary_public_mixture() -> Any:
+    import epcsaft
+
+    parameter_set = epcsaft.ParameterSet.from_dict(
+        {
+            "m": np.asarray([1.5, 1.5, 1.5], dtype=float),
+            "s": np.asarray([3.7, 3.7, 3.7], dtype=float),
+            "e": np.asarray([220.0, 220.0, 220.0], dtype=float),
+            "MW": np.asarray([0.016, 0.030, 0.044], dtype=float),
+            "k_ij": np.asarray(
+                [
+                    [0.0, 0.8, 0.8],
+                    [0.8, 0.0, 0.8],
+                    [0.8, 0.8, 0.0],
+                ],
+                dtype=float,
+            ),
+        },
+        species=["A", "B", "C"],
+    )
+    return epcsaft.Mixture(parameter_set)
 
 
 def _run_internal_multiphase_postsolve() -> dict[str, Any]:
@@ -431,10 +504,66 @@ def _strict_route_refinement_payload(core: Any, mix: Any, phase_kinds: list[str]
     )
 
 
+def _public_multiphase_admission_payload(phase_kinds: list[str]) -> dict[str, Any]:
+    import epcsaft_equilibrium
+
+    feed = [1.0 / len(phase_kinds) for _ in phase_kinds]
+    try:
+        result = epcsaft_equilibrium.Equilibrium(
+            _symmetric_ternary_public_mixture(),
+            route=PUBLIC_MULTIPHASE_ROUTE,
+            T=200.0,
+            P=1.0e6,
+            z=feed,
+            phase_kinds=phase_kinds,
+        ).solve(
+            solver_options={
+                "max_iterations": 320,
+                "tolerance": 1.0e-8,
+                "ipopt_iteration_history_limit": 12,
+                "ipopt_acceptable_tolerance": 1.0e-8,
+                "ipopt_constraint_violation_tolerance": 1.0e-8,
+                "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+                "ipopt_complementarity_tolerance": 1.0e-8,
+            }
+        )
+    except Exception as exc:
+        return {
+            "route": PUBLIC_MULTIPHASE_ROUTE,
+            "solve_succeeded": False,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
+
+    diagnostics = result.diagnostics
+    return {
+        "route": result.route,
+        "public_selector_family": result.selector_route,
+        "phase_count": len(result.phase_labels),
+        "phase_labels": result.phase_labels,
+        "phase_fractions": dict(result.phase_fractions),
+        "feed_composition": result.z.tolist(),
+        "solve_succeeded": True,
+        "accepted": bool(diagnostics.get("accepted", diagnostics.get("route_accepted", False))),
+        "postsolve_accepted": bool(diagnostics.get("postsolve_accepted", False)),
+        "postsolve_certification_accepted": bool(
+            diagnostics.get("postsolve_certification", {}).get("accepted", False)
+        ),
+        "exact_hessian_available": bool(diagnostics.get("exact_hessian_available", False)),
+        "residual_exact_jacobian_available": bool(diagnostics.get("residual_exact_jacobian_available", False)),
+        "residual_exact_hessian_available": bool(diagnostics.get("residual_exact_hessian_available", False)),
+        "ln_fugacity_consistency_norm": diagnostics.get("ln_fugacity_consistency_norm"),
+        "material_balance_norm": diagnostics.get("material_balance_norm"),
+        "pressure_consistency_norm": diagnostics.get("pressure_consistency_norm"),
+        "phase_distance": diagnostics.get("phase_distance"),
+        "route_refinement_kind": diagnostics.get("route_refinement_kind"),
+    }
+
+
 def run_generalized_phase_set_completion(
     *,
     phase_kinds: list[str],
     run_route_refinement: bool,
+    require_public_admission: bool,
     checker_command: list[str],
 ) -> dict[str, Any]:
     from scripts.dev.native_runtime_env import apply_native_runtime_env
@@ -471,6 +600,8 @@ def run_generalized_phase_set_completion(
     }
     if route_refinement is not None:
         payload["route_refinement"] = route_refinement
+    if require_public_admission:
+        payload["public_admission"] = _public_multiphase_admission_payload(phase_kinds)
     return payload
 
 
@@ -481,6 +612,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--phase-kinds", default="liquid,liquid,liquid")
     parser.add_argument("--run-route-refinement", action="store_true")
     parser.add_argument("--require-route-refinement", action="store_true")
+    parser.add_argument("--require-public-admission", action="store_true")
     return parser
 
 
@@ -495,20 +627,28 @@ def main(argv: list[str] | None = None) -> int:
         "scripts/validation/check_generalized_phase_set.py",
         *argv,
     ]
-    if args.run_route_refinement or args.require_route_refinement:
+    if args.run_route_refinement or args.require_route_refinement or args.require_public_admission:
         payload = run_generalized_phase_set_completion(
             phase_kinds=phase_kinds,
-            run_route_refinement=args.run_route_refinement,
+            run_route_refinement=args.run_route_refinement or args.require_public_admission,
+            require_public_admission=args.require_public_admission,
             checker_command=checker_command,
         )
-        result = evaluate_generalized_phase_set_completion(payload)
+        result = evaluate_generalized_phase_set_completion(
+            payload,
+            require_public_admission=args.require_public_admission,
+        )
         if args.require_route_refinement and "missing_generalized_route_refinement" in result["blockers"]:
             result["complete"] = False
         output = {
             **result,
             "route": NEUTRAL_MULTIPHASE_ROUTE,
             "checker": "generalized_phase_set_completion",
-            "scope": "internal_neutral_multiphase_route_refinement",
+            "scope": (
+                "public_neutral_multiphase_admission"
+                if args.require_public_admission
+                else "internal_neutral_multiphase_route_refinement"
+            ),
         }
     else:
         payload = _run_internal_multiphase_postsolve()
@@ -518,6 +658,7 @@ def main(argv: list[str] | None = None) -> int:
             "route": NEUTRAL_MULTIPHASE_ROUTE,
             "checker": "generalized_phase_set",
             "scope": "internal_neutral_multiphase_diagnostics",
+            "admission_mode": "internal_certification",
         }
     if args.require_complete:
         try:

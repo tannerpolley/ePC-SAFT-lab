@@ -90,11 +90,12 @@ def test_checker_rejects_infeasible_or_collapsed_phase_sets() -> None:
     assert "duplicate_selected_phase_compositions" in result["blockers"]
 
 
-def test_checker_rejects_public_route_exposure() -> None:
-    result = checker.evaluate_payload(_payload(public_routes=["flash", "neutral_multiphase_nonassoc"]))
+def test_checker_reports_public_route_exposure_without_blocking_internal_records() -> None:
+    result = checker.evaluate_payload(_payload(public_routes=["flash", "multiphase"]))
 
-    assert result["complete"] is False
-    assert "neutral_multiphase_public_route_exposed" in result["blockers"]
+    assert result["complete"] is True
+    assert result["public_route_exposure"] is True
+    assert result["blockers"] == []
 
 
 def test_checker_rejects_lower_free_energy_omitted_candidate_without_distinct_diagnostic() -> None:

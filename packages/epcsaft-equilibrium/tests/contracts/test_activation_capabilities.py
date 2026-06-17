@@ -15,6 +15,7 @@ EXPECTED_PUBLIC_ROUTE_FAMILIES = {
     "dew_temperature": "bubble_dew_derived_routes",
     "flash": "neutral_tp_flash",
     "lle": "neutral_lle",
+    "multiphase": "neutral_multiphase_nonassoc",
     "single_component_vle": "single_component_vle",
 }
 
@@ -55,10 +56,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_tp_flash",
         "neutral_lle",
         "single_component_vle",
+        "neutral_multiphase_nonassoc",
         "bubble_dew_derived_routes",
     ]
     assert activation["declared_not_exposed_families"] == [
-        "neutral_multiphase_nonassoc",
         "electrolyte_lle",
         "reactive_speciation",
         "reactive_lle",
@@ -68,6 +69,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_tp_flash",
         "neutral_lle",
         "single_component_vle",
+        "neutral_multiphase_nonassoc",
         "bubble_dew_derived_routes",
     ]
     assert public_route_map == EXPECTED_PUBLIC_ROUTE_FAMILIES
@@ -79,6 +81,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "dew_temperature",
         "flash",
         "lle",
+        "multiphase",
         "single_component_vle",
     ]
     assert activation["public_route_family_map"] == EXPECTED_PUBLIC_ROUTE_FAMILIES
@@ -86,6 +89,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_tp_flash": ["flash"],
         "neutral_lle": ["lle"],
         "single_component_vle": ["single_component_vle"],
+        "neutral_multiphase_nonassoc": ["multiphase"],
         "bubble_dew_derived_routes": [
             "bubble_pressure",
             "bubble_temperature",
@@ -96,7 +100,6 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert {
         route: spec.selector_family for route, spec in _EQUILIBRIUM_ROUTE_SPECS.items()
     } == EXPECTED_PUBLIC_ROUTE_FAMILIES
-    assert "neutral_multiphase_nonassoc" not in capabilities["public_routes"]
     assert capabilities["bubble_dew_derived_routes"]["entrypoint"] == ("Equilibrium(mixture, route=..., ...).solve()")
     assert capabilities["bubble_dew_derived_routes"]["public_routes"] == [
         "bubble_pressure",
@@ -117,6 +120,16 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["neutral_lle"]["public_routes"] == ["lle"]
     assert capabilities["neutral_lle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert (
+        capabilities["neutral_multiphase_nonassoc"]["entrypoint"]
+        == "Equilibrium(mixture, route='multiphase', T=..., P=..., z=..., phase_kinds=[...]).solve()"
+    )
+    assert capabilities["neutral_multiphase_nonassoc"]["public_routes"] == ["multiphase"]
+    assert (
+        capabilities["neutral_multiphase_nonassoc"]["input_scope"]
+        == "neutral non-reactive non-electrolyte non-associating explicit phase-kind sets"
+    )
+    assert capabilities["neutral_multiphase_nonassoc"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
+    assert (
         capabilities["single_component_vle"]["entrypoint"]
         == "Equilibrium(mixture, route='single_component_vle', T=...).solve()"
     )
@@ -132,6 +145,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "bubble_dew_derived_routes",
         "neutral_tp_flash",
         "neutral_lle",
+        "neutral_multiphase_nonassoc",
         "single_component_vle",
     }
 

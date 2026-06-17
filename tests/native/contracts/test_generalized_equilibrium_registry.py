@@ -123,11 +123,16 @@ def test_stage9_phase_discovery_checker_requires_complete_exit_status() -> None:
     assert required_command in stage_text
 
 
-def test_no_generalized_family_claims_production_before_held_gates() -> None:
+def test_only_generalized_neutral_multiphase_claims_public_admission() -> None:
     for row in _family_rows():
-        assert row["activation_status"] == "planned_not_public", row["family_label"]
-        assert row["production_exposed"] is False, row["family_label"]
         assert "required_gates" in row, row["family_label"]
+        if row["family_label"] == "PE-Generalized Multiphase":
+            assert row["activation_status"] == "neutral_public_admitted"
+            assert row["production_exposed"] is True
+            assert row["existing_public_utility_routes"] == ["multiphase"]
+        else:
+            assert row["activation_status"] == "planned_not_public", row["family_label"]
+            assert row["production_exposed"] is False, row["family_label"]
 
     neutral = _family_by_label()["PE-Neutral TP Flash"]
     assert "continuous_tpd_minimization" in neutral["required_gates"]
@@ -253,15 +258,15 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert electrolyte["derivative_contract"] == expected_derivative_contract
 
 
-def test_generalized_multiphase_records_strict_internal_residual_evidence() -> None:
+def test_generalized_multiphase_records_public_admission_evidence() -> None:
     generalized = _family_by_label()["PE-Generalized Multiphase"]
     evidence = {
         row["evidence_label"]: row
-        for row in generalized["internal_diagnostic_evidence"]
+        for row in generalized["admission_evidence"]
     }
 
-    assert generalized["production_exposed"] is False
-    assert generalized["existing_public_utility_routes"] == []
+    assert generalized["production_exposed"] is True
+    assert generalized["existing_public_utility_routes"] == ["multiphase"]
     strict = evidence["Strict neutral multiphase fugacity-residual refinement"]
     assert strict["command"] == (
         "uv run --no-sync python scripts/validation/check_generalized_phase_set.py "
@@ -271,11 +276,21 @@ def test_generalized_multiphase_records_strict_internal_residual_evidence() -> N
     assert "strict_multiphase_fugacity_residual_route" in strict["result_requirement"]
     assert "exact_reduced_fugacity_residual_derivatives" in strict["result_requirement"]
     assert "stage_ii_candidate_set_replay_consumed" in strict["result_requirement"]
-    assert "public_route_admission_closed" in strict["result_requirement"]
+    assert "public_route_admission_closed" not in strict["result_requirement"]
+    public = evidence["Public neutral multiphase admission checker"]
+    assert public["command"] == (
+        "uv run --no-sync python scripts/validation/check_generalized_phase_set.py "
+        "--json --phase-kinds liquid,liquid,liquid --run-route-refinement "
+        "--require-route-refinement --require-public-admission --require-complete"
+    )
+    assert "public_multiphase_route" in public["result_requirement"]
+    assert "neutral_multiphase_nonassoc selector family" in public["result_requirement"]
+    assert "generalized_phase_set_public_admission_checker" in public["result_requirement"]
     assert "strict_multiphase_fugacity_residual_route" in generalized["required_gates"]
     assert "exact_reduced_fugacity_residual_derivatives" in generalized["required_gates"]
     assert "stage_ii_candidate_set_replay_consumed" in generalized["required_gates"]
-    assert "public_route_admission_closed" in generalized["required_gates"]
+    assert "public_multiphase_route" in generalized["required_gates"]
+    assert "generalized_phase_set_public_admission_checker" in generalized["required_gates"]
 
 
 def test_benchmark_cases_reference_descriptive_family_labels() -> None:

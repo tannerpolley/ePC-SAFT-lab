@@ -27,7 +27,7 @@ from .core.native_results import (
     native_route_solved_pressure,
     native_route_solved_temperature,
     native_route_summed_phase_amounts,
-    neutral_two_phase_payload_to_result,
+    neutral_phase_payload_to_result,
     raise_native_route_rejected,
 )
 
@@ -428,6 +428,7 @@ def configure_equilibrium_problem(
     x: Any = None,
     y: Any = None,
     z: Any = None,
+    phase_kinds: Any = None,
 ) -> EquilibriumProblem:
     """Validate and freeze a constructor-configured equilibrium problem."""
 
@@ -464,16 +465,21 @@ def configure_equilibrium_problem(
         raise InputError(f"{spec.route_label} requires P.")
     if not spec.requires_pressure and P is not None:
         raise InputError(f"{spec.route_label} must not specify P.")
+    if spec.route_label != "multiphase" and phase_kinds is not None:
+        raise InputError(f"{spec.route_label} must not specify phase_kinds.")
 
     _reject_ion_containing_mixture(mixture)
     _reject_associating_mixture(mixture, spec.route_label)
     temperature = _positive_scalar(T, "T", spec.route_label) if spec.requires_temperature else None
     pressure = _positive_scalar(P, "P", spec.route_label) if spec.requires_pressure else None
+    phase_kind_tokens = _normalize_phase_kinds(phase_kinds) if spec.route_label == "multiphase" else None
     fixed_specs: dict[str, Any] = {spec.composition_key: composition}
     if temperature is not None:
         fixed_specs["T"] = temperature
     if pressure is not None:
         fixed_specs["P"] = pressure
+    if phase_kind_tokens is not None:
+        fixed_specs["phase_kinds"] = phase_kind_tokens
     return EquilibriumProblem(
         route=spec.route_label,
         selector_route=spec.selector_route,
@@ -481,7 +487,7 @@ def configure_equilibrium_problem(
         unknowns=spec.unknowns,
         composition_role=spec.composition_role,
         activation_key=spec.selector_family,
-        expected_phase_keys=spec.phase_labels,
+        expected_phase_keys=_phase_labels_for_kinds(phase_kind_tokens) if phase_kind_tokens is not None else spec.phase_labels,
         fixed_specs=fixed_specs,
     )
 
@@ -497,6 +503,15 @@ def _solve_selector_route(
 
     opts = _normalize_options(options)
     spec = _EQUILIBRIUM_ROUTE_SPECS[problem.route]
+    if problem.route == "multiphase":
+        return _native_neutral_multiphase_route(
+            mixture,
+            problem,
+            options=opts,
+            problem_kind=spec.problem_kind,
+            selector_family=spec.selector_family,
+            composition_role=spec.composition_role,
+        )
     return _native_selector_route(
         mixture,
         request=_selector_request_from_problem(problem),
@@ -518,6 +533,7 @@ def _selector_request_from_problem(problem: EquilibriumProblem) -> dict[str, Any
         pressure=problem.fixed_specs.get("P"),
         composition=np.asarray(problem.fixed_specs[composition_key], dtype=float),
         composition_role=problem.composition_role,
+        phase_kinds=problem.fixed_specs.get("phase_kinds"),
     )
 
 
@@ -526,7 +542,30 @@ def equilibrium_structure(mixture: Any, problem: EquilibriumProblem) -> Equilibr
 
     _core = extension_native_core()
 
-    contract = _core._native_equilibrium_selector_contract(mixture._native, _selector_request_from_problem(problem))
+    request = _selector_request_from_problem(problem)
+    if problem.route == "multiphase":
+        contract = _core._native_equilibrium_activation_plan_contract(mixture._native, request)
+        activation = contract["activation_plan"]
+        layout = contract["variable_layout"]
+        return EquilibriumStructure(
+            route=problem.route,
+            selector_route=problem.selector_route,
+            knowns=problem.knowns,
+            unknowns=problem.unknowns,
+            composition_role=problem.composition_role,
+            activation_key=problem.activation_key,
+            residual_families=tuple(str(item) for item in activation["residual_blocks"]),
+            hard_constraint_families=tuple(str(item) for item in activation["constraint_blocks"]),
+            expected_phase_keys=tuple(str(item) for item in activation["phase_keys"]),
+            dof={
+                "available": False,
+                "reason": "not_generally_owned_by_route_metadata",
+            },
+            variable_model=str(activation["variable_model"]),
+            density_backend=str(activation["density_backend"]),
+        )
+
+    contract = _core._native_equilibrium_selector_contract(mixture._native, request)
     activation = contract["activation"]
     return EquilibriumStructure(
         route=problem.route,
@@ -638,7 +677,7 @@ def _accepted_native_selector_two_phase_result(
         phase_distance_tolerance,
         public_route != "single_component_vle",
     )
-    result = neutral_two_phase_payload_to_result(
+    result = neutral_phase_payload_to_result(
         result_payload,
         problem_kind=problem_kind,
         phase_labels=native_route_phase_labels(route, route_label),
@@ -661,6 +700,127 @@ def _accepted_native_selector_two_phase_result(
         selector_route=str(route.get("route", "")),
         composition_role=composition_role,
         feed_composition=feed_composition,
+    )
+
+
+def _native_neutral_multiphase_route(
+    mixture: Any,
+    problem: EquilibriumProblem,
+    *,
+    options: EquilibriumSolverOptions,
+    problem_kind: str,
+    selector_family: str,
+    composition_role: str,
+) -> EquilibriumResult:
+    _core = extension_native_core()
+
+    temperature = float(problem.fixed_specs["T"])
+    pressure = float(problem.fixed_specs["P"])
+    feed = np.asarray(problem.fixed_specs["z"], dtype=float)
+    phase_kinds = tuple(str(item) for item in problem.fixed_specs["phase_kinds"])
+    material_tolerance, pressure_tolerance, ln_fugacity_tolerance, phase_distance_tolerance = (
+        neutral_two_phase_eos_tolerances(pressure, options)
+    )
+    route = _core._native_neutral_multiphase_fugacity_residual_route_result(
+        mixture._native,
+        temperature,
+        pressure,
+        feed.tolist(),
+        _phase_kind_codes(phase_kinds),
+        options.max_iterations,
+        options.tolerance,
+        _native_timeout_seconds(options),
+        *_native_ipopt_option_args(options),
+        material_tolerance,
+        pressure_tolerance,
+        ln_fugacity_tolerance,
+        phase_distance_tolerance,
+        dict(options.continuation_state or {}),
+        option_profile="held_refinement",
+        **_native_ipopt_control_kwargs(options),
+    )
+    if str(route.get("status", "")) == "ipopt_dependency_required":
+        raise InputError("multiphase requires the native Ipopt neutral multiphase route.")
+
+    return _accepted_native_multiphase_route_result(
+        T=temperature,
+        P=pressure,
+        feed=feed,
+        route=route,
+        public_route=problem.route,
+        problem_kind=problem_kind,
+        selector_family=selector_family,
+        composition_role=composition_role,
+        phase_labels=problem.expected_phase_keys,
+    )
+
+
+def _accepted_native_multiphase_route_result(
+    *,
+    T: float,
+    P: float,
+    feed: np.ndarray,
+    route: Mapping[str, Any],
+    public_route: str,
+    problem_kind: str,
+    selector_family: str,
+    composition_role: str,
+    phase_labels: tuple[str, ...],
+) -> EquilibriumResult:
+    if not bool(route.get("accepted", False)):
+        raise_native_route_rejected(route, "Native neutral multiphase route was rejected.")
+
+    diagnostics = native_route_diagnostics(route)
+    certification = diagnostics.get("postsolve_certification", {})
+    if str(route.get("selector_family", "")) != selector_family:
+        raise SolutionError("Native neutral multiphase route returned an unexpected route family.", diagnostics)
+    if not isinstance(certification, Mapping) or not bool(certification.get("accepted", False)):
+        raise SolutionError("Native neutral multiphase route failed postsolve certification.", diagnostics)
+
+    physical_evidence = route.get("physical_evidence", {})
+    phase_payloads = physical_evidence.get("phases", ()) if isinstance(physical_evidence, Mapping) else ()
+    if not isinstance(phase_payloads, Sequence) or isinstance(phase_payloads, (str, bytes)) or not phase_payloads:
+        raise SolutionError("Native neutral multiphase route did not return phase evidence.", diagnostics)
+    if len(phase_payloads) != len(phase_labels):
+        raise SolutionError("Native neutral multiphase route phase count did not match requested labels.", diagnostics)
+
+    phases: list[EquilibriumPhase] = []
+    for index, payload in enumerate(phase_payloads):
+        if not isinstance(payload, Mapping):
+            raise SolutionError("Native neutral multiphase route returned invalid phase evidence.", diagnostics)
+        phases.append(
+            EquilibriumPhase(
+                label=phase_labels[index],
+                composition=payload["composition"],
+                density=float(payload["density"]),
+                temperature=T,
+                pressure=P,
+                phase_fraction=float(payload["phase_fraction"]),
+                ln_fugacity_coefficient=payload.get("ln_fugacity_coefficients"),
+                diagnostics={
+                    "native_label": payload.get("label", ""),
+                    "role": payload.get("role", ""),
+                    "phase_kind": payload.get("phase_kind", 0),
+                },
+            )
+        )
+    diagnostics = dict(diagnostics)
+    diagnostics["phase_labels"] = tuple(phase_labels)
+    if "physical_evidence" in diagnostics and isinstance(diagnostics["physical_evidence"], Mapping):
+        diagnostics["physical_evidence"] = dict(diagnostics["physical_evidence"])
+        diagnostics["physical_evidence"]["phase_labels"] = tuple(phase_labels)
+
+    return EquilibriumResult(
+        backend=str(route.get("backend", "native_equilibrium_nlp")),
+        problem_kind=problem_kind,
+        phases=tuple(phases),
+        stable=True,
+        split_detected=True,
+        diagnostics=diagnostics,
+        route=public_route,
+        selector_route=str(route.get("route", "")),
+        composition_role=composition_role,
+        feed_composition=feed,
     )
 
 
@@ -797,6 +957,44 @@ def _native_ipopt_control_kwargs(options: EquilibriumSolverOptions) -> dict[str,
         "dual_infeasibility_tolerance": _native_ipopt_optional_tolerance(options.ipopt_dual_infeasibility_tolerance),
         "complementarity_tolerance": _native_ipopt_optional_tolerance(options.ipopt_complementarity_tolerance),
     }
+
+
+def _normalize_phase_kinds(phase_kinds: Any) -> tuple[str, ...]:
+    if phase_kinds is None:
+        raise InputError("multiphase requires explicit phase_kinds.")
+    if isinstance(phase_kinds, (str, bytes)) or not isinstance(phase_kinds, Sequence):
+        raise InputError("phase_kinds must be a sequence of phase-kind strings.")
+    out: list[str] = []
+    for item in phase_kinds:
+        if not isinstance(item, str):
+            raise InputError("phase_kinds entries must be strings.")
+        normalized = item.strip().lower()
+        if normalized not in {"liquid", "vapor"}:
+            raise InputError("phase_kinds entries must be 'liquid' or 'vapor'.")
+        out.append(normalized)
+    if len(out) < 3:
+        raise InputError("multiphase phase_kinds must contain at least three phases.")
+    return tuple(out)
+
+
+def _phase_labels_for_kinds(phase_kinds: Sequence[str]) -> tuple[str, ...]:
+    liquid_count = sum(1 for item in phase_kinds if item == "liquid")
+    vapor_count = sum(1 for item in phase_kinds if item == "vapor")
+    liquid_index = 0
+    vapor_index = 0
+    labels: list[str] = []
+    for phase_kind in phase_kinds:
+        if phase_kind == "liquid":
+            liquid_index += 1
+            labels.append(f"liquid{liquid_index}" if liquid_count > 1 else "liquid")
+            continue
+        vapor_index += 1
+        labels.append(f"vapor{vapor_index}" if vapor_count > 1 else "vapor")
+    return tuple(labels)
+
+
+def _phase_kind_codes(phase_kinds: Sequence[str]) -> list[int]:
+    return [0 if item == "liquid" else 1 for item in phase_kinds]
 
 
 def _normalize_feed(z: Any, ncomp: int, min_composition: float, kind: str) -> np.ndarray:

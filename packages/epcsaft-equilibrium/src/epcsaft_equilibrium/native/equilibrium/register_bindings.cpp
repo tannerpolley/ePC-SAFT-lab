@@ -2441,8 +2441,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         out["residual_derivative_backend"] = "cppad_explicit_density";
         out["residual_exact_jacobian_available"] = true;
         out["residual_exact_hessian_available"] = true;
-        out["production_exposed"] = false;
-        out["public_route_admission"] = "closed";
+        out["production_exposed"] = true;
+        out["public_route_admission"] = "open";
         return out;
     },
         py::arg("mixture"),

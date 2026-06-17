@@ -339,6 +339,102 @@ def test_equilibrium_lle_route_configures_neutral_liquid_pair_structure() -> Non
     assert "phase_volume_gap" not in structure.hard_constraint_families
 
 
+def test_equilibrium_multiphase_route_configures_explicit_phase_set_structure() -> None:
+    mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
+
+    equilibrium = equilibrium_module.Equilibrium(
+        mixture,
+        route="multiphase",
+        T=200.0,
+        P=1.0e6,
+        z=[1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+        phase_kinds=["liquid", "liquid", "liquid"],
+    )
+    structure = equilibrium.structure()
+
+    assert equilibrium.problem.route == "multiphase"
+    assert equilibrium.problem.selector_route == "neutral_multiphase_nonassoc"
+    assert equilibrium.problem.activation_key == "neutral_multiphase_nonassoc"
+    assert equilibrium.problem.expected_phase_keys == ("liquid1", "liquid2", "liquid3")
+    assert equilibrium.problem.fixed_specs["phase_kinds"] == ("liquid", "liquid", "liquid")
+    assert structure.route == "multiphase"
+    assert structure.selector_route == "neutral_multiphase_nonassoc"
+    assert structure.activation_key == "neutral_multiphase_nonassoc"
+    assert structure.expected_phase_keys == ("liquid1", "liquid2", "liquid3")
+    assert structure.residual_families == (
+        "material_balance",
+        "phase_pressure_consistency",
+        "phase_equilibrium",
+        "phase_distance",
+    )
+    assert structure.hard_constraint_families == ("material_balance", "phase_pressure_consistency")
+
+
+def test_equilibrium_multiphase_route_requires_explicit_phase_kinds() -> None:
+    mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
+
+    with pytest.raises(epcsaft.InputError, match="phase_kinds"):
+        equilibrium_module.Equilibrium(
+            mixture,
+            route="multiphase",
+            T=200.0,
+            P=1.0e6,
+            z=[1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+        )
+
+
+@pytest.mark.parametrize(
+    "phase_kinds",
+    (
+        ["liquid", "liquid"],
+        ["liquid", "solid", "liquid"],
+        ["liquid", "", "liquid"],
+        ["liquid", object(), "liquid"],
+    ),
+)
+def test_equilibrium_multiphase_route_rejects_malformed_phase_kinds(phase_kinds: list[object]) -> None:
+    mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
+
+    with pytest.raises(epcsaft.InputError, match="phase_kinds"):
+        equilibrium_module.Equilibrium(
+            mixture,
+            route="multiphase",
+            T=200.0,
+            P=1.0e6,
+            z=[1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+            phase_kinds=phase_kinds,
+        )
+
+
+def test_equilibrium_multiphase_route_requires_feed_composition_only() -> None:
+    mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
+
+    with pytest.raises(epcsaft.InputError, match="z"):
+        equilibrium_module.Equilibrium(
+            mixture,
+            route="multiphase",
+            T=200.0,
+            P=1.0e6,
+            x=[1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+            phase_kinds=["liquid", "liquid", "liquid"],
+        )
+
+
+@pytest.mark.parametrize("route", ("flash", "lle"))
+def test_equilibrium_fixed_shape_feed_routes_reject_phase_kinds(route: str) -> None:
+    mixture = epcsaft.Mixture(_neutral_lle_parameter_set())
+
+    with pytest.raises(epcsaft.InputError, match="phase_kinds"):
+        equilibrium_module.Equilibrium(
+            mixture,
+            route=route,
+            T=225.0,
+            P=1.0e6,
+            z=[0.5, 0.5],
+            phase_kinds=["liquid", "liquid"],
+        )
+
+
 def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(_neutral_lle_parameter_set())
@@ -397,6 +493,70 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
     )
 
 
+def test_equilibrium_multiphase_route_returns_public_three_phase_result() -> None:
+    _skip_without_ipopt()
+    mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
+
+    result = equilibrium_module.Equilibrium(
+        mixture,
+        route="multiphase",
+        T=200.0,
+        P=1.0e6,
+        z=[1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+        phase_kinds=["liquid", "liquid", "liquid"],
+    ).solve(
+        solver_options={
+            "max_iterations": 320,
+            "tolerance": 1.0e-8,
+            "ipopt_iteration_history_limit": 12,
+            "ipopt_acceptable_tolerance": 1.0e-8,
+            "ipopt_constraint_violation_tolerance": 1.0e-8,
+            "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+            "ipopt_complementarity_tolerance": 1.0e-8,
+        }
+    )
+
+    diagnostics = result.diagnostics
+    assert result.route == "multiphase"
+    assert result.selector_route == "neutral_multiphase_nonassoc"
+    assert result.problem_kind == "neutral_multiphase_nonassoc"
+    assert result.phase_labels == ["liquid1", "liquid2", "liquid3"]
+    assert tuple(result.phases) == ("liquid1", "liquid2", "liquid3")
+    assert result.z == pytest.approx([1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0])
+    assert sum(result.phase_fractions.values()) == pytest.approx(1.0, rel=1.0e-8)
+    assert all(value > 0.0 for value in result.phase_fractions.values())
+    for composition in result.phase_compositions.values():
+        assert float(np.sum(composition)) == pytest.approx(1.0, rel=1.0e-8)
+        assert np.all(composition > 0.0)
+    with pytest.raises(AttributeError):
+        _ = result.x
+    with pytest.raises(AttributeError):
+        _ = result.y
+    with pytest.raises(AttributeError):
+        _ = result.liquid_fraction
+    with pytest.raises(AttributeError):
+        _ = result.vapor_fraction
+    payload = result.to_dict()
+    assert payload["phase_labels"] == ["liquid1", "liquid2", "liquid3"]
+    assert payload["x"] is None
+    assert payload["y"] is None
+    assert payload["phase_fractions"] == pytest.approx(dict(result.phase_fractions))
+    assert diagnostics["route_refinement_kind"] == "strict_fugacity_residual"
+    assert diagnostics["hessian_approximation"] == "exact"
+    assert diagnostics["hessian_backend"] == "cppad_phase_system_plus_reduced_fugacity_residual"
+    assert diagnostics["exact_hessian_available"] is True
+    assert diagnostics["residual_exact_jacobian_available"] is True
+    assert diagnostics["residual_exact_hessian_available"] is True
+    assert diagnostics["postsolve_accepted"] is True
+    assert diagnostics["postsolve_certification"]["accepted"] is True
+    assert diagnostics["ln_fugacity_consistency_norm"] <= 1.0e-6
+    assert diagnostics["material_balance_norm"] <= 1.0e-8
+    assert diagnostics["pressure_consistency_norm"] <= 1.0e-3
+    assert diagnostics["phase_distance"] > 0.0
+    assert diagnostics["seed_name"] == "held_stage_ii_dual_loop_candidate_set"
+    assert all(attempt["solver_status"] != "max_iterations_exceeded" for attempt in diagnostics["seed_attempts"])
+
+
 @pytest.mark.parametrize(
     ("route", "kwargs"),
     (
@@ -406,6 +566,15 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
         ("dew_temperature", {"P": HYDROCARBON_BUBBLE_P, "y": [0.35, 0.65]}),
         ("flash", {"T": HYDROCARBON_T, "P": HYDROCARBON_BUBBLE_P, "z": [0.35, 0.65]}),
         ("lle", {"T": 300.0, "P": 1.0e6, "z": [0.5, 0.5]}),
+        (
+            "multiphase",
+            {
+                "T": 200.0,
+                "P": 1.0e6,
+                "z": [0.5, 0.5],
+                "phase_kinds": ["liquid", "liquid", "liquid"],
+            },
+        ),
     ),
 )
 def test_equilibrium_constructor_rejects_associating_inputs_before_selector_dispatch(
@@ -421,14 +590,24 @@ def test_equilibrium_constructor_rejects_associating_inputs_before_selector_disp
 
 
 def test_equilibrium_lle_constructor_rejects_ionic_inputs() -> None:
-    with pytest.raises(epcsaft.InputError, match="neutral mixtures"):
-        equilibrium_module.Equilibrium(
-            epcsaft.Mixture(_ionic_parameter_set()),
-            route="lle",
-            T=300.0,
-            P=1.0e5,
-            z=[0.8, 0.1, 0.1],
-        )
+    for route, kwargs in (
+        ("lle", {"T": 300.0, "P": 1.0e5, "z": [0.8, 0.1, 0.1]}),
+        (
+            "multiphase",
+            {
+                "T": 200.0,
+                "P": 1.0e6,
+                "z": [0.8, 0.1, 0.1],
+                "phase_kinds": ["liquid", "liquid", "liquid"],
+            },
+        ),
+    ):
+        with pytest.raises(epcsaft.InputError, match="neutral mixtures"):
+            equilibrium_module.Equilibrium(
+                epcsaft.Mixture(_ionic_parameter_set()),
+                route=route,
+                **kwargs,
+            )
 
 
 def _equilibrium() -> equilibrium_module.Equilibrium:
@@ -553,6 +732,26 @@ def _neutral_lle_parameter_set() -> epcsaft.ParameterSet:
             "k_ij": np.asarray([[0.0, 0.5], [0.5, 0.0]]),
         },
         species=["A", "B"],
+    )
+
+
+def _symmetric_ternary_nonassociating_parameter_set() -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "m": np.asarray([1.5, 1.5, 1.5], dtype=float),
+            "s": np.asarray([3.7, 3.7, 3.7], dtype=float),
+            "e": np.asarray([220.0, 220.0, 220.0], dtype=float),
+            "MW": np.asarray([0.016, 0.030, 0.044], dtype=float),
+            "k_ij": np.asarray(
+                [
+                    [0.0, 0.8, 0.8],
+                    [0.8, 0.0, 0.8],
+                    [0.8, 0.8, 0.0],
+                ],
+                dtype=float,
+            ),
+        },
+        species=["A", "B", "C"],
     )
 
 

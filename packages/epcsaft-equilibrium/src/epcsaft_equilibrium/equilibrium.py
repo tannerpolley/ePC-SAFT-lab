@@ -25,6 +25,7 @@ class Equilibrium:
         x: Sequence[float] | None = None,
         y: Sequence[float] | None = None,
         z: Sequence[float] | None = None,
+        phase_kinds: Sequence[str] | None = None,
     ) -> None:
         if not isinstance(mixture, Mixture):
             raise InputError("Equilibrium requires a Mixture.")
@@ -33,7 +34,16 @@ class Equilibrium:
 
         provider_contract()
         self.mixture = mixture
-        self._problem = configure_equilibrium_problem(mixture.native, route=route, T=T, P=P, x=x, y=y, z=z)
+        self._problem = configure_equilibrium_problem(
+            mixture.native,
+            route=route,
+            T=T,
+            P=P,
+            x=x,
+            y=y,
+            z=z,
+            phase_kinds=phase_kinds,
+        )
 
     @property
     def problem(self) -> Any:
