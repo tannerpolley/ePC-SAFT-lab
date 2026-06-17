@@ -47,8 +47,9 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | --- | --- | --- |
 | [HELD LLE reliability campaign](../../../../analyses/package_validation/held_lle_reliability/README.md) | `lle` | Synthetic neutral LLE algorithm reliability evidence: 100 accepted two-phase conditions, 10,000 independent route-refinement repeats, zero failed repeats. This is not source-backed public LLE showcase evidence, generalized phase-set completion, or associating GFPE admission. |
 | [Neutral nonassociating LLE showcase](../../../../analyses/package_validation/neutral_nonassociating_lle_showcase/README.md) | `lle` | Source-backed Matsuda/NIST perfluorohexane + hexane LLE evidence for the current neutral `route="lle"` utility. This is one binary source-backed showcase, not generalized phase-set completion or associating GFPE admission. |
-| `scripts/validation/check_generalized_phase_set.py --json --require-complete` | `lle` | Internal neutral generalized phase-set diagnostic record evidence for #252: three selected candidate rows, rejected candidate rows, mass-balance feasibility, noncollapsed selected compositions, and no public `neutral_multiphase_nonassoc` exposure. This keeps `PE-Generalized Multiphase` planned-not-public. |
-| `scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` | `lle` | Internal generalized phase-set certification evidence for #261 using the #263 private `strict_fugacity_residual` Stage III refinement: consumes the Stage II candidate-set replay, selects 3 of 6 candidates for requested `liquid,liquid,liquid`, reports exact reduced fugacity-residual derivative metadata, accepts the postsolve with ln-fugacity consistency <= `1.0e-6`, and keeps public generalized route admission closed. |
+| `scripts/validation/check_generalized_phase_set.py --json --require-complete` | `lle` | Retained neutral generalized phase-set diagnostic record evidence for #252: three selected candidate rows, rejected candidate rows, mass-balance feasibility, and noncollapsed selected compositions. This is historical internal certification evidence, not the public-admission gate. |
+| `scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-complete` | `lle` | Generalized phase-set certification evidence for #261 using the #263 `strict_fugacity_residual` Stage III refinement: consumes the Stage II candidate-set replay, selects 3 of 6 candidates for requested `liquid,liquid,liquid`, reports exact reduced fugacity-residual derivative metadata, and accepts the postsolve with ln-fugacity consistency <= `1.0e-6`. |
+| `scripts/validation/check_generalized_phase_set.py --json --phase-kinds liquid,liquid,liquid --run-route-refinement --require-route-refinement --require-public-admission --require-complete` | `lle` | Public generalized neutral multiphase admission evidence for #264: proves `Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()` maps to `neutral_multiphase_nonassoc`, returns three named phases, reports exact Hessian evidence, accepts the postsolve, and completes with no checker blockers. |
 | `scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` | `lle` | Retained derived-boundary evidence for #256: current bubble/dew `P-x` and `T-x` route points emit complete `boundary_trace` records with route, DOF swap, source fixture, selector family, shared NLP families, strict Ipopt convergence, finite residuals, and no iteration-limit seed path. Cloud and shadow remain planned-only. |
 | `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, and empty source-data blockers. |
 | `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
@@ -80,8 +81,8 @@ retained PNG/SVG figures. This closes the public source-backed neutral LLE
 showcase gap only.
 
 #252 closed through #255 with internal neutral generalized phase-set diagnostic
-records and the retained `check_generalized_phase_set.py` checker. This keeps
-`PE-Generalized Multiphase` planned-not-public and does not close #189.
+records and the retained `check_generalized_phase_set.py` checker. This remains
+historical record evidence and does not by itself close #189.
 
 #256 closed through #257 with retained boundary traces for current bubble/dew
 route points and tighter generalized phase-set rejected-candidate diagnostics.
@@ -100,16 +101,15 @@ and keeps public cloud/shadow route keys closed.
 #263 closed through #265 with the strict reduced fugacity-residual Stage III
 route for the generalized neutral multiphase candidate-set replay. Its checker
 proof requires exact residual derivative metadata, accepted postsolve, Stage II
-replay consumption, and public `neutral_multiphase_nonassoc` route admission
-closed.
+replay consumption, and no Gibbs-objective-only certification shortcut.
 
 #261 closed through #266 with generalized phase-set certification proof. The
 retained checker reports `complete: true`, `blockers: []`,
 `selected_candidate_count: 3`, `rejected_candidate_count: 3`, strict Stage III
 replay consumption of `held_stage_ii_dual_loop_candidate_set`, exact residual
-Jacobian/Hessian evidence, and public `neutral_multiphase_nonassoc` route
-admission closed. This closes the internal certification child only; final
-public generalized multiphase admission remains separate under #189.
+Jacobian/Hessian evidence, and accepted postsolve. This closes the internal
+certification child only; final public generalized multiphase admission remains
+separate under #189.
 
 #189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
 for boundary workflows and generalized phase-set PE. #264 is the ready final

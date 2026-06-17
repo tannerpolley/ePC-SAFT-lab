@@ -59,7 +59,7 @@ The collapsed plan has six visible family labels:
 | `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `planned_not_public` |
 | `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `planned_not_public` |
 | `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `planned_not_public` |
-| `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `planned_not_public` |
+| `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `neutral_public_admitted` |
 | `CE Chemical Equilibrium Placeholder` | Homogeneous chemical/speciation equilibrium without phase split | `planned_not_public` |
 | `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium | `planned_not_public` |
 
@@ -371,7 +371,9 @@ Implementation must proceed in this order:
    bubble, dew, cloud, and shadow workflows as DOF swaps over the shared phase
    NLP, then `T-x` and `P-x` diagram generation.
 5. Neutral generalized multiphase:
-   full HELD stages and phase-set completeness beyond two selected phases.
+   Stage II candidate-set replay, strict Stage III residual refinement, and
+   public neutral nonassociating `multiphase` admission beyond two selected
+   phases.
 6. Associating PE:
    exact association derivative coverage or lifted mass-action variables before
    Gross/Sadowski validation cases.
@@ -550,22 +552,27 @@ iteration-limit seed path are failed boundary evidence.
   proves neutral three-candidate phase-set records, selected/rejected row
   reasons including duplicate/collapsed, infeasible, lower-free-energy omitted,
   uncertified, and generic unselected rejected candidates, mass-balance
-  feasibility, noncollapsed selected compositions, and no public
-  `neutral_multiphase_nonassoc` exposure;
+  feasibility, and noncollapsed selected compositions;
 - current retained strict route proof: `uv run --no-sync python
   scripts/validation/check_generalized_phase_set.py --json --phase-kinds
   liquid,liquid,liquid --run-route-refinement --require-route-refinement
-  --require-complete` proves private Stage III
+  --require-complete` proves Stage III
   `strict_fugacity_residual` refinement for the Stage II candidate-set replay,
   exact reduced fugacity-residual derivative metadata, accepted postsolve,
-  reduced ln-fugacity consistency <= `1.0e-6`, and closed public route
-  admission;
-- first validation target: replay representative neutral, associating, and electrolyte
-  cases through the same phase-set discovery contract;
-- required before exposure: complete candidate phase set, mass-balance
-  feasibility, no route-specific phase-count assumptions, strict residual
-  Stage III certification rather than only a thermodynamic-objective route,
-  source-backed representative cases, and final public admission evidence.
+  and reduced ln-fugacity consistency <= `1.0e-6`;
+- current public admission proof: `uv run --no-sync python
+  scripts/validation/check_generalized_phase_set.py --json --phase-kinds
+  liquid,liquid,liquid --run-route-refinement --require-route-refinement
+  --require-public-admission --require-complete` proves the public
+  `Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()` workflow
+  maps to `neutral_multiphase_nonassoc`, returns three named phases, reports
+  exact Hessian evidence, and accepts the postsolve;
+- remaining validation target: replay associating and electrolyte cases through
+  their own exact-derivative and chemistry-specific phase-set contracts;
+- required before broader exposure: complete candidate phase set,
+  mass-balance feasibility, no route-specific phase-count assumptions, strict
+  residual Stage III certification rather than only a thermodynamic-objective
+  route, and source-backed representative cases for each additional family.
 
 `CE Chemical Equilibrium Placeholder`
 
@@ -594,12 +601,16 @@ benchmark_cases:
 Registry acceptance rules:
 
 - no visible old numeric row identifiers;
-- no family row marked `production_exposed: true` before the HELD and
-  derivative gates pass;
+- every family row marked `production_exposed: true` must carry a matching
+  checker command and acceptance evidence; currently this is limited to
+  neutral nonassociating `PE-Generalized Multiphase` public `multiphase`
+  admission;
 - bubble/dew/cloud/shadow appear only under `derived_subworkflows`;
 - reference cases use descriptive family labels;
 - deterministic screening is not called full HELD;
 - raw `docs/ChatGPT_Gemini_Responses/*` files remain uncited input artifacts.
 
-The immediate test work is registry/test audit cleanup only. It must not add
-new public routes, new solver infrastructure, or new executable validation fixtures.
+The current admitted public generalized route is neutral nonassociating
+`Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()`. Do not
+broaden that claim to associating, electrolyte, reactive, CE, CPE, LLLE, or
+VLLE without their own exact-derivative and source-backed proof gates.
