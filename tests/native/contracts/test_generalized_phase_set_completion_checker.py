@@ -75,7 +75,7 @@ def _completion_payload(*, requested_phase_kinds: list[str] | None = None) -> di
     return {
         "requested_phase_kinds": phase_kinds,
         "requested_phase_count": phase_count,
-        "public_routes": ["flash", "lle"],
+        "public_routes": ["flash", "lle", "multiphase"],
         "native_freshness_receipt": {
             "status": "fresh",
             "extension_path": "epcsaft_equilibrium._native",
@@ -120,13 +120,39 @@ def _completion_payload(*, requested_phase_kinds: list[str] | None = None) -> di
             "residual_exact_hessian_available": True,
             "selected_seed_attempt_statuses": ["success"],
             "postsolve": {"accepted": True, "ln_fugacity_consistency_norm": 2.0e-10},
-            "public_route_admission": "closed",
+            "public_route_admission": "open",
         },
     }
 
 
-def _evaluate(payload: dict[str, Any]) -> dict[str, Any]:
-    return checker.evaluate_generalized_phase_set_completion(payload)
+def _public_admission_payload(*, phase_count: int = 3) -> dict[str, Any]:
+    return {
+        "route": "multiphase",
+        "public_selector_family": "neutral_multiphase_nonassoc",
+        "phase_count": phase_count,
+        "phase_labels": [f"liquid{index + 1}" for index in range(phase_count)],
+        "phase_fractions": {f"liquid{index + 1}": 1.0 / phase_count for index in range(phase_count)},
+        "feed_composition": [1.0 / phase_count for _ in range(phase_count)],
+        "solve_succeeded": True,
+        "accepted": True,
+        "postsolve_accepted": True,
+        "postsolve_certification_accepted": True,
+        "exact_hessian_available": True,
+        "residual_exact_jacobian_available": True,
+        "residual_exact_hessian_available": True,
+        "ln_fugacity_consistency_norm": 2.0e-10,
+        "material_balance_norm": 2.0e-12,
+        "pressure_consistency_norm": 2.0e-6,
+        "phase_distance": 0.35,
+        "route_refinement_kind": "strict_fugacity_residual",
+    }
+
+
+def _evaluate(payload: dict[str, Any], *, require_public_admission: bool = False) -> dict[str, Any]:
+    return checker.evaluate_generalized_phase_set_completion(
+        payload,
+        require_public_admission=require_public_admission,
+    )
 
 
 def test_completion_checker_accepts_route_refined_candidate_set_replay() -> None:
@@ -134,6 +160,8 @@ def test_completion_checker_accepts_route_refined_candidate_set_replay() -> None
 
     assert result["complete"] is True
     assert result["blockers"] == []
+    assert result["public_route_exposure"] is True
+    assert result["admission_mode"] == "internal_certification"
     assert result["requested_phase_kinds"] == ["liquid", "liquid", "liquid"]
     assert result["selected_candidate_count"] == 3
     assert result["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
@@ -282,14 +310,60 @@ def test_completion_checker_accepts_four_requested_phases_without_three_phase_ha
     assert result["selected_candidate_count"] == 4
 
 
-def test_completion_checker_rejects_public_route_exposure() -> None:
+def test_completion_checker_accepts_public_admission_mode() -> None:
     payload = _completion_payload()
-    payload["public_routes"] = ["flash", "neutral_multiphase_nonassoc"]
+    payload["public_admission"] = _public_admission_payload()
 
-    result = _evaluate(payload)
+    result = _evaluate(payload, require_public_admission=True)
+
+    assert result["complete"] is True
+    assert result["blockers"] == []
+    assert result["admission_mode"] == "public_admission"
+    assert result["public_admission"]["public_selector_family"] == "neutral_multiphase_nonassoc"
+
+
+@pytest.mark.parametrize(
+    ("mutator", "blocker"),
+    [
+        (
+            lambda payload: payload.__setitem__("public_routes", ["flash", "lle"]),
+            "public_multiphase_route_missing",
+        ),
+        (
+            lambda payload: payload.pop("public_admission"),
+            "public_multiphase_solve_failed",
+        ),
+        (
+            lambda payload: payload["public_admission"].__setitem__("public_selector_family", "neutral_lle"),
+            "public_multiphase_route_wrong_family",
+        ),
+        (
+            lambda payload: payload["public_admission"].__setitem__("phase_count", 2),
+            "public_multiphase_phase_count_mismatch",
+        ),
+        (
+            lambda payload: payload["public_admission"].__setitem__("postsolve_accepted", False),
+            "public_multiphase_postsolve_not_accepted",
+        ),
+        (
+            lambda payload: payload["public_admission"].__setitem__("residual_exact_hessian_available", False),
+            "public_multiphase_exact_hessian_missing",
+        ),
+        (
+            lambda payload: payload["public_admission"].__setitem__("ln_fugacity_consistency_norm", 2.0e-4),
+            "public_multiphase_ln_fugacity_norm_above_tolerance",
+        ),
+    ],
+)
+def test_completion_checker_requires_public_admission_evidence(mutator: Any, blocker: str) -> None:
+    payload = _completion_payload()
+    payload["public_admission"] = _public_admission_payload()
+    mutator(payload)
+
+    result = _evaluate(payload, require_public_admission=True)
 
     assert result["complete"] is False
-    assert "neutral_multiphase_public_route_exposed" in result["blockers"]
+    assert blocker in result["blockers"]
 
 
 def test_completion_checker_rejects_lower_free_energy_rejected_candidate() -> None:
