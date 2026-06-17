@@ -2,13 +2,15 @@
 issue: 189
 title: "M4: derive boundary workflows and generalized phase-set PE from neutral GFPE"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/189"
-state: "open"
+state: "closed"
+closed_at: "2026-06-17T13:15:46Z"
+closing_pr: "https://github.com/ePC-SAFT/ePC-SAFT/pull/268"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "done"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md"
@@ -23,7 +25,7 @@ GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md
 Branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
-AFK/HITL: HITL umbrella; #252, #256, #258, #260, #263, and #261 closed as AFK child issues; #264 is resolving final public neutral generalized multiphase admission.
+AFK/HITL: HITL umbrella closed; #252, #256, #258, #260, #263, #261, and #264 closed as child issues.
 
 GitHub remains authoritative for state, labels, Project fields, comments,
 dependency edges, and PR linkage. This mirror exists so `project-resolve` can
@@ -46,9 +48,9 @@ route required before #261 could honestly complete generalized phase-set
 certification. #261 closed through #266 with proof that the strict residual
 route consumes the Stage II candidate-set replay and completes strict Stage III
 residual refinement for the requested neutral multiphase phase-kind list. #264
-now supplies final public neutral generalized multiphase capability admission
-through the public `multiphase` route; #189 should close only after the #264 PR
-merges and live issue state is synced.
+supplied final public neutral generalized multiphase capability admission
+through the public `multiphase` route. #189 closed through PR #268 after #264
+merged and live issue state synced.
 
 ## Supplemental Context
 
@@ -122,6 +124,8 @@ uv run --no-sync python scripts/validation/check_generalized_phase_set.py --json
 The public admission is neutral nonassociating only. #145/#190/#191 remain
 separate associating/electrolyte/reactive follow-up gates.
 
+Closed through https://github.com/ePC-SAFT/ePC-SAFT/pull/268 on 2026-06-17.
+
 ## Non-Goals And Boundaries
 
 - No associating/electrolyte/reactive route admission unless separately proven.
@@ -134,7 +138,7 @@ separate associating/electrolyte/reactive follow-up gates.
 - Package: `equilibrium`
 - Capability: `lle`
 - Backend: `Ipopt`
-- Readiness: `ready`
-- AFK/HITL: `HITL umbrella; #252, #256, #258, #260, #263, and #261 closed; #264 resolving final public admission`
+- Readiness: `done`
+- AFK/HITL: `HITL umbrella closed; #252, #256, #258, #260, #263, #261, and #264 closed`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`

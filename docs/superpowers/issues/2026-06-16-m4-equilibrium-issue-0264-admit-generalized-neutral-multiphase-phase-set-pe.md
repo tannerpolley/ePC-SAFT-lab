@@ -2,13 +2,15 @@
 issue: 264
 title: "M4: admit generalized neutral multiphase phase-set PE"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/264"
-state: "open"
+state: "closed"
+closed_at: "2026-06-17T13:15:47Z"
+closing_pr: "https://github.com/ePC-SAFT/ePC-SAFT/pull/268"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "in_progress"
+readiness: "done"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
 source_plan: "docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md"
@@ -27,7 +29,7 @@ last_synced: "2026-06-17"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 **Source Plan:** docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md
 **Classification:** AFK
-**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:in-progress, type:feature
+**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/264 using docs/superpowers/issues/2026-06-16-m4-equilibrium-issue-0264-admit-generalized-neutral-multiphase-phase-set-pe.md and docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md. Complete proof oracle: issue acceptance criteria checked.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -51,6 +53,8 @@ Add the final #189 child that admits certified neutral generalized multiphase
 phase-set PE through the public `Equilibrium(mixture, route="multiphase",
 T=..., P=..., z=..., phase_kinds=[...]).solve()` workflow after #263 and #261
 closed.
+
+Closed through https://github.com/ePC-SAFT/ePC-SAFT/pull/268 on 2026-06-17.
 
 ## Parent And Dependencies
 

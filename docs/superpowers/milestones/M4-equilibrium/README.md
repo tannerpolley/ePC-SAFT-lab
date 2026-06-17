@@ -59,8 +59,6 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `ready` | `Ipopt` | `blocked` | Associating neutral LLE after HELD/TPD and associating VLE proofs. |
-| [#189](../../issues/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md) | `lle` | `Ipopt` | `ready` | HITL umbrella for boundary workflows and generalized phase-set PE after #188/#241 closed. |
-| [#264](../../issues/2026-06-16-m4-equilibrium-issue-0264-admit-generalized-neutral-multiphase-phase-set-pe.md) | `lle` | `Ipopt` | `ready` | AFK child for final public neutral generalized multiphase admission after #261 certification. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates. |
 
@@ -111,15 +109,22 @@ Jacobian/Hessian evidence, and accepted postsolve. This closes the internal
 certification child only; final public generalized multiphase admission remains
 separate under #189.
 
-#189 is unblocked after #188 and #241 closed, but it remains the HITL umbrella
-for boundary workflows and generalized phase-set PE. #264 is the ready final
-public neutral generalized multiphase admission child. #190 and #191 remain
-blocked by their own proof gates.
+#264 closed through #268 with public neutral generalized multiphase admission.
+The retained public-admission checker reports `complete: true`, `blockers: []`,
+public route `multiphase`, selector family `neutral_multiphase_nonassoc`, exact
+Jacobian/Hessian evidence, accepted postsolve, and positive three-phase
+fractions for the requested `liquid,liquid,liquid` phase-kind list.
+
+#189 closed through #268 after the final public neutral generalized multiphase
+admission child merged. #190 and #191 remain blocked by their own associating
+and electrolyte proof gates.
 
 ## Closed Issues
 
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/228](https://github.com/ePC-SAFT/ePC-SAFT/issues/228) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/230](https://github.com/ePC-SAFT/ePC-SAFT/pull/230) on 2026-06-05T02:56:36Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/208](https://github.com/ePC-SAFT/ePC-SAFT/issues/208) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/238](https://github.com/ePC-SAFT/ePC-SAFT/pull/238) on 2026-06-10T22:22:15Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/264](https://github.com/ePC-SAFT/ePC-SAFT/issues/264) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/268](https://github.com/ePC-SAFT/ePC-SAFT/pull/268) on 2026-06-17T13:15:47Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/189](https://github.com/ePC-SAFT/ePC-SAFT/issues/189) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/268](https://github.com/ePC-SAFT/ePC-SAFT/pull/268) on 2026-06-17T13:15:46Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/186](https://github.com/ePC-SAFT/ePC-SAFT/issues/186) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/239](https://github.com/ePC-SAFT/ePC-SAFT/pull/239) on 2026-06-10T23:07:32Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/148](https://github.com/ePC-SAFT/ePC-SAFT/issues/148) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/240](https://github.com/ePC-SAFT/ePC-SAFT/pull/240) on 2026-06-11T00:02:53Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/187](https://github.com/ePC-SAFT/ePC-SAFT/issues/187) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/242](https://github.com/ePC-SAFT/ePC-SAFT/pull/242) on 2026-06-11T16:28:05Z
