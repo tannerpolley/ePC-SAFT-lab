@@ -24,6 +24,8 @@ _ROUTE_STRING_DIAGNOSTIC_KEYS = (
     "jacobian_approximation",
     "hessian_approximation",
     "hessian_backend",
+    "route_refinement_kind",
+    "residual_derivative_backend",
     "option_profile",
     "solver_acceptance_policy",
     "exact_hessian_policy",
@@ -45,6 +47,8 @@ _ROUTE_BOOL_DIAGNOSTIC_KEYS = (
     "solver_accepted",
     "solver_feasible_point",
     "postsolve_accepted",
+    "residual_exact_jacobian_available",
+    "residual_exact_hessian_available",
     "scaled_acceptance_passed",
     "profile_exact_hessian_gate",
     "variable_scaling_quality_passed",
@@ -58,6 +62,7 @@ _ROUTE_INT_DIAGNOSTIC_KEYS = (
     "iteration_count",
     "iteration_history_limit",
     "iteration_history_size",
+    "requested_phase_count",
     "ipopt_print_level",
     "variable_scaling_count",
     "constraint_scaling_count",
@@ -93,6 +98,7 @@ _ROUTE_FLOAT_DIAGNOSTIC_KEYS = (
 _ROUTE_SEQUENCE_DIAGNOSTIC_KEYS = (
     "residual_families",
     "constraint_families",
+    "requested_phase_kinds",
 )
 
 _ROUTE_MAPPING_DIAGNOSTIC_KEYS = (
@@ -130,6 +136,7 @@ _PHASE_ELIGIBILITY_EVIDENCE_KEYS = (
 _STABILITY_EVIDENCE_KEYS = (
     "tpdf_stability",
     "stability_certificate",
+    "physical_evidence",
 )
 
 
@@ -219,9 +226,15 @@ def _postsolve_certification_summary(diagnostics: Mapping[str, Any]) -> dict[str
     solver_accepted = bool(diagnostics.get("solver_accepted", False))
     stability_source, stability_payload = _stability_evidence(diagnostics)
     stability_checked = stability_payload is not None
-    stability_accepted = bool(stability_payload.get("accepted", False)) if stability_payload is not None else False
+    stability_accepted = (
+        bool(stability_payload.get("accepted", stability_payload.get("stability_accepted", False)))
+        if stability_payload is not None
+        else False
+    )
     candidate_set_complete = (
-        bool(stability_payload.get("candidate_set_complete", False)) if stability_payload is not None else False
+        bool(stability_payload.get("candidate_set_complete", stability_payload.get("candidate_completeness_accepted", False)))
+        if stability_payload is not None
+        else False
     )
     raw_stability_certificate = diagnostics.get("stability_certificate", "")
     if isinstance(raw_stability_certificate, Mapping):
@@ -489,13 +502,13 @@ def _phase_payload_to_public(phase: Mapping[str, Any], *, label: str | None = No
     )
 
 
-def neutral_two_phase_payload_to_result(
+def neutral_phase_payload_to_result(
     payload: Mapping[str, Any],
     *,
     problem_kind: str | None = None,
     phase_labels: Sequence[str] | None = None,
 ):
-    """Convert an accepted native neutral two-phase payload into public dataclasses."""
+    """Convert an accepted native neutral phase payload into public dataclasses."""
     from ..workflows import EquilibriumResult
 
     diagnostics = _diagnostics(payload)

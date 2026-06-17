@@ -361,12 +361,13 @@ def test_equilibrium_multiphase_route_configures_explicit_phase_set_structure() 
     assert structure.selector_route == "neutral_multiphase_nonassoc"
     assert structure.activation_key == "neutral_multiphase_nonassoc"
     assert structure.expected_phase_keys == ("liquid1", "liquid2", "liquid3")
-    assert structure.hard_constraint_families == (
+    assert structure.residual_families == (
         "material_balance",
         "phase_pressure_consistency",
         "phase_equilibrium",
         "phase_distance",
     )
+    assert structure.hard_constraint_families == ("material_balance", "phase_pressure_consistency")
 
 
 def test_equilibrium_multiphase_route_requires_explicit_phase_kinds() -> None:
@@ -570,7 +571,7 @@ def test_equilibrium_multiphase_route_returns_public_three_phase_result() -> Non
             {
                 "T": 200.0,
                 "P": 1.0e6,
-                "z": [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0],
+                "z": [0.5, 0.5],
                 "phase_kinds": ["liquid", "liquid", "liquid"],
             },
         ),

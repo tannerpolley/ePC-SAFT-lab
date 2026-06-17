@@ -102,6 +102,19 @@ EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = {
         selector_family="neutral_lle",
         phase_labels=("liquid1", "liquid2"),
     ),
+    "multiphase": NativeSelectorRouteSpec(
+        selector_route="neutral_multiphase_nonassoc",
+        composition_key="z",
+        composition_role="feed",
+        requires_temperature=True,
+        requires_pressure=True,
+        knowns=("T", "P", "z", "phase_kinds"),
+        unknowns=("phase_compositions", "phase_amounts", "phase_volumes"),
+        problem_kind="neutral_multiphase_nonassoc",
+        route_label="multiphase",
+        selector_family="neutral_multiphase_nonassoc",
+        phase_labels=(),
+    ),
     "single_component_vle": NativeSelectorRouteSpec(
         selector_route="single_component_vle",
         composition_key="z",
@@ -125,6 +138,7 @@ def selector_request_payload(
     composition_role: str,
     temperature: float | None = None,
     pressure: float | None = None,
+    phase_kinds: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     request: dict[str, Any] = {
         "route": route,
@@ -135,6 +149,8 @@ def selector_request_payload(
         request["temperature"] = float(temperature)
     if pressure is not None:
         request["pressure"] = float(pressure)
+    if phase_kinds is not None:
+        request["phase_kinds"] = list(phase_kinds)
     return request
 
 
