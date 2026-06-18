@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates
-last_synced: "2026-06-02"
+last_synced: "2026-06-18"
 ---
 
 # Admit associating GFPE through exact derivative proof gates
@@ -64,7 +64,7 @@ Admit associating GFPE only after the exact-derivative and associating-route pro
 - Package: `equilibrium`
 - Capability: `lle`
 - Backend: `Ipopt`
-- Readiness: `blocked`
+- Readiness: `ready`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`
+- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
