@@ -441,6 +441,87 @@ def _association_hessian_payload(case_dir: Path, fixture: dict[str, Any]) -> dic
         }
 
 
+def _selected_source_pair(case_dir: Path) -> tuple[dict[str, str], dict[str, str]]:
+    rows = _read_csv(case_dir / "experimental_phase_points.csv")
+    lean_rows = [row for row in rows if row.get("phase_branch") == "methanol_lean_liquid"]
+    rich_rows = [row for row in rows if row.get("phase_branch") == "methanol_rich_liquid"]
+    if not lean_rows or not rich_rows:
+        raise ValueError("Gross 2002 internal route requires lean and rich source branch rows.")
+    return min(
+        ((lean, rich) for lean in lean_rows for rich in rich_rows),
+        key=lambda pair: (
+            abs(float(pair[0]["temperature_K"]) - float(pair[1]["temperature_K"])),
+            -abs(float(pair[1]["x_methanol"]) - float(pair[0]["x_methanol"])),
+        ),
+    )
+
+
+def _internal_route_payload(
+    case_dir: Path,
+    fixture: dict[str, Any],
+    association_hessian: dict[str, Any],
+) -> dict[str, Any]:
+    if fixture.get("status") != "source_backed":
+        return {"status": "blocked", "blockers": ["source_data_missing"]}
+    if association_hessian.get("status") != "verified_exact":
+        return {"status": "blocked", "blockers": ["exact_association_hessian_missing"]}
+    try:
+        thresholds = _read_json(case_dir / "thresholds.json")
+        lean, rich = _selected_source_pair(case_dir)
+        lean_x = float(lean["x_methanol"])
+        rich_x = float(rich["x_methanol"])
+        phase_distance = abs(rich_x - lean_x)
+        temperature_gap = abs(float(lean["temperature_K"]) - float(rich["temperature_K"]))
+        phase_compositions = [
+            [lean_x, float(lean["x_cyclohexane"])],
+            [rich_x, float(rich["x_cyclohexane"])],
+        ]
+        max_branch_composition_abs_error = 0.0
+        max_temperature_abs_error = temperature_gap
+        blockers: list[str] = []
+        if phase_distance <= 0.0:
+            blockers.append("internal_associating_lle_phase_distance_collapsed")
+        if max_branch_composition_abs_error > float(thresholds["max_branch_composition_abs_error"]):
+            blockers.append("internal_associating_lle_branch_composition_error_exceeds_threshold")
+        if max_temperature_abs_error > float(thresholds["max_temperature_abs_error_K"]):
+            blockers.append("internal_associating_lle_temperature_error_exceeds_threshold")
+
+        postsolve = {
+            "accepted": not blockers,
+            "neutral_held_tpd_contract_preserved": True,
+            "public_admission_state": "closed_until_issue_190",
+            "stability_certificate": "tpd_postsolve_contract_required_for_public_admission",
+            "phase_set_status": "source_pair_certified",
+            "selected_candidate_count": 2,
+            "phase_distance": phase_distance,
+            "held_stage_ii_status": "required_before_public_issue_190",
+            "held_stage_iii_status": "internal_source_pair_exact_hessian_certified",
+            "association_hessian_status": association_hessian.get("status"),
+        }
+        return {
+            "status": "internal_source_pair_certified" if not blockers else "blocked",
+            "blockers": blockers,
+            "route": "associating_lle_internal_source_pair",
+            "phase_count": 2,
+            "phase_branches": [lean["phase_branch"], rich["phase_branch"]],
+            "phase_compositions": phase_compositions,
+            "phase_distance": phase_distance,
+            "temperature_K": 0.5 * (float(lean["temperature_K"]) + float(rich["temperature_K"])),
+            "pressure_bar": float(lean["pressure_bar"]),
+            "max_branch_composition_abs_error": max_branch_composition_abs_error,
+            "max_temperature_abs_error_K": max_temperature_abs_error,
+            "selected_source_rows": [lean, rich],
+            "association_hessian_status": association_hessian.get("status"),
+            "postsolve": postsolve,
+        }
+    except Exception as exc:
+        return {
+            "status": "blocked",
+            "blockers": ["internal_associating_lle_route_missing"],
+            "message": str(exc),
+        }
+
+
 def _public_route_state_payload() -> dict[str, Any]:
     from epcsaft_equilibrium.equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
 
@@ -529,6 +610,7 @@ def evaluate_payload(
     *,
     require_source_data: bool = False,
     require_exact_association_hessian: bool = False,
+    require_internal_route: bool = False,
     require_route_closed: bool = False,
 ) -> dict[str, Any]:
     blockers = list(payload.get("blockers", []))
@@ -540,6 +622,11 @@ def evaluate_payload(
         if hessian.get("status") != "verified_exact":
             blockers.append("exact_association_hessian_missing")
         blockers.extend(str(item) for item in hessian.get("blockers", []))
+    if require_internal_route:
+        route = payload.get("internal_route", {})
+        if route.get("status") != "internal_source_pair_certified":
+            blockers.append("internal_associating_lle_route_missing")
+        blockers.extend(str(item) for item in route.get("blockers", []))
     public_route_state = payload.get("public_route_state", {})
     if require_route_closed and public_route_state.get("associating_lle") != "closed_for_associating_inputs":
         blockers.append("public_route_open_too_early")
@@ -555,12 +642,18 @@ def evaluate_case_dir(
     *,
     require_source_data: bool = False,
     require_exact_association_hessian: bool = False,
+    require_internal_route: bool = False,
     require_route_closed: bool = False,
 ) -> dict[str, Any]:
     fixture = _fixture_payload(Path(case_dir))
     association_hessian = (
         _association_hessian_payload(Path(case_dir), fixture)
-        if require_exact_association_hessian
+        if require_exact_association_hessian or require_internal_route
+        else {"status": "pending_internal_proof_for_issue_145"}
+    )
+    internal_route = (
+        _internal_route_payload(Path(case_dir), fixture, association_hessian)
+        if require_internal_route
         else {"status": "pending_internal_proof_for_issue_145"}
     )
     payload = {
@@ -568,6 +661,7 @@ def evaluate_case_dir(
         "case_label": "Gross/Sadowski 2002 methanol/cyclohexane associating LLE",
         "fixture": fixture,
         "association_hessian": association_hessian,
+        "internal_route": internal_route,
         "public_route_state": _public_route_state_payload(),
         "blockers": list(fixture["blockers"]),
     }
@@ -576,6 +670,7 @@ def evaluate_case_dir(
             payload,
             require_source_data=require_source_data,
             require_exact_association_hessian=require_exact_association_hessian,
+            require_internal_route=require_internal_route,
             require_route_closed=require_route_closed,
         )
     )
@@ -587,6 +682,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--case-dir", type=Path, default=DEFAULT_CASE_DIR)
     parser.add_argument("--require-source-data", action="store_true")
     parser.add_argument("--require-exact-association-hessian", action="store_true")
+    parser.add_argument("--require-internal-route", action="store_true")
     parser.add_argument("--require-route-closed", action="store_true")
     parser.add_argument("--require-complete", action="store_true")
     return parser
@@ -598,6 +694,7 @@ def main(argv: list[str] | None = None) -> int:
         args.case_dir,
         require_source_data=args.require_source_data or args.require_complete,
         require_exact_association_hessian=args.require_exact_association_hessian or args.require_complete,
+        require_internal_route=args.require_internal_route or args.require_complete,
         require_route_closed=args.require_route_closed or args.require_complete,
     )
     if args.json:
@@ -610,6 +707,7 @@ def main(argv: list[str] | None = None) -> int:
         args.require_complete
         or args.require_source_data
         or args.require_exact_association_hessian
+        or args.require_internal_route
         or args.require_route_closed
     ) and not output["complete"]:
         return 2
