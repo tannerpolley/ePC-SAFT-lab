@@ -1,0 +1,17 @@
+case_key,source_status,source_basis,source_figure,source_marker_family,phase_branch,temperature_C,temperature_K,pressure_bar,x_methanol,x_cyclohexane,pixel_x,pixel_y,digitization_uncertainty_x,digitization_uncertainty_T_K
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,methanol_lean_liquid,7.6,280.75,1.013,0.067,0.933,164,820,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_lean_liquid,16.5,289.65,1.013,0.081,0.919,173,733,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_lean_liquid,22.0,295.15,1.013,0.092,0.908,181,679,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_lean_liquid,27.0,300.15,1.013,0.106,0.894,190,630,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,methanol_lean_liquid,31.8,304.95,1.013,0.124,0.876,203,583,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_lean_liquid,36.5,309.65,1.013,0.187,0.813,246,537,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,methanol_lean_liquid,44.0,317.15,1.013,0.281,0.719,310,463,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,methanol_lean_liquid,46.7,319.85,1.013,0.380,0.620,378,437,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,near_plait_region,47.0,320.15,1.013,0.490,0.510,453,434,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,near_plait_region,46.6,319.75,1.013,0.570,0.430,507,438,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_rich_liquid,41.5,314.65,1.013,0.715,0.285,607,488,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_rich_liquid,36.5,309.65,1.013,0.762,0.238,638,537,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,methanol_rich_liquid,31.5,304.65,1.013,0.797,0.203,662,586,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_rich_liquid,26.5,299.65,1.013,0.822,0.178,680,635,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,Jones_and_Amstell_1930,methanol_rich_liquid,21.5,294.65,1.013,0.843,0.157,694,684,0.02,2.0
+gross2002_fig8_lle,source_digitized,lower_liquid_liquid_branch,Figure 8,DECHEMA_correlation,methanol_rich_liquid,16.5,289.65,1.013,0.856,0.144,703,733,0.02,2.0

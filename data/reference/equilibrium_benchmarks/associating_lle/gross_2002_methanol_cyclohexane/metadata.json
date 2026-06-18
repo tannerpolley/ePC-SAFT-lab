@@ -1,0 +1,34 @@
+{
+  "case_label": "Gross/Sadowski 2002 methanol/cyclohexane associating LLE",
+  "family_label": "PE-Associating TP Flash",
+  "route": "lle",
+  "selector_route": "associating_lle_internal_proof",
+  "species": [
+    "methanol",
+    "cyclohexane"
+  ],
+  "expected_phase_count": 2,
+  "source_status": "source_backed",
+  "source_model_family": "PC-SAFT",
+  "runtime_model_family": "ePC-SAFT PC-SAFT association term",
+  "source_basis": "Digitized Gross and Sadowski 2002 Figure 8 liquid-liquid branch points at P = 1.013 bar plus retained Gross 2002 Table 1 and Table 2 parameter rows.",
+  "source_paths": {
+    "paper_markdown": "analyses/paper_validation/2002_gross/docs/md/source_01_gross_2002.md",
+    "pure_component_table": "analyses/paper_validation/2002_gross/tables/table_001/table_001.csv",
+    "binary_interaction_table": "analyses/paper_validation/2002_gross/tables/table_002/table_002.csv",
+    "retained_parameter_bundle": "analyses/paper_validation/2002_gross/parameters/",
+    "figure_08_source_image": "analyses/paper_validation/2002_gross/figures/figure_08/source/paper_source_01_gross_2002_figure_008.png"
+  },
+  "pressure_bar": 1.013,
+  "parameter_basis": "Methanol is the Gross and Sadowski 2002 Table 1 2B associating row. Cyclohexane is the retained neutral row in the Gross 2002 parameter bundle, sourced to Gross 2001 Table 2 and used by the Gross 2002 Table 2 methanol/cyclohexane binary target.",
+  "binary_interaction_basis": "Gross and Sadowski 2002 Table 2 PC-SAFT k_ij for methanol-cyclohexane.",
+  "association_active": true,
+  "associating_species": [
+    "methanol"
+  ],
+  "electrolyte_active": false,
+  "reaction_active": false,
+  "public_admission_state": "closed_until_issue_190",
+  "follow_on_stress_target": "water/1-pentanol from Gross and Sadowski 2002 Figure 10, after the one-associating-component proof is green.",
+  "scope_statement": "This fixture supports issue #145 internal proof for one neutral associating binary LLE with one associating component. It does not admit public associating GFPE, electrolyte, reactive, CE, CPE, LLLE, or generalized associating phase-set behavior."
+}

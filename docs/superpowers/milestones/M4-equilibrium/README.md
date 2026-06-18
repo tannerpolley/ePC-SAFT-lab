@@ -54,6 +54,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, and empty source-data blockers. |
 | `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
 | `scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete` | `electrolyte` | Closed-admission source gate for #269: parses the Khudaida 2026 source fixture, records the raw paper-row closure correction before normalized explicit-ion expansion, constructs the path-based `2026_Khudaida` paper-validation parameter bundle, runs native electrolyte and phase-charge diagnostics, and keeps public electrolyte route admission closed. |
+| `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-route-closed` | `lle` | Source-data gate for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, and confirms public associating LLE admission is still closed until #190. |
 
 ## Current Open Issues
 
@@ -128,6 +129,12 @@ paper-validation parameter-bundle execution, runs native electrolyte/charge
 diagnostics, and keeps public electrolyte route state closed. It still leaves
 electrolyte TPD, HELD2 phase discovery, postsolve electrolyte phase-set
 certification, and public electrolyte route admission pending.
+
+#145 now has its source-data fixture gate: Gross/Sadowski 2002 Figure 8
+methanol/cyclohexane LLE rows plus retained Table 1/Table 2 parameters pass
+`check_associating_lle_gross_2002.py --require-source-data --require-route-closed`.
+This does not close #145 by itself; exact association Hessian coverage and the
+internal associating LLE route proof remain required before #190 can unblock.
 
 ## Closed Issues
 
