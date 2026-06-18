@@ -8,10 +8,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
+SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 EQUILIBRIUM_SRC_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src"
-if str(EQUILIBRIUM_SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(EQUILIBRIUM_SRC_ROOT))
+for import_root in (SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
 DEFAULT_CASE_DIR = (
     REPO_ROOT
@@ -194,6 +198,249 @@ def _parameter_blockers(pure_rows: list[dict[str, str]], binary_rows: list[dict[
     return list(dict.fromkeys(blockers))
 
 
+def _matrix_symmetric(row_major: list[float], shape: tuple[int, int], *, tolerance: float) -> tuple[bool, float]:
+    matrix = np.asarray(row_major, dtype=float).reshape(shape)
+    if not np.all(np.isfinite(matrix)):
+        return False, math.inf
+    error = float(np.max(np.abs(matrix - matrix.T))) if matrix.size else 0.0
+    return error <= tolerance, error
+
+
+def _fixture_mixture(case_dir: Path):
+    from epcsaft.state.native_adapter import ePCSAFTMixture
+
+    pure_rows = _read_csv(case_dir / "pure_component_parameters.csv")
+    binary_rows = _read_csv(case_dir / "binary_interactions.csv")
+    pure_by_species = {row["species"]: row for row in pure_rows}
+    binary = binary_rows[0]
+    k_ij = float(binary["k_ij"])
+    params = {
+        "MW": np.asarray([float(pure_by_species[name]["molecular_weight_g_per_mol"]) / 1000.0 for name in SPECIES]),
+        "m": np.asarray([float(pure_by_species[name]["m"]) for name in SPECIES]),
+        "s": np.asarray([float(pure_by_species[name]["sigma_A"]) for name in SPECIES]),
+        "e": np.asarray([float(pure_by_species[name]["epsilon_over_k_K"]) for name in SPECIES]),
+        "e_assoc": np.asarray([float(pure_by_species[name]["association_energy_over_k_K"]) for name in SPECIES]),
+        "vol_a": np.asarray([float(pure_by_species[name]["association_volume"]) for name in SPECIES]),
+        "assoc_scheme": [pure_by_species[name]["assoc_scheme"] or None for name in SPECIES],
+        "k_ij": np.asarray([[0.0, k_ij], [k_ij, 0.0]], dtype=float),
+        "z": np.asarray([0.0, 0.0], dtype=float),
+        "dielc": np.asarray([33.05, 2.02], dtype=float),
+    }
+    return ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
+
+
+def _association_hessian_payload(case_dir: Path, fixture: dict[str, Any]) -> dict[str, Any]:
+    if fixture.get("status") != "source_backed":
+        return {"status": "blocked", "blockers": ["source_data_missing"]}
+
+    try:
+        import epcsaft._core as provider_core
+        from epcsaft.state.native_adapter import create_struct
+        from epcsaft_equilibrium._native import extension_native_core
+
+        thresholds = _read_json(case_dir / "thresholds.json")
+        tolerance = float(thresholds["hessian_symmetry_abs_tol"])
+        residual_threshold = float(thresholds["max_mass_action_inf_norm"])
+        nonzero_threshold = float(thresholds["min_nonzero_sensitivity_abs"])
+        site_upper = float(thresholds["site_fraction_upper"])
+        site_lower = float(thresholds["site_fraction_lower_exclusive"])
+
+        if not provider_core._native_cppad_smoke()["cppad_compiled"]:
+            return {"status": "blocked", "blockers": ["exact_association_hessian_missing", "cppad_required"]}
+
+        equilibrium_core = extension_native_core()
+        mixture = _fixture_mixture(case_dir)
+        temperature = 298.15
+        composition = np.asarray([0.5, 0.5], dtype=float)
+        density = 1000.0
+        state = mixture.state(T=temperature, rho=density, x=composition, phase="liquid")
+        pressure = float(state.pressure())
+        raw = provider_core._native_phase_state_ln_fugacity_composition_sensitivity(
+            temperature,
+            pressure,
+            composition.tolist(),
+            0,
+            create_struct(mixture.parameters),
+        )
+
+        first_shape = tuple(raw["association_site_sensitivity_shape"])
+        first_response = np.asarray(raw["association_site_sensitivity_row_major"], dtype=float).reshape(first_shape)
+        second_shape = tuple(raw["association_site_second_sensitivity_shape"])
+        second_response = np.asarray(raw["association_site_second_sensitivity_tensor_row_major"], dtype=float).reshape(second_shape)
+        second_symmetric = all(
+            float(np.max(np.abs(second_response[:, :, site] - second_response[:, :, site].T))) <= tolerance
+            for site in range(second_shape[2])
+        )
+
+        amounts = np.asarray([0.5, 0.5], dtype=float)
+        volume = float(amounts.sum() / density)
+        phase_block = equilibrium_core._native_eos_phase_block(
+            mixture._native,
+            temperature,
+            pressure,
+            amounts.tolist(),
+            volume,
+        )
+        phase_pressure_shape = tuple(phase_block["pressure_hessian_shape"])
+        phase_pressure_symmetric, phase_pressure_symmetry_error = _matrix_symmetric(
+            phase_block["pressure_hessian_row_major"],
+            phase_pressure_shape,
+            tolerance=tolerance,
+        )
+        objective_shape = tuple(phase_block["objective_curvature_shape"])
+        phase_objective_symmetric, phase_objective_symmetry_error = _matrix_symmetric(
+            phase_block["objective_curvature_row_major"],
+            objective_shape,
+            tolerance=tolerance,
+        )
+
+        delta = [0.0, 1000.0, 1000.0, 0.0]
+        solve = provider_core._native_association_site_fraction_solve(delta, density, [0.5, 0.5])
+        site_fractions = np.asarray(solve["site_fractions"], dtype=float)
+        block = equilibrium_core._native_association_mass_action_block(
+            density,
+            site_fractions.tolist(),
+            [0.5, 0.5],
+            delta,
+        )
+        block_hessian_shape = tuple(block["site_fraction_hessian_shape"])
+        block_hessian = np.asarray(block["site_fraction_hessian_tensor_row_major"], dtype=float).reshape(block_hessian_shape)
+        mass_action_hessians_symmetric = all(
+            float(np.max(np.abs(block_hessian[site, :, :] - block_hessian[site, :, :].T))) <= tolerance
+            for site in range(block_hessian_shape[0])
+        )
+        max_mass_action_residual = max(abs(float(value)) for value in block["residuals"])
+
+        phase_amounts = [
+            np.asarray([0.6, 0.4], dtype=float),
+            np.asarray([0.2, 0.8], dtype=float),
+        ]
+        volumes = [float(phase_amounts[0].sum() / 1000.0), float(phase_amounts[1].sum() / 800.0)]
+        phase_site_fractions: list[list[float]] = []
+        for phase_amount, phase_volume in zip(phase_amounts, volumes, strict=True):
+            phase_density = float(phase_amount.sum() / phase_volume)
+            phase_composition = phase_amount / phase_amount.sum()
+            phase_solve = provider_core._native_association_site_fraction_solve(
+                delta,
+                phase_density,
+                [float(phase_composition[0]), float(phase_composition[0])],
+            )
+            phase_site_fractions.append([float(value) for value in phase_solve["site_fractions"]])
+        phase_system = equilibrium_core._native_eos_phase_system(
+            mixture._native,
+            temperature,
+            1.0e5,
+            [phase.tolist() for phase in phase_amounts],
+            volumes,
+            (phase_amounts[0] + phase_amounts[1]).tolist(),
+            [],
+            phase_site_fractions,
+            delta,
+        )
+        system_objective_shape = tuple(phase_system["objective_hessian_shape"])
+        system_objective_symmetric, system_objective_symmetry_error = _matrix_symmetric(
+            phase_system["objective_hessian_row_major"],
+            system_objective_shape,
+            tolerance=tolerance,
+        )
+        constraint_shape = tuple(phase_system["constraint_hessian_shape"])
+        constraint_tensor = np.asarray(phase_system["constraint_hessian_tensor_row_major"], dtype=float).reshape(
+            (constraint_shape[0], constraint_shape[1], constraint_shape[1])
+        )
+        constraint_has_hessian = list(phase_system["constraint_has_hessian"])
+        constraint_symmetry_errors = [
+            float(np.max(np.abs(constraint_tensor[index] - constraint_tensor[index].T)))
+            for index, has_hessian in enumerate(constraint_has_hessian)
+            if has_hessian
+        ]
+        constraints_symmetric = bool(
+            constraint_symmetry_errors
+            and np.all(np.isfinite(constraint_tensor))
+            and max(constraint_symmetry_errors) <= tolerance
+        )
+        sample_lagrangian = np.asarray(phase_system["objective_hessian_row_major"], dtype=float).reshape(system_objective_shape)
+        for index, has_hessian in enumerate(constraint_has_hessian):
+            if has_hessian:
+                sample_lagrangian = sample_lagrangian + constraint_tensor[index]
+        lagrangian_symmetric = bool(
+            np.all(np.isfinite(sample_lagrangian))
+            and float(np.max(np.abs(sample_lagrangian - sample_lagrangian.T))) <= tolerance
+        )
+        phase_system_residual = max(
+            [abs(float(value)) for value in phase_system["phase_association_residuals"]],
+            default=0.0,
+        )
+        max_mass_action_residual = max(max_mass_action_residual, phase_system_residual)
+
+        all_site_fractions = np.asarray([*site_fractions.tolist(), *sum(phase_site_fractions, [])], dtype=float)
+        blockers: list[str] = []
+        if raw.get("backend") != "cppad_implicit" or raw.get("association_sensitivity_backend") != "cppad_implicit_association":
+            blockers.append("exact_association_hessian_missing")
+        if not np.all(np.isfinite(first_response)) or not np.any(np.abs(first_response) > nonzero_threshold):
+            blockers.append("association_first_sensitivity_missing")
+        if (
+            not np.all(np.isfinite(second_response))
+            or not np.any(np.abs(second_response) > nonzero_threshold)
+            or not second_symmetric
+        ):
+            blockers.append("association_second_sensitivity_missing")
+        if float(np.min(all_site_fractions)) <= site_lower or float(np.max(all_site_fractions)) > site_upper:
+            blockers.append("association_site_fraction_bounds_failed")
+        if max_mass_action_residual > residual_threshold:
+            blockers.append("association_mass_action_residual_too_large")
+        if phase_block.get("objective_curvature_backend") != "cppad_implicit_association":
+            blockers.append("association_objective_hessian_backend_mismatch")
+        if phase_block.get("pressure_hessian_backend") != "cppad_implicit_association":
+            blockers.append("association_pressure_hessian_backend_mismatch")
+        if not phase_pressure_symmetric or not phase_objective_symmetric:
+            blockers.append("association_phase_block_hessian_not_symmetric")
+        if not mass_action_hessians_symmetric:
+            blockers.append("association_mass_action_hessian_not_symmetric")
+        if phase_system.get("objective_hessian_backend") != "cppad_phase_blocks":
+            blockers.append("association_phase_system_objective_backend_mismatch")
+        if phase_system.get("constraint_hessian_backend") != "cppad_phase_blocks":
+            blockers.append("association_phase_system_constraint_backend_mismatch")
+        if not system_objective_symmetric or not constraints_symmetric or not lagrangian_symmetric:
+            blockers.append("association_phase_system_hessian_not_symmetric")
+        if not all(constraint_has_hessian[-4:]):
+            blockers.append("association_mass_action_constraint_hessian_missing")
+
+        return {
+            "status": "verified_exact" if not blockers else "blocked",
+            "blockers": blockers,
+            "backend": raw.get("association_sensitivity_backend"),
+            "site_fraction_min": float(np.min(all_site_fractions)),
+            "site_fraction_max": float(np.max(all_site_fractions)),
+            "max_mass_action_residual": float(max_mass_action_residual),
+            "site_first_sensitivity_shape": list(first_shape),
+            "site_second_sensitivity_shape": list(second_shape),
+            "site_first_sensitivity_nonzero": bool(np.any(np.abs(first_response) > nonzero_threshold)),
+            "site_second_sensitivity_nonzero": bool(np.any(np.abs(second_response) > nonzero_threshold)),
+            "site_second_sensitivities_symmetric": bool(second_symmetric),
+            "phase_block_objective_hessian_backend": phase_block.get("objective_curvature_backend"),
+            "phase_block_pressure_hessian_backend": phase_block.get("pressure_hessian_backend"),
+            "phase_block_objective_hessian_symmetric": bool(phase_objective_symmetric),
+            "phase_block_pressure_hessian_symmetric": bool(phase_pressure_symmetric),
+            "phase_block_objective_symmetry_error": phase_objective_symmetry_error,
+            "phase_block_pressure_symmetry_error": phase_pressure_symmetry_error,
+            "association_mass_action_hessians_symmetric": bool(mass_action_hessians_symmetric),
+            "phase_system_objective_hessian_backend": phase_system.get("objective_hessian_backend"),
+            "phase_system_constraint_hessian_backend": phase_system.get("constraint_hessian_backend"),
+            "phase_system_objective_hessian_symmetric": bool(system_objective_symmetric),
+            "phase_system_constraint_hessians_symmetric": bool(constraints_symmetric),
+            "phase_system_objective_symmetry_error": system_objective_symmetry_error,
+            "phase_system_constraint_symmetry_error": max(constraint_symmetry_errors, default=0.0),
+            "sample_lagrangian_hessian_symmetric": bool(lagrangian_symmetric),
+            "association_constraint_has_hessian": constraint_has_hessian[-4:],
+        }
+    except Exception as exc:
+        return {
+            "status": "blocked",
+            "blockers": ["exact_association_hessian_missing"],
+            "message": str(exc),
+        }
+
+
 def _public_route_state_payload() -> dict[str, Any]:
     from epcsaft_equilibrium.equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
 
@@ -292,6 +539,7 @@ def evaluate_payload(
         hessian = payload.get("association_hessian", {})
         if hessian.get("status") != "verified_exact":
             blockers.append("exact_association_hessian_missing")
+        blockers.extend(str(item) for item in hessian.get("blockers", []))
     public_route_state = payload.get("public_route_state", {})
     if require_route_closed and public_route_state.get("associating_lle") != "closed_for_associating_inputs":
         blockers.append("public_route_open_too_early")
@@ -310,11 +558,16 @@ def evaluate_case_dir(
     require_route_closed: bool = False,
 ) -> dict[str, Any]:
     fixture = _fixture_payload(Path(case_dir))
+    association_hessian = (
+        _association_hessian_payload(Path(case_dir), fixture)
+        if require_exact_association_hessian
+        else {"status": "pending_internal_proof_for_issue_145"}
+    )
     payload = {
         "checker": "gross_2002_associating_lle_closed_admission_gate",
         "case_label": "Gross/Sadowski 2002 methanol/cyclohexane associating LLE",
         "fixture": fixture,
-        "association_hessian": {"status": "pending_internal_proof_for_issue_145"},
+        "association_hessian": association_hessian,
         "public_route_state": _public_route_state_payload(),
         "blockers": list(fixture["blockers"]),
     }

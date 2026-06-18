@@ -66,3 +66,24 @@ def test_gross_2002_fixture_reports_source_backed_closed_admission_complete() ->
     assert payload["fixture"]["parameter_bundle"]["cyclohexane_association_site_count"] == 0
     assert payload["fixture"]["binary_interaction"]["k_ij"] == 0.051
     assert payload["public_route_state"]["associating_lle"] == "closed_for_associating_inputs"
+
+
+def test_gross_2002_checker_reports_exact_association_hessian_evidence() -> None:
+    payload = checker.evaluate_case_dir(
+        CASE_DIR,
+        require_source_data=True,
+        require_exact_association_hessian=True,
+        require_route_closed=True,
+    )
+
+    assert payload["complete"] is True
+    assert payload["association_hessian"]["status"] == "verified_exact"
+    assert payload["association_hessian"]["site_fraction_min"] > 0.0
+    assert payload["association_hessian"]["site_fraction_max"] <= 1.0 + 1.0e-12
+    assert payload["association_hessian"]["max_mass_action_residual"] <= 1.0e-8
+    assert payload["association_hessian"]["site_first_sensitivity_nonzero"] is True
+    assert payload["association_hessian"]["site_second_sensitivity_nonzero"] is True
+    assert payload["association_hessian"]["association_mass_action_hessians_symmetric"] is True
+    assert payload["association_hessian"]["phase_block_pressure_hessian_symmetric"] is True
+    assert payload["association_hessian"]["phase_system_constraint_hessians_symmetric"] is True
+    assert payload["association_hessian"]["sample_lagrangian_hessian_symmetric"] is True
