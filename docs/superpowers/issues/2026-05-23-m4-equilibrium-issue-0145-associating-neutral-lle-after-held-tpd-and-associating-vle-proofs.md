@@ -57,22 +57,38 @@ completion claim.
 
 ## Acceptance Criteria
 
-- [ ] Gross and Sadowski 2002 methanol/cyclohexane source data, parameters, and
+- [x] Gross and Sadowski 2002 methanol/cyclohexane source data, parameters, and
   thresholds are retained in the repo and checked by a replayable validation
   command.
-- [ ] Active association reports bounded site fractions, low mass-action
+- [x] Active association reports bounded site fractions, low mass-action
   residuals, exact first sensitivities, and exact second sensitivities for every
   solved liquid phase in the proof fixture.
-- [ ] The native equilibrium block and phase-system diagnostics report exact
+- [x] The native equilibrium block and phase-system diagnostics report exact
   association Hessian coverage, including objective, pressure, mass-action, and
   Lagrangian-Hessian evidence.
-- [ ] The associating LLE proof route solves or certifies the source-backed
+- [x] The associating LLE proof route solves or certifies the source-backed
   methanol/cyclohexane split without weakening neutral HELD/TPD postsolve
   checks.
-- [ ] Public `Equilibrium(..., route="lle")` associating admission remains
+- [x] Public `Equilibrium(..., route="lle")` associating admission remains
   closed until #190; #145 records internal proof evidence only.
-- [ ] GitHub issue #145 outcome is satisfied without broadening unrelated
+- [x] GitHub issue #145 outcome is satisfied without broadening unrelated
   package capability claims.
+
+## Implementation Evidence
+
+The branch-local #145 proof is complete when the proof oracle below passes. The
+proof remains internal: `epcsaft_equilibrium.capabilities()` records
+`associating_neutral_lle_gross_2002_internal_exact_hessian` as
+`internal_proof_closed_until_issue_190`, and the public `lle` route remains
+mapped to `neutral_lle` for nonassociating inputs only.
+
+The retained checker reports Gross/Sadowski 2002 Figure 8 source rows, Table 1
+methanol 2B parameters, the retained cyclohexane PC-SAFT row, Table 2
+`k_ij = 0.051`, bounded site fractions, mass-action residuals below `1.0e-8`,
+exact association first and second site sensitivities, symmetric
+objective/pressure/mass-action/Lagrangian Hessian evidence, an internal
+source-pair certification, and `closed_for_associating_inputs` public route
+state.
 
 ## Proof Oracle
 

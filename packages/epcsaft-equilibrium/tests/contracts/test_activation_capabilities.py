@@ -145,9 +145,24 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "bubble_dew_derived_routes",
         "neutral_tp_flash",
         "neutral_lle",
+        "associating_neutral_lle_gross_2002_internal_exact_hessian",
         "neutral_multiphase_nonassoc",
         "single_component_vle",
     }
+    associating_proof = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "associating_neutral_lle_gross_2002_internal_exact_hessian"
+    )
+    assert associating_proof["classification"] == "internal_proof_closed_until_issue_190"
+    assert associating_proof["backend"] == "cppad_implicit_association"
+    assert associating_proof["public_admission_state"] == "closed_until_issue_190"
+    assert (
+        associating_proof["source_fixture"]
+        == "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
+    )
+    assert "associating_neutral_lle_gross_2002_internal_exact_hessian" not in capabilities["production_families"]
+    assert activation["public_route_family_map"]["lle"] == "neutral_lle"
 
     deleted_route_keys = {
         "neutral_lle_flash",
