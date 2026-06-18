@@ -10,16 +10,16 @@ capability: "lle"
 backend: "Ipopt"
 readiness: "closed"
 release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md"
+source_spec: null
+source_plan: null
 afk_hitl: "AFK"
-branch: codex/issue-0252-neutral-generalized-phase-set-diagnostics
-closed_at: "2026-06-13T14:13:58Z"
-closed_by_pr: "https://github.com/ePC-SAFT/ePC-SAFT/pull/255"
+branch: null
 last_synced: "2026-06-13"
 ---
 
 # M4: add neutral generalized phase-set diagnostics contract
+
+**Mirror Retention:** Keep
 
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/252
 Parent Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189

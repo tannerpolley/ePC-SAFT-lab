@@ -86,7 +86,7 @@ class RepeatResult:
     selected_candidate_count: int = 2
     run_id: str = ""
     process_id: int = 0
-    native_start_policy: str = "deterministic_multistart"
+    native_start_policy: str = "deterministic_stage_i"
     stage_i_start_count: int = 1
     candidate_start_sources: list[str] = field(default_factory=lambda: ["feed_phase_kind_0"])
     stage_ii_stopping_reason: str = "bound_gap_closed"
@@ -490,7 +490,7 @@ def _run_native_repeat(
         selected_candidate_count=int(postsolve.get("selected_candidate_count", discovery.get("selected_candidate_count", 0))),
         run_id=run_id,
         process_id=os.getpid(),
-        native_start_policy="deterministic_multistart",
+        native_start_policy="deterministic_stage_i",
         stage_i_start_count=int(postsolve.get("held_stage_i_start_count", discovery.get("held_stage_i_start_count", 0))),
         candidate_start_sources=[
             str(item)
@@ -537,7 +537,7 @@ def _accepted_repeat_blockers(repeat: RepeatResult, thresholds: ReliabilityThres
     if repeat.selected_candidate_count != 2:
         blockers.append("selected_candidate_count_mismatch")
     if (
-        repeat.native_start_policy not in {"deterministic_multistart", "seeded_multistart"}
+        repeat.native_start_policy not in {"deterministic_stage_i", "seeded_stage_i"}
         or repeat.stage_i_start_count <= 0
         or not repeat.candidate_start_sources
     ):

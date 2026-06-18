@@ -64,6 +64,19 @@ _STRUCTURAL_KEYS = {
     "runtime_options",
 }
 _PARAMETER_PAYLOAD_KEYS = _PURE_PARAMETER_KEYS | _BINARY_PARAMETER_KEYS | _GENERATED_PARAMETER_KEYS | _STRUCTURAL_KEYS
+_NATIVE_RUNTIME_PASSTHROUGH_KEYS = {
+    "mixed_rel_perm_a",
+    "mixed_rel_perm_b",
+    "mixed_rel_perm_c",
+    "mixed_rel_perm_mask",
+    "mixed_rel_perm_water_index",
+    "mixed_ion_sigma",
+    "mixed_ion_sigma_applied",
+    "mixed_ion_sigma_sources",
+    "mixed_ion_dispersion",
+    "mixed_ion_dispersion_applied",
+    "mixed_ion_dispersion_sources",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -822,9 +835,13 @@ def _normalize_runtime_user_options(runtime_options: Mapping[str, Any]) -> dict[
     metadata = {
         str(key): _copy_payload_value(value)
         for key, value in runtime_options.items()
-        if str(key) in metadata_keys
+        if str(key) in metadata_keys or str(key) in _NATIVE_RUNTIME_PASSTHROUGH_KEYS
     }
-    option_payload = {str(key): value for key, value in runtime_options.items() if str(key) not in metadata_keys}
+    option_payload = {
+        str(key): value
+        for key, value in runtime_options.items()
+        if str(key) not in metadata_keys and str(key) not in _NATIVE_RUNTIME_PASSTHROUGH_KEYS
+    }
     resolved = _resolve_runtime_options(option_payload)
     normalized = {
         "elec_model": resolved["model"],

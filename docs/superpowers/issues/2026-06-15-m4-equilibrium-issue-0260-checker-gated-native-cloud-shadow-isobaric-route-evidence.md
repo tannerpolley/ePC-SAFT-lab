@@ -10,15 +10,16 @@ capability: "lle"
 backend: "Ipopt"
 readiness: "closed"
 release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
-source_plan: "docs/superpowers/plans/2026-06-15-m4-equilibrium-issue-0189-native-cloud-shadow-isobaric-route-admission-plan.md"
+source_spec: null
+source_plan: null
 afk_hitl: "AFK"
-branch: codex/issue-0260-checker-gated-native-cloud-shadow-isobaric-route-evidence
-parent_issue: 189
+branch: null
 last_synced: "2026-06-16"
 ---
 
 # M4: admit checker-gated native cloud/shadow isobaric route evidence
+
+**Mirror Retention:** Keep
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/260
 **GitHub Milestone:** M4 - Equilibrium

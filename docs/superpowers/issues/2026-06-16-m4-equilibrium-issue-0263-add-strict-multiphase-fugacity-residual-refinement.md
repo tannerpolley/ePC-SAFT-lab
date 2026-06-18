@@ -10,17 +10,16 @@ capability: "lle"
 backend: "Ipopt"
 readiness: "closed"
 release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
-source_plan: "docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md"
+source_spec: null
+source_plan: null
 afk_hitl: "AFK"
-branch: codex/issue-0263-add-strict-multiphase-fugacity-residual-refinement
-parent_issue: 189
-blocking:
-  - 261
+branch: null
 last_synced: "2026-06-16"
 ---
 
 # M4: add strict multiphase fugacity residual refinement
+
+**Mirror Retention:** Keep
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/263
 **GitHub Milestone:** M4 - Equilibrium
@@ -28,6 +27,7 @@ last_synced: "2026-06-16"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md
 **Source Plan:** docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md
 **Classification:** AFK
+AFK/HITL: AFK
 **Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/263 using docs/superpowers/issues/2026-06-16-m4-equilibrium-issue-0263-add-strict-multiphase-fugacity-residual-refinement.md and docs/superpowers/plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md. Complete proof oracle: issue acceptance criteria checked.
 **Execution Mode:** Ask at runtime
