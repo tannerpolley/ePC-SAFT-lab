@@ -62,7 +62,6 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `ready` | Associating neutral LLE after HELD/TPD and associating VLE proofs; former #148 blocker is closed. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase admission blocker closed. |
-| [#269](../../issues/2026-06-17-m4-equilibrium-issue-0269-add-electrolyte-gfpe-closed-admission-source-gate.md) | `electrolyte` | `Ipopt` | `ready` | First #191 child: retained closed-admission Khudaida source gate, parameter-bundle execution, native electrolyte diagnostics, and closed public route state. |
 
 ## Queue Guard
 
@@ -122,16 +121,17 @@ admission child merged. #190 remains blocked by #145 associating proof gates;
 #191 is ready for its electrolyte GFPE and HELD2.0 proof scope, but no
 electrolyte public admission claim is made yet.
 
-#269 is the first #191 child. Its retained checker proves Khudaida source-data
-parsing, records the raw paper-row closure correction before normalized
-explicit-ion expansion, verifies path-based paper-validation parameter-bundle
-execution, runs native electrolyte/charge diagnostics, and keeps public
-electrolyte route state closed. It still leaves electrolyte TPD, HELD2 phase
-discovery, postsolve electrolyte phase-set certification, and public electrolyte
-route admission pending.
+#269 closed through #270 with the first #191 child gate. Its retained checker
+proves Khudaida source-data parsing, records the raw paper-row closure
+correction before normalized explicit-ion expansion, verifies path-based
+paper-validation parameter-bundle execution, runs native electrolyte/charge
+diagnostics, and keeps public electrolyte route state closed. It still leaves
+electrolyte TPD, HELD2 phase discovery, postsolve electrolyte phase-set
+certification, and public electrolyte route admission pending.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/269](https://github.com/ePC-SAFT/ePC-SAFT/issues/269) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/270](https://github.com/ePC-SAFT/ePC-SAFT/pull/270) on 2026-06-18T00:45:16Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/228](https://github.com/ePC-SAFT/ePC-SAFT/issues/228) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/230](https://github.com/ePC-SAFT/ePC-SAFT/pull/230) on 2026-06-05T02:56:36Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/208](https://github.com/ePC-SAFT/ePC-SAFT/issues/208) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/238](https://github.com/ePC-SAFT/ePC-SAFT/pull/238) on 2026-06-10T22:22:15Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/264](https://github.com/ePC-SAFT/ePC-SAFT/issues/264) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/268](https://github.com/ePC-SAFT/ePC-SAFT/pull/268) on 2026-06-17T13:15:47Z
