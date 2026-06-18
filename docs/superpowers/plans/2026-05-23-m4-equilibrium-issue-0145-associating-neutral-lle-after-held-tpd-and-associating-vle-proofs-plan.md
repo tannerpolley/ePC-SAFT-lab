@@ -53,7 +53,7 @@ Required numerical gates:
 - The source-backed methanol/cyclohexane checker records two liquid phases on opposite sides of the retained binodal with branch composition absolute error `<= 0.10` and temperature absolute error `<= 5.0 K` for the first internal proof. Tighter thresholds belong in follow-up validation after the route is stable.
 - The public associating route gate remains closed for #145: the checker must report `public_route_state: closed_for_associating_inputs`.
 
-## Task 1: Build The Gross 2002 Associating LLE Fixture
+### Task 1: Build The Gross 2002 Associating LLE Fixture
 
 **Use Cases:**
 - A validation worker can load methanol/cyclohexane PC-SAFT parameters and `k_ij=0.051` from retained Gross and Sadowski 2002 artifacts without hand-copying values from prose.
@@ -80,7 +80,7 @@ Required numerical gates:
 - [ ] **Step 6: Run the checker contract again.** Run `uv run python run_pytest.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q`; expected result is pass with the public route still closed.
 - [ ] **Step 7: Commit.** Commit the fixture, checker, tests, and registry update with message `test: add Gross 2002 associating LLE source fixture`.
 
-## Task 2: Prove Exact Implicit Association Hessian Coverage
+### Task 2: Prove Exact Implicit Association Hessian Coverage
 
 **Use Cases:**
 - Active association reports `cppad_implicit_association` first and second site sensitivities for the same state variables used by equilibrium phase blocks.
@@ -105,7 +105,7 @@ Required numerical gates:
 - [ ] **Step 4: Re-run the focused derivative tests.** Run the same command; expected result is pass with exact backend labels and symmetric Hessians.
 - [ ] **Step 5: Commit.** Commit derivative proof updates with message `test: prove implicit association hessian coverage`.
 
-## Task 3: Add The Internal Associating LLE Proof Route
+### Task 3: Add The Internal Associating LLE Proof Route
 
 **Use Cases:**
 - A native diagnostic can solve or certify the Gross 2002 methanol/cyclohexane two-liquid split with active association and exact Hessian evidence.
@@ -128,7 +128,7 @@ Required numerical gates:
 - [ ] **Step 5: Re-run the focused tests.** Run the same command; expected result is pass with public route closed and internal proof complete.
 - [ ] **Step 6: Commit.** Commit the internal route proof with message `feat: prove internal associating neutral LLE route`.
 
-## Task 4: Close #145 And Prepare #190 Readiness
+### Task 4: Close #145 And Prepare #190 Readiness
 
 **Use Cases:**
 - The M4 queue clearly shows #145 closed by internal proof, #190 as the next associating admission issue, and #191 electrolyte after association.
