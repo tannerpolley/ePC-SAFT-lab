@@ -1,0 +1,2 @@
+component_i,component_j,k_ij,l_ij,k_hb_ij,source_status,source_detail
+methanol,cyclohexane,0.051,0,0,source_backed,Gross2002 Table2 PC-SAFT methanol-cyclohexane binary interaction

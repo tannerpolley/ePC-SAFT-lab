@@ -31,13 +31,15 @@ start from a durable local source plan.
 
 ## Summary
 
-Admit associating GFPE only after the exact-derivative and associating-route proof gates are satisfied, preserving the blocked relationship from associating LLE to its prerequisites.
+Admit associating GFPE only after the exact-derivative and associating-route proof gates are satisfied, preserving the blocked relationship from associating LLE to its prerequisites. The #145 branch now provides the immediate prerequisite internal proof: Gross/Sadowski 2002 methanol/cyclohexane source data, exact association Hessian diagnostics, and closed public admission. #190 should become the next public-admission issue after #145 merges.
 
 ## Supplemental Context
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
 - `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md`
+- `data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane`
+- `scripts/validation/check_associating_lle_gross_2002.py`
 
 ## Acceptance Criteria
 
@@ -48,6 +50,8 @@ Admit associating GFPE only after the exact-derivative and associating-route pro
 
 ## Proof Oracle
 
+- Confirm the #145 prerequisite remains green:
+  `uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete`.
 - Run focused associating EOS/derivative tests required by the gate.
 - Run focused associating equilibrium package tests.
 - Run docs validation.

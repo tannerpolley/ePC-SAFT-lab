@@ -56,6 +56,26 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     },
     {
         "row_family": "equilibrium",
+        "subsystem": "internal_closed_admission_proof",
+        "quantity": "associating_neutral_lle_gross_2002_internal_exact_hessian",
+        "derivative": "association_lagrangian_hessian",
+        "backend": "cppad_implicit_association",
+        "supported": True,
+        "classification": "internal_proof_closed_until_issue_190",
+        "public_admission_state": "closed_until_issue_190",
+        "source_fixture": (
+            "data/reference/equilibrium_benchmarks/associating_lle/"
+            "gross_2002_methanol_cyclohexane"
+        ),
+        "reason": "internal issue #145 proof certifies Gross/Sadowski 2002 methanol/cyclohexane source pair with exact association Hessian evidence while public associating GFPE admission stays closed",
+        "tests": (
+            "scripts/validation/check_associating_lle_gross_2002.py",
+            "packages/epcsaft-equilibrium/tests/native/results/test_associating_lle_reference_values.py",
+            "tests/native/contracts/test_associating_lle_gross_2002_checker.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
         "subsystem": "native_ipopt",
         "quantity": "neutral_multiphase_nonassoc",
         "derivative": "lagrangian_hessian",

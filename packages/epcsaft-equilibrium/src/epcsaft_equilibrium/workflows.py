@@ -1044,7 +1044,10 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         or (vol_a.size > 0 and np.any(np.abs(vol_a) > 0.0))
     )
     if active:
-        raise InputError(f"Production {route_label} requires neutral non-associating mixtures.")
+        raise InputError(
+            f"Production {route_label} requires neutral non-associating mixtures; "
+            "associating GFPE admission is closed until issue #190."
+        )
 
 
 def _json_like(value: Any) -> Any:

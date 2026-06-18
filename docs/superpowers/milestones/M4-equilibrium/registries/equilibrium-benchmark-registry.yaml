@@ -147,13 +147,26 @@ family_rows:
       - association_mass_action_certification
       - neutral_phase_discovery_reuse
       - postsolve_phase_set_certification
+    admission_evidence:
+      - evidence_label: "Gross/Sadowski 2002 methanol/cyclohexane internal exact-Hessian gate"
+        evidence_tier: T2
+        command: "uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete"
+        scope: "Source-backed one-associating-component neutral LLE fixture for issue #145 using Gross/Sadowski 2002 Figure 8, Table 1, Table 2, retained parameters, exact association Hessian diagnostics, internal source-pair certification, and closed public associating route admission."
+        result_requirement: "Figure 8 LLE rows retained; methanol 2B association and cyclohexane neutral parameters retained; k_ij = 0.051 retained; exact association site first/second sensitivities and objective/pressure/mass-action/Lagrangian Hessians verified; public associating LLE admission remains closed until issue #190."
     reference_cases:
       - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
-        evidence_tier: T0
-        source: "Gross and Sadowski 2002 associating PC-SAFT benchmark"
-        fixture_status: source_data_needed
+        evidence_tier: T2
+        source: "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
+        source_model_family: PC-SAFT
+        route: associating_lle_internal_proof
+        fixture_status: available
+        proof_status: internal_exact_hessian_source_pair_certified
+        scope: "Source-backed methanol/cyclohexane Figure 8 liquid-liquid branch fixture for one-associating-component internal proof. Public associating GFPE remains closed until #190."
         acceptance_checks:
+          - source_digitized_figure_8_lle_rows
           - source_backed_parameters
+          - source_backed_binary_interaction
+          - public_associating_route_closed
           - association_mass_action
           - exact_hessian
           - phase_equilibrium_certification
@@ -482,10 +495,12 @@ benchmark_cases:
   - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
     family_labels: ["PE-Associating TP Flash"]
     priority_rank: 1
-    status: source_data_needed
-    fixture_status: source_data_needed
-    source_path: "literature:Gross and Sadowski 2002 methanol/cyclohexane"
-    todo: "Use only after exact association derivative architecture exists."
+    status: fixture_available_not_generalized_production
+    fixture_status: available
+    source_path: "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
+    source_model_family: PC-SAFT
+    retained_evidence: "uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete"
+    todo: "Use as the #145 internal exact-Hessian and closed-admission proof. #190 remains the public associating GFPE admission issue."
 
   - case_label: "Khudaida 2026 electrolyte LLE"
     family_labels: ["PE-Electrolyte LLE/TP Flash"]

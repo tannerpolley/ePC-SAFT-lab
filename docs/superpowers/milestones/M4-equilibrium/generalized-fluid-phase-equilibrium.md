@@ -533,6 +533,13 @@ iteration-limit seed path are failed boundary evidence.
 `PE-Associating TP Flash`
 
 - first validation target: Gross/Sadowski 2002 methanol/cyclohexane;
+- current retained internal proof: `uv run python
+  scripts/validation/check_associating_lle_gross_2002.py --json
+  --require-source-data --require-exact-association-hessian
+  --require-route-closed --require-complete` proves the source fixture, exact
+  association site sensitivities, objective/pressure/mass-action/Lagrangian
+  Hessian evidence, and a source-pair internal LLE certification while public
+  associating admission remains closed for #190;
 - follow-on stress: water/1-pentanol or another two-associating-component case;
 - required before exposure: association mass-action or implicit sensitivity
   architecture with exact Jacobian and Hessian contributions.

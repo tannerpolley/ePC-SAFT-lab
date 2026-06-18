@@ -581,7 +581,7 @@ def test_equilibrium_constructor_rejects_associating_inputs_before_selector_disp
     route: str,
     kwargs: dict[str, object],
 ) -> None:
-    with pytest.raises(epcsaft.InputError, match="non-associating"):
+    with pytest.raises(epcsaft.InputError, match=r"non-associating.*#190"):
         equilibrium_module.Equilibrium(
             epcsaft.Mixture(_associating_parameter_set()),
             route=route,
