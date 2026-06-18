@@ -2,27 +2,29 @@
 issue: 145
 title: "Associating neutral LLE after HELD/TPD and associating VLE proofs"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/145"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "closed"
 release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md"
-source_plan: "docs/superpowers/plans/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs-plan.md"
+source_spec: null
+source_plan: null
 afk_hitl: "HITL"
-branch: codex/issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs
+branch: null
 last_synced: "2026-06-18"
 ---
 
 # Associating neutral LLE after HELD/TPD and associating VLE proofs
 
+**Mirror Retention:** Keep
+
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/145
 Source Spec: docs/superpowers/specs/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md
 Source Plan: docs/superpowers/plans/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs-plan.md
-Branch: codex/issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs
+Branch: closed by PR #273
 AFK/HITL: HITL
 
 GitHub remains authoritative for state, labels, Project fields, comments,
@@ -31,11 +33,10 @@ start from a durable local source plan.
 
 ## Summary
 
-#148 is closed, so the native GitHub dependency blocker for this issue is
-satisfied. #145 is ready for its own source-backed neutral associating LLE proof
-scope. This issue must prove the implicit association state, Jacobian, and
-Hessian path using real Gross and Sadowski 2002 evidence, then keep public
-associating GFPE admission closed for #190.
+#145 closed through PR #273 with its source-backed neutral associating LLE proof
+scope satisfied. The proof exercises the implicit association state, Jacobian,
+and Hessian path using real Gross and Sadowski 2002 evidence while keeping
+public associating GFPE admission closed for #190.
 
 The first validation target is methanol/cyclohexane at 1.013 bar from Gross and
 Sadowski 2002, Figure 8, with pure-component and binary-interaction parameters
@@ -112,7 +113,7 @@ state.
 - Package: `equilibrium`
 - Capability: `lle`
 - Backend: `Ipopt`
-- Readiness: `ready`
+- Readiness: `closed`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
 - Labels: `python-api, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`

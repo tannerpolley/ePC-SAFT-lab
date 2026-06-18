@@ -31,7 +31,7 @@ start from a durable local source plan.
 
 ## Summary
 
-Admit associating GFPE only after the exact-derivative and associating-route proof gates are satisfied, preserving the blocked relationship from associating LLE to its prerequisites. The #145 branch now provides the immediate prerequisite internal proof: Gross/Sadowski 2002 methanol/cyclohexane source data, exact association Hessian diagnostics, and closed public admission. #190 should become the next public-admission issue after #145 merges.
+Admit associating GFPE only after the exact-derivative and associating-route proof gates are satisfied, preserving the blocked relationship from associating LLE to its prerequisites. #145 now provides the immediate prerequisite internal proof: Gross/Sadowski 2002 methanol/cyclohexane source data, exact association Hessian diagnostics, and closed public admission. #190 is the next public-admission issue now that #145 has merged.
 
 ## Supplemental Context
 

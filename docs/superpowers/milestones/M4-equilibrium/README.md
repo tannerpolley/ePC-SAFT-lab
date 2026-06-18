@@ -60,8 +60,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `ready` | Associating neutral LLE after HELD/TPD and associating VLE proofs; former #148 blocker is closed. |
-| [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `ready` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
+| [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `ready` | Admit associating GFPE through exact derivative proof gates after #145 closed the internal Gross/Sadowski exact-Hessian proof. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase admission blocker closed. |
 
 ## Queue Guard
@@ -118,9 +117,9 @@ Jacobian/Hessian evidence, accepted postsolve, and positive three-phase
 fractions for the requested `liquid,liquid,liquid` phase-kind list.
 
 #189 closed through #268 after the final public neutral generalized multiphase
-admission child merged. #190 remains blocked by #145 associating proof gates;
-#191 is ready for its electrolyte GFPE and HELD2.0 proof scope, but no
-electrolyte public admission claim is made yet.
+admission child merged. #190 is now ready after #145 closed the associating
+proof gate; #191 is ready for its electrolyte GFPE and HELD2.0 proof scope, but
+no electrolyte public admission claim is made yet.
 
 #269 closed through #270 with the first #191 child gate. Its retained checker
 proves Khudaida source-data parsing, records the raw paper-row closure
@@ -130,15 +129,16 @@ diagnostics, and keeps public electrolyte route state closed. It still leaves
 electrolyte TPD, HELD2 phase discovery, postsolve electrolyte phase-set
 certification, and public electrolyte route admission pending.
 
-#145 now has its internal exact-Hessian proof gate on this branch: Gross/Sadowski
-2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table 1/Table 2
-parameters pass `check_associating_lle_gross_2002.py --require-source-data
---require-exact-association-hessian --require-route-closed --require-complete`.
-The proof stays internal and closed-admission; #190 remains the public
-associating GFPE admission issue after #145 merges.
+#145 closed through #273 with its internal exact-Hessian proof gate:
+Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
+1/Table 2 parameters pass `check_associating_lle_gross_2002.py
+--require-source-data --require-exact-association-hessian --require-route-closed
+--require-complete`. The proof stays internal and closed-admission; #190 is the
+next public associating GFPE admission issue.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/145](https://github.com/ePC-SAFT/ePC-SAFT/issues/145) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/273](https://github.com/ePC-SAFT/ePC-SAFT/pull/273) on 2026-06-18T07:35:51Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/269](https://github.com/ePC-SAFT/ePC-SAFT/issues/269) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/270](https://github.com/ePC-SAFT/ePC-SAFT/pull/270) on 2026-06-18T00:45:16Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/228](https://github.com/ePC-SAFT/ePC-SAFT/issues/228) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/230](https://github.com/ePC-SAFT/ePC-SAFT/pull/230) on 2026-06-05T02:56:36Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/208](https://github.com/ePC-SAFT/ePC-SAFT/issues/208) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/238](https://github.com/ePC-SAFT/ePC-SAFT/pull/238) on 2026-06-10T22:22:15Z
