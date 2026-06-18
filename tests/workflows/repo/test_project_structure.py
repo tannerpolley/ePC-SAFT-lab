@@ -1183,7 +1183,7 @@ def test_equilibrium_constructor_configured_api_has_no_legacy_kwargs_or_setup_he
 
     assert constructor.args.vararg is None
     assert constructor.args.kwarg is None
-    assert constructor_kwargs == ["route", "T", "P", "x", "y", "z"]
+    assert constructor_kwargs == ["route", "T", "P", "x", "y", "z", "phase_kinds"]
     assert solve.args.vararg is None
     assert solve.args.kwarg is None
     assert solve_kwargs == ["solver_options"]

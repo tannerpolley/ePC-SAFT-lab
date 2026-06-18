@@ -3,23 +3,23 @@ issue: 189
 title: "M4: derive boundary workflows and generalized phase-set PE from neutral GFPE"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/189"
 state: "closed"
-closed_at: "2026-06-17T13:15:46Z"
-closing_pr: "https://github.com/ePC-SAFT/ePC-SAFT/pull/268"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "lle"
 backend: "Ipopt"
-readiness: "done"
+readiness: "closed"
 release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe-plan.md"
+source_spec: null
+source_plan: null
 afk_hitl: "HITL"
-branch: codex/issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe
+branch: null
 last_synced: "2026-06-17"
 ---
 
 # Derive boundary workflows and generalized phase-set PE from neutral GFPE
+
+**Mirror Retention:** Keep
 
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0189-derive-boundary-workflows-and-generalized-phase-set-pe-from-neutral-gfpe.md

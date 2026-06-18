@@ -45,6 +45,9 @@ std::string selector_family_for_route(const std::string& route) {
     if (route == "single_component_vle") {
         return "single_component_vle";
     }
+    if (route == "multiphase" || route == "neutral_multiphase_nonassoc") {
+        return "neutral_multiphase_nonassoc";
+    }
     throw ValueError("selector-ineligible: route family is declared-not-exposed or unsupported by the production selector.");
 }
 

@@ -165,7 +165,7 @@ def test_reliability_repeat_rows_include_independent_start_receipts() -> None:
         "hidden_state_carryover_allowed",
     ):
         assert key in row
-    assert row["native_start_policy"] in {"deterministic_multistart", "seeded_multistart"}
+    assert row["native_start_policy"] in {"deterministic_stage_i", "seeded_stage_i"}
     assert row["hidden_state_carryover_allowed"] is False
     assert row["stage_i_start_count"] > 0
     assert json.loads(row["candidate_start_sources"])

@@ -16,7 +16,6 @@ Durable workflow details belong in the referenced docs, not in this file.
 
 ## Tooling Rules
 
-
 - IMPORTANT: Using intellij-index MCP tools for code navigation and refactoring.
 - For non-trivial code, build, native, test, refactor, debug, architecture, or validation work, use IntelliJ Bridge/MCP first. Before falling back to shell, run tool discovery for IntelliJ/JetBrains MCP tools and record a short receipt: `IntelliJ MCP available: yes/no`, `tools found: ...`, and `fallback approved by user: yes/no`.
 - If IntelliJ/JetBrains MCP tools are not exposed for a non-trivial task, stop and ask the user to open or focus IntelliJ on this repo. Do not continue with shell fallback unless the user explicitly approves fallback for that task.
@@ -76,7 +75,6 @@ Single-context repo; read root `CONTEXT.md`, `docs/superpowers/PROJECT_CONTEXT.m
 - Keep user-facing docs updated when public API behavior, install/build/test workflow, package layout, or capability claims change.
 - Before handoff, review `git status --short` and do not leave your own tracked changes unstaged or uncommitted unless the user requested that.
 - Run the repo cleanup hook before reporting completion:
-
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```

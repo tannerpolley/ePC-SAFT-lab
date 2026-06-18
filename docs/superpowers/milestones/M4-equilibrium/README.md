@@ -53,6 +53,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_boundary_workflows.py --json --run-current-boundary-route --allow-route-sweep --route-point-count 1 --require-complete` | `lle` | Retained derived-boundary evidence for #256: current bubble/dew `P-x` and `T-x` route points emit complete `boundary_trace` records with route, DOF swap, source fixture, selector family, shared NLP families, strict Ipopt convergence, finite residuals, and no iteration-limit seed path. Cloud and shadow remain planned-only. |
 | `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, and empty source-data blockers. |
 | `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
+| `scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete` | `electrolyte` | Closed-admission source gate for #269: parses the Khudaida 2026 source fixture, records the raw paper-row closure correction before normalized explicit-ion expansion, constructs the path-based `2026_Khudaida` paper-validation parameter bundle, runs native electrolyte and phase-charge diagnostics, and keeps public electrolyte route admission closed. |
 
 ## Current Open Issues
 
@@ -61,7 +62,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [#145](../../issues/2026-05-23-m4-equilibrium-issue-0145-associating-neutral-lle-after-held-tpd-and-associating-vle-proofs.md) | `lle` | `Ipopt` | `ready` | Associating neutral LLE after HELD/TPD and associating VLE proofs; former #148 blocker is closed. |
 | [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `blocked` | Admit associating GFPE through exact derivative proof gates. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase admission blocker closed. |
-| [#269](../../issues/2026-06-17-m4-equilibrium-issue-0269-add-electrolyte-gfpe-closed-admission-source-gate.md) | `electrolyte` | `Ipopt` | `ready` | First #191 child: Khudaida source fixture, parameter-bundle execution, native electrolyte diagnostics, and closed public route state. |
+| [#269](../../issues/2026-06-17-m4-equilibrium-issue-0269-add-electrolyte-gfpe-closed-admission-source-gate.md) | `electrolyte` | `Ipopt` | `ready` | First #191 child: retained closed-admission Khudaida source gate, parameter-bundle execution, native electrolyte diagnostics, and closed public route state. |
 
 ## Queue Guard
 
@@ -121,10 +122,11 @@ admission child merged. #190 remains blocked by #145 associating proof gates;
 #191 is ready for its electrolyte GFPE and HELD2.0 proof scope, but no
 electrolyte public admission claim is made yet.
 
-#269 is the first #191 child. It is ready and AFK-scoped to prove Khudaida
-source-data parsing, explicit-ion expansion, path-based paper-validation
-parameter-bundle execution, native electrolyte/charge diagnostics, and closed
-public electrolyte route state. It must leave electrolyte TPD, HELD2 phase
+#269 is the first #191 child. Its retained checker proves Khudaida source-data
+parsing, records the raw paper-row closure correction before normalized
+explicit-ion expansion, verifies path-based paper-validation parameter-bundle
+execution, runs native electrolyte/charge diagnostics, and keeps public
+electrolyte route state closed. It still leaves electrolyte TPD, HELD2 phase
 discovery, postsolve electrolyte phase-set certification, and public electrolyte
 route admission pending.
 

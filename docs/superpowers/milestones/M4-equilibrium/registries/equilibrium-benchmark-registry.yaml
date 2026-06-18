@@ -189,6 +189,13 @@ family_rows:
       - electrolyte_tpd
       - held2_stage_discovery
       - charge_and_electrochemical_certification
+      - electrolyte_gfpe_closed_admission_source_gate
+    admission_evidence:
+      - evidence_label: "Khudaida electrolyte GFPE closed-admission gate"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete"
+        scope: "Pre-association electrolyte GFPE source-data, raw closure-drift accounting, normalized explicit-ion expansion, native electrolyte/charge diagnostics, and closed public-route admission gate for the Khudaida 2026 source fixture."
+        result_requirement: "Khudaida source fixture parsed; raw paper-row closure correction recorded; explicit-ion charge balance <= 1.0e-8; path-based `2026_Khudaida` parameter bundle constructs native mixture; native electrolyte contribution active; native phase-charge diagnostic residual <= 1.0e-8; electrolyte public route admission closed."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1

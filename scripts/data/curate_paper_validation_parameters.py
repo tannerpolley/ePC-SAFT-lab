@@ -17,6 +17,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PAPER_ROOT = REPO_ROOT / "analyses" / "paper_validation"
 LEGACY_ROOT = REPO_ROOT / "data" / "reference" / "epcsaft_parameters"
+SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
 
 PURE_COLUMNS = [
     "component",
@@ -103,6 +106,7 @@ def validate_parameter_root(parameter_root: Path, prefix: str) -> list[str]:
     errors.extend(validate_user_options(parameter_root / "user_options.json", prefix))
     errors.extend(validate_pure_files(parameter_root / "pure", prefix))
     errors.extend(validate_binary_files(parameter_root / "mixed" / "binary_interaction", prefix))
+    errors.extend(validate_khudaida_runtime_payload(parameter_root, prefix))
     return errors
 
 
@@ -171,6 +175,29 @@ def validate_binary_files(binary_root: Path, prefix: str) -> list[str]:
     if not (binary_root / "source_manifest.csv").is_file():
         errors.append(f"missing binary source_manifest.csv: {prefix}")
     return errors
+
+
+def validate_khudaida_runtime_payload(parameter_root: Path, prefix: str) -> list[str]:
+    if parameter_root.parent.name != "2026_khudaida":
+        return []
+    try:
+        from epcsaft.model.parameters import ParameterSource
+
+        species = ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
+        composition = [
+            0.7295582904360921,
+            0.013336215598851259,
+            0.20495308450174898,
+            0.026076204731653927,
+            0.026076204731653927,
+        ]
+        ParameterSource(parameter_root, species=species).to_runtime_dict(
+            x=composition,
+            T=293.15,
+        )
+    except Exception as exc:
+        return [f"Khudaida runtime parameter payload does not normalize: {prefix}: {exc}"]
+    return []
 
 
 def validate_square_matrix(path: Path) -> list[str]:

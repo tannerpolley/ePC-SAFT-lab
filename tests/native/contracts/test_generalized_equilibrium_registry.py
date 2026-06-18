@@ -258,6 +258,27 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert electrolyte["derivative_contract"] == expected_derivative_contract
 
 
+def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> None:
+    electrolyte = _family_by_label()["PE-Electrolyte LLE/TP Flash"]
+    evidence = {row["evidence_label"]: row for row in electrolyte["admission_evidence"]}
+
+    gate = evidence["Khudaida electrolyte GFPE closed-admission gate"]
+
+    assert electrolyte["production_exposed"] is False
+    assert electrolyte["existing_public_utility_routes"] == []
+    assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
+    assert gate["evidence_tier"] == "T1"
+    assert gate["command"] == (
+        "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py "
+        "--json --require-source-data --require-parameter-bundle "
+        "--require-native-diagnostics --require-public-routes-closed --require-complete"
+    )
+    assert "Khudaida source fixture parsed" in gate["result_requirement"]
+    assert "explicit-ion charge balance <= 1.0e-8" in gate["result_requirement"]
+    assert "path-based `2026_Khudaida` parameter bundle constructs native mixture" in gate["result_requirement"]
+    assert "electrolyte public route admission closed" in gate["result_requirement"]
+
+
 def test_generalized_multiphase_records_public_admission_evidence() -> None:
     generalized = _family_by_label()["PE-Generalized Multiphase"]
     evidence = {

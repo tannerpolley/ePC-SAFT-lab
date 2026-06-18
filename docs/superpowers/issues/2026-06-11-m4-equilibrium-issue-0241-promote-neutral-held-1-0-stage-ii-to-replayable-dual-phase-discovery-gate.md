@@ -10,14 +10,16 @@ capability: "lle"
 backend: "Ipopt"
 readiness: "closed"
 release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md"
-source_plan: "docs/superpowers/plans/2026-06-11-m4-equilibrium-held-1-0-adoption-and-issue-0187-start-plan.md"
+source_spec: null
+source_plan: null
 afk_hitl: "AFK"
-branch: codex/issue-0241-promote-neutral-held-stage-ii-dual-discovery
+branch: null
 last_synced: "2026-06-11"
 ---
 
 # M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate
+
+**Mirror Retention:** Keep
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/241
 **GitHub Milestone:** M4 - Equilibrium
