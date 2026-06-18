@@ -2,8 +2,18 @@ from __future__ import annotations
 
 import numpy as np
 
+from epcsaft import Mixture
+from epcsaft.model.parameters import ParameterSet
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from equilibrium_support.runtime_cases import _ionic_params
+
+GROSS_2002_TEMPERATURE_K = 289.65
+GROSS_2002_PRESSURE_PA = 101_300.0
+GROSS_2002_METHANOL_LEAN_LIQUID = [0.081, 0.919]
+GROSS_2002_METHANOL_RICH_LIQUID = [0.856, 0.144]
+GROSS_2002_LLE_FEED = (
+    0.5 * (np.asarray(GROSS_2002_METHANOL_LEAN_LIQUID) + np.asarray(GROSS_2002_METHANOL_RICH_LIQUID))
+).tolist()
 
 
 def _neutral_binary_mixture() -> ePCSAFTMixture:
@@ -40,6 +50,44 @@ def _methanol_cyclohexane_mixture() -> ePCSAFTMixture:
         "dielc": np.asarray([33.05, 2.02]),
     }
     return ePCSAFTMixture.from_params(params, species=["Methanol", "Cyclohexane"])
+
+
+def gross_2002_associating_parameter_set(
+    *,
+    source_backed: bool = True,
+    k_ij: float = 0.051,
+) -> ParameterSet:
+    metadata = {
+        "source": "Gross/Sadowski 2002 Figure 8",
+        "paper": "Gross and Sadowski 2002",
+        "table": "Tables 1 and 2",
+        "figure": "Figure 8",
+        "source_path": (
+            "data/reference/equilibrium_benchmarks/associating_lle/"
+            "gross_2002_methanol_cyclohexane"
+        ),
+        "source_backed": source_backed,
+    }
+    return ParameterSet.from_dict(
+        {
+            "MW": np.asarray([32.042e-3, 84.147e-3]),
+            "m": np.asarray([1.5255, 2.5303]),
+            "s": np.asarray([3.2300, 3.8499]),
+            "e": np.asarray([188.90, 278.11]),
+            "e_assoc": np.asarray([2899.5, 0.0]),
+            "vol_a": np.asarray([0.035176, 0.0]),
+            "assoc_scheme": ["2B", None],
+            "k_ij": np.asarray([[0.0, k_ij], [k_ij, 0.0]]),
+            "z": np.asarray([0.0, 0.0]),
+            "dielc": np.asarray([33.05, 2.02]),
+        },
+        species=["Methanol", "Cyclohexane"],
+        metadata=metadata,
+    )
+
+
+def gross_2002_associating_public_mixture(*, source_backed: bool = True) -> ePCSAFTMixture:
+    return Mixture(gross_2002_associating_parameter_set(source_backed=source_backed)).native
 
 
 def _methanol_cyclohexane_lle_feed() -> list[float]:

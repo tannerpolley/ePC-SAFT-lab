@@ -417,6 +417,7 @@ class EquilibriumStructure:
 
 
 _EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = EQUILIBRIUM_ROUTE_SPECS
+_GROSS_2002_PARAMETER_SOURCE_LABEL = "Gross/Sadowski 2002 Figure 8"
 
 
 def configure_equilibrium_problem(
@@ -1043,11 +1044,51 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         or (e_assoc.size > 0 and np.any(np.abs(e_assoc) > 0.0))
         or (vol_a.size > 0 and np.any(np.abs(vol_a) > 0.0))
     )
-    if active:
+    if not active:
+        return
+    if route_label == "lle" and _has_gross_2002_associating_lle_proof(parameters):
+        return
+    if route_label == "lle":
         raise InputError(
-            f"Production {route_label} requires neutral non-associating mixtures; "
-            "associating GFPE admission is closed until issue #190."
+            "Production lle associating GFPE admission requires source-backed Gross/Sadowski 2002 "
+            "neutral two-phase LLE exact-Hessian proof."
         )
+    raise InputError(
+        f"Production {route_label} associating GFPE admission only admits the source-backed "
+        "Gross/Sadowski 2002 neutral two-phase LLE proof; this route remains closed for associating inputs."
+    )
+
+
+def _has_gross_2002_associating_lle_proof(parameters: Mapping[str, Any]) -> bool:
+    if parameters.get("_parameter_source_label") != _GROSS_2002_PARAMETER_SOURCE_LABEL:
+        return False
+    if parameters.get("_parameter_provenance_status") != "source_backed_parameter_metadata":
+        return False
+    if parameters.get("_binary_interaction_provenance_status") != "explicit_binary_records":
+        return False
+    fields = {str(field) for field in parameters.get("_parameter_provenance_fields", ())}
+    if {"source", "paper", "table", "figure", "source_path"} - fields:
+        return False
+    expected_vectors = {
+        "m": [1.5255, 2.5303],
+        "s": [3.2300, 3.8499],
+        "e": [188.90, 278.11],
+        "e_assoc": [2899.5, 0.0],
+        "vol_a": [0.035176, 0.0],
+        "assoc_num": [2, 0],
+    }
+    for key, expected in expected_vectors.items():
+        actual = np.asarray(parameters.get(key, []), dtype=float).flatten()
+        if actual.shape != (len(expected),) or not np.allclose(actual, np.asarray(expected), rtol=0.0, atol=1.0e-10):
+            return False
+    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
+    if assoc_matrix.shape != (4,) or not np.allclose(assoc_matrix, [0.0, 1.0, 1.0, 0.0], rtol=0.0, atol=1.0e-12):
+        return False
+    k_ij = np.asarray(parameters.get("k_ij", []), dtype=float)
+    if k_ij.shape != (2, 2) or not np.allclose(k_ij, [[0.0, 0.051], [0.051, 0.0]], rtol=0.0, atol=1.0e-12):
+        return False
+    z = np.asarray(parameters.get("z", []), dtype=float).flatten()
+    return z.size == 0 or np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12)
 
 
 def _json_like(value: Any) -> Any:

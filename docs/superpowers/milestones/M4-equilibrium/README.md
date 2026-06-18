@@ -54,14 +54,14 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate` | `lle` | Retained cloud/shadow source-data gate for #258: 14 Matsuda/NIST cloud-point binodal rows, one paired cloud/shadow source branch, and empty source-data blockers. |
 | `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
 | `scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete` | `electrolyte` | Closed-admission source gate for #269: parses the Khudaida 2026 source fixture, records the raw paper-row closure correction before normalized explicit-ion expansion, constructs the path-based `2026_Khudaida` paper-validation parameter bundle, runs native electrolyte and phase-charge diagnostics, and keeps public electrolyte route admission closed. |
-| `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, certifies a source-backed internal two-liquid pair, and keeps public associating LLE admission closed until #190. |
+| `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian prerequisite proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, and certifies the source-backed internal two-liquid pair consumed by #190. |
+| `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-electrolyte-closed --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized associating phase-set surfaces closed. |
 
 ## Current Open Issues
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#190](../../issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md) | `lle` | `Ipopt` | `ready` | Admit associating GFPE through exact derivative proof gates after #145 closed the internal Gross/Sadowski exact-Hessian proof. |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase admission blocker closed. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase and associating public-admission blockers closed. |
 
 ## Queue Guard
 
@@ -133,8 +133,20 @@ certification, and public electrolyte route admission pending.
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
 1/Table 2 parameters pass `check_associating_lle_gross_2002.py
 --require-source-data --require-exact-association-hessian --require-route-closed
---require-complete`. The proof stays internal and closed-admission; #190 is the
-next public associating GFPE admission issue.
+--require-complete`. The proof stays the internal prerequisite receipt consumed
+by #190.
+
+#190 public admission evidence is now the retained
+`check_associating_gfpe_gate.py --require-source-data
+--require-public-admission --require-exact-association-hessian
+--require-electrolyte-closed --require-complete` gate. It admits only the
+source-backed Gross/Sadowski 2002 methanol/cyclohexane two-phase neutral LLE
+configuration with `assoc_scheme=2B`, `k_ij=0.051`, and
+`cppad_implicit_association`; missing-proof, ionic/electrolyte, reactive,
+TP-flash, and generalized associating phase-set surfaces remain closed. This
+clears the associating public-admission blocker ahead of #191 electrolyte work
+without claiming electrolyte, reactive, LLLE, two-associating-component, or
+generalized associating phase-set support.
 
 ## Closed Issues
 

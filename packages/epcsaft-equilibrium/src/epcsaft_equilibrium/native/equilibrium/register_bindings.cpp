@@ -1423,6 +1423,9 @@ py::dict selector_parameter_readiness_to_dict(
     out["active_residual_families"] = readiness.active_residual_families;
     out["parameter_provenance_fields"] = readiness.parameter_provenance_fields;
     out["derivative_gate"] = readiness.derivative_gate;
+    out["associating_admission_proof_route"] = readiness.associating_admission_proof_route;
+    out["associating_admission_fixture"] = readiness.associating_admission_fixture;
+    out["associating_admission_backend"] = readiness.associating_admission_backend;
     return out;
 }
 

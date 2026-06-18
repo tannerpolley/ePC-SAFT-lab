@@ -56,21 +56,32 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     },
     {
         "row_family": "equilibrium",
-        "subsystem": "internal_closed_admission_proof",
-        "quantity": "associating_neutral_lle_gross_2002_internal_exact_hessian",
+        "subsystem": "native_ipopt",
+        "quantity": "associating_neutral_lle_gross_2002_public_exact_hessian",
         "derivative": "association_lagrangian_hessian",
         "backend": "cppad_implicit_association",
         "supported": True,
-        "classification": "internal_proof_closed_until_issue_190",
-        "public_admission_state": "closed_until_issue_190",
+        "classification": "production_supported",
+        "public_admission_state": "public_route_open",
+        "public_route": "lle",
+        "selector_family": "neutral_lle",
+        "source_configuration": "Gross2002 Figure8 methanol-cyclohexane",
+        "component_pair": ("methanol", "cyclohexane"),
+        "assoc_scheme": "2B",
+        "k_ij": 0.051,
+        "phase_count": 2,
         "source_fixture": (
             "data/reference/equilibrium_benchmarks/associating_lle/"
             "gross_2002_methanol_cyclohexane"
         ),
-        "reason": "internal issue #145 proof certifies Gross/Sadowski 2002 methanol/cyclohexane source pair with exact association Hessian evidence while public associating GFPE admission stays closed",
+        "reason": "issue #190 admits only the source-backed Gross/Sadowski 2002 methanol/cyclohexane neutral two-phase LLE proof from #145 through exact implicit-association Hessian evidence",
         "tests": (
+            "scripts/validation/check_associating_gfpe_gate.py",
             "scripts/validation/check_associating_lle_gross_2002.py",
+            "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py",
+            "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
             "packages/epcsaft-equilibrium/tests/native/results/test_associating_lle_reference_values.py",
+            "tests/native/contracts/test_associating_gfpe_gate_checker.py",
             "tests/native/contracts/test_associating_lle_gross_2002_checker.py",
         ),
     },
@@ -237,7 +248,10 @@ def capabilities() -> dict[str, object]:
             "entrypoint": "Equilibrium(mixture, route='lle', T=..., P=..., z=...).solve()",
             "public_routes": public_routes_by_family["neutral_lle"],
             "selector_core": True,
-            "input_scope": "neutral non-reactive non-electrolyte non-associating liquid/liquid mixtures",
+            "input_scope": (
+                "neutral non-reactive non-electrolyte liquid/liquid mixtures: non-associating mixtures plus "
+                "the source-backed Gross/Sadowski 2002 methanol/cyclohexane associating proof fixture"
+            ),
             "requires": ["cppad", "ipopt"],
         },
         "neutral_multiphase_nonassoc": {

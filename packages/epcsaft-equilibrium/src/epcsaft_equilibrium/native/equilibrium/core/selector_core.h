@@ -78,6 +78,9 @@ struct SelectorParameterReadiness {
     std::vector<std::string> active_residual_families;
     std::vector<std::string> parameter_provenance_fields;
     std::string derivative_gate;
+    std::string associating_admission_proof_route;
+    std::string associating_admission_fixture;
+    std::string associating_admission_backend;
 };
 
 struct SelectorRouteRequest {
