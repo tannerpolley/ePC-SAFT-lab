@@ -40,6 +40,7 @@ Admit associating GFPE only after the exact-derivative and associating-route pro
 - `docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md`
 - `data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane`
 - `scripts/validation/check_associating_lle_gross_2002.py`
+- `scripts/validation/check_associating_gfpe_gate.py`
 
 ## Acceptance Criteria
 
@@ -52,6 +53,8 @@ Admit associating GFPE only after the exact-derivative and associating-route pro
 
 - Confirm the #145 prerequisite remains green:
   `uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete`.
+- Confirm the #190 public admission gate is green:
+  `uv run python scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-electrolyte-closed --require-complete`.
 - Run focused associating EOS/derivative tests required by the gate.
 - Run focused associating equilibrium package tests.
 - Run docs validation.

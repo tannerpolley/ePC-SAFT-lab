@@ -22,6 +22,14 @@ from equilibrium_support.hydrocarbon_cases import (
     HYDROCARBON_VAPOR_Y,
     hydrocarbon_parameter_set,
 )
+from equilibrium_support.equilibrium_cases import (
+    GROSS_2002_LLE_FEED,
+    GROSS_2002_METHANOL_LEAN_LIQUID,
+    GROSS_2002_METHANOL_RICH_LIQUID,
+    GROSS_2002_PRESSURE_PA,
+    GROSS_2002_TEMPERATURE_K,
+    gross_2002_associating_parameter_set,
+)
 
 
 def test_workflow_object_is_constructed_with_problem_spec() -> None:
@@ -493,6 +501,51 @@ def test_equilibrium_lle_route_returns_named_liquid_phase_helpers() -> None:
     )
 
 
+def test_equilibrium_lle_admits_source_backed_gross_2002_associating_fixture() -> None:
+    _skip_without_ipopt()
+    mixture = epcsaft.Mixture(gross_2002_associating_parameter_set())
+    equilibrium = equilibrium_module.Equilibrium(
+        mixture,
+        route="lle",
+        T=GROSS_2002_TEMPERATURE_K,
+        P=GROSS_2002_PRESSURE_PA,
+        z=GROSS_2002_LLE_FEED,
+    )
+
+    structure = equilibrium.structure()
+    assert structure.activation_key == "neutral_lle"
+    assert structure.expected_phase_keys == ("liquid1", "liquid2")
+
+    result = equilibrium.solve(
+        solver_options={
+            "max_iterations": 320,
+            "tolerance": 1.0e-6,
+            "ipopt_iteration_history_limit": 12,
+            "ipopt_acceptable_tolerance": 1.0e-7,
+            "ipopt_constraint_violation_tolerance": 1.0e-7,
+            "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+            "ipopt_complementarity_tolerance": 1.0e-8,
+        }
+    )
+
+    diagnostics = result.diagnostics
+    assert result.route == "lle"
+    assert result.selector_route == "neutral_lle"
+    assert result.problem_kind == "neutral_lle"
+    assert result.phase_labels == ["liquid1", "liquid2"]
+    assert result.z == pytest.approx(GROSS_2002_LLE_FEED)
+    assert diagnostics["hessian_approximation"] == "exact"
+    assert diagnostics["exact_hessian_available"] is True
+    assert diagnostics["postsolve_accepted"] is True
+    assert diagnostics["activation_plan"]["family_key"] == "neutral_lle"
+
+    phase_compositions = list(result.phase_compositions.values())
+    methanol_values = sorted(float(composition[0]) for composition in phase_compositions)
+    assert methanol_values[0] == pytest.approx(GROSS_2002_METHANOL_LEAN_LIQUID[0], abs=0.12)
+    assert methanol_values[1] == pytest.approx(GROSS_2002_METHANOL_RICH_LIQUID[0], abs=0.12)
+    assert abs(methanol_values[1] - methanol_values[0]) > 0.5
+
+
 def test_equilibrium_multiphase_route_returns_public_three_phase_result() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
@@ -581,11 +634,60 @@ def test_equilibrium_constructor_rejects_associating_inputs_before_selector_disp
     route: str,
     kwargs: dict[str, object],
 ) -> None:
-    with pytest.raises(epcsaft.InputError, match=r"non-associating.*#190"):
+    with pytest.raises(epcsaft.InputError, match=r"associating GFPE"):
         equilibrium_module.Equilibrium(
             epcsaft.Mixture(_associating_parameter_set()),
             route=route,
             **kwargs,
+        )
+
+
+def test_equilibrium_lle_rejects_gross_2002_associating_fixture_without_source_proof() -> None:
+    with pytest.raises(epcsaft.InputError, match=r"source-backed Gross/Sadowski 2002"):
+        equilibrium_module.Equilibrium(
+            epcsaft.Mixture(gross_2002_associating_parameter_set(source_backed=False)),
+            route="lle",
+            T=GROSS_2002_TEMPERATURE_K,
+            P=GROSS_2002_PRESSURE_PA,
+            z=GROSS_2002_LLE_FEED,
+        )
+
+
+@pytest.mark.parametrize(
+    ("route", "kwargs"),
+    (
+        ("flash", {"T": GROSS_2002_TEMPERATURE_K, "P": GROSS_2002_PRESSURE_PA, "z": GROSS_2002_LLE_FEED}),
+        (
+            "multiphase",
+            {
+                "T": GROSS_2002_TEMPERATURE_K,
+                "P": GROSS_2002_PRESSURE_PA,
+                "z": GROSS_2002_LLE_FEED,
+                "phase_kinds": ["liquid", "liquid", "liquid"],
+            },
+        ),
+    ),
+)
+def test_equilibrium_rejects_source_backed_associating_scope_outside_two_phase_lle(
+    route: str,
+    kwargs: dict[str, object],
+) -> None:
+    with pytest.raises(epcsaft.InputError, match=r"neutral two-phase LLE"):
+        equilibrium_module.Equilibrium(
+            epcsaft.Mixture(gross_2002_associating_parameter_set()),
+            route=route,
+            **kwargs,
+        )
+
+
+def test_equilibrium_lle_rejects_ionic_associating_inputs_before_public_associating_gate() -> None:
+    with pytest.raises(epcsaft.InputError, match="neutral mixtures"):
+        equilibrium_module.Equilibrium(
+            epcsaft.Mixture(_ionic_associating_parameter_set()),
+            route="lle",
+            T=300.0,
+            P=1.0e5,
+            z=[0.8, 0.1, 0.1],
         )
 
 
@@ -780,6 +882,25 @@ def _ionic_parameter_set() -> epcsaft.ParameterSet:
             "m": np.asarray([1.2047, 1.0, 1.0]),
             "s": np.asarray([2.7927, 2.8232, 2.7560]),
             "e": np.asarray([353.95, 230.0, 170.0]),
+            "z": np.asarray([0.0, 1.0, -1.0]),
+            "dielc": np.asarray([78.09, 8.0, 8.0]),
+            "d_born": np.asarray([0.0, 3.445, 4.1]),
+            "f_solv": np.asarray([1.5, 1.0, 1.0]),
+        },
+        species=["H2O", "Na+", "Cl-"],
+    )
+
+
+def _ionic_associating_parameter_set() -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "MW": np.asarray([18.01528e-3, 22.98e-3, 35.45e-3]),
+            "m": np.asarray([1.2047, 1.0, 1.0]),
+            "s": np.asarray([2.7927, 2.8232, 2.7560]),
+            "e": np.asarray([353.95, 230.0, 170.0]),
+            "e_assoc": np.asarray([2425.7, 0.0, 0.0]),
+            "vol_a": np.asarray([0.04509, 0.0, 0.0]),
+            "assoc_scheme": ["2B", None, None],
             "z": np.asarray([0.0, 1.0, -1.0]),
             "dielc": np.asarray([78.09, 8.0, 8.0]),
             "d_born": np.asarray([0.0, 3.445, 4.1]),

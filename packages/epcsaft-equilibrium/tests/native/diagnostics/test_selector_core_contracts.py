@@ -11,6 +11,10 @@ from epcsaft.frontend import Mixture
 from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from equilibrium_support.equilibrium_cases import (
+    GROSS_2002_LLE_FEED,
+    GROSS_2002_PRESSURE_PA,
+    GROSS_2002_TEMPERATURE_K,
+    gross_2002_associating_public_mixture,
     _ionic_mixture,
     _methanol_cyclohexane_mixture,
     _neutral_binary_mixture,
@@ -287,6 +291,67 @@ def test_selector_core_rejects_active_association_before_solver_dispatch() -> No
                 "temperature": 298.15,
                 "composition": [0.35, 0.65],
                 "composition_role": "liquid",
+            },
+        )
+
+
+def test_selector_core_admits_source_backed_gross_2002_associating_lle_contract() -> None:
+    mix = gross_2002_associating_public_mixture()
+
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "neutral_lle",
+            "temperature": GROSS_2002_TEMPERATURE_K,
+            "pressure": GROSS_2002_PRESSURE_PA,
+            "composition": GROSS_2002_LLE_FEED,
+            "composition_role": "feed",
+        },
+    )
+
+    assert payload["selector_family"] == "neutral_lle"
+    assert payload["route"] == "neutral_lle"
+    assert payload["phase_labels"] == ["liquid1", "liquid2"]
+    assert payload["phase_roles"] == ["liquid", "liquid"]
+    assert (
+        "associating_neutral_lle_gross_2002_public_exact_hessian"
+        in payload["activation"]["proof_routes"]
+    )
+    classification = payload["input_classification"]
+    assert classification["neutral"] is True
+    assert classification["nonelectrolyte"] is True
+    assert classification["nonreactive"] is True
+    assert classification["nonassociating"] is False
+    assert classification["associating_species_indices"] == [0]
+    assert classification["active_family_markers"] == [
+        "associating_neutral_lle_proven",
+        "neutral",
+        "associating",
+        "nonreactive",
+    ]
+    readiness = payload["parameter_readiness"]
+    assert readiness["association_parameters_active"] is True
+    assert readiness["source_backed_parameter_provenance_present"] is True
+    assert readiness["binary_interaction_provenance_status"] == "explicit_binary_records"
+    assert readiness["associating_admission_proof_route"] == (
+        "associating_neutral_lle_gross_2002_public_exact_hessian"
+    )
+    assert readiness["associating_admission_fixture"] == "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane"
+    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
+
+
+def test_selector_core_rejects_gross_2002_associating_lle_without_source_proof() -> None:
+    mix = gross_2002_associating_public_mixture(source_backed=False)
+
+    with pytest.raises(_provider_core.NativeValueError, match="source-backed Gross/Sadowski 2002"):
+        _core._native_equilibrium_selector_contract(
+            mix._native,
+            {
+                "route": "neutral_lle",
+                "temperature": GROSS_2002_TEMPERATURE_K,
+                "pressure": GROSS_2002_PRESSURE_PA,
+                "composition": GROSS_2002_LLE_FEED,
+                "composition_role": "feed",
             },
         )
 

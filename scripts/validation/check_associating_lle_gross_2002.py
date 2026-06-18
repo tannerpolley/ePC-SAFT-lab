@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import math
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,7 +14,7 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 EQUILIBRIUM_SRC_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "src"
-for import_root in (SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
+for import_root in (REPO_ROOT, SRC_ROOT, EQUILIBRIUM_SRC_ROOT):
     if str(import_root) not in sys.path:
         sys.path.insert(0, str(import_root))
 
@@ -689,6 +690,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from scripts.dev.native_runtime_env import apply_native_runtime_env
+
+    apply_native_runtime_env(os.environ)
     args = build_arg_parser().parse_args(argv)
     output = evaluate_case_dir(
         args.case_dir,

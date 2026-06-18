@@ -68,7 +68,10 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             "production_exposed",
             {"material_balance", "phase_pressure_consistency", "phase_equilibrium", "phase_distance"},
             {"material_balance", "phase_pressure_consistency", "phase_distance"},
-            {"neutral_lle_binary_nonassociating_ipopt_exact_hessian"},
+            {
+                "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
+                "associating_neutral_lle_gross_2002_public_exact_hessian",
+            },
             {"lle"},
             "phase_species_amounts_plus_phase_volume",
             "explicit_phase_volume_pressure_constraint",

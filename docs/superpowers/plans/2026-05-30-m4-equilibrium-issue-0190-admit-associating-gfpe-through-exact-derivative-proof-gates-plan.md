@@ -23,12 +23,12 @@
 
 ## Acceptance Criteria
 
-- [ ] Associating route admission requires exact association derivative evidence appropriate to the tested association configuration.
-- [ ] Approximate explicit association closures remain labeled approximate and are not accepted as exact production proof.
-- [ ] Associating GFPE diagnostics distinguish EOS closure, derivative, solver, and postsolve certification failures.
-- [ ] Capability evidence names the exact associating configurations proven.
-- [ ] Public associating admission is limited to the two-phase neutral LLE configuration proven by #145 until a later generalized phase-set issue expands it.
-- [ ] Electrolyte #191 remains outside #190 and does not borrow associating admission evidence.
+- [x] Associating route admission requires exact association derivative evidence appropriate to the tested association configuration.
+- [x] Approximate explicit association closures remain labeled approximate and are not accepted as exact production proof.
+- [x] Associating GFPE diagnostics distinguish EOS closure, derivative, solver, and postsolve certification failures.
+- [x] Capability evidence names the exact associating configurations proven.
+- [x] Public associating admission is limited to the two-phase neutral LLE configuration proven by #145 until a later generalized phase-set issue expands it.
+- [x] Electrolyte #191 remains outside #190 and does not borrow associating admission evidence.
 
 ## Test Complete And Metrics
 
@@ -56,10 +56,10 @@ Required gates:
 - Test: `packages/epcsaft-equilibrium/tests/native/results/test_associating_lle_reference_values.py`
 - Modify: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md`
 
-- [ ] **Step 1: Add a preflight test or checker assertion.** Require the #145 checker output to include source data, exact association Hessian evidence, and public route closed state.
-- [ ] **Step 2: Run preflight.** Run `uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete`; expected result is pass before #190 code changes.
-- [ ] **Step 3: Sync issue state.** Confirm GitHub #190 has no open blockers after #145 is merged, then update the local issue mirror readiness from `blocked` to `ready`.
-- [ ] **Step 4: Commit.** Commit preflight/readiness synchronization with message `docs: mark associating GFPE admission ready after issue 145`.
+- [x] **Step 1: Add a preflight test or checker assertion.** Require the #145 checker output to include source data, exact association Hessian evidence, and public route closed state.
+- [x] **Step 2: Run preflight.** Run `uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete`; expected result is pass before #190 code changes.
+- [x] **Step 3: Sync issue state.** Confirm GitHub #190 has no open blockers after #145 is merged, then update the local issue mirror readiness from `blocked` to `ready`.
+- [x] **Step 4: Commit.** Commit preflight/readiness synchronization with message `docs: mark associating GFPE admission ready after issue 145`.
 
 ### Task 2: Admit The Narrow Public Associating LLE Route
 
@@ -77,13 +77,13 @@ Required gates:
 - Modify: `packages/epcsaft-equilibrium/tests/api/test_equilibrium.py`
 - Modify: `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 
-- [ ] **Step 1: Write failing public API tests.** Add tests that call `Equilibrium(mixture, route="lle", T=..., P=..., z=...).solve()` for the Gross 2002 fixture and assert exact association Hessian diagnostics in the result.
-- [ ] **Step 2: Write rejection tests.** Add tests for ionic associating mixtures, reactive inputs, unsupported phase counts, and associating systems without retained proof evidence.
-- [ ] **Step 3: Run public API tests and verify failure.** Run `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`; expected result is failure on the newly admitted public associating case.
-- [ ] **Step 4: Implement selector admission.** Replace the blanket associating rejection for the proven LLE case with a source-evidence gate keyed by the activation matrix and #145 proof receipt. Keep all other associating route families closed.
-- [ ] **Step 5: Regenerate activation mirrors.** Run `uv run python scripts/dev/generate_equilibrium_activation.py` and inspect the generated Python mirror.
-- [ ] **Step 6: Re-run public API tests.** Run the same command; expected result is pass.
-- [ ] **Step 7: Commit.** Commit admission behavior with message `feat: admit proven associating neutral LLE route`.
+- [x] **Step 1: Write failing public API tests.** Add tests that call `Equilibrium(mixture, route="lle", T=..., P=..., z=...).solve()` for the Gross 2002 fixture and assert exact association Hessian diagnostics in the result.
+- [x] **Step 2: Write rejection tests.** Add tests for ionic associating mixtures, reactive inputs, unsupported phase counts, and associating systems without retained proof evidence.
+- [x] **Step 3: Run public API tests and verify failure.** Run `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`; expected result is failure on the newly admitted public associating case.
+- [x] **Step 4: Implement selector admission.** Replace the blanket associating rejection for the proven LLE case with a source-evidence gate keyed by the activation matrix and #145 proof receipt. Keep all other associating route families closed.
+- [x] **Step 5: Regenerate activation mirrors.** Run `uv run python scripts/dev/generate_equilibrium_activation.py` and inspect the generated Python mirror.
+- [x] **Step 6: Re-run public API tests.** Run the same command; expected result is pass.
+- [x] **Step 7: Commit.** Commit admission behavior with message `feat: admit proven associating neutral LLE route`.
 
 ### Task 3: Add Associating GFPE Gate Checker And Capability Evidence
 
@@ -100,12 +100,12 @@ Required gates:
 - Modify: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 
-- [ ] **Step 1: Write the gate checker contract.** Require checker flags for source proof, exact association Hessian, public associating route admission, unsupported route rejection, and no electrolyte admission.
-- [ ] **Step 2: Implement the checker.** `check_associating_gfpe_gate.py` must call the public route for the proven Gross 2002 case and inspect capability evidence for exact scope.
-- [ ] **Step 3: Update capability evidence.** Add a production row for the proven associating neutral LLE scope with source fixture and exact backend fields.
-- [ ] **Step 4: Update M4 docs.** Move the queue note so #190 closure is the final association gate before #191 electrolyte work resumes.
-- [ ] **Step 5: Run checker tests.** Run `uv run python run_pytest.py tests/native/contracts/test_associating_gfpe_gate_checker.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`; expected result is pass.
-- [ ] **Step 6: Commit.** Commit checker and docs with message `docs: record associating GFPE admission gate`.
+- [x] **Step 1: Write the gate checker contract.** Require checker flags for source proof, exact association Hessian, public associating route admission, unsupported route rejection, and no electrolyte admission.
+- [x] **Step 2: Implement the checker.** `check_associating_gfpe_gate.py` must call the public route for the proven Gross 2002 case and inspect capability evidence for exact scope.
+- [x] **Step 3: Update capability evidence.** Add a production row for the proven associating neutral LLE scope with source fixture and exact backend fields.
+- [x] **Step 4: Update M4 docs.** Move the queue note so #190 closure is the final association gate before #191 electrolyte work resumes.
+- [x] **Step 5: Run checker tests.** Run `uv run python run_pytest.py tests/native/contracts/test_associating_gfpe_gate_checker.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`; expected result is pass.
+- [x] **Step 6: Commit.** Commit checker and docs with message `docs: record associating GFPE admission gate`.
 
 ## Proof Oracle
 

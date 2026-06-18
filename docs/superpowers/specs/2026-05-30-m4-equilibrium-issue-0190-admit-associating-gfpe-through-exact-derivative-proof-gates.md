@@ -65,6 +65,11 @@ phase-set or associating LLLE coverage until #189 closes.
 
 - Run focused associating EOS/derivative tests required by the gate.
 - Run focused associating equilibrium package tests.
+- Run `uv run python scripts/validation/check_associating_gfpe_gate.py
+  --json --require-source-data --require-public-admission
+  --require-exact-association-hessian --require-electrolyte-closed
+  --require-complete` to prove the narrow public Gross/Sadowski 2002 admission
+  and the still-closed unsupported associating/electrolyte/reactive surfaces.
 - Run the HELD/GFPE receipt gate if associating evidence reuses neutral
   phase-discovery diagnostics.
 - Run docs validation.

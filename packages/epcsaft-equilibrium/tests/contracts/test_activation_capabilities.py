@@ -118,6 +118,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["neutral_tp_flash"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["neutral_lle"]["entrypoint"] == "Equilibrium(mixture, route='lle', T=..., P=..., z=...).solve()"
     assert capabilities["neutral_lle"]["public_routes"] == ["lle"]
+    assert capabilities["neutral_lle"]["input_scope"] == (
+        "neutral non-reactive non-electrolyte liquid/liquid mixtures: non-associating mixtures plus "
+        "the source-backed Gross/Sadowski 2002 methanol/cyclohexane associating proof fixture"
+    )
     assert capabilities["neutral_lle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert (
         capabilities["neutral_multiphase_nonassoc"]["entrypoint"]
@@ -145,23 +149,28 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "bubble_dew_derived_routes",
         "neutral_tp_flash",
         "neutral_lle",
-        "associating_neutral_lle_gross_2002_internal_exact_hessian",
+        "associating_neutral_lle_gross_2002_public_exact_hessian",
         "neutral_multiphase_nonassoc",
         "single_component_vle",
     }
     associating_proof = next(
         row
         for row in capabilities["route_derivative_evidence"]["rows"]
-        if row["quantity"] == "associating_neutral_lle_gross_2002_internal_exact_hessian"
+        if row["quantity"] == "associating_neutral_lle_gross_2002_public_exact_hessian"
     )
-    assert associating_proof["classification"] == "internal_proof_closed_until_issue_190"
+    assert associating_proof["classification"] == "production_supported"
     assert associating_proof["backend"] == "cppad_implicit_association"
-    assert associating_proof["public_admission_state"] == "closed_until_issue_190"
+    assert associating_proof["public_admission_state"] == "public_route_open"
+    assert associating_proof["public_route"] == "lle"
+    assert associating_proof["selector_family"] == "neutral_lle"
+    assert associating_proof["source_configuration"] == "Gross2002 Figure8 methanol-cyclohexane"
+    assert associating_proof["component_pair"] == ["methanol", "cyclohexane"]
+    assert associating_proof["assoc_scheme"] == "2B"
+    assert associating_proof["k_ij"] == pytest.approx(0.051)
     assert (
         associating_proof["source_fixture"]
         == "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
     )
-    assert "associating_neutral_lle_gross_2002_internal_exact_hessian" not in capabilities["production_families"]
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
 
     deleted_route_keys = {

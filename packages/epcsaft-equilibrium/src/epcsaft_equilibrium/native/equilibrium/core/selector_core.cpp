@@ -11,6 +11,11 @@
 namespace epcsaft::native::equilibrium {
 namespace {
 
+const char* kGross2002AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_public_exact_hessian";
+const char* kGross2002AssociatingLleFixture = "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane";
+const char* kGross2002AssociatingBackend = "cppad_implicit_association";
+const char* kGross2002ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
+
 std::string normalized_token(std::string value) {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
         return static_cast<char>(std::tolower(ch));
@@ -84,6 +89,86 @@ bool active_association_for_species(const add_args& args, std::size_t species) {
     return false;
 }
 
+bool contains_text(const std::vector<std::string>& values, const std::string& expected) {
+    return std::find(values.begin(), values.end(), expected) != values.end();
+}
+
+bool close_to(double actual, double expected, double tolerance = 1.0e-10) {
+    return std::isfinite(actual) && std::abs(actual - expected) <= tolerance;
+}
+
+bool vector_close_to(
+    const std::vector<double>& values,
+    const std::vector<double>& expected,
+    double tolerance = 1.0e-10
+) {
+    if (values.size() != expected.size()) {
+        return false;
+    }
+    for (std::size_t index = 0; index < expected.size(); ++index) {
+        if (!close_to(values[index], expected[index], tolerance)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool int_vector_equals(const std::vector<int>& values, const std::vector<int>& expected) {
+    return values == expected;
+}
+
+bool gross_2002_source_backed_metadata_present(const add_args& args) {
+    return args.parameter_source_label == kGross2002ParameterSourceLabel
+        && args.parameter_provenance_status == "source_backed_parameter_metadata"
+        && args.binary_interaction_provenance_status == "explicit_binary_records"
+        && contains_text(args.parameter_provenance_fields, "source")
+        && contains_text(args.parameter_provenance_fields, "paper")
+        && contains_text(args.parameter_provenance_fields, "table")
+        && contains_text(args.parameter_provenance_fields, "figure")
+        && contains_text(args.parameter_provenance_fields, "source_path");
+}
+
+bool gross_2002_parameter_fingerprint_matches(const add_args& args) {
+    if (args.m.size() != 2 || args.s.size() != 2 || args.e.size() != 2) {
+        return false;
+    }
+    if (!vector_close_to(args.m, {1.5255, 2.5303})
+        || !vector_close_to(args.s, {3.2300, 3.8499})
+        || !vector_close_to(args.e, {188.90, 278.11})) {
+        return false;
+    }
+    if (!vector_close_to(args.e_assoc, {2899.5, 0.0}) || !vector_close_to(args.vol_a, {0.035176, 0.0})) {
+        return false;
+    }
+    if (!int_vector_equals(args.assoc_num, {2, 0})) {
+        return false;
+    }
+    if (!vector_close_to(
+            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
+            {0.0, 1.0, 1.0, 0.0},
+            1.0e-12
+        )) {
+        return false;
+    }
+    if (args.k_ij.size() != 4
+        || !close_to(args.k_ij[0], 0.0, 1.0e-12)
+        || !close_to(args.k_ij[1], 0.051, 1.0e-12)
+        || !close_to(args.k_ij[2], 0.051, 1.0e-12)
+        || !close_to(args.k_ij[3], 0.0, 1.0e-12)) {
+        return false;
+    }
+    return all_zero_or_empty(args.z)
+        && all_zero_or_empty(args.k_hb)
+        && all_zero_or_empty(args.l_ij)
+        && all_zero_or_empty(args.d_born)
+        && all_zero_or_empty(args.f_solv);
+}
+
+bool has_gross_2002_associating_lle_proof(const add_args& args) {
+    return gross_2002_source_backed_metadata_present(args)
+        && gross_2002_parameter_fingerprint_matches(args);
+}
+
 SelectorInputClassification classify_selector_input(const add_args& args) {
     SelectorInputClassification out;
     const std::size_t species_count = args.m.size();
@@ -104,7 +189,7 @@ SelectorInputClassification classify_selector_input(const add_args& args) {
     out.nonelectrolyte = out.ionic_species_indices.empty() && all_zero_or_empty(args.z);
     out.nonassociating = no_association_sites(args);
     out.nonreactive = true;
-    out.neutral = out.nonelectrolyte && out.nonassociating && out.nonreactive;
+    out.neutral = out.nonelectrolyte && out.nonreactive;
     if (out.neutral) {
         out.active_family_markers.push_back("neutral");
     }
@@ -123,14 +208,38 @@ SelectorInputClassification classify_selector_input(const add_args& args) {
     return out;
 }
 
-void require_eligible_input(const SelectorInputClassification& classification) {
+void require_eligible_input(
+    const add_args& args,
+    const SelectorRouteRequest& request,
+    SelectorInputClassification& classification
+) {
     if (classification.neutral && classification.nonreactive && classification.nonelectrolyte
         && classification.nonassociating) {
         return;
     }
+    if (
+        request.route == "neutral_lle"
+        && classification.neutral
+        && classification.nonreactive
+        && classification.nonelectrolyte
+        && !classification.nonassociating
+    ) {
+        if (has_gross_2002_associating_lle_proof(args)) {
+            classification.active_family_markers.insert(
+                classification.active_family_markers.begin(),
+                "associating_neutral_lle_proven"
+            );
+            return;
+        }
+        throw ValueError(
+            "selector-ineligible: associating neutral_lle requires source-backed Gross/Sadowski 2002 "
+            "exact-Hessian proof for the public two-phase LLE admission gate."
+        );
+    }
     throw ValueError(
         "selector-ineligible: production selector routes support only neutral, non-reactive, "
-        "non-electrolyte, non-associating mixtures."
+        "non-electrolyte, non-associating mixtures except the source-backed Gross/Sadowski 2002 "
+        "neutral two-phase LLE proof."
     );
 }
 
@@ -305,6 +414,11 @@ SelectorParameterReadiness evaluate_parameter_readiness(
     }
     out.required_parameter_families_present = out.missing_required_parameter_families.empty();
     out.derivative_gate = activation.derivative_requirement;
+    if (activation.key == "neutral_lle" && has_gross_2002_associating_lle_proof(args)) {
+        out.associating_admission_proof_route = kGross2002AssociatingLleProofRoute;
+        out.associating_admission_fixture = kGross2002AssociatingLleFixture;
+        out.associating_admission_backend = kGross2002AssociatingBackend;
+    }
     return out;
 }
 
@@ -626,7 +740,7 @@ SelectorContract evaluate_selector_contract(
     out.parameter_readiness = evaluate_parameter_readiness(args, out.activation);
     require_parameter_readiness(out.parameter_readiness);
     out.input_classification = classify_selector_input(args);
-    require_eligible_input(out.input_classification);
+    require_eligible_input(args, request, out.input_classification);
     out.production_exposed = out.activation.production_exposed;
     out.certification_required = out.activation.postsolve_certification == "on"
         || out.activation.postsolve_certification == "tpd_postsolve";
