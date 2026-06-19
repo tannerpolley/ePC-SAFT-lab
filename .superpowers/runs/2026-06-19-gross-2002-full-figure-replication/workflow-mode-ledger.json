@@ -1,0 +1,30 @@
+{
+  "run_id": "2026-06-19-gross-2002-full-figure-replication",
+  "created_at": "2026-06-19T00:00:00-07:00",
+  "skill_name": "superpowers-project:initiate-workflow",
+  "question_id": "project_workflow_mode",
+  "source": "request_user_input",
+  "selected_mode": "auto-mode",
+  "selected_label": "Auto Mode",
+  "requested_goal": "Start the process of fully replicating each figure of the 2002 Gross paper to prove association has been fully and correctly implemented, using digitized or sourced data and plot types/scales matching the paper.",
+  "route_policy": {
+    "selected_route": "superpowers-project:brainstorm-spec",
+    "companion_method": "superpowers:brainstorming",
+    "bounded_to_one_route": true,
+    "stop_at_route_closeout": true,
+    "no_implementation_in_brainstorm": true
+  },
+  "artifact_scope": {
+    "repo": "C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT",
+    "paper_validation_root": "analyses/paper_validation/2002_gross",
+    "spec_root": "docs/superpowers/specs",
+    "milestone": "M4 - Equilibrium",
+    "package": "packages/epcsaft-equilibrium"
+  },
+  "validation": {
+    "validator_path": "scripts/validate-workflow-mode-ledger.ps1",
+    "validator_available": false,
+    "status": "blocked_missing_validator",
+    "evidence": "The referenced validator path is absent from the repo and no matching validate-workflow-mode-ledger.ps1 was found under the local Codex or agents skill roots."
+  }
+}
