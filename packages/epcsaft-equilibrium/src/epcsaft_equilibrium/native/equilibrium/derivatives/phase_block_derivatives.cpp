@@ -3,6 +3,7 @@
 #include <exception>
 
 #include "eos/core_internal.h"
+#include "eos/residual/implicit_association/sensitivities.h"
 #include "equilibrium/derivatives/route_second_order.h"
 
 #include <algorithm>
@@ -80,6 +81,62 @@ void populate_eos_phase_block_derivatives(
         );
         base_hessian = base_bundle.hessian_row_major;
         base_third_derivative = base_bundle.third_derivative_tensor_row_major;
+        double total_amount = 0.0;
+        for (double amount : amounts) {
+            total_amount += amount;
+        }
+        const double rho = total_amount / volume;
+        std::vector<double> composition(static_cast<std::size_t>(amounts.size()), 0.0);
+        for (std::size_t component = 0; component < amounts.size(); ++component) {
+            composition[component] = amounts[component] / total_amount;
+        }
+        const int base_var_count = static_cast<int>(amounts.size()) + 1;
+        std::vector<double> q_first(static_cast<std::size_t>(base_var_count * nvars), 0.0);
+        std::vector<double> q_second(static_cast<std::size_t>(base_var_count * nvars * nvars), 0.0);
+        const auto q1 = [&](int q, int y) -> double& {
+            return q_first[static_cast<std::size_t>(q * nvars + y)];
+        };
+        const auto q2 = [&](int q, int y0, int y1) -> double& {
+            return q_second[static_cast<std::size_t>(q * nvars * nvars + y0 * nvars + y1)];
+        };
+        const auto q1_value = [&](int q, int y) {
+            return q_first[static_cast<std::size_t>(q * nvars + y)];
+        };
+        const auto q2_value = [&](int q, int y0, int y1) {
+            return q_second[static_cast<std::size_t>(q * nvars * nvars + y0 * nvars + y1)];
+        };
+        for (int species = 0; species < static_cast<int>(amounts.size()); ++species) {
+            q1(0, species) = 1.0 / volume;
+            q2(0, species, nvars - 1) = -1.0 / (volume * volume);
+            q2(0, nvars - 1, species) = -1.0 / (volume * volume);
+        }
+        q1(0, nvars - 1) = -rho / volume;
+        q2(0, nvars - 1, nvars - 1) = 2.0 * rho / (volume * volume);
+        for (int component = 0; component < static_cast<int>(amounts.size()); ++component) {
+            const int q_index = 1 + component;
+            for (int species = 0; species < static_cast<int>(amounts.size()); ++species) {
+                const double indicator = component == species ? 1.0 : 0.0;
+                q1(q_index, species) =
+                    (indicator - composition[static_cast<std::size_t>(component)]) / total_amount;
+            }
+            for (int first = 0; first < static_cast<int>(amounts.size()); ++first) {
+                for (int second = 0; second < static_cast<int>(amounts.size()); ++second) {
+                    const double first_indicator = component == first ? 1.0 : 0.0;
+                    const double second_indicator = component == second ? 1.0 : 0.0;
+                    q2(q_index, first, second) =
+                        (2.0 * composition[static_cast<std::size_t>(component)] - first_indicator - second_indicator)
+                        / (total_amount * total_amount);
+                }
+            }
+        }
+        const auto association_response =
+            residual_association_detail::association_phase_state_response_cppad_cpp(temperature, rho, composition, args);
+        if (!association_response.active) {
+            throw ::ValueError("Association phase-state response was not available for the EOS phase block.");
+        }
+        if (association_response.base_var_count != base_var_count) {
+            throw ::ValueError("Association phase-state response variable count did not match the phase model.");
+        }
         const EosPhaseAssociationDerivativeCorrectionResult association_corrections =
             eos_phase_association_derivative_corrections_cpp(temperature, amounts, volume, args);
         if (!association_corrections.active) {
@@ -112,6 +169,57 @@ void populate_eos_phase_block_derivatives(
         for (std::size_t index = 0; index < result.objective_curvature_row_major.size(); ++index) {
             result.objective_curvature_row_major[index] +=
                 association_corrections.helmholtz_hessian_row_major[index];
+        }
+        result.objective_third_derivative_backend = association_response.backend;
+        result.objective_third_derivative_rows = nvars;
+        result.objective_third_derivative_cols = nvars;
+        result.objective_third_derivative_tensor_row_major.assign(
+            static_cast<std::size_t>(nvars * nvars * nvars),
+            0.0
+        );
+        const auto mu_first = [&](int component, int q_index) {
+            return association_response.dmu_dvar_row_major[
+                static_cast<std::size_t>(component * base_var_count + q_index)
+            ];
+        };
+        const auto mu_second = [&](int component, int q0, int q1_index) {
+            return association_response.d2mu_dvar2_tensor_row_major[
+                static_cast<std::size_t>(component * base_var_count * base_var_count + q0 * base_var_count + q1_index)
+            ];
+        };
+        for (int component = 0; component < static_cast<int>(amounts.size()); ++component) {
+            for (int row = 0; row < nvars; ++row) {
+                for (int col = 0; col < nvars; ++col) {
+                    double value = base_third_derivative[
+                        static_cast<std::size_t>(component * nvars * nvars + row * nvars + col)
+                    ];
+                    for (int q_index = 0; q_index < base_var_count; ++q_index) {
+                        value += mu_first(component, q_index) * q2_value(q_index, row, col);
+                        for (int q_other = 0; q_other < base_var_count; ++q_other) {
+                            value += mu_second(component, q_index, q_other)
+                                * q1_value(q_index, row)
+                                * q1_value(q_other, col);
+                        }
+                    }
+                    result.objective_third_derivative_tensor_row_major[
+                        static_cast<std::size_t>(component * nvars * nvars + row * nvars + col)
+                    ] = value;
+                }
+            }
+            for (int row = 0; row < nvars; ++row) {
+                for (int col = 0; col < row; ++col) {
+                    const std::size_t left =
+                        static_cast<std::size_t>(component * nvars * nvars + row * nvars + col);
+                    const std::size_t right =
+                        static_cast<std::size_t>(component * nvars * nvars + col * nvars + row);
+                    const double symmetric = 0.5 * (
+                        result.objective_third_derivative_tensor_row_major[left]
+                        + result.objective_third_derivative_tensor_row_major[right]
+                    );
+                    result.objective_third_derivative_tensor_row_major[left] = symmetric;
+                    result.objective_third_derivative_tensor_row_major[right] = symmetric;
+                }
+            }
         }
         result.constraint_jacobian_backend = pressure_derivatives.backend;
         result.constraint_jacobian_rows = 1;

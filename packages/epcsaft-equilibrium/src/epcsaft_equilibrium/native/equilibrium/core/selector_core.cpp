@@ -169,6 +169,25 @@ bool has_gross_2002_associating_lle_proof(const add_args& args) {
         && gross_2002_parameter_fingerprint_matches(args);
 }
 
+bool has_pure_2b_single_component_vle_association_proof(const add_args& args) {
+    if (args.m.size() != 1) {
+        return false;
+    }
+    if (!int_vector_equals(args.assoc_num, {2})) {
+        return false;
+    }
+    if (!vector_close_to(std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()), {0.0, 1.0, 1.0, 0.0}, 1.0e-12)) {
+        return false;
+    }
+    return args.e_assoc.size() == 1
+        && args.vol_a.size() == 1
+        && std::isfinite(args.e_assoc[0])
+        && args.e_assoc[0] > 0.0
+        && std::isfinite(args.vol_a[0])
+        && args.vol_a[0] > 0.0
+        && all_zero_or_empty(args.z);
+}
+
 SelectorInputClassification classify_selector_input(const add_args& args) {
     SelectorInputClassification out;
     const std::size_t species_count = args.m.size();
@@ -216,6 +235,24 @@ void require_eligible_input(
     if (classification.neutral && classification.nonreactive && classification.nonelectrolyte
         && classification.nonassociating) {
         return;
+    }
+    if (
+        request.route == "single_component_vle"
+        && classification.neutral
+        && classification.nonreactive
+        && classification.nonelectrolyte
+        && !classification.nonassociating
+    ) {
+        if (has_pure_2b_single_component_vle_association_proof(args)) {
+            classification.active_family_markers.insert(
+                classification.active_family_markers.begin(),
+                "associating_single_component_vle_proven"
+            );
+            return;
+        }
+        throw ValueError(
+            "selector-ineligible: associating single_component_vle requires a pure neutral 2B associating proof input."
+        );
     }
     if (
         request.route == "neutral_lle"

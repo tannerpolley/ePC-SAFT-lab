@@ -103,7 +103,10 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
                 "phase_equilibrium",
                 "phase_volume_gap",
             },
-            {"single_component_vle_ethane_ipopt_exact_hessian"},
+            {
+                "single_component_vle_ethane_ipopt_exact_hessian",
+                "single_component_vle_pure_2b_associating_ipopt_exact_hessian",
+            },
             {"single_component_vle"},
             "phase_species_amounts_plus_phase_volume_plus_route_scalar",
             "explicit_phase_volume_pressure_constraint",
