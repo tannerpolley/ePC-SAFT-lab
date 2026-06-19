@@ -11,10 +11,10 @@ backend: "Ipopt"
 readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-18-m4-equilibrium-gross-2002-association-acceptance-pass.md"
-source_plan: null
+source_plan: "docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md"
 afk_hitl: "AFK"
-branch: null
-last_synced: "2026-06-18"
+branch: codex/issue-0275-gross-2002-association-acceptance-campaign
+last_synced: "2026-06-19"
 ---
 
 # M4: add Gross 2002 paper-validation association acceptance campaign
@@ -25,7 +25,7 @@ last_synced: "2026-06-18"
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-18-m4-equilibrium-gross-2002-association-acceptance-pass.md
-**Source Plan:** None
+**Source Plan:** docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md
 **Classification:** AFK
 AFK/HITL: AFK
 **Labels:** agent-ready, status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
