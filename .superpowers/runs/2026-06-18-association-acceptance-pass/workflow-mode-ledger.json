@@ -1,0 +1,26 @@
+{
+  "schema": "superpowers-project.workflow-mode-ledger.v1",
+  "run_id": "2026-06-18-association-acceptance-pass",
+  "question_id": "project_workflow_mode",
+  "source": "request_user_input",
+  "selected_mode": "auto",
+  "recommended_mode": "manual",
+  "request_summary": "Begin an improved acceptance pass to increase confidence in the association implementation after the #190 associating GFPE public admission merge.",
+  "route_policy": {
+    "selected_route": "brainstorm-spec",
+    "reason": "The requested acceptance pass is new validation scope and needs a durable spec before planning, issue creation, or implementation.",
+    "one_route_only": true,
+    "stop_at_route_closeout": true
+  },
+  "repo": {
+    "root": "C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT",
+    "milestone": "M4 - Equilibrium",
+    "package": "epcsaft-equilibrium"
+  },
+  "validator": {
+    "expected_path": "scripts/validate-workflow-mode-ledger.ps1",
+    "present_in_repo": false,
+    "validation_attempted": false,
+    "reason": "scripts/validate-workflow-mode-ledger.ps1 is absent from this repository"
+  }
+}
