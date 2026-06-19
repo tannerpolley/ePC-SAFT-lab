@@ -1,6 +1,6 @@
 # Gross 2002 Association Acceptance Campaign Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Resolve GitHub issue #275 by turning the Gross/Sadowski 2002 paper-validation tree into an executable association acceptance campaign with retained source data, plots, exact association-Hessian evidence, and native freshness receipts.
 
@@ -75,11 +75,11 @@ Numerical and structural pass metrics:
 - Create: `docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md`
 - Modify: `docs/superpowers/issues/2026-06-18-m4-equilibrium-issue-0275-add-gross-2002-paper-validation-association-acceptance-campaign.md`
 
-- [ ] **Step 1: Save this implementation plan.**
+- [x] **Step 1: Save this implementation plan.**
 
   Use the path above and keep the `Task N` sections with nonempty `**Use Cases:**` blocks.
 
-- [ ] **Step 2: Validate the plan.**
+- [x] **Step 2: Validate the plan.**
 
   Run:
 
@@ -89,15 +89,15 @@ Numerical and structural pass metrics:
 
   Expected: exit code `0`, with every numbered task passing the use-case gate.
 
-- [ ] **Step 3: Update the local mirror.**
+- [x] **Step 3: Update the local mirror.**
 
   Set `source_plan` in the YAML frontmatter and `**Source Plan:**` in the body to this plan path.
 
-- [ ] **Step 4: Update the GitHub issue body.**
+- [x] **Step 4: Update the GitHub issue body.**
 
   Use `gh issue edit 275 --body-file <updated-body-file>` or an equivalent body update so the live issue names this source plan.
 
-- [ ] **Step 5: Commit the plan link.**
+- [x] **Step 5: Commit the plan link.**
 
   Run:
 
@@ -118,7 +118,7 @@ Numerical and structural pass metrics:
 - Create: `tests/native/contracts/test_gross_2002_association_acceptance_checker.py`
 - Create: `scripts/validation/check_gross_2002_association_acceptance.py`
 
-- [ ] **Step 1: Add failing schema and missing-manifest tests.**
+- [x] **Step 1: Add failing schema and missing-manifest tests.**
 
   Create tests that import `scripts.validation.check_gross_2002_association_acceptance as checker`, call `checker.evaluate_campaign(require_complete=True)`, and assert missing artifacts produce named blockers:
 
@@ -128,15 +128,15 @@ Numerical and structural pass metrics:
   assert "gross_2002_figure_01_pure_association_mirror_missing" in payload["blockers"]
   ```
 
-- [ ] **Step 2: Add complete-payload tests for `evaluate_payload`.**
+- [x] **Step 2: Add complete-payload tests for `evaluate_payload`.**
 
   Build an in-memory payload with accepted `figure_01`, `figure_08`, and `figure_10` records, source-requirement records for Figures 2-7 and 9, a `native_freshness_receipt`, and assert `complete is True` when all require flags are set.
 
-- [ ] **Step 3: Add CLI tests.**
+- [x] **Step 3: Add CLI tests.**
 
   Call `checker.main(["--json", "--manifest", str(tmp_path / "missing.json"), "--require-complete"])` and assert exit code `2` plus JSON blockers.
 
-- [ ] **Step 4: Run red tests.**
+- [x] **Step 4: Run red tests.**
 
   Run:
 
@@ -161,23 +161,23 @@ Numerical and structural pass metrics:
 - Create: `analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_digitized_points.csv`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_digitization_metadata.json`
 
-- [ ] **Step 1: Create the manifest with all ten figures.**
+- [x] **Step 1: Create the manifest with all ten figures.**
 
   Define `accepted_hard_gate` records for `figure_08` and `figure_10`, an `accepted_sanity_gate` record for `figure_01`, and `source_requirement` records for `figure_02` through `figure_07` plus `figure_09`.
 
-- [ ] **Step 2: Record Figure 1 source evidence.**
+- [x] **Step 2: Record Figure 1 source evidence.**
 
   Create a CSV containing methanol, 1-pentanol, and 1-nonanol with Table 1 `psat_aad_percent`, `liquid_density_aad_percent`, `temperature_range_K`, association scheme `2B`, and source table `table_001`.
 
-- [ ] **Step 3: Record Figure 10 source evidence.**
+- [x] **Step 3: Record Figure 10 source evidence.**
 
   Create a digitized source CSV with water-rich and 1-pentanol-rich liquid branch points at `1.013 bar`, columns for `temperature_K`, `x_water`, `x_1_pentanol`, `phase_branch`, `source_status`, `x_uncertainty`, and `temperature_uncertainty_K`.
 
-- [ ] **Step 4: Record metadata.**
+- [x] **Step 4: Record metadata.**
 
   Add metadata JSON files naming source image paths, Gross 2002 Table 1/2 parameter rows, the water two-site caveat, and digitization uncertainties.
 
-- [ ] **Step 5: Re-run red tests.**
+- [x] **Step 5: Re-run red tests.**
 
   Run:
 
@@ -201,27 +201,27 @@ Numerical and structural pass metrics:
 - Modify: `analyses/paper_validation/2002_gross/shared/results/gross_2002_association_acceptance_summary.json`
 - Modify: `analyses/paper_validation/2002_gross/shared/results/gross_2002_association_acceptance_summary.csv`
 
-- [ ] **Step 1: Implement manifest loading and payload evaluation.**
+- [x] **Step 1: Implement manifest loading and payload evaluation.**
 
   Add pure functions that read the manifest, validate figure roles, collect blockers, and expose `evaluate_payload` for testable in-memory payloads.
 
-- [ ] **Step 2: Connect Figure 8.**
+- [x] **Step 2: Connect Figure 8.**
 
   Call `check_associating_lle_gross_2002.evaluate_case_dir(..., require_source_data=True, require_exact_association_hessian=True, require_internal_route=True)` and copy its exact-Hessian and source-row metrics into the campaign figure record.
 
-- [ ] **Step 3: Add Figure 10 exact association diagnostics.**
+- [x] **Step 3: Add Figure 10 exact association diagnostics.**
 
   Build a water/1-pentanol native mixture from Gross 2002 Tables 1/2, sample representative liquid compositions from the retained Figure 10 source CSV, call the provider and equilibrium native association diagnostic hooks, and record site-fraction bounds, mass-action residual, and Hessian symmetry metrics.
 
-- [ ] **Step 4: Add native freshness receipt support.**
+- [x] **Step 4: Add native freshness receipt support.**
 
   When `--require-fresh-native` or `--require-complete` is set, call `scripts.validation.native_freshness.build_receipt` with `epcsaft_equilibrium._native` and the checker command.
 
-- [ ] **Step 5: Write campaign summaries.**
+- [x] **Step 5: Write campaign summaries.**
 
   Write JSON and CSV summaries under `analyses/paper_validation/2002_gross/shared/results`, including one row per figure and explicit `counts_toward_completion` fields.
 
-- [ ] **Step 6: Run focused checker tests.**
+- [x] **Step 6: Run focused checker tests.**
 
   Run:
 
@@ -246,19 +246,19 @@ Numerical and structural pass metrics:
 - Create: retained result files in `analyses/paper_validation/2002_gross/figures/figure_08/results/`
 - Create: retained result files in `analyses/paper_validation/2002_gross/figures/figure_10/results/`
 
-- [ ] **Step 1: Add Figure 1 render script.**
+- [x] **Step 1: Add Figure 1 render script.**
 
   Read the Figure 1 pure-association AAD CSV, write model/evidence CSV and plotted-data CSV, then render a bar/point mirror showing vapor-pressure and liquid-density AAD values for methanol, 1-pentanol, and 1-nonanol.
 
-- [ ] **Step 2: Add Figure 8 render script.**
+- [x] **Step 2: Add Figure 8 render script.**
 
   Read the existing Gross 2002 methanol/cyclohexane source fixture and checker output, write plotted-data/model CSVs, then render a source branch mirror with the public associating route point.
 
-- [ ] **Step 3: Add Figure 10 render script.**
+- [x] **Step 3: Add Figure 10 render script.**
 
   Read the retained Figure 10 source CSV and checker diagnostics, write plotted-data/model CSVs, then render a water-rich and 1-pentanol-rich source/evidence mirror with explicit text that this is a cross-association stress gate, not public electrolyte admission.
 
-- [ ] **Step 4: Run the render scripts.**
+- [x] **Step 4: Run the render scripts.**
 
   Run:
 
@@ -270,7 +270,7 @@ Numerical and structural pass metrics:
 
   Expected: each script writes `.csv`, `.json`, `.png`, `.svg`, and `.mpl.yaml` artifacts to its figure `results` folder.
 
-- [ ] **Step 5: Run the complete checker.**
+- [x] **Step 5: Run the complete checker.**
 
   Run:
 
@@ -292,15 +292,15 @@ Numerical and structural pass metrics:
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 
-- [ ] **Step 1: Update documentation.**
+- [x] **Step 1: Update documentation.**
 
   Add a concise M4 note that Gross 2002 association confidence is now evidence-scoped to accepted campaign figures and does not admit electrolyte or reactive routes.
 
-- [ ] **Step 2: Update the issue mirror.**
+- [x] **Step 2: Update the issue mirror.**
 
   Check off completed acceptance criteria, preserve non-goals, and keep the proof oracle commands exact.
 
-- [ ] **Step 3: Run proof oracle.**
+- [x] **Step 3: Run proof oracle.**
 
   Run:
 
@@ -315,7 +315,7 @@ Numerical and structural pass metrics:
 
   Expected: every command exits `0`.
 
-- [ ] **Step 4: Commit implementation.**
+- [x] **Step 4: Commit implementation.**
 
   Run:
 
@@ -324,7 +324,7 @@ Numerical and structural pass metrics:
   git commit -m "Add Gross 2002 association acceptance campaign"
   ```
 
-- [ ] **Step 5: Push and open PR.**
+- [x] **Step 5: Push and open PR.**
 
   After artifact review and native push permission, push the branch and open a PR whose body includes `Closes #275`.
 

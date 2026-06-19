@@ -1,0 +1,7 @@
+component,metric,value_percent,source_status
+methanol,psat_aad_percent,2.36,source_table
+methanol,liquid_density_aad_percent,2.01,source_table
+1-pentanol,psat_aad_percent,0.5,source_table
+1-pentanol,liquid_density_aad_percent,0.52,source_table
+1-nonanol,psat_aad_percent,0.86,source_table
+1-nonanol,liquid_density_aad_percent,1.23,source_table

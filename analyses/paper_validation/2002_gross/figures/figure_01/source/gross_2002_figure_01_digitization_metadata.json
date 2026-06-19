@@ -1,0 +1,9 @@
+{
+  "figure_id": "figure_01",
+  "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper_source_01_gross_2002_figure_001.png",
+  "source_basis": "Gross 2002 Table 1 AAD values for the Figure 1 pure associating components",
+  "physical_quantities": ["vapor pressure AAD percent", "liquid density AAD percent"],
+  "digitization_required": false,
+  "source_status": "source_table",
+  "notes": "Figure 1 is retained as a pure-association sanity mirror using the paper's tabulated PC-SAFT AAD values for the three displayed alkanols."
+}

@@ -550,7 +550,18 @@ iteration-limit seed path are failed boundary evidence.
   `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps
   missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized
   associating phase-set surfaces closed;
-- follow-on stress: water/1-pentanol or another two-associating-component case;
+- current paper-validation acceptance proof: `uv run --no-sync python
+  scripts/validation/check_gross_2002_association_acceptance.py --json
+  --require-complete --require-exact-association-hessian --require-fresh-native`
+  accepts Figure 1 pure-association AAD sanity evidence, Figure 8
+  methanol/cyclohexane exact-Hessian evidence, and Figure 10 water/1-pentanol
+  cross-association stress evidence with `k_ij=0.016` and
+  `cppad_implicit_association`; Figures 2-7 and 9 remain source-requirement
+  records with no completion credit until their source points and provenance
+  are retained;
+- follow-on stress: broaden the accepted Gross 2002 campaign to the Figure
+  2-7 and 9 VLE mirrors after source points and required nonassociating
+  pure-parameter provenance are retained;
 - required before exposure: association mass-action or implicit sensitivity
   architecture with exact Jacobian and Hessian contributions.
 

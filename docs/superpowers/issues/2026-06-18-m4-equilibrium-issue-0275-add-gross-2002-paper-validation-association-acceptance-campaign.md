@@ -56,17 +56,25 @@ campaign summaries attached to the existing paper-validation tree.
 
 ## Acceptance Criteria
 
-- [ ] Add a Gross 2002 association acceptance manifest under `analyses/paper_validation/2002_gross/shared` that names the participating figures, hard-gate figures, source paths, parameter sources, route families, and thresholds.
-- [ ] Keep all per-figure source data, scripts, and results inside the existing `analyses/paper_validation/2002_gross/figures/figure_NN` lanes.
-- [ ] Preserve the existing Figure 8 methanol/cyclohexane source-backed fixture and connect its retained source rows, model output, plot data, and exact association-Hessian evidence to the campaign summary.
-- [ ] Add Figure 10 water/1-pentanol as the hard cross-association VLLE/LLE stress gate, including source data, paper parameters, exact association derivative receipts, mass-action residuals, and retained mirror plots.
-- [ ] Add Figure 1 as the pure-association sanity mirror before broad association confidence claims.
-- [ ] Add Figures 2-7 and 9 as campaign-ready VLE mirrors only after their source points, physical units, digitization uncertainty, and required nonassociating pure-parameter provenance are retained.
-- [ ] Resolve the Figure 2 methanol-isobutane/isobutanol source-text discrepancy before Figure 2 evidence can count.
-- [ ] Add `scripts/validation/check_gross_2002_association_acceptance.py` with `--json`, `--require-complete`, `--require-exact-association-hessian`, and `--require-fresh-native` support.
-- [ ] Retain campaign summary JSON/CSV under `analyses/paper_validation/2002_gross/shared/results`.
-- [ ] Render every new or updated Gross 2002 mirror plot and retain the plotted-data CSV and Matplotlib sidecar.
-- [ ] Keep capability text evidence-scoped; do not broaden electrolyte, reactive, CE, CPE, generalized phase-count, or broad associating-family claims from this campaign.
+- [x] Add a Gross 2002 association acceptance manifest under `analyses/paper_validation/2002_gross/shared` that names the participating figures, hard-gate figures, source paths, parameter sources, route families, and thresholds.
+- [x] Keep all per-figure source data, scripts, and results inside the existing `analyses/paper_validation/2002_gross/figures/figure_NN` lanes.
+- [x] Preserve the existing Figure 8 methanol/cyclohexane source-backed fixture and connect its retained source rows, model output, plot data, and exact association-Hessian evidence to the campaign summary.
+- [x] Add Figure 10 water/1-pentanol as the hard cross-association VLLE/LLE stress gate, including source data, paper parameters, exact association derivative receipts, mass-action residuals, and retained mirror plots.
+- [x] Add Figure 1 as the pure-association sanity mirror before broad association confidence claims.
+- [x] Add Figures 2-7 and 9 as campaign-scoped VLE source-requirement records; they do not count as accepted evidence until source points, physical units, digitization uncertainty, and required nonassociating pure-parameter provenance are retained.
+- [x] Resolve the Figure 2 methanol-isobutane/isobutanol source-text discrepancy before Figure 2 evidence can count.
+- [x] Add `scripts/validation/check_gross_2002_association_acceptance.py` with `--json`, `--require-complete`, `--require-exact-association-hessian`, and `--require-fresh-native` support.
+- [x] Retain campaign summary JSON/CSV under `analyses/paper_validation/2002_gross/shared/results`.
+- [x] Render every new or updated Gross 2002 mirror plot and retain the plotted-data CSV and Matplotlib sidecar.
+- [x] Keep capability text evidence-scoped; do not broaden electrolyte, reactive, CE, CPE, generalized phase-count, or broad associating-family claims from this campaign.
+
+## Resolution Evidence
+
+- Accepted figures: `figure_01`, `figure_08`, and `figure_10`.
+- Source-requirement figures with no completion credit: `figure_02`, `figure_03`, `figure_04`, `figure_05`, `figure_06`, `figure_07`, and `figure_09`.
+- Figure 8 retains the existing methanol/cyclohexane exact-Hessian proof with `cppad_implicit_association`, `k_ij = 0.051`, and 16 source rows.
+- Figure 10 retains water/1-pentanol digitized Figure 10 source rows, Gross 2002 Table 1/2 parameters, `k_ij = 0.016`, the paper's two-site water caveat, and exact association diagnostics with `cppad_implicit_association`.
+- Figure 1 retains Gross 2002 Table 1 pure-association AAD evidence for methanol, 1-pentanol, and 1-nonanol.
 
 ## Blocked By
 
@@ -90,6 +98,7 @@ campaign summaries attached to the existing paper-validation tree.
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-complete
+uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```

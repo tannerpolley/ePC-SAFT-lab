@@ -1,0 +1,22 @@
+{
+  "artifacts": {
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_association_mirror_model_curve.csv",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_association_mirror_plotted_data.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_association_mirror_association_mirror.png",
+    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_association_mirror_association_mirror.mpl.yaml",
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_pure_association_aad.csv",
+    "summary_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_association_mirror_association_summary.json",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_association_mirror_association_mirror.svg"
+  },
+  "figure_id": "figure_01",
+  "pure_association_sanity": {
+    "components": [
+      "methanol",
+      "1-pentanol",
+      "1-nonanol"
+    ],
+    "status": "verified"
+  },
+  "source_point_count": 3,
+  "status": "accepted"
+}
