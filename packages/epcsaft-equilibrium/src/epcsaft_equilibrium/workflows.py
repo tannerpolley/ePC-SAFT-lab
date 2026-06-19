@@ -1046,6 +1046,8 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
     )
     if not active:
         return
+    if route_label == "single_component_vle" and _has_pure_2b_single_component_vle_association_proof(parameters):
+        return
     if route_label == "lle" and _has_gross_2002_associating_lle_proof(parameters):
         return
     if route_label == "lle":
@@ -1057,6 +1059,23 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         f"Production {route_label} associating GFPE admission only admits the source-backed "
         "Gross/Sadowski 2002 neutral two-phase LLE proof; this route remains closed for associating inputs."
     )
+
+
+def _has_pure_2b_single_component_vle_association_proof(parameters: Mapping[str, Any]) -> bool:
+    assoc_num = np.asarray(parameters.get("assoc_num", []), dtype=int).flatten()
+    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
+    e_assoc = np.asarray(parameters.get("e_assoc", []), dtype=float).flatten()
+    vol_a = np.asarray(parameters.get("vol_a", []), dtype=float).flatten()
+    charges = np.asarray(parameters.get("z", []), dtype=float).flatten()
+    if assoc_num.shape != (1,) or int(assoc_num[0]) != 2:
+        return False
+    if assoc_matrix.shape != (4,) or not np.allclose(assoc_matrix, [0.0, 1.0, 1.0, 0.0], rtol=0.0, atol=1.0e-12):
+        return False
+    if e_assoc.shape != (1,) or not np.isfinite(e_assoc[0]) or float(e_assoc[0]) <= 0.0:
+        return False
+    if vol_a.shape != (1,) or not np.isfinite(vol_a[0]) or float(vol_a[0]) <= 0.0:
+        return False
+    return not (charges.size and np.any(np.abs(charges) > 1.0e-12))
 
 
 def _has_gross_2002_associating_lle_proof(parameters: Mapping[str, Any]) -> bool:

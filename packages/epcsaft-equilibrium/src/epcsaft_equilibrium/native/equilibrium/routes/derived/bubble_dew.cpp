@@ -1136,8 +1136,14 @@ bool route_has_active_association_sites(const add_args& args) {
     return false;
 }
 
-bool route_supports_exact_phase_derivatives(const add_args& args) {
-    return !route_has_active_association_sites(args) && (args.z.empty() || args.born_model <= 1);
+bool route_supports_exact_phase_derivatives(const add_args& args, const std::string& problem_name) {
+    if (!(args.z.empty() || args.born_model <= 1)) {
+        return false;
+    }
+    if (!route_has_active_association_sites(args)) {
+        return true;
+    }
+    return problem_name == "single_component_vle_eos" && args.m.size() == 1;
 }
 
 class NeutralFixedTemperaturePressureProblem final : public NlpProblem {
@@ -1467,7 +1473,7 @@ public:
     }
 
     bool has_exact_hessian() const override {
-        return route_supports_exact_phase_derivatives(args_);
+        return route_supports_exact_phase_derivatives(args_, problem_name_);
     }
 
     int hessian_nonzero_count() const override {
@@ -1961,7 +1967,7 @@ public:
     }
 
     bool has_exact_hessian() const override {
-        return route_supports_exact_phase_derivatives(args_);
+        return route_supports_exact_phase_derivatives(args_, problem_name_);
     }
 
     int hessian_nonzero_count() const override {
@@ -2390,7 +2396,7 @@ public:
     }
 
     bool has_exact_hessian() const override {
-        return route_supports_exact_phase_derivatives(args_);
+        return route_supports_exact_phase_derivatives(args_, problem_name_);
     }
 
     int hessian_nonzero_count() const override {
