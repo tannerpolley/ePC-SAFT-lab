@@ -4,7 +4,7 @@
 
 **Goal:** Fully replicate Gross/Sadowski 2002 Figure 1 as paper-scale saturated vapor/liquid density curves for methanol, 1-pentanol, and 1-nonanol with retained source data, native model data, plot-match scoring, and checker evidence.
 
-**Architecture:** Promote Figure 1 from the #275 association-AAD sanity mirror to the #279 full-replication contract. The work must first prove a native `single_component_vle` path for pure 2B associating alcohols, then retain calibrated Figure 1 source points, generate PC-SAFT vapor/liquid density curves, render the `T-rho` paper plot, update the manifest to accepted, and keep the campaign checker strict.
+**Architecture:** Promote Figure 1 from the #275 association-AAD sanity mirror to the #279 full-replication contract. The native pure 2B associating `single_component_vle` admission is split into prerequisite issue #290; this issue consumes that merged route to retain calibrated Figure 1 source points, generate PC-SAFT vapor/liquid density curves, render the `T-rho` paper plot, update the manifest to accepted, and keep the campaign checker strict.
 
 **Tech Stack:** Python stdlib CSV/JSON/pathlib, pandas, matplotlib, yaml, existing `epcsaft` and `epcsaft_equilibrium` public APIs, native equilibrium Ipopt route code, C++ exact derivative blocks, pytest through `run_pytest.py`, Sphinx docs validation, and the repo cleanup hook.
 
@@ -28,16 +28,16 @@ Material planning questions were answered from repo evidence:
 
 - Scope: #280 owns Figure 1 only. #281-#285 own the other figure families, and #286 owns final campaign closure.
 - Source policy: use the retained Gross/Sadowski Figure 1 image as the coordinate truth for this issue unless a traceable cited source table is found quickly during source acquisition. Either path must produce the same retained source CSV, metadata JSON, and QA overlay.
-- Route policy: the current public `single_component_vle` tests reject associating input. #280 cannot close by plotting diagnostics around that rejection; it must make the Figure 1 alcohol model curves through a production native route or keep the issue open.
+- Route policy: #280 is blocked by #290. #280 must not implement native route admission; it must consume the merged #290 public `single_component_vle` route and keep the Figure 1 PR focused on source/model/plot/score artifacts.
 - Metrics: inherit the #279 `t_rho` normalized score gate of `>= 7.0`, plus per-component vapor/liquid branch coverage.
 - Branch strategy: use the issue branch from the mirror, `codex/issue-0280-gross-2002-figure-1-density-curves`.
-- Execution route: worker-thread orchestration after this plan is linked to the issue mirror.
+- Execution route: worker-thread orchestration after #290 is merged and this plan is linked to the issue mirror.
 
 ## Test Complete And Metrics
 
 Test complete for #280 means:
 
-- `Equilibrium(mixture, route="single_component_vle", T=...).solve()` returns native Ipopt results for pure methanol, 1-pentanol, and 1-nonanol parameter sets from Gross/Sadowski Table 1.
+- The merged #290 route receipt proves `Equilibrium(mixture, route="single_component_vle", T=...).solve()` returns native Ipopt results for pure methanol, 1-pentanol, and 1-nonanol parameter sets from Gross/Sadowski Table 1.
 - Figure 1 source data is retained with at least six source points per component per branch for `vapor` and `liquid`, unless the retained paper image visibly contains fewer; any lower count must be recorded in the metadata and score caveats.
 - Figure 1 model data is retained with at least thirty model points per component per branch across the paper temperature span.
 - The Figure 1 score JSON records per-component and per-branch `source_point_count`, `model_point_count`, `rmse_axis`, `max_axis_error`, `normalized_plot_score`, `branch_coverage_score`, `derivative_status`, and `pass`.
@@ -48,23 +48,23 @@ Test complete for #280 means:
 ## Outcome Contract
 
 **Intent:** Convert Figure 1 from a diagnostic association-AAD mirror into source-backed curve-level paper replication.
-**Current Behavior:** Figure 1 is `planned` in `gross_2002_full_replication_manifest.json`; existing artifacts only show Table 1 AAD sanity evidence. Public `single_component_vle` currently rejects associating components.
+**Current Behavior:** Figure 1 is `planned` in `gross_2002_full_replication_manifest.json`; existing artifacts only show Table 1 AAD sanity evidence. #290 owns the native pure associating `single_component_vle` admission required before this figure can generate model curves.
 **Expected Outcome:** Figure 1 is `accepted`, counts toward full campaign completion, and has retained source, model, plotted, score, summary, PNG, SVG, sidecar, and native route evidence artifacts.
 **Target-Perspective Output:** A reviewer can open the Figure 1 PNG/SVG and see a paper-scale `T-rho` reproduction for methanol, 1-pentanol, and 1-nonanol, then inspect score JSON and retained CSVs behind the plot.
 **Truth Owner:** Gross/Sadowski 2002 Figure 1 source image and the #279 full-replication checker contract.
-**Contract Interface:** `scripts/validation/check_gross_2002_full_replication.py` and the public `epcsaft_equilibrium.Equilibrium(..., route="single_component_vle", T=...).solve()` workflow.
+**Contract Interface:** `scripts/validation/check_gross_2002_full_replication.py` and the #290 public `epcsaft_equilibrium.Equilibrium(..., route="single_component_vle", T=...).solve()` workflow.
 **Cutover Decision:** Replace the current Figure 1 `planned` manifest record with an `accepted` record only after the source/model/score/plot artifacts pass the checker.
 **Displaced Path:** Keep the older `gross_2002_figure_01_association_mirror_*` artifacts as #275 acceptance evidence, but do not use them as full-replication proof.
-**Evidence Lane:** Native route tests, Figure 1 retained source/model/plot artifacts, full-replication checker output, association acceptance checker output, docs validation, and cleanup hook.
+**Evidence Lane:** #290 route receipt, Figure 1 retained source/model/plot artifacts, full-replication checker output, association acceptance checker output, docs validation, and cleanup hook.
 **Acceptance Evidence:** Passing proof oracle commands plus rendered Figure 1 PNG/SVG and a score table showing all six component/branch series pass.
-**Kill Criteria:** Stop the worker route if the native pure-associating saturation route cannot produce stable, certified vapor/liquid densities for all three alcohols with exact derivative metadata; split a prerequisite issue rather than closing #280 by source-only artifacts.
+**Kill Criteria:** Stop the worker route if #290 is not merged or if the merged pure-associating saturation route cannot produce stable, certified vapor/liquid densities for all three alcohols with exact derivative metadata.
 **Forbidden Moves:** Do not relabel the #275 AAD mirror as full replication; do not use synthetic source points; do not lower #279 thresholds; do not add electrolyte/reactive/generalized phase-count claims; do not bypass native route evidence with a Python-owned production solver.
 **Risk If Wrong:** The project would claim association confidence before the package can reproduce the simplest pure associating saturation curves from the Gross paper, weakening the blocker chain before electrolyte work.
 
 ## Architecture Slice
 
 **Files To Create:** `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_metadata.json`, `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_qa_overlay.png`, `analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_gross_2002_figure_01_replication_data.py`, `analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_replication.py`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml`.
-**Files To Modify:** `scripts/validation/check_gross_2002_full_replication.py`, `tests/native/contracts/test_gross_2002_full_replication_checker.py`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium_activation.py`, `packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py`, native single-component VLE route files under `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium`, `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv`, `docs/superpowers/milestones/M4-equilibrium/README.md`.
+**Files To Modify:** `scripts/validation/check_gross_2002_full_replication.py`, `tests/native/contracts/test_gross_2002_full_replication_checker.py`, `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv`, `docs/superpowers/milestones/M4-equilibrium/README.md`.
 **Files To Avoid:** Other Gross 2002 figure folders except shared campaign summary files, electrolyte/reactive code paths, regression package code, and downstream repositories.
 **Source Of Truth:** Gross/Sadowski 2002 Figure 1 image, Table 1 alcohol parameter rows, and #279 checker schema.
 **Read Path:** Source CSV and metadata feed the generation script; model CSV and source CSV feed the render script; score and summary JSON feed the manifest and checker.
@@ -148,66 +148,35 @@ Test complete for #280 means:
   git commit -m "Require Gross 2002 Figure 1 branch coverage"
   ```
 
-### Task 2: Prove Native Pure Associating Saturation Admission
+### Task 2: Verify The #290 Native Route Prerequisite
 
 **Use Cases:**
-- Methanol, 1-pentanol, and 1-nonanol can run through the public `single_component_vle` workflow with Gross/Sadowski 2B association parameters.
-- Existing nonassociating single-component VLE behavior remains unchanged.
-- Binary associating mixtures remain rejected by `single_component_vle`.
-- Native diagnostics report exact derivative and Ipopt solve metadata for the accepted pure associating route.
+- Methanol, 1-pentanol, and 1-nonanol model-curve generation consumes the merged #290 public route.
+- #280 does not edit native route admission, selector guards, or capability metadata.
+- The final Figure 1 handoff names the #290 route receipt and derivative metadata it consumed.
 
 **Files:**
-- Modify: `packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py`
-- Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`
-- Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`
-- Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium_activation.py`
-- Modify: native route files under `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium`
+- Read: `docs/superpowers/issues/2026-06-19-m4-equilibrium-issue-0290-admit-pure-2b-associating-single-component-vle-prerequisite.md`
+- Read: `docs/superpowers/plans/2026-06-19-m4-equilibrium-pure-2b-associating-single-component-vle-prerequisite-plan.md`
 - Test: `packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py`
 
-- [ ] **Step 1: Replace the associating rejection test with an acceptance test**
+- [ ] **Step 1: Confirm #290 is merged**
 
-  In `test_single_component_vle.py`, replace `test_single_component_vle_route_rejects_associating_component` with a test that builds a pure methanol 2B parameter set and asserts the route configures and solves.
+  Confirm GitHub issue #290 is closed by a merged PR before starting Figure 1 artifact work.
 
-- [ ] **Step 2: Run the new API test and verify the current failure**
-
-  Run:
-
-  ```powershell
-  uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py::test_single_component_vle_route_accepts_pure_associating_component -q
-  ```
-
-  Expected before implementation: `InputError` from the associating selector guard.
-
-- [ ] **Step 3: Narrow the Python selector guard**
-
-  Update `workflows.py` so `single_component_vle` can accept exactly one neutral associating component while preserving the ion and binary-mixture guards.
-
-- [ ] **Step 4: Prove native route support or implement the missing native association path**
-
-  Run the new API test. If native code raises an exact-derivative error for active association sites, update the single-component VLE native route to use the existing association phase-system block and implicit association derivative path already used by associating LLE evidence.
-
-- [ ] **Step 5: Update capability and activation text narrowly**
-
-  Change capability scope from nonassociating-only to: single neutral non-reactive non-electrolyte component, including pure 2B associating components when the Figure 1 route proof is present. Do not claim binary associating VLE or broad associating phase-set support.
-
-- [ ] **Step 6: Run route tests**
+- [ ] **Step 2: Run the #290 route receipt test**
 
   Run:
 
   ```powershell
-  uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py -q
+  uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q
   ```
 
-  Expected: all selected tests pass.
+  Expected: the pure 2B associating route test passes and reports exact derivative metadata.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 3: Keep Figure 1 branch scoped to artifacts**
 
-  Commit:
-
-  ```powershell
-  git add packages/epcsaft-equilibrium/src/epcsaft_equilibrium packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py
-  git commit -m "Admit pure associating single component VLE"
-  ```
+  Do not modify `packages/epcsaft-equilibrium/src/epcsaft_equilibrium`, native C++ route files, activation metadata, or route capability tests in the Figure 1 PR. If the generator exposes a route defect, reopen or amend #290 instead of hiding the fix in #280.
 
 ### Task 3: Retain Figure 1 Source Data And Metadata
 

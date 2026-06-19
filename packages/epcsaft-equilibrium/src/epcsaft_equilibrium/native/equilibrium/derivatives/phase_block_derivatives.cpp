@@ -195,10 +195,10 @@ void populate_eos_phase_block_derivatives(
                     ];
                     for (int q_index = 0; q_index < base_var_count; ++q_index) {
                         value += mu_first(component, q_index) * q2_value(q_index, row, col);
-                        for (int q_second = 0; q_second < base_var_count; ++q_second) {
-                            value += mu_second(component, q_index, q_second)
+                        for (int q_other = 0; q_other < base_var_count; ++q_other) {
+                            value += mu_second(component, q_index, q_other)
                                 * q1_value(q_index, row)
-                                * q1_value(q_second, col);
+                                * q1_value(q_other, col);
                         }
                     }
                     result.objective_third_derivative_tensor_row_major[
