@@ -1,0 +1,13 @@
+kind: matplotlib-figure
+version: 1
+plot_id: gross_2002_figure_01_association_mirror
+title: Gross 2002 Figure 1 Association Mirror
+matplotlib:
+  title: Gross 2002 Figure 1 Association Mirror
+  x_label: composition or component
+  y_label: source value
+  grid: major
+files:
+  plotted_data: analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_association_mirror_plotted_data.csv
+render:
+  command: uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_association_mirror.py

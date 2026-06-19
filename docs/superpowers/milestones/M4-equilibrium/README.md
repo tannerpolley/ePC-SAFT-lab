@@ -57,6 +57,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete` | `electrolyte` | Closed-admission source gate for #269: parses the Khudaida 2026 source fixture, records the raw paper-row closure correction before normalized explicit-ion expansion, constructs the path-based `2026_Khudaida` paper-validation parameter bundle, runs native electrolyte and phase-charge diagnostics, and keeps public electrolyte route admission closed. |
 | `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian prerequisite proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, and certifies the source-backed internal two-liquid pair consumed by #190. |
 | `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-electrolyte-closed --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized associating phase-set surfaces closed. |
+| `scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native` | `association` | Gross/Sadowski 2002 paper-validation acceptance campaign for #275: retains Figure 1 pure-association AAD sanity evidence, connects Figure 8 methanol/cyclohexane source rows and exact-Hessian proof to campaign summaries, adds Figure 10 water/1-pentanol cross-association stress evidence with `k_ij = 0.016` and `cppad_implicit_association`, records Figures 2-7 and 9 as source-requirement records with no completion credit, and keeps electrolyte/reactive/generalized associating claims outside this evidence. |
 
 ## Current Open Issues
 
@@ -121,12 +122,15 @@ fractions for the requested `liquid,liquid,liquid` phase-kind list.
 #189 closed through #268 after the final public neutral generalized multiphase
 admission child merged.
 
-#275 is now the next ready M4 issue. It blocks #191 until the strengthened
-Gross/Sadowski 2002 paper-validation association acceptance campaign is in
-place under `analyses/paper_validation/2002_gross`. The campaign covers every
-relevant paper figure, keeps Figures 8 and 10 as hard phase-split gates, and
-requires retained source data, retained plots, exact association derivative
-receipts, and fresh-native evidence.
+#275 adds the strengthened Gross/Sadowski 2002 paper-validation association
+acceptance campaign under `analyses/paper_validation/2002_gross`. The retained
+checker accepts Figure 1 pure-association sanity evidence, Figure 8
+methanol/cyclohexane source-backed exact-Hessian evidence, and Figure 10
+water/1-pentanol cross-association stress evidence. Figures 2-7 and 9 remain
+manifest-scoped source requirements with no completion credit until their
+source points and provenance are retained. The campaign removes the
+association-confidence blocker for #191 only after #275 closes; it does not
+admit electrolyte, reactive, LLLE, or generalized associating phase sets.
 
 #269 closed through #270 with the first #191 child gate. Its retained checker
 proves Khudaida source-data parsing, records the raw paper-row closure

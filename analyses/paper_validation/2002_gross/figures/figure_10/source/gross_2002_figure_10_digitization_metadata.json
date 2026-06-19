@@ -1,0 +1,21 @@
+{
+  "figure_id": "figure_10",
+  "source_image": "analyses/paper_validation/2002_gross/figures/figure_10/source/paper_source_01_gross_2002_figure_010.png",
+  "source_basis": "Manual digitization from the retained Figure 10 image in the Gross 2002 paper-validation tree",
+  "axes": {
+    "x": "mole fraction water",
+    "y": "temperature_C",
+    "pressure_bar": 1.013
+  },
+  "digitization_uncertainty": {
+    "x_water_abs": 0.025,
+    "x_water_abs_for_water_rich_branch": 0.012,
+    "temperature_K_abs": 2.5
+  },
+  "parameter_sources": {
+    "pure": "analyses/paper_validation/2002_gross/tables/table_001/table_001.csv",
+    "binary": "analyses/paper_validation/2002_gross/tables/table_002/table_002.csv"
+  },
+  "gross_2002_water_caveat": "Gross 2002 assigns two association sites to all associating substances in this study; the paper notes this is a simplification for water.",
+  "source_status": "source_digitized"
+}
