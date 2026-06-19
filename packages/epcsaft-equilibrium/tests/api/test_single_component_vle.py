@@ -113,11 +113,19 @@ def test_single_component_vle_route_rejects_binary_mixture() -> None:
         epcsaft_equilibrium.Equilibrium(mixture, route="single_component_vle", T=233.15)
 
 
-def test_single_component_vle_route_rejects_associating_component() -> None:
+def test_single_component_vle_route_accepts_pure_associating_component() -> None:
+    _skip_without_ipopt()
     mixture = epcsaft.Mixture(_pure_associating_parameter_set())
 
-    with pytest.raises(epcsaft.InputError, match="non-associating"):
-        epcsaft_equilibrium.Equilibrium(mixture, route="single_component_vle", T=298.15)
+    equilibrium = epcsaft_equilibrium.Equilibrium(mixture, route="single_component_vle", T=298.15)
+    result = equilibrium.solve(solver_options={"max_iterations": 200, "tolerance": 1.0e-8})
+
+    assert equilibrium.problem.composition_role == "pure"
+    assert result.route == "single_component_vle"
+    assert result.diagnostics["route_status"] == "accepted"
+    assert result.liquid_density > result.vapor_density
+    assert result.to_dict()["saturation_residuals"]["pressure_consistency_norm"] <= 1.0e-2
+    assert result.to_dict()["saturation_residuals"]["chemical_potential_consistency_norm"] <= 1.0e-6
 
 
 def test_single_component_vle_route_rejects_public_composition_specs() -> None:

@@ -1,0 +1,120 @@
+dataset,component,branch,temperature_K,density_kg_m3,source_reference
+paper_pc_saft_curve,methanol,vapor,260.0,0.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,vapor,300.0,0.3,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,vapor,340.0,1.6,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,vapor,380.0,5.8,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,vapor,420.0,16.5,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,vapor,460.0,41.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,vapor,475.0,56.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,liquid,260.0,823.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,liquid,300.0,790.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,liquid,340.0,752.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,liquid,380.0,708.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,liquid,420.0,654.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,liquid,460.0,582.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,methanol,liquid,475.0,548.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,vapor,280.0,0.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,vapor,330.0,0.1,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,vapor,380.0,1.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,vapor,430.0,5.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,vapor,480.0,16.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,vapor,530.0,44.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,vapor,560.0,78.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,liquid,280.0,830.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,liquid,330.0,790.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,liquid,380.0,745.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,liquid,430.0,695.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,liquid,480.0,634.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,liquid,530.0,555.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-pentanol,liquid,560.0,492.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,vapor,300.0,0.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,vapor,360.0,0.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,vapor,420.0,0.5,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,vapor,480.0,3.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,vapor,540.0,12.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,vapor,600.0,37.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,vapor,640.0,75.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,liquid,300.0,839.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,liquid,360.0,792.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,liquid,420.0,741.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,liquid,480.0,684.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,liquid,540.0,620.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,liquid,600.0,540.0,Gross2002 Figure1 solid PC-SAFT curve
+paper_pc_saft_curve,1-nonanol,liquid,640.0,468.0,Gross2002 Figure1 solid PC-SAFT curve
+experimental_marker,methanol,vapor,345.0,1.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,vapor,375.0,5.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,vapor,410.0,16.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,vapor,450.0,44.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,vapor,485.0,96.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,liquid,505.0,180.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,liquid,505.0,370.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,liquid,486.0,495.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,liquid,465.0,560.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,liquid,420.0,650.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,liquid,370.0,724.0,Gross2002 Figure1 experimental marker
+experimental_marker,methanol,liquid,320.0,782.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,585.0,275.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,575.0,425.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,565.0,465.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,553.0,505.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,535.0,545.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,505.0,600.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,468.0,650.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,430.0,694.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,385.0,738.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-pentanol,liquid,340.0,780.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,670.0,255.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,660.0,410.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,645.0,445.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,630.0,480.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,605.0,520.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,580.0,560.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,550.0,600.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,520.0,635.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,485.0,670.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,450.0,700.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,415.0,730.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,370.0,760.0,Gross2002 Figure1 experimental marker
+experimental_marker,1-nonanol,liquid,330.0,790.0,Gross2002 Figure1 experimental marker
+package_model,methanol,vapor,260.0,0.02614559169168749,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,vapor,300.0,0.25085515435084577,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,vapor,340.0,1.3934925695179659,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,vapor,380.0,5.343298986568444,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,vapor,420.0,15.863819290986036,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,vapor,460.0,39.872904178758084,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,vapor,475.0,54.957275458713895,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,liquid,260.0,822.9664628946595,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,liquid,300.0,788.9403861038247,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,liquid,340.0,751.6089677435501,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,liquid,380.0,707.881136247494,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,liquid,420.0,653.5229138330316,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,liquid,460.0,581.3046529002161,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,methanol,liquid,475.0,546.8407112859531,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,vapor,280.0,0.0027209311374676755,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,vapor,330.0,0.09179376603735045,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,vapor,380.0,0.9383722743671521,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,vapor,430.0,4.723927253171811,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,vapor,480.0,15.83946292767636,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,vapor,530.0,43.312911156991994,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,vapor,560.0,77.56753339394781,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,liquid,280.0,830.0999268447863,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,liquid,330.0,789.2032106078191,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,liquid,380.0,744.9547419989201,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,liquid,430.0,694.3488799496316,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,liquid,480.0,633.66456008231,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,liquid,530.0,555.3476793155979,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-pentanol,liquid,560.0,491.30788123240995,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,vapor,300.0,0.00022156800917062184,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,vapor,360.0,0.026670305219841733,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,vapor,420.0,0.4902688946604613,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,vapor,480.0,3.2024700472291054,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,vapor,540.0,12.231803305732504,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,vapor,600.0,36.568599260733116,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,vapor,640.0,74.07509903102996,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,liquid,300.0,839.2249642579453,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,liquid,360.0,791.3861651117078,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,liquid,420.0,739.633698683913,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,liquid,480.0,682.8263825602473,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,liquid,540.0,618.6206899804803,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,liquid,600.0,539.1783130956072,epcsaft_equilibrium single_component_vle exact Hessian route
+package_model,1-nonanol,liquid,640.0,466.8190250733997,epcsaft_equilibrium single_component_vle exact Hessian route

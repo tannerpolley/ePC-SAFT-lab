@@ -172,6 +172,43 @@ def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
     assert "gross_2002_figure_02_score_below_threshold" in result["blockers"]
 
 
+def test_figure_one_requires_vapor_and_liquid_branch_scores(tmp_path: Path) -> None:
+    artifacts = _artifact_set(tmp_path, "figure_01", derivative_status="verified_exact")
+    score_path = Path(artifacts["score_json"])
+    score_payload = json.loads(score_path.read_text(encoding="utf-8"))
+    score_payload["branch_scores"] = {
+        "methanol:liquid": {
+            "source_point_count": 6,
+            "model_point_count": 30,
+            "rmse_axis": {"rho": 0.1, "T": 0.1},
+            "max_axis_error": {"rho": 0.2, "T": 0.2},
+            "normalized_plot_score": 8.0,
+            "branch_coverage_score": 1.0,
+            "derivative_status": "verified_exact",
+            "pass": True,
+        }
+    }
+    score_path.write_text(json.dumps(score_payload, sort_keys=True) + "\n", encoding="utf-8")
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_01",
+            "plot_family": "t_rho",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 7.0,
+            "requires_exact_association_hessian": True,
+            "required_branches": ["methanol:vapor", "methanol:liquid"],
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True, require_exact_association_hessian=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_01_required_branch_methanol_vapor_missing" in result["blockers"]
+
+
 def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) -> None:
     artifacts = _artifact_set(tmp_path, "figure_02", derivative_status="verified_exact")
     payload = _foundation_payload()
@@ -217,5 +254,5 @@ def test_cli_require_complete_reports_planned_figure_blockers(capsys) -> None:
 
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 2
-    assert "gross_2002_figure_01_full_replication_missing" in payload["blockers"]
+    assert "gross_2002_figure_02_full_replication_missing" in payload["blockers"]
     assert "gross_2002_figure_10_full_replication_missing" in payload["blockers"]

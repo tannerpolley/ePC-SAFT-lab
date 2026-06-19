@@ -1,5 +1,7 @@
 {
-  "accepted_figures": [],
+  "accepted_figures": [
+    "figure_01"
+  ],
   "artifact_contract": {
     "required_artifacts": [
       "source_csv",
@@ -15,25 +17,65 @@
     ]
   },
   "association_acceptance_manifest": "analyses/paper_validation/2002_gross/shared/gross_2002_association_acceptance_manifest.json",
-  "blockers": [],
+  "blockers": [
+    "gross_2002_figure_02_full_replication_missing",
+    "gross_2002_figure_03_full_replication_missing",
+    "gross_2002_figure_04_full_replication_missing",
+    "gross_2002_figure_05_full_replication_missing",
+    "gross_2002_figure_06_full_replication_missing",
+    "gross_2002_figure_07_full_replication_missing",
+    "gross_2002_figure_08_full_replication_missing",
+    "gross_2002_figure_09_full_replication_missing",
+    "gross_2002_figure_10_full_replication_missing"
+  ],
   "campaign": "gross_2002_full_replication",
   "checker": "gross_2002_full_replication",
   "complete": false,
   "figures": [
     {
       "acceptance_threshold": 7.0,
-      "counts_toward_completion": false,
+      "artifacts": {
+        "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_qa_overlay.png",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png",
+        "score_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json",
+        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source_points.csv",
+        "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_metadata.json",
+        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg"
+      },
+      "counts_toward_completion": true,
       "figure_id": "figure_01",
+      "near_critical_exclusions": [
+        {
+          "component": "methanol",
+          "reason": "single_component_vle postsolve phase-distance gate rejects phase coalescence near the visible critical tip",
+          "temperature_window_K": "485-512"
+        }
+      ],
       "paper_plot_type": "T-rho saturated vapor/liquid densities",
       "planned_artifact_stem": "gross_2002_figure_01_replication",
       "plot_family": "t_rho",
-      "remaining_work": [
-        "retain source or digitized coexisting density data",
-        "generate model vapor and liquid density curves",
-        "score vapor and liquid branch agreement"
+      "remaining_work": [],
+      "replication_status": "accepted",
+      "required_branches": [
+        "methanol:vapor",
+        "methanol:liquid",
+        "1-pentanol:vapor",
+        "1-pentanol:liquid",
+        "1-nonanol:vapor",
+        "1-nonanol:liquid"
       ],
-      "replication_status": "planned",
-      "requires_exact_association_hessian": false,
+      "requires_exact_association_hessian": true,
+      "score": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "normalized_plot_score": 9.738754243972839,
+        "pass": true
+      },
+      "source_data_basis": "calibrated Gross 2002 Figure 1 PC-SAFT curve points plus visible experimental markers",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper_source_01_gross_2002_figure_001.png",
       "system": "methanol, 1-pentanol, 1-nonanol"
     },
@@ -194,8 +236,24 @@
   ],
   "foundation_complete": true,
   "manifest": "analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json",
+  "native_freshness_receipt": {
+    "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+    "checker_command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/validation/check_gross_2002_full_replication.py",
+      "--json",
+      "--require-complete",
+      "--require-exact-association-hessian",
+      "--require-fresh-native"
+    ],
+    "git_commit": "9e76d29733900f85ca4253020c9f0c046c7b7613",
+    "native_module_name": "epcsaft_equilibrium._native_core",
+    "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\5905\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+  },
   "planned_figures": [
-    "figure_01",
     "figure_02",
     "figure_03",
     "figure_04",

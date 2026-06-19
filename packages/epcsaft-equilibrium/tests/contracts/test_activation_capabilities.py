@@ -140,7 +140,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["single_component_vle"]["public_routes"] == ["single_component_vle"]
     assert (
         capabilities["single_component_vle"]["input_scope"]
-        == "single neutral non-reactive non-electrolyte non-associating component"
+        == "single neutral non-reactive non-electrolyte component, including pure 2B associating components for the retained Gross/Sadowski 2002 Figure 1 saturation proof"
     )
     assert capabilities["single_component_vle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["problem_objects"]["available"] is True
