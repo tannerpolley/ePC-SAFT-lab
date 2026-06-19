@@ -198,6 +198,8 @@ def _accepted_record_blockers(
         requires_exact = bool(record.get("requires_exact_association_hessian")) or require_exact_association_hessian
         if requires_exact and score.get("derivative_status") != "verified_exact":
             blockers.append(f"gross_2002_{figure_id}_exact_association_hessian_missing")
+    if figure_id == "figure_02" and record.get("source_identity_status") != "resolved":
+        blockers.append("gross_2002_figure_02_source_identity_unresolved")
 
     return blockers
 

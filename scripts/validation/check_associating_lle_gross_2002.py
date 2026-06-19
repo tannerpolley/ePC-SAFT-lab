@@ -235,6 +235,10 @@ def _association_hessian_payload(case_dir: Path, fixture: dict[str, Any]) -> dic
         return {"status": "blocked", "blockers": ["source_data_missing"]}
 
     try:
+        from scripts.dev.native_runtime_env import apply_native_runtime_env
+
+        apply_native_runtime_env(os.environ)
+
         import epcsaft._core as provider_core
         from epcsaft.state.native_adapter import create_struct
         from epcsaft_equilibrium._native import extension_native_core

@@ -1,0 +1,11 @@
+figure_id,plot_family,replication_status,counts_toward_completion,acceptance_threshold,requires_exact_association_hessian,blockers
+figure_01,t_rho,planned,False,7.0,False,
+figure_02,vle,planned,False,7.0,True,
+figure_03,vle,planned,False,7.0,True,
+figure_04,vle,planned,False,7.0,True,
+figure_05,vle,planned,False,7.0,True,
+figure_06,vle,planned,False,7.0,True,
+figure_07,vle,planned,False,7.0,True,
+figure_08,phase_boundary,planned,False,6.5,True,
+figure_09,vle,planned,False,7.0,True,
+figure_10,phase_boundary,planned,False,6.5,True,

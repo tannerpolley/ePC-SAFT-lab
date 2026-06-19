@@ -111,6 +111,7 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
                 "counts_toward_completion": True,
                 "acceptance_threshold": 7.0 if plot_family != "phase_boundary" else 6.5,
                 "requires_exact_association_hessian": requires_exact,
+                "source_identity_status": "resolved" if figure_id == "figure_02" else "not_required",
                 "artifacts": _artifact_set(tmp_path, figure_id, derivative_status="verified_exact" if requires_exact else "not_required"),
             }
         )
@@ -169,6 +170,28 @@ def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
 
     assert result["complete"] is False
     assert "gross_2002_figure_02_score_below_threshold" in result["blockers"]
+
+
+def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) -> None:
+    artifacts = _artifact_set(tmp_path, "figure_02", derivative_status="verified_exact")
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_02",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 7.0,
+            "requires_exact_association_hessian": True,
+            "source_identity_status": "unresolved",
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_02_source_identity_unresolved" in result["blockers"]
 
 
 def test_complete_payload_accepts_all_figures(tmp_path: Path) -> None:
