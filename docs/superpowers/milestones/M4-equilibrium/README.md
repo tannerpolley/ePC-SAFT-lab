@@ -24,6 +24,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [HELD 1.0 full adoption](../../specs/2026-06-11-m4-equilibrium-held-1-0-full-adoption.md) | `vle`/`lle` | Define the Pereira 2012-style HELD 1.0 adoption gates that must be finished before associating GFPE borrows the neutral algorithm path. |
 | [HELD 1.0 fresh-native proof gate](../../specs/2026-06-11-m4-equilibrium-held-1-0-fresh-native-proof-gate.md) | `lle` | Require fresh native build receipts before HELD/GFPE validation artifacts can claim Stage II/III completion. |
 | [Neutral nonassociating LLE source-backed showcase](../../specs/2026-06-11-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase.md) | `lle` | Add the first source-backed neutral nonassociating LLE fixture and showcase after the HELD proof lane is receipt-backed. |
+| [Gross 2002 association acceptance pass](../../specs/2026-06-18-m4-equilibrium-gross-2002-association-acceptance-pass.md) | `association` | Add a paper-validation acceptance campaign under `analyses/paper_validation/2002_gross`, with all relevant Gross/Sadowski figures and hard phase-split gates for Figures 8 and 10. |
 
 ## Current Plans
 
@@ -61,7 +62,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready` | Prove electrolyte GFPE and HELD2.0 validation gates after the neutral multiphase and associating public-admission blockers closed. |
+| [#275](../../issues/2026-06-18-m4-equilibrium-issue-0275-add-gross-2002-paper-validation-association-acceptance-campaign.md) | `association` | `Ipopt` | `ready` | Add the Gross/Sadowski 2002 paper-validation association acceptance campaign before electrolyte work relies on associating GFPE confidence. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #275 closes the strengthened association acceptance premise. |
 
 ## Queue Guard
 
@@ -117,9 +119,14 @@ Jacobian/Hessian evidence, accepted postsolve, and positive three-phase
 fractions for the requested `liquid,liquid,liquid` phase-kind list.
 
 #189 closed through #268 after the final public neutral generalized multiphase
-admission child merged. #190 is now ready after #145 closed the associating
-proof gate; #191 is ready for its electrolyte GFPE and HELD2.0 proof scope, but
-no electrolyte public admission claim is made yet.
+admission child merged.
+
+#275 is now the next ready M4 issue. It blocks #191 until the strengthened
+Gross/Sadowski 2002 paper-validation association acceptance campaign is in
+place under `analyses/paper_validation/2002_gross`. The campaign covers every
+relevant paper figure, keeps Figures 8 and 10 as hard phase-split gates, and
+requires retained source data, retained plots, exact association derivative
+receipts, and fresh-native evidence.
 
 #269 closed through #270 with the first #191 child gate. Its retained checker
 proves Khudaida source-data parsing, records the raw paper-row closure
@@ -144,9 +151,10 @@ source-backed Gross/Sadowski 2002 methanol/cyclohexane two-phase neutral LLE
 configuration with `assoc_scheme=2B`, `k_ij=0.051`, and
 `cppad_implicit_association`; missing-proof, ionic/electrolyte, reactive,
 TP-flash, and generalized associating phase-set surfaces remain closed. This
-clears the associating public-admission blocker ahead of #191 electrolyte work
-without claiming electrolyte, reactive, LLLE, two-associating-component, or
-generalized associating phase-set support.
+clears the narrow associating public-admission blocker, but #275 now adds the
+stronger Gross 2002 paper-validation acceptance pass before #191 electrolyte
+work resumes. #190 does not claim electrolyte, reactive, LLLE,
+two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues
 
