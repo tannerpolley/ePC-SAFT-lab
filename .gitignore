@@ -41,7 +41,6 @@ graphify-out/
 data/MIAC/*/plot_fits/
 data/reference/MIAC/*/plot_fits/
 .idea/
-.run/
 .codex_tmp/
 wheelhouse/
 CMakeFiles/

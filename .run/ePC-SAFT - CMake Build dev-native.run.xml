@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ePC-SAFT: CMake Build dev-native" type="PowerShellRunType" factoryName="PowerShell" folderName="ePC-SAFT" scriptUrl="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT/scripts/dev/cmake_preset.ps1" workingDirectory="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT" commandOptions="-NoProfile -ExecutionPolicy Bypass" scriptParameters="-Action Build -Preset dev-native -Parallel 10">
+    <method v="2" />
+  </configuration>
+</component>
