@@ -67,8 +67,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#290](../../issues/2026-06-19-m4-equilibrium-issue-0290-admit-pure-2b-associating-single-component-vle-prerequisite.md) | `association` | `Ipopt` | `ready` | Admit the narrow pure 2B associating `single_component_vle` route prerequisite consumed by #280. |
-| [#280](../../issues/2026-06-19-m4-equilibrium-issue-0280-fully-replicate-gross-2002-figure-1-pure-component-density-curves.md) | `ready` | `Ipopt` | `blocked` | Fully replicate Figure 1 pure-component density curves after #290 supplies the native model route. |
+| [#280](../../issues/2026-06-19-m4-equilibrium-issue-0280-fully-replicate-gross-2002-figure-1-pure-component-density-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figure 1 pure-component density curves using the #290 native model route without adding route-admission code to the figure PR. |
 | [#281](../../issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 2-5 self-associating VLE curves using the shared #279 checker and score schema. |
 | [#282](../../issues/2026-06-19-m4-equilibrium-issue-0282-fully-replicate-gross-2002-figures-6-7-supercritical-partner-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 6-7 supercritical-partner VLE curves using the shared #279 checker and score schema. |
 | [#283](../../issues/2026-06-19-m4-equilibrium-issue-0283-upgrade-gross-2002-figure-8-to-full-lle-vle-envelope-replication.md) | `association` | `Ipopt` | `ready` | Upgrade Figure 8 from hard-gate evidence to full LLE+VLE envelope replication. |
@@ -152,6 +151,12 @@ retained summary format consumed by #280 through #286. The figure-family issues
 #280 through #285 are now ready and share one proof oracle and one plot-match
 scoring contract.
 
+#290 closed through #291 with the narrow pure 2B associating
+`single_component_vle` prerequisite required by #280. The PR touched only
+route/capability/test files, admits exactly one neutral associating component,
+keeps binary associating/electrolyte/reactive/generalized surfaces closed, and
+left Gross 2002 Figure 1 source/plot/score artifacts for #280.
+
 #269 closed through #270 with the first #191 child gate. Its retained checker
 proves Khudaida source-data parsing, records the raw paper-row closure
 correction before normalized explicit-ion expansion, verifies path-based
@@ -182,6 +187,7 @@ two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/290](https://github.com/ePC-SAFT/ePC-SAFT/issues/290) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/291](https://github.com/ePC-SAFT/ePC-SAFT/pull/291) on 2026-06-19T23:32:21Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/279](https://github.com/ePC-SAFT/ePC-SAFT/issues/279) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/288](https://github.com/ePC-SAFT/ePC-SAFT/pull/288) on 2026-06-19T20:03:07Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/145](https://github.com/ePC-SAFT/ePC-SAFT/issues/145) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/273](https://github.com/ePC-SAFT/ePC-SAFT/pull/273) on 2026-06-18T07:35:51Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/275](https://github.com/ePC-SAFT/ePC-SAFT/issues/275) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/278](https://github.com/ePC-SAFT/ePC-SAFT/pull/278) on 2026-06-19T07:09:38Z
