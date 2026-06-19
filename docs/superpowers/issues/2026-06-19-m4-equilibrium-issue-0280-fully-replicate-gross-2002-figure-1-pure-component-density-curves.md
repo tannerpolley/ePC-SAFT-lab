@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "association"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
 source_plan: "docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0280-gross-2002-figure-1-density-curves-plan.md"
@@ -24,7 +24,7 @@ last_synced: "2026-06-19"
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0280-gross-2002-figure-1-density-curves-plan.md
 **Classification:** AFK
-**Labels:** status:blocked, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
+**Labels:** status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
 **Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0280-gross-2002-figure-1-density-curves-plan.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/279 and https://github.com/ePC-SAFT/ePC-SAFT/issues/290 are closed. Complete proof oracle: Figure 1 pure-component saturated vapor/liquid density curves retained source data, native model curve from the #290 public route, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first

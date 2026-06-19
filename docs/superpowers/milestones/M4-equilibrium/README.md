@@ -68,7 +68,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#290](../../issues/2026-06-19-m4-equilibrium-issue-0290-admit-pure-2b-associating-single-component-vle-prerequisite.md) | `association` | `Ipopt` | `ready` | Admit the narrow pure 2B associating `single_component_vle` route prerequisite consumed by #280. |
-| [#280](../../issues/2026-06-19-m4-equilibrium-issue-0280-fully-replicate-gross-2002-figure-1-pure-component-density-curves.md) | `association` | `Ipopt` | `blocked` | Fully replicate Figure 1 pure-component density curves after #290 supplies the native model route. |
+| [#280](../../issues/2026-06-19-m4-equilibrium-issue-0280-fully-replicate-gross-2002-figure-1-pure-component-density-curves.md) | `ready` | `Ipopt` | `blocked` | Fully replicate Figure 1 pure-component density curves after #290 supplies the native model route. |
 | [#281](../../issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 2-5 self-associating VLE curves using the shared #279 checker and score schema. |
 | [#282](../../issues/2026-06-19-m4-equilibrium-issue-0282-fully-replicate-gross-2002-figures-6-7-supercritical-partner-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 6-7 supercritical-partner VLE curves using the shared #279 checker and score schema. |
 | [#283](../../issues/2026-06-19-m4-equilibrium-issue-0283-upgrade-gross-2002-figure-8-to-full-lle-vle-envelope-replication.md) | `association` | `Ipopt` | `ready` | Upgrade Figure 8 from hard-gate evidence to full LLE+VLE envelope replication. |
