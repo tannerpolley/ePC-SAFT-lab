@@ -11,7 +11,7 @@ backend: "Ipopt"
 readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: null
+source_plan: "docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0279-gross-2002-full-replication-checker-scoring-schema-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0279-gross-2002-full-replication-checker-scoring-schema
 last_synced: "2026-06-19"
@@ -22,7 +22,7 @@ last_synced: "2026-06-19"
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
-**Source Plan:** none
+**Source Plan:** docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0279-gross-2002-full-replication-checker-scoring-schema-plan.md
 **Classification:** AFK
 **Labels:** agent-ready, status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
 **Goal Command:** /goal Resolve this issue using docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md. Complete proof oracle: full-replication checker contract, scoring schema, source metadata schema, manifest upgrade, docs validation, cleanup hook.
@@ -68,7 +68,9 @@ Add the strict full-replication foundation for the Gross/Sadowski 2002 paper-val
 
 ## Proof Oracle
 
+- uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-foundation
 - uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete
+  - Expected for #279 closeout: exits 2 with named full-replication blockers for planned figure records; this is the #286 final gate, not a #279 pass gate.
 - uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 - uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py -q
 - uv run --no-sync python scripts/dev/validate_project.py docs

@@ -42,6 +42,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #189 generalized phase-set certification gate plan](../../plans/2026-06-15-m4-equilibrium-issue-0189-generalized-phase-set-certification-gate-plan.md) | `lle` | Defines the next #189 child after #260 for Stage II candidate-set replay and strict Stage III Ipopt refinement of the generalized neutral multiphase phase set. |
 | [Issue #189 strict multiphase fugacity-residual refinement plan](../../plans/2026-06-16-m4-equilibrium-issue-0189-strict-multiphase-fugacity-residual-refinement-plan.md) | `lle` | Defines #263: exact reduced fugacity-residual Stage III refinement for the generalized neutral multiphase candidate-set replay before #261 resumes. |
 | [Issue #189 generalized neutral multiphase admission plan](../../plans/2026-06-16-m4-equilibrium-issue-0189-generalized-neutral-multiphase-admission-plan.md) | `lle` | Defines #264: public `Equilibrium(..., route="multiphase", phase_kinds=[...]).solve()` admission for the certified neutral generalized multiphase phase set after #261 closed. |
+| [Issue #279 Gross 2002 full-replication foundation plan](../../plans/2026-06-19-m4-equilibrium-issue-0279-gross-2002-full-replication-checker-scoring-schema-plan.md) | `association` | Defines the strict full-replication checker, source metadata schema, score schema, manifest contract, and foundation/complete gate split before figure-family replication issues execute. |
 
 ## Retained Evidence
 
