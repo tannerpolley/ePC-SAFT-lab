@@ -56,7 +56,7 @@ Upgrade Figure 1 from table-AAD sanity evidence to a paper-scale T-rho reproduct
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/279
+- None
 
 ## Non-goals
 

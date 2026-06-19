@@ -70,7 +70,6 @@ Track and close the full Gross/Sadowski 2002 figure replication campaign. This i
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/279
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/280
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/281
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/282

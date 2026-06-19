@@ -56,7 +56,7 @@ Replicate the four-temperature VLE figures for 1-butanol/n-butane and ethanol/n-
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/279
+- None
 
 ## Non-goals
 

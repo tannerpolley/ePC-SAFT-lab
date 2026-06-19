@@ -56,7 +56,7 @@ Replicate Figure 2 methanol identity case, Figure 3 1-propanol/ethylbenzene, Fig
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/279
+- None
 
 ## Non-goals
 

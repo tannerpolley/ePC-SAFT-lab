@@ -56,7 +56,7 @@ Upgrade Figure 8 from selected LLE source-pair acceptance evidence to full isoba
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/279
+- None
 
 ## Non-goals
 

@@ -66,14 +66,13 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#279](../../issues/2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md) | `association` | `Ipopt` | `ready` | Add the Gross 2002 full-replication checker, artifact schema, scorecard thresholds, and manifest contract. |
-| [#280](../../issues/2026-06-19-m4-equilibrium-issue-0280-fully-replicate-gross-2002-figure-1-pure-component-density-curves.md) | `ready` | `Ipopt` | `blocked` | Fully replicate Figure 1 pure-component density curves after #279 defines the common checker and score schema. |
-| [#281](../../issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md) | `ready` | `Ipopt` | `blocked` | Fully replicate Figures 2-5 self-associating VLE curves after #279. |
-| [#282](../../issues/2026-06-19-m4-equilibrium-issue-0282-fully-replicate-gross-2002-figures-6-7-supercritical-partner-vle-curves.md) | `ready` | `Ipopt` | `blocked` | Fully replicate Figures 6-7 supercritical-partner VLE curves after #279. |
-| [#283](../../issues/2026-06-19-m4-equilibrium-issue-0283-upgrade-gross-2002-figure-8-to-full-lle-vle-envelope-replication.md) | `ready` | `Ipopt` | `blocked` | Upgrade Figure 8 from hard-gate evidence to full LLE+VLE envelope replication after #279. |
-| [#284](../../issues/2026-06-19-m4-equilibrium-issue-0284-fully-replicate-gross-2002-figure-9-cross-associating-vle-curve.md) | `ready` | `Ipopt` | `blocked` | Fully replicate Figure 9 cross-associating VLE curve after #279. |
-| [#285](../../issues/2026-06-19-m4-equilibrium-issue-0285-upgrade-gross-2002-figure-10-to-full-vlle-lle-envelope-replication.md) | `ready` | `Ipopt` | `blocked` | Upgrade Figure 10 from stress evidence to full VLLE/LLE envelope replication after #279. |
-| [#286](../../issues/2026-06-19-m4-equilibrium-issue-0286-complete-gross-2002-full-figure-replication-campaign.md) | `association` | `Ipopt` | `blocked` | Track full Gross 2002 Figure 1-10 completion after #279-#285 close. |
+| [#280](../../issues/2026-06-19-m4-equilibrium-issue-0280-fully-replicate-gross-2002-figure-1-pure-component-density-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figure 1 pure-component density curves using the shared #279 checker and score schema. |
+| [#281](../../issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 2-5 self-associating VLE curves using the shared #279 checker and score schema. |
+| [#282](../../issues/2026-06-19-m4-equilibrium-issue-0282-fully-replicate-gross-2002-figures-6-7-supercritical-partner-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 6-7 supercritical-partner VLE curves using the shared #279 checker and score schema. |
+| [#283](../../issues/2026-06-19-m4-equilibrium-issue-0283-upgrade-gross-2002-figure-8-to-full-lle-vle-envelope-replication.md) | `association` | `Ipopt` | `ready` | Upgrade Figure 8 from hard-gate evidence to full LLE+VLE envelope replication. |
+| [#284](../../issues/2026-06-19-m4-equilibrium-issue-0284-fully-replicate-gross-2002-figure-9-cross-associating-vle-curve.md) | `association` | `Ipopt` | `ready` | Fully replicate Figure 9 cross-associating VLE curve using the shared #279 checker and score schema. |
+| [#285](../../issues/2026-06-19-m4-equilibrium-issue-0285-upgrade-gross-2002-figure-10-to-full-vlle-lle-envelope-replication.md) | `association` | `Ipopt` | `ready` | Upgrade Figure 10 from stress evidence to full VLLE/LLE envelope replication. |
+| [#286](../../issues/2026-06-19-m4-equilibrium-issue-0286-complete-gross-2002-full-figure-replication-campaign.md) | `association` | `Ipopt` | `blocked` | Track full Gross 2002 Figure 1-10 completion after #280-#285 close. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #286 closes the full Gross 2002 replication campaign. |
 
 ## Queue Guard
@@ -145,11 +144,11 @@ Gross/Sadowski 2002 Figure 1-10 replication gate before electrolyte resumes. It
 does not admit electrolyte, reactive, LLLE, or generalized associating phase
 sets.
 
-#279 is the next ready M4 association-validation issue. It defines the strict
-full-replication checker, source/digitization artifact schema, scoring
-thresholds, manifest contract, and retained summary format consumed by #280
-through #286. The figure-family issues remain blocked until #279 closes so they
-can share one proof oracle and one plot-match scoring contract.
+#279 closed through #288 with the strict full-replication checker,
+source/digitization artifact schema, scoring thresholds, manifest contract, and
+retained summary format consumed by #280 through #286. The figure-family issues
+#280 through #285 are now ready and share one proof oracle and one plot-match
+scoring contract.
 
 #269 closed through #270 with the first #191 child gate. Its retained checker
 proves Khudaida source-data parsing, records the raw paper-row closure
@@ -181,6 +180,7 @@ two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/279](https://github.com/ePC-SAFT/ePC-SAFT/issues/279) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/288](https://github.com/ePC-SAFT/ePC-SAFT/pull/288) on 2026-06-19T20:03:07Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/145](https://github.com/ePC-SAFT/ePC-SAFT/issues/145) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/273](https://github.com/ePC-SAFT/ePC-SAFT/pull/273) on 2026-06-18T07:35:51Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/275](https://github.com/ePC-SAFT/ePC-SAFT/issues/275) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/278](https://github.com/ePC-SAFT/ePC-SAFT/pull/278) on 2026-06-19T07:09:38Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/269](https://github.com/ePC-SAFT/ePC-SAFT/issues/269) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/270](https://github.com/ePC-SAFT/ePC-SAFT/pull/270) on 2026-06-18T00:45:16Z

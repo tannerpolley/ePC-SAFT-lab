@@ -56,7 +56,7 @@ Upgrade Figure 10 from source-data plus diagnostic-sample stress gate to full wa
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/279
+- None
 
 ## Non-goals
 

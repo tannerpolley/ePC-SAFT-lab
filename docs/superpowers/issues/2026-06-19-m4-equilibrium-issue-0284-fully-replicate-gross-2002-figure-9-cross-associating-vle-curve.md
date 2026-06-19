@@ -56,7 +56,7 @@ Replicate the isobaric methanol/1-octanol VLE T-x plot at 1.013 bar and exercise
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/279
+- None
 
 ## Non-goals
 
