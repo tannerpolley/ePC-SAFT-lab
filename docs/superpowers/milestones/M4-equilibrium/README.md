@@ -64,7 +64,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#275](../../issues/2026-06-18-m4-equilibrium-issue-0275-add-gross-2002-paper-validation-association-acceptance-campaign.md) | `association` | `Ipopt` | `ready` | Add the Gross/Sadowski 2002 paper-validation association acceptance campaign before electrolyte work relies on associating GFPE confidence. |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #275 closes the strengthened association acceptance premise. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #275 closes the strengthened association acceptance premise. |
 
 ## Queue Guard
 
