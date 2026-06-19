@@ -1,0 +1,226 @@
+{
+  "campaign": "gross_2002_full_replication",
+  "source_paper": "Gross and Sadowski 2002",
+  "source_markdown": "analyses/paper_validation/2002_gross/docs/md/source_01_gross_2002.md",
+  "source_pdf": "analyses/paper_validation/2002_gross/docs/pdf/source_01_gross_2002.pdf",
+  "association_acceptance_manifest": "analyses/paper_validation/2002_gross/shared/gross_2002_association_acceptance_manifest.json",
+  "artifact_contract": {
+    "required_artifacts": [
+      "source_csv",
+      "source_metadata_json",
+      "digitization_qa_overlay",
+      "model_csv",
+      "plotted_csv",
+      "score_json",
+      "summary_json",
+      "png",
+      "svg",
+      "sidecar"
+    ]
+  },
+  "source_metadata_schema": {
+    "required_fields": [
+      "provenance",
+      "axis_calibration",
+      "units",
+      "series_labels",
+      "digitization_uncertainty",
+      "qa_overlay"
+    ]
+  },
+  "score_schema": {
+    "required_fields": [
+      "source_point_count",
+      "model_point_count",
+      "rmse_axis",
+      "max_axis_error",
+      "normalized_plot_score",
+      "branch_coverage_score",
+      "derivative_status",
+      "pass"
+    ],
+    "thresholds": {
+      "diagnostic_score_cap": 4.0,
+      "phase_boundary": 6.5,
+      "t_rho": 7.0,
+      "vle": 7.0
+    }
+  },
+  "summary_artifacts": {
+    "csv": "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv",
+    "json": "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json"
+  },
+  "figures": [
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_01",
+      "paper_plot_type": "T-rho saturated vapor/liquid densities",
+      "planned_artifact_stem": "gross_2002_figure_01_replication",
+      "plot_family": "t_rho",
+      "remaining_work": [
+        "retain source or digitized coexisting density data",
+        "generate model vapor and liquid density curves",
+        "score vapor and liquid branch agreement"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": false,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper_source_01_gross_2002_figure_001.png",
+      "system": "methanol, 1-pentanol, 1-nonanol"
+    },
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_02",
+      "paper_plot_type": "isothermal VLE P-x/y",
+      "planned_artifact_stem": "gross_2002_figure_02_replication",
+      "plot_family": "vle",
+      "remaining_work": [
+        "resolve methanol-isobutane caption versus methanol-isobutanol Table 2 identity",
+        "retain source or digitized pressure-composition data at 100 degC",
+        "generate matching PC-SAFT VLE pressure-composition curves"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_identity_status": "unresolved",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/paper_source_01_gross_2002_figure_002.png",
+      "system": "methanol-isobutane caption versus methanol-isobutanol Table 2 row"
+    },
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_03",
+      "paper_plot_type": "VLE at two pressures",
+      "planned_artifact_stem": "gross_2002_figure_03_replication",
+      "plot_family": "vle",
+      "remaining_work": [
+        "retain source or digitized source points for both pressure series",
+        "retain ethylbenzene pure-parameter provenance",
+        "generate and score matching VLE curves for each pressure series"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_03/source/paper_source_01_gross_2002_figure_003.png",
+      "system": "1-propanol/ethylbenzene"
+    },
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_04",
+      "paper_plot_type": "isothermal VLE P-x/y",
+      "planned_artifact_stem": "gross_2002_figure_04_replication",
+      "plot_family": "vle",
+      "remaining_work": [
+        "retain source or digitized pressure-composition points at 40 degC",
+        "retain benzene pure-parameter provenance",
+        "generate and score the matching VLE curve"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_04/source/paper_source_01_gross_2002_figure_004.png",
+      "system": "1-pentanol/benzene"
+    },
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_05",
+      "paper_plot_type": "isothermal VLE P-x/y with two isomer systems",
+      "planned_artifact_stem": "gross_2002_figure_05_replication",
+      "plot_family": "vle",
+      "remaining_work": [
+        "retain source or digitized pressure-composition points for both alcohol isomers",
+        "retain benzene pure-parameter provenance",
+        "generate and score both isomer VLE curves separately"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_05/source/paper_source_01_gross_2002_figure_005.png",
+      "system": "1-propanol/benzene and 2-propanol/benzene"
+    },
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_06",
+      "paper_plot_type": "VLE at four temperatures",
+      "planned_artifact_stem": "gross_2002_figure_06_replication",
+      "plot_family": "vle",
+      "remaining_work": [
+        "retain source or digitized source points for all four temperature series",
+        "retain n-butane pure-parameter provenance",
+        "generate and score each temperature series"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_06/source/paper_source_01_gross_2002_figure_006.png",
+      "system": "1-butanol/n-butane"
+    },
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_07",
+      "paper_plot_type": "VLE at four temperatures",
+      "planned_artifact_stem": "gross_2002_figure_07_replication",
+      "plot_family": "vle",
+      "remaining_work": [
+        "retain source or digitized source points for all four temperature series",
+        "retain n-butane pure-parameter provenance",
+        "generate and score each temperature series with the supercritical-partner caveat"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_07/source/paper_source_01_gross_2002_figure_007.png",
+      "system": "ethanol/n-butane"
+    },
+    {
+      "acceptance_threshold": 6.5,
+      "counts_toward_completion": false,
+      "figure_id": "figure_08",
+      "paper_plot_type": "isobaric VLE and LLE T-x",
+      "planned_artifact_stem": "gross_2002_figure_08_replication",
+      "plot_family": "phase_boundary",
+      "remaining_work": [
+        "upgrade selected LLE branch evidence to full LLE plus VLE envelope reproduction",
+        "score branches and azeotrope or plait-region behavior at 1.013 bar",
+        "retain exact association derivative receipts for accepted route solves"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_08/source/paper_source_01_gross_2002_figure_008.png",
+      "system": "methanol/cyclohexane"
+    },
+    {
+      "acceptance_threshold": 7.0,
+      "counts_toward_completion": false,
+      "figure_id": "figure_09",
+      "paper_plot_type": "isobaric VLE T-x",
+      "planned_artifact_stem": "gross_2002_figure_09_replication",
+      "plot_family": "vle",
+      "remaining_work": [
+        "retain source or digitized temperature-composition points",
+        "generate cross-associating VLE curve at 1.013 bar",
+        "retain exact association derivative receipts for accepted two-associating-component route solves"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_09/source/paper_source_01_gross_2002_figure_009.png",
+      "system": "methanol/1-octanol"
+    },
+    {
+      "acceptance_threshold": 6.5,
+      "counts_toward_completion": false,
+      "figure_id": "figure_10",
+      "paper_plot_type": "isobaric VLLE/LLE T-x",
+      "planned_artifact_stem": "gross_2002_figure_10_replication",
+      "plot_family": "phase_boundary",
+      "remaining_work": [
+        "upgrade selected stress rows to full water-rich, alcohol-rich, and vapor or VLLE envelope reproduction",
+        "score each branch at 1.013 bar",
+        "retain the Gross 2002 two-site water caveat and exact association derivative receipts"
+      ],
+      "replication_status": "planned",
+      "requires_exact_association_hessian": true,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_10/source/paper_source_01_gross_2002_figure_010.png",
+      "system": "water/1-pentanol"
+    }
+  ]
+}

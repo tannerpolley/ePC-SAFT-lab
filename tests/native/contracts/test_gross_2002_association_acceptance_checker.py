@@ -151,6 +151,15 @@ def test_figure_two_source_requirement_does_not_count_as_accepted(tmp_path: Path
     assert "gross_2002_figure_02_source_identity_unresolved" in result["blockers"]
 
 
+def test_campaign_checker_reports_exact_hessian_evidence_for_current_gross_2002_gates() -> None:
+    payload = checker.evaluate_campaign(require_exact_association_hessian=True)
+    by_figure = {record["figure_id"]: record for record in payload["figure_records"]}
+
+    assert payload["blockers"] == []
+    assert by_figure["figure_08"]["exact_association_hessian"]["status"] == "verified_exact"
+    assert by_figure["figure_10"]["exact_association_hessian"]["status"] == "verified_exact"
+
+
 def test_cli_json_missing_manifest_reports_named_blockers(tmp_path: Path, capsys) -> None:
     exit_code = checker.main(
         [
