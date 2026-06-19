@@ -25,6 +25,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [HELD 1.0 fresh-native proof gate](../../specs/2026-06-11-m4-equilibrium-held-1-0-fresh-native-proof-gate.md) | `lle` | Require fresh native build receipts before HELD/GFPE validation artifacts can claim Stage II/III completion. |
 | [Neutral nonassociating LLE source-backed showcase](../../specs/2026-06-11-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase.md) | `lle` | Add the first source-backed neutral nonassociating LLE fixture and showcase after the HELD proof lane is receipt-backed. |
 | [Gross 2002 association acceptance pass](../../specs/2026-06-18-m4-equilibrium-gross-2002-association-acceptance-pass.md) | `association` | Add a paper-validation acceptance campaign under `analyses/paper_validation/2002_gross`, with all relevant Gross/Sadowski figures and hard phase-split gates for Figures 8 and 10. |
+| [Gross 2002 full figure replication](../../specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md) | `association` | Require source-backed or digitized curve-level replication of Gross/Sadowski 2002 Figures 1-10, retained scorecards, and a strict full-replication checker before electrolyte work resumes. |
 
 ## Current Plans
 
@@ -63,8 +64,15 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#275](../../issues/2026-06-18-m4-equilibrium-issue-0275-add-gross-2002-paper-validation-association-acceptance-campaign.md) | `association` | `Ipopt` | `ready` | Add the Gross/Sadowski 2002 paper-validation association acceptance campaign before electrolyte work relies on associating GFPE confidence. |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #275 closes the strengthened association acceptance premise. |
+| [#279](../../issues/2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md) | `association` | `Ipopt` | `ready` | Add the Gross 2002 full-replication checker, artifact schema, scorecard thresholds, and manifest contract. |
+| [#280](../../issues/2026-06-19-m4-equilibrium-issue-0280-fully-replicate-gross-2002-figure-1-pure-component-density-curves.md) | `association` | `Ipopt` | `blocked` | Fully replicate Figure 1 pure-component density curves after #279 defines the common checker and score schema. |
+| [#281](../../issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md) | `association` | `Ipopt` | `blocked` | Fully replicate Figures 2-5 self-associating VLE curves after #279. |
+| [#282](../../issues/2026-06-19-m4-equilibrium-issue-0282-fully-replicate-gross-2002-figures-6-7-supercritical-partner-vle-curves.md) | `association` | `Ipopt` | `blocked` | Fully replicate Figures 6-7 supercritical-partner VLE curves after #279. |
+| [#283](../../issues/2026-06-19-m4-equilibrium-issue-0283-upgrade-gross-2002-figure-8-to-full-lle-vle-envelope-replication.md) | `association` | `Ipopt` | `blocked` | Upgrade Figure 8 from hard-gate evidence to full LLE+VLE envelope replication after #279. |
+| [#284](../../issues/2026-06-19-m4-equilibrium-issue-0284-fully-replicate-gross-2002-figure-9-cross-associating-vle-curve.md) | `association` | `Ipopt` | `blocked` | Fully replicate Figure 9 cross-associating VLE curve after #279. |
+| [#285](../../issues/2026-06-19-m4-equilibrium-issue-0285-upgrade-gross-2002-figure-10-to-full-vlle-lle-envelope-replication.md) | `association` | `Ipopt` | `blocked` | Upgrade Figure 10 from stress evidence to full VLLE/LLE envelope replication after #279. |
+| [#286](../../issues/2026-06-19-m4-equilibrium-issue-0286-complete-gross-2002-full-figure-replication-campaign.md) | `association` | `Ipopt` | `blocked` | Track full Gross 2002 Figure 1-10 completion after #279-#285 close. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #286 closes the full Gross 2002 replication campaign. |
 
 ## Queue Guard
 
@@ -122,15 +130,24 @@ fractions for the requested `liquid,liquid,liquid` phase-kind list.
 #189 closed through #268 after the final public neutral generalized multiphase
 admission child merged.
 
-#275 adds the strengthened Gross/Sadowski 2002 paper-validation association
-acceptance campaign under `analyses/paper_validation/2002_gross`. The retained
+#275 closed through #278 with the strengthened Gross/Sadowski 2002
+paper-validation association acceptance campaign under
+`analyses/paper_validation/2002_gross`. The retained
 checker accepts Figure 1 pure-association sanity evidence, Figure 8
 methanol/cyclohexane source-backed exact-Hessian evidence, and Figure 10
 water/1-pentanol cross-association stress evidence. Figures 2-7 and 9 remain
 manifest-scoped source requirements with no completion credit until their
-source points and provenance are retained. The campaign removes the
-association-confidence blocker for #191 only after #275 closes; it does not
-admit electrolyte, reactive, LLLE, or generalized associating phase sets.
+source points and provenance are retained. The campaign removes the first
+association-confidence blocker for #191, but #286 now adds the full
+Gross/Sadowski 2002 Figure 1-10 replication gate before electrolyte resumes. It
+does not admit electrolyte, reactive, LLLE, or generalized associating phase
+sets.
+
+#279 is the next ready M4 association-validation issue. It defines the strict
+full-replication checker, source/digitization artifact schema, scoring
+thresholds, manifest contract, and retained summary format consumed by #280
+through #286. The figure-family issues remain blocked until #279 closes so they
+can share one proof oracle and one plot-match scoring contract.
 
 #269 closed through #270 with the first #191 child gate. Its retained checker
 proves Khudaida source-data parsing, records the raw paper-row closure
@@ -163,6 +180,7 @@ two-associating-component, or generalized associating phase-set support.
 ## Closed Issues
 
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/145](https://github.com/ePC-SAFT/ePC-SAFT/issues/145) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/273](https://github.com/ePC-SAFT/ePC-SAFT/pull/273) on 2026-06-18T07:35:51Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/275](https://github.com/ePC-SAFT/ePC-SAFT/issues/275) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/278](https://github.com/ePC-SAFT/ePC-SAFT/pull/278) on 2026-06-19T07:09:38Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/269](https://github.com/ePC-SAFT/ePC-SAFT/issues/269) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/270](https://github.com/ePC-SAFT/ePC-SAFT/pull/270) on 2026-06-18T00:45:16Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/228](https://github.com/ePC-SAFT/ePC-SAFT/issues/228) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/230](https://github.com/ePC-SAFT/ePC-SAFT/pull/230) on 2026-06-05T02:56:36Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/208](https://github.com/ePC-SAFT/ePC-SAFT/issues/208) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/238](https://github.com/ePC-SAFT/ePC-SAFT/pull/238) on 2026-06-10T22:22:15Z

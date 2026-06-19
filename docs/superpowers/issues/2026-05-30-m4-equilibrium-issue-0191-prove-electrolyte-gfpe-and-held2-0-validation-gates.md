@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "blocked"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
@@ -31,7 +31,7 @@ AFK/HITL: HITL
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md
 **Classification:** HITL
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -54,12 +54,12 @@ start from a durable local source plan.
 
 ## Summary
 
-Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalized phase-set path is certified and the Gross 2002 association acceptance campaign proves the associating premise that electrolyte work would otherwise rely on.
+Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalized phase-set path is certified and the Gross 2002 full figure replication campaign proves the associating premise that electrolyte work would otherwise rely on.
 
 ## Blocking Prerequisites
 
-- [#275](2026-06-18-m4-equilibrium-issue-0275-add-gross-2002-paper-validation-association-acceptance-campaign.md) is open and blocks #191. It adds the Gross/Sadowski 2002 paper-validation association acceptance campaign under `analyses/paper_validation/2002_gross`, with Figures 8 and 10 as hard phase-split gates.
-- #189 is already closed and remains only as historical dependency provenance.
+- [#286](2026-06-19-m4-equilibrium-issue-0286-complete-gross-2002-full-figure-replication-campaign.md) is open and blocks #191. It completes the full Gross/Sadowski 2002 Figure 1-10 replication campaign after #279-#285 close.
+- #189 and #275 are already closed and remain only as historical dependency provenance.
 
 ## Child Issues
 
@@ -70,6 +70,7 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
 - `docs/superpowers/plans/2026-06-17-m4-equilibrium-issue-0191-electrolyte-gfpe-closed-admission-gate-plan.md`
+- `docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md`
 
 ## Acceptance Criteria
 
@@ -96,7 +97,7 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - Package: `equilibrium`
 - Capability: `electrolyte`
 - Backend: `Ipopt`
-- Readiness: `ready`
+- Readiness: `blocked`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
+- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`
