@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ePC-SAFT: Test Integration" type="UvRunConfigurationType" factoryName="UvRunConfigurationType" folderName="ePC-SAFT">
+    <option name="runType" value="SCRIPT" />
+    <option name="scriptOrModule" value="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT/run_pytest.py" />
+    <option name="args">
+      <list>
+        <option value="--integration" />
+        <option value="-q" />
+      </list>
+    </option>
+    <option name="env">
+      <map>
+        <entry key="PYTHONUNBUFFERED" value="1" />
+        <entry key="VIRTUAL_ENV" value="C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\.venv" />
+      </map>
+    </option>
+    <option name="checkSync" value="false" />
+    <option name="uvSdkKey" value="uv (ePC-SAFT)" />
+    <option name="uvArgs">
+      <list>
+        <option value="--project" />
+        <option value="C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT" />
+        <option value="--no-sync" />
+      </list>
+    </option>
+    <option name="debugJustMyCode" value="false" />
+    <method v="2" />
+  </configuration>
+</component>
