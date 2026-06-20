@@ -615,6 +615,34 @@ def test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary(
     assert readiness["associating_admission_backend"] == "cppad_implicit_association"
 
 
+@pytest.mark.parametrize(
+    ("parameter_builder_name", "route", "kwargs"),
+    (
+        (
+            "_gross_2002_figure2_associating_vle_parameter_set",
+            "bubble_pressure",
+            {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "x": GROSS_2002_FIGURE2_LIQUID_X},
+        ),
+        (
+            "_gross_2002_figure2_associating_vle_parameter_set",
+            "dew_pressure",
+            {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "y": GROSS_2002_FIGURE2_VAPOR_Y},
+        ),
+    ),
+)
+def test_equilibrium_vle_rejects_associating_binary_without_source_backed_proof(
+    parameter_builder_name: str,
+    route: str,
+    kwargs: dict[str, object],
+) -> None:
+    with pytest.raises(epcsaft.InputError, match=r"source-backed Gross/Sadowski 2002 Figures 2-9"):
+        equilibrium_module.Equilibrium(
+            epcsaft.Mixture(globals()[parameter_builder_name](source_backed=False)),
+            route=route,
+            **kwargs,
+        )
+
+
 def test_equilibrium_multiphase_route_returns_public_three_phase_result() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
