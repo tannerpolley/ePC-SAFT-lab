@@ -11,7 +11,7 @@ backend: "Ipopt"
 readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: null
+source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0282-gross-2002-figures-6-7-vle-curves
 last_synced: "2026-06-19"
@@ -22,10 +22,10 @@ last_synced: "2026-06-19"
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
-**Source Plan:** none
+**Source Plan:** docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md
 **Classification:** AFK
 **Labels:** status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
-**Goal Command:** /goal Resolve this issue using docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/279 is closed. Complete proof oracle: Figures 6-7 supercritical-partner VLE curves retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
+**Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/279 is closed. Complete proof oracle: Figures 6-7 supercritical-partner VLE curves retained source data, model curve or envelope through existing public routes only, paper-scale plot, score JSON, validation checker, no package/native implementation edits, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -53,6 +53,7 @@ Replicate the four-temperature VLE figures for 1-butanol/n-butane and ethanol/n-
 - [ ] Render paper-scale mirror plots with series labels matching the paper.
 - [ ] Write score JSON per temperature series and figure.
 - [ ] Record the supercritical-partner caveat and keep capability text evidence-scoped.
+- [ ] Keep `packages/**`, C++/header, CMake, and package-local test changes out of this figure-replication PR; split any discovered production-route gap into a prerequisite issue.
 
 ## Blocked by
 
