@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "association"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "blocked"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
 source_plan: null
 afk_hitl: "AFK"
 branch: codex/issue-0284-gross-2002-figure-9-vle-curve
-last_synced: "2026-06-19"
+last_synced: "2026-06-20"
 ---
 # M4: fully replicate Gross 2002 Figure 9 cross-associating VLE curve
 
@@ -24,8 +24,8 @@ last_synced: "2026-06-19"
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** none
 **Classification:** AFK
-**Labels:** status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
-**Goal Command:** /goal Resolve this issue using docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/279 is closed. Complete proof oracle: Figure 9 methanol/1-octanol cross-associating VLE curve retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
+**Labels:** status:blocked, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
+**Goal Command:** /goal Resolve this issue using docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/292 is closed. Complete proof oracle: Figure 9 methanol/1-octanol cross-associating VLE curve retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -56,7 +56,12 @@ Replicate the isobaric methanol/1-octanol VLE T-x plot at 1.013 bar and exercise
 
 ## Blocked by
 
-- None
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/292
+
+## Blocker Evidence
+
+- Figure 9 full replication is a cross-associating isobaric VLE curve at 1.013 bar.
+- The public source-backed associating VLE admission required to generate model curves belongs to #292, not to the Figure 9 artifact PR.
 
 ## Non-goals
 

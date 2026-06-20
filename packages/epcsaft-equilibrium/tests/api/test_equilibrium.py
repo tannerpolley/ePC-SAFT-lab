@@ -31,6 +31,10 @@ from equilibrium_support.equilibrium_cases import (
     gross_2002_associating_parameter_set,
 )
 
+GROSS_2002_FIGURE2_TEMPERATURE_K = 373.15
+GROSS_2002_FIGURE2_LIQUID_X = [0.35, 0.65]
+GROSS_2002_FIGURE2_VAPOR_Y = [0.35, 0.65]
+
 
 def test_workflow_object_is_constructed_with_problem_spec() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
@@ -546,6 +550,99 @@ def test_equilibrium_lle_admits_source_backed_gross_2002_associating_fixture() -
     assert abs(methanol_values[1] - methanol_values[0]) > 0.5
 
 
+@pytest.mark.parametrize(
+    ("parameter_builder_name", "route", "kwargs", "problem_kind"),
+    (
+        ("_gross_2002_figure2_associating_vle_parameter_set", "bubble_pressure", {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "x": GROSS_2002_FIGURE2_LIQUID_X}, "neutral_bubble_p"),
+        ("_gross_2002_figure2_associating_vle_parameter_set", "dew_pressure", {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "y": GROSS_2002_FIGURE2_VAPOR_Y}, "neutral_dew_p"),
+        ("_gross_2002_figure3_associating_vle_parameter_set", "bubble_pressure", {"T": 360.0, "x": [0.2, 0.8]}, "neutral_bubble_p"),
+        ("_gross_2002_figure3_associating_vle_parameter_set", "dew_pressure", {"T": 360.0, "y": [0.2, 0.8]}, "neutral_dew_p"),
+        ("_gross_2002_figure4_associating_vle_parameter_set", "bubble_pressure", {"T": 313.15, "x": [0.8, 0.2]}, "neutral_bubble_p"),
+        ("_gross_2002_figure4_associating_vle_parameter_set", "dew_pressure", {"T": 313.15, "y": [0.8, 0.2]}, "neutral_dew_p"),
+        ("_gross_2002_figure5_1propanol_benzene_parameter_set", "bubble_pressure", {"T": 313.15, "x": [0.7, 0.3]}, "neutral_bubble_p"),
+        ("_gross_2002_figure5_1propanol_benzene_parameter_set", "dew_pressure", {"T": 313.15, "y": [0.7, 0.3]}, "neutral_dew_p"),
+        ("_gross_2002_figure5_2propanol_benzene_parameter_set", "bubble_pressure", {"T": 313.15, "x": [0.7, 0.3]}, "neutral_bubble_p"),
+        ("_gross_2002_figure5_2propanol_benzene_parameter_set", "dew_pressure", {"T": 313.15, "y": [0.7, 0.3]}, "neutral_dew_p"),
+        ("_gross_2002_figure6_1butanol_butane_parameter_set", "bubble_pressure", {"T": 373.15, "x": [0.5, 0.5]}, "neutral_bubble_p"),
+        ("_gross_2002_figure6_1butanol_butane_parameter_set", "dew_pressure", {"T": 373.15, "y": [0.5, 0.5]}, "neutral_dew_p"),
+        ("_gross_2002_figure7_ethanol_butane_parameter_set", "bubble_pressure", {"T": 373.15, "x": [0.5, 0.5]}, "neutral_bubble_p"),
+        ("_gross_2002_figure7_ethanol_butane_parameter_set", "dew_pressure", {"T": 373.15, "y": [0.5, 0.5]}, "neutral_dew_p"),
+        ("gross_2002_associating_parameter_set", "bubble_pressure", {"T": GROSS_2002_TEMPERATURE_K, "x": GROSS_2002_LLE_FEED}, "neutral_bubble_p"),
+        ("gross_2002_associating_parameter_set", "dew_pressure", {"T": GROSS_2002_TEMPERATURE_K, "y": GROSS_2002_LLE_FEED}, "neutral_dew_p"),
+        ("_gross_2002_figure9_methanol_1octanol_parameter_set", "bubble_pressure", {"T": 393.15, "x": [0.4, 0.6]}, "neutral_bubble_p"),
+        ("_gross_2002_figure9_methanol_1octanol_parameter_set", "dew_pressure", {"T": 393.15, "y": [0.4, 0.6]}, "neutral_dew_p"),
+    ),
+)
+def test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary(
+    parameter_builder_name: str,
+    route: str,
+    kwargs: dict[str, object],
+    problem_kind: str,
+) -> None:
+    _skip_without_ipopt()
+    mixture = epcsaft.Mixture(globals()[parameter_builder_name]())
+
+    equilibrium = equilibrium_module.Equilibrium(mixture, route=route, **kwargs)
+    structure = equilibrium.structure()
+    assert structure.activation_key == "bubble_dew_derived_routes"
+    assert structure.expected_phase_keys == ("liquid", "vapor")
+
+    result = equilibrium.solve(
+        solver_options={
+            "max_iterations": 320,
+            "tolerance": 1.0e-6,
+            "ipopt_iteration_history_limit": 12,
+            "ipopt_acceptable_tolerance": 1.0e-7,
+            "ipopt_constraint_violation_tolerance": 1.0e-7,
+            "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+            "ipopt_complementarity_tolerance": 1.0e-8,
+        }
+    )
+
+    diagnostics = result.diagnostics
+    assert result.route == route
+    assert result.selector_route == route
+    assert result.problem_kind == problem_kind
+    assert result.phase_labels == ["liquid", "vapor"]
+    assert diagnostics["hessian_approximation"] == "exact"
+    assert diagnostics["exact_hessian_available"] is True
+    assert diagnostics["postsolve_accepted"] is True
+    readiness = diagnostics["parameter_readiness"]
+    assert readiness["associating_admission_proof_route"] == (
+        "associating_neutral_vle_gross_2002_figures_2_9_public_exact_hessian"
+    )
+    assert readiness["associating_admission_fixture"] == "Gross/Sadowski 2002 Figures 2-9 associating binary VLE"
+    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
+
+
+@pytest.mark.parametrize(
+    ("parameter_builder_name", "route", "kwargs"),
+    (
+        (
+            "_gross_2002_figure2_associating_vle_parameter_set",
+            "bubble_pressure",
+            {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "x": GROSS_2002_FIGURE2_LIQUID_X},
+        ),
+        (
+            "_gross_2002_figure2_associating_vle_parameter_set",
+            "dew_pressure",
+            {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "y": GROSS_2002_FIGURE2_VAPOR_Y},
+        ),
+    ),
+)
+def test_equilibrium_vle_rejects_associating_binary_without_source_backed_proof(
+    parameter_builder_name: str,
+    route: str,
+    kwargs: dict[str, object],
+) -> None:
+    with pytest.raises(epcsaft.InputError, match=r"source-backed Gross/Sadowski 2002 Figures 2-9"):
+        equilibrium_module.Equilibrium(
+            epcsaft.Mixture(globals()[parameter_builder_name](source_backed=False)),
+            route=route,
+            **kwargs,
+        )
+
+
 def test_equilibrium_multiphase_route_returns_public_three_phase_result() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
@@ -907,6 +1004,189 @@ def _ionic_associating_parameter_set() -> epcsaft.ParameterSet:
             "f_solv": np.asarray([1.5, 1.0, 1.0]),
         },
         species=["H2O", "Na+", "Cl-"],
+    )
+
+
+def _gross_2002_figure2_associating_vle_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["Methanol", "Isobutane"],
+        source="Gross/Sadowski 2002 Figure 2",
+        metadata_extra={
+            "caption_system": "methanol-isobutane",
+            "table_002_conflict": "methanol-isobutanol",
+            "pure_isobutane_source": (
+                "docs/papers/md/ePC-SAFT-Literature/"
+                "Gross, Sadowski - 2001 - PC-SAFT An equation of state based on a perturbation theory for chain molec.md"
+            ),
+        },
+        mw=[32.042e-3, 58.123e-3],
+        m=[1.5255, 2.2616],
+        s=[3.2300, 3.7574],
+        e=[188.90, 216.53],
+        e_assoc=[2899.5, 0.0],
+        vol_a=[0.035176, 0.0],
+        kij=0.05,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure3_associating_vle_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["1-Propanol", "Ethylbenzene"],
+        source="Gross/Sadowski 2002 Figure 3",
+        metadata_extra={"reference_system": "1-propanol-ethylbenzene"},
+        mw=[60.096e-3, 106.167e-3],
+        m=[2.9997, 3.0799],
+        s=[3.2522, 3.7974],
+        e=[233.40, 287.35],
+        e_assoc=[2276.8, 0.0],
+        vol_a=[0.015268, 0.0],
+        kij=0.023,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure4_associating_vle_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["1-Pentanol", "Benzene"],
+        source="Gross/Sadowski 2002 Figure 4",
+        metadata_extra={"reference_system": "1-pentanol-benzene"},
+        mw=[88.15e-3, 78.114e-3],
+        m=[3.6260, 2.4653],
+        s=[3.4508, 3.6478],
+        e=[247.28, 287.35],
+        e_assoc=[2252.1, 0.0],
+        vol_a=[0.010319, 0.0],
+        kij=0.0135,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure5_1propanol_benzene_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["1-Propanol", "Benzene"],
+        source="Gross/Sadowski 2002 Figure 5",
+        metadata_extra={"reference_system": "1-propanol-benzene"},
+        mw=[60.096e-3, 78.114e-3],
+        m=[2.9997, 2.4653],
+        s=[3.2522, 3.6478],
+        e=[233.40, 287.35],
+        e_assoc=[2276.8, 0.0],
+        vol_a=[0.015268, 0.0],
+        kij=0.020,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure5_2propanol_benzene_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["2-Propanol", "Benzene"],
+        source="Gross/Sadowski 2002 Figure 5",
+        metadata_extra={"reference_system": "2-propanol-benzene"},
+        mw=[60.096e-3, 78.114e-3],
+        m=[3.0929, 2.4653],
+        s=[3.2085, 3.6478],
+        e=[208.42, 287.35],
+        e_assoc=[2253.9, 0.0],
+        vol_a=[0.024675, 0.0],
+        kij=0.021,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure6_1butanol_butane_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["1-Butanol", "Butane"],
+        source="Gross/Sadowski 2002 Figure 6",
+        metadata_extra={
+            "reference_system": "1-butanol-n-butane",
+            "temperature_series_C": [60.0, 100.0, 160.0, 200.0],
+        },
+        mw=[74.123e-3, 58.123e-3],
+        m=[2.7515, 2.3316],
+        s=[3.6139, 3.7086],
+        e=[259.59, 222.88],
+        e_assoc=[2544.6, 0.0],
+        vol_a=[0.006692, 0.0],
+        kij=0.015,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure7_ethanol_butane_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["Ethanol", "Butane"],
+        source="Gross/Sadowski 2002 Figure 7",
+        metadata_extra={
+            "reference_system": "ethanol-n-butane",
+            "temperature_series_C": [60.0, 100.0, 160.0, 200.0],
+        },
+        mw=[46.069e-3, 58.123e-3],
+        m=[2.3827, 2.3316],
+        s=[3.1771, 3.7086],
+        e=[198.24, 222.88],
+        e_assoc=[2653.4, 0.0],
+        vol_a=[0.032384, 0.0],
+        kij=0.028,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure9_methanol_1octanol_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["Methanol", "1-Octanol"],
+        source="Gross/Sadowski 2002 Figure 9",
+        metadata_extra={"reference_system": "methanol-1-octanol"},
+        mw=[32.042e-3, 130.23e-3],
+        m=[1.5255, 4.3555],
+        s=[3.2300, 3.7145],
+        e=[188.90, 262.74],
+        e_assoc=[2899.5, 2754.8],
+        vol_a=[0.035176, 0.002197],
+        kij=0.020,
+        assoc_scheme=["2B", "2B"],
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_associating_vle_parameter_set(
+    *,
+    species: list[str],
+    source: str,
+    metadata_extra: dict[str, object],
+    mw: list[float],
+    m: list[float],
+    s: list[float],
+    e: list[float],
+    e_assoc: list[float],
+    vol_a: list[float],
+    kij: float,
+    source_backed: bool,
+    assoc_scheme: list[str | None] | None = None,
+) -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "MW": np.asarray(mw),
+            "m": np.asarray(m),
+            "s": np.asarray(s),
+            "e": np.asarray(e),
+            "e_assoc": np.asarray(e_assoc),
+            "vol_a": np.asarray(vol_a),
+            "assoc_scheme": assoc_scheme or ["2B", None],
+            "k_ij": np.asarray([[0.0, kij], [kij, 0.0]]),
+            "z": np.asarray([0.0, 0.0]),
+            "dielc": np.asarray([1.0, 1.0]),
+        },
+        species=species,
+        metadata={
+            "source": source,
+            "paper": "Gross and Sadowski 2002",
+            "table": "Gross 2002 figure caption plus Gross 2001 pure-component table",
+            "figure": source.rsplit(" ", 1)[-1],
+            "source_path": "analyses/paper_validation/2002_gross",
+            "source_backed": source_backed,
+            **metadata_extra,
+        },
     )
 
 
