@@ -76,7 +76,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [#283](../../issues/2026-06-19-m4-equilibrium-issue-0283-upgrade-gross-2002-figure-8-to-full-lle-vle-envelope-replication.md) | `ready` | `Ipopt` | `blocked` | Upgrade Figure 8 from hard-gate evidence to full LLE+VLE envelope replication after #292 opens the required VLE branch admission. |
 | [#284](../../issues/2026-06-19-m4-equilibrium-issue-0284-fully-replicate-gross-2002-figure-9-cross-associating-vle-curve.md) | `ready` | `Ipopt` | `blocked` | Fully replicate Figure 9 cross-associating VLE curve after #292 opens the required public VLE route admission. |
 | [#285](../../issues/2026-06-19-m4-equilibrium-issue-0285-upgrade-gross-2002-figure-10-to-full-vlle-lle-envelope-replication.md) | `ready` | `Ipopt` | `blocked` | Write a source plan and route-prerequisite audit before upgrading Figure 10 from stress evidence to full VLLE/LLE envelope replication. |
-| [#286](../../issues/2026-06-19-m4-equilibrium-issue-0286-complete-gross-2002-full-figure-replication-campaign.md) | `association` | `Ipopt` | `blocked` | Track full Gross 2002 Figure 1-10 completion after #280-#285 close. |
+| [#286](../../issues/2026-06-19-m4-equilibrium-issue-0286-complete-gross-2002-full-figure-replication-campaign.md) | `ready` | `Ipopt` | `blocked` | Track full Gross 2002 Figure 1-10 completion after #280-#285 close. |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #286 closes the full Gross 2002 replication campaign. |
 
 ## Queue Guard

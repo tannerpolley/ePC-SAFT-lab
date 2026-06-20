@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "association"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
 source_plan: null
 afk_hitl: "AFK"
 branch: codex/issue-0286-gross-2002-full-figure-replication-campaign
-last_synced: "2026-06-19"
+last_synced: "2026-06-20"
 ---
 # M4: complete Gross 2002 full figure replication campaign
 
@@ -24,7 +24,7 @@ last_synced: "2026-06-19"
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** none
 **Classification:** AFK
-**Labels:** status:blocked, type:feature, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
+**Labels:** status:ready, type:feature, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
 **Goal Command:** /goal Track completion of the Gross 2002 full figure replication issue set from docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md. Complete proof oracle: every child issue closed and the full-replication checker reports every Figure 1-10 accepted with retained curve-level evidence.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
