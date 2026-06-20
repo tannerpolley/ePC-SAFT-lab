@@ -1,0 +1,22 @@
+figure_id,series,accepted_system,component_order,T_K,P_bar,x_component_1,y_component_1,source_kind,source_reference,digitized_x_px,digitized_y_px,uncertainty_P_bar,uncertainty_composition
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,3.700,0.00000,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,116.000,469.264,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,6.100,0.43500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,414.410,418.192,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,13.550,0.73500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,620.210,259.656,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,18.550,0.80500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,668.230,153.256,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,20.550,0.83500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,688.810,110.696,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,21.600,0.86500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,709.390,88.352,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,22.000,0.89500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,729.970,79.840,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,21.850,0.92500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,750.550,83.032,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,21.500,0.95500,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,771.130,90.480,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,20.950,0.98000,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,788.280,102.184,0.35,0.010
+figure_02,bubble_line,methanol/isobutane,"isobutane,methanol",373.15,20.500,1.00000,,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,802.000,111.760,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,6.050,,0.00500,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,119.430,419.256,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,13.550,,0.09000,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,177.740,259.656,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,18.550,,0.25500,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,290.930,153.256,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,20.550,,0.43000,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,410.980,110.696,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,21.350,,0.67500,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,579.050,93.672,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,21.950,,0.86500,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,709.390,80.904,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,21.850,,0.89500,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,729.970,83.032,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,21.700,,0.93000,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,753.980,86.224,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,21.450,,0.96500,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,777.990,91.544,0.35,0.010
+figure_02,dew_line,methanol/isobutane,"isobutane,methanol",373.15,21.050,,0.98500,calibrated_digitization,Gross2002 Figure2 reproduced Leu Robinson 1992 markers,791.710,100.056,0.35,0.010

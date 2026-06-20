@@ -1,7 +1,7 @@
 {
   "accepted_component_order": [
-    "methanol",
-    "isobutane"
+    "isobutane",
+    "methanol"
   ],
   "accepted_system": "methanol/isobutane",
   "caption_system": "methanol-isobutane",
