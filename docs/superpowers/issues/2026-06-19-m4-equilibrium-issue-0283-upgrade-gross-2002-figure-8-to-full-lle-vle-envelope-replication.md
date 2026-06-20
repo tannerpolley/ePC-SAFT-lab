@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "association"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "blocked"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
 source_plan: null
 afk_hitl: "AFK"
 branch: codex/issue-0283-gross-2002-figure-8-envelope-replication
-last_synced: "2026-06-19"
+last_synced: "2026-06-20"
 ---
 # M4: upgrade Gross 2002 Figure 8 to full LLE+VLE envelope replication
 
@@ -24,8 +24,8 @@ last_synced: "2026-06-19"
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** none
 **Classification:** AFK
-**Labels:** status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
-**Goal Command:** /goal Resolve this issue using docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/279 is closed. Complete proof oracle: Figure 8 full methanol/cyclohexane LLE+VLE envelope retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
+**Labels:** status:blocked, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
+**Goal Command:** /goal Resolve this issue using docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/292 is closed. Complete proof oracle: Figure 8 full methanol/cyclohexane LLE+VLE envelope retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -56,7 +56,12 @@ Upgrade Figure 8 from selected LLE source-pair acceptance evidence to full isoba
 
 ## Blocked by
 
-- None
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/292
+
+## Blocker Evidence
+
+- Figure 8 full replication includes an isobaric methanol/cyclohexane VLE branch at 1.013 bar, not only the already admitted source-backed LLE branch.
+- The VLE model-generation part belongs behind #292 so this figure-replication PR does not add package/native route implementation.
 
 ## Non-goals
 

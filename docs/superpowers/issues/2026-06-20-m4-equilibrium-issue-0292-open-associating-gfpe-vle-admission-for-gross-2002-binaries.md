@@ -25,7 +25,7 @@ last_synced: "2026-06-20"
 **Source Plan:** docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md
 **Classification:** AFK
 **Labels:** agent-ready, status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native
-**Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md. Complete proof oracle: public Gross 2002 Figures 2-7 associating binary VLE bubble/dew routes accepted with exact association-Hessian evidence, existing associating LLE proof preserved, broader unproven families still rejected, docs validation, cleanup hook.
+**Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md. Complete proof oracle: public Gross 2002 Figures 2-9 associating binary VLE bubble/dew routes accepted with exact association-Hessian evidence, existing associating LLE proof preserved, broader unproven families still rejected, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -37,12 +37,12 @@ last_synced: "2026-06-20"
 ## Outcome Summary
 
 **Outcome Source:** docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md#outcome-contract
-**Intent:** Permit source-backed neutral associating binary VLE route solves needed by Gross/Sadowski 2002 Figures 2-7.
-**Target Output:** The Figure 2-7 replication workers can generate model CSVs through public equilibrium routes.
+**Intent:** Permit source-backed neutral associating binary VLE route solves needed by Gross/Sadowski 2002 Figures 2-9.
+**Target Output:** The Figure 2-9 replication workers can generate model CSVs through public equilibrium routes.
 **Owner:** `packages/epcsaft-equilibrium` selector/admission and native GFPE route metadata.
 **Interface:** Public `epcsaft_equilibrium.Equilibrium(...).solve()` bubble/dew workflows with exact association-Hessian receipts.
 **Cutover:** Replace the current VLE admission rejection for source-backed Gross 2002 associating binaries with explicit admissible route cases.
-**Replaced Path:** The #281 and #282 blocker paths where public `bubble_pressure` and `dew_pressure` reject source-backed Gross/Sadowski 2002 associating VLE before model generation.
+**Replaced Path:** The #281, #282, #283, and #284 blocker paths where public VLE routes reject source-backed Gross/Sadowski 2002 associating VLE before model generation.
 **Acceptance Proof:** Focused tests and validation probes show accepted Gross 2002 associating binary VLE solves expose exact derivative evidence and unproven broader families still reject.
 **Stop Criteria:** Stop if implementation cannot be narrowed to source-backed neutral associating binary VLE without broader generalized family exposure.
 **Avoid:** Do not add Gross 2002 figure artifacts, electrolyte/reactive admission, generalized phase-count claims, approximate derivative acceptance, or weakened diagnostics.
@@ -57,16 +57,16 @@ last_synced: "2026-06-20"
 
 ## What To Build
 
-Open the narrow production admission path that lets source-backed neutral associating binary VLE cases from Gross/Sadowski 2002 Figures 2-7 enter public `bubble_pressure` and `dew_pressure` workflows with exact association-Hessian evidence.
+Open the narrow production admission path that lets source-backed neutral associating binary VLE cases from Gross/Sadowski 2002 Figures 2-9 enter public `bubble_pressure` and `dew_pressure` workflows with exact association-Hessian evidence.
 
 ## Acceptance Criteria
 
-- [ ] Add a failing public-route test that reproduces the current `bubble_pressure` and `dew_pressure` rejection for the Gross/Sadowski 2002 Figure 2 methanol/isobutane and Figure 6 1-butanol/n-butane associating binaries.
-- [ ] Admit only source-backed neutral associating binary VLE cases needed by Gross/Sadowski 2002 Figures 2-7.
+- [ ] Add a failing public-route test that reproduces the current VLE rejection for representative Gross/Sadowski 2002 Figure 2 methanol/isobutane, Figure 6 1-butanol/n-butane, Figure 8 methanol/cyclohexane, and Figure 9 methanol/1-octanol associating binaries.
+- [ ] Admit only source-backed neutral associating binary VLE cases needed by Gross/Sadowski 2002 Figures 2-9.
 - [ ] Preserve explicit rejection for unproven broader associating, electrolyte, reactive, CE, CPE, and generalized phase-count cases.
 - [ ] Assert exact association-Hessian receipt metadata on accepted associating VLE route results.
 - [ ] Preserve the existing Gross/Sadowski 2002 associating LLE proof.
-- [ ] Leave Gross 2002 Figure 2-7 source, plot, score, and model-artifact generation to #281 and #282.
+- [ ] Leave Gross 2002 Figure 2-9 source, plot, score, and model-artifact generation to #281, #282, #283, and #284.
 
 ## Blocked by
 
@@ -76,6 +76,8 @@ Open the narrow production admission path that lets source-backed neutral associ
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/281
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/282
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/283
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/284
 
 ## Non-goals
 
