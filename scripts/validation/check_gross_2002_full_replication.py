@@ -212,6 +212,8 @@ def _accepted_record_blockers(
             blockers.append(f"gross_2002_{figure_id}_exact_association_hessian_missing")
     if figure_id == "figure_02" and record.get("source_identity_status") != "resolved":
         blockers.append("gross_2002_figure_02_source_identity_unresolved")
+    if figure_id == "figure_02" and not _path_exists(artifacts.get("source_identity_json", "")):
+        blockers.append("gross_2002_figure_02_source_identity_json_missing")
 
     return blockers
 

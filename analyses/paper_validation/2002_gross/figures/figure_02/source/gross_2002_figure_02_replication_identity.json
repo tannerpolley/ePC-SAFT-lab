@@ -1,0 +1,46 @@
+{
+  "accepted_component_order": [
+    "methanol",
+    "2-methyl-2-butanol"
+  ],
+  "accepted_system": "methanol/2-methyl-2-butanol",
+  "caption_system": "methanol-isobutane",
+  "evidence": [
+    {
+      "finding": "The retained Gross 2002 Figure 2 caption names methanol-isobutane and reports PC-SAFT k_ij = 0.05 and SAFT k_ij = 0.03 at 100 degC.",
+      "path": "analyses/paper_validation/2002_gross/docs/md/source_01_gross_2002.md"
+    },
+    {
+      "finding": "The retained Table 2 extraction maps the same k_ij values to methanol-isobutanol.",
+      "path": "analyses/paper_validation/2002_gross/tables/table_002/table_002.csv"
+    },
+    {
+      "finding": "The analysis-local binary interaction source manifest maps the PC-SAFT k_ij = 0.05 row to methanol and 2-methyl-2-butanol.",
+      "path": "analyses/paper_validation/2002_gross/parameters/mixed/binary_interaction/source_manifest.csv"
+    },
+    {
+      "finding": "The analysis-local k_ij matrix contains k_ij = 0.05 for methanol with 2-methyl-2-butanol.",
+      "path": "analyses/paper_validation/2002_gross/parameters/mixed/binary_interaction/k_ij.csv"
+    },
+    {
+      "finding": "Gross 2002 Table 1 retains pure PC-SAFT parameters for 2-methyl-2-butanol, while no isobutane or isobutanol pure-parameter row is retained in the analysis snapshot.",
+      "path": "analyses/paper_validation/2002_gross/tables/table_001/table_001.csv"
+    }
+  ],
+  "figure_id": "figure_02",
+  "parameter_snapshot_system": "methanol/2-methyl-2-butanol",
+  "pc_saft_k_ij": 0.05,
+  "rejected_systems": [
+    {
+      "reason": "Caption-only identity conflicts with Table 2 and the analysis-local parameter snapshot.",
+      "system": "methanol/isobutane"
+    },
+    {
+      "reason": "Retained Table 2 text says isobutanol, but the analysis-local parameter snapshot resolves the row to 2-methyl-2-butanol and retains no isobutanol pure-parameter row.",
+      "system": "methanol/isobutanol"
+    }
+  ],
+  "resolution_reason": "Accepted methanol/2-methyl-2-butanol because the Figure 2 caption k_ij values match the retained Table 2 row, and the analysis-local parameter snapshot resolves that row to the retained pure component 2-methyl-2-butanol. The caption system methanol-isobutane and Table 2 label methanol-isobutanol are treated as conflicting labels, not accepted component identities.",
+  "saft_k_ij": 0.03,
+  "table_002_system": "methanol-isobutanol"
+}

@@ -65,21 +65,23 @@
     },
     {
       "acceptance_threshold": 7.0,
+      "artifacts": {
+        "source_identity_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_identity.json"
+      },
       "counts_toward_completion": false,
       "figure_id": "figure_02",
       "paper_plot_type": "isothermal VLE P-x/y",
       "planned_artifact_stem": "gross_2002_figure_02_replication",
       "plot_family": "vle",
       "remaining_work": [
-        "resolve methanol-isobutane caption versus methanol-isobutanol Table 2 identity",
         "retain source or digitized pressure-composition data at 100 degC",
         "generate matching PC-SAFT VLE pressure-composition curves"
       ],
       "replication_status": "planned",
       "requires_exact_association_hessian": true,
-      "source_identity_status": "unresolved",
+      "source_identity_status": "resolved",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/paper_source_01_gross_2002_figure_002.png",
-      "system": "methanol-isobutane caption versus methanol-isobutanol Table 2 row"
+      "system": "methanol/2-methyl-2-butanol"
     },
     {
       "acceptance_threshold": 7.0,
