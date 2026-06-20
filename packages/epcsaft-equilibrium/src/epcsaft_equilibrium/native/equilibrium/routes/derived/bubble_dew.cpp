@@ -1166,8 +1166,17 @@ bool route_all_zero_or_empty(const std::vector<double>& values) {
     });
 }
 
-bool route_has_gross_2002_figure2_associating_vle_proof(const add_args& args) {
-    if (args.parameter_source_label != "Gross/Sadowski 2002 Figure 2") {
+bool route_has_gross_2002_associating_vle_case(
+    const add_args& args,
+    const char* source_label,
+    const std::vector<double>& expected_m,
+    const std::vector<double>& expected_s,
+    const std::vector<double>& expected_e,
+    const std::vector<double>& expected_e_assoc,
+    const std::vector<double>& expected_vol_a,
+    const std::vector<double>& expected_kij
+) {
+    if (args.parameter_source_label != source_label) {
         return false;
     }
     if (args.parameter_provenance_status != "source_backed_parameter_metadata"
@@ -1183,11 +1192,11 @@ bool route_has_gross_2002_figure2_associating_vle_proof(const add_args& args) {
     ) {
         return false;
     }
-    if (!route_vector_close_to(args.m, {1.5255, 2.2616})
-        || !route_vector_close_to(args.s, {3.2300, 3.7574})
-        || !route_vector_close_to(args.e, {188.90, 216.53})
-        || !route_vector_close_to(args.e_assoc, {2899.5, 0.0})
-        || !route_vector_close_to(args.vol_a, {0.035176, 0.0})
+    if (!route_vector_close_to(args.m, expected_m)
+        || !route_vector_close_to(args.s, expected_s)
+        || !route_vector_close_to(args.e, expected_e)
+        || !route_vector_close_to(args.e_assoc, expected_e_assoc)
+        || !route_vector_close_to(args.vol_a, expected_vol_a)
         || args.assoc_num != std::vector<int>({2, 0})
         || !route_vector_close_to(
             std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
@@ -1198,8 +1207,8 @@ bool route_has_gross_2002_figure2_associating_vle_proof(const add_args& args) {
     }
     if (args.k_ij.size() != 4
         || !route_close_to(args.k_ij[0], 0.0, 1.0e-12)
-        || !route_close_to(args.k_ij[1], 0.05, 1.0e-12)
-        || !route_close_to(args.k_ij[2], 0.05, 1.0e-12)
+        || !route_close_to(args.k_ij[1], expected_kij[1], 1.0e-12)
+        || !route_close_to(args.k_ij[2], expected_kij[2], 1.0e-12)
         || !route_close_to(args.k_ij[3], 0.0, 1.0e-12)) {
         return false;
     }
@@ -1208,6 +1217,59 @@ bool route_has_gross_2002_figure2_associating_vle_proof(const add_args& args) {
         && route_all_zero_or_empty(args.l_ij)
         && route_all_zero_or_empty(args.d_born)
         && route_all_zero_or_empty(args.f_solv);
+}
+
+bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
+    return route_has_gross_2002_associating_vle_case(
+               args,
+               "Gross/Sadowski 2002 Figure 2",
+               {1.5255, 2.2616},
+               {3.2300, 3.7574},
+               {188.90, 216.53},
+               {2899.5, 0.0},
+               {0.035176, 0.0},
+               {0.0, 0.05, 0.05, 0.0}
+           )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 3",
+            {2.9997, 3.0799},
+            {3.2522, 3.7974},
+            {233.40, 287.35},
+            {2276.8, 0.0},
+            {0.015268, 0.0},
+            {0.0, 0.023, 0.023, 0.0}
+        )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 4",
+            {3.6260, 2.4653},
+            {3.4508, 3.6478},
+            {247.28, 287.35},
+            {2252.1, 0.0},
+            {0.010319, 0.0},
+            {0.0, 0.0135, 0.0135, 0.0}
+        )
+        || route_has_gross_2002_associating_vle_case(
+               args,
+               "Gross/Sadowski 2002 Figure 5",
+               {2.9997, 2.4653},
+               {3.2522, 3.6478},
+               {233.40, 287.35},
+               {2276.8, 0.0},
+               {0.015268, 0.0},
+               {0.0, 0.020, 0.020, 0.0}
+           )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 5",
+            {3.0929, 2.4653},
+            {3.2085, 3.6478},
+            {208.42, 287.35},
+            {2253.9, 0.0},
+            {0.024675, 0.0},
+            {0.0, 0.021, 0.021, 0.0}
+        );
 }
 
 bool route_supports_exact_phase_derivatives(const add_args& args, const std::string& problem_name) {
@@ -1219,7 +1281,7 @@ bool route_supports_exact_phase_derivatives(const add_args& args, const std::str
     }
     if (
         (problem_name == "neutral_bubble_p_eos" || problem_name == "neutral_dew_p_eos")
-        && route_has_gross_2002_figure2_associating_vle_proof(args)
+        && route_has_gross_2002_associating_vle_proof(args)
     ) {
         return true;
     }

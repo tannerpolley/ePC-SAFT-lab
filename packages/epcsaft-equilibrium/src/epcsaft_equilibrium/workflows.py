@@ -418,6 +418,68 @@ class EquilibriumStructure:
 
 _EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = EQUILIBRIUM_ROUTE_SPECS
 _GROSS_2002_PARAMETER_SOURCE_LABEL = "Gross/Sadowski 2002 Figure 8"
+_GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 2",
+        "vectors": {
+            "m": [1.5255, 2.2616],
+            "s": [3.2300, 3.7574],
+            "e": [188.90, 216.53],
+            "e_assoc": [2899.5, 0.0],
+            "vol_a": [0.035176, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.05], [0.05, 0.0]],
+    },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 3",
+        "vectors": {
+            "m": [2.9997, 3.0799],
+            "s": [3.2522, 3.7974],
+            "e": [233.40, 287.35],
+            "e_assoc": [2276.8, 0.0],
+            "vol_a": [0.015268, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.023], [0.023, 0.0]],
+    },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 4",
+        "vectors": {
+            "m": [3.6260, 2.4653],
+            "s": [3.4508, 3.6478],
+            "e": [247.28, 287.35],
+            "e_assoc": [2252.1, 0.0],
+            "vol_a": [0.010319, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.0135], [0.0135, 0.0]],
+    },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 5",
+        "vectors": {
+            "m": [2.9997, 2.4653],
+            "s": [3.2522, 3.6478],
+            "e": [233.40, 287.35],
+            "e_assoc": [2276.8, 0.0],
+            "vol_a": [0.015268, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.020], [0.020, 0.0]],
+    },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 5",
+        "vectors": {
+            "m": [3.0929, 2.4653],
+            "s": [3.2085, 3.6478],
+            "e": [208.42, 287.35],
+            "e_assoc": [2253.9, 0.0],
+            "vol_a": [0.024675, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.021], [0.021, 0.0]],
+    },
+)
 
 
 def configure_equilibrium_problem(
@@ -1050,7 +1112,7 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         return
     if route_label == "lle" and _has_gross_2002_associating_lle_proof(parameters):
         return
-    if route_label in {"bubble_pressure", "dew_pressure"} and _has_gross_2002_figure2_associating_vle_proof(
+    if route_label in {"bubble_pressure", "dew_pressure"} and _has_gross_2002_associating_vle_proof(
         parameters
     ):
         return
@@ -1060,8 +1122,9 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
             "neutral two-phase LLE exact-Hessian proof."
         )
     raise InputError(
-        f"Production {route_label} associating GFPE admission only admits the source-backed "
-        "Gross/Sadowski 2002 neutral two-phase LLE proof; this route remains closed for associating inputs."
+        f"Production {route_label} associating GFPE admission only admits the source-backed Gross/Sadowski 2002 "
+        "Figures 2-5 neutral binary VLE proofs or the Figure 8 neutral two-phase LLE proof; this route remains "
+        "closed for associating inputs."
     )
 
 
@@ -1114,8 +1177,10 @@ def _has_gross_2002_associating_lle_proof(parameters: Mapping[str, Any]) -> bool
     return z.size == 0 or np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12)
 
 
-def _has_gross_2002_figure2_associating_vle_proof(parameters: Mapping[str, Any]) -> bool:
-    if parameters.get("_parameter_source_label") != "Gross/Sadowski 2002 Figure 2":
+def _has_gross_2002_associating_vle_proof(parameters: Mapping[str, Any]) -> bool:
+    source_label = parameters.get("_parameter_source_label")
+    matching_cases = [case for case in _GROSS_2002_ASSOCIATING_VLE_CASES if case["source_label"] == source_label]
+    if not matching_cases:
         return False
     if parameters.get("_parameter_provenance_status") != "source_backed_parameter_metadata":
         return False
@@ -1124,26 +1189,26 @@ def _has_gross_2002_figure2_associating_vle_proof(parameters: Mapping[str, Any])
     fields = {str(field) for field in parameters.get("_parameter_provenance_fields", ())}
     if {"source", "paper", "table", "figure", "source_path"} - fields:
         return False
-    expected_vectors = {
-        "m": [1.5255, 2.2616],
-        "s": [3.2300, 3.7574],
-        "e": [188.90, 216.53],
-        "e_assoc": [2899.5, 0.0],
-        "vol_a": [0.035176, 0.0],
-        "assoc_num": [2, 0],
-    }
-    for key, expected in expected_vectors.items():
-        actual = np.asarray(parameters.get(key, []), dtype=float).flatten()
-        if actual.shape != (len(expected),) or not np.allclose(actual, np.asarray(expected), rtol=0.0, atol=1.0e-10):
-            return False
     assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
     if assoc_matrix.shape != (4,) or not np.allclose(assoc_matrix, [0.0, 1.0, 1.0, 0.0], rtol=0.0, atol=1.0e-12):
         return False
-    k_ij = np.asarray(parameters.get("k_ij", []), dtype=float)
-    if k_ij.shape != (2, 2) or not np.allclose(k_ij, [[0.0, 0.05], [0.05, 0.0]], rtol=0.0, atol=1.0e-12):
-        return False
     z = np.asarray(parameters.get("z", []), dtype=float).flatten()
-    return z.size == 0 or np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12)
+    if z.size and not np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12):
+        return False
+    k_ij = np.asarray(parameters.get("k_ij", []), dtype=float)
+    for case in matching_cases:
+        expected_vectors = case["vectors"]
+        if any(
+            (
+                actual := np.asarray(parameters.get(key, []), dtype=float).flatten()
+            ).shape != (len(expected),)
+            or not np.allclose(actual, np.asarray(expected), rtol=0.0, atol=1.0e-10)
+            for key, expected in expected_vectors.items()
+        ):
+            continue
+        if k_ij.shape == (2, 2) and np.allclose(k_ij, np.asarray(case["k_ij"], dtype=float), rtol=0.0, atol=1.0e-12):
+            return True
+    return False
 
 
 def _json_like(value: Any) -> Any:
