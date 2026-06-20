@@ -201,8 +201,30 @@ def _accepted_record_blockers(
             if not branch_token:
                 continue
             if branch_token not in branch_scores:
-                sanitized = "".join(character if character.isalnum() else "_" for character in branch_token).strip("_")
-                blockers.append(f"gross_2002_{figure_id}_required_branch_{sanitized}_missing")
+                blockers.append(f"gross_2002_{figure_id}_required_branch_{_blocker_token(branch_token)}_missing")
+        series_scores = score.get("series_scores", {})
+        if not isinstance(series_scores, dict):
+            series_scores = {}
+        for series_key in record.get("required_series", []):
+            series_token = str(series_key).strip()
+            if not series_token:
+                continue
+            if series_token not in series_scores:
+                blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_missing")
+                continue
+            series_score = series_scores.get(series_token, {})
+            if not isinstance(series_score, dict):
+                blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_invalid")
+                continue
+            threshold = _record_threshold(record)
+            normalized_series_score = _as_float(series_score.get("normalized_plot_score"), default=-1.0)
+            if normalized_series_score < threshold or series_score.get("pass") is not True:
+                blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_score_below_threshold")
+            if _as_float(series_score.get("branch_coverage_score"), default=-1.0) != 1.0:
+                blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_coverage_incomplete")
+            requires_exact = bool(record.get("requires_exact_association_hessian")) or require_exact_association_hessian
+            if requires_exact and series_score.get("derivative_status") != "verified_exact":
+                blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_exact_association_hessian_missing")
         threshold = _record_threshold(record)
         normalized_score = _as_float(score.get("normalized_plot_score"), default=-1.0)
         if normalized_score < threshold or score.get("pass") is not True:
@@ -216,6 +238,10 @@ def _accepted_record_blockers(
         blockers.append("gross_2002_figure_02_source_identity_json_missing")
 
     return blockers
+
+
+def _blocker_token(value: str) -> str:
+    return "".join(character if character.isalnum() else "_" for character in value).strip("_")
 
 
 def _as_float(value: Any, *, default: float) -> float:

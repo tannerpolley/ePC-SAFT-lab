@@ -79,6 +79,10 @@
       ],
       "replication_status": "planned",
       "requires_exact_association_hessian": true,
+      "required_series": [
+        "bubble_line",
+        "dew_line"
+      ],
       "source_identity_status": "resolved",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/paper_source_01_gross_2002_figure_002.png",
       "system": "methanol/2-methyl-2-butanol"
@@ -97,6 +101,10 @@
       ],
       "replication_status": "planned",
       "requires_exact_association_hessian": true,
+      "required_series": [
+        "pressure_series_low",
+        "pressure_series_high"
+      ],
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_03/source/paper_source_01_gross_2002_figure_003.png",
       "system": "1-propanol/ethylbenzene"
     },
@@ -114,6 +122,10 @@
       ],
       "replication_status": "planned",
       "requires_exact_association_hessian": true,
+      "required_series": [
+        "bubble_line",
+        "dew_line"
+      ],
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_04/source/paper_source_01_gross_2002_figure_004.png",
       "system": "1-pentanol/benzene"
     },
@@ -131,6 +143,10 @@
       ],
       "replication_status": "planned",
       "requires_exact_association_hessian": true,
+      "required_series": [
+        "1-propanol-benzene",
+        "2-propanol-benzene"
+      ],
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_05/source/paper_source_01_gross_2002_figure_005.png",
       "system": "1-propanol/benzene and 2-propanol/benzene"
     },
