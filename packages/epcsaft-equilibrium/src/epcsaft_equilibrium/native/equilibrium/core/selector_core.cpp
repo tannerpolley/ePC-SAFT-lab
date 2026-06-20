@@ -13,10 +13,15 @@ namespace {
 
 const char* kGross2002AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_public_exact_hessian";
 const char* kGross2002AssociatingLleFixture = "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane";
+const char* kGross2002Figure10AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian";
+const char* kGross2002Figure10AssociatingLleFixture = "Gross/Sadowski 2002 Figure 10 water-1-pentanol";
 const char* kGross2002AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figures_2_9_public_exact_hessian";
 const char* kGross2002AssociatingVleFixture = "Gross/Sadowski 2002 Figures 2-9 associating binary VLE";
+const char* kGross2002Figure10AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian";
+const char* kGross2002Figure10AssociatingVleFixture = "Gross/Sadowski 2002 Figure 10 water-1-pentanol upper VLLE/VLE boundary";
 const char* kGross2002AssociatingBackend = "cppad_implicit_association";
 const char* kGross2002Figure8ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
+const char* kGross2002Figure10ParameterSourceLabel = "Gross/Sadowski 2002 Figure 10";
 const char* kGross2002Figure2ParameterSourceLabel = "Gross/Sadowski 2002 Figure 2";
 const char* kGross2002Figure3ParameterSourceLabel = "Gross/Sadowski 2002 Figure 3";
 const char* kGross2002Figure4ParameterSourceLabel = "Gross/Sadowski 2002 Figure 4";
@@ -224,6 +229,47 @@ bool gross_2002_vle_case_parameter_fingerprint_matches(
         && all_zero_or_empty(args.f_solv);
 }
 
+bool gross_2002_figure10_parameter_fingerprint_matches(const add_args& args) {
+    if (args.m.size() != 2 || args.s.size() != 2 || args.e.size() != 2) {
+        return false;
+    }
+    if (!vector_close_to(args.m, {1.0656, 3.6260})
+        || !vector_close_to(args.s, {3.0007, 3.4508})
+        || !vector_close_to(args.e, {366.51, 247.28})
+        || !vector_close_to(args.e_assoc, {2500.7, 2252.1})
+        || !vector_close_to(args.vol_a, {0.034868, 0.010319})) {
+        return false;
+    }
+    if (!int_vector_equals(args.assoc_num, {2, 2})) {
+        return false;
+    }
+    if (!vector_close_to(
+            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
+            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
+            1.0e-12
+        )) {
+        return false;
+    }
+    if (args.k_ij.size() != 4
+        || !close_to(args.k_ij[0], 0.0, 1.0e-12)
+        || !close_to(args.k_ij[1], 0.016, 1.0e-12)
+        || !close_to(args.k_ij[2], 0.016, 1.0e-12)
+        || !close_to(args.k_ij[3], 0.0, 1.0e-12)) {
+        return false;
+    }
+    const bool zero_or_empty_fsolv = all_zero_or_empty(args.f_solv) || vector_close_to(args.f_solv, {1.0, 1.0}, 1.0e-12);
+    return all_zero_or_empty(args.z)
+        && all_zero_or_empty(args.k_hb)
+        && all_zero_or_empty(args.l_ij)
+        && all_zero_or_empty(args.d_born)
+        && zero_or_empty_fsolv;
+}
+
+bool has_gross_2002_figure10_associating_lle_proof(const add_args& args) {
+    return gross_2002_source_backed_metadata_present(args, kGross2002Figure10ParameterSourceLabel)
+        && gross_2002_figure10_parameter_fingerprint_matches(args);
+}
+
 bool has_gross_2002_associating_vle_proof(const add_args& args) {
     if (!gross_2002_source_backed_metadata_present(args, args.parameter_source_label)) {
         return false;
@@ -343,6 +389,9 @@ bool has_gross_2002_associating_vle_proof(const add_args& args) {
             {0.0, 0.020, 0.020, 0.0}
         );
     }
+    if (args.parameter_source_label == kGross2002Figure10ParameterSourceLabel) {
+        return gross_2002_figure10_parameter_fingerprint_matches(args);
+    }
     return false;
 }
 
@@ -457,7 +506,7 @@ void require_eligible_input(
         && classification.nonelectrolyte
         && !classification.nonassociating
     ) {
-        if (has_gross_2002_associating_lle_proof(args)) {
+        if (has_gross_2002_associating_lle_proof(args) || has_gross_2002_figure10_associating_lle_proof(args)) {
             classification.active_family_markers.insert(
                 classification.active_family_markers.begin(),
                 "associating_neutral_lle_proven"
@@ -472,7 +521,8 @@ void require_eligible_input(
     throw ValueError(
         "selector-ineligible: production selector routes support only neutral, non-reactive, "
         "non-electrolyte, non-associating mixtures except source-backed Gross/Sadowski 2002 "
-        "Figures 2-9 bubble/dew VLE and neutral two-phase LLE proof inputs."
+        "Figures 2-9 bubble/dew VLE, Figure 10 bubble/dew or neutral two-phase LLE, and Figure 8 neutral two-phase "
+        "LLE proof inputs."
     );
 }
 
@@ -652,9 +702,19 @@ SelectorParameterReadiness evaluate_parameter_readiness(
         out.associating_admission_fixture = kGross2002AssociatingLleFixture;
         out.associating_admission_backend = kGross2002AssociatingBackend;
     }
+    if (activation.key == "neutral_lle" && has_gross_2002_figure10_associating_lle_proof(args)) {
+        out.associating_admission_proof_route = kGross2002Figure10AssociatingLleProofRoute;
+        out.associating_admission_fixture = kGross2002Figure10AssociatingLleFixture;
+        out.associating_admission_backend = kGross2002AssociatingBackend;
+    }
     if (activation.key == "bubble_dew_derived_routes" && has_gross_2002_associating_vle_proof(args)) {
-        out.associating_admission_proof_route = kGross2002AssociatingVleProofRoute;
-        out.associating_admission_fixture = kGross2002AssociatingVleFixture;
+        if (args.parameter_source_label == kGross2002Figure10ParameterSourceLabel) {
+            out.associating_admission_proof_route = kGross2002Figure10AssociatingVleProofRoute;
+            out.associating_admission_fixture = kGross2002Figure10AssociatingVleFixture;
+        } else {
+            out.associating_admission_proof_route = kGross2002AssociatingVleProofRoute;
+            out.associating_admission_fixture = kGross2002AssociatingVleFixture;
+        }
         out.associating_admission_backend = kGross2002AssociatingBackend;
     }
     return out;

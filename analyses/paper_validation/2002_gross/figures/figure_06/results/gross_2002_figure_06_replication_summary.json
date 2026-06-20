@@ -1,0 +1,102 @@
+{
+  "derivative_status": "verified_exact",
+  "figure_id": "figure_06",
+  "model_row_count": 31,
+  "native_freshness": "fresh_native",
+  "native_freshness_receipt": {
+    "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+    "checker_command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/validation/check_gross_2002_full_replication.py",
+      "--json",
+      "--require-exact-association-hessian",
+      "--require-fresh-native"
+    ],
+    "git_commit": "7ada3075e76a1ab0b23ab883840cb723d69c9a24",
+    "native_module_name": "epcsaft_equilibrium._native_core",
+    "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+  },
+  "normalized_plot_score": 8.923142039800089,
+  "pc_saft_kij": 0.015,
+  "series_scores": {
+    "T_100C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.6264643676041928,
+        "x_butane": 0.0
+      },
+      "model_point_count": 8,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.357244585242883,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.3856532488542702,
+        "x_butane": 0.0
+      },
+      "source_point_count": 8
+    },
+    "T_160C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 1.2361155962488226,
+        "x_butane": 0.0
+      },
+      "model_point_count": 8,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 8.923142039800089,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.6461147761199468,
+        "x_butane": 0.0
+      },
+      "source_point_count": 8
+    },
+    "T_200C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.7821448243165889,
+        "x_butane": 0.0
+      },
+      "model_point_count": 6,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.218732697252394,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.4687603816485637,
+        "x_butane": 0.0
+      },
+      "source_point_count": 6
+    },
+    "T_60C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.22931656547257617,
+        "x_butane": 0.0
+      },
+      "model_point_count": 9,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.751206185430792,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.14927628874152502,
+        "x_butane": 0.0
+      },
+      "source_point_count": 9
+    }
+  },
+  "source_row_count": 31,
+  "system": "1-butanol/n-butane",
+  "temperature_series_C": [
+    60.0,
+    100.0,
+    160.0,
+    200.0
+  ]
+}

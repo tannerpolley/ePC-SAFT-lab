@@ -1,11 +1,11 @@
 series,source_role,system,P_bar,T_C,T_K,x_1_propanol,y_1_propanol,route,problem_kind,route_status,solver_status,hessian_approximation,exact_hessian_available,postsolve_accepted,hessian_backend,iteration_count
 pressure_series_high,bubble_curve,1-propanol/ethylbenzene,1.013,136.2522009636678,409.4022009636678,0.0,1.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,10
-pressure_series_high,bubble_curve,1-propanol/ethylbenzene,1.013,101.09199532929426,374.24199532929424,0.72,0.8272027376853834,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,9
+pressure_series_high,bubble_curve,1-propanol/ethylbenzene,1.013,99.7015155090549,372.8515155090549,0.72,0.82602102263859,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,4
 pressure_series_high,bubble_curve,1-propanol/ethylbenzene,1.013,97.04311388853625,370.19311388853623,1.0,1.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,9
 pressure_series_high,dew_curve,1-propanol/ethylbenzene,1.013,136.2522009636678,409.4022009636678,1.0,0.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,10
 pressure_series_high,dew_curve,1-propanol/ethylbenzene,1.013,97.04311388853625,370.19311388853623,1.0,1.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,9
 pressure_series_low,bubble_curve,1-propanol/ethylbenzene,0.4,104.7114558536652,377.8614558536652,0.0,1.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,8
-pressure_series_low,bubble_curve,1-propanol/ethylbenzene,0.4,74.27149669888172,347.4214966988817,0.72,0.7993082478225442,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,7
+pressure_series_low,bubble_curve,1-propanol/ethylbenzene,0.4,74.27149643270013,347.4214964327001,0.72,0.7993082475495958,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,4
 pressure_series_low,bubble_curve,1-propanol/ethylbenzene,0.4,74.344812720079,347.494812720079,1.0,1.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,8
 pressure_series_low,dew_curve,1-propanol/ethylbenzene,0.4,104.7114558536652,377.8614558536652,1.0,0.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,8
 pressure_series_low,dew_curve,1-propanol/ethylbenzene,0.4,74.344812720079,347.494812720079,1.0,1.0,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,8

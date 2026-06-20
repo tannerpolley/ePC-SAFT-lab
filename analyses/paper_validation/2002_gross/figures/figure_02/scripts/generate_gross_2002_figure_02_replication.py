@@ -365,7 +365,7 @@ def _score(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) 
             "normalized_plot_score": score,
             "branch_coverage_score": 1.0,
             "derivative_status": "verified_exact",
-            "pass": score >= 7.0,
+            "pass": score >= 8.0,
         }
         all_errors.extend(errors)
 
@@ -380,7 +380,7 @@ def _score(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) 
         "normalized_plot_score": normalized_score,
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "pass": normalized_score >= 7.0,
+        "pass": normalized_score >= 8.0,
         "series_scores": series_scores,
         "score_basis": "pressure-coordinate RMSE against calibrated Gross 2002 Figure 2 digitized P-x/y source points",
     }

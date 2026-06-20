@@ -616,6 +616,45 @@ def test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary(
 
 
 @pytest.mark.parametrize(
+    ("temperature_k", "x_butane"),
+    (
+        (433.15, 0.46),
+        (473.15, 0.24),
+    ),
+)
+def test_equilibrium_vle_admits_supercritical_figure6_branch_points(
+    temperature_k: float,
+    x_butane: float,
+) -> None:
+    _skip_without_ipopt()
+    mixture = epcsaft.Mixture(_gross_2002_figure6_1butanol_butane_parameter_set())
+
+    result = equilibrium_module.Equilibrium(
+        mixture,
+        route="bubble_pressure",
+        T=temperature_k,
+        x=[1.0 - x_butane, x_butane],
+    ).solve(
+        solver_options={
+            "max_iterations": 320,
+            "tolerance": 1.0e-6,
+            "ipopt_iteration_history_limit": 12,
+            "ipopt_acceptable_tolerance": 1.0e-7,
+            "ipopt_constraint_violation_tolerance": 1.0e-7,
+            "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+            "ipopt_complementarity_tolerance": 1.0e-8,
+        }
+    )
+
+    diagnostics = result.diagnostics
+    assert result.route == "bubble_pressure"
+    assert result.problem_kind == "neutral_bubble_p"
+    assert diagnostics["hessian_approximation"] == "exact"
+    assert diagnostics["exact_hessian_available"] is True
+    assert diagnostics["postsolve_accepted"] is True
+
+
+@pytest.mark.parametrize(
     ("parameter_builder_name", "route", "kwargs"),
     (
         (

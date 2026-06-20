@@ -1,0 +1,7 @@
+figure_id: figure_07
+png: analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.png
+svg: analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.svg
+x_axis: x_butane
+y_axis: pressure_bar
+matplotlib_backend: Agg
+style: paper-scale P-x_Butane overlay with retained source markers and public-route PC-SAFT curves

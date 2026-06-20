@@ -15,6 +15,7 @@ from equilibrium_support.equilibrium_cases import (
     GROSS_2002_PRESSURE_PA,
     GROSS_2002_TEMPERATURE_K,
     gross_2002_associating_public_mixture,
+    gross_2002_figure10_public_mixture,
     _ionic_mixture,
     _methanol_cyclohexane_mixture,
     _neutral_binary_mixture,
@@ -354,6 +355,51 @@ def test_selector_core_rejects_gross_2002_associating_lle_without_source_proof()
                 "composition_role": "feed",
             },
         )
+
+
+def test_selector_core_admits_source_backed_gross_2002_figure10_associating_lle_contract() -> None:
+    mix = gross_2002_figure10_public_mixture()
+
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "neutral_lle",
+            "temperature": 337.15,
+            "pressure": GROSS_2002_PRESSURE_PA,
+            "composition": [0.70, 0.30],
+            "composition_role": "feed",
+        },
+    )
+
+    readiness = payload["parameter_readiness"]
+    assert readiness["associating_admission_proof_route"] == (
+        "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian"
+    )
+    assert readiness["associating_admission_fixture"] == "Gross/Sadowski 2002 Figure 10 water-1-pentanol"
+    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
+
+
+def test_selector_core_admits_source_backed_gross_2002_figure10_associating_vle_contract() -> None:
+    mix = gross_2002_figure10_public_mixture()
+
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "dew_pressure",
+            "temperature": 381.15,
+            "composition": [0.73, 0.27],
+            "composition_role": "vapor",
+        },
+    )
+
+    readiness = payload["parameter_readiness"]
+    assert readiness["associating_admission_proof_route"] == (
+        "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian"
+    )
+    assert readiness["associating_admission_fixture"] == (
+        "Gross/Sadowski 2002 Figure 10 water-1-pentanol upper VLLE/VLE boundary"
+    )
+    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
 
 
 def test_selector_core_rejects_ionic_lle_before_solver_dispatch() -> None:

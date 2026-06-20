@@ -528,6 +528,19 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
         "assoc_matrix": [0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0],
         "k_ij": [[0.0, 0.020], [0.020, 0.0]],
     },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 10",
+        "vectors": {
+            "m": [1.0656, 3.6260],
+            "s": [3.0007, 3.4508],
+            "e": [366.51, 247.28],
+            "e_assoc": [2500.7, 2252.1],
+            "vol_a": [0.034868, 0.010319],
+            "assoc_num": [2, 2],
+        },
+        "assoc_matrix": [0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0],
+        "k_ij": [[0.0, 0.016], [0.016, 0.0]],
+    },
 )
 
 
@@ -1159,7 +1172,10 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         return
     if route_label == "single_component_vle" and _has_pure_2b_single_component_vle_association_proof(parameters):
         return
-    if route_label == "lle" and _has_gross_2002_associating_lle_proof(parameters):
+    if route_label == "lle" and (
+        _has_gross_2002_associating_lle_proof(parameters)
+        or _has_gross_2002_figure10_associating_lle_proof(parameters)
+    ):
         return
     if route_label in {"bubble_pressure", "dew_pressure"} and _has_gross_2002_associating_vle_proof(
         parameters
@@ -1172,7 +1188,8 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         )
     raise InputError(
         f"Production {route_label} associating GFPE admission only admits the source-backed Gross/Sadowski 2002 "
-        "Figures 2-9 neutral binary VLE proofs or the Figure 8 neutral two-phase LLE proof; this route remains "
+        "Figures 2-9 neutral binary VLE proofs, the Figure 8 neutral two-phase LLE proof, or the Figure 10 "
+        "water-1-pentanol proof fixture; this route remains "
         "closed for associating inputs."
     )
 
@@ -1224,6 +1241,47 @@ def _has_gross_2002_associating_lle_proof(parameters: Mapping[str, Any]) -> bool
         return False
     z = np.asarray(parameters.get("z", []), dtype=float).flatten()
     return z.size == 0 or np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12)
+
+
+def _has_gross_2002_figure10_associating_lle_proof(parameters: Mapping[str, Any]) -> bool:
+    if parameters.get("_parameter_source_label") != "Gross/Sadowski 2002 Figure 10":
+        return False
+    if parameters.get("_parameter_provenance_status") != "source_backed_parameter_metadata":
+        return False
+    if parameters.get("_binary_interaction_provenance_status") != "explicit_binary_records":
+        return False
+    fields = {str(field) for field in parameters.get("_parameter_provenance_fields", ())}
+    if {"source", "paper", "table", "figure", "source_path"} - fields:
+        return False
+    expected_vectors = {
+        "m": [1.0656, 3.6260],
+        "s": [3.0007, 3.4508],
+        "e": [366.51, 247.28],
+        "e_assoc": [2500.7, 2252.1],
+        "vol_a": [0.034868, 0.010319],
+        "assoc_num": [2, 2],
+    }
+    for key, expected in expected_vectors.items():
+        actual = np.asarray(parameters.get(key, []), dtype=float).flatten()
+        if actual.shape != (len(expected),) or not np.allclose(actual, np.asarray(expected), rtol=0.0, atol=1.0e-10):
+            return False
+    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
+    if assoc_matrix.shape != (16,) or not np.allclose(
+        assoc_matrix,
+        [0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0],
+        rtol=0.0,
+        atol=1.0e-12,
+    ):
+        return False
+    k_ij = np.asarray(parameters.get("k_ij", []), dtype=float)
+    if k_ij.shape != (2, 2) or not np.allclose(k_ij, [[0.0, 0.016], [0.016, 0.0]], rtol=0.0, atol=1.0e-12):
+        return False
+    z = np.asarray(parameters.get("z", []), dtype=float).flatten()
+    f_solv = np.asarray(parameters.get("f_solv", []), dtype=float).flatten()
+    f_solv_ok = f_solv.size == 0 or np.allclose(f_solv, 0.0, rtol=0.0, atol=1.0e-12) or np.allclose(
+        f_solv, 1.0, rtol=0.0, atol=1.0e-12
+    )
+    return (z.size == 0 or np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12)) and f_solv_ok
 
 
 def _has_gross_2002_associating_vle_proof(parameters: Mapping[str, Any]) -> bool:

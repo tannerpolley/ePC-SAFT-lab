@@ -1,0 +1,65 @@
+dataset,series,T_K,P_bar,x_butane,y_butane,source_reference
+retained_source,T_100C,373.15,5.0578512396694215,0.048104956268221574,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,7.041322314049586,0.09183673469387756,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,9.12396694214876,0.15014577259475217,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,11.40495867768595,0.24489795918367346,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,12.793388429752067,0.33819241982507287,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,13.68595041322314,0.4329446064139942,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,14.181818181818182,0.5102040816326531,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,14.776859504132231,0.6253644314868805,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,15.272727272727272,0.7478134110787172,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,15.471074380165287,0.8250728862973761,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_100C,373.15,15.669421487603305,0.8950437317784257,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,15.272727272727272,0.08892128279883382,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,19.636363636363637,0.14868804664723032,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,23.107438016528928,0.24635568513119532,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,25.68595041322314,0.33819241982507287,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,27.669421487603305,0.4329446064139942,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,28.958677685950416,0.5072886297376094,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,30.545454545454543,0.6253644314868805,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,32.13223140495868,0.8250728862973761,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_140C,413.15,32.62809917355372,0.8950437317784257,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,22.016528925619838,0.08892128279883382,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,25.884297520661157,0.15306122448979592,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,30.644628099173556,0.24489795918367346,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,34.51239669421487,0.33819241982507287,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,37.1900826446281,0.4329446064139942,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,38.77685950413223,0.5087463556851312,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,41.35537190082644,0.6253644314868805,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_160C,433.15,42.54545454545455,0.6982507288629738,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_190C,463.15,34.21487603305785,0.08892128279883382,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_190C,463.15,41.35537190082644,0.15160349854227406,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_190C,463.15,47.20661157024794,0.24635568513119532,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+retained_source,T_190C,463.15,51.471074380165284,0.33527696793002915,,Gross 2002 Figure 7 visible PC-SAFT solid curve
+package_model,T_100C,373.15,5.023220104295448,0.048104956268221574,0.5526145113427874,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,7.047311319803784,0.09183673469387763,0.6851686975294271,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,9.133137866408791,0.15014577259475215,0.7624999869568934,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,11.427919235004222,0.24489795918367346,0.8174856896834228,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,12.815835471581034,0.33819241982507287,0.8432360013551979,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,13.703067897715597,0.4329446064139942,0.8586286717934122,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,14.201121881889042,0.5102040816326532,0.8676000520811797,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,14.750123915545847,0.6253644314868805,0.8788743033299722,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,15.228271493327311,0.7478134110787172,0.8921433238321341,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,15.506068649291528,0.8250728862973762,0.9040230588409173,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_100C,373.15,15.716800564435715,0.8950437317784257,0.9208759220917873,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,14.87584377655361,0.08892128279883386,0.4875455086879418,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,18.536279079832752,0.14868804664723032,0.5925689539725633,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,22.86710781381234,0.24635568038173752,0.677999089437041,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,25.620589184943345,0.33819241982507287,0.7209621889957585,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,27.608021387580628,0.4329446064139941,0.7499585630799225,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,28.793119921897297,0.5072886297376094,0.7678390847207504,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,30.315997592596727,0.6253644314868805,0.7942172749000918,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,32.37990564014539,0.8250728862973761,0.8573114069233665,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_140C,413.15,32.70534593339454,0.8950437317784257,0.8961489187122,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,21.228220380766746,0.08892128279883385,0.398352937634954,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,26.005112253374524,0.15306122448979598,0.5099576661158944,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,31.14455886745343,0.24489795918367355,0.5964034461515908,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,34.88092519895782,0.33819241982507287,0.6472506673445224,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,37.66272607757992,0.4329446064139941,0.6824447432474073,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,39.42851224576303,0.5087463556851312,0.7054278093607493,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,41.727153007378085,0.6253644314868805,0.7398829104878656,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_160C,433.15,43.03914807872139,0.6982507288629738,0.7654257830323956,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_190C,463.15,35.049441030697416,0.08892128279883385,0.2831090225889241,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_190C,463.15,41.01123576386299,0.1516034985422741,0.38111397859064905,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_190C,463.15,46.79308227539844,0.24635568098621968,0.24663240916302023,epcsaft_equilibrium public bubble_pressure exact Hessian route
+package_model,T_190C,463.15,53.05397706998043,0.3352769679300291,0.5166083429799068,epcsaft_equilibrium public bubble_pressure exact Hessian route

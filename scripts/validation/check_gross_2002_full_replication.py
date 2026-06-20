@@ -45,9 +45,9 @@ REQUIRED_SCORE_FIELDS = (
     "pass",
 )
 PLOT_FAMILY_THRESHOLDS = {
-    "t_rho": 7.0,
-    "vle": 7.0,
-    "phase_boundary": 6.5,
+    "t_rho": 8.0,
+    "vle": 8.0,
+    "phase_boundary": 8.0,
 }
 DIAGNOSTIC_SCORE_CAP = 4.0
 
@@ -253,8 +253,8 @@ def _as_float(value: Any, *, default: float) -> float:
 
 def _record_threshold(record: dict[str, Any]) -> float:
     if "acceptance_threshold" in record:
-        return _as_float(record.get("acceptance_threshold"), default=7.0)
-    return PLOT_FAMILY_THRESHOLDS.get(str(record.get("plot_family", "")), 7.0)
+        return _as_float(record.get("acceptance_threshold"), default=8.0)
+    return PLOT_FAMILY_THRESHOLDS.get(str(record.get("plot_family", "")), 8.0)
 
 
 def _figure_record_by_id(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:

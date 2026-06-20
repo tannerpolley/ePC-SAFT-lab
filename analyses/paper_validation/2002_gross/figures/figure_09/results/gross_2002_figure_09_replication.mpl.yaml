@@ -1,0 +1,13 @@
+kind: matplotlib-figure
+version: 1
+plot_id: gross_2002_figure_09_replication
+title: Gross 2002 Figure 9 PC-SAFT replication
+matplotlib:
+  title: Gross/Sadowski 2002 Figure 9 PC-SAFT replication
+  x_label: x_Methanol or y_Methanol
+  y_label: T / degC
+  grid: major
+files:
+  plotted_data: analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_plotted_data.csv
+render:
+  command: uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_09/scripts/generate_gross_2002_figure_09_replication.py
