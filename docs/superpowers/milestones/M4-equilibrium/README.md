@@ -45,6 +45,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #279 Gross 2002 full-replication foundation plan](../../plans/2026-06-19-m4-equilibrium-issue-0279-gross-2002-full-replication-checker-scoring-schema-plan.md) | `association` | Defines the strict full-replication checker, source metadata schema, score schema, manifest contract, and foundation/complete gate split before figure-family replication issues execute. |
 | [Pure 2B associating single-component VLE prerequisite plan](../../plans/2026-06-19-m4-equilibrium-pure-2b-associating-single-component-vle-prerequisite-plan.md) | `association` | Splits the native pure associating `single_component_vle` route admission out of Figure 1 replication so #280 can stay focused on paper-figure artifacts. |
 | [Issue #281 Gross 2002 Figures 2-5 VLE replication plan](../../plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md) | `association` | Defines the Figure 2 identity gate plus source/model/plot/score tasks for Gross 2002 Figures 2-5 while keeping native route gaps as separate prerequisites. |
+| [Issue #292 associating GFPE VLE admission prerequisite plan](../../plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md) | `association` | Opens the source-backed neutral associating binary VLE admission needed before #281 can generate Gross 2002 Figures 2-5 model curves. |
 
 ## Retained Evidence
 
@@ -68,7 +69,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#281](../../issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 2-5 self-associating VLE curves using the shared #279 checker and score schema. |
+| [#292](../../issues/2026-06-20-m4-equilibrium-issue-0292-open-associating-gfpe-vle-admission-for-gross-2002-binaries.md) | `association` | `Ipopt` | `ready` | Open the source-backed associating binary VLE admission path needed before #281 can generate model curves. |
+| [#281](../../issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md) | `association` | `Ipopt` | `blocked` | Fully replicate Figures 2-5 self-associating VLE curves after #292 opens the required public VLE route admission. |
 | [#282](../../issues/2026-06-19-m4-equilibrium-issue-0282-fully-replicate-gross-2002-figures-6-7-supercritical-partner-vle-curves.md) | `association` | `Ipopt` | `ready` | Fully replicate Figures 6-7 supercritical-partner VLE curves using the shared #279 checker and score schema. |
 | [#283](../../issues/2026-06-19-m4-equilibrium-issue-0283-upgrade-gross-2002-figure-8-to-full-lle-vle-envelope-replication.md) | `association` | `Ipopt` | `ready` | Upgrade Figure 8 from hard-gate evidence to full LLE+VLE envelope replication. |
 | [#284](../../issues/2026-06-19-m4-equilibrium-issue-0284-fully-replicate-gross-2002-figure-9-cross-associating-vle-curve.md) | `association` | `Ipopt` | `ready` | Fully replicate Figure 9 cross-associating VLE curve using the shared #279 checker and score schema. |
