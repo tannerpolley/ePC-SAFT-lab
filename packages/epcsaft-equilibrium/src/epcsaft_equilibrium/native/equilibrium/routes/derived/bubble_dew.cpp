@@ -1174,6 +1174,8 @@ bool route_has_gross_2002_associating_vle_case(
     const std::vector<double>& expected_e,
     const std::vector<double>& expected_e_assoc,
     const std::vector<double>& expected_vol_a,
+    const std::vector<int>& expected_assoc_num,
+    const std::vector<double>& expected_assoc_matrix,
     const std::vector<double>& expected_kij
 ) {
     if (args.parameter_source_label != source_label) {
@@ -1197,10 +1199,10 @@ bool route_has_gross_2002_associating_vle_case(
         || !route_vector_close_to(args.e, expected_e)
         || !route_vector_close_to(args.e_assoc, expected_e_assoc)
         || !route_vector_close_to(args.vol_a, expected_vol_a)
-        || args.assoc_num != std::vector<int>({2, 0})
+        || args.assoc_num != expected_assoc_num
         || !route_vector_close_to(
             std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
-            {0.0, 1.0, 1.0, 0.0},
+            expected_assoc_matrix,
             1.0e-12
         )) {
         return false;
@@ -1228,6 +1230,8 @@ bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
                {188.90, 216.53},
                {2899.5, 0.0},
                {0.035176, 0.0},
+               {2, 0},
+               {0.0, 1.0, 1.0, 0.0},
                {0.0, 0.05, 0.05, 0.0}
            )
         || route_has_gross_2002_associating_vle_case(
@@ -1238,6 +1242,8 @@ bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
             {233.40, 287.35},
             {2276.8, 0.0},
             {0.015268, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
             {0.0, 0.023, 0.023, 0.0}
         )
         || route_has_gross_2002_associating_vle_case(
@@ -1248,6 +1254,8 @@ bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
             {247.28, 287.35},
             {2252.1, 0.0},
             {0.010319, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
             {0.0, 0.0135, 0.0135, 0.0}
         )
         || route_has_gross_2002_associating_vle_case(
@@ -1258,6 +1266,8 @@ bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
                {233.40, 287.35},
                {2276.8, 0.0},
                {0.015268, 0.0},
+               {2, 0},
+               {0.0, 1.0, 1.0, 0.0},
                {0.0, 0.020, 0.020, 0.0}
            )
         || route_has_gross_2002_associating_vle_case(
@@ -1268,7 +1278,57 @@ bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
             {208.42, 287.35},
             {2253.9, 0.0},
             {0.024675, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
             {0.0, 0.021, 0.021, 0.0}
+        )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 6",
+            {2.7515, 2.3316},
+            {3.6139, 3.7086},
+            {259.59, 222.88},
+            {2544.6, 0.0},
+            {0.006692, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.015, 0.015, 0.0}
+        )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 7",
+            {2.3827, 2.3316},
+            {3.1771, 3.7086},
+            {198.24, 222.88},
+            {2653.4, 0.0},
+            {0.032384, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.028, 0.028, 0.0}
+        )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 8",
+            {1.5255, 2.5303},
+            {3.2300, 3.8499},
+            {188.90, 278.11},
+            {2899.5, 0.0},
+            {0.035176, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.051, 0.051, 0.0}
+        )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 9",
+            {1.5255, 4.3555},
+            {3.2300, 3.7145},
+            {188.90, 262.74},
+            {2899.5, 2754.8},
+            {0.035176, 0.002197},
+            {2, 2},
+            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
+            {0.0, 0.020, 0.020, 0.0}
         );
 }
 

@@ -563,6 +563,14 @@ def test_equilibrium_lle_admits_source_backed_gross_2002_associating_fixture() -
         ("_gross_2002_figure5_1propanol_benzene_parameter_set", "dew_pressure", {"T": 313.15, "y": [0.7, 0.3]}, "neutral_dew_p"),
         ("_gross_2002_figure5_2propanol_benzene_parameter_set", "bubble_pressure", {"T": 313.15, "x": [0.7, 0.3]}, "neutral_bubble_p"),
         ("_gross_2002_figure5_2propanol_benzene_parameter_set", "dew_pressure", {"T": 313.15, "y": [0.7, 0.3]}, "neutral_dew_p"),
+        ("_gross_2002_figure6_1butanol_butane_parameter_set", "bubble_pressure", {"T": 373.15, "x": [0.5, 0.5]}, "neutral_bubble_p"),
+        ("_gross_2002_figure6_1butanol_butane_parameter_set", "dew_pressure", {"T": 373.15, "y": [0.5, 0.5]}, "neutral_dew_p"),
+        ("_gross_2002_figure7_ethanol_butane_parameter_set", "bubble_pressure", {"T": 373.15, "x": [0.5, 0.5]}, "neutral_bubble_p"),
+        ("_gross_2002_figure7_ethanol_butane_parameter_set", "dew_pressure", {"T": 373.15, "y": [0.5, 0.5]}, "neutral_dew_p"),
+        ("gross_2002_associating_parameter_set", "bubble_pressure", {"T": GROSS_2002_TEMPERATURE_K, "x": GROSS_2002_LLE_FEED}, "neutral_bubble_p"),
+        ("gross_2002_associating_parameter_set", "dew_pressure", {"T": GROSS_2002_TEMPERATURE_K, "y": GROSS_2002_LLE_FEED}, "neutral_dew_p"),
+        ("_gross_2002_figure9_methanol_1octanol_parameter_set", "bubble_pressure", {"T": 393.15, "x": [0.4, 0.6]}, "neutral_bubble_p"),
+        ("_gross_2002_figure9_methanol_1octanol_parameter_set", "dew_pressure", {"T": 393.15, "y": [0.4, 0.6]}, "neutral_dew_p"),
     ),
 )
 def test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary(
@@ -599,6 +607,12 @@ def test_equilibrium_vle_admits_source_backed_gross_2002_associating_binary(
     assert diagnostics["hessian_approximation"] == "exact"
     assert diagnostics["exact_hessian_available"] is True
     assert diagnostics["postsolve_accepted"] is True
+    readiness = diagnostics["parameter_readiness"]
+    assert readiness["associating_admission_proof_route"] == (
+        "associating_neutral_vle_gross_2002_figures_2_9_public_exact_hessian"
+    )
+    assert readiness["associating_admission_fixture"] == "Gross/Sadowski 2002 Figures 2-9 associating binary VLE"
+    assert readiness["associating_admission_backend"] == "cppad_implicit_association"
 
 
 def test_equilibrium_multiphase_route_returns_public_three_phase_result() -> None:
@@ -1052,6 +1066,61 @@ def _gross_2002_figure5_2propanol_benzene_parameter_set(*, source_backed: bool =
     )
 
 
+def _gross_2002_figure6_1butanol_butane_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["1-Butanol", "Butane"],
+        source="Gross/Sadowski 2002 Figure 6",
+        metadata_extra={
+            "reference_system": "1-butanol-n-butane",
+            "temperature_series_C": [60.0, 100.0, 160.0, 200.0],
+        },
+        mw=[74.123e-3, 58.123e-3],
+        m=[2.7515, 2.3316],
+        s=[3.6139, 3.7086],
+        e=[259.59, 222.88],
+        e_assoc=[2544.6, 0.0],
+        vol_a=[0.006692, 0.0],
+        kij=0.015,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure7_ethanol_butane_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["Ethanol", "Butane"],
+        source="Gross/Sadowski 2002 Figure 7",
+        metadata_extra={
+            "reference_system": "ethanol-n-butane",
+            "temperature_series_C": [60.0, 100.0, 160.0, 200.0],
+        },
+        mw=[46.069e-3, 58.123e-3],
+        m=[2.3827, 2.3316],
+        s=[3.1771, 3.7086],
+        e=[198.24, 222.88],
+        e_assoc=[2653.4, 0.0],
+        vol_a=[0.032384, 0.0],
+        kij=0.028,
+        source_backed=source_backed,
+    )
+
+
+def _gross_2002_figure9_methanol_1octanol_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    return _gross_2002_associating_vle_parameter_set(
+        species=["Methanol", "1-Octanol"],
+        source="Gross/Sadowski 2002 Figure 9",
+        metadata_extra={"reference_system": "methanol-1-octanol"},
+        mw=[32.042e-3, 130.23e-3],
+        m=[1.5255, 4.3555],
+        s=[3.2300, 3.7145],
+        e=[188.90, 262.74],
+        e_assoc=[2899.5, 2754.8],
+        vol_a=[0.035176, 0.002197],
+        kij=0.020,
+        assoc_scheme=["2B", "2B"],
+        source_backed=source_backed,
+    )
+
+
 def _gross_2002_associating_vle_parameter_set(
     *,
     species: list[str],
@@ -1065,6 +1134,7 @@ def _gross_2002_associating_vle_parameter_set(
     vol_a: list[float],
     kij: float,
     source_backed: bool,
+    assoc_scheme: list[str | None] | None = None,
 ) -> epcsaft.ParameterSet:
     return epcsaft.ParameterSet.from_dict(
         {
@@ -1074,7 +1144,7 @@ def _gross_2002_associating_vle_parameter_set(
             "e": np.asarray(e),
             "e_assoc": np.asarray(e_assoc),
             "vol_a": np.asarray(vol_a),
-            "assoc_scheme": ["2B", None],
+            "assoc_scheme": assoc_scheme or ["2B", None],
             "k_ij": np.asarray([[0.0, kij], [kij, 0.0]]),
             "z": np.asarray([0.0, 0.0]),
             "dielc": np.asarray([1.0, 1.0]),

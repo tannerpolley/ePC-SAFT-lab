@@ -479,6 +479,55 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
         },
         "k_ij": [[0.0, 0.021], [0.021, 0.0]],
     },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 6",
+        "vectors": {
+            "m": [2.7515, 2.3316],
+            "s": [3.6139, 3.7086],
+            "e": [259.59, 222.88],
+            "e_assoc": [2544.6, 0.0],
+            "vol_a": [0.006692, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.015], [0.015, 0.0]],
+    },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 7",
+        "vectors": {
+            "m": [2.3827, 2.3316],
+            "s": [3.1771, 3.7086],
+            "e": [198.24, 222.88],
+            "e_assoc": [2653.4, 0.0],
+            "vol_a": [0.032384, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.028], [0.028, 0.0]],
+    },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 8",
+        "vectors": {
+            "m": [1.5255, 2.5303],
+            "s": [3.2300, 3.8499],
+            "e": [188.90, 278.11],
+            "e_assoc": [2899.5, 0.0],
+            "vol_a": [0.035176, 0.0],
+            "assoc_num": [2, 0],
+        },
+        "k_ij": [[0.0, 0.051], [0.051, 0.0]],
+    },
+    {
+        "source_label": "Gross/Sadowski 2002 Figure 9",
+        "vectors": {
+            "m": [1.5255, 4.3555],
+            "s": [3.2300, 3.7145],
+            "e": [188.90, 262.74],
+            "e_assoc": [2899.5, 2754.8],
+            "vol_a": [0.035176, 0.002197],
+            "assoc_num": [2, 2],
+        },
+        "assoc_matrix": [0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0],
+        "k_ij": [[0.0, 0.020], [0.020, 0.0]],
+    },
 )
 
 
@@ -1123,7 +1172,7 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         )
     raise InputError(
         f"Production {route_label} associating GFPE admission only admits the source-backed Gross/Sadowski 2002 "
-        "Figures 2-5 neutral binary VLE proofs or the Figure 8 neutral two-phase LLE proof; this route remains "
+        "Figures 2-9 neutral binary VLE proofs or the Figure 8 neutral two-phase LLE proof; this route remains "
         "closed for associating inputs."
     )
 
@@ -1189,15 +1238,18 @@ def _has_gross_2002_associating_vle_proof(parameters: Mapping[str, Any]) -> bool
     fields = {str(field) for field in parameters.get("_parameter_provenance_fields", ())}
     if {"source", "paper", "table", "figure", "source_path"} - fields:
         return False
-    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
-    if assoc_matrix.shape != (4,) or not np.allclose(assoc_matrix, [0.0, 1.0, 1.0, 0.0], rtol=0.0, atol=1.0e-12):
-        return False
     z = np.asarray(parameters.get("z", []), dtype=float).flatten()
     if z.size and not np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12):
         return False
     k_ij = np.asarray(parameters.get("k_ij", []), dtype=float)
     for case in matching_cases:
         expected_vectors = case["vectors"]
+        expected_assoc_matrix = np.asarray(case.get("assoc_matrix", [0.0, 1.0, 1.0, 0.0]), dtype=float)
+        assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
+        if assoc_matrix.shape != expected_assoc_matrix.shape or not np.allclose(
+            assoc_matrix, expected_assoc_matrix, rtol=0.0, atol=1.0e-12
+        ):
+            continue
         if any(
             (
                 actual := np.asarray(parameters.get(key, []), dtype=float).flatten()

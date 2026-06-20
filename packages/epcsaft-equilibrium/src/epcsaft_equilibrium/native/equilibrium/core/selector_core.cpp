@@ -13,14 +13,17 @@ namespace {
 
 const char* kGross2002AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_public_exact_hessian";
 const char* kGross2002AssociatingLleFixture = "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane";
-const char* kGross2002AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figures_2_5_public_exact_hessian";
-const char* kGross2002AssociatingVleFixture = "Gross/Sadowski 2002 Figures 2-5 associating binary VLE";
+const char* kGross2002AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figures_2_9_public_exact_hessian";
+const char* kGross2002AssociatingVleFixture = "Gross/Sadowski 2002 Figures 2-9 associating binary VLE";
 const char* kGross2002AssociatingBackend = "cppad_implicit_association";
 const char* kGross2002Figure8ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
 const char* kGross2002Figure2ParameterSourceLabel = "Gross/Sadowski 2002 Figure 2";
 const char* kGross2002Figure3ParameterSourceLabel = "Gross/Sadowski 2002 Figure 3";
 const char* kGross2002Figure4ParameterSourceLabel = "Gross/Sadowski 2002 Figure 4";
 const char* kGross2002Figure5ParameterSourceLabel = "Gross/Sadowski 2002 Figure 5";
+const char* kGross2002Figure6ParameterSourceLabel = "Gross/Sadowski 2002 Figure 6";
+const char* kGross2002Figure7ParameterSourceLabel = "Gross/Sadowski 2002 Figure 7";
+const char* kGross2002Figure9ParameterSourceLabel = "Gross/Sadowski 2002 Figure 9";
 
 std::string normalized_token(std::string value) {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
@@ -183,6 +186,7 @@ bool gross_2002_vle_case_parameter_fingerprint_matches(
     const std::vector<double>& expected_e_assoc,
     const std::vector<double>& expected_vol_a,
     const std::vector<int>& expected_assoc_num,
+    const std::vector<double>& expected_assoc_matrix,
     const std::vector<double>& expected_kij
 ) {
     if (args.m.size() != 2 || args.s.size() != 2 || args.e.size() != 2) {
@@ -201,7 +205,7 @@ bool gross_2002_vle_case_parameter_fingerprint_matches(
     }
     if (!vector_close_to(
             std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
-            {0.0, 1.0, 1.0, 0.0},
+            expected_assoc_matrix,
             1.0e-12
         )) {
         return false;
@@ -233,6 +237,7 @@ bool has_gross_2002_associating_vle_proof(const add_args& args) {
             {2899.5, 0.0},
             {0.035176, 0.0},
             {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
             {0.0, 0.05, 0.05, 0.0}
         );
     }
@@ -245,6 +250,7 @@ bool has_gross_2002_associating_vle_proof(const add_args& args) {
             {2276.8, 0.0},
             {0.015268, 0.0},
             {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
             {0.0, 0.023, 0.023, 0.0}
         );
     }
@@ -257,6 +263,7 @@ bool has_gross_2002_associating_vle_proof(const add_args& args) {
             {2252.1, 0.0},
             {0.010319, 0.0},
             {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
             {0.0, 0.0135, 0.0135, 0.0}
         );
     }
@@ -269,6 +276,7 @@ bool has_gross_2002_associating_vle_proof(const add_args& args) {
                    {2276.8, 0.0},
                    {0.015268, 0.0},
                    {2, 0},
+                   {0.0, 1.0, 1.0, 0.0},
                    {0.0, 0.020, 0.020, 0.0}
                )
             || gross_2002_vle_case_parameter_fingerprint_matches(
@@ -279,8 +287,61 @@ bool has_gross_2002_associating_vle_proof(const add_args& args) {
                 {2253.9, 0.0},
                 {0.024675, 0.0},
                 {2, 0},
+                {0.0, 1.0, 1.0, 0.0},
                 {0.0, 0.021, 0.021, 0.0}
             );
+    }
+    if (args.parameter_source_label == kGross2002Figure6ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {2.7515, 2.3316},
+            {3.6139, 3.7086},
+            {259.59, 222.88},
+            {2544.6, 0.0},
+            {0.006692, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.015, 0.015, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure7ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {2.3827, 2.3316},
+            {3.1771, 3.7086},
+            {198.24, 222.88},
+            {2653.4, 0.0},
+            {0.032384, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.028, 0.028, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure8ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {1.5255, 2.5303},
+            {3.2300, 3.8499},
+            {188.90, 278.11},
+            {2899.5, 0.0},
+            {0.035176, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.051, 0.051, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure9ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {1.5255, 4.3555},
+            {3.2300, 3.7145},
+            {188.90, 262.74},
+            {2899.5, 2754.8},
+            {0.035176, 0.002197},
+            {2, 2},
+            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
+            {0.0, 0.020, 0.020, 0.0}
+        );
     }
     return false;
 }
@@ -380,13 +441,13 @@ void require_eligible_input(
         if (has_gross_2002_associating_vle_proof(args)) {
             classification.active_family_markers.insert(
                 classification.active_family_markers.begin(),
-                "associating_neutral_vle_gross_2002_figures_2_5_proven"
+                "associating_neutral_vle_gross_2002_figures_2_9_proven"
             );
             return;
         }
         throw ValueError(
             "selector-ineligible: associating bubble/dew routes require source-backed Gross/Sadowski 2002 "
-            "Figures 2-5 neutral binary exact-Hessian proof input."
+            "Figures 2-9 neutral binary exact-Hessian proof input."
         );
     }
     if (
@@ -411,7 +472,7 @@ void require_eligible_input(
     throw ValueError(
         "selector-ineligible: production selector routes support only neutral, non-reactive, "
         "non-electrolyte, non-associating mixtures except source-backed Gross/Sadowski 2002 "
-        "Figure 2 bubble/dew VLE and neutral two-phase LLE proof inputs."
+        "Figures 2-9 bubble/dew VLE and neutral two-phase LLE proof inputs."
     );
 }
 
