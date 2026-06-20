@@ -1,0 +1,56 @@
+{
+  "provenance": {
+    "paper": "Gross and Sadowski 2002",
+    "figure": "Figure 4",
+    "source_image": "analyses/paper_validation/2002_gross/figures/figure_04/source/paper_source_01_gross_2002_figure_004.png",
+    "source_caption_manifest": "analyses/paper_validation/2002_gross/shared/source/figures_manifest.csv",
+    "method": "calibrated manual curve-center extraction from the retained paper image, plus calibrated experimental-marker centers from the reproduced reference-25 dataset markers"
+  },
+  "system": "1-pentanol/benzene",
+  "component_order": [
+    "benzene",
+    "1-pentanol"
+  ],
+  "parameter_provenance": {
+    "1-pentanol": "Gross2002 Table1",
+    "benzene": "Gross2001 Table2; Gross2002 Table2",
+    "k_ij": "Gross2002 Table2",
+    "reference_data": "Gross2002 Figure 4 caption reference 25"
+  },
+  "axis_calibration": {
+    "source": "manual frame calibration from retained Gross 2002 Figure 4 image",
+    "x_benzene": {
+      "min": 0.0,
+      "max": 1.0,
+      "pixel_min": 143.0,
+      "pixel_max": 804.0
+    },
+    "pressure_bar": {
+      "min": 0.0,
+      "max": 0.25,
+      "pixel_min": 624.0,
+      "pixel_max": 40.0
+    }
+  },
+  "units": {
+    "temperature": "K",
+    "pressure": "bar",
+    "composition": "mole fraction benzene",
+    "pixel": "source image pixel coordinate"
+  },
+  "series_labels": [
+    "bubble_line",
+    "dew_line"
+  ],
+  "digitization_uncertainty": {
+    "paper_pc_saft_curve": {
+      "pressure_bar": 0.003,
+      "composition_mole_fraction": 0.008
+    },
+    "experimental_marker": {
+      "pressure_bar": 0.004,
+      "composition_mole_fraction": 0.01
+    }
+  },
+  "qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_digitization_qa_overlay.png"
+}

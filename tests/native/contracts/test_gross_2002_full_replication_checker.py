@@ -355,5 +355,6 @@ def test_cli_require_complete_reports_planned_figure_blockers(capsys) -> None:
 
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 2
-    assert "gross_2002_figure_02_full_replication_missing" in payload["blockers"]
+    assert "gross_2002_figure_06_full_replication_missing" in payload["blockers"]
+    assert "gross_2002_figure_02_full_replication_missing" not in payload["blockers"]
     assert "gross_2002_figure_10_full_replication_missing" in payload["blockers"]

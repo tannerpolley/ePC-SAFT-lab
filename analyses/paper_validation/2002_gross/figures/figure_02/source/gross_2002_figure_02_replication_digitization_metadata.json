@@ -24,9 +24,10 @@
     "pressure_bar": 0.35
   },
   "identity_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_identity.json",
+  "marker_role": "experimental_marker",
   "provenance": {
     "figure": "Figure 2",
-    "method": "calibrated manual marker-center extraction from retained paper image",
+    "method": "calibrated manual curve-center extraction from the retained paper image, with explicit marker-overlap proxies where the solid PC-SAFT line is occluded by reproduced experimental markers",
     "paper": "Gross and Sadowski 2002",
     "source_caption_manifest": "analyses/paper_validation/2002_gross/shared/source/figures_manifest.csv",
     "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/paper_source_01_gross_2002_figure_002.png",
@@ -38,6 +39,7 @@
     "dew_line"
   ],
   "source_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_source_points.csv",
+  "source_curve_role": "paper_pc_saft_curve",
   "units": {
     "composition": "mole fraction isobutane",
     "pixel": "source image pixel coordinate",

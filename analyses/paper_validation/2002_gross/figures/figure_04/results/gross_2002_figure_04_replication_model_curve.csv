@@ -1,0 +1,12 @@
+series,x_1_pentanol,y_1_pentanol,T_K,P_bar,route,problem_kind,route_status,solver_status,hessian_approximation,exact_hessian_available,postsolve_accepted,hessian_backend,iteration_count
+bubble_line,0.0,0.0,313.15,0.24383048840963117,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,8
+bubble_line,0.12,0.015396488403584641,313.15,0.23126507354253997,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,9
+bubble_line,0.32,0.023672796117225142,313.15,0.21273934639839762,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,23
+bubble_line,0.52,0.033514584250671095,313.15,0.18447607471874777,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,11
+bubble_line,0.72,0.054994904056915116,313.15,0.1359075674220255,bubble_pressure,neutral_bubble_p,accepted,success,exact,True,True,cppad_phase_pressure_route,7
+bubble_line,1.0,1.0,313.15,0.009766610313321902,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,23
+dew_line,0.7408422829078984,0.059,313.15,0.12920717555954753,dew_pressure,neutral_dew_p,accepted,success,exact,True,True,cppad_phase_pressure_route,231
+dew_line,0.9017824564524651,0.13918,313.15,0.06385180412126733,dew_pressure,neutral_dew_p,accepted,success,exact,True,True,cppad_phase_pressure_route,6
+dew_line,0.9497563371230635,0.2388800336398619,313.15,0.03895666794467124,dew_pressure,neutral_dew_p,accepted,success,exact,True,True,cppad_phase_pressure_route,37
+dew_line,0.9871250178833741,0.54917,313.15,0.01756602503393127,dew_pressure,neutral_dew_p,accepted,success,exact,True,True,cppad_phase_pressure_route,7
+dew_line,1.0,1.0,313.15,0.009766610313321902,single_component_vle,single_component_vle,accepted,success,exact,True,True,cppad_phase_pressure_route,23

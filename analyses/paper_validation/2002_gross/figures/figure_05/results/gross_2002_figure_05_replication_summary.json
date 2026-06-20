@@ -1,0 +1,90 @@
+{
+  "artifacts": {
+    "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_qa_overlay.png",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_model_curve.csv",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_plotted_data.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.png",
+    "score_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_score.json",
+    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.mpl.yaml",
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_source_points.csv",
+    "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_metadata.json",
+    "summary_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_summary.json",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.svg"
+  },
+  "figure_id": "figure_05",
+  "model_point_count": 26,
+  "native_route": {
+    "derivative_status": "verified_exact",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_model_curve.csv",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "git_commit": "f098a8694fbd249aa42d6906488e64d8b2882b5f",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\aa17\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    },
+    "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()"
+  },
+  "score": {
+    "branch_coverage_score": 1.0,
+    "derivative_status": "verified_exact",
+    "max_axis_error": {
+      "P_bar": 0.017189708097228112,
+      "composition_component_1": 0.0
+    },
+    "model_point_count": 26,
+    "normalized_plot_score": 9.320671561399191,
+    "pass": true,
+    "rmse_axis": {
+      "P_bar": 0.005955162104259049,
+      "composition_component_1": 0.0
+    },
+    "score_basis": "pressure-coordinate RMSE against calibrated Gross 2002 Figure 5 digitized PC-SAFT curve traces",
+    "series_scores": {
+      "1-propanol-benzene": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.011760434486109639,
+          "composition_component_1": 0.0
+        },
+        "model_point_count": 13,
+        "normalized_plot_score": 9.502212910705541,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.004977870892944586,
+          "composition_component_1": 0.0
+        },
+        "source_point_count": 13
+      },
+      "2-propanol-benzene": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.017189708097228112,
+          "composition_component_1": 0.0
+        },
+        "model_point_count": 13,
+        "normalized_plot_score": 9.320671561399191,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.006793284386008082,
+          "composition_component_1": 0.0
+        },
+        "source_point_count": 13
+      }
+    },
+    "source_point_count": 26
+  },
+  "source_point_count": 26,
+  "status": "accepted"
+}

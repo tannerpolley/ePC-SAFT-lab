@@ -1,0 +1,90 @@
+{
+  "artifacts": {
+    "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_digitization_qa_overlay.png",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_model_curve.csv",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_plotted_data.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.png",
+    "score_json": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_score.json",
+    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.mpl.yaml",
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_source_points.csv",
+    "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_digitization_metadata.json",
+    "summary_json": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_summary.json",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.svg"
+  },
+  "figure_id": "figure_04",
+  "model_point_count": 11,
+  "native_route": {
+    "derivative_status": "verified_exact",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_model_curve.csv",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "git_commit": "f098a8694fbd249aa42d6906488e64d8b2882b5f",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\aa17\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    },
+    "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()"
+  },
+  "score": {
+    "branch_coverage_score": 1.0,
+    "derivative_status": "verified_exact",
+    "max_axis_error": {
+      "P_bar": 0.04120717555954753,
+      "composition_component_1": 0.0
+    },
+    "model_point_count": 11,
+    "normalized_plot_score": 8.022280537231941,
+    "pass": true,
+    "rmse_axis": {
+      "P_bar": 0.01584863729952044,
+      "composition_component_1": 0.0
+    },
+    "score_basis": "pressure-coordinate RMSE against calibrated Gross 2002 Figure 4 digitized P-x/y source points",
+    "series_scores": {
+      "bubble_line": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.021092432577974496,
+          "x_1_pentanol": 0.0
+        },
+        "model_point_count": 6,
+        "normalized_plot_score": 8.840053729647025,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.011599462703529757,
+          "x_1_pentanol": 0.0
+        },
+        "source_point_count": 6
+      },
+      "dew_line": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "P_bar": 0.04120717555954753,
+          "y_1_pentanol": 0.0
+        },
+        "model_point_count": 5,
+        "normalized_plot_score": 8.022280537231941,
+        "pass": true,
+        "rmse_axis": {
+          "P_bar": 0.019777194627680583,
+          "y_1_pentanol": 0.0
+        },
+        "source_point_count": 5
+      }
+    },
+    "source_point_count": 11
+  },
+  "source_point_count": 33,
+  "status": "accepted"
+}

@@ -1,0 +1,51 @@
+{
+  "branch_coverage_score": 1.0,
+  "derivative_status": "verified_exact",
+  "max_axis_error": {
+    "P_bar": 0.017189708097228112,
+    "composition_component_1": 0.0
+  },
+  "model_point_count": 26,
+  "normalized_plot_score": 9.320671561399191,
+  "pass": true,
+  "rmse_axis": {
+    "P_bar": 0.005955162104259049,
+    "composition_component_1": 0.0
+  },
+  "score_basis": "pressure-coordinate RMSE against calibrated Gross 2002 Figure 5 digitized PC-SAFT curve traces",
+  "series_scores": {
+    "1-propanol-benzene": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.011760434486109639,
+        "composition_component_1": 0.0
+      },
+      "model_point_count": 13,
+      "normalized_plot_score": 9.502212910705541,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.004977870892944586,
+        "composition_component_1": 0.0
+      },
+      "source_point_count": 13
+    },
+    "2-propanol-benzene": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.017189708097228112,
+        "composition_component_1": 0.0
+      },
+      "model_point_count": 13,
+      "normalized_plot_score": 9.320671561399191,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.006793284386008082,
+        "composition_component_1": 0.0
+      },
+      "source_point_count": 13
+    }
+  },
+  "source_point_count": 26
+}

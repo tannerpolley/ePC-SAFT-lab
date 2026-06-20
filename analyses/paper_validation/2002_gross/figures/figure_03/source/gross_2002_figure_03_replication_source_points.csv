@@ -1,0 +1,11 @@
+figure_id,series,source_role,system,P_bar,T_C,T_K,x_1_propanol,y_1_propanol,source_kind,source_reference,digitized_x_px,digitized_y_px,uncertainty_T_C,uncertainty_composition
+figure_03,pressure_series_high,bubble_curve,1-propanol/ethylbenzene,1.013,136.5,409.65,0.00000,,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,76.000,24.000,0.6,0.012
+figure_03,pressure_series_high,bubble_curve,1-propanol/ethylbenzene,1.013,103.5,376.65,0.72000,,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,591.000,253.000,0.6,0.012
+figure_03,pressure_series_high,bubble_curve,1-propanol/ethylbenzene,1.013,97.2,370.35,1.00000,,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,791.000,298.000,0.6,0.012
+figure_03,pressure_series_high,dew_curve,1-propanol/ethylbenzene,1.013,136.5,409.65,,0.00000,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,76.000,24.000,0.6,0.012
+figure_03,pressure_series_high,dew_curve,1-propanol/ethylbenzene,1.013,97.2,370.35,,1.00000,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,791.000,298.000,0.6,0.012
+figure_03,pressure_series_low,bubble_curve,1-propanol/ethylbenzene,0.400,104.5,377.65,0.00000,,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,76.000,247.000,0.6,0.012
+figure_03,pressure_series_low,bubble_curve,1-propanol/ethylbenzene,0.400,75.0,348.15,0.72000,,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,591.000,452.000,0.6,0.012
+figure_03,pressure_series_low,bubble_curve,1-propanol/ethylbenzene,0.400,74.5,347.65,1.00000,,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,791.000,456.000,0.6,0.012
+figure_03,pressure_series_low,dew_curve,1-propanol/ethylbenzene,0.400,104.5,377.65,,0.00000,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,76.000,247.000,0.6,0.012
+figure_03,pressure_series_low,dew_curve,1-propanol/ethylbenzene,0.400,74.5,347.65,,1.00000,calibrated_curve_trace,Gross2002 Figure3 solid PC-SAFT curve center,791.000,456.000,0.6,0.012
