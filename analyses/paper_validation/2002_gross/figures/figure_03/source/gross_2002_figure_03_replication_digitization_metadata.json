@@ -1,0 +1,65 @@
+{
+  "provenance": {
+    "paper": "Gross and Sadowski 2002",
+    "figure": "Figure 3",
+    "source_image": "analyses/paper_validation/2002_gross/figures/figure_03/source/paper_source_01_gross_2002_figure_003.png",
+    "source_caption_manifest": "analyses/paper_validation/2002_gross/shared/source/figures_manifest.csv",
+    "method": "calibrated manual curve-center extraction from the retained paper image for the two visible pressure-series bubble and dew PC-SAFT branches"
+  },
+  "system": "1-propanol/ethylbenzene",
+  "component_order": [
+    "1-propanol",
+    "ethylbenzene"
+  ],
+  "parameter_provenance": {
+    "1-propanol": "Gross2002 Table1",
+    "ethylbenzene": "Gross2001 Table2; Gross2002 Table2",
+    "k_ij": "Gross2002 Figure 3 caption",
+    "reference_data": "Gross2002 Figure 3 caption reference 24"
+  },
+  "axis_calibration": {
+    "source": "manual frame calibration from retained Gross 2002 Figure 3 image",
+    "x_1_propanol": {
+      "min": 0.0,
+      "max": 1.0,
+      "pixel_min": 76.0,
+      "pixel_max": 791.0
+    },
+    "temperature_C": {
+      "min": 60.0,
+      "max": 140.0,
+      "pixel_min": 580.0,
+      "pixel_max": 18.0
+    }
+  },
+  "units": {
+    "temperature": "degC",
+    "pressure": "bar",
+    "composition": "mole fraction 1-propanol",
+    "pixel": "source image pixel coordinate"
+  },
+  "series_labels": [
+    "pressure_series_high",
+    "pressure_series_low"
+  ],
+  "series_mapping": {
+    "pressure_series_high": {
+      "pressure_bar": 1.013,
+      "paper_marker": "diamond"
+    },
+    "pressure_series_low": {
+      "pressure_bar": 0.4,
+      "paper_marker": "circle"
+    }
+  },
+  "digitization_uncertainty": {
+    "curve_trace": {
+      "temperature_C": 0.6,
+      "composition_mole_fraction": 0.012
+    }
+  },
+  "limitations": [
+    "The retained paper image overlays two pressure-series bubble and dew branches with shared solid-line styling; branch separation follows the pressure-series marker mapping and the visible monotone envelope geometry."
+  ],
+  "qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_digitization_qa_overlay.png"
+}

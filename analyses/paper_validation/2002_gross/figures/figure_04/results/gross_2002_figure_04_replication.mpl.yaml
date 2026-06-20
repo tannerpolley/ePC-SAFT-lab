@@ -1,0 +1,7 @@
+figure_id: figure_04
+png: analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.png
+svg: analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.svg
+x_axis: composition_component_1
+y_axis: pressure_bar
+matplotlib_backend: Agg
+style: paper-scale P-x/y overlay with retained source markers and public-route PC-SAFT curves

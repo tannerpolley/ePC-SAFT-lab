@@ -65,70 +65,147 @@
     },
     {
       "acceptance_threshold": 7.0,
-      "counts_toward_completion": false,
+      "artifacts": {
+        "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_digitization_qa_overlay.png",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_model_curve.csv",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.png",
+        "score_json": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_score.json",
+        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.mpl.yaml",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_source_points.csv",
+        "source_identity_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_identity.json",
+        "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_digitization_metadata.json",
+        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_summary.json",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.svg"
+      },
+      "counts_toward_completion": true,
       "figure_id": "figure_02",
       "paper_plot_type": "isothermal VLE P-x/y",
       "planned_artifact_stem": "gross_2002_figure_02_replication",
       "plot_family": "vle",
-      "remaining_work": [
-        "resolve methanol-isobutane caption versus methanol-isobutanol Table 2 identity",
-        "retain source or digitized pressure-composition data at 100 degC",
-        "generate matching PC-SAFT VLE pressure-composition curves"
+      "remaining_work": [],
+      "replication_status": "accepted",
+      "required_series": [
+        "bubble_line",
+        "dew_line"
       ],
-      "replication_status": "planned",
       "requires_exact_association_hessian": true,
-      "source_identity_status": "unresolved",
+      "score": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "normalized_plot_score": 9.01263023162245,
+        "pass": true
+      },
+      "source_data_basis": "calibrated Gross 2002 Figure 2 pressure-composition source points with figure-local parameter provenance resolution for methanol/isobutane",
+      "source_identity_status": "resolved",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/paper_source_01_gross_2002_figure_002.png",
-      "system": "methanol-isobutane caption versus methanol-isobutanol Table 2 row"
+      "system": "methanol/isobutane"
     },
     {
       "acceptance_threshold": 7.0,
-      "counts_toward_completion": false,
+      "artifacts": {
+        "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_digitization_qa_overlay.png",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_model_curve.csv",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.png",
+        "score_json": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_score.json",
+        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.mpl.yaml",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_source_points.csv",
+        "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_digitization_metadata.json",
+        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_summary.json",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.svg"
+      },
+      "counts_toward_completion": true,
       "figure_id": "figure_03",
       "paper_plot_type": "VLE at two pressures",
       "planned_artifact_stem": "gross_2002_figure_03_replication",
       "plot_family": "vle",
-      "remaining_work": [
-        "retain source or digitized source points for both pressure series",
-        "retain ethylbenzene pure-parameter provenance",
-        "generate and score matching VLE curves for each pressure series"
+      "remaining_work": [],
+      "replication_status": "accepted",
+      "required_series": [
+        "pressure_series_low",
+        "pressure_series_high"
       ],
-      "replication_status": "planned",
       "requires_exact_association_hessian": true,
+      "score": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "normalized_plot_score": 7.814498369180127,
+        "pass": true
+      },
+      "source_data_basis": "calibrated Gross 2002 Figure 3 solid-curve source traces with pressure-route inversion over admitted public pressure solves",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_03/source/paper_source_01_gross_2002_figure_003.png",
       "system": "1-propanol/ethylbenzene"
     },
     {
       "acceptance_threshold": 7.0,
-      "counts_toward_completion": false,
+      "artifacts": {
+        "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_digitization_qa_overlay.png",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_model_curve.csv",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.png",
+        "score_json": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_score.json",
+        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.mpl.yaml",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_source_points.csv",
+        "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_digitization_metadata.json",
+        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_summary.json",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.svg"
+      },
+      "counts_toward_completion": true,
       "figure_id": "figure_04",
       "paper_plot_type": "isothermal VLE P-x/y",
       "planned_artifact_stem": "gross_2002_figure_04_replication",
       "plot_family": "vle",
-      "remaining_work": [
-        "retain source or digitized pressure-composition points at 40 degC",
-        "retain benzene pure-parameter provenance",
-        "generate and score the matching VLE curve"
+      "remaining_work": [],
+      "replication_status": "accepted",
+      "required_series": [
+        "bubble_line",
+        "dew_line"
       ],
-      "replication_status": "planned",
       "requires_exact_association_hessian": true,
+      "score": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "normalized_plot_score": 8.022280537231941,
+        "pass": true
+      },
+      "source_data_basis": "calibrated Gross 2002 Figure 4 pressure-composition source points with retained reference-25 marker overlays",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_04/source/paper_source_01_gross_2002_figure_004.png",
       "system": "1-pentanol/benzene"
     },
     {
       "acceptance_threshold": 7.0,
-      "counts_toward_completion": false,
+      "artifacts": {
+        "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_qa_overlay.png",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_model_curve.csv",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.png",
+        "score_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_score.json",
+        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.mpl.yaml",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_source_points.csv",
+        "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_metadata.json",
+        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_summary.json",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.svg"
+      },
+      "counts_toward_completion": true,
       "figure_id": "figure_05",
       "paper_plot_type": "isothermal VLE P-x/y with two isomer systems",
       "planned_artifact_stem": "gross_2002_figure_05_replication",
       "plot_family": "vle",
-      "remaining_work": [
-        "retain source or digitized pressure-composition points for both alcohol isomers",
-        "retain benzene pure-parameter provenance",
-        "generate and score both isomer VLE curves separately"
+      "remaining_work": [],
+      "replication_status": "accepted",
+      "required_series": [
+        "1-propanol-benzene",
+        "2-propanol-benzene"
       ],
-      "replication_status": "planned",
       "requires_exact_association_hessian": true,
+      "score": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "normalized_plot_score": 9.320671561399191,
+        "pass": true
+      },
+      "source_data_basis": "calibrated Gross 2002 Figure 5 solid-curve source traces retained separately for 1-propanol/benzene and 2-propanol/benzene",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_05/source/paper_source_01_gross_2002_figure_005.png",
       "system": "1-propanol/benzene and 2-propanol/benzene"
     },
@@ -230,9 +307,9 @@
       "--require-exact-association-hessian",
       "--require-fresh-native"
     ],
-    "git_commit": "f6774fdc3f59b8dc7248c06ffd3d049c9542814c",
+    "git_commit": "f098a8694fbd249aa42d6906488e64d8b2882b5f",
     "native_module_name": "epcsaft_equilibrium._native_core",
-    "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\5905\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\aa17\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
   },
   "score_schema": {
     "required_fields": [

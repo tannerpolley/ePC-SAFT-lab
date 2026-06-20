@@ -103,6 +103,19 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
         figure_id = f"figure_{number:02d}"
         plot_family = "t_rho" if number == 1 else "phase_boundary" if number in (8, 10) else "vle"
         requires_exact = number in (8, 9, 10)
+        artifacts = _artifact_set(tmp_path, figure_id, derivative_status="verified_exact" if requires_exact else "not_required")
+        if figure_id == "figure_02":
+            artifacts["source_identity_json"] = _write(
+                tmp_path / figure_id / "identity.json",
+                json.dumps(
+                    {
+                        "figure_id": "figure_02",
+                        "accepted_system": "methanol/isobutane",
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+            )
         figures.append(
             {
                 "figure_id": figure_id,
@@ -112,7 +125,7 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
                 "acceptance_threshold": 7.0 if plot_family != "phase_boundary" else 6.5,
                 "requires_exact_association_hessian": requires_exact,
                 "source_identity_status": "resolved" if figure_id == "figure_02" else "not_required",
-                "artifacts": _artifact_set(tmp_path, figure_id, derivative_status="verified_exact" if requires_exact else "not_required"),
+                "artifacts": artifacts,
             }
         )
     payload = _foundation_payload()
@@ -231,6 +244,94 @@ def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) 
     assert "gross_2002_figure_02_source_identity_unresolved" in result["blockers"]
 
 
+def test_figure_two_identity_requires_retained_artifact_before_acceptance(tmp_path: Path) -> None:
+    artifacts = _artifact_set(tmp_path, "figure_02", derivative_status="verified_exact")
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_02",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 7.0,
+            "requires_exact_association_hessian": True,
+            "source_identity_status": "resolved",
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_02_source_identity_json_missing" in result["blockers"]
+
+
+def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
+    figure_03_artifacts = _artifact_set(tmp_path, "figure_03", derivative_status="verified_exact")
+    figure_03_score_path = Path(figure_03_artifacts["score_json"])
+    figure_03_score = json.loads(figure_03_score_path.read_text(encoding="utf-8"))
+    figure_03_score["series_scores"] = {
+        "pressure_series_low": {
+            "source_point_count": 8,
+            "model_point_count": 40,
+            "rmse_axis": {"composition": 0.01, "temperature_K": 0.2},
+            "max_axis_error": {"composition": 0.02, "temperature_K": 0.4},
+            "normalized_plot_score": 8.0,
+            "branch_coverage_score": 1.0,
+            "derivative_status": "verified_exact",
+            "pass": True,
+        }
+    }
+    figure_03_score_path.write_text(json.dumps(figure_03_score, sort_keys=True) + "\n", encoding="utf-8")
+
+    figure_05_artifacts = _artifact_set(tmp_path, "figure_05", derivative_status="verified_exact")
+    figure_05_score_path = Path(figure_05_artifacts["score_json"])
+    figure_05_score = json.loads(figure_05_score_path.read_text(encoding="utf-8"))
+    figure_05_score["series_scores"] = {
+        "1-propanol-benzene": {
+            "source_point_count": 8,
+            "model_point_count": 40,
+            "rmse_axis": {"composition": 0.01, "pressure_bar": 0.02},
+            "max_axis_error": {"composition": 0.02, "pressure_bar": 0.04},
+            "normalized_plot_score": 8.0,
+            "branch_coverage_score": 1.0,
+            "derivative_status": "verified_exact",
+            "pass": True,
+        }
+    }
+    figure_05_score_path.write_text(json.dumps(figure_05_score, sort_keys=True) + "\n", encoding="utf-8")
+
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_03",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 7.0,
+            "requires_exact_association_hessian": True,
+            "required_series": ["pressure_series_low", "pressure_series_high"],
+            "artifacts": figure_03_artifacts,
+        },
+        {
+            "figure_id": "figure_05",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 7.0,
+            "requires_exact_association_hessian": True,
+            "required_series": ["1-propanol-benzene", "2-propanol-benzene"],
+            "artifacts": figure_05_artifacts,
+        },
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_03_required_series_pressure_series_high_missing" in result["blockers"]
+    assert "gross_2002_figure_05_required_series_2_propanol_benzene_missing" in result["blockers"]
+
+
 def test_complete_payload_accepts_all_figures(tmp_path: Path) -> None:
     result = checker.evaluate_payload(_complete_payload(tmp_path), require_complete=True)
 
@@ -254,5 +355,6 @@ def test_cli_require_complete_reports_planned_figure_blockers(capsys) -> None:
 
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 2
-    assert "gross_2002_figure_02_full_replication_missing" in payload["blockers"]
+    assert "gross_2002_figure_06_full_replication_missing" in payload["blockers"]
+    assert "gross_2002_figure_02_full_replication_missing" not in payload["blockers"]
     assert "gross_2002_figure_10_full_replication_missing" in payload["blockers"]

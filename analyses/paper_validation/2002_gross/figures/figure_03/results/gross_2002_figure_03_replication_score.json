@@ -1,0 +1,51 @@
+{
+  "branch_coverage_score": 1.0,
+  "derivative_status": "verified_exact",
+  "max_axis_error": {
+    "T_C": 2.4080046707057363,
+    "composition_component_1": 0.0
+  },
+  "model_point_count": 10,
+  "normalized_plot_score": 7.814498369180127,
+  "pass": true,
+  "rmse_axis": {
+    "T_C": 0.8147902872784349,
+    "composition_component_1": 0.0
+  },
+  "score_basis": "temperature-coordinate RMSE against calibrated Gross 2002 Figure 3 digitized PC-SAFT curve traces",
+  "series_scores": {
+    "pressure_series_high": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "T_C": 2.4080046707057363,
+        "composition_component_1": 0.0
+      },
+      "model_point_count": 5,
+      "normalized_plot_score": 7.814498369180127,
+      "pass": true,
+      "rmse_axis": {
+        "T_C": 1.0927508154099363,
+        "composition_component_1": 0.0
+      },
+      "source_point_count": 5
+    },
+    "pressure_series_low": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "T_C": 0.7285033011182804,
+        "composition_component_1": 0.0
+      },
+      "model_point_count": 5,
+      "normalized_plot_score": 9.26880350135557,
+      "pass": true,
+      "rmse_axis": {
+        "T_C": 0.3655982493222152,
+        "composition_component_1": 0.0
+      },
+      "source_point_count": 5
+    }
+  },
+  "source_point_count": 10
+}
