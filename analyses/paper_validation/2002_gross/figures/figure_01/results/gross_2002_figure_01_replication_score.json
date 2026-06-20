@@ -1,0 +1,122 @@
+{
+  "branch_coverage_score": 1.0,
+  "branch_scores": {
+    "1-nonanol:liquid": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "density_kg_m3": 1.9849597759530866,
+        "temperature_K": 0.0
+      },
+      "model_point_count": 31,
+      "normalized_plot_score": 9.783416160372228,
+      "pass": true,
+      "rmse_axis": {
+        "density_kg_m3": 0.8663353585110897,
+        "temperature_K": 0.0
+      },
+      "source_point_count": 7
+    },
+    "1-nonanol:vapor": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "density_kg_m3": 4.00260117471759,
+        "temperature_K": 0.0
+      },
+      "model_point_count": 31,
+      "normalized_plot_score": 9.636849139450382,
+      "pass": true,
+      "rmse_axis": {
+        "density_kg_m3": 1.4526034421984722,
+        "temperature_K": 0.0
+      },
+      "source_point_count": 7
+    },
+    "1-pentanol:liquid": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "density_kg_m3": 2.9924575805933955,
+        "temperature_K": 0.0
+      },
+      "model_point_count": 31,
+      "normalized_plot_score": 9.71144630878207,
+      "pass": true,
+      "rmse_axis": {
+        "density_kg_m3": 1.154214764871719,
+        "temperature_K": 0.0
+      },
+      "source_point_count": 7
+    },
+    "1-pentanol:vapor": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "density_kg_m3": 3.3861670713972885,
+        "temperature_K": 0.0
+      },
+      "model_point_count": 31,
+      "normalized_plot_score": 9.639222161118791,
+      "pass": true,
+      "rmse_axis": {
+        "density_kg_m3": 1.4431113555248345,
+        "temperature_K": 0.0
+      },
+      "source_point_count": 7
+    },
+    "methanol:liquid": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "density_kg_m3": 2.3096651312986296,
+        "temperature_K": 0.0
+      },
+      "model_point_count": 31,
+      "normalized_plot_score": 9.774379131511804,
+      "pass": true,
+      "rmse_axis": {
+        "density_kg_m3": 0.9024834739527816,
+        "temperature_K": 0.0
+      },
+      "source_point_count": 7
+    },
+    "methanol:vapor": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "density_kg_m3": 3.1803259549951406,
+        "temperature_K": 0.0
+      },
+      "model_point_count": 31,
+      "normalized_plot_score": 9.668930426064891,
+      "pass": true,
+      "rmse_axis": {
+        "density_kg_m3": 1.324278295740433,
+        "temperature_K": 0.0
+      },
+      "source_point_count": 7
+    }
+  },
+  "derivative_status": "verified_exact",
+  "max_axis_error": {
+    "density_kg_m3": 4.00260117471759,
+    "temperature_K": 0.0
+  },
+  "model_point_count": 186,
+  "near_critical_exclusions": [
+    {
+      "component": "methanol",
+      "reason": "single_component_vle postsolve phase-distance gate rejects phase coalescence near the visible critical tip",
+      "temperature_window_K": "485-512"
+    }
+  ],
+  "normalized_plot_score": 9.636849139450382,
+  "pass": true,
+  "rmse_axis": {
+    "density_kg_m3": 1.214054175542499,
+    "temperature_K": 0.0
+  },
+  "score_basis": "density-coordinate RMSE against calibrated Gross 2002 Figure 1 solid PC-SAFT curve points",
+  "source_point_count": 42
+}

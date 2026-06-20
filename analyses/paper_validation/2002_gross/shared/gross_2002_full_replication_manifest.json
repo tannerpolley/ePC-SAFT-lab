@@ -1,9 +1,4 @@
 {
-  "campaign": "gross_2002_full_replication",
-  "source_paper": "Gross and Sadowski 2002",
-  "source_markdown": "analyses/paper_validation/2002_gross/docs/md/source_01_gross_2002.md",
-  "source_pdf": "analyses/paper_validation/2002_gross/docs/pdf/source_01_gross_2002.pdf",
-  "association_acceptance_manifest": "analyses/paper_validation/2002_gross/shared/gross_2002_association_acceptance_manifest.json",
   "artifact_contract": {
     "required_artifacts": [
       "source_csv",
@@ -18,53 +13,53 @@
       "sidecar"
     ]
   },
-  "source_metadata_schema": {
-    "required_fields": [
-      "provenance",
-      "axis_calibration",
-      "units",
-      "series_labels",
-      "digitization_uncertainty",
-      "qa_overlay"
-    ]
-  },
-  "score_schema": {
-    "required_fields": [
-      "source_point_count",
-      "model_point_count",
-      "rmse_axis",
-      "max_axis_error",
-      "normalized_plot_score",
-      "branch_coverage_score",
-      "derivative_status",
-      "pass"
-    ],
-    "thresholds": {
-      "diagnostic_score_cap": 4.0,
-      "phase_boundary": 6.5,
-      "t_rho": 7.0,
-      "vle": 7.0
-    }
-  },
-  "summary_artifacts": {
-    "csv": "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv",
-    "json": "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json"
-  },
+  "association_acceptance_manifest": "analyses/paper_validation/2002_gross/shared/gross_2002_association_acceptance_manifest.json",
+  "campaign": "gross_2002_full_replication",
   "figures": [
     {
       "acceptance_threshold": 7.0,
-      "counts_toward_completion": false,
+      "artifacts": {
+        "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_qa_overlay.png",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png",
+        "score_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json",
+        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source_points.csv",
+        "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_metadata.json",
+        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg"
+      },
+      "counts_toward_completion": true,
       "figure_id": "figure_01",
+      "near_critical_exclusions": [
+        {
+          "component": "methanol",
+          "reason": "single_component_vle postsolve phase-distance gate rejects phase coalescence near the visible critical tip",
+          "temperature_window_K": "485-512"
+        }
+      ],
       "paper_plot_type": "T-rho saturated vapor/liquid densities",
       "planned_artifact_stem": "gross_2002_figure_01_replication",
       "plot_family": "t_rho",
-      "remaining_work": [
-        "retain source or digitized coexisting density data",
-        "generate model vapor and liquid density curves",
-        "score vapor and liquid branch agreement"
+      "remaining_work": [],
+      "replication_status": "accepted",
+      "required_branches": [
+        "methanol:vapor",
+        "methanol:liquid",
+        "1-pentanol:vapor",
+        "1-pentanol:liquid",
+        "1-nonanol:vapor",
+        "1-nonanol:liquid"
       ],
-      "replication_status": "planned",
-      "requires_exact_association_hessian": false,
+      "requires_exact_association_hessian": true,
+      "score": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "normalized_plot_score": 9.636849139450382,
+        "pass": true
+      },
+      "source_data_basis": "calibrated Gross 2002 Figure 1 PC-SAFT curve points plus visible experimental markers",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper_source_01_gross_2002_figure_001.png",
       "system": "methanol, 1-pentanol, 1-nonanol"
     },
@@ -222,5 +217,56 @@
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_10/source/paper_source_01_gross_2002_figure_010.png",
       "system": "water/1-pentanol"
     }
-  ]
+  ],
+  "native_freshness_receipt": {
+    "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+    "checker_command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/validation/check_gross_2002_full_replication.py",
+      "--json",
+      "--require-exact-association-hessian",
+      "--require-fresh-native"
+    ],
+    "git_commit": "f6774fdc3f59b8dc7248c06ffd3d049c9542814c",
+    "native_module_name": "epcsaft_equilibrium._native_core",
+    "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\5905\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+  },
+  "score_schema": {
+    "required_fields": [
+      "source_point_count",
+      "model_point_count",
+      "rmse_axis",
+      "max_axis_error",
+      "normalized_plot_score",
+      "branch_coverage_score",
+      "derivative_status",
+      "pass"
+    ],
+    "thresholds": {
+      "diagnostic_score_cap": 4.0,
+      "phase_boundary": 6.5,
+      "t_rho": 7.0,
+      "vle": 7.0
+    }
+  },
+  "source_markdown": "analyses/paper_validation/2002_gross/docs/md/source_01_gross_2002.md",
+  "source_metadata_schema": {
+    "required_fields": [
+      "provenance",
+      "axis_calibration",
+      "units",
+      "series_labels",
+      "digitization_uncertainty",
+      "qa_overlay"
+    ]
+  },
+  "source_paper": "Gross and Sadowski 2002",
+  "source_pdf": "analyses/paper_validation/2002_gross/docs/pdf/source_01_gross_2002.pdf",
+  "summary_artifacts": {
+    "csv": "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv",
+    "json": "analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json"
+  }
 }

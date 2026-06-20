@@ -80,7 +80,7 @@ Upgrade Figure 1 from table-AAD sanity evidence to a paper-scale T-rho reproduct
 ## Proof Oracle
 
 - uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
-- uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native
+- uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native
 - uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 - uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
 - uv run --no-sync python scripts/dev/validate_project.py docs

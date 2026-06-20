@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 MANIFEST_PATH = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "shared" / "gross_2002_full_replication_manifest.json"
 SUMMARY_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "shared" / "results"
 
@@ -191,6 +193,16 @@ def _accepted_record_blockers(
         for field in REQUIRED_SCORE_FIELDS:
             if field not in score:
                 blockers.append(f"gross_2002_{figure_id}_score_{field}_missing")
+        branch_scores = score.get("branch_scores", {})
+        if not isinstance(branch_scores, dict):
+            branch_scores = {}
+        for branch_key in record.get("required_branches", []):
+            branch_token = str(branch_key).strip()
+            if not branch_token:
+                continue
+            if branch_token not in branch_scores:
+                sanitized = "".join(character if character.isalnum() else "_" for character in branch_token).strip("_")
+                blockers.append(f"gross_2002_{figure_id}_required_branch_{sanitized}_missing")
         threshold = _record_threshold(record)
         normalized_score = _as_float(score.get("normalized_plot_score"), default=-1.0)
         if normalized_score < threshold or score.get("pass") is not True:

@@ -1,0 +1,167 @@
+{
+  "artifacts": {
+    "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_qa_overlay.png",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png",
+    "score_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json",
+    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml",
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source_points.csv",
+    "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_metadata.json",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg"
+  },
+  "figure_id": "figure_01",
+  "model_point_count": 186,
+  "native_route": {
+    "derivative_status": "verified_exact",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "git_commit": "f6774fdc3f59b8dc7248c06ffd3d049c9542814c",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\5905\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    },
+    "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='single_component_vle', T=...).solve()"
+  },
+  "near_critical_exclusions": [
+    {
+      "component": "methanol",
+      "reason": "single_component_vle postsolve phase-distance gate rejects phase coalescence near the visible critical tip",
+      "temperature_window_K": "485-512"
+    }
+  ],
+  "score": {
+    "branch_coverage_score": 1.0,
+    "branch_scores": {
+      "1-nonanol:liquid": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "density_kg_m3": 1.9849597759530866,
+          "temperature_K": 0.0
+        },
+        "model_point_count": 31,
+        "normalized_plot_score": 9.783416160372228,
+        "pass": true,
+        "rmse_axis": {
+          "density_kg_m3": 0.8663353585110897,
+          "temperature_K": 0.0
+        },
+        "source_point_count": 7
+      },
+      "1-nonanol:vapor": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "density_kg_m3": 4.00260117471759,
+          "temperature_K": 0.0
+        },
+        "model_point_count": 31,
+        "normalized_plot_score": 9.636849139450382,
+        "pass": true,
+        "rmse_axis": {
+          "density_kg_m3": 1.4526034421984722,
+          "temperature_K": 0.0
+        },
+        "source_point_count": 7
+      },
+      "1-pentanol:liquid": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "density_kg_m3": 2.9924575805933955,
+          "temperature_K": 0.0
+        },
+        "model_point_count": 31,
+        "normalized_plot_score": 9.71144630878207,
+        "pass": true,
+        "rmse_axis": {
+          "density_kg_m3": 1.154214764871719,
+          "temperature_K": 0.0
+        },
+        "source_point_count": 7
+      },
+      "1-pentanol:vapor": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "density_kg_m3": 3.3861670713972885,
+          "temperature_K": 0.0
+        },
+        "model_point_count": 31,
+        "normalized_plot_score": 9.639222161118791,
+        "pass": true,
+        "rmse_axis": {
+          "density_kg_m3": 1.4431113555248345,
+          "temperature_K": 0.0
+        },
+        "source_point_count": 7
+      },
+      "methanol:liquid": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "density_kg_m3": 2.3096651312986296,
+          "temperature_K": 0.0
+        },
+        "model_point_count": 31,
+        "normalized_plot_score": 9.774379131511804,
+        "pass": true,
+        "rmse_axis": {
+          "density_kg_m3": 0.9024834739527816,
+          "temperature_K": 0.0
+        },
+        "source_point_count": 7
+      },
+      "methanol:vapor": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "density_kg_m3": 3.1803259549951406,
+          "temperature_K": 0.0
+        },
+        "model_point_count": 31,
+        "normalized_plot_score": 9.668930426064891,
+        "pass": true,
+        "rmse_axis": {
+          "density_kg_m3": 1.324278295740433,
+          "temperature_K": 0.0
+        },
+        "source_point_count": 7
+      }
+    },
+    "derivative_status": "verified_exact",
+    "max_axis_error": {
+      "density_kg_m3": 4.00260117471759,
+      "temperature_K": 0.0
+    },
+    "model_point_count": 186,
+    "near_critical_exclusions": [
+      {
+        "component": "methanol",
+        "reason": "single_component_vle postsolve phase-distance gate rejects phase coalescence near the visible critical tip",
+        "temperature_window_K": "485-512"
+      }
+    ],
+    "normalized_plot_score": 9.636849139450382,
+    "pass": true,
+    "rmse_axis": {
+      "density_kg_m3": 1.214054175542499,
+      "temperature_K": 0.0
+    },
+    "score_basis": "density-coordinate RMSE against calibrated Gross 2002 Figure 1 solid PC-SAFT curve points",
+    "source_point_count": 42
+  },
+  "source_point_count": 77,
+  "status": "accepted"
+}
