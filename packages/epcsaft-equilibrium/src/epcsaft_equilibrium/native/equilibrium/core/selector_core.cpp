@@ -13,8 +13,17 @@ namespace {
 
 const char* kGross2002AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_public_exact_hessian";
 const char* kGross2002AssociatingLleFixture = "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane";
+const char* kGross2002AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figures_2_9_public_exact_hessian";
+const char* kGross2002AssociatingVleFixture = "Gross/Sadowski 2002 Figures 2-9 associating binary VLE";
 const char* kGross2002AssociatingBackend = "cppad_implicit_association";
-const char* kGross2002ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
+const char* kGross2002Figure8ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
+const char* kGross2002Figure2ParameterSourceLabel = "Gross/Sadowski 2002 Figure 2";
+const char* kGross2002Figure3ParameterSourceLabel = "Gross/Sadowski 2002 Figure 3";
+const char* kGross2002Figure4ParameterSourceLabel = "Gross/Sadowski 2002 Figure 4";
+const char* kGross2002Figure5ParameterSourceLabel = "Gross/Sadowski 2002 Figure 5";
+const char* kGross2002Figure6ParameterSourceLabel = "Gross/Sadowski 2002 Figure 6";
+const char* kGross2002Figure7ParameterSourceLabel = "Gross/Sadowski 2002 Figure 7";
+const char* kGross2002Figure9ParameterSourceLabel = "Gross/Sadowski 2002 Figure 9";
 
 std::string normalized_token(std::string value) {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
@@ -117,8 +126,8 @@ bool int_vector_equals(const std::vector<int>& values, const std::vector<int>& e
     return values == expected;
 }
 
-bool gross_2002_source_backed_metadata_present(const add_args& args) {
-    return args.parameter_source_label == kGross2002ParameterSourceLabel
+bool gross_2002_source_backed_metadata_present(const add_args& args, const std::string& source_label) {
+    return args.parameter_source_label == source_label
         && args.parameter_provenance_status == "source_backed_parameter_metadata"
         && args.binary_interaction_provenance_status == "explicit_binary_records"
         && contains_text(args.parameter_provenance_fields, "source")
@@ -165,8 +174,176 @@ bool gross_2002_parameter_fingerprint_matches(const add_args& args) {
 }
 
 bool has_gross_2002_associating_lle_proof(const add_args& args) {
-    return gross_2002_source_backed_metadata_present(args)
+    return gross_2002_source_backed_metadata_present(args, kGross2002Figure8ParameterSourceLabel)
         && gross_2002_parameter_fingerprint_matches(args);
+}
+
+bool gross_2002_vle_case_parameter_fingerprint_matches(
+    const add_args& args,
+    const std::vector<double>& expected_m,
+    const std::vector<double>& expected_s,
+    const std::vector<double>& expected_e,
+    const std::vector<double>& expected_e_assoc,
+    const std::vector<double>& expected_vol_a,
+    const std::vector<int>& expected_assoc_num,
+    const std::vector<double>& expected_assoc_matrix,
+    const std::vector<double>& expected_kij
+) {
+    if (args.m.size() != 2 || args.s.size() != 2 || args.e.size() != 2) {
+        return false;
+    }
+    if (!vector_close_to(args.m, expected_m)
+        || !vector_close_to(args.s, expected_s)
+        || !vector_close_to(args.e, expected_e)) {
+        return false;
+    }
+    if (!vector_close_to(args.e_assoc, expected_e_assoc) || !vector_close_to(args.vol_a, expected_vol_a)) {
+        return false;
+    }
+    if (!int_vector_equals(args.assoc_num, expected_assoc_num)) {
+        return false;
+    }
+    if (!vector_close_to(
+            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
+            expected_assoc_matrix,
+            1.0e-12
+        )) {
+        return false;
+    }
+    if (args.k_ij.size() != 4
+        || !close_to(args.k_ij[0], 0.0, 1.0e-12)
+        || !close_to(args.k_ij[1], expected_kij[1], 1.0e-12)
+        || !close_to(args.k_ij[2], expected_kij[2], 1.0e-12)
+        || !close_to(args.k_ij[3], 0.0, 1.0e-12)) {
+        return false;
+    }
+    return all_zero_or_empty(args.z)
+        && all_zero_or_empty(args.k_hb)
+        && all_zero_or_empty(args.l_ij)
+        && all_zero_or_empty(args.d_born)
+        && all_zero_or_empty(args.f_solv);
+}
+
+bool has_gross_2002_associating_vle_proof(const add_args& args) {
+    if (!gross_2002_source_backed_metadata_present(args, args.parameter_source_label)) {
+        return false;
+    }
+    if (args.parameter_source_label == kGross2002Figure2ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {1.5255, 2.2616},
+            {3.2300, 3.7574},
+            {188.90, 216.53},
+            {2899.5, 0.0},
+            {0.035176, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.05, 0.05, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure3ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {2.9997, 3.0799},
+            {3.2522, 3.7974},
+            {233.40, 287.35},
+            {2276.8, 0.0},
+            {0.015268, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.023, 0.023, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure4ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {3.6260, 2.4653},
+            {3.4508, 3.6478},
+            {247.28, 287.35},
+            {2252.1, 0.0},
+            {0.010319, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.0135, 0.0135, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure5ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+                   args,
+                   {2.9997, 2.4653},
+                   {3.2522, 3.6478},
+                   {233.40, 287.35},
+                   {2276.8, 0.0},
+                   {0.015268, 0.0},
+                   {2, 0},
+                   {0.0, 1.0, 1.0, 0.0},
+                   {0.0, 0.020, 0.020, 0.0}
+               )
+            || gross_2002_vle_case_parameter_fingerprint_matches(
+                args,
+                {3.0929, 2.4653},
+                {3.2085, 3.6478},
+                {208.42, 287.35},
+                {2253.9, 0.0},
+                {0.024675, 0.0},
+                {2, 0},
+                {0.0, 1.0, 1.0, 0.0},
+                {0.0, 0.021, 0.021, 0.0}
+            );
+    }
+    if (args.parameter_source_label == kGross2002Figure6ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {2.7515, 2.3316},
+            {3.6139, 3.7086},
+            {259.59, 222.88},
+            {2544.6, 0.0},
+            {0.006692, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.015, 0.015, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure7ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {2.3827, 2.3316},
+            {3.1771, 3.7086},
+            {198.24, 222.88},
+            {2653.4, 0.0},
+            {0.032384, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.028, 0.028, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure8ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {1.5255, 2.5303},
+            {3.2300, 3.8499},
+            {188.90, 278.11},
+            {2899.5, 0.0},
+            {0.035176, 0.0},
+            {2, 0},
+            {0.0, 1.0, 1.0, 0.0},
+            {0.0, 0.051, 0.051, 0.0}
+        );
+    }
+    if (args.parameter_source_label == kGross2002Figure9ParameterSourceLabel) {
+        return gross_2002_vle_case_parameter_fingerprint_matches(
+            args,
+            {1.5255, 4.3555},
+            {3.2300, 3.7145},
+            {188.90, 262.74},
+            {2899.5, 2754.8},
+            {0.035176, 0.002197},
+            {2, 2},
+            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
+            {0.0, 0.020, 0.020, 0.0}
+        );
+    }
+    return false;
 }
 
 bool has_pure_2b_single_component_vle_association_proof(const add_args& args) {
@@ -255,6 +432,25 @@ void require_eligible_input(
         );
     }
     if (
+        (request.route == "bubble_pressure" || request.route == "dew_pressure")
+        && classification.neutral
+        && classification.nonreactive
+        && classification.nonelectrolyte
+        && !classification.nonassociating
+    ) {
+        if (has_gross_2002_associating_vle_proof(args)) {
+            classification.active_family_markers.insert(
+                classification.active_family_markers.begin(),
+                "associating_neutral_vle_gross_2002_figures_2_9_proven"
+            );
+            return;
+        }
+        throw ValueError(
+            "selector-ineligible: associating bubble/dew routes require source-backed Gross/Sadowski 2002 "
+            "Figures 2-9 neutral binary exact-Hessian proof input."
+        );
+    }
+    if (
         request.route == "neutral_lle"
         && classification.neutral
         && classification.nonreactive
@@ -275,8 +471,8 @@ void require_eligible_input(
     }
     throw ValueError(
         "selector-ineligible: production selector routes support only neutral, non-reactive, "
-        "non-electrolyte, non-associating mixtures except the source-backed Gross/Sadowski 2002 "
-        "neutral two-phase LLE proof."
+        "non-electrolyte, non-associating mixtures except source-backed Gross/Sadowski 2002 "
+        "Figures 2-9 bubble/dew VLE and neutral two-phase LLE proof inputs."
     );
 }
 
@@ -454,6 +650,11 @@ SelectorParameterReadiness evaluate_parameter_readiness(
     if (activation.key == "neutral_lle" && has_gross_2002_associating_lle_proof(args)) {
         out.associating_admission_proof_route = kGross2002AssociatingLleProofRoute;
         out.associating_admission_fixture = kGross2002AssociatingLleFixture;
+        out.associating_admission_backend = kGross2002AssociatingBackend;
+    }
+    if (activation.key == "bubble_dew_derived_routes" && has_gross_2002_associating_vle_proof(args)) {
+        out.associating_admission_proof_route = kGross2002AssociatingVleProofRoute;
+        out.associating_admission_fixture = kGross2002AssociatingVleFixture;
         out.associating_admission_backend = kGross2002AssociatingBackend;
     }
     return out;

@@ -104,6 +104,7 @@ _ROUTE_SEQUENCE_DIAGNOSTIC_KEYS = (
 _ROUTE_MAPPING_DIAGNOSTIC_KEYS = (
     "activation_plan",
     "variable_layout",
+    "parameter_readiness",
 )
 
 _RESIDUAL_EVIDENCE_KEYS = (
