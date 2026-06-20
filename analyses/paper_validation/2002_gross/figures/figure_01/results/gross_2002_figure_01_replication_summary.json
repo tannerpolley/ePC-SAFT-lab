@@ -11,7 +11,7 @@
     "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg"
   },
   "figure_id": "figure_01",
-  "model_point_count": 42,
+  "model_point_count": 186,
   "native_route": {
     "derivative_status": "verified_exact",
     "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv",
@@ -24,11 +24,10 @@
         "python",
         "scripts/validation/check_gross_2002_full_replication.py",
         "--json",
-        "--require-complete",
         "--require-exact-association-hessian",
         "--require-fresh-native"
       ],
-      "git_commit": "9e76d29733900f85ca4253020c9f0c046c7b7613",
+      "git_commit": "f6774fdc3f59b8dc7248c06ffd3d049c9542814c",
       "native_module_name": "epcsaft_equilibrium._native_core",
       "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\5905\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
     },
@@ -48,14 +47,14 @@
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "density_kg_m3": 1.3793100195197212,
+          "density_kg_m3": 1.9849597759530866,
           "temperature_K": 0.0
         },
-        "model_point_count": 7,
-        "normalized_plot_score": 9.738754243972839,
+        "model_point_count": 31,
+        "normalized_plot_score": 9.783416160372228,
         "pass": true,
         "rmse_axis": {
-          "density_kg_m3": 1.0449830241086477,
+          "density_kg_m3": 0.8663353585110897,
           "temperature_K": 0.0
         },
         "source_point_count": 7
@@ -64,14 +63,14 @@
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "density_kg_m3": 0.9249009689700358,
+          "density_kg_m3": 4.00260117471759,
           "temperature_K": 0.0
         },
-        "model_point_count": 7,
-        "normalized_plot_score": 9.899240325637328,
+        "model_point_count": 31,
+        "normalized_plot_score": 9.636849139450382,
         "pass": true,
         "rmse_axis": {
-          "density_kg_m3": 0.4030386974506878,
+          "density_kg_m3": 1.4526034421984722,
           "temperature_K": 0.0
         },
         "source_point_count": 7
@@ -80,14 +79,14 @@
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "density_kg_m3": 0.7967893921809264,
+          "density_kg_m3": 2.9924575805933955,
           "temperature_K": 0.0
         },
-        "model_point_count": 7,
-        "normalized_plot_score": 9.873816546895737,
+        "model_point_count": 31,
+        "normalized_plot_score": 9.71144630878207,
         "pass": true,
         "rmse_axis": {
-          "density_kg_m3": 0.5047338124170487,
+          "density_kg_m3": 1.154214764871719,
           "temperature_K": 0.0
         },
         "source_point_count": 7
@@ -96,14 +95,14 @@
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "density_kg_m3": 0.6870888430080058,
+          "density_kg_m3": 3.3861670713972885,
           "temperature_K": 0.0
         },
-        "model_point_count": 7,
-        "normalized_plot_score": 9.917355133738177,
+        "model_point_count": 31,
+        "normalized_plot_score": 9.639222161118791,
         "pass": true,
         "rmse_axis": {
-          "density_kg_m3": 0.33057946504729,
+          "density_kg_m3": 1.4431113555248345,
           "temperature_K": 0.0
         },
         "source_point_count": 7
@@ -112,14 +111,14 @@
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "density_kg_m3": 1.159288714046852,
+          "density_kg_m3": 2.3096651312986296,
           "temperature_K": 0.0
         },
-        "model_point_count": 7,
-        "normalized_plot_score": 9.827155874153148,
+        "model_point_count": 31,
+        "normalized_plot_score": 9.774379131511804,
         "pass": true,
         "rmse_axis": {
-          "density_kg_m3": 0.6913765033874103,
+          "density_kg_m3": 0.9024834739527816,
           "temperature_K": 0.0
         },
         "source_point_count": 7
@@ -128,14 +127,14 @@
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "density_kg_m3": 1.127095821241916,
+          "density_kg_m3": 3.1803259549951406,
           "temperature_K": 0.0
         },
-        "model_point_count": 7,
-        "normalized_plot_score": 9.835882628669424,
+        "model_point_count": 31,
+        "normalized_plot_score": 9.668930426064891,
         "pass": true,
         "rmse_axis": {
-          "density_kg_m3": 0.6564694853223032,
+          "density_kg_m3": 1.324278295740433,
           "temperature_K": 0.0
         },
         "source_point_count": 7
@@ -143,10 +142,10 @@
     },
     "derivative_status": "verified_exact",
     "max_axis_error": {
-      "density_kg_m3": 1.3793100195197212,
+      "density_kg_m3": 4.00260117471759,
       "temperature_K": 0.0
     },
-    "model_point_count": 42,
+    "model_point_count": 186,
     "near_critical_exclusions": [
       {
         "component": "methanol",
@@ -154,10 +153,10 @@
         "temperature_window_K": "485-512"
       }
     ],
-    "normalized_plot_score": 9.738754243972839,
+    "normalized_plot_score": 9.636849139450382,
     "pass": true,
     "rmse_axis": {
-      "density_kg_m3": 0.6490277820224049,
+      "density_kg_m3": 1.214054175542499,
       "temperature_K": 0.0
     },
     "score_basis": "density-coordinate RMSE against calibrated Gross 2002 Figure 1 solid PC-SAFT curve points",

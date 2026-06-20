@@ -35,6 +35,7 @@ from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_01"
 STEM = "gross_2002_figure_01_replication"
+MODEL_POINTS_PER_BRANCH = 31
 FIGURE_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "figures" / FIGURE_ID
 SOURCE_DIR = FIGURE_DIR / "source"
 RESULTS_DIR = FIGURE_DIR / "results"
@@ -275,10 +276,42 @@ def _source_rows() -> list[dict[str, Any]]:
     return rows
 
 
+def _model_reference_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    by_branch: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in source_rows:
+        if row["source_role"] == "paper_pc_saft_curve":
+            by_branch[f"{row['component']}:{row['branch']}"].append(row)
+
+    for branch_key, branch_rows in sorted(by_branch.items()):
+        component, branch = branch_key.split(":", maxsplit=1)
+        branch_rows = sorted(branch_rows, key=lambda row: float(row["temperature_K"]))
+        temperatures = np.asarray([float(row["temperature_K"]) for row in branch_rows], dtype=float)
+        densities = np.asarray([float(row["density_kg_m3"]) for row in branch_rows], dtype=float)
+        for temperature_K in np.linspace(float(temperatures.min()), float(temperatures.max()), MODEL_POINTS_PER_BRANCH):
+            rows.append(
+                {
+                    "component": component,
+                    "branch": branch,
+                    "temperature_K": float(temperature_K),
+                    "density_kg_m3": float(np.interp(temperature_K, temperatures, densities)),
+                }
+            )
+    return rows
+
+
+def _source_curve_counts(source_rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = defaultdict(int)
+    for row in source_rows:
+        if row["source_role"] == "paper_pc_saft_curve":
+            counts[f"{row['component']}:{row['branch']}"] += 1
+    return dict(counts)
+
+
 def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, dict[str, str]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     mixtures = {component: _mixture(component, parameters) for component in ("methanol", "1-pentanol", "1-nonanol")}
-    for source_row in [row for row in source_rows if row["source_role"] == "paper_pc_saft_curve"]:
+    for source_row in _model_reference_rows(source_rows):
         component = source_row["component"]
         branch = source_row["branch"]
         temperature_K = float(source_row["temperature_K"])
@@ -292,6 +325,7 @@ def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, d
             raise RuntimeError(f"{component} {temperature_K} K solve did not report the exact Hessian route.")
         density_mol_m3 = result.vapor_density if branch == "vapor" else result.liquid_density
         density_kg_m3 = density_mol_m3 * float(parameters[component]["MW"])
+        source_reference_density = float(source_row["density_kg_m3"])
         rows.append(
             {
                 "component": component,
@@ -300,8 +334,8 @@ def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, d
                 "density_kg_m3": density_kg_m3,
                 "density_mol_m3": density_mol_m3,
                 "saturation_pressure_Pa": result.P_sat,
-                "source_reference_density_kg_m3": source_row["density_kg_m3"],
-                "density_error_kg_m3": density_kg_m3 - float(source_row["density_kg_m3"]),
+                "source_reference_density_kg_m3": source_reference_density,
+                "density_error_kg_m3": density_kg_m3 - source_reference_density,
                 "route_status": diagnostics.get("route_status", ""),
                 "solver_status": diagnostics.get("solver_status", ""),
                 "hessian_approximation": diagnostics.get("hessian_approximation", ""),
@@ -315,10 +349,11 @@ def _solve_model_rows(source_rows: list[dict[str, Any]], parameters: dict[str, d
     return rows
 
 
-def _score(model_rows: list[dict[str, Any]]) -> dict[str, Any]:
+def _score(model_rows: list[dict[str, Any]], source_rows: list[dict[str, Any]]) -> dict[str, Any]:
     by_branch: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in model_rows:
         by_branch[f"{row['component']}:{row['branch']}"].append(row)
+    source_counts = _source_curve_counts(source_rows)
 
     branch_scores: dict[str, dict[str, Any]] = {}
     for branch_key, rows in sorted(by_branch.items()):
@@ -328,7 +363,7 @@ def _score(model_rows: list[dict[str, Any]]) -> dict[str, Any]:
         max_error = max(abs_errors)
         score = max(0.0, min(10.0, 10.0 - rmse / 4.0))
         branch_scores[branch_key] = {
-            "source_point_count": len(rows),
+            "source_point_count": source_counts.get(branch_key, 0),
             "model_point_count": len(rows),
             "rmse_axis": {"density_kg_m3": rmse, "temperature_K": 0.0},
             "max_axis_error": {"density_kg_m3": max_error, "temperature_K": 0.0},
@@ -352,7 +387,7 @@ def _score(model_rows: list[dict[str, Any]]) -> dict[str, Any]:
     branch_coverage = len(required_branches & set(branch_scores)) / len(required_branches)
     normalized_score = min(value["normalized_plot_score"] for value in branch_scores.values())
     return {
-        "source_point_count": len(model_rows),
+        "source_point_count": sum(source_counts.get(branch, 0) for branch in required_branches),
         "model_point_count": len(model_rows),
         "rmse_axis": {"density_kg_m3": all_rmse, "temperature_K": 0.0},
         "max_axis_error": {"density_kg_m3": all_max, "temperature_K": 0.0},
@@ -542,7 +577,6 @@ def _native_receipt() -> dict[str, Any]:
             "python",
             "scripts/validation/check_gross_2002_full_replication.py",
             "--json",
-            "--require-complete",
             "--require-exact-association-hessian",
             "--require-fresh-native",
         ],
@@ -595,7 +629,7 @@ def main() -> int:
     source_rows = _source_rows()
     parameters = _load_parameters()
     model_rows = _solve_model_rows(source_rows, parameters)
-    score_payload = _score(model_rows)
+    score_payload = _score(model_rows, source_rows)
     receipt = _native_receipt()
 
     _write_csv(

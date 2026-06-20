@@ -43,7 +43,7 @@ Test complete for #280 means:
 - The Figure 1 score JSON records per-component and per-branch `source_point_count`, `model_point_count`, `rmse_axis`, `max_axis_error`, `normalized_plot_score`, `branch_coverage_score`, `derivative_status`, and `pass`.
 - Every component and branch has `normalized_plot_score >= 7.0`, `branch_coverage_score == 1.0`, and `pass: true`.
 - The rendered PNG/SVG plot uses the paper plot type and scale: temperature on the vertical axis and density on the horizontal axis, with source markers and PC-SAFT model curves for all three alcohols.
-- `scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native` no longer reports a Figure 1 blocker. Other figures may still block until #281-#285 land.
+- `scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native` exits `0` with Figure 1 accepted and no blockers. A separate partial-campaign readout with `--require-complete` may still exit `2` until #281-#285 land.
 
 ## Outcome Contract
 
@@ -393,15 +393,15 @@ Test complete for #280 means:
 
   Expected: shared summary records Figure 1 as accepted.
 
-- [ ] **Step 3: Run the partial complete gate**
+- [ ] **Step 3: Run the Figure 1 acceptance gate**
 
   Run:
 
   ```powershell
-  uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native
+  uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native
   ```
 
-  Expected for #280 closeout: exit `2`, no `gross_2002_figure_01_*` blockers, and named blockers remain for Figure 2-10.
+  Expected for #280 closeout: exit `0`, Figure 1 accepted, and no Figure 1 blockers.
 
 - [ ] **Step 4: Update docs and issue mirror**
 
@@ -455,11 +455,11 @@ Test complete for #280 means:
   Run:
 
   ```powershell
-  uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native
+  uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native
   uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
   ```
 
-  Expected: full-replication complete gate exits `2` because Figure 2-10 remain planned, but it has no Figure 1 blocker. Association acceptance exits `0`.
+  Expected: full-replication Figure 1 acceptance gate exits `0`, with Figure 1 accepted and no blockers. Association acceptance exits `0`.
 
 - [ ] **Step 4: Run docs validation and diff hygiene**
 
@@ -489,6 +489,7 @@ Required pass commands:
 ```powershell
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
+uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
@@ -505,7 +506,7 @@ Expected for #280: exit `2`; Figure 1 has no blockers, and Figure 2-10 blockers 
 
 ## Risk Notes
 
-- This issue is larger than a plot-only PR because native pure associating saturation is currently rejected at the public workflow layer.
+- This issue depends on the #290 pure associating saturation route remaining admitted and exact-Hessian-backed in the public workflow layer.
 - Native route admission must stay narrow: pure associating `single_component_vle` for the Gross Figure 1 alcohol evidence, not binary associating VLE.
 - Digitization quality directly affects scores. The QA overlay and metadata must be reviewable.
 - The Figure 1 paper plot compares PC-SAFT and SAFT. #280 only needs PC-SAFT model curves; SAFT lines should not be reproduced unless source data and implementation ownership are explicitly added.

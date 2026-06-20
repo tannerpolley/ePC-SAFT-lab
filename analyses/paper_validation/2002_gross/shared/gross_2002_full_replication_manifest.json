@@ -56,7 +56,7 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 9.738754243972839,
+        "normalized_plot_score": 9.636849139450382,
         "pass": true
       },
       "source_data_basis": "calibrated Gross 2002 Figure 1 PC-SAFT curve points plus visible experimental markers",
@@ -227,11 +227,10 @@
       "python",
       "scripts/validation/check_gross_2002_full_replication.py",
       "--json",
-      "--require-complete",
       "--require-exact-association-hessian",
       "--require-fresh-native"
     ],
-    "git_commit": "9e76d29733900f85ca4253020c9f0c046c7b7613",
+    "git_commit": "f6774fdc3f59b8dc7248c06ffd3d049c9542814c",
     "native_module_name": "epcsaft_equilibrium._native_core",
     "native_module_path": "C:\\Users\\Tanner\\.codex\\worktrees\\5905\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
   },
