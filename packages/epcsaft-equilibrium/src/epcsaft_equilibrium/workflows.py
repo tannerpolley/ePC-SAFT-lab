@@ -418,16 +418,9 @@ class EquilibriumStructure:
 
 _EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = EQUILIBRIUM_ROUTE_SPECS
 _GROSS_2002_PARAMETER_SOURCE_LABEL = "Gross/Sadowski 2002 Figure 8"
-<<<<<<< HEAD
-_GROSS_2002_ASSOCIATING_VLE_CASES = (
-    {
-        "source_label": "Gross/Sadowski 2002 Figure 2",
-        "k_ij": [[0.0, 0.05], [0.05, 0.0]],
-=======
 _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
     {
         "source_label": "Gross/Sadowski 2002 Figure 2",
->>>>>>> origin/main
         "vectors": {
             "m": [1.5255, 2.2616],
             "s": [3.2300, 3.7574],
@@ -436,17 +429,10 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
             "vol_a": [0.035176, 0.0],
             "assoc_num": [2, 0],
         },
-<<<<<<< HEAD
-    },
-    {
-        "source_label": "Gross/Sadowski 2002 Figure 3",
-        "k_ij": [[0.0, 0.023], [0.023, 0.0]],
-=======
         "k_ij": [[0.0, 0.05], [0.05, 0.0]],
     },
     {
         "source_label": "Gross/Sadowski 2002 Figure 3",
->>>>>>> origin/main
         "vectors": {
             "m": [2.9997, 3.0799],
             "s": [3.2522, 3.7974],
@@ -455,17 +441,10 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
             "vol_a": [0.015268, 0.0],
             "assoc_num": [2, 0],
         },
-<<<<<<< HEAD
-    },
-    {
-        "source_label": "Gross/Sadowski 2002 Figure 4",
-        "k_ij": [[0.0, 0.0135], [0.0135, 0.0]],
-=======
         "k_ij": [[0.0, 0.023], [0.023, 0.0]],
     },
     {
         "source_label": "Gross/Sadowski 2002 Figure 4",
->>>>>>> origin/main
         "vectors": {
             "m": [3.6260, 2.4653],
             "s": [3.4508, 3.6478],
@@ -474,17 +453,10 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
             "vol_a": [0.010319, 0.0],
             "assoc_num": [2, 0],
         },
-<<<<<<< HEAD
-    },
-    {
-        "source_label": "Gross/Sadowski 2002 Figure 5",
-        "k_ij": [[0.0, 0.020], [0.020, 0.0]],
-=======
         "k_ij": [[0.0, 0.0135], [0.0135, 0.0]],
     },
     {
         "source_label": "Gross/Sadowski 2002 Figure 5",
->>>>>>> origin/main
         "vectors": {
             "m": [2.9997, 2.4653],
             "s": [3.2522, 3.6478],
@@ -493,17 +465,10 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
             "vol_a": [0.015268, 0.0],
             "assoc_num": [2, 0],
         },
-<<<<<<< HEAD
-    },
-    {
-        "source_label": "Gross/Sadowski 2002 Figure 5",
-        "k_ij": [[0.0, 0.021], [0.021, 0.0]],
-=======
         "k_ij": [[0.0, 0.020], [0.020, 0.0]],
     },
     {
         "source_label": "Gross/Sadowski 2002 Figure 5",
->>>>>>> origin/main
         "vectors": {
             "m": [3.0929, 2.4653],
             "s": [3.2085, 3.6478],
@@ -512,8 +477,6 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
             "vol_a": [0.024675, 0.0],
             "assoc_num": [2, 0],
         },
-<<<<<<< HEAD
-=======
         "k_ij": [[0.0, 0.021], [0.021, 0.0]],
     },
     {
@@ -564,7 +527,6 @@ _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
         },
         "assoc_matrix": [0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0],
         "k_ij": [[0.0, 0.020], [0.020, 0.0]],
->>>>>>> origin/main
     },
 )
 
