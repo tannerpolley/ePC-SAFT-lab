@@ -13,8 +13,11 @@ namespace {
 
 const char* kGross2002AssociatingLleProofRoute = "associating_neutral_lle_gross_2002_public_exact_hessian";
 const char* kGross2002AssociatingLleFixture = "Gross/Sadowski 2002 Figure 8 methanol-cyclohexane";
+const char* kGross2002Figure2AssociatingVleProofRoute = "associating_neutral_vle_gross_2002_figure2_public_exact_hessian";
+const char* kGross2002Figure2AssociatingVleFixture = "Gross/Sadowski 2002 Figure 2 methanol-isobutane";
 const char* kGross2002AssociatingBackend = "cppad_implicit_association";
-const char* kGross2002ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
+const char* kGross2002Figure8ParameterSourceLabel = "Gross/Sadowski 2002 Figure 8";
+const char* kGross2002Figure2ParameterSourceLabel = "Gross/Sadowski 2002 Figure 2";
 
 std::string normalized_token(std::string value) {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char ch) {
@@ -117,8 +120,8 @@ bool int_vector_equals(const std::vector<int>& values, const std::vector<int>& e
     return values == expected;
 }
 
-bool gross_2002_source_backed_metadata_present(const add_args& args) {
-    return args.parameter_source_label == kGross2002ParameterSourceLabel
+bool gross_2002_source_backed_metadata_present(const add_args& args, const std::string& source_label) {
+    return args.parameter_source_label == source_label
         && args.parameter_provenance_status == "source_backed_parameter_metadata"
         && args.binary_interaction_provenance_status == "explicit_binary_records"
         && contains_text(args.parameter_provenance_fields, "source")
@@ -165,8 +168,49 @@ bool gross_2002_parameter_fingerprint_matches(const add_args& args) {
 }
 
 bool has_gross_2002_associating_lle_proof(const add_args& args) {
-    return gross_2002_source_backed_metadata_present(args)
+    return gross_2002_source_backed_metadata_present(args, kGross2002Figure8ParameterSourceLabel)
         && gross_2002_parameter_fingerprint_matches(args);
+}
+
+bool gross_2002_figure2_vle_parameter_fingerprint_matches(const add_args& args) {
+    if (args.m.size() != 2 || args.s.size() != 2 || args.e.size() != 2) {
+        return false;
+    }
+    if (!vector_close_to(args.m, {1.5255, 2.2616})
+        || !vector_close_to(args.s, {3.2300, 3.7574})
+        || !vector_close_to(args.e, {188.90, 216.53})) {
+        return false;
+    }
+    if (!vector_close_to(args.e_assoc, {2899.5, 0.0}) || !vector_close_to(args.vol_a, {0.035176, 0.0})) {
+        return false;
+    }
+    if (!int_vector_equals(args.assoc_num, {2, 0})) {
+        return false;
+    }
+    if (!vector_close_to(
+            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
+            {0.0, 1.0, 1.0, 0.0},
+            1.0e-12
+        )) {
+        return false;
+    }
+    if (args.k_ij.size() != 4
+        || !close_to(args.k_ij[0], 0.0, 1.0e-12)
+        || !close_to(args.k_ij[1], 0.05, 1.0e-12)
+        || !close_to(args.k_ij[2], 0.05, 1.0e-12)
+        || !close_to(args.k_ij[3], 0.0, 1.0e-12)) {
+        return false;
+    }
+    return all_zero_or_empty(args.z)
+        && all_zero_or_empty(args.k_hb)
+        && all_zero_or_empty(args.l_ij)
+        && all_zero_or_empty(args.d_born)
+        && all_zero_or_empty(args.f_solv);
+}
+
+bool has_gross_2002_figure2_associating_vle_proof(const add_args& args) {
+    return gross_2002_source_backed_metadata_present(args, kGross2002Figure2ParameterSourceLabel)
+        && gross_2002_figure2_vle_parameter_fingerprint_matches(args);
 }
 
 bool has_pure_2b_single_component_vle_association_proof(const add_args& args) {
@@ -255,6 +299,25 @@ void require_eligible_input(
         );
     }
     if (
+        (request.route == "bubble_pressure" || request.route == "dew_pressure")
+        && classification.neutral
+        && classification.nonreactive
+        && classification.nonelectrolyte
+        && !classification.nonassociating
+    ) {
+        if (has_gross_2002_figure2_associating_vle_proof(args)) {
+            classification.active_family_markers.insert(
+                classification.active_family_markers.begin(),
+                "associating_neutral_vle_gross_2002_figure2_proven"
+            );
+            return;
+        }
+        throw ValueError(
+            "selector-ineligible: associating bubble/dew routes require source-backed Gross/Sadowski 2002 "
+            "Figure 2 methanol-isobutane exact-Hessian proof input."
+        );
+    }
+    if (
         request.route == "neutral_lle"
         && classification.neutral
         && classification.nonreactive
@@ -275,8 +338,8 @@ void require_eligible_input(
     }
     throw ValueError(
         "selector-ineligible: production selector routes support only neutral, non-reactive, "
-        "non-electrolyte, non-associating mixtures except the source-backed Gross/Sadowski 2002 "
-        "neutral two-phase LLE proof."
+        "non-electrolyte, non-associating mixtures except source-backed Gross/Sadowski 2002 "
+        "Figure 2 bubble/dew VLE and neutral two-phase LLE proof inputs."
     );
 }
 
@@ -454,6 +517,11 @@ SelectorParameterReadiness evaluate_parameter_readiness(
     if (activation.key == "neutral_lle" && has_gross_2002_associating_lle_proof(args)) {
         out.associating_admission_proof_route = kGross2002AssociatingLleProofRoute;
         out.associating_admission_fixture = kGross2002AssociatingLleFixture;
+        out.associating_admission_backend = kGross2002AssociatingBackend;
+    }
+    if (activation.key == "bubble_dew_derived_routes" && has_gross_2002_figure2_associating_vle_proof(args)) {
+        out.associating_admission_proof_route = kGross2002Figure2AssociatingVleProofRoute;
+        out.associating_admission_fixture = kGross2002Figure2AssociatingVleFixture;
         out.associating_admission_backend = kGross2002AssociatingBackend;
     }
     return out;

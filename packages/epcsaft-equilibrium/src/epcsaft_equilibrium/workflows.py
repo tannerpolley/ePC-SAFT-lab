@@ -1050,6 +1050,10 @@ def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") 
         return
     if route_label == "lle" and _has_gross_2002_associating_lle_proof(parameters):
         return
+    if route_label in {"bubble_pressure", "dew_pressure"} and _has_gross_2002_figure2_associating_vle_proof(
+        parameters
+    ):
+        return
     if route_label == "lle":
         raise InputError(
             "Production lle associating GFPE admission requires source-backed Gross/Sadowski 2002 "
@@ -1105,6 +1109,38 @@ def _has_gross_2002_associating_lle_proof(parameters: Mapping[str, Any]) -> bool
         return False
     k_ij = np.asarray(parameters.get("k_ij", []), dtype=float)
     if k_ij.shape != (2, 2) or not np.allclose(k_ij, [[0.0, 0.051], [0.051, 0.0]], rtol=0.0, atol=1.0e-12):
+        return False
+    z = np.asarray(parameters.get("z", []), dtype=float).flatten()
+    return z.size == 0 or np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12)
+
+
+def _has_gross_2002_figure2_associating_vle_proof(parameters: Mapping[str, Any]) -> bool:
+    if parameters.get("_parameter_source_label") != "Gross/Sadowski 2002 Figure 2":
+        return False
+    if parameters.get("_parameter_provenance_status") != "source_backed_parameter_metadata":
+        return False
+    if parameters.get("_binary_interaction_provenance_status") != "explicit_binary_records":
+        return False
+    fields = {str(field) for field in parameters.get("_parameter_provenance_fields", ())}
+    if {"source", "paper", "table", "figure", "source_path"} - fields:
+        return False
+    expected_vectors = {
+        "m": [1.5255, 2.2616],
+        "s": [3.2300, 3.7574],
+        "e": [188.90, 216.53],
+        "e_assoc": [2899.5, 0.0],
+        "vol_a": [0.035176, 0.0],
+        "assoc_num": [2, 0],
+    }
+    for key, expected in expected_vectors.items():
+        actual = np.asarray(parameters.get(key, []), dtype=float).flatten()
+        if actual.shape != (len(expected),) or not np.allclose(actual, np.asarray(expected), rtol=0.0, atol=1.0e-10):
+            return False
+    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
+    if assoc_matrix.shape != (4,) or not np.allclose(assoc_matrix, [0.0, 1.0, 1.0, 0.0], rtol=0.0, atol=1.0e-12):
+        return False
+    k_ij = np.asarray(parameters.get("k_ij", []), dtype=float)
+    if k_ij.shape != (2, 2) or not np.allclose(k_ij, [[0.0, 0.05], [0.05, 0.0]], rtol=0.0, atol=1.0e-12):
         return False
     z = np.asarray(parameters.get("z", []), dtype=float).flatten()
     return z.size == 0 or np.allclose(z, 0.0, rtol=0.0, atol=1.0e-12)

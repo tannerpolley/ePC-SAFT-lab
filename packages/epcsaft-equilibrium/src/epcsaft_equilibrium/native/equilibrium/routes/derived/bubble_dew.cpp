@@ -1136,11 +1136,91 @@ bool route_has_active_association_sites(const add_args& args) {
     return false;
 }
 
+bool route_close_to(double actual, double expected, double tolerance = 1.0e-10) {
+    return std::isfinite(actual) && std::abs(actual - expected) <= tolerance;
+}
+
+bool route_vector_close_to(
+    const std::vector<double>& values,
+    const std::vector<double>& expected,
+    double tolerance = 1.0e-10
+) {
+    if (values.size() != expected.size()) {
+        return false;
+    }
+    for (std::size_t index = 0; index < expected.size(); ++index) {
+        if (!route_close_to(values[index], expected[index], tolerance)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool route_contains_text(const std::vector<std::string>& values, const std::string& expected) {
+    return std::find(values.begin(), values.end(), expected) != values.end();
+}
+
+bool route_all_zero_or_empty(const std::vector<double>& values) {
+    return std::all_of(values.begin(), values.end(), [](double value) {
+        return std::isfinite(value) && std::abs(value) <= 1.0e-12;
+    });
+}
+
+bool route_has_gross_2002_figure2_associating_vle_proof(const add_args& args) {
+    if (args.parameter_source_label != "Gross/Sadowski 2002 Figure 2") {
+        return false;
+    }
+    if (args.parameter_provenance_status != "source_backed_parameter_metadata"
+        || args.binary_interaction_provenance_status != "explicit_binary_records") {
+        return false;
+    }
+    if (
+        !route_contains_text(args.parameter_provenance_fields, "source")
+        || !route_contains_text(args.parameter_provenance_fields, "paper")
+        || !route_contains_text(args.parameter_provenance_fields, "table")
+        || !route_contains_text(args.parameter_provenance_fields, "figure")
+        || !route_contains_text(args.parameter_provenance_fields, "source_path")
+    ) {
+        return false;
+    }
+    if (!route_vector_close_to(args.m, {1.5255, 2.2616})
+        || !route_vector_close_to(args.s, {3.2300, 3.7574})
+        || !route_vector_close_to(args.e, {188.90, 216.53})
+        || !route_vector_close_to(args.e_assoc, {2899.5, 0.0})
+        || !route_vector_close_to(args.vol_a, {0.035176, 0.0})
+        || args.assoc_num != std::vector<int>({2, 0})
+        || !route_vector_close_to(
+            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
+            {0.0, 1.0, 1.0, 0.0},
+            1.0e-12
+        )) {
+        return false;
+    }
+    if (args.k_ij.size() != 4
+        || !route_close_to(args.k_ij[0], 0.0, 1.0e-12)
+        || !route_close_to(args.k_ij[1], 0.05, 1.0e-12)
+        || !route_close_to(args.k_ij[2], 0.05, 1.0e-12)
+        || !route_close_to(args.k_ij[3], 0.0, 1.0e-12)) {
+        return false;
+    }
+    return route_all_zero_or_empty(args.z)
+        && route_all_zero_or_empty(args.k_hb)
+        && route_all_zero_or_empty(args.l_ij)
+        && route_all_zero_or_empty(args.d_born)
+        && route_all_zero_or_empty(args.f_solv);
+}
+
 bool route_supports_exact_phase_derivatives(const add_args& args, const std::string& problem_name) {
     if (!(args.z.empty() || args.born_model <= 1)) {
         return false;
     }
     if (!route_has_active_association_sites(args)) {
+        return true;
+    }
+    if (
+        (problem_name == "neutral_bubble_p_eos" || problem_name == "neutral_dew_p_eos")
+        && route_has_gross_2002_figure2_associating_vle_proof(args)
+    ) {
         return true;
     }
     return problem_name == "single_component_vle_eos" && args.m.size() == 1;

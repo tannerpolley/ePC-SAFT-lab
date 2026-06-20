@@ -31,6 +31,10 @@ from equilibrium_support.equilibrium_cases import (
     gross_2002_associating_parameter_set,
 )
 
+GROSS_2002_FIGURE2_TEMPERATURE_K = 373.15
+GROSS_2002_FIGURE2_LIQUID_X = [0.35, 0.65]
+GROSS_2002_FIGURE2_VAPOR_Y = [0.35, 0.65]
+
 
 def test_workflow_object_is_constructed_with_problem_spec() -> None:
     mixture = epcsaft.Mixture(hydrocarbon_parameter_set())
@@ -546,6 +550,56 @@ def test_equilibrium_lle_admits_source_backed_gross_2002_associating_fixture() -
     assert abs(methanol_values[1] - methanol_values[0]) > 0.5
 
 
+@pytest.mark.parametrize(
+    ("route", "kwargs", "problem_kind"),
+    (
+        (
+            "bubble_pressure",
+            {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "x": GROSS_2002_FIGURE2_LIQUID_X},
+            "neutral_bubble_p",
+        ),
+        (
+            "dew_pressure",
+            {"T": GROSS_2002_FIGURE2_TEMPERATURE_K, "y": GROSS_2002_FIGURE2_VAPOR_Y},
+            "neutral_dew_p",
+        ),
+    ),
+)
+def test_equilibrium_vle_admits_source_backed_gross_2002_figure2_associating_binary(
+    route: str,
+    kwargs: dict[str, object],
+    problem_kind: str,
+) -> None:
+    _skip_without_ipopt()
+    mixture = epcsaft.Mixture(_gross_2002_figure2_associating_vle_parameter_set())
+
+    equilibrium = equilibrium_module.Equilibrium(mixture, route=route, **kwargs)
+    structure = equilibrium.structure()
+    assert structure.activation_key == "bubble_dew_derived_routes"
+    assert structure.expected_phase_keys == ("liquid", "vapor")
+
+    result = equilibrium.solve(
+        solver_options={
+            "max_iterations": 320,
+            "tolerance": 1.0e-6,
+            "ipopt_iteration_history_limit": 12,
+            "ipopt_acceptable_tolerance": 1.0e-7,
+            "ipopt_constraint_violation_tolerance": 1.0e-7,
+            "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+            "ipopt_complementarity_tolerance": 1.0e-8,
+        }
+    )
+
+    diagnostics = result.diagnostics
+    assert result.route == route
+    assert result.selector_route == route
+    assert result.problem_kind == problem_kind
+    assert result.phase_labels == ["liquid", "vapor"]
+    assert diagnostics["hessian_approximation"] == "exact"
+    assert diagnostics["exact_hessian_available"] is True
+    assert diagnostics["postsolve_accepted"] is True
+
+
 def test_equilibrium_multiphase_route_returns_public_three_phase_result() -> None:
     _skip_without_ipopt()
     mixture = epcsaft.Mixture(_symmetric_ternary_nonassociating_parameter_set())
@@ -907,6 +961,39 @@ def _ionic_associating_parameter_set() -> epcsaft.ParameterSet:
             "f_solv": np.asarray([1.5, 1.0, 1.0]),
         },
         species=["H2O", "Na+", "Cl-"],
+    )
+
+
+def _gross_2002_figure2_associating_vle_parameter_set(*, source_backed: bool = True) -> epcsaft.ParameterSet:
+    metadata = {
+        "source": "Gross/Sadowski 2002 Figure 2",
+        "paper": "Gross and Sadowski 2002",
+        "table": "Gross 2002 Figure 2 caption plus Gross 2001 pure-component table",
+        "figure": "Figure 2",
+        "source_path": "analyses/paper_validation/2002_gross",
+        "source_backed": source_backed,
+        "caption_system": "methanol-isobutane",
+        "table_002_conflict": "methanol-isobutanol",
+        "pure_isobutane_source": (
+            "docs/papers/md/ePC-SAFT-Literature/"
+            "Gross, Sadowski - 2001 - PC-SAFT An equation of state based on a perturbation theory for chain molec.md"
+        ),
+    }
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "MW": np.asarray([32.042e-3, 58.123e-3]),
+            "m": np.asarray([1.5255, 2.2616]),
+            "s": np.asarray([3.2300, 3.7574]),
+            "e": np.asarray([188.90, 216.53]),
+            "e_assoc": np.asarray([2899.5, 0.0]),
+            "vol_a": np.asarray([0.035176, 0.0]),
+            "assoc_scheme": ["2B", None],
+            "k_ij": np.asarray([[0.0, 0.05], [0.05, 0.0]]),
+            "z": np.asarray([0.0, 0.0]),
+            "dielc": np.asarray([1.0, 1.0]),
+        },
+        species=["Methanol", "Isobutane"],
+        metadata=metadata,
     )
 
 
