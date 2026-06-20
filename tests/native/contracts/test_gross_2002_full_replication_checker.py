@@ -110,7 +110,7 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
                 json.dumps(
                     {
                         "figure_id": "figure_02",
-                        "accepted_system": "methanol/2-methyl-2-butanol",
+                        "accepted_system": "methanol/isobutane",
                     },
                     sort_keys=True,
                 )
