@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "association"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "blocked"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
 source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0282-gross-2002-figures-6-7-vle-curves
-last_synced: "2026-06-19"
+last_synced: "2026-06-20"
 ---
 # M4: fully replicate Gross 2002 Figures 6-7 supercritical-partner VLE curves
 
@@ -24,8 +24,8 @@ last_synced: "2026-06-19"
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md
 **Classification:** AFK
-**Labels:** status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
-**Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/279 is closed. Complete proof oracle: Figures 6-7 supercritical-partner VLE curves retained source data, model curve or envelope through existing public routes only, paper-scale plot, score JSON, validation checker, no package/native implementation edits, docs validation, cleanup hook.
+**Labels:** status:blocked, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
+**Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/292 is closed. Complete proof oracle: Figures 6-7 supercritical-partner VLE curves retained source data, model curve or envelope through existing public routes only, paper-scale plot, score JSON, validation checker, no package/native implementation edits, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -57,7 +57,12 @@ Replicate the four-temperature VLE figures for 1-butanol/n-butane and ethanol/n-
 
 ## Blocked by
 
-- None
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/292
+
+## Blocker Evidence
+
+- #282 worker retained Figure 6 source data and checker gates, then stopped model generation because the public `bubble_pressure` route rejects the source-backed 1-butanol/n-butane associating VLE input.
+- The discovered route gap belongs to #292, not to this figure-replication PR. #282 must resume only after #292 lands and must still keep `packages/**`, native C++/header, CMake, and package-local test changes out of its branch.
 
 ## Non-goals
 
