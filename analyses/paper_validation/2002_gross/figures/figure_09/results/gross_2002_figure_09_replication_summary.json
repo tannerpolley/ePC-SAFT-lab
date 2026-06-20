@@ -1,0 +1,109 @@
+{
+  "artifacts": {
+    "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_09/source/gross_2002_figure_09_replication_digitization_qa_overlay.png",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_model_curve.csv",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_plotted_data.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication.png",
+    "score_json": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_score.json",
+    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication.mpl.yaml",
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_09/source/gross_2002_figure_09_replication_source_points.csv",
+    "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_09/source/gross_2002_figure_09_replication_digitization_metadata.json",
+    "summary_json": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_summary.json",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication.svg"
+  },
+  "figure_id": "figure_09",
+  "model_point_count": 14,
+  "native_route": {
+    "derivative_status": "verified_exact",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "git_commit": "7ada3075e76a1ab0b23ab883840cb723d69c9a24",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    },
+    "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve() with scalar inversion to P=1.013 bar"
+  },
+  "score": {
+    "branch_coverage_score": 1.0,
+    "derivative_status": "verified_exact",
+    "max_axis_error": {
+      "T_C": 0.9152200976555491,
+      "composition_component_1": 0.0
+    },
+    "model_point_count": 14,
+    "native_freshness": "fresh_native",
+    "native_freshness_receipt": {
+      "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+      "checker_command": [
+        "uv",
+        "run",
+        "--no-sync",
+        "python",
+        "scripts/validation/check_gross_2002_full_replication.py",
+        "--json",
+        "--require-exact-association-hessian",
+        "--require-fresh-native"
+      ],
+      "git_commit": "7ada3075e76a1ab0b23ab883840cb723d69c9a24",
+      "native_module_name": "epcsaft_equilibrium._native_core",
+      "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+    },
+    "normalized_plot_score": 8.848154979228916,
+    "pass": true,
+    "rmse_axis": {
+      "T_C": 0.4878716337954255,
+      "composition_component_1": 0.0
+    },
+    "score_basis": "temperature-coordinate RMSE against calibrated Gross 2002 Figure 9 retained PC-SAFT curve digitization using public pressure-route inversion",
+    "series_scores": {
+      "bubble_curve": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "T_C": 0.9152200976555491,
+          "x_methanol": 0.0
+        },
+        "model_point_count": 8,
+        "native_freshness": "fresh_native",
+        "normalized_plot_score": 8.848154979228916,
+        "pass": true,
+        "rmse_axis": {
+          "T_C": 0.5759225103855419,
+          "x_methanol": 0.0
+        },
+        "source_point_count": 8
+      },
+      "dew_curve": {
+        "branch_coverage_score": 1.0,
+        "derivative_status": "verified_exact",
+        "max_axis_error": {
+          "T_C": 0.5477043392967289,
+          "y_methanol": 0.0
+        },
+        "model_point_count": 6,
+        "native_freshness": "fresh_native",
+        "normalized_plot_score": 9.327309714097803,
+        "pass": true,
+        "rmse_axis": {
+          "T_C": 0.336345142951099,
+          "y_methanol": 0.0
+        },
+        "source_point_count": 6
+      }
+    },
+    "source_point_count": 14
+  },
+  "source_point_count": 14,
+  "status": "accepted",
+  "system": "methanol/1-octanol"
+}

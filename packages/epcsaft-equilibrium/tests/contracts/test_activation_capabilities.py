@@ -120,7 +120,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["neutral_lle"]["public_routes"] == ["lle"]
     assert capabilities["neutral_lle"]["input_scope"] == (
         "neutral non-reactive non-electrolyte liquid/liquid mixtures: non-associating mixtures plus "
-        "the source-backed Gross/Sadowski 2002 methanol/cyclohexane associating proof fixture"
+        "the source-backed Gross/Sadowski 2002 methanol/cyclohexane and water/1-pentanol associating proof fixtures"
     )
     assert capabilities["neutral_lle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert (
@@ -150,6 +150,8 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_tp_flash",
         "neutral_lle",
         "associating_neutral_lle_gross_2002_public_exact_hessian",
+        "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
+        "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian",
         "neutral_multiphase_nonassoc",
         "single_component_vle",
     }
@@ -171,6 +173,24 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         associating_proof["source_fixture"]
         == "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
     )
+    figure10_lle_proof = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian"
+    )
+    assert figure10_lle_proof["public_route"] == "lle"
+    assert figure10_lle_proof["source_configuration"] == "Gross2002 Figure10 water-1-pentanol"
+    assert figure10_lle_proof["component_pair"] == ["water", "1-pentanol"]
+    assert figure10_lle_proof["k_ij"] == pytest.approx(0.016)
+    figure10_vle_proof = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian"
+    )
+    assert figure10_vle_proof["public_route"] == "bubble_pressure/dew_pressure"
+    assert figure10_vle_proof["source_configuration"] == "Gross2002 Figure10 water-1-pentanol"
+    assert figure10_vle_proof["component_pair"] == ["water", "1-pentanol"]
+    assert figure10_vle_proof["k_ij"] == pytest.approx(0.016)
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
 
     deleted_route_keys = {

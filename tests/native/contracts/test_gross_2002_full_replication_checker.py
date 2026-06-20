@@ -50,7 +50,7 @@ def _artifact_set(
                 "normalized_plot_score": score,
                 "branch_coverage_score": 1.0,
                 "derivative_status": derivative_status,
-                "pass": score >= 7.0,
+                "pass": score >= 8.0,
             },
             sort_keys=True,
         )
@@ -89,7 +89,7 @@ def _foundation_payload() -> dict[str, object]:
                 "plot_family": "t_rho" if number == 1 else "phase_boundary" if number in (8, 10) else "vle",
                 "replication_status": "planned",
                 "counts_toward_completion": False,
-                "acceptance_threshold": 7.0 if number not in (8, 10) else 6.5,
+                "acceptance_threshold": 8.0,
             }
             for number in range(1, 11)
         ],
@@ -122,7 +122,7 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
                 "plot_family": plot_family,
                 "replication_status": "accepted",
                 "counts_toward_completion": True,
-                "acceptance_threshold": 7.0 if plot_family != "phase_boundary" else 6.5,
+                "acceptance_threshold": 8.0,
                 "requires_exact_association_hessian": requires_exact,
                 "source_identity_status": "resolved" if figure_id == "figure_02" else "not_required",
                 "artifacts": artifacts,
@@ -152,7 +152,7 @@ def test_accepted_figure_requires_all_replication_artifacts(tmp_path: Path) -> N
             "plot_family": "phase_boundary",
             "replication_status": "accepted",
             "counts_toward_completion": True,
-            "acceptance_threshold": 6.5,
+            "acceptance_threshold": 8.0,
             "requires_exact_association_hessian": True,
             "artifacts": artifacts,
         }
@@ -173,7 +173,7 @@ def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
             "plot_family": "vle",
             "replication_status": "accepted",
             "counts_toward_completion": True,
-            "acceptance_threshold": 7.0,
+            "acceptance_threshold": 8.0,
             "requires_exact_association_hessian": False,
             "artifacts": artifacts,
         }
@@ -209,7 +209,7 @@ def test_figure_one_requires_vapor_and_liquid_branch_scores(tmp_path: Path) -> N
             "plot_family": "t_rho",
             "replication_status": "accepted",
             "counts_toward_completion": True,
-            "acceptance_threshold": 7.0,
+            "acceptance_threshold": 8.0,
             "requires_exact_association_hessian": True,
             "required_branches": ["methanol:vapor", "methanol:liquid"],
             "artifacts": artifacts,
@@ -231,7 +231,7 @@ def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) 
             "plot_family": "vle",
             "replication_status": "accepted",
             "counts_toward_completion": True,
-            "acceptance_threshold": 7.0,
+            "acceptance_threshold": 8.0,
             "requires_exact_association_hessian": True,
             "source_identity_status": "unresolved",
             "artifacts": artifacts,
@@ -253,7 +253,7 @@ def test_figure_two_identity_requires_retained_artifact_before_acceptance(tmp_pa
             "plot_family": "vle",
             "replication_status": "accepted",
             "counts_toward_completion": True,
-            "acceptance_threshold": 7.0,
+            "acceptance_threshold": 8.0,
             "requires_exact_association_hessian": True,
             "source_identity_status": "resolved",
             "artifacts": artifacts,
@@ -308,7 +308,7 @@ def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
             "plot_family": "vle",
             "replication_status": "accepted",
             "counts_toward_completion": True,
-            "acceptance_threshold": 7.0,
+            "acceptance_threshold": 8.0,
             "requires_exact_association_hessian": True,
             "required_series": ["pressure_series_low", "pressure_series_high"],
             "artifacts": figure_03_artifacts,
@@ -318,7 +318,7 @@ def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
             "plot_family": "vle",
             "replication_status": "accepted",
             "counts_toward_completion": True,
-            "acceptance_threshold": 7.0,
+            "acceptance_threshold": 8.0,
             "requires_exact_association_hessian": True,
             "required_series": ["1-propanol-benzene", "2-propanol-benzene"],
             "artifacts": figure_05_artifacts,
@@ -347,14 +347,14 @@ def test_cli_foundation_passes_committed_manifest(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 0
     assert payload["foundation_complete"] is True
-    assert payload["complete"] is False
+    assert payload["complete"] is True
 
 
-def test_cli_require_complete_reports_planned_figure_blockers(capsys) -> None:
+def test_cli_require_complete_accepts_committed_manifest(capsys) -> None:
     exit_code = checker.main(["--json", "--require-complete"])
 
     payload = json.loads(capsys.readouterr().out)
-    assert exit_code == 2
-    assert "gross_2002_figure_06_full_replication_missing" in payload["blockers"]
-    assert "gross_2002_figure_02_full_replication_missing" not in payload["blockers"]
-    assert "gross_2002_figure_10_full_replication_missing" in payload["blockers"]
+    assert exit_code == 0
+    assert payload["complete"] is True
+    assert payload["accepted_figures"] == [f"figure_{number:02d}" for number in range(1, 11)]
+    assert payload["blockers"] == []

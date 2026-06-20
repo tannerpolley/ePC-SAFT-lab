@@ -1,0 +1,81 @@
+{
+  "axis_calibration": {
+    "x1_pixel": [
+      119.0,
+      557.0
+    ],
+    "x1_value": 0.0,
+    "x2_pixel": [
+      805.0,
+      557.0
+    ],
+    "x2_value": 1.0,
+    "x_scale": "linear",
+    "y1_pixel": [
+      119.0,
+      557.0
+    ],
+    "y1_value": 0.0,
+    "y2_pixel": [
+      119.0,
+      13.0
+    ],
+    "y2_value": 55.0,
+    "y_scale": "linear"
+  },
+  "binary_interaction": {
+    "pc_saft_kij": 0.015,
+    "saft_kij": 0.025,
+    "source": "Gross 2002 Table 2"
+  },
+  "caption": "Vapor-liquid equilibria of 1-butanol-n-butane at four temperatures.",
+  "component_order_basis": [
+    "1-butanol",
+    "n-butane"
+  ],
+  "digitization_uncertainty": {
+    "P_bar": 0.8,
+    "notes": "Uncertainty reflects marker overlap with plotted curves and 0.2 major-tick x spacing.",
+    "x_butane": 0.015
+  },
+  "figure_id": "figure_06",
+  "provenance": {
+    "digitization_basis": "manual calibrated digitization of visible experimental markers in the retained source crop",
+    "experimental_reference": "Deak, Victorov, and de Loos 1995 high-pressure VLE in alkanol plus alkane mixtures",
+    "gross_2002_reference_number": 26,
+    "paper": "Gross and Sadowski 2002"
+  },
+  "qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_06/source/gross_2002_figure_06_replication_digitization_qa_overlay.png",
+  "roi": [
+    119,
+    13,
+    805,
+    557
+  ],
+  "series_labels": {
+    "T_100C": {
+      "T_C": 100.0,
+      "marker": "diamond"
+    },
+    "T_160C": {
+      "T_C": 160.0,
+      "marker": "triangle"
+    },
+    "T_200C": {
+      "T_C": 200.0,
+      "marker": "circle"
+    },
+    "T_60C": {
+      "T_C": 60.0,
+      "marker": "square"
+    }
+  },
+  "source_csv": "analyses/paper_validation/2002_gross/figures/figure_06/source/gross_2002_figure_06_replication_source_points.csv",
+  "source_image": "analyses/paper_validation/2002_gross/figures/figure_06/source/paper_source_01_gross_2002_figure_006.png",
+  "units": {
+    "P_bar": "bar",
+    "T_C": "degC",
+    "T_K": "K",
+    "x_butane": "mole fraction"
+  }
+}

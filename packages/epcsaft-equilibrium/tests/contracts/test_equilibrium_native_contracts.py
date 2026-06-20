@@ -10,7 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 PROVIDER_MODULE_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft"
 EQUILIBRIUM_PACKAGE_ROOT = REPO_ROOT / "packages" / "epcsaft-equilibrium"
 EQUILIBRIUM_MODULE_ROOT = EQUILIBRIUM_PACKAGE_ROOT / "src" / "epcsaft_equilibrium"
-EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_PACKAGE_ROOT / "native" / "equilibrium"
+EQUILIBRIUM_NATIVE_ROOT = EQUILIBRIUM_MODULE_ROOT / "native" / "equilibrium"
 
 
 def test_native_equilibrium_entrypoint_is_exposed() -> None:
@@ -96,3 +96,13 @@ def test_selector_core_and_two_phase_support_have_dedicated_owners() -> None:
     assert selector.exists()
     assert "solve_selector_route" in selector.read_text(encoding="utf-8")
     assert "solve_seeded_neutral_two_phase_route" not in source
+
+
+def test_figure10_water_rich_seed_gate_does_not_depend_on_generic_problem_name() -> None:
+    source = (EQUILIBRIUM_NATIVE_ROOT / "core" / "two_phase_eos_route.cpp").read_text(encoding="utf-8")
+
+    assert 'route_label == "neutral_lle" && feed_amounts.size() == 2 && is_gross_2002_figure10_water_pentanol_case(args)' not in source
+    assert 'phase_kinds.size() == 2' in source
+    assert 'phase_kinds[0] == 0' in source
+    assert 'phase_kinds[1] == 0' in source
+    assert 'is_gross_2002_figure10_water_pentanol_case(args)' in source

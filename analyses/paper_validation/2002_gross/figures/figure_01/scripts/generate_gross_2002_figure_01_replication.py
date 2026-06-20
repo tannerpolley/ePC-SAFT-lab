@@ -370,7 +370,7 @@ def _score(model_rows: list[dict[str, Any]], source_rows: list[dict[str, Any]]) 
             "normalized_plot_score": score,
             "branch_coverage_score": 1.0,
             "derivative_status": "verified_exact",
-            "pass": score >= 7.0,
+            "pass": score >= 8.0,
         }
 
     all_errors = [float(row["density_error_kg_m3"]) for row in model_rows]
@@ -394,7 +394,7 @@ def _score(model_rows: list[dict[str, Any]], source_rows: list[dict[str, Any]]) 
         "normalized_plot_score": normalized_score,
         "branch_coverage_score": branch_coverage,
         "derivative_status": "verified_exact",
-        "pass": branch_coverage == 1.0 and normalized_score >= 7.0,
+        "pass": branch_coverage == 1.0 and normalized_score >= 8.0,
         "branch_scores": branch_scores,
         "score_basis": "density-coordinate RMSE against calibrated Gross 2002 Figure 1 solid PC-SAFT curve points",
         "near_critical_exclusions": NEAR_CRITICAL_EXCLUSIONS,

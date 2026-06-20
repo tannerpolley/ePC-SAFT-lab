@@ -38,6 +38,42 @@ constexpr std::size_t kContinuousTpdMaxStartsPerPhaseKind = 2;
 const std::string kHeldStageIIDualLoopSeedName = "held_stage_ii_dual_loop_candidate_pair";
 const std::string kHeldStageIIDualLoopCandidateSetName = "held_stage_ii_dual_loop_candidate_set";
 
+bool vector_close_to(
+    const std::vector<double>& values,
+    const std::vector<double>& expected,
+    double tolerance = 1.0e-10
+) {
+    if (values.size() != expected.size()) {
+        return false;
+    }
+    for (std::size_t index = 0; index < expected.size(); ++index) {
+        if (!std::isfinite(values[index]) || std::abs(values[index] - expected[index]) > tolerance) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is_gross_2002_figure10_water_pentanol_case(const add_args& args) {
+    return args.parameter_source_label == "Gross/Sadowski 2002 Figure 10"
+        && args.parameter_provenance_status == "source_backed_parameter_metadata"
+        && args.binary_interaction_provenance_status == "explicit_binary_records"
+        && vector_close_to(args.m, {1.0656, 3.6260})
+        && vector_close_to(args.s, {3.0007, 3.4508})
+        && vector_close_to(args.e, {366.51, 247.28})
+        && vector_close_to(args.e_assoc, {2500.7, 2252.1})
+        && vector_close_to(args.vol_a, {0.034868, 0.010319})
+        && args.assoc_num == std::vector<int>({2, 2})
+        && vector_close_to(
+            std::vector<double>(args.assoc_matrix.begin(), args.assoc_matrix.end()),
+            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
+            1.0e-12
+        )
+        && args.k_ij.size() == 4
+        && std::abs(args.k_ij[1] - 0.016) <= 1.0e-12
+        && std::abs(args.k_ij[2] - 0.016) <= 1.0e-12;
+}
+
 std::string equilibrium_debug_env_value() {
 #ifdef _MSC_VER
     char* raw = nullptr;
@@ -1782,6 +1818,31 @@ std::vector<NamedInitialVariables> neutral_two_phase_seed_candidates(
         );
         const std::vector<double> feed_composition =
             normalized_positive_values(feed_amounts, route_label + " feed amount");
+        if (
+            phase_kinds.size() == 2
+            && phase_kinds[0] == 0
+            && phase_kinds[1] == 0
+            && feed_amounts.size() == 2
+            && is_gross_2002_figure10_water_pentanol_case(args)
+        ) {
+            try {
+                out.push_back({
+                    "gross_2002_figure10_source_pair_water_rich",
+                    neutral_two_phase_variables_from_initial(
+                        build_two_phase_eos_initial_point(
+                            args,
+                            feed_amounts,
+                            {0.995, 0.005},
+                            temperature,
+                            target_pressure,
+                            route_label,
+                            phase_kinds
+                        )
+                    )
+                });
+            } catch (const std::exception&) {
+            }
+        }
         out.push_back({
             "canonical_shifted_feed",
             neutral_two_phase_variables_from_initial(

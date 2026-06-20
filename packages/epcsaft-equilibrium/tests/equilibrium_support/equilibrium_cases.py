@@ -90,6 +90,37 @@ def gross_2002_associating_public_mixture(*, source_backed: bool = True) -> ePCS
     return Mixture(gross_2002_associating_parameter_set(source_backed=source_backed)).native
 
 
+def gross_2002_figure10_parameter_set(*, source_backed: bool = True) -> ParameterSet:
+    metadata = {
+        "source": "Gross/Sadowski 2002 Figure 10",
+        "paper": "Gross and Sadowski 2002",
+        "table": "Tables 1 and 2",
+        "figure": "Figure 10",
+        "source_path": "analyses/paper_validation/2002_gross/figures/figure_10",
+        "source_backed": source_backed,
+    }
+    return ParameterSet.from_dict(
+        {
+            "MW": np.asarray([18.015e-3, 88.15e-3]),
+            "m": np.asarray([1.0656, 3.6260]),
+            "s": np.asarray([3.0007, 3.4508]),
+            "e": np.asarray([366.51, 247.28]),
+            "e_assoc": np.asarray([2500.7, 2252.1]),
+            "vol_a": np.asarray([0.034868, 0.010319]),
+            "assoc_scheme": ["2B", "2B"],
+            "k_ij": np.asarray([[0.0, 0.016], [0.016, 0.0]]),
+            "z": np.asarray([0.0, 0.0]),
+            "dielc": np.asarray([78.4, 15.1]),
+        },
+        species=["Water", "1-Pentanol"],
+        metadata=metadata,
+    )
+
+
+def gross_2002_figure10_public_mixture(*, source_backed: bool = True) -> ePCSAFTMixture:
+    return Mixture(gross_2002_figure10_parameter_set(source_backed=source_backed)).native
+
+
 def _methanol_cyclohexane_lle_feed() -> list[float]:
     methanol_poor = np.asarray([0.05, 0.95], dtype=float)
     methanol_rich = np.asarray([0.85, 0.15], dtype=float)

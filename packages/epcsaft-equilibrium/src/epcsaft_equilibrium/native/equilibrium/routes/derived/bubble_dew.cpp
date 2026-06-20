@@ -1214,11 +1214,13 @@ bool route_has_gross_2002_associating_vle_case(
         || !route_close_to(args.k_ij[3], 0.0, 1.0e-12)) {
         return false;
     }
+    const bool zero_or_empty_fsolv = route_all_zero_or_empty(args.f_solv)
+        || route_vector_close_to(args.f_solv, {1.0, 1.0}, 1.0e-12);
     return route_all_zero_or_empty(args.z)
         && route_all_zero_or_empty(args.k_hb)
         && route_all_zero_or_empty(args.l_ij)
         && route_all_zero_or_empty(args.d_born)
-        && route_all_zero_or_empty(args.f_solv);
+        && zero_or_empty_fsolv;
 }
 
 bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
@@ -1329,6 +1331,18 @@ bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
             {2, 2},
             {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
             {0.0, 0.020, 0.020, 0.0}
+        )
+        || route_has_gross_2002_associating_vle_case(
+            args,
+            "Gross/Sadowski 2002 Figure 10",
+            {1.0656, 3.6260},
+            {3.0007, 3.4508},
+            {366.51, 247.28},
+            {2500.7, 2252.1},
+            {0.034868, 0.010319},
+            {2, 2},
+            {0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0},
+            {0.0, 0.016, 0.016, 0.0}
         );
 }
 
@@ -1377,6 +1391,7 @@ public:
             throw ValueError(problem_name_ + " fixed phase index is out of range.");
         }
         species_count_ = static_cast<int>(fixed_composition_.size());
+        minimum_vapor_volume_ = kMinimumLiquidVolume;
         if (!charges_.empty()) {
             charge_neutral_shifted_composition(
                 fixed_composition_,

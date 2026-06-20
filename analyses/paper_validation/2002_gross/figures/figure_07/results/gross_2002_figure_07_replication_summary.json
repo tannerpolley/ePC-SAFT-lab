@@ -1,0 +1,103 @@
+{
+  "derivative_status": "verified_exact",
+  "figure_id": "figure_07",
+  "model_row_count": 32,
+  "native_freshness": "fresh_native",
+  "native_freshness_receipt": {
+    "build_refresh_command": "uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4",
+    "checker_command": [
+      "uv",
+      "run",
+      "--no-sync",
+      "python",
+      "scripts/validation/check_gross_2002_full_replication.py",
+      "--json",
+      "--require-exact-association-hessian",
+      "--require-fresh-native"
+    ],
+    "git_commit": "7ada3075e76a1ab0b23ab883840cb723d69c9a24",
+    "native_module_name": "epcsaft_equilibrium._native_core",
+    "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
+  },
+  "normalized_plot_score": 8.442866866419665,
+  "pc_saft_kij": 0.028,
+  "series_scores": {
+    "T_100C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.04737907683241005,
+        "x_butane": 0.0
+      },
+      "model_point_count": 11,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.95186175373878,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.028882947756732037,
+        "x_butane": 0.0
+      },
+      "source_point_count": 11
+    },
+    "T_140C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 1.1000845565308843,
+        "x_butane": 0.0
+      },
+      "model_point_count": 9,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.301484688140306,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.41910918711581646,
+        "x_butane": 0.0
+      },
+      "source_point_count": 9
+    },
+    "T_160C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 0.7883085448530913,
+        "x_butane": 0.0
+      },
+      "model_point_count": 8,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 9.155950526443508,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.5064296841338952,
+        "x_butane": 0.0
+      },
+      "source_point_count": 8
+    },
+    "T_190C": {
+      "branch_coverage_score": 1.0,
+      "derivative_status": "verified_exact",
+      "max_axis_error": {
+        "P_bar": 1.5829026898151426,
+        "x_butane": 0.0
+      },
+      "model_point_count": 4,
+      "native_freshness": "fresh_native",
+      "normalized_plot_score": 8.442866866419665,
+      "pass": true,
+      "rmse_axis": {
+        "P_bar": 0.9342798801482011,
+        "x_butane": 0.0
+      },
+      "source_point_count": 4
+    }
+  },
+  "source_row_count": 32,
+  "supercritical_partner_caveat": "Gross 2002 identifies Figure 7 as a mixture with one component above its critical point; the retained source set excludes pure-endpoint markers and one mid-high-x 140 degC diamond inside the current public-route solve gap between the low-x and high-x continuation branches.",
+  "system": "ethanol/n-butane",
+  "temperature_series_C": [
+    100.0,
+    140.0,
+    160.0,
+    190.0
+  ]
+}
