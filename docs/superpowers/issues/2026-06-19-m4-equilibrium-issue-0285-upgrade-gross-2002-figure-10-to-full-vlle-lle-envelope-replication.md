@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "association"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
 source_plan: null
@@ -24,7 +24,7 @@ last_synced: "2026-06-20"
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** none
 **Classification:** AFK
-**Labels:** status:blocked, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
+**Labels:** status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
 **Goal Command:** /goal Write a source plan for this issue before execution. Complete proof oracle: Figure 10 full water/1-pentanol VLLE/LLE envelope retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
