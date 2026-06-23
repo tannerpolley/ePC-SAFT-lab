@@ -1,0 +1,12 @@
+section,key,value,unit,notes
+provenance,paper,Gross and Sadowski 2002,,
+provenance,figure,figure_08,,
+provenance,source_image,analyses/paper_validation/2002_gross/figures/figure_08/source/figure_08.png,,
+source_method,published_figure_curve_trace,retained visible PC-SAFT curve points from the published figure,,
+source_method,literature_table_overlay,external literature-table points retained where available,,
+data_file,source_points,analyses/paper_validation/2002_gross/figures/figure_08/source/source_points.csv,,figure-local source points used for acceptance scoring
+data_file,model_curve,analyses/paper_validation/2002_gross/figures/figure_08/results/model_curve.csv,,native ePC-SAFT model curve rows
+data_file,plotted_data,analyses/paper_validation/2002_gross/figures/figure_08/results/plotted_data.csv,,rows used by the retained figure image
+data_file,literature_points,analyses/paper_validation/2002_gross/figures/figure_08/source/literature_points.csv,,Madhavan and Murti 1966 Table 3c
+acceptance,normalized_plot_score,9.9082422421564,,temperature-coordinate RMSE against retained Figure 8 lower LLE source rows and calibrated upper PC-SAFT VLE curve source_capture
+acceptance,derivative_status,verified_exact,,

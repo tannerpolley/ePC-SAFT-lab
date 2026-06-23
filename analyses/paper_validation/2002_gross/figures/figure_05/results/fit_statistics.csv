@@ -1,0 +1,5 @@
+scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit,notes
+figure,,,,14,26,0.0,0.0,0.0,0.004815908504656738,0.0,0.0,0.0,0.0,0.013315017332666435,0.0,9.435218700621311,1.0,verified_exact,True,pressure-coordinate RMSE against calibrated Gross 2002 Figure 5 retained PC-SAFT curve traces,,,,,,,,
+series,1-propanol-benzene,,,7,13,0.0,0.0,0.0,0.003806331283225649,0.0,0.0,0.0,0.0,0.0069505486503129155,0.0,9.619366871677435,1.0,verified_exact,True,,,,,,,,,
+series,2-propanol-benzene,,,7,13,0.0,0.0,0.0,0.005647812993786886,0.0,0.0,0.0,0.0,0.013315017332666435,0.0,9.435218700621311,1.0,verified_exact,True,,,,,,,,,
+literature_overlay,,,,,,,,,,,,,,,,,,,,,48,0,0.0014766626578058895,0.010808672834688116,0.001306195839062261,0.006384739959382088,bar,

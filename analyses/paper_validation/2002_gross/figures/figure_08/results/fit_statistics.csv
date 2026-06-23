@@ -1,0 +1,7 @@
+scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit,notes
+figure,,,,21,21,0.0,0.0,0.05038892821258892,0.0,0.0,0.0,0.0,0.10541255852349973,0.0,0.0,9.9082422421564,1.0,verified_exact,True,temperature-coordinate RMSE against retained Figure 8 lower LLE source rows and calibrated upper PC-SAFT VLE curve source_capture,,,,,,,,
+series,lle_methanol_lean,,,6,6,0.0,0.0,0.038675030302998646,0.0,0.0,0.0,0.0,0.05594405594405316,0.0,0.0,9.951656212121252,1.0,verified_exact,True,,,,,,,,,
+series,lle_methanol_rich,,,6,6,0.0,0.0,0.07340620627488056,0.0,0.0,0.0,0.0,0.10541255852349973,0.0,0.0,9.9082422421564,1.0,verified_exact,True,,,,,,,,,
+series,vle_bubble_left,,,5,5,0.0,0.0,0.04395206831246317,0.0,0.0,0.0,0.0,0.062880120889794,0.0,0.0,9.945059914609422,1.0,verified_exact,True,,,,,,,,,
+series,vle_dew_right,,,4,4,0.0,0.0,0.024267415078227828,0.0,0.0,0.0,0.0,0.048534830156455655,0.0,0.0,9.969665731152215,1.0,verified_exact,True,,,,,,,,,
+literature_overlay,,,,,,,,,,,,,,,,,,,,,23,11,1.5445127872855422,2.1593113101738552,-1.5445127872855422,0.2743361966759399,degC,

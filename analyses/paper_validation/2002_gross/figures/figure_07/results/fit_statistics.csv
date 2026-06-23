@@ -1,0 +1,7 @@
+scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit,notes
+figure,,,,32,32,0.0,0.0,0.0,0.47214049966220417,0.0,0.0,0.0,0.0,1.5829026898151426,0.0,8.442866866419665,1.0,verified_exact,True,pressure-coordinate RMSE against calibrated Gross 2002 Figure 7 retained P-x_Butane source points,,,,,,,,
+series,T_100C,,,11,11,0.0,0.0,0.0,0.028882947756732037,0.0,0.0,0.0,0.0,0.04737907683241005,0.0,9.95186175373878,1.0,verified_exact,True,,,,,,,,,
+series,T_140C,,,9,9,0.0,0.0,0.0,0.41910918711581646,0.0,0.0,0.0,0.0,1.1000845565308843,0.0,9.301484688140306,1.0,verified_exact,True,,,,,,,,,
+series,T_160C,,,8,8,0.0,0.0,0.0,0.5064296841338952,0.0,0.0,0.0,0.0,0.7883085448530913,0.0,9.155950526443508,1.0,verified_exact,True,,,,,,,,,
+series,T_190C,,,4,4,0.0,0.0,0.0,0.9342798801482011,0.0,0.0,0.0,0.0,1.5829026898151426,0.0,8.442866866419665,1.0,verified_exact,True,,,,,,,,,
+literature_overlay,,,,,,,,,,,,,,,,,,,,,32,4,0.26813728790457203,1.4592826367425715,0.022982366550744482,0.006095143806789915,bar,
