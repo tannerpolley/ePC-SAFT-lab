@@ -22,7 +22,7 @@ MANIFEST_PATH = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "sh
 SUMMARY_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "shared" / "results"
 REQUIRED_ACCEPTED_FIGURES = ("figure_01", "figure_08", "figure_10")
 SOURCE_REQUIREMENT_FIGURES = ("figure_02", "figure_03", "figure_04", "figure_05", "figure_06", "figure_07", "figure_09")
-VISUAL_ARTIFACT_KEYS = ("source_csv", "model_csv", "plotted_csv", "summary_json", "png", "svg", "pdf")
+VISUAL_ARTIFACT_KEYS = ("source_csv", "model_csv", "plotted_csv", "fit_statistics_csv", "png", "svg", "pdf")
 FIGURE01_ARTIFACT_KEYS = ("source_csv", "fit_statistics_csv")
 FIGURE_MISSING_BLOCKERS = {
     "figure_01": "gross_2002_figure_01_pure_association_statistics_missing",
@@ -81,21 +81,21 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def _artifact_paths(figure_id: str, stem: str, source_csv: str | None = None) -> dict[str, str]:
+def _artifact_paths(figure_id: str, source_csv: str | None = None) -> dict[str, str]:
     result_dir = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "figures" / figure_id / "results"
     if figure_id == "figure_01":
         return {
             "source_csv": _relative(_repo_path(source_csv)) if source_csv else "",
-            "fit_statistics_csv": _relative(result_dir / "association_fit_statistics.csv"),
+            "fit_statistics_csv": _relative(result_dir / "fit_statistics.csv"),
         }
     return {
         "source_csv": _relative(_repo_path(source_csv)) if source_csv else "",
-        "model_csv": _relative(result_dir / f"{stem}_model_curve.csv"),
-        "plotted_csv": _relative(result_dir / f"{stem}_plotted_data.csv"),
-        "summary_json": _relative(result_dir / f"{stem}_association_summary.json"),
-        "png": _relative(result_dir / f"{stem}_association_mirror.png"),
-        "svg": _relative(result_dir / f"{stem}_association_mirror.svg"),
-        "pdf": _relative(result_dir / f"{stem}_association_mirror.pdf"),
+        "model_csv": _relative(result_dir / "model_curve.csv"),
+        "plotted_csv": _relative(result_dir / "plotted_data.csv"),
+        "fit_statistics_csv": _relative(result_dir / "fit_statistics.csv"),
+        "png": _relative(result_dir / f"{figure_id}.png"),
+        "svg": _relative(result_dir / f"{figure_id}.svg"),
+        "pdf": _relative(result_dir / f"{figure_id}.pdf"),
     }
 
 
@@ -213,14 +213,6 @@ def _load_manifest(manifest_path: Path) -> dict[str, Any]:
     return _read_json(manifest_path)
 
 
-def _manifest_figure(manifest: dict[str, Any], figure_id: str) -> dict[str, Any]:
-    figures = manifest.get("figures", [])
-    for row in figures:
-        if row.get("figure_id") == figure_id:
-            return dict(row)
-    raise KeyError(figure_id)
-
-
 def _row_count(csv_path: str | None) -> int:
     if not csv_path or not _repo_path(csv_path).is_file():
         return 0
@@ -242,7 +234,6 @@ def _source_requirement_record(row: dict[str, Any]) -> dict[str, Any]:
 
 def _figure01_record(row: dict[str, Any]) -> dict[str, Any]:
     source_csv = row.get("source_csv", "")
-    stem = row.get("result_stem", "association")
     source_rows = _read_csv(_repo_path(source_csv)) if _repo_path(source_csv).is_file() else []
     components = {source_row.get("component", "") for source_row in source_rows}
     status = "accepted" if {"methanol", "1-pentanol", "1-nonanol"} <= components else "blocked"
@@ -255,7 +246,7 @@ def _figure01_record(row: dict[str, Any]) -> dict[str, Any]:
         "source_image": row.get("source_image", ""),
         "source_data_home": row.get("source_data_home", []),
         "route_family": row.get("route_family", ""),
-        "artifacts": _artifact_paths("figure_01", stem, source_csv),
+        "artifacts": _artifact_paths("figure_01", source_csv),
         "pure_association_sanity": {
             "status": "verified" if status == "accepted" else "blocked",
             "components": sorted(components),
@@ -267,7 +258,6 @@ def _figure01_record(row: dict[str, Any]) -> dict[str, Any]:
 def _figure08_record(row: dict[str, Any], *, require_exact: bool) -> dict[str, Any]:
     from scripts.validation import check_associating_lle_gross_2002 as gross_2002
 
-    stem = row.get("result_stem", "gross_2002_figure_08_association_mirror")
     source_csv = row.get("source_csv", "")
     proof = gross_2002.evaluate_case_dir(
         gross_2002.DEFAULT_CASE_DIR,
@@ -288,7 +278,7 @@ def _figure08_record(row: dict[str, Any], *, require_exact: bool) -> dict[str, A
         "source_point_count": int(proof.get("fixture", {}).get("source_data", {}).get("paper_data_rows", 0) or 0),
         "source_image": row.get("source_image", ""),
         "route_family": row.get("route_family", ""),
-        "artifacts": _artifact_paths("figure_08", stem, source_csv),
+        "artifacts": _artifact_paths("figure_08", source_csv),
         "exact_association_hessian": hessian,
         "existing_checker": "scripts/validation/check_associating_lle_gross_2002.py",
     }
@@ -364,8 +354,13 @@ def _figure10_association_hessian_payload(source_rows: list[dict[str, str]]) -> 
             return {"status": "blocked", "blockers": ["gross_2002_figure_10_cppad_required"]}
 
         mixture = _figure10_mixture()
-        selected = next(row for row in source_rows if row.get("phase_branch") == "LLE_1_pentanol_rich_liquid")
-        temperature = float(selected["temperature_K"])
+        selected = next(
+            row
+            for row in source_rows
+            if row.get("phase_branch") == "LLE_1_pentanol_rich_liquid"
+            or row.get("series") == "lle_1_pentanol_rich"
+        )
+        temperature = float(selected.get("temperature_K") or selected["T_K"])
         composition = np.asarray([float(selected["x_water"]), float(selected["x_1_pentanol"])], dtype=float)
         density = 500.0
         state = mixture.state(T=temperature, rho=density, x=composition, phase="liquid")
@@ -471,13 +466,15 @@ def _figure10_association_hessian_payload(source_rows: list[dict[str, str]]) -> 
 
 def _figure10_record(row: dict[str, Any], *, require_exact: bool) -> dict[str, Any]:
     source_csv = row.get("source_csv", "")
-    stem = row.get("result_stem", "gross_2002_figure_10_association_mirror")
     source_rows = _read_csv(_repo_path(source_csv)) if _repo_path(source_csv).is_file() else []
-    branches = {source_row.get("phase_branch", "") for source_row in source_rows}
+    branches = {source_row.get("phase_branch") or source_row.get("series", "") for source_row in source_rows}
     status = (
         "accepted"
         if len(source_rows) >= int(row.get("thresholds", {}).get("min_source_points", 8))
-        and {"LLE_1_pentanol_rich_liquid", "LLE_water_rich_liquid"} <= branches
+        and (
+            {"LLE_1_pentanol_rich_liquid", "LLE_water_rich_liquid"} <= branches
+            or {"lle_1_pentanol_rich", "lle_water_rich"} <= branches
+        )
         else "blocked"
     )
     hessian = _figure10_association_hessian_payload(source_rows) if require_exact and source_rows else {"status": "not_requested", "blockers": []}
@@ -491,7 +488,7 @@ def _figure10_record(row: dict[str, Any], *, require_exact: bool) -> dict[str, A
         "source_point_count": len(source_rows),
         "source_image": row.get("source_image", ""),
         "route_family": row.get("route_family", ""),
-        "artifacts": _artifact_paths("figure_10", stem, source_csv),
+        "artifacts": _artifact_paths("figure_10", source_csv),
         "exact_association_hessian": hessian,
         "cross_association_stress": {
             "status": "verified" if status == "accepted" else "blocked",
@@ -645,255 +642,6 @@ def evaluate_campaign(
     return result
 
 
-def _save_plot(fig: Any, png: Path, svg: Path, pdf: Path) -> None:
-    png.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(png, dpi=180, bbox_inches="tight")
-    fig.savefig(svg, bbox_inches="tight")
-    text = svg.read_text(encoding="utf-8")
-    svg.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
-    fig.savefig(pdf, bbox_inches="tight")
-
-
-def _render_figure01(row: dict[str, Any]) -> dict[str, Any]:
-    source_csv = _repo_path(row["source_csv"])
-    source_rows = _read_csv(source_csv)
-    stem = row.get("result_stem", "association")
-    artifacts = _artifact_paths("figure_01", stem, row["source_csv"])
-    statistics_rows: list[dict[str, Any]] = []
-    for source_row in source_rows:
-        component = source_row["component"]
-        statistics_rows.extend(
-            [
-                {
-                    "component": component,
-                    "metric": "vapor_pressure_aad",
-                    "value_percent": source_row["psat_aad_percent"],
-                    "source_table": source_row["source_table"],
-                    "source_status": source_row["source_status"],
-                    "source_method": source_row.get("source_method", ""),
-                    "source_reference": source_row.get("source_reference", ""),
-                    "evidence_role": "gross_2002_table_1_pc_saft_aad",
-                },
-                {
-                    "component": component,
-                    "metric": "liquid_density_aad",
-                    "value_percent": source_row["liquid_density_aad_percent"],
-                    "source_table": source_row["source_table"],
-                    "source_status": source_row["source_status"],
-                    "source_method": source_row.get("source_method", ""),
-                    "source_reference": source_row.get("source_reference", ""),
-                    "evidence_role": "gross_2002_table_1_pc_saft_aad",
-                },
-            ]
-        )
-    _write_csv(
-        _repo_path(artifacts["fit_statistics_csv"]),
-        statistics_rows,
-        [
-            "component",
-            "metric",
-            "value_percent",
-            "source_table",
-            "source_status",
-            "source_method",
-            "source_reference",
-            "evidence_role",
-        ],
-    )
-
-    components = [source_row["component"] for source_row in source_rows]
-    summary = {
-        "figure_id": "figure_01",
-        "status": "accepted",
-        "source_point_count": len(source_rows),
-        "artifacts": artifacts,
-        "source_data_home": row.get("source_data_home", []),
-        "pure_association_sanity": {"status": "verified", "components": components},
-    }
-    return summary
-
-
-def _render_figure08(row: dict[str, Any]) -> dict[str, Any]:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    from scripts.validation import check_associating_gfpe_gate
-
-    source_rows = _read_csv(_repo_path(row["source_csv"]))
-    proof = check_associating_gfpe_gate.evaluate_case_dir(
-        require_source_data=True,
-        require_public_admission=True,
-        require_exact_association_hessian=True,
-        require_capability_evidence=True,
-        require_electrolyte_closed=True,
-    )
-    public = proof["public_admission"]
-    stem = row["result_stem"]
-    artifacts = _artifact_paths("figure_08", stem, row["source_csv"])
-    retained_summary_path = _repo_path(artifacts["summary_json"])
-    retained_summary = _read_json(retained_summary_path) if retained_summary_path.is_file() else {}
-    plotted_rows = [
-        {
-            "series": source_row["phase_branch"],
-            "temperature_C": source_row["temperature_C"],
-            "temperature_K": source_row["temperature_K"],
-            "x_methanol": source_row["x_methanol"],
-            "source_status": source_row["source_status"],
-        }
-        for source_row in source_rows
-    ]
-    if "methanol_branch_values" in public and "temperature_K" in proof["prerequisite_proof"].get("internal_route", {}):
-        route_temperature_k = float(proof["prerequisite_proof"]["internal_route"]["temperature_K"])
-        model_rows = [
-            {
-                "series": "public_associating_lle_route",
-                "phase_index": index,
-                "temperature_K": route_temperature_k,
-                "x_methanol": x_value,
-                "route_status": public["status"],
-            }
-            for index, x_value in enumerate(public["methanol_branch_values"])
-        ]
-        public_admission = public
-        exact_hessian = proof["prerequisite_proof"]["association_hessian"]
-    else:
-        model_rows = _read_csv(_repo_path(artifacts["model_csv"]))
-        if not model_rows:
-            raise RuntimeError(f"retained Figure 8 association model CSV is empty: {artifacts['model_csv']}")
-        route_temperature_k = float(model_rows[0]["temperature_K"])
-        public_admission = retained_summary.get("public_admission", public)
-        exact_hessian = retained_summary.get("exact_association_hessian", proof["prerequisite_proof"].get("association_hessian", {}))
-    _write_csv(_repo_path(artifacts["plotted_csv"]), plotted_rows, ["series", "temperature_C", "temperature_K", "x_methanol", "source_status"])
-    _write_csv(_repo_path(artifacts["model_csv"]), model_rows, ["series", "phase_index", "temperature_K", "x_methanol", "route_status"])
-
-    fig, ax = plt.subplots(figsize=(7.0, 4.8))
-    for branch, marker in (("methanol_lean_liquid", "o"), ("methanol_rich_liquid", "s")):
-        branch_rows = [source_row for source_row in source_rows if source_row["phase_branch"] == branch]
-        ax.scatter(
-            [float(source_row["x_methanol"]) for source_row in branch_rows],
-            [float(source_row["temperature_K"]) - 273.15 for source_row in branch_rows],
-            marker=marker,
-            label=f"source {branch.replace('_', ' ')}",
-            s=38,
-        )
-    route_temperature_c = route_temperature_k - 273.15
-    route_x = [float(model_row["x_methanol"]) for model_row in model_rows]
-    ax.scatter(route_x, [route_temperature_c] * len(route_x), color="#E45756", marker="D", label="public route proof")
-    ax.set_xlabel("methanol mole fraction")
-    ax.set_ylabel("T / degC")
-    ax.set_title("Gross 2002 Figure 8 associating LLE mirror")
-    ax.grid(alpha=0.25)
-    ax.legend(frameon=False)
-    _save_plot(fig, _repo_path(artifacts["png"]), _repo_path(artifacts["svg"]), _repo_path(artifacts["pdf"]))
-    plt.close(fig)
-    summary = {
-        "figure_id": "figure_08",
-        "status": "accepted",
-        "source_point_count": len(source_rows),
-        "artifacts": artifacts,
-        "exact_association_hessian": exact_hessian,
-        "public_admission": public_admission,
-    }
-    _write_json(_repo_path(artifacts["summary_json"]), summary)
-    return summary
-
-
-def _render_figure10(row: dict[str, Any]) -> dict[str, Any]:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    source_rows = _read_csv(_repo_path(row["source_csv"]))
-    hessian = _figure10_association_hessian_payload(source_rows)
-    stem = row["result_stem"]
-    artifacts = _artifact_paths("figure_10", stem, row["source_csv"])
-    plotted_rows = [
-        {
-            "source_series": source_row["source_series"],
-            "phase_branch": source_row["phase_branch"],
-            "temperature_C": source_row["temperature_C"],
-            "temperature_K": source_row["temperature_K"],
-            "x_water": source_row["x_water"],
-            "source_status": source_row["source_status"],
-        }
-        for source_row in source_rows
-    ]
-    model_rows = [
-        {
-            "series": "exact_association_diagnostic_sample",
-            "temperature_K": hessian.get("temperature_K", ""),
-            "x_water": hessian.get("composition", ["", ""])[0],
-            "x_1_pentanol": hessian.get("composition", ["", ""])[1],
-            "backend": hessian.get("backend", ""),
-            "max_mass_action_residual": hessian.get("max_mass_action_residual", ""),
-            "status": hessian.get("status", ""),
-        }
-    ]
-    _write_csv(_repo_path(artifacts["plotted_csv"]), plotted_rows, ["source_series", "phase_branch", "temperature_C", "temperature_K", "x_water", "source_status"])
-    _write_csv(_repo_path(artifacts["model_csv"]), model_rows, ["series", "temperature_K", "x_water", "x_1_pentanol", "backend", "max_mass_action_residual", "status"])
-
-    fig, ax = plt.subplots(figsize=(7.0, 4.8))
-    styles = {
-        "LLE_1_pentanol_rich_liquid": ("o", "#4C78A8"),
-        "LLE_water_rich_liquid": ("s", "#F58518"),
-        "VLE_or_VLLE_source_points": ("^", "#54A24B"),
-    }
-    for branch, (marker, color) in styles.items():
-        branch_rows = [source_row for source_row in source_rows if source_row["phase_branch"] == branch]
-        ax.scatter(
-            [float(source_row["x_water"]) for source_row in branch_rows],
-            [float(source_row["temperature_C"]) for source_row in branch_rows],
-            marker=marker,
-            color=color,
-            s=38,
-            label=branch.replace("_", " "),
-        )
-    if hessian.get("status") == "verified_exact":
-        ax.scatter(
-            [float(hessian["composition"][0])],
-            [float(hessian["temperature_K"]) - 273.15],
-            color="#E45756",
-            marker="D",
-            s=64,
-            label="exact association diagnostic sample",
-        )
-    ax.set_xlabel("water mole fraction")
-    ax.set_ylabel("T / degC")
-    ax.set_title("Gross 2002 Figure 10 cross-association stress mirror")
-    ax.grid(alpha=0.25)
-    ax.legend(frameon=False)
-    _save_plot(fig, _repo_path(artifacts["png"]), _repo_path(artifacts["svg"]), _repo_path(artifacts["pdf"]))
-    plt.close(fig)
-    summary = {
-        "figure_id": "figure_10",
-        "status": "accepted" if hessian.get("status") == "verified_exact" else "blocked",
-        "source_point_count": len(source_rows),
-        "artifacts": artifacts,
-        "exact_association_hessian": hessian,
-        "cross_association_stress": {"status": "verified" if hessian.get("status") == "verified_exact" else "blocked"},
-    }
-    _write_json(_repo_path(artifacts["summary_json"]), summary)
-    return summary
-
-
-def render_figure(figure_id: str, *, manifest_path: Path = MANIFEST_PATH) -> dict[str, Any]:
-    manifest = _load_manifest(manifest_path)
-    row = _manifest_figure(manifest, figure_id)
-    if figure_id == "figure_01":
-        return _render_figure01(row)
-    if figure_id == "figure_08":
-        return _render_figure08(row)
-    if figure_id == "figure_10":
-        return _render_figure10(row)
-    raise ValueError(f"Gross 2002 render only owns accepted figures, got {figure_id}")
-
-
-def render_accepted_figures(*, manifest_path: Path = MANIFEST_PATH) -> list[dict[str, Any]]:
-    return [render_figure(figure_id, manifest_path=manifest_path) for figure_id in REQUIRED_ACCEPTED_FIGURES]
-
-
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
@@ -901,8 +649,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--require-complete", action="store_true")
     parser.add_argument("--require-exact-association-hessian", action="store_true")
     parser.add_argument("--require-fresh-native", action="store_true")
-    parser.add_argument("--render", action="store_true")
-    parser.add_argument("--regenerate", action="store_true")
     return parser
 
 
@@ -917,15 +663,13 @@ def main(argv: list[str] | None = None) -> int:
         "scripts/validation/check_gross_2002_association_acceptance.py",
         *cli_args,
     ]
-    if args.render or args.regenerate:
-        render_accepted_figures(manifest_path=args.manifest)
     output = evaluate_campaign(
         manifest_path=args.manifest,
         require_complete=args.require_complete,
         require_exact_association_hessian=args.require_exact_association_hessian or args.require_complete,
         require_fresh_native=args.require_fresh_native or args.require_complete,
         checker_command=checker_command,
-        write_summary=args.render or args.regenerate,
+        write_summary=True,
     )
     if args.json:
         print(json.dumps(output, indent=2, sort_keys=True))

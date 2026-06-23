@@ -14,7 +14,7 @@ def _artifact_set(tmp_path: Path, figure_id: str) -> dict[str, str]:
         fit_statistics_csv.write_text("artifact\n", encoding="utf-8")
         return {"source_csv": str(source_csv), "fit_statistics_csv": str(fit_statistics_csv)}
     files = {}
-    for suffix in ("source_csv", "model_csv", "plotted_csv", "summary_json", "png", "svg", "pdf"):
+    for suffix in ("source_csv", "model_csv", "plotted_csv", "fit_statistics_csv", "png", "svg", "pdf"):
         path = tmp_path / f"{figure_id}_{suffix}"
         path.write_text("artifact\n", encoding="utf-8")
         files[suffix] = str(path)

@@ -8,4 +8,4 @@ figure_06,source_requirement,source_requirement_recorded,False,,supercritical_pa
 figure_07,source_requirement,source_requirement_recorded,False,,supercritical_partner_vle,
 figure_08,accepted_hard_gate,accepted,True,16,associating_neutral_lle_vle,verified_exact
 figure_09,source_requirement,source_requirement_recorded,False,,cross_associating_vle,
-figure_10,accepted_hard_gate,accepted,True,16,cross_associating_vlle_lle_stress,verified_exact
+figure_10,accepted_hard_gate,accepted,True,24,cross_associating_vlle_lle_stress,verified_exact

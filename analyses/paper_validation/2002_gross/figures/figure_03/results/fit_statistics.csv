@@ -1,0 +1,5 @@
+scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit,notes
+figure,,,,10,10,0.0,0.0,0.5287820805903377,0.0,0.0,0.0,0.0,1.3984844909450942,0.0,0.0,8.69530260974624,1.0,verified_exact,True,temperature-coordinate RMSE against calibrated Gross 2002 Figure 3 retained PC-SAFT curve traces,,,,,,,,
+series,pressure_series_high,,,5,5,0.0,0.0,0.6523486951268809,0.0,0.0,0.0,0.0,1.3984844909450942,0.0,0.0,8.69530260974624,1.0,verified_exact,True,,,,,,,,,
+series,pressure_series_low,,,5,5,0.0,0.0,0.36559835540268604,0.0,0.0,0.0,0.0,0.7285035672998674,0.0,0.0,9.268803289194627,1.0,verified_exact,True,,,,,,,,,
+literature_overlay,,,,,,,,,,,,,,,,,,,,,40,0,6.060491081463409,15.168871525730083,-6.060491081463409,0.27673475257823743,degC,

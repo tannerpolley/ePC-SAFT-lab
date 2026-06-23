@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import json
 import math
 from collections import defaultdict
 from pathlib import Path
@@ -19,7 +18,6 @@ ANALYSIS_ROOT = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross"
 FIGURES_ROOT = ANALYSIS_ROOT / "figures"
 SHARED_RESULTS = ANALYSIS_ROOT / "shared" / "results"
 
-OVERLAY_STEM = "clean_literature_overlay"
 MODEL_COLORS = [
     "#0b4f6c",
     "#b23a48",
@@ -75,31 +73,13 @@ CSV_FIELDS = [
     "note",
 ]
 
-
-def _figure_code(figure_id: str) -> str:
-    return figure_id.split("_")[-1]
-
-
 def _figure_dirs(figure_id: str) -> tuple[Path, Path, Path]:
     figure_dir = FIGURES_ROOT / figure_id
     return figure_dir, figure_dir / "source", figure_dir / "results"
 
 
-def _stem(figure_id: str) -> str:
-    return f"gross_2002_figure_{_figure_code(figure_id)}_{OVERLAY_STEM}"
-
-
-def _replication_stem(figure_id: str) -> str:
-    return f"gross_2002_figure_{_figure_code(figure_id)}_replication"
-
-
 def _relative(path: Path) -> str:
     return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str] = CSV_FIELDS) -> None:
@@ -378,10 +358,9 @@ def _render_figure(
     ylim: tuple[float, float] | None = None,
 ) -> None:
     _, _, results_dir = _figure_dirs(figure_id)
-    stem = _stem(figure_id)
-    png = results_dir / f"{stem}.png"
-    svg = results_dir / f"{stem}.svg"
-    pdf = results_dir / f"{stem}.pdf"
+    png = results_dir / f"{figure_id}.png"
+    svg = results_dir / f"{figure_id}.svg"
+    pdf = results_dir / f"{figure_id}.pdf"
 
     fig, ax = plt.subplots(figsize=(8.8, 5.2), constrained_layout=True)
     ax.set_title(title, fontsize=12, pad=8)
@@ -519,12 +498,8 @@ def _write_figure_outputs(
     ylim: tuple[float, float] | None = None,
 ) -> dict[str, Any]:
     _, source_dir, results_dir = _figure_dirs(figure_id)
-    stem = _stem(figure_id)
-    source_csv = source_dir / f"{stem}_literature_points.csv"
-    plotted_csv = results_dir / f"{stem}_plotted_data.csv"
-    stats_csv = results_dir / f"{stem}_fit_statistics.csv"
-    stats_json = results_dir / f"{stem}_fit_statistics.json"
-    summary_json = results_dir / f"{stem}_summary.json"
+    source_csv = source_dir / "literature_points.csv"
+    plotted_csv = results_dir / "plotted_data.csv"
     smooth_model_rows = _smooth_model_rows(model_rows)
 
     _write_csv(source_csv, literature_rows)
@@ -541,31 +516,28 @@ def _write_figure_outputs(
     )
 
     stats = _nearest_branch_stats(figure_id, smooth_model_rows, literature_rows, y_unit=y_unit)
-    _write_csv(stats_csv, [stats], list(stats.keys()))
-    _write_json(stats_json, stats)
     summary = {
         "figure_id": figure_id,
         "title": title,
-        "artifact_png": _relative(results_dir / f"{stem}.png"),
-        "artifact_svg": _relative(results_dir / f"{stem}.svg"),
+        "artifact_png": _relative(results_dir / f"{figure_id}.png"),
+        "artifact_svg": _relative(results_dir / f"{figure_id}.svg"),
+        "artifact_pdf": _relative(results_dir / f"{figure_id}.pdf"),
         "literature_points_csv": _relative(source_csv),
         "plotted_data_csv": _relative(plotted_csv),
         "model_seed_rows": len(model_rows),
         "smooth_model_rows": len(smooth_model_rows),
-        "digitized_trace_rows_plotted": 0,
+        "source_trace_rows_plotted": 0,
         "literature_rows": len(literature_rows),
         "sources": sources,
         "pending_source_data": pending,
         "fit_statistics": stats,
     }
-    _write_json(summary_json, summary)
     return summary
 
 
 def _figure_paths(figure_id: str) -> tuple[Path, Path]:
     _, _, results_dir = _figure_dirs(figure_id)
-    stem = _replication_stem(figure_id)
-    return results_dir / f"{stem}_model_curve.csv", results_dir / f"{stem}_plotted_data.csv"
+    return results_dir / "model_curve.csv", results_dir / "plotted_data.csv"
 
 
 def _model_rows_from_csv(
@@ -1861,7 +1833,7 @@ def _build_all() -> list[dict[str, Any]]:
             literature_rows=_fig8_literature(),
             model_rows=_model_rows_from_csv("figure_08", _fig8_model),
             sources=["Madhavan and Murti 1966 Table 3c"],
-            pending=["Kato et al. 1992 methanol/cyclohexane LLE table needs OCR or manual digitization because the Zotero PDF table does not extract as text"],
+            pending=["Kato et al. 1992 methanol/cyclohexane LLE table needs OCR or manual source_capture because the Zotero PDF table does not extract as text"],
             y_unit="degC",
             ylim=(0.0, 70.0),
         )
@@ -1900,9 +1872,7 @@ def _build_all() -> list[dict[str, Any]]:
 def main() -> None:
     summaries = _build_all()
     SHARED_RESULTS.mkdir(parents=True, exist_ok=True)
-    summary_json = SHARED_RESULTS / "gross_2002_clean_literature_overlay_summary.json"
-    summary_csv = SHARED_RESULTS / "gross_2002_clean_literature_overlay_summary.csv"
-    _write_json(summary_json, {"figures": summaries})
+    summary_csv = SHARED_RESULTS / "gross_2002_literature_overlay_summary.csv"
     rows = [
         {
             "figure_id": item["figure_id"],
@@ -1910,7 +1880,7 @@ def main() -> None:
             "literature_rows": item["literature_rows"],
             "model_seed_rows": item["model_seed_rows"],
             "smooth_model_rows": item["smooth_model_rows"],
-            "digitized_trace_rows_plotted": item["digitized_trace_rows_plotted"],
+            "source_trace_rows_plotted": item["source_trace_rows_plotted"],
             "matched_literature_points": item["fit_statistics"]["matched_literature_points"],
             "skipped_literature_points": item["fit_statistics"]["skipped_literature_points"],
             "mae": item["fit_statistics"]["mae"],
@@ -1932,7 +1902,7 @@ def main() -> None:
             "literature_rows",
             "model_seed_rows",
             "smooth_model_rows",
-            "digitized_trace_rows_plotted",
+            "source_trace_rows_plotted",
             "matched_literature_points",
             "skipped_literature_points",
             "mae",

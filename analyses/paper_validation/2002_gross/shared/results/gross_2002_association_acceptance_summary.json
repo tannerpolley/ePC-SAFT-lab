@@ -11,7 +11,7 @@
   "figure_records": [
     {
       "artifacts": {
-        "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/association_fit_statistics.csv",
+        "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/fit_statistics.csv",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/pure_association_aad.csv"
       },
       "counts_toward_completion": true,
@@ -44,7 +44,7 @@
       "role": "source_requirement",
       "route_family": "self_associating_vle",
       "source_data_home": [],
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/paper_source_01_gross_2002_figure_002.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/figure_02.png",
       "source_requirements": [
         "resolve methanol-isobutane caption versus methanol-isobutanol Table 2 identity",
         "retain pressure-composition source points with units",
@@ -58,7 +58,7 @@
       "role": "source_requirement",
       "route_family": "self_associating_vle",
       "source_data_home": [],
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_03/source/paper_source_01_gross_2002_figure_003.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_03/source/figure_03.png",
       "source_requirements": [
         "retain source points with pressure and composition units",
         "retain ethylbenzene pure-parameter provenance"
@@ -71,7 +71,7 @@
       "role": "source_requirement",
       "route_family": "self_associating_vle",
       "source_data_home": [],
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_04/source/paper_source_01_gross_2002_figure_004.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_04/source/figure_04.png",
       "source_requirements": [
         "retain source points with pressure and composition units",
         "retain benzene pure-parameter provenance"
@@ -84,7 +84,7 @@
       "role": "source_requirement",
       "route_family": "self_associating_vle_isomer_stress",
       "source_data_home": [],
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_05/source/paper_source_01_gross_2002_figure_005.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_05/source/figure_05.png",
       "source_requirements": [
         "retain source points for both alcohol isomers",
         "retain benzene pure-parameter provenance"
@@ -97,7 +97,7 @@
       "role": "source_requirement",
       "route_family": "supercritical_partner_vle",
       "source_data_home": [],
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_06/source/paper_source_01_gross_2002_figure_006.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_06/source/figure_06.png",
       "source_requirements": [
         "retain source points for all temperature panels",
         "retain n-butane pure-parameter provenance"
@@ -110,7 +110,7 @@
       "role": "source_requirement",
       "route_family": "supercritical_partner_vle",
       "source_data_home": [],
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_07/source/paper_source_01_gross_2002_figure_007.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_07/source/figure_07.png",
       "source_requirements": [
         "retain source points for all temperature panels",
         "retain n-butane pure-parameter provenance"
@@ -119,13 +119,13 @@
     },
     {
       "artifacts": {
-        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_model_curve.csv",
-        "pdf": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_mirror.pdf",
-        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_plotted_data.csv",
-        "png": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_mirror.png",
+        "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/fit_statistics.csv",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_08/results/figure_08.pdf",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_08/results/figure_08.png",
         "source_csv": "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane/experimental_phase_points.csv",
-        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_summary.json",
-        "svg": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_mirror.svg"
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_08/results/figure_08.svg"
       },
       "counts_toward_completion": true,
       "exact_association_hessian": {
@@ -172,7 +172,7 @@
       "figure_id": "figure_08",
       "role": "accepted_hard_gate",
       "route_family": "associating_neutral_lle_vle",
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_08/source/paper_source_01_gross_2002_figure_008.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_08/source/figure_08.png",
       "source_point_count": 16,
       "status": "accepted"
     },
@@ -182,7 +182,7 @@
       "role": "source_requirement",
       "route_family": "cross_associating_vle",
       "source_data_home": [],
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_09/source/paper_source_01_gross_2002_figure_009.png",
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_09/source/figure_09.png",
       "source_requirements": [
         "retain source points with temperature and composition units",
         "retain two-associating-component cross-association diagnostics"
@@ -191,20 +191,21 @@
     },
     {
       "artifacts": {
-        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_model_curve.csv",
-        "pdf": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_mirror.pdf",
-        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_plotted_data.csv",
-        "png": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_mirror.png",
-        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_digitized_points.csv",
-        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_summary.json",
-        "svg": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_mirror.svg"
+        "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/fit_statistics.csv",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_10/results/figure_10.pdf",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_10/results/figure_10.png",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_10/source/source_points.csv",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_10/results/figure_10.svg"
       },
       "counts_toward_completion": true,
       "cross_association_stress": {
         "branches": [
-          "LLE_1_pentanol_rich_liquid",
-          "LLE_water_rich_liquid",
-          "VLE_or_VLLE_source_points"
+          "lle_1_pentanol_rich",
+          "lle_water_rich",
+          "upper_vle_curve",
+          "vlle_tie_line"
         ],
         "gross_2002_water_caveat": "two-site water association model used by Gross 2002",
         "k_ij": 0.016,
@@ -215,22 +216,22 @@
         "backend": "cppad_implicit_association",
         "blockers": [],
         "composition": [
-          0.35,
-          0.65
+          0.325,
+          0.675
         ],
-        "max_mass_action_residual": 0.0,
+        "max_mass_action_residual": 2.220446049250313e-16,
         "phase_block_objective_hessian_symmetric": true,
-        "phase_block_objective_symmetry_error": 1.1368683772161603e-13,
+        "phase_block_objective_symmetry_error": 5.684341886080802e-14,
         "phase_block_pressure_hessian_symmetric": true,
         "phase_block_pressure_symmetry_error": 0.0,
-        "pressure_Pa": 433655.0500724103,
+        "pressure_Pa": 382444.27301604225,
         "site_first_sensitivity_nonzero": true,
         "site_first_sensitivity_shape": [
           3,
           4
         ],
-        "site_fraction_max": 0.8802250235889064,
-        "site_fraction_min": 0.7775607580936834,
+        "site_fraction_max": 0.8888888888888888,
+        "site_fraction_min": 0.7692307692307694,
         "site_second_sensitivities_symmetric": true,
         "site_second_sensitivity_nonzero": true,
         "site_second_sensitivity_shape": [
@@ -239,13 +240,13 @@
           4
         ],
         "status": "verified_exact",
-        "temperature_K": 302.15
+        "temperature_K": 298.15
       },
       "figure_id": "figure_10",
       "role": "accepted_hard_gate",
       "route_family": "cross_associating_vlle_lle_stress",
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_10/source/paper_source_01_gross_2002_figure_010.png",
-      "source_point_count": 16,
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_10/source/figure_10.png",
+      "source_point_count": 24,
       "status": "accepted"
     }
   ],

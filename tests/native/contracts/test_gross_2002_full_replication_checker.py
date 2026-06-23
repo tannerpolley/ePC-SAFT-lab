@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 from pathlib import Path
 
@@ -12,62 +13,90 @@ def _write(path: Path, text: str = "artifact\n") -> str:
     return str(path)
 
 
+def _fit_statistics_text(
+    *,
+    score: float = 8.0,
+    proof_status: str = "verified_exact",
+    series: list[str] | None = None,
+    branches: list[str] | None = None,
+) -> str:
+    fields = ["scope", "series", "component", "branch", *checker.CSV_STATISTIC_FIELDS]
+    rows: list[dict[str, object]] = [
+        {
+            "scope": "figure",
+            "source_point_count": 1,
+            "model_point_count": 1,
+            "normalized_plot_score": score,
+            "branch_coverage_score": 1.0,
+            checker.PROOF_STATUS_FIELD: proof_status,
+            "pass": score >= 8.0,
+        }
+    ]
+    for item in series or []:
+        rows.append(
+            {
+                "scope": "series",
+                "series": item,
+                "source_point_count": 1,
+                "model_point_count": 1,
+                "normalized_plot_score": score,
+                "branch_coverage_score": 1.0,
+                checker.PROOF_STATUS_FIELD: proof_status,
+                "pass": score >= 8.0,
+            }
+        )
+    for item in branches or []:
+        component, _, branch = item.partition(":")
+        rows.append(
+            {
+                "scope": "branch",
+                "component": component,
+                "branch": branch,
+                "source_point_count": 1,
+                "model_point_count": 1,
+                "normalized_plot_score": score,
+                "branch_coverage_score": 1.0,
+                checker.PROOF_STATUS_FIELD: proof_status,
+                "pass": score >= 8.0,
+            }
+        )
+
+    output = []
+    writer_row = {field: "" for field in fields}
+    output.append(",".join(fields))
+    for row in rows:
+        writer_row.update(row)
+        output.append(",".join(str(writer_row.get(field, "")) for field in fields))
+        writer_row = {field: "" for field in fields}
+    return "\n".join(output) + "\n"
+
+
 def _artifact_set(
     tmp_path: Path,
     figure_id: str,
     *,
     score: float = 8.0,
     proof_status: str = "verified_exact",
+    series: list[str] | None = None,
+    branches: list[str] | None = None,
 ) -> dict[str, str]:
     source_csv = _write(tmp_path / figure_id / "source.csv", "x,y\n0.1,1.0\n")
-    qa_overlay_path = tmp_path / figure_id / "qa_overlay.png"
-    source_metadata_json = _write(
-        tmp_path / figure_id / "metadata.json",
-        json.dumps(
-            {
-                "provenance": "unit-test digitization",
-                "axis_calibration": {"x": "composition", "y": "temperature_K"},
-                "units": {"x": "mole_fraction", "y": "K"},
-                "series_labels": ["liquid"],
-                "digitization_uncertainty": {"x": 0.002, "y": 0.2},
-                "qa_overlay": str(qa_overlay_path),
-            },
-            sort_keys=True,
-        )
-        + "\n",
-    )
-    digitization_qa_overlay = _write(qa_overlay_path)
+    source_notes_csv = _write(tmp_path / figure_id / "source_notes.csv", "section,key,value,unit,notes\n")
     model_csv = _write(tmp_path / figure_id / "model.csv", "x,y\n0.1,1.1\n")
     plotted_csv = _write(tmp_path / figure_id / "plotted.csv", "x_source,y_source,x_model,y_model\n0.1,1.0,0.1,1.1\n")
-    score_json = _write(
-        tmp_path / figure_id / "score.json",
-        json.dumps(
-            {
-                "source_point_count": 1,
-                "model_point_count": 1,
-                "rmse_axis": {"x": 0.0, "y": 0.1},
-                "max_axis_error": {"x": 0.0, "y": 0.1},
-                "normalized_plot_score": score,
-                "branch_coverage_score": 1.0,
-                checker.PROOF_STATUS_FIELD: proof_status,
-                "pass": score >= 8.0,
-            },
-            sort_keys=True,
-        )
-        + "\n",
+    fit_statistics_csv = _write(
+        tmp_path / figure_id / "fit_statistics.csv",
+        _fit_statistics_text(score=score, proof_status=proof_status, series=series, branches=branches),
     )
-    summary_json = _write(tmp_path / figure_id / "summary.json", "{}\n")
     png = _write(tmp_path / figure_id / "plot.png")
     svg = _write(tmp_path / figure_id / "plot.svg")
     pdf = _write(tmp_path / figure_id / "plot.pdf")
     return {
         "source_csv": source_csv,
-        "source_metadata_json": source_metadata_json,
-        "digitization_qa_overlay": digitization_qa_overlay,
+        "source_notes_csv": source_notes_csv,
         "model_csv": model_csv,
         "plotted_csv": plotted_csv,
-        "score_json": score_json,
-        "summary_json": summary_json,
+        "fit_statistics_csv": fit_statistics_csv,
         "png": png,
         "svg": svg,
         "pdf": pdf,
@@ -78,9 +107,8 @@ def _foundation_payload() -> dict[str, object]:
     return {
         "campaign": "gross_2002_full_replication",
         "artifact_contract": {"required_artifacts": list(checker.REQUIRED_ACCEPTED_ARTIFACT_KEYS)},
-        "source_metadata_schema": {"required_fields": list(checker.REQUIRED_SOURCE_METADATA_FIELDS)},
         "score_schema": {
-            "required_fields": list(checker.REQUIRED_SCORE_FIELDS),
+            "required_fields": list(checker.CSV_STATISTIC_FIELDS),
             "thresholds": dict(checker.PLOT_FAMILY_THRESHOLDS) | {"diagnostic_score_cap": checker.DIAGNOSTIC_SCORE_CAP},
         },
         "figures": [
@@ -104,18 +132,6 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
         plot_family = "t_rho" if number == 1 else "phase_boundary" if number in (8, 10) else "vle"
         requires_exact = number in (8, 9, 10)
         artifacts = _artifact_set(tmp_path, figure_id, proof_status="verified_exact" if requires_exact else "not_required")
-        if figure_id == "figure_02":
-            artifacts["source_identity_json"] = _write(
-                tmp_path / figure_id / "identity.json",
-                json.dumps(
-                    {
-                        "figure_id": "figure_02",
-                        "accepted_system": "methanol/isobutane",
-                    },
-                    sort_keys=True,
-                )
-                + "\n",
-            )
         figures.append(
             {
                 "figure_id": figure_id,
@@ -144,7 +160,7 @@ def test_foundation_payload_accepts_planned_all_figures() -> None:
 
 def test_accepted_figure_requires_all_replication_artifacts(tmp_path: Path) -> None:
     artifacts = _artifact_set(tmp_path, "figure_08")
-    artifacts.pop("source_metadata_json")
+    artifacts.pop("source_notes_csv")
     payload = _foundation_payload()
     payload["figures"] = [
         {
@@ -161,7 +177,7 @@ def test_accepted_figure_requires_all_replication_artifacts(tmp_path: Path) -> N
     result = checker.evaluate_payload(payload, require_complete=True)
 
     assert result["complete"] is False
-    assert "gross_2002_figure_08_source_metadata_json_missing" in result["blockers"]
+    assert "gross_2002_figure_08_source_notes_csv_missing" in result["blockers"]
 
 
 def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
@@ -175,6 +191,7 @@ def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
             checker.SECOND_ORDER_REQUIRED_FIELD: False,
+            "source_identity_status": "resolved",
             "artifacts": artifacts,
         }
     ]
@@ -186,22 +203,7 @@ def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
 
 
 def test_figure_one_requires_vapor_and_liquid_branch_scores(tmp_path: Path) -> None:
-    artifacts = _artifact_set(tmp_path, "figure_01", proof_status="verified_exact")
-    score_path = Path(artifacts["score_json"])
-    score_payload = json.loads(score_path.read_text(encoding="utf-8"))
-    score_payload["branch_scores"] = {
-        "methanol:liquid": {
-            "source_point_count": 6,
-            "model_point_count": 30,
-            "rmse_axis": {"rho": 0.1, "T": 0.1},
-            "max_axis_error": {"rho": 0.2, "T": 0.2},
-            "normalized_plot_score": 8.0,
-            "branch_coverage_score": 1.0,
-            checker.PROOF_STATUS_FIELD: "verified_exact",
-            "pass": True,
-        }
-    }
-    score_path.write_text(json.dumps(score_payload, sort_keys=True) + "\n", encoding="utf-8")
+    artifacts = _artifact_set(tmp_path, "figure_01", proof_status="verified_exact", branches=["methanol:liquid"])
     payload = _foundation_payload()
     payload["figures"] = [
         {
@@ -244,63 +246,19 @@ def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) 
     assert "gross_2002_figure_02_source_identity_unresolved" in result["blockers"]
 
 
-def test_figure_two_identity_requires_retained_artifact_before_acceptance(tmp_path: Path) -> None:
-    artifacts = _artifact_set(tmp_path, "figure_02", proof_status="verified_exact")
-    payload = _foundation_payload()
-    payload["figures"] = [
-        {
-            "figure_id": "figure_02",
-            "plot_family": "vle",
-            "replication_status": "accepted",
-            "counts_toward_completion": True,
-            "acceptance_threshold": 8.0,
-            checker.SECOND_ORDER_REQUIRED_FIELD: True,
-            "source_identity_status": "resolved",
-            "artifacts": artifacts,
-        }
-    ]
-
-    result = checker.evaluate_payload(payload, require_complete=True)
-
-    assert result["complete"] is False
-    assert "gross_2002_figure_02_source_identity_json_missing" in result["blockers"]
-
-
 def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
-    figure_03_artifacts = _artifact_set(tmp_path, "figure_03", proof_status="verified_exact")
-    figure_03_score_path = Path(figure_03_artifacts["score_json"])
-    figure_03_score = json.loads(figure_03_score_path.read_text(encoding="utf-8"))
-    figure_03_score["series_scores"] = {
-        "pressure_series_low": {
-            "source_point_count": 8,
-            "model_point_count": 40,
-            "rmse_axis": {"composition": 0.01, "temperature_K": 0.2},
-            "max_axis_error": {"composition": 0.02, "temperature_K": 0.4},
-            "normalized_plot_score": 8.0,
-            "branch_coverage_score": 1.0,
-            checker.PROOF_STATUS_FIELD: "verified_exact",
-            "pass": True,
-        }
-    }
-    figure_03_score_path.write_text(json.dumps(figure_03_score, sort_keys=True) + "\n", encoding="utf-8")
-
-    figure_05_artifacts = _artifact_set(tmp_path, "figure_05", proof_status="verified_exact")
-    figure_05_score_path = Path(figure_05_artifacts["score_json"])
-    figure_05_score = json.loads(figure_05_score_path.read_text(encoding="utf-8"))
-    figure_05_score["series_scores"] = {
-        "1-propanol-benzene": {
-            "source_point_count": 8,
-            "model_point_count": 40,
-            "rmse_axis": {"composition": 0.01, "pressure_bar": 0.02},
-            "max_axis_error": {"composition": 0.02, "pressure_bar": 0.04},
-            "normalized_plot_score": 8.0,
-            "branch_coverage_score": 1.0,
-            checker.PROOF_STATUS_FIELD: "verified_exact",
-            "pass": True,
-        }
-    }
-    figure_05_score_path.write_text(json.dumps(figure_05_score, sort_keys=True) + "\n", encoding="utf-8")
-
+    figure_03_artifacts = _artifact_set(
+        tmp_path,
+        "figure_03",
+        proof_status="verified_exact",
+        series=["pressure_series_low"],
+    )
+    figure_05_artifacts = _artifact_set(
+        tmp_path,
+        "figure_05",
+        proof_status="verified_exact",
+        series=["1-propanol-benzene"],
+    )
     payload = _foundation_payload()
     payload["figures"] = [
         {

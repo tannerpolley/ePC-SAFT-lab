@@ -1,0 +1,5 @@
+scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit,notes
+figure,,,,14,14,0.0,0.0,0.4878716337954255,0.0,0.0,0.0,0.0,0.9152200976555491,0.0,0.0,8.848154979228916,1.0,verified_exact,True,temperature-coordinate RMSE against calibrated Gross 2002 Figure 9 retained PC-SAFT curve source_capture using public pressure-route inversion,,,,,,,,
+series,bubble_curve,,,8,8,0.0,0.0,0.5759225103855419,0.0,0.0,0.0,0.0,0.9152200976555491,0.0,0.0,8.848154979228916,1.0,verified_exact,True,,,,,,,,,
+series,dew_curve,,,6,6,0.0,0.0,0.336345142951099,0.0,0.0,0.0,0.0,0.5477043392967289,0.0,0.0,9.327309714097803,1.0,verified_exact,True,,,,,,,,,
+literature_overlay,,,,,,,,,,,,,,,,,,,,,19,31,0.8773413488316537,1.7987787557753734,-0.2877340414364705,0.0067435922277605965,degC,

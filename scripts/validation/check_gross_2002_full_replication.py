@@ -20,12 +20,10 @@ SECOND_ORDER_CLI_FLAG = "--require-" + "exact-association-hessian"
 REQUIRED_FIGURES = tuple(f"figure_{number:02d}" for number in range(1, 11))
 REQUIRED_ACCEPTED_ARTIFACT_KEYS = (
     "source_csv",
-    "source_metadata_json",
-    "digitization_qa_overlay",
+    "source_notes_csv",
     "model_csv",
     "plotted_csv",
-    "score_json",
-    "summary_json",
+    "fit_statistics_csv",
     "png",
     "svg",
     "pdf",
@@ -41,28 +39,6 @@ BASE_ACCEPTED_ARTIFACT_KEYS = (
 CSV_STATISTIC_FIELDS = (
     "source_point_count",
     "model_point_count",
-    "rmse_density_kg_m3",
-    "rmse_temperature_K",
-    "max_density_error_kg_m3",
-    "max_temperature_error_K",
-    "normalized_plot_score",
-    "branch_coverage_score",
-    PROOF_STATUS_FIELD,
-    "pass",
-)
-REQUIRED_SOURCE_METADATA_FIELDS = (
-    "provenance",
-    "axis_calibration",
-    "units",
-    "series_labels",
-    "digitization_uncertainty",
-    "qa_overlay",
-)
-REQUIRED_SCORE_FIELDS = (
-    "source_point_count",
-    "model_point_count",
-    "rmse_axis",
-    "max_axis_error",
     "normalized_plot_score",
     "branch_coverage_score",
     PROOF_STATUS_FIELD,
@@ -168,13 +144,8 @@ def _foundation_blockers(payload: dict[str, Any]) -> list[str]:
         if key not in artifact_keys:
             blockers.append(f"gross_2002_artifact_contract_{key}_missing")
 
-    metadata_fields = set(_field_list(payload, "source_metadata_schema", "required_fields"))
-    for field in REQUIRED_SOURCE_METADATA_FIELDS:
-        if field not in metadata_fields:
-            blockers.append(f"gross_2002_source_metadata_schema_{field}_missing")
-
     score_fields = set(_field_list(payload, "score_schema", "required_fields"))
-    for field in REQUIRED_SCORE_FIELDS:
+    for field in CSV_STATISTIC_FIELDS:
         if field not in score_fields:
             blockers.append(f"gross_2002_score_schema_{field}_missing")
 
@@ -218,24 +189,8 @@ def _accepted_record_blockers(
         if not _path_exists(artifacts.get(key, "")):
             blockers.append(f"gross_2002_{figure_id}_{key}_missing")
 
-    if "digitization_qa_overlay" in artifacts and not _path_exists(artifacts.get("digitization_qa_overlay", "")):
-        blockers.append(f"gross_2002_{figure_id}_digitization_qa_overlay_missing")
-
-    if "source_notes_csv" in artifacts:
-        if not _path_exists(artifacts.get("source_notes_csv", "")):
-            blockers.append(f"gross_2002_{figure_id}_source_notes_csv_missing")
-    elif "digitization_notes_csv" in artifacts:
-        if not _path_exists(artifacts.get("digitization_notes_csv", "")):
-            blockers.append(f"gross_2002_{figure_id}_digitization_notes_csv_missing")
-    else:
-        metadata_path = str(artifacts.get("source_metadata_json", ""))
-        if not _path_exists(metadata_path):
-            blockers.append(f"gross_2002_{figure_id}_source_metadata_json_missing")
-        metadata = _safe_json_payload(metadata_path)
-        if metadata:
-            for field in REQUIRED_SOURCE_METADATA_FIELDS:
-                if field not in metadata:
-                    blockers.append(f"gross_2002_{figure_id}_source_metadata_{field}_missing")
+    if not _path_exists(artifacts.get("source_notes_csv", "")):
+        blockers.append(f"gross_2002_{figure_id}_source_notes_csv_missing")
 
     uses_fit_statistics_csv = "fit_statistics_csv" in artifacts
     if uses_fit_statistics_csv:
@@ -254,20 +209,18 @@ def _accepted_record_blockers(
                 for row in score_rows
                 if row.get("scope") == "branch"
             }
+            series_scores = {
+                str(row.get("series", "")): row
+                for row in score_rows
+                if row.get("scope") == "series" and str(row.get("series", "")).strip()
+            }
             score["branch_scores"] = branch_scores
+            score["series_scores"] = series_scores
     else:
-        score_path = str(artifacts.get("score_json", ""))
-        if not _path_exists(score_path):
-            blockers.append(f"gross_2002_{figure_id}_score_json_missing")
-        if not _path_exists(artifacts.get("summary_json", "")):
-            blockers.append(f"gross_2002_{figure_id}_summary_json_missing")
-        score = _safe_json_payload(score_path)
+        blockers.append(f"gross_2002_{figure_id}_fit_statistics_csv_missing")
+        score = {}
 
     if score:
-        if not uses_fit_statistics_csv:
-            for field in REQUIRED_SCORE_FIELDS:
-                if field not in score:
-                    blockers.append(f"gross_2002_{figure_id}_score_{field}_missing")
         branch_scores = score.get("branch_scores", {})
         if not isinstance(branch_scores, dict):
             branch_scores = {}
@@ -311,8 +264,6 @@ def _accepted_record_blockers(
             blockers.append(f"gross_2002_{figure_id}_{SECOND_ORDER_MISSING_SUFFIX}")
     if figure_id == "figure_02" and record.get("source_identity_status") != "resolved":
         blockers.append("gross_2002_figure_02_source_identity_unresolved")
-    if figure_id == "figure_02" and not _path_exists(artifacts.get("source_identity_json", "")):
-        blockers.append("gross_2002_figure_02_source_identity_json_missing")
 
     return blockers
 

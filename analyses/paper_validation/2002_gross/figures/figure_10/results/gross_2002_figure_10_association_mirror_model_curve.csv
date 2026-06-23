@@ -1,2 +1,0 @@
-series,temperature_K,x_water,x_1_pentanol,backend,max_mass_action_residual,status
-exact_association_diagnostic_sample,302.15,0.35,0.65,cppad_implicit_association,0.0,verified_exact
