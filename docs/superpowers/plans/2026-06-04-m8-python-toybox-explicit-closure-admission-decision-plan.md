@@ -73,7 +73,7 @@ Current retained evidence roots:
 - Create `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report_plotted_data.csv`.
 - Create `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.png`.
 - Create `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.svg`.
-- Create `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.mpl.yaml`.
+- Create `analyses/package_validation/explicit_association_toybox/figures/final_picard_admission_report/output/final_picard_admission_report.pdf`.
 - Create `analyses/package_validation/explicit_association_toybox/docs/issue_161_picard_admission_decision.md`.
 - Create `analyses/package_validation/explicit_association_toybox/tests/test_final_picard_admission_report.py`.
 - Modify `analyses/package_validation/explicit_association_toybox/tests/test_picard_policy_grid.py`.
@@ -425,7 +425,7 @@ Render:
 - `final_picard_admission_report.png`;
 - `final_picard_admission_report.svg`;
 - `final_picard_admission_report_plotted_data.csv`;
-- `final_picard_admission_report.mpl.yaml`.
+- `final_picard_admission_report.pdf`.
 
 - [ ] **Step 5: Run tests and render figures**
 

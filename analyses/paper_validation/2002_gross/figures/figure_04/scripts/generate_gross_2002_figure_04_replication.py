@@ -51,7 +51,7 @@ SCORE_JSON = RESULTS_DIR / f"{STEM}_score.json"
 SUMMARY_JSON = RESULTS_DIR / f"{STEM}_summary.json"
 PNG = RESULTS_DIR / f"{STEM}.png"
 SVG = RESULTS_DIR / f"{STEM}.svg"
-SIDECAR = RESULTS_DIR / f"{STEM}.mpl.yaml"
+PDF = RESULTS_DIR / f"{STEM}.pdf"
 
 COMPONENT_ORDER = ["1-Pentanol", "Benzene"]
 SOURCE_SERIES = ("bubble_line", "dew_line")
@@ -80,6 +80,10 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    return list(csv.DictReader(path.read_text(encoding="utf-8").splitlines()))
 
 def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -384,22 +388,8 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     fig.text(0.02, 0.01, f"minimum series score: {score_payload['normalized_plot_score']:.2f}; exact Hessian route verified", fontsize=8)
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    fig.savefig(PDF)
     plt.close(fig)
-    SIDECAR.write_text(
-        "\n".join(
-            [
-                "figure_id: figure_04",
-                f"png: {_relative(PNG)}",
-                f"svg: {_relative(SVG)}",
-                "x_axis: composition_component_1",
-                "y_axis: pressure_bar",
-                "matplotlib_backend: Agg",
-                "style: paper-scale P-x/y overlay with retained source markers and public-route PC-SAFT curves",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
 
 
 def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) -> None:
@@ -450,6 +440,27 @@ def _native_receipt() -> dict[str, Any]:
     return native_freshness.receipt_to_jsonable(receipt)
 
 
+
+def _retained_native_receipt() -> dict[str, Any]:
+    if SUMMARY_JSON.exists():
+        payload = json.loads(SUMMARY_JSON.read_text(encoding="utf-8"))
+        candidates = [
+            payload.get("native_freshness_receipt"),
+            payload.get("native_freshness"),
+            payload.get("native_route", {}).get("native_freshness_receipt")
+            if isinstance(payload.get("native_route"), dict)
+            else None,
+        ]
+        for receipt in candidates:
+            if isinstance(receipt, dict) and receipt:
+                return receipt
+    if MANIFEST_PATH.exists():
+        payload = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        receipt = payload.get("native_freshness_receipt")
+        if isinstance(receipt, dict) and receipt:
+            return receipt
+    raise RuntimeError(f"Retained native freshness receipt is required for --render-only: {_relative(SUMMARY_JSON)}")
+
 def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> None:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     manifest["native_freshness_receipt"] = receipt
@@ -463,7 +474,7 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
         "summary_json": _relative(SUMMARY_JSON),
         "png": _relative(PNG),
         "svg": _relative(SVG),
-        "sidecar": _relative(SIDECAR),
+        "pdf": _relative(PDF),
     }
     for record in manifest["figures"]:
         if record.get("figure_id") != FIGURE_ID:
@@ -489,11 +500,22 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
 
 
 def main() -> int:
+    unknown_args = [arg for arg in sys.argv[1:] if arg != "--render-only"]
+    if unknown_args:
+        raise RuntimeError(f"Unsupported arguments: {unknown_args}")
+    render_only = "--render-only" in sys.argv[1:]
+
     source_rows = _load_source_rows()
-    mixture = _mixture()
-    model_rows = _solve_series(mixture, source_rows, "bubble_line") + _solve_series(mixture, source_rows, "dew_line")
+    if render_only:
+        if not MODEL_CSV.exists():
+            raise RuntimeError(f"Retained model CSV is required for --render-only: {_relative(MODEL_CSV)}")
+        model_rows = list(_read_csv(MODEL_CSV))
+        receipt = _retained_native_receipt()
+    else:
+        mixture = _mixture()
+        model_rows = _solve_series(mixture, source_rows, "bubble_line") + _solve_series(mixture, source_rows, "dew_line")
+        receipt = _native_receipt()
     score_payload = _score(source_rows, model_rows)
-    receipt = _native_receipt()
     _write_csv(
         MODEL_CSV,
         model_rows,
@@ -530,7 +552,7 @@ def main() -> int:
             "summary_json": SUMMARY_JSON,
             "png": PNG,
             "svg": SVG,
-            "sidecar": SIDECAR,
+            "pdf": PDF,
         },
         "source_point_count": len(source_rows),
         "model_point_count": len(model_rows),

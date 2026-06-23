@@ -1,7 +1,0 @@
-component,metric,value_percent,evidence_role
-methanol,psat_aad_percent,2.36,gross_2002_table_1_pc_saft_aad
-methanol,liquid_density_aad_percent,2.01,gross_2002_table_1_pc_saft_aad
-1-pentanol,psat_aad_percent,0.5,gross_2002_table_1_pc_saft_aad
-1-pentanol,liquid_density_aad_percent,0.52,gross_2002_table_1_pc_saft_aad
-1-nonanol,psat_aad_percent,0.86,gross_2002_table_1_pc_saft_aad
-1-nonanol,liquid_density_aad_percent,1.23,gross_2002_table_1_pc_saft_aad

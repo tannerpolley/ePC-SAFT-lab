@@ -18,7 +18,7 @@ from epcsaft import ReactionDefinition, _core, ePCSAFTMixture  # noqa: E402
 
 INPUT_DIR = ANALYSIS_DIR / "shared" / "source"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results" / "reaction_equilibrium"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "reaction_equilibrium"
 
 EQUILIBRIUM_CSV = INPUT_DIR / "rezaee_2025_extraction_equilibrium_mole_fractions.csv"
 REACTION_CONSTANTS_CSV = INPUT_DIR / "rezaee_2026_reaction_constants.csv"

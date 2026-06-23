@@ -1,0 +1,2 @@
+"component","source_name","nist_id","status","needed_properties","notes"
+"water","nist_chemistry_webbook","C7732185","public_source_candidate","T_K,p_sat_Pa,rho_sat_liq_mol_m3","Fetch first from NIST Chemistry WebBook saturation table; provider residual lane currently uses fixed first-pass sigma."

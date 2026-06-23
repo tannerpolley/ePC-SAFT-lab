@@ -10,7 +10,7 @@ Scope:
 - No LLE readiness claim.
 
 The source fixture is
-`data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash`.
+`data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane`.
 
 ## Figures
 

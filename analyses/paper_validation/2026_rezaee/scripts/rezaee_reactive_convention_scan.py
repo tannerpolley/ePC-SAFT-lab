@@ -17,7 +17,7 @@ import rezaee_reactive_equilibrium_replay as replay  # noqa: E402
 
 ANALYSIS_DIR = Path(__file__).resolve().parents[1]
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results" / "reaction_equilibrium"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "reaction_equilibrium"
 
 SCAN_ROWS_CSV = PROCESSED_DIR / "rezaee_2026_reactive_convention_scan_rows.csv"
 SCAN_SUMMARY_CSV = PROCESSED_DIR / "rezaee_2026_reactive_convention_scan_summary.csv"

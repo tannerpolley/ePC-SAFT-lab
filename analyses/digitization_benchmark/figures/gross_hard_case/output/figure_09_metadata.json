@@ -1,0 +1,36 @@
+{
+  "dark_threshold": 150,
+  "figure_id": "figure_09",
+  "limitations": [
+    "This utility verifies calibrated source points against visible paper ink.",
+    "It does not infer unlabeled series identity without external calibration and seed metadata.",
+    "Dense text, axes, markers, and nearby curves can share the same local ink neighborhood."
+  ],
+  "method": "local_dark_ink_seed_refinement",
+  "minimum_dark_support_pixels": 4,
+  "output_csv": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\analyses\\digitization_benchmark\\figures\\gross_hard_case\\output\\figure_09_source_points.csv",
+  "qa_overlay": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\analyses\\digitization_benchmark\\figures\\gross_hard_case\\output\\figure_09_qa_overlay.png",
+  "quality_thresholds": {
+    "pass_shift_px": 9.0,
+    "review_shift_px": 16.0
+  },
+  "refine_radius_px": 12,
+  "seed_metadata": "analyses\\paper_validation\\2002_gross\\figures\\figure_09\\source\\gross_2002_figure_09_replication_digitization_metadata.json",
+  "seed_source_csv": "analyses\\paper_validation\\2002_gross\\figures\\figure_09\\source\\gross_2002_figure_09_replication_source_points.csv",
+  "source_image": "analyses\\paper_validation\\2002_gross\\figures\\figure_09\\source\\paper_source_01_gross_2002_figure_009.png",
+  "summary": {
+    "fail_count": 0,
+    "figure_id": "figure_09",
+    "max_shift_px": 7.015734543375862,
+    "median_shift_px": 3.878431576601061,
+    "metadata": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\analyses\\digitization_benchmark\\figures\\gross_hard_case\\output\\figure_09_metadata.json",
+    "missing_local_ink_count": 0,
+    "output_csv": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\analyses\\digitization_benchmark\\figures\\gross_hard_case\\output\\figure_09_source_points.csv",
+    "pass_count": 14,
+    "pass_fraction": 1.0,
+    "point_count": 14,
+    "qa_overlay": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\analyses\\digitization_benchmark\\figures\\gross_hard_case\\output\\figure_09_qa_overlay.png",
+    "review_count": 0,
+    "status": "pass"
+  }
+}

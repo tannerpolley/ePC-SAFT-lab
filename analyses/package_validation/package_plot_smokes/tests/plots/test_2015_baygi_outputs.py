@@ -137,15 +137,15 @@ def test_2015_baygi_figure_2_and_3_workflow_outputs_expected_series():
         figure_dir = PLOT_ROOT / "figures" / figure / "results"
         image = figure_dir / f"{figure}.png"
         svg = figure_dir / f"{figure}.svg"
+        pdf = figure_dir / f"{figure}.pdf"
         plot_data = figure_dir / f"{figure}.csv"
-        plot_style = figure_dir / f"{figure}.mpl.yaml"
         diagnostics = figure_dir / "data" / f"{figure}_diagnostics.csv"
         metrics = figure_dir / "data" / f"{figure}_metrics.csv"
 
         assert image.exists()
         assert svg.exists()
+        assert pdf.exists()
         assert plot_data.exists()
-        assert plot_style.exists()
         assert diagnostics.exists()
         assert metrics.exists()
         assert EXPECTED_LABELS <= _artist_labels(plot_data)

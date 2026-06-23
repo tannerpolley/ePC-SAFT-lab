@@ -1,0 +1,2 @@
+figure_id,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit
+figure_02,12,2,0.8111590059055981,4.114769882679896,0.466915436336421,0.0442530827007964,bar

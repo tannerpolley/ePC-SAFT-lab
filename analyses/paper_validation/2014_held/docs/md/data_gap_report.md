@@ -3,7 +3,7 @@
 Current reproducible outputs in this folder:
 
 - Figure 1: NaCl/KBr osmotic coefficients at 298.15 K (`figure_1/plot_figure_1.py`).
-- Figure 2: model curves for NaCl/KCl at 273.15 K and 298.15 K with digitized panel data for KCl (273.15 K, 298.15 K) and NaCl (273.15 K), plus exact NaCl 298.15 K data (`figure_2/plot_figure_2.py`, `data/reference/osmotic/water/held_2014_figure_2_digitized.csv` mirrored to `figure_2/figure_2_digitized.csv`).
+- Figure 2: model curves for NaCl/KCl at 273.15 K and 298.15 K with digitized panel data for KCl (273.15 K, 298.15 K) and NaCl (273.15 K), plus exact NaCl 298.15 K data (`figure_2/plot_figure_2.py`, `data/reference/osmotic/water/nacl_kcl_osmotic_coefficients.csv` mirrored to `figure_2/figure_2_digitized.csv`).
 - Figure 3: LiAc/NaAc/KAc osmotic coefficients with strategy-2 model and a classical ePC-SAFT reference using the new `2009_Held` dataset (`figure_3/plot_figure_3.py`) and the richer acetate data file `data/reference/osmotic/water/LiAc-NaAc-KAc.csv` mirrored to `figure_3/LiAc-NaAc-KAc.csv`.
 - Figure 4a: amino-acid/KCl osmotic coefficients (alanine, glycine) with strategy-2 model and strategy-1-like reference model (`figure_4/plot_figure_4a.py`) using `figure_4a_digitized.csv` data points.
 - Figure 4b (digitized): amino-acid solubility panel reproduced from digitized paper data/model traces (`figure_4/plot_figure_4b.py`, `figure_4b_digitized.csv`).
@@ -14,7 +14,7 @@ Current reproducible outputs in this folder:
 Resolved by local figure-input mirroring in this folder:
 
 - Figure 1 now stages `NaCl.csv` and `KBr.csv` into `figures/figure_01/source/`.
-- Figure 2 now stages `held_2014_figure_2_digitized.csv` and `NaCl.csv` into `figures/figure_02/source/`.
+- Figure 2 now stages `nacl_kcl_osmotic_coefficients.csv` and `NaCl.csv` into `figures/figure_02/source/`.
 - Figure 3 now stages `LiAc-NaAc-KAc.csv` into `figures/figure_03/source/`.
 
 Remaining gap:

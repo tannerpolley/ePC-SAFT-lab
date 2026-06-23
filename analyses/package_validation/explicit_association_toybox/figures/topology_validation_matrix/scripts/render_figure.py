@@ -16,16 +16,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     role_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "topology_validation_matrix" / "output"
 MATRIX = OUTPUT / "topology_matrix.csv"
 FIGURE = OUTPUT / "topology_validation_matrix.png"
 PLOTTED = OUTPUT / "topology_validation_matrix_plotted_data.csv"
-SIDECAR = OUTPUT / "topology_validation_matrix.mpl.yaml"
 
 
 def main() -> None:
@@ -86,19 +84,8 @@ def main() -> None:
     style_axis(ax, minor=True)
     ax.legend()
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_topology_validation_matrix",
-        title="Huang/Radosz topology validation",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="Table VII topology",
-        y_label="max relative error in a_assoc",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/topology_validation_matrix/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

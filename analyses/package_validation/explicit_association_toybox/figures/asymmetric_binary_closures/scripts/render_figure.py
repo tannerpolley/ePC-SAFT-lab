@@ -17,16 +17,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     apply_plot_style,
     case_label,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "asymmetric_binary_closures" / "output"
 SOURCE = OUTPUT / "asymmetric_binary_closures.csv"
 PLOTTED = OUTPUT / "asymmetric_binary_closures_plotted_data.csv"
 FIGURE = OUTPUT / "asymmetric_binary_closures.png"
-SIDECAR = OUTPUT / "asymmetric_binary_closures.mpl.yaml"
 
 
 def main() -> None:
@@ -82,19 +80,8 @@ def main() -> None:
     style_axis(axes[1], grid_axis="x")
 
     fig.suptitle("Asymmetric mixture diagnostics for Picard closure")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="asymmetric_binary_closures",
-        title="Asymmetric mixture diagnostics for Picard closure",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="association error and speedup",
-        y_label="case",
-        y_scale="linear",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/asymmetric_binary_closures/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

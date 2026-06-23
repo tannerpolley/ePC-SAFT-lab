@@ -4,7 +4,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import yaml
 
 
 FIGURE_ROOT = Path(__file__).resolve().parents[1]
@@ -12,9 +11,16 @@ RESULTS_DIR = FIGURE_ROOT / "results"
 PLOT_ID = "associating_saturation_scope"
 SOURCE_CSV = RESULTS_DIR / f"{PLOT_ID}.csv"
 PLOTTED_CSV = RESULTS_DIR / f"{PLOT_ID}_plotted_data.csv"
-SIDECAR = RESULTS_DIR / f"{PLOT_ID}.mpl.yaml"
 PNG = RESULTS_DIR / f"{PLOT_ID}.png"
 SVG = RESULTS_DIR / f"{PLOT_ID}.svg"
+PDF = RESULTS_DIR / f"{PLOT_ID}.pdf"
+PLOT_METADATA = {
+    "title": "Water and methanol NIST saturation data",
+    "xlabel": "temperature, $T$ / K",
+    "pressure_ylabel": "saturation pressure, $p_{sat}$ / kPa",
+    "density_ylabel": "saturated liquid density / kmol m$^{-3}$",
+    "figsize": (10.0, 4.4),
+}
 
 
 def _strip_svg_trailing_whitespace(path: Path) -> None:
@@ -50,7 +56,6 @@ def _plot_rows(frame: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> int:
     frame = pd.read_csv(SOURCE_CSV)
-    metadata = yaml.safe_load(SIDECAR.read_text(encoding="utf-8"))
     plotted = _plot_rows(frame)
     plotted.to_csv(PLOTTED_CSV, index=False)
     plt.rcParams["svg.hashsalt"] = PLOT_ID
@@ -70,7 +75,7 @@ def main() -> int:
     fig, axes = plt.subplots(
         1,
         2,
-        figsize=tuple(metadata["matplotlib"]["figsize"]),
+        figsize=PLOT_METADATA["figsize"],
         constrained_layout=True,
     )
     pressure_ax, density_ax = axes
@@ -98,31 +103,27 @@ def main() -> int:
         )
 
     pressure_ax.set_yscale("log")
-    pressure_ax.set_xlabel(metadata["matplotlib"]["xlabel"])
-    pressure_ax.set_ylabel(metadata["matplotlib"]["pressure_ylabel"])
+    pressure_ax.set_xlabel(PLOT_METADATA["xlabel"])
+    pressure_ax.set_ylabel(PLOT_METADATA["pressure_ylabel"])
     pressure_ax.grid(True, which="major", color="#d7dce2", linewidth=0.7, alpha=0.85)
     pressure_ax.grid(True, which="minor", color="#edf0f3", linewidth=0.45, alpha=0.65)
     pressure_ax.legend(frameon=False, loc="best")
 
-    density_ax.set_xlabel(metadata["matplotlib"]["xlabel"])
-    density_ax.set_ylabel(metadata["matplotlib"]["density_ylabel"])
+    density_ax.set_xlabel(PLOT_METADATA["xlabel"])
+    density_ax.set_ylabel(PLOT_METADATA["density_ylabel"])
     density_ax.grid(True, which="major", color="#d7dce2", linewidth=0.7, alpha=0.85)
     density_ax.legend(frameon=False, loc="best")
-    density_ax.text(
-        0.02,
-        0.03,
-        "production route rejects 2B association",
-        transform=density_ax.transAxes,
-        fontsize=9,
-        color="#44484d",
-    )
+    route_statuses = ", ".join(sorted(str(value) for value in frame["route_status"].unique()))
+    density_ax.text(0.02, 0.03, route_statuses, transform=density_ax.transAxes, fontsize=9, color="#44484d")
 
-    fig.suptitle(metadata["matplotlib"]["title"], fontsize=13)
+    fig.suptitle(PLOT_METADATA["title"], fontsize=13)
     fig.savefig(PNG, bbox_inches="tight")
     fig.savefig(SVG, bbox_inches="tight", metadata={"Date": None})
+    fig.savefig(PDF, bbox_inches="tight")
     _strip_svg_trailing_whitespace(SVG)
     print(f"wrote {PNG}")
     print(f"wrote {SVG}")
+    print(f"wrote {PDF}")
     return 0
 
 

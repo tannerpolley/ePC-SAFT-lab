@@ -194,7 +194,7 @@ extension of the neutral phase-split path.
 
 Retained evidence after #250:
 
-- `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane`
+- `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane`
 - `scripts/validation/check_neutral_lle_showcase.py`
 - `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`
 - `analyses/package_validation/neutral_nonassociating_lle_showcase`

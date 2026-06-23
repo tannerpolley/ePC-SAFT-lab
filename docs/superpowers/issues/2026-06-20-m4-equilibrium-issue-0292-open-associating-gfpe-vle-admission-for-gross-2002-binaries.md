@@ -23,6 +23,7 @@ last_synced: "2026-06-20"
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** agent-ready, status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native
 **Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md. Complete proof oracle: public Gross 2002 Figures 2-9 associating binary VLE bubble/dew routes accepted with exact association-Hessian evidence, existing associating LLE proof preserved, broader unproven families still rejected, docs validation, cleanup hook.

@@ -1,0 +1,10 @@
+{
+  "figure_id": "figure_08",
+  "mae": 1.5445127872855422,
+  "matched_literature_points": 23,
+  "max_abs": 2.1593113101738552,
+  "normalized_mae": 0.2743361966759399,
+  "signed_bias": -1.5445127872855422,
+  "skipped_literature_points": 11,
+  "y_unit": "degC"
+}

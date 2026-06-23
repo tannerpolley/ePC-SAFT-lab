@@ -18,7 +18,7 @@ CASE_DIR = (
     / "reference"
     / "equilibrium_benchmarks"
     / "neutral_lle"
-    / "matsuda_2011_pfhexane_hexane"
+    / "perfluorohexane_hexane"
 )
 SOURCE_TEMPERATURE_K = 293.895
 PRESSURE_PA = 101300.0

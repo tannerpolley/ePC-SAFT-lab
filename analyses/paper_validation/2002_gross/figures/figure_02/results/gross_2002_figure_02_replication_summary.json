@@ -2,10 +2,10 @@
   "artifacts": {
     "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_digitization_qa_overlay.png",
     "model_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_model_curve.csv",
+    "pdf": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.pdf",
     "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_plotted_data.csv",
     "png": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.png",
     "score_json": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_score.json",
-    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.mpl.yaml",
     "source_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_source_points.csv",
     "source_identity_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_identity.json",
     "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_digitization_metadata.json",

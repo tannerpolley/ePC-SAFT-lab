@@ -5,7 +5,7 @@
   "status": "accepted_public_native_ipopt",
   "status_reason": "all shared native Ipopt gates and hard TPDF certification passed",
   "source_assets": [
-    "data/reference/multiphase/ascani_case2_model_comparison.csv",
+    "data/reference/multiphase/case2_model_comparison.csv",
     "docs/papers/md/Ascani, Sadowski, Held - 2022 - Calculation of Multiphase Equilibria Containing Mixed Solvents and M.md",
     "docs/papers/md/Ascani, Sadowski, Held - 2022 - Supporting Information for Calculation of multiphase equilibria containing mixed solvents and mixed..md"
   ],

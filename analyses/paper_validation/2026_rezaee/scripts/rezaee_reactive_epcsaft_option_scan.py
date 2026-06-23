@@ -26,7 +26,7 @@ from epcsaft import ePCSAFTMixture  # noqa: E402
 
 INPUT_DIR = ANALYSIS_DIR / "shared" / "source"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results" / "reaction_equilibrium"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "reaction_equilibrium"
 
 SPECIES_DATASET_JSON = INPUT_DIR / "rezaee_2026_epcsaft_species_dataset.json"
 OPTION_SCAN_ROWS_CSV = PROCESSED_DIR / "rezaee_2026_reactive_epcsaft_option_scan_rows.csv"

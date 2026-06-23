@@ -11,8 +11,9 @@ from .toy_property_eos import evaluate_toy_property_coupling
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ANALYSIS_ROOT.parents[2]
-REFERENCE_SOURCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component" / "saturation_density"
-DEFAULT_SOURCE = REFERENCE_SOURCE_DIR / "water_methanol_nist_saturation.csv"
+REFERENCE_SOURCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component" / "saturation_properties"
+DEFAULT_SOURCE_COMPONENTS = ("methanol", "water")
+DEFAULT_SOURCE = REFERENCE_SOURCE_DIR
 DEFAULT_OUTPUT = ANALYSIS_ROOT / "figures" / "property_residuals" / "output" / "property_residuals.csv"
 DEFAULT_CASES = ANALYSIS_ROOT / "config" / "paper_systems.yaml"
 GAS_CONSTANT = 8.31446261815324
@@ -21,15 +22,35 @@ GAS_CONSTANT = 8.31446261815324
 ProviderEvaluator = Callable[[dict[str, object], dict[str, object]], dict[str, float]]
 
 
-def load_public_saturation_rows(path: Path = DEFAULT_SOURCE) -> list[dict[str, object]]:
-    if not path.exists():
-        raise FileNotFoundError(
-            "data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv "
-            "is required before fixed-state residual generation: "
-            f"{path}"
+def saturation_properties_path(component: str, source_root: Path = DEFAULT_SOURCE) -> Path:
+    return source_root / component / "saturation_properties.csv"
+
+
+def load_public_saturation_rows(
+    source_root: Path = DEFAULT_SOURCE,
+    *,
+    components: Sequence[str] = DEFAULT_SOURCE_COMPONENTS,
+) -> list[dict[str, object]]:
+    if source_root.suffix:
+        raise ValueError(
+            "source_root must be the pure-component saturation-properties root, "
+            "not a combined source-named CSV."
         )
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
+    rows: list[dict[str, object]] = []
+    missing: list[Path] = []
+    for component in components:
+        path = saturation_properties_path(component, source_root)
+        if not path.exists():
+            missing.append(path)
+            continue
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            rows.extend(csv.DictReader(handle))
+    if missing:
+        missing_list = ", ".join(str(path) for path in missing)
+        raise FileNotFoundError(
+            "pure-component saturation properties are required before fixed-state residual generation: "
+            f"{missing_list}"
+        )
     for row in rows:
         for key in ("T_K", "p_sat_Pa", "rho_sat_liq_mol_m3"):
             row[key] = float(row[key])

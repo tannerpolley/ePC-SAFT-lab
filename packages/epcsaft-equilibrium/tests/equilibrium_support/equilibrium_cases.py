@@ -64,7 +64,7 @@ def gross_2002_associating_parameter_set(
         "figure": "Figure 8",
         "source_path": (
             "data/reference/equilibrium_benchmarks/associating_lle/"
-            "gross_2002_methanol_cyclohexane"
+            "methanol_cyclohexane"
         ),
         "source_backed": source_backed,
     }

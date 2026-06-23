@@ -4,7 +4,7 @@
 
 **Goal:** Extend the Python-only explicit association toybox so exact implicit association and the active explicit Picard candidate are compared on amortized timing, derivative agreement, propagated EOS property proxies, water topology behavior, and local objective sensitivity before any provider implementation decision.
 
-**Architecture:** Keep the work entirely under `analyses/package_validation/explicit_association_toybox` and add figure-owned analysis lanes that reuse the existing exact mass-action baseline, closure evaluators, hard-chain and dispersion scalar helpers, real-system topology metadata, and fixed-state property residual scaffolding. New modules produce retained CSVs, plotted-data CSVs, PNGs, and `.mpl.yaml` sidecars with exact implicit timing kept as a first-class baseline column.
+**Architecture:** Keep the work entirely under `analyses/package_validation/explicit_association_toybox` and add figure-owned analysis lanes that reuse the existing exact mass-action baseline, closure evaluators, hard-chain and dispersion scalar helpers, real-system topology metadata, and fixed-state property residual scaffolding. New modules produce retained CSVs, plotted-data CSVs, PNGs, and PDF artifacts with exact implicit timing kept as a first-class baseline column.
 
 **Tech Stack:** Python stdlib, NumPy, PyYAML, Matplotlib, pytest, existing toybox scripts, and optional provider state calls already used by the property-residual lane; no provider runtime change, no equilibrium package change, no regression package change, and no new dependency.
 
@@ -42,7 +42,7 @@
 - [ ] Water fork output compares assigned `3B` and rigorous-label `4C` topology rows with pressure residual in MPa and `Z` residual, without presenting fixed-state diagnostics as VLE validation.
 - [ ] Local objective sensitivity output reports exact and closure objective values, gradient max absolute error, Hessian-proxy max absolute error, exact implicit timing, closure timing, and evidence band.
 - [ ] Rows with reduced site information remain diagnostic-only in all new evidence bands unless a row is explicitly marked as a failure-mode diagnostic.
-- [ ] Every new or updated figure workflow writes retained CSV, plotted-data CSV, PNG, and `.mpl.yaml` sidecar files under its figure-owned `output` folder.
+- [ ] Every new or updated figure workflow writes retained CSV, plotted-data CSV, PNG, and PDF files under its figure-owned `output` folder.
 - [ ] `analysis.yaml` and `README.md` list the new commands and state that this remains analysis-only toybox evidence.
 - [ ] Final implementation reporting renders every new or updated plot inline with absolute filesystem paths and includes compact Markdown tables from retained data.
 - [ ] No `packages/epcsaft/**`, `packages/epcsaft-equilibrium/**`, `packages/epcsaft-regression/**`, public API, native SDK, capability contract, or dependency file is changed.
@@ -392,7 +392,7 @@ Create `figures/amortized_timing/scripts/render_figure.py` that reads the retain
 ```text
 amortized_timing_plotted_data.csv
 amortized_timing.png
-amortized_timing.mpl.yaml
+amortized_timing.pdf
 ```
 
 Plot closure median elapsed time, exact implicit median elapsed time, and speedup. The exact implicit baseline must be visible in the figure or in a clearly labeled panel.
@@ -512,7 +512,7 @@ Create the generator and renderer for:
 figures/derivative_agreement/output/derivative_agreement.csv
 figures/derivative_agreement/output/derivative_agreement_plotted_data.csv
 figures/derivative_agreement/output/derivative_agreement.png
-figures/derivative_agreement/output/derivative_agreement.mpl.yaml
+figures/derivative_agreement/output/derivative_agreement.pdf
 ```
 
 Plot derivative relative error by target and closure, with exact implicit timing and closure timing summarized in plotted data.
@@ -657,7 +657,7 @@ Create:
 figures/asymmetric_binary_closures/output/asymmetric_binary_closures.csv
 figures/asymmetric_binary_closures/output/asymmetric_binary_closures_plotted_data.csv
 figures/asymmetric_binary_closures/output/asymmetric_binary_closures.png
-figures/asymmetric_binary_closures/output/asymmetric_binary_closures.mpl.yaml
+figures/asymmetric_binary_closures/output/asymmetric_binary_closures.pdf
 ```
 
 Modify `analysis.yaml`:
@@ -773,7 +773,7 @@ Create:
 figures/total_eos_impact/output/total_eos_impact.csv
 figures/total_eos_impact/output/total_eos_impact_plotted_data.csv
 figures/total_eos_impact/output/total_eos_impact.png
-figures/total_eos_impact/output/total_eos_impact.mpl.yaml
+figures/total_eos_impact/output/total_eos_impact.pdf
 ```
 
 Modify `analysis.yaml`:
@@ -899,7 +899,7 @@ Create:
 figures/water_topology_fork/output/water_topology_fork.csv
 figures/water_topology_fork/output/water_topology_fork_plotted_data.csv
 figures/water_topology_fork/output/water_topology_fork.png
-figures/water_topology_fork/output/water_topology_fork.mpl.yaml
+figures/water_topology_fork/output/water_topology_fork.pdf
 ```
 
 Modify `analysis.yaml`:
@@ -1007,7 +1007,7 @@ Create the generator and renderer for:
 figures/equilibrium_style_objective_sensitivity/output/equilibrium_style_objective_sensitivity.csv
 figures/equilibrium_style_objective_sensitivity/output/equilibrium_style_objective_sensitivity_plotted_data.csv
 figures/equilibrium_style_objective_sensitivity/output/equilibrium_style_objective_sensitivity.png
-figures/equilibrium_style_objective_sensitivity/output/equilibrium_style_objective_sensitivity.mpl.yaml
+figures/equilibrium_style_objective_sensitivity/output/equilibrium_style_objective_sensitivity.pdf
 ```
 
 Each retained row must include:
@@ -1104,7 +1104,7 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/eq
 uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/scripts/render_figure.py
 ```
 
-Expected result: every command exits successfully and writes the retained CSV, plotted-data CSV, PNG, and `.mpl.yaml` sidecar in its figure-owned output folder.
+Expected result: every command exits successfully and writes the retained CSV, plotted-data CSV, PNG, and PDF artifact in its figure-owned output folder.
 
 - [ ] **Step 4: Run repo structure and quick validation**
 

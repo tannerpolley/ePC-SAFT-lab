@@ -129,7 +129,7 @@ analyses/package_validation/explicit_association_toybox/
 The toybox should be readable as a small scientific analysis package, not as a
 new public package module. Keep all generated runs under
 `figures/closure_accuracy/output/runs/`; retained CSV summaries, plotted data,
-figures, and Matplotlib sidecars belong under the figure-owned `output/`
+figures, and PDF artifacts and provenance files belong under the figure-owned `output/`
 folder.
 
 ## Lightweight Neutral PC-SAFT Scaffold

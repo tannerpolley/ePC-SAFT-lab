@@ -1,9 +1,9 @@
 {
   "artifacts": {
     "model_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_model_curve.csv",
+    "pdf": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_mirror.pdf",
     "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_plotted_data.csv",
     "png": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_mirror.png",
-    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_mirror.mpl.yaml",
     "source_csv": "analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_digitized_points.csv",
     "summary_json": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_summary.json",
     "svg": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_association_mirror_association_mirror.svg"

@@ -134,48 +134,12 @@ def case_label(name: str) -> str:
     return labels.get(name, name.replace("_", " "))
 
 
-def save_png_svg(fig, png_path: Path) -> Path:
+def save_plot_artifacts(fig, png_path: Path) -> Path:
     svg_path = png_path.with_suffix(".svg")
+    pdf_path = png_path.with_suffix(".pdf")
     fig.savefig(png_path, dpi=180)
     fig.savefig(svg_path, metadata={"Date": None})
+    text = svg_path.read_text(encoding="utf-8")
+    svg_path.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
+    fig.savefig(pdf_path)
     return svg_path
-
-
-def write_sidecar(
-    path: Path,
-    *,
-    plot_id: str,
-    title: str,
-    figure: Path,
-    source_data: Path,
-    x_label: str,
-    y_label: str,
-    y_scale: str | None = None,
-    extra_files: dict[str, Path] | None = None,
-    command: str | None = None,
-) -> None:
-    files = {
-        "figure": figure.name,
-        "svg": figure.with_suffix(".svg").name,
-        "source_data": source_data.name,
-    }
-    if extra_files:
-        files.update({key: value.name for key, value in extra_files.items()})
-    lines = [
-        "kind: matplotlib-figure",
-        "version: 1",
-        f"plot_id: {plot_id}",
-        f"title: {title}",
-        "matplotlib:",
-        f"  title: {title}",
-        f"  x_label: {x_label}",
-        f"  y_label: {y_label}",
-    ]
-    if y_scale is not None:
-        lines.append(f"  y_scale: {y_scale}")
-    lines.append("files:")
-    lines.extend(f"  {key}: {value}" for key, value in files.items())
-    if command:
-        lines.extend(("render:", f"  command: {command}"))
-    lines.append("")
-    path.write_text("\n".join(lines), encoding="utf-8")

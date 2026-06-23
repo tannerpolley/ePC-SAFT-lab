@@ -14,12 +14,16 @@ from generate_rezaee_2026_figure_comparison_data import FIGURE_SPECS
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-RESULTS_DIR = ANALYSIS_DIR / "results" / "reaction_equilibrium"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "reaction_equilibrium"
 FIGURES_DIR = ANALYSIS_DIR / "figures"
 SUMMARY_JSON = RESULTS_DIR / "rezaee_2026_package_figure_comparison_summary.json"
 REPORT_MD = RESULTS_DIR / "rezaee_2026_package_figure_comparison.md"
 SVG_METADATA = {"Date": "2026-05-17T00:00:00"}
 SVG_HASHSALT = "rezaee_2026_package_figure_comparison"
+
+
+def _artifact_stem(spec: dict[str, Any]) -> str:
+    return str(spec.get("artifact_stem", spec["folder"]))
 
 
 def _jsonable(value: Any) -> Any:
@@ -60,7 +64,8 @@ def _normalize_svg_whitespace(path: Path) -> None:
 
 def _render_figure(figure_id: str, spec: dict[str, Any]) -> dict[str, Any]:
     figure_folder = FIGURES_DIR / str(spec["folder"])
-    data_path = figure_folder / "results" / "data" / f"{spec['folder']}_package_vs_paper_points.csv"
+    artifact_stem = _artifact_stem(spec)
+    data_path = figure_folder / "results" / "data" / f"{artifact_stem}_package_vs_paper_points.csv"
     rows = pd.read_csv(data_path)
     paper = rows.loc[rows["series"] == "digitized_paper_model"].copy()
     package = rows.loc[rows["series"] == "current_epcsaft_package_model"].copy()
@@ -111,10 +116,12 @@ def _render_figure(figure_id: str, spec: dict[str, Any]) -> dict[str, Any]:
     ax.set_title(f"Rezaee 2026 {spec['paper_label']}: package model vs digitized paper")
     ax.legend(loc="best", frameon=True, framealpha=0.94)
 
-    png_path = output_dir / f"{spec['folder']}_package_vs_paper.png"
-    svg_path = output_dir / f"{spec['folder']}_package_vs_paper.svg"
+    png_path = output_dir / f"{artifact_stem}_package_vs_paper.png"
+    svg_path = output_dir / f"{artifact_stem}_package_vs_paper.svg"
+    pdf_path = output_dir / f"{artifact_stem}_package_vs_paper.pdf"
     fig.savefig(png_path, dpi=220)
     fig.savefig(svg_path, metadata=SVG_METADATA)
+    fig.savefig(pdf_path)
     _normalize_svg_whitespace(svg_path)
     plt.close(fig)
 
@@ -125,6 +132,7 @@ def _render_figure(figure_id: str, spec: dict[str, Any]) -> dict[str, Any]:
         "data": str(data_path.relative_to(ANALYSIS_DIR)),
         "png": str(png_path.relative_to(ANALYSIS_DIR)),
         "svg": str(svg_path.relative_to(ANALYSIS_DIR)),
+        "pdf": str(pdf_path.relative_to(ANALYSIS_DIR)),
         "package_case_id": str(spec["package_case_id"]),
         "digitized_paper_points": int(len(paper)),
         "package_model_points": int(len(package)),
@@ -151,6 +159,7 @@ def _write_report(summary: dict[str, Any]) -> None:
                 f"  Data: `{entry['data']}`",
                 f"  PNG: `{entry['png']}`",
                 f"  SVG: `{entry['svg']}`",
+                f"  PDF: `{entry['pdf']}`",
             ]
         )
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")

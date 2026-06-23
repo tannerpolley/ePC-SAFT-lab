@@ -11,7 +11,7 @@ backend: "Ipopt"
 readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: null
+source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0284-gross-2002-figure-9-cross-associating-vle-curve-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0284-gross-2002-figure-9-vle-curve
 last_synced: "2026-06-20"
@@ -22,10 +22,12 @@ last_synced: "2026-06-20"
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
-**Source Plan:** none
+**Source Plan:** docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0284-gross-2002-figure-9-cross-associating-vle-curve-plan.md
+
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** status:ready, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
-**Goal Command:** /goal Resolve this issue using docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/292 is closed. Complete proof oracle: Figure 9 methanol/1-octanol cross-associating VLE curve retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
+**Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0284-gross-2002-figure-9-cross-associating-vle-curve-plan.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/292 is closed. Complete proof oracle: Figure 9 methanol/1-octanol cross-associating VLE curve retained source data, model curve or envelope, paper-scale plot, score JSON, validation checker, docs validation, cleanup hook.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread

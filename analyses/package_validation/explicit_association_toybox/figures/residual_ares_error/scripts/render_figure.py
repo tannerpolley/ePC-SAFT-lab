@@ -19,16 +19,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     case_label,
     closure_label,
     log_fit_line,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "residual_ares_error" / "output"
 METRICS = OUTPUT / "residual_ares_metrics.csv"
 FIGURE = OUTPUT / "residual_ares_error_summary.png"
 PLOTTED = OUTPUT / "residual_ares_error_summary_plotted_data.csv"
-SIDECAR = OUTPUT / "residual_ares_error_summary.mpl.yaml"
 
 
 def _load_rows() -> list[dict[str, str]]:
@@ -79,19 +77,8 @@ def main() -> None:
     style_axis(ax, minor=True)
     ax.legend(fontsize=8)
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_total_residual_ares_error",
-        title="Total residual Helmholtz error from association closure",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="rho Delta",
-        y_label="relative error in a_res",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

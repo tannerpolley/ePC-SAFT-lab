@@ -1,0 +1,46 @@
+{
+  "name": "ethane_carbon_dioxide",
+  "case_label": "Pereira 2012 System III",
+  "family_label": "PE-Neutral TP Flash",
+  "source_model_family": "SAFT-VR",
+  "runtime_model_support": "absent_from_epcsaft",
+  "fixture_status": "source_audited_not_executable",
+  "fixture_requirements": {
+    "executable": false,
+    "phase_discovery_required": true,
+    "saft_vr_runtime_required": true,
+    "source_confirmed_feed_correction_required": true,
+    "material_balance_check_path": "material_balance_check.csv",
+    "feed_correction_candidates_path": "feed_correction_candidates.csv"
+  },
+  "composition_basis": "mole_fraction",
+  "pressure_basis": "MPa in source tables; Pa required by package runtime",
+  "temperature_basis": "K",
+  "source_paths": {
+    "paper_pdf": "docs/papers/pdf/Pereira et al. - 2012 - The HELD algorithm for multicomponent, multiphase equilibrium calculations with generic equations of.pdf",
+    "paper_markdown": "docs/papers/md/Equilibrium/Pereira et al. - 2012 - The HELD algorithm for multicomponent, multiphase equilibrium calculations with generic equations of.md"
+  },
+  "audited_source_locations": [
+    {
+      "source": "Pereira et al. 2012 Table 3",
+      "paper_page": 109,
+      "markdown_lines": "496-522",
+      "contents": "System III SAFT-VR ethane + carbon dioxide point phase splits"
+    },
+    {
+      "source": "Pereira et al. 2012 Table B.1",
+      "paper_page": 117,
+      "markdown_lines": "934-938",
+      "contents": "System III SAFT-VR pure parameters and binary interaction factors"
+    }
+  ],
+  "blocking_reasons": [
+    "model_family_mismatch",
+    "saft_vr_runtime_absent",
+    "published_second_feed_composition_not_normalized"
+  ],
+  "notes": [
+    "This source audit captures Pereira System III data needed for a future validation path, but it is not an executable ePC-SAFT fixture.",
+    "The published second feed composition is [0.09, 0.01], which sums to 0.10. Do not silently normalize or infer [0.09, 0.91] in validation code without a source-backed correction policy."
+  ]
+}

@@ -2,10 +2,10 @@
   "artifacts": {
     "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_qa_overlay.png",
     "model_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_model_curve.csv",
+    "pdf": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.pdf",
     "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_plotted_data.csv",
     "png": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.png",
     "score_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_score.json",
-    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.mpl.yaml",
     "source_csv": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_source_points.csv",
     "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_metadata.json",
     "summary_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_summary.json",
@@ -38,14 +38,14 @@
     "branch_coverage_score": 1.0,
     "derivative_status": "verified_exact",
     "max_axis_error": {
-      "P_bar": 0.017189708097228112,
+      "P_bar": 0.013315017332666435,
       "composition_component_1": 0.0
     },
     "model_point_count": 26,
-    "normalized_plot_score": 9.320671561399191,
+    "normalized_plot_score": 9.435218700621311,
     "pass": true,
     "rmse_axis": {
-      "P_bar": 0.005955162104259049,
+      "P_bar": 0.004815908504656738,
       "composition_component_1": 0.0
     },
     "score_basis": "pressure-coordinate RMSE against calibrated Gross 2002 Figure 5 digitized PC-SAFT curve traces",
@@ -54,37 +54,37 @@
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "P_bar": 0.011760434486109639,
+          "P_bar": 0.0069505486503129155,
           "composition_component_1": 0.0
         },
         "model_point_count": 13,
-        "normalized_plot_score": 9.502212910705541,
+        "normalized_plot_score": 9.619366871677435,
         "pass": true,
         "rmse_axis": {
-          "P_bar": 0.004977870892944586,
+          "P_bar": 0.003806331283225649,
           "composition_component_1": 0.0
         },
-        "source_point_count": 13
+        "source_point_count": 7
       },
       "2-propanol-benzene": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
         "max_axis_error": {
-          "P_bar": 0.017189708097228112,
+          "P_bar": 0.013315017332666435,
           "composition_component_1": 0.0
         },
         "model_point_count": 13,
-        "normalized_plot_score": 9.320671561399191,
+        "normalized_plot_score": 9.435218700621311,
         "pass": true,
         "rmse_axis": {
-          "P_bar": 0.006793284386008082,
+          "P_bar": 0.005647812993786886,
           "composition_component_1": 0.0
         },
-        "source_point_count": 13
+        "source_point_count": 7
       }
     },
-    "source_point_count": 26
+    "source_point_count": 14
   },
-  "source_point_count": 26,
+  "source_point_count": 14,
   "status": "accepted"
 }

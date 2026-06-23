@@ -17,16 +17,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     apply_plot_style,
     case_label,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "hessian_agreement" / "output"
 SOURCE = OUTPUT / "hessian_agreement.csv"
 PLOTTED = OUTPUT / "hessian_agreement_plotted_data.csv"
 FIGURE = OUTPUT / "hessian_agreement.png"
-SIDECAR = OUTPUT / "hessian_agreement.mpl.yaml"
 
 
 def main() -> None:
@@ -88,19 +86,8 @@ def main() -> None:
         axis.legend(loc="upper right", frameon=False)
     axes[-1].set_xlabel("Hessian target")
     fig.suptitle(r"Picard Hessian agreement against exact implicit sensitivities")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="hessian_agreement",
-        title="Picard Hessian agreement against exact implicit sensitivities",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="Hessian target",
-        y_label="relative Hessian error",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/hessian_agreement/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

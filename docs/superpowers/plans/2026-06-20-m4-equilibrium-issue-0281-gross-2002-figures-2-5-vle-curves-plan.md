@@ -40,7 +40,7 @@ Material planning questions were answered from repo evidence:
 Test complete for #281 means:
 
 - Figures 2, 3, 4, and 5 are `accepted` in `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`.
-- Every accepted figure has `counts_toward_completion: true`, empty `remaining_work`, and retained artifact paths for `source_csv`, `source_metadata_json`, `digitization_qa_overlay`, `model_csv`, `plotted_csv`, `score_json`, `summary_json`, `png`, `svg`, and `sidecar`.
+- Every accepted figure has `counts_toward_completion: true`, empty `remaining_work`, and retained artifact paths for `source_csv`, `source_metadata_json`, `digitization_qa_overlay`, `model_csv`, `plotted_csv`, `score_json`, `summary_json`, `png`, `svg`, and `PDF artifact and provenance file`.
 - Figure 2 has `source_identity_status: resolved` and a retained identity artifact under `analyses/paper_validation/2002_gross/figures/figure_02/source/`.
 - Every figure-level score JSON records `source_point_count`, `model_point_count`, `rmse_axis`, `max_axis_error`, `normalized_plot_score`, `branch_coverage_score`, `derivative_status`, and `pass`.
 - Every required Figure 2-5 series has `normalized_plot_score >= 7.0`, `branch_coverage_score == 1.0`, `derivative_status: "verified_exact"`, and `pass: true`.
@@ -53,7 +53,7 @@ Test complete for #281 means:
 
 **Intent:** Convert Figures 2-5 from source-requirement records into curve-level Gross 2002 VLE replications.
 **Current Behavior:** Figure 1 is accepted; Figures 2-5 remain planned with source images only and named blockers in the shared summary.
-**Expected Outcome:** Figures 2-5 are accepted with retained source, model, plotted, score, summary, PNG, SVG, sidecar, identity, and native receipt artifacts.
+**Expected Outcome:** Figures 2-5 are accepted with retained source, model, plotted, score, summary, PNG, SVG, PDF artifact and provenance file, identity, and native receipt artifacts.
 **Target-Perspective Output:** A reviewer can open the four generated plots, compare PC-SAFT curves against retained source markers in paper coordinates, and inspect score JSON plus source/model CSVs behind each plot.
 **Truth Owner:** Gross/Sadowski 2002 Figures 2-5 source images, local Gross 2002 paper text, Table 1 pure parameters, Table 2 binary `k_ij` rows, analysis-local parameter snapshots, and the #279 full-replication checker contract.
 **Contract Interface:** `scripts/validation/check_gross_2002_full_replication.py`, the #279 score/source metadata schemas, and public `epcsaft_equilibrium.Equilibrium(...).solve()` workflows used by the generation scripts.
@@ -67,7 +67,7 @@ Test complete for #281 means:
 
 ## Architecture Slice
 
-**Files To Create:** Figure-owned source, script, and result files under `analyses/paper_validation/2002_gross/figures/figure_02`, `figure_03`, `figure_04`, and `figure_05`, including identity, source CSV, metadata JSON, QA overlay, model CSV, plotted CSV, score JSON, summary JSON, PNG, SVG, and MPL sidecar artifacts.
+**Files To Create:** Figure-owned source, script, and result files under `analyses/paper_validation/2002_gross/figures/figure_02`, `figure_03`, `figure_04`, and `figure_05`, including identity, source CSV, metadata JSON, QA overlay, model CSV, plotted CSV, score JSON, summary JSON, PNG, SVG, and PDF LaTeX artifacts.
 **Files To Modify:** `scripts/validation/check_gross_2002_full_replication.py`, `tests/native/contracts/test_gross_2002_full_replication_checker.py`, `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv`, this issue mirror, and `docs/superpowers/milestones/M4-equilibrium/README.md`.
 **Files To Avoid:** Native C++ route implementation files, provider EOS code, regression package code, electrolyte/reactive route files, downstream repositories, and Gross 2002 figure folders outside Figures 2-5 except shared summary files.
 **Source Of Truth:** Gross/Sadowski 2002 Figures 2-5 images and captions, Table 1, Table 2, `analyses/paper_validation/2002_gross/parameters`, and #279 checker schema.
@@ -279,7 +279,7 @@ Test complete for #281 means:
 - Create: `analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_summary.json`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.png`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.svg`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.mpl.yaml`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.pdf`
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_02/scripts/_placeholder.md` if real scripts occupy the folder.
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_02/results/_placeholder.md` if real results occupy the folder.
 
@@ -386,7 +386,7 @@ Test complete for #281 means:
 - Create: `analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_summary.json`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.png`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.svg`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.mpl.yaml`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.pdf`
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_03/scripts/_placeholder.md` if real scripts occupy the folder.
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_03/results/_placeholder.md` if real results occupy the folder.
 
@@ -489,7 +489,7 @@ Test complete for #281 means:
 - Create: `analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_summary.json`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.png`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.svg`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.mpl.yaml`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.pdf`
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_04/scripts/_placeholder.md` if real scripts occupy the folder.
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_04/results/_placeholder.md` if real results occupy the folder.
 
@@ -592,7 +592,7 @@ Test complete for #281 means:
 - Create: `analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_summary.json`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.png`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.svg`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.mpl.yaml`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.pdf`
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_05/scripts/_placeholder.md` if real scripts occupy the folder.
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_05/results/_placeholder.md` if real results occupy the folder.
 

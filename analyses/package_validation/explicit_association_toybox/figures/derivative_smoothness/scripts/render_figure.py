@@ -16,17 +16,15 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
     target_label,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "derivative_smoothness" / "output"
 SMOOTHNESS = OUTPUT / "derivative_smoothness.csv"
 FIGURE = OUTPUT / "derivative_smoothness.png"
 PLOTTED = OUTPUT / "derivative_smoothness_plotted_data.csv"
-SIDECAR = OUTPUT / "derivative_smoothness.mpl.yaml"
 
 
 def main() -> None:
@@ -79,19 +77,8 @@ def main() -> None:
     style_axis(ax, minor=True)
     ax.legend()
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_derivative_smoothness",
-        title="Local derivative smoothness",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="perturbation variable",
-        y_label="relative slope jump",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_smoothness/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

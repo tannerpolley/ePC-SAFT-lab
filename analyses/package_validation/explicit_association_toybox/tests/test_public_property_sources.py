@@ -7,6 +7,7 @@ from analyses.package_validation.explicit_association_toybox.scripts.public_prop
     fetch_nist_saturation,
     nist_saturation_url,
     parse_nist_saturation_html,
+    write_public_saturation_csv,
 )
 
 
@@ -98,3 +99,36 @@ def test_select_source_rows_applies_declared_temperature_window_and_count() -> N
     assert len(selected) == 4
     assert selected[0]["T_K"] == pytest.approx(290.0)
     assert selected[-1]["T_K"] == pytest.approx(320.0)
+
+
+def test_write_public_saturation_csv_uses_component_taxonomy(tmp_path) -> None:
+    paths = write_public_saturation_csv(
+        [
+            {
+                "component": "methanol",
+                "source_name": "nist_chemistry_webbook",
+                "T_K": 293.15,
+                "p_sat_Pa": 6000.0,
+                "rho_sat_liq_mol_m3": 24500.0,
+                "phase": "liquid",
+                "source_url": "https://webbook.nist.gov/example",
+            },
+            {
+                "component": "water",
+                "source_name": "nist_chemistry_webbook",
+                "T_K": 293.15,
+                "p_sat_Pa": 2300.0,
+                "rho_sat_liq_mol_m3": 55300.0,
+                "phase": "liquid",
+                "source_url": "https://webbook.nist.gov/example",
+            },
+        ],
+        tmp_path,
+    )
+
+    assert paths == [
+        tmp_path / "methanol" / "saturation_properties.csv",
+        tmp_path / "water" / "saturation_properties.csv",
+    ]
+    assert (tmp_path / "methanol" / "saturation_properties.csv").is_file()
+    assert (tmp_path / "water" / "saturation_properties.csv").is_file()

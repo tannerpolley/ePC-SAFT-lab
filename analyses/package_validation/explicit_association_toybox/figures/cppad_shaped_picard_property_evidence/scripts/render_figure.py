@@ -17,16 +17,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     case_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "cppad_shaped_picard_property_evidence" / "output"
 SOURCE = OUTPUT / "cppad_shaped_picard_property_evidence.csv"
 PLOTTED = OUTPUT / "cppad_shaped_picard_property_evidence_plotted_data.csv"
 FIGURE = OUTPUT / "cppad_shaped_picard_property_evidence.png"
-SIDECAR = OUTPUT / "cppad_shaped_picard_property_evidence.mpl.yaml"
 SELECTED_CASES = (
     "pure_2b_self",
     "cross_associating_binary",
@@ -58,20 +56,6 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(plotted)
     _render(plotted)
-    write_sidecar(
-        SIDECAR,
-        plot_id="cppad_shaped_picard_property_evidence",
-        title="CppAD-shaped Picard property evidence",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="association density and pressure proxy density",
-        y_label="a_assoc and P_proxy",
-        y_scale="linear",
-        command=(
-            "uv run python analyses/package_validation/explicit_association_toybox/figures/"
-            "cppad_shaped_picard_property_evidence/scripts/render_figure.py"
-        ),
-    )
     print(FIGURE)
 
 
@@ -158,7 +142,7 @@ def _render(rows: list[dict[str, object]]) -> None:
             style_axis(axis)
     axes[0, 0].legend(frameon=False, loc="best")
     fig.suptitle("Picard property evidence across pure and mixture association cases")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
 
 

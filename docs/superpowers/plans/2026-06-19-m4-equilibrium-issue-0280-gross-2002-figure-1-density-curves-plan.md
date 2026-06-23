@@ -27,7 +27,7 @@
 Material planning questions were answered from repo evidence:
 
 - Scope: #280 owns Figure 1 only. #281-#285 own the other figure families, and #286 owns final campaign closure.
-- Source policy: use the retained Gross/Sadowski Figure 1 image as the coordinate truth for this issue unless a traceable cited source table is found quickly during source acquisition. Either path must produce the same retained source CSV, metadata JSON, and QA overlay.
+- Source policy: use the retained Gross/Sadowski Figure 1 image as the coordinate truth for this issue unless a traceable cited source table is found quickly during source acquisition. Either path must produce the same retained source CSV, digitization notes CSV, and QA overlay.
 - Route policy: #280 is blocked by #290. #280 must not implement native route admission; it must consume the merged #290 public `single_component_vle` route and keep the Figure 1 PR focused on source/model/plot/score artifacts.
 - Metrics: inherit the #279 `t_rho` normalized score gate of `>= 7.0`, plus per-component vapor/liquid branch coverage.
 - Branch strategy: use the issue branch from the mirror, `codex/issue-0280-gross-2002-figure-1-density-curves`.
@@ -38,9 +38,9 @@ Material planning questions were answered from repo evidence:
 Test complete for #280 means:
 
 - The merged #290 route receipt proves `Equilibrium(mixture, route="single_component_vle", T=...).solve()` returns native Ipopt results for pure methanol, 1-pentanol, and 1-nonanol parameter sets from Gross/Sadowski Table 1.
-- Figure 1 source data is retained with at least six source points per component per branch for `vapor` and `liquid`, unless the retained paper image visibly contains fewer; any lower count must be recorded in the metadata and score caveats.
+- Figure 1 source data is retained with at least six source points per component per branch for `vapor` and `liquid`, unless the retained paper image visibly contains fewer; any lower count must be recorded in digitization_notes.csv and score caveats.
 - Figure 1 model data is retained with at least thirty model points per component per branch across the paper temperature span.
-- The Figure 1 score JSON records per-component and per-branch `source_point_count`, `model_point_count`, `rmse_axis`, `max_axis_error`, `normalized_plot_score`, `branch_coverage_score`, `derivative_status`, and `pass`.
+- The Figure 1 fit_statistics.csv records per-component and per-branch `source_point_count`, `model_point_count`, `rmse_density_kg_m3`, `rmse_temperature_K`, `max_density_error_kg_m3`, `max_temperature_error_K`, `normalized_plot_score`, `branch_coverage_score`, `derivative_status`, and `pass`.
 - Every component and branch has `normalized_plot_score >= 7.0`, `branch_coverage_score == 1.0`, and `pass: true`.
 - The rendered PNG/SVG plot uses the paper plot type and scale: temperature on the vertical axis and density on the horizontal axis, with source markers and PC-SAFT model curves for all three alcohols.
 - `scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native` exits `0` with Figure 1 accepted and no blockers. A separate partial-campaign readout with `--require-complete` may still exit `2` until #281-#285 land.
@@ -49,8 +49,8 @@ Test complete for #280 means:
 
 **Intent:** Convert Figure 1 from a diagnostic association-AAD mirror into source-backed curve-level paper replication.
 **Current Behavior:** Figure 1 is `planned` in `gross_2002_full_replication_manifest.json`; existing artifacts only show Table 1 AAD sanity evidence. #290 owns the native pure associating `single_component_vle` admission required before this figure can generate model curves.
-**Expected Outcome:** Figure 1 is `accepted`, counts toward full campaign completion, and has retained source, model, plotted, score, summary, PNG, SVG, sidecar, and native route evidence artifacts.
-**Target-Perspective Output:** A reviewer can open the Figure 1 PNG/SVG and see a paper-scale `T-rho` reproduction for methanol, 1-pentanol, and 1-nonanol, then inspect score JSON and retained CSVs behind the plot.
+**Expected Outcome:** Figure 1 is `accepted`, counts toward full campaign completion, and has retained source, model, plotted, score, summary, PNG, SVG, PDF artifact and provenance file, and native route evidence artifacts.
+**Target-Perspective Output:** A reviewer can open the Figure 1 PNG/SVG and see a paper-scale `T-rho` reproduction for methanol, 1-pentanol, and 1-nonanol, then inspect fit_statistics.csv and retained CSVs behind the plot.
 **Truth Owner:** Gross/Sadowski 2002 Figure 1 source image and the #279 full-replication checker contract.
 **Contract Interface:** `scripts/validation/check_gross_2002_full_replication.py` and the #290 public `epcsaft_equilibrium.Equilibrium(..., route="single_component_vle", T=...).solve()` workflow.
 **Cutover Decision:** Replace the current Figure 1 `planned` manifest record with an `accepted` record only after the source/model/score/plot artifacts pass the checker.
@@ -63,11 +63,11 @@ Test complete for #280 means:
 
 ## Architecture Slice
 
-**Files To Create:** `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_metadata.json`, `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_qa_overlay.png`, `analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_gross_2002_figure_01_replication_data.py`, `analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_replication.py`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg`, `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml`.
+**Files To Create:** `analyses/paper_validation/2002_gross/figures/figure_01/source/source_points.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_notes.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_overlay.png`, `analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_data.py`, `analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_figure.py`, `analyses/paper_validation/2002_gross/figures/figure_01/results/model_curve.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/results/plotted_data.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/results/fit_statistics.csv`, `analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.png`, `analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.svg`, `analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.pdf`.
 **Files To Modify:** `scripts/validation/check_gross_2002_full_replication.py`, `tests/native/contracts/test_gross_2002_full_replication_checker.py`, `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv`, `docs/superpowers/milestones/M4-equilibrium/README.md`.
 **Files To Avoid:** Other Gross 2002 figure folders except shared campaign summary files, electrolyte/reactive code paths, regression package code, and downstream repositories.
 **Source Of Truth:** Gross/Sadowski 2002 Figure 1 image, Table 1 alcohol parameter rows, and #279 checker schema.
-**Read Path:** Source CSV and metadata feed the generation script; model CSV and source CSV feed the render script; score and summary JSON feed the manifest and checker.
+**Read Path:** Source CSV and digitization notes feed the generation script; model CSV and source CSV feed the render script; fit_statistics.csv feeds the manifest and checker.
 **Write Path:** Figure-specific artifacts stay under `analyses/paper_validation/2002_gross/figures/figure_01`; shared status artifacts stay under `analyses/paper_validation/2002_gross/shared`.
 **Integration Points:** Public `Equilibrium` route, native selector route, exact derivative/Ipopt diagnostics, full-replication checker, M4 milestone evidence table.
 **Migration Or Cutover:** Keep #275 association mirror files intact, remove only owned `_placeholder.md` files from `figure_01/scripts` or `figure_01/results` when real files occupy those folders.
@@ -79,7 +79,7 @@ Test complete for #280 means:
 - Retain or digitize coexisting vapor/liquid density source data: Tasks 3 and 5.
 - Generate PC-SAFT saturated vapor/liquid density model curves: Tasks 2 and 4.
 - Render paper-scale `T-rho` mirror plot: Task 5.
-- Write and enforce Figure 1 score JSON: Tasks 1, 4, and 6.
+- Write and enforce Figure 1 fit_statistics.csv: Tasks 1, 4, and 6.
 - Keep artifacts under `analyses/paper_validation/2002_gross/figures/figure_01`: Tasks 3-6.
 - Preserve #275 association acceptance evidence: Tasks 5-7.
 
@@ -94,7 +94,7 @@ Test complete for #280 means:
 
 **Use Cases:**
 - A future Figure 1 record cannot pass with only liquid-density evidence.
-- A score JSON missing methanol vapor, 1-pentanol liquid, or 1-nonanol vapor branch data produces a named blocker.
+- A fit_statistics.csv missing methanol vapor, 1-pentanol liquid, or 1-nonanol vapor branch data produces a named blocker.
 - Figure 1 acceptance requires `t_rho` threshold `>= 7.0` plus complete vapor/liquid branch coverage.
 - The #279 foundation mode still passes with planned Figure 1 data.
 
@@ -105,7 +105,7 @@ Test complete for #280 means:
 
 - [ ] **Step 1: Add a failing branch-coverage test**
 
-  Add a test that builds an accepted Figure 1 record with score JSON lacking a `vapor` branch and expects `gross_2002_figure_01_required_branch_vapor_missing`.
+  Add a test that builds an accepted Figure 1 record with fit_statistics.csv lacking a `vapor` branch and expects `gross_2002_figure_01_required_branch_vapor_missing`.
 
 - [ ] **Step 2: Run the targeted test and verify failure**
 
@@ -178,7 +178,7 @@ Test complete for #280 means:
 
   Do not modify `packages/epcsaft-equilibrium/src/epcsaft_equilibrium`, native C++ route files, activation metadata, or route capability tests in the Figure 1 PR. If the generator exposes a route defect, reopen or amend #290 instead of hiding the fix in #280.
 
-### Task 3: Retain Figure 1 Source Data And Metadata
+### Task 3: Retain Figure 1 Source Data And Digitization Notes
 
 **Use Cases:**
 - Reviewers can trace every plotted source point to either the retained Gross image digitization or a cited experimental source.
@@ -187,42 +187,42 @@ Test complete for #280 means:
 - The old AAD source CSV remains available only for #275.
 
 **Files:**
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source.csv`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_metadata.json`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_qa_overlay.png`
-- Modify: `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_digitization_metadata.json` only if it is superseded by the new replication metadata.
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/source_points.csv`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_notes.csv`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_overlay.png`
+- Modify: `analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_notes.csv` only if it is superseded by the new replication metadata.
 
 - [ ] **Step 1: Digitize or extract Figure 1 source points**
 
-  Produce `gross_2002_figure_01_replication_source.csv` with columns:
+  Produce `source_points.csv` with columns:
 
   ```text
   figure_id,component,branch,T_K,density_kg_m3,density_mol_m3,source_kind,source_reference,digitized_x_px,digitized_y_px,uncertainty_T_K,uncertainty_density_kg_m3
   ```
 
-- [ ] **Step 2: Write metadata**
+- [ ] **Step 2: Write digitization notes**
 
-  Write `gross_2002_figure_01_replication_metadata.json` with the #279 required fields plus:
+  Write `digitization_notes.csv` with provenance, calibration, uncertainty, and source notes:
 
   ```json
   {
     "figure_id": "figure_01",
     "plot_type": "T-rho",
-    "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper_source_01_gross_2002_figure_001.png",
+    "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper.png",
     "series_labels": ["methanol:vapor", "methanol:liquid", "1-pentanol:vapor", "1-pentanol:liquid", "1-nonanol:vapor", "1-nonanol:liquid"]
   }
   ```
 
 - [ ] **Step 3: Save the QA overlay**
 
-  Save `gross_2002_figure_01_replication_qa_overlay.png` showing the retained paper image with calibration anchors and extracted points overlaid.
+  Save `digitization_overlay.png` showing the retained paper image with calibration anchors and extracted points overlaid.
 
 - [ ] **Step 4: Check source row coverage**
 
   Run a one-shot CSV check:
 
   ```powershell
-  uv run --no-sync python -c "import pandas as pd; f=pd.read_csv('analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source.csv'); print(f.groupby(['component','branch']).size().to_string())"
+  uv run --no-sync python -c "import pandas as pd; f=pd.read_csv('analyses/paper_validation/2002_gross/figures/figure_01/source/source_points.csv'); print(f.groupby(['component','branch']).size().to_string())"
   ```
 
   Expected: all six component/branch groups are present.
@@ -232,7 +232,7 @@ Test complete for #280 means:
   Commit:
 
   ```powershell
-  git add analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source.csv analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_metadata.json analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_qa_overlay.png
+  git add analyses/paper_validation/2002_gross/figures/figure_01/source/source_points.csv analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_notes.csv analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_overlay.png
   git commit -m "Retain Gross 2002 Figure 1 source density points"
   ```
 
@@ -240,15 +240,15 @@ Test complete for #280 means:
 
 **Use Cases:**
 - The model CSV contains vapor and liquid density curves for all three Figure 1 alcohols.
-- The score JSON proves branch-level agreement against retained source points.
-- Solver diagnostics and native freshness evidence are retained in the summary JSON.
+- The fit_statistics.csv proves branch-level agreement against retained source points.
+- Solver diagnostics and native freshness evidence are retained in the paper-level manifest/summary, not in a figure-local JSON file.
 - The generation path is separate from rendering, so the plot can be reproduced without rerunning solves.
 
 **Files:**
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_gross_2002_figure_01_replication_data.py`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_data.py`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/model_curve.csv`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/fit_statistics.csv`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/fit_statistics.csv`
 
 - [ ] **Step 1: Write the generation script**
 
@@ -272,24 +272,24 @@ Test complete for #280 means:
 
 - [ ] **Step 4: Score model against source**
 
-  Interpolate model curves onto source temperatures for each component/branch. Write branch score entries keyed by `component:branch`, then compute the top-level score JSON fields required by #279.
+  Interpolate model curves onto source temperatures for each component/branch. Write branch score entries keyed by `component:branch`, then compute the top-level fit_statistics.csv fields required by the checker.
 
 - [ ] **Step 5: Run generation**
 
   Run:
 
   ```powershell
-  uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_gross_2002_figure_01_replication_data.py
+  uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_data.py
   ```
 
-  Expected: model curve, score JSON, and summary JSON are written.
+  Expected: model_curve.csv, fit_statistics.csv, and figure_01 SVG/PNG/PDF are written.
 
 - [ ] **Step 6: Commit**
 
   Commit:
 
   ```powershell
-  git add analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_gross_2002_figure_01_replication_data.py analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json
+  git add analyses/paper_validation/2002_gross/figures/figure_01/scripts/generate_data.py analyses/paper_validation/2002_gross/figures/figure_01/results/model_curve.csv analyses/paper_validation/2002_gross/figures/figure_01/results/fit_statistics.csv
   git commit -m "Generate Gross 2002 Figure 1 model density curves"
   ```
 
@@ -297,22 +297,22 @@ Test complete for #280 means:
 
 **Use Cases:**
 - A reviewer can visually compare source points and PC-SAFT curves in the same coordinate orientation as Gross Figure 1.
-- Rendering consumes retained CSVs and score metadata; it does not run native solves.
+- Rendering consumes retained CSVs and fit statistics; it does not run native solves.
 - The plotted-data CSV preserves exactly what was drawn.
 - The old association mirror remains separate.
 
 **Files:**
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_replication.py`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_figure.py`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/plotted_data.csv`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.png`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.svg`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.pdf`
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_01/scripts/_placeholder.md` if the folder now has real scripts.
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_01/results/_placeholder.md` if the folder now has real full-replication results.
 
-- [ ] **Step 1: Create the MPL sidecar**
+- [ ] **Step 1: Create the PDF LaTeX artifact**
 
-  Write sidecar metadata with plot id, source CSV, model CSV, score JSON, axis labels, figure size, and command.
+  Save the PDF figure artifact and record plot id, source CSV, model CSV, fit_statistics.csv, axis labels, figure size, and command in retained CSV notes.
 
 - [ ] **Step 2: Write the render script**
 
@@ -323,10 +323,10 @@ Test complete for #280 means:
   Run:
 
   ```powershell
-  uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_replication.py
+  uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_figure.py
   ```
 
-  Expected: PNG, SVG, sidecar, and plotted-data CSV are written.
+  Expected: PNG, SVG, PDF, provenance JSON, and plotted-data CSV are written.
 
 - [ ] **Step 4: Inspect the plot**
 
@@ -370,16 +370,15 @@ Test complete for #280 means:
   "replication_status": "accepted",
   "counts_toward_completion": true,
   "artifacts": {
-    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source.csv",
-    "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_metadata.json",
-    "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_qa_overlay.png",
-    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv",
-    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv",
-    "score_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json",
-    "summary_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json",
-    "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png",
-    "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg",
-    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml"
+    "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/source_points.csv",
+    "digitization_notes_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_notes.csv",
+    "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_overlay.png",
+    "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/model_curve.csv",
+    "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/plotted_data.csv",
+    "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/fit_statistics.csv",
+    "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.png",
+    "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.svg",
+    "pdf": "analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.pdf"
   }
   ```
 
@@ -508,7 +507,7 @@ Expected for #280: exit `2`; Figure 1 has no blockers, and Figure 2-10 blockers 
 
 - This issue depends on the #290 pure associating saturation route remaining admitted and exact-Hessian-backed in the public workflow layer.
 - Native route admission must stay narrow: pure associating `single_component_vle` for the Gross Figure 1 alcohol evidence, not binary associating VLE.
-- Digitization quality directly affects scores. The QA overlay and metadata must be reviewable.
+- Digitization quality directly affects scores. The QA overlay and digitization notes must be reviewable.
 - The Figure 1 paper plot compares PC-SAFT and SAFT. #280 only needs PC-SAFT model curves; SAFT lines should not be reproduced unless source data and implementation ownership are explicitly added.
 
 ## Recommended Implementation Route

@@ -24,7 +24,7 @@ DEFAULT_CASE_DIR = (
     / "reference"
     / "equilibrium_benchmarks"
     / "associating_lle"
-    / "gross_2002_methanol_cyclohexane"
+    / "methanol_cyclohexane"
 )
 SPECIES = ["methanol", "cyclohexane"]
 REQUIRED_FILES = (

@@ -17,7 +17,7 @@ CASE_DIR = (
     / "reference"
     / "equilibrium_benchmarks"
     / "neutral_lle"
-    / "matsuda_2011_pfhexane_hexane"
+    / "perfluorohexane_hexane"
 )
 
 

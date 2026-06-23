@@ -78,7 +78,7 @@ paper-validation tree above.
   methanol/cyclohexane, methanol/1-octanol, 1-pentanol/benzene, and
   water/1-pentanol.
 - Verified:
-  `data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane`
+  `data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane`
   already contains a source-backed Figure 8 methanol/cyclohexane fixture with
   digitized liquid-liquid points, Gross 2002 Table 1/2 parameters, and
   metadata linking to the retained Figure 8 image.
@@ -138,7 +138,7 @@ analyses/paper_validation/2002_gross/figures/figure_NN/results/
   gross_2002_figure_NN_association_summary.json
   gross_2002_figure_NN_association_mirror.png
   gross_2002_figure_NN_association_mirror.svg
-  gross_2002_figure_NN_association_mirror.mpl.yaml
+  gross_2002_figure_NN_association_mirror.pdf
 ```
 
 The script names may be shortened during implementation, but the ownership and
@@ -220,7 +220,7 @@ manifest scope or it has a concrete pass/fail result.
 7. Aggregate per-figure summaries into the campaign summary.
 8. The validation checker reads the retained artifacts and fails loudly when
    source data, model data, derivative receipts, fresh-native receipts, or plot
-   sidecars are missing.
+   PDF artifacts and provenance files are missing.
 
 ## Acceptance Criteria
 
@@ -235,7 +235,7 @@ manifest scope or it has a concrete pass/fail result.
 - Figures 2-7 and 9 are added as source-backed VLE mirrors when their source
   points and required nonassociating pure parameters are retained.
 - Every accepted figure has a retained plot, retained plotted-data CSV,
-  retained model-data CSV, retained summary JSON, and Matplotlib sidecar.
+  retained model-data CSV, retained summary JSON, and PDF artifact and provenance file.
 - Every accepted associating equilibrium solve records exact association
   derivative evidence, mass-action residuals, site-bound checks, and the
   association contribution state.
@@ -261,7 +261,7 @@ The checker must fail loudly for:
 - missing mass-action residual evidence for associating solves;
 - stale or absent native freshness evidence when native equilibrium code is
   exercised;
-- plot sidecars that do not match the plotted CSV data;
+- plot PDF artifacts and provenance files that do not match the plotted CSV data;
 - campaign summaries generated from a different commit than the retained plot
   artifacts;
 - any runtime path that substitutes an approximate association closure for the

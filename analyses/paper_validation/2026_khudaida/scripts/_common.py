@@ -126,7 +126,7 @@ def configure_style() -> None:
 def save_figure(fig: plt.Figure, path: Path) -> None:
     path = paper_validation_output_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    save_plot_figure(fig, path, dpi=300, svg_companion=True)
+    save_plot_figure(fig, path, dpi=300)
 
 
 def add_figure_caption(

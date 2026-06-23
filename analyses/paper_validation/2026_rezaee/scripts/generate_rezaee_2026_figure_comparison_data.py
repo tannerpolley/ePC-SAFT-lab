@@ -10,7 +10,7 @@ import pandas as pd
 from _paths import ANALYSIS_DIR
 
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results" / "reaction_equilibrium"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "reaction_equilibrium"
 FIGURES_DIR = ANALYSIS_DIR / "figures"
 
 DIGITIZED_POINTS_CSV = PROCESSED_DIR / "rezaee_2026_paper_figure_digitized_points.csv"
@@ -19,7 +19,8 @@ SUMMARY_JSON = RESULTS_DIR / "rezaee_2026_package_figure_comparison_data_summary
 
 FIGURE_SPECS: dict[str, dict[str, Any]] = {
     "fig7": {
-        "folder": "figure_7",
+        "folder": "figure_07",
+        "artifact_stem": "figure_7",
         "paper_label": "Fig. 7",
         "caption": "Deviation of calculated extraction percentage from experimental data [17].",
         "axis_max": 60.0,
@@ -31,7 +32,8 @@ FIGURE_SPECS: dict[str, dict[str, Any]] = {
         "y_label": "Calculated Li extraction / %",
     },
     "fig8": {
-        "folder": "figure_8",
+        "folder": "figure_08",
+        "artifact_stem": "figure_8",
         "paper_label": "Fig. 8",
         "caption": "Deviation of calculated selectivity from experimental data [17].",
         "axis_max": 6.0,
@@ -44,6 +46,7 @@ FIGURE_SPECS: dict[str, dict[str, Any]] = {
     },
     "fig10": {
         "folder": "figure_10",
+        "artifact_stem": "figure_10",
         "paper_label": "Fig. 10",
         "caption": "Deviation of calculated lithium extraction percentage from experimental data [17] using k_ij.",
         "axis_max": 60.0,
@@ -56,6 +59,7 @@ FIGURE_SPECS: dict[str, dict[str, Any]] = {
     },
     "fig11": {
         "folder": "figure_11",
+        "artifact_stem": "figure_11",
         "paper_label": "Fig. 11",
         "caption": "Deviation of calculated selectivity from experimental data [17] using k_ij.",
         "axis_max": 6.0,
@@ -67,6 +71,10 @@ FIGURE_SPECS: dict[str, dict[str, Any]] = {
         "y_label": "Calculated Li/Na selectivity / -",
     },
 }
+
+
+def _artifact_stem(spec: dict[str, Any]) -> str:
+    return str(spec.get("artifact_stem", spec["folder"]))
 
 
 def _jsonable(value: Any) -> Any:
@@ -136,28 +144,26 @@ def _package_rows(package_rows: pd.DataFrame, figure_id: str, spec: dict[str, An
     )
 
 
-def _write_metadata(folder: Path, figure_id: str, spec: dict[str, Any], data_path: Path) -> None:
-    folder.mkdir(parents=True, exist_ok=True)
-    text = "\n".join(
-        [
-            f"figure_id: {figure_id}",
-            f"paper_label: {spec['paper_label']}",
-            f"description: {spec['caption']}",
-            "series:",
-            "  - digitized_paper_model",
-            "  - current_epcsaft_package_model",
-            f"package_case_id: {spec['package_case_id']}",
-            f"quantity: {spec['quantity']}",
-            f"x_label: {spec['x_label']}",
-            f"y_label: {spec['y_label']}",
-            f"axis_max: {spec['axis_max']}",
-            f"data: {data_path.relative_to(ANALYSIS_DIR).as_posix()}",
-            "source_images:",
-            f"  source: figures/{spec['folder']}/source/source_image.png",
-            f"  digitization_overlay: figures/{spec['folder']}/source/digitization_overlay.png",
-        ]
-    )
-    (folder / f"{spec['folder']}.mpl.yaml").write_text(text + "\n", encoding="utf-8")
+def _write_provenance(folder: Path, figure_id: str, spec: dict[str, Any], data_path: Path) -> Path:
+    path = folder / "results" / "data" / f"{_artifact_stem(spec)}_plot_provenance.json"
+    payload = {
+        "figure_id": figure_id,
+        "paper_label": spec["paper_label"],
+        "description": spec["caption"],
+        "series": ["digitized_paper_model", "current_epcsaft_package_model"],
+        "package_case_id": spec["package_case_id"],
+        "quantity": spec["quantity"],
+        "x_label": spec["x_label"],
+        "y_label": spec["y_label"],
+        "axis_max": spec["axis_max"],
+        "data": data_path.relative_to(ANALYSIS_DIR).as_posix(),
+        "source_images": {
+            "source": f"figures/{spec['folder']}/source/source_image.png",
+            "digitization_overlay": f"figures/{spec['folder']}/source/digitization_overlay.png",
+        },
+    }
+    path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
 
 
 def main() -> int:
@@ -173,9 +179,9 @@ def main() -> int:
             [_paper_rows(digitized, figure_id, spec), _package_rows(package_rows, figure_id, spec)],
             ignore_index=True,
         )
-        out_csv = data_folder / f"{spec['folder']}_package_vs_paper_points.csv"
+        out_csv = data_folder / f"{_artifact_stem(spec)}_package_vs_paper_points.csv"
         combined.to_csv(out_csv, index=False)
-        _write_metadata(figure_folder, figure_id, spec, out_csv)
+        provenance_path = _write_provenance(figure_folder, figure_id, spec, out_csv)
 
         paper = combined.loc[combined["series"] == "digitized_paper_model"]
         package = combined.loc[combined["series"] == "current_epcsaft_package_model"]
@@ -184,6 +190,7 @@ def main() -> int:
                 "figure_id": figure_id,
                 "paper_label": str(spec["paper_label"]),
                 "data": str(out_csv.relative_to(ANALYSIS_DIR)),
+                "provenance": str(provenance_path.relative_to(ANALYSIS_DIR)),
                 "package_case_id": str(spec["package_case_id"]),
                 "digitized_paper_points": int(len(paper)),
                 "package_model_points": int(len(package)),

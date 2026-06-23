@@ -49,7 +49,7 @@ Numerical metrics are required by the schema even though #279 does not compute r
 ## Acceptance Coverage
 
 - Strict full-replication checker entry point: Tasks 1-2.
-- Red contract tests for missing source CSV, metadata, QA overlay, model curve, plot, sidecar, score JSON, and derivative receipts: Task 1.
+- Red contract tests for missing source CSV, metadata, QA overlay, model curve, plot, PDF artifact and provenance file, score JSON, and derivative receipts: Task 1.
 - Full-replication manifest for Figures 1-10: Task 3.
 - Score JSON fields and source metadata fields: Tasks 2-3.
 - Keep #275 checker behavior intact: Task 4.
@@ -139,7 +139,7 @@ Numerical metrics are required by the schema even though #279 does not compute r
       summary_json = _write(tmp_path / figure_id / "summary.json", "{}\n")
       png = _write(tmp_path / figure_id / "plot.png")
       svg = _write(tmp_path / figure_id / "plot.svg")
-      sidecar = _write(tmp_path / figure_id / "plot.mpl.yaml", "kind: matplotlib-figure\n")
+      pdf = _write(tmp_path / figure_id / "plot.pdf", "%PDF-1.4\n")
       return {
           "source_csv": source_csv,
           "source_metadata_json": metadata_json,
@@ -150,7 +150,7 @@ Numerical metrics are required by the schema even though #279 does not compute r
           "summary_json": summary_json,
           "png": png,
           "svg": svg,
-          "sidecar": sidecar,
+          "pdf": pdf,
       }
   ```
 
@@ -316,7 +316,7 @@ Numerical metrics are required by the schema even though #279 does not compute r
       "summary_json",
       "png",
       "svg",
-      "sidecar",
+      "pdf",
   )
   REQUIRED_SOURCE_METADATA_FIELDS = (
       "provenance",
@@ -478,7 +478,7 @@ Numerical metrics are required by the schema even though #279 does not compute r
         "summary_json",
         "png",
         "svg",
-        "sidecar"
+        "pdf"
       ]
     },
     "source_metadata_schema": {
@@ -531,8 +531,8 @@ Numerical metrics are required by the schema even though #279 does not compute r
     "counts_toward_completion": false,
     "acceptance_threshold": 7.0,
     "requires_exact_association_hessian": false,
-    "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper_source_01_gross_2002_figure_001.png",
-    "planned_artifact_stem": "gross_2002_figure_01_replication",
+    "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper.png",
+    "planned_artifact_stem": "figure_01",
     "remaining_work": [
       "retain source or digitized coexisting density data",
       "generate model vapor and liquid density curves",

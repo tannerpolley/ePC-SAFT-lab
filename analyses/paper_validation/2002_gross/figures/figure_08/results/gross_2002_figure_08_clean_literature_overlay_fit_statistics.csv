@@ -1,0 +1,2 @@
+figure_id,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit
+figure_08,23,11,1.5445127872855422,2.1593113101738552,-1.5445127872855422,0.2743361966759399,degC

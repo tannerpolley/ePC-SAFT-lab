@@ -15,16 +15,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     BLUE,
     ORANGE,
     apply_plot_style,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "quick_phase_equilibrium" / "output"
 SOURCE = OUTPUT / "quick_phase_equilibrium.csv"
 PLOTTED = OUTPUT / "quick_phase_equilibrium_plotted_data.csv"
 FIGURE = OUTPUT / "quick_phase_equilibrium.png"
-SIDECAR = OUTPUT / "quick_phase_equilibrium.mpl.yaml"
 COLORS = {"Exact implicit": BLUE, "Picard": ORANGE}
 
 
@@ -86,19 +84,8 @@ def main() -> None:
         axis.legend(frameon=False)
 
     fig.suptitle("Quick toy phase-pair residuals")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="quick_phase_equilibrium",
-        title="Quick toy phase-pair residuals",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="temperature / K",
-        y_label="scaled pressure and reduced-chemical-potential residual norm",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/quick_phase_equilibrium/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

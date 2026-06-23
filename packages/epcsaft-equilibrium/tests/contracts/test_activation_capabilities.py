@@ -171,7 +171,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert associating_proof["k_ij"] == pytest.approx(0.051)
     assert (
         associating_proof["source_fixture"]
-        == "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
+        == "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane"
     )
     figure10_lle_proof = next(
         row

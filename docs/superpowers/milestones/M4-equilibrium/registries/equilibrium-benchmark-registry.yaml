@@ -80,7 +80,7 @@ family_rows:
     reference_cases:
       - case_label: "Hydrocarbon workbook derived TP flash"
         evidence_tier: T1
-        source: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash"
+        source: "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane"
         source_model_family: PC-SAFT
         fixture_status: available
         acceptance_checks:
@@ -92,7 +92,7 @@ family_rows:
           - exact_hessian
       - case_label: "Matsuda 2011 perfluorohexane + hexane neutral LLE"
         evidence_tier: T1
-        source: "data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane"
+        source: "data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane"
         retained_evidence: "analyses/package_validation/neutral_nonassociating_lle_showcase"
         source_model_family: "PC-SAFT-compatible sPC-SAFT"
         route: neutral_lle
@@ -156,7 +156,7 @@ family_rows:
     reference_cases:
       - case_label: "Gross/Sadowski 2002 methanol/cyclohexane"
         evidence_tier: T2
-        source: "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
+        source: "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane"
         source_model_family: PC-SAFT
         route: associating_lle_internal_proof
         fixture_status: available
@@ -212,7 +212,7 @@ family_rows:
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1
-        source: "data/reference/equilibrium_benchmarks/electrolyte_lle/khudaida_2026"
+        source: "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl"
         fixture_status: available
         acceptance_checks:
           - source_backed_data
@@ -441,13 +441,13 @@ neutral_tp_flash_fixture_gate:
       status: insufficient_no_point_phase_split_fixture
       note: "This table supplies binary VLE correlation/AAD context and fitted k_ij values, but not a single T, P, feed-composition, phase-fraction, and phase-composition TP-flash target."
     - case_label: "Hydrocarbon workbook TP flash smoke"
-      local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/metadata.json"
+      local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane/metadata.json"
       source_model_family: PC-SAFT
       status: promoted_executable_workbook_fixture
       note: "The workbook bubble-point coexistence state now has a derived equal-phase TP flash feed, explicit phase fractions, source-backed PC-SAFT parameters, and an executable neutral TP flash fixture gate."
     - case_label: "Pereira 2012 System III"
-      local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012/metadata.json"
-      source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
+      local_artifact: "data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide/metadata.json"
+      source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide"
       source_model_family: SAFT-VR
       status: rejected_model_family_mismatch
       note: "Do not use as executable ePC-SAFT validation input unless SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization is added."
@@ -458,11 +458,11 @@ benchmark_cases:
     priority_rank: 1
     status: available
     fixture_status: available
-    source_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash"
+    source_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane"
     source_model_family: PC-SAFT
     species: ["Methane", "Ethane", "Propane"]
-    pure_component_parameters: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/pc_saft_parameters.csv"
-    binary_interactions: "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/binary_interactions.csv"
+    pure_component_parameters: "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane/pc_saft_parameters.csv"
+    binary_interactions: "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane/binary_interactions.csv"
     temperature: 233.15
     pressure: 1276369.4735856401
     feed_composition: [0.41233144641716446, 0.2514659568616244, 0.3362025967212111]
@@ -487,7 +487,7 @@ benchmark_cases:
     status: source_data_needed
     fixture_status: source_data_needed
     source_path: "literature:Pereira et al. 2012 System III"
-    source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
+    source_audit_path: "data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide"
     source_model_family: SAFT-VR
     current_fixture_blocker: model_family_mismatch
     todo: "Do not use Pereira as ePC-SAFT validation input until SAFT-VR/model parity support or a source-backed ePC-SAFT reparameterization exists; select a source-backed ePC-SAFT-compatible neutral TP flash fixture first."
@@ -497,7 +497,7 @@ benchmark_cases:
     priority_rank: 1
     status: fixture_available_not_generalized_production
     fixture_status: available
-    source_path: "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane"
+    source_path: "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane"
     source_model_family: PC-SAFT
     retained_evidence: "uv run python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete"
     todo: "Use as the #145 internal exact-Hessian and closed-admission proof. #190 remains the public associating GFPE admission issue."
@@ -507,7 +507,7 @@ benchmark_cases:
     priority_rank: 1
     status: fixture_available_not_generalized_production
     fixture_status: available
-    source_path: "data/reference/equilibrium_benchmarks/electrolyte_lle/khudaida_2026"
+    source_path: "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl"
     todo: "Use as first electrolyte PE validation target after Born SSM+DS exact Hessian and HELD2 gates pass."
 
   - case_label: "Held 2014 Figure 6"

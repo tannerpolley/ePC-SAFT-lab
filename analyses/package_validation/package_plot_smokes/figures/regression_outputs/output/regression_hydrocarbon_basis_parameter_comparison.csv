@@ -1,0 +1,32 @@
+figure_file,axes_index,axes_title,x_label,y_label,artist_type,artist_label,color,linestyle,marker,linewidth,series_index,point_index,x,y,width,height
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,line,,#d1d1d1,-,,0.80000000000000004,0,0,0,0,,
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,line,,#d1d1d1,-,,0.80000000000000004,0,1,0,1,,
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,line,,#404040,-,,0.80000000000000004,0,0,0,0,,
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,line,,#404040,-,,0.80000000000000004,0,1,0,1,,
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,0,0,0.49709101892337548,-0.35999999999999999,0.99418203784675097,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,1,0,1.8578185996159897,0.64000000000000012,3.7156371992319794,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,2,0,75.206449828932747,1.6400000000000001,150.41289965786549,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,3,0,0.80462118437612773,2.6399999999999997,1.6092423687522555,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,4,0,1.7628606181133974,3.6399999999999997,3.5257212362267949,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,5,0,95.581507659806093,4.6400000000000006,191.16301531961219,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,6,0,0.99454634812956644,5.6400000000000006,1.9890926962591329,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,7,0,1.8121803615383782,6.6400000000000006,3.6243607230767565,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#1f77b4,,,1,8,0,104.47400037564738,7.6400000000000006,208.94800075129476,0.35999999999999999
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,9,0,0.5,-2.7755575615628914e-17,1,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,10,0,1.85195,0.99999999999999989,3.7039,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,11,0,75.015000000000001,2,150.03,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,12,0,0.80345,3,1.6069,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,13,0,1.7603,3.9999999999999996,3.5206,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,14,0,95.709999999999994,5,191.41999999999999,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,15,0,1.0009999999999999,6,2.0019999999999998,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,16,0,1.8091999999999999,7,3.6183999999999998,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,0,Hydrocarbon fitted parameters vs workbook/literature references,Value,,bar,,#ff7f0e,,,1,17,0,104.05500000000001,8,208.11000000000001,0.36000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,0,0,-0.0029089810766245172,-0.27500000000000002,-0.0058179621532490344,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,1,0,0.0015844379211074095,0.72499999999999998,0.003168875842214819,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,2,0,0.0012760769774894812,1.7250000000000001,0.0025521539549789624,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,3,0,0.00072884708203854124,2.7250000000000001,0.0014576941640770825,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,4,0,0.0007273243519279306,3.7250000000000001,0.0014546487038558612,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,5,0,-0.0006712586991636251,4.7249999999999996,-0.0013425173983272502,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,6,0,-0.0032236023328838428,5.7249999999999996,-0.0064472046657676856,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,7,0,0.00082366834467674358,6.7249999999999996,0.0016473366893534872,0.55000000000000004
+regression_hydrocarbon_basis_parameter_comparison.png,1,,Rel. err.,,bar,,#1f77b4,,,1,8,0,0.0020133601251615561,7.7249999999999996,0.0040267202503231122,0.55000000000000004

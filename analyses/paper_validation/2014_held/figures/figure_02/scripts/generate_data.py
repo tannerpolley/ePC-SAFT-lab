@@ -19,7 +19,7 @@ import shutil
 
 
 REFERENCE_INPUTS = (
-    ("figure_2_digitized.csv", Path("data/reference/osmotic/water/held_2014_figure_2_digitized.csv")),
+    ("figure_2_digitized.csv", Path("data/reference/osmotic/water/nacl_kcl_osmotic_coefficients.csv")),
     ("NaCl.csv", Path("data/reference/osmotic/water/NaCl.csv")),
 )
 

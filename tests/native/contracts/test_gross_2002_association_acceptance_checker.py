@@ -7,8 +7,14 @@ from scripts.validation import check_gross_2002_association_acceptance as checke
 
 
 def _artifact_set(tmp_path: Path, figure_id: str) -> dict[str, str]:
+    if figure_id == "figure_01":
+        source_csv = tmp_path / f"{figure_id}_source_csv"
+        source_csv.write_text("artifact\n", encoding="utf-8")
+        fit_statistics_csv = tmp_path / f"{figure_id}_fit_statistics_csv"
+        fit_statistics_csv.write_text("artifact\n", encoding="utf-8")
+        return {"source_csv": str(source_csv), "fit_statistics_csv": str(fit_statistics_csv)}
     files = {}
-    for suffix in ("source_csv", "model_csv", "plotted_csv", "summary_json", "png", "svg", "sidecar"):
+    for suffix in ("source_csv", "model_csv", "plotted_csv", "summary_json", "png", "svg", "pdf"):
         path = tmp_path / f"{figure_id}_{suffix}"
         path.write_text("artifact\n", encoding="utf-8")
         files[suffix] = str(path)
@@ -25,7 +31,7 @@ def test_missing_manifest_reports_campaign_blockers(tmp_path: Path) -> None:
 
     assert payload["complete"] is False
     assert "gross_2002_campaign_manifest_missing" in payload["blockers"]
-    assert "gross_2002_figure_01_pure_association_mirror_missing" in payload["blockers"]
+    assert "gross_2002_figure_01_pure_association_statistics_missing" in payload["blockers"]
     assert "gross_2002_figure_10_source_data_missing" in payload["blockers"]
     assert "gross_2002_native_freshness_receipt_missing" in payload["blockers"]
 

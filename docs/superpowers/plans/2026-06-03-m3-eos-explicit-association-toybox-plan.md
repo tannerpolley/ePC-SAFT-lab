@@ -1027,7 +1027,7 @@
   METRICS = OUTPUT / "closure_metrics.csv"
   FIGURE = OUTPUT / "closure_accuracy_summary.png"
   PLOTTED = OUTPUT / "closure_accuracy_summary_plotted_data.csv"
-  SIDECAR = OUTPUT / "closure_accuracy_summary.mpl.yaml"
+  PDF = OUTPUT / "closure_accuracy_summary.pdf"
 
 
   def _load_rows() -> list[dict[str, str]]:
@@ -1056,7 +1056,7 @@
       ax.legend()
       fig.tight_layout()
       fig.savefig(FIGURE, dpi=160)
-      SIDECAR.write_text(
+      PDF.write_text(
           "figure: closure_accuracy_summary.png\n"
           "source_data: closure_accuracy_summary_plotted_data.csv\n"
           "reference_line: 0.03\n",
@@ -1091,7 +1091,7 @@
   Test-Path analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_metrics.csv
   Test-Path analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary_plotted_data.csv
   Test-Path analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary.png
-  Test-Path analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary.mpl.yaml
+  Test-Path analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary.pdf
   ```
 
 - [ ] **Step 5: Commit**
@@ -1133,7 +1133,7 @@
   uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py
   ```
 
-  Expected: retained CSV, plotted-data CSV, PNG, and `.mpl.yaml` sidecar are present under `figures/closure_accuracy/output/`.
+  Expected: retained CSV, plotted-data CSV, PNG, and PDF artifact are present under `figures/closure_accuracy/output/`.
 
 - [ ] **Step 4: Run structure and quick validation**
 

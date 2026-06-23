@@ -936,7 +936,7 @@ Substeps:
    feed by equal-phase lever blending and expects 0.5 liquid / 0.5 vapor
    fractions.
    The Pereira source audit now lives under
-   `data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012` as
+   `data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide` as
    non-executable SAFT-VR context and records the published second-feed
    composition inconsistency. Its material-balance files separate reported
    material-balance-feasible points from inferred feed-correction candidates.

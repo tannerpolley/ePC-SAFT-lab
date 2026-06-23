@@ -13,7 +13,7 @@ Figure-owned layout is:
 `figures/{figure_id}/results/runs/`.
 
 Separate data generation from rendering. Retain exact plotted data snapshots
-beside rendered figures and `.mpl.yaml` sidecars.
+beside rendered SVG, PNG, and PDF figures.
 
 Do not place analysis scripts in root `scripts/`, package `src`, or package
 tests. Do not turn downstream metrics into package APIs.

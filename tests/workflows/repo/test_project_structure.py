@@ -92,6 +92,10 @@ PAPER_VALIDATION_DOC_ROOTS = {
     "analyses/paper_validation/2024_yu",
     "analyses/paper_validation/2026_rezaee",
 }
+PAPER_VALIDATION_INFRA_ROOTS = {
+    "analyses/paper_validation/scripts",
+    "analyses/paper_validation/tests",
+}
 PAPER_VALIDATION_DOC_SUBDIRS = {"md", "pdf"}
 PAPER_VALIDATION_ROOT_DIRS = {"docs", "figures", "parameters", "scripts", "shared", "tables"}
 PAPER_VALIDATION_FIGURE_SUBDIRS = {"source", "scripts", "results"}
@@ -227,6 +231,13 @@ SUPERPOWERS_ISSUE_FILENAME_PATTERN = re.compile(
 )
 SUPERPOWERS_PLAN_FILENAME_PATTERN = re.compile(
     r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-(?:issue-\d{4}-)?[a-z0-9-]+-plan\.md$"
+)
+DATA_REFERENCE_FORBIDDEN_PATH_PATTERN = re.compile(
+    r"(^|[/_.-])("
+    r"19\d\d|20\d\d|nist|held|gross|matsuda|pereira|hubach|khudaida|"
+    r"esteso|hernandez|susial|jced|ascani|digitized|paper_validation"
+    r")([/_.-]|$)",
+    re.IGNORECASE,
 )
 SUPERPOWERS_REGISTRY_FILES = {
     "milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md",
@@ -1541,7 +1552,7 @@ def test_paper_validation_uses_flat_paper_roots() -> None:
         for path in paper_root.iterdir()
         if path.is_dir()
     }
-    assert actual == PAPER_VALIDATION_DOC_ROOTS
+    assert actual == PAPER_VALIDATION_DOC_ROOTS | PAPER_VALIDATION_INFRA_ROOTS
     assert not (paper_root / "native").exists()
     assert not (paper_root / "application").exists()
     for old_domain in ("co2_solubility", "eos", "equilibrium", "extraction"):
@@ -1974,6 +1985,17 @@ def test_selected_figure_scripts_do_not_read_canonical_data_root_directly() -> N
             text = path.read_text(encoding="utf-8")
             for snippet in forbidden_snippets:
                 assert snippet not in text, f"{path} still references canonical data root via {snippet!r}"
+
+
+def test_reference_data_paths_use_taxonomy_not_source_names() -> None:
+    reference_root = REPO_ROOT / "data" / "reference"
+    offenders = [
+        path.relative_to(reference_root).as_posix()
+        for path in sorted(reference_root.rglob("*"))
+        if DATA_REFERENCE_FORBIDDEN_PATH_PATTERN.search(path.relative_to(reference_root).as_posix())
+    ]
+
+    assert offenders == []
 
 
 def test_analysis_template_uses_figure_owned_outputs() -> None:

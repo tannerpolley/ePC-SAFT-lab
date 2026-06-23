@@ -19,15 +19,13 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     GREEN,
     ORANGE,
     apply_plot_style,
-    save_png_svg,
-    write_sidecar,
+    save_plot_artifacts,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "pure_saturation_validation" / "output"
 SOURCE = OUTPUT / "pure_saturation_validation.csv"
 PLOTTED = OUTPUT / "pure_saturation_validation_plotted_data.csv"
 FIGURE = OUTPUT / "pure_saturation_validation.png"
-SIDECAR = OUTPUT / "pure_saturation_validation.mpl.yaml"
 MODEL_DOTTED = (0, (1.2, 1.8))
 MODEL_COLORS = {
     "Exact implicit": BLUE,
@@ -84,21 +82,6 @@ def main() -> None:
     plotted = build_plotted_rows(rows)
     _write_plotted_data(plotted)
     _render(plotted)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_pure_saturation_validation",
-        title="Pure-component saturation validation",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="10^3/T / K^-1 and rho_l / mol cm^-3",
-        y_label="log10 pressure / kPa and temperature / K",
-        y_scale="linear transformed pressure",
-        command=(
-            "uv run python "
-            "analyses/package_validation/explicit_association_toybox/figures/"
-            "pure_saturation_validation/scripts/render_figure.py"
-        ),
-    )
     print(FIGURE)
 
 
@@ -191,7 +174,7 @@ def _render(rows: list[dict[str, object]]) -> None:
         _style_chapman_axis(pressure_axis)
         _style_chapman_axis(density_axis)
     axes[0, 0].legend(frameon=False, loc="best", fontsize=8)
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
 
 

@@ -26,7 +26,7 @@ if str(ANALYSIS_SCRIPTS) not in sys.path:
 import _common as common
 
 OUTPUT = Path(__file__).with_name("figure_7.png")
-DATA_PATH = common.analysis_data_path(__file__, "hernandez_2007_table6.csv", kind="source")
+DATA_PATH = common.analysis_data_path(__file__, "nacl_gamma_pm_by_solvent_mass_fraction.csv", kind="source")
 DIELC_PATH = common.analysis_data_path(__file__, "water-methanol-ethanol.csv", kind="source")
 SERIES = [
     {

@@ -49,48 +49,20 @@ def _ternary_xy(row: dict[str, str]) -> tuple[float, float]:
     return x, y
 
 
-def _write_sidecar(path: Path, *, plot_id: str, title: str, png_name: str, svg_name: str, csv_files: list[str]) -> None:
-    csv_block = "\n".join(f"    - {name}" for name in csv_files)
-    path.write_text(
-        f"""kind: matplotlib-figure
-version: 1
-plot_id: {plot_id}
-title: {title}
-files:
-  figures:
-    - {png_name}
-    - {svg_name}
-  data:
-{csv_block}
-matplotlib:
-  title: {title}
-  style: scientific-validation
-""",
-        encoding="utf-8",
-    )
-
-
 def _strip_trailing_whitespace(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     path.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
 
 
-def _save(fig: plt.Figure, output_dir: Path, stem: str, *, plot_id: str, title: str, csv_files: list[str]) -> None:
+def _save(fig: plt.Figure, output_dir: Path, stem: str) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    png_name = f"{stem}.png"
-    svg_name = f"{stem}.svg"
-    fig.savefig(output_dir / png_name, dpi=180, bbox_inches="tight")
-    svg_path = output_dir / svg_name
+    png_path = output_dir / f"{stem}.png"
+    svg_path = output_dir / f"{stem}.svg"
+    pdf_path = output_dir / f"{stem}.pdf"
+    fig.savefig(png_path, dpi=180, bbox_inches="tight")
     fig.savefig(svg_path, bbox_inches="tight", metadata={"Date": None})
+    fig.savefig(pdf_path, bbox_inches="tight")
     _strip_trailing_whitespace(svg_path)
-    _write_sidecar(
-        output_dir / f"{stem}.mpl.yaml",
-        plot_id=plot_id,
-        title=title,
-        png_name=png_name,
-        svg_name=svg_name,
-        csv_files=csv_files,
-    )
     plt.close(fig)
 
 
@@ -164,9 +136,6 @@ def render_tieline() -> None:
         fig,
         FIGURES_ROOT / "neutral_tp_flash_vle_tieline" / "results",
         "neutral_tp_flash_vle_tieline",
-        plot_id="issue_0188_neutral_tp_flash_vle_tieline",
-        title="Issue 188 neutral TP-flash VLE tie-line",
-        csv_files=["../../../shared/results/neutral_tp_flash_phase_points.csv"],
     )
 
 
@@ -199,12 +168,6 @@ def render_tolerance_margins() -> None:
         fig,
         FIGURES_ROOT / "neutral_tp_flash_tolerance_margins" / "results",
         "neutral_tp_flash_tolerance_margins",
-        plot_id="issue_0188_neutral_tp_flash_tolerance_margins",
-        title="Issue 188 neutral TP-flash tolerance margins",
-        csv_files=[
-            "../../../shared/results/neutral_tp_flash_tolerance_summary.csv",
-            "../../../shared/results/neutral_tp_flash_component_errors.csv",
-        ],
     )
 
 
@@ -242,9 +205,6 @@ def render_held_gate_status() -> None:
         fig,
         FIGURES_ROOT / "held_1_0_gate_status" / "results",
         "held_1_0_gate_status",
-        plot_id="issue_0188_held_1_0_gate_status",
-        title="Issue 188 HELD 1.0 gate status",
-        csv_files=["../../../shared/results/held_1_0_gate_status.csv"],
     )
 
 

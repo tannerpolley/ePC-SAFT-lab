@@ -4,7 +4,7 @@
 
 **Goal:** Extend the explicit association toybox with topology-resolved, real-system, derivative-smoothness, property-residual, timing, water-parameter, and total-`ares` evidence lanes before any production EOS closure decision.
 
-**Architecture:** Keep the work inside `analyses/package_validation/explicit_association_toybox` and add focused figure-owned workflows with analysis-local tests. Reuse the existing exact mass-action baseline, Huang/Radosz topology matrix, public source loader, and fixed-state provider residual path; issue #216 remains the source for hard-chain and dispersion scalar context. Each lane writes retained CSVs, plotted data, PNGs, and `.mpl.yaml` sidecars under figure-owned `output` folders.
+**Architecture:** Keep the work inside `analyses/package_validation/explicit_association_toybox` and add focused figure-owned workflows with analysis-local tests. Reuse the existing exact mass-action baseline, Huang/Radosz topology matrix, public source loader, and fixed-state provider residual path; issue #216 remains the source for hard-chain and dispersion scalar context. Each lane writes retained CSVs, plotted data, PNGs, and PDF artifacts under figure-owned `output` folders.
 
 **Tech Stack:** Python stdlib, NumPy, PyYAML, Matplotlib, pytest, existing toybox modules, optional provider API calls already used by the property residual lane; no SciPy dependency, provider C++, equilibrium package, regression package, or public API changes.
 
@@ -36,7 +36,7 @@
 - [ ] Water-specific rows record the parameter source and diameter handling used by the analysis.
 - [ ] Repeated timing summaries report median, interquartile range, minimum, and maximum for exact and closure evaluations.
 - [ ] Total neutral `ares` context is included only through the issue #216 HC/dispersion lane or equivalent already-merged files.
-- [ ] All new or updated figure workflows write retained CSV, plotted-data CSV, PNG, and `.mpl.yaml` sidecar files.
+- [ ] All new or updated figure workflows write retained CSV, plotted-data CSV, PNG, and PDF files.
 - [ ] Final implementation reporting renders every new or updated plot inline in chat and includes compact Markdown tables from retained data.
 - [ ] No `packages/epcsaft/**`, `packages/epcsaft-equilibrium/**`, `packages/epcsaft-regression/**`, public API, dependency, or production EOS behavior changes are introduced.
 
@@ -141,7 +141,7 @@ Create `figures/topology_error_heatmaps/scripts/render_figure.py`. It should rea
 ```text
 topology_error_heatmap_plotted_data.csv
 topology_error_heatmap.png
-topology_error_heatmap.mpl.yaml
+topology_error_heatmap.pdf
 ```
 
 Use log-scaled color for `ares_assoc_rel_error` and separate panels or grouped axes by closure family.
@@ -267,7 +267,7 @@ Render error versus elapsed time with closure labels. Retain:
 ```text
 closure_sensitivity_plotted_data.csv
 closure_sensitivity.png
-closure_sensitivity.mpl.yaml
+closure_sensitivity.pdf
 ```
 
 - [ ] **Step 5: Verify and commit**
@@ -334,7 +334,7 @@ Write:
 figures/derivative_smoothness/output/derivative_smoothness.csv
 figures/derivative_smoothness/output/derivative_smoothness_plotted_data.csv
 figures/derivative_smoothness/output/derivative_smoothness.png
-figures/derivative_smoothness/output/derivative_smoothness.mpl.yaml
+figures/derivative_smoothness/output/derivative_smoothness.pdf
 ```
 
 Use grouped bars or points by closure and perturbation axis.
@@ -517,7 +517,7 @@ Write:
 figures/timing_repeatability/output/timing_repeatability.csv
 figures/timing_repeatability/output/timing_repeatability_plotted_data.csv
 figures/timing_repeatability/output/timing_repeatability.png
-figures/timing_repeatability/output/timing_repeatability.mpl.yaml
+figures/timing_repeatability/output/timing_repeatability.pdf
 ```
 
 - [ ] **Step 4: Verify and commit**

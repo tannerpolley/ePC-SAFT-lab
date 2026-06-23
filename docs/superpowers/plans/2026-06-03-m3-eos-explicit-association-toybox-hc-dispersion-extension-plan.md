@@ -130,7 +130,7 @@ speedup_ratio
 - HC and dispersion scalar helpers are source-backed by local equation IDs and return finite scalar values for the configured fixed states.
 - Hard-chain and dispersion terms are identical for exact and explicit association rows at the same state and do not depend on the closure name.
 - The toybox reports total neutral `ares` exact/closure values, absolute and relative total `ares` error, exact solve time, closure time, and speedup ratio.
-- The residual `ares` figure command writes retained plotted data, a PNG, and an `.mpl.yaml` sidecar under `figures/residual_ares_error/output`.
+- The residual `ares` figure command writes retained plotted data, a PNG, and an PDF artifact under `figures/residual_ares_error/output`.
 - The toybox contains no SciPy imports and no dependency change.
 - No `packages/epcsaft`, `packages/epcsaft-equilibrium`, or `packages/epcsaft-regression` files change.
 
@@ -1014,7 +1014,7 @@ OUTPUT = ANALYSIS_ROOT / "figures" / "residual_ares_error" / "output"
 METRICS = OUTPUT / "residual_ares_metrics.csv"
 FIGURE = OUTPUT / "residual_ares_error_summary.png"
 PLOTTED = OUTPUT / "residual_ares_error_summary_plotted_data.csv"
-SIDECAR = OUTPUT / "residual_ares_error_summary.mpl.yaml"
+PDF = OUTPUT / "residual_ares_error_summary.pdf"
 
 
 def _load_rows() -> list[dict[str, str]]:
@@ -1050,7 +1050,7 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(FIGURE, dpi=160)
     plt.close(fig)
-    SIDECAR.write_text(
+    PDF.write_text(
         "\n".join(
             (
                 "kind: matplotlib-figure",
@@ -1116,7 +1116,7 @@ Expected:
 - `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_metrics.csv`
 - `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary_plotted_data.csv`
 - `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary.png`
-- `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary.mpl.yaml`
+- `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary.pdf`
 
 Commit:
 
@@ -1155,7 +1155,7 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/re
 uv run python analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/scripts/render_figure.py
 ```
 
-Expected: both figure output folders contain CSV data, plotted data snapshots, PNGs, and `.mpl.yaml` sidecars.
+Expected: both figure output folders contain CSV data, plotted data snapshots, PNGs, and PDF artifacts.
 
 - [ ] **Step 3: Prove SciPy and package boundaries**
 
@@ -1214,11 +1214,11 @@ Generated artifacts to verify:
 - `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_metrics.csv`
 - `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary_plotted_data.csv`
 - `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary.png`
-- `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary.mpl.yaml`
+- `analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/output/closure_accuracy_summary.pdf`
 - `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_metrics.csv`
 - `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary_plotted_data.csv`
 - `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary.png`
-- `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary.mpl.yaml`
+- `analyses/package_validation/explicit_association_toybox/figures/residual_ares_error/output/residual_ares_error_summary.pdf`
 
 ## Risks And Sequencing Notes
 

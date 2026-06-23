@@ -1,2 +1,3 @@
+*.pdf binary
 docs/latex/*.pdf binary
 docs/latex/out/** -whitespace

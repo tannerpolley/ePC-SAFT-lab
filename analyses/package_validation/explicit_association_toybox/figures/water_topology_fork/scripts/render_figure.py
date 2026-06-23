@@ -15,16 +15,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     BLUE,
     ORANGE,
     apply_plot_style,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "water_topology_fork" / "output"
 SOURCE = OUTPUT / "water_topology_fork.csv"
 PLOTTED = OUTPUT / "water_topology_fork_plotted_data.csv"
 FIGURE = OUTPUT / "water_topology_fork.png"
-SIDECAR = OUTPUT / "water_topology_fork.mpl.yaml"
 
 
 def main() -> None:
@@ -71,19 +69,8 @@ def main() -> None:
     axes[1].set_ylabel(r"$|Z_{\mathrm{provider}}-Z_{\mathrm{exp}}|$")
     axes[1].legend()
     style_axis(axes[1], minor=True)
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="water_topology_fork",
-        title="Water fixed-state topology diagnostic",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="T / K",
-        y_label="absolute pressure and Z residuals",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/water_topology_fork/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

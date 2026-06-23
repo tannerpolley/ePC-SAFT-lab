@@ -79,7 +79,7 @@ def main() -> None:
     ax.set_title("Ascani 2022 Table 5 fugacity comparison", fontsize=13)
     ax.legend(loc="lower right", fontsize=8)
     output = table_results_path("table_5_fugacity.png")
-    save_plot_figure(fig, output, dpi=300, svg_companion=True)
+    save_plot_figure(fig, output, dpi=300)
     plt.close(fig)
     print(f"[write] {output}")
 

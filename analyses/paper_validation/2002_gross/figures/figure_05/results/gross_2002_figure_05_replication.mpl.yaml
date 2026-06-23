@@ -1,7 +1,0 @@
-figure_id: figure_05
-png: analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.png
-svg: analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.svg
-x_axis: composition_component_1
-y_axis: pressure_bar
-matplotlib_backend: Agg
-style: paper-scale P-x/y overlay for both propanol isomers with retained source traces and public-route PC-SAFT curves

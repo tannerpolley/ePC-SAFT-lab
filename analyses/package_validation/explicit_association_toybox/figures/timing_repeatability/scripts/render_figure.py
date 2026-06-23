@@ -16,16 +16,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "timing_repeatability" / "output"
 TIMING = OUTPUT / "timing_repeatability.csv"
 FIGURE = OUTPUT / "timing_repeatability.png"
 PLOTTED = OUTPUT / "timing_repeatability_plotted_data.csv"
-SIDECAR = OUTPUT / "timing_repeatability.mpl.yaml"
 
 
 def main() -> None:
@@ -82,19 +80,8 @@ def main() -> None:
         if speed > 1.0:
             ax.annotate(f"{speed:.1f}x", (xi, medians[xi]), textcoords="offset points", xytext=(0, 6), ha="center")
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_timing_repeatability",
-        title="Repeated association solve timing range",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="method",
-        y_label="elapsed time / s",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/timing_repeatability/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

@@ -17,16 +17,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "equilibrium_style_objective_sensitivity" / "output"
 SOURCE = OUTPUT / "equilibrium_style_objective_sensitivity.csv"
 PLOTTED = OUTPUT / "equilibrium_style_objective_sensitivity_plotted_data.csv"
 FIGURE = OUTPUT / "equilibrium_style_objective_sensitivity.png"
-SIDECAR = OUTPUT / "equilibrium_style_objective_sensitivity.mpl.yaml"
 
 
 def main() -> None:
@@ -76,19 +74,8 @@ def main() -> None:
         fontsize=9,
     )
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="equilibrium_style_objective_sensitivity",
-        title="Local objective derivative sensitivity",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="objective derivative order",
-        y_label="absolute error vs exact implicit",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

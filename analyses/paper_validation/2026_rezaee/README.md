@@ -37,17 +37,17 @@ The strict pre-surrogate evidence bundle is:
 - `shared/results/processed/rezaee_2025_extraction_equilibrium_summary.csv`
 - `results/targets/rezaee_2025_extraction_target_summary.md`
 - `shared/results/processed/rezaee_2026_section32_basis_inference_rows.csv`
-- `results/reaction_equilibrium/rezaee_2026_section32_basis_inference_summary.json`
-- `results/reaction_equilibrium/rezaee_2026_section32_basis_inference.md`
+- `shared/results/reaction_equilibrium/rezaee_2026_section32_basis_inference_summary.json`
+- `shared/results/reaction_equilibrium/rezaee_2026_section32_basis_inference.md`
 - `shared/results/processed/rezaee_2026_section32_equilibrium_replication_rows.csv`
-- `results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication_summary.json`
-- `results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication.md`
+- `shared/results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication_summary.json`
+- `shared/results/reaction_equilibrium/rezaee_2026_section32_equilibrium_replication.md`
 - `shared/results/processed/rezaee_2026_calibrated_native_ipopt_attempt_rows.csv`
 - `shared/results/processed/rezaee_2026_calibrated_separate_phase_residual_rows.csv`
-- `results/reaction_equilibrium/rezaee_2026_calibrated_native_ipopt_attempt_summary.json`
+- `shared/results/reaction_equilibrium/rezaee_2026_calibrated_native_ipopt_attempt_summary.json`
 
-Additional guardrail outputs in `results/reaction_equilibrium/` record replay, convention-scan, ePC-SAFT option-scan, calibrated public native Ipopt route attempts, and paper-basis reaction-coordinate diagnostics.
-The lane-level gate summary is `results/reaction_equilibrium/summary.json`.
+Additional guardrail outputs in `shared/results/reaction_equilibrium/` record replay, convention-scan, ePC-SAFT option-scan, calibrated public native Ipopt route attempts, and paper-basis reaction-coordinate diagnostics.
+The lane-level gate summary is `shared/results/reaction_equilibrium/summary.json`.
 
 The figure comparison outputs are package-owned overlays, not downstream screenshots:
 

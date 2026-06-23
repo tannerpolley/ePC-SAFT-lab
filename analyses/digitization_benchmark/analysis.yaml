@@ -1,0 +1,16 @@
+analysis_id: digitization_benchmark
+title: Digitization benchmark for plot and data extraction tools
+owner: ePC-SAFT validation
+status: active
+purpose: >
+  Store generated receipts from the consensus figure digitizer skill. The skill
+  generates known synthetic data, renders plots, runs available digitization
+  tools, scores extracted data against source oracles, and audits Gross 2002
+  seed-refinement behavior.
+outputs:
+  summary_csv: results/digitization_toolchain_summary.csv
+  summary_json: results/digitization_toolchain_summary.json
+  scoreboard_png: results/digitization_toolchain_scoreboard.png
+  receipt_json: results/digitization_toolchain_receipt.json
+regeneration:
+  command: .\.venv\Scripts\python.exe C:\Users\Tanner\.agents\skills\consensus-figure-digitizer\scripts\benchmark_digitizer_toolchain.py --repo-root .

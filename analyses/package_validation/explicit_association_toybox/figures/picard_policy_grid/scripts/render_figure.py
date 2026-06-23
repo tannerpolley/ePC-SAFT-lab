@@ -19,16 +19,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     RED,
     apply_plot_style,
     case_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "picard_policy_grid" / "output"
 SOURCE = OUTPUT / "picard_policy_grid.csv"
 PLOTTED = OUTPUT / "picard_policy_grid_plotted_data.csv"
 FIGURE = OUTPUT / "picard_policy_grid.png"
-SIDECAR = OUTPUT / "picard_policy_grid.mpl.yaml"
 SELECTED_CASES = (
     "pure_2b_self",
     "water_like_3b_topology",
@@ -59,21 +57,6 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(plotted)
     _render(plotted)
-    write_sidecar(
-        SIDECAR,
-        plot_id="picard_policy_grid",
-        title="Picard policy grid evidence",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="fixed Picard step count",
-        y_label="relative error",
-        y_scale="log",
-        extra_files={"handoff": OUTPUT / "picard_policy_cppad_handoff_matrix.csv"},
-        command=(
-            "uv run python analyses/package_validation/explicit_association_toybox/figures/"
-            "picard_policy_grid/scripts/render_figure.py"
-        ),
-    )
     print(FIGURE)
 
 
@@ -141,7 +124,7 @@ def _render(rows: list[dict[str, object]]) -> None:
         axis.set_xlabel("Picard steps")
     axes[0, 0].legend(frameon=False, loc="best", ncol=2)
     fig.suptitle("Fixed-depth Picard policy grid against exact implicit association")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
 
 

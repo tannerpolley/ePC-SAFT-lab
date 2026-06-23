@@ -189,7 +189,7 @@ enough.
 - Create: `analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence_plotted_data.csv`
 - Create: `analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.png`
 - Create: `analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.svg`
-- Create: `analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.mpl.yaml`
+- Create: `analyses/package_validation/explicit_association_toybox/figures/picard_stress_evidence/output/picard_stress_evidence.pdf`
 - Create: `analyses/package_validation/explicit_association_toybox/docs/picard_stress_rescue_or_retire_decision.md`
 - Test: `analyses/package_validation/explicit_association_toybox/tests/test_picard_stress_report.py`
 

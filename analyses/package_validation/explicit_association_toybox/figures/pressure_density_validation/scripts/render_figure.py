@@ -16,15 +16,13 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     BLUE,
     ORANGE,
     apply_plot_style,
-    save_png_svg,
-    write_sidecar,
+    save_plot_artifacts,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "pressure_density_validation" / "output"
 SOURCE = OUTPUT / "pressure_density_validation.csv"
 PLOTTED = OUTPUT / "pressure_density_validation_plotted_data.csv"
 FIGURE = OUTPUT / "pressure_density_validation.png"
-SIDECAR = OUTPUT / "pressure_density_validation.mpl.yaml"
 MODEL_DOTTED = (0, (1.2, 1.8))
 MODEL_COLORS = {
     "exact_implicit": BLUE,
@@ -47,21 +45,6 @@ def main() -> None:
     plotted = [_plotted_row(row) for row in rows]
     _write_plotted_data(plotted)
     _render(plotted)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_pressure_density_validation",
-        title="Associating-compound pressure-density validation",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="10^3/T / K^-1 and rho_l / mol cm^-3",
-        y_label="log10 pressure / kPa and temperature / K",
-        y_scale="linear transformed pressure",
-        command=(
-            "uv run python "
-            "analyses/package_validation/explicit_association_toybox/figures/"
-            "pressure_density_validation/scripts/render_figure.py"
-        ),
-    )
     print(FIGURE)
 
 
@@ -175,7 +158,7 @@ def _render(rows: list[dict[str, object]]) -> None:
         _style_chapman_axis(density_axis)
 
     axes[0, 0].legend(frameon=False, loc="best", fontsize=8)
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
 
 

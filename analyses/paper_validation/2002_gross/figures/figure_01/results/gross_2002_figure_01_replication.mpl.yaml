@@ -1,7 +1,0 @@
-figure_id: figure_01
-png: analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png
-svg: analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg
-x_axis: density_kg_m3
-y_axis: temperature_K
-matplotlib_backend: Agg
-style: paper-scale T-rho overlay with digitized PC-SAFT curve points and experimental markers

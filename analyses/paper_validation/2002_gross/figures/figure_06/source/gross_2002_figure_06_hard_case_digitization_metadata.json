@@ -1,0 +1,36 @@
+{
+  "dark_threshold": 150,
+  "figure_id": "figure_06",
+  "limitations": [
+    "This utility verifies calibrated source points against visible paper ink.",
+    "It does not infer unlabeled series identity without external calibration and seed metadata.",
+    "Dense text, axes, markers, and nearby curves can share the same local ink neighborhood."
+  ],
+  "method": "local_dark_ink_seed_refinement",
+  "minimum_dark_support_pixels": 4,
+  "output_csv": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\gross_2002_figure_06_hard_case_digitization_source_points.csv",
+  "qa_overlay": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\gross_2002_figure_06_hard_case_digitization_qa_overlay.png",
+  "quality_thresholds": {
+    "pass_shift_px": 9.0,
+    "review_shift_px": 16.0
+  },
+  "refine_radius_px": 12,
+  "seed_metadata": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\gross_2002_figure_06_replication_digitization_metadata.json",
+  "seed_source_csv": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\gross_2002_figure_06_replication_source_points.csv",
+  "source_image": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\paper_source_01_gross_2002_figure_006.png",
+  "summary": {
+    "fail_count": 0,
+    "figure_id": "figure_06",
+    "max_shift_px": 7.693876639037533,
+    "median_shift_px": 1.682324212502841,
+    "metadata": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\gross_2002_figure_06_hard_case_digitization_metadata.json",
+    "missing_local_ink_count": 0,
+    "output_csv": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\gross_2002_figure_06_hard_case_digitization_source_points.csv",
+    "pass_count": 31,
+    "pass_fraction": 1.0,
+    "point_count": 31,
+    "qa_overlay": "analyses\\paper_validation\\2002_gross\\figures\\figure_06\\source\\gross_2002_figure_06_hard_case_digitization_qa_overlay.png",
+    "review_count": 0,
+    "status": "pass"
+  }
+}
