@@ -18,16 +18,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     case_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "cppad_shaped_picard_derivative_evidence" / "output"
 SOURCE = OUTPUT / "cppad_shaped_picard_derivative_evidence.csv"
 PLOTTED = OUTPUT / "cppad_shaped_picard_derivative_evidence_plotted_data.csv"
 FIGURE = OUTPUT / "cppad_shaped_picard_derivative_evidence.png"
-SIDECAR = OUTPUT / "cppad_shaped_picard_derivative_evidence.mpl.yaml"
 SELECTED_CASES = (
     "pure_2b_self",
     "cross_associating_binary",
@@ -49,20 +47,6 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(plotted)
     _render(plotted)
-    write_sidecar(
-        SIDECAR,
-        plot_id="cppad_shaped_picard_derivative_evidence",
-        title="CppAD-shaped Picard derivative evidence",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="derivative target and local quadratic target",
-        y_label="relative error",
-        y_scale="log",
-        command=(
-            "uv run python analyses/package_validation/explicit_association_toybox/figures/"
-            "cppad_shaped_picard_derivative_evidence/scripts/render_figure.py"
-        ),
-    )
     print(FIGURE)
 
 
@@ -117,7 +101,7 @@ def _render(rows: list[dict[str, object]]) -> None:
     )
     axes[-1].set_xlabel("Derivative target")
     fig.suptitle("JAX Picard derivatives against exact implicit baselines")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
 
 

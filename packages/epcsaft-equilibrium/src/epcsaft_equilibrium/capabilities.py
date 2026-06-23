@@ -72,7 +72,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "phase_count": 2,
         "source_fixture": (
             "data/reference/equilibrium_benchmarks/associating_lle/"
-            "gross_2002_methanol_cyclohexane"
+            "methanol_cyclohexane"
         ),
         "reason": "issue #190 admits only the source-backed Gross/Sadowski 2002 methanol/cyclohexane neutral two-phase LLE proof from #145 through exact implicit-association Hessian evidence",
         "tests": (

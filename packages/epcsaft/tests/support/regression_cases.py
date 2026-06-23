@@ -3,8 +3,9 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parents[4] / "data" / "reference" / "pure_component"
-REFERENCE_CSV = DATA_DIR / "hydrocarbon_basis_workbook_reference.csv"
+PURE_COMPONENT_REFERENCE_DIR = Path(__file__).resolve().parents[4] / "data" / "reference" / "pure_component"
+SATURATION_PROPERTIES_DIR = PURE_COMPONENT_REFERENCE_DIR / "saturation_properties"
+REFERENCE_CSV = PURE_COMPONENT_REFERENCE_DIR / "hydrocarbon_basis_workbook_reference.csv"
 
 HYDROCARBON_REFERENCE = {
     "Methane": {"m": 1.0, "s": 3.7039, "e": 150.03},
@@ -69,7 +70,7 @@ def _load_workbook_reference_rows() -> dict[str, dict[str, float]]:
 
 
 def _nist_rows_by_temperature(component: str) -> dict[float, dict[str, float]]:
-    path = DATA_DIR / f"{component.lower()}_nist_saturation.csv"
+    path = SATURATION_PROPERTIES_DIR / component.lower() / "saturation_properties.csv"
     values: dict[float, dict[str, float]] = {}
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         for row in csv.DictReader(handle):

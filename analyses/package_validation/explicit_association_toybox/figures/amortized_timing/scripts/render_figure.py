@@ -16,16 +16,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "amortized_timing" / "output"
 SOURCE = OUTPUT / "amortized_timing.csv"
 PLOTTED = OUTPUT / "amortized_timing_plotted_data.csv"
 FIGURE = OUTPUT / "amortized_timing.png"
-SIDECAR = OUTPUT / "amortized_timing.mpl.yaml"
 
 
 def main() -> None:
@@ -76,19 +74,8 @@ def main() -> None:
     style_axis(ax, minor=True)
     ax.legend()
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="amortized_timing",
-        title="Exact implicit vs Picard timing by topology",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="topology",
-        y_label="median elapsed time / s",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/amortized_timing/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

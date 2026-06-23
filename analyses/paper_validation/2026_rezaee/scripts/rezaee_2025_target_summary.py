@@ -7,7 +7,7 @@ from typing import Any
 ANALYSIS_DIR = Path(__file__).resolve().parents[1]
 INPUT_DIR = ANALYSIS_DIR / "shared" / "source"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results" / "targets"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "targets"
 
 DOE_CSV = INPUT_DIR / "rezaee_2025_doe_extraction_responses.csv"
 OPTIMUM_CSV = INPUT_DIR / "rezaee_2025_optimum_neighborhood.csv"

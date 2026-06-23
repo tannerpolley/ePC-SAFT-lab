@@ -17,7 +17,7 @@ from scripts.dev.native_runtime_env import apply_to_current_process
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 ANALYSIS_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2022_ascani"
-SOURCE_CSV = REPO_ROOT / "data" / "reference" / "multiphase" / "ascani_case2_model_comparison.csv"
+SOURCE_CSV = REPO_ROOT / "data" / "reference" / "multiphase" / "case2_model_comparison.csv"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
 RESULTS_DIR = ANALYSIS_DIR / "results" / "electrolyte_lle"
 NORMALIZED_SOURCE_CSV = PROCESSED_DIR / "source_expected_phase_compositions.csv"

@@ -5,7 +5,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import yaml
 
 
 def _repo_root() -> Path:
@@ -21,9 +20,17 @@ RESULTS_DIR = FIGURE_ROOT / "results"
 PLOT_ID = "hydrocarbon_saturation_pressure"
 SOURCE_CSV = RESULTS_DIR / f"{PLOT_ID}.csv"
 PLOTTED_CSV = RESULTS_DIR / f"{PLOT_ID}_plotted_data.csv"
-SIDECAR = RESULTS_DIR / f"{PLOT_ID}.mpl.yaml"
 PNG = RESULTS_DIR / f"{PLOT_ID}.png"
 SVG = RESULTS_DIR / f"{PLOT_ID}.svg"
+PDF = RESULTS_DIR / f"{PLOT_ID}.pdf"
+PLOT_METADATA = {
+    "title": "Single-component VLE route vs NIST saturation pressure",
+    "xlabel": "temperature, $T$ / K",
+    "ylabel": "saturation pressure, $p_{sat}$ / kPa",
+    "error_ylabel": "relative error / %",
+    "density_error_ylabel": "liquid-density error / %",
+    "figsize": (11.0, 7.8),
+}
 
 
 def _strip_svg_trailing_whitespace(path: Path) -> None:
@@ -93,7 +100,6 @@ def _plot_rows(frame: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> int:
     frame = pd.read_csv(SOURCE_CSV)
-    metadata = yaml.safe_load(SIDECAR.read_text(encoding="utf-8"))
     plotted = _plot_rows(frame)
     plotted.to_csv(PLOTTED_CSV, index=False)
     plt.rcParams["svg.hashsalt"] = PLOT_ID
@@ -112,7 +118,7 @@ def main() -> int:
     fig, axes = plt.subplots(
         3,
         3,
-        figsize=tuple(metadata["matplotlib"]["figsize"]),
+        figsize=PLOT_METADATA["figsize"],
         sharex="col",
         constrained_layout=True,
         gridspec_kw={"height_ratios": [2.2, 1.0, 1.0]},
@@ -164,20 +170,22 @@ def main() -> int:
             linewidth=1.25,
         )
         density_ax.grid(True, which="major", color="#d7dce2", linewidth=0.7, alpha=0.85)
-        density_ax.set_xlabel(metadata["matplotlib"]["xlabel"])
+        density_ax.set_xlabel(PLOT_METADATA["xlabel"])
         if col == 0:
-            pressure_ax.set_ylabel(metadata["matplotlib"]["ylabel"])
-            error_ax.set_ylabel(metadata["matplotlib"]["error_ylabel"])
-            density_ax.set_ylabel(metadata["matplotlib"]["density_error_ylabel"])
+            pressure_ax.set_ylabel(PLOT_METADATA["ylabel"])
+            error_ax.set_ylabel(PLOT_METADATA["error_ylabel"])
+            density_ax.set_ylabel(PLOT_METADATA["density_error_ylabel"])
         if col == 2:
             pressure_ax.legend(frameon=False, loc="best")
 
-    fig.suptitle(metadata["matplotlib"]["title"], fontsize=13)
+    fig.suptitle(PLOT_METADATA["title"], fontsize=13)
     fig.savefig(PNG, bbox_inches="tight")
     fig.savefig(SVG, bbox_inches="tight", metadata={"Date": None})
+    fig.savefig(PDF, bbox_inches="tight")
     _strip_svg_trailing_whitespace(SVG)
     print(f"wrote {PNG}")
     print(f"wrote {SVG}")
+    print(f"wrote {PDF}")
     return 0
 
 

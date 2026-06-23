@@ -17,16 +17,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     apply_plot_style,
     case_label,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "total_eos_impact" / "output"
 SOURCE = OUTPUT / "total_eos_impact.csv"
 PLOTTED = OUTPUT / "total_eos_impact_plotted_data.csv"
 FIGURE = OUTPUT / "total_eos_impact.png"
-SIDECAR = OUTPUT / "total_eos_impact.mpl.yaml"
 
 
 def main() -> None:
@@ -67,19 +65,8 @@ def main() -> None:
     ax.set_title(f"Total EOS propagation: {closure_label(plotted[0]['closure_name'])}")
     style_axis(ax, minor=True)
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="total_eos_impact",
-        title="Total EOS propagation for Picard closure",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="speedup vs exact implicit",
-        y_label="relative error in P_proxy",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/total_eos_impact/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

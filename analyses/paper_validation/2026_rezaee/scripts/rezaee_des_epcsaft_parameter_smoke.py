@@ -25,7 +25,7 @@ from epcsaft import (
 
 INPUT_DIR = ANALYSIS_DIR / "shared" / "source"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results" / "smoke"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "smoke"
 
 DENSITY_RECORDS_CSV = PROCESSED_DIR / "rezaee_2026_des_density_fit_records.csv"
 FIT_SUMMARY_CSV = PROCESSED_DIR / "rezaee_2026_des_parameter_fit_summary.csv"

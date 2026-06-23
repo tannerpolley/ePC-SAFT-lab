@@ -144,7 +144,7 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/cp
 uv run python analyses/package_validation/explicit_association_toybox/figures/cppad_shaped_picard_property_evidence/scripts/render_figure.py
 ```
 
-Expected: retained CSV, plotted-data CSV, PNG, SVG, and MPL sidecar under
+Expected: retained CSV, plotted-data CSV, PNG, SVG, and PDF LaTeX artifact under
 `figures/cppad_shaped_picard_property_evidence/output`. Figures use point data
 and dotted model curves; no bar plots.
 
@@ -211,7 +211,7 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/cp
 uv run python analyses/package_validation/explicit_association_toybox/figures/cppad_shaped_picard_derivative_evidence/scripts/render_figure.py
 ```
 
-Expected: retained CSV, plotted-data CSV, PNG, SVG, and MPL sidecar under
+Expected: retained CSV, plotted-data CSV, PNG, SVG, and PDF LaTeX artifact under
 `figures/cppad_shaped_picard_derivative_evidence/output`. Figures separate
 value, first-derivative, and Hessian evidence instead of hiding everything in
 one aggregate score. The Hessian panel should include local quadratic model

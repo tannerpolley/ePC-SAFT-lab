@@ -18,16 +18,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     apply_plot_style,
     closure_label,
     role_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "timing_pareto" / "output"
 PARETO = OUTPUT / "timing_pareto.csv"
 FIGURE = OUTPUT / "timing_pareto.png"
 PLOTTED = OUTPUT / "timing_pareto_plotted_data.csv"
-SIDECAR = OUTPUT / "timing_pareto.mpl.yaml"
 
 
 def main() -> None:
@@ -68,19 +66,8 @@ def main() -> None:
     style_axis(ax, grid_axis="both", minor=True)
     ax.legend()
     fig.tight_layout()
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_timing_pareto",
-        title="Association solve timing and error",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="median elapsed time / s",
-        y_label="max relative error in a_assoc",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/timing_pareto/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

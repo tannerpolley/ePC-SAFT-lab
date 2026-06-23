@@ -7,7 +7,7 @@ source_assets:
     kind: paper_markdown
   - path: docs/papers/md/Ascani, Sadowski, Held - 2022 - Supporting Information for Calculation of multiphase equilibria containing mixed solvents and mixed..md
     kind: supporting_information_markdown
-  - path: data/reference/multiphase/ascani_case2_model_comparison.csv
+  - path: data/reference/multiphase/case2_model_comparison.csv
     kind: source_backed_case2_comparison
 commands:
   ipopt_setup:

@@ -67,7 +67,7 @@ def main() -> None:
     fig.suptitle("Ascani 2022 Gibbs comparison", fontsize=13)
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
     output = figure_output_path(__file__, "gibbs_summary.png")
-    save_plot_figure(fig, output, dpi=300, svg_companion=True)
+    save_plot_figure(fig, output, dpi=300)
     plt.close(fig)
     print(f"[write] {output}")
 

@@ -12,13 +12,12 @@ REPO_ROOT = ANALYSIS_ROOT.parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from analyses.package_validation.explicit_association_toybox.scripts.plot_style import save_png_svg, write_sidecar
+from analyses.package_validation.explicit_association_toybox.scripts.plot_style import save_plot_artifacts
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "property_residuals" / "output"
 RESIDUALS = OUTPUT / "property_residuals.csv"
 FIGURE = OUTPUT / "property_residuals.png"
 PLOTTED = OUTPUT / "property_residuals_plotted_data.csv"
-SIDECAR = OUTPUT / "property_residuals.mpl.yaml"
 EXACT_COLOR = "#1f77b4"
 PICARD_COLOR = "#d55e00"
 MODEL_DOTTED = (0, (1.2, 1.8))
@@ -155,19 +154,8 @@ def main() -> None:
 
     axes[0, 0].legend(frameon=False, loc="best", fontsize=7)
 
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_fixed_state_property_residuals",
-        title="Chapman-style associating-fluid fixed-state check",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="10^3/T / K^-1 and rho_l / mol cm^-3",
-        y_label="log10 pressure / kPa and temperature / K",
-        y_scale="linear transformed pressure",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

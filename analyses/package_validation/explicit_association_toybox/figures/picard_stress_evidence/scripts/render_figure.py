@@ -21,16 +21,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     PURPLE,
     RED,
     apply_plot_style,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "picard_stress_evidence" / "output"
 SOURCE = OUTPUT / "picard_stress_evidence.csv"
 PLOTTED = OUTPUT / "picard_stress_evidence_plotted_data.csv"
 FIGURE = OUTPUT / "picard_stress_evidence.png"
-SIDECAR = OUTPUT / "picard_stress_evidence.mpl.yaml"
 LAMBDA_COLORS = {
     0.35: BLUE,
     0.5: ORANGE,
@@ -53,20 +51,6 @@ def main() -> None:
     plotted = build_plotted_rows(rows)
     _write_plotted_rows(plotted)
     _render(plotted)
-    write_sidecar(
-        SIDECAR,
-        plot_id="picard_stress_evidence",
-        title="Picard stress evidence",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="fixed Picard step count",
-        y_label="relative error or speedup",
-        y_scale="log for error panels",
-        command=(
-            "uv run python analyses/package_validation/explicit_association_toybox/figures/"
-            "picard_stress_evidence/scripts/render_figure.py"
-        ),
-    )
     print(FIGURE)
 
 
@@ -145,7 +129,7 @@ def _render(rows: Sequence[Mapping[str, object]]) -> None:
         style_axis(axis, minor=metric != "simulation_speedup_vs_exact")
     axes[0, 0].legend(frameon=False, loc="best", ncol=2)
     fig.suptitle("Picard policy grid under stress-case exact implicit baselines")
-    svg = save_png_svg(fig, FIGURE)
+    svg = save_plot_artifacts(fig, FIGURE)
     _strip_trailing_svg_whitespace(svg)
     plt.close(fig)
 

@@ -1,10 +1,10 @@
 {
   "artifacts": {
     "model_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_model_curve.csv",
+    "pdf": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_mirror.pdf",
     "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_plotted_data.csv",
     "png": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_mirror.png",
-    "sidecar": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_mirror.mpl.yaml",
-    "source_csv": "data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane/experimental_phase_points.csv",
+    "source_csv": "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane/experimental_phase_points.csv",
     "summary_json": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_summary.json",
     "svg": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_association_mirror_association_mirror.svg"
   },

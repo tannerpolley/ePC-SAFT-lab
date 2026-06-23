@@ -11,7 +11,7 @@ import pandas as pd
 ANALYSIS_DIR = Path(__file__).resolve().parents[1]
 INPUT_DIR = ANALYSIS_DIR / "shared" / "source"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results" / "reaction_equilibrium"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results" / "reaction_equilibrium"
 
 DOE_CSV = INPUT_DIR / "rezaee_2025_doe_extraction_responses.csv"
 EQUILIBRIUM_CSV = INPUT_DIR / "rezaee_2025_extraction_equilibrium_mole_fractions.csv"

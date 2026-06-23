@@ -11,7 +11,7 @@ backend: "Ipopt"
 readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: null
+source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0286-gross-2002-full-figure-replication-campaign-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0286-gross-2002-full-figure-replication-campaign
 last_synced: "2026-06-20"
@@ -22,7 +22,8 @@ last_synced: "2026-06-20"
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
-**Source Plan:** none
+**Source Plan:** docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0286-gross-2002-full-figure-replication-campaign-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** status:ready, type:feature, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
 **Goal Command:** /goal Track completion of the Gross 2002 full figure replication issue set from docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md. Complete proof oracle: every child issue closed and the full-replication checker reports every Figure 1-10 accepted with retained curve-level evidence.
@@ -65,7 +66,7 @@ Track and close the full Gross/Sadowski 2002 figure replication campaign. This i
 - [ ] Figure 8 LLE+VLE envelope upgrade issue is closed.
 - [ ] Figure 9 cross-associating VLE replication issue is closed.
 - [ ] Figure 10 VLLE/LLE envelope upgrade issue is closed.
-- [ ] `check_gross_2002_full_replication.py --require-complete` reports every Figure 1-10 accepted with retained source, model, plot, sidecar, score, and derivative evidence as required.
+- [ ] `check_gross_2002_full_replication.py --require-complete` reports every Figure 1-10 accepted with retained source, model, plot, PDF artifact and provenance file, score, and derivative evidence as required.
 - [ ] M4 docs clearly distinguish full Gross 2002 paper replication from #275 association acceptance.
 
 ## Blocked by
@@ -94,4 +95,3 @@ Track and close the full Gross/Sadowski 2002 figure replication campaign. This i
 ## GitHub Body
 
 The GitHub issue body mirrors this file and is authoritative for live comments, labels, milestone, dependency edges, issue type, and project fields.
-

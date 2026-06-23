@@ -6,7 +6,9 @@ from pathlib import Path
 
 def find_repo_root(start: Path) -> Path:
     for candidate in (start, *start.parents):
-        if (candidate / "pyproject.toml").is_file() and (candidate / "src" / "epcsaft").is_dir():
+        package_src = candidate / "packages" / "epcsaft" / "src" / "epcsaft"
+        legacy_src = candidate / "src" / "epcsaft"
+        if (candidate / "pyproject.toml").is_file() and (package_src.is_dir() or legacy_src.is_dir()):
             return candidate
     raise RuntimeError(f"Could not find ePC-SAFT repo root from {start}")
 
@@ -14,7 +16,9 @@ def find_repo_root(start: Path) -> Path:
 SCRIPT_DIR = Path(__file__).resolve().parent
 ANALYSIS_DIR = SCRIPT_DIR.parent
 REPO_ROOT = find_repo_root(SCRIPT_DIR)
-SRC_ROOT = REPO_ROOT / "src"
+SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
+if not (SRC_ROOT / "epcsaft").is_dir():
+    SRC_ROOT = REPO_ROOT / "src"
 
 for path in (SRC_ROOT, REPO_ROOT):
     text = str(path)

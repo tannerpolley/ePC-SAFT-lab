@@ -12,7 +12,7 @@ from scripts.dev.native_runtime_env import apply_to_current_process
 SCRIPT_DIR = Path(__file__).resolve().parent
 INPUT_DIR = ANALYSIS_DIR / "shared" / "source"
 PROCESSED_DIR = ANALYSIS_DIR / "shared" / "results" / "processed"
-RESULTS_DIR = ANALYSIS_DIR / "results"
+RESULTS_DIR = ANALYSIS_DIR / "shared" / "results"
 REACTION_RESULTS_DIR = RESULTS_DIR / "reaction_equilibrium"
 SUMMARY_JSON = REACTION_RESULTS_DIR / "summary.json"
 

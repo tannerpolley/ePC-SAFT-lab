@@ -139,7 +139,7 @@ analyses/paper_validation/2002_gross/figures/figure_NN/results/
   gross_2002_figure_NN_replication_summary.json
   gross_2002_figure_NN_replication.png
   gross_2002_figure_NN_replication.svg
-  gross_2002_figure_NN_replication.mpl.yaml
+  gross_2002_figure_NN_replication.pdf
 ```
 
 The existing #275 result files may remain as association-acceptance artifacts.
@@ -186,7 +186,7 @@ Render scripts must read retained source and model CSVs. They should not perform
 long model solves inside the plotting path. Each rendered plot must match the
 paper's plot type and scale, including axis direction, units, legend semantics,
 and branch styling where practical. Every plot must have a PNG, SVG, plotted
-data CSV, and MPLGallery sidecar.
+data CSV, and MPLGallery-registered SVG.
 
 ### Scoring
 
@@ -261,7 +261,7 @@ The full-replication checker must fail loudly for:
 - missing exact association derivative receipts for associating equilibrium
   routes;
 - missing native freshness receipts for native-backed model generation;
-- missing mirror plot, SVG, PNG, plotted-data CSV, or sidecar;
+- missing mirror plot, SVG, PNG, plotted-data CSV, or PDF artifact and provenance file;
 - score below the figure-family threshold.
 
 Figure 2 remains blocked from acceptance until the methanol-isobutane caption
@@ -272,7 +272,7 @@ source reference, or another retained provenance artifact.
 
 The implementation plan should start with red tests for a strict checker. Tests
 must show that a figure marked accepted fails if it lacks source data, metadata,
-QA overlay, model curve, plot, sidecar, score summary, or required derivative
+QA overlay, model curve, plot, PDF artifact and provenance file, score summary, or required derivative
 receipts.
 
 Candidate proof commands:
@@ -311,7 +311,7 @@ that foundation.
 
 - All ten Gross 2002 figures are represented in the full-replication manifest.
 - Every accepted figure has retained source data, metadata, QA overlay, model
-  data, mirror plot, sidecar, score JSON, and summary JSON.
+  data, mirror plot, PDF artifact and provenance file, score JSON, and summary JSON.
 - Generated plots match the paper plot type and scale rather than using
   diagnostic substitutes.
 - Figures 2-7 and 9 no longer remain source-requirement records once their

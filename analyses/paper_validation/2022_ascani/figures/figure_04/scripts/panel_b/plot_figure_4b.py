@@ -86,7 +86,7 @@ def main() -> None:
     ax.legend(loc="upper right", fontsize=8)
     ax.set_title("Ascani 2022 Figure 4b-style phase split", fontsize=13)
     output = figure_output_path(__file__, "figure_4b.png")
-    save_plot_figure(fig, output, dpi=300, svg_companion=True)
+    save_plot_figure(fig, output, dpi=300)
     plt.close(fig)
     print(f"[write] {output}")
 

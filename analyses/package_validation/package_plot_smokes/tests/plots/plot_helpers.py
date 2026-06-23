@@ -13,7 +13,7 @@ import numpy as np
 matplotlib.rcParams["svg.fonttype"] = "none"
 matplotlib.rcParams["svg.hashsalt"] = "epcsaft-test-plots"
 
-from epcsaft import ePCSAFTMixture
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from scripts import plot_outputs
 
 MATPLOTLIB_COLORWAY = (
@@ -65,11 +65,11 @@ def methanol_cyclohexane_mixture() -> ePCSAFTMixture:
 def assert_plot_with_data(path: Path) -> None:
     csv_path = path.parent / f"{path.stem}.csv"
     svg_path = path.with_suffix(".svg")
-    style_path = path.parent / f"{path.stem}.mpl.yaml"
+    pdf_path = path.with_suffix(".pdf")
     assert path.exists()
     assert svg_path.exists()
     assert csv_path.exists()
-    assert style_path.exists()
+    assert pdf_path.exists()
     assert csv_path.stat().st_size > 0
 
 
@@ -350,7 +350,7 @@ def save_comparison_plot(
     output_path = plot_outputs.test_plot_path(__file__, filename, category=category)
     try:
         _finish_figure(fig)
-        plot_outputs.save_plot_figure(fig, output_path, dpi=120, svg_companion=True)
+        plot_outputs.save_plot_figure(fig, output_path, dpi=120)
     finally:
         plt.close(fig)
     assert_plot_with_data(output_path)
@@ -405,7 +405,7 @@ def save_parity_plot(
     output_path = plot_outputs.test_plot_path(__file__, filename, category=category)
     try:
         _finish_figure(fig)
-        plot_outputs.save_plot_figure(fig, output_path, dpi=120, svg_companion=True)
+        plot_outputs.save_plot_figure(fig, output_path, dpi=120)
     finally:
         plt.close(fig)
     assert_plot_with_data(output_path)
@@ -488,7 +488,7 @@ def save_contribution_closure_plot(
     output_path = plot_outputs.test_plot_path(__file__, filename, category=category)
     try:
         _finish_figure(fig)
-        plot_outputs.save_plot_figure(fig, output_path, dpi=120, svg_companion=True)
+        plot_outputs.save_plot_figure(fig, output_path, dpi=120)
     finally:
         plt.close(fig)
     assert_plot_with_data(output_path)
@@ -534,7 +534,7 @@ def save_contribution_term_breakdown_plot(
     output_path = plot_outputs.test_plot_path(__file__, filename, category=category)
     try:
         _finish_figure(fig)
-        plot_outputs.save_plot_figure(fig, output_path, dpi=120, svg_companion=True)
+        plot_outputs.save_plot_figure(fig, output_path, dpi=120)
     finally:
         plt.close(fig)
     assert_plot_with_data(output_path)

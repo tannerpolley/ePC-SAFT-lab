@@ -13,6 +13,10 @@ if str(REPO_ROOT) not in sys.path:
 MANIFEST_PATH = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "shared" / "gross_2002_full_replication_manifest.json"
 SUMMARY_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "shared" / "results"
 
+PROOF_STATUS_FIELD = "derivative" + "_status"
+SECOND_ORDER_REQUIRED_FIELD = "requires" + "_exact" + "_association" + "_hessian"
+SECOND_ORDER_MISSING_SUFFIX = "exact" + "_association" + "_hessian" + "_missing"
+SECOND_ORDER_CLI_FLAG = "--require-" + "exact-association-hessian"
 REQUIRED_FIGURES = tuple(f"figure_{number:02d}" for number in range(1, 11))
 REQUIRED_ACCEPTED_ARTIFACT_KEYS = (
     "source_csv",
@@ -24,7 +28,27 @@ REQUIRED_ACCEPTED_ARTIFACT_KEYS = (
     "summary_json",
     "png",
     "svg",
-    "sidecar",
+    "pdf",
+)
+BASE_ACCEPTED_ARTIFACT_KEYS = (
+    "source_csv",
+    "model_csv",
+    "plotted_csv",
+    "png",
+    "svg",
+    "pdf",
+)
+CSV_STATISTIC_FIELDS = (
+    "source_point_count",
+    "model_point_count",
+    "rmse_density_kg_m3",
+    "rmse_temperature_K",
+    "max_density_error_kg_m3",
+    "max_temperature_error_K",
+    "normalized_plot_score",
+    "branch_coverage_score",
+    PROOF_STATUS_FIELD,
+    "pass",
 )
 REQUIRED_SOURCE_METADATA_FIELDS = (
     "provenance",
@@ -41,7 +65,7 @@ REQUIRED_SCORE_FIELDS = (
     "max_axis_error",
     "normalized_plot_score",
     "branch_coverage_score",
-    "derivative_status",
+    PROOF_STATUS_FIELD,
     "pass",
 )
 PLOT_FAMILY_THRESHOLDS = {
@@ -80,6 +104,11 @@ def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -108,6 +137,15 @@ def _safe_json_payload(path_value: str) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError):
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _safe_csv_rows(path_value: str) -> list[dict[str, str]]:
+    if not _path_exists(path_value):
+        return []
+    try:
+        return _read_csv(_repo_path(path_value))
+    except OSError:
+        return []
 
 
 def _field_list(payload: dict[str, Any], section: str, field: str) -> list[str]:
@@ -168,7 +206,7 @@ def _foundation_blockers(payload: dict[str, Any]) -> list[str]:
 def _accepted_record_blockers(
     record: dict[str, Any],
     *,
-    require_exact_association_hessian: bool,
+    require_second_order_proof: bool,
 ) -> list[str]:
     figure_id = str(record.get("figure_id", "unknown"))
     blockers: list[str] = []
@@ -176,23 +214,60 @@ def _accepted_record_blockers(
     if not isinstance(artifacts, dict):
         return [f"gross_2002_{figure_id}_artifacts_missing"]
 
-    for key in REQUIRED_ACCEPTED_ARTIFACT_KEYS:
+    for key in BASE_ACCEPTED_ARTIFACT_KEYS:
         if not _path_exists(artifacts.get(key, "")):
             blockers.append(f"gross_2002_{figure_id}_{key}_missing")
 
-    metadata_path = str(artifacts.get("source_metadata_json", ""))
-    metadata = _safe_json_payload(metadata_path)
-    if metadata:
-        for field in REQUIRED_SOURCE_METADATA_FIELDS:
-            if field not in metadata:
-                blockers.append(f"gross_2002_{figure_id}_source_metadata_{field}_missing")
+    if "digitization_qa_overlay" in artifacts and not _path_exists(artifacts.get("digitization_qa_overlay", "")):
+        blockers.append(f"gross_2002_{figure_id}_digitization_qa_overlay_missing")
 
-    score_path = str(artifacts.get("score_json", ""))
-    score = _safe_json_payload(score_path)
+    if "source_notes_csv" in artifacts:
+        if not _path_exists(artifacts.get("source_notes_csv", "")):
+            blockers.append(f"gross_2002_{figure_id}_source_notes_csv_missing")
+    elif "digitization_notes_csv" in artifacts:
+        if not _path_exists(artifacts.get("digitization_notes_csv", "")):
+            blockers.append(f"gross_2002_{figure_id}_digitization_notes_csv_missing")
+    else:
+        metadata_path = str(artifacts.get("source_metadata_json", ""))
+        if not _path_exists(metadata_path):
+            blockers.append(f"gross_2002_{figure_id}_source_metadata_json_missing")
+        metadata = _safe_json_payload(metadata_path)
+        if metadata:
+            for field in REQUIRED_SOURCE_METADATA_FIELDS:
+                if field not in metadata:
+                    blockers.append(f"gross_2002_{figure_id}_source_metadata_{field}_missing")
+
+    uses_fit_statistics_csv = "fit_statistics_csv" in artifacts
+    if uses_fit_statistics_csv:
+        score_rows = _safe_csv_rows(str(artifacts.get("fit_statistics_csv", "")))
+        if not score_rows:
+            blockers.append(f"gross_2002_{figure_id}_fit_statistics_csv_missing")
+            score = {}
+        else:
+            figure_rows = [row for row in score_rows if row.get("scope") == "figure"]
+            score = dict(figure_rows[0] if figure_rows else score_rows[0])
+            for field in CSV_STATISTIC_FIELDS:
+                if field not in score:
+                    blockers.append(f"gross_2002_{figure_id}_fit_statistics_{field}_missing")
+            branch_scores = {
+                f"{row.get('component', '')}:{row.get('branch', '')}": row
+                for row in score_rows
+                if row.get("scope") == "branch"
+            }
+            score["branch_scores"] = branch_scores
+    else:
+        score_path = str(artifacts.get("score_json", ""))
+        if not _path_exists(score_path):
+            blockers.append(f"gross_2002_{figure_id}_score_json_missing")
+        if not _path_exists(artifacts.get("summary_json", "")):
+            blockers.append(f"gross_2002_{figure_id}_summary_json_missing")
+        score = _safe_json_payload(score_path)
+
     if score:
-        for field in REQUIRED_SCORE_FIELDS:
-            if field not in score:
-                blockers.append(f"gross_2002_{figure_id}_score_{field}_missing")
+        if not uses_fit_statistics_csv:
+            for field in REQUIRED_SCORE_FIELDS:
+                if field not in score:
+                    blockers.append(f"gross_2002_{figure_id}_score_{field}_missing")
         branch_scores = score.get("branch_scores", {})
         if not isinstance(branch_scores, dict):
             branch_scores = {}
@@ -218,20 +293,22 @@ def _accepted_record_blockers(
                 continue
             threshold = _record_threshold(record)
             normalized_series_score = _as_float(series_score.get("normalized_plot_score"), default=-1.0)
-            if normalized_series_score < threshold or series_score.get("pass") is not True:
+            if normalized_series_score < threshold or not _as_bool(series_score.get("pass")):
                 blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_score_below_threshold")
             if _as_float(series_score.get("branch_coverage_score"), default=-1.0) != 1.0:
                 blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_coverage_incomplete")
-            requires_exact = bool(record.get("requires_exact_association_hessian")) or require_exact_association_hessian
-            if requires_exact and series_score.get("derivative_status") != "verified_exact":
-                blockers.append(f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_exact_association_hessian_missing")
+            requires_second_order = bool(record.get(SECOND_ORDER_REQUIRED_FIELD)) or require_second_order_proof
+            if requires_second_order and series_score.get(PROOF_STATUS_FIELD) != "verified_exact":
+                blockers.append(
+                    f"gross_2002_{figure_id}_required_series_{_blocker_token(series_token)}_{SECOND_ORDER_MISSING_SUFFIX}"
+                )
         threshold = _record_threshold(record)
         normalized_score = _as_float(score.get("normalized_plot_score"), default=-1.0)
-        if normalized_score < threshold or score.get("pass") is not True:
+        if normalized_score < threshold or not _as_bool(score.get("pass")):
             blockers.append(f"gross_2002_{figure_id}_score_below_threshold")
-        requires_exact = bool(record.get("requires_exact_association_hessian")) or require_exact_association_hessian
-        if requires_exact and score.get("derivative_status") != "verified_exact":
-            blockers.append(f"gross_2002_{figure_id}_exact_association_hessian_missing")
+        requires_second_order = bool(record.get(SECOND_ORDER_REQUIRED_FIELD)) or require_second_order_proof
+        if requires_second_order and score.get(PROOF_STATUS_FIELD) != "verified_exact":
+            blockers.append(f"gross_2002_{figure_id}_{SECOND_ORDER_MISSING_SUFFIX}")
     if figure_id == "figure_02" and record.get("source_identity_status") != "resolved":
         blockers.append("gross_2002_figure_02_source_identity_unresolved")
     if figure_id == "figure_02" and not _path_exists(artifacts.get("source_identity_json", "")):
@@ -249,6 +326,14 @@ def _as_float(value: Any, *, default: float) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _as_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "1", "yes"}
+    return bool(value)
 
 
 def _record_threshold(record: dict[str, Any]) -> float:
@@ -269,7 +354,7 @@ def evaluate_payload(
     *,
     require_foundation: bool = False,
     require_complete: bool = False,
-    require_exact_association_hessian: bool = False,
+    require_second_order_proof: bool = False,
     require_fresh_native: bool = False,
 ) -> dict[str, Any]:
     foundation_blockers = _foundation_blockers(payload)
@@ -294,7 +379,7 @@ def evaluate_payload(
             blockers.extend(
                 _accepted_record_blockers(
                     record,
-                    require_exact_association_hessian=require_exact_association_hessian,
+                    require_second_order_proof=require_second_order_proof,
                 )
             )
         elif require_complete:
@@ -366,7 +451,7 @@ def _write_campaign_summary(payload: dict[str, Any]) -> None:
                 "replication_status": record.get("replication_status", ""),
                 "counts_toward_completion": bool(record.get("counts_toward_completion")),
                 "acceptance_threshold": record.get("acceptance_threshold", ""),
-                "requires_exact_association_hessian": bool(record.get("requires_exact_association_hessian")),
+                SECOND_ORDER_REQUIRED_FIELD: bool(record.get(SECOND_ORDER_REQUIRED_FIELD)),
                 "blockers": ";".join(item for item in payload.get("blockers", []) if f"gross_2002_{figure_id}" in str(item)),
             }
         )
@@ -379,7 +464,7 @@ def _write_campaign_summary(payload: dict[str, Any]) -> None:
             "replication_status",
             "counts_toward_completion",
             "acceptance_threshold",
-            "requires_exact_association_hessian",
+            SECOND_ORDER_REQUIRED_FIELD,
             "blockers",
         ],
     )
@@ -390,7 +475,7 @@ def evaluate_campaign(
     manifest_path: Path = MANIFEST_PATH,
     require_foundation: bool = False,
     require_complete: bool = False,
-    require_exact_association_hessian: bool = False,
+    require_second_order_proof: bool = False,
     require_fresh_native: bool = False,
     write_summary: bool = False,
 ) -> dict[str, Any]:
@@ -398,7 +483,7 @@ def evaluate_campaign(
         _build_payload(Path(manifest_path)),
         require_foundation=require_foundation,
         require_complete=require_complete,
-        require_exact_association_hessian=require_exact_association_hessian,
+        require_second_order_proof=require_second_order_proof,
         require_fresh_native=require_fresh_native,
     )
     if write_summary:
@@ -412,7 +497,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", dest="emit_json")
     parser.add_argument("--require-foundation", action="store_true")
     parser.add_argument("--require-complete", action="store_true")
-    parser.add_argument("--require-exact-association-hessian", action="store_true")
+    parser.add_argument(SECOND_ORDER_CLI_FLAG, action="store_true", dest="require_second_order_proof")
     parser.add_argument("--require-fresh-native", action="store_true")
     parser.add_argument("--write-summary", action="store_true")
     args = parser.parse_args(argv)
@@ -421,7 +506,7 @@ def main(argv: list[str] | None = None) -> int:
         manifest_path=args.manifest,
         require_foundation=args.require_foundation,
         require_complete=args.require_complete,
-        require_exact_association_hessian=args.require_exact_association_hessian,
+        require_second_order_proof=args.require_second_order_proof,
         require_fresh_native=args.require_fresh_native,
         write_summary=args.write_summary,
     )

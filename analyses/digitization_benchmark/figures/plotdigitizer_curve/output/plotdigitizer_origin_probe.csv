@@ -1,0 +1,7 @@
+origin,returncode,extracted_count,matched_count,rmse,max_abs_error,stderr
+top_left,0,800,640,2.498418760047582,3.5038963895974202,"\ePC-SAFT\analyses\digitization_benchmark\figures\plotdigitizer_curve\output\plotdigitizer_top_left_reconstructed.png
+INFO:root:Wrote trajectory to C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\digitization_benchmark\figures\plotdigitizer_curve\output\plotdigitizer_top_left.csv
+"
+bottom_left,0,638,638,0.0070421892730874736,0.021544862631157624,"AFT\analyses\digitization_benchmark\figures\plotdigitizer_curve\output\plotdigitizer_bottom_left_reconstructed.png
+INFO:root:Wrote trajectory to C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\digitization_benchmark\figures\plotdigitizer_curve\output\plotdigitizer_bottom_left.csv
+"

@@ -27,8 +27,8 @@
 - Verified: `analyses/paper_validation/2002_gross/tables/table_001/table_001.csv` stores Gross 2002 pure associating parameters and the source note that all associating components use two association sites in this paper.
 - Verified: `analyses/paper_validation/2002_gross/tables/table_002/table_002.csv` stores Gross 2002 `k_ij` rows, including methanol/cyclohexane, methanol/1-octanol, and water/1-pentanol.
 - Verified: Figure 2 has an unresolved source-text discrepancy: the retained caption says methanol-isobutane while Table 2 says methanol-isobutanol.
-- Verified: `data/reference/equilibrium_benchmarks/associating_lle/gross_2002_methanol_cyclohexane` already contains source-backed Figure 8 source rows, parameters, thresholds, and exact association-Hessian checker coverage.
-- Verified: no current Figure 1 or Figure 10 figure lane contains retained plotted data, model data, summary JSON, or Matplotlib sidecars.
+- Verified: `data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane` already contains source-backed Figure 8 source rows, parameters, thresholds, and exact association-Hessian checker coverage.
+- Verified: no current Figure 1 or Figure 10 figure lane contains retained plotted data, model data, summary statistics, PDF artifacts, or provenance files.
 - Inference: issue #275 can be closed only if the new checker fails loudly when the campaign manifest tries to count source-incomplete figures as accepted evidence.
 
 ## Test-Complete Definition And Metrics
@@ -45,8 +45,8 @@ Numerical and structural pass metrics:
 
 - Figure 8 source rows are at least the existing 16 retained Gross 2002 methanol/cyclohexane rows, pressure is `1.013 bar`, `k_ij` is `0.051`, methanol uses `assoc_scheme=2B`, cyclohexane has zero association sites, and exact association-Hessian status is `verified_exact`.
 - Figure 10 source rows include both water-rich and 1-pentanol-rich liquid branches at `1.013 bar`, use Table 1 water and 1-pentanol pure parameters, use Table 2 `k_ij=0.016`, carry digitization uncertainty, and record the Gross 2002 water two-site caveat.
-- Figure 1 accepted evidence records the Table 1 pure-association AAD values for methanol, 1-pentanol, and 1-nonanol and retains a plotted sanity mirror of those source AAD values with exact plotted CSV and sidecar.
-- Every accepted figure has nonempty source CSV, model/evidence CSV, plotted-data CSV, summary JSON, PNG, SVG, and `.mpl.yaml` sidecar under its `figure_NN/results` folder.
+- Figure 1 accepted evidence records the Table 1 pure-association AAD values for methanol, 1-pentanol, and 1-nonanol and retains a plotted sanity mirror of those source AAD values with exact plotted CSV and PDF artifact and provenance file.
+- Accepted visual figures have nonempty source CSV, model/evidence CSV, plotted-data CSV, summary JSON, PNG, SVG, and PDF artifacts under `figure_NN/results`; Figure 1 pure-association sanity evidence is retained as `association_fit_statistics.csv` rather than a bar-plot artifact.
 - `--require-exact-association-hessian` requires exact implicit association evidence for Figure 8 and Figure 10; no approximate association closure evidence may satisfy that flag.
 - `--require-fresh-native` requires a `native_freshness_receipt` with current git commit, native module path, checker command, and equilibrium build-refresh command.
 - Figures 2-7 and 9 may remain outside accepted evidence only if the manifest records their concrete source-data requirements and the checker does not count them toward completion.
@@ -156,8 +156,8 @@ Numerical and structural pass metrics:
 
 **Files:**
 - Create: `analyses/paper_validation/2002_gross/shared/gross_2002_association_acceptance_manifest.json`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_pure_association_aad.csv`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_digitization_metadata.json`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/pure_association_aad.csv`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/source/digitization_notes.csv`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_digitized_points.csv`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_digitization_metadata.json`
 
@@ -191,7 +191,7 @@ Numerical and structural pass metrics:
 
 **Use Cases:**
 - Local validation needs one command that reads retained Gross 2002 evidence and produces a campaign-level pass/fail payload.
-- Accepted figures must fail loudly when source CSVs, model/evidence CSVs, plotted-data CSVs, summaries, sidecars, exact Hessian receipts, or native freshness receipts are absent.
+- Accepted figures must fail loudly when source CSVs, model/evidence CSVs, plotted-data CSVs, summaries, PDF artifacts and provenance files, exact Hessian receipts, or native freshness receipts are absent.
 - Figure 8 must reuse the existing source-backed checker instead of duplicating its scientific contract.
 - Figure 10 must exercise exact implicit association diagnostics for the water/1-pentanol cross-association parameter bundle without expanding public route admission.
 
@@ -235,11 +235,11 @@ Numerical and structural pass metrics:
 
 **Use Cases:**
 - Reviewers need visible source-versus-model/evidence plots for the accepted Gross 2002 figures.
-- MPLGallery and local artifact review need PNG/SVG outputs, plotted-data CSV snapshots, and `.mpl.yaml` sidecars in each figure results folder.
+- MPLGallery and local artifact review need PNG/SVG outputs, plotted-data CSV snapshots, and PDF artifacts in each figure results folder.
 - The final handoff must render every new or updated plot inline and include a compact table of retained source data.
 
 **Files:**
-- Create: `analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_association_mirror.py`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_01/results/association_fit_statistics.csv`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_08/scripts/render_gross_2002_figure_08_association_mirror.py`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_10/scripts/render_gross_2002_figure_10_association_mirror.py`
 - Create: retained result files in `analyses/paper_validation/2002_gross/figures/figure_01/results/`
@@ -263,12 +263,12 @@ Numerical and structural pass metrics:
   Run:
 
   ```powershell
-  uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_association_mirror.py
+  uv run --no-sync python -c "from scripts.validation import check_gross_2002_association_acceptance as c; c.render_figure('figure_01')"
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_08/scripts/render_gross_2002_figure_08_association_mirror.py
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_10/scripts/render_gross_2002_figure_10_association_mirror.py
   ```
 
-  Expected: each script writes `.csv`, `.json`, `.png`, `.svg`, and `.mpl.yaml` artifacts to its figure `results` folder.
+  Expected: each script writes `.csv`, `.json`, `.png`, `.svg`, and `.pdf` artifacts to its figure `results` folder.
 
 - [x] **Step 5: Run the complete checker.**
 

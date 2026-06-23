@@ -17,7 +17,7 @@ def _trace(**overrides: Any) -> dict[str, Any]:
         "solved_boundary_variable": "P",
         "fixed_composition_role": "liquid",
         "phase_roles": ["liquid", "vapor"],
-        "source_fixture": "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash",
+        "source_fixture": "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane",
         "selector_family": "bubble_dew_derived_routes",
         "problem_name": "neutral_bubble_p_eos",
         "variable_model": "phase_species_amounts_plus_phase_volume",

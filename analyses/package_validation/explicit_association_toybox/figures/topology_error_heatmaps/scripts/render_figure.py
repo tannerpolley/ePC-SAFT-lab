@@ -15,15 +15,13 @@ if str(REPO_ROOT) not in sys.path:
 
 from analyses.package_validation.explicit_association_toybox.scripts.plot_style import (
     apply_plot_style,
-    save_png_svg,
-    write_sidecar,
+    save_plot_artifacts,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "topology_error_heatmaps" / "output"
 HEATMAP = OUTPUT / "topology_error_heatmap.csv"
 FIGURE = OUTPUT / "topology_error_heatmap.png"
 PLOTTED = OUTPUT / "topology_error_heatmap_plotted_data.csv"
-SIDECAR = OUTPUT / "topology_error_heatmap.mpl.yaml"
 
 
 def main() -> None:
@@ -64,19 +62,8 @@ def main() -> None:
     ax.set_xlabel("Huang/Radosz topology")
     ax.set_ylabel(r"$\rho\Delta$")
     fig.colorbar(image, ax=ax, shrink=0.84, label=r"max relative error in $a_{\mathrm{assoc}}$")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_topology_error_heatmap",
-        title="Picard association error across topology and rho Delta",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="Huang/Radosz topology",
-        y_label="rho Delta",
-        y_scale="linear",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/topology_error_heatmaps/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

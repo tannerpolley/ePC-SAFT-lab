@@ -26,7 +26,7 @@ Issue #250 implements this showcase with the Matsuda/NIST perfluorohexane +
 hexane source case:
 
 - Fixture:
-  `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane`
+  `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane`
 - Checker: `scripts/validation/check_neutral_lle_showcase.py`
 - Public API regression:
   `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`
@@ -146,7 +146,7 @@ Use the two-step plotting workflow:
 1. `scripts/generate_data.py` loads the fixture, runs the current `lle` route,
    and writes retained CSV/JSON outputs.
 2. `scripts/render_figures.py` reads those retained outputs and writes PNG/SVG
-   plus `.mpl.yaml` sidecars.
+   plus PDF artifacts.
 
 Minimum figures:
 

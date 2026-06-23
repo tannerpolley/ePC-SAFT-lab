@@ -19,7 +19,7 @@ REGISTRY_PATH = (
     / "equilibrium-benchmark-registry.yaml"
 )
 PEREIRA_SOURCE_AUDIT_PATH = (
-    REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
+    REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "ethane_carbon_dioxide"
 )
 
 
@@ -79,7 +79,7 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     assert benchmarks["Pereira 2012 System III"]["source_model_family"] == "SAFT-VR"
     assert benchmarks["Pereira 2012 System III"]["current_fixture_blocker"] == "model_family_mismatch"
     assert benchmarks["Pereira 2012 System III"]["source_audit_path"] == (
-        "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
+        "data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide"
     )
     assert "ePC-SAFT-compatible neutral TP flash fixture" in benchmarks["Pereira 2012 System III"]["todo"]
     assert benchmarks["Gross/Sadowski 2002 methanol/cyclohexane"]["family_labels"] == [
@@ -136,12 +136,12 @@ def test_local_source_audit_does_not_promote_context_to_fixture() -> None:
         == "insufficient_no_point_phase_split_fixture"
     )
     assert local_candidates["Hydrocarbon workbook TP flash smoke"]["local_artifact"].endswith(
-        "data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash/metadata.json"
+        "data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane/metadata.json"
     )
     assert local_candidates["Hydrocarbon workbook TP flash smoke"]["status"] == "promoted_executable_workbook_fixture"
     assert local_candidates["Pereira 2012 System III"]["status"] == "rejected_model_family_mismatch"
     assert local_candidates["Pereira 2012 System III"]["source_audit_path"] == (
-        "data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012"
+        "data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide"
     )
 
 
@@ -152,7 +152,7 @@ def test_pereira_source_audit_fixture_is_nonexecutable_and_complete() -> None:
     phase_rows = list(csv.DictReader(phase_text.splitlines()))
     parameter_rows = list(csv.DictReader(parameter_text.splitlines()))
 
-    assert metadata["name"] == "pereira_2012_system_iii"
+    assert metadata["name"] == "ethane_carbon_dioxide"
     assert metadata["family_label"] == "PE-Neutral TP Flash"
     assert metadata["fixture_status"] == "source_audited_not_executable"
     assert metadata["source_model_family"] == "SAFT-VR"

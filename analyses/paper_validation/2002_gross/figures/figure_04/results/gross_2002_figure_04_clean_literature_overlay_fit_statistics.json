@@ -1,0 +1,10 @@
+{
+  "figure_id": "figure_04",
+  "mae": 0.001121331630522502,
+  "matched_literature_points": 24,
+  "max_abs": 0.002289342319082191,
+  "normalized_mae": 0.00474939275951928,
+  "signed_bias": 7.613850212875796e-05,
+  "skipped_literature_points": 0,
+  "y_unit": "bar"
+}

@@ -38,7 +38,7 @@
 - Verified: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/routes/derived/bubble_dew.cpp` implements `solve_neutral_bubble_t_eos_route` and `solve_neutral_dew_t_eos_route` through fixed-pressure temperature route helpers.
 - Verified: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/selector_core.cpp` dispatches public production routes and rejects unsupported selector routes.
 - Verified: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp` already exposes private native proof helpers such as `_native_equilibrium_selector_route_result`.
-- Verified: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/thresholds.json` contains `solver_max_iterations: 260`, `solver_tolerance: 1.0e-6`, `pressure_abs_Pa: 0.001`, `ln_fugacity_abs: 1.0e-6`, `phase_distance_min: 1.0e-6`, `composition_abs: 0.02`, and `source_temperature_pair_abs_K: 0.2`.
+- Verified: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/thresholds.json` contains `solver_max_iterations: 260`, `solver_tolerance: 1.0e-6`, `pressure_abs_Pa: 0.001`, `ln_fugacity_abs: 1.0e-6`, `phase_distance_min: 1.0e-6`, `composition_abs: 0.02`, and `source_temperature_pair_abs_K: 0.2`.
 - Verified: `metadata.json` for the Matsuda fixture marks the case neutral, nonelectrolyte, nonreactive, nonassociating, source-backed, and scoped to the current `lle` utility route.
 - Inference: the cleanest next #189 slice is a private proof route plus checker gate. Public route-key admission should remain a later child because #189 still has generalized phase-set completion and final public capability admission open.
 
@@ -492,7 +492,7 @@ uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/ep
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route
-uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
@@ -542,7 +542,7 @@ uv run --no-sync python run_pytest.py --allow-long-equilibrium-tests packages/ep
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route
-uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```

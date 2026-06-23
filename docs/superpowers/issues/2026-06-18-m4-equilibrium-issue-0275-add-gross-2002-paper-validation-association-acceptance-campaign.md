@@ -51,7 +51,7 @@ AFK/HITL: AFK
 Add a source-backed Gross/Sadowski 2002 association acceptance campaign under
 `analyses/paper_validation/2002_gross` that covers all relevant paper figures,
 with Figures 8 and 10 as the hard phase-split gates. The campaign must keep
-source data, generated model data, retained plots, Matplotlib sidecars, and
+source data, generated model data, retained plots, PDF artifacts and provenance files, and
 campaign summaries attached to the existing paper-validation tree.
 
 ## Acceptance Criteria
@@ -65,7 +65,7 @@ campaign summaries attached to the existing paper-validation tree.
 - [x] Resolve the Figure 2 methanol-isobutane/isobutanol source-text discrepancy before Figure 2 evidence can count.
 - [x] Add `scripts/validation/check_gross_2002_association_acceptance.py` with `--json`, `--require-complete`, `--require-exact-association-hessian`, and `--require-fresh-native` support.
 - [x] Retain campaign summary JSON/CSV under `analyses/paper_validation/2002_gross/shared/results`.
-- [x] Render every new or updated Gross 2002 mirror plot and retain the plotted-data CSV and Matplotlib sidecar.
+- [x] Render every new or updated Gross 2002 mirror plot and retain the plotted-data CSV and PDF artifact and provenance file.
 - [x] Keep capability text evidence-scoped; do not broaden electrolyte, reactive, CE, CPE, generalized phase-count, or broad associating-family claims from this campaign.
 
 ## Resolution Evidence

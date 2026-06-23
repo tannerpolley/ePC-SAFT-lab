@@ -456,7 +456,7 @@ lever blending, and checks the native `neutral_tp_flash` route against the
 source phase compositions and phase fractions. This is source-backed workbook
 evidence, not a literature benchmark.
 The Pereira source audit is retained under
-`data/reference/equilibrium_benchmarks/neutral_tp_flash/pereira_2012`; it
+`data/reference/equilibrium_benchmarks/neutral_tp_flash/ethane_carbon_dioxide`; it
 captures the SAFT-VR phase-split table and parameters, and records the
 published second-feed composition inconsistency as a blocker instead of
 normalizing it silently. Its material-balance check file identifies which

@@ -17,7 +17,7 @@ FIXTURE_DIR = (
     / "reference"
     / "equilibrium_benchmarks"
     / "neutral_tp_flash"
-    / "hydrocarbon_workbook_flash"
+    / "methane_ethane_propane"
 )
 
 for import_root in (

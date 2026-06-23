@@ -28,7 +28,7 @@ commands:
   render_water_topology_fork: uv run python analyses/package_validation/explicit_association_toybox/figures/water_topology_fork/scripts/render_figure.py
   generate_equilibrium_style_objective_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/scripts/generate_data.py
   render_equilibrium_style_objective_sensitivity: uv run python analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/scripts/render_figure.py
-  fetch_public_property_sources: uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv
+  fetch_public_property_sources: uv run python -m analyses.package_validation.explicit_association_toybox.scripts.public_property_sources --allow-network --output data/reference/pure_component/saturation_properties
   generate_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/generate_data.py
   render_property_residuals: uv run python analyses/package_validation/explicit_association_toybox/figures/property_residuals/scripts/render_figure.py
   generate_pure_saturation_validation: uv run python analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/scripts/generate_data.py

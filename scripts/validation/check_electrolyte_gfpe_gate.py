@@ -25,7 +25,7 @@ DEFAULT_CASE_DIR = (
     / "reference"
     / "equilibrium_benchmarks"
     / "electrolyte_lle"
-    / "khudaida_2026"
+    / "water_ethanol_isobutanol_nacl"
 )
 REQUIRED_FILES = (
     "metadata.json",

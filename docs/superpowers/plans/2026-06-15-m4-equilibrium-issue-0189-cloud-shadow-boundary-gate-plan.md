@@ -27,7 +27,7 @@
 
 - Verified: `scripts/validation/check_boundary_workflows.py` already reports bubble, dew, cloud, and shadow as derived boundary workflows.
 - Verified: current bubble/dew routes have retained `boundary_trace` evidence after #256; cloud/shadow rows still have `current_runtime_routes: []` and `current_convergence_status: planned_not_executable`.
-- Verified: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/source_binodal_points.csv` contains 14 source-backed `cloud_point` rows for perfluorohexane + hexane at 101.3 kPa, with temperatures from 285.09 K to 296.26 K and perfluorohexane mole fractions from 0.1498 to 0.7000.
+- Verified: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/source_binodal_points.csv` contains 14 source-backed `cloud_point` rows for perfluorohexane + hexane at 101.3 kPa, with temperatures from 285.09 K to 296.26 K and perfluorohexane mole fractions from 0.1498 to 0.7000.
 - Verified: `experimental_tielines.csv` records one paired source branch at 293.895 K and 101.3 kPa with liquid compositions `[0.2000, 0.8000]` and `[0.5497, 0.4503]`; the branch temperature gap is 0.01 K against a 0.2 K source threshold.
 - Verified: `metadata.json` marks the fixture neutral, nonelectrolyte, nonreactive, nonassociating, source-backed, and scoped to the current public `lle` utility route only.
 - Verified: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md` says cloud/shadow are derived boundary workflows after the neutral TP-flash proof and must not invent synthetic VLLE validation fixtures.
@@ -60,7 +60,7 @@ This child is test-complete only when the retained gate proves source-data readi
 - The checker output includes `binodal_point_count == 14`, `paired_cloud_shadow_count == 1`, pressure 101.3 kPa or 101300 Pa as appropriate, `temperature_range_K == [285.09, 296.26]`, and `composition_range_x1 == [0.1498, 0.7000]`.
 - The checker output includes route-admission blockers for native cloud and shadow route absence, but those blockers are separated from source-data gate blockers so reviewers cannot confuse source-data readiness with route completion.
 - Any missing fixture file, malformed composition, wrong method, wrong species order, wrong pressure unit, invalid source status, forbidden association/electrolyte/reaction activation, or missing paired branch row makes the gate fail with a named blocker.
-- `scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete` remains green.
+- `scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete` remains green.
 - Existing `tests/native/contracts/test_boundary_workflow_checker.py` remains green; cloud/shadow gate tests prove no regression in the #256 boundary trace evaluator.
 
 ## File Map
@@ -132,7 +132,7 @@ This child is test-complete only when the retained gate proves source-data readi
 - Modify: `scripts/validation/check_boundary_workflows.py`
 - Test: `tests/native/contracts/test_cloud_shadow_boundary_gate_checker.py`
 
-- [ ] Add `DEFAULT_CLOUD_SHADOW_CASE_DIR = REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_lle" / "matsuda_2011_pfhexane_hexane"`.
+- [ ] Add `DEFAULT_CLOUD_SHADOW_CASE_DIR = REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_lle" / "perfluorohexane_hexane"`.
 - [ ] Add CSV/JSON readers local to the checker or reuse existing simple reader patterns from `check_neutral_lle_showcase.py`.
 - [ ] Add `evaluate_cloud_shadow_gate(case_dir: Path = DEFAULT_CLOUD_SHADOW_CASE_DIR) -> dict[str, Any]`.
 - [ ] Validate fixture metadata fields: source-backed status, species list, route `lle`, selector route `neutral_lle`, expected two liquid phases, and all forbidden physics flags false.
@@ -178,7 +178,7 @@ This child is test-complete only when the retained gate proves source-data readi
 - [ ] Run the source-backed neutral LLE showcase checker:
 
   ```powershell
-  uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+  uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete
   ```
 
 - [ ] If implementation changes native files or public route names, stop this child and split a new native route-admission issue before continuing.
@@ -242,7 +242,7 @@ Run these commands from the repo root:
 uv run --no-sync python run_pytest.py tests/native/contracts/test_cloud_shadow_boundary_gate_checker.py tests/native/contracts/test_boundary_workflow_checker.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate
-uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
@@ -289,7 +289,7 @@ Add the next #189 child gate for cloud/shadow derived-boundary readiness. This i
 uv run --no-sync python run_pytest.py tests/native/contracts/test_cloud_shadow_boundary_gate_checker.py tests/native/contracts/test_boundary_workflow_checker.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --contracts-only
 uv run --no-sync python scripts/validation/check_boundary_workflows.py --json --cloud-shadow-gate --require-cloud-shadow-gate
-uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```

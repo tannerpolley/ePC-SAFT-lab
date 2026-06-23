@@ -17,17 +17,15 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     apply_plot_style,
     case_label,
     closure_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
     target_label,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "derivative_agreement" / "output"
 SOURCE = OUTPUT / "derivative_agreement.csv"
 PLOTTED = OUTPUT / "derivative_agreement_plotted_data.csv"
 FIGURE = OUTPUT / "derivative_agreement.png"
-SIDECAR = OUTPUT / "derivative_agreement.mpl.yaml"
 
 
 def main() -> None:
@@ -80,19 +78,8 @@ def main() -> None:
         ax.legend(loc="upper right")
     axes[-1].set_xlabel("Derivative target")
     fig.suptitle(r"Picard derivative agreement against exact implicit sensitivities")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="derivative_agreement",
-        title="Picard derivative agreement against exact implicit sensitivities",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="Derivative target",
-        y_label="relative derivative error",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/derivative_agreement/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

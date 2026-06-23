@@ -1,0 +1,28 @@
+{
+  "artifact_png": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_clean_literature_overlay.png",
+  "artifact_svg": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_clean_literature_overlay.svg",
+  "digitized_trace_rows_plotted": 0,
+  "figure_id": "figure_08",
+  "fit_statistics": {
+    "figure_id": "figure_08",
+    "mae": 1.5445127872855422,
+    "matched_literature_points": 23,
+    "max_abs": 2.1593113101738552,
+    "normalized_mae": 0.2743361966759399,
+    "signed_bias": -1.5445127872855422,
+    "skipped_literature_points": 11,
+    "y_unit": "degC"
+  },
+  "literature_points_csv": "analyses/paper_validation/2002_gross/figures/figure_08/source/gross_2002_figure_08_clean_literature_overlay_literature_points.csv",
+  "literature_rows": 34,
+  "model_seed_rows": 21,
+  "pending_source_data": [
+    "Kato et al. 1992 methanol/cyclohexane LLE table needs OCR or manual digitization because the Zotero PDF table does not extract as text"
+  ],
+  "plotted_data_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_clean_literature_overlay_plotted_data.csv",
+  "smooth_model_rows": 1280,
+  "sources": [
+    "Madhavan and Murti 1966 Table 3c"
+  ],
+  "title": "Gross 2002 Fig. 8: methanol/cyclohexane at 1.013 bar"
+}

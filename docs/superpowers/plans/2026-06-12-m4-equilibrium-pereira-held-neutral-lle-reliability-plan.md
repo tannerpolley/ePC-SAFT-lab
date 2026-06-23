@@ -23,7 +23,7 @@
 - User decision: the reliability plan must target LLE/stability behavior, not a VLE-only TP flash fixture.
 - User decision: require a full campaign rather than a smoke-only reliability gate.
 - User decision: after this neutral reliability gate and exact association derivatives exist, a narrow two-phase associating proof may start while explicitly excluding generalized phase-set and LLLE claims until #189 is complete.
-- Current evidence: `scripts/validation/check_phase_discovery.py` evaluates a synthetic neutral LLE binary, and `data/reference/equilibrium_benchmarks/neutral_tp_flash/hydrocarbon_workbook_flash` is a source-backed liquid/vapor TP flash fixture. This plan keeps the workbook case as source-backed neutral TP evidence, but the new reliability campaign is LLE-centered.
+- Current evidence: `scripts/validation/check_phase_discovery.py` evaluates a synthetic neutral LLE binary, and `data/reference/equilibrium_benchmarks/neutral_tp_flash/methane_ethane_propane` is a source-backed liquid/vapor TP flash fixture. This plan keeps the workbook case as source-backed neutral TP evidence, but the new reliability campaign is LLE-centered.
 
 ## What Counts As Test Complete
 

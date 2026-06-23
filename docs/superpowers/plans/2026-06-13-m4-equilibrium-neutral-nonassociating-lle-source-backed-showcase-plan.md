@@ -48,13 +48,13 @@ The issue is complete only when all of these are true:
 
 ## File Map
 
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/source_notes.md`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/metadata.json`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/pure_component_parameters.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/binary_interactions.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/experimental_tielines.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/feed_compositions.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/thresholds.json`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/source_notes.md`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/metadata.json`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/pure_component_parameters.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/binary_interactions.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/experimental_tielines.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/feed_compositions.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/thresholds.json`
 - Create: `scripts/validation/check_neutral_lle_showcase.py`
 - Create: `tests/native/contracts/test_neutral_lle_showcase_checker.py`
 - Create: `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`
@@ -68,10 +68,10 @@ The issue is complete only when all of these are true:
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/shared/results/neutral_lle_tolerance_summary.csv`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_binodal_showcase/results/neutral_lle_binodal_showcase.png`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_binodal_showcase/results/neutral_lle_binodal_showcase.svg`
-- Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_binodal_showcase/results/neutral_lle_binodal_showcase.mpl.yaml`
+- Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_binodal_showcase/results/neutral_lle_binodal_showcase.pdf`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_tolerance_margins/results/neutral_lle_tolerance_margins.png`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_tolerance_margins/results/neutral_lle_tolerance_margins.svg`
-- Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_tolerance_margins/results/neutral_lle_tolerance_margins.mpl.yaml`
+- Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_tolerance_margins/results/neutral_lle_tolerance_margins.pdf`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/neutral_lle_held_stage_status/results/neutral_lle_held_stage_status.png`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
@@ -85,13 +85,13 @@ The issue is complete only when all of these are true:
 - Future workers need to see the exact source row, species order, parameter provenance, binary interaction provenance, and tolerance decision.
 
 **Files:**
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/source_notes.md`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/metadata.json`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/pure_component_parameters.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/binary_interactions.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/experimental_tielines.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/feed_compositions.csv`
-- Create: `data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/thresholds.json`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/source_notes.md`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/metadata.json`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/pure_component_parameters.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/binary_interactions.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/experimental_tielines.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/feed_compositions.csv`
+- Create: `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/thresholds.json`
 - Test: `tests/native/contracts/test_neutral_lle_showcase_checker.py`
 
 - [x] Write a failing fixture-completeness test that imports `scripts.validation.check_neutral_lle_showcase` and asserts the candidate fixture is complete.
@@ -131,7 +131,7 @@ The issue is complete only when all of these are true:
 
   ```powershell
   uv run --no-sync python run_pytest.py tests/native/contracts/test_neutral_lle_showcase_checker.py -q
-  uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+  uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete
   ```
 
 ### Task 3: Add Package-Level Source-Backed LLE Route Test
@@ -172,12 +172,12 @@ The issue is complete only when all of these are true:
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/shared/results/run_summary.json`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/shared/results/neutral_lle_phase_points.csv`
 - Generate: `analyses/package_validation/neutral_nonassociating_lle_showcase/shared/results/neutral_lle_tolerance_summary.csv`
-- Generate: figure PNG/SVG/CSV/`.mpl.yaml` outputs under `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/*/results/`
+- Generate: figure PNG/SVG/CSV/`.pdf` outputs under `analyses/package_validation/neutral_nonassociating_lle_showcase/figures/*/results/`
 - Test: `analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/generate_data.py`
 - Test: `analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py`
 
 - [x] Implement `generate_data.py` so it calls the checker, writes the summary JSON, writes phase-point rows, and writes diagnostic margin rows.
-- [x] Implement `render_figures.py` so it reads retained data only and writes PNG, SVG, plot-input CSV, and `.mpl.yaml` sidecars.
+- [x] Implement `render_figures.py` so it reads retained data only and writes PNG, SVG, plot-input CSV, and PDF artifacts.
 - [x] Include a binodal-style composition figure with source liquid phases, solved liquid phases, and feed.
 - [x] Include a diagnostic-margin figure for composition, material balance, pressure, fugacity, and phase distance, plus a HELD-stage status figure for Stage II and Stage III evidence.
 - [x] Add README text stating the analysis is neutral nonassociating LLE showcase evidence only.
@@ -238,7 +238,7 @@ Run the proof in this order:
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py tests/native/contracts/test_neutral_lle_showcase_checker.py -q
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py -q
-uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane --json --require-complete
+uv run --no-sync python scripts/validation/check_neutral_lle_showcase.py --case-dir data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane --json --require-complete
 uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/generate_data.py
 uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py
 uv run --no-sync python scripts/dev/validate_project.py docs

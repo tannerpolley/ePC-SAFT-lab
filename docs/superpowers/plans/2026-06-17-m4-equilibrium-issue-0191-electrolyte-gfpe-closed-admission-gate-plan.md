@@ -19,7 +19,7 @@
 - Parent plan validator receipt: fails Task # Use Cases gate with 3 missing use-case blocks.
 - GFPE doctrine: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - M4 registry: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
-- Source fixture: `data/reference/equilibrium_benchmarks/electrolyte_lle/khudaida_2026`
+- Source fixture: `data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl`
 - Analysis parameter bundle: `analyses/paper_validation/2026_khudaida/parameters`
 - User scope decision: `Gate First` for #191 child planning.
 
@@ -323,7 +323,7 @@ Numerical and structural pass metrics:
   After the edit, this command must construct a mixture rather than raising on `mixed_ion_dispersion*` keys:
 
   ```powershell
-  uv run --no-sync python -c "import csv; from scripts.data.paper_validation_parameters import paper_validation_parameter_path; from epcsaft.state.native_adapter import ePCSAFTMixture; row=next(csv.DictReader(open('data/reference/equilibrium_benchmarks/electrolyte_lle/khudaida_2026/feed_compositions.csv', newline=''))); xs=float(row['x_nacl_total']); x=[float(row['x_water_total'])/(1+xs), float(row['x_ethanol_total'])/(1+xs), float(row['x_isobutanol_total'])/(1+xs), xs/(1+xs), xs/(1+xs)]; mix=ePCSAFTMixture.from_dataset(paper_validation_parameter_path('2026_Khudaida'), species=['H2O','Ethanol','Butanol','Na+','Cl-'], x=x, T=float(row['temperature_K'])); print(mix.species)"
+  uv run --no-sync python -c "import csv; from scripts.data.paper_validation_parameters import paper_validation_parameter_path; from epcsaft.state.native_adapter import ePCSAFTMixture; row=next(csv.DictReader(open('data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl/feed_compositions.csv', newline=''))); xs=float(row['x_nacl_total']); x=[float(row['x_water_total'])/(1+xs), float(row['x_ethanol_total'])/(1+xs), float(row['x_isobutanol_total'])/(1+xs), xs/(1+xs), xs/(1+xs)]; mix=ePCSAFTMixture.from_dataset(paper_validation_parameter_path('2026_Khudaida'), species=['H2O','Ethanol','Butanol','Na+','Cl-'], x=x, T=float(row['temperature_K'])); print(mix.species)"
   ```
 
 - [ ] **Step 4: Extend parameter-bundle curation**

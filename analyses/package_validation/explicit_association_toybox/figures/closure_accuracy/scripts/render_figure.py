@@ -19,16 +19,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     case_label,
     closure_label,
     log_fit_line,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "closure_accuracy" / "output"
 METRICS = OUTPUT / "closure_metrics.csv"
 FIGURE = OUTPUT / "closure_accuracy_summary.png"
 PLOTTED = OUTPUT / "closure_accuracy_summary_plotted_data.csv"
-SIDECAR = OUTPUT / "closure_accuracy_summary.mpl.yaml"
 
 
 def _load_rows() -> list[dict[str, str]]:
@@ -90,19 +88,8 @@ def main() -> None:
     axes[1].legend(fontsize=8, loc="lower left")
     fig.suptitle(f"{closure_label(plotted[0]['closure'])} closure accuracy")
 
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="explicit_association_closure_accuracy_summary",
-        title=f"{closure_label(plotted[0]['closure'])} closure accuracy",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="rho Delta",
-        y_label="relative Helmholtz error",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/closure_accuracy/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

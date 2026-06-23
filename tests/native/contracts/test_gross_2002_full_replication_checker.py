@@ -17,7 +17,7 @@ def _artifact_set(
     figure_id: str,
     *,
     score: float = 8.0,
-    derivative_status: str = "verified_exact",
+    proof_status: str = "verified_exact",
 ) -> dict[str, str]:
     source_csv = _write(tmp_path / figure_id / "source.csv", "x,y\n0.1,1.0\n")
     qa_overlay_path = tmp_path / figure_id / "qa_overlay.png"
@@ -49,7 +49,7 @@ def _artifact_set(
                 "max_axis_error": {"x": 0.0, "y": 0.1},
                 "normalized_plot_score": score,
                 "branch_coverage_score": 1.0,
-                "derivative_status": derivative_status,
+                checker.PROOF_STATUS_FIELD: proof_status,
                 "pass": score >= 8.0,
             },
             sort_keys=True,
@@ -59,7 +59,7 @@ def _artifact_set(
     summary_json = _write(tmp_path / figure_id / "summary.json", "{}\n")
     png = _write(tmp_path / figure_id / "plot.png")
     svg = _write(tmp_path / figure_id / "plot.svg")
-    sidecar = _write(tmp_path / figure_id / "plot.mpl.yaml", "kind: matplotlib-figure\n")
+    pdf = _write(tmp_path / figure_id / "plot.pdf")
     return {
         "source_csv": source_csv,
         "source_metadata_json": source_metadata_json,
@@ -70,7 +70,7 @@ def _artifact_set(
         "summary_json": summary_json,
         "png": png,
         "svg": svg,
-        "sidecar": sidecar,
+        "pdf": pdf,
     }
 
 
@@ -103,7 +103,7 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
         figure_id = f"figure_{number:02d}"
         plot_family = "t_rho" if number == 1 else "phase_boundary" if number in (8, 10) else "vle"
         requires_exact = number in (8, 9, 10)
-        artifacts = _artifact_set(tmp_path, figure_id, derivative_status="verified_exact" if requires_exact else "not_required")
+        artifacts = _artifact_set(tmp_path, figure_id, proof_status="verified_exact" if requires_exact else "not_required")
         if figure_id == "figure_02":
             artifacts["source_identity_json"] = _write(
                 tmp_path / figure_id / "identity.json",
@@ -123,7 +123,7 @@ def _complete_payload(tmp_path: Path) -> dict[str, object]:
                 "replication_status": "accepted",
                 "counts_toward_completion": True,
                 "acceptance_threshold": 8.0,
-                "requires_exact_association_hessian": requires_exact,
+                checker.SECOND_ORDER_REQUIRED_FIELD: requires_exact,
                 "source_identity_status": "resolved" if figure_id == "figure_02" else "not_required",
                 "artifacts": artifacts,
             }
@@ -153,7 +153,7 @@ def test_accepted_figure_requires_all_replication_artifacts(tmp_path: Path) -> N
             "replication_status": "accepted",
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
-            "requires_exact_association_hessian": True,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
             "artifacts": artifacts,
         }
     ]
@@ -165,7 +165,7 @@ def test_accepted_figure_requires_all_replication_artifacts(tmp_path: Path) -> N
 
 
 def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
-    artifacts = _artifact_set(tmp_path, "figure_02", score=5.0, derivative_status="not_required")
+    artifacts = _artifact_set(tmp_path, "figure_02", score=5.0, proof_status="not_required")
     payload = _foundation_payload()
     payload["figures"] = [
         {
@@ -174,7 +174,7 @@ def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
             "replication_status": "accepted",
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
-            "requires_exact_association_hessian": False,
+            checker.SECOND_ORDER_REQUIRED_FIELD: False,
             "artifacts": artifacts,
         }
     ]
@@ -186,7 +186,7 @@ def test_low_score_blocks_accepted_figure(tmp_path: Path) -> None:
 
 
 def test_figure_one_requires_vapor_and_liquid_branch_scores(tmp_path: Path) -> None:
-    artifacts = _artifact_set(tmp_path, "figure_01", derivative_status="verified_exact")
+    artifacts = _artifact_set(tmp_path, "figure_01", proof_status="verified_exact")
     score_path = Path(artifacts["score_json"])
     score_payload = json.loads(score_path.read_text(encoding="utf-8"))
     score_payload["branch_scores"] = {
@@ -197,7 +197,7 @@ def test_figure_one_requires_vapor_and_liquid_branch_scores(tmp_path: Path) -> N
             "max_axis_error": {"rho": 0.2, "T": 0.2},
             "normalized_plot_score": 8.0,
             "branch_coverage_score": 1.0,
-            "derivative_status": "verified_exact",
+            checker.PROOF_STATUS_FIELD: "verified_exact",
             "pass": True,
         }
     }
@@ -210,20 +210,20 @@ def test_figure_one_requires_vapor_and_liquid_branch_scores(tmp_path: Path) -> N
             "replication_status": "accepted",
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
-            "requires_exact_association_hessian": True,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
             "required_branches": ["methanol:vapor", "methanol:liquid"],
             "artifacts": artifacts,
         }
     ]
 
-    result = checker.evaluate_payload(payload, require_complete=True, require_exact_association_hessian=True)
+    result = checker.evaluate_payload(payload, require_complete=True, require_second_order_proof=True)
 
     assert result["complete"] is False
     assert "gross_2002_figure_01_required_branch_methanol_vapor_missing" in result["blockers"]
 
 
 def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) -> None:
-    artifacts = _artifact_set(tmp_path, "figure_02", derivative_status="verified_exact")
+    artifacts = _artifact_set(tmp_path, "figure_02", proof_status="verified_exact")
     payload = _foundation_payload()
     payload["figures"] = [
         {
@@ -232,7 +232,7 @@ def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) 
             "replication_status": "accepted",
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
-            "requires_exact_association_hessian": True,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
             "source_identity_status": "unresolved",
             "artifacts": artifacts,
         }
@@ -245,7 +245,7 @@ def test_figure_two_identity_must_be_resolved_before_acceptance(tmp_path: Path) 
 
 
 def test_figure_two_identity_requires_retained_artifact_before_acceptance(tmp_path: Path) -> None:
-    artifacts = _artifact_set(tmp_path, "figure_02", derivative_status="verified_exact")
+    artifacts = _artifact_set(tmp_path, "figure_02", proof_status="verified_exact")
     payload = _foundation_payload()
     payload["figures"] = [
         {
@@ -254,7 +254,7 @@ def test_figure_two_identity_requires_retained_artifact_before_acceptance(tmp_pa
             "replication_status": "accepted",
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
-            "requires_exact_association_hessian": True,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
             "source_identity_status": "resolved",
             "artifacts": artifacts,
         }
@@ -267,7 +267,7 @@ def test_figure_two_identity_requires_retained_artifact_before_acceptance(tmp_pa
 
 
 def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
-    figure_03_artifacts = _artifact_set(tmp_path, "figure_03", derivative_status="verified_exact")
+    figure_03_artifacts = _artifact_set(tmp_path, "figure_03", proof_status="verified_exact")
     figure_03_score_path = Path(figure_03_artifacts["score_json"])
     figure_03_score = json.loads(figure_03_score_path.read_text(encoding="utf-8"))
     figure_03_score["series_scores"] = {
@@ -278,13 +278,13 @@ def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
             "max_axis_error": {"composition": 0.02, "temperature_K": 0.4},
             "normalized_plot_score": 8.0,
             "branch_coverage_score": 1.0,
-            "derivative_status": "verified_exact",
+            checker.PROOF_STATUS_FIELD: "verified_exact",
             "pass": True,
         }
     }
     figure_03_score_path.write_text(json.dumps(figure_03_score, sort_keys=True) + "\n", encoding="utf-8")
 
-    figure_05_artifacts = _artifact_set(tmp_path, "figure_05", derivative_status="verified_exact")
+    figure_05_artifacts = _artifact_set(tmp_path, "figure_05", proof_status="verified_exact")
     figure_05_score_path = Path(figure_05_artifacts["score_json"])
     figure_05_score = json.loads(figure_05_score_path.read_text(encoding="utf-8"))
     figure_05_score["series_scores"] = {
@@ -295,7 +295,7 @@ def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
             "max_axis_error": {"composition": 0.02, "pressure_bar": 0.04},
             "normalized_plot_score": 8.0,
             "branch_coverage_score": 1.0,
-            "derivative_status": "verified_exact",
+            checker.PROOF_STATUS_FIELD: "verified_exact",
             "pass": True,
         }
     }
@@ -309,7 +309,7 @@ def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
             "replication_status": "accepted",
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
-            "requires_exact_association_hessian": True,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
             "required_series": ["pressure_series_low", "pressure_series_high"],
             "artifacts": figure_03_artifacts,
         },
@@ -319,7 +319,7 @@ def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
             "replication_status": "accepted",
             "counts_toward_completion": True,
             "acceptance_threshold": 8.0,
-            "requires_exact_association_hessian": True,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
             "required_series": ["1-propanol-benzene", "2-propanol-benzene"],
             "artifacts": figure_05_artifacts,
         },

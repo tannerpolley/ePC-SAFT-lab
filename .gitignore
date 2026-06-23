@@ -32,10 +32,7 @@ scripts/fits/
 scripts/paper_validation/
 docs/latex/out/
 docs/latex/references.bib
-docs/ChatGPT_Gemini_Responses/
-docs/goals/*
-docs/goals/**/.goalbuddy-board/
-.goalbuddy-board/
+.mplgallery/
 graphify-out/
 **/graphify-out/
 data/MIAC/*/plot_fits/

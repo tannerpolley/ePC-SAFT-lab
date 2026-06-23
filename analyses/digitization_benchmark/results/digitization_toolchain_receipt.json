@@ -1,0 +1,22 @@
+{
+  "python": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\.venv\\Scripts\\python.exe",
+  "python_modules": {
+    "PIL": "12.2.0",
+    "cv2": "4.13.0",
+    "fitz": "1.27.2.3",
+    "matplotlib": "3.10.9",
+    "numpy": "2.4.4",
+    "pdfplumber": "0.11.10",
+    "pypdf": "6.14.0",
+    "reportlab": "5.0.0",
+    "scipy": "1.18.0",
+    "skimage": "0.26.0"
+  },
+  "tools": {
+    "engauge": null,
+    "magick": "C:\\Users\\Tanner\\scoop\\apps\\imagemagick\\current\\magick.EXE",
+    "pdftoppm": "C:\\Users\\Tanner\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\pdftoppm.EXE",
+    "plotdigitizer": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\.venv\\Scripts\\plotdigitizer.exe",
+    "tesseract": "C:\\Users\\Tanner\\scoop\\shims\\tesseract.EXE"
+  }
+}

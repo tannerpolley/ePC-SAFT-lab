@@ -13,9 +13,9 @@ import yaml
 
 ANALYSIS_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = ANALYSIS_ROOT.parents[2]
-REFERENCE_SOURCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component" / "saturation_density"
+REFERENCE_SOURCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component" / "saturation_properties"
 DEFAULT_CONFIG = ANALYSIS_ROOT / "config" / "public_property_sources.yaml"
-DEFAULT_OUTPUT = REFERENCE_SOURCE_DIR / "water_methanol_nist_saturation.csv"
+DEFAULT_OUTPUT = REFERENCE_SOURCE_DIR
 NIST_FLUID_URL = "https://webbook.nist.gov/cgi/fluid.cgi"
 
 
@@ -128,9 +128,11 @@ def _select_source_rows(rows: list[dict[str, object]], source: Mapping[str, obje
     return selected
 
 
-def write_public_saturation_csv(rows: list[dict[str, object]], output_path: Path = DEFAULT_OUTPUT) -> Path:
+def write_public_saturation_csv(rows: list[dict[str, object]], output_root: Path = DEFAULT_OUTPUT) -> list[Path]:
     if not rows:
         raise RuntimeError("public saturation fetch produced no liquid rows.")
+    if output_root.suffix:
+        raise ValueError("public saturation output must be the pure-component saturation-properties root directory.")
     fieldnames = [
         "component",
         "source_name",
@@ -140,12 +142,18 @@ def write_public_saturation_csv(rows: list[dict[str, object]], output_path: Path
         "phase",
         "source_url",
     ]
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows({key: row.get(key, "") for key in fieldnames} for row in rows)
-    return output_path
+    paths: list[Path] = []
+    components = sorted({str(row["component"]) for row in rows})
+    for component in components:
+        output_path = output_root / component / "saturation_properties.csv"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        component_rows = [row for row in rows if str(row["component"]) == component]
+        with output_path.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows({key: row.get(key, "") for key in fieldnames} for row in component_rows)
+        paths.append(output_path)
+    return paths
 
 
 def load_public_property_sources(path: Path = DEFAULT_CONFIG) -> list[dict[str, object]]:
@@ -208,8 +216,8 @@ def main() -> None:
     rows: list[dict[str, object]] = []
     for source in load_public_property_sources(args.config):
         rows.extend(fetch_nist_saturation(source, allow_network=args.allow_network))
-    output = write_public_saturation_csv(rows, args.output)
-    print(output)
+    for output in write_public_saturation_csv(rows, args.output):
+        print(output)
 
 
 if __name__ == "__main__":

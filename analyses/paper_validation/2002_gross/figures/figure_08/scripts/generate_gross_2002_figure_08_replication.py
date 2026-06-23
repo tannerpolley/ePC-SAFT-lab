@@ -34,7 +34,6 @@ from PIL import Image, ImageDraw
 import epcsaft
 import epcsaft_equilibrium
 from epcsaft_equilibrium._native import extension_native_core
-from equilibrium_support.equilibrium_cases import gross_2002_associating_parameter_set
 
 FIGURE_ID = "figure_08"
 STEM = "gross_2002_figure_08_replication"
@@ -125,7 +124,7 @@ SCORE_JSON = RESULTS_DIR / f"{STEM}_score.json"
 SUMMARY_JSON = RESULTS_DIR / f"{STEM}_summary.json"
 PNG = RESULTS_DIR / f"{STEM}.png"
 SVG = RESULTS_DIR / f"{STEM}.svg"
-SIDECAR = RESULTS_DIR / f"{STEM}.mpl.yaml"
+PDF = RESULTS_DIR / f"{STEM}.pdf"
 
 
 def _relative(path: Path) -> str:
@@ -150,6 +149,10 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+
+
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    return list(csv.DictReader(path.read_text(encoding="utf-8").splitlines()))
 
 def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -293,6 +296,8 @@ def _write_source_artifacts() -> tuple[list[dict[str, Any]], dict[str, float]]:
 
 
 def _mixture() -> epcsaft.Mixture:
+    from equilibrium_support.equilibrium_cases import gross_2002_associating_parameter_set
+
     return epcsaft.Mixture(gross_2002_associating_parameter_set())
 
 
@@ -525,28 +530,8 @@ def _write_plot(source_rows: list[dict[str, Any]], model_rows: list[dict[str, An
     )
     fig.savefig(PNG, dpi=180)
     fig.savefig(SVG)
+    fig.savefig(PDF)
     plt.close(fig)
-    SIDECAR.write_text(
-        "\n".join(
-            [
-                "kind: matplotlib-figure",
-                "version: 1",
-                "plot_id: gross_2002_figure_08_replication",
-                "title: Gross 2002 Figure 8 PC-SAFT replication",
-                "matplotlib:",
-                "  title: Gross/Sadowski 2002 Figure 8 PC-SAFT replication",
-                "  x_label: x_Methanol or y_Methanol",
-                "  y_label: T / degC",
-                "  grid: major",
-                "files:",
-                f"  plotted_data: {_relative(PLOTTED_CSV)}",
-                "render:",
-                "  command: uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_08/scripts/generate_gross_2002_figure_08_replication.py",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
 
 
 def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[str, Any]]) -> None:
@@ -604,6 +589,27 @@ def _native_receipt() -> dict[str, Any]:
     return native_freshness.receipt_to_jsonable(receipt)
 
 
+
+def _retained_native_receipt() -> dict[str, Any]:
+    if SUMMARY_JSON.exists():
+        payload = json.loads(SUMMARY_JSON.read_text(encoding="utf-8"))
+        candidates = [
+            payload.get("native_freshness_receipt"),
+            payload.get("native_freshness"),
+            payload.get("native_route", {}).get("native_freshness_receipt")
+            if isinstance(payload.get("native_route"), dict)
+            else None,
+        ]
+        for receipt in candidates:
+            if isinstance(receipt, dict) and receipt:
+                return receipt
+    if MANIFEST_PATH.exists():
+        payload = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        receipt = payload.get("native_freshness_receipt")
+        if isinstance(receipt, dict) and receipt:
+            return receipt
+    raise RuntimeError(f"Retained native freshness receipt is required for --render-only: {_relative(SUMMARY_JSON)}")
+
 def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> None:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     manifest["native_freshness_receipt"] = receipt
@@ -617,7 +623,7 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
         "summary_json": _relative(SUMMARY_JSON),
         "png": _relative(PNG),
         "svg": _relative(SVG),
-        "sidecar": _relative(SIDECAR),
+        "pdf": _relative(PDF),
     }
     for record in manifest["figures"]:
         if record.get("figure_id") != FIGURE_ID:
@@ -643,9 +649,20 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
 
 
 def main() -> int:
+    unknown_args = [arg for arg in sys.argv[1:] if arg != "--render-only"]
+    if unknown_args:
+        raise RuntimeError(f"Unsupported arguments: {unknown_args}")
+    render_only = "--render-only" in sys.argv[1:]
+
     source_rows, _ = _write_source_artifacts()
-    model_rows = _solve_model_rows(source_rows)
-    native_receipt = _native_receipt()
+    if render_only:
+        if not MODEL_CSV.exists():
+            raise RuntimeError(f"Retained model CSV is required for --render-only: {_relative(MODEL_CSV)}")
+        model_rows = list(_read_csv(MODEL_CSV))
+        native_receipt = _retained_native_receipt()
+    else:
+        model_rows = _solve_model_rows(source_rows)
+        native_receipt = _native_receipt()
     score_payload = _score(source_rows, model_rows, native_receipt)
     _write_csv(
         MODEL_CSV,

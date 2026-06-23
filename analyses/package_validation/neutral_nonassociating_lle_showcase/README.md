@@ -6,7 +6,7 @@ nonassociating LLE showcase for M4 issue #250.
 The source fixture is:
 
 ```text
-data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane/
+data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane/
 ```
 
 Scope:

@@ -12,14 +12,14 @@ def test_residual_ares_figure_workflow_writes_retained_outputs(tmp_path: Path, m
     metrics = tmp_path / "residual_ares_metrics.csv"
     plotted = tmp_path / "residual_ares_error_summary_plotted_data.csv"
     figure = tmp_path / "residual_ares_error_summary.png"
-    sidecar = tmp_path / "residual_ares_error_summary.mpl.yaml"
+    svg = tmp_path / "residual_ares_error_summary.svg"
+    pdf = tmp_path / "residual_ares_error_summary.pdf"
 
     monkeypatch.setattr(generate_data, "OUTPUT", metrics)
     monkeypatch.setattr(render_figure, "OUTPUT", tmp_path)
     monkeypatch.setattr(render_figure, "METRICS", metrics)
     monkeypatch.setattr(render_figure, "PLOTTED", plotted)
     monkeypatch.setattr(render_figure, "FIGURE", figure)
-    monkeypatch.setattr(render_figure, "SIDECAR", sidecar)
 
     generate_data.main()
     render_figure.main()
@@ -27,6 +27,7 @@ def test_residual_ares_figure_workflow_writes_retained_outputs(tmp_path: Path, m
     assert metrics.is_file()
     assert plotted.is_file()
     assert figure.is_file()
-    assert sidecar.is_file()
+    assert svg.is_file()
+    assert pdf.is_file()
     assert "ares_total_rel_error" in metrics.read_text(encoding="utf-8")
     assert "max_ares_total_rel_error" in plotted.read_text(encoding="utf-8")

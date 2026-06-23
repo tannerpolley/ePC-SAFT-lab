@@ -105,7 +105,7 @@ uv run python analyses/package_validation/explicit_association_toybox/figures/ja
 uv run python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py
 ```
 
-Expected: CSV, plotted-data CSV, PNG, SVG, and MPL sidecar are written under
+Expected: CSV, plotted-data CSV, PNG, SVG, and PDF LaTeX artifact are written under
 `figures/jax_picard_derivatives/output`.
 
 - [ ] **Step 5: Commit**

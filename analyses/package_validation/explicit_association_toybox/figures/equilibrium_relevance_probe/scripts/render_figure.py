@@ -16,16 +16,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     case_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "equilibrium_relevance_probe" / "output"
 SOURCE = OUTPUT / "equilibrium_relevance_probe.csv"
 PLOTTED = OUTPUT / "equilibrium_relevance_probe_plotted_data.csv"
 FIGURE = OUTPUT / "equilibrium_relevance_probe.png"
-SIDECAR = OUTPUT / "equilibrium_relevance_probe.mpl.yaml"
 
 ERROR_METRICS = (
     ("objective_abs_error", r"$|\Delta \Phi|$"),
@@ -62,20 +60,6 @@ def main() -> None:
     plotted = build_plotted_rows(rows)
     _write_plotted_data(plotted)
     _render(plotted)
-    write_sidecar(
-        SIDECAR,
-        plot_id="equilibrium_relevance_probe",
-        title="Picard local-objective derivative relevance probe",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="local objective error metric",
-        y_label="absolute error or residual norm",
-        y_scale="log",
-        command=(
-            "uv run python analyses/package_validation/explicit_association_toybox/figures/"
-            "equilibrium_relevance_probe/scripts/render_figure.py"
-        ),
-    )
     print(FIGURE)
 
 
@@ -125,7 +109,7 @@ def _render(rows: list[dict[str, object]]) -> None:
     axis.set_title(str(rows[0]["case_label"]), loc="left")
     style_axis(axis, minor=True)
     axis.legend(frameon=False, loc="best")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
 
 

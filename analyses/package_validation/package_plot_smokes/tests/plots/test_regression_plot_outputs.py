@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+import csv
+from pathlib import Path
+
 import numpy as np
 
-import epcsaft
+import epcsaft_regression
 from analyses.package_validation.package_plot_smokes.tests.plots.plot_helpers import save_comparison_plot
 from scripts import plot_outputs
-from tests.helpers.binary_regression_cases import (
-    ETHANOL_WATER_HELD_2012_KIJ,
-    ETHANOL_WATER_PAPER_PCSAFT_KIJ_100KPA,
-    ethanol_water_jced2021_vle_records,
-)
-from tests.helpers.regression_cases import (
+from packages.epcsaft.tests.support.regression_cases import (
     _load_workbook_reference_rows,
     _methane_like_records,
     _minimal_neutral_metadata,
@@ -18,9 +16,34 @@ from tests.helpers.regression_cases import (
     _real_saturation_records,
 )
 
+REPO_ROOT = Path(__file__).resolve().parents[5]
+ETHANOL_WATER_VLE_CSV = REPO_ROOT / "data" / "reference" / "regression" / "binary" / "vle" / "ethanol_water" / "100kpa.csv"
+GROSS_2002_PARAMETER_SNAPSHOT = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "parameters"
+ETHANOL_WATER_INITIAL_KIJ = 0.0
+ETHANOL_WATER_PAPER_PCSAFT_KIJ_100KPA = -0.0269
+
+
+def ethanol_water_vle_records(*, smoke_only: bool = False) -> list[dict[str, float]]:
+    rows: list[dict[str, float]] = []
+    with ETHANOL_WATER_VLE_CSV.open("r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if smoke_only and row.get("use_in_smoke", "").lower() != "true":
+                continue
+            rows.append(
+                {
+                    "T": float(row["T"]),
+                    "P": float(row["P"]),
+                    "x_Ethanol": float(row["x_Ethanol"]),
+                    "x_H2O": float(row["x_H2O"]),
+                    "y_Ethanol": float(row["y_Ethanol"]),
+                    "y_H2O": float(row["y_H2O"]),
+                }
+            )
+    return rows
+
 
 def test_regression_parameter_reference_comparison_plot() -> None:
-    result = epcsaft.fit_pure_neutral(
+    result = epcsaft_regression.fit_pure_neutral(
         _methane_like_records(),
         "Methane",
         assoc_scheme="",
@@ -54,7 +77,7 @@ def test_full_hydrocarbon_basis_parameter_comparison_plot() -> None:
 
     for component in ("Methane", "Ethane", "Propane"):
         reference = csv_rows[component]
-        result = epcsaft.fit_pure_neutral(
+        result = epcsaft_regression.fit_pure_neutral(
             _real_saturation_records(component),
             component,
             assoc_scheme="",
@@ -82,19 +105,19 @@ def test_full_hydrocarbon_basis_parameter_comparison_plot() -> None:
 
 
 def test_ethanol_water_binary_vle_real_data_kij_plot() -> None:
-    result = epcsaft.fit_binary_pair(
-        ethanol_water_jced2021_vle_records(smoke_only=True),
+    result = epcsaft_regression.fit_binary_pair(
+        ethanol_water_vle_records(smoke_only=True),
         ("Ethanol", "H2O"),
-        dataset="2012_Held",
-        initial_guess={"k_ij": ETHANOL_WATER_HELD_2012_KIJ},
+        dataset=GROSS_2002_PARAMETER_SNAPSHOT,
+        initial_guess={"k_ij": ETHANOL_WATER_INITIAL_KIJ},
         bounds={"k_ij": (-0.15, 0.10)},
     )
     assert result.success, result.message
 
-    labels = ("2012 Held start", "native fit", "2021 paper PC-SAFT")
+    labels = ("zero start", "native fit", "2021 paper PC-SAFT")
     values = np.asarray(
         [
-            ETHANOL_WATER_HELD_2012_KIJ,
+            ETHANOL_WATER_INITIAL_KIJ,
             result.fitted_values["k_ij"],
             ETHANOL_WATER_PAPER_PCSAFT_KIJ_100KPA,
         ],
@@ -126,5 +149,5 @@ def test_ethanol_water_binary_vle_real_data_kij_plot() -> None:
         "ethanol_water_binary_vle_real_data_kij.png",
         category=("regression", "binary_ethanol_water"),
     )
-    plot_outputs.save_plot_figure(fig, out, dpi=160, svg_companion=True)
+    plot_outputs.save_plot_figure(fig, out, dpi=160)
     plt.close(fig)

@@ -90,7 +90,7 @@ missing.
 
 - [ ] **Step 3: Implement data generation**
 
-Read `data/reference/pure_component/saturation_density/water_methanol_nist_saturation.csv`
+Read `data/reference/pure_component/saturation_properties/{methanol,water}/saturation_properties.csv`
 and provider cases. Write
 one reference row plus exact implicit and Picard model rows for each retained
 pure associating compound/temperature case.
@@ -115,7 +115,7 @@ Stage the generation script, output CSV, and tests. Commit with:
 - Create: `analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/output/pure_saturation_validation_plotted_data.csv`
 - Create: `analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/output/pure_saturation_validation.png`
 - Create: `analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/output/pure_saturation_validation.svg`
-- Create: `analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/output/pure_saturation_validation.mpl.yaml`
+- Create: `analyses/package_validation/explicit_association_toybox/figures/pure_saturation_validation/output/pure_saturation_validation.pdf`
 
 - [ ] **Step 1: Render the first figure**
 

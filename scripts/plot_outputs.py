@@ -512,9 +512,9 @@ def plot_svg_path(image_path: str | Path) -> Path:
     return image.with_suffix(".svg")
 
 
-def plot_style_path(image_path: str | Path) -> Path:
+def plot_pdf_path(image_path: str | Path) -> Path:
     image = Path(image_path)
-    return image.parent / f"{image.stem}.mpl.yaml"
+    return image.with_suffix(".pdf")
 
 
 def _strip_trailing_whitespace(path: Path) -> None:
@@ -523,42 +523,6 @@ def _strip_trailing_whitespace(path: Path) -> None:
     if text.endswith("\n"):
         normalized += "\n"
     path.write_text(normalized, encoding="utf-8", newline="\n")
-
-
-def _yaml_scalar(value: Any) -> str:
-    text = "" if value is None else str(value)
-    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def write_mpl_style_contract(fig: Any, image_path: str | Path) -> Path:
-    image = Path(image_path)
-    path = plot_style_path(image)
-    axes_blocks: list[str] = []
-    for index, ax in enumerate(getattr(fig, "axes", [])):
-        axes_blocks.extend(
-            [
-                f"  - index: {index}",
-                f"    title: {_yaml_scalar(ax.get_title() if hasattr(ax, 'get_title') else '')}",
-                f"    xlabel: {_yaml_scalar(ax.get_xlabel() if hasattr(ax, 'get_xlabel') else '')}",
-                f"    ylabel: {_yaml_scalar(ax.get_ylabel() if hasattr(ax, 'get_ylabel') else '')}",
-            ]
-        )
-    if not axes_blocks:
-        axes_blocks.append("  []")
-
-    content = [
-        "# Matplotlib plot-set style contract.",
-        "# Edit this sidecar, then rerun the owning render script.",
-        "figure:",
-        f"  file: {_yaml_scalar(image.name)}",
-        "  format: " + _yaml_scalar(image.suffix.lstrip(".")),
-        "axes:",
-        *axes_blocks,
-        "",
-    ]
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(content), encoding="utf-8", newline="\n")
-    return path
 
 
 def _format_cell(value: Any) -> str:
@@ -779,7 +743,6 @@ def save_plot_figure(
     *,
     dpi: int = 300,
     bbox_inches: str | None = "tight",
-    svg_companion: bool = False,
     **savefig_kwargs: Any,
 ) -> Path:
     output_path = Path(path)
@@ -788,11 +751,12 @@ def save_plot_figure(
     if bbox_inches is not None:
         kwargs["bbox_inches"] = bbox_inches
     fig.savefig(output_path, dpi=dpi, **kwargs)
-    if svg_companion:
-        svg_path = plot_svg_path(output_path)
-        svg_kwargs = dict(kwargs)
-        fig.savefig(svg_path, format="svg", **svg_kwargs)
-        _strip_trailing_whitespace(svg_path)
+    svg_path = plot_svg_path(output_path)
+    svg_kwargs = dict(kwargs)
+    fig.savefig(svg_path, format="svg", metadata={"Date": None}, **svg_kwargs)
+    _strip_trailing_whitespace(svg_path)
+    pdf_path = plot_pdf_path(output_path)
+    pdf_kwargs = dict(kwargs)
+    fig.savefig(pdf_path, format="pdf", **pdf_kwargs)
     export_plot_data(fig, output_path)
-    write_mpl_style_contract(fig, output_path)
     return output_path

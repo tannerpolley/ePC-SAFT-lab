@@ -22,9 +22,10 @@ MANIFEST_PATH = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "sh
 SUMMARY_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "shared" / "results"
 REQUIRED_ACCEPTED_FIGURES = ("figure_01", "figure_08", "figure_10")
 SOURCE_REQUIREMENT_FIGURES = ("figure_02", "figure_03", "figure_04", "figure_05", "figure_06", "figure_07", "figure_09")
-ARTIFACT_KEYS = ("source_csv", "model_csv", "plotted_csv", "summary_json", "png", "svg", "sidecar")
+VISUAL_ARTIFACT_KEYS = ("source_csv", "model_csv", "plotted_csv", "summary_json", "png", "svg", "pdf")
+FIGURE01_ARTIFACT_KEYS = ("source_csv", "fit_statistics_csv")
 FIGURE_MISSING_BLOCKERS = {
-    "figure_01": "gross_2002_figure_01_pure_association_mirror_missing",
+    "figure_01": "gross_2002_figure_01_pure_association_statistics_missing",
     "figure_08": "gross_2002_figure_08_campaign_evidence_missing",
     "figure_10": "gross_2002_figure_10_source_data_missing",
 }
@@ -82,6 +83,11 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 def _artifact_paths(figure_id: str, stem: str, source_csv: str | None = None) -> dict[str, str]:
     result_dir = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "figures" / figure_id / "results"
+    if figure_id == "figure_01":
+        return {
+            "source_csv": _relative(_repo_path(source_csv)) if source_csv else "",
+            "fit_statistics_csv": _relative(result_dir / "association_fit_statistics.csv"),
+        }
     return {
         "source_csv": _relative(_repo_path(source_csv)) if source_csv else "",
         "model_csv": _relative(result_dir / f"{stem}_model_curve.csv"),
@@ -89,7 +95,7 @@ def _artifact_paths(figure_id: str, stem: str, source_csv: str | None = None) ->
         "summary_json": _relative(result_dir / f"{stem}_association_summary.json"),
         "png": _relative(result_dir / f"{stem}_association_mirror.png"),
         "svg": _relative(result_dir / f"{stem}_association_mirror.svg"),
-        "sidecar": _relative(result_dir / f"{stem}_association_mirror.mpl.yaml"),
+        "pdf": _relative(result_dir / f"{stem}_association_mirror.pdf"),
     }
 
 
@@ -105,7 +111,8 @@ def _figure_artifact_blockers(record: dict[str, Any]) -> list[str]:
     blockers: list[str] = []
     if not isinstance(artifacts, dict):
         return [f"gross_2002_{figure_id}_artifacts_missing"]
-    for key in ARTIFACT_KEYS:
+    artifact_keys = FIGURE01_ARTIFACT_KEYS if figure_id == "figure_01" else VISUAL_ARTIFACT_KEYS
+    for key in artifact_keys:
         if not _path_exists(artifacts.get(key, "")):
             blockers.append(f"gross_2002_{figure_id}_{key}_missing")
     return blockers
@@ -154,7 +161,7 @@ def evaluate_payload(
             if require_complete:
                 blockers.extend(_figure_artifact_blockers(record))
             if figure_id == "figure_01" and record.get("pure_association_sanity", {}).get("status") != "verified":
-                blockers.append("gross_2002_figure_01_pure_association_mirror_missing")
+                blockers.append("gross_2002_figure_01_pure_association_statistics_missing")
             if figure_id == "figure_10" and record.get("cross_association_stress", {}).get("status") != "verified":
                 blockers.append("gross_2002_figure_10_cross_association_stress_missing")
 
@@ -227,6 +234,7 @@ def _source_requirement_record(row: dict[str, Any]) -> dict[str, Any]:
         "status": "source_requirement_recorded",
         "counts_toward_completion": False,
         "source_image": row.get("source_image", ""),
+        "source_data_home": row.get("source_data_home", []),
         "route_family": row.get("route_family", ""),
         "source_requirements": list(row.get("source_requirements", [])),
     }
@@ -234,7 +242,7 @@ def _source_requirement_record(row: dict[str, Any]) -> dict[str, Any]:
 
 def _figure01_record(row: dict[str, Any]) -> dict[str, Any]:
     source_csv = row.get("source_csv", "")
-    stem = row.get("result_stem", "gross_2002_figure_01_association_mirror")
+    stem = row.get("result_stem", "association")
     source_rows = _read_csv(_repo_path(source_csv)) if _repo_path(source_csv).is_file() else []
     components = {source_row.get("component", "") for source_row in source_rows}
     status = "accepted" if {"methanol", "1-pentanol", "1-nonanol"} <= components else "blocked"
@@ -245,6 +253,7 @@ def _figure01_record(row: dict[str, Any]) -> dict[str, Any]:
         "counts_toward_completion": True,
         "source_point_count": len(source_rows),
         "source_image": row.get("source_image", ""),
+        "source_data_home": row.get("source_data_home", []),
         "route_family": row.get("route_family", ""),
         "artifacts": _artifact_paths("figure_01", stem, source_csv),
         "pure_association_sanity": {
@@ -636,102 +645,71 @@ def evaluate_campaign(
     return result
 
 
-def _plot_sidecar(path: Path, *, plot_id: str, title: str, command: str, plotted_csv: str) -> None:
-    path.write_text(
-        "\n".join(
-            [
-                "kind: matplotlib-figure",
-                "version: 1",
-                f"plot_id: {plot_id}",
-                f"title: {title}",
-                "matplotlib:",
-                f"  title: {title}",
-                "  x_label: composition or component",
-                "  y_label: source value",
-                "  grid: major",
-                "files:",
-                f"  plotted_data: {plotted_csv}",
-                "render:",
-                f"  command: {command}",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
-
-
-def _save_plot(fig: Any, png: Path, svg: Path) -> None:
+def _save_plot(fig: Any, png: Path, svg: Path, pdf: Path) -> None:
     png.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(png, dpi=180, bbox_inches="tight")
     fig.savefig(svg, bbox_inches="tight")
+    text = svg.read_text(encoding="utf-8")
+    svg.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
+    fig.savefig(pdf, bbox_inches="tight")
 
 
 def _render_figure01(row: dict[str, Any]) -> dict[str, Any]:
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
     source_csv = _repo_path(row["source_csv"])
     source_rows = _read_csv(source_csv)
-    stem = row["result_stem"]
+    stem = row.get("result_stem", "association")
     artifacts = _artifact_paths("figure_01", stem, row["source_csv"])
-    model_rows: list[dict[str, Any]] = []
-    plotted_rows: list[dict[str, Any]] = []
+    statistics_rows: list[dict[str, Any]] = []
     for source_row in source_rows:
         component = source_row["component"]
-        for metric in ("psat_aad_percent", "liquid_density_aad_percent"):
-            value = float(source_row[metric])
-            model_rows.append(
+        statistics_rows.extend(
+            [
                 {
                     "component": component,
-                    "metric": metric,
-                    "value_percent": value,
-                    "evidence_role": "gross_2002_table_1_pc_saft_aad",
-                }
-            )
-            plotted_rows.append(
-                {
-                    "component": component,
-                    "metric": metric,
-                    "value_percent": value,
+                    "metric": "vapor_pressure_aad",
+                    "value_percent": source_row["psat_aad_percent"],
+                    "source_table": source_row["source_table"],
                     "source_status": source_row["source_status"],
-                }
-            )
-    _write_csv(_repo_path(artifacts["model_csv"]), model_rows, ["component", "metric", "value_percent", "evidence_role"])
-    _write_csv(_repo_path(artifacts["plotted_csv"]), plotted_rows, ["component", "metric", "value_percent", "source_status"])
-
-    components = [row["component"] for row in source_rows]
-    x = np.arange(len(components), dtype=float)
-    psat = [float(row["psat_aad_percent"]) for row in source_rows]
-    rho = [float(row["liquid_density_aad_percent"]) for row in source_rows]
-    fig, ax = plt.subplots(figsize=(7.0, 4.4))
-    width = 0.34
-    ax.bar(x - width / 2, psat, width=width, label="vapor pressure AAD", color="#4C78A8")
-    ax.bar(x + width / 2, rho, width=width, label="liquid density AAD", color="#F58518")
-    ax.set_xticks(x)
-    ax.set_xticklabels(components)
-    ax.set_ylabel("AAD / %")
-    ax.set_title("Gross 2002 Figure 1 pure-association sanity mirror")
-    ax.grid(axis="y", alpha=0.25)
-    ax.legend(frameon=False)
-    _save_plot(fig, _repo_path(artifacts["png"]), _repo_path(artifacts["svg"]))
-    plt.close(fig)
-    _plot_sidecar(
-        _repo_path(artifacts["sidecar"]),
-        plot_id="gross_2002_figure_01_association_mirror",
-        title="Gross 2002 Figure 1 Association Mirror",
-        command="uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_01/scripts/render_gross_2002_figure_01_association_mirror.py",
-        plotted_csv=artifacts["plotted_csv"],
+                    "source_method": source_row.get("source_method", ""),
+                    "source_reference": source_row.get("source_reference", ""),
+                    "evidence_role": "gross_2002_table_1_pc_saft_aad",
+                },
+                {
+                    "component": component,
+                    "metric": "liquid_density_aad",
+                    "value_percent": source_row["liquid_density_aad_percent"],
+                    "source_table": source_row["source_table"],
+                    "source_status": source_row["source_status"],
+                    "source_method": source_row.get("source_method", ""),
+                    "source_reference": source_row.get("source_reference", ""),
+                    "evidence_role": "gross_2002_table_1_pc_saft_aad",
+                },
+            ]
+        )
+    _write_csv(
+        _repo_path(artifacts["fit_statistics_csv"]),
+        statistics_rows,
+        [
+            "component",
+            "metric",
+            "value_percent",
+            "source_table",
+            "source_status",
+            "source_method",
+            "source_reference",
+            "evidence_role",
+        ],
     )
+
+    components = [source_row["component"] for source_row in source_rows]
     summary = {
         "figure_id": "figure_01",
         "status": "accepted",
         "source_point_count": len(source_rows),
         "artifacts": artifacts,
+        "source_data_home": row.get("source_data_home", []),
         "pure_association_sanity": {"status": "verified", "components": components},
     }
-    _write_json(_repo_path(artifacts["summary_json"]), summary)
     return summary
 
 
@@ -753,6 +731,8 @@ def _render_figure08(row: dict[str, Any]) -> dict[str, Any]:
     public = proof["public_admission"]
     stem = row["result_stem"]
     artifacts = _artifact_paths("figure_08", stem, row["source_csv"])
+    retained_summary_path = _repo_path(artifacts["summary_json"])
+    retained_summary = _read_json(retained_summary_path) if retained_summary_path.is_file() else {}
     plotted_rows = [
         {
             "series": source_row["phase_branch"],
@@ -763,17 +743,27 @@ def _render_figure08(row: dict[str, Any]) -> dict[str, Any]:
         }
         for source_row in source_rows
     ]
-    route_temperature_k = float(proof["prerequisite_proof"]["internal_route"]["temperature_K"])
-    model_rows = [
-        {
-            "series": "public_associating_lle_route",
-            "phase_index": index,
-            "temperature_K": route_temperature_k,
-            "x_methanol": x_value,
-            "route_status": public["status"],
-        }
-        for index, x_value in enumerate(public["methanol_branch_values"])
-    ]
+    if "methanol_branch_values" in public and "temperature_K" in proof["prerequisite_proof"].get("internal_route", {}):
+        route_temperature_k = float(proof["prerequisite_proof"]["internal_route"]["temperature_K"])
+        model_rows = [
+            {
+                "series": "public_associating_lle_route",
+                "phase_index": index,
+                "temperature_K": route_temperature_k,
+                "x_methanol": x_value,
+                "route_status": public["status"],
+            }
+            for index, x_value in enumerate(public["methanol_branch_values"])
+        ]
+        public_admission = public
+        exact_hessian = proof["prerequisite_proof"]["association_hessian"]
+    else:
+        model_rows = _read_csv(_repo_path(artifacts["model_csv"]))
+        if not model_rows:
+            raise RuntimeError(f"retained Figure 8 association model CSV is empty: {artifacts['model_csv']}")
+        route_temperature_k = float(model_rows[0]["temperature_K"])
+        public_admission = retained_summary.get("public_admission", public)
+        exact_hessian = retained_summary.get("exact_association_hessian", proof["prerequisite_proof"].get("association_hessian", {}))
     _write_csv(_repo_path(artifacts["plotted_csv"]), plotted_rows, ["series", "temperature_C", "temperature_K", "x_methanol", "source_status"])
     _write_csv(_repo_path(artifacts["model_csv"]), model_rows, ["series", "phase_index", "temperature_K", "x_methanol", "route_status"])
 
@@ -788,28 +778,22 @@ def _render_figure08(row: dict[str, Any]) -> dict[str, Any]:
             s=38,
         )
     route_temperature_c = route_temperature_k - 273.15
-    ax.scatter(public["methanol_branch_values"], [route_temperature_c] * len(public["methanol_branch_values"]), color="#E45756", marker="D", label="public route proof")
+    route_x = [float(model_row["x_methanol"]) for model_row in model_rows]
+    ax.scatter(route_x, [route_temperature_c] * len(route_x), color="#E45756", marker="D", label="public route proof")
     ax.set_xlabel("methanol mole fraction")
     ax.set_ylabel("T / degC")
     ax.set_title("Gross 2002 Figure 8 associating LLE mirror")
     ax.grid(alpha=0.25)
     ax.legend(frameon=False)
-    _save_plot(fig, _repo_path(artifacts["png"]), _repo_path(artifacts["svg"]))
+    _save_plot(fig, _repo_path(artifacts["png"]), _repo_path(artifacts["svg"]), _repo_path(artifacts["pdf"]))
     plt.close(fig)
-    _plot_sidecar(
-        _repo_path(artifacts["sidecar"]),
-        plot_id="gross_2002_figure_08_association_mirror",
-        title="Gross 2002 Figure 8 Association Mirror",
-        command="uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_08/scripts/render_gross_2002_figure_08_association_mirror.py",
-        plotted_csv=artifacts["plotted_csv"],
-    )
     summary = {
         "figure_id": "figure_08",
         "status": "accepted",
         "source_point_count": len(source_rows),
         "artifacts": artifacts,
-        "exact_association_hessian": proof["prerequisite_proof"]["association_hessian"],
-        "public_admission": public,
+        "exact_association_hessian": exact_hessian,
+        "public_admission": public_admission,
     }
     _write_json(_repo_path(artifacts["summary_json"]), summary)
     return summary
@@ -880,15 +864,8 @@ def _render_figure10(row: dict[str, Any]) -> dict[str, Any]:
     ax.set_title("Gross 2002 Figure 10 cross-association stress mirror")
     ax.grid(alpha=0.25)
     ax.legend(frameon=False)
-    _save_plot(fig, _repo_path(artifacts["png"]), _repo_path(artifacts["svg"]))
+    _save_plot(fig, _repo_path(artifacts["png"]), _repo_path(artifacts["svg"]), _repo_path(artifacts["pdf"]))
     plt.close(fig)
-    _plot_sidecar(
-        _repo_path(artifacts["sidecar"]),
-        plot_id="gross_2002_figure_10_association_mirror",
-        title="Gross 2002 Figure 10 Association Mirror",
-        command="uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_10/scripts/render_gross_2002_figure_10_association_mirror.py",
-        plotted_csv=artifacts["plotted_csv"],
-    )
     summary = {
         "figure_id": "figure_10",
         "status": "accepted" if hessian.get("status") == "verified_exact" else "blocked",

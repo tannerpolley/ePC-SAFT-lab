@@ -17,16 +17,14 @@ from analyses.package_validation.explicit_association_toybox.scripts.plot_style 
     ORANGE,
     apply_plot_style,
     case_label,
-    save_png_svg,
+    save_plot_artifacts,
     style_axis,
-    write_sidecar,
 )
 
 OUTPUT = ANALYSIS_ROOT / "figures" / "jax_picard_derivatives" / "output"
 SOURCE = OUTPUT / "jax_picard_derivatives.csv"
 PLOTTED = OUTPUT / "jax_picard_derivatives_plotted_data.csv"
 FIGURE = OUTPUT / "jax_picard_derivatives.png"
-SIDECAR = OUTPUT / "jax_picard_derivatives.mpl.yaml"
 
 
 def main() -> None:
@@ -86,19 +84,8 @@ def main() -> None:
     )
     axes[-1].set_xlabel("JAX derivative target")
     fig.suptitle("JAX Picard derivatives against exact implicit sensitivities")
-    save_png_svg(fig, FIGURE)
+    save_plot_artifacts(fig, FIGURE)
     plt.close(fig)
-    write_sidecar(
-        SIDECAR,
-        plot_id="jax_picard_derivatives",
-        title="JAX Picard derivatives against exact implicit sensitivities",
-        figure=FIGURE,
-        source_data=PLOTTED,
-        x_label="JAX derivative target",
-        y_label="relative derivative error",
-        y_scale="log",
-        command="uv run python analyses/package_validation/explicit_association_toybox/figures/jax_picard_derivatives/scripts/render_figure.py",
-    )
     print(FIGURE)
 
 

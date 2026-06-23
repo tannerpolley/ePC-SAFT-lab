@@ -18,7 +18,7 @@ CASE_DIR = (
     / "reference"
     / "equilibrium_benchmarks"
     / "neutral_lle"
-    / "matsuda_2011_pfhexane_hexane"
+    / "perfluorohexane_hexane"
 )
 
 
@@ -68,7 +68,7 @@ def test_cloud_shadow_gate_reports_retained_source_data() -> None:
         "native_shadow_point_route_absent",
     ]
     assert payload["source_fixture"] == (
-        "data/reference/equilibrium_benchmarks/neutral_lle/matsuda_2011_pfhexane_hexane"
+        "data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane"
     )
     assert payload["species"] == ["perfluorohexane", "hexane"]
     assert payload["binodal_point_count"] == 14

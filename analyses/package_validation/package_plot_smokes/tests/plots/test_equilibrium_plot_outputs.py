@@ -56,7 +56,7 @@ def test_equilibrium_vle_composition_plot_is_written_to_plot_set() -> None:
         category=("equilibrium", "vle"),
     )
     try:
-        plot_outputs.save_plot_figure(fig, output_path, dpi=120, svg_companion=True)
+        plot_outputs.save_plot_figure(fig, output_path, dpi=120)
     finally:
         plt.close(fig)
 
@@ -155,7 +155,7 @@ def test_equilibrium_lle_tie_line_plot_is_written_to_plot_set() -> None:
         category=("equilibrium", "lle"),
     )
     try:
-        plot_outputs.save_plot_figure(fig, output_path, dpi=120, svg_companion=True)
+        plot_outputs.save_plot_figure(fig, output_path, dpi=120)
     finally:
         plt.close(fig)
 
@@ -260,7 +260,7 @@ def test_equilibrium_electrolyte_lle_phase_composition_plot() -> None:
         category=("equilibrium", "electrolyte_lle"),
     )
     try:
-        plot_outputs.save_plot_figure(fig, output_path, dpi=120, svg_companion=True)
+        plot_outputs.save_plot_figure(fig, output_path, dpi=120)
     finally:
         plt.close(fig)
 

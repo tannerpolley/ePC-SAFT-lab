@@ -72,14 +72,14 @@ Use ``data/reference/`` for stable reusable inputs:
 - equilibrium benchmark fixtures under ``data/reference/equilibrium_benchmarks/``
 - reusable literature data such as ``MIAC``, ``osmotic``, ``pure_component``, and regression tables
 
-Use ``data/reference/`` for stable reusable inputs shared by multiple analyses. Use ``analyses/<category>/<short_id>/figures/<figure_id>/source/`` for hand-curated, digitized, or figure-owned source assets. Use ``analyses/<category>/<short_id>/figures/<figure_id>/results/`` for generated model tables and the exact plotted data retained with that figure.
+Use ``data/reference/`` for stable reusable inputs shared by multiple analyses. Organize reference data by scientific data type and component or mixture system, not by paper-validation context, author, year, or figure id. Use ``analyses/<category>/<short_id>/figures/<figure_id>/source/`` for hand-curated or figure-owned source assets. Use ``analyses/<category>/<short_id>/figures/<figure_id>/results/`` for generated model tables and the exact plotted data retained with that figure.
 
 For full paper-validation analyses, ePC-SAFT parameter datasets and parameter CSV bundles used to execute the analysis must be analysis-owned input snapshots directly under ``analyses/paper_validation/<short_id>/parameters/``.
 The ``parameters/`` folder should contain ``mixed/``, ``pure/``, and ``user_options.json`` directly; do not add a nested dataset-name folder such as ``parameters/2005_Cameretti/``.
 Root ``data/reference/epcsaft_parameters/`` is retained only as a pointer README for the retired shared dataset tree.
 Direct in-code parameter dictionaries are acceptable for focused tests, tiny synthetic fixtures, and smoke checks, but full validation analyses should use the analysis-local dataset snapshot.
 
-Paper-validation source papers are copied under ``docs/md/`` and ``docs/pdf/``. Figure folders must be named ``figure_NN`` and contain only ``source/``, ``scripts/``, and ``results/``. Source paper figures live under ``figures/figure_NN/source/`` as PNG files, extracted source tables live under ``tables/table_###/source/`` as Markdown snippets plus CSV conversions, paper-wide source manifests live under ``shared/source/``, and analysis-wide generated artifacts live under ``shared/results/``.
+Paper-validation source papers are copied under ``docs/md/`` and ``docs/pdf/``. Figure folders must be named ``figure_NN`` and contain only ``source/``, ``scripts/``, and ``results/``. Source paper figures live under ``figures/figure_NN/source/`` as ``figure_NN.png`` files, reusable source data lives under the appropriate ``data/reference/<data_type>/<component_or_system>/`` taxonomy home and is copied into figure-local ``source/`` folders by the figure scripts, extracted source tables live under ``tables/table_###/source/`` as Markdown snippets plus CSV conversions, paper-wide source manifests live under ``shared/source/``, and analysis-wide generated artifacts live under ``shared/results/``.
 
 Output Policy
 -------------
@@ -87,18 +87,22 @@ Output Policy
 Generated figure outputs use figure-owned ``results/`` folders:
 
 - ``figures/<figure_id>/results/runs/`` for ignored run-specific payloads, logs, sweeps, and exploratory output
-- ``figures/<figure_id>/results/`` for curated generated tables, exact plotted data snapshots, rendered figures, and editable sidecars that are intentionally retained
+- ``figures/<figure_id>/results/`` for curated generated tables, exact plotted data snapshots, rendered SVG/PNG/PDF figures, and CSV fit statistics that are intentionally retained
 
-Each figure-owned output folder keeps the figure, exact plotted data snapshot, and editable Matplotlib sidecar together:
+Each figure-owned output folder keeps the figure, exact plotted data snapshot, and provenance together:
 
 .. code-block:: text
 
    figures/response_curve/results/
-     response_curve.csv
-     response_curve.svg
-     response_curve.png
-     response_curve.mpl.yaml
+     model_curve.csv
+     plotted_data.csv
+     fit_statistics.csv
+     figure_01.svg
+     figure_01.png
+     figure_01.pdf
 
-Use one meaningful figure folder per figure or figure family. This layout is designed so external tools such as ``mplgallery`` can discover analysis-owned plots directly without a package-owned gallery index, server, or manifest.
+Use one meaningful figure folder per figure or figure family. This layout is designed so external tools such as ``mplgallery`` can discover analysis-owned Matplotlib SVG plots through the project root ``.mplgallery/manifest.yaml`` without package-owned plotting servers or per-figure registration files.
 
 Do not add new gallery index, server, or manifest workflows to this package. External visualization tools should discover analysis-owned assets directly.
+
+Paper-validation figure folders do not keep per-figure JSON files. If a paper-level machine summary is needed, keep it under ``shared/results/``. Use ``analyses/paper_validation/AGENTS.md`` and ``analyses/paper_validation/scripts/check_figure_contract.py`` as the local gate for migrated figure folders.

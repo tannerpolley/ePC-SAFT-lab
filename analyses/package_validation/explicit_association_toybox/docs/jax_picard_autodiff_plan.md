@@ -54,7 +54,8 @@ The implemented figure/data lane is:
 - `figures/jax_picard_derivatives/output/jax_picard_derivatives.csv`
 - `figures/jax_picard_derivatives/output/jax_picard_derivatives_plotted_data.csv`
 - `figures/jax_picard_derivatives/output/jax_picard_derivatives.png`
-- `figures/jax_picard_derivatives/output/jax_picard_derivatives.mpl.yaml`
+- `figures/jax_picard_derivatives/output/jax_picard_derivatives.svg`
+- `figures/jax_picard_derivatives/output/jax_picard_derivatives.pdf`
 
 Required columns:
 

@@ -16,7 +16,7 @@ CASE_DIR = (
     / "reference"
     / "equilibrium_benchmarks"
     / "electrolyte_lle"
-    / "khudaida_2026"
+    / "water_ethanol_isobutanol_nacl"
 )
 SPECIES = ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
 TEMPERATURE = 293.15

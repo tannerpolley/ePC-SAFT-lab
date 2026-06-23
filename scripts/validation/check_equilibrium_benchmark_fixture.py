@@ -11,7 +11,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CASE_DIR = (
-    REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "pereira_2012"
+    REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "ethane_carbon_dioxide"
 )
 ACCEPTED_NEUTRAL_FLASH_MODEL_FAMILIES = {"PC-SAFT", "ePC-SAFT"}
 PHASE_DISCOVERY_REQUIREMENTS = (

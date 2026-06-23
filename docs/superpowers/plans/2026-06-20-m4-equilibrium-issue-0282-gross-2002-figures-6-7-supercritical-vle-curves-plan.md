@@ -40,7 +40,7 @@
 Test complete for #282 means:
 
 - Figures 6 and 7 are `accepted` in `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`.
-- Every accepted Figure 6/7 record has `counts_toward_completion: true`, empty `remaining_work`, and retained artifact paths for `source_csv`, `source_metadata_json`, `digitization_qa_overlay`, `model_csv`, `plotted_csv`, `score_json`, `summary_json`, `png`, `svg`, and `sidecar`.
+- Every accepted Figure 6/7 record has `counts_toward_completion: true`, empty `remaining_work`, and retained artifact paths for `source_csv`, `source_metadata_json`, `digitization_qa_overlay`, `model_csv`, `plotted_csv`, `score_json`, `summary_json`, `png`, `svg`, and `PDF artifact and provenance file`.
 - Figure 6 has required series `T_60C`, `T_100C`, `T_160C`, and `T_200C`.
 - Figure 7 has required series `T_100C`, `T_140C`, `T_160C`, and `T_190C`.
 - Every figure-level score JSON records `source_point_count`, `model_point_count`, `rmse_axis`, `max_axis_error`, `normalized_plot_score`, `branch_coverage_score`, `derivative_status`, `native_freshness`, and `pass`.
@@ -54,7 +54,7 @@ Test complete for #282 means:
 
 **Intent:** Convert Figures 6 and 7 from source-requirement records into curve-level Gross 2002 supercritical-partner VLE replications.
 **Current Behavior:** Figures 6 and 7 are planned records with source images, captions, and Table 2 `k_ij` rows, but no retained source CSVs, model curves, paper-scale plots, score JSON, or accepted checker evidence.
-**Expected Outcome:** Figures 6 and 7 are accepted with retained source, model, plotted, score, summary, PNG, SVG, sidecar, native receipt, exact association-Hessian, and supercritical-caveat artifacts.
+**Expected Outcome:** Figures 6 and 7 are accepted with retained source, model, plotted, score, summary, PNG, SVG, PDF artifact and provenance file, native receipt, exact association-Hessian, and supercritical-caveat artifacts.
 **Target Output:** A reviewer can open the two generated plots, compare PC-SAFT curves against retained source markers in paper coordinates, and inspect score JSON plus source/model CSVs behind each temperature series.
 **Owner:** Figure-replication artifacts under `analyses/paper_validation/2002_gross`, shared validation manifests under the same analysis root, and M4 issue/docs metadata.
 **Interface:** `scripts/validation/check_gross_2002_full_replication.py`, the #279 score/source metadata schemas, and public `epcsaft_equilibrium.Equilibrium(...).solve()` workflows used by the generation scripts.
@@ -68,7 +68,7 @@ Test complete for #282 means:
 
 ## Implementation Boundaries
 
-**Files To Create:** Figure-owned source, script, and result files under `analyses/paper_validation/2002_gross/figures/figure_06` and `analyses/paper_validation/2002_gross/figures/figure_07`, including source CSV, metadata JSON, QA overlay PNG, generator script, model CSV, plotted CSV, score JSON, summary JSON, PNG, SVG, and MPL sidecar artifacts.
+**Files To Create:** Figure-owned source, script, and result files under `analyses/paper_validation/2002_gross/figures/figure_06` and `analyses/paper_validation/2002_gross/figures/figure_07`, including source CSV, metadata JSON, QA overlay PNG, generator script, model CSV, plotted CSV, score JSON, summary JSON, PNG, SVG, and PDF LaTeX artifacts.
 **Files To Modify:** `scripts/validation/check_gross_2002_full_replication.py`, `tests/native/contracts/test_gross_2002_full_replication_checker.py`, `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json`, `analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv`, the #282 issue mirror, and `docs/superpowers/milestones/M4-equilibrium/README.md`.
 **Files To Avoid:** `packages/**`, `**/*.cpp`, `**/*.hpp`, `CMakeLists.txt`, package-local tests, provider EOS code, regression code, electrolyte/reactive route files, downstream repositories, and Gross 2002 figure folders outside Figures 6 and 7 except shared summary files.
 **Source Of Truth:** Gross/Sadowski 2002 Figures 6 and 7 images/captions, Gross 2002 Table 1, Gross 2002 Table 2, source reference 26, analysis-local parameter snapshots, and the #279 full-replication checker schema.
@@ -217,7 +217,7 @@ Test complete for #282 means:
 - Create: `analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication_summary.json`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication.png`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication.svg`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication.mpl.yaml`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication.pdf`
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_06/scripts/_placeholder.md` if real scripts occupy the folder.
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_06/results/_placeholder.md` if real results occupy the folder.
 
@@ -325,7 +325,7 @@ Test complete for #282 means:
 - Create: `analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication_summary.json`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.png`
 - Create: `analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.svg`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.mpl.yaml`
+- Create: `analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.pdf`
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_07/scripts/_placeholder.md` if real scripts occupy the folder.
 - Delete: `analyses/paper_validation/2002_gross/figures/figure_07/results/_placeholder.md` if real results occupy the folder.
 

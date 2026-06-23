@@ -22,7 +22,7 @@
       "summary_json",
       "png",
       "svg",
-      "sidecar"
+      "pdf"
     ]
   },
   "association_acceptance_manifest": "analyses/paper_validation/2002_gross/shared/gross_2002_association_acceptance_manifest.json",
@@ -34,19 +34,34 @@
     {
       "acceptance_threshold": 8.0,
       "artifacts": {
-        "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_qa_overlay.png",
-        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_model_curve.csv",
-        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_plotted_data.csv",
-        "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.png",
-        "score_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.mpl.yaml",
-        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_source_points.csv",
-        "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_01/source/gross_2002_figure_01_replication_digitization_metadata.json",
-        "summary_json": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication_summary.json",
-        "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/gross_2002_figure_01_replication.svg"
+        "fit_statistics_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/fit_statistics.csv",
+        "model_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.pdf",
+        "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_01/results/plotted_data.csv",
+        "png": "analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.png",
+        "source_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/source_points.csv",
+        "source_notes_csv": "analyses/paper_validation/2002_gross/figures/figure_01/source/source_notes.csv",
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_01/results/figure_01.svg"
       },
       "counts_toward_completion": true,
       "figure_id": "figure_01",
+      "near_critical_connectors": {
+        "1-nonanol": {
+          "basis": "visible Gross 2002 Figure 1 near-critical marker at the top of the 1-nonanol envelope",
+          "tip_density_kg_m3": 255.0,
+          "tip_temperature_K": 670.0
+        },
+        "1-pentanol": {
+          "basis": "visible Gross 2002 Figure 1 near-critical marker at the top of the 1-pentanol envelope",
+          "tip_density_kg_m3": 275.0,
+          "tip_temperature_K": 585.0
+        },
+        "methanol": {
+          "basis": "visible Gross 2002 Figure 1 near-critical marker center between the retained vapor and liquid branch endpoints",
+          "tip_density_kg_m3": 275.0,
+          "tip_temperature_K": 505.0
+        }
+      },
       "near_critical_exclusions": [
         {
           "component": "methanol",
@@ -55,7 +70,7 @@
         }
       ],
       "paper_plot_type": "T-rho saturated vapor/liquid densities",
-      "planned_artifact_stem": "gross_2002_figure_01_replication",
+      "planned_artifact_stem": "figure_01",
       "plot_family": "t_rho",
       "remaining_work": [],
       "replication_status": "accepted",
@@ -75,7 +90,19 @@
         "pass": true
       },
       "source_data_basis": "calibrated Gross 2002 Figure 1 PC-SAFT curve points plus visible experimental markers",
-      "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/paper_source_01_gross_2002_figure_001.png",
+      "source_data_home": {
+        "association_aad": [
+          "data/reference/pure_component/association_aad/methanol/association_aad.csv",
+          "data/reference/pure_component/association_aad/1_pentanol/association_aad.csv",
+          "data/reference/pure_component/association_aad/1_nonanol/association_aad.csv"
+        ],
+        "saturation_density": [
+          "data/reference/pure_component/saturation_density/methanol/saturation_density.csv",
+          "data/reference/pure_component/saturation_density/1_pentanol/saturation_density.csv",
+          "data/reference/pure_component/saturation_density/1_nonanol/saturation_density.csv"
+        ]
+      },
+      "source_image": "analyses/paper_validation/2002_gross/figures/figure_01/source/figure_01.png",
       "system": "methanol, 1-pentanol, 1-nonanol"
     },
     {
@@ -83,10 +110,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_02/results/gross_2002_figure_02_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_source_points.csv",
         "source_identity_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_identity.json",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_digitization_metadata.json",
@@ -121,10 +148,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_03/results/gross_2002_figure_03_replication_summary.json",
@@ -157,10 +184,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_04/results/gross_2002_figure_04_replication_summary.json",
@@ -193,10 +220,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_05/results/gross_2002_figure_05_replication_summary.json",
@@ -217,7 +244,7 @@
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 9.320671561399191,
+        "normalized_plot_score": 9.435218700621311,
         "pass": true
       },
       "source_data_basis": "calibrated Gross 2002 Figure 5 solid-curve source traces retained separately for 1-propanol/benzene and 2-propanol/benzene",
@@ -229,10 +256,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_06/source/gross_2002_figure_06_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_06/source/gross_2002_figure_06_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_06/source/gross_2002_figure_06_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_06/results/gross_2002_figure_06_replication_summary.json",
@@ -267,10 +294,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_07/source/gross_2002_figure_07_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_07/source/gross_2002_figure_07_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_07/source/gross_2002_figure_07_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_07/results/gross_2002_figure_07_replication_summary.json",
@@ -305,10 +332,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_08/source/gross_2002_figure_08_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_08/source/gross_2002_figure_08_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_08/source/gross_2002_figure_08_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_08/results/gross_2002_figure_08_replication_summary.json",
@@ -337,10 +364,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_09/source/gross_2002_figure_09_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_09/source/gross_2002_figure_09_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_09/source/gross_2002_figure_09_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_09/results/gross_2002_figure_09_replication_summary.json",
@@ -373,10 +400,10 @@
       "artifacts": {
         "digitization_qa_overlay": "analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_replication_digitization_qa_overlay.png",
         "model_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_replication_model_curve.csv",
+        "pdf": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_replication.pdf",
         "plotted_csv": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_replication_plotted_data.csv",
         "png": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_replication.png",
         "score_json": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_replication_score.json",
-        "sidecar": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_replication.mpl.yaml",
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_replication_source_points.csv",
         "source_metadata_json": "analyses/paper_validation/2002_gross/figures/figure_10/source/gross_2002_figure_10_replication_digitization_metadata.json",
         "summary_json": "analyses/paper_validation/2002_gross/figures/figure_10/results/gross_2002_figure_10_replication_summary.json",

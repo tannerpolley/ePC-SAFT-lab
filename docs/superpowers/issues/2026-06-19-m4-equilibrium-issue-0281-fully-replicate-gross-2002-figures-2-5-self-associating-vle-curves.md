@@ -23,6 +23,7 @@ last_synced: "2026-06-20"
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
 **Source Plan:** docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** status:blocked, type:task, validation, equilibrium, area:equilibrium, backend:ipopt, native, docs
 **Goal Command:** /goal Resolve this issue using docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md after https://github.com/ePC-SAFT/ePC-SAFT/issues/292 is closed. Complete proof oracle: Figures 2-5 subcritical self-associating VLE curves retained source data, resolved Figure 2 identity, model curves, paper-scale plots, per-series score JSON, validation checker, docs validation, cleanup hook.

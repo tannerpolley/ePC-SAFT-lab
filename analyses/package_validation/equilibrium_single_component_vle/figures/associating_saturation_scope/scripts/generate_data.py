@@ -34,8 +34,7 @@ REFERENCE_SOURCE = (
     / "data"
     / "reference"
     / "pure_component"
-    / "saturation_density"
-    / "water_methanol_nist_saturation.csv"
+    / "saturation_properties"
 )
 HELD_PARAMETERS = REPO_ROOT / "analyses" / "paper_validation" / "2012_held" / "parameters" / "pure" / "water.csv"
 COMPONENT_LABELS = {"methanol": "Methanol", "water": "Water"}
@@ -68,35 +67,58 @@ def _mixture_for_component(component: str) -> tuple[Any, dict[str, str]]:
     return epcsaft.Mixture(parameter_set), row
 
 
-def _route_rejection(component: str, temperature: float) -> str:
+def _route_probe(component: str, temperature: float) -> dict[str, object]:
     mixture, _row = _mixture_for_component(component)
     try:
         epcsaft_equilibrium.Equilibrium(mixture, route="single_component_vle", T=temperature).solve()
     except epcsaft.InputError as exc:
-        return str(exc)
-    raise RuntimeError(
-        "Production single_component_vle unexpectedly accepted an associating component; "
-        "update this scope artifact before retaining a fit plot."
-    )
+        return {
+            "route_eligible": False,
+            "route_status": "input_rejected_associating_component",
+            "route_message": str(exc),
+        }
+    return {
+        "route_eligible": True,
+        "route_status": "accepted_associating_component",
+        "route_message": "Production single_component_vle accepted the associating pure-component input.",
+    }
+
+
+def _load_source_rows() -> pd.DataFrame:
+    frames: list[pd.DataFrame] = []
+    missing: list[Path] = []
+    for component in COMPONENT_LABELS:
+        path = REFERENCE_SOURCE / component / "saturation_properties.csv"
+        if not path.exists():
+            missing.append(path)
+            continue
+        frames.append(pd.read_csv(path))
+    if missing:
+        raise RuntimeError(
+            "Missing pure-component saturation-properties files: "
+            + ", ".join(str(path) for path in missing)
+        )
+    return pd.concat(frames, ignore_index=True)
 
 
 def main() -> int:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    source = pd.read_csv(REFERENCE_SOURCE)
+    source = _load_source_rows()
     source = source[source["component"].isin(COMPONENT_LABELS)].copy()
     if source.empty:
         raise RuntimeError(f"{REFERENCE_SOURCE} contains no water or methanol rows.")
 
-    rejection_by_component: dict[str, str] = {}
+    route_by_component: dict[str, dict[str, object]] = {}
     parameter_rows = {component: _load_parameter_row(component) for component in COMPONENT_LABELS}
     for component, subset in source.groupby("component"):
         first_temperature = float(subset.sort_values("T_K").iloc[0]["T_K"])
-        rejection_by_component[component] = _route_rejection(component, first_temperature)
+        route_by_component[component] = _route_probe(component, first_temperature)
 
     rows: list[dict[str, object]] = []
     for raw in source.sort_values(["component", "T_K"]).to_dict("records"):
         component = str(raw["component"])
         parameter = parameter_rows[component]
+        route = route_by_component[component]
         rows.append(
             {
                 "component": component,
@@ -111,9 +133,9 @@ def main() -> int:
                 "parameter_source": parameter["source"],
                 "assoc_scheme": parameter["assoc_scheme"],
                 "e_assoc_over_k_K": float(parameter["e_assoc"]),
-                "route_eligible": False,
-                "route_status": "input_rejected_associating_component",
-                "route_rejection_message": rejection_by_component[component],
+                "route_eligible": route["route_eligible"],
+                "route_status": route["route_status"],
+                "route_message": route["route_message"],
             }
         )
 

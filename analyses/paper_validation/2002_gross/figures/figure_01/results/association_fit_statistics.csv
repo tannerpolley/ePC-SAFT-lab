@@ -1,0 +1,7 @@
+component,metric,value_percent,source_table,source_status,source_method,source_reference,evidence_role
+methanol,vapor_pressure_aad,2.36,table_001,source_table,source_table,Gross and Sadowski 2002 Table 1,gross_2002_table_1_pc_saft_aad
+methanol,liquid_density_aad,2.01,table_001,source_table,source_table,Gross and Sadowski 2002 Table 1,gross_2002_table_1_pc_saft_aad
+1-pentanol,vapor_pressure_aad,0.50,table_001,source_table,source_table,Gross and Sadowski 2002 Table 1,gross_2002_table_1_pc_saft_aad
+1-pentanol,liquid_density_aad,0.52,table_001,source_table,source_table,Gross and Sadowski 2002 Table 1,gross_2002_table_1_pc_saft_aad
+1-nonanol,vapor_pressure_aad,0.86,table_001,source_table,source_table,Gross and Sadowski 2002 Table 1,gross_2002_table_1_pc_saft_aad
+1-nonanol,liquid_density_aad,1.23,table_001,source_table,source_table,Gross and Sadowski 2002 Table 1,gross_2002_table_1_pc_saft_aad

@@ -33,50 +33,20 @@ def _as_float(row: dict[str, str], key: str) -> float:
     return float(row[key])
 
 
-def _write_sidecar(path: Path, *, plot_id: str, title: str, png_name: str, svg_name: str, csv_files: list[str]) -> None:
-    csv_block = "\n".join(f"    - {name}" for name in csv_files)
-    path.write_text(
-        f"""kind: matplotlib-figure
-version: 1
-plot_id: {plot_id}
-title: {title}
-files:
-  figures:
-    - {png_name}
-    - {svg_name}
-  data:
-{csv_block}
-render:
-  command: uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py
-matplotlib:
-  title: {title}
-  style: scientific-validation
-""",
-        encoding="utf-8",
-    )
-
-
 def _strip_trailing_whitespace(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     path.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
 
 
-def _save(fig: plt.Figure, output_dir: Path, stem: str, *, plot_id: str, title: str, csv_files: list[str]) -> None:
+def _save(fig: plt.Figure, output_dir: Path, stem: str) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    png_name = f"{stem}.png"
-    svg_name = f"{stem}.svg"
-    fig.savefig(output_dir / png_name, dpi=180, bbox_inches="tight")
-    svg_path = output_dir / svg_name
+    png_path = output_dir / f"{stem}.png"
+    svg_path = output_dir / f"{stem}.svg"
+    pdf_path = output_dir / f"{stem}.pdf"
+    fig.savefig(png_path, dpi=180, bbox_inches="tight")
     fig.savefig(svg_path, bbox_inches="tight", metadata={"Date": None})
+    fig.savefig(pdf_path, bbox_inches="tight")
     _strip_trailing_whitespace(svg_path)
-    _write_sidecar(
-        output_dir / f"{stem}.mpl.yaml",
-        plot_id=plot_id,
-        title=title,
-        png_name=png_name,
-        svg_name=svg_name,
-        csv_files=csv_files,
-    )
     plt.close(fig)
 
 
@@ -153,9 +123,6 @@ def render_binodal_showcase() -> None:
         fig,
         output_dir,
         "neutral_lle_binodal_showcase",
-        plot_id="m4_issue_250_neutral_lle_binodal_showcase",
-        title="M4 issue 250 neutral LLE binodal showcase",
-        csv_files=[phase_points_name, binodal_name],
     )
 
 
@@ -193,9 +160,6 @@ def render_tolerance_margins() -> None:
         fig,
         output_dir,
         "neutral_lle_tolerance_margins",
-        plot_id="m4_issue_250_neutral_lle_tolerance_margins",
-        title="M4 issue 250 neutral LLE tolerance margins",
-        csv_files=[tolerance_name, component_name],
     )
 
 
@@ -222,9 +186,6 @@ def render_held_stage_status() -> None:
         fig,
         output_dir,
         "neutral_lle_held_stage_status",
-        plot_id="m4_issue_250_neutral_lle_held_stage_status",
-        title="M4 issue 250 neutral LLE HELD-stage status",
-        csv_files=[stage_name],
     )
 
 

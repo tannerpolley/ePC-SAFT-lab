@@ -51,34 +51,34 @@ pure_2b_self,pure 2B self,association_helmholtz_relative_error,$a^{\mathrm{assoc
 pure_2b_self,pure 2B self,derivative_max_relative_error,max deriv. rel. error,11,1.0,4.735727848429812e-12,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.35,0.005741569022430903,dominated,diagnostic_only
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,3,0.35,0.0128336473699782,dominated,diagnostic_only
-water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.5,0.0039015134889372,pareto_frontier,diagnostic_only
-water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,3,0.5,0.008685629221987314,pareto_frontier,diagnostic_only
+water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.5,0.0039015134889372,dominated,diagnostic_only
+water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,3,0.5,0.008685629221987314,dominated,diagnostic_only
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.65,0.0023210143003558896,dominated,diagnostic_only
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,3,0.65,0.005353843653336039,dominated,diagnostic_only
-water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.8,0.0011003277938407812,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,3,0.8,0.0028575291348286814,dominated,diagnostic_candidate
+water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.8,0.0011003277938407812,pareto_frontier,fast
+water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,3,0.8,0.0028575291348286814,pareto_frontier,fast
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,1.0,0.00039260385365698505,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,3,1.0,0.0014160887168637973,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.35,0.003355875712747808,dominated,diagnostic_only
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,5,0.35,0.00747763674837209,dominated,diagnostic_only
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.5,0.0015916289431932185,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,5,0.5,0.0037278875429529075,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.65,0.0005972001830844144,pareto_frontier,fast
-water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,5,0.65,0.0015854421981839884,pareto_frontier,fast
+water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.65,0.0005972001830844144,dominated,diagnostic_candidate
+water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,5,0.65,0.0015854421981839884,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.8,0.0001645689630416995,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,5,0.8,0.0005457711612503911,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,1.0,2.1771305484930018e-05,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,5,1.0,0.00011192836545888275,dominated,diagnostic_candidate
+water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,1.0,2.1771305484930018e-05,pareto_frontier,fast
+water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,5,1.0,0.00011192836545888275,pareto_frontier,fast
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.35,0.0019031938476233312,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,7,0.35,0.004347589369079531,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.5,0.0006246484122209335,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,7,0.5,0.0015915568253179703,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.65,0.0001515022307503233,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,7,0.65,0.000468462242809607,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.8,2.4811075950710043e-05,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,7,0.8,0.00010071013516721804,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,1.0,1.2093934350830948e-06,pareto_frontier,high_accuracy
-water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,7,1.0,8.081270647519994e-06,pareto_frontier,high_accuracy
+water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.8,2.4811075950710043e-05,pareto_frontier,balanced
+water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,7,0.8,0.00010071013516721804,pareto_frontier,balanced
+water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,1.0,1.2093934350830948e-06,dominated,diagnostic_candidate
+water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,7,1.0,8.081270647519994e-06,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,9,0.35,0.0010582422748355847,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,9,0.35,0.0025185231151216973,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,9,0.5,0.00024125659153938366,dominated,diagnostic_candidate
@@ -87,8 +87,8 @@ water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\m
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,9,0.65,0.00013634403097860615,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,9,0.8,3.7451718023209558e-06,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,9,0.8,1.800002479260296e-05,dominated,diagnostic_candidate
-water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,9,1.0,6.71881364096994e-08,pareto_frontier,high_accuracy
-water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,9,1.0,5.525288546016037e-07,pareto_frontier,high_accuracy
+water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,9,1.0,6.71881364096994e-08,dominated,diagnostic_candidate
+water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,9,1.0,5.525288546016037e-07,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,11,0.35,0.0005809100211943734,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,11,0.35,0.0014528662780263512,dominated,diagnostic_candidate
 water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,11,0.5,9.255226609588617e-05,dominated,diagnostic_candidate
@@ -101,12 +101,12 @@ water_like_3b_topology,water-like 3B,association_helmholtz_relative_error,$a^{\m
 water_like_3b_topology,water-like 3B,derivative_max_relative_error,max deriv. rel. error,11,1.0,3.644751173550364e-08,pareto_frontier,high_accuracy
 asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.35,0.015951138694866293,dominated,diagnostic_only
 asymmetric_donor_acceptor_binary,asymmetric D/A binary,derivative_max_relative_error,max deriv. rel. error,3,0.35,0.036035361658936074,dominated,diagnostic_only
-asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.5,0.009607435555948849,pareto_frontier,diagnostic_only
-asymmetric_donor_acceptor_binary,asymmetric D/A binary,derivative_max_relative_error,max deriv. rel. error,3,0.5,0.022505612531560464,pareto_frontier,diagnostic_only
+asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.5,0.009607435555948849,dominated,diagnostic_only
+asymmetric_donor_acceptor_binary,asymmetric D/A binary,derivative_max_relative_error,max deriv. rel. error,3,0.5,0.022505612531560464,dominated,diagnostic_only
 asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.65,0.004947109744492332,dominated,diagnostic_only
 asymmetric_donor_acceptor_binary,asymmetric D/A binary,derivative_max_relative_error,max deriv. rel. error,3,0.65,0.012207662555775744,dominated,diagnostic_only
-asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.8,0.0018851155135483104,dominated,diagnostic_only
-asymmetric_donor_acceptor_binary,asymmetric D/A binary,derivative_max_relative_error,max deriv. rel. error,3,0.8,0.005131887533414779,dominated,diagnostic_only
+asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.8,0.0018851155135483104,pareto_frontier,diagnostic_only
+asymmetric_donor_acceptor_binary,asymmetric D/A binary,derivative_max_relative_error,max deriv. rel. error,3,0.8,0.005131887533414779,pareto_frontier,diagnostic_only
 asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,1.0,0.00025941053110088735,pareto_frontier,fast
 asymmetric_donor_acceptor_binary,asymmetric D/A binary,derivative_max_relative_error,max deriv. rel. error,3,1.0,0.001090813278391701,pareto_frontier,fast
 asymmetric_donor_acceptor_binary,asymmetric D/A binary,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.35,0.008459977116293165,dominated,diagnostic_only
@@ -153,10 +153,10 @@ mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,3,0.35,8.709966506466849e-05,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.5,2.2557505907246787e-05,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,3,0.5,4.210610889197585e-05,dominated,diagnostic_candidate
-mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.65,8.183802725380935e-06,pareto_frontier,fast
-mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,3,0.65,1.759700471380146e-05,pareto_frontier,fast
-mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.8,2.2708035508093102e-06,pareto_frontier,fast
-mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,3,0.8,6.563950199976407e-06,pareto_frontier,fast
+mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.65,8.183802725380935e-06,dominated,diagnostic_candidate
+mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,3,0.65,1.759700471380146e-05,dominated,diagnostic_candidate
+mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,0.8,2.2708035508093102e-06,dominated,diagnostic_candidate
+mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,3,0.8,6.563950199976407e-06,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,3,1.0,1.1015649583670345e-07,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,3,1.0,2.602303973099927e-07,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.35,2.115632232205884e-05,dominated,diagnostic_candidate
@@ -165,20 +165,20 @@ mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,5,0.5,1.2901683745233701e-05,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.65,1.3471273317959934e-06,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,5,0.65,3.6689703769525957e-06,dominated,diagnostic_candidate
-mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.8,2.2400285545765717e-07,dominated,diagnostic_candidate
-mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,5,0.8,8.218129712160696e-07,dominated,diagnostic_candidate
+mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,0.8,2.2400285545765717e-07,pareto_frontier,fast
+mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,5,0.8,8.218129712160696e-07,pareto_frontier,fast
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,5,1.0,2.4903568621412155e-09,pareto_frontier,fast
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,5,1.0,1.0092514462972763e-08,pareto_frontier,fast
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.35,9.193157114007427e-06,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,7,0.35,1.8284810931123003e-05,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.5,1.7344744624502418e-06,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,7,0.5,4.2469964732796305e-06,dominated,diagnostic_candidate
-mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.65,2.497088718208405e-07,pareto_frontier,high_accuracy
-mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,7,0.65,8.115541938004742e-07,pareto_frontier,high_accuracy
+mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.65,2.497088718208405e-07,dominated,diagnostic_candidate
+mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,7,0.65,8.115541938004742e-07,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,0.8,2.3170143005626626e-08,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,7,0.8,1.0026834718313244e-07,dominated,diagnostic_candidate
-mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,1.0,5.732899155788235e-11,pareto_frontier,high_accuracy
-mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,7,1.0,3.3724244999798946e-10,pareto_frontier,high_accuracy
+mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,7,1.0,5.732899155788235e-11,dominated,diagnostic_candidate
+mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,7,1.0,3.3724244999798946e-10,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,9,0.35,4.076585845220117e-06,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,derivative_max_relative_error,max deriv. rel. error,9,0.35,8.739941835878998e-06,dominated,diagnostic_candidate
 mixed_2b_4c_binary,mixed 2B+4C,association_helmholtz_relative_error,$a^{\mathrm{assoc}}$ rel. error,9,0.5,5.23040051781739e-07,dominated,diagnostic_candidate

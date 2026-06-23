@@ -30,7 +30,7 @@ import epcsaft_equilibrium
 FIGURE_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = FIGURE_ROOT / "results"
 REFERENCE_DIR = REPO_ROOT / "data" / "reference" / "pure_component"
-SATURATION_REFERENCE_DIR = REFERENCE_DIR / "saturation_density"
+SATURATION_REFERENCE_DIR = REFERENCE_DIR / "saturation_properties"
 PARAMETER_REFERENCE = REFERENCE_DIR / "hydrocarbon_basis_workbook_reference.csv"
 SOLVER_OPTIONS = {"max_iterations": 500, "tolerance": 1.0e-7}
 MOLECULAR_WEIGHTS_KG_PER_MOL = {
@@ -67,7 +67,7 @@ def _mixture_for_species(species: str, parameters: dict[str, dict[str, float]]) 
 
 
 def _reference_rows(species: str) -> list[dict[str, str]]:
-    path = SATURATION_REFERENCE_DIR / f"{species.lower()}_nist_saturation.csv"
+    path = SATURATION_REFERENCE_DIR / species.lower() / "saturation_properties.csv"
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
 
