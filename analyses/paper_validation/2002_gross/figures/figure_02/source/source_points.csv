@@ -1,5 +1,12 @@
 figure_id,series,source_role,accepted_system,component_order,T_K,P_bar,x_component_1,y_component_1,source_kind,source_reference,source_x_px,source_y_px,uncertainty_P_bar,uncertainty_composition
+figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,3.524,0.00000,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve endpoint proxy,116.000,473.000,0.25,0.008
 figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,5.122,0.00875,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,122.000,439.000,0.25,0.008
+figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,8.740,0.03061,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,137.000,362.000,0.25,0.008
+figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,11.889,0.06122,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,158.000,295.000,0.25,0.008
+figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,14.286,0.09184,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,179.000,244.000,0.25,0.008
+figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,16.729,0.15306,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,221.000,192.000,0.25,0.008
+figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,18.515,0.24636,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,285.000,154.000,0.25,0.008
+figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,19.549,0.33819,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,348.000,132.000,0.25,0.008
 figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,20.207,0.43440,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,414.000,118.000,0.25,0.008
 figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,20.536,0.99125,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,796.000,111.000,0.25,0.008
 figure_02,bubble_line,paper_pc_saft_curve,methanol/isobutane,"isobutane,methanol",373.15,20.912,0.97959,,calibrated_curve_trace,Gross2002 Figure2 solid PC-SAFT curve center,788.000,103.000,0.25,0.008

@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    script = Path(__file__).resolve().parents[2] / 'scripts' / 'generate_clean_literature_overlays.py'
+    script = Path(__file__).resolve().parents[3] / "scripts" / "generate_clean_literature_overlays.py"
     completed = subprocess.run([sys.executable, str(script)], check=False)
     return int(completed.returncode)
 

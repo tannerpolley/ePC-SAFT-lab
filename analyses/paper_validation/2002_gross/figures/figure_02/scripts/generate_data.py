@@ -235,8 +235,8 @@ def _write_overlay(source_rows: list[dict[str, Any]]) -> None:
     )
     colors = {"bubble_line": (180, 50, 50), "dew_line": (20, 120, 40)}
     for row in source_rows:
-        x = float(row["retained_x_px"])
-        y = float(row["retained_y_px"])
+        x = float(row.get("source_x_px") or row.get("retained_x_px"))
+        y = float(row.get("source_y_px") or row.get("retained_y_px"))
         color = colors[row["series"]]
         if row["source_role"] == "paper_pc_saft_curve":
             draw.ellipse((x - 3, y - 3, x + 3, y + 3), fill=color)
@@ -605,13 +605,13 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     manifest["native_freshness_receipt"] = receipt
     artifacts = {
-        "source_identity_json": _relative(IDENTITY_JSON),
+        "source_identity_csv": _relative(SOURCE_IDENTITY_CSV),
         "source_csv": _relative(SOURCE_CSV),
         "source_notes_csv": _relative(SOURCE_NOTES_CSV),
-                "model_csv": _relative(MODEL_CSV),
+        "model_csv": _relative(MODEL_CSV),
         "plotted_csv": _relative(PLOTTED_CSV),
         "fit_statistics_csv": _relative(FIT_STATISTICS_CSV),
-                "png": _relative(PNG),
+        "png": _relative(PNG),
         "svg": _relative(SVG),
         "pdf": _relative(PDF),
     }
@@ -689,13 +689,13 @@ def main() -> int:
         "figure_id": FIGURE_ID,
         "status": "accepted" if score_payload["pass"] else "blocked",
         "artifacts": {
-            "source_identity_json": IDENTITY_JSON,
+            "source_identity_csv": SOURCE_IDENTITY_CSV,
             "source_csv": SOURCE_CSV,
             "source_notes_csv": SOURCE_NOTES_CSV,
-                        "model_csv": MODEL_CSV,
+            "model_csv": MODEL_CSV,
             "plotted_csv": PLOTTED_CSV,
             "fit_statistics_csv": FIT_STATISTICS_CSV,
-                        "png": PNG,
+            "png": PNG,
             "svg": SVG,
             "pdf": PDF,
         },
