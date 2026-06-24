@@ -26,6 +26,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Neutral nonassociating LLE source-backed showcase](../../specs/2026-06-11-m4-equilibrium-neutral-nonassociating-lle-source-backed-showcase.md) | `lle` | Add the first source-backed neutral nonassociating LLE fixture and showcase after the HELD proof lane is receipt-backed. |
 | [Gross 2002 association acceptance pass](../../specs/2026-06-18-m4-equilibrium-gross-2002-association-acceptance-pass.md) | `association` | Add a paper-validation acceptance campaign under `analyses/paper_validation/2002_gross`, with all relevant Gross/Sadowski figures and hard phase-split gates for Figures 8 and 10. |
 | [Gross 2002 full figure replication](../../specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md) | `association` | Require source-backed or digitized curve-level replication of Gross/Sadowski 2002 Figures 1-10, retained scorecards, and a strict full-replication checker before electrolyte work resumes. |
+| [Adaptive branch tracing validation](../../specs/2026-06-24-m4-equilibrium-adaptive-branch-tracing-and-validation.md) | `association` | Add internal boundary-route branch tracing so accepted VLE paper-validation curves carry solved-anchor, segment-density, exact-Hessian, and postsolve proof. |
 
 ## Current Plans
 
@@ -47,6 +48,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #281 Gross 2002 Figures 2-5 VLE replication plan](../../plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md) | `association` | Defines the Figure 2 identity gate plus source/model/plot/score tasks for Gross 2002 Figures 2-5 while keeping native route gaps as separate prerequisites. |
 | [Issue #282 Gross 2002 Figures 6-7 supercritical VLE replication plan](../../plans/2026-06-20-m4-equilibrium-issue-0282-gross-2002-figures-6-7-supercritical-vle-curves-plan.md) | `association` | Defines the Figure 6/7 source/model/plot/score tasks while forcing public-route gaps into separate prerequisites. |
 | [Issue #292 associating GFPE VLE admission prerequisite plan](../../plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md) | `association` | Opens the source-backed neutral associating binary VLE admission needed before #281-#284 can generate Gross 2002 Figures 2-9 model curves. |
+| [Issue #298 adaptive branch tracing validation plan](../../plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md) | `association` | Adds the internal traced-boundary proof layer consumed by Gross 2002 Figure 2 and the full-replication checker. |
 
 ## Retained Evidence
 
@@ -65,6 +67,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-electrolyte-closed --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized associating phase-set surfaces closed. |
 | `scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native` | `association` | Gross/Sadowski 2002 paper-validation acceptance campaign for #275: retains Figure 1 pure-association AAD sanity evidence, connects Figure 8 methanol/cyclohexane source rows and exact-Hessian proof to campaign summaries, adds Figure 10 water/1-pentanol cross-association stress evidence with `k_ij = 0.016` and `cppad_implicit_association`, records Figures 2-7 and 9 as source-requirement records with no completion credit, and keeps electrolyte/reactive/generalized associating claims outside this evidence. |
 | `scripts/validation/check_gross_2002_full_replication.py --json --require-foundation` | `association` | Gross/Sadowski 2002 full-replication foundation for #279: validates the Figure 1-10 manifest, required source/digitization artifact contract, score schema, source metadata schema, and planned blocker readout. This is not full figure replication until #280-#286 close. |
+| `scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native --write-summary` | `association` | Gross/Sadowski 2002 complete full-replication proof with #298 Figure 2 branch tracing: all ten figures are accepted, Figure 2 records `requires_branch_trace`, the retained trace summary proves complete `bubble_line` and `dew_line` traces, exact Hessian and postsolve receipts, max coordinate gaps of `0.06851` and `0.07000`, and no checker blockers. |
 
 ## Current Open Issues
 
@@ -159,6 +162,13 @@ scoring contract.
 route/capability/test files, admits exactly one neutral associating component,
 keeps binary associating/electrolyte/reactive/generalized surfaces closed, and
 left Gross 2002 Figure 1 source/plot/score artifacts for #280.
+
+#298 adds the internal adaptive boundary-route tracing layer consumed by Figure
+2 validation. The retained Figure 2 proof now combines `single_component_vle`
+for pure-limit endpoints with traced `bubble_pressure`/`dew_pressure` binary
+branch anchors, writes the trace summary under shared Gross 2002 results, and
+forces the full-replication checker to reject accepted Figure 2 records without
+complete branch traces, exact-Hessian evidence, and postsolve evidence.
 
 #269 closed through #270 with the first #191 child gate. Its retained checker
 proves Khudaida source-data parsing, records the raw paper-row closure

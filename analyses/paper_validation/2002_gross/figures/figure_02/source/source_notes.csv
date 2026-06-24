@@ -8,5 +8,5 @@ data_file,source_points,analyses/paper_validation/2002_gross/figures/figure_02/s
 data_file,model_curve,analyses/paper_validation/2002_gross/figures/figure_02/results/model_curve.csv,,native ePC-SAFT model curve rows
 data_file,plotted_data,analyses/paper_validation/2002_gross/figures/figure_02/results/plotted_data.csv,,rows used by the retained figure image
 data_file,literature_points,analyses/paper_validation/2002_gross/figures/figure_02/source/literature_points.csv,,Leu and Robinson 1992 Table I
-acceptance,normalized_plot_score,9.01263023162245,,pressure-coordinate RMSE against calibrated Gross 2002 Figure 2 retained P-x/y source points
+acceptance,normalized_plot_score,8.686761147190301,,pressure-coordinate RMSE against calibrated Gross 2002 Figure 2 retained P-x/y source points
 acceptance,derivative_status,verified_exact,,

@@ -264,12 +264,64 @@ def _accepted_record_blockers(
             blockers.append(f"gross_2002_{figure_id}_{SECOND_ORDER_MISSING_SUFFIX}")
     if figure_id == "figure_02" and record.get("source_identity_status") != "resolved":
         blockers.append("gross_2002_figure_02_source_identity_unresolved")
+    if record.get("requires_branch_trace") is True:
+        blockers.extend(_branch_trace_blockers(record, artifacts))
 
     return blockers
 
 
 def _blocker_token(value: str) -> str:
     return "".join(character if character.isalnum() else "_" for character in value).strip("_")
+
+
+def _branch_trace_blockers(record: dict[str, Any], artifacts: dict[str, Any]) -> list[str]:
+    figure_id = str(record.get("figure_id", "unknown"))
+    trace_path = str(artifacts.get("trace_summary_json", "")).strip()
+    if not _path_exists(trace_path):
+        return [f"gross_2002_{figure_id}_trace_summary_json_missing"]
+
+    trace_payload = _safe_json_payload(trace_path)
+    traces = trace_payload.get("traces", [])
+    if not isinstance(traces, list):
+        return [f"gross_2002_{figure_id}_trace_summary_json_invalid"]
+
+    by_series = {
+        str(trace.get("series", "")): trace
+        for trace in traces
+        if isinstance(trace, dict) and str(trace.get("series", "")).strip()
+    }
+    requirements = record.get("trace_requirements", {})
+    if not isinstance(requirements, dict):
+        requirements = {}
+    required_series = requirements.get("required_series", record.get("required_series", []))
+    if not isinstance(required_series, list):
+        required_series = []
+    max_coordinate_gap = _as_float(requirements.get("max_coordinate_gap"), default=float("inf"))
+    max_interpolation_error = _as_float(requirements.get("max_interpolation_error"), default=float("inf"))
+
+    blockers: list[str] = []
+    for series in [str(item) for item in required_series if str(item).strip()]:
+        trace = by_series.get(series)
+        series_token = _blocker_token(series)
+        prefix = f"gross_2002_{figure_id}_trace_{series_token}"
+        if trace is None:
+            blockers.append(f"{prefix}_missing")
+            continue
+        if trace.get("complete") is not True:
+            blockers.append(f"{prefix}_incomplete")
+        if _as_float(trace.get("solved_required_anchor_count"), default=-1.0) < _as_float(
+            trace.get("required_anchor_count"), default=0.0
+        ):
+            blockers.append(f"{prefix}_required_anchors_incomplete")
+        if _as_float(trace.get("max_coordinate_gap"), default=float("inf")) > max_coordinate_gap:
+            blockers.append(f"{prefix}_coordinate_gap_exceeds_threshold")
+        if _as_float(trace.get("max_interpolation_error"), default=float("inf")) > max_interpolation_error:
+            blockers.append(f"{prefix}_interpolation_error_exceeds_threshold")
+        if trace.get("exact_hessian_verified") is not True:
+            blockers.append(f"{prefix}_exact_hessian_missing")
+        if trace.get("postsolve_verified") is not True:
+            blockers.append(f"{prefix}_postsolve_missing")
+    return blockers
 
 
 def _as_float(value: Any, *, default: float) -> float:

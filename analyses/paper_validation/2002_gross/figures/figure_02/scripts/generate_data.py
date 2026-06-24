@@ -30,13 +30,20 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 import epcsaft
-import epcsaft_equilibrium
+from epcsaft_equilibrium import Equilibrium
 from epcsaft_equilibrium._native import extension_native_core
+from epcsaft_equilibrium.branch_tracing import (
+    BranchTraceAnchor,
+    BranchTraceOptions,
+    BranchTraceResult,
+    trace_equilibrium_boundary_route,
+)
 
 FIGURE_ID = "figure_02"
 TEMPERATURE_K = 373.15
 MODEL_POINTS_PER_SERIES = 41
 MIN_COMPOSITION = 1.0e-6
+BINARY_BRANCH_MIN_COMPOSITION = 0.02
 
 FIGURE_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2002_gross" / "figures" / FIGURE_ID
 SOURCE_DIR = FIGURE_DIR / "source"
@@ -52,6 +59,7 @@ MODEL_CSV = RESULTS_DIR / "model_curve.csv"
 PLOTTED_CSV = RESULTS_DIR / "plotted_data.csv"
 FIT_STATISTICS_CSV = RESULTS_DIR / "fit_statistics.csv"
 SUMMARY_JSON = SHARED_DIR / "results" / f"{FIGURE_ID}_generation_summary.json"
+TRACE_SUMMARY_JSON = SHARED_DIR / "results" / f"{FIGURE_ID}_trace_summary.json"
 PNG = RESULTS_DIR / f"{FIGURE_ID}.png"
 SVG = RESULTS_DIR / f"{FIGURE_ID}.svg"
 PDF = RESULTS_DIR / f"{FIGURE_ID}.pdf"
@@ -59,6 +67,22 @@ PDF = RESULTS_DIR / f"{FIGURE_ID}.pdf"
 COMPONENT_ORDER = ["isobutane", "methanol"]
 MIXTURE_SPECIES = ["Methanol", "Isobutane"]
 SOURCE_SERIES = ("bubble_line", "dew_line")
+FIGURE_2_TRACE_OPTIONS = {
+    "max_coordinate_gap": 0.075,
+    "max_interpolation_error": 0.35,
+    "requested_coordinate_tolerance": 2.0e-4,
+    "max_refinement_iterations": 8,
+    "max_points": 240,
+}
+EQUILIBRIUM_SOLVER_OPTIONS = {
+    "max_iterations": 320,
+    "tolerance": 1.0e-6,
+    "ipopt_iteration_history_limit": 12,
+    "ipopt_acceptable_tolerance": 1.0e-7,
+    "ipopt_constraint_violation_tolerance": 1.0e-7,
+    "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+    "ipopt_complementarity_tolerance": 1.0e-8,
+}
 AXIS_CALIBRATION = {
     "composition_isobutane": {"min": 0.0, "max": 1.0, "pixel_min": 116.0, "pixel_max": 802.0},
     "pressure_bar": {"min": 0.0, "max": 25.0, "pixel_min": 548.0, "pixel_max": 16.0},
@@ -235,8 +259,8 @@ def _write_overlay(source_rows: list[dict[str, Any]]) -> None:
     )
     colors = {"bubble_line": (180, 50, 50), "dew_line": (20, 120, 40)}
     for row in source_rows:
-        x = float(row["retained_x_px"])
-        y = float(row["retained_y_px"])
+        x = float(row.get("source_x_px") or row.get("retained_x_px"))
+        y = float(row.get("source_y_px") or row.get("retained_y_px"))
         color = colors[row["series"]]
         if row["source_role"] == "paper_pc_saft_curve":
             draw.ellipse((x - 3, y - 3, x + 3, y + 3), fill=color)
@@ -263,6 +287,33 @@ def _mixture() -> epcsaft.Mixture:
         },
         species=MIXTURE_SPECIES,
         metadata=MIXTURE_METADATA,
+    )
+    return epcsaft.Mixture(parameter_set)
+
+
+def _pure_mixture(species: str, params: dict[str, Any]) -> epcsaft.Mixture:
+    payload: dict[str, Any] = {
+        "MW": np.asarray([params["MW"]]),
+        "m": np.asarray([params["m"]]),
+        "s": np.asarray([params["s"]]),
+        "e": np.asarray([params["e"]]),
+        "z": np.asarray([0.0]),
+        "dielc": np.asarray([1.0]),
+    }
+    if params.get("e_assoc", 0.0) or params.get("assoc_scheme"):
+        payload["e_assoc"] = np.asarray([params["e_assoc"]])
+        payload["vol_a"] = np.asarray([params["vol_a"]])
+        payload["assoc_scheme"] = [params["assoc_scheme"]]
+    parameter_set = epcsaft.ParameterSet.from_dict(
+        payload,
+        species=[species],
+        metadata={
+            "source": params.get("source", ""),
+            "paper": SOURCE_PROVENANCE["paper"],
+            "figure": SOURCE_PROVENANCE["figure"],
+            "source_path": SOURCE_PROVENANCE["source_image"],
+            "endpoint_role": "single_component_vle",
+        },
     )
     return epcsaft.Mixture(parameter_set)
 
@@ -294,118 +345,139 @@ def _series_compositions(source_rows: list[dict[str, Any]], series: str) -> list
     coordinate_key = "x_component_1" if series == "bubble_line" else "y_component_1"
     curve_rows = _source_curve_rows(source_rows)
     source_values = [float(row[coordinate_key]) for row in curve_rows if row["series"] == series]
-    values = {min(1.0 - MIN_COMPOSITION, max(MIN_COMPOSITION, value)) for value in source_values}
+    values = {
+        min(1.0 - MIN_COMPOSITION, max(MIN_COMPOSITION, value))
+        for value in source_values
+        if BINARY_BRANCH_MIN_COMPOSITION <= value < 1.0
+    }
     return sorted(values)
 
 
-def _series_segments(compositions: list[float], series: str) -> list[list[float]]:
-    if series == "bubble_line":
-        low = [value for value in compositions if value < 0.7]
-        high = [value for value in compositions if value >= 0.7]
-        segments: list[list[float]] = []
-        if low:
-            segments.append(low)
-        if high:
-            segments.append(sorted(high, reverse=True))
-        return segments
-    low = [value for value in compositions if value < 0.8]
-    high = [value for value in compositions if value >= 0.8]
-    segments = []
-    if low:
-        segments.append(low)
-    if high:
-        segments.append(sorted(high, reverse=True))
-    return segments
+def _trace_series(mixture: epcsaft.Mixture, source_rows: list[dict[str, Any]], series: str) -> BranchTraceResult:
+    route = "bubble_pressure" if series == "bubble_line" else "dew_pressure"
+    anchors = [
+        BranchTraceAnchor(
+            anchor_id=f"{series}_{index:03d}",
+            coordinate=composition,
+            source_role=series,
+            source_reference="analyses/paper_validation/2002_gross/figures/figure_02/source/source_points.csv",
+            required=True,
+        )
+        for index, composition in enumerate(_series_compositions(source_rows, series), start=1)
+    ]
+    result = trace_equilibrium_boundary_route(
+        mixture,
+        anchors=anchors,
+        options=BranchTraceOptions(
+            route=route,
+            component_index=1,
+            fixed_variable="T_K",
+            fixed_value=TEMPERATURE_K,
+            solver_options=EQUILIBRIUM_SOLVER_OPTIONS,
+            **FIGURE_2_TRACE_OPTIONS,
+        ),
+    )
+    if not result.complete:
+        raise RuntimeError(f"{series} trace did not satisfy branch completeness: {', '.join(result.blockers)}")
+    return result
 
 
-def _solve_route_point(
-    mixture: epcsaft.Mixture,
-    route: str,
-    target_composition: float,
-    continuation_state: dict[str, Any] | None = None,
-) -> epcsaft_equilibrium.EquilibriumResult:
-    candidate_offsets = (0.0, -0.01, 0.01, -0.02, 0.02, -0.05, 0.05)
-    last_error: Exception | None = None
-    for offset in candidate_offsets:
-        isobutane = min(1.0 - MIN_COMPOSITION, max(MIN_COMPOSITION, target_composition + offset))
-        try:
-            solver_options = {
-                "max_iterations": 320,
-                "tolerance": 1.0e-6,
-                "ipopt_iteration_history_limit": 12,
-                "ipopt_acceptable_tolerance": 1.0e-7,
-                "ipopt_constraint_violation_tolerance": 1.0e-7,
-                "ipopt_dual_infeasibility_tolerance": 1.0e-8,
-                "ipopt_complementarity_tolerance": 1.0e-8,
-            }
-            if continuation_state is not None:
-                solver_options["continuation_state"] = continuation_state
-            if route == "bubble_pressure":
-                return epcsaft_equilibrium.Equilibrium(
-                    mixture,
-                    route=route,
-                    T=TEMPERATURE_K,
-                    x=[float(1.0 - isobutane), isobutane],
-                ).solve(solver_options=solver_options)
-            return epcsaft_equilibrium.Equilibrium(
-                mixture,
-                route=route,
-                T=TEMPERATURE_K,
-                y=[float(1.0 - isobutane), isobutane],
-            ).solve(solver_options=solver_options)
-        except Exception as exc:
-            last_error = exc
-    assert last_error is not None
-    raise last_error
-
-
-def _solve_series(mixture: epcsaft.Mixture, series: str) -> list[dict[str, Any]]:
-    compositions = _series_compositions(_load_source_rows(), series)
+def _model_rows_from_trace(trace: BranchTraceResult, series: str) -> list[dict[str, Any]]:
+    composition_key = "x_component_1" if series == "bubble_line" else "y_component_1"
+    paired_key = "y_component_1" if series == "bubble_line" else "x_component_1"
     rows: list[dict[str, Any]] = []
-    for segment in _series_segments(compositions, series):
-        continuation_state: dict[str, Any] | None = None
-        for composition in segment:
-            if series == "bubble_line":
-                result = _solve_route_point(mixture, "bubble_pressure", float(composition), continuation_state)
-                composition_key = "x_component_1"
-                paired_key = "y_component_1"
-                fixed_composition = float(result.x[1])
-                paired_composition = float(result.y[1])
-            else:
-                result = _solve_route_point(mixture, "dew_pressure", float(composition), continuation_state)
-                composition_key = "y_component_1"
-                paired_key = "x_component_1"
-                fixed_composition = float(result.y[1])
-                paired_composition = float(result.x[1])
-
-            diagnostics = result.diagnostics
-            if diagnostics.get("hessian_approximation") != "exact" or diagnostics.get("exact_hessian_available") is not True:
-                raise RuntimeError(f"{series} solve at composition={composition:.3f} did not report the exact Hessian route.")
-            if diagnostics.get("postsolve_accepted") is not True:
-                raise RuntimeError(f"{series} solve at composition={composition:.3f} was not postsolve accepted.")
-            continuation_state = diagnostics.get("continuation_state")
-
-            rows.append(
-                {
-                    "series": series,
-                    composition_key: fixed_composition,
-                    paired_key: paired_composition,
-                    "T_K": TEMPERATURE_K,
-                    "P_bar": float(result.pressure) / 1.0e5,
-                    "route": result.route,
-                    "problem_kind": result.problem_kind,
-                    "route_status": diagnostics.get("route_status", ""),
-                    "solver_status": diagnostics.get("solver_status", ""),
-                    "hessian_approximation": diagnostics.get("hessian_approximation", ""),
-                    "exact_hessian_available": bool(diagnostics.get("exact_hessian_available")),
-                    "postsolve_accepted": bool(diagnostics.get("postsolve_accepted")),
-                    "hessian_backend": diagnostics.get("hessian_backend", ""),
-                    "iteration_count": diagnostics.get("iteration_count", ""),
-                    "pressure_consistency_norm": diagnostics.get("pressure_consistency_norm", ""),
-                    "chemical_potential_consistency_norm": diagnostics.get("chemical_potential_consistency_norm", ""),
-                }
-            )
+    for point in trace.accepted_points:
+        rows.append(
+            {
+                "series": series,
+                composition_key: point.solved_coordinate,
+                paired_key: point.paired_coordinate,
+                "T_K": point.temperature_k,
+                "P_bar": point.pressure_bar,
+                "route": point.route,
+                "problem_kind": "boundary_branch_trace",
+                "route_status": point.route_status,
+                "solver_status": point.solver_status,
+                "hessian_approximation": point.hessian_approximation,
+                "exact_hessian_available": point.exact_hessian_available,
+                "postsolve_accepted": point.postsolve_accepted,
+                "hessian_backend": "cppad_phase_pressure_route",
+                "iteration_count": "",
+                "pressure_consistency_norm": point.residuals.get("pressure_consistency_norm", ""),
+                "chemical_potential_consistency_norm": point.residuals.get("chemical_potential_consistency_norm", ""),
+                "trace_point_id": point.point_id,
+                "requested_coordinate": point.requested_coordinate,
+                "source_anchor_id": point.source_anchor_id,
+            }
+        )
+    rows.sort(key=lambda row: float(row[composition_key]))
     return rows
+
+
+def _pure_endpoint_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    endpoint_mixtures = {
+        0.0: ("methanol", _pure_mixture("Methanol", METHANOL_PARAMS)),
+        1.0: ("isobutane", _pure_mixture("Isobutane", ISOBUTANE_PARAMS)),
+    }
+    solved: dict[float, Any] = {}
+    rows: list[dict[str, Any]] = []
+    for source_row in _source_curve_rows(source_rows):
+        series = source_row["series"]
+        coordinate_key = "x_component_1" if series == "bubble_line" else "y_component_1"
+        coordinate = float(source_row[coordinate_key])
+        if coordinate not in endpoint_mixtures:
+            continue
+        component, mixture = endpoint_mixtures[coordinate]
+        if coordinate not in solved:
+            solved[coordinate] = Equilibrium(mixture, route="single_component_vle", T=TEMPERATURE_K).solve(
+                solver_options=EQUILIBRIUM_SOLVER_OPTIONS
+            )
+        result = solved[coordinate]
+        diagnostics = result.diagnostics
+        payload = result.to_dict() if hasattr(result, "to_dict") else {}
+        residuals = payload.get("saturation_residuals", {}) if isinstance(payload.get("saturation_residuals"), dict) else {}
+        postsolve_certification = diagnostics.get("postsolve_certification", {})
+        postsolve_accepted = diagnostics.get("postsolve_accepted")
+        if postsolve_accepted is None and isinstance(postsolve_certification, dict):
+            postsolve_accepted = postsolve_certification.get("accepted")
+        rows.append(
+            {
+                "series": series,
+                "x_component_1": coordinate,
+                "y_component_1": coordinate,
+                "T_K": TEMPERATURE_K,
+                "P_bar": float(result.pressure) / 1.0e5,
+                "route": result.route,
+                "problem_kind": result.problem_kind,
+                "route_status": diagnostics.get("route_status", ""),
+                "solver_status": diagnostics.get("solver_status", ""),
+                "hessian_approximation": diagnostics.get("hessian_approximation", ""),
+                "exact_hessian_available": bool(diagnostics.get("exact_hessian_available")),
+                "postsolve_accepted": bool(postsolve_accepted),
+                "hessian_backend": diagnostics.get("hessian_backend", ""),
+                "iteration_count": diagnostics.get("iteration_count", ""),
+                "pressure_consistency_norm": residuals.get(
+                    "pressure_consistency_norm",
+                    diagnostics.get("pressure_consistency_norm", ""),
+                ),
+                "chemical_potential_consistency_norm": residuals.get(
+                    "chemical_potential_consistency_norm",
+                    diagnostics.get("chemical_potential_consistency_norm", ""),
+                ),
+                "trace_point_id": f"single_component_vle:{component}:{coordinate:.1f}",
+                "requested_coordinate": coordinate,
+                "source_anchor_id": f"pure_endpoint:{component}",
+            }
+        )
+    return rows
+
+
+def _solve_traces(mixture: epcsaft.Mixture, source_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, BranchTraceResult]]:
+    trace_results = {series: _trace_series(mixture, source_rows, series) for series in SOURCE_SERIES}
+    rows: list[dict[str, Any]] = _pure_endpoint_rows(source_rows)
+    for series, result in trace_results.items():
+        rows.extend(_model_rows_from_trace(result, series))
+    return rows, trace_results
 
 
 def _interp_pressure(series_rows: list[dict[str, Any]], coordinate_key: str, composition: float) -> float:
@@ -563,6 +635,41 @@ def _write_plotted_csv(source_rows: list[dict[str, Any]], model_rows: list[dict[
     )
 
 
+def _trace_summary_payload(trace_results: dict[str, BranchTraceResult]) -> dict[str, Any]:
+    traces: list[dict[str, Any]] = []
+    for series, result in trace_results.items():
+        accepted_points = result.accepted_points
+        traces.append(
+            {
+                "series": series,
+                "route": result.route,
+                "complete": result.complete,
+                "required_anchor_count": result.required_anchor_count,
+                "solved_required_anchor_count": result.solved_required_anchor_count,
+                "accepted_point_count": len(accepted_points),
+                "max_coordinate_gap": result.max_coordinate_gap,
+                "max_interpolation_error": result.max_interpolation_error,
+                "exact_hessian_verified": all(
+                    point.exact_hessian_available and point.hessian_approximation == "exact"
+                    for point in accepted_points
+                ),
+                "postsolve_verified": all(point.postsolve_accepted for point in accepted_points),
+                "blockers": list(result.blockers),
+            }
+        )
+    return {
+        "figure_id": FIGURE_ID,
+        "trace_contract": "m4_boundary_route_trace_v1",
+        "trace_options": dict(FIGURE_2_TRACE_OPTIONS),
+        "trace_source_policy": {
+            "binary_branch_min_composition": BINARY_BRANCH_MIN_COMPOSITION,
+            "pure_endpoints_route": "single_component_vle",
+            "reason": "pure-limit source points are represented by the single-component saturation route; finite binary branch anchors use bubble/dew pressure routes",
+        },
+        "traces": traces,
+    }
+
+
 def _native_receipt() -> dict[str, Any]:
     receipt = native_freshness.build_receipt(
         native_module=extension_native_core(),
@@ -578,7 +685,6 @@ def _native_receipt() -> dict[str, Any]:
         ],
     )
     return native_freshness.receipt_to_jsonable(receipt)
-
 
 
 def _retained_native_receipt() -> dict[str, Any]:
@@ -601,17 +707,19 @@ def _retained_native_receipt() -> dict[str, Any]:
             return receipt
     raise RuntimeError(f"Retained native freshness receipt is required for --render-only: {_relative(SUMMARY_JSON)}")
 
+
 def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> None:
     manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     manifest["native_freshness_receipt"] = receipt
     artifacts = {
-        "source_identity_json": _relative(IDENTITY_JSON),
+        "source_identity_csv": _relative(SOURCE_IDENTITY_CSV),
         "source_csv": _relative(SOURCE_CSV),
         "source_notes_csv": _relative(SOURCE_NOTES_CSV),
-                "model_csv": _relative(MODEL_CSV),
+        "model_csv": _relative(MODEL_CSV),
         "plotted_csv": _relative(PLOTTED_CSV),
         "fit_statistics_csv": _relative(FIT_STATISTICS_CSV),
-                "png": _relative(PNG),
+        "trace_summary_json": _relative(TRACE_SUMMARY_JSON),
+        "png": _relative(PNG),
         "svg": _relative(SVG),
         "pdf": _relative(PDF),
     }
@@ -623,9 +731,15 @@ def _update_manifest(score_payload: dict[str, Any], receipt: dict[str, Any]) -> 
                 "replication_status": "accepted" if score_payload["pass"] else "planned",
                 "counts_toward_completion": bool(score_payload["pass"]),
                 "requires_exact_association_hessian": True,
+                "requires_branch_trace": True,
                 "artifacts": artifacts,
                 "remaining_work": [] if score_payload["pass"] else ["improve Figure 2 per-series replication score to the acceptance threshold"],
                 "source_data_basis": "calibrated Gross 2002 Figure 2 pressure-composition source points with figure-local parameter provenance resolution for methanol/isobutane",
+                "trace_requirements": {
+                    "max_coordinate_gap": FIGURE_2_TRACE_OPTIONS["max_coordinate_gap"],
+                    "max_interpolation_error": FIGURE_2_TRACE_OPTIONS["max_interpolation_error"],
+                    "required_series": list(SOURCE_SERIES),
+                },
                 "score": {
                     "normalized_plot_score": score_payload["normalized_plot_score"],
                     "branch_coverage_score": score_payload["branch_coverage_score"],
@@ -650,11 +764,16 @@ def main() -> int:
     if render_only:
         if not MODEL_CSV.exists():
             raise RuntimeError(f"Retained model CSV is required for --render-only: {_relative(MODEL_CSV)}")
+        if not TRACE_SUMMARY_JSON.exists():
+            raise RuntimeError(f"Retained trace summary is required for --render-only: {_relative(TRACE_SUMMARY_JSON)}")
         model_rows = list(_read_csv(MODEL_CSV))
+        trace_summary = json.loads(TRACE_SUMMARY_JSON.read_text(encoding="utf-8"))
         receipt = _retained_native_receipt()
     else:
         mixture = _mixture()
-        model_rows = _solve_series(mixture, "bubble_line") + _solve_series(mixture, "dew_line")
+        model_rows, trace_results = _solve_traces(mixture, source_rows)
+        trace_summary = _trace_summary_payload(trace_results)
+        _write_json(TRACE_SUMMARY_JSON, trace_summary)
         receipt = _native_receipt()
     score_payload = _score(source_rows, model_rows)
 
@@ -678,6 +797,9 @@ def main() -> int:
             "iteration_count",
             "pressure_consistency_norm",
             "chemical_potential_consistency_norm",
+            "trace_point_id",
+            "requested_coordinate",
+            "source_anchor_id",
         ],
     )
     _write_overlay(source_rows)
@@ -689,19 +811,21 @@ def main() -> int:
         "figure_id": FIGURE_ID,
         "status": "accepted" if score_payload["pass"] else "blocked",
         "artifacts": {
-            "source_identity_json": IDENTITY_JSON,
+            "source_identity_csv": SOURCE_IDENTITY_CSV,
             "source_csv": SOURCE_CSV,
             "source_notes_csv": SOURCE_NOTES_CSV,
-                        "model_csv": MODEL_CSV,
+            "model_csv": MODEL_CSV,
             "plotted_csv": PLOTTED_CSV,
             "fit_statistics_csv": FIT_STATISTICS_CSV,
-                        "png": PNG,
+            "trace_summary_json": TRACE_SUMMARY_JSON,
+            "png": PNG,
             "svg": SVG,
             "pdf": PDF,
         },
         "source_point_count": len(source_rows),
         "model_point_count": len(model_rows),
         "score": score_payload,
+        "trace_summary": trace_summary,
         "source_provenance": SOURCE_PROVENANCE,
         "native_route": {
             "public_entrypoint": "epcsaft_equilibrium.Equilibrium(mixture, route='bubble_pressure'/'dew_pressure', T=..., x=.../y=...).solve()",

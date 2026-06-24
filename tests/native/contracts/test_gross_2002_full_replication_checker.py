@@ -290,6 +290,112 @@ def test_accepted_vle_figures_require_all_series_scores(tmp_path: Path) -> None:
     assert "gross_2002_figure_05_required_series_2_propanol_benzene_missing" in result["blockers"]
 
 
+def test_accepted_figure_two_requires_trace_summary_artifact(tmp_path: Path) -> None:
+    artifacts = _artifact_set(
+        tmp_path,
+        "figure_02",
+        proof_status="verified_exact",
+        series=["bubble_line", "dew_line"],
+    )
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_02",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 8.0,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
+            "source_identity_status": "resolved",
+            "required_series": ["bubble_line", "dew_line"],
+            "requires_branch_trace": True,
+            "trace_requirements": {
+                "max_coordinate_gap": 0.075,
+                "max_interpolation_error": 0.35,
+                "required_series": ["bubble_line", "dew_line"],
+            },
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_02_trace_summary_json_missing" in result["blockers"]
+
+
+def test_accepted_figure_two_requires_complete_trace_series(tmp_path: Path) -> None:
+    artifacts = _artifact_set(
+        tmp_path,
+        "figure_02",
+        proof_status="verified_exact",
+        series=["bubble_line", "dew_line"],
+    )
+    artifacts["trace_summary_json"] = _write(
+        tmp_path / "figure_02" / "trace_summary.json",
+        json.dumps(
+            {
+                "figure_id": "figure_02",
+                "trace_contract": "m4_boundary_route_trace_v1",
+                "traces": [
+                    {
+                        "series": "bubble_line",
+                        "route": "bubble_pressure",
+                        "complete": False,
+                        "required_anchor_count": 3,
+                        "solved_required_anchor_count": 2,
+                        "accepted_point_count": 5,
+                        "max_coordinate_gap": 0.04,
+                        "max_interpolation_error": 0.1,
+                        "exact_hessian_verified": True,
+                        "postsolve_verified": True,
+                        "blockers": ["required_anchor_incomplete"],
+                    },
+                    {
+                        "series": "dew_line",
+                        "route": "dew_pressure",
+                        "complete": True,
+                        "required_anchor_count": 3,
+                        "solved_required_anchor_count": 3,
+                        "accepted_point_count": 5,
+                        "max_coordinate_gap": 0.04,
+                        "max_interpolation_error": 0.1,
+                        "exact_hessian_verified": True,
+                        "postsolve_verified": True,
+                        "blockers": [],
+                    },
+                ],
+            }
+        ),
+    )
+    payload = _foundation_payload()
+    payload["figures"] = [
+        {
+            "figure_id": "figure_02",
+            "plot_family": "vle",
+            "replication_status": "accepted",
+            "counts_toward_completion": True,
+            "acceptance_threshold": 8.0,
+            checker.SECOND_ORDER_REQUIRED_FIELD: True,
+            "source_identity_status": "resolved",
+            "required_series": ["bubble_line", "dew_line"],
+            "requires_branch_trace": True,
+            "trace_requirements": {
+                "max_coordinate_gap": 0.075,
+                "max_interpolation_error": 0.35,
+                "required_series": ["bubble_line", "dew_line"],
+            },
+            "artifacts": artifacts,
+        }
+    ]
+
+    result = checker.evaluate_payload(payload, require_complete=True)
+
+    assert result["complete"] is False
+    assert "gross_2002_figure_02_trace_bubble_line_incomplete" in result["blockers"]
+    assert "gross_2002_figure_02_trace_bubble_line_required_anchors_incomplete" in result["blockers"]
+
+
 def test_complete_payload_accepts_all_figures(tmp_path: Path) -> None:
     result = checker.evaluate_payload(_complete_payload(tmp_path), require_complete=True)
 

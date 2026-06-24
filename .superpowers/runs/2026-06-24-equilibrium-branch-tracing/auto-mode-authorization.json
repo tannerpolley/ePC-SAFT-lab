@@ -1,0 +1,39 @@
+{
+  "schema": "superpowers-project.auto-mode-authorization.v1",
+  "run_id": "2026-06-24-equilibrium-branch-tracing",
+  "question_id": "project_auto_mode_authorization",
+  "source": "request_user_input",
+  "selected_authority": "bounded-auto-merge",
+  "source_spec": "docs/superpowers/specs/2026-06-24-m4-equilibrium-adaptive-branch-tracing-and-validation.md",
+  "route_policy": {
+    "selected_mode": "agent-chooses",
+    "issue_route": "direct-inline-resolve-issue",
+    "intended_next_route": "write-plan"
+  },
+  "decision_policy": {
+    "selected_mode": "recorded-defaults",
+    "stop_outside_policy": true
+  },
+  "merge_permission": {
+    "selected_mode": "preauthorized-after-clean-premerge",
+    "require_clean_premerge": true
+  },
+  "mutation_scope": [
+    "current-repo",
+    "development-branch"
+  ],
+  "required_proof": [
+    "plan-proof-oracle",
+    "verification-receipts",
+    "cleanup-hook",
+    "premerge-proof",
+    "closeout-proof"
+  ],
+  "stop_conditions": [
+    "missing-proof",
+    "dirty-unsafe-state",
+    "failed-validation",
+    "decision-outside-policy"
+  ],
+  "authorization_note": "User selected Auto Mode for the initiate-workflow route and later clarified that Auto Mode should choose recommended options without further native prompts."
+}
