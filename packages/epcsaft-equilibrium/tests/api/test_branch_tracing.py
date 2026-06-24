@@ -7,9 +7,12 @@ from epcsaft_equilibrium.branch_tracing import (
     BranchTraceAnchor,
     BranchTraceOptions,
     BranchTracePoint,
+    solve_equilibrium_boundary_point,
     trace_boundary_route,
+    trace_equilibrium_boundary_route,
     validate_branch_trace_inputs,
 )
+from epcsaft_equilibrium import branch_tracing as branch_tracing_module
 
 
 def test_branch_trace_options_validate_supported_route_and_anchor_ids() -> None:
@@ -150,3 +153,124 @@ def test_trace_carries_continuation_state_to_refinement_point() -> None:
     assert result.complete is True
     assert refinement_states
     assert refinement_states[0] == {"variables": [0.1, 12.1]}
+
+
+def test_equilibrium_point_adapter_maps_bubble_route_and_continuation_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    class FakeResult:
+        route = "bubble_pressure"
+        x = [0.75, 0.25]
+        y = [0.65, 0.35]
+        pressure = 1.23e6
+        temperature = 373.15
+        problem_kind = "derived_bubble_pressure"
+        diagnostics = {
+            "exact_hessian_available": True,
+            "hessian_approximation": "exact",
+            "postsolve_accepted": True,
+            "route_status": "accepted",
+            "solver_status": "Solve_Succeeded",
+            "iteration_count": 7,
+            "pressure_consistency_norm": 1.0e-9,
+            "chemical_potential_consistency_norm": 2.0e-9,
+            "continuation_state": {"variables": [0.25, 12.3]},
+        }
+
+    class FakeEquilibrium:
+        def __init__(self, mixture: object, **kwargs: object) -> None:
+            calls.append({"mixture": mixture, "kwargs": kwargs})
+
+        def solve(self, *, solver_options: object = None) -> FakeResult:
+            calls[-1]["solver_options"] = solver_options
+            return FakeResult()
+
+    monkeypatch.setattr(branch_tracing_module, "Equilibrium", FakeEquilibrium)
+    mixture = object()
+
+    point = solve_equilibrium_boundary_point(
+        BranchSolveRequest(
+            route="bubble_pressure",
+            component_index=1,
+            fixed_variable="T_K",
+            fixed_value=373.15,
+            coordinate=0.25,
+            continuation_state={"variables": [0.20, 11.0]},
+            source_anchor_id="source-a",
+        ),
+        mixture=mixture,
+        solver_options={"max_iterations": 25},
+    )
+
+    assert calls[0]["kwargs"] == {"route": "bubble_pressure", "T": 373.15, "x": [0.75, 0.25]}
+    assert calls[0]["solver_options"] == {"max_iterations": 25, "continuation_state": {"variables": [0.20, 11.0]}}
+    assert point.solved_coordinate == 0.25
+    assert point.paired_coordinate == 0.35
+    assert point.pressure_bar == pytest.approx(12.3)
+    assert point.continuation_state_returned == {"variables": [0.25, 12.3]}
+
+
+def test_equilibrium_point_adapter_maps_dew_route(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    class FakeResult:
+        route = "dew_pressure"
+        x = [0.60, 0.40]
+        y = [0.72, 0.28]
+        pressure = 1.1e6
+        temperature = 373.15
+        problem_kind = "derived_dew_pressure"
+        diagnostics = {
+            "exact_hessian_available": True,
+            "hessian_approximation": "exact",
+            "postsolve_accepted": True,
+            "route_status": "accepted",
+            "solver_status": "Solve_Succeeded",
+        }
+
+    class FakeEquilibrium:
+        def __init__(self, mixture: object, **kwargs: object) -> None:
+            calls.append({"mixture": mixture, "kwargs": kwargs})
+
+        def solve(self, *, solver_options: object = None) -> FakeResult:
+            calls[-1]["solver_options"] = solver_options
+            return FakeResult()
+
+    monkeypatch.setattr(branch_tracing_module, "Equilibrium", FakeEquilibrium)
+
+    point = solve_equilibrium_boundary_point(
+        BranchSolveRequest(
+            route="dew_pressure",
+            component_index=1,
+            fixed_variable="T_K",
+            fixed_value=373.15,
+            coordinate=0.28,
+        ),
+        mixture=object(),
+    )
+
+    assert calls[0]["kwargs"] == {"route": "dew_pressure", "T": 373.15, "y": [0.72, 0.28]}
+    assert point.solved_coordinate == 0.28
+    assert point.paired_coordinate == 0.40
+
+
+def test_equilibrium_branch_trace_wrapper_uses_default_adapter(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_solve(request: BranchSolveRequest, *, mixture: object, solver_options: object = None) -> BranchTracePoint:
+        assert solver_options == {"max_iterations": 5}
+        return _fake_point(request, pressure_bar=10.0 + request.coordinate)
+
+    monkeypatch.setattr(branch_tracing_module, "solve_equilibrium_boundary_point", fake_solve)
+
+    result = trace_equilibrium_boundary_route(
+        object(),
+        anchors=[BranchTraceAnchor(anchor_id="a", coordinate=0.10), BranchTraceAnchor(anchor_id="b", coordinate=0.12)],
+        options=BranchTraceOptions(
+            route="bubble_pressure",
+            component_index=1,
+            fixed_variable="T_K",
+            fixed_value=373.15,
+            solver_options={"max_iterations": 5},
+        ),
+    )
+
+    assert result.complete is True

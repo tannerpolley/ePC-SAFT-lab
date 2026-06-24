@@ -7,6 +7,8 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any
 
+from .equilibrium import Equilibrium
+
 SUPPORTED_BOUNDARY_ROUTES = frozenset({"bubble_pressure", "dew_pressure", "bubble_temperature", "dew_temperature"})
 SUPPORTED_FIXED_VARIABLES = frozenset({"T_K", "P_bar"})
 
@@ -337,4 +339,86 @@ def _result_from_points(
         solved_required_anchor_count=len(solved_required_anchor_ids),
         complete=complete,
         blockers=tuple(sorted(blockers)),
+    )
+
+
+def solve_equilibrium_boundary_point(
+    request: BranchSolveRequest,
+    *,
+    mixture: Any,
+    solver_options: Mapping[str, Any] | None = None,
+) -> BranchTracePoint:
+    if request.component_index != 1:
+        raise ValueError("internal boundary branch tracing currently supports binary component_index=1")
+
+    composition = [1.0 - request.coordinate, request.coordinate]
+    constructor_kwargs: dict[str, Any] = {"route": request.route}
+    if request.fixed_variable == "T_K":
+        constructor_kwargs["T"] = request.fixed_value
+    elif request.fixed_variable == "P_bar":
+        constructor_kwargs["P"] = request.fixed_value * 1.0e5
+    else:
+        raise ValueError(f"unsupported fixed variable: {request.fixed_variable}")
+
+    if request.route.startswith("bubble_"):
+        constructor_kwargs["x"] = composition
+    elif request.route.startswith("dew_"):
+        constructor_kwargs["y"] = composition
+    else:
+        raise ValueError(f"unsupported boundary route: {request.route}")
+
+    merged_options = dict(solver_options or {})
+    if request.continuation_state is not None:
+        merged_options["continuation_state"] = dict(request.continuation_state)
+
+    result = Equilibrium(mixture, **constructor_kwargs).solve(solver_options=merged_options)
+    diagnostics = dict(getattr(result, "diagnostics", {}) or {})
+    if request.route.startswith("bubble_"):
+        solved_coordinate = float(result.x[request.component_index])
+        paired_coordinate = float(result.y[request.component_index])
+    else:
+        solved_coordinate = float(result.y[request.component_index])
+        paired_coordinate = float(result.x[request.component_index])
+
+    residuals = {
+        key: diagnostics[key]
+        for key in ("pressure_consistency_norm", "chemical_potential_consistency_norm")
+        if key in diagnostics
+    }
+    return BranchTracePoint(
+        point_id=f"{request.route}:{request.coordinate:.6f}",
+        route=str(getattr(result, "route", request.route)),
+        requested_coordinate=float(request.coordinate),
+        solved_coordinate=solved_coordinate,
+        paired_coordinate=paired_coordinate,
+        pressure_bar=float(result.pressure) / 1.0e5,
+        temperature_k=float(result.temperature),
+        continuation_state_used=request.continuation_state,
+        continuation_state_returned=diagnostics.get("continuation_state"),
+        exact_hessian_available=diagnostics.get("exact_hessian_available") is True,
+        hessian_approximation=str(diagnostics.get("hessian_approximation", "")),
+        postsolve_accepted=diagnostics.get("postsolve_accepted") is True,
+        route_status=str(diagnostics.get("route_status", "")),
+        solver_status=str(diagnostics.get("solver_status", "")),
+        residuals=residuals,
+        source_anchor_id=request.source_anchor_id,
+        accepted=True,
+        rejection_reason="",
+    )
+
+
+def trace_equilibrium_boundary_route(
+    mixture: Any,
+    *,
+    anchors: Sequence[BranchTraceAnchor],
+    options: BranchTraceOptions,
+) -> BranchTraceResult:
+    return trace_boundary_route(
+        anchors=anchors,
+        options=options,
+        solve_point=lambda request: solve_equilibrium_boundary_point(
+            request,
+            mixture=mixture,
+            solver_options=options.solver_options,
+        ),
     )
