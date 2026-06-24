@@ -1,0 +1,31 @@
+{
+  "schema": "superpowers-project.workflow-mode-ledger.v1",
+  "run_id": "2026-06-24-equilibrium-branch-tracing",
+  "created_at": "2026-06-24T00:00:00-06:00",
+  "skill_name": "superpowers-project:initiate-workflow",
+  "question_id": "project_workflow_mode",
+  "source": "request_user_input",
+  "selected_mode": "auto",
+  "selected_label": "Auto Mode",
+  "recommended_mode": "manual",
+  "request_summary": "Start pulling the Figure 2 sampling failure lessons into real project code for future equilibrium solves.",
+  "route_policy": {
+    "selected_route": "superpowers-project:brainstorm-spec",
+    "companion_method": "superpowers:brainstorming",
+    "reason": "The requested change crosses Python branch orchestration, native C++ point-solve diagnostics, validation artifacts, and future equilibrium API design, so it needs a durable design spec before implementation.",
+    "one_route_only": true,
+    "stop_at_route_closeout": true,
+    "no_implementation_in_brainstorm": true
+  },
+  "repo": {
+    "root": "C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT",
+    "milestone": "M4 - Equilibrium",
+    "package": "packages/epcsaft-equilibrium"
+  },
+  "validator": {
+    "expected_path": "scripts/validate-workflow-mode-ledger.ps1",
+    "present_in_repo": false,
+    "validation_attempted": false,
+    "reason": "scripts/validate-workflow-mode-ledger.ps1 is absent from this repository"
+  }
+}
