@@ -87,14 +87,37 @@ def _require_verified_held_gate_receipts(rows: list[dict[str, str]]) -> None:
 def render_tieline() -> None:
     rows = _read_csv(SHARED_RESULTS / "neutral_tp_flash_phase_points.csv")
     by_role = {row["role"]: row for row in rows}
-    fig, ax = plt.subplots(figsize=(7.2, 6.2))
+    fig, ax = plt.subplots(figsize=(7.0, 5.8))
 
     triangle = [(0.0, 0.0), (1.0, 0.0), (0.5, math.sqrt(3.0) / 2.0), (0.0, 0.0)]
-    ax.plot([p[0] for p in triangle], [p[1] for p in triangle], color="black", linewidth=1.6)
-    for fraction in (0.2, 0.4, 0.6, 0.8):
-        ax.plot([fraction, 0.5 + 0.5 * fraction], [0.0, (math.sqrt(3.0) / 2.0) * (1.0 - fraction)], color="#d4d4d4", linewidth=0.8)
-        ax.plot([1.0 - fraction, 0.5 * (1.0 - fraction)], [0.0, (math.sqrt(3.0) / 2.0) * fraction], color="#d4d4d4", linewidth=0.8)
-        ax.plot([0.5 * fraction, 1.0 - 0.5 * fraction], [(math.sqrt(3.0) / 2.0) * fraction] * 2, color="#d4d4d4", linewidth=0.8)
+    ax.plot([p[0] for p in triangle], [p[1] for p in triangle], color="black", linewidth=1.8)
+    grid_color = "#e5e7eb"
+    grid_width = 0.75
+    for fraction in (0.25, 0.5, 0.75):
+        # Constant propane.
+        ax.plot(
+            [fraction, 0.5 + 0.5 * fraction],
+            [0.0, (math.sqrt(3.0) / 2.0) * (1.0 - fraction)],
+            color=grid_color,
+            linewidth=grid_width,
+            zorder=0,
+        )
+        # Constant methane.
+        ax.plot(
+            [1.0 - fraction, 0.5 * (1.0 - fraction)],
+            [0.0, (math.sqrt(3.0) / 2.0) * (1.0 - fraction)],
+            color=grid_color,
+            linewidth=grid_width,
+            zorder=0,
+        )
+        # Constant ethane.
+        ax.plot(
+            [0.5 * fraction, 1.0 - 0.5 * fraction],
+            [(math.sqrt(3.0) / 2.0) * fraction] * 2,
+            color=grid_color,
+            linewidth=grid_width,
+            zorder=0,
+        )
 
     source_liq = _ternary_xy(by_role["source_liquid"])
     source_vap = _ternary_xy(by_role["source_vapor"])
@@ -102,35 +125,52 @@ def render_tieline() -> None:
     solved_vap = _ternary_xy(by_role["solved_vapor"])
     feed = _ternary_xy(by_role["feed"])
 
-    ax.plot([source_liq[0], source_vap[0]], [source_liq[1], source_vap[1]], color="#737373", linestyle="--", linewidth=2.0)
-    ax.plot([solved_liq[0], solved_vap[0]], [solved_liq[1], solved_vap[1]], color="#0f766e", linewidth=2.4)
-    ax.scatter(*source_liq, s=92, marker="o", facecolor="white", edgecolor="#525252", linewidth=1.8, zorder=3)
-    ax.scatter(*source_vap, s=92, marker="s", facecolor="white", edgecolor="#525252", linewidth=1.8, zorder=3)
-    ax.scatter(*solved_liq, s=56, marker="o", color="#0f766e", zorder=4)
-    ax.scatter(*solved_vap, s=56, marker="s", color="#0f766e", zorder=4)
-    ax.scatter(*feed, s=88, marker="D", color="#b45309", zorder=5)
+    ax.plot(
+        [source_vap[0], source_liq[0]],
+        [source_vap[1], source_liq[1]],
+        color="#6b7280",
+        linestyle=(0, (4, 3)),
+        linewidth=1.7,
+        zorder=1,
+    )
+    ax.plot(
+        [solved_vap[0], solved_liq[0]],
+        [solved_vap[1], solved_liq[1]],
+        color="#0f766e",
+        linewidth=2.8,
+        zorder=2,
+    )
+    ax.scatter(*source_liq, s=130, marker="o", facecolor="white", edgecolor="#6b7280", linewidth=1.8, zorder=3)
+    ax.scatter(*source_vap, s=130, marker="s", facecolor="white", edgecolor="#6b7280", linewidth=1.8, zorder=3)
+    ax.scatter(*solved_liq, s=72, marker="o", color="#0f766e", edgecolor="#0f4f47", linewidth=0.8, zorder=4)
+    ax.scatter(*solved_vap, s=72, marker="s", color="#0f766e", edgecolor="#0f4f47", linewidth=0.8, zorder=4)
+    ax.scatter(*feed, s=96, marker="D", color="#b45309", edgecolor="#7c2d12", linewidth=0.8, zorder=5)
 
-    ax.text(-0.055, -0.055, "Methane", ha="center", va="top", fontsize=12)
-    ax.text(1.055, -0.055, "Propane", ha="center", va="top", fontsize=12)
+    ax.annotate("vapor", xy=solved_vap, xytext=(-12, 11), textcoords="offset points", ha="right", fontsize=10, color="#0f4f47")
+    ax.annotate("liquid", xy=solved_liq, xytext=(12, 10), textcoords="offset points", ha="left", fontsize=10, color="#0f4f47")
+    ax.annotate("feed", xy=feed, xytext=(0, -18), textcoords="offset points", ha="center", fontsize=10, color="#7c2d12")
+
+    ax.text(-0.04, -0.05, "Methane", ha="center", va="top", fontsize=12)
+    ax.text(1.04, -0.05, "Propane", ha="center", va="top", fontsize=12)
     ax.text(0.5, math.sqrt(3.0) / 2.0 + 0.025, "Ethane", ha="center", va="bottom", fontsize=12)
-    ax.set_title("Neutral TP-flash VLE tie-line", fontsize=14, pad=22)
+    ax.set_title("Neutral TP flash: ternary composition closure", fontsize=14, pad=18)
     ax.text(
         0.5,
-        -0.12,
-        "T = 233.15 K, P = 1.276369 MPa; feed is an equal-phase blend of workbook liquid and vapor states",
+        -0.10,
+        "T = 233.15 K, P = 1.276 MPa",
         ha="center",
         va="top",
-        fontsize=9,
+        fontsize=10,
     )
     handles = [
-        Line2D([0], [0], color="#737373", linestyle="--", linewidth=2, label="workbook source tie-line"),
-        Line2D([0], [0], color="#0f766e", linewidth=2.4, label="current main solved tie-line"),
-        Line2D([0], [0], marker="D", color="none", markerfacecolor="#b45309", markeredgecolor="#b45309", linestyle="None", label="constructed feed"),
+        Line2D([0], [0], color="#6b7280", linestyle=(0, (4, 3)), linewidth=1.7, label="reference tie-line"),
+        Line2D([0], [0], color="#0f766e", linewidth=2.8, label="solved tie-line"),
+        Line2D([0], [0], marker="D", color="none", markerfacecolor="#b45309", markeredgecolor="#7c2d12", linestyle="None", label="feed"),
     ]
-    ax.legend(handles=handles, loc="upper right", frameon=False)
+    ax.legend(handles=handles, loc="upper right", frameon=False, fontsize=10)
     ax.set_aspect("equal")
-    ax.set_xlim(-0.12, 1.12)
-    ax.set_ylim(-0.16, math.sqrt(3.0) / 2.0 + 0.16)
+    ax.set_xlim(-0.09, 1.09)
+    ax.set_ylim(-0.13, math.sqrt(3.0) / 2.0 + 0.13)
     ax.axis("off")
     _save(
         fig,
