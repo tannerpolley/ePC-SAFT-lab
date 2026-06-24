@@ -2,7 +2,7 @@
 issue: 298
 title: "M4: add internal adaptive branch tracing for boundary-route validation"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/298"
-state: "open"
+state: "resolved-pending-merge"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
@@ -42,7 +42,7 @@ last_synced: "2026-06-24"
 **Intent:** Add reusable internal branch tracing so boundary-route validation proves solved branch density, required source-anchor solves, exact-Hessian receipts, and postsolve receipts before a paper-validation curve can count as accepted.
 **Target Output:** `scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native` exits `0` only when Figure 2 has accepted branch trace summaries for `bubble_line` and `dew_line` plus solved model rows behind the rendered `figure_02.png`, `figure_02.svg`, and `figure_02.pdf`.
 **Owner:** `packages/epcsaft-equilibrium` owns the reusable branch tracer; `analyses/paper_validation/2002_gross/figures/figure_02` owns Figure 2 source/model/plot artifacts; `scripts/validation/check_gross_2002_full_replication.py` owns campaign admission.
-**Interface:** Internal module `epcsaft_equilibrium.branch_tracing` with explicit trace data objects and `trace_boundary_route(...)`; Figure 2 consumes that module and writes `trace_summary.json`; the checker reads manifest fields `requires_branch_trace`, `trace_requirements`, and artifact `trace_summary_json`.
+**Interface:** Internal module `epcsaft_equilibrium.branch_tracing` with explicit trace data objects and `trace_boundary_route(...)`; Figure 2 consumes that module and writes `analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json`; the checker reads manifest fields `requires_branch_trace`, `trace_requirements`, and artifact `trace_summary_json`.
 **Cutover:** Replace Figure 2's figure-local `_solve_route_point(...)` and `_solve_series(...)` route loop with the shared tracer while keeping Figure 2 source acquisition, scoring, rendering, and manifest update ownership in the figure script.
 **Replaced Path:** The old path where a figure-local loop could produce sparse model rows and rely on renderer smoothing is displaced by trace completeness gates and shared package branch tracing.
 **Acceptance Proof:** A reviewer can inspect the Figure 2 trace summary and see both required series complete, every required anchor solved, maximum coordinate gap `<= 0.075`, maximum pressure interpolation error `<= 0.35 bar`, exact-Hessian and postsolve status true for every accepted trace point, and no checker blockers.
@@ -65,13 +65,13 @@ generation over to the shared tracer.
 
 ## Acceptance Criteria
 
-- [ ] Add `epcsaft_equilibrium.branch_tracing` with explicit branch trace data objects and input validation.
-- [ ] Implement adaptive branch refinement that solves required anchors first, carries continuation state, rejects coordinate drift, and reports incomplete traces loudly.
-- [ ] Add an internal equilibrium point-solve adapter for bubble/dew boundary routes without exporting a public API.
-- [ ] Require retained trace completeness for accepted Figure 2 records in the full-replication checker.
-- [ ] Replace Figure 2's figure-local route loop with the shared tracer and write `trace_summary.json`.
-- [ ] Regenerate Figure 2 artifacts and preserve exact-Hessian, postsolve, score, and full-campaign checker evidence.
-- [ ] Update M4 evidence docs and pass the plan proof oracle.
+- [x] Add `epcsaft_equilibrium.branch_tracing` with explicit branch trace data objects and input validation.
+- [x] Implement adaptive branch refinement that solves required anchors first, carries continuation state, rejects coordinate drift, and reports incomplete traces loudly.
+- [x] Add an internal equilibrium point-solve adapter for bubble/dew boundary routes without exporting a public API.
+- [x] Require retained trace completeness for accepted Figure 2 records in the full-replication checker.
+- [x] Replace Figure 2's figure-local route loop with the shared tracer and write `analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json`.
+- [x] Regenerate Figure 2 artifacts and preserve exact-Hessian, postsolve, score, and full-campaign checker evidence.
+- [x] Update M4 evidence docs and pass the plan proof oracle.
 
 ## Blocked by
 

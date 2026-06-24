@@ -1,4 +1,4 @@
 scope,series,component,branch,source_point_count,model_point_count,rmse_density_kg_m3,rmse_temperature_K,rmse_temperature_C,rmse_pressure_bar,rmse_composition,max_density_error_kg_m3,max_temperature_error_K,max_temperature_error_C,max_pressure_error_bar,max_composition_error,normalized_plot_score,branch_coverage_score,derivative_status,pass,score_basis
-figure,,,,33,33,0.0,0.0,0.0,0.41172627406509954,0.0,0.0,0.0,0.0,1.353757807716014,0.0,8.686761147190301,1.0,verified_exact,True,pressure-coordinate RMSE against calibrated Gross 2002 Figure 2 retained P-x/y source points
-series,bubble_line,,,18,18,0.0,0.0,0.0,0.45963359848339463,0.0,0.0,0.0,0.0,1.353757807716014,0.0,8.686761147190301,1.0,verified_exact,True,
-series,dew_line,,,15,15,0.0,0.0,0.0,0.3455793695179323,0.0,0.0,0.0,0.0,0.6956526686688136,0.0,9.012630372805909,1.0,verified_exact,True,
+figure,,,,33,50,0.0,0.0,0.0,0.34500992699684535,0.0,0.0,0.0,0.0,0.8267746593203551,0.0,8.95236231311544,1.0,verified_exact,True,pressure-coordinate RMSE against calibrated Gross 2002 Figure 2 retained P-x/y source points
+series,bubble_line,,,18,27,0.0,0.0,0.0,0.3258589173666765,0.0,0.0,0.0,0.0,0.8267746593203551,0.0,9.068974521809496,1.0,verified_exact,True,
+series,dew_line,,,15,23,0.0,0.0,0.0,0.36667319040959595,0.0,0.0,0.0,0.0,0.6956526686688136,0.0,8.95236231311544,1.0,verified_exact,True,

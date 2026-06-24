@@ -1,0 +1,44 @@
+{
+  "figure_id": "figure_02",
+  "trace_contract": "m4_boundary_route_trace_v1",
+  "trace_options": {
+    "max_coordinate_gap": 0.075,
+    "max_interpolation_error": 0.35,
+    "max_points": 240,
+    "max_refinement_iterations": 8,
+    "requested_coordinate_tolerance": 0.0002
+  },
+  "trace_source_policy": {
+    "binary_branch_min_composition": 0.02,
+    "pure_endpoints_route": "single_component_vle",
+    "reason": "pure-limit source points are represented by the single-component saturation route; finite binary branch anchors use bubble/dew pressure routes"
+  },
+  "traces": [
+    {
+      "accepted_point_count": 26,
+      "blockers": [],
+      "complete": true,
+      "exact_hessian_verified": true,
+      "max_coordinate_gap": 0.06851000000000007,
+      "max_interpolation_error": 0.0,
+      "postsolve_verified": true,
+      "required_anchor_count": 16,
+      "route": "bubble_pressure",
+      "series": "bubble_line",
+      "solved_required_anchor_count": 16
+    },
+    {
+      "accepted_point_count": 21,
+      "blockers": [],
+      "complete": true,
+      "exact_hessian_verified": true,
+      "max_coordinate_gap": 0.07000000000000006,
+      "max_interpolation_error": 0.0,
+      "postsolve_verified": true,
+      "required_anchor_count": 12,
+      "route": "dew_pressure",
+      "series": "dew_line",
+      "solved_required_anchor_count": 12
+    }
+  ]
+}

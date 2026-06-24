@@ -28,10 +28,10 @@
 **Expected Outcome:** Figure 2 generation uses package-owned branch tracing, writes retained trace diagnostics, and the checker rejects accepted Figure 2 records when required traces, required anchors, exact-Hessian evidence, postsolve evidence, or segment-density metrics are missing.
 **Target Output:** `scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native` exits `0` only when Figure 2 has accepted branch trace summaries for `bubble_line` and `dew_line` plus solved model rows behind the rendered `figure_02.png`, `figure_02.svg`, and `figure_02.pdf`.
 **Owner:** `packages/epcsaft-equilibrium` owns the reusable branch tracer; `analyses/paper_validation/2002_gross/figures/figure_02` owns Figure 2 source/model/plot artifacts; `scripts/validation/check_gross_2002_full_replication.py` owns campaign admission.
-**Interface:** Internal module `epcsaft_equilibrium.branch_tracing` with explicit trace data objects and `trace_boundary_route(...)`; Figure 2 consumes that internal module and writes `trace_summary.json`; the checker reads manifest fields `requires_branch_trace`, `trace_requirements`, and artifact `trace_summary_json`.
+**Interface:** Internal module `epcsaft_equilibrium.branch_tracing` with explicit trace data objects and `trace_boundary_route(...)`; Figure 2 consumes that internal module and writes `analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json`; the checker reads manifest fields `requires_branch_trace`, `trace_requirements`, and artifact `trace_summary_json`.
 **Cutover:** Replace Figure 2's figure-local `_solve_route_point(...)` and `_solve_series(...)` route loop with the shared tracer while keeping Figure 2 source acquisition, scoring, rendering, and manifest update ownership in the figure script.
 **Replaced Path:** The old path where a figure-local loop could produce sparse model rows and rely on renderer smoothing is displaced by trace completeness gates and shared package branch tracing.
-**Evidence:** Package tracer tests, checker regression tests, retained Figure 2 `trace_summary.json`, regenerated Figure 2 model/plot artifacts, full Gross 2002 checker output, exact-Hessian receipts, fresh-native receipt, and cleanup hook output.
+**Evidence:** Package tracer tests, checker regression tests, retained Figure 2 shared trace summary, regenerated Figure 2 model/plot artifacts, full Gross 2002 checker output, exact-Hessian receipts, fresh-native receipt, and cleanup hook output.
 **Acceptance Proof:** A reviewer can inspect the Figure 2 trace summary and see both required series complete, every required anchor solved, maximum coordinate gap `<= 0.075`, maximum pressure interpolation error `<= 0.35 bar`, exact-Hessian and postsolve status true for every accepted trace point, and no checker blockers.
 **Stop Criteria:** Stop if the native point route cannot solve a required Figure 2 anchor exactly, if accepted points do not expose exact-Hessian or postsolve receipts, if trace completeness requires broad native continuation work, or if branch tracing cannot remain internal without public API claims.
 **Avoid:** Do not add electrolyte, reactive, CE, CPE, generalized phase-count, HELD Stage I/II, public branch-tracing API, Gross-specific native C++ code, hidden coordinate substitution, or acceptance credit based only on interpolation.
@@ -39,11 +39,11 @@
 
 ## Implementation Boundaries
 
-**Files To Create:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py`; `packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py`; `analyses/paper_validation/2002_gross/figures/figure_02/results/trace_summary.json`.
+**Files To Create:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py`; `packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py`; `analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json`.
 **Files To Modify:** `analyses/paper_validation/2002_gross/figures/figure_02/scripts/generate_data.py`; `scripts/validation/check_gross_2002_full_replication.py`; `tests/native/contracts/test_gross_2002_full_replication_checker.py`; `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`; `docs/superpowers/milestones/M4-equilibrium/README.md`.
 **Files To Avoid:** Native C++ equilibrium implementation files, public `epcsaft_equilibrium.__init__.py` exports, provider EOS files, regression package files, electrolyte/reactive route files, unrelated Gross 2002 figure folders except shared manifest/summary output.
 **Source Of Truth:** Approved spec, Figure 2 retained source rows, `Equilibrium(...).solve()` point-route contract, normalized result diagnostics, full-replication checker schema, and M4 GFPE evidence doctrine.
-**Read Path:** Figure 2 source rows become `BranchTraceAnchor` records; `trace_boundary_route(...)` calls `Equilibrium(...).solve()`; branch trace diagnostics become model CSV rows and `trace_summary.json`; checker reads manifest artifacts and trace requirements.
+**Read Path:** Figure 2 source rows become `BranchTraceAnchor` records; `trace_boundary_route(...)` calls `Equilibrium(...).solve()`; branch trace diagnostics become model CSV rows and the shared Figure 2 trace summary; checker reads manifest artifacts and trace requirements.
 **Write Path:** Reusable trace code stays under `packages/epcsaft-equilibrium`; Figure 2 generated artifacts stay under `analyses/paper_validation/2002_gross/figures/figure_02`; checker evidence stays in the shared manifest and summary.
 **Integration Points:** `epcsaft_equilibrium.Equilibrium`, `EquilibriumSolverOptions.continuation_state`, `EquilibriumResult.diagnostics`, Figure 2 generator, full-replication checker, M4 README evidence table.
 **Migration Or Cutover:** Land the package tracer behind internal imports, then migrate Figure 2 to it and remove the displaced local solve loop in the same PR.
@@ -99,7 +99,7 @@ Initial numeric defaults for this implementation:
 - Create: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py`
 - Create: `packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py`
 
-- [ ] **Step 1: Write the failing data-contract tests**
+- [x] **Step 1: Write the failing data-contract tests**
 
   Add `packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py` with these tests:
 
@@ -144,7 +144,7 @@ Initial numeric defaults for this implementation:
           validate_branch_trace_inputs(options, anchors)
   ```
 
-- [ ] **Step 2: Run the failing test**
+- [x] **Step 2: Run the failing test**
 
   Run:
 
@@ -154,7 +154,7 @@ Initial numeric defaults for this implementation:
 
   Expected before implementation: fail with `ModuleNotFoundError: No module named 'epcsaft_equilibrium.branch_tracing'`.
 
-- [ ] **Step 3: Implement the data objects and validation**
+- [x] **Step 3: Implement the data objects and validation**
 
   Create `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py` with frozen dataclasses for:
 
@@ -189,7 +189,7 @@ Initial numeric defaults for this implementation:
   - anchor coordinates must be finite and strictly between `0.0` and `1.0`;
   - numeric tolerances and budgets must be positive.
 
-- [ ] **Step 4: Run the contract tests**
+- [x] **Step 4: Run the contract tests**
 
   Run:
 
@@ -199,7 +199,7 @@ Initial numeric defaults for this implementation:
 
   Expected after implementation: the three data-contract tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   Commit:
 
@@ -221,7 +221,7 @@ Initial numeric defaults for this implementation:
 - Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py`
 - Modify: `packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py`
 
-- [ ] **Step 1: Add failing adaptive-refinement tests**
+- [x] **Step 1: Add failing adaptive-refinement tests**
 
   Extend `test_branch_tracing.py` with a fake solver and tests for refinement:
 
@@ -307,7 +307,7 @@ Initial numeric defaults for this implementation:
       assert "coordinate_drift_exceeds_tolerance" in result.blockers
   ```
 
-- [ ] **Step 2: Run the failing adaptive tests**
+- [x] **Step 2: Run the failing adaptive tests**
 
   Run:
 
@@ -317,7 +317,7 @@ Initial numeric defaults for this implementation:
 
   Expected before implementation: fail because `trace_boundary_route` and adaptive metrics do not exist.
 
-- [ ] **Step 3: Implement `trace_boundary_route(...)`**
+- [x] **Step 3: Implement `trace_boundary_route(...)`**
 
   In `branch_tracing.py`, implement:
 
@@ -342,7 +342,7 @@ Initial numeric defaults for this implementation:
   - stop with blockers when `max_refinement_iterations` or `max_points` is exhausted;
   - set `BranchTraceResult.complete` only when required anchors and all segments pass.
 
-- [ ] **Step 4: Run the branch tracing tests**
+- [x] **Step 4: Run the branch tracing tests**
 
   Run:
 
@@ -352,7 +352,7 @@ Initial numeric defaults for this implementation:
 
   Expected after implementation: all branch tracing tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   Commit:
 
@@ -373,7 +373,7 @@ Initial numeric defaults for this implementation:
 - Modify: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py`
 - Modify: `packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py`
 
-- [ ] **Step 1: Add failing adapter tests with a fake `Equilibrium` class**
+- [x] **Step 1: Add failing adapter tests with a fake `Equilibrium` class**
 
   Add tests that monkeypatch the adapter's equilibrium class and assert:
 
@@ -382,7 +382,7 @@ Initial numeric defaults for this implementation:
   - `continuation_state` is forwarded through `solver_options`;
   - result diagnostics populate `BranchTracePoint`.
 
-- [ ] **Step 2: Run the adapter tests**
+- [x] **Step 2: Run the adapter tests**
 
   Run:
 
@@ -392,7 +392,7 @@ Initial numeric defaults for this implementation:
 
   Expected before implementation: fail because the equilibrium adapter does not exist.
 
-- [ ] **Step 3: Implement the default point solver**
+- [x] **Step 3: Implement the default point solver**
 
   In `branch_tracing.py`, add:
 
@@ -415,7 +415,7 @@ Initial numeric defaults for this implementation:
   - convert pressure from Pa to bar for trace output;
   - copy `exact_hessian_available`, `hessian_approximation`, `postsolve_accepted`, `route_status`, `solver_status`, `iteration_count`, `pressure_consistency_norm`, and `chemical_potential_consistency_norm` into the trace point.
 
-- [ ] **Step 4: Add a convenience wrapper**
+- [x] **Step 4: Add a convenience wrapper**
 
   Add:
 
@@ -431,7 +431,7 @@ Initial numeric defaults for this implementation:
 
   This wrapper should call `trace_boundary_route(...)` with `solve_equilibrium_boundary_point(...)`.
 
-- [ ] **Step 5: Run the adapter tests**
+- [x] **Step 5: Run the adapter tests**
 
   Run:
 
@@ -441,7 +441,7 @@ Initial numeric defaults for this implementation:
 
   Expected after implementation: all adapter tests pass without requiring native execution.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   Commit:
 
@@ -462,7 +462,7 @@ Initial numeric defaults for this implementation:
 - Modify: `scripts/validation/check_gross_2002_full_replication.py`
 - Modify: `tests/native/contracts/test_gross_2002_full_replication_checker.py`
 
-- [ ] **Step 1: Add failing checker tests for trace requirements**
+- [x] **Step 1: Add failing checker tests for trace requirements**
 
   Extend `tests/native/contracts/test_gross_2002_full_replication_checker.py` with tests that add this accepted Figure 2 record:
 
@@ -498,7 +498,7 @@ Initial numeric defaults for this implementation:
   gross_2002_figure_02_trace_bubble_line_incomplete
   ```
 
-- [ ] **Step 2: Run the failing checker tests**
+- [x] **Step 2: Run the failing checker tests**
 
   Run:
 
@@ -508,7 +508,7 @@ Initial numeric defaults for this implementation:
 
   Expected before implementation: fail because trace requirements are ignored.
 
-- [ ] **Step 3: Implement trace summary validation**
+- [x] **Step 3: Implement trace summary validation**
 
   In `check_gross_2002_full_replication.py`, add helper functions that:
 
@@ -524,7 +524,7 @@ Initial numeric defaults for this implementation:
   - require `postsolve_verified is true`;
   - append deterministic blocker names under `gross_2002_<figure_id>_trace_<series>_<reason>`.
 
-- [ ] **Step 4: Run checker tests**
+- [x] **Step 4: Run checker tests**
 
   Run:
 
@@ -534,7 +534,7 @@ Initial numeric defaults for this implementation:
 
   Expected after implementation: checker tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   Commit:
 
@@ -554,15 +554,15 @@ Initial numeric defaults for this implementation:
 **Files:**
 - Modify: `analyses/paper_validation/2002_gross/figures/figure_02/scripts/generate_data.py`
 - Modify: `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`
-- Create: `analyses/paper_validation/2002_gross/figures/figure_02/results/trace_summary.json`
+- Create: `analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json`
 - Modify generated artifacts under `analyses/paper_validation/2002_gross/figures/figure_02/results/`
 
-- [ ] **Step 1: Add Figure 2 trace summary writing**
+- [x] **Step 1: Add Figure 2 trace summary writing**
 
   In `generate_data.py`, add constants:
 
   ```python
-  TRACE_SUMMARY_JSON = RESULTS_DIR / "trace_summary.json"
+  TRACE_SUMMARY_JSON = SHARED_DIR / "results" / f"{FIGURE_ID}_trace_summary.json"
   FIGURE_2_TRACE_OPTIONS = {
       "max_coordinate_gap": 0.075,
       "max_interpolation_error": 0.35,
@@ -572,7 +572,7 @@ Initial numeric defaults for this implementation:
   }
   ```
 
-- [ ] **Step 2: Replace `_solve_route_point(...)` and `_solve_series(...)`**
+- [x] **Step 2: Replace `_solve_route_point(...)` and `_solve_series(...)`**
 
   Remove the old route-loop helpers and add a Figure 2 function that:
 
@@ -582,7 +582,7 @@ Initial numeric defaults for this implementation:
   - fails with `RuntimeError` when either result is incomplete;
   - converts accepted `BranchTracePoint` records into existing model CSV rows.
 
-- [ ] **Step 3: Write `trace_summary.json`**
+- [x] **Step 3: Write `trace_summary.json`**
 
   Serialize a summary shaped like:
 
@@ -610,7 +610,7 @@ Initial numeric defaults for this implementation:
 
   Fill every numeric value from `BranchTraceResult`; do not leave zero counts in the real artifact.
 
-- [ ] **Step 4: Update manifest artifacts and trace requirements**
+- [x] **Step 4: Update manifest artifacts and trace requirements**
 
   Update Figure 2's manifest record to include:
 
@@ -626,10 +626,10 @@ Initial numeric defaults for this implementation:
   Add artifact:
 
   ```json
-  "trace_summary_json": "analyses/paper_validation/2002_gross/figures/figure_02/results/trace_summary.json"
+  "trace_summary_json": "analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json"
   ```
 
-- [ ] **Step 5: Regenerate Figure 2**
+- [x] **Step 5: Regenerate Figure 2**
 
   Run:
 
@@ -639,7 +639,7 @@ Initial numeric defaults for this implementation:
 
   Expected: the script exits `0`, writes `model_curve.csv`, `plotted_data.csv`, `fit_statistics.csv`, `trace_summary.json`, `figure_02.png`, `figure_02.svg`, and `figure_02.pdf`.
 
-- [ ] **Step 6: Run Figure 2 folder contract**
+- [x] **Step 6: Run Figure 2 folder contract**
 
   Run:
 
@@ -649,7 +649,7 @@ Initial numeric defaults for this implementation:
 
   Expected: exits `0` and prints `paper_validation_figure_contract_ok`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
   Commit:
 
@@ -669,7 +669,7 @@ Initial numeric defaults for this implementation:
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 - Modify generated summaries under `analyses/paper_validation/2002_gross/shared/results/`
 
-- [ ] **Step 1: Build the equilibrium native target if needed**
+- [x] **Step 1: Build the equilibrium native target if needed**
 
   Run:
 
@@ -679,7 +679,7 @@ Initial numeric defaults for this implementation:
 
   Expected: exits `0`.
 
-- [ ] **Step 2: Run focused tests**
+- [x] **Step 2: Run focused tests**
 
   Run:
 
@@ -689,7 +689,7 @@ Initial numeric defaults for this implementation:
 
   Expected: exits `0`.
 
-- [ ] **Step 3: Run full Gross 2002 replication checker**
+- [x] **Step 3: Run full Gross 2002 replication checker**
 
   Run:
 
@@ -699,7 +699,7 @@ Initial numeric defaults for this implementation:
 
   Expected: exits `0`, reports `complete: true`, and reports no Figure 2 trace blockers.
 
-- [ ] **Step 4: Update M4 README evidence**
+- [x] **Step 4: Update M4 README evidence**
 
   Update `docs/superpowers/milestones/M4-equilibrium/README.md` to record:
 
@@ -708,7 +708,7 @@ Initial numeric defaults for this implementation:
   - Figure 2 trace-summary evidence;
   - the checker command from Step 3.
 
-- [ ] **Step 5: Run docs validation**
+- [x] **Step 5: Run docs validation**
 
   Run:
 
@@ -718,7 +718,7 @@ Initial numeric defaults for this implementation:
 
   Expected: exits `0`.
 
-- [ ] **Step 6: Run diff and cleanup checks**
+- [x] **Step 6: Run diff and cleanup checks**
 
   Run:
 
@@ -736,7 +736,7 @@ Initial numeric defaults for this implementation:
 
   Expected: exits `0` and reports no matching leftover Codex processes.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
   Commit:
 

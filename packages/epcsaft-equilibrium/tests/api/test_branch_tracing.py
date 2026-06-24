@@ -155,6 +155,33 @@ def test_trace_carries_continuation_state_to_refinement_point() -> None:
     assert refinement_states[0] == {"variables": [0.1, 12.1]}
 
 
+def test_trace_carries_continuation_state_between_required_anchors() -> None:
+    anchor_states: list[object] = []
+
+    def solver(request: BranchSolveRequest) -> BranchTracePoint:
+        anchor_states.append(request.continuation_state)
+        return _fake_point(request, pressure_bar=12.0 + request.coordinate)
+
+    result = trace_boundary_route(
+        anchors=[
+            BranchTraceAnchor(anchor_id="left", coordinate=0.10, required=True),
+            BranchTraceAnchor(anchor_id="right", coordinate=0.12, required=True),
+        ],
+        options=BranchTraceOptions(
+            route="bubble_pressure",
+            component_index=1,
+            fixed_variable="T_K",
+            fixed_value=373.15,
+            max_coordinate_gap=0.05,
+            max_interpolation_error=0.35,
+        ),
+        solve_point=solver,
+    )
+
+    assert result.complete is True
+    assert anchor_states == [None, {"variables": [0.1, 12.1]}]
+
+
 def test_equilibrium_point_adapter_maps_bubble_route_and_continuation_state(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[dict[str, object]] = []
 

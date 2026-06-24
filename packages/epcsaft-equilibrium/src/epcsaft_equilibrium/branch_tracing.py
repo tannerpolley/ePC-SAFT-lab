@@ -159,6 +159,7 @@ def trace_boundary_route(
     blockers: set[str] = set()
     points: list[BranchTracePoint] = []
     anchor_order = sorted(anchors, key=lambda anchor: (not anchor.required, float(anchor.coordinate)))
+    anchor_continuation_state: Mapping[str, Any] | None = None
 
     for anchor in anchor_order:
         point = _solve_trace_point(
@@ -169,12 +170,15 @@ def trace_boundary_route(
                 fixed_variable=options.fixed_variable,
                 fixed_value=options.fixed_value,
                 coordinate=float(anchor.coordinate),
+                continuation_state=anchor_continuation_state,
                 source_anchor_id=str(anchor.anchor_id),
             ),
             options,
             blockers,
         )
         points.append(point)
+        if point.accepted and point.continuation_state_returned:
+            anchor_continuation_state = point.continuation_state_returned
 
     for _iteration in range(options.max_refinement_iterations):
         accepted = _accepted_sorted_points(points)

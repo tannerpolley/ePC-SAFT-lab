@@ -99,7 +99,8 @@
         "source_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/source_points.csv",
         "source_identity_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/source_identity.csv",
         "source_notes_csv": "analyses/paper_validation/2002_gross/figures/figure_02/source/source_notes.csv",
-        "svg": "analyses/paper_validation/2002_gross/figures/figure_02/results/figure_02.svg"
+        "svg": "analyses/paper_validation/2002_gross/figures/figure_02/results/figure_02.svg",
+        "trace_summary_json": "analyses/paper_validation/2002_gross/shared/results/figure_02_trace_summary.json"
       },
       "counts_toward_completion": true,
       "figure_id": "figure_02",
@@ -112,17 +113,26 @@
         "bubble_line",
         "dew_line"
       ],
+      "requires_branch_trace": true,
       "requires_exact_association_hessian": true,
       "score": {
         "branch_coverage_score": 1.0,
         "derivative_status": "verified_exact",
-        "normalized_plot_score": 8.686761147190301,
+        "normalized_plot_score": 8.95236231311544,
         "pass": true
       },
       "source_data_basis": "calibrated Gross 2002 Figure 2 pressure-composition source points with figure-local parameter provenance resolution for methanol/isobutane",
       "source_identity_status": "resolved",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_02/source/figure_02.png",
-      "system": "methanol/isobutane"
+      "system": "methanol/isobutane",
+      "trace_requirements": {
+        "max_coordinate_gap": 0.075,
+        "max_interpolation_error": 0.35,
+        "required_series": [
+          "bubble_line",
+          "dew_line"
+        ]
+      }
     },
     {
       "acceptance_threshold": 8.0,
@@ -420,7 +430,7 @@
       "--require-exact-association-hessian",
       "--require-fresh-native"
     ],
-    "git_commit": "a964bfdbd14423552979e147720ad48c1b88db53",
+    "git_commit": "c2abffda4ad2b63a965fee1d3736a4e9741d8486",
     "native_module_name": "epcsaft_equilibrium._native_core",
     "native_module_path": "C:\\Users\\Tanner\\Documents\\Workspaces\\Engineering\\ePC-SAFT\\packages\\epcsaft-equilibrium\\src\\epcsaft_equilibrium\\_native_core.cp313-win_amd64.pyd"
   },
