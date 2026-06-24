@@ -209,6 +209,11 @@ family_rows:
         command: "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete"
         scope: "Pre-association electrolyte GFPE source-data, raw closure-drift accounting, normalized explicit-ion expansion, native electrolyte/charge diagnostics, and closed public-route admission gate for the Khudaida 2026 source fixture."
         result_requirement: "Khudaida source fixture parsed; raw paper-row closure correction recorded; explicit-ion charge balance <= 1.0e-8; path-based `2026_Khudaida` parameter bundle constructs native mixture; native electrolyte contribution active; native phase-charge diagnostic residual <= 1.0e-8; electrolyte public route admission closed."
+      - evidence_label: "Electrolyte HELD2 readiness and Born SSM/DS exactness gate"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_held2_readiness.py --json --require-source-gate --require-reduced-basis --require-born-ssm-ds --require-public-routes-closed --require-complete"
+        scope: "Prerequisite-only electrolyte HELD2 readiness evidence for the Khudaida 2026 source fixture: consumes the closed-admission source gate, verifies the exact NaCl charge-neutral reduced amount lift, records CppAD Born SSM/DS derivative receipts, and keeps public electrolyte route admission closed."
+        result_requirement: "Khudaida closed-admission source gate complete; reduced NaCl amount lift charge residual <= 1.0e-10; CppAD Born SSM/DS composition, ln-fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts finite; HELD2 status marked readiness-only; electrolyte TPD, HELD2 dual phase discovery, postsolve certification, and public admission remain pending."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1

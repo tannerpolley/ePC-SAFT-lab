@@ -5,7 +5,6 @@ from __future__ import annotations
 from ._native import native_ipopt_backend_info, provider_contract
 from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
 
-
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES = (
     "EquilibriumProblem",
     "EquilibriumStructure",
@@ -158,6 +157,37 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py",
             "packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py",
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "electrolyte_gfpe_readiness",
+        "quantity": "electrolyte_held2_readiness_born_ssm_ds_exactness",
+        "derivative": "born_ssm_ds_composition_fugacity_activity_and_parameter_receipts",
+        "backend": "cppad_born_ssm_ds",
+        "supported": True,
+        "classification": "prerequisite_evidence",
+        "public_admission_state": "public_route_closed",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 electrolyte LLE readiness",
+        "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
+        "reduced_basis": "charge_neutral_NaCl_amount_lift",
+        "phase_count": 2,
+        "source_fixture": (
+            "data/reference/equilibrium_benchmarks/electrolyte_lle/"
+            "water_ethanol_isobutanol_nacl"
+        ),
+        "reason": (
+            "issue #300 records the electrolyte HELD2 prerequisite gate: source-backed "
+            "Khudaida inputs, exact charge-neutral NaCl amount lifting, CppAD Born "
+            "SSM/DS derivative receipts, and closed public electrolyte route state."
+        ),
+        "tests": (
+            "scripts/validation/check_electrolyte_held2_readiness.py",
+            "tests/native/contracts/test_electrolyte_held2_readiness_checker.py",
+            "packages/epcsaft/tests/native/state/test_born_parameter_derivatives.py",
+            "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+            "tests/native/contracts/test_generalized_equilibrium_registry.py",
         ),
     },
 )
