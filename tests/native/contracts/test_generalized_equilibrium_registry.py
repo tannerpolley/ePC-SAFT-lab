@@ -278,6 +278,18 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
     assert "path-based `2026_Khudaida` parameter bundle constructs native mixture" in gate["result_requirement"]
     assert "electrolyte public route admission closed" in gate["result_requirement"]
 
+    readiness = evidence["Electrolyte HELD2 readiness and Born SSM/DS exactness gate"]
+    assert readiness["evidence_tier"] == "T1"
+    assert readiness["command"] == (
+        "uv run --no-sync python scripts/validation/check_electrolyte_held2_readiness.py "
+        "--json --require-source-gate --require-reduced-basis --require-born-ssm-ds "
+        "--require-public-routes-closed --require-complete"
+    )
+    assert "reduced NaCl amount lift charge residual <= 1.0e-10" in readiness["result_requirement"]
+    assert "CppAD Born SSM/DS composition" in readiness["result_requirement"]
+    assert "activity-parameter" in readiness["result_requirement"]
+    assert "HELD2 status marked readiness-only" in readiness["result_requirement"]
+
 
 def test_generalized_multiphase_records_public_admission_evidence() -> None:
     generalized = _family_by_label()["PE-Generalized Multiphase"]

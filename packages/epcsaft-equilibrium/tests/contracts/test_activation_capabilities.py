@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
@@ -154,6 +153,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian",
         "neutral_multiphase_nonassoc",
         "single_component_vle",
+        "electrolyte_held2_readiness_born_ssm_ds_exactness",
     }
     associating_proof = next(
         row
@@ -191,6 +191,30 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert figure10_vle_proof["source_configuration"] == "Gross2002 Figure10 water-1-pentanol"
     assert figure10_vle_proof["component_pair"] == ["water", "1-pentanol"]
     assert figure10_vle_proof["k_ij"] == pytest.approx(0.016)
+    electrolyte_readiness = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "electrolyte_held2_readiness_born_ssm_ds_exactness"
+    )
+    assert electrolyte_readiness["classification"] == "prerequisite_evidence"
+    assert electrolyte_readiness["backend"] == "cppad_born_ssm_ds"
+    assert electrolyte_readiness["public_admission_state"] == "public_route_closed"
+    assert electrolyte_readiness["selector_family"] == "electrolyte_lle"
+    assert electrolyte_readiness["source_configuration"] == "Khudaida 2026 electrolyte LLE readiness"
+    assert electrolyte_readiness["component_set"] == ["water", "ethanol", "isobutanol", "NaCl"]
+    assert electrolyte_readiness["reduced_basis"] == "charge_neutral_NaCl_amount_lift"
+    assert (
+        electrolyte_readiness["source_fixture"]
+        == "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl"
+    )
+    assert "electrolyte_lle" not in activation["public_routes"]
+    assert "electrolyte_lle" not in activation["production_families"]
+    electrolyte_activation = next(
+        row for row in capabilities["activation_matrix"]["rows"] if row["key"] == "electrolyte_lle"
+    )
+    assert electrolyte_activation["production_exposed"] is False
+    assert electrolyte_activation["public_routes"] == []
+    assert electrolyte_activation["proof_routes"] == []
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
 
     deleted_route_keys = {

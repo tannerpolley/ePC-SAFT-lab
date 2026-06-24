@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates
-last_synced: "2026-06-19"
+last_synced: "2026-06-24"
 ---
 
 # Prove electrolyte GFPE and HELD2.0 validation gates
@@ -58,12 +58,13 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 
 ## Blocking Prerequisites
 
-- [#286](2026-06-19-m4-equilibrium-issue-0286-complete-gross-2002-full-figure-replication-campaign.md) is open and blocks #191. It completes the full Gross/Sadowski 2002 Figure 1-10 replication campaign after #279-#285 close.
-- #189 and #275 are already closed and remain only as historical dependency provenance.
+- #189, #275, #286, and #300 are closed and remain only as historical dependency provenance.
+- #191 is still blocked by the next unimplemented electrolyte gates: electrolyte TPD, HELD2 dual phase discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set certification, and public electrolyte route admission.
 
 ## Child Issues
 
 - [#269](2026-06-17-m4-equilibrium-issue-0269-add-electrolyte-gfpe-closed-admission-source-gate.md) closed the first #191 child gate. It proved the Khudaida source fixture, explicit-ion expansion, path-based paper-validation parameter-bundle execution, native electrolyte/charge diagnostics, and public route boundary state. It did not admit public electrolyte GFPE, electrolyte TPD, HELD2 phase discovery, or electrolyte postsolve certification.
+- [#300](2026-06-24-m4-equilibrium-issue-0300-add-electrolyte-held2-readiness-and-born-exactness-gate.md) closed the reduced electroneutral variable and Born SSM/DS exactness readiness gate. It proved the exact charge-neutral NaCl amount lift, CppAD Born SSM/DS composition, fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts, and kept public electrolyte route admission closed.
 
 ## Supplemental Context
 
