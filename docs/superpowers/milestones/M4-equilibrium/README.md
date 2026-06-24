@@ -75,8 +75,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#300](../../issues/2026-06-24-m4-equilibrium-issue-0300-add-electrolyte-held2-readiness-and-born-exactness-gate.md) | `electrolyte` | `Ipopt` | `ready` | Add the next #191 prerequisite gate for reduced electroneutral variables, exact Born SSM/DS derivative receipts, HELD2 readiness diagnostics, and closed public electrolyte route evidence. |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after #300 and later electrolyte TPD, HELD2 discovery, postsolve certification, and public admission gates close. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after electrolyte TPD, HELD2 discovery, Stage III refinement, postsolve certification, and public admission gates close. |
 
 ## Queue Guard
 
@@ -174,11 +173,11 @@ diagnostics, and keeps public electrolyte route state closed. It still leaves
 electrolyte TPD, HELD2 phase discovery, postsolve electrolyte phase-set
 certification, and public electrolyte route admission pending.
 
-#300 is the active #191 child after #286 closed. It adds the readiness gate
-needed before electrolyte HELD2 implementation: exact reduced electroneutral
-amount lifting for the Khudaida NaCl fixture, CppAD-backed Born SSM/DS
-derivative receipts, and a retained HELD2 readiness payload. It must keep
-electrolyte TPD, HELD2 dual discovery, postsolve electrolyte phase-set
+#300 closed through #301 with the readiness gate needed before electrolyte
+HELD2 implementation: exact reduced electroneutral amount lifting for the
+Khudaida NaCl fixture, CppAD-backed Born SSM/DS derivative receipts, and a
+retained HELD2 readiness payload. It keeps electrolyte TPD, HELD2 dual
+discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set
 certification, and public electrolyte route admission closed.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
