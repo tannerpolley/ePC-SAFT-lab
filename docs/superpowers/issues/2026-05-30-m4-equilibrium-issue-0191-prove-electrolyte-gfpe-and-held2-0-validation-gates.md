@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates
-last_synced: "2026-06-24"
+last_synced: "2026-06-25"
 ---
 
 # Prove electrolyte GFPE and HELD2.0 validation gates
