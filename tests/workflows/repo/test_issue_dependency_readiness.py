@@ -129,6 +129,39 @@ def test_workflow_event_parser_reads_issue_and_pr_close_events(tmp_path: Path) -
     assert readiness.closed_issues_from_event(pr_event, event_name="pull_request") == [188, 241]
 
 
+def test_main_treats_merged_pr_without_close_keyword_as_noop(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    pr_event = tmp_path / "pr.json"
+    pr_event.write_text(
+        json.dumps(
+            {
+                "pull_request": {
+                    "merged": True,
+                    "title": "Tighten HELD2 adoption diagnostics plan",
+                    "body": "Refs #306.",
+                },
+                "action": "closed",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    rc = readiness.main(
+        [
+            "--event-path",
+            str(pr_event),
+            "--event-name",
+            "pull_request",
+            "--dry-run",
+            "--json",
+        ]
+    )
+
+    payload = json.loads(capsys.readouterr().out)
+    assert rc == 0
+    assert payload["no_op_reason"] == "event_has_no_closed_issue_references"
+    assert payload["summary"] == {"ready_to_unblock": 0, "still_blocked": 0, "no_op": 1}
+
+
 def test_workflow_listens_only_to_closeout_events() -> None:
     workflow = (Path(__file__).resolve().parents[3] / ".github" / "workflows" / "sync-issue-readiness.yml").read_text(
         encoding="utf-8"

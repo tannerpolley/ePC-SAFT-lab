@@ -69,6 +69,24 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - [#302](2026-06-24-m4-equilibrium-issue-0302-add-electrolyte-charge-neutral-tpd-gate.md) closed the native-backed charge-neutral electrolyte TPD screening gate. It proves three finite source-backed candidates, selected candidate count `2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`, readiness-only HELD2 status, and closed public electrolyte route state. It does not close HELD2 dual discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set certification, or public route admission.
 - [#306](2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md) is the active ready child. It must add native reduced-coordinate HELD2 phase-discovery diagnostics with independent counterion-pair matrix rank evidence, charge-neutral candidates, mean-ionic residual bookkeeping, and closed public route state. It must not claim Stage III refinement, postsolve certification, or public electrolyte route admission.
 
+## HELD2 Adoption Checkpoint Sequence
+
+- Source and readiness checkpoints: #269, #300, and #302 remain prerequisite
+  evidence for source fixtures, reduced electroneutral variables, Born SSM/DS
+  derivatives, and charge-neutral TPD screening.
+- #306 phase-discovery checkpoint: required diagnostics are counterion-pair
+  matrix rank, reduced-coordinate lift/back-lift residuals, finite TPD
+  candidate metrics, pair-based mean-ionic residual bookkeeping, closed public
+  routes, and a Stage III handoff record.
+- Stage III refinement checkpoint: consume the #306 candidate set and solve the
+  electrolyte reduced-variable phase-set equations with exact residual
+  derivative receipts.
+- Postsolve checkpoint: certify explicit-ion material reconstruction,
+  per-phase charge balance, neutral transfer, mean-ionic transfer, pressure
+  consistency, phase amounts, and domain margins.
+- Public admission checkpoint: consume all prior checkers and expose only the
+  certified electrolyte route surface.
+
 ## Supplemental Context
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`

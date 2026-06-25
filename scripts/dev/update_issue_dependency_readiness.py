@@ -342,9 +342,33 @@ def main(argv: list[str] | None = None) -> int:
     args = build_arg_parser().parse_args(argv)
     repo_root = Path.cwd()
     issue_numbers = list(args.issue)
+    event_mode = bool(args.event_path or args.event_name)
+    if event_mode and not (args.event_path and args.event_name):
+        raise SystemExit("--event-path and --event-name must be supplied together.")
     if args.event_path and args.event_name:
         issue_numbers.extend(closed_issues_from_event(args.event_path, event_name=args.event_name))
     if not issue_numbers and not args.reconcile:
+        if event_mode:
+            payload = {
+                "repo": args.repo,
+                "mode": "apply" if args.apply else "dry_run",
+                "dry_run": not args.apply,
+                "dependent_results": [],
+                "agent_ready_eligible": {},
+                "local_updates": [],
+                "commit_decision": local_commit_decision(local_updates=[], apply=args.apply),
+                "summary": {
+                    "ready_to_unblock": 0,
+                    "still_blocked": 0,
+                    "no_op": 1,
+                },
+                "no_op_reason": "event_has_no_closed_issue_references",
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print("Dependency readiness sync: event has no closed issue references.")
+            return 0
         raise SystemExit("--issue, --event-path/--event-name, or --reconcile is required.")
     client = GitHubClient(args.repo)
     today = dt.date.today().isoformat()
