@@ -229,21 +229,24 @@ strict derivative evidence, and postsolve certification.
 ### Task 1: Publish And Verify Tracker State
 
 **Use Cases:**
-- A milestone reviewer needs #191 blocked by #306 rather than a prose-only
-  HELD2 phrase.
+- A milestone reviewer needs historical evidence that #191 was blocked by #306
+  while HELD2 phase discovery was open.
 - A resolver needs a local #306 mirror with acceptance criteria, proof oracle,
   and cutover boundaries.
-- Dependency readiness needs visible evidence that #306 is the active blocker
-  and that #269/#300/#302 are closed provenance.
+- Dependency readiness needs visible evidence that #306 closed before #312
+  became the active Stage III blocker and that #269/#300/#302 are closed
+  provenance.
 
 **Files:**
 - `docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md`
 - `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 - `docs/superpowers/milestones/M4-equilibrium/README.md`
 
-- [ ] Confirm #306 is open, `status:ready`, `agent-ready`, and blocks #191.
-- [ ] Confirm #191 carries `status:blocked` while #306 is open.
-- [ ] Update local mirrors and the M4 README with the active blocker.
+- [x] Confirm #306 closed with retained phase-discovery evidence and blocks
+  #191 only as historical dependency provenance.
+- [x] Confirm #191 moves to #312/#313/#314 as the remaining blockers after
+  #306 closes.
+- [x] Update local mirrors and the M4 README with the next active blocker.
 
 ### Task 2: Add Counterion-Pair Matrix Contracts
 

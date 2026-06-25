@@ -15,7 +15,7 @@ discovery, refinement, postsolve, and source-backed validation evidence exists.
 through child gates that each add executable evidence and then update this
 parent with closed provenance.
 
-## Current State After #302
+## Current State After #306
 
 - #269 closed the Khudaida closed-admission source gate: source rows,
   explicit-ion expansion, parameter-bundle construction, native electrolyte
@@ -26,11 +26,17 @@ parent with closed provenance.
   `_native_electrolyte_tpd_phase_discovery` reports three finite source-backed
   candidates, selected candidate count `2`, minimum TPD
   `-0.010922388988229025`, and maximum charge residual `0.0`.
-- #306 is the active child blocker for HELD2 counterion-pair phase discovery.
+- #306 closed the HELD2 counterion-pair phase-discovery gate with a Stage III
+  handoff record.
+- #312 is the active child blocker for Stage III electrolyte reduced-variable
+  refinement.
+- #313 and #314 are blocked by #312 and #313 respectively for postsolve
+  certification and public route admission.
 
-The #302 result is instability-screening evidence and a candidate seed. It is
-not full HELD2 phase discovery, Stage III electrolyte refinement, postsolve
-phase-set certification, or public route admission.
+The #302 result is instability-screening evidence and a candidate seed. The
+#306 result is phase-discovery and handoff evidence. Neither result is Stage
+III electrolyte refinement, postsolve phase-set certification, or public route
+admission.
 
 ## HELD2 Algorithm Doctrine
 
@@ -81,17 +87,17 @@ contracts, and a parent #191 tracker update.
 1. Prerequisite evidence: #269, #300, and #302 stay historical prerequisite
    gates for source fixtures, reduced electroneutral variables, Born SSM/DS
    derivative receipts, and charge-neutral TPD screening.
-2. Phase discovery: #306 must prove independent counterion-pair matrix
+2. Phase discovery: #306 proved independent counterion-pair matrix
    construction, reduced-coordinate trial/candidate lifting, finite TPD
    candidate metrics, pair-based mean-ionic bookkeeping, and a Stage III
-   handoff record. It must include single-salt, common-anion, and multivalent
+   handoff record. It includes single-salt, common-anion, and multivalent
    matrix tests.
-3. Stage III refinement: the next child after #306 must consume the #306
+3. Stage III refinement: #312 must consume the #306
    candidate-set record and solve the reduced electrolyte phase-set equations
    with exact residual derivative evidence. Required residual families are
    neutral transfer, pair-based mean-ionic transfer, material balance in
    reduced coordinates, phase pressure consistency, and domain margins.
-4. Postsolve certification: a separate child must certify the refined phase set
+4. Postsolve certification: #313 must certify the refined phase set
    with per-phase charge balance, explicit-ion material balance reconstruction,
    neutral and mean-ionic transfer residual tolerances, pressure consistency,
    positive phase amounts, noncollapsed compositions, and stable replay from
@@ -100,7 +106,7 @@ contracts, and a parent #191 tracker update.
    include the Khudaida fixture and at least one multi-ion mixed-solvent
    fixture from the local methodology context, with water + 1-butanol + NaCl +
    KCl Table 5 as the preferred first multi-ion case.
-6. Public route admission: only after the previous gates pass may a child expose
+6. Public route admission: only after the previous gates pass may #314 expose
    a public electrolyte route. That admission checker must consume the source,
    phase-discovery, Stage III, and postsolve checkers and keep unrelated
    reactive, associating-generalized, and regression claims outside #191.
@@ -117,10 +123,10 @@ contracts, and a parent #191 tracker update.
 1. Closed #269: closed-admission source gate.
 2. Closed #300: reduced electroneutral basis and Born SSM/DS exactness gate.
 3. Closed #302: charge-neutral electrolyte TPD screening gate.
-4. Open #306: counterion-pair HELD2 phase-discovery gate.
-5. Future child: Stage III electrolyte reduced-variable refinement gate.
-6. Future child: postsolve electrolyte phase-set certification gate.
-7. Future child: public electrolyte route admission gate.
+4. Closed #306: counterion-pair HELD2 phase-discovery gate.
+5. Open #312: Stage III electrolyte reduced-variable refinement gate.
+6. Open #313: postsolve electrolyte phase-set certification gate, blocked by #312.
+7. Open #314: public electrolyte route admission gate, blocked by #313.
 
 ## Implementation Notes
 

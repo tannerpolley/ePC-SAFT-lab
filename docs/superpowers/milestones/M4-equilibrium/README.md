@@ -51,7 +51,10 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #298 adaptive branch tracing validation plan](../../plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md) | `association` | Adds the internal traced-boundary proof layer consumed by Gross 2002 Figure 2 and the full-replication checker. |
 | [Issue #300 electrolyte HELD2 readiness and Born exactness gate plan](../../plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md) | `electrolyte` | Adds the next #191 child gate for reduced electroneutral variables, exact Born SSM/DS derivative receipts, HELD2 readiness diagnostics, and closed public electrolyte route evidence. |
 | [Issue #302 electrolyte charge-neutral TPD gate plan](../../plans/2026-06-24-m4-equilibrium-issue-0302-electrolyte-charge-neutral-tpd-gate-plan.md) | `electrolyte` | Adds the next #191 child gate for native-backed charge-neutral electrolyte TPD screening before full HELD2 dual discovery, Stage III refinement, postsolve certification, or public route admission. |
-| [Issue #306 electrolyte HELD2 counterion-pair phase-discovery gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0306-electrolyte-held2-counterion-pair-phase-discovery-gate-plan.md) | `electrolyte` | Adds the active #191 child gate for independent counterion-pair matrix construction, reduced electroneutral HELD2 phase-discovery diagnostics, mean-ionic residual bookkeeping, and closed public electrolyte route evidence. |
+| [Issue #306 electrolyte HELD2 counterion-pair phase-discovery gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0306-electrolyte-held2-counterion-pair-phase-discovery-gate-plan.md) | `electrolyte` | Closed #191 child gate for independent counterion-pair matrix construction, reduced electroneutral HELD2 phase-discovery diagnostics, mean-ionic residual bookkeeping, and closed public electrolyte route evidence. |
+| [Issue #312 electrolyte HELD2 Stage III refinement gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md) | `electrolyte` | Adds the active #191 child gate for consuming the #306 candidate set in strict reduced-variable Stage III electrolyte refinement while keeping postsolve certification and public admission separate. |
+| [Issue #313 electrolyte postsolve phase-set certification gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md) | `electrolyte` | Adds the #191 child gate for explicit-ion reconstruction, charge, transfer, pressure, amount, and domain-margin certification after #312 closes. |
+| [Issue #314 electrolyte public route admission gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md) | `electrolyte` | Adds the final #191 child gate for source-backed public electrolyte GFPE route admission after Stage III and postsolve certification close. |
 
 ## Retained Evidence
 
@@ -79,7 +82,10 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `blocked` | Umbrella now blocked by Stage III electrolyte refinement, postsolve certification, and public admission gates after the #306 phase-discovery proof. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Umbrella blocked by #312, #313, and #314 after the #306 phase-discovery proof. |
+| [#312](../../issues/2026-06-25-m4-equilibrium-issue-0312-add-electrolyte-held2-stage-iii-reduced-variable-refinement-gate.md) | `electrolyte` | `Ipopt` | `ready` | Active child: consume #306 HELD2 candidate handoff and prove strict reduced-variable Stage III electrolyte refinement. |
+| [#313](../../issues/2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) | `electrolyte` | `Ipopt` | `blocked` | Postsolve certification child blocked by #312. |
+| [#314](../../issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) | `electrolyte` | `Ipopt` | `blocked` | Final public electrolyte GFPE admission child blocked by #313. |
 
 ## Queue Guard
 
@@ -202,9 +208,23 @@ records charged species ordering, pair labels, counterion-pair matrix rank
 finite TPD candidate metrics, and a Stage III handoff record. The proof covers
 Na+/Cl-, Na+/K+/Cl-, and the multivalent K+/Cl-/Na+/SO4-- methodology example,
 and rejects incomplete prerequisites, raw single-ion charged-transfer evidence,
-and premature Stage III/postsolve/public-admission completion. #191 now moves
-to the Stage III electrolyte refinement child before postsolve certification
-and public route admission.
+and premature Stage III/postsolve/public-admission completion. #191 is now
+blocked by #312, #313, and #314 for Stage III electrolyte refinement, postsolve
+certification, and public route admission in order.
+
+#312 is the active ready child for #191. It must consume the #306 HELD2
+candidate handoff and prove strict Stage III reduced-variable electrolyte
+refinement with exact reduced residual derivative receipts while keeping
+postsolve certification and public admission closed.
+
+#313 is blocked by #312. It must certify explicit-ion material reconstruction,
+per-phase charge balance, neutral and mean-ionic transfer residuals, pressure
+consistency, phase amounts, composition/domain margins, and closed public route
+state.
+
+#314 is blocked by #313. It is the final public electrolyte GFPE admission gate
+and must consume #269/#300/#302/#306/#312/#313 before #191 can close and M6
+#192 can become the next GFPE evidence gate.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table

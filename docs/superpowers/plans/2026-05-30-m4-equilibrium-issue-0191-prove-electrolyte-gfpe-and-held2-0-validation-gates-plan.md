@@ -6,16 +6,17 @@
 > not open public electrolyte routes directly from #191.
 
 **Goal:** Resolve GitHub issue #191 by closing the electrolyte HELD2 child gates
-in order: counterion-pair phase discovery, Stage III reduced-variable
-refinement, postsolve certification, and public route admission.
+in order: counterion-pair phase discovery (#306), Stage III reduced-variable
+refinement (#312), postsolve certification (#313), and public route admission
+(#314).
 
 **Architecture:** #191 is the electrolyte GFPE umbrella for
 `packages/epcsaft-equilibrium`. Existing children prove source data, reduced
-electroneutral variables, Born SSM/DS derivative receipts, and charge-neutral
-TPD screening. The next child, #306, must turn the HELD2 paper-derived
-counterion-pair formulation into native phase-discovery evidence. Public
-electrolyte admission stays closed until a later child proves Stage III
-refinement and postsolve certification.
+electroneutral variables, Born SSM/DS derivative receipts, charge-neutral TPD
+screening, and HELD2 counterion-pair phase discovery. The next child, #312,
+must consume the #306 candidate handoff and prove Stage III reduced-variable
+refinement. Public electrolyte admission stays closed until #313 proves
+postsolve certification and #314 proves public route admission.
 
 **Tech Stack:** C++ equilibrium native core, pybind11 bindings, Python
 validation checkers, pytest contracts through `run_pytest.py`, M4 issue
@@ -28,8 +29,8 @@ mirrors, M4 registry evidence, GitHub dependency readiness.
 - Source Spec: `docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 - Source Issue: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 - Source Plan: `docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md`
-- Active Child: `https://github.com/ePC-SAFT/ePC-SAFT/issues/306`
-- Active Child Plan: `docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0306-electrolyte-held2-counterion-pair-phase-discovery-gate-plan.md`
+- Active Child: `https://github.com/ePC-SAFT/ePC-SAFT/issues/312`
+- Active Child Plan: `docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md`
 - Milestone: `M4 - Equilibrium`
 - AFK/HITL: `HITL`
 
@@ -37,9 +38,10 @@ mirrors, M4 registry evidence, GitHub dependency readiness.
 
 **Intent:** Keep #191 as the parent acceptance gate for electrolyte GFPE while
 forcing implementation through PR-sized child gates.
-**Current Behavior:** #269, #300, and #302 are closed, but the current code only
-has source readiness, reduced-basis/Born exactness evidence, and deterministic
-charge-neutral TPD screening.
+**Current Behavior:** #269, #300, #302, and #306 are closed, but the current
+code only has source readiness, reduced-basis/Born exactness evidence,
+deterministic charge-neutral TPD screening, and HELD2 phase-discovery handoff
+evidence.
 **Expected Outcome:** #191 closes only after HELD2 counterion-pair phase
 discovery, Stage III electrolyte refinement, postsolve certification, and
 public route admission children all close with retained executable evidence.
@@ -50,7 +52,7 @@ for its own gate and names the remaining electrolyte gates.
 **Interface:** GitHub issue dependencies, local issue mirrors, M4 README,
 benchmark registry rows, validation checkers, and native diagnostics.
 **Cutover:** Direct #191 implementation is displaced by the child sequence
-starting with #306.
+continuing with #312, #313, and #314.
 **Replaced Path:** The stale generic parent plan is replaced with explicit
 child-gate orchestration so workers do not treat readiness or TPD screening as
 production electrolyte support.
@@ -105,28 +107,29 @@ focused tests, and tracker evidence:
 - Source and readiness checkpoints: #269, #300, and #302 remain prerequisite
   evidence for source fixtures, reduced electroneutral variables, Born SSM/DS
   derivatives, and charge-neutral TPD screening.
-- #306 phase-discovery checkpoint: required diagnostics are counterion-pair
+- #306 phase-discovery checkpoint: retained diagnostics are counterion-pair
   matrix rank, reduced-coordinate lift/back-lift residuals, finite TPD
   candidate metrics, pair-based mean-ionic residual bookkeeping, closed public
   routes, and a Stage III handoff record.
-- Stage III refinement checkpoint: consume the #306 candidate set and solve the
+- #312 Stage III refinement checkpoint: consume the #306 candidate set and solve the
   electrolyte reduced-variable phase-set equations with exact residual
   derivative receipts.
-- Postsolve checkpoint: certify explicit-ion material reconstruction,
+- #313 postsolve checkpoint: certify explicit-ion material reconstruction,
   per-phase charge balance, neutral transfer, mean-ionic transfer, pressure
   consistency, phase amounts, and domain margins.
-- Public admission checkpoint: consume all prior checkers and expose only the
+- #314 public admission checkpoint: consume all prior checkers and expose only the
   certified electrolyte route surface.
 
 ## Acceptance Criteria
 
-- [ ] #306 or its successor child blocks #191 until the current electrolyte
+- [ ] #312 or its successor child blocks #191 until the current electrolyte
   gate is closed.
-- [ ] Parent #191 docs list closed children #269, #300, and #302 as historical
-  provenance only.
-- [ ] Parent #191 docs list open child #306 as the current HELD2
-  counterion-pair phase-discovery gate.
-- [ ] Future Stage III, postsolve, and admission gates remain separate.
+- [ ] Parent #191 docs list closed children #269, #300, #302, and #306 as
+  historical provenance only.
+- [ ] Parent #191 docs list open child #312 as the current Stage III
+  reduced-variable refinement gate.
+- [ ] #313 postsolve and #314 admission gates remain separate and blocked in
+  order.
 - [ ] The parent tracker keeps the HELD2 adoption checkpoint sequence current
   as each child opens or closes.
 - [ ] Public electrolyte route claims stay closed until the final admission
