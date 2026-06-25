@@ -68,6 +68,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete` | `electrolyte` | Closed-admission source gate for #269: parses the Khudaida 2026 source fixture, records the raw paper-row closure correction before normalized explicit-ion expansion, constructs the path-based `2026_Khudaida` paper-validation parameter bundle, runs native electrolyte and phase-charge diagnostics, and keeps public electrolyte route admission closed. |
 | `scripts/validation/check_electrolyte_held2_readiness.py --json --require-source-gate --require-reduced-basis --require-born-ssm-ds --require-public-routes-closed --require-complete` | `electrolyte` | Prerequisite-only HELD2 readiness gate for #300: consumes the #269 Khudaida source gate, proves exact charge-neutral NaCl reduced amount lifting with residual <= `1.0e-10`, records CppAD Born SSM/DS composition, ln-fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts, and keeps HELD2 discovery, postsolve certification, and public electrolyte route admission pending. Electrolyte TPD screening is covered separately by #302. |
 | `scripts/validation/check_electrolyte_tpd_gate.py --json --require-source-gate --require-held2-readiness --require-native-tpd --require-public-routes-closed --require-complete` | `electrolyte` | Charge-neutral electrolyte TPD screening gate for #302: consumes the #269 source gate and #300 readiness gate, calls native `_native_electrolyte_tpd_phase_discovery`, reports three finite source-backed candidates, selected candidate count `2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`, readiness-only HELD2 status, and closed public electrolyte route state. This is screening evidence, not full HELD2 discovery, postsolve certification, or public route admission. |
+| `scripts/validation/check_electrolyte_held2_phase_discovery.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-native-held2-discovery --require-public-routes-closed --require-complete` | `electrolyte` | HELD2 counterion-pair phase-discovery gate for #306: consumes #269/#300/#302, calls native `_native_electrolyte_held2_phase_discovery`, proves full-rank `N_ch - 1` counterion-pair matrices for NaCl, Na/K/Cl, and K/Cl/Na/SO4 cases, reports charge-neutral lifted candidate diagnostics, finite reduced-TPD metrics, pair-based mean-ionic bookkeeping, a Stage III handoff record, and closed public electrolyte route state. Stage III refinement, postsolve certification, and public admission remain separate gates. |
 | `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian prerequisite proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, and certifies the source-backed internal two-liquid pair consumed by #190. |
 | `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-electrolyte-closed --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized associating phase-set surfaces closed. |
 | `scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native` | `association` | Gross/Sadowski 2002 paper-validation acceptance campaign for #275: retains Figure 1 pure-association AAD sanity evidence, connects Figure 8 methanol/cyclohexane source rows and exact-Hessian proof to campaign summaries, adds Figure 10 water/1-pentanol cross-association stress evidence with `k_ij = 0.016` and `cppad_implicit_association`, records Figures 2-7 and 9 as source-requirement records with no completion credit, and keeps electrolyte/reactive/generalized associating claims outside this evidence. |
@@ -78,8 +79,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Umbrella blocked by #306, then Stage III refinement, postsolve certification, and public admission gates. |
-| [#306](../../issues/2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md) | `electrolyte` | `Ipopt` | `ready` | Add native HELD2 counterion-pair phase-discovery diagnostics in reduced electroneutral coordinates while public electrolyte routes remain closed. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Umbrella now blocked by Stage III electrolyte refinement, postsolve certification, and public admission gates after the #306 phase-discovery proof. |
 
 ## Queue Guard
 
@@ -193,23 +193,18 @@ negative TPD candidate is instability-screening evidence only; HELD2 dual
 discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set
 certification, and public route admission remain pending.
 
-#306 is the active ready child for #191 after the HELD2 paper audit. It must add
-native independent counterion-pair matrix construction, reduced electroneutral
-phase-discovery diagnostics, charge-neutral candidate rows, mean-ionic residual
-bookkeeping, and closed public route evidence. It must not claim Stage III
-electrolyte refinement, postsolve electrolyte phase-set certification, or public
-electrolyte route admission.
-
-The #306 proof must now include a field-level diagnostic payload and negative
-contract tests: prerequisite receipts for #269/#300/#302, charged species
-ordering, pair labels, counterion-pair matrix rank `N_ch - 1`, transformed
-variable count, reduced lift/back-lift residuals, finite TPD candidate metrics,
-pair-based mean-ionic residual rows, and closed public route state. Required
-matrix tests cover Na+/Cl-, Na+/K+/Cl-, and the multivalent K+/Cl-/Na+/SO4--
-methodology example. Required checker-negative tests reject hardcoded NaCl-only
-evidence, missing multi-ion source fixtures, raw single-ion charged-transfer
-equality, incomplete prerequisite gates, and premature Stage III/postsolve or
-public-admission completion.
+#306 closed on 2026-06-25 with native independent counterion-pair matrix
+construction, reduced electroneutral phase-discovery diagnostics,
+charge-neutral candidate rows, pair-based mean-ionic residual bookkeeping, and
+closed public route evidence. The retained checker consumes #269/#300/#302,
+records charged species ordering, pair labels, counterion-pair matrix rank
+`N_ch - 1`, transformed variable count, reduced lift/back-lift residuals,
+finite TPD candidate metrics, and a Stage III handoff record. The proof covers
+Na+/Cl-, Na+/K+/Cl-, and the multivalent K+/Cl-/Na+/SO4-- methodology example,
+and rejects incomplete prerequisites, raw single-ion charged-transfer evidence,
+and premature Stage III/postsolve/public-admission completion. #191 now moves
+to the Stage III electrolyte refinement child before postsolve certification
+and public route admission.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table

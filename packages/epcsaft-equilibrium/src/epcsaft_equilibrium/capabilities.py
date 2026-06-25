@@ -190,6 +190,41 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "tests/native/contracts/test_generalized_equilibrium_registry.py",
         ),
     },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "electrolyte_phase_discovery",
+        "quantity": "electrolyte_held2_counterion_pair_phase_discovery",
+        "derivative": "counterion_pair_reduced_tpd_bookkeeping",
+        "backend": "native_counterion_pair_phase_discovery",
+        "supported": True,
+        "classification": "phase_discovery_evidence",
+        "public_admission_state": "public_route_closed",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl plus Ascani 2022 mixed-electrolyte counterion fixtures",
+        "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
+        "source_fixture": (
+            "data/reference/equilibrium_benchmarks/electrolyte_lle/"
+            "water_ethanol_isobutanol_nacl"
+        ),
+        "preprocessor_fixtures": (
+            "analyses/paper_validation/2022_ascani/tables/table_005/table_005.md",
+            "docs/papers/md/Equilibrium/Ascani, Sadowski, Held - 2022 - Calculation of Multiphase Equilibria Containing Mixed Solvents and M.md",
+        ),
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "stage_status": "phase_discovery_complete_stage_iii_pending",
+        "reason": (
+            "issue #306 records the electrolyte HELD2 phase-discovery gate: "
+            "native counterion-pair matrix construction, charge-neutral candidate "
+            "diagnostics, pair-based mean-ionic bookkeeping, source-backed multi-ion "
+            "preprocessor fixtures, and closed public electrolyte route state."
+        ),
+        "tests": (
+            "scripts/validation/check_electrolyte_held2_phase_discovery.py",
+            "tests/native/contracts/test_electrolyte_held2_phase_discovery.py",
+            "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+            "tests/native/contracts/test_generalized_equilibrium_registry.py",
+        ),
+    },
 )
 
 

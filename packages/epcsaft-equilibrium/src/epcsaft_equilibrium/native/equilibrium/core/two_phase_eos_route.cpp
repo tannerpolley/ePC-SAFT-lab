@@ -570,6 +570,369 @@ void require_charge_neutral_composition(
     }
 }
 
+std::vector<int> indices_sorted_by_feed(
+    const std::vector<int>& indices,
+    const std::vector<double>& feed
+) {
+    std::vector<int> ordered = indices;
+    std::sort(ordered.begin(), ordered.end(), [&](int first, int second) {
+        const double first_feed = feed[static_cast<std::size_t>(first)];
+        const double second_feed = feed[static_cast<std::size_t>(second)];
+        if (std::abs(first_feed - second_feed) > 1.0e-14) {
+            return first_feed > second_feed;
+        }
+        return first < second;
+    });
+    return ordered;
+}
+
+int active_charged_position(
+    const std::vector<int>& charged_indices,
+    int species_index
+) {
+    const auto found = std::find(charged_indices.begin(), charged_indices.end(), species_index);
+    if (found == charged_indices.end()) {
+        throw ValueError("Electrolyte HELD2 counterion pair references a species outside the active charged set.");
+    }
+    return static_cast<int>(std::distance(charged_indices.begin(), found));
+}
+
+std::vector<double> solve_square_linear_system(
+    std::vector<std::vector<double>> matrix,
+    std::vector<double> rhs,
+    double tolerance,
+    const std::string& label
+) {
+    const std::size_t n = rhs.size();
+    if (matrix.size() != n) {
+        throw ValueError(label + " matrix row count mismatch.");
+    }
+    for (const std::vector<double>& row : matrix) {
+        require_size(row, n, label + " matrix");
+    }
+    for (std::size_t col = 0; col < n; ++col) {
+        std::size_t pivot = col;
+        double pivot_abs = std::abs(matrix[col][col]);
+        for (std::size_t row = col + 1; row < n; ++row) {
+            const double value_abs = std::abs(matrix[row][col]);
+            if (value_abs > pivot_abs) {
+                pivot = row;
+                pivot_abs = value_abs;
+            }
+        }
+        if (pivot_abs <= tolerance) {
+            throw ValueError(label + " matrix is singular at the declared tolerance.");
+        }
+        if (pivot != col) {
+            std::swap(matrix[pivot], matrix[col]);
+            std::swap(rhs[pivot], rhs[col]);
+        }
+        const double divisor = matrix[col][col];
+        for (std::size_t item = col; item < n; ++item) {
+            matrix[col][item] /= divisor;
+        }
+        rhs[col] /= divisor;
+        for (std::size_t row = 0; row < n; ++row) {
+            if (row == col) {
+                continue;
+            }
+            const double factor = matrix[row][col];
+            for (std::size_t item = col; item < n; ++item) {
+                matrix[row][item] -= factor * matrix[col][item];
+            }
+            rhs[row] -= factor * rhs[col];
+        }
+    }
+    return rhs;
+}
+
+int matrix_rank(
+    std::vector<std::vector<double>> matrix,
+    double tolerance
+) {
+    if (matrix.empty()) {
+        return 0;
+    }
+    const std::size_t row_count = matrix.size();
+    const std::size_t col_count = matrix.front().size();
+    for (const std::vector<double>& row : matrix) {
+        require_size(row, col_count, "Counterion-pair matrix");
+    }
+    int rank = 0;
+    std::size_t pivot_row = 0;
+    for (std::size_t col = 0; col < col_count && pivot_row < row_count; ++col) {
+        std::size_t pivot = pivot_row;
+        double pivot_abs = std::abs(matrix[pivot][col]);
+        for (std::size_t row = pivot_row + 1; row < row_count; ++row) {
+            const double value_abs = std::abs(matrix[row][col]);
+            if (value_abs > pivot_abs) {
+                pivot = row;
+                pivot_abs = value_abs;
+            }
+        }
+        if (pivot_abs <= tolerance) {
+            continue;
+        }
+        std::swap(matrix[pivot], matrix[pivot_row]);
+        const double divisor = matrix[pivot_row][col];
+        for (std::size_t item = col; item < col_count; ++item) {
+            matrix[pivot_row][item] /= divisor;
+        }
+        for (std::size_t row = 0; row < row_count; ++row) {
+            if (row == pivot_row) {
+                continue;
+            }
+            const double factor = matrix[row][col];
+            for (std::size_t item = col; item < col_count; ++item) {
+                matrix[row][item] -= factor * matrix[pivot_row][item];
+            }
+        }
+        ++rank;
+        ++pivot_row;
+    }
+    return rank;
+}
+
+std::vector<double> row_sums(const std::vector<std::vector<double>>& matrix) {
+    std::vector<double> out;
+    out.reserve(matrix.size());
+    for (const std::vector<double>& row : matrix) {
+        out.push_back(std::accumulate(row.begin(), row.end(), 0.0));
+    }
+    return out;
+}
+
+std::vector<double> reduced_coordinates_from_candidate(
+    const std::vector<double>& feed,
+    const std::vector<double>& candidate,
+    const std::vector<int>& charged_indices,
+    const std::vector<std::vector<double>>& counterion_matrix,
+    double tolerance
+) {
+    require_size(candidate, feed.size(), "Electrolyte HELD2 candidate composition");
+    const std::size_t row_count = counterion_matrix.size();
+    std::vector<std::vector<double>> normal(row_count, std::vector<double>(row_count, 0.0));
+    std::vector<double> rhs(row_count, 0.0);
+    for (std::size_t row = 0; row < row_count; ++row) {
+        for (std::size_t col = 0; col < row_count; ++col) {
+            for (std::size_t charged = 0; charged < charged_indices.size(); ++charged) {
+                normal[row][col] += counterion_matrix[row][charged] * counterion_matrix[col][charged];
+            }
+        }
+        for (std::size_t charged = 0; charged < charged_indices.size(); ++charged) {
+            const int global_index = charged_indices[charged];
+            rhs[row] += counterion_matrix[row][charged]
+                * (candidate[static_cast<std::size_t>(global_index)] - feed[static_cast<std::size_t>(global_index)]);
+        }
+    }
+    return solve_square_linear_system(normal, rhs, tolerance, "Electrolyte HELD2 reduced-coordinate normal");
+}
+
+std::vector<double> charged_lift_from_reduced_coordinates(
+    const std::vector<double>& feed,
+    const std::vector<int>& charged_indices,
+    const std::vector<std::vector<double>>& counterion_matrix,
+    const std::vector<double>& coordinates
+) {
+    std::vector<double> out = feed;
+    for (std::size_t charged = 0; charged < charged_indices.size(); ++charged) {
+        const int global_index = charged_indices[charged];
+        double updated = feed[static_cast<std::size_t>(global_index)];
+        for (std::size_t row = 0; row < counterion_matrix.size(); ++row) {
+            updated += counterion_matrix[row][charged] * coordinates[row];
+        }
+        out[static_cast<std::size_t>(global_index)] = updated;
+    }
+    return out;
+}
+
+double max_lift_round_trip_residual(
+    const std::vector<double>& candidate,
+    const std::vector<double>& lifted,
+    const std::vector<int>& charged_indices
+) {
+    double residual = 0.0;
+    for (int global_index : charged_indices) {
+        residual = std::max(
+            residual,
+            std::abs(candidate[static_cast<std::size_t>(global_index)] - lifted[static_cast<std::size_t>(global_index)])
+        );
+    }
+    return residual;
+}
+
+double min_component_value(const std::vector<std::vector<double>>& compositions) {
+    double value = std::numeric_limits<double>::infinity();
+    for (const std::vector<double>& composition : compositions) {
+        for (double item : composition) {
+            value = std::min(value, item);
+        }
+    }
+    return std::isfinite(value) ? value : 0.0;
+}
+
+double max_composition_sum_residual(const std::vector<std::vector<double>>& compositions) {
+    double residual = 0.0;
+    for (const std::vector<double>& composition : compositions) {
+        residual = std::max(residual, std::abs(std::accumulate(composition.begin(), composition.end(), 0.0) - 1.0));
+    }
+    return residual;
+}
+
+double max_charge_residual(
+    const std::vector<std::vector<double>>& compositions,
+    const std::vector<double>& charges
+) {
+    double residual = 0.0;
+    for (const std::vector<double>& composition : compositions) {
+        residual = std::max(residual, charge_residual_abs(composition, charges));
+    }
+    return residual;
+}
+
+double duplicate_candidate_distance(
+    const std::vector<NeutralTpdCandidate>& candidates
+) {
+    if (candidates.size() < 2) {
+        return 0.0;
+    }
+    double distance = std::numeric_limits<double>::infinity();
+    for (std::size_t first = 0; first < candidates.size(); ++first) {
+        for (std::size_t second = first + 1; second < candidates.size(); ++second) {
+            distance = std::min(
+                distance,
+                composition_distance_inf_norm(candidates[first].composition, candidates[second].composition)
+            );
+        }
+    }
+    return std::isfinite(distance) ? distance : 0.0;
+}
+
+double max_candidate_feed_distance(
+    const std::vector<double>& feed,
+    const std::vector<std::vector<double>>& compositions
+) {
+    double distance = 0.0;
+    for (const std::vector<double>& composition : compositions) {
+        distance = std::max(distance, composition_distance_inf_norm(feed, composition));
+    }
+    return distance;
+}
+
+ElectrolyteHeld2PhaseDiscoveryResult build_electrolyte_held2_diagnostic(
+    const std::vector<double>& feed,
+    const std::vector<double>& charges,
+    const std::vector<std::string>& species_labels,
+    double rank_tolerance
+) {
+    require_size(charges, feed.size(), "Electrolyte HELD2 charge");
+    if (species_labels.size() != feed.size()) {
+        throw ValueError("Electrolyte HELD2 species label size did not match feed composition size.");
+    }
+    ElectrolyteHeld2PhaseDiscoveryResult out;
+    out.species_labels = species_labels;
+    out.feed_composition = feed;
+    out.charge_vector = charges;
+    out.rank_tolerance = rank_tolerance;
+
+    for (std::size_t index = 0; index < charges.size(); ++index) {
+        if (std::abs(charges[index]) <= rank_tolerance || feed[index] <= kCompositionFloor) {
+            continue;
+        }
+        const int species_index = static_cast<int>(index);
+        out.charged_species_indices.push_back(species_index);
+        out.charged_species_labels.push_back(species_labels[index]);
+        if (charges[index] > 0.0) {
+            out.cation_indices.push_back(species_index);
+        } else {
+            out.anion_indices.push_back(species_index);
+        }
+    }
+    if (out.cation_indices.empty() || out.anion_indices.empty()) {
+        throw ValueError("Electrolyte HELD2 phase discovery requires active cations and anions.");
+    }
+
+    out.charged_feed_ordering = out.charged_species_indices;
+    std::sort(out.charged_feed_ordering.begin(), out.charged_feed_ordering.end(), [&](int first, int second) {
+        const double first_feed = feed[static_cast<std::size_t>(first)];
+        const double second_feed = feed[static_cast<std::size_t>(second)];
+        if (std::abs(first_feed - second_feed) > 1.0e-14) {
+            return first_feed > second_feed;
+        }
+        return first < second;
+    });
+
+    const std::vector<int> cations = indices_sorted_by_feed(out.cation_indices, feed);
+    const std::vector<int> anions = indices_sorted_by_feed(out.anion_indices, feed);
+    const auto append_pair = [&](int cation, int anion) {
+        std::vector<double> row(out.charged_species_indices.size(), 0.0);
+        const int cation_pos = active_charged_position(out.charged_species_indices, cation);
+        const int anion_pos = active_charged_position(out.charged_species_indices, anion);
+        row[static_cast<std::size_t>(cation_pos)] = 1.0 / std::abs(charges[static_cast<std::size_t>(cation)]);
+        row[static_cast<std::size_t>(anion_pos)] = 1.0 / std::abs(charges[static_cast<std::size_t>(anion)]);
+        out.counterion_pair_matrix.push_back(row);
+        out.pair_labels.push_back(species_labels[static_cast<std::size_t>(cation)]
+            + "/" + species_labels[static_cast<std::size_t>(anion)]);
+    };
+
+    if (cations.size() <= anions.size()) {
+        const int pivot_cation = cations.front();
+        for (int anion : anions) {
+            append_pair(pivot_cation, anion);
+        }
+        for (std::size_t cation = 1; cation < cations.size(); ++cation) {
+            append_pair(cations[cation], anions[cation - 1]);
+        }
+    } else {
+        const int pivot_anion = anions.front();
+        for (int cation : cations) {
+            append_pair(cation, pivot_anion);
+        }
+        for (std::size_t anion = 1; anion < anions.size(); ++anion) {
+            append_pair(cations[anion - 1], anions[anion]);
+        }
+    }
+
+    out.expected_rank = static_cast<int>(out.charged_species_indices.size()) - 1;
+    out.counterion_pair_rank = matrix_rank(out.counterion_pair_matrix, rank_tolerance);
+    out.transformed_variable_count = static_cast<int>(out.counterion_pair_matrix.size());
+    out.counterion_pair_row_sums = row_sums(out.counterion_pair_matrix);
+    if (out.counterion_pair_rank != out.expected_rank) {
+        throw ValueError("Electrolyte HELD2 counterion-pair matrix did not reach full rank.");
+    }
+
+    for (const std::vector<double>& charged_row : out.counterion_pair_matrix) {
+        std::vector<double> row(feed.size(), 0.0);
+        for (std::size_t charged = 0; charged < out.charged_species_indices.size(); ++charged) {
+            row[static_cast<std::size_t>(out.charged_species_indices[charged])] = charged_row[charged];
+        }
+        out.lift_matrix.push_back(row);
+    }
+    out.mean_ionic_pair_labels = out.pair_labels;
+    return out;
+}
+
+std::vector<double> pair_residuals_from_reference_and_trial(
+    const std::vector<std::vector<double>>& counterion_matrix,
+    const std::vector<int>& charged_indices,
+    const EosPhaseBlockResult& reference,
+    const EosPhaseBlockResult& trial
+) {
+    std::vector<double> residuals;
+    residuals.reserve(counterion_matrix.size());
+    for (const std::vector<double>& row : counterion_matrix) {
+        double residual = 0.0;
+        for (std::size_t charged = 0; charged < charged_indices.size(); ++charged) {
+            const int global_index = charged_indices[charged];
+            residual += row[charged]
+                * (trial.gradient[static_cast<std::size_t>(global_index)]
+                   - reference.gradient[static_cast<std::size_t>(global_index)]);
+        }
+        residuals.push_back(residual);
+    }
+    return residuals;
+}
+
 std::vector<std::vector<double>> electrolyte_tpd_trial_compositions(
     const std::vector<double>& reference,
     const std::vector<double>& charges,
@@ -3431,6 +3794,127 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
         out.candidate_completeness_accepted = false;
         out.phase_set_status = "charge_neutral_tpd_negative_candidate";
     }
+    return out;
+}
+
+ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<std::string>& species_labels,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+) {
+    require_positive_finite(charge_tolerance, "Electrolyte HELD2 charge tolerance");
+    require_positive_finite(tpd_tolerance, "Electrolyte HELD2 TPD tolerance");
+    require_positive_finite(candidate_mass_balance_tolerance, "Electrolyte HELD2 candidate mass-balance tolerance");
+    const std::vector<double> feed =
+        normalized_trial_composition(feed_composition, "Electrolyte HELD2 feed composition");
+    require_size(charges, feed.size(), "Electrolyte HELD2 charge");
+    if (species_labels.size() != feed.size()) {
+        throw ValueError("Electrolyte HELD2 species label size did not match feed composition size.");
+    }
+    require_charge_neutral_composition(feed, charges, "Electrolyte HELD2 feed", charge_tolerance);
+
+    ElectrolyteHeld2PhaseDiscoveryResult out =
+        build_electrolyte_held2_diagnostic(feed, charges, species_labels, 1.0e-10);
+    out.tpd_discovery = evaluate_electrolyte_tpd_phase_discovery(
+        args,
+        temperature,
+        target_pressure,
+        feed,
+        charges,
+        phase_kinds,
+        charge_tolerance,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance
+    );
+    out.reduced_start_count = out.tpd_discovery.tpd_candidate_count;
+    out.converged_start_count = out.tpd_discovery.unique_candidate_count;
+    out.selected_candidate_count = out.tpd_discovery.selected_candidate_count;
+    out.min_tpd = out.tpd_discovery.min_tpd;
+    out.duplicate_candidate_distance = duplicate_candidate_distance(out.tpd_discovery.candidates);
+
+    std::vector<std::vector<double>> candidate_compositions = out.tpd_discovery.selected_phase_compositions;
+    if (candidate_compositions.empty()) {
+        for (const NeutralTpdCandidate& candidate : out.tpd_discovery.candidates) {
+            candidate_compositions.push_back(candidate.composition);
+        }
+    }
+    out.lifted_candidate_compositions = candidate_compositions;
+    out.stage_iii_phase_compositions = out.tpd_discovery.selected_phase_compositions;
+    out.stage_iii_phase_fractions = out.tpd_discovery.selected_phase_fractions;
+    out.stage_iii_phase_kinds = out.tpd_discovery.selected_phase_kinds;
+    for (const NeutralTpdCandidate& candidate : out.tpd_discovery.candidates) {
+        if (candidate.selected) {
+            out.stage_iii_tpd_values.push_back(candidate.tpd);
+        }
+    }
+
+    out.max_charge_residual = max_charge_residual(candidate_compositions, charges);
+    out.component_nonnegativity_margin = min_component_value(candidate_compositions);
+    out.composition_sum_residual = max_composition_sum_residual(candidate_compositions);
+    out.candidate_to_feed_distance = max_candidate_feed_distance(feed, candidate_compositions);
+    out.round_trip_residual = 0.0;
+    for (const std::vector<double>& candidate : candidate_compositions) {
+        std::vector<double> reduced = reduced_coordinates_from_candidate(
+            feed,
+            candidate,
+            out.charged_species_indices,
+            out.counterion_pair_matrix,
+            out.rank_tolerance
+        );
+        out.reduced_candidate_coordinates.push_back(reduced);
+        const std::vector<double> lifted = charged_lift_from_reduced_coordinates(
+            feed,
+            out.charged_species_indices,
+            out.counterion_pair_matrix,
+            reduced
+        );
+        out.round_trip_residual = std::max(
+            out.round_trip_residual,
+            max_lift_round_trip_residual(candidate, lifted, out.charged_species_indices)
+        );
+    }
+
+    if (!candidate_compositions.empty()) {
+        const std::vector<int> reference_phase_kinds = phase_kinds.empty() ? std::vector<int>{0} : phase_kinds;
+        const EosPhaseBlockResult reference = evaluate_unit_phase_block_at_pressure_root(
+            args,
+            temperature,
+            target_pressure,
+            feed,
+            reference_phase_kinds.front(),
+            "Electrolyte HELD2 mean-ionic reference"
+        );
+        const EosPhaseBlockResult trial = evaluate_unit_phase_block_at_pressure_root(
+            args,
+            temperature,
+            target_pressure,
+            candidate_compositions.front(),
+            reference_phase_kinds.front(),
+            "Electrolyte HELD2 mean-ionic candidate"
+        );
+        out.mean_ionic_residual_values = pair_residuals_from_reference_and_trial(
+            out.counterion_pair_matrix,
+            out.charged_species_indices,
+            reference,
+            trial
+        );
+        out.mean_ionic_max_abs_residual = 0.0;
+        for (double value : out.mean_ionic_residual_values) {
+            out.mean_ionic_max_abs_residual = std::max(out.mean_ionic_max_abs_residual, std::abs(value));
+        }
+    }
+    out.phase_discovery_status = "complete";
+    out.stage_iii_refinement_status = "pending";
+    out.postsolve_certification_status = "pending";
+    out.public_route_admission_status = "closed";
+    out.stage_iii_handoff_status = "pending_stage_iii_refinement";
     return out;
 }
 

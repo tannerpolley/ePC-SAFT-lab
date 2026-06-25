@@ -154,6 +154,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_multiphase_nonassoc",
         "single_component_vle",
         "electrolyte_held2_readiness_born_ssm_ds_exactness",
+        "electrolyte_held2_counterion_pair_phase_discovery",
     }
     associating_proof = next(
         row
@@ -207,6 +208,18 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         electrolyte_readiness["source_fixture"]
         == "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl"
     )
+    electrolyte_discovery = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "electrolyte_held2_counterion_pair_phase_discovery"
+    )
+    assert electrolyte_discovery["classification"] == "phase_discovery_evidence"
+    assert electrolyte_discovery["backend"] == "native_counterion_pair_phase_discovery"
+    assert electrolyte_discovery["public_admission_state"] == "public_route_closed"
+    assert electrolyte_discovery["selector_family"] == "electrolyte_lle"
+    assert electrolyte_discovery["reduced_basis"] == "independent_counterion_pair_matrix"
+    assert electrolyte_discovery["stage_status"] == "phase_discovery_complete_stage_iii_pending"
+    assert "Ascani 2022 mixed-electrolyte counterion fixtures" in electrolyte_discovery["source_configuration"]
     assert "electrolyte_lle" not in activation["public_routes"]
     assert "electrolyte_lle" not in activation["production_families"]
     electrolyte_activation = next(

@@ -262,6 +262,55 @@ struct NeutralPhaseDiscoveryResult {
     std::vector<NeutralTpdCandidate> candidates;
 };
 
+struct ElectrolyteHeld2PhaseDiscoveryResult {
+    std::string algorithm_scope = "held2_counterion_pair_phase_discovery_only";
+    std::vector<std::string> species_labels;
+    std::vector<double> feed_composition;
+    std::vector<double> charge_vector;
+    std::vector<int> charged_species_indices;
+    std::vector<int> cation_indices;
+    std::vector<int> anion_indices;
+    std::vector<int> charged_feed_ordering;
+    std::vector<std::string> charged_species_labels;
+    std::vector<std::string> pair_labels;
+    std::vector<std::vector<double>> counterion_pair_matrix;
+    std::vector<double> counterion_pair_row_sums;
+    int counterion_pair_rank = 0;
+    int expected_rank = 0;
+    double rank_tolerance = 1.0e-10;
+    int transformed_variable_count = 0;
+    std::vector<std::vector<double>> lift_matrix;
+    std::vector<std::vector<double>> lifted_candidate_compositions;
+    std::vector<std::vector<double>> reduced_candidate_coordinates;
+    double max_charge_residual = 0.0;
+    double component_nonnegativity_margin = 0.0;
+    double composition_sum_residual = 0.0;
+    double round_trip_residual = 0.0;
+    double round_trip_tolerance = 1.0e-8;
+    std::string reduced_coordinate_basis = "counterion_pair_transformed_variables";
+    int reduced_start_count = 0;
+    int converged_start_count = 0;
+    int selected_candidate_count = 0;
+    double min_tpd = 0.0;
+    double duplicate_candidate_distance = 0.0;
+    double candidate_to_feed_distance = 0.0;
+    std::vector<std::string> mean_ionic_pair_labels;
+    std::vector<double> mean_ionic_residual_values;
+    double mean_ionic_residual_scale = 1.0;
+    double mean_ionic_max_abs_residual = 0.0;
+    std::string mean_ionic_status = "bookkeeping_only_until_stage_iii";
+    std::string phase_discovery_status = "complete";
+    std::string stage_iii_refinement_status = "pending";
+    std::string postsolve_certification_status = "pending";
+    std::string public_route_admission_status = "closed";
+    std::vector<std::vector<double>> stage_iii_phase_compositions;
+    std::vector<double> stage_iii_phase_fractions;
+    std::vector<int> stage_iii_phase_kinds;
+    std::vector<double> stage_iii_tpd_values;
+    std::string stage_iii_handoff_status = "pending_stage_iii_refinement";
+    NeutralPhaseDiscoveryResult tpd_discovery;
+};
+
 struct RoutePhaseEvidence {
     std::string label;
     std::string role;
@@ -596,6 +645,19 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
     double target_pressure,
     const std::vector<double>& feed_composition,
     const std::vector<double>& charges,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+);
+
+ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<std::string>& species_labels,
     const std::vector<int>& phase_kinds,
     double charge_tolerance,
     double tpd_tolerance,

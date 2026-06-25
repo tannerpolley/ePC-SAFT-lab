@@ -266,6 +266,7 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
 
     assert electrolyte["production_exposed"] is False
     assert electrolyte["existing_public_utility_routes"] == []
+    assert electrolyte["phase_discovery_status"] == "held2_counterion_pair_phase_discovery_complete_pending_stage_iii"
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
     assert gate["evidence_tier"] == "T1"
     assert gate["command"] == (
@@ -289,6 +290,17 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
     assert "CppAD Born SSM/DS composition" in readiness["result_requirement"]
     assert "activity-parameter" in readiness["result_requirement"]
     assert "HELD2 status marked readiness-only" in readiness["result_requirement"]
+
+    discovery = evidence["Electrolyte HELD2 counterion-pair phase-discovery gate"]
+    assert discovery["evidence_tier"] == "T1"
+    assert discovery["command"] == (
+        "uv run --no-sync python scripts/validation/check_electrolyte_held2_phase_discovery.py "
+        "--json --require-source-gate --require-readiness-gate --require-tpd-gate "
+        "--require-native-held2-discovery --require-public-routes-closed --require-complete"
+    )
+    assert "rank equals N_ch - 1" in discovery["result_requirement"]
+    assert "pair-based mean-ionic bookkeeping" in discovery["scope"]
+    assert "Stage III refinement, postsolve certification, and public admission remain pending or closed" in discovery["result_requirement"]
 
 
 def test_generalized_multiphase_records_public_admission_evidence() -> None:
