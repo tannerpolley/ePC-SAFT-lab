@@ -79,7 +79,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Umbrella now blocked by Stage III electrolyte refinement, postsolve certification, and public admission gates after the #306 phase-discovery proof. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `blocked` | Umbrella now blocked by Stage III electrolyte refinement, postsolve certification, and public admission gates after the #306 phase-discovery proof. |
 
 ## Queue Guard
 
