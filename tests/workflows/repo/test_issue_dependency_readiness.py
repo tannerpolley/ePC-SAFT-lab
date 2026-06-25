@@ -108,9 +108,14 @@ def test_missing_local_mirror_is_reported(tmp_path: Path) -> None:
     assert updates["warnings"] == ["missing_local_mirror"]
 
 
-def test_workflow_event_parser_reads_issue_and_pr_close_events(tmp_path: Path) -> None:
+def test_workflow_event_parser_reads_issue_close_events(tmp_path: Path) -> None:
     issue_event = tmp_path / "issue.json"
     issue_event.write_text(json.dumps({"issue": {"number": 188}, "action": "closed"}), encoding="utf-8")
+
+    assert readiness.closed_issues_from_event(issue_event, event_name="issues") == [188]
+
+
+def test_workflow_event_parser_ignores_pr_close_events(tmp_path: Path) -> None:
     pr_event = tmp_path / "pr.json"
     pr_event.write_text(
         json.dumps(
@@ -125,8 +130,7 @@ def test_workflow_event_parser_reads_issue_and_pr_close_events(tmp_path: Path) -
         encoding="utf-8",
     )
 
-    assert readiness.closed_issues_from_event(issue_event, event_name="issues") == [188]
-    assert readiness.closed_issues_from_event(pr_event, event_name="pull_request") == [188, 241]
+    assert readiness.closed_issues_from_event(pr_event, event_name="pull_request") == []
 
 
 def test_main_treats_merged_pr_without_close_keyword_as_noop(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -168,11 +172,61 @@ def test_workflow_listens_only_to_closeout_events() -> None:
     )
 
     assert "issues:\n    types: [closed]" in workflow
-    assert "pull_request:\n    types: [closed]" in workflow
+    assert "pull_request:" not in workflow
     assert "workflow_dispatch:" in workflow
     assert "schedule:" in workflow
     assert "reopened" not in workflow
     assert "unlabeled" not in workflow
+
+
+def test_apply_ready_result_updates_labels_and_mirrors_without_commenting(tmp_path: Path) -> None:
+    issue_dir = tmp_path / "docs" / "superpowers" / "issues"
+    issue_dir.mkdir(parents=True)
+    mirror = issue_dir / "issue-0189.md"
+    mirror.write_text(
+        "\n".join(
+            [
+                "---",
+                "issue: 189",
+                'readiness: "blocked"',
+                'last_synced: "2026-06-01"',
+                "---",
+                "",
+                "## Tracker Metadata",
+                "",
+                "- Readiness: `blocked`",
+                "- Labels: `enhancement, status:blocked, type:feature`",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    class ClientWithoutComment:
+        calls: list[dict[str, object]]
+
+        def __init__(self) -> None:
+            self.calls = []
+
+        def apply_labels(self, issue_number: int, *, add: list[str], remove: list[str]) -> None:
+            self.calls.append({"issue": issue_number, "add": add, "remove": remove})
+
+    client = ClientWithoutComment()
+    local_update = readiness._apply_ready_result(
+        client,  # type: ignore[arg-type]
+        tmp_path,
+        {
+            "dependent_issue": 189,
+            "all_blockers": [188, 241],
+            "proposed_label_changes": {"add": ["status:ready"], "remove": ["status:blocked"]},
+        },
+        today="2026-06-13",
+        strict_local=False,
+    )
+
+    assert client.calls == [{"issue": 189, "add": ["status:ready"], "remove": ["status:blocked"]}]
+    assert local_update["changed"] is True
+    assert 'readiness: "ready"' in mirror.read_text(encoding="utf-8")
 
 
 def test_apply_plan_records_git_commit_decision() -> None:
