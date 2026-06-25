@@ -487,6 +487,44 @@ struct NeutralTwoPhaseEosRouteResult {
     NeutralTwoPhaseEosPostsolve postsolve;
 };
 
+struct ElectrolyteStageIIIRefinementResult {
+    std::string algorithm_scope = "held2_stage_iii_reduced_variable_refinement_only";
+    std::string status = "incomplete";
+    std::string phase_discovery_status = "complete";
+    std::string stage_iii_refinement_status = "complete";
+    std::string postsolve_certification_status = "pending";
+    std::string public_route_admission_status = "closed";
+    std::string source_gate = "electrolyte_held2_counterion_pair_phase_discovery";
+    std::string source_native_binding = "_native_electrolyte_held2_phase_discovery";
+    std::string seed_name = "electrolyte_held2_counterion_pair_candidate_set";
+    int selected_candidate_count = 0;
+    std::vector<std::string> selected_phase_labels;
+    std::vector<int> selected_phase_kinds;
+    std::vector<double> selected_phase_fractions;
+    std::vector<std::vector<double>> selected_phase_compositions;
+    std::string coordinate_basis = "counterion_pair_transformed_variables";
+    std::vector<std::string> variable_labels;
+    std::vector<double> variable_lower_bounds;
+    std::vector<double> variable_upper_bounds;
+    std::vector<double> variable_scaling;
+    std::vector<std::string> equation_labels;
+    std::vector<double> residual_values;
+    std::vector<double> residual_scaling;
+    double residual_inf_norm = 0.0;
+    double residual_tolerance = 1.0e-6;
+    double phase_distance = 0.0;
+    double phase_distance_tolerance = 1.0e-8;
+    double active_bound_violation = 0.0;
+    double active_bound_tolerance = 1.0e-8;
+    bool exact_reduced_jacobian_available = false;
+    bool exact_reduced_hessian_available = false;
+    int jacobian_nonzero_count = 0;
+    int hessian_nonzero_count = 0;
+    std::string derivative_backend = "cppad_phase_amount_charge_constraints_with_counterion_pair_chain_rule";
+    NeutralTwoPhaseEosRouteResult route_result;
+    ElectrolyteHeld2PhaseDiscoveryResult held2_discovery;
+};
+
 NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     const add_args& args,
     double temperature,
@@ -662,6 +700,22 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
     double charge_tolerance,
     double tpd_tolerance,
     double candidate_mass_balance_tolerance
+);
+
+ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<std::string>& species_labels,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance,
+    double residual_tolerance,
+    double phase_distance_tolerance,
+    double active_bound_tolerance
 );
 
 NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(

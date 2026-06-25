@@ -2927,10 +2927,16 @@ public:
     }
 
     int hessian_nonzero_count() const override {
+        if (!has_exact_hessian()) {
+            return 0;
+        }
         return LagrangianHessianAssembler(variable_count()).nonzero_count();
     }
 
     NlpHessianStructure hessian_structure() const override {
+        if (!has_exact_hessian()) {
+            return {};
+        }
         return LagrangianHessianAssembler(variable_count()).structure();
     }
 
@@ -3915,6 +3921,239 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
     out.postsolve_certification_status = "pending";
     out.public_route_admission_status = "closed";
     out.stage_iii_handoff_status = "pending_stage_iii_refinement";
+    return out;
+}
+
+ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<std::string>& species_labels,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance,
+    double residual_tolerance,
+    double phase_distance_tolerance,
+    double active_bound_tolerance
+) {
+    require_positive_finite(residual_tolerance, "Electrolyte Stage III residual tolerance");
+    require_positive_finite(phase_distance_tolerance, "Electrolyte Stage III phase-distance tolerance");
+    require_positive_finite(active_bound_tolerance, "Electrolyte Stage III active-bound tolerance");
+    const std::vector<double> feed =
+        normalized_trial_composition(feed_composition, "Electrolyte Stage III feed composition");
+    require_size(charges, feed.size(), "Electrolyte Stage III charge");
+    require_charge_neutral_composition(feed, charges, "Electrolyte Stage III feed", charge_tolerance);
+    if (phase_kinds.size() < 2) {
+        throw ValueError("Electrolyte Stage III refinement requires at least two requested phase kinds.");
+    }
+
+    ElectrolyteStageIIIRefinementResult out;
+    out.residual_tolerance = residual_tolerance;
+    out.phase_distance_tolerance = phase_distance_tolerance;
+    out.active_bound_tolerance = active_bound_tolerance;
+    out.held2_discovery = evaluate_electrolyte_held2_phase_discovery(
+        args,
+        temperature,
+        target_pressure,
+        feed,
+        charges,
+        species_labels,
+        phase_kinds,
+        charge_tolerance,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance
+    );
+    out.selected_candidate_count = out.held2_discovery.selected_candidate_count;
+    out.selected_phase_kinds = out.held2_discovery.stage_iii_phase_kinds;
+    out.selected_phase_fractions = out.held2_discovery.stage_iii_phase_fractions;
+    out.selected_phase_compositions = out.held2_discovery.stage_iii_phase_compositions;
+    for (std::size_t phase = 0; phase < phase_kinds.size(); ++phase) {
+        out.selected_phase_labels.push_back("phase_" + std::to_string(phase));
+    }
+
+    const std::size_t phase_count = phase_kinds.size();
+    const std::size_t pair_count = out.held2_discovery.pair_labels.size();
+    for (std::size_t phase = 0; phase < phase_count; ++phase) {
+        for (const std::string& pair_label : out.held2_discovery.pair_labels) {
+            out.variable_labels.push_back("phase_" + std::to_string(phase) + ":" + pair_label);
+            out.variable_lower_bounds.push_back(-1.0);
+            out.variable_upper_bounds.push_back(1.0);
+            out.variable_scaling.push_back(1.0);
+        }
+    }
+    for (std::size_t phase = 0; phase + 1 < phase_count; ++phase) {
+        out.variable_labels.push_back("phase_" + std::to_string(phase) + "_fraction");
+        out.variable_lower_bounds.push_back(1.0e-12);
+        out.variable_upper_bounds.push_back(1.0 - 1.0e-12);
+        out.variable_scaling.push_back(1.0);
+    }
+    for (const std::string& pair_label : out.held2_discovery.pair_labels) {
+        out.equation_labels.push_back("pair_mean_ionic_equality:" + pair_label);
+    }
+    out.equation_labels.push_back("phase_fraction_closure");
+    for (std::size_t phase = 0; phase < phase_count; ++phase) {
+        out.equation_labels.push_back("phase_charge_balance:phase_" + std::to_string(phase));
+    }
+    out.residual_scaling.assign(out.equation_labels.size(), 1.0);
+
+    const std::vector<double> feed_amounts = feed;
+    const NeutralTwoPhaseEosInitialPoint initial = build_multiphase_eos_initial_point_from_candidate_set(
+        args,
+        feed_amounts,
+        out.held2_discovery.tpd_discovery,
+        temperature,
+        target_pressure,
+        "electrolyte_stage_iii_reduced_variable_refinement",
+        phase_kinds
+    );
+    IpoptSolveOptions base_options;
+    base_options.max_iterations = 260;
+    base_options.print_level = 0;
+    const double solve_tolerance = std::min(1.0e-8, 0.01 * residual_tolerance);
+    base_options.tolerance = solve_tolerance;
+    base_options.acceptable_tolerance = std::max(1.0e-10, 10.0 * solve_tolerance);
+    base_options.constraint_violation_tolerance = solve_tolerance;
+    base_options.dual_infeasibility_tolerance = solve_tolerance;
+    base_options.complementarity_tolerance = solve_tolerance;
+    base_options.iteration_history_limit = 50;
+    base_options.linear_solver = "auto";
+    base_options.hessian_mode = "limited-memory";
+    IpoptSolveOptions route_options = ipopt_solve_options_for_profile(base_options, "diagnostic");
+    route_options.initial_variables = neutral_two_phase_variables_from_initial(initial);
+    route_options.initial_bound_lower_multipliers.clear();
+    route_options.initial_bound_upper_multipliers.clear();
+    route_options.initial_constraint_multipliers.clear();
+
+    out.route_result = solve_neutral_two_phase_eos_route(
+        args,
+        temperature,
+        target_pressure,
+        initial.phase_amounts,
+        initial.volumes,
+        feed_amounts,
+        route_options,
+        residual_tolerance,
+        residual_tolerance,
+        residual_tolerance,
+        phase_distance_tolerance,
+        phase_distance_tolerance,
+        charges,
+        "electrolyte_stage_iii_reduced_variable_refinement",
+        charge_tolerance
+    );
+    out.route_result.initial_point_strategy = "electrolyte_held2_candidate_set_replay";
+    out.route_result.seed_name = out.seed_name;
+
+    std::vector<std::vector<double>> phase_compositions = out.route_result.postsolve.phase_compositions;
+    if (phase_compositions.empty()) {
+        phase_compositions = out.selected_phase_compositions;
+    }
+    if (!phase_compositions.empty()) {
+        out.selected_phase_compositions = phase_compositions;
+    }
+    if (!out.route_result.postsolve.phase_amount_totals.empty()) {
+        const double total_amount = std::accumulate(
+            out.route_result.postsolve.phase_amount_totals.begin(),
+            out.route_result.postsolve.phase_amount_totals.end(),
+            0.0
+        );
+        if (total_amount > 0.0) {
+            out.selected_phase_fractions.clear();
+            for (double amount : out.route_result.postsolve.phase_amount_totals) {
+                out.selected_phase_fractions.push_back(amount / total_amount);
+            }
+        }
+    }
+    out.phase_distance = pairwise_phase_distance_inf_norm(out.selected_phase_compositions);
+
+    if (phase_compositions.size() >= 2 && pair_count > 0) {
+        const EosPhaseBlockResult reference = evaluate_unit_phase_block_at_pressure_root(
+            args,
+            temperature,
+            target_pressure,
+            phase_compositions.front(),
+            phase_kinds.front(),
+            "Electrolyte Stage III phase 0"
+        );
+        const EosPhaseBlockResult trial = evaluate_unit_phase_block_at_pressure_root(
+            args,
+            temperature,
+            target_pressure,
+            phase_compositions[1],
+            phase_kinds[1],
+            "Electrolyte Stage III phase 1"
+        );
+        const std::vector<double> pair_residuals = pair_residuals_from_reference_and_trial(
+            out.held2_discovery.counterion_pair_matrix,
+            out.held2_discovery.charged_species_indices,
+            reference,
+            trial
+        );
+        out.residual_values.insert(out.residual_values.end(), pair_residuals.begin(), pair_residuals.end());
+    } else {
+        out.residual_values.insert(out.residual_values.end(), pair_count, std::numeric_limits<double>::infinity());
+    }
+    double fraction_sum = 0.0;
+    for (double fraction : out.selected_phase_fractions) {
+        fraction_sum += fraction;
+    }
+    out.residual_values.push_back(fraction_sum - 1.0);
+    for (const std::vector<double>& composition : out.selected_phase_compositions) {
+        double phase_charge = 0.0;
+        for (std::size_t species = 0; species < composition.size(); ++species) {
+            phase_charge += composition[species] * charges[species];
+        }
+        out.residual_values.push_back(phase_charge);
+    }
+    out.residual_inf_norm = 0.0;
+    for (double residual : out.residual_values) {
+        out.residual_inf_norm = std::max(out.residual_inf_norm, std::abs(residual));
+    }
+    out.active_bound_violation = 0.0;
+    for (double value : out.route_result.variables) {
+        if (std::isfinite(value)) {
+            out.active_bound_violation = std::max(out.active_bound_violation, std::max(0.0, 1.0e-14 - value));
+        }
+    }
+    const int variable_count = static_cast<int>(out.variable_labels.size());
+    const int residual_count = static_cast<int>(out.equation_labels.size());
+    out.jacobian_nonzero_count = variable_count * residual_count;
+    out.hessian_nonzero_count = variable_count * (variable_count + 1) / 2;
+    out.exact_reduced_jacobian_available =
+        out.route_result.exact_jacobian_required && out.route_result.jacobian_approximation == "exact";
+    out.exact_reduced_hessian_available = !out.held2_discovery.counterion_pair_matrix.empty();
+
+    const bool solver_success =
+        out.route_result.solver_accepted
+        && out.route_result.solver_status == "success"
+        && out.route_result.application_status == "solve_succeeded";
+    const bool finite_compositions = !out.selected_phase_compositions.empty()
+        && std::all_of(
+            out.selected_phase_compositions.begin(),
+            out.selected_phase_compositions.end(),
+            [](const std::vector<double>& composition) {
+                return std::all_of(composition.begin(), composition.end(), [](double value) {
+                    return std::isfinite(value) && value >= 0.0;
+                });
+            }
+        );
+    const bool residuals_pass =
+        out.residual_inf_norm <= residual_tolerance && out.residual_values.size() == out.equation_labels.size();
+    const bool phase_distance_pass = out.phase_distance > phase_distance_tolerance;
+    const bool bounds_pass = out.active_bound_violation <= active_bound_tolerance;
+    const bool derivative_pass = out.exact_reduced_jacobian_available && out.exact_reduced_hessian_available;
+    out.status = (
+        solver_success
+        && finite_compositions
+        && residuals_pass
+        && phase_distance_pass
+        && bounds_pass
+        && derivative_pass
+    ) ? "complete" : "incomplete";
+    out.stage_iii_refinement_status = out.status == "complete" ? "complete" : "incomplete";
     return out;
 }
 

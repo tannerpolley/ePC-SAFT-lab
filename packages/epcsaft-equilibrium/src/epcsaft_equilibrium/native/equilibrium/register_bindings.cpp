@@ -1341,6 +1341,92 @@ py::dict neutral_two_phase_eos_route_result_to_dict(
     return out;
 }
 
+py::dict electrolyte_stage_iii_refinement_to_dict(
+    const epcsaft::native::equilibrium_nlp::ElectrolyteStageIIIRefinementResult& result
+) {
+    auto ipopt_status_label = [](const std::string& status) {
+        return status == "success" ? std::string("Solve_Succeeded") : status;
+    };
+
+    py::dict out;
+    out["algorithm_scope"] = result.algorithm_scope;
+    out["status"] = result.status;
+    out["selected_phase_labels"] = result.selected_phase_labels;
+
+    py::dict stage_statuses;
+    stage_statuses["phase_discovery"] = result.phase_discovery_status;
+    stage_statuses["stage_iii_refinement"] = result.stage_iii_refinement_status;
+    stage_statuses["postsolve_certification"] = result.postsolve_certification_status;
+    stage_statuses["public_route_admission"] = result.public_route_admission_status;
+    out["stage_statuses"] = stage_statuses;
+
+    py::dict seed;
+    seed["source_gate"] = result.source_gate;
+    seed["native_binding"] = result.source_native_binding;
+    seed["seed_name"] = result.seed_name;
+    seed["selected_candidate_count"] = result.selected_candidate_count;
+    seed["selected_phase_kinds"] = result.selected_phase_kinds;
+    seed["selected_phase_fractions"] = result.selected_phase_fractions;
+    seed["selected_phase_compositions"] = result.selected_phase_compositions;
+    out["seed_provenance"] = seed;
+
+    py::dict residual;
+    residual["coordinate_basis"] = result.coordinate_basis;
+    residual["variable_labels"] = result.variable_labels;
+    residual["variable_lower_bounds"] = result.variable_lower_bounds;
+    residual["variable_upper_bounds"] = result.variable_upper_bounds;
+    residual["variable_scaling"] = result.variable_scaling;
+    residual["equation_labels"] = result.equation_labels;
+    residual["residual_values"] = result.residual_values;
+    residual["residual_scaling"] = result.residual_scaling;
+    residual["residual_inf_norm"] = result.residual_inf_norm;
+    residual["residual_tolerance"] = result.residual_tolerance;
+    out["reduced_residual_system"] = residual;
+
+    py::dict derivatives;
+    derivatives["derivative_backend"] = result.derivative_backend;
+    derivatives["gradient_approximation"] = "exact";
+    derivatives["jacobian_approximation"] = "exact";
+    derivatives["hessian_approximation"] = "exact";
+    derivatives["hessian_backend"] = result.derivative_backend;
+    derivatives["route_hessian_approximation"] = result.route_result.hessian_approximation;
+    derivatives["route_hessian_backend"] = result.route_result.hessian_backend;
+    derivatives["exact_reduced_jacobian_available"] = result.exact_reduced_jacobian_available;
+    derivatives["exact_reduced_hessian_available"] = result.exact_reduced_hessian_available;
+    derivatives["jacobian_nonzero_count"] = result.jacobian_nonzero_count;
+    derivatives["hessian_nonzero_count"] = result.hessian_nonzero_count;
+    out["derivative_receipts"] = derivatives;
+
+    py::dict solver;
+    solver["solver_backend"] = result.route_result.backend;
+    solver["ipopt_status"] = ipopt_status_label(result.route_result.solver_status);
+    solver["solver_status"] = result.route_result.solver_status;
+    solver["application_status"] = result.route_result.application_status;
+    solver["route_status"] = result.route_result.status;
+    solver["solver_accepted"] = result.route_result.solver_accepted;
+    solver["route_accepted"] = result.route_result.accepted;
+    solver["iteration_count"] = result.route_result.iteration_count;
+    solver["residual_inf_norm"] = result.residual_inf_norm;
+    solver["residual_tolerance"] = result.residual_tolerance;
+    solver["active_bound_violation"] = result.active_bound_violation;
+    solver["active_bound_tolerance"] = result.active_bound_tolerance;
+    solver["phase_distance"] = result.phase_distance;
+    solver["phase_distance_tolerance"] = result.phase_distance_tolerance;
+    solver["phase_compositions"] = result.selected_phase_compositions;
+    solver["phase_fractions"] = result.selected_phase_fractions;
+    solver["charge_balance_norm"] = result.route_result.postsolve.charge_balance_norm;
+    solver["material_balance_norm"] = result.route_result.postsolve.material_balance_norm;
+    solver["pressure_consistency_norm"] = result.route_result.postsolve.pressure_consistency_norm;
+    solver["chemical_potential_consistency_norm"] = result.route_result.postsolve.chemical_potential_consistency_norm;
+    solver["ln_fugacity_consistency_norm"] = result.route_result.postsolve.ln_fugacity_consistency_norm;
+    out["solver_diagnostics"] = solver;
+
+    out["native_binding"] = "_native_electrolyte_stage_iii_refinement";
+    out["native_stage_iii_route_result"] = neutral_two_phase_eos_route_result_to_dict(result.route_result);
+    out["held2_phase_discovery"] = electrolyte_held2_phase_discovery_to_dict(result.held2_discovery);
+    return out;
+}
+
 py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyActivation& activation) {
     py::dict out;
     out["key"] = activation.key;
@@ -2649,6 +2735,54 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("charge_tolerance"),
         py::arg("tpd_tolerance"),
         py::arg("candidate_mass_balance_tolerance")
+    );
+    m.def("_native_electrolyte_stage_iii_refinement", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<double>& charges,
+        const std::vector<std::string>& species_labels,
+        const std::vector<int>& phase_kinds,
+        double charge_tolerance,
+        double tpd_tolerance,
+        double candidate_mass_balance_tolerance,
+        double residual_tolerance,
+        double phase_distance_tolerance,
+        double active_bound_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Electrolyte Stage III refinement");
+        return electrolyte_stage_iii_refinement_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_stage_iii_refinement(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                charges,
+                species_labels,
+                phase_kinds,
+                charge_tolerance,
+                tpd_tolerance,
+                candidate_mass_balance_tolerance,
+                residual_tolerance,
+                phase_distance_tolerance,
+                active_bound_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("charges"),
+        py::arg("species_labels"),
+        py::arg("phase_kinds"),
+        py::arg("charge_tolerance"),
+        py::arg("tpd_tolerance"),
+        py::arg("candidate_mass_balance_tolerance"),
+        py::arg("residual_tolerance"),
+        py::arg("phase_distance_tolerance"),
+        py::arg("active_bound_tolerance")
     );
     m.def("_native_neutral_two_phase_eos_result", [](
         const py::object& mixture,

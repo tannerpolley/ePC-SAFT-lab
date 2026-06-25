@@ -155,6 +155,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "single_component_vle",
         "electrolyte_held2_readiness_born_ssm_ds_exactness",
         "electrolyte_held2_counterion_pair_phase_discovery",
+        "electrolyte_held2_stage_iii_reduced_variable_refinement",
     }
     associating_proof = next(
         row
@@ -220,6 +221,18 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert electrolyte_discovery["reduced_basis"] == "independent_counterion_pair_matrix"
     assert electrolyte_discovery["stage_status"] == "phase_discovery_complete_stage_iii_pending"
     assert "Ascani 2022 mixed-electrolyte counterion fixtures" in electrolyte_discovery["source_configuration"]
+    electrolyte_stage_iii = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "electrolyte_held2_stage_iii_reduced_variable_refinement"
+    )
+    assert electrolyte_stage_iii["classification"] == "stage_iii_refinement_evidence"
+    assert electrolyte_stage_iii["backend"] == "native_electrolyte_stage_iii_refinement"
+    assert electrolyte_stage_iii["public_admission_state"] == "public_route_closed"
+    assert electrolyte_stage_iii["selector_family"] == "electrolyte_lle"
+    assert electrolyte_stage_iii["reduced_basis"] == "independent_counterion_pair_matrix"
+    assert electrolyte_stage_iii["stage_status"] == "stage_iii_refinement_complete_postsolve_pending"
+    assert electrolyte_stage_iii["route_hessian_mode"] == "limited_memory_charged_born_route"
     assert "electrolyte_lle" not in activation["public_routes"]
     assert "electrolyte_lle" not in activation["production_families"]
     electrolyte_activation = next(
