@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "blocked"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
@@ -31,7 +31,7 @@ AFK/HITL: HITL
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md
 **Classification:** HITL
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -60,7 +60,9 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 
 - #189, #275, #286, #300, #302, and #306 are closed and remain only as historical dependency provenance.
 - #306 closed the HELD2 counterion-pair phase-discovery gate in reduced electroneutral coordinates.
-- The remaining gates are Stage III electrolyte refinement, postsolve electrolyte phase-set certification, and public electrolyte route admission.
+- The remaining gates are split into concrete child issues: #312 Stage III
+  electrolyte reduced-variable refinement, #313 postsolve electrolyte
+  phase-set certification, and #314 public electrolyte route admission.
 
 ## Child Issues
 
@@ -68,6 +70,9 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - [#300](2026-06-24-m4-equilibrium-issue-0300-add-electrolyte-held2-readiness-and-born-exactness-gate.md) closed the reduced electroneutral variable and Born SSM/DS exactness readiness gate. It proved the exact charge-neutral NaCl amount lift, CppAD Born SSM/DS composition, fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts, and kept public electrolyte route admission closed.
 - [#302](2026-06-24-m4-equilibrium-issue-0302-add-electrolyte-charge-neutral-tpd-gate.md) closed the native-backed charge-neutral electrolyte TPD screening gate. It proves three finite source-backed candidates, selected candidate count `2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`, readiness-only HELD2 status, and closed public electrolyte route state. It does not close HELD2 dual discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set certification, or public route admission.
 - [#306](2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md) closed the HELD2 counterion-pair phase-discovery child. It added native reduced-coordinate diagnostics with independent counterion-pair matrix rank evidence, charge-neutral candidates, mean-ionic residual bookkeeping, a Stage III handoff record, and closed public route state. It did not claim Stage III refinement, postsolve certification, or public electrolyte route admission.
+- [#312](2026-06-25-m4-equilibrium-issue-0312-add-electrolyte-held2-stage-iii-reduced-variable-refinement-gate.md) is the active ready child. It must consume the #306 candidate handoff and prove Stage III reduced-variable electrolyte phase-set refinement with exact reduced residual derivative receipts while keeping postsolve certification and public route admission pending.
+- [#313](2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) is blocked by #312. It must certify explicit-ion material reconstruction, per-phase charge balance, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, and domain margins while keeping public route admission pending.
+- [#314](2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) is blocked by #313. It is the final public electrolyte GFPE admission child and must consume every prior electrolyte checker before #191 can close.
 
 ## HELD2 Adoption Checkpoint Sequence
 
@@ -78,13 +83,13 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
   matrix rank, reduced-coordinate lift/back-lift residuals, finite TPD
   candidate metrics, pair-based mean-ionic residual bookkeeping, closed public
   routes, and a Stage III handoff record.
-- Stage III refinement checkpoint: consume the #306 candidate set and solve the
+- #312 Stage III refinement checkpoint: consume the #306 candidate set and solve the
   electrolyte reduced-variable phase-set equations with exact residual
   derivative receipts.
-- Postsolve checkpoint: certify explicit-ion material reconstruction,
+- #313 postsolve checkpoint: certify explicit-ion material reconstruction,
   per-phase charge balance, neutral transfer, mean-ionic transfer, pressure
   consistency, phase amounts, and domain margins.
-- Public admission checkpoint: consume all prior checkers and expose only the
+- #314 public admission checkpoint: consume all prior checkers and expose only the
   certified electrolyte route surface.
 
 ## Supplemental Context
@@ -99,9 +104,9 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 ## Acceptance Criteria
 
 - [x] HELD2 counterion-pair phase discovery consumes #269, #300, and #302 evidence and reports full-rank reduced-coordinate diagnostics.
-- [ ] Stage III electrolyte refinement consumes the HELD2 candidate set and solves in reduced electroneutral variables.
-- [ ] Postsolve electrolyte certification reports material, charge, pressure, neutral transfer, mean-ionic transfer, and domain diagnostics.
-- [ ] Electrolyte GFPE route admission is gated by source-backed validation and postsolve certification.
+- [ ] #312 Stage III electrolyte refinement consumes the HELD2 candidate set and solves in reduced electroneutral variables.
+- [ ] #313 postsolve electrolyte certification reports material, charge, pressure, neutral transfer, mean-ionic transfer, and domain diagnostics.
+- [ ] #314 electrolyte GFPE route admission is gated by source-backed validation and postsolve certification.
 - [ ] Capability evidence distinguishes neutral, associating, electrolyte, and reactive support.
 - [ ] Docs do not claim electrolyte production support before executable evidence passes.
 
@@ -124,7 +129,7 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - Package: `equilibrium`
 - Capability: `electrolyte`
 - Backend: `Ipopt`
-- Readiness: `ready`
+- Readiness: `blocked`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
-- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature`
+- Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`
