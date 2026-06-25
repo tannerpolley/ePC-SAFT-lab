@@ -84,7 +84,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Umbrella blocked by #313 and #314 after the #312 Stage III refinement proof. |
-| [#313](../../issues/2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) | `electrolyte` | `Ipopt` | `ready` | Next child: certify explicit-ion material, charge, transfer, pressure, amount, and domain diagnostics after #312. |
+| [#313](../../issues/2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) | `ready` | `Ipopt` | `ready` | Next child: certify explicit-ion material, charge, transfer, pressure, amount, and domain diagnostics after #312. |
 | [#314](../../issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) | `electrolyte` | `Ipopt` | `blocked` | Final public electrolyte GFPE admission child blocked by #313. |
 
 ## Queue Guard
