@@ -50,6 +50,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #292 associating GFPE VLE admission prerequisite plan](../../plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md) | `association` | Opens the source-backed neutral associating binary VLE admission needed before #281-#284 can generate Gross 2002 Figures 2-9 model curves. |
 | [Issue #298 adaptive branch tracing validation plan](../../plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md) | `association` | Adds the internal traced-boundary proof layer consumed by Gross 2002 Figure 2 and the full-replication checker. |
 | [Issue #300 electrolyte HELD2 readiness and Born exactness gate plan](../../plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md) | `electrolyte` | Adds the next #191 child gate for reduced electroneutral variables, exact Born SSM/DS derivative receipts, HELD2 readiness diagnostics, and closed public electrolyte route evidence. |
+| [Issue #302 electrolyte charge-neutral TPD gate plan](../../plans/2026-06-24-m4-equilibrium-issue-0302-electrolyte-charge-neutral-tpd-gate-plan.md) | `electrolyte` | Adds the next #191 child gate for native-backed charge-neutral electrolyte TPD screening before full HELD2 dual discovery, Stage III refinement, postsolve certification, or public route admission. |
 
 ## Retained Evidence
 
@@ -65,6 +66,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_boundary_workflows.py --json --run-cloud-shadow-route --require-cloud-shadow-route` | `lle` | Checker-gated native cloud/shadow route evidence for #260: derives the model-refined Matsuda branch pair from certified `neutral_lle`, fixes the parent branch in the private `neutral_cloud_t_eos` cloud-temperature route, solves with strict Ipopt, reports source/model parent and shadow errors, and keeps public cloud/shadow route admission closed. |
 | `scripts/validation/check_electrolyte_gfpe_gate.py --json --require-source-data --require-parameter-bundle --require-native-diagnostics --require-public-routes-closed --require-complete` | `electrolyte` | Closed-admission source gate for #269: parses the Khudaida 2026 source fixture, records the raw paper-row closure correction before normalized explicit-ion expansion, constructs the path-based `2026_Khudaida` paper-validation parameter bundle, runs native electrolyte and phase-charge diagnostics, and keeps public electrolyte route admission closed. |
 | `scripts/validation/check_electrolyte_held2_readiness.py --json --require-source-gate --require-reduced-basis --require-born-ssm-ds --require-public-routes-closed --require-complete` | `electrolyte` | Prerequisite-only HELD2 readiness gate for #300: consumes the #269 Khudaida source gate, proves exact charge-neutral NaCl reduced amount lifting with residual <= `1.0e-10`, records CppAD Born SSM/DS composition, ln-fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts, and keeps electrolyte TPD, HELD2 discovery, postsolve certification, and public electrolyte route admission pending. |
+| `scripts/validation/check_electrolyte_tpd_gate.py --json --require-source-gate --require-held2-readiness --require-native-tpd --require-public-routes-closed --require-complete` | `electrolyte` | Charge-neutral electrolyte TPD screening gate for #302: consumes the #269 source gate and #300 readiness gate, calls native `_native_electrolyte_tpd_phase_discovery`, reports three finite source-backed candidates, selected candidate count `2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`, readiness-only HELD2 status, and closed public electrolyte route state. This is screening evidence, not full HELD2 discovery, postsolve certification, or public route admission. |
 | `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian prerequisite proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, and certifies the source-backed internal two-liquid pair consumed by #190. |
 | `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-electrolyte-closed --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized associating phase-set surfaces closed. |
 | `scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native` | `association` | Gross/Sadowski 2002 paper-validation acceptance campaign for #275: retains Figure 1 pure-association AAD sanity evidence, connects Figure 8 methanol/cyclohexane source rows and exact-Hessian proof to campaign summaries, adds Figure 10 water/1-pentanol cross-association stress evidence with `k_ij = 0.016` and `cppad_implicit_association`, records Figures 2-7 and 9 as source-requirement records with no completion credit, and keeps electrolyte/reactive/generalized associating claims outside this evidence. |
@@ -75,7 +77,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after electrolyte TPD, HELD2 discovery, Stage III refinement, postsolve certification, and public admission gates close. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Prove electrolyte GFPE and HELD2.0 validation gates after HELD2 dual discovery, Stage III refinement, postsolve certification, and public admission gates close. |
 
 ## Queue Guard
 
@@ -179,6 +181,15 @@ Khudaida NaCl fixture, CppAD-backed Born SSM/DS derivative receipts, and a
 retained HELD2 readiness payload. It keeps electrolyte TPD, HELD2 dual
 discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set
 certification, and public electrolyte route admission closed.
+
+#302 closes through #303 with the native-backed charge-neutral electrolyte TPD
+screening child for #191. The retained checker consumes the #269 source gate and #300 readiness gate,
+then reports three finite source-backed TPD candidates, selected candidate count
+`2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`,
+readiness-only HELD2 status, and closed public electrolyte route state. The
+negative TPD candidate is instability-screening evidence only; HELD2 dual
+discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set
+certification, and public route admission remain pending.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
