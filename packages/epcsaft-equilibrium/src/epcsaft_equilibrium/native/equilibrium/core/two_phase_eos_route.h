@@ -525,6 +525,57 @@ struct ElectrolyteStageIIIRefinementResult {
     ElectrolyteHeld2PhaseDiscoveryResult held2_discovery;
 };
 
+struct ElectrolytePostsolveCertificationResult {
+    std::string algorithm_scope = "held2_electrolyte_postsolve_phase_set_certification_only";
+    std::string status = "incomplete";
+    std::string phase_discovery_status = "complete";
+    std::string stage_iii_refinement_status = "complete";
+    std::string postsolve_certification_status = "incomplete";
+    std::string public_route_admission_status = "closed";
+    std::vector<std::string> component_labels;
+    std::vector<double> feed_composition;
+    std::vector<double> reconstructed_feed_composition;
+    std::vector<double> feed_reconstruction_residuals;
+    double feed_reconstruction_inf_norm = 0.0;
+    double feed_reconstruction_tolerance = 1.0e-6;
+    double component_nonnegativity_margin = 0.0;
+    std::vector<double> charge_vector;
+    std::vector<double> phase_charge_residuals;
+    double max_phase_charge_residual = 0.0;
+    double total_charge_residual = 0.0;
+    double phase_charge_tolerance = 1.0e-10;
+    double total_charge_tolerance = 1.0e-10;
+    std::vector<std::string> neutral_species_labels;
+    std::vector<double> neutral_transfer_residuals;
+    double neutral_transfer_max_abs_residual = 0.0;
+    double neutral_transfer_tolerance = 1.0e-6;
+    std::vector<std::string> mean_ionic_pair_labels;
+    std::vector<double> mean_ionic_transfer_residuals;
+    double mean_ionic_transfer_max_abs_residual = 0.0;
+    double mean_ionic_transfer_tolerance = 1.0e-6;
+    double pressure_consistency_norm = 0.0;
+    double pressure_tolerance = 1.0e-6;
+    int phase_count = 0;
+    std::vector<double> phase_amount_totals;
+    std::vector<double> phase_fractions;
+    std::vector<std::vector<double>> phase_compositions;
+    std::vector<double> composition_sum_residuals;
+    double phase_fraction_sum_residual = 0.0;
+    double phase_fraction_sum_tolerance = 1.0e-8;
+    double composition_sum_tolerance = 1.0e-8;
+    double minimum_component_mole_fraction = 0.0;
+    double minimum_phase_amount = 0.0;
+    double phase_distance = 0.0;
+    double phase_distance_tolerance = 1.0e-8;
+    bool explicit_ion_reconstruction_accepted = false;
+    bool charge_balance_accepted = false;
+    bool transfer_residuals_accepted = false;
+    bool pressure_consistency_accepted = false;
+    bool phase_set_accepted = false;
+    bool domain_margins_accepted = false;
+    ElectrolyteStageIIIRefinementResult stage_iii_refinement;
+};
+
 NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     const add_args& args,
     double temperature,
@@ -703,6 +754,22 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
 );
 
 ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<std::string>& species_labels,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance,
+    double residual_tolerance,
+    double phase_distance_tolerance,
+    double active_bound_tolerance
+);
+
+ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certification(
     const add_args& args,
     double temperature,
     double target_pressure,

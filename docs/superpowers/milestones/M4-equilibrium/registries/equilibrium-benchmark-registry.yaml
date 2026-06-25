@@ -194,10 +194,10 @@ family_rows:
     objective_family: pressure_transformed_helmholtz_electrolyte
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
-    phase_discovery_status: held2_stage_iii_refinement_complete_pending_postsolve_public_admission
+    phase_discovery_status: held2_postsolve_certified_pending_public_admission
     phase_discovery_contract:
       completed_issue: 306
-      scope: "HELD2 counterion-pair phase discovery only; Stage III refinement, postsolve certification, and public route admission remain separate gates."
+      scope: "HELD2 counterion-pair phase discovery plus Stage III refinement and postsolve certification are now retained as separate evidence gates; public route admission remains the final separate gate."
       required_payload_groups:
         - prerequisite_gate_receipts_269_300_302
         - charged_species_ordering_and_charges
@@ -205,6 +205,8 @@ family_rows:
         - reduced_coordinate_lift_back_lift_residuals
         - finite_reduced_tpd_candidate_metrics
         - pair_based_mean_ionic_residual_bookkeeping
+        - stage_iii_reduced_variable_refinement
+        - postsolve_explicit_ion_phase_set_certification
         - stage_statuses_with_public_routes_closed
       required_matrix_tests:
         - nacl_single_salt_rank_one
@@ -223,6 +225,7 @@ family_rows:
       - electrolyte_tpd
       - held2_counterion_pair_phase_discovery
       - held2_stage_iii_reduced_variable_refinement
+      - electrolyte_postsolve_phase_set_certification
       - held2_stage_discovery
       - charge_and_electrochemical_certification
       - electrolyte_gfpe_closed_admission_source_gate
@@ -252,6 +255,11 @@ family_rows:
         command: "uv run --no-sync python scripts/validation/check_electrolyte_stage_iii_refinement.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-native-stage-iii --require-public-routes-closed --require-complete"
         scope: "Stage III electrolyte refinement evidence: consumes #269/#300/#302/#306, calls native `_native_electrolyte_stage_iii_refinement`, records the #306 candidate-set seed provenance, reduced counterion-pair residual variables/equations/scaling/bounds, exact reduced Jacobian/Hessian receipts, strict Ipopt solve diagnostics, finite phase compositions, and closed public electrolyte route state."
         result_requirement: "Checker returns complete with no blockers; Ipopt status `Solve_Succeeded`; reduced residual infinity norm <= 1.0e-4; charge/material/pressure diagnostics finite; exact reduced residual Jacobian/Hessian receipts retained; postsolve certification remains pending and public electrolyte route admission remains closed."
+      - evidence_label: "Electrolyte postsolve phase-set certification gate"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_postsolve_certification.py --json --require-stage-iii --require-postsolve-certification --require-public-routes-closed --require-complete"
+        scope: "Postsolve electrolyte phase-set certification evidence: consumes #312, calls native `_native_electrolyte_postsolve_certification`, retains explicit-ion reconstruction, per-phase and total charge residuals, neutral and mean-ionic transfer residuals, pressure consistency, phase amount, composition normalization, and domain-margin diagnostics, and keeps public electrolyte route state closed."
+        result_requirement: "Checker returns complete with no blockers; explicit-ion feed reconstruction <= 1.0e-4; phase and total charge residuals <= 1.0e-8; neutral and mean-ionic transfer residuals <= 1.0e-4; pressure consistency <= 1.0e-4; phase distance exceeds 1.0e-8; public electrolyte route admission remains closed."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1
@@ -263,6 +271,7 @@ family_rows:
           - electrochemical_potential_equality
           - born_ssm_ds_exact_hessian
           - electrolyte_tpd_or_held2_certification
+          - electrolyte_postsolve_phase_set_certification
       - case_label: "Held 2014 Figure 6"
         evidence_tier: T0
         source: "Held et al. 2014 ePC-SAFT benchmark"
