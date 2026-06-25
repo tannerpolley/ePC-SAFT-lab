@@ -194,12 +194,13 @@ family_rows:
     objective_family: pressure_transformed_helmholtz_electrolyte
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
-    phase_discovery_status: held2_planned_after_born_exact_hessian
+    phase_discovery_status: held2_counterion_pair_phase_discovery_blocked_by_306
     required_gates:
       - infrastructure_gate
       - born_ssm_ds_exact_hessian
       - reduced_electroneutral_variable_basis
       - electrolyte_tpd
+      - held2_counterion_pair_phase_discovery
       - held2_stage_discovery
       - charge_and_electrochemical_certification
       - electrolyte_gfpe_closed_admission_source_gate
@@ -213,7 +214,12 @@ family_rows:
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_electrolyte_held2_readiness.py --json --require-source-gate --require-reduced-basis --require-born-ssm-ds --require-public-routes-closed --require-complete"
         scope: "Prerequisite-only electrolyte HELD2 readiness evidence for the Khudaida 2026 source fixture: consumes the closed-admission source gate, verifies the exact NaCl charge-neutral reduced amount lift, records CppAD Born SSM/DS derivative receipts, and keeps public electrolyte route admission closed."
-        result_requirement: "Khudaida closed-admission source gate complete; reduced NaCl amount lift charge residual <= 1.0e-10; CppAD Born SSM/DS composition, ln-fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts finite; HELD2 status marked readiness-only; electrolyte TPD, HELD2 dual phase discovery, postsolve certification, and public admission remain pending."
+        result_requirement: "Khudaida closed-admission source gate complete; reduced NaCl amount lift charge residual <= 1.0e-10; CppAD Born SSM/DS composition, ln-fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts finite; HELD2 status marked readiness-only; HELD2 dual phase discovery, postsolve certification, and public admission remain pending. Electrolyte TPD screening is covered by the #302 evidence row."
+      - evidence_label: "Charge-neutral electrolyte TPD screening gate"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_tpd_gate.py --json --require-source-gate --require-held2-readiness --require-native-tpd --require-public-routes-closed --require-complete"
+        scope: "Prerequisite-only electrolyte TPD screening evidence for the Khudaida 2026 source fixture: consumes the closed-admission source gate and readiness gate, calls native `_native_electrolyte_tpd_phase_discovery`, and keeps public electrolyte route admission closed."
+        result_requirement: "Three finite source-backed candidates; selected candidate count 2; minimum TPD -0.010922388988229025; maximum charge residual 0.0; HELD2 status marked readiness-only; HELD2 counterion-pair phase discovery, Stage III refinement, postsolve certification, and public admission remain pending."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1
