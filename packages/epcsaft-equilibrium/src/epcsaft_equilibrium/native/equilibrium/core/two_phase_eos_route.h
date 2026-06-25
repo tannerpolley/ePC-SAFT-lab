@@ -590,6 +590,18 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
     bool continuous_tpd_required = true
 );
 
+NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+);
+
 NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
     const add_args& args,
     double temperature,

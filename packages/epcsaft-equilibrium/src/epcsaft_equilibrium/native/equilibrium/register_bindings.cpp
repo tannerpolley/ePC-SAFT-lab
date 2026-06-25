@@ -2497,6 +2497,42 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("candidate_mass_balance_tolerance"),
         py::arg("continuous_tpd_required") = true
     );
+    m.def("_native_electrolyte_tpd_phase_discovery", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<double>& charges,
+        const std::vector<int>& phase_kinds,
+        double charge_tolerance,
+        double tpd_tolerance,
+        double candidate_mass_balance_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Electrolyte TPD phase discovery");
+        return neutral_phase_discovery_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_tpd_phase_discovery(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                charges,
+                phase_kinds,
+                charge_tolerance,
+                tpd_tolerance,
+                candidate_mass_balance_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("charges"),
+        py::arg("phase_kinds"),
+        py::arg("charge_tolerance"),
+        py::arg("tpd_tolerance"),
+        py::arg("candidate_mass_balance_tolerance")
+    );
     m.def("_native_neutral_two_phase_eos_result", [](
         const py::object& mixture,
         double temperature,
