@@ -195,6 +195,27 @@ family_rows:
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
     phase_discovery_status: held2_counterion_pair_phase_discovery_blocked_by_306
+    phase_discovery_contract:
+      active_issue: 306
+      scope: "HELD2 counterion-pair phase discovery only; Stage III refinement, postsolve certification, and public route admission remain separate gates."
+      required_payload_groups:
+        - prerequisite_gate_receipts_269_300_302
+        - charged_species_ordering_and_charges
+        - counterion_pair_matrix_rank_nch_minus_one
+        - reduced_coordinate_lift_back_lift_residuals
+        - finite_reduced_tpd_candidate_metrics
+        - pair_based_mean_ionic_residual_bookkeeping
+        - stage_statuses_with_public_routes_closed
+      required_matrix_tests:
+        - nacl_single_salt_rank_one
+        - na_k_cl_common_anion_rank_two
+        - k_cl_na_so4_multivalent_rank_three
+      required_negative_tests:
+        - reject_hardcoded_nacl_only_evidence
+        - reject_missing_multi_ion_source_fixture
+        - reject_raw_single_ion_transfer_acceptance
+        - reject_incomplete_prerequisite_gates
+        - reject_premature_stage_iii_postsolve_or_public_admission_completion
     required_gates:
       - infrastructure_gate
       - born_ssm_ds_exact_hessian

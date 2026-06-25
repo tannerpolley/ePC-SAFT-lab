@@ -72,6 +72,39 @@ the M4 GFPE doctrine:
 - [ ] Docs do not claim electrolyte production support before executable
   evidence passes.
 
+## Full HELD2 Adoption Test Spine
+
+The remaining electrolyte work must progress through this test spine in order.
+Each child gate must leave retained checker output, focused native or Python
+contracts, and a parent #191 tracker update.
+
+1. Prerequisite evidence: #269, #300, and #302 stay historical prerequisite
+   gates for source fixtures, reduced electroneutral variables, Born SSM/DS
+   derivative receipts, and charge-neutral TPD screening.
+2. Phase discovery: #306 must prove independent counterion-pair matrix
+   construction, reduced-coordinate trial/candidate lifting, finite TPD
+   candidate metrics, pair-based mean-ionic bookkeeping, and a Stage III
+   handoff record. It must include single-salt, common-anion, and multivalent
+   matrix tests.
+3. Stage III refinement: the next child after #306 must consume the #306
+   candidate-set record and solve the reduced electrolyte phase-set equations
+   with exact residual derivative evidence. Required residual families are
+   neutral transfer, pair-based mean-ionic transfer, material balance in
+   reduced coordinates, phase pressure consistency, and domain margins.
+4. Postsolve certification: a separate child must certify the refined phase set
+   with per-phase charge balance, explicit-ion material balance reconstruction,
+   neutral and mean-ionic transfer residual tolerances, pressure consistency,
+   positive phase amounts, noncollapsed compositions, and stable replay from
+   retained candidates.
+5. Source-backed validation breadth: before public admission, validation must
+   include the Khudaida fixture and at least one multi-ion mixed-solvent
+   fixture from the local methodology context, with water + 1-butanol + NaCl +
+   KCl Table 5 as the preferred first multi-ion case.
+6. Public route admission: only after the previous gates pass may a child expose
+   a public electrolyte route. That admission checker must consume the source,
+   phase-discovery, Stage III, and postsolve checkers and keep unrelated
+   reactive, associating-generalized, and regression claims outside #191.
+
 ## Source Context
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`

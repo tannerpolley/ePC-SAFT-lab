@@ -97,6 +97,27 @@ active child plan as the executable entry point.
 **Acceptance Proof Gate:** Run the active child proof oracle and docs validation
 before merging any tracker or implementation PR.
 
+## HELD2 Adoption Checkpoint Sequence
+
+The #191 parent closes only when each checkpoint has its own retained checker,
+focused tests, and tracker evidence:
+
+- Source and readiness checkpoints: #269, #300, and #302 remain prerequisite
+  evidence for source fixtures, reduced electroneutral variables, Born SSM/DS
+  derivatives, and charge-neutral TPD screening.
+- #306 phase-discovery checkpoint: required diagnostics are counterion-pair
+  matrix rank, reduced-coordinate lift/back-lift residuals, finite TPD
+  candidate metrics, pair-based mean-ionic residual bookkeeping, closed public
+  routes, and a Stage III handoff record.
+- Stage III refinement checkpoint: consume the #306 candidate set and solve the
+  electrolyte reduced-variable phase-set equations with exact residual
+  derivative receipts.
+- Postsolve checkpoint: certify explicit-ion material reconstruction,
+  per-phase charge balance, neutral transfer, mean-ionic transfer, pressure
+  consistency, phase amounts, and domain margins.
+- Public admission checkpoint: consume all prior checkers and expose only the
+  certified electrolyte route surface.
+
 ## Acceptance Criteria
 
 - [ ] #306 or its successor child blocks #191 until the current electrolyte
@@ -106,6 +127,8 @@ before merging any tracker or implementation PR.
 - [ ] Parent #191 docs list open child #306 as the current HELD2
   counterion-pair phase-discovery gate.
 - [ ] Future Stage III, postsolve, and admission gates remain separate.
+- [ ] The parent tracker keeps the HELD2 adoption checkpoint sequence current
+  as each child opens or closes.
 - [ ] Public electrolyte route claims stay closed until the final admission
   child closes.
 

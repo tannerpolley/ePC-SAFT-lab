@@ -200,6 +200,17 @@ bookkeeping, and closed public route evidence. It must not claim Stage III
 electrolyte refinement, postsolve electrolyte phase-set certification, or public
 electrolyte route admission.
 
+The #306 proof must now include a field-level diagnostic payload and negative
+contract tests: prerequisite receipts for #269/#300/#302, charged species
+ordering, pair labels, counterion-pair matrix rank `N_ch - 1`, transformed
+variable count, reduced lift/back-lift residuals, finite TPD candidate metrics,
+pair-based mean-ionic residual rows, and closed public route state. Required
+matrix tests cover Na+/Cl-, Na+/K+/Cl-, and the multivalent K+/Cl-/Na+/SO4--
+methodology example. Required checker-negative tests reject hardcoded NaCl-only
+evidence, missing multi-ion source fixtures, raw single-ion charged-transfer
+equality, incomplete prerequisite gates, and premature Stage III/postsolve or
+public-admission completion.
+
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
 1/Table 2 parameters pass `check_associating_lle_gross_2002.py
