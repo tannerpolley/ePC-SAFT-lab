@@ -1235,6 +1235,84 @@ py::dict neutral_phase_discovery_to_dict(
     return out;
 }
 
+py::dict electrolyte_held2_phase_discovery_to_dict(
+    const epcsaft::native::equilibrium_nlp::ElectrolyteHeld2PhaseDiscoveryResult& result
+) {
+    py::dict out;
+    out["algorithm_scope"] = result.algorithm_scope;
+    py::dict charged_species;
+    charged_species["species_labels"] = result.species_labels;
+    charged_species["charged_species_labels"] = result.charged_species_labels;
+    charged_species["charge_vector"] = result.charge_vector;
+    charged_species["active_charged_species_indices"] = result.charged_species_indices;
+    charged_species["cation_indices"] = result.cation_indices;
+    charged_species["anion_indices"] = result.anion_indices;
+    charged_species["charged_feed_ordering"] = result.charged_feed_ordering;
+    out["charged_species"] = charged_species;
+
+    py::dict counterion_pairs;
+    counterion_pairs["pair_labels"] = result.pair_labels;
+    counterion_pairs["charged_species_labels"] = result.charged_species_labels;
+    counterion_pairs["matrix"] = result.counterion_pair_matrix;
+    counterion_pairs["row_sums"] = result.counterion_pair_row_sums;
+    counterion_pairs["rank"] = result.counterion_pair_rank;
+    counterion_pairs["expected_rank"] = result.expected_rank;
+    counterion_pairs["rank_tolerance"] = result.rank_tolerance;
+    counterion_pairs["transformed_variable_count"] = result.transformed_variable_count;
+    out["counterion_pairs"] = counterion_pairs;
+
+    py::dict lift;
+    lift["basis_label"] = result.reduced_coordinate_basis;
+    lift["lift_matrix"] = result.lift_matrix;
+    lift["lifted_candidate_compositions"] = result.lifted_candidate_compositions;
+    lift["reduced_candidate_coordinates"] = result.reduced_candidate_coordinates;
+    lift["max_charge_residual"] = result.max_charge_residual;
+    lift["component_nonnegativity_margin"] = result.component_nonnegativity_margin;
+    lift["composition_sum_residual"] = result.composition_sum_residual;
+    lift["round_trip_residual"] = result.round_trip_residual;
+    lift["round_trip_tolerance"] = result.round_trip_tolerance;
+    out["electroneutral_lift"] = lift;
+
+    py::dict reduced_tpd;
+    reduced_tpd["coordinate_basis"] = result.reduced_coordinate_basis;
+    reduced_tpd["reduced_start_count"] = result.reduced_start_count;
+    reduced_tpd["converged_start_count"] = result.converged_start_count;
+    reduced_tpd["selected_candidate_count"] = result.selected_candidate_count;
+    reduced_tpd["minimum_tpd"] = result.min_tpd;
+    reduced_tpd["duplicate_candidate_distance"] = result.duplicate_candidate_distance;
+    reduced_tpd["candidate_to_feed_distance"] = result.candidate_to_feed_distance;
+    out["reduced_tpd"] = reduced_tpd;
+
+    py::dict mean_ionic;
+    mean_ionic["pair_labels"] = result.mean_ionic_pair_labels;
+    mean_ionic["residual_values"] = result.mean_ionic_residual_values;
+    mean_ionic["residual_scale"] = result.mean_ionic_residual_scale;
+    mean_ionic["maximum_absolute_residual"] = result.mean_ionic_max_abs_residual;
+    mean_ionic["status"] = result.mean_ionic_status;
+    out["mean_ionic_residuals"] = mean_ionic;
+
+    py::dict stage_statuses;
+    stage_statuses["phase_discovery"] = result.phase_discovery_status;
+    stage_statuses["stage_iii_refinement"] = result.stage_iii_refinement_status;
+    stage_statuses["postsolve_certification"] = result.postsolve_certification_status;
+    stage_statuses["public_route_admission"] = result.public_route_admission_status;
+    out["stage_statuses"] = stage_statuses;
+
+    py::dict handoff;
+    handoff["status"] = result.stage_iii_handoff_status;
+    handoff["phase_fractions"] = result.stage_iii_phase_fractions;
+    handoff["phase_kinds"] = result.stage_iii_phase_kinds;
+    handoff["explicit_ion_phase_compositions"] = result.stage_iii_phase_compositions;
+    handoff["reduced_candidate_coordinates"] = result.reduced_candidate_coordinates;
+    handoff["counterion_pair_matrix"] = result.counterion_pair_matrix;
+    handoff["mean_ionic_pair_labels"] = result.mean_ionic_pair_labels;
+    handoff["tpd_values"] = result.stage_iii_tpd_values;
+    out["stage_iii_handoff"] = handoff;
+
+    out["tpd_discovery"] = neutral_phase_discovery_to_dict(result.tpd_discovery);
+    return out;
+}
+
 py::dict neutral_two_phase_eos_route_result_to_dict(
     const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosRouteResult& result
 ) {
@@ -2528,6 +2606,45 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("target_pressure"),
         py::arg("feed_composition"),
         py::arg("charges"),
+        py::arg("phase_kinds"),
+        py::arg("charge_tolerance"),
+        py::arg("tpd_tolerance"),
+        py::arg("candidate_mass_balance_tolerance")
+    );
+    m.def("_native_electrolyte_held2_phase_discovery", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<double>& charges,
+        const std::vector<std::string>& species_labels,
+        const std::vector<int>& phase_kinds,
+        double charge_tolerance,
+        double tpd_tolerance,
+        double candidate_mass_balance_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Electrolyte HELD2 phase discovery");
+        return electrolyte_held2_phase_discovery_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_held2_phase_discovery(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                charges,
+                species_labels,
+                phase_kinds,
+                charge_tolerance,
+                tpd_tolerance,
+                candidate_mass_balance_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("charges"),
+        py::arg("species_labels"),
         py::arg("phase_kinds"),
         py::arg("charge_tolerance"),
         py::arg("tpd_tolerance"),

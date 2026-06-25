@@ -58,23 +58,23 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 
 ## Closed Prerequisites And Remaining Gates
 
-- #189, #275, #286, #300, and #302 are closed and remain only as historical dependency provenance.
-- #306 is the active open child blocker. It owns HELD2 counterion-pair phase-discovery evidence in reduced electroneutral coordinates.
-- After #306 closes, the remaining gates are Stage III electrolyte refinement, postsolve electrolyte phase-set certification, and public electrolyte route admission.
+- #189, #275, #286, #300, #302, and #306 are closed and remain only as historical dependency provenance.
+- #306 closed the HELD2 counterion-pair phase-discovery gate in reduced electroneutral coordinates.
+- The remaining gates are Stage III electrolyte refinement, postsolve electrolyte phase-set certification, and public electrolyte route admission.
 
 ## Child Issues
 
 - [#269](2026-06-17-m4-equilibrium-issue-0269-add-electrolyte-gfpe-closed-admission-source-gate.md) closed the first #191 child gate. It proved the Khudaida source fixture, explicit-ion expansion, path-based paper-validation parameter-bundle execution, native electrolyte/charge diagnostics, and public route boundary state. It did not admit public electrolyte GFPE, electrolyte TPD, HELD2 phase discovery, or electrolyte postsolve certification.
 - [#300](2026-06-24-m4-equilibrium-issue-0300-add-electrolyte-held2-readiness-and-born-exactness-gate.md) closed the reduced electroneutral variable and Born SSM/DS exactness readiness gate. It proved the exact charge-neutral NaCl amount lift, CppAD Born SSM/DS composition, fugacity, activity-parameter, `d_born`, and `f_solv` derivative receipts, and kept public electrolyte route admission closed.
 - [#302](2026-06-24-m4-equilibrium-issue-0302-add-electrolyte-charge-neutral-tpd-gate.md) closed the native-backed charge-neutral electrolyte TPD screening gate. It proves three finite source-backed candidates, selected candidate count `2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`, readiness-only HELD2 status, and closed public electrolyte route state. It does not close HELD2 dual discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set certification, or public route admission.
-- [#306](2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md) is the active ready child. It must add native reduced-coordinate HELD2 phase-discovery diagnostics with independent counterion-pair matrix rank evidence, charge-neutral candidates, mean-ionic residual bookkeeping, and closed public route state. It must not claim Stage III refinement, postsolve certification, or public electrolyte route admission.
+- [#306](2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md) closed the HELD2 counterion-pair phase-discovery child. It added native reduced-coordinate diagnostics with independent counterion-pair matrix rank evidence, charge-neutral candidates, mean-ionic residual bookkeeping, a Stage III handoff record, and closed public route state. It did not claim Stage III refinement, postsolve certification, or public electrolyte route admission.
 
 ## HELD2 Adoption Checkpoint Sequence
 
 - Source and readiness checkpoints: #269, #300, and #302 remain prerequisite
   evidence for source fixtures, reduced electroneutral variables, Born SSM/DS
   derivatives, and charge-neutral TPD screening.
-- #306 phase-discovery checkpoint: required diagnostics are counterion-pair
+- #306 phase-discovery checkpoint: retained diagnostics are counterion-pair
   matrix rank, reduced-coordinate lift/back-lift residuals, finite TPD
   candidate metrics, pair-based mean-ionic residual bookkeeping, closed public
   routes, and a Stage III handoff record.
@@ -98,7 +98,7 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 
 ## Acceptance Criteria
 
-- [ ] HELD2 counterion-pair phase discovery consumes #269, #300, and #302 evidence and reports full-rank reduced-coordinate diagnostics.
+- [x] HELD2 counterion-pair phase discovery consumes #269, #300, and #302 evidence and reports full-rank reduced-coordinate diagnostics.
 - [ ] Stage III electrolyte refinement consumes the HELD2 candidate set and solves in reduced electroneutral variables.
 - [ ] Postsolve electrolyte certification reports material, charge, pressure, neutral transfer, mean-ionic transfer, and domain diagnostics.
 - [ ] Electrolyte GFPE route admission is gated by source-backed validation and postsolve certification.

@@ -194,9 +194,9 @@ family_rows:
     objective_family: pressure_transformed_helmholtz_electrolyte
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
-    phase_discovery_status: held2_counterion_pair_phase_discovery_blocked_by_306
+    phase_discovery_status: held2_counterion_pair_phase_discovery_complete_pending_stage_iii
     phase_discovery_contract:
-      active_issue: 306
+      completed_issue: 306
       scope: "HELD2 counterion-pair phase discovery only; Stage III refinement, postsolve certification, and public route admission remain separate gates."
       required_payload_groups:
         - prerequisite_gate_receipts_269_300_302
@@ -241,6 +241,11 @@ family_rows:
         command: "uv run --no-sync python scripts/validation/check_electrolyte_tpd_gate.py --json --require-source-gate --require-held2-readiness --require-native-tpd --require-public-routes-closed --require-complete"
         scope: "Prerequisite-only electrolyte TPD screening evidence for the Khudaida 2026 source fixture: consumes the closed-admission source gate and readiness gate, calls native `_native_electrolyte_tpd_phase_discovery`, and keeps public electrolyte route admission closed."
         result_requirement: "Three finite source-backed candidates; selected candidate count 2; minimum TPD -0.010922388988229025; maximum charge residual 0.0; HELD2 status marked readiness-only; HELD2 counterion-pair phase discovery, Stage III refinement, postsolve certification, and public admission remain pending."
+      - evidence_label: "Electrolyte HELD2 counterion-pair phase-discovery gate"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_held2_phase_discovery.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-native-held2-discovery --require-public-routes-closed --require-complete"
+        scope: "Phase-discovery-only electrolyte HELD2 evidence: consumes #269/#300/#302 gates, calls native `_native_electrolyte_held2_phase_discovery`, reports independent counterion-pair matrix diagnostics, source-backed multi-ion preprocessor fixtures, charge-neutral lifted candidate rows, pair-based mean-ionic bookkeeping, and closed public electrolyte route state."
+        result_requirement: "Counterion-pair matrix rank equals N_ch - 1; Na+/Cl-, Na+/K+/Cl-, and K+/Cl-/Na+/SO4-- source/methodology cases are covered; selected candidate count is positive; minimum TPD and pair residual metrics are finite; Stage III refinement, postsolve certification, and public admission remain pending or closed."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1

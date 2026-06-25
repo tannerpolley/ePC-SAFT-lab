@@ -2,13 +2,13 @@
 issue: 306
 title: "M4: add electrolyte HELD2 counterion-pair phase-discovery gate"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/306"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "closed"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0306-electrolyte-held2-counterion-pair-phase-discovery-gate-plan.md"
@@ -64,6 +64,17 @@ matrix, generate charge-neutral candidate coordinates, record finite discovery
 metrics, expose mean-ionic residual bookkeeping for later Stage III work, and
 keep public electrolyte routes closed.
 
+## Resolution Summary
+
+The implementation adds native `_native_electrolyte_held2_phase_discovery`,
+the retained `check_electrolyte_held2_phase_discovery.py` proof oracle, and
+contract tests for single-salt, common-anion, and multivalent counterion-pair
+matrices. The diagnostic consumes #269/#300/#302, reports full-rank
+`N_ch - 1` counterion-pair matrices, charge-neutral lifted candidate rows,
+finite reduced-TPD metrics, pair-based mean-ionic bookkeeping, and a Stage III
+handoff record. Stage III refinement, postsolve certification, and public
+electrolyte route admission remain separate #191 gates.
+
 ## Parent And Dependencies
 
 - Parent issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
@@ -112,28 +123,28 @@ postsolve, or public-admission completion claim.
 
 ## Acceptance Criteria
 
-- [ ] A local mirror exists for #306 and #191 is blocked by #306 on GitHub.
-- [ ] Native equilibrium exposes `_native_electrolyte_held2_phase_discovery`.
-- [ ] The native payload reports charged-species indices, charge vector,
+- [x] A local mirror exists for #306 and #191 records #306 as closed dependency provenance after merge.
+- [x] Native equilibrium exposes `_native_electrolyte_held2_phase_discovery`.
+- [x] The native payload reports charged-species indices, charge vector,
   counterion-pair matrix, matrix rank, transformed-variable dimension, and
   charge-neutral lift/back-lift residuals.
-- [ ] The native payload satisfies the tightened diagnostic contract and emits
+- [x] The native payload satisfies the tightened diagnostic contract and emits
   a Stage III handoff record without claiming Stage III completion.
-- [ ] At least one NaCl source-backed fixture and one multi-ion or
+- [x] At least one NaCl source-backed fixture and one multi-ion or
   mixed-electrolyte source-backed preprocessor fixture exercise matrix
   construction.
-- [ ] The required contract tests cover single-salt, common-anion, and
+- [x] The required contract tests cover single-salt, common-anion, and
   multivalent counterion-pair cases.
-- [ ] Candidate phase-discovery metrics are finite and include selected
+- [x] Candidate phase-discovery metrics are finite and include selected
   candidate count, minimum TPD, candidate charge residuals, and pending
   Stage III/postsolve/admission gates.
-- [ ] Mean-ionic residual bookkeeping exists for candidate phase sets.
-- [ ] Raw single-ion charged-transfer equality is rejected as acceptance
+- [x] Mean-ionic residual bookkeeping exists for candidate phase sets.
+- [x] Raw single-ion charged-transfer equality is rejected as acceptance
   evidence.
-- [ ] The retained checker consumes #269, #300, and #302 evidence before
+- [x] The retained checker consumes #269, #300, and #302 evidence before
   granting completion.
-- [ ] Capabilities and registry evidence keep public electrolyte routes closed.
-- [ ] #191 and M4 README show #306 closed after merge and list the remaining
+- [x] Capabilities and registry evidence keep public electrolyte routes closed.
+- [x] #191 and M4 README show #306 closed after merge and list the remaining
   Stage III, postsolve, and public-admission blockers.
 
 ## Proof Oracle
