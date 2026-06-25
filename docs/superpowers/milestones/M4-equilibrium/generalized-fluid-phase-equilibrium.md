@@ -57,8 +57,8 @@ The collapsed plan has six visible family labels:
 | Planning label | Scope | Current generalized status |
 | --- | --- | --- |
 | `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `planned_not_public` |
-| `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `planned_not_public` |
-| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `planned_not_public` |
+| `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `source_backed_associating_lle_public_admitted` |
+| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `source_backed_electrolyte_lle_public_admitted` |
 | `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `neutral_public_admitted` |
 | `CE Chemical Equilibrium Placeholder` | Homogeneous chemical/speciation equilibrium without phase split | `planned_not_public` |
 | `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium | `planned_not_public` |
@@ -543,13 +543,12 @@ iteration-limit seed path are failed boundary evidence.
 - current public admission proof: `uv run python
   scripts/validation/check_associating_gfpe_gate.py --json
   --require-source-data --require-public-admission
-  --require-exact-association-hessian --require-electrolyte-closed
-  --require-complete` admits only
+  --require-exact-association-hessian --require-complete` admits only
   `Equilibrium(..., route="lle")` for the source-backed Gross/Sadowski 2002
   methanol/cyclohexane two-phase neutral associating fixture, names
   `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps
-  missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized
-  associating phase-set surfaces closed;
+  missing-proof, reactive, TP-flash, and generalized associating phase-set
+  surfaces outside that admission;
 - current paper-validation acceptance proof: `uv run --no-sync python
   scripts/validation/check_gross_2002_association_acceptance.py --json
   --require-complete --require-exact-association-hessian --require-fresh-native`
@@ -568,10 +567,18 @@ iteration-limit seed path are failed boundary evidence.
 `PE-Electrolyte LLE/TP Flash`
 
 - first validation target: Khudaida 2026 electrolyte LLE case;
+- current public admission proof: `uv run --no-sync python
+  scripts/validation/check_electrolyte_public_admission.py --json
+  --require-source-gate --require-readiness-gate --require-tpd-gate
+  --require-held2-discovery --require-stage-iii
+  --require-postsolve-certification --require-public-admission
+  --require-complete` consumes #269/#300/#302/#306/#312/#313 and admits only
+  `Equilibrium(..., route="electrolyte_lle")` for the source-backed explicit-ion
+  H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent LLE fixture;
 - follow-on: Held 2014 Figure 6, then Ascani/Sadowski/Held 2022;
-- required before exposure: Born SSM+DS exact Hessian, reduced
-  electroneutral variables, electrolyte TPD/HELD2.0, charge and
-  electrochemical-potential certification.
+- required before broader exposure: additional source-backed electrolyte
+  systems, generic salt/solvent coverage, reactive/speciation coupling, CE/CPE
+  routes, regression evidence, and release documentation.
 
 `PE-Generalized Multiphase`
 

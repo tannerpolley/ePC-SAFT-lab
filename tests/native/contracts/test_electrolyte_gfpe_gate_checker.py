@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -63,14 +62,13 @@ def test_khudaida_parameter_bundle_constructs_through_path_without_public_datase
     assert mixture.ncomp == 5
 
 
-def test_electrolyte_gfpe_gate_reports_source_backed_closed_admission_complete() -> None:
+def test_electrolyte_gfpe_gate_reports_source_backed_prerequisite_complete() -> None:
     from scripts.validation import check_electrolyte_gfpe_gate as checker
 
     payload = checker.evaluate_case_dir(
         CASE_DIR,
         require_parameter_bundle=True,
         require_native_diagnostics=True,
-        require_public_routes_closed=True,
     )
 
     assert payload["complete"] is True
@@ -84,25 +82,23 @@ def test_electrolyte_gfpe_gate_reports_source_backed_closed_admission_complete()
     assert payload["parameter_bundle"]["status"] == "constructs_native_mixture"
     assert payload["native_diagnostics"]["electrolyte_contribution"]["active"] is True
     assert payload["native_diagnostics"]["phase_system"]["max_phase_charge_residual"] <= 1.0e-8
-    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
-    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == []
-    assert payload["public_route_state"]["electrolyte_lle"]["proof_routes"] == []
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
+    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == ["electrolyte_lle"]
+    assert payload["public_route_state"]["electrolyte_lle"]["proof_routes"] == [
+        "electrolyte_held2_public_route_admission"
+    ]
 
 
-def test_electrolyte_gfpe_gate_rejects_public_route_admission() -> None:
+def test_legacy_closed_route_requirement_rejects_current_public_admission() -> None:
     from scripts.validation import check_electrolyte_gfpe_gate as checker
 
     payload = checker.evaluate_case_dir(
         CASE_DIR,
         require_parameter_bundle=True,
         require_native_diagnostics=True,
-        require_public_routes_closed=True,
     )
-    admitted = deepcopy(payload)
-    admitted["public_route_state"]["electrolyte_lle"]["production_exposed"] = True
-    admitted["public_route_state"]["electrolyte_lle"]["public_routes"] = ["electrolyte_lle"]
 
-    result = checker.evaluate_payload(admitted, require_public_routes_closed=True)
+    result = checker.evaluate_payload(payload, require_public_routes_closed=True)
 
     assert result["complete"] is False
     assert "electrolyte_lle_public_route_exposed" in result["blockers"]

@@ -37,7 +37,6 @@ def test_electrolyte_tpd_gate_uses_source_readiness_and_native_candidates() -> N
         require_source_gate=True,
         require_held2_readiness=True,
         require_native_tpd=True,
-        require_public_routes_closed=True,
     )
 
     assert payload["complete"] is True
@@ -53,7 +52,7 @@ def test_electrolyte_tpd_gate_uses_source_readiness_and_native_candidates() -> N
     assert payload["held2_status"]["readiness_only"] is True
     assert payload["held2_status"]["full_held2_claimed"] is False
     assert "held2_dual_phase_discovery" in payload["held2_status"]["pending_gates"]
-    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
 
 
 def test_cli_requires_complete_electrolyte_tpd_gate() -> None:
@@ -67,7 +66,6 @@ def test_cli_requires_complete_electrolyte_tpd_gate() -> None:
             "--require-source-gate",
             "--require-held2-readiness",
             "--require-native-tpd",
-            "--require-public-routes-closed",
             "--require-complete",
         ],
         cwd=REPO_ROOT,

@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "in_progress"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md"
@@ -71,16 +71,30 @@ electrolyte gates remain.
 - Blocks: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
 - Prerequisite satisfied by this sequence: https://github.com/ePC-SAFT/ePC-SAFT/issues/313
 
+## Implementation Results
+
+The #314 branch adds the retained public admission checker and admits only the
+source-backed Khudaida explicit-ion H2O/Ethanol/Butanol/Na+/Cl- NaCl
+mixed-solvent LLE route through
+`Equilibrium(..., route="electrolyte_lle")`. The retained checker consumes
+#269/#300/#302/#306/#312/#313 and reports `complete: true`, `blockers: []`,
+phase labels `liquid1` and `liquid2`, per-phase charge residuals `[0.0, 0.0]`,
+total charge residual `0.0`, pressure consistency norm
+`6.984919309616089e-10`, phase distance `2.7722252287643023e-06`, neutral
+transfer residual max `1.1078450725898747e-05`, mean-ionic transfer residual
+max `3.3871562834519864e-05`, and exact reduced Hessian availability while
+keeping reactive, CE/CPE, regression, and release claims closed.
+
 ## Acceptance Criteria
 
-- [ ] The public admission checker consumes #269, #300, #302, #306, #312, and #313 evidence.
-- [ ] The public route surface exposes only the certified electrolyte GFPE scope.
-- [ ] Capability evidence distinguishes neutral, associating, electrolyte, and reactive support.
-- [ ] Registry evidence names the source fixture, parameter bundle, validation checkers, tolerances, and public route status.
-- [ ] User-facing docs state the admitted electrolyte scope and explicit non-goals.
-- [ ] Negative tests reject missing prerequisite evidence, uncertified phase sets, unsupported species bases, and premature reactive admission.
-- [ ] #191 is updated and closed only after this issue merges and the retained public-admission checker passes.
-- [ ] M4 README shows no remaining open M4 issues after #191 closes.
+- [x] The public admission checker consumes #269, #300, #302, #306, #312, and #313 evidence.
+- [x] The public route surface exposes only the certified electrolyte GFPE scope.
+- [x] Capability evidence distinguishes neutral, associating, electrolyte, and reactive support.
+- [x] Registry evidence names the source fixture, parameter bundle, validation checkers, tolerances, and public route status.
+- [x] User-facing docs state the admitted electrolyte scope and explicit non-goals.
+- [x] Negative tests reject missing prerequisite evidence, uncertified phase sets, unsupported species bases, and premature reactive admission.
+- [x] #191 closeout evidence is prepared; the umbrella should close only after this issue merges and the retained public-admission checker passes on main.
+- [x] M4 README identifies #191 as ready to close after #314 merges.
 
 ## Prerequisite
 

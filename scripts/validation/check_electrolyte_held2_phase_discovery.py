@@ -343,7 +343,7 @@ def _native_held2_payload(case_dir: Path, checker_command: list[str] | None) -> 
         blockers.append("stage_iii_claimed_complete_by_phase_discovery_gate")
     if stages.get("postsolve_certification") == "complete":
         blockers.append("postsolve_claimed_complete_by_phase_discovery_gate")
-    if stages.get("public_route_admission") != "closed":
+    if stages.get("public_route_admission") != "separate_public_admission_gate":
         blockers.append("public_route_admission_opened_by_phase_discovery_gate")
 
     receipt = native_freshness.build_receipt(
@@ -485,7 +485,7 @@ def evaluate_payload(
             blockers.append("stage_iii_claimed_complete_by_phase_discovery_gate")
         if stages.get("postsolve_certification") == "complete":
             blockers.append("postsolve_claimed_complete_by_phase_discovery_gate")
-        if stages.get("public_route_admission") != "closed":
+        if stages.get("public_route_admission") != "separate_public_admission_gate":
             blockers.append("public_route_admission_opened_by_phase_discovery_gate")
         handoff = held2.get("stage_iii_handoff", {})
         if handoff.get("status") != "pending_stage_iii_refinement":
@@ -536,7 +536,7 @@ def evaluate_held2_phase_discovery(
         require_source_gate=True,
         require_held2_readiness=True,
         require_native_tpd=True,
-        require_public_routes_closed=True,
+        require_public_routes_closed=require_public_routes_closed,
         checker_command=checker_command,
     )
     source_gate = tpd_gate.get("source_gate", {})
@@ -625,7 +625,7 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
             "phase_discovery": "complete",
             "stage_iii_refinement": "pending",
             "postsolve_certification": "pending",
-            "public_route_admission": "closed",
+            "public_route_admission": "separate_public_admission_gate",
         },
         "stage_iii_handoff": {
             "status": "pending_stage_iii_refinement",
@@ -693,7 +693,7 @@ def main(argv: list[str] | None = None) -> int:
         require_readiness_gate=args.require_readiness_gate or args.require_complete,
         require_tpd_gate=args.require_tpd_gate or args.require_complete,
         require_native_held2_discovery=args.require_native_held2_discovery or args.require_complete,
-        require_public_routes_closed=args.require_public_routes_closed or args.require_complete,
+        require_public_routes_closed=args.require_public_routes_closed,
         checker_command=checker_command,
     )
     if args.require_complete:

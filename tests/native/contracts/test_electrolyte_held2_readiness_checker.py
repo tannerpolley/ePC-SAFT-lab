@@ -159,7 +159,6 @@ def test_evaluate_readiness_uses_real_source_gate_and_provider_receipts() -> Non
         require_source_gate=True,
         require_reduced_basis=True,
         require_born_ssm_ds=True,
-        require_public_routes_closed=True,
     )
 
     assert result["complete"] is True
@@ -169,6 +168,7 @@ def test_evaluate_readiness_uses_real_source_gate_and_provider_receipts() -> Non
     assert result["born_ssm_ds_exactness"]["finite_composition_derivatives"] is True
     assert result["born_ssm_ds_exactness"]["finite_parameter_derivatives"] is True
     assert result["held2_readiness"]["readiness_only"] is True
+    assert result["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
 
 
 def test_cli_requires_complete_readiness_evidence() -> None:
@@ -182,7 +182,6 @@ def test_cli_requires_complete_readiness_evidence() -> None:
             "--require-source-gate",
             "--require-reduced-basis",
             "--require-born-ssm-ds",
-            "--require-public-routes-closed",
             "--require-complete",
         ],
         cwd=REPO_ROOT,

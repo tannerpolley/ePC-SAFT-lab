@@ -302,7 +302,7 @@ struct ElectrolyteHeld2PhaseDiscoveryResult {
     std::string phase_discovery_status = "complete";
     std::string stage_iii_refinement_status = "pending";
     std::string postsolve_certification_status = "pending";
-    std::string public_route_admission_status = "closed";
+    std::string public_route_admission_status = "separate_public_admission_gate";
     std::vector<std::vector<double>> stage_iii_phase_compositions;
     std::vector<double> stage_iii_phase_fractions;
     std::vector<int> stage_iii_phase_kinds;
@@ -493,7 +493,7 @@ struct ElectrolyteStageIIIRefinementResult {
     std::string phase_discovery_status = "complete";
     std::string stage_iii_refinement_status = "complete";
     std::string postsolve_certification_status = "pending";
-    std::string public_route_admission_status = "closed";
+    std::string public_route_admission_status = "separate_public_admission_gate";
     std::string source_gate = "electrolyte_held2_counterion_pair_phase_discovery";
     std::string source_native_binding = "_native_electrolyte_held2_phase_discovery";
     std::string seed_name = "electrolyte_held2_counterion_pair_candidate_set";
@@ -531,7 +531,7 @@ struct ElectrolytePostsolveCertificationResult {
     std::string phase_discovery_status = "complete";
     std::string stage_iii_refinement_status = "complete";
     std::string postsolve_certification_status = "incomplete";
-    std::string public_route_admission_status = "closed";
+    std::string public_route_admission_status = "separate_public_admission_gate";
     std::vector<std::string> component_labels;
     std::vector<double> feed_composition;
     std::vector<double> reconstructed_feed_composition;

@@ -87,7 +87,12 @@ def _representative_reduced_amounts(case_dir: Path) -> np.ndarray:
     return values / total
 
 
-def _source_gate_payload(case_dir: Path, checker_command: list[str] | None) -> dict[str, Any]:
+def _source_gate_payload(
+    case_dir: Path,
+    checker_command: list[str] | None,
+    *,
+    require_public_routes_closed: bool,
+) -> dict[str, Any]:
     command = checker_command or [
         "uv",
         "run",
@@ -100,7 +105,7 @@ def _source_gate_payload(case_dir: Path, checker_command: list[str] | None) -> d
         require_source_data=True,
         require_parameter_bundle=True,
         require_native_diagnostics=True,
-        require_public_routes_closed=True,
+        require_public_routes_closed=require_public_routes_closed,
         checker_command=command,
     )
 
@@ -305,7 +310,7 @@ def _held2_readiness_payload() -> dict[str, Any]:
             "khudaida_source_gate",
             "reduced_charge_neutral_NaCl_amount_lift",
             "cppad_born_ssm_ds_derivative_receipts",
-            "closed_public_electrolyte_route_state",
+            "public_electrolyte_route_admission_gate",
         ],
     }
 
@@ -405,7 +410,11 @@ def evaluate_readiness(
     checker_command: list[str] | None = None,
 ) -> dict[str, Any]:
     case_dir = Path(case_dir)
-    source_gate = _source_gate_payload(case_dir, checker_command)
+    source_gate = _source_gate_payload(
+        case_dir,
+        checker_command,
+        require_public_routes_closed=require_public_routes_closed,
+    )
     payload = {
         "checker": "electrolyte_held2_readiness_gate",
         "case_label": "Khudaida 2026 electrolyte LLE",
@@ -454,7 +463,7 @@ def main(argv: list[str] | None = None) -> int:
         require_source_gate=args.require_source_gate or args.require_complete,
         require_reduced_basis=args.require_reduced_basis or args.require_complete,
         require_born_ssm_ds=args.require_born_ssm_ds or args.require_complete,
-        require_public_routes_closed=args.require_public_routes_closed or args.require_complete,
+        require_public_routes_closed=args.require_public_routes_closed,
         checker_command=checker_command,
     )
     if args.require_complete:

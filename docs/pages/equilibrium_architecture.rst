@@ -75,11 +75,13 @@ Solver Selection
 The reset public frontend does not expose a solver-backend selector. Public
 equilibrium workflows choose the required native route directly and raise at the
 route boundary when the compiled dependency or CppAD coverage is missing. The
-trusted public proof set is the hydrocarbon neutral VLE/flash route family and
-the synthetic neutral nonassociating LLE binary through the native selector
-core, Ipopt, and exact Hessian callbacks. Associating LLE, electrolyte,
-reactive, and speciation route families remain declared-not-exposed activation
-rows until they are ported behind the selector and reset
+trusted public proof set is the hydrocarbon neutral VLE/flash route family,
+neutral LLE, the source-backed methanol/cyclohexane associating LLE fixture,
+and the source-backed Khudaida explicit-ion NaCl mixed-solvent electrolyte LLE
+fixture through the native selector core, Ipopt, and exact Hessian or exact
+reduced-derivative callbacks. Broader associating, generic electrolyte,
+reactive, CE/CPE, and speciation route families remain declared-not-exposed
+activation rows until they are ported behind the selector and reset
 ``Equilibrium(mixture, route=..., ...)`` workflow.
 
 The convex Gibbs formulation is limited to homogeneous ideal reaction or

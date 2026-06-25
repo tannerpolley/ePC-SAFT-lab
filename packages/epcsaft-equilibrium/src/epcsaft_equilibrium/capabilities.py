@@ -167,7 +167,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "cppad_born_ssm_ds",
         "supported": True,
         "classification": "prerequisite_evidence",
-        "public_admission_state": "public_route_closed",
+        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 electrolyte LLE readiness",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -180,7 +180,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "reason": (
             "issue #300 records the electrolyte HELD2 prerequisite gate: source-backed "
             "Khudaida inputs, exact charge-neutral NaCl amount lifting, CppAD Born "
-            "SSM/DS derivative receipts, and closed public electrolyte route state."
+            "SSM/DS derivative receipts, and downstream public-admission prerequisites."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_held2_readiness.py",
@@ -198,7 +198,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "native_counterion_pair_phase_discovery",
         "supported": True,
         "classification": "phase_discovery_evidence",
-        "public_admission_state": "public_route_closed",
+        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 NaCl plus Ascani 2022 mixed-electrolyte counterion fixtures",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -216,7 +216,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "issue #306 records the electrolyte HELD2 phase-discovery gate: "
             "native counterion-pair matrix construction, charge-neutral candidate "
             "diagnostics, pair-based mean-ionic bookkeeping, source-backed multi-ion "
-            "preprocessor fixtures, and closed public electrolyte route state."
+            "preprocessor fixtures, and downstream Stage III/postsolve prerequisites."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_held2_phase_discovery.py",
@@ -233,7 +233,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "native_electrolyte_stage_iii_refinement",
         "supported": True,
         "classification": "stage_iii_refinement_evidence",
-        "public_admission_state": "public_route_closed",
+        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 NaCl local Stage III refinement",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -249,8 +249,8 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "the checker consumes #269/#300/#302/#306, calls native "
             "`_native_electrolyte_stage_iii_refinement`, retains exact reduced "
             "counterion-pair residual Jacobian/Hessian receipts, records strict "
-            "Ipopt solver diagnostics, and keeps postsolve certification plus "
-            "public electrolyte route admission closed."
+            "Ipopt solver diagnostics, and feeds postsolve certification plus "
+            "public electrolyte route admission."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_stage_iii_refinement.py",
@@ -268,7 +268,7 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "backend": "native_electrolyte_postsolve_certification",
         "supported": True,
         "classification": "postsolve_certification_evidence",
-        "public_admission_state": "public_route_closed",
+        "public_admission_state": "prerequisite_evidence_only",
         "selector_family": "electrolyte_lle",
         "source_configuration": "Khudaida 2026 NaCl local postsolve certification",
         "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
@@ -285,13 +285,49 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "`_native_electrolyte_postsolve_certification`, retains explicit-ion "
             "reconstruction, per-phase and total charge residuals, neutral and "
             "mean-ionic transfer residuals, pressure consistency, phase amount, "
-            "composition normalization, and domain-margin diagnostics, and keeps "
-            "public electrolyte route admission closed for #314."
+            "composition normalization, and domain-margin diagnostics consumed by "
+            "#314 public electrolyte route admission."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_postsolve_certification.py",
             "tests/native/contracts/test_electrolyte_postsolve_certification.py",
             "tests/native/contracts/test_electrolyte_stage_iii_refinement.py",
+            "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+            "tests/native/contracts/test_generalized_equilibrium_registry.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "electrolyte_public_admission",
+        "quantity": "electrolyte_lle_khudaida_public_admission",
+        "derivative": "exact_reduced_counterion_pair_jacobian_hessian_receipts",
+        "backend": "native_electrolyte_postsolve_certification",
+        "supported": True,
+        "classification": "production_supported",
+        "public_admission_state": "public_route_open",
+        "public_route": "electrolyte_lle",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl mixed-solvent electrolyte LLE",
+        "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
+        "native_component_set": ("H2O", "Ethanol", "Butanol", "Na+", "Cl-"),
+        "source_fixture": (
+            "data/reference/equilibrium_benchmarks/electrolyte_lle/"
+            "water_ethanol_isobutanol_nacl"
+        ),
+        "parameter_bundle": "analyses/paper_validation/2026_khudaida/parameters",
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "stage_status": "public_admission_complete",
+        "route_hessian_mode": "limited_memory_charged_born_route_with_exact_reduced_derivative_receipts",
+        "reason": (
+            "issue #314 admits only the source-backed Khudaida 2026 NaCl mixed-solvent "
+            "electrolyte LLE route after #269/#300/#302/#306/#312/#313 evidence proves "
+            "source fixture parsing, reduced charge-neutral variables, charge-neutral TPD, "
+            "HELD2 phase discovery, Stage III refinement, and postsolve phase-set certification."
+        ),
+        "tests": (
+            "scripts/validation/check_electrolyte_public_admission.py",
+            "tests/native/contracts/test_electrolyte_public_admission.py",
+            "tests/native/contracts/test_electrolyte_postsolve_certification.py",
             "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
             "tests/native/contracts/test_generalized_equilibrium_registry.py",
         ),
@@ -453,6 +489,26 @@ def capabilities() -> dict[str, object]:
             "selector_core": True,
             "input_scope": "single neutral non-reactive non-electrolyte component, including pure 2B associating components for the retained Gross/Sadowski 2002 Figure 1 saturation proof",
             "requires": ["cppad", "ipopt"],
+        },
+        "electrolyte_lle": {
+            "available": bool(activation["ipopt_available"]),
+            "production": True,
+            "entrypoint": "Equilibrium(mixture, route='electrolyte_lle', T=..., P=..., z=...).solve()",
+            "public_routes": public_routes_by_family["electrolyte_lle"],
+            "selector_core": False,
+            "input_scope": (
+                "source-backed Khudaida 2026 NaCl mixed-solvent LLE for explicit-ion "
+                "H2O/Ethanol/Butanol/Na+/Cl- feeds built from the retained parameter bundle"
+            ),
+            "requires": ["cppad", "ipopt"],
+            "unsupported_surfaces": [
+                "reactive_electrolyte_lle",
+                "reactive_lle",
+                "reactive_speciation",
+                "ce",
+                "cpe",
+                "regression",
+            ],
         },
         "problem_objects": {
             "available": True,

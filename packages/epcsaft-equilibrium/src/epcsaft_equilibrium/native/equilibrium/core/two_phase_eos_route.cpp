@@ -3919,7 +3919,7 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
     out.phase_discovery_status = "complete";
     out.stage_iii_refinement_status = "pending";
     out.postsolve_certification_status = "pending";
-    out.public_route_admission_status = "closed";
+    out.public_route_admission_status = "separate_public_admission_gate";
     out.stage_iii_handoff_status = "pending_stage_iii_refinement";
     return out;
 }

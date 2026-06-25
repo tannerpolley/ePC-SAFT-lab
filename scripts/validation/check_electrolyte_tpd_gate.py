@@ -46,7 +46,12 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
-def _source_gate_payload(case_dir: Path, checker_command: list[str] | None) -> dict[str, Any]:
+def _source_gate_payload(
+    case_dir: Path,
+    checker_command: list[str] | None,
+    *,
+    require_public_routes_closed: bool,
+) -> dict[str, Any]:
     command = checker_command or [
         "uv",
         "run",
@@ -59,18 +64,18 @@ def _source_gate_payload(case_dir: Path, checker_command: list[str] | None) -> d
         require_source_data=True,
         require_parameter_bundle=True,
         require_native_diagnostics=True,
-        require_public_routes_closed=True,
+        require_public_routes_closed=require_public_routes_closed,
         checker_command=command,
     )
 
 
-def _held2_readiness_payload(case_dir: Path) -> dict[str, Any]:
+def _held2_readiness_payload(case_dir: Path, *, require_public_routes_closed: bool) -> dict[str, Any]:
     return check_electrolyte_held2_readiness.evaluate_readiness(
         case_dir,
         require_source_gate=True,
         require_reduced_basis=True,
         require_born_ssm_ds=True,
-        require_public_routes_closed=True,
+        require_public_routes_closed=require_public_routes_closed,
     )
 
 
@@ -271,8 +276,12 @@ def evaluate_tpd_gate(
     checker_command: list[str] | None = None,
 ) -> dict[str, Any]:
     case_dir = Path(case_dir)
-    source_gate = _source_gate_payload(case_dir, checker_command)
-    held2 = _held2_readiness_payload(case_dir)
+    source_gate = _source_gate_payload(
+        case_dir,
+        checker_command,
+        require_public_routes_closed=require_public_routes_closed,
+    )
+    held2 = _held2_readiness_payload(case_dir, require_public_routes_closed=require_public_routes_closed)
     public_state = source_gate.get("public_route_state", {})
     try:
         tpd = _native_tpd_payload(case_dir)
@@ -301,7 +310,7 @@ def evaluate_tpd_gate(
                 "reduced_charge_neutral_NaCl_amount_lift",
                 "cppad_born_ssm_ds_derivative_receipts",
                 "charge_neutral_electrolyte_tpd_screening",
-                "closed_public_electrolyte_route_state",
+                "public_electrolyte_route_admission_gate",
             ],
             "pending_gates": REMAINING_HELD2_GATES,
         },
@@ -346,7 +355,7 @@ def main(argv: list[str] | None = None) -> int:
         require_source_gate=args.require_source_gate or args.require_complete,
         require_held2_readiness=args.require_held2_readiness or args.require_complete,
         require_native_tpd=args.require_native_tpd or args.require_complete,
-        require_public_routes_closed=args.require_public_routes_closed or args.require_complete,
+        require_public_routes_closed=args.require_public_routes_closed,
         checker_command=checker_command,
     )
     if args.require_complete:

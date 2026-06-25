@@ -121,7 +121,6 @@ def test_mean_ionic_rows_are_pair_based() -> None:
         require_readiness_gate=True,
         require_tpd_gate=True,
         require_native_held2_discovery=True,
-        require_public_routes_closed=True,
     )
 
     residuals = payload["held2_phase_discovery"]["mean_ionic_residuals"]
@@ -174,7 +173,7 @@ def test_checker_consumes_prerequisite_gates() -> None:
     assert "electrolyte_tpd_gate_incomplete" in result["blockers"]
 
 
-def test_public_electrolyte_routes_stay_closed() -> None:
+def test_phase_discovery_defers_public_admission_to_separate_gate() -> None:
     checker = _load_checker()
 
     payload = checker.evaluate_held2_phase_discovery(
@@ -182,12 +181,14 @@ def test_public_electrolyte_routes_stay_closed() -> None:
         require_readiness_gate=True,
         require_tpd_gate=True,
         require_native_held2_discovery=True,
-        require_public_routes_closed=True,
     )
 
-    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
-    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == []
-    assert payload["held2_phase_discovery"]["stage_statuses"]["public_route_admission"] == "closed"
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
+    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == ["electrolyte_lle"]
+    assert (
+        payload["held2_phase_discovery"]["stage_statuses"]["public_route_admission"]
+        == "separate_public_admission_gate"
+    )
 
 
 def test_ascani_2022_table5_fixture_loaded() -> None:
@@ -213,7 +214,6 @@ def test_cli_requires_complete_electrolyte_held2_phase_discovery() -> None:
             "--require-readiness-gate",
             "--require-tpd-gate",
             "--require-native-held2-discovery",
-            "--require-public-routes-closed",
             "--require-complete",
         ],
         cwd=REPO_ROOT,

@@ -198,7 +198,7 @@ def test_postsolve_rejects_public_admission_status() -> None:
     assert "postsolve_public_route_admission_claimed" in result["blockers"]
 
 
-def test_public_electrolyte_routes_stay_closed() -> None:
+def test_postsolve_payload_does_not_claim_public_admission() -> None:
     checker = _load_checker()
 
     payload = checker.minimal_complete_payload_for_tests()
@@ -206,7 +206,7 @@ def test_public_electrolyte_routes_stay_closed() -> None:
     stages = payload["electrolyte_postsolve_certification"]["stage_statuses"]
 
     assert stages["postsolve_certification"] == "complete"
-    assert stages["public_route_admission"] == "closed"
+    assert stages["public_route_admission"] == "separate_public_admission_gate"
     assert public_state["production_exposed"] is False
     assert public_state["public_routes"] == []
     assert public_state["proof_routes"] == []
@@ -220,7 +220,6 @@ def test_cli_requires_complete_electrolyte_postsolve_certification() -> None:
             "--json",
             "--require-stage-iii",
             "--require-postsolve-certification",
-            "--require-public-routes-closed",
             "--require-complete",
         ],
         cwd=REPO_ROOT,
@@ -233,3 +232,9 @@ def test_cli_requires_complete_electrolyte_postsolve_certification() -> None:
     payload = json.loads(result.stdout)
     assert payload["complete"] is True
     assert payload["blockers"] == []
+    assert (
+        payload["electrolyte_postsolve_certification"]["stage_statuses"]["public_route_admission"]
+        == "separate_public_admission_gate"
+    )
+    assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is True
+    assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == ["electrolyte_lle"]
