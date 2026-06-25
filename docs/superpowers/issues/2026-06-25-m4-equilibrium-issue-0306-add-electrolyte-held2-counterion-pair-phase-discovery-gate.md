@@ -71,6 +71,45 @@ keep public electrolyte routes closed.
 - Blocked by: None.
 - Prerequisite evidence consumed: #269, #300, and #302.
 
+## Tightened Diagnostic Contract
+
+The retained checker must require a native payload with these groups before it
+can return `complete: true`:
+
+- prerequisite gate receipts for #269, #300, and #302;
+- charged species labels, charges, active charged indices, cation/anion
+  indices, and feed ordering;
+- counterion-pair labels, matrix, row sums, rank, expected rank `N_ch - 1`,
+  rank tolerance, and transformed variable count;
+- reduced-coordinate lift/back-lift residuals, per-phase charge residual
+  maximum, composition-sum residual, and component nonnegativity margin;
+- reduced TPD basis label, start counts, converged counts, selected candidate
+  count, minimum TPD, duplicate-candidate distance, and candidate-to-feed
+  distance;
+- pair-based mean-ionic residual labels, values, scale, and maximum absolute
+  residual with `bookkeeping_only_until_stage_iii` status;
+- stage statuses showing phase discovery complete while Stage III refinement,
+  postsolve certification, and public electrolyte route admission remain
+  pending or closed as appropriate.
+
+The checker must reject hardcoded NaCl-only evidence, missing multi-ion source
+fixture evidence, raw single-ion charged-transfer equality as acceptance
+evidence, incomplete prerequisite gates, and any premature Stage III,
+postsolve, or public-admission completion claim.
+
+## Required Contract Tests
+
+- Single-salt Na+/Cl- rank and inverse-valence row construction.
+- Common-anion Na+/K+/Cl- rank and pair-label construction using the local
+  water + 1-butanol + NaCl + KCl Table 5 context.
+- Multivalent K+/Cl-/Na+/SO4-- methodology example with sulfate coefficient
+  `1/2` and matrix rank `3`.
+- Reduced-coordinate lift and back-lift residual tests with charge residual <=
+  `1.0e-10`.
+- Checker-negative tests for incomplete #269/#300/#302 payloads, raw ion
+  equality, and premature Stage III/postsolve/public-admission status.
+- Closed public route tests for capabilities and registry evidence.
+
 ## Acceptance Criteria
 
 - [ ] A local mirror exists for #306 and #191 is blocked by #306 on GitHub.
@@ -78,13 +117,19 @@ keep public electrolyte routes closed.
 - [ ] The native payload reports charged-species indices, charge vector,
   counterion-pair matrix, matrix rank, transformed-variable dimension, and
   charge-neutral lift/back-lift residuals.
+- [ ] The native payload satisfies the tightened diagnostic contract and emits
+  a Stage III handoff record without claiming Stage III completion.
 - [ ] At least one NaCl source-backed fixture and one multi-ion or
   mixed-electrolyte source-backed preprocessor fixture exercise matrix
   construction.
+- [ ] The required contract tests cover single-salt, common-anion, and
+  multivalent counterion-pair cases.
 - [ ] Candidate phase-discovery metrics are finite and include selected
   candidate count, minimum TPD, candidate charge residuals, and pending
   Stage III/postsolve/admission gates.
 - [ ] Mean-ionic residual bookkeeping exists for candidate phase sets.
+- [ ] Raw single-ion charged-transfer equality is rejected as acceptance
+  evidence.
 - [ ] The retained checker consumes #269, #300, and #302 evidence before
   granting completion.
 - [ ] Capabilities and registry evidence keep public electrolyte routes closed.

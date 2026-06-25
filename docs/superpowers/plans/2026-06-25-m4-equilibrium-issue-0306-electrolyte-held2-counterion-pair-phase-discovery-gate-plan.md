@@ -112,6 +112,81 @@ push, PR creation, merge, and issue close.
 | Public route state | GFPE doctrine | Keep `electrolyte_lle` closed. | Avoids unsupported user-facing capability claims. | No | M4 owner |
 | Stage III | #191 acceptance sequence | Defer electrolyte reduced-variable refinement to the next child. | Keeps #306 focused on phase discovery. | Yes | M4 owner |
 
+## Diagnostic Payload Contract
+
+The #306 checker must reject a native payload unless it records the following
+groups with source-backed values and finite numeric receipts:
+
+- `algorithm_scope`: `held2_counterion_pair_phase_discovery_only`.
+- `source_gates`: `khudaida_2026_source_gate_complete`,
+  `held2_readiness_gate_complete`, and `electrolyte_tpd_gate_complete`.
+- `charged_species`: charged species labels, explicit charges, active charged
+  species indices, cation indices, anion indices, and the charged feed ordering
+  used by the counterion-pair preprocessor.
+- `counterion_pairs`: pair labels, counterion-pair matrix, row sums, matrix
+  rank, expected rank `N_ch - 1`, rank tolerance, and transformed variable
+  count.
+- `electroneutral_lift`: lift matrix, lifted candidate compositions, per-phase
+  charge residual maximum, component nonnegativity margin, composition-sum
+  residual, and lift/back-lift round-trip residual.
+- `reduced_tpd`: coordinate basis label
+  `counterion_pair_transformed_variables`, reduced start count, converged start
+  count, selected candidate count, minimum TPD, duplicate-candidate distance,
+  and candidate-to-feed distance.
+- `mean_ionic_residuals`: pair labels, residual values, residual scale,
+  maximum absolute residual, and an explicit `bookkeeping_only_until_stage_iii`
+  status.
+- `stage_statuses`: `phase_discovery_complete`,
+  `stage_iii_refinement_pending`, `postsolve_certification_pending`, and
+  `public_route_admission_closed`.
+- `source_fixtures`: the Khudaida NaCl fixture and a multi-ion fixture from the
+  local mixed-solvent mixed-electrolyte source context, especially the
+  water + 1-butanol + NaCl + KCl Table 5 case with Na+/Cl- and K+/Cl- pairs.
+
+The checker must fail if the payload only contains a hardcoded NaCl pair, if a
+multi-ion fixture is absent, if raw single-ion transfer equality appears in
+acceptance evidence, if a required prerequisite checker is incomplete, or if
+any Stage III, postsolve, or public-admission status is marked complete.
+
+## Required Contract Tests
+
+- `test_counterion_pair_matrix_rank_single_salt`: Na+/Cl- builds one row with
+  rank `1`, expected rank `1`, and inverse-valence row entries.
+- `test_counterion_pair_matrix_rank_common_anion`: Na+/K+/Cl- builds two
+  independent rows for Na+/Cl- and K+/Cl- with rank `2`.
+- `test_counterion_pair_matrix_multivalent_source_example`: K+/Cl-/Na+/SO4--,
+  ordered by feed abundance from the methodology example, builds a `3 x 4`
+  full-rank matrix and uses the sulfate `1/2` inverse-valence coefficient.
+- `test_reduced_lift_keeps_charge_zero`: random transformed-coordinate samples
+  lift to explicit-ion compositions with maximum charge residual <= `1.0e-10`.
+- `test_reduced_lift_round_trip_is_stable`: lifted candidates can be projected
+  back to transformed coordinates within the declared round-trip tolerance.
+- `test_mean_ionic_rows_are_pair_based`: charged transfer diagnostics expose
+  pair residual labels and reject raw single-ion residual rows as acceptance
+  evidence.
+- `test_phase_discovery_payload_rejects_stage_iii_claims`: the checker rejects
+  payloads that mark Stage III refinement, postsolve certification, or public
+  route admission complete under #306.
+- `test_checker_consumes_prerequisite_gates`: incomplete #269, #300, or #302
+  payloads produce blockers before native HELD2 discovery evidence is read as
+  complete.
+- `test_public_electrolyte_routes_stay_closed`: capability and registry
+  evidence keep `electrolyte_lle` outside public and production route families.
+- `test_ascani_2022_table5_fixture_loaded`: the multi-ion source fixture is
+  available to tests with water, 1-butanol, NaCl, and KCl feed metadata and
+  mean-ionic pair labels.
+
+## Stage III Handoff Contract
+
+#306 must emit a candidate-set record that the next electrolyte refinement
+child can consume directly. The handoff record must include phase amount
+estimates, explicit-ion phase compositions, reduced transformed coordinates,
+phase kind labels, counterion-pair matrix, mean-ionic pair labels, source
+fixture id, TPD values, and `pending_stage_iii_refinement`. The next child then
+owns the equation solve for neutral transfer residuals, mean-ionic transfer
+residuals, material balance in reduced coordinates, pressure consistency,
+strict derivative evidence, and postsolve certification.
+
 ## Acceptance Criteria
 
 - [ ] A local mirror exists for #306 and #191 is blocked by #306 on GitHub.
@@ -119,13 +194,22 @@ push, PR creation, merge, and issue close.
 - [ ] The native payload reports charged-species indices, charge vector,
   counterion-pair matrix, matrix rank, transformed-variable dimension, and
   charge-neutral lift/back-lift residuals.
+- [ ] The native payload satisfies the Diagnostic Payload Contract and emits a
+  Stage III handoff record that does not claim refinement completion.
 - [ ] At least one NaCl source-backed fixture and one multi-ion or
   mixed-electrolyte source-backed preprocessor fixture exercise the matrix
   construction.
+- [ ] Single-salt, common-anion, and multivalent counterion-pair matrix tests
+  prove full-rank construction for the required source and methodology cases.
+- [ ] Reduced-coordinate lift/back-lift tests prove charge residual,
+  nonnegativity margin, composition-sum residual, and round-trip residual
+  tolerances.
 - [ ] Candidate phase-discovery metrics are finite and include selected
   candidate count, minimum TPD, candidate charge residuals, and pending
   Stage III/postsolve/admission gates.
 - [ ] Mean-ionic residual bookkeeping exists for candidate phase sets.
+- [ ] Raw single-ion charged-transfer equality is rejected as acceptance
+  evidence.
 - [ ] The retained checker consumes #269, #300, and #302 evidence before
   granting completion.
 - [ ] Capabilities and registry evidence keep public electrolyte routes closed.
@@ -179,6 +263,11 @@ push, PR creation, merge, and issue close.
 - [ ] Add tests for the native binding shape and counterion-pair matrix rank.
 - [ ] Add tests for NaCl and multi-ion source-backed preprocessor fixtures.
 - [ ] Add checker schema tests for reduced-coordinate and mean-ionic fields.
+- [ ] Add matrix tests for Na+/Cl-, Na+/K+/Cl-, and K+/Cl-/Na+/SO4--
+  inverse-valence rows.
+- [ ] Add checker-negative tests for incomplete prerequisite gates, raw
+  single-ion charged-transfer rows, and premature Stage III/postsolve/public
+  admission statuses.
 
 ### Task 3: Implement Native HELD2 Discovery Diagnostics
 
@@ -201,6 +290,9 @@ push, PR creation, merge, and issue close.
 - [ ] Implement charged-species ordering and counterion-pair matrix assembly.
 - [ ] Add reduced-coordinate trial/candidate lifting and charge checks.
 - [ ] Add mean-ionic residual bookkeeping for candidate phase sets.
+- [ ] Add explicit Stage III handoff fields: phase amount estimates,
+  explicit-ion compositions, transformed coordinates, phase kinds, pair labels,
+  source fixture id, and TPD values.
 - [ ] Bind the diagnostic as `_native_electrolyte_held2_phase_discovery`.
 
 ### Task 4: Add The Retained Checker And Capability Evidence
@@ -220,6 +312,8 @@ push, PR creation, merge, and issue close.
 
 - [ ] Consume #269, #300, and #302 checker payloads.
 - [ ] Record finite native HELD2 discovery metrics and residual bookkeeping.
+- [ ] Verify the checker schema against the Diagnostic Payload Contract before
+  returning `complete: true`.
 - [ ] Keep `electrolyte_lle` absent from public routes and production families.
 - [ ] Add registry/capability rows that name this as phase-discovery evidence.
 
