@@ -202,13 +202,18 @@ Use ``epcsaft_equilibrium.capabilities()`` and the cookbook before wiring a
 high-level equilibrium workflow. The extension includes native-backed paths for
 neutral phase equilibrium through constructor-configured ``Equilibrium(...)``
 objects. The production-exposed families are neutral bubble/dew routes, neutral TP flash,
-and neutral nonassociating LLE when the native Ipopt dependency is compiled.
+and neutral nonassociating LLE, the source-backed methanol/cyclohexane
+associating LLE fixture, and the source-backed Khudaida explicit-ion electrolyte
+LLE fixture when the native Ipopt dependency is compiled.
 
 Important boundaries:
 
-- Electrolyte LLE, reactive speciation, reactive LLE, reactive electrolyte LLE,
-  and associating LLE are declared not exposed in
-  ``epcsaft_equilibrium.capabilities()`` for this release.
+- The public electrolyte route is limited to
+  ``Equilibrium(..., route="electrolyte_lle")`` for the retained
+  H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent LLE fixture and its
+  source-backed parameter bundle. Generic electrolyte GFPE, reactive
+  speciation, reactive LLE, reactive electrolyte LLE, CE/CPE, parameter
+  regression, and release-wheel claims remain outside the admitted scope.
 - The GitHub release wheel is built without a local Ipopt runtime dependency.
   Ipopt-backed equilibrium routes require an Ipopt-enabled source or editable
   build.

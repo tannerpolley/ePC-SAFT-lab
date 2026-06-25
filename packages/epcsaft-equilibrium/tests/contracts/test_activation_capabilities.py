@@ -12,6 +12,7 @@ EXPECTED_PUBLIC_ROUTE_FAMILIES = {
     "bubble_temperature": "bubble_dew_derived_routes",
     "dew_pressure": "bubble_dew_derived_routes",
     "dew_temperature": "bubble_dew_derived_routes",
+    "electrolyte_lle": "electrolyte_lle",
     "flash": "neutral_tp_flash",
     "lle": "neutral_lle",
     "multiphase": "neutral_multiphase_nonassoc",
@@ -56,10 +57,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_lle",
         "single_component_vle",
         "neutral_multiphase_nonassoc",
+        "electrolyte_lle",
         "bubble_dew_derived_routes",
     ]
     assert activation["declared_not_exposed_families"] == [
-        "electrolyte_lle",
         "reactive_speciation",
         "reactive_lle",
         "reactive_electrolyte_lle",
@@ -69,6 +70,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_lle",
         "single_component_vle",
         "neutral_multiphase_nonassoc",
+        "electrolyte_lle",
         "bubble_dew_derived_routes",
     ]
     assert public_route_map == EXPECTED_PUBLIC_ROUTE_FAMILIES
@@ -78,6 +80,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "bubble_temperature",
         "dew_pressure",
         "dew_temperature",
+        "electrolyte_lle",
         "flash",
         "lle",
         "multiphase",
@@ -89,6 +92,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "neutral_lle": ["lle"],
         "single_component_vle": ["single_component_vle"],
         "neutral_multiphase_nonassoc": ["multiphase"],
+        "electrolyte_lle": ["electrolyte_lle"],
         "bubble_dew_derived_routes": [
             "bubble_pressure",
             "bubble_temperature",
@@ -157,6 +161,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "electrolyte_held2_counterion_pair_phase_discovery",
         "electrolyte_held2_stage_iii_reduced_variable_refinement",
         "electrolyte_held2_postsolve_phase_set_certification",
+        "electrolyte_lle_khudaida_public_admission",
     }
     associating_proof = next(
         row
@@ -201,7 +206,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     )
     assert electrolyte_readiness["classification"] == "prerequisite_evidence"
     assert electrolyte_readiness["backend"] == "cppad_born_ssm_ds"
-    assert electrolyte_readiness["public_admission_state"] == "public_route_closed"
+    assert electrolyte_readiness["public_admission_state"] == "prerequisite_evidence_only"
     assert electrolyte_readiness["selector_family"] == "electrolyte_lle"
     assert electrolyte_readiness["source_configuration"] == "Khudaida 2026 electrolyte LLE readiness"
     assert electrolyte_readiness["component_set"] == ["water", "ethanol", "isobutanol", "NaCl"]
@@ -217,7 +222,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     )
     assert electrolyte_discovery["classification"] == "phase_discovery_evidence"
     assert electrolyte_discovery["backend"] == "native_counterion_pair_phase_discovery"
-    assert electrolyte_discovery["public_admission_state"] == "public_route_closed"
+    assert electrolyte_discovery["public_admission_state"] == "prerequisite_evidence_only"
     assert electrolyte_discovery["selector_family"] == "electrolyte_lle"
     assert electrolyte_discovery["reduced_basis"] == "independent_counterion_pair_matrix"
     assert electrolyte_discovery["stage_status"] == "phase_discovery_complete_stage_iii_pending"
@@ -229,7 +234,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     )
     assert electrolyte_stage_iii["classification"] == "stage_iii_refinement_evidence"
     assert electrolyte_stage_iii["backend"] == "native_electrolyte_stage_iii_refinement"
-    assert electrolyte_stage_iii["public_admission_state"] == "public_route_closed"
+    assert electrolyte_stage_iii["public_admission_state"] == "prerequisite_evidence_only"
     assert electrolyte_stage_iii["selector_family"] == "electrolyte_lle"
     assert electrolyte_stage_iii["reduced_basis"] == "independent_counterion_pair_matrix"
     assert electrolyte_stage_iii["stage_status"] == "stage_iii_refinement_complete_postsolve_pending"
@@ -241,25 +246,38 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     )
     assert electrolyte_postsolve["classification"] == "postsolve_certification_evidence"
     assert electrolyte_postsolve["backend"] == "native_electrolyte_postsolve_certification"
-    assert electrolyte_postsolve["public_admission_state"] == "public_route_closed"
+    assert electrolyte_postsolve["public_admission_state"] == "prerequisite_evidence_only"
     assert electrolyte_postsolve["selector_family"] == "electrolyte_lle"
     assert electrolyte_postsolve["reduced_basis"] == "independent_counterion_pair_matrix"
     assert electrolyte_postsolve["stage_status"] == "postsolve_certified_public_admission_pending"
     assert electrolyte_postsolve["route_hessian_mode"] == "limited_memory_charged_born_route"
-    assert "electrolyte_lle" not in activation["public_routes"]
-    assert "electrolyte_lle" not in activation["production_families"]
+    electrolyte_public = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "electrolyte_lle_khudaida_public_admission"
+    )
+    assert electrolyte_public["classification"] == "production_supported"
+    assert electrolyte_public["backend"] == "native_electrolyte_postsolve_certification"
+    assert electrolyte_public["public_admission_state"] == "public_route_open"
+    assert electrolyte_public["public_route"] == "electrolyte_lle"
+    assert electrolyte_public["selector_family"] == "electrolyte_lle"
+    assert electrolyte_public["source_configuration"] == "Khudaida 2026 NaCl mixed-solvent electrolyte LLE"
+    assert electrolyte_public["native_component_set"] == ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
+    assert electrolyte_public["stage_status"] == "public_admission_complete"
+    assert "electrolyte_lle" in activation["public_routes"]
+    assert "electrolyte_lle" in activation["production_families"]
     electrolyte_activation = next(
         row for row in capabilities["activation_matrix"]["rows"] if row["key"] == "electrolyte_lle"
     )
-    assert electrolyte_activation["production_exposed"] is False
-    assert electrolyte_activation["public_routes"] == []
-    assert electrolyte_activation["proof_routes"] == []
+    assert electrolyte_activation["production_exposed"] is True
+    assert electrolyte_activation["public_routes"] == ["electrolyte_lle"]
+    assert electrolyte_activation["proof_routes"] == ["electrolyte_held2_public_route_admission"]
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
+    assert activation["public_route_family_map"]["electrolyte_lle"] == "electrolyte_lle"
 
     deleted_route_keys = {
         "neutral_lle_flash",
         "neutral_stability",
-        "electrolyte_lle",
         "electrolyte_bubble_pressure",
         "electrolyte_stability",
         "reactive_speciation",

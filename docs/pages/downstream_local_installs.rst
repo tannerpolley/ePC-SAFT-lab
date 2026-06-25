@@ -194,7 +194,10 @@ Capability status summary
      - Uses native charge-constrained TPD route builders; Python does not provide an alternate solve loop.
    * - Electrolyte LLE
      - Native Ipopt route when compiled
-     - Requires an Ipopt-enabled build.
+     - Public package route is limited to the retained source-backed
+       H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent fixture through
+       ``route="electrolyte_lle"``; generic salt/solvent, reactive, CE/CPE,
+       and regression claims remain downstream or future-gate work.
    * - Reactive speciation
      - Explicit Ipopt ideal route
      - Native Ipopt support covers homogeneous ``ideal_mole_fraction`` when compiled; activity and concentration residual diagnostics use exact CppAD-implicit phase-state derivatives, while production nonideal solves require the native Gibbs/activity NLP route builder.
@@ -217,7 +220,9 @@ without adding downstream-specific public APIs:
 * Reactive speciation with generic target rows for speciation, volatile partial
   pressure, and activity observations.
 * Electrolyte LLE with generic solvent-feed, salt-molality, phase-composition,
-  mean-ionic-activity, and regularization rows.
+  mean-ionic-activity, and regularization row shapes. This smoke coverage does
+  not broaden the admitted ``electrolyte_lle`` route beyond the retained
+  source-backed package fixture.
 * Reactive electrolyte bubble pressure with generic speciation, fugacity, and
   partial-pressure rows.
 

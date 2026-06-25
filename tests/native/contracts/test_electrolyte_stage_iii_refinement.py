@@ -172,7 +172,7 @@ def test_stage_iii_rejects_raw_single_ion_equality() -> None:
     assert "stage_iii_raw_single_ion_equality_present" in result["blockers"]
 
 
-def test_public_electrolyte_routes_stay_closed() -> None:
+def test_stage_iii_defers_public_admission_to_separate_gate() -> None:
     checker = _load_checker()
 
     payload = checker.minimal_complete_payload_for_tests()
@@ -180,7 +180,10 @@ def test_public_electrolyte_routes_stay_closed() -> None:
     assert payload["public_route_state"]["electrolyte_lle"]["production_exposed"] is False
     assert payload["public_route_state"]["electrolyte_lle"]["public_routes"] == []
     assert payload["electrolyte_stage_iii_refinement"]["stage_statuses"]["postsolve_certification"] == "pending"
-    assert payload["electrolyte_stage_iii_refinement"]["stage_statuses"]["public_route_admission"] == "closed"
+    assert (
+        payload["electrolyte_stage_iii_refinement"]["stage_statuses"]["public_route_admission"]
+        == "separate_public_admission_gate"
+    )
 
 
 def test_cli_requires_complete_electrolyte_stage_iii_refinement() -> None:
@@ -194,7 +197,6 @@ def test_cli_requires_complete_electrolyte_stage_iii_refinement() -> None:
             "--require-tpd-gate",
             "--require-held2-discovery",
             "--require-native-stage-iii",
-            "--require-public-routes-closed",
             "--require-complete",
         ],
         cwd=REPO_ROOT,

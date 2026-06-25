@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready_to_close_after_314_merge"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
@@ -60,10 +60,11 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 
 - #189, #275, #286, #300, #302, and #306 are closed and remain only as historical dependency provenance.
 - #306 closed the HELD2 counterion-pair phase-discovery gate in reduced electroneutral coordinates.
-- The remaining gate is the concrete public electrolyte route admission child
-  under #314. #312 provides the retained Stage III reduced-variable refinement
-  proof and #313 provides the retained postsolve certification proof consumed
-  by #314.
+- #312 provides the retained Stage III reduced-variable refinement proof.
+- #313 provides the retained postsolve certification proof.
+- #314 is the final public electrolyte route admission child. Once #314 merges
+  and its retained checker passes on `main`, this umbrella has no remaining M4
+  electrolyte implementation gate.
 
 ## Child Issues
 
@@ -73,7 +74,7 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - [#306](2026-06-25-m4-equilibrium-issue-0306-add-electrolyte-held2-counterion-pair-phase-discovery-gate.md) closed the HELD2 counterion-pair phase-discovery child. It added native reduced-coordinate diagnostics with independent counterion-pair matrix rank evidence, charge-neutral candidates, mean-ionic residual bookkeeping, a Stage III handoff record, and closed public route state. It did not claim Stage III refinement, postsolve certification, or public electrolyte route admission.
 - [#312](2026-06-25-m4-equilibrium-issue-0312-add-electrolyte-held2-stage-iii-reduced-variable-refinement-gate.md) adds the retained Stage III reduced-variable electrolyte refinement proof. It consumes the #306 candidate handoff, reports exact reduced residual derivative receipts, records strict Ipopt success and finite local phase compositions, and keeps postsolve certification plus public route admission pending.
 - [#313](2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) closes the postsolve certification child. It certifies explicit-ion material reconstruction, per-phase charge balance, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, and domain margins while keeping public route admission pending.
-- [#314](2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) is the final public electrolyte GFPE admission child and must consume every prior electrolyte checker before #191 can close.
+- [#314](2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) is the final public electrolyte GFPE admission child. It consumes every prior electrolyte checker, admits only the source-backed Khudaida explicit-ion `electrolyte_lle` route, and prepares this umbrella for closeout after merge.
 
 ## HELD2 Adoption Checkpoint Sequence
 
@@ -92,8 +93,21 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
   per-phase charge balance, neutral transfer, mean-ionic transfer, pressure
   consistency, phase amounts, and domain margins through
   `scripts/validation/check_electrolyte_postsolve_certification.py`.
-- #314 public admission checkpoint: consume all prior checkers and expose only the
-  certified electrolyte route surface.
+- #314 public admission checkpoint: consume all prior checkers and expose only
+  the certified electrolyte route surface.
+
+## Closeout Evidence Prepared
+
+After #314 merges, close this umbrella with the retained checker command:
+
+```powershell
+uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
+```
+
+Expected retained result: `complete: true`, `blockers: []`, public route
+`electrolyte_lle`, phase labels `liquid1` and `liquid2`, total charge residual
+`0.0`, pressure consistency norm `6.984919309616089e-10`, exact reduced
+Hessian available, and reactive/CE/CPE/regression/release claims closed.
 
 ## Supplemental Context
 
@@ -109,9 +123,9 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - [x] HELD2 counterion-pair phase discovery consumes #269, #300, and #302 evidence and reports full-rank reduced-coordinate diagnostics.
 - [x] #312 Stage III electrolyte refinement consumes the HELD2 candidate set and solves in reduced electroneutral variables.
 - [x] #313 postsolve electrolyte certification reports material, charge, pressure, neutral transfer, mean-ionic transfer, and domain diagnostics.
-- [ ] #314 electrolyte GFPE route admission is gated by source-backed validation and postsolve certification.
-- [ ] Capability evidence distinguishes neutral, associating, electrolyte, and reactive support.
-- [ ] Docs do not claim electrolyte production support before executable evidence passes.
+- [x] #314 electrolyte GFPE route admission is gated by source-backed validation and postsolve certification.
+- [x] Capability evidence distinguishes neutral, associating, electrolyte, and reactive support.
+- [x] Docs state the exact source-backed electrolyte production scope and do not broaden into generic electrolyte, reactive, CE/CPE, regression, or release claims.
 
 ## Proof Oracle
 
@@ -132,7 +146,7 @@ Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalize
 - Package: `equilibrium`
 - Capability: `electrolyte`
 - Backend: `Ipopt`
-- Readiness: `blocked`
+- Readiness: `ready_to_close_after_314_merge`
 - AFK/HITL: `HITL`
 - Release target: `equilibrium-0.x`
 - Labels: `enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature`

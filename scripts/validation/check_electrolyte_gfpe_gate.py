@@ -539,7 +539,7 @@ def main(argv: list[str] | None = None) -> int:
         require_source_data=args.require_source_data or args.require_complete,
         require_parameter_bundle=args.require_parameter_bundle or args.require_complete,
         require_native_diagnostics=args.require_native_diagnostics or args.require_complete,
-        require_public_routes_closed=args.require_public_routes_closed or args.require_complete,
+        require_public_routes_closed=args.require_public_routes_closed,
         checker_command=checker_command,
     )
     if args.require_complete:

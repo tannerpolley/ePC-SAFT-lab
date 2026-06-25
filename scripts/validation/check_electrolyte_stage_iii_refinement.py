@@ -117,7 +117,7 @@ def _validate_stage_iii_payload(stage_iii: dict[str, Any]) -> list[str]:
         blockers.append("stage_iii_status_incomplete")
     if stages.get("postsolve_certification") == "complete":
         blockers.append("stage_iii_postsolve_claimed_complete")
-    if stages.get("public_route_admission") != "closed":
+    if stages.get("public_route_admission") != "separate_public_admission_gate":
         blockers.append("stage_iii_public_route_admission_open")
 
     seed = stage_iii.get("seed_provenance", {})
@@ -284,7 +284,7 @@ def evaluate_stage_iii_refinement(
         require_readiness_gate=True,
         require_tpd_gate=True,
         require_native_held2_discovery=True,
-        require_public_routes_closed=True,
+        require_public_routes_closed=require_public_routes_closed,
         checker_command=checker_command,
     )
     try:
@@ -365,7 +365,7 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
             "phase_discovery": "complete",
             "stage_iii_refinement": "complete",
             "postsolve_certification": "pending",
-            "public_route_admission": "closed",
+            "public_route_admission": "separate_public_admission_gate",
         },
         "seed_provenance": {
             "source_gate": "electrolyte_held2_counterion_pair_phase_discovery",
@@ -470,7 +470,7 @@ def main(argv: list[str] | None = None) -> int:
         require_tpd_gate=args.require_tpd_gate or args.require_complete,
         require_held2_discovery=args.require_held2_discovery or args.require_complete,
         require_native_stage_iii=args.require_native_stage_iii or args.require_complete,
-        require_public_routes_closed=args.require_public_routes_closed or args.require_complete,
+        require_public_routes_closed=args.require_public_routes_closed,
         checker_command=checker_command,
     )
     if args.require_complete:

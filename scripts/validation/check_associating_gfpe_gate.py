@@ -266,23 +266,24 @@ def _capability_evidence_payload() -> dict[str, Any]:
     if any(quantity.endswith("_internal_exact_hessian") for quantity in quantities):
         blockers.append("stale_internal_associating_exact_hessian_row_present")
 
-    electrolyte = next((row for row in activation_rows if row.get("key") == "electrolyte_lle"), {})
     reactive_rows = [row for row in activation_rows if str(row.get("key", "")).startswith("reactive")]
-    closed_family_rows = [electrolyte, *reactive_rows]
-    for row in closed_family_rows:
+    for row in reactive_rows:
         key = str(row.get("key", "missing"))
         if row.get("production_exposed") is True:
             blockers.append(f"{key}_public_route_exposed")
         if row.get("public_routes"):
             blockers.append(f"{key}_public_route_exposed")
-    if "electrolyte_lle" in public_routes:
-        blockers.append("electrolyte_lle_capability_public_route_exposed")
-    if "electrolyte_lle" in production_families:
-        blockers.append("electrolyte_lle_production_family_exposed")
     if "reactive_lle" in public_routes:
         blockers.append("reactive_lle_capability_public_route_exposed")
     if "reactive_lle" in production_families:
         blockers.append("reactive_lle_production_family_exposed")
+    electrolyte = next((row for row in activation_rows if row.get("key") == "electrolyte_lle"), {})
+    electrolyte_state = {
+        "production_exposed": electrolyte.get("production_exposed") is True,
+        "public_routes": list(electrolyte.get("public_routes", [])),
+        "capability_public": "electrolyte_lle" in public_routes,
+        "production_family": "electrolyte_lle" in production_families,
+    }
 
     return {
         "status": "capability_evidence_verified" if not blockers else "blocked",
@@ -293,6 +294,7 @@ def _capability_evidence_payload() -> dict[str, Any]:
         "production_families": production_families,
         "route_derivative_evidence_quantities": quantities,
         "proof_row": proof_row,
+        "electrolyte_public_route_state": electrolyte_state,
     }
 
 
@@ -331,11 +333,14 @@ def evaluate_payload(
         blockers.extend(str(item) for item in capability.get("blockers", []))
     if require_electrolyte_closed:
         capability = payload.get("capability_evidence", {})
-        blockers.extend(
-            str(item)
-            for item in capability.get("blockers", [])
-            if "electrolyte" in str(item) or "reactive" in str(item)
-        )
+        electrolyte_state = capability.get("electrolyte_public_route_state", {})
+        if (
+            electrolyte_state.get("production_exposed") is True
+            or electrolyte_state.get("public_routes")
+            or electrolyte_state.get("capability_public") is True
+            or electrolyte_state.get("production_family") is True
+        ):
+            blockers.append("electrolyte_lle_public_route_exposed")
 
     unique_blockers = sorted(set(blockers))
     result = dict(payload)
@@ -421,7 +426,7 @@ def main(argv: list[str] | None = None) -> int:
         require_public_admission=args.require_public_admission or args.require_complete,
         require_exact_association_hessian=args.require_exact_association_hessian or args.require_complete,
         require_capability_evidence=args.require_capability_evidence or args.require_complete,
-        require_electrolyte_closed=args.require_electrolyte_closed or args.require_complete,
+        require_electrolyte_closed=args.require_electrolyte_closed,
     )
     if args.json:
         print(json.dumps(output, indent=2, sort_keys=True))

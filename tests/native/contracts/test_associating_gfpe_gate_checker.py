@@ -36,7 +36,6 @@ def test_associating_gfpe_gate_reports_public_narrow_admission_complete() -> Non
         require_public_admission=True,
         require_exact_association_hessian=True,
         require_capability_evidence=True,
-        require_electrolyte_closed=True,
     )
 
     assert payload["complete"] is True
@@ -77,7 +76,9 @@ def test_associating_gfpe_gate_reports_public_narrow_admission_complete() -> Non
     assert proof_row["source_configuration"] == checker.SOURCE_CONFIGURATION
     assert proof_row["assoc_scheme"] == "2B"
     assert proof_row["k_ij"] == 0.051
-    assert "electrolyte_lle" not in capability["public_routes"]
+    electrolyte_state = capability["electrolyte_public_route_state"]
+    assert electrolyte_state["production_exposed"] is True
+    assert "electrolyte_lle" in capability["public_routes"]
     assert "reactive_lle" not in capability["public_routes"]
 
 

@@ -417,6 +417,15 @@ class EquilibriumStructure:
 
 
 _EQUILIBRIUM_ROUTE_SPECS: dict[str, NativeSelectorRouteSpec] = EQUILIBRIUM_ROUTE_SPECS
+_ELECTROLYTE_LLE_PUBLIC_SPECIES = ("H2O", "Ethanol", "Butanol", "Na+", "Cl-")
+_ELECTROLYTE_LLE_PUBLIC_CHARGES = np.asarray([0.0, 0.0, 0.0, 1.0, -1.0], dtype=float)
+_ELECTROLYTE_CHARGE_TOLERANCE = 1.0e-8
+_ELECTROLYTE_TPD_TOLERANCE = 1.0e-8
+_ELECTROLYTE_CANDIDATE_MASS_BALANCE_TOLERANCE = 1.0e-8
+_ELECTROLYTE_RESIDUAL_TOLERANCE = 1.0e-4
+_ELECTROLYTE_PHASE_DISTANCE_TOLERANCE = 1.0e-8
+_ELECTROLYTE_ACTIVE_BOUND_TOLERANCE = 1.0e-8
+_ELECTROLYTE_LLE_SOURCE_SCOPE = "source-backed Khudaida 2026 NaCl mixed-solvent LLE"
 _GROSS_2002_PARAMETER_SOURCE_LABEL = "Gross/Sadowski 2002 Figure 8"
 _GROSS_2002_ASSOCIATING_VLE_CASES: tuple[dict[str, Any], ...] = (
     {
@@ -593,8 +602,11 @@ def configure_equilibrium_problem(
     if spec.route_label != "multiphase" and phase_kinds is not None:
         raise InputError(f"{spec.route_label} must not specify phase_kinds.")
 
-    _reject_ion_containing_mixture(mixture)
-    _reject_associating_mixture(mixture, spec.route_label)
+    if spec.route_label == "electrolyte_lle":
+        _require_source_backed_electrolyte_lle_scope(mixture, composition)
+    else:
+        _reject_ion_containing_mixture(mixture)
+        _reject_associating_mixture(mixture, spec.route_label)
     temperature = _positive_scalar(T, "T", spec.route_label) if spec.requires_temperature else None
     pressure = _positive_scalar(P, "P", spec.route_label) if spec.requires_pressure else None
     phase_kind_tokens = _normalize_phase_kinds(phase_kinds) if spec.route_label == "multiphase" else None
@@ -628,6 +640,15 @@ def _solve_selector_route(
 
     opts = _normalize_options(options)
     spec = _EQUILIBRIUM_ROUTE_SPECS[problem.route]
+    if problem.route == "electrolyte_lle":
+        return _native_electrolyte_lle_route(
+            mixture,
+            problem,
+            options=opts,
+            problem_kind=spec.problem_kind,
+            selector_family=spec.selector_family,
+            composition_role=spec.composition_role,
+        )
     if problem.route == "multiphase":
         return _native_neutral_multiphase_route(
             mixture,
@@ -668,6 +689,30 @@ def equilibrium_structure(mixture: Any, problem: EquilibriumProblem) -> Equilibr
     _core = extension_native_core()
 
     request = _selector_request_from_problem(problem)
+    if problem.route == "electrolyte_lle":
+        return EquilibriumStructure(
+            route=problem.route,
+            selector_route=problem.selector_route,
+            knowns=problem.knowns,
+            unknowns=problem.unknowns,
+            composition_role=problem.composition_role,
+            activation_key=problem.activation_key,
+            residual_families=("phase_equilibrium", "material_balance", "phase_charge"),
+            hard_constraint_families=(
+                "phase_equilibrium",
+                "phase_pressure_consistency",
+                "phase_distance",
+                "formula_feasibility",
+                "phase_charge",
+            ),
+            expected_phase_keys=problem.expected_phase_keys,
+            dof={
+                "available": False,
+                "reason": "source_backed_public_admission_contract",
+            },
+            variable_model="counterion_pair_reduced_phase_amounts_plus_phase_volume",
+            density_backend="native_electrolyte_postsolve_certification",
+        )
     if problem.route == "multiphase":
         contract = _core._native_equilibrium_activation_plan_contract(mixture._native, request)
         activation = contract["activation_plan"]
@@ -825,6 +870,170 @@ def _accepted_native_selector_two_phase_result(
         selector_route=str(route.get("route", "")),
         composition_role=composition_role,
         feed_composition=feed_composition,
+    )
+
+
+def _native_electrolyte_lle_route(
+    mixture: Any,
+    problem: EquilibriumProblem,
+    *,
+    options: EquilibriumSolverOptions,
+    problem_kind: str,
+    selector_family: str,
+    composition_role: str,
+) -> EquilibriumResult:
+    _core = extension_native_core()
+
+    temperature = float(problem.fixed_specs["T"])
+    pressure = float(problem.fixed_specs["P"])
+    feed = np.asarray(problem.fixed_specs["z"], dtype=float)
+    route_mixture = _nonassociating_electrolyte_route_mixture(mixture)
+    certification = _core._native_electrolyte_postsolve_certification(
+        route_mixture._native,
+        temperature,
+        pressure,
+        feed.tolist(),
+        _ELECTROLYTE_LLE_PUBLIC_CHARGES.tolist(),
+        list(_ELECTROLYTE_LLE_PUBLIC_SPECIES),
+        [0, 0],
+        _ELECTROLYTE_CHARGE_TOLERANCE,
+        _ELECTROLYTE_TPD_TOLERANCE,
+        _ELECTROLYTE_CANDIDATE_MASS_BALANCE_TOLERANCE,
+        _ELECTROLYTE_RESIDUAL_TOLERANCE,
+        _ELECTROLYTE_PHASE_DISTANCE_TOLERANCE,
+        _ELECTROLYTE_ACTIVE_BOUND_TOLERANCE,
+    )
+    return _accepted_native_electrolyte_lle_result(
+        T=temperature,
+        P=pressure,
+        feed=feed,
+        certification=certification,
+        public_route=problem.route,
+        problem_kind=problem_kind,
+        selector_family=selector_family,
+        composition_role=composition_role,
+        options=options,
+    )
+
+
+def _accepted_native_electrolyte_lle_result(
+    *,
+    T: float,
+    P: float,
+    feed: np.ndarray,
+    certification: Mapping[str, Any],
+    public_route: str,
+    problem_kind: str,
+    selector_family: str,
+    composition_role: str,
+    options: EquilibriumSolverOptions,
+) -> EquilibriumResult:
+    certification_payload = dict(certification)
+    if certification_payload.get("status") != "complete":
+        raise SolutionError("Native electrolyte LLE postsolve certification did not complete.", certification_payload)
+
+    stage_iii = certification_payload.get("electrolyte_stage_iii_refinement", {})
+    if not isinstance(stage_iii, Mapping) or stage_iii.get("status") != "complete":
+        raise SolutionError("Native electrolyte LLE Stage III evidence is not complete.", certification_payload)
+    native_route = stage_iii.get("native_stage_iii_route_result", {})
+    if not isinstance(native_route, Mapping) or native_route.get("accepted") is not True:
+        raise SolutionError("Native electrolyte LLE route evidence was not accepted.", certification_payload)
+
+    physical_evidence = native_route.get("physical_evidence", {})
+    phase_payloads = physical_evidence.get("phases", ()) if isinstance(physical_evidence, Mapping) else ()
+    if not isinstance(phase_payloads, Sequence) or isinstance(phase_payloads, (str, bytes)) or len(phase_payloads) != 2:
+        raise SolutionError("Native electrolyte LLE certification did not return two phase payloads.", certification_payload)
+
+    labels = ("liquid1", "liquid2")
+    phases: list[EquilibriumPhase] = []
+    for index, payload in enumerate(phase_payloads):
+        if not isinstance(payload, Mapping):
+            raise SolutionError("Native electrolyte LLE phase payload is invalid.", certification_payload)
+        phases.append(
+            EquilibriumPhase(
+                label=labels[index],
+                composition=payload["composition"],
+                density=float(payload["density"]),
+                temperature=T,
+                pressure=P,
+                phase_fraction=float(payload["phase_fraction"]),
+                ln_fugacity_coefficient=payload.get("ln_fugacity_coefficients"),
+                diagnostics={
+                    "native_label": payload.get("label", ""),
+                    "role": payload.get("role", ""),
+                    "phase_kind": payload.get("phase_kind", 0),
+                    "amount_total": payload.get("amount_total"),
+                    "volume": payload.get("volume"),
+                },
+            )
+        )
+
+    derivatives = stage_iii.get("derivative_receipts", {})
+    if not isinstance(derivatives, Mapping):
+        derivatives = {}
+    route_hessian = str(derivatives.get("route_hessian_approximation", native_route.get("hessian_approximation", "")))
+    diagnostics: dict[str, Any] = {
+        "route_status": "production_accepted",
+        "solver_accepted": True,
+        "route_accepted": True,
+        "solver_status": native_route.get("solver_status", ""),
+        "application_status": native_route.get("application_status", ""),
+        "postsolve_accepted": True,
+        "postsolve_certification": {
+            "accepted": True,
+            "status": certification_payload.get("status"),
+            "native_binding": certification_payload.get("native_binding"),
+            "algorithm_scope": certification_payload.get("algorithm_scope"),
+        },
+        "public_admission": {
+            "status": "accepted",
+            "scope": _ELECTROLYTE_LLE_SOURCE_SCOPE,
+            "association_state": "disabled_for_pre_association_electrolyte_gate",
+            "public_route": public_route,
+            "selector_family": selector_family,
+            "source_fixture": "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl",
+            "parameter_bundle": "analyses/paper_validation/2026_khudaida/parameters",
+        },
+        "activation_plan": {"family_key": selector_family},
+        "phase_labels": labels,
+        "phase_roles": ("liquid", "liquid"),
+        "charge_balance": certification_payload.get("charge_balance", {}),
+        "transfer_residuals": certification_payload.get("transfer_residuals", {}),
+        "pressure_consistency": certification_payload.get("pressure_consistency", {}),
+        "phase_set": certification_payload.get("phase_set", {}),
+        "domain_margins": certification_payload.get("domain_margins", {}),
+        "explicit_ion_reconstruction": certification_payload.get("explicit_ion_reconstruction", {}),
+        "derivative_receipts": derivatives,
+        "hessian_approximation": str(derivatives.get("hessian_approximation", "exact")),
+        "exact_hessian_available": bool(derivatives.get("exact_reduced_hessian_available", False)),
+        "jacobian_approximation": str(derivatives.get("jacobian_approximation", "exact")),
+        "exact_jacobian_available": bool(derivatives.get("exact_reduced_jacobian_available", False)),
+        "route_hessian_approximation": route_hessian,
+        "route_hessian_backend": derivatives.get("route_hessian_backend"),
+        "backend": native_route.get("backend", "ipopt"),
+        "option_profile": native_route.get("option_profile", "electrolyte_stage_iii_refinement"),
+        "max_iterations": options.max_iterations,
+        "tolerance": options.tolerance,
+        "ipopt_iteration_history_limit": options.ipopt_iteration_history_limit,
+        "iteration_count": native_route.get("iteration_count", 0),
+        "iteration_history_size": native_route.get("iteration_history_size", 0),
+        "iteration_history": native_route.get("iteration_history", ()),
+        "physical_evidence": physical_evidence,
+    }
+    if diagnostics["hessian_approximation"] != "exact" or diagnostics["exact_hessian_available"] is not True:
+        raise SolutionError("Native electrolyte LLE route did not return exact reduced Hessian evidence.", diagnostics)
+
+    return EquilibriumResult(
+        backend=str(native_route.get("backend", "ipopt")),
+        problem_kind=problem_kind,
+        phases=tuple(phases),
+        stable=True,
+        split_detected=True,
+        diagnostics=diagnostics,
+        route=public_route,
+        selector_route=selector_family,
+        composition_role=composition_role,
+        feed_composition=feed,
     )
 
 
@@ -1150,6 +1359,67 @@ def _positive_scalar(value: Any, label: str, kind: str) -> float:
     return out
 
 
+def _association_active(parameters: Mapping[str, Any]) -> bool:
+    assoc_num = np.asarray(parameters.get("assoc_num", []), dtype=int).flatten()
+    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
+    e_assoc = np.asarray(parameters.get("e_assoc", []), dtype=float).flatten()
+    vol_a = np.asarray(parameters.get("vol_a", []), dtype=float).flatten()
+    return (
+        (assoc_num.size > 0 and np.any(assoc_num > 0))
+        or (assoc_matrix.size > 0 and np.any(np.abs(assoc_matrix) > 0.0))
+        or (e_assoc.size > 0 and np.any(np.abs(e_assoc) > 0.0))
+        or (vol_a.size > 0 and np.any(np.abs(vol_a) > 0.0))
+    )
+
+
+def _require_source_backed_electrolyte_lle_scope(mixture: Any, feed: np.ndarray) -> None:
+    parameters = mixture.parameters
+    species = tuple(str(item) for item in getattr(mixture, "species", ()))
+    if species != _ELECTROLYTE_LLE_PUBLIC_SPECIES:
+        raise InputError(
+            "Production electrolyte_lle admission is limited to the source-backed Khudaida 2026 "
+            "H2O/Ethanol/Butanol/Na+/Cl- mixed-solvent LLE fixture."
+        )
+    charges = np.asarray(parameters.get("z", []), dtype=float).flatten()
+    if charges.shape != _ELECTROLYTE_LLE_PUBLIC_CHARGES.shape or not np.allclose(
+        charges,
+        _ELECTROLYTE_LLE_PUBLIC_CHARGES,
+        rtol=0.0,
+        atol=1.0e-12,
+    ):
+        raise InputError("electrolyte_lle requires the certified explicit-ion Na+/Cl- charge basis.")
+    if abs(float(feed @ charges)) > _ELECTROLYTE_CHARGE_TOLERANCE:
+        raise InputError("electrolyte_lle requires a charge-neutral explicit-ion feed.")
+    source_label = str(parameters.get("_parameter_source_label", "")).replace("\\", "/").lower()
+    if not source_label.endswith("analyses/paper_validation/2026_khudaida/parameters"):
+        raise InputError("electrolyte_lle requires the certified Khudaida 2026 parameter bundle.")
+    if parameters.get("_binary_interaction_provenance_status") != "explicit_binary_records":
+        raise InputError("electrolyte_lle requires explicit source-bundle binary interaction records.")
+    elec_model = parameters.get("elec_model", {})
+    if not isinstance(elec_model, Mapping):
+        raise InputError("electrolyte_lle requires the certified electrolyte model options.")
+    born_model = elec_model.get("born_model", {})
+    if not isinstance(born_model, Mapping):
+        raise InputError("electrolyte_lle requires the certified Born model options.")
+    if elec_model.get("include_born_model") is not True:
+        raise InputError("electrolyte_lle requires the Born contribution.")
+    if born_model.get("solvation_shell_model") is not True or born_model.get("dielectric_saturation") is not True:
+        raise InputError("electrolyte_lle requires the certified Born SSM/DS formulation.")
+
+
+def _nonassociating_electrolyte_route_mixture(mixture: Any) -> Any:
+    from epcsaft.state.native_adapter import ePCSAFTMixture
+
+    params = dict(mixture.parameters)
+    ncomp = int(mixture.ncomp)
+    params["assoc_scheme"] = [None] * ncomp
+    params["e_assoc"] = np.zeros(ncomp, dtype=float)
+    params["vol_a"] = np.zeros(ncomp, dtype=float)
+    params.pop("assoc_num", None)
+    params.pop("assoc_matrix", None)
+    return ePCSAFTMixture.from_params(params, species=mixture.species)
+
+
 def _reject_ion_containing_mixture(mixture: Any) -> None:
     charges = np.asarray(mixture.parameters.get("z", []), dtype=float).flatten()
     if charges.size and np.any(np.abs(charges) > 1.0e-12):
@@ -1158,17 +1428,7 @@ def _reject_ion_containing_mixture(mixture: Any) -> None:
 
 def _reject_associating_mixture(mixture: Any, route_label: str = "neutral_lle") -> None:
     parameters = mixture.parameters
-    assoc_num = np.asarray(parameters.get("assoc_num", []), dtype=int).flatten()
-    assoc_matrix = np.asarray(parameters.get("assoc_matrix", []), dtype=float).flatten()
-    e_assoc = np.asarray(parameters.get("e_assoc", []), dtype=float).flatten()
-    vol_a = np.asarray(parameters.get("vol_a", []), dtype=float).flatten()
-    active = (
-        (assoc_num.size > 0 and np.any(assoc_num > 0))
-        or (assoc_matrix.size > 0 and np.any(np.abs(assoc_matrix) > 0.0))
-        or (e_assoc.size > 0 and np.any(np.abs(e_assoc) > 0.0))
-        or (vol_a.size > 0 and np.any(np.abs(vol_a) > 0.0))
-    )
-    if not active:
+    if not _association_active(parameters):
         return
     if route_label == "single_component_vle" and _has_pure_2b_single_component_vle_association_proof(parameters):
         return

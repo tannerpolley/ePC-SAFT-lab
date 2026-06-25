@@ -146,7 +146,7 @@ def _validate_postsolve_certification(certification: dict[str, Any]) -> list[str
         blockers.append("postsolve_stage_iii_incomplete")
     if stages.get("postsolve_certification") != "complete":
         blockers.append("postsolve_status_incomplete")
-    if stages.get("public_route_admission") != "closed":
+    if stages.get("public_route_admission") != "separate_public_admission_gate":
         blockers.append("postsolve_public_route_admission_claimed")
 
     reconstruction = certification.get("explicit_ion_reconstruction", {})
@@ -270,7 +270,7 @@ def evaluate_postsolve_certification(
         require_tpd_gate=True,
         require_held2_discovery=True,
         require_native_stage_iii=True,
-        require_public_routes_closed=True,
+        require_public_routes_closed=require_public_routes_closed,
         checker_command=checker_command,
     )
     try:
@@ -316,7 +316,7 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
             "phase_discovery": "complete",
             "stage_iii_refinement": "complete",
             "postsolve_certification": "complete",
-            "public_route_admission": "closed",
+            "public_route_admission": "separate_public_admission_gate",
         },
         "explicit_ion_reconstruction": {
             "status": "accepted",
@@ -418,7 +418,7 @@ def main(argv: list[str] | None = None) -> int:
         args.case_dir,
         require_stage_iii=args.require_stage_iii or args.require_complete,
         require_postsolve_certification=args.require_postsolve_certification or args.require_complete,
-        require_public_routes_closed=args.require_public_routes_closed or args.require_complete,
+        require_public_routes_closed=args.require_public_routes_closed,
         checker_command=checker_command,
     )
     if args.require_complete:

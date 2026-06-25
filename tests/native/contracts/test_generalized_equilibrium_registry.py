@@ -123,13 +123,19 @@ def test_stage9_phase_discovery_checker_requires_complete_exit_status() -> None:
     assert required_command in stage_text
 
 
-def test_only_generalized_neutral_multiphase_claims_public_admission() -> None:
+def test_public_admission_rows_are_explicitly_scoped() -> None:
+    admitted = {
+        "PE-Generalized Multiphase": ("neutral_public_admitted", ["multiphase"]),
+        "PE-Associating TP Flash": ("source_backed_associating_lle_public_admitted", ["lle"]),
+        "PE-Electrolyte LLE/TP Flash": ("source_backed_electrolyte_lle_public_admitted", ["electrolyte_lle"]),
+    }
     for row in _family_rows():
         assert "required_gates" in row, row["family_label"]
-        if row["family_label"] == "PE-Generalized Multiphase":
-            assert row["activation_status"] == "neutral_public_admitted"
+        if row["family_label"] in admitted:
+            expected_status, expected_routes = admitted[row["family_label"]]
+            assert row["activation_status"] == expected_status
             assert row["production_exposed"] is True
-            assert row["existing_public_utility_routes"] == ["multiphase"]
+            assert row["existing_public_utility_routes"] == expected_routes
         else:
             assert row["activation_status"] == "planned_not_public", row["family_label"]
             assert row["production_exposed"] is False, row["family_label"]
@@ -258,34 +264,34 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert electrolyte["derivative_contract"] == expected_derivative_contract
 
 
-def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> None:
+def test_electrolyte_family_records_public_admission_evidence() -> None:
     electrolyte = _family_by_label()["PE-Electrolyte LLE/TP Flash"]
     evidence = {row["evidence_label"]: row for row in electrolyte["admission_evidence"]}
 
     gate = evidence["Khudaida electrolyte GFPE closed-admission gate"]
 
-    assert electrolyte["production_exposed"] is False
-    assert electrolyte["existing_public_utility_routes"] == []
-    assert electrolyte["phase_discovery_status"] == "held2_postsolve_certified_pending_public_admission"
+    assert electrolyte["production_exposed"] is True
+    assert electrolyte["existing_public_utility_routes"] == ["electrolyte_lle"]
+    assert electrolyte["phase_discovery_status"] == "held2_postsolve_certified_public_admission_complete"
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
     assert "electrolyte_postsolve_phase_set_certification" in electrolyte["required_gates"]
+    assert "electrolyte_public_route_admission" in electrolyte["required_gates"]
     assert gate["evidence_tier"] == "T1"
     assert gate["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py "
         "--json --require-source-data --require-parameter-bundle "
-        "--require-native-diagnostics --require-public-routes-closed --require-complete"
+        "--require-native-diagnostics --require-complete"
     )
     assert "Khudaida source fixture parsed" in gate["result_requirement"]
     assert "explicit-ion charge balance <= 1.0e-8" in gate["result_requirement"]
     assert "path-based `2026_Khudaida` parameter bundle constructs native mixture" in gate["result_requirement"]
-    assert "electrolyte public route admission closed" in gate["result_requirement"]
 
     readiness = evidence["Electrolyte HELD2 readiness and Born SSM/DS exactness gate"]
     assert readiness["evidence_tier"] == "T1"
     assert readiness["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_held2_readiness.py "
         "--json --require-source-gate --require-reduced-basis --require-born-ssm-ds "
-        "--require-public-routes-closed --require-complete"
+        "--require-complete"
     )
     assert "reduced NaCl amount lift charge residual <= 1.0e-10" in readiness["result_requirement"]
     assert "CppAD Born SSM/DS composition" in readiness["result_requirement"]
@@ -297,37 +303,45 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
     assert discovery["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_held2_phase_discovery.py "
         "--json --require-source-gate --require-readiness-gate --require-tpd-gate "
-        "--require-native-held2-discovery --require-public-routes-closed --require-complete"
+        "--require-native-held2-discovery --require-complete"
     )
     assert "rank equals N_ch - 1" in discovery["result_requirement"]
     assert "pair-based mean-ionic bookkeeping" in discovery["scope"]
-    assert "Stage III refinement, postsolve certification, and public admission remain pending or closed" in discovery["result_requirement"]
 
     stage_iii = evidence["Electrolyte HELD2 Stage III reduced-variable refinement gate"]
     assert stage_iii["evidence_tier"] == "T1"
     assert stage_iii["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_stage_iii_refinement.py "
         "--json --require-source-gate --require-readiness-gate --require-tpd-gate "
-        "--require-held2-discovery --require-native-stage-iii --require-public-routes-closed --require-complete"
+        "--require-held2-discovery --require-native-stage-iii --require-complete"
     )
     assert "_native_electrolyte_stage_iii_refinement" in stage_iii["scope"]
     assert "exact reduced Jacobian/Hessian receipts" in stage_iii["scope"]
     assert "Ipopt status `Solve_Succeeded`" in stage_iii["result_requirement"]
-    assert "postsolve certification remains pending" in stage_iii["result_requirement"]
-    assert "public electrolyte route admission remains closed" in stage_iii["result_requirement"]
 
     postsolve = evidence["Electrolyte postsolve phase-set certification gate"]
     assert postsolve["evidence_tier"] == "T1"
     assert postsolve["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_postsolve_certification.py "
         "--json --require-stage-iii --require-postsolve-certification "
-        "--require-public-routes-closed --require-complete"
+        "--require-complete"
     )
     assert "_native_electrolyte_postsolve_certification" in postsolve["scope"]
     assert "explicit-ion reconstruction" in postsolve["scope"]
     assert "neutral and mean-ionic transfer residuals" in postsolve["scope"]
     assert "phase and total charge residuals <= 1.0e-8" in postsolve["result_requirement"]
-    assert "public electrolyte route admission remains closed" in postsolve["result_requirement"]
+
+    public = evidence["Electrolyte public route admission gate"]
+    assert public["evidence_tier"] == "T1"
+    assert public["command"] == (
+        "uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py "
+        "--json --require-source-gate --require-readiness-gate --require-tpd-gate "
+        "--require-held2-discovery --require-stage-iii --require-postsolve-certification "
+        "--require-public-admission --require-complete"
+    )
+    assert "Equilibrium(..., route='electrolyte_lle')" in public["scope"]
+    assert "public route `electrolyte_lle`" in public["result_requirement"]
+    assert "reactive, CE, CPE, regression, and release claims remain closed" in public["result_requirement"]
 
 
 def test_generalized_multiphase_records_public_admission_evidence() -> None:

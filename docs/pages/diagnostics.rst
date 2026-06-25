@@ -79,10 +79,14 @@ hard constraints, and postsolve certification were used:
 * ``postsolve_certification`` is present and accepted.
 
 Associating, electrolyte, reactive, and generalized stability route families
-are declared for plan context only. Neutral nonassociating LLE is already a
-selector-owned production route; broader associating LLE, electrolyte LLE, and
-reactive routes are not callable production diagnostics until a future ADR and
-activation-matrix proof expose them through the selector core.
+are still checked against their proof gates before public use. Neutral LLE has
+selector-owned production diagnostics, the source-backed methanol/cyclohexane
+associating LLE fixture is admitted through ``route="lle"``, and the
+source-backed Khudaida explicit-ion NaCl mixed-solvent fixture is admitted
+through ``route="electrolyte_lle"``. Broader associating, generic electrolyte,
+reactive, CE/CPE, and regression surfaces are not callable production
+diagnostics until matching activation-matrix proof exposes them through the
+selector core.
 
 Contribution Maps
 -----------------
