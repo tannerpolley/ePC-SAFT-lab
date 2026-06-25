@@ -56,10 +56,10 @@ start from a durable local source plan.
 
 Prove electrolyte GFPE and HELD2.0 validation gates after the neutral generalized phase-set path is certified and the Gross 2002 full figure replication campaign proves the associating premise that electrolyte work would otherwise rely on.
 
-## Blocking Prerequisites
+## Closed Prerequisites And Remaining Gates
 
 - #189, #275, #286, #300, and #302 are closed and remain only as historical dependency provenance.
-- #191 remains blocked by HELD2 dual phase discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set certification, and public electrolyte route admission.
+- #191 is ready for the next child gate. The remaining gates are HELD2 dual phase discovery, Stage III electrolyte refinement, postsolve electrolyte phase-set certification, and public electrolyte route admission.
 
 ## Child Issues
 
