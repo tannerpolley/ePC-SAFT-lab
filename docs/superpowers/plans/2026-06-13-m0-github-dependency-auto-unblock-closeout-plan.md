@@ -37,7 +37,7 @@ GitHub Actions, local Markdown mirrors under `docs/superpowers`, docs under
 ## Acceptance Gates
 
 - [ ] A dry-run command can list issues blocked by a resolved issue and show which dependents have zero open blockers left.
-- [ ] A GitHub Actions workflow runs the same logic on issue close, merged PR close, manual dispatch, and scheduled reconciliation.
+- [ ] A GitHub Actions workflow runs the same logic on issue close, manual dispatch, and scheduled reconciliation.
 - [ ] An apply command removes `status:blocked` and adds `status:ready` only for dependents whose native blockers are all closed.
 - [ ] `agent-ready` is added only when local mirror/source-plan checks prove the issue is AFK-ready.
 - [ ] Local mirrors and milestone README rows are refreshed and committed by the workflow when changes are needed, or reported as missing.
@@ -206,11 +206,11 @@ Triggering example:
 #189 remained labeled `status:blocked` after its native blockers #188 and #241 were closed.
 
 Goal:
-Provide a dry-run-first script plus a GitHub Actions workflow so GitHub can automatically identify and apply safe dependent-issue unblocks after a clean issue/PR merge and commit local mirror updates back to the repo.
+Provide a dry-run-first script plus a GitHub Actions workflow so GitHub can automatically identify and apply safe dependent-issue unblocks after a clean issue close and commit local mirror updates back to the repo.
 
 Acceptance:
 - A dry-run command lists issues blocked by a resolved issue and shows which dependents have zero open blockers left.
-- A GitHub Actions workflow runs the same logic on issue close, merged PR close, manual dispatch, and scheduled reconciliation.
+- A GitHub Actions workflow runs the same logic on issue close, manual dispatch, and scheduled reconciliation.
 - An apply command removes `status:blocked` and adds `status:ready` only for dependents whose native blockers are all closed.
 - `agent-ready` is added only when local mirror/source-plan checks prove the issue is AFK-ready.
 - Local mirrors and milestone README rows are refreshed and committed by the workflow when changes are needed, or reported as missing.

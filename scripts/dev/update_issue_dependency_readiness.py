@@ -195,12 +195,6 @@ def closed_issues_from_event(path: Path, *, event_name: str) -> list[int]:
         issue = payload.get("issue", {})
         number = issue.get("number") if isinstance(issue, dict) else None
         return [number] if isinstance(number, int) else []
-    if event_name == "pull_request" and payload.get("action") == "closed":
-        pr = payload.get("pull_request", {})
-        if not isinstance(pr, dict) or pr.get("merged") is not True:
-            return []
-        text = "\n".join(str(pr.get(field, "")) for field in ("title", "body"))
-        return sorted({int(match) for match in re.findall(r"(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+(?:[\w.-]+/[\w.-]+)?#(\d+)", text, re.I)})
     return []
 
 
@@ -257,9 +251,6 @@ class GitHubClient:
             command.extend(["--remove-label", label])
         subprocess.run(command, check=True)
 
-    def comment(self, issue_number: int, body: str) -> None:
-        subprocess.run(["gh", "issue", "comment", str(issue_number), "--repo", self.repo, "--body", body], check=True)
-
 
 def _plan_for_issue(
     client: GitHubClient,
@@ -311,12 +302,6 @@ def _apply_ready_result(
     issue_number = int(result["dependent_issue"])
     changes = result["proposed_label_changes"]
     client.apply_labels(issue_number, add=list(changes["add"]), remove=list(changes["remove"]))
-    blocker_text = ", ".join(f"#{number}" for number in result["all_blockers"])
-    client.comment(
-        issue_number,
-        f"Dependency readiness sync: all native GitHub blockers are closed ({blocker_text}). "
-        f"Moved `{BLOCKED_LABEL}` to `{READY_LABEL}`.",
-    )
     local_update = sync_local_issue_readiness(repo_root, issue_number, readiness="ready", today=today)
     if strict_local and local_update["warnings"]:
         raise RuntimeError(f"local mirror sync incomplete for #{issue_number}: {', '.join(local_update['warnings'])}")

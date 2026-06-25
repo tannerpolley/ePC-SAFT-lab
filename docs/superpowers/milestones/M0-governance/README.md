@@ -18,8 +18,8 @@ No active M0 governance plans are currently tracked.
 
 ## Retained Workflow
 
-`sync issue readiness` runs on issue close, merged PR close, manual dispatch,
-and scheduled reconciliation. The local command is
+`sync issue readiness` runs on issue close, manual dispatch, and scheduled
+reconciliation. The local command is
 `uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py`;
 use `--dry-run --json` before `--apply --json`.
 

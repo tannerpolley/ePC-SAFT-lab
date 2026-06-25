@@ -47,11 +47,13 @@ for dashboard filtering.
 ## Dependency Readiness Sync
 
 The `sync issue readiness` GitHub Actions workflow runs after issue close,
-merged pull request close, manual dispatch, and scheduled reconciliation. It
+manual dispatch, and scheduled reconciliation. It
 checks GitHub native dependency edges and moves a dependent issue from
 `status:blocked` to `status:ready` only when all native blockers are closed.
 Dependency state alone does not add `agent-ready`; the local mirror and source
-plan must prove the issue is AFK-ready.
+plan must prove the issue is AFK-ready. The workflow updates labels and local
+mirrors silently; it does not post issue comments for routine dependency
+readiness changes.
 
 After a clean merge or direct issue close, inspect the workflow result. If the
 workflow could not push mirror changes, run the same check locally and commit
