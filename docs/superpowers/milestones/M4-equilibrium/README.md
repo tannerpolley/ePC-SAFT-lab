@@ -53,7 +53,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #302 electrolyte charge-neutral TPD gate plan](../../plans/2026-06-24-m4-equilibrium-issue-0302-electrolyte-charge-neutral-tpd-gate-plan.md) | `electrolyte` | Adds the next #191 child gate for native-backed charge-neutral electrolyte TPD screening before full HELD2 dual discovery, Stage III refinement, postsolve certification, or public route admission. |
 | [Issue #306 electrolyte HELD2 counterion-pair phase-discovery gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0306-electrolyte-held2-counterion-pair-phase-discovery-gate-plan.md) | `electrolyte` | Closed #191 child gate for independent counterion-pair matrix construction, reduced electroneutral HELD2 phase-discovery diagnostics, mean-ionic residual bookkeeping, and closed public electrolyte route evidence. |
 | [Issue #312 electrolyte HELD2 Stage III refinement gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md) | `electrolyte` | Closed #191 child gate for consuming the #306 candidate set in local reduced-variable Stage III electrolyte refinement while keeping postsolve certification and public admission separate. |
-| [Issue #313 electrolyte postsolve phase-set certification gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md) | `electrolyte` | Adds the #191 child gate for explicit-ion reconstruction, charge, transfer, pressure, amount, and domain-margin certification after #312 closes. |
+| [Issue #313 electrolyte postsolve phase-set certification gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md) | `electrolyte` | Closed #191 child gate for explicit-ion reconstruction, charge, transfer, pressure, amount, and domain-margin certification after #312. |
 | [Issue #314 electrolyte public route admission gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md) | `electrolyte` | Adds the final #191 child gate for source-backed public electrolyte GFPE route admission after Stage III and postsolve certification close. |
 
 ## Retained Evidence
@@ -73,6 +73,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_electrolyte_tpd_gate.py --json --require-source-gate --require-held2-readiness --require-native-tpd --require-public-routes-closed --require-complete` | `electrolyte` | Charge-neutral electrolyte TPD screening gate for #302: consumes the #269 source gate and #300 readiness gate, calls native `_native_electrolyte_tpd_phase_discovery`, reports three finite source-backed candidates, selected candidate count `2`, minimum TPD `-0.010922388988229025`, maximum charge residual `0.0`, readiness-only HELD2 status, and closed public electrolyte route state. This is screening evidence, not full HELD2 discovery, postsolve certification, or public route admission. |
 | `scripts/validation/check_electrolyte_held2_phase_discovery.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-native-held2-discovery --require-public-routes-closed --require-complete` | `electrolyte` | HELD2 counterion-pair phase-discovery gate for #306: consumes #269/#300/#302, calls native `_native_electrolyte_held2_phase_discovery`, proves full-rank `N_ch - 1` counterion-pair matrices for NaCl, Na/K/Cl, and K/Cl/Na/SO4 cases, reports charge-neutral lifted candidate diagnostics, finite reduced-TPD metrics, pair-based mean-ionic bookkeeping, a Stage III handoff record, and closed public electrolyte route state. Stage III refinement, postsolve certification, and public admission remain separate gates. |
 | `scripts/validation/check_electrolyte_stage_iii_refinement.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-native-stage-iii --require-public-routes-closed --require-complete` | `electrolyte` | Stage III refinement gate for #312: consumes #269/#300/#302/#306, calls native `_native_electrolyte_stage_iii_refinement`, records #306 candidate-set seed provenance, reduced counterion-pair residual variables/equations/scaling/bounds, exact reduced Jacobian/Hessian receipts, strict Ipopt success, finite local phase compositions, and closed public electrolyte route state. Postsolve certification and public admission remain separate gates under #313 and #314. |
+| `scripts/validation/check_electrolyte_postsolve_certification.py --json --require-stage-iii --require-postsolve-certification --require-public-routes-closed --require-complete` | `electrolyte` | Postsolve phase-set certification gate for #313: consumes #312, calls native `_native_electrolyte_postsolve_certification`, retains explicit-ion feed reconstruction, per-phase and total charge residuals, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, composition normalization, and domain margins while keeping public electrolyte route admission closed for #314. |
 | `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian prerequisite proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, and certifies the source-backed internal two-liquid pair consumed by #190. |
 | `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-electrolyte-closed --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, ionic/electrolyte, reactive, TP-flash, and generalized associating phase-set surfaces closed. |
 | `scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native` | `association` | Gross/Sadowski 2002 paper-validation acceptance campaign for #275: retains Figure 1 pure-association AAD sanity evidence, connects Figure 8 methanol/cyclohexane source rows and exact-Hessian proof to campaign summaries, adds Figure 10 water/1-pentanol cross-association stress evidence with `k_ij = 0.016` and `cppad_implicit_association`, records Figures 2-7 and 9 as source-requirement records with no completion credit, and keeps electrolyte/reactive/generalized associating claims outside this evidence. |
@@ -83,9 +84,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Umbrella blocked by #313 and #314 after the #312 Stage III refinement proof. |
-| [#313](../../issues/2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) | `ready` | `Ipopt` | `ready` | Next child: certify explicit-ion material, charge, transfer, pressure, amount, and domain diagnostics after #312. |
-| [#314](../../issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) | `electrolyte` | `Ipopt` | `blocked` | Final public electrolyte GFPE admission child blocked by #313. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked` | Umbrella blocked only by #314 after the #313 postsolve certification proof. |
+| [#314](../../issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) | `electrolyte` | `Ipopt` | `ready` | Final public electrolyte GFPE admission child after #313. |
 
 ## Queue Guard
 
@@ -210,22 +210,27 @@ Na+/Cl-, Na+/K+/Cl-, and the multivalent K+/Cl-/Na+/SO4-- methodology example,
 and rejects incomplete prerequisites, raw single-ion charged-transfer evidence,
 and premature Stage III/postsolve/public-admission completion.
 
-#312 adds the retained Stage III reduced-variable electrolyte refinement gate
+#312 closed with the retained Stage III reduced-variable electrolyte refinement gate
 for #191. The checker consumes #269/#300/#302/#306, calls native
 `_native_electrolyte_stage_iii_refinement`, records the #306 candidate-set seed
 provenance, reports exact reduced counterion-pair Jacobian/Hessian receipts,
 strict Ipopt success, finite local phase compositions, and keeps postsolve
-certification plus public admission closed. #191 is now blocked by #313 and
-#314 for postsolve certification and public route admission in order.
+certification plus public admission closed. #191 then moved to #313 for
+postsolve certification.
 
-#313 is now the next electrolyte child. It must certify explicit-ion material reconstruction,
-per-phase charge balance, neutral and mean-ionic transfer residuals, pressure
-consistency, phase amounts, composition/domain margins, and closed public route
-state.
+#313 closes the electrolyte postsolve phase-set certification gate for #191.
+The retained checker consumes #312, calls native
+`_native_electrolyte_postsolve_certification`, reports `complete: true` with
+`blockers: []`, explicit-ion feed reconstruction at retained tolerance,
+per-phase charge residuals `0.0`, total charge residual `0.0`, pressure
+consistency norm `6.984919309616089e-10`, phase distance
+`2.7722252287643023e-06` above the `1.0e-8` floor, positive phase amounts
+with minimum amount `0.43529509750292383`, separate neutral and mean-ionic
+transfer residual families, and closed public electrolyte route state.
 
-#314 is blocked by #313. It is the final public electrolyte GFPE admission gate
-and must consume #269/#300/#302/#306/#312/#313 before #191 can close and M6
-#192 can become the next GFPE evidence gate.
+#314 is now the final public electrolyte GFPE admission gate and must consume
+#269/#300/#302/#306/#312/#313 before #191 can close and M6 #192 can become the
+next GFPE evidence gate.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table

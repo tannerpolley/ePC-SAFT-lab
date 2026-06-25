@@ -1427,6 +1427,95 @@ py::dict electrolyte_stage_iii_refinement_to_dict(
     return out;
 }
 
+py::dict electrolyte_postsolve_certification_to_dict(
+    const epcsaft::native::equilibrium_nlp::ElectrolytePostsolveCertificationResult& result
+) {
+    auto status_label = [](bool accepted) {
+        return accepted ? std::string("accepted") : std::string("rejected");
+    };
+
+    py::dict out;
+    out["algorithm_scope"] = result.algorithm_scope;
+    out["status"] = result.status;
+    out["native_binding"] = "_native_electrolyte_postsolve_certification";
+
+    py::dict stage_statuses;
+    stage_statuses["phase_discovery"] = result.phase_discovery_status;
+    stage_statuses["stage_iii_refinement"] = result.stage_iii_refinement_status;
+    stage_statuses["postsolve_certification"] = result.postsolve_certification_status;
+    stage_statuses["public_route_admission"] = result.public_route_admission_status;
+    out["stage_statuses"] = stage_statuses;
+
+    py::dict reconstruction;
+    reconstruction["status"] = status_label(result.explicit_ion_reconstruction_accepted);
+    reconstruction["component_labels"] = result.component_labels;
+    reconstruction["feed_composition"] = result.feed_composition;
+    reconstruction["reconstructed_feed_composition"] = result.reconstructed_feed_composition;
+    reconstruction["feed_reconstruction_residuals"] = result.feed_reconstruction_residuals;
+    reconstruction["feed_reconstruction_inf_norm"] = result.feed_reconstruction_inf_norm;
+    reconstruction["feed_reconstruction_tolerance"] = result.feed_reconstruction_tolerance;
+    reconstruction["component_nonnegativity_margin"] = result.component_nonnegativity_margin;
+    out["explicit_ion_reconstruction"] = reconstruction;
+
+    py::dict charge_balance;
+    charge_balance["status"] = status_label(result.charge_balance_accepted);
+    charge_balance["charge_vector"] = result.charge_vector;
+    charge_balance["phase_charge_residuals"] = result.phase_charge_residuals;
+    charge_balance["max_phase_charge_residual"] = result.max_phase_charge_residual;
+    charge_balance["phase_charge_tolerance"] = result.phase_charge_tolerance;
+    charge_balance["total_charge_residual"] = result.total_charge_residual;
+    charge_balance["total_charge_tolerance"] = result.total_charge_tolerance;
+    out["charge_balance"] = charge_balance;
+
+    py::dict neutral_transfer;
+    neutral_transfer["species_labels"] = result.neutral_species_labels;
+    neutral_transfer["residual_values"] = result.neutral_transfer_residuals;
+    neutral_transfer["max_abs_residual"] = result.neutral_transfer_max_abs_residual;
+    neutral_transfer["tolerance"] = result.neutral_transfer_tolerance;
+
+    py::dict mean_ionic_transfer;
+    mean_ionic_transfer["pair_labels"] = result.mean_ionic_pair_labels;
+    mean_ionic_transfer["residual_values"] = result.mean_ionic_transfer_residuals;
+    mean_ionic_transfer["max_abs_residual"] = result.mean_ionic_transfer_max_abs_residual;
+    mean_ionic_transfer["tolerance"] = result.mean_ionic_transfer_tolerance;
+
+    py::dict transfer;
+    transfer["status"] = status_label(result.transfer_residuals_accepted);
+    transfer["neutral_transfer"] = neutral_transfer;
+    transfer["mean_ionic_transfer"] = mean_ionic_transfer;
+    out["transfer_residuals"] = transfer;
+
+    py::dict pressure;
+    pressure["status"] = status_label(result.pressure_consistency_accepted);
+    pressure["pressure_consistency_norm"] = result.pressure_consistency_norm;
+    pressure["pressure_tolerance"] = result.pressure_tolerance;
+    out["pressure_consistency"] = pressure;
+
+    py::dict phase_set;
+    phase_set["status"] = status_label(result.phase_set_accepted);
+    phase_set["phase_count"] = result.phase_count;
+    phase_set["phase_amount_totals"] = result.phase_amount_totals;
+    phase_set["phase_fractions"] = result.phase_fractions;
+    phase_set["phase_compositions"] = result.phase_compositions;
+    phase_set["composition_sum_residuals"] = result.composition_sum_residuals;
+    phase_set["composition_sum_tolerance"] = result.composition_sum_tolerance;
+    phase_set["phase_fraction_sum_residual"] = result.phase_fraction_sum_residual;
+    phase_set["phase_fraction_sum_tolerance"] = result.phase_fraction_sum_tolerance;
+    out["phase_set"] = phase_set;
+
+    py::dict domain;
+    domain["status"] = status_label(result.domain_margins_accepted);
+    domain["minimum_component_mole_fraction"] = result.minimum_component_mole_fraction;
+    domain["minimum_phase_amount"] = result.minimum_phase_amount;
+    domain["phase_distance"] = result.phase_distance;
+    domain["phase_distance_tolerance"] = result.phase_distance_tolerance;
+    out["domain_margins"] = domain;
+
+    out["electrolyte_stage_iii_refinement"] =
+        electrolyte_stage_iii_refinement_to_dict(result.stage_iii_refinement);
+    return out;
+}
+
 py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyActivation& activation) {
     py::dict out;
     out["key"] = activation.key;
@@ -2754,6 +2843,54 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const add_args args = native_args_from_mixture_object(mixture, "Electrolyte Stage III refinement");
         return electrolyte_stage_iii_refinement_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_electrolyte_stage_iii_refinement(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                charges,
+                species_labels,
+                phase_kinds,
+                charge_tolerance,
+                tpd_tolerance,
+                candidate_mass_balance_tolerance,
+                residual_tolerance,
+                phase_distance_tolerance,
+                active_bound_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("charges"),
+        py::arg("species_labels"),
+        py::arg("phase_kinds"),
+        py::arg("charge_tolerance"),
+        py::arg("tpd_tolerance"),
+        py::arg("candidate_mass_balance_tolerance"),
+        py::arg("residual_tolerance"),
+        py::arg("phase_distance_tolerance"),
+        py::arg("active_bound_tolerance")
+    );
+    m.def("_native_electrolyte_postsolve_certification", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<double>& charges,
+        const std::vector<std::string>& species_labels,
+        const std::vector<int>& phase_kinds,
+        double charge_tolerance,
+        double tpd_tolerance,
+        double candidate_mass_balance_tolerance,
+        double residual_tolerance,
+        double phase_distance_tolerance,
+        double active_bound_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Electrolyte postsolve certification");
+        return electrolyte_postsolve_certification_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_postsolve_certification(
                 args,
                 temperature,
                 target_pressure,

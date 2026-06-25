@@ -260,6 +260,42 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "tests/native/contracts/test_generalized_equilibrium_registry.py",
         ),
     },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "electrolyte_postsolve_certification",
+        "quantity": "electrolyte_held2_postsolve_phase_set_certification",
+        "derivative": "postsolve_physical_residual_certification",
+        "backend": "native_electrolyte_postsolve_certification",
+        "supported": True,
+        "classification": "postsolve_certification_evidence",
+        "public_admission_state": "public_route_closed",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl local postsolve certification",
+        "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
+        "source_fixture": (
+            "data/reference/equilibrium_benchmarks/electrolyte_lle/"
+            "water_ethanol_isobutanol_nacl"
+        ),
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "stage_status": "postsolve_certified_public_admission_pending",
+        "route_hessian_mode": "limited_memory_charged_born_route",
+        "reason": (
+            "issue #313 records the electrolyte postsolve certification gate: "
+            "the checker consumes #312, calls native "
+            "`_native_electrolyte_postsolve_certification`, retains explicit-ion "
+            "reconstruction, per-phase and total charge residuals, neutral and "
+            "mean-ionic transfer residuals, pressure consistency, phase amount, "
+            "composition normalization, and domain-margin diagnostics, and keeps "
+            "public electrolyte route admission closed for #314."
+        ),
+        "tests": (
+            "scripts/validation/check_electrolyte_postsolve_certification.py",
+            "tests/native/contracts/test_electrolyte_postsolve_certification.py",
+            "tests/native/contracts/test_electrolyte_stage_iii_refinement.py",
+            "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+            "tests/native/contracts/test_generalized_equilibrium_registry.py",
+        ),
+    },
 )
 
 

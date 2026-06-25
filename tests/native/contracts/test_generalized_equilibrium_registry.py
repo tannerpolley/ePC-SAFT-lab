@@ -266,8 +266,9 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
 
     assert electrolyte["production_exposed"] is False
     assert electrolyte["existing_public_utility_routes"] == []
-    assert electrolyte["phase_discovery_status"] == "held2_stage_iii_refinement_complete_pending_postsolve_public_admission"
+    assert electrolyte["phase_discovery_status"] == "held2_postsolve_certified_pending_public_admission"
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
+    assert "electrolyte_postsolve_phase_set_certification" in electrolyte["required_gates"]
     assert gate["evidence_tier"] == "T1"
     assert gate["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py "
@@ -314,6 +315,19 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
     assert "Ipopt status `Solve_Succeeded`" in stage_iii["result_requirement"]
     assert "postsolve certification remains pending" in stage_iii["result_requirement"]
     assert "public electrolyte route admission remains closed" in stage_iii["result_requirement"]
+
+    postsolve = evidence["Electrolyte postsolve phase-set certification gate"]
+    assert postsolve["evidence_tier"] == "T1"
+    assert postsolve["command"] == (
+        "uv run --no-sync python scripts/validation/check_electrolyte_postsolve_certification.py "
+        "--json --require-stage-iii --require-postsolve-certification "
+        "--require-public-routes-closed --require-complete"
+    )
+    assert "_native_electrolyte_postsolve_certification" in postsolve["scope"]
+    assert "explicit-ion reconstruction" in postsolve["scope"]
+    assert "neutral and mean-ionic transfer residuals" in postsolve["scope"]
+    assert "phase and total charge residuals <= 1.0e-8" in postsolve["result_requirement"]
+    assert "public electrolyte route admission remains closed" in postsolve["result_requirement"]
 
 
 def test_generalized_multiphase_records_public_admission_evidence() -> None:

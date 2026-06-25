@@ -28,7 +28,7 @@ last_synced: "2026-06-25"
 **Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/313 using docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md and docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md after #312 closes. Complete proof oracle: issue acceptance criteria checked and PR merged.
 **Execution Mode:** Ask at runtime
-**Worktree Policy:** Native Codex worktree thread first
+**Worktree Policy:** Local branch in primary checkout
 **Integration Policy:** Worker PR reviewed by main thread
 **TDD Policy:** Required
 **Parallelization Plan:** None
@@ -42,7 +42,7 @@ last_synced: "2026-06-25"
 **Target Output:** `scripts/validation/check_electrolyte_postsolve_certification.py --json --require-stage-iii --require-postsolve-certification --require-public-routes-closed --require-complete` returns `complete: true`.
 **Owner:** M4 equilibrium package owner.
 **Interface:** Electrolyte postsolve payload, retained checker JSON, pytest contracts, M4 issue mirror, registry row, and M4 README.
-**Cutover:** This checker becomes the #313 proof oracle; #191 remains blocked by #313/#314 until the child sequence closes.
+**Cutover:** This checker becomes the #313 proof oracle; after merge, #191 remains blocked only by #314.
 **Replaced Path:** Stage III convergence-only evidence remains prerequisite evidence and no longer stands in for physical electrolyte acceptance.
 **Acceptance Proof:** Acceptance is proven when postsolve certification consumes #312, reports explicit-ion reconstruction, charge balance, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, and domain margins with closed public route state.
 **Stop Criteria:** Stop if any physical certification family is absent or if a public electrolyte route must be opened to satisfy this gate.
@@ -53,7 +53,7 @@ last_synced: "2026-06-25"
 **Merge Owner:** Main thread orchestrator
 **Merge Gate:** Native UI approval required
 **Merge Policy:** Repo default
-**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Worktree Cleanup Policy:** No worktree used
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
 ## What To Build
@@ -68,22 +68,35 @@ composition/domain margins, and capability boundary state.
 
 - Parent issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
 - Blocks: https://github.com/ePC-SAFT/ePC-SAFT/issues/191 and https://github.com/ePC-SAFT/ePC-SAFT/issues/314
-- Blocked by: https://github.com/ePC-SAFT/ePC-SAFT/issues/312
+- Prerequisite satisfied by: https://github.com/ePC-SAFT/ePC-SAFT/issues/312
 
 ## Acceptance Criteria
 
-- [ ] The checker consumes the closed #312 Stage III refinement gate.
-- [ ] Explicit-ion material reconstruction closes to a retained tolerance from the reduced electroneutral solution.
-- [ ] Per-phase and total charge residuals are retained and accepted.
-- [ ] Neutral transfer and mean-ionic transfer residuals are reported separately with documented conventions.
-- [ ] Pressure consistency, phase amounts, phase composition normalization, nonnegativity margins, and domain margins are retained.
-- [ ] Negative tests reject Stage III-only results, phase-collapsed results, charge-imbalanced phases, missing transfer diagnostics, and premature public-admission status.
-- [ ] Capabilities and registry evidence keep public electrolyte routes closed.
-- [ ] #191 and the M4 README name #314 as the only remaining M4 electrolyte gate after this issue closes.
+- [x] The checker consumes the closed #312 Stage III refinement gate.
+- [x] Explicit-ion material reconstruction closes to a retained tolerance from the reduced electroneutral solution.
+- [x] Per-phase and total charge residuals are retained and accepted.
+- [x] Neutral transfer and mean-ionic transfer residuals are reported separately with documented conventions.
+- [x] Pressure consistency, phase amounts, phase composition normalization, nonnegativity margins, and domain margins are retained.
+- [x] Negative tests reject Stage III-only results, phase-collapsed results, charge-imbalanced phases, missing transfer diagnostics, and premature public-admission status.
+- [x] Capabilities and registry evidence keep public electrolyte routes closed.
+- [x] #191 and the M4 README name #314 as the only remaining M4 electrolyte gate after this issue closes.
 
-## Blocked by
+## Prerequisite
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/312
+
+## Resolution Notes
+
+- Added `scripts/validation/check_electrolyte_postsolve_certification.py`.
+- Added native `_native_electrolyte_postsolve_certification`.
+- The retained checker returns `complete: true` and `blockers: []`.
+- Retained physical diagnostics include phase charge residuals `0.0`, total
+  charge residual `0.0`, pressure consistency norm
+  `6.984919309616089e-10`, phase distance `2.7722252287643023e-06`
+  against a `1.0e-8` floor, and minimum phase amount
+  `0.43529509750292383`.
+- Public electrolyte route admission remains closed; #314 owns public
+  admission.
 
 ## Non-Goals
 

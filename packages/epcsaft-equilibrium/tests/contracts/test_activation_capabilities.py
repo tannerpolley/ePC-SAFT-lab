@@ -156,6 +156,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "electrolyte_held2_readiness_born_ssm_ds_exactness",
         "electrolyte_held2_counterion_pair_phase_discovery",
         "electrolyte_held2_stage_iii_reduced_variable_refinement",
+        "electrolyte_held2_postsolve_phase_set_certification",
     }
     associating_proof = next(
         row
@@ -233,6 +234,18 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert electrolyte_stage_iii["reduced_basis"] == "independent_counterion_pair_matrix"
     assert electrolyte_stage_iii["stage_status"] == "stage_iii_refinement_complete_postsolve_pending"
     assert electrolyte_stage_iii["route_hessian_mode"] == "limited_memory_charged_born_route"
+    electrolyte_postsolve = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "electrolyte_held2_postsolve_phase_set_certification"
+    )
+    assert electrolyte_postsolve["classification"] == "postsolve_certification_evidence"
+    assert electrolyte_postsolve["backend"] == "native_electrolyte_postsolve_certification"
+    assert electrolyte_postsolve["public_admission_state"] == "public_route_closed"
+    assert electrolyte_postsolve["selector_family"] == "electrolyte_lle"
+    assert electrolyte_postsolve["reduced_basis"] == "independent_counterion_pair_matrix"
+    assert electrolyte_postsolve["stage_status"] == "postsolve_certified_public_admission_pending"
+    assert electrolyte_postsolve["route_hessian_mode"] == "limited_memory_charged_born_route"
     assert "electrolyte_lle" not in activation["public_routes"]
     assert "electrolyte_lle" not in activation["production_families"]
     electrolyte_activation = next(

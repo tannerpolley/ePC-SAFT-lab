@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md"
@@ -25,10 +25,10 @@ last_synced: "2026-06-25"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md
 **Classification:** AFK
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/314 using docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md and docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md after #313 closes. Complete proof oracle: issue acceptance criteria checked, PR merged, and #191 closeout evidence prepared.
 **Execution Mode:** Ask at runtime
-**Worktree Policy:** Native Codex worktree thread first
+**Worktree Policy:** Local branch in primary checkout
 **Integration Policy:** Worker PR reviewed by main thread
 **TDD Policy:** Required
 **Parallelization Plan:** None
@@ -53,7 +53,7 @@ last_synced: "2026-06-25"
 **Merge Owner:** Main thread orchestrator
 **Merge Gate:** Native UI approval required
 **Merge Policy:** Repo default
-**Worktree Cleanup Policy:** Remove owned worktree after merge
+**Worktree Cleanup Policy:** No worktree used
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
 ## What To Build
@@ -69,7 +69,7 @@ electrolyte gates remain.
 
 - Parent issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
 - Blocks: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
-- Blocked by: https://github.com/ePC-SAFT/ePC-SAFT/issues/313
+- Prerequisite satisfied by this sequence: https://github.com/ePC-SAFT/ePC-SAFT/issues/313
 
 ## Acceptance Criteria
 
@@ -82,7 +82,7 @@ electrolyte gates remain.
 - [ ] #191 is updated and closed only after this issue merges and the retained public-admission checker passes.
 - [ ] M4 README shows no remaining open M4 issues after #191 closes.
 
-## Blocked by
+## Prerequisite
 
 - https://github.com/ePC-SAFT/ePC-SAFT/issues/313
 

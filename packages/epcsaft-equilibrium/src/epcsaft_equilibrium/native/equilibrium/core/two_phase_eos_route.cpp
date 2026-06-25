@@ -4157,6 +4157,226 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
     return out;
 }
 
+ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certification(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<std::string>& species_labels,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance,
+    double residual_tolerance,
+    double phase_distance_tolerance,
+    double active_bound_tolerance
+) {
+    const std::vector<double> feed =
+        normalized_trial_composition(feed_composition, "Electrolyte postsolve feed composition");
+    require_size(charges, feed.size(), "Electrolyte postsolve charge");
+
+    ElectrolytePostsolveCertificationResult out;
+    out.feed_composition = feed;
+    out.charge_vector = charges;
+    out.feed_reconstruction_tolerance = residual_tolerance;
+    out.phase_charge_tolerance = charge_tolerance;
+    out.total_charge_tolerance = charge_tolerance;
+    out.neutral_transfer_tolerance = residual_tolerance;
+    out.mean_ionic_transfer_tolerance = residual_tolerance;
+    out.pressure_tolerance = residual_tolerance;
+    out.phase_distance_tolerance = phase_distance_tolerance;
+    out.stage_iii_refinement = evaluate_electrolyte_stage_iii_refinement(
+        args,
+        temperature,
+        target_pressure,
+        feed,
+        charges,
+        species_labels,
+        phase_kinds,
+        charge_tolerance,
+        tpd_tolerance,
+        candidate_mass_balance_tolerance,
+        residual_tolerance,
+        phase_distance_tolerance,
+        active_bound_tolerance
+    );
+    out.phase_discovery_status = out.stage_iii_refinement.phase_discovery_status;
+    out.stage_iii_refinement_status = out.stage_iii_refinement.stage_iii_refinement_status;
+
+    out.component_labels.reserve(feed.size());
+    for (std::size_t species = 0; species < feed.size(); ++species) {
+        if (species < species_labels.size() && !species_labels[species].empty()) {
+            out.component_labels.push_back(species_labels[species]);
+        } else {
+            out.component_labels.push_back("species_" + std::to_string(species));
+        }
+    }
+
+    const NeutralTwoPhaseEosPostsolve& postsolve = out.stage_iii_refinement.route_result.postsolve;
+    out.phase_compositions = postsolve.phase_compositions.empty()
+        ? out.stage_iii_refinement.selected_phase_compositions
+        : postsolve.phase_compositions;
+    out.phase_amount_totals = postsolve.phase_amount_totals;
+    if (out.phase_amount_totals.empty()) {
+        out.phase_amount_totals = out.stage_iii_refinement.selected_phase_fractions;
+    }
+    out.phase_count = static_cast<int>(out.phase_compositions.size());
+    const double amount_total = std::accumulate(out.phase_amount_totals.begin(), out.phase_amount_totals.end(), 0.0);
+    out.phase_fractions.reserve(out.phase_amount_totals.size());
+    if (amount_total > 0.0) {
+        for (double amount : out.phase_amount_totals) {
+            out.phase_fractions.push_back(amount / amount_total);
+        }
+    } else {
+        out.phase_fractions = out.stage_iii_refinement.selected_phase_fractions;
+    }
+
+    out.reconstructed_feed_composition.assign(feed.size(), 0.0);
+    const std::size_t phase_count = out.phase_compositions.size();
+    for (std::size_t phase = 0; phase < phase_count; ++phase) {
+        require_size(out.phase_compositions[phase], feed.size(), "Electrolyte postsolve phase composition");
+        const double weight = phase < out.phase_fractions.size() ? out.phase_fractions[phase] : 0.0;
+        for (std::size_t species = 0; species < feed.size(); ++species) {
+            out.reconstructed_feed_composition[species] += weight * out.phase_compositions[phase][species];
+        }
+    }
+    out.feed_reconstruction_residuals.reserve(feed.size());
+    out.feed_reconstruction_inf_norm = 0.0;
+    for (std::size_t species = 0; species < feed.size(); ++species) {
+        const double residual = out.reconstructed_feed_composition[species] - feed[species];
+        out.feed_reconstruction_residuals.push_back(residual);
+        out.feed_reconstruction_inf_norm = std::max(out.feed_reconstruction_inf_norm, std::abs(residual));
+    }
+
+    out.component_nonnegativity_margin = std::numeric_limits<double>::infinity();
+    out.minimum_component_mole_fraction = std::numeric_limits<double>::infinity();
+    out.minimum_phase_amount = std::numeric_limits<double>::infinity();
+    out.phase_distance = pairwise_phase_distance_inf_norm(out.phase_compositions);
+    out.composition_sum_residuals.reserve(out.phase_compositions.size());
+    for (const std::vector<double>& composition : out.phase_compositions) {
+        double composition_sum = 0.0;
+        for (double value : composition) {
+            out.component_nonnegativity_margin = std::min(out.component_nonnegativity_margin, value);
+            out.minimum_component_mole_fraction = std::min(out.minimum_component_mole_fraction, value);
+            composition_sum += value;
+        }
+        out.composition_sum_residuals.push_back(std::abs(composition_sum - 1.0));
+    }
+    for (double amount : out.phase_amount_totals) {
+        out.minimum_phase_amount = std::min(out.minimum_phase_amount, amount);
+    }
+    if (!std::isfinite(out.component_nonnegativity_margin)) {
+        out.component_nonnegativity_margin = -std::numeric_limits<double>::infinity();
+    }
+    if (!std::isfinite(out.minimum_component_mole_fraction)) {
+        out.minimum_component_mole_fraction = -std::numeric_limits<double>::infinity();
+    }
+    if (!std::isfinite(out.minimum_phase_amount)) {
+        out.minimum_phase_amount = -std::numeric_limits<double>::infinity();
+    }
+
+    double fraction_sum = 0.0;
+    for (double fraction : out.phase_fractions) {
+        fraction_sum += fraction;
+    }
+    out.phase_fraction_sum_residual = std::abs(fraction_sum - 1.0);
+
+    out.phase_charge_residuals.reserve(out.phase_compositions.size());
+    out.max_phase_charge_residual = 0.0;
+    for (const std::vector<double>& composition : out.phase_compositions) {
+        double phase_charge = 0.0;
+        for (std::size_t species = 0; species < feed.size(); ++species) {
+            phase_charge += composition[species] * charges[species];
+        }
+        out.phase_charge_residuals.push_back(phase_charge);
+        out.max_phase_charge_residual = std::max(out.max_phase_charge_residual, std::abs(phase_charge));
+    }
+    out.total_charge_residual = 0.0;
+    for (std::size_t species = 0; species < feed.size(); ++species) {
+        out.total_charge_residual += out.reconstructed_feed_composition[species] * charges[species];
+    }
+    out.total_charge_residual = std::abs(out.total_charge_residual);
+
+    if (out.phase_compositions.size() >= 2 && postsolve.phase_ln_fugacity_coefficients.size() >= 2) {
+        const std::vector<double>& first_lnphi = postsolve.phase_ln_fugacity_coefficients.front();
+        const std::vector<double>& second_lnphi = postsolve.phase_ln_fugacity_coefficients[1];
+        require_size(first_lnphi, feed.size(), "Electrolyte postsolve first phase ln fugacity");
+        require_size(second_lnphi, feed.size(), "Electrolyte postsolve second phase ln fugacity");
+        for (std::size_t species = 0; species < feed.size(); ++species) {
+            if (std::abs(charges[species]) > charge_tolerance) {
+                continue;
+            }
+            const double first_value =
+                std::log(std::max(out.phase_compositions[0][species], 1.0e-300)) + first_lnphi[species];
+            const double second_value =
+                std::log(std::max(out.phase_compositions[1][species], 1.0e-300)) + second_lnphi[species];
+            const double residual = first_value - second_value;
+            out.neutral_species_labels.push_back(out.component_labels[species]);
+            out.neutral_transfer_residuals.push_back(residual);
+            out.neutral_transfer_max_abs_residual =
+                std::max(out.neutral_transfer_max_abs_residual, std::abs(residual));
+        }
+    }
+
+    for (std::size_t equation = 0; equation < out.stage_iii_refinement.equation_labels.size(); ++equation) {
+        const std::string& label = out.stage_iii_refinement.equation_labels[equation];
+        const std::string prefix = "pair_mean_ionic_equality:";
+        if (label.rfind(prefix, 0) != 0 || equation >= out.stage_iii_refinement.residual_values.size()) {
+            continue;
+        }
+        out.mean_ionic_pair_labels.push_back(label.substr(prefix.size()));
+        const double residual = out.stage_iii_refinement.residual_values[equation];
+        out.mean_ionic_transfer_residuals.push_back(residual);
+        out.mean_ionic_transfer_max_abs_residual =
+            std::max(out.mean_ionic_transfer_max_abs_residual, std::abs(residual));
+    }
+
+    out.pressure_consistency_norm = postsolve.pressure_consistency_norm;
+    out.explicit_ion_reconstruction_accepted =
+        out.feed_reconstruction_inf_norm <= out.feed_reconstruction_tolerance
+        && out.component_nonnegativity_margin >= 0.0;
+    out.charge_balance_accepted =
+        !out.phase_charge_residuals.empty()
+        && out.max_phase_charge_residual <= out.phase_charge_tolerance
+        && out.total_charge_residual <= out.total_charge_tolerance;
+    out.transfer_residuals_accepted =
+        !out.neutral_species_labels.empty()
+        && !out.mean_ionic_pair_labels.empty()
+        && out.neutral_transfer_max_abs_residual <= out.neutral_transfer_tolerance
+        && out.mean_ionic_transfer_max_abs_residual <= out.mean_ionic_transfer_tolerance;
+    out.pressure_consistency_accepted = out.pressure_consistency_norm <= out.pressure_tolerance;
+    const bool composition_sums_accepted = std::all_of(
+        out.composition_sum_residuals.begin(),
+        out.composition_sum_residuals.end(),
+        [&out](double residual) { return residual <= out.composition_sum_tolerance; }
+    );
+    out.phase_set_accepted =
+        out.phase_count >= 2
+        && !out.phase_amount_totals.empty()
+        && out.phase_fraction_sum_residual <= out.phase_fraction_sum_tolerance
+        && composition_sums_accepted;
+    out.domain_margins_accepted =
+        out.minimum_component_mole_fraction >= 0.0
+        && out.minimum_phase_amount > 0.0
+        && out.phase_distance > out.phase_distance_tolerance;
+
+    const bool stage_iii_complete = out.stage_iii_refinement.status == "complete";
+    const bool route_postsolve_accepted = out.stage_iii_refinement.route_result.postsolve.accepted;
+    const bool accepted =
+        stage_iii_complete
+        && route_postsolve_accepted
+        && out.explicit_ion_reconstruction_accepted
+        && out.charge_balance_accepted
+        && out.transfer_residuals_accepted
+        && out.pressure_consistency_accepted
+        && out.phase_set_accepted
+        && out.domain_margins_accepted;
+    out.status = accepted ? "complete" : "incomplete";
+    out.postsolve_certification_status = accepted ? "complete" : "incomplete";
+    return out;
+}
+
 NeutralTwoPhaseEosNlpContract evaluate_neutral_two_phase_eos_nlp_contract(
     const add_args& args,
     double temperature,
