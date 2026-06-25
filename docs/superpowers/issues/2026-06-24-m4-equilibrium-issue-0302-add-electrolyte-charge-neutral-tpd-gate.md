@@ -26,7 +26,7 @@ last_synced: "2026-06-25"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0302-electrolyte-charge-neutral-tpd-gate-plan.md
 **Classification:** AFK
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:closed, type:feature
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/302 using docs/superpowers/issues/2026-06-24-m4-equilibrium-issue-0302-add-electrolyte-charge-neutral-tpd-gate.md and docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0302-electrolyte-charge-neutral-tpd-gate-plan.md. Complete proof oracle: issue acceptance criteria checked and PR merged.
 **Execution Mode:** Auto Mode
 **Worktree Policy:** Native Codex worktree thread first
