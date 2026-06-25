@@ -194,7 +194,7 @@ family_rows:
     objective_family: pressure_transformed_helmholtz_electrolyte
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
-    phase_discovery_status: held2_counterion_pair_phase_discovery_complete_pending_stage_iii
+    phase_discovery_status: held2_stage_iii_refinement_complete_pending_postsolve_public_admission
     phase_discovery_contract:
       completed_issue: 306
       scope: "HELD2 counterion-pair phase discovery only; Stage III refinement, postsolve certification, and public route admission remain separate gates."
@@ -222,6 +222,7 @@ family_rows:
       - reduced_electroneutral_variable_basis
       - electrolyte_tpd
       - held2_counterion_pair_phase_discovery
+      - held2_stage_iii_reduced_variable_refinement
       - held2_stage_discovery
       - charge_and_electrochemical_certification
       - electrolyte_gfpe_closed_admission_source_gate
@@ -246,6 +247,11 @@ family_rows:
         command: "uv run --no-sync python scripts/validation/check_electrolyte_held2_phase_discovery.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-native-held2-discovery --require-public-routes-closed --require-complete"
         scope: "Phase-discovery-only electrolyte HELD2 evidence: consumes #269/#300/#302 gates, calls native `_native_electrolyte_held2_phase_discovery`, reports independent counterion-pair matrix diagnostics, source-backed multi-ion preprocessor fixtures, charge-neutral lifted candidate rows, pair-based mean-ionic bookkeeping, and closed public electrolyte route state."
         result_requirement: "Counterion-pair matrix rank equals N_ch - 1; Na+/Cl-, Na+/K+/Cl-, and K+/Cl-/Na+/SO4-- source/methodology cases are covered; selected candidate count is positive; minimum TPD and pair residual metrics are finite; Stage III refinement, postsolve certification, and public admission remain pending or closed."
+      - evidence_label: "Electrolyte HELD2 Stage III reduced-variable refinement gate"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_stage_iii_refinement.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-native-stage-iii --require-public-routes-closed --require-complete"
+        scope: "Stage III electrolyte refinement evidence: consumes #269/#300/#302/#306, calls native `_native_electrolyte_stage_iii_refinement`, records the #306 candidate-set seed provenance, reduced counterion-pair residual variables/equations/scaling/bounds, exact reduced Jacobian/Hessian receipts, strict Ipopt solve diagnostics, finite phase compositions, and closed public electrolyte route state."
+        result_requirement: "Checker returns complete with no blockers; Ipopt status `Solve_Succeeded`; reduced residual infinity norm <= 1.0e-4; charge/material/pressure diagnostics finite; exact reduced residual Jacobian/Hessian receipts retained; postsolve certification remains pending and public electrolyte route admission remains closed."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1

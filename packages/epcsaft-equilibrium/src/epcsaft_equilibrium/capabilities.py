@@ -225,6 +225,41 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "tests/native/contracts/test_generalized_equilibrium_registry.py",
         ),
     },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "electrolyte_stage_iii_refinement",
+        "quantity": "electrolyte_held2_stage_iii_reduced_variable_refinement",
+        "derivative": "counterion_pair_reduced_residual_jacobian_hessian_receipts",
+        "backend": "native_electrolyte_stage_iii_refinement",
+        "supported": True,
+        "classification": "stage_iii_refinement_evidence",
+        "public_admission_state": "public_route_closed",
+        "selector_family": "electrolyte_lle",
+        "source_configuration": "Khudaida 2026 NaCl local Stage III refinement",
+        "component_set": ("water", "ethanol", "isobutanol", "NaCl"),
+        "source_fixture": (
+            "data/reference/equilibrium_benchmarks/electrolyte_lle/"
+            "water_ethanol_isobutanol_nacl"
+        ),
+        "reduced_basis": "independent_counterion_pair_matrix",
+        "stage_status": "stage_iii_refinement_complete_postsolve_pending",
+        "route_hessian_mode": "limited_memory_charged_born_route",
+        "reason": (
+            "issue #312 records the electrolyte HELD2 Stage III refinement gate: "
+            "the checker consumes #269/#300/#302/#306, calls native "
+            "`_native_electrolyte_stage_iii_refinement`, retains exact reduced "
+            "counterion-pair residual Jacobian/Hessian receipts, records strict "
+            "Ipopt solver diagnostics, and keeps postsolve certification plus "
+            "public electrolyte route admission closed."
+        ),
+        "tests": (
+            "scripts/validation/check_electrolyte_stage_iii_refinement.py",
+            "tests/native/contracts/test_electrolyte_stage_iii_refinement.py",
+            "tests/native/contracts/test_electrolyte_held2_phase_discovery.py",
+            "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
+            "tests/native/contracts/test_generalized_equilibrium_registry.py",
+        ),
+    },
 )
 
 

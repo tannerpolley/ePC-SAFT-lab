@@ -1264,6 +1264,7 @@ IpoptSolveResult solve_ipopt_nlp(
 #else
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
     app->Options()->SetIntegerValue("print_level", normalized_options.print_level);
+    app->Options()->SetStringValue("sb", "yes");
     app->Options()->SetIntegerValue("max_iter", normalized_options.max_iterations);
     app->Options()->SetNumericValue("tol", normalized_options.tolerance);
     app->Options()->SetNumericValue("acceptable_tol", normalized_options.acceptable_tolerance);

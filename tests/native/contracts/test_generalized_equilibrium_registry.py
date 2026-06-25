@@ -266,7 +266,7 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
 
     assert electrolyte["production_exposed"] is False
     assert electrolyte["existing_public_utility_routes"] == []
-    assert electrolyte["phase_discovery_status"] == "held2_counterion_pair_phase_discovery_complete_pending_stage_iii"
+    assert electrolyte["phase_discovery_status"] == "held2_stage_iii_refinement_complete_pending_postsolve_public_admission"
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
     assert gate["evidence_tier"] == "T1"
     assert gate["command"] == (
@@ -301,6 +301,19 @@ def test_electrolyte_family_records_closed_admission_source_gate_evidence() -> N
     assert "rank equals N_ch - 1" in discovery["result_requirement"]
     assert "pair-based mean-ionic bookkeeping" in discovery["scope"]
     assert "Stage III refinement, postsolve certification, and public admission remain pending or closed" in discovery["result_requirement"]
+
+    stage_iii = evidence["Electrolyte HELD2 Stage III reduced-variable refinement gate"]
+    assert stage_iii["evidence_tier"] == "T1"
+    assert stage_iii["command"] == (
+        "uv run --no-sync python scripts/validation/check_electrolyte_stage_iii_refinement.py "
+        "--json --require-source-gate --require-readiness-gate --require-tpd-gate "
+        "--require-held2-discovery --require-native-stage-iii --require-public-routes-closed --require-complete"
+    )
+    assert "_native_electrolyte_stage_iii_refinement" in stage_iii["scope"]
+    assert "exact reduced Jacobian/Hessian receipts" in stage_iii["scope"]
+    assert "Ipopt status `Solve_Succeeded`" in stage_iii["result_requirement"]
+    assert "postsolve certification remains pending" in stage_iii["result_requirement"]
+    assert "public electrolyte route admission remains closed" in stage_iii["result_requirement"]
 
 
 def test_generalized_multiphase_records_public_admission_evidence() -> None:
