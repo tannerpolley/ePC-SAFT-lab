@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "benchmark"
 capability: "lle"
 backend: Null
-readiness: "blocked"
+readiness: "ready"
 release_target: "future"
 source_spec: "docs/superpowers/specs/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence-plan.md"
 afk_hitl: "HITL"
 branch: codex/issue-0192-close-gfpe-registry-capability-and-benchmark-evidence
-last_synced: "2026-06-02"
+last_synced: "2026-06-25"
 ---
 
 # Close GFPE registry, capability, and benchmark evidence
@@ -63,7 +63,7 @@ Close the GFPE registry/capability/benchmark evidence after the relevant M4 proo
 - Package: `benchmark`
 - Capability: `lle`
 - Backend: `-`
-- Readiness: `blocked`
+- Readiness: `ready`
 - AFK/HITL: `HITL`
 - Release target: `future`
-- Labels: `docs, validation, area:benchmark, status:blocked, type:task`
+- Labels: `docs, validation, area:benchmark, status:ready, type:task`
