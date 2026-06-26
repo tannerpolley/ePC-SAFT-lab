@@ -20,6 +20,7 @@
 #include "equilibrium/blocks/reaction_block.h"
 #include "equilibrium/blocks/saturation_block.h"
 #include "equilibrium/core/activation_matrix.h"
+#include "equilibrium/core/chemical_equilibrium_nlp.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/selector_core.h"
@@ -625,6 +626,217 @@ py::dict homogeneous_chemical_equilibrium_block_to_dict(
     out["domain_margins"] = domain_margins;
     out["scaling"] = scaling;
     out["domain_safety_policy"] = "strict_positive_amounts";
+    return out;
+}
+
+template <typename T>
+T required_payload_field(const py::dict& payload, const char* key, const std::string& context) {
+    if (!payload.contains(key)) {
+        throw ValueError(context + " missing field: " + key);
+    }
+    return py::cast<T>(payload[key]);
+}
+
+std::vector<double> flatten_row_major_matrix(
+    const py::dict& payload,
+    const char* key,
+    std::size_t expected_rows,
+    std::size_t expected_columns,
+    const std::string& context
+) {
+    if (!payload.contains(key)) {
+        throw ValueError(context + " missing field: " + key);
+    }
+    const py::sequence rows = py::cast<py::sequence>(payload[key]);
+    if (static_cast<std::size_t>(py::len(rows)) != expected_rows) {
+        throw ValueError(context + " matrix row count mismatch.");
+    }
+    std::vector<double> out;
+    out.reserve(expected_rows * expected_columns);
+    for (const py::handle row_handle : rows) {
+        const std::vector<double> row = py::cast<std::vector<double>>(row_handle);
+        if (row.size() != expected_columns) {
+            throw ValueError(context + " matrix column count mismatch.");
+        }
+        out.insert(out.end(), row.begin(), row.end());
+    }
+    return out;
+}
+
+std::vector<double> log_equilibrium_constants_from_registry(
+    const std::vector<std::string>& reaction_labels,
+    const py::dict& standard_state_payload
+) {
+    if (!standard_state_payload.contains("records")) {
+        throw ValueError("chemical equilibrium standard-state payload missing field: records");
+    }
+    std::vector<double> out(reaction_labels.size(), 0.0);
+    std::vector<bool> assigned(reaction_labels.size(), false);
+    const py::sequence records = py::cast<py::sequence>(standard_state_payload["records"]);
+    for (const py::handle record_handle : records) {
+        const py::dict record = py::cast<py::dict>(record_handle);
+        const std::string label = required_payload_field<std::string>(
+            record,
+            "reaction_label",
+            "chemical equilibrium standard-state record"
+        );
+        const double ln_k = required_payload_field<double>(
+            record,
+            "ln_equilibrium_constant",
+            "chemical equilibrium standard-state record"
+        );
+        const auto found = std::find(reaction_labels.begin(), reaction_labels.end(), label);
+        if (found == reaction_labels.end()) {
+            throw ValueError("chemical equilibrium standard-state record references unknown reaction: " + label);
+        }
+        const auto index = static_cast<std::size_t>(std::distance(reaction_labels.begin(), found));
+        if (assigned[index]) {
+            throw ValueError("chemical equilibrium standard-state registry contains duplicate reaction: " + label);
+        }
+        if (!std::isfinite(ln_k)) {
+            throw ValueError("chemical equilibrium log equilibrium constants must be finite.");
+        }
+        out[index] = ln_k;
+        assigned[index] = true;
+    }
+    for (std::size_t index = 0; index < assigned.size(); ++index) {
+        if (!assigned[index]) {
+            throw ValueError(
+                "chemical equilibrium standard-state registry missing reaction: " + reaction_labels[index]
+            );
+        }
+    }
+    return out;
+}
+
+epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput chemical_equilibrium_input_from_payloads(
+    const py::dict& schema_payload,
+    const py::dict& standard_state_payload,
+    const std::vector<double>& initial_amounts
+) {
+    epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput out;
+    out.species_labels = required_payload_field<std::vector<std::string>>(
+        schema_payload,
+        "species_labels",
+        "chemical equilibrium schema payload"
+    );
+    out.reaction_labels = required_payload_field<std::vector<std::string>>(
+        schema_payload,
+        "reaction_labels",
+        "chemical equilibrium schema payload"
+    );
+    out.conservation_labels = required_payload_field<std::vector<std::string>>(
+        schema_payload,
+        "conservation_labels",
+        "chemical equilibrium schema payload"
+    );
+    out.stoichiometry_row_major = flatten_row_major_matrix(
+        schema_payload,
+        "stoichiometric_matrix",
+        out.reaction_labels.size(),
+        out.species_labels.size(),
+        "chemical equilibrium stoichiometric_matrix"
+    );
+    out.conservation_matrix_row_major = flatten_row_major_matrix(
+        schema_payload,
+        "conservation_matrix",
+        out.conservation_labels.size(),
+        out.species_labels.size(),
+        "chemical equilibrium conservation_matrix"
+    );
+    out.conservation_totals = required_payload_field<std::vector<double>>(
+        schema_payload,
+        "conservation_totals",
+        "chemical equilibrium schema payload"
+    );
+    out.log_equilibrium_constants = log_equilibrium_constants_from_registry(
+        out.reaction_labels,
+        standard_state_payload
+    );
+    out.initial_amounts = initial_amounts;
+    return out;
+}
+
+py::dict ce_solver_diagnostics_to_dict(
+    const epcsaft::native::equilibrium_nlp::IpoptSolveResult& result
+) {
+    py::dict out;
+    out["solver_backend"] = result.backend;
+    out["adapter_kind"] = result.adapter_kind;
+    out["solver_status"] = result.solver_status;
+    out["application_status"] = result.application_status;
+    out["solver_accepted"] = result.accepted;
+    out["solver_ran"] = result.solver_ran;
+    out["solver_solved"] = result.solved;
+    out["solver_acceptable"] = result.acceptable;
+    out["solver_feasible_point"] = result.feasible_point;
+    out["objective"] = result.objective;
+    out["iteration_count"] = diagnostic_int_or(result, "iteration_count", 0);
+    out["hessian_approximation"] = diagnostic_string_or(result, "hessian_approximation", "");
+    out["hessian_backend"] = diagnostic_string_or(result, "hessian_backend", "");
+    out["option_profile"] = diagnostic_string_or(result, "option_profile", "");
+    out["scaling_method"] = diagnostic_string_or(result, "scaling_method", "");
+    out["scaling_contract"] = diagnostic_string_or(result, "scaling_contract", "");
+    out["linear_solver_requested"] = diagnostic_string_or(result, "linear_solver_requested", "auto");
+    out["linear_solver_selected"] = diagnostic_string_or(result, "linear_solver_selected", "default");
+    out["activation_compiler"] = diagnostic_string_or(result, "activation_compiler", "");
+    out["activation_family"] = diagnostic_string_or(result, "activation_family", "");
+    out["thermodynamic_block"] = diagnostic_string_or(result, "thermodynamic_block", "");
+    out["exact_hessian_available"] = diagnostic_bool_or(result, "exact_hessian_available", false);
+    out["profile_exact_hessian_gate"] = diagnostic_bool_or(result, "profile_exact_hessian_gate", true);
+    out["scaled_acceptance_passed"] = diagnostic_bool_or(result, "scaled_acceptance_passed", false);
+    out["variable_scaling_quality_passed"] =
+        diagnostic_bool_or(result, "variable_scaling_quality_passed", false);
+    out["constraint_scaling_quality_passed"] =
+        diagnostic_bool_or(result, "constraint_scaling_quality_passed", false);
+    return out;
+}
+
+py::dict neutral_two_phase_eos_nlp_contract_to_dict(
+    const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract& result
+);
+py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyActivation& activation);
+py::dict activation_plan_to_dict(const epcsaft::native::equilibrium::ActivationPlan& plan);
+py::dict variable_layout_to_dict(const epcsaft::native::equilibrium::VariableLayout& layout);
+
+py::dict chemical_equilibrium_nlp_result_to_dict(
+    const epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpResult& result,
+    const epcsaft::native::equilibrium::ProblemFamilyActivation& activation,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout
+) {
+    py::dict selector;
+    selector["selector_family"] = "reactive_speciation";
+    selector["route"] = "reactive_speciation";
+    selector["activation_compiler"] = result.contract.activation_compiler;
+    selector["problem_name"] = result.contract.problem_name;
+
+    py::dict activated = neutral_two_phase_eos_nlp_contract_to_dict(result.contract);
+    activated["derivatives"] = activated["derivative_contract"];
+
+    py::dict out;
+    out["native_binding"] = "_native_chemical_equilibrium_nlp_activation";
+    out["route"] = "reactive_speciation";
+    out["activation_compiler"] = result.contract.activation_compiler;
+    out["thermodynamic_block"] = "homogeneous_chemical_equilibrium";
+    out["accepted"] = result.accepted;
+    out["activation"] = activation_to_dict(activation);
+    out["activation_plan"] = activation_plan_to_dict(plan);
+    out["variable_layout"] = variable_layout_to_dict(layout);
+    out["selector_contract"] = selector;
+    out["activated"] = activated;
+    out["solver_diagnostics"] = ce_solver_diagnostics_to_dict(result.solve);
+    out["amounts"] = result.postsolve.amounts;
+    out["mole_fractions"] = result.postsolve.mole_fractions;
+    out["standard_mu_rt"] = result.postsolve.standard_mu_rt;
+    out["objective_value"] = result.postsolve.objective_value;
+    out["balance_residuals"] = result.postsolve.balance_residuals;
+    out["reaction_residuals"] = result.postsolve.reaction_residuals;
+    out["reaction_affinities"] = result.postsolve.reaction_affinities;
+    out["balance_inf_norm"] = result.balance_inf_norm;
+    out["reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
+    out["continuation_state"] = ipopt_continuation_state_to_dict(result.solve);
+    out["iteration_history"] = ipopt_iteration_history_to_list(result.solve.iteration_history);
     return out;
 }
 
@@ -2497,6 +2709,70 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             )
         );
     });
+    m.def("_native_chemical_equilibrium_nlp_activation", [](
+        const py::dict& schema_payload,
+        const py::dict& standard_state_payload,
+        const std::vector<double>& initial_amounts,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double balance_tolerance,
+        double reaction_stationarity_tolerance,
+        const py::object& continuation_state,
+        const py::kwargs& kwargs
+    ) {
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                "proof",
+                iteration_history_limit
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        apply_ipopt_continuation_state(options, continuation_state);
+        const auto input = chemical_equilibrium_input_from_payloads(
+            schema_payload,
+            standard_state_payload,
+            initial_amounts
+        );
+        const auto plan = epcsaft::native::equilibrium::build_reactive_speciation_activation_plan(
+            static_cast<int>(input.species_labels.size())
+        );
+        const auto layout = epcsaft::native::equilibrium::build_variable_layout(
+            plan,
+            static_cast<int>(input.species_labels.size())
+        );
+        const auto result = epcsaft::native::equilibrium_nlp::solve_activated_chemical_equilibrium_nlp(
+            input,
+            plan,
+            layout,
+            options,
+            balance_tolerance,
+            reaction_stationarity_tolerance
+        );
+        return chemical_equilibrium_nlp_result_to_dict(
+            result,
+            epcsaft::native::equilibrium::activation_row_for_key("reactive_speciation"),
+            plan,
+            layout
+        );
+    },
+        py::arg("schema_payload"),
+        py::arg("standard_state_payload"),
+        py::arg("initial_amounts"),
+        py::arg("max_iterations") = 100,
+        py::arg("tolerance") = 1.0e-8,
+        py::arg("timeout_seconds") = 0.0,
+        py::arg("hessian_mode") = "auto",
+        py::arg("iteration_history_limit") = 20,
+        py::arg("balance_tolerance") = 1.0e-9,
+        py::arg("reaction_stationarity_tolerance") = 1.0e-8,
+        py::arg("continuation_state") = py::none()
+    );
     m.def("_native_eos_phase_block", [](
         const py::object& mixture,
         double temperature,
