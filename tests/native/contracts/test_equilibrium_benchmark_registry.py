@@ -300,3 +300,30 @@ def test_current_runtime_route_keys_are_excluded_from_generalized_families() -> 
 
     for row in registry["family_rows"]:
         assert row["family_label"] not in excluded
+
+
+def test_ce_and_cpe_registry_placeholders_have_explicit_blocking_gates() -> None:
+    rows = {row["family_label"]: row for row in _registry()["family_rows"]}
+    ce = rows["CE Chemical Equilibrium Placeholder"]
+    cpe = rows["CPE Combined Phase-Chemical Placeholder"]
+
+    assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
+    assert {
+        "homogeneous_single_phase_only",
+        "standard_state_registry",
+        "reaction_affinity_certification",
+        "exact_chemical_potential_derivatives",
+    } <= set(ce["required_gates"])
+
+    dependencies = cpe["activation_dependencies"]
+    assert {
+        "held_stage_ii_dual_phase_discovery",
+        "held_stage_iii_ipopt_refinement",
+        "postsolve_phase_set_certification",
+    } <= set(dependencies["phase_equilibrium"])
+    assert {
+        "standard_state_registry",
+        "reaction_affinity_certification",
+        "exact_chemical_potential_derivatives",
+    } <= set(dependencies["chemical_equilibrium"])
+    assert "sequential_speciation_flash_as_simultaneous_cpe" in cpe["forbidden_shortcuts"]
