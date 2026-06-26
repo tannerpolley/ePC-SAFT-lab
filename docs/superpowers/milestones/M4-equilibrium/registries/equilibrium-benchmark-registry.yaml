@@ -363,18 +363,22 @@ family_rows:
     activation_status: planned_not_public
     production_exposed: false
     existing_public_utility_routes: []
-    scope: "Homogeneous chemical and speciation equilibrium after standard-state conventions are explicit."
+    scope: "Homogeneous single-phase chemical and speciation equilibrium after standard-state conventions are explicit."
     primary_problem: "Chemical equilibrium without phase split."
     knowns: [T, P, feed_composition, reaction_set]
     physical_variables: [species_amounts, reaction_extents_or_element_basis]
     objective_family: gibbs_or_helmholtz_chemical_equilibrium
     hard_constraints: [element_balance, reaction_affinity, standard_state_convention]
     derivative_contract: exact_derivatives_required_before_exposure
-    phase_discovery_status: none
+    phase_discovery_status: not_applicable_homogeneous_single_phase
     required_gates:
+      - homogeneous_single_phase_only
+      - reaction_set_schema
       - reaction_constant_convention
       - standard_state_registry
       - reaction_affinity_certification
+      - exact_chemical_potential_derivatives
+      - ce_validation_ladder
     reference_cases:
       - case_label: "Chemical equilibrium placeholder"
         evidence_tier: T0
@@ -396,11 +400,28 @@ family_rows:
     objective_family: pressure_transformed_helmholtz_with_reaction_affinity
     hard_constraints: [material_balance, phase_pressure_consistency, transferable_potential_equality, reaction_affinity]
     derivative_contract: exact_coupled_derivatives_required_before_exposure
-    phase_discovery_status: planned_after_pe_and_ce_validation_gates
+    phase_discovery_status: blocked_until_pe_and_ce_validation_gates
     required_gates:
       - pe_family_validation
       - ce_family_validation
+      - phase_equilibrium_validation
+      - chemical_equilibrium_validation
+      - standard_state_registry
+      - reaction_affinity_certification
       - coupled_phase_reaction_certification
+      - exact_coupled_derivatives
+      - simultaneous_objective_certification
+    activation_dependencies:
+      phase_equilibrium:
+        - held_stage_i_stability
+        - held_stage_ii_dual_phase_discovery
+        - held_stage_iii_ipopt_refinement
+        - postsolve_phase_set_certification
+      chemical_equilibrium:
+        - standard_state_registry
+        - reaction_affinity_certification
+        - exact_chemical_potential_derivatives
+        - ce_validation_ladder
     reference_cases:
       - case_label: "Combined phase-chemical placeholder"
         evidence_tier: T0
@@ -410,6 +431,7 @@ family_rows:
     forbidden_shortcuts:
       - phase_only_validation_as_cpe_validation
       - ce_only_validation_as_cpe_validation
+      - sequential_speciation_flash_as_simultaneous_cpe
 
 derived_subworkflows:
   - label: "Bubble point"
