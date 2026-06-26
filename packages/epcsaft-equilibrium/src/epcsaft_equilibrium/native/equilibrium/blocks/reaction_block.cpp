@@ -135,6 +135,37 @@ std::vector<double> standard_mu_rt_from_reactions(
     return std::vector<double>(mu.data(), mu.data() + mu.size());
 }
 
+std::vector<double> reaction_affinities_from_gradient(
+    const std::vector<double>& chemical_potential_gradient,
+    int reaction_count,
+    const std::vector<double>& stoichiometry_row_major
+) {
+    if (chemical_potential_gradient.empty()) {
+        throw ValueError("Reaction affinity projection requires at least one species.");
+    }
+    if (reaction_count <= 0) {
+        throw ValueError("Reaction affinity projection requires at least one reaction.");
+    }
+    const std::size_t species = chemical_potential_gradient.size();
+    if (stoichiometry_row_major.size() != static_cast<std::size_t>(reaction_count) * species) {
+        throw ValueError("Reaction affinity stoichiometry must be a reaction-by-species row-major matrix.");
+    }
+    for (double gradient_value : chemical_potential_gradient) {
+        if (!std::isfinite(gradient_value)) {
+            throw ValueError("Reaction affinity chemical potential gradient must be finite.");
+        }
+    }
+    std::vector<double> affinities(static_cast<std::size_t>(reaction_count), 0.0);
+    for (int reaction = 0; reaction < reaction_count; ++reaction) {
+        for (std::size_t species_index = 0; species_index < species; ++species_index) {
+            affinities[static_cast<std::size_t>(reaction)] +=
+                stoichiometry_row_major[static_cast<std::size_t>(reaction) * species + species_index]
+                * chemical_potential_gradient[species_index];
+        }
+    }
+    return affinities;
+}
+
 IdealReactionQuotientResult evaluate_ideal_reaction_quotients(
     const std::vector<double>& amounts,
     int reaction_count,

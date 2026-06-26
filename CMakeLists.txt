@@ -358,6 +358,7 @@ if(EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE AND NOT EXISTS "${EPCSAFT_REGRESSION_N
 endif()
 set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/association_block.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/chemical_equilibrium_block.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/electrolyte_block.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/eos_phase_block.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/gibbs_blocks.cpp
