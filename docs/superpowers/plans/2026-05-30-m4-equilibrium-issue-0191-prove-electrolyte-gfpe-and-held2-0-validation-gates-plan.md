@@ -17,11 +17,17 @@ electroneutral variables, Born SSM/DS derivative receipts, charge-neutral TPD
 screening, HELD2 counterion-pair phase discovery, Stage III refinement,
 postsolve certification, and representative public route admission. The active
 child, #320, must prove full Khudaida model reproduction and broader HELD2
-flash behavior before #191 can close.
+flash behavior before #191 can close. #320 also must prove that accepted
+electrolyte rows use the shared native `NlpProblem`/Ipopt exact-Hessian
+production path with route-owned transforms/scaling, exact objective gradients,
+exact constraint Jacobians, exact Lagrangian Hessians, Born SSM+DS active-block
+exactness, projected electrochemical or modified mean-ionic residuals, and
+strict Stage III Ipopt success when Stage III evidence is counted.
 
-**Tech Stack:** C++ equilibrium native core, pybind11 bindings, Python
-validation checkers, pytest contracts through `run_pytest.py`, M4 issue
-mirrors, M4 registry evidence, GitHub dependency readiness.
+**Tech Stack:** C++ equilibrium native core, `NlpProblem`, Ipopt,
+`VariableTransform`, pybind11 bindings, Python validation checkers, pytest
+contracts through `run_pytest.py`, M4 issue mirrors, M4 registry evidence,
+GitHub dependency readiness.
 
 ---
 
@@ -43,10 +49,12 @@ forcing implementation through PR-sized child gates.
 but #314 proved representative public route admission only. The Khudaida figure
 checker currently exposes failed model reproduction.
 **Expected Outcome:** #191 closes only after #320 proves full Khudaida
-figure-level model reproduction and broader HELD2 flash scenario behavior.
+figure-level model reproduction, broader HELD2 flash scenario behavior, and
+the shared `NlpProblem`/Ipopt exact-Hessian production route receipts.
 **Target Output:** `electrolyte_lle` remains scoped to the exact behavior proven
 by retained checkers; final closeout requires artifact-complete and
-model-reproduction-complete Khudaida evidence.
+model-reproduction-complete Khudaida evidence plus exact-Hessian route
+diagnostics.
 **Owner:** M4 equilibrium package owner.
 **Interface:** GitHub issue dependencies, local issue mirrors, M4 README,
 benchmark registry rows, validation checkers, and native diagnostics.
@@ -56,13 +64,18 @@ continuing with #320.
 child-gate orchestration so workers do not treat readiness or TPD screening as
 production electrolyte support.
 **Evidence:** Closed child issue mirrors, checker JSON, targeted contract tests,
-registry evidence, dependency-readiness receipts, and PR merge records.
+`NlpProblem` sparse derivative receipts, Ipopt option/profile diagnostics, Born
+SSM+DS active-block exact-Hessian receipts, reduced-coordinate lift/back-lift
+diagnostics, registry evidence, dependency-readiness receipts, and PR merge
+records.
 **Acceptance Proof:** #191 acceptance is proven only when all electrolyte child
-gates are closed, the public electrolyte route admission checker passes, and the
-full Khudaida figure checker passes with model reproduction required.
+gates are closed, the public electrolyte route admission checker passes, the
+full Khudaida figure checker passes with model reproduction required, and #320
+proves the exact-Hessian production route path.
 **Stop Criteria:** Stop if a child attempts to admit public electrolyte routes
 before Stage III and postsolve evidence, compares charged species by raw
-single-ion chemical potentials, or uses downstream case-study metrics as
+single-ion chemical potentials, bypasses `NlpProblem`/Ipopt, lacks Born SSM+DS
+active-block exact-Hessian evidence, or uses downstream case-study metrics as
 upstream package validation.
 **Avoid:** Do not add reactive electrolyte routes, parameter-regression work,
 release claims, or public admission before the required proof gates.
@@ -78,7 +91,9 @@ refinement, certification, and admission separate.
 electrolyte route maps before the admission child, and provider EOS internals
 unless a child issue explicitly scopes provider receipt consumption.
 **Source Of Truth:** #191 source spec, M4 GFPE doctrine, Stage 14/15 electrolyte
-plan, local HELD2 paper markdown, and closed child issue mirrors #269/#300/#302.
+plan, Perdomo 2025 HELD2 paper markdown, Ascani 2022 electrolyte methodology,
+Khudaida 2026 retained source data, and closed child issue mirrors
+#269/#300/#302.
 **Read Path:** Read source fixture readiness through
 `check_electrolyte_gfpe_gate.py`, readiness through
 `check_electrolyte_held2_readiness.py`, TPD screening through
@@ -87,9 +102,10 @@ issue dependencies.
 **Write Path:** Update parent issue mirrors and M4 docs after each child issue
 is created or closed; write implementation code only inside the active child
 scope.
-**Integration Points:** Native phase-discovery diagnostics, checker CLIs,
-activation capability rows, benchmark registry rows, and GitHub dependency
-readiness automation.
+**Integration Points:** Native phase-discovery diagnostics, `NlpProblem` sparse
+derivative metadata, `VariableTransform` reduced-coordinate lift/back-lift,
+Ipopt exact-Hessian profile diagnostics, checker CLIs, activation capability
+rows, benchmark registry rows, and GitHub dependency readiness automation.
 **Migration Or Cutover:** As each child opens, #191 carries `status:blocked`;
 after a child closes, dependency readiness either exposes the next child or
 returns #191 to ready for planning.
@@ -119,12 +135,19 @@ focused tests, and tracker evidence:
 - #314 public admission checkpoint: consume all prior checkers and expose only
   the certified representative electrolyte route surface.
 - #320 full reproduction checkpoint: make the full Khudaida figure checker pass
-  with model reproduction required and add broader HELD2 flash scenario tests.
+  with model reproduction required, add broader HELD2 flash scenario tests, and
+  prove the shared native `NlpProblem`/Ipopt exact-Hessian route path.
 
 ## Acceptance Criteria
 
 - [ ] #320 blocks #191 until full Khudaida figure-level model reproduction and
   HELD2 flash scenario validation pass.
+- [ ] #320 blocks #191 until accepted rows prove the shared native
+  `NlpProblem`/Ipopt exact-Hessian route path, fixed sparse derivative receipts,
+  route-owned transforms/scaling, and Ipopt postsolve diagnostics.
+- [ ] #320 blocks #191 until Born SSM+DS active-block exact-Hessian evidence,
+  reduced electroneutral lift/back-lift, and projected electrochemical or
+  modified mean-ionic residuals are retained.
 - [ ] Parent #191 docs list closed children #269, #300, #302, #306, #312, #313,
   and #314 as
   historical provenance only.

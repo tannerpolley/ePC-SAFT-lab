@@ -34,7 +34,9 @@ parent with closed provenance.
 - #314 closed representative public route admission for one certified
   source-backed payload.
 - #320 is the active child blocker for full Khudaida figure-level model
-  reproduction and broader HELD2 flash scenario testing.
+  reproduction and broader HELD2 flash scenario testing. Its closeout must also
+  prove that accepted electrolyte rows stay on the shared native
+  `NlpProblem`/Ipopt exact-Hessian production path.
 
 The #302 result is instability-screening evidence and a candidate seed. The
 #306 result is phase-discovery and handoff evidence. The #314 result is
@@ -58,13 +60,21 @@ the M4 GFPE doctrine:
 - neutral species equilibrium is checked with neutral chemical-potential or
   fugacity residuals;
 - charged species transfer equilibrium is checked with independent mean-ionic
-  chemical-potential or mean-ionic fugacity residuals, not raw single-ion
-  chemical-potential equality;
+  chemical-potential, mean-ionic fugacity, or projected electrochemical
+  residuals, not raw single-ion chemical-potential equality;
+- accepted electrolyte flashes are generated through the common
+  pressure-transformed Helmholtz `NlpProblem`/Ipopt phase NLP with route-owned
+  bounds, smooth variable transforms, user scaling, exact objective gradients,
+  exact constraint Jacobians, exact Lagrangian Hessians, sparse derivative
+  receipts, and postsolve certification;
+- Born SSM/DS active phase blocks have exact-Hessian evidence before Khudaida
+  production rows are accepted;
 - phase discovery must produce candidate phase-set evidence before Stage III
   refinement can claim convergence;
 - Stage III refinement must solve the electrolyte reduced-variable phase-set
-  equations and then pass postsolve material, charge, pressure, neutral
-  transfer, mean-ionic transfer, and domain diagnostics.
+  equations, report strict Ipopt `success` and `solve_succeeded` when counted
+  toward production readiness, and then pass postsolve material, charge,
+  pressure, neutral transfer, mean-ionic transfer, and domain diagnostics.
 
 ## Acceptance Gates
 
@@ -79,6 +89,14 @@ the M4 GFPE doctrine:
   postsolve certification.
 - [ ] Khudaida figure-level model reproduction passes for every modeled figure
   or panel with retained fit statistics and plot score `>= 8.0`.
+- [ ] Accepted Khudaida model rows prove the shared native `NlpProblem`/Ipopt
+  exact-Hessian route path, including fixed sparse derivative receipts,
+  `profile_exact_hessian_gate`, route-owned transforms/scaling, and Ipopt
+  postsolve diagnostics.
+- [ ] Born SSM/DS active blocks have exact-Hessian evidence before electrolyte
+  model rows can close #320.
+- [ ] Charged transfer uses projected electrochemical or modified mean-ionic
+  residuals; raw single-ion chemical-potential equality is rejected.
 - [ ] HELD2 flash scenario tests cover neutral-limit parity, source-backed
   electrolyte LLE, common-ion or mixed-salt reduced-coordinate behavior, stable
   feeds, unstable feeds, boundary feeds, and phase-label permutations.
@@ -115,8 +133,11 @@ contracts, and a parent #191 tracker update.
    source-backed public route surface, but this is not full #191 closeout.
 6. Source-backed validation breadth: #320 must make the Khudaida figure
    checker pass with model reproduction required and must add broader HELD2
-   flash scenario tests. Validation must include the retained Khudaida fixture
-   and at least one common-ion or mixed-salt reduced-coordinate case.
+   flash scenario tests. Validation must include the retained Khudaida fixture,
+   at least one common-ion or mixed-salt reduced-coordinate case, and explicit
+   proof that accepted rows use the shared native `NlpProblem`/Ipopt
+   exact-Hessian production path with Born SSM/DS active-block exactness and
+   projected electrochemical or modified mean-ionic residuals.
 7. Final parent closeout: only after #320 passes may #191 close and hand off
    remaining benchmark/capability evidence to M6.
 
@@ -124,7 +145,13 @@ contracts, and a parent #191 tracker update.
 
 - `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
+- `docs/papers/md/Equilibrium/Perdomo et al. - 2025 - Phase stability criteria and fluid-phase equilibria in strong-electrolyte systems.md`
 - `docs/papers/md/Equilibrium/Ascani, Sadowski, Held - 2022 - Calculation of Multiphase Equilibria Containing Mixed Solvents and M.md`
+- `docs/papers/md/Equilibrium/Khudaida et al. - 2026 - Upgrading the Extraction of Ethanol and Isobutanol from an Aqueous Solution in the Presence of Sodiu.md`
+- `analyses/paper_validation/2026_khudaida/README.md`
+- `analyses/paper_validation/2026_khudaida/analysis.yaml`
+- `analyses/paper_validation/2026_khudaida/docs/md/provenance_notes.md`
+- `analyses/paper_validation/2026_khudaida/shared/source/figure_manifest.csv`
 - `docs/papers/md/Equilibrium/Pereira et al. - 2012 - The HELD algorithm for multicomponent, multiphase equilibrium calculations with generic equations of.md`
 
 ## Child Gate Sequence
@@ -149,6 +176,9 @@ contracts, and a parent #191 tracker update.
   full figure-level model reproduction and broader HELD2 flash scenarios.
 - Keep raw single-ion chemical-potential equality out of acceptance criteria for
   charged species; use independent mean-ionic residuals.
+- Keep production electrolyte acceptance on the shared native `NlpProblem`/Ipopt
+  exact-Hessian route. Residual-only solves or adapter-owned thermodynamic
+  equations are diagnostic substitutes only and cannot close #191.
 
 ## Non-Goals
 

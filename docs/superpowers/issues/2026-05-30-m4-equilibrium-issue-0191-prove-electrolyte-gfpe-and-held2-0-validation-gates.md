@@ -67,19 +67,25 @@ that evidence is valid but too narrow for final M4 electrolyte LLE closeout.
 retained figure checker to pass with model reproduction enabled and adds a
 broader HELD2 flash scenario gate covering neutral-limit parity, source-backed
 electrolyte LLE, common-ion or mixed-salt reduced coordinates, stable feeds,
-unstable feeds, boundary feeds, and phase-label permutations.
+unstable feeds, boundary feeds, and phase-label permutations. It must also
+prove accepted electrolyte rows use the shared native `NlpProblem`/Ipopt
+exact-Hessian production path with route-owned transforms/scaling, exact
+objective gradients, exact constraint Jacobians, exact Lagrangian Hessians,
+Born SSM+DS active-block exactness, projected electrochemical or modified
+mean-ionic residuals, and strict Stage III Ipopt success when Stage III evidence
+is counted.
 
 ## Outcome Summary
 
 **Outcome Source:** docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md#outcome-proof
 **Intent:** Keep #191 as the parent acceptance gate for electrolyte GFPE and prevent final closeout until all child gates, including #320, pass with retained executable evidence.
-**Target Output:** Maintainers see #191 open and blocked by #320 until full Khudaida figure-level model reproduction and broader HELD2 flash scenario validation pass.
+**Target Output:** Maintainers see #191 open and blocked by #320 until full Khudaida figure-level model reproduction, broader HELD2 flash scenario validation, and shared `NlpProblem`/Ipopt exact-Hessian route receipts pass.
 **Owner:** M4 equilibrium package owner.
 **Interface:** GitHub issue dependencies, local issue mirrors, M4 docs, validation checkers, and native diagnostics consumed by issue-resolution workflows.
 **Cutover:** Replace the #314-only closeout path with the #320 full reproduction and HELD2 scenario gate.
 **Replaced Path:** Representative public route admission treated as final electrolyte LLE completion evidence.
-**Acceptance Proof:** #191 closes only after #320 passes its proof oracle and the parent mirror is updated with closed provenance.
-**Stop Criteria:** Do not close #191 while #320 is open, while Khudaida model reproduction fails, or while HELD2 flash scenario tests are absent.
+**Acceptance Proof:** #191 closes only after #320 passes its proof oracle, accepted route diagnostics prove the exact-Hessian production path, and the parent mirror is updated with closed provenance.
+**Stop Criteria:** Do not close #191 while #320 is open, while Khudaida model reproduction fails, while HELD2 flash scenario tests are absent, while accepted rows bypass `NlpProblem`/Ipopt, while Born SSM+DS active-block exact-Hessian evidence is absent, or while charged transfer is certified with raw single-ion chemical-potential equality.
 **Avoid:** Do not count collapsed near-feed splits, synthetic payloads, source-only plots, downstream metrics, or broad release claims as completion evidence.
 
 ## Closed Prerequisites And Remaining Gates
@@ -103,7 +109,7 @@ unstable feeds, boundary feeds, and phase-label permutations.
 - [#312](2026-06-25-m4-equilibrium-issue-0312-add-electrolyte-held2-stage-iii-reduced-variable-refinement-gate.md) adds the retained Stage III reduced-variable electrolyte refinement proof. It consumes the #306 candidate handoff, reports exact reduced residual derivative receipts, records strict Ipopt success and finite local phase compositions, and keeps postsolve certification plus public route admission pending.
 - [#313](2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) closes the postsolve certification child. It certifies explicit-ion material reconstruction, per-phase charge balance, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, and domain margins while keeping public route admission pending.
 - [#314](2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) closed representative public electrolyte GFPE route admission. It consumes every prior electrolyte checker and admits only the source-backed Khudaida explicit-ion `electrolyte_lle` route, but it did not prove figure-level model reproduction or robust HELD2 flashing across the Khudaida data set.
-- [#320](2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) is the active final blocker. It requires all modeled Khudaida figures or panels to pass the retained checker with `normalized_plot_score >= 8.0` and requires the broader HELD2 flash scenario gate.
+- [#320](2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) is the active final blocker. It requires all modeled Khudaida figures or panels to pass the retained checker with `normalized_plot_score >= 8.0`, requires the broader HELD2 flash scenario gate, and requires accepted electrolyte rows to prove the shared native `NlpProblem`/Ipopt exact-Hessian route path with Born SSM+DS active-block exactness and projected electrochemical or modified mean-ionic residuals.
 
 ## HELD2 Adoption Checkpoint Sequence
 
@@ -126,7 +132,7 @@ unstable feeds, boundary feeds, and phase-label permutations.
   the certified representative electrolyte route surface.
 - #320 full reproduction checkpoint: make the full Khudaida figure checker pass
   with model reproduction required, then prove broader HELD2 flashing through
-  retained scenario tests.
+  retained scenario tests and exact-Hessian `NlpProblem`/Ipopt route receipts.
 
 ## Closeout Evidence Required
 
@@ -143,8 +149,10 @@ uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electro
 Expected retained result: Khudaida artifact and model reproduction complete,
 zero artifact/model blockers, every modeled figure or panel score `>= 8.0`,
 public route `electrolyte_lle`, certified phase diagnostics, noncollapsed phase
-splits, exact reduced Hessian available, and reactive/CE/CPE/regression/release
-claims closed.
+splits, exact reduced Hessian available, shared `NlpProblem`/Ipopt
+exact-Hessian path, Born SSM+DS active-block exactness, reduced
+electroneutral lift/back-lift, projected electrochemical or modified
+mean-ionic residuals, and reactive/CE/CPE/regression/release claims closed.
 
 ## Supplemental Context
 
@@ -152,7 +160,13 @@ claims closed.
 - `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`
 - `docs/superpowers/plans/2026-06-17-m4-equilibrium-issue-0191-electrolyte-gfpe-closed-admission-gate-plan.md`
 - `docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0306-electrolyte-held2-counterion-pair-phase-discovery-gate-plan.md`
+- `docs/papers/md/Equilibrium/Perdomo et al. - 2025 - Phase stability criteria and fluid-phase equilibria in strong-electrolyte systems.md`
 - `docs/papers/md/Equilibrium/Ascani, Sadowski, Held - 2022 - Calculation of Multiphase Equilibria Containing Mixed Solvents and M.md`
+- `docs/papers/md/Equilibrium/Khudaida et al. - 2026 - Upgrading the Extraction of Ethanol and Isobutanol from an Aqueous Solution in the Presence of Sodiu.md`
+- `analyses/paper_validation/2026_khudaida/README.md`
+- `analyses/paper_validation/2026_khudaida/analysis.yaml`
+- `analyses/paper_validation/2026_khudaida/docs/md/provenance_notes.md`
+- `analyses/paper_validation/2026_khudaida/shared/source/figure_manifest.csv`
 - `docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md`
 
 ## Acceptance Criteria
@@ -162,6 +176,13 @@ claims closed.
 - [x] #313 postsolve electrolyte certification reports material, charge, pressure, neutral transfer, mean-ionic transfer, and domain diagnostics.
 - [x] #314 representative electrolyte GFPE route admission is gated by source-backed validation and postsolve certification.
 - [ ] #320 full Khudaida figure-level model reproduction passes with `--require-model-pass`.
+- [ ] #320 accepted model rows prove the shared native `NlpProblem`/Ipopt
+  exact-Hessian route path, fixed sparse derivative receipts, route-owned
+  transforms/scaling, and Ipopt postsolve diagnostics.
+- [ ] #320 proves Born SSM+DS active-block exact-Hessian evidence and reduced
+  electroneutral lift/back-lift before accepting Khudaida model rows.
+- [ ] #320 certifies charged transfer by projected electrochemical or modified
+  mean-ionic residuals; raw single-ion chemical-potential equality is rejected.
 - [ ] #320 HELD2 flash scenario tests cover neutral-limit parity, source-backed electrolyte LLE, common-ion or mixed-salt reduced coordinates, stable feeds, unstable feeds, boundary feeds, and phase-label permutations.
 - [ ] Capability evidence distinguishes neutral, associating, electrolyte, and reactive support without broadening beyond the full retained evidence.
 - [ ] Docs state the exact source-backed electrolyte production scope and do not broaden into generic electrolyte, reactive, CE/CPE, regression, or release claims.
