@@ -85,8 +85,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `ready_to_close_after_314_merge` | Umbrella closeout is prepared once #314's retained public-admission checker passes on the merged branch. |
-| [#314](../../issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) | `electrolyte` | `Ipopt` | `in_progress` | Final public electrolyte GFPE admission child after #313; this branch carries its implementation and proof oracle. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves full Khudaida figure-level model reproduction, broader HELD2 flash scenario validation, and shared native `NlpProblem`/Ipopt exact-Hessian route receipts. |
+| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active final #191 blocker for full Khudaida model reproduction and HELD2 flash scenario proof. |
 
 ## Queue Guard
 
@@ -229,10 +229,15 @@ consistency norm `6.984919309616089e-10`, phase distance
 with minimum amount `0.43529509750292383`, separate neutral and mean-ionic
 transfer residual families, and domain-margin evidence.
 
-#314 is the final public electrolyte GFPE admission gate. It consumes
-#269/#300/#302/#306/#312/#313, exposes only the source-backed Khudaida explicit-ion
-NaCl mixed-solvent `electrolyte_lle` route, and prepares #191 for closure so
-M6 #192 can become the next GFPE evidence gate.
+#314 is retained representative public electrolyte GFPE admission evidence. It
+consumes #269/#300/#302/#306/#312/#313 and exposes only the source-backed
+Khudaida explicit-ion NaCl mixed-solvent `electrolyte_lle` route, but it is not
+full electrolyte LLE model reproduction.
+
+#320 is the active final #191 blocker. It must prove full Khudaida
+figure-level model reproduction, broader HELD2 flash scenario validation, and
+shared native `NlpProblem`/Ipopt exact-Hessian route receipts before #191 can
+close or hand off remaining GFPE evidence to M6 #192.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table

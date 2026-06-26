@@ -21,7 +21,7 @@ activation_status_vocabulary:
   planned_not_public: "Planning family with no generalized production exposure."
   implemented_utility_not_generalized: "Existing public utility behavior may exist, but does not satisfy generalized admission gates."
   source_backed_associating_lle_public_admitted: "Source-backed associating LLE public admission for the retained methanol/cyclohexane fixture only."
-  source_backed_electrolyte_lle_public_admitted: "Source-backed electrolyte LLE public admission for the retained explicit-ion Khudaida fixture only."
+  representative_public_admitted_blocked_by_khudaida_model_reproduction: "Representative source-backed electrolyte LLE public admission is retained for the explicit-ion Khudaida fixture, but full Khudaida model reproduction and broader HELD2 flash validation remain blocked by issue #320."
   diagnostic_only: "Internal helper or diagnostic layer only."
   source_data_needed: "A source-backed target exists but local executable fixture data are missing."
 
@@ -191,7 +191,7 @@ family_rows:
 
   - family_label: "PE-Electrolyte LLE/TP Flash"
     family_kind: phase_equilibrium
-    activation_status: source_backed_electrolyte_lle_public_admitted
+    activation_status: representative_public_admitted_blocked_by_khudaida_model_reproduction
     production_exposed: true
     existing_public_utility_routes: [electrolyte_lle]
     scope: "Strong-electrolyte LLE and TP flash with charge-neutral reduced variables."
@@ -201,7 +201,7 @@ family_rows:
     objective_family: pressure_transformed_helmholtz_electrolyte
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
-    phase_discovery_status: held2_postsolve_certified_public_admission_complete
+    phase_discovery_status: held2_postsolve_certified_representative_public_admission_complete_full_khudaida_model_reproduction_blocked_by_320
     phase_discovery_contract:
       completed_issue: 306
       scope: "HELD2 counterion-pair phase discovery plus Stage III refinement, postsolve certification, and public route admission are retained as separate evidence gates."

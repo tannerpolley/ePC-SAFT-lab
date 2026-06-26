@@ -28,7 +28,7 @@ last_synced: "2026-06-25"
 **Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/314 using docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md and docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md after #313 closes. Complete proof oracle: issue acceptance criteria checked, PR merged, and #191 closeout evidence prepared.
 **Execution Mode:** Ask at runtime
-**Worktree Policy:** Local branch in primary checkout
+**Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
 **TDD Policy:** Required
 **Parallelization Plan:** None
@@ -53,7 +53,7 @@ last_synced: "2026-06-25"
 **Merge Owner:** Main thread orchestrator
 **Merge Gate:** Native UI approval required
 **Merge Policy:** Repo default
-**Worktree Cleanup Policy:** No worktree used
+**Worktree Cleanup Policy:** No worktree created
 **Orchestrator Wakeup Policy:** Worker handoff or bounded heartbeat
 
 ## What To Build
@@ -61,9 +61,10 @@ last_synced: "2026-06-25"
 Admit the certified electrolyte GFPE route only after the postsolve
 certification child closes. This issue updates the selector/admission path,
 public capability evidence, benchmark registry, docs, and tests so user-facing
-electrolyte support matches the exact source-backed validation scope. It also
-prepares #191 closure when the public admission proof passes and no M4
-electrolyte gates remain.
+electrolyte support matches the exact source-backed validation scope. It is
+retained as representative public-route admission evidence only; #191 remains
+blocked by #320 until full Khudaida figure-level model reproduction and HELD2
+flash scenario gates pass.
 
 ## Parent And Dependencies
 
