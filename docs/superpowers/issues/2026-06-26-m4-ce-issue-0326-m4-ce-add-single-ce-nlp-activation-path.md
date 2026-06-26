@@ -39,7 +39,7 @@
 
 ## What To Build
 
-Add the standalone CE route through the single activation-matrix NLP/Ipopt path. Direct extent, element-potential/VCS-style, and Pope-style continuation ideas are future strategy notes only unless represented as diagnostics inside this one route; they must not become separate execution lanes, native bindings, public APIs, or checker bypasses.
+Add the standalone CE route through the single activation-matrix NLP/Ipopt path. Direct extent, element-potential/VCS-style, and Pope-style continuation ideas may appear only as non-executing reference notes; they must not become route diagnostics, metadata choices, execution lanes, selector branches, native bindings, public APIs, or checker bypasses.
 
 ## Acceptance Criteria
 

@@ -158,20 +158,25 @@ Child issues:
    - Acceptance: native tests prove balances, stationarity, curvature, and
      finite-domain handling.
 
-5. `M4 CE: add robust CE algorithm lanes`
+5. `M4 CE: add single CE NLP activation path`
    - Type: `Feature`
-   - Scope: direct extent/Newton or Ipopt lane, element-potential or VCS-style
-     reduced lane, and Pope-style continuation lane for difficult seeds.
-   - Acceptance: each lane reports the same thermodynamic residual contract and
-     has clear admission criteria.
+   - Scope: one standalone CE route through the activation matrix, selector
+     contract, native `NlpProblem`, and Ipopt adapter using the homogeneous CE
+     residual/objective block.
+   - Acceptance: tests and checker evidence prove CE cannot bypass the
+     activation-matrix NLP/Ipopt path through direct extent,
+     element-potential/VCS-style, Pope-style continuation, checker-only, native
+     binding, or public API side routes.
 
 6. `M4 CE: create Cantera and Pope reference-oracle harness`
    - Type: `Task`
    - Scope: local scripts/fixtures that compare ePC-SAFT CE outputs against
-     Cantera-compatible ideal cases and Pope-style constrained ideal-gas cases.
+     Cantera-compatible ideal cases and Pope-paper constrained ideal-gas
+     reference cases.
    - Acceptance: retained JSON summaries include element residuals, affinity
      residuals, species mole fractions, solver metadata, and known limitation
-     notes.
+     notes; the harness is reference-only and creates no alternate CE solver
+     route.
 
 7. `M4 CE: design standalone speciation public API and result schema`
    - Type: `Feature`
