@@ -375,8 +375,9 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - The #325 homogeneous CE residual/objective block must become the objective and
   residual source for that one NLP path, not a direct checker-only binding.
 - Direct extent, element-potential/VCS-style, and Pope-style continuation ideas
-  may be retained only as route diagnostics or future strategy metadata inside
-  the single NLP path; they must not become separate execution lanes.
+  may appear only as non-executing reference notes. They must not become route
+  diagnostics, metadata choices, execution lanes, selector branches, native
+  bindings, public API fields, or checker gates.
 - CPE must later be able to compose phase and chemistry without migrating from a
   separate standalone CE solver architecture.
 
@@ -418,8 +419,9 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   from phase equilibrium proof.
 - Cantera-compatible ideal cases should compare element balance, species mole
   fractions, and affinities.
-- Pope-style constrained ideal-gas cases should stress tiny species and
-  constraint-potential continuation behavior.
+- Pope-paper constrained ideal-gas reference cases should stress tiny species
+  and constraint-potential behavior without creating an ePC-SAFT continuation
+  route.
 
 **Files:**
 
@@ -437,8 +439,8 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - [ ] **Step 2: Run oracle tests and verify missing fixture failure.**
   Run `uv run --no-sync python run_pytest.py tests/native/contracts/test_chemical_equilibrium_reference_oracles.py -q`.
 - [ ] **Step 3: Generate retained oracle records.**
-  Add deterministic ideal CE cases from Cantera-compatible and Pope-style
-  definitions with no production runtime dependency.
+  Add deterministic ideal CE cases from Cantera-compatible and Pope-paper
+  reference definitions with no production runtime dependency.
 - [ ] **Step 4: Wire oracle checker evidence.**
   Make the standalone CE checker reject oracle records that claim LLE or CPE
   proof.
