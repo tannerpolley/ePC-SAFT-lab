@@ -14,9 +14,16 @@ from epcsaft import InputError, SolutionError
 from epcsaft.runtime import RouteDiagnosticsView
 
 from ._native import extension_native_core
+from .chemical_equilibrium import (
+    ChemicalReaction,
+    ChemicalSpecies,
+    CompiledChemicalEquilibrium,
+    compile_reaction_set,
+)
 from .core.native_requests import (
     EQUILIBRIUM_ROUTE_SPECS,
     NativeSelectorRouteSpec,
+    chemical_equilibrium_schema_payload,
     neutral_two_phase_eos_tolerances,
     selector_request_payload,
     selector_route_solver_tolerances,
@@ -49,6 +56,23 @@ class EquilibriumSolverOptions:
     ipopt_dual_infeasibility_tolerance: float | None = None
     ipopt_complementarity_tolerance: float | None = None
     continuation_state: Mapping[str, Any] | None = None
+
+
+def compile_chemical_equilibrium_schema(
+    *,
+    species: Sequence[ChemicalSpecies],
+    reactions: Sequence[ChemicalReaction],
+    feed_amounts: Mapping[str, float],
+) -> CompiledChemicalEquilibrium:
+    """Compile standalone CE schema inputs without entering native solver code."""
+
+    return compile_reaction_set(species=species, reactions=reactions, feed_amounts=feed_amounts)
+
+
+def chemical_equilibrium_native_payload(compiled: CompiledChemicalEquilibrium) -> dict[str, Any]:
+    """Return the native-boundary payload for a compiled standalone CE schema."""
+
+    return chemical_equilibrium_schema_payload(compiled)
 
 
 def _readonly_float_array(value: Any) -> np.ndarray:
