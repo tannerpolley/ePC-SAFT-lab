@@ -3,19 +3,20 @@
 Milestone: `M4 - Equilibrium`
 Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/191`
 Status: `open`
-Last synced: `2026-06-25`
+Last synced: `2026-06-26`
 
 ## Summary
 
-Prove electrolyte GFPE and HELD2.0 validation gates without opening public
-electrolyte LLE or TP-flash routes before the electrolyte-specific phase
-discovery, refinement, postsolve, and source-backed validation evidence exists.
+Prove electrolyte GFPE and HELD2.0 validation gates without treating public
+electrolyte LLE route admission as complete until the electrolyte-specific
+phase discovery, refinement, postsolve, full source-backed figure reproduction,
+and broader HELD2 flash scenario evidence exists.
 
 #191 is a HITL umbrella. It is not a direct implementation issue. Resolve it
 through child gates that each add executable evidence and then update this
 parent with closed provenance.
 
-## Current State After #306
+## Current State After #314 And #320 Reopen
 
 - #269 closed the Khudaida closed-admission source gate: source rows,
   explicit-ion expansion, parameter-bundle construction, native electrolyte
@@ -28,15 +29,18 @@ parent with closed provenance.
   `-0.010922388988229025`, and maximum charge residual `0.0`.
 - #306 closed the HELD2 counterion-pair phase-discovery gate with a Stage III
   handoff record.
-- #312 is the active child blocker for Stage III electrolyte reduced-variable
-  refinement.
-- #313 and #314 are blocked by #312 and #313 respectively for postsolve
-  certification and public route admission.
+- #312 closed the Stage III electrolyte reduced-variable refinement gate.
+- #313 closed the postsolve electrolyte phase-set certification gate.
+- #314 closed representative public route admission for one certified
+  source-backed payload.
+- #320 is the active child blocker for full Khudaida figure-level model
+  reproduction and broader HELD2 flash scenario testing.
 
 The #302 result is instability-screening evidence and a candidate seed. The
-#306 result is phase-discovery and handoff evidence. Neither result is Stage
-III electrolyte refinement, postsolve phase-set certification, or public route
-admission.
+#306 result is phase-discovery and handoff evidence. The #314 result is
+representative route-admission evidence. None of those results prove that the
+electrolyte route reproduces the retained Khudaida figures across all modeled
+cases.
 
 ## HELD2 Algorithm Doctrine
 
@@ -73,6 +77,11 @@ the M4 GFPE doctrine:
   mean-ionic transfer residuals, and domain margins.
 - [ ] Electrolyte GFPE route admission is gated by source-backed validation and
   postsolve certification.
+- [ ] Khudaida figure-level model reproduction passes for every modeled figure
+  or panel with retained fit statistics and plot score `>= 8.0`.
+- [ ] HELD2 flash scenario tests cover neutral-limit parity, source-backed
+  electrolyte LLE, common-ion or mixed-salt reduced-coordinate behavior, stable
+  feeds, unstable feeds, boundary feeds, and phase-label permutations.
 - [ ] Capability evidence distinguishes neutral, associating, electrolyte, and
   reactive support.
 - [ ] Docs do not claim electrolyte production support before executable
@@ -102,14 +111,14 @@ contracts, and a parent #191 tracker update.
    neutral and mean-ionic transfer residual tolerances, pressure consistency,
    positive phase amounts, noncollapsed compositions, and stable replay from
    retained candidates.
-5. Source-backed validation breadth: before public admission, validation must
-   include the Khudaida fixture and at least one multi-ion mixed-solvent
-   fixture from the local methodology context, with water + 1-butanol + NaCl +
-   KCl Table 5 as the preferred first multi-ion case.
-6. Public route admission: only after the previous gates pass may #314 expose
-   a public electrolyte route. That admission checker must consume the source,
-   phase-discovery, Stage III, and postsolve checkers and keep unrelated
-   reactive, associating-generalized, and regression claims outside #191.
+5. Representative public route admission: #314 exposed a certified
+   source-backed public route surface, but this is not full #191 closeout.
+6. Source-backed validation breadth: #320 must make the Khudaida figure
+   checker pass with model reproduction required and must add broader HELD2
+   flash scenario tests. Validation must include the retained Khudaida fixture
+   and at least one common-ion or mixed-salt reduced-coordinate case.
+7. Final parent closeout: only after #320 passes may #191 close and hand off
+   remaining benchmark/capability evidence to M6.
 
 ## Source Context
 
@@ -124,9 +133,11 @@ contracts, and a parent #191 tracker update.
 2. Closed #300: reduced electroneutral basis and Born SSM/DS exactness gate.
 3. Closed #302: charge-neutral electrolyte TPD screening gate.
 4. Closed #306: counterion-pair HELD2 phase-discovery gate.
-5. Open #312: Stage III electrolyte reduced-variable refinement gate.
-6. Open #313: postsolve electrolyte phase-set certification gate, blocked by #312.
-7. Open #314: public electrolyte route admission gate, blocked by #313.
+5. Closed #312: Stage III electrolyte reduced-variable refinement gate.
+6. Closed #313: postsolve electrolyte phase-set certification gate.
+7. Closed #314: representative public electrolyte route admission gate.
+8. Open #320: full Khudaida electrolyte LLE figure and HELD2 flash validation
+   gate, blocking #191.
 
 ## Implementation Notes
 
@@ -134,8 +145,8 @@ contracts, and a parent #191 tracker update.
   explicitly approves cross-milestone work.
 - Consume provider Born derivative receipts through public provider APIs rather
   than rewriting provider EOS behavior inside M4.
-- Keep public `electrolyte_lle` absent from public routes, proof routes, and
-  production families until the route-admission child closes.
+- Treat public `electrolyte_lle` admission as representative until #320 proves
+  full figure-level model reproduction and broader HELD2 flash scenarios.
 - Keep raw single-ion chemical-potential equality out of acceptance criteria for
   charged species; use independent mean-ionic residuals.
 
