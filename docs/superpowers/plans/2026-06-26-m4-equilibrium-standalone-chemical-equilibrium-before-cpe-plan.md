@@ -173,7 +173,8 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   activity, molality, fugacity, and EOS `x phi` conventions.
 - [ ] Homogeneous CE native/Python core reports exact residuals, derivatives,
   scaling, and diagnostics.
-- [ ] Robust algorithm lanes report a shared residual contract.
+- [ ] Standalone CE enters through one activation-matrix NLP/Ipopt path using
+  the shared CE residual contract.
 - [ ] Cantera and Pope reference cases are retained as CE-only oracles.
 - [ ] Public CE API/result schema exposes standalone speciation only.
 - [ ] Validation ladder includes analytic, charged, Ascani, MEA, and oracle
@@ -364,41 +365,50 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - [ ] **Step 5: Commit.**
   Commit the native CE block and bindings.
 
-### Task 6: Add Robust CE Algorithm Lanes
+### Task 6: Add Single CE NLP Activation Path
 
 **Use Cases:**
 
-- Easy CE cases should solve through a direct extent or Ipopt lane.
-- Rank-sensitive or tiny-species cases need an element-potential/VCS-style lane
-  or Pope-style continuation lane with shared diagnostics.
-- Algorithm lanes must return the same thermodynamic residual contract so
-  capability gates can compare them.
+- Standalone CE must enter through the same activation matrix, selector
+  contract, native `NlpProblem`, and Ipopt adapter pattern used by the rest of
+  M4 equilibrium.
+- The #325 homogeneous CE residual/objective block must become the objective and
+  residual source for that one NLP path, not a direct checker-only binding.
+- Direct extent, element-potential/VCS-style, and Pope-style continuation ideas
+  may be retained only as route diagnostics or future strategy metadata inside
+  the single NLP path; they must not become separate execution lanes.
+- CPE must later be able to compose phase and chemistry without migrating from a
+  separate standalone CE solver architecture.
 
 **Files:**
 
 - Modify:
   `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/chemical_equilibrium.py`
 - Modify:
-  `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp`
+  `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium_activation.py`
 - Create:
-  `packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_algorithms.py`
+  `packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py`
 - Create:
   `tests/native/contracts/test_standalone_ce_gate.py`
 - Create: `scripts/validation/check_standalone_ce_gate.py`
 
-- [ ] **Step 1: Write failing algorithm-lane tests.**
-  Cover direct lane, element-potential/VCS-style lane, Pope-style continuation
-  lane, and common result diagnostics.
+- [ ] **Step 1: Write failing single-path activation tests.**
+  Cover activation-matrix admission, selector classification, native
+  `NlpProblem` construction, Ipopt-adapter solve diagnostics, and rejection of
+  side-channel CE lane bindings.
 - [ ] **Step 2: Run tests and verify failure.**
-  Run `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_algorithms.py tests/native/contracts/test_standalone_ce_gate.py -q`.
-- [ ] **Step 3: Implement lane selection and diagnostics.**
-  Add lane metadata, residual comparison, iteration/status diagnostics, and
-  domain-safety reporting.
+  Run `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py tests/native/contracts/test_standalone_ce_gate.py -q`.
+- [ ] **Step 3: Implement the single CE NLP route.**
+  Add activation-matrix/selector wiring and native NLP/Ipopt solve diagnostics
+  that consume the #325 CE residual/objective block. Do not add
+  `_native_chemical_equilibrium_algorithm_lanes`, direct extent, VCS-style, or
+  Pope-style side-route bindings.
 - [ ] **Step 4: Add checker coverage.**
-  Make `check_standalone_ce_gate.py --json --require-algorithm-lanes` validate
-  all three lanes.
+  Make `check_standalone_ce_gate.py --json --require-single-nlp-path` validate
+  the activation matrix, selector, native NLP route, Ipopt adapter diagnostics,
+  and absence of side-channel CE solver bindings.
 - [ ] **Step 5: Commit.**
-  Commit algorithm lanes and checker gate.
+  Commit the single CE NLP activation route and checker gate.
 
 ### Task 7: Create Cantera And Pope Reference Oracle Harness
 
@@ -617,16 +627,16 @@ Create the issues in this dependency order:
    - Blocked by: standard-state registry issue
    - Goal Command: `/goal Build homogeneous CE native residual/objective core with exact derivative diagnostics.`
 
-6. Child: `M4 CE: add robust CE algorithm lanes`
+6. Child: `M4 CE: add single CE NLP activation path`
    - Type: `Feature`
    - Classification: `AFK`
    - Blocked by: homogeneous CE core issue
-   - Goal Command: `/goal Add direct, element-potential, and Pope-style CE algorithm lanes with shared diagnostics.`
+   - Goal Command: `/goal Add the standalone CE route through the single activation-matrix NLP/Ipopt path, with no side-channel algorithm lanes.`
 
 7. Child: `M4 CE: create Cantera and Pope reference-oracle harness`
    - Type: `Task`
    - Classification: `AFK`
-   - Blocked by: algorithm lanes issue
+   - Blocked by: single CE NLP activation path issue
    - Goal Command: `/goal Create retained CE-only Cantera/Pope oracle fixtures and tests.`
 
 8. Child: `M4 CE: design standalone speciation public API and result schema`
@@ -658,8 +668,8 @@ Create the issues in this dependency order:
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
-uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-schema --require-standard-state --require-core --require-algorithm-lanes --require-oracles --require-api --require-validation --require-activation --require-complete
-uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_schema.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_standard_state.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py packages/epcsaft-equilibrium/tests/native/blocks/test_chemical_equilibrium_blocks.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_algorithms.py tests/native/contracts/test_standalone_ce_gate.py tests/native/contracts/test_chemical_equilibrium_reference_oracles.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q
+uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-schema --require-standard-state --require-core --require-single-nlp-path --require-oracles --require-api --require-validation --require-activation --require-complete
+uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_schema.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_standard_state.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py packages/epcsaft-equilibrium/tests/native/blocks/test_chemical_equilibrium_blocks.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py tests/native/contracts/test_standalone_ce_gate.py tests/native/contracts/test_chemical_equilibrium_reference_oracles.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
