@@ -59,4 +59,6 @@ ActivationPlan build_neutral_multiphase_nonassoc_activation_plan(
     const std::vector<std::string>& phase_kinds
 );
 
+ActivationPlan build_reactive_speciation_activation_plan(int species_count);
+
 }  // namespace epcsaft::native::equilibrium

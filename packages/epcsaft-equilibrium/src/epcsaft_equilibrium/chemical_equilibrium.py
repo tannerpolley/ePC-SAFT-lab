@@ -360,6 +360,62 @@ def build_standard_state_registry(records: Sequence[EquilibriumConstantRecord]) 
     return StandardStateRegistry(registry)
 
 
+def solve_chemical_equilibrium_nlp_activation(
+    compiled: CompiledChemicalEquilibrium,
+    standard_states: StandardStateRegistry,
+    *,
+    initial_amounts: Sequence[float],
+    max_iterations: int = 100,
+    tolerance: float = 1.0e-8,
+    timeout_seconds: float | None = None,
+    hessian_mode: str = "auto",
+    ipopt_iteration_history_limit: int = 20,
+    balance_tolerance: float = 1.0e-9,
+    reaction_stationarity_tolerance: float = 1.0e-8,
+    continuation_state: Mapping[str, Any] | None = None,
+    ipopt_linear_solver: str = "auto",
+) -> dict[str, Any]:
+    """Solve standalone CE through the internal activation-matrix NLP/Ipopt path."""
+
+    if not isinstance(compiled, CompiledChemicalEquilibrium):
+        raise InputError("chemical equilibrium NLP activation requires a compiled CE schema.")
+    if not isinstance(standard_states, StandardStateRegistry):
+        raise InputError("chemical equilibrium NLP activation requires a standard-state registry.")
+    if tuple(standard_states.reaction_labels) != tuple(compiled.reaction_labels):
+        raise InputError("standard-state registry reaction order must match the compiled CE schema.")
+    if hessian_mode not in {"auto", "exact", "limited-memory"}:
+        raise InputError("hessian_mode must be 'auto', 'exact', or 'limited-memory'.")
+    iterations = int(max_iterations)
+    if iterations <= 0:
+        raise InputError("max_iterations must be positive.")
+    history_limit = int(ipopt_iteration_history_limit)
+    if history_limit < 0:
+        raise InputError("ipopt_iteration_history_limit must be non-negative.")
+    solve_tolerance = _positive_finite_float(tolerance, "tolerance")
+    balance_tol = _positive_finite_float(balance_tolerance, "balance_tolerance")
+    reaction_tol = _positive_finite_float(reaction_stationarity_tolerance, "reaction_stationarity_tolerance")
+    timeout = 0.0 if timeout_seconds is None else _positive_finite_float(timeout_seconds, "timeout_seconds")
+    initial = _positive_amount_vector(initial_amounts, compiled.species_count, "initial_amounts")
+
+    from ._native import extension_native_core
+
+    core = extension_native_core()
+    return core._native_chemical_equilibrium_nlp_activation(
+        compiled.to_native_payload(),
+        standard_states.to_native_payload(),
+        initial.tolist(),
+        iterations,
+        solve_tolerance,
+        timeout,
+        hessian_mode,
+        history_limit,
+        balance_tol,
+        reaction_tol,
+        continuation_state,
+        linear_solver=str(ipopt_linear_solver),
+    )
+
+
 def _clean_label(value: Any, label: str) -> str:
     if not isinstance(value, str):
         raise InputError(f"{label} must be a string.")
@@ -507,6 +563,17 @@ def _feed_vector(feed_amounts: Mapping[str, float], species_index: Mapping[str, 
     if float(np.sum(feed)) <= 0.0:
         raise InputError("feed amount values must contain positive material.")
     return feed
+
+
+def _positive_amount_vector(values: Sequence[float], expected_size: int, label: str) -> np.ndarray:
+    array = np.asarray(values, dtype=float)
+    if array.shape != (expected_size,):
+        raise InputError(f"{label} must contain one amount per species.")
+    if not np.all(np.isfinite(array)):
+        raise InputError(f"{label} must be finite.")
+    if np.any(array <= 0.0):
+        raise InputError(f"{label} must be strictly positive.")
+    return array.copy()
 
 
 def _matrix_rank(matrix: np.ndarray) -> int:
