@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "equilibrium/blocks/association_block.h"
+#include "equilibrium/blocks/chemical_equilibrium_block.h"
 #include "equilibrium/blocks/electrolyte_block.h"
 #include "equilibrium/blocks/eos_phase_block.h"
 #include "equilibrium/blocks/gibbs_blocks.h"
@@ -575,6 +576,55 @@ py::dict association_mass_action_block_to_dict(
         result.site_fraction_hessian_depth
     );
     out["site_fraction_hessian_tensor_row_major"] = result.site_fraction_hessian_tensor_row_major;
+    return out;
+}
+
+py::dict homogeneous_chemical_equilibrium_block_to_dict(
+    const epcsaft::native::equilibrium_nlp::HomogeneousChemicalEquilibriumBlockResult& result
+) {
+    py::dict exact_derivative_metadata;
+    exact_derivative_metadata["derivative_backend"] = "analytic";
+    exact_derivative_metadata["objective_gradient_exact"] = true;
+    exact_derivative_metadata["balance_jacobian_exact"] = true;
+    exact_derivative_metadata["affinity_jacobian_exact"] = true;
+    exact_derivative_metadata["objective_hessian_exact"] = true;
+    exact_derivative_metadata["hessian_backend"] = "analytic";
+
+    py::dict domain_margins;
+    domain_margins["minimum_amount"] = result.minimum_amount;
+    domain_margins["amount_lower_margin"] = result.amount_lower_margin;
+    domain_margins["total_amount"] = result.total_amount;
+
+    py::dict scaling;
+    scaling["objective_scaling"] = result.objective_scaling;
+    scaling["variable_scaling"] = result.variable_scaling;
+    scaling["balance_scaling"] = result.balance_scaling;
+    scaling["affinity_scaling"] = result.affinity_scaling;
+
+    py::dict out;
+    out["model"] = "homogeneous_chemical_equilibrium";
+    out["residual_families"] = std::vector<std::string>{"conservation_balance", "reaction_affinity"};
+    out["species_count"] = result.species_count;
+    out["reaction_count"] = result.reaction_count;
+    out["constraint_count"] = result.constraint_count;
+    out["amounts"] = result.amounts;
+    out["mole_fractions"] = result.mole_fractions;
+    out["standard_mu_rt"] = result.standard_mu_rt;
+    out["objective_value"] = result.objective_value;
+    out["reduced_gibbs"] = result.objective_value;
+    out["gradient"] = result.objective_gradient;
+    out["objective_gradient"] = result.objective_gradient;
+    out["hessian_row_major"] = result.hessian_row_major;
+    out["balance_residuals"] = result.balance_residuals;
+    out["balance_jacobian_row_major"] = result.balance_jacobian_row_major;
+    out["log_q"] = result.log_q;
+    out["reaction_residuals"] = result.reaction_residuals;
+    out["reaction_affinities"] = result.reaction_affinities;
+    out["affinity_jacobian_row_major"] = result.affinity_jacobian_row_major;
+    out["exact_derivative_metadata"] = exact_derivative_metadata;
+    out["domain_margins"] = domain_margins;
+    out["scaling"] = scaling;
+    out["domain_safety_policy"] = "strict_positive_amounts";
     return out;
 }
 
@@ -2425,6 +2475,27 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         phase_residuals["ideal_vapor"] = reactions.residuals[0];
         out["phase_validation_residuals"] = phase_residuals;
         return out;
+    });
+    m.def("_native_chemical_equilibrium_block", [](
+        const std::vector<double>& amounts,
+        int reaction_count,
+        const std::vector<double>& stoichiometry_row_major,
+        int conservation_row_count,
+        const std::vector<double>& conservation_matrix_row_major,
+        const std::vector<double>& conservation_totals,
+        const std::vector<double>& log_equilibrium_constants
+    ) {
+        return homogeneous_chemical_equilibrium_block_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_homogeneous_chemical_equilibrium_block(
+                amounts,
+                reaction_count,
+                stoichiometry_row_major,
+                conservation_row_count,
+                conservation_matrix_row_major,
+                conservation_totals,
+                log_equilibrium_constants
+            )
+        );
     });
     m.def("_native_eos_phase_block", [](
         const py::object& mixture,

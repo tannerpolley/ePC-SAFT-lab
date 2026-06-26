@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
@@ -34,8 +33,10 @@ def test_runtime_capabilities_report_public_ipopt_routes() -> None:
         "bubble_temperature": "bubble_dew_derived_routes",
         "dew_pressure": "bubble_dew_derived_routes",
         "dew_temperature": "bubble_dew_derived_routes",
+        "electrolyte_lle": "electrolyte_lle",
         "flash": "neutral_tp_flash",
         "lle": "neutral_lle",
+        "multiphase": "neutral_multiphase_nonassoc",
         "single_component_vle": "single_component_vle",
     }
 

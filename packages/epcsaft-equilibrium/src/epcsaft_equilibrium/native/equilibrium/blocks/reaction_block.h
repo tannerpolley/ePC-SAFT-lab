@@ -24,6 +24,12 @@ std::vector<double> standard_mu_rt_from_reactions(
     const std::vector<double>& log_equilibrium_constants
 );
 
+std::vector<double> reaction_affinities_from_gradient(
+    const std::vector<double>& chemical_potential_gradient,
+    int reaction_count,
+    const std::vector<double>& stoichiometry_row_major
+);
+
 std::vector<double> amounts_from_reaction_extents(
     const std::vector<double>& initial_amounts,
     int reaction_count,
