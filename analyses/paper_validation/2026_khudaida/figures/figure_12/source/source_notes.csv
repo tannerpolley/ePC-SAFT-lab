@@ -1,0 +1,6 @@
+section,key,value,unit,notes
+provenance,paper,Khudaida 2026 Supporting Information,,
+provenance,figure,Figure S3,,figure_12
+provenance,source_image,source/figure_12.png,,
+basis,composition,salt-free ternary projection with NaCl retained in source/model CSV rows,,
+model,route,public electrolyte_lle,,three-panel retained package/source comparison
