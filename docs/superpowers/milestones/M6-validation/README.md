@@ -14,5 +14,5 @@ docs/test proof, and release-quality validation gates.
 
 | Issue | Package | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#192](../../issues/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence.md) | `benchmark` | `-` | `blocked` | Close GFPE registry, capability, and benchmark evidence. |
+| [#192](../../issues/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence.md) | `ready` | `-` | `blocked` | Close GFPE registry, capability, and benchmark evidence. |
 | [#194](../../issues/2026-05-30-m6-validation-issue-0194-re-open-executable-literature-benchmark-and-capability-evidence-backlog.md) | `benchmark` | `-` | `needs design` | Re-open executable literature benchmark and capability evidence backlog. |

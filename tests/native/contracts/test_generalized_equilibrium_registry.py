@@ -264,6 +264,42 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
     assert electrolyte["derivative_contract"] == expected_derivative_contract
 
 
+def test_ce_family_is_homogeneous_speciation_with_explicit_gates() -> None:
+    ce = _family_by_label()["CE Chemical Equilibrium Placeholder"]
+    required_gates = set(ce["required_gates"])
+
+    assert ce["family_kind"] == "chemical_equilibrium"
+    assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
+    assert {
+        "homogeneous_single_phase_only",
+        "standard_state_registry",
+        "reaction_affinity_certification",
+        "exact_chemical_potential_derivatives",
+    } <= required_gates
+    assert "hidden_standard_state" in ce["forbidden_shortcuts"]
+
+
+def test_cpe_family_requires_simultaneous_phase_and_chemical_proof_chains() -> None:
+    cpe = _family_by_label()["CPE Combined Phase-Chemical Placeholder"]
+    required_gates = set(cpe["required_gates"])
+    dependencies = cpe["activation_dependencies"]
+
+    assert cpe["family_kind"] == "combined_phase_chemical_equilibrium"
+    assert cpe["phase_discovery_status"] == "blocked_until_pe_and_ce_validation_gates"
+    assert {"phase_equilibrium_validation", "chemical_equilibrium_validation"} <= required_gates
+    assert {
+        "held_stage_ii_dual_phase_discovery",
+        "held_stage_iii_ipopt_refinement",
+        "postsolve_phase_set_certification",
+    } <= set(dependencies["phase_equilibrium"])
+    assert {
+        "standard_state_registry",
+        "reaction_affinity_certification",
+        "exact_chemical_potential_derivatives",
+    } <= set(dependencies["chemical_equilibrium"])
+    assert "sequential_speciation_flash_as_simultaneous_cpe" in cpe["forbidden_shortcuts"]
+
+
 def test_electrolyte_family_records_public_admission_evidence() -> None:
     electrolyte = _family_by_label()["PE-Electrolyte LLE/TP Flash"]
     evidence = {row["evidence_label"]: row for row in electrolyte["admission_evidence"]}

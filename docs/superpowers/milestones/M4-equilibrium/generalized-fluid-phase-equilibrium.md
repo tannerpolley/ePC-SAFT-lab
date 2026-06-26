@@ -60,8 +60,8 @@ The collapsed plan has six visible family labels:
 | `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `source_backed_associating_lle_public_admitted` |
 | `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `source_backed_electrolyte_lle_public_admitted` |
 | `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `neutral_public_admitted` |
-| `CE Chemical Equilibrium Placeholder` | Homogeneous chemical/speciation equilibrium without phase split | `planned_not_public` |
-| `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium | `planned_not_public` |
+| `CE Chemical Equilibrium Placeholder` | Homogeneous single-phase chemical/speciation equilibrium without phase split | `planned_not_public` |
+| `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium after PE and CE proof chains | `planned_not_public` |
 
 The family labels are deliberately descriptive. They replace the old numeric
 PE/CE/CPE row identifiers in the plan and registry. They are stable enough
@@ -130,6 +130,12 @@ sum_i nu_{r,i} mu_i = 0
 ```
 
 with a declared standard-state and reaction-constant convention.
+Standalone CE owns only the homogeneous single-phase problem: species amounts,
+reaction extents or an element/conservation basis, standard-state conventions,
+reaction-affinity residuals, and exact chemical-potential derivatives. CPE is
+not a sequential speciation calculation followed by a phase flash. CPE must
+solve one coupled phase-plus-chemistry objective and certify both phase-transfer
+equilibrium and reaction affinity in the same candidate phase set.
 
 ## Stability And HELD Doctrine
 
@@ -381,8 +387,10 @@ Implementation must proceed in this order:
    Born SSM+DS exact Hessian coverage, charge-neutral reduced variables, and
    HELD2.0 before Khudaida/Held/Ascani validation.
 8. CE and CPE:
-   homogeneous chemical equilibrium first, then simultaneous phase-chemical
-   equilibrium after PE and CE proofs exist.
+   homogeneous single-phase chemical equilibrium first, then simultaneous
+   phase-chemical equilibrium after PE and CE proofs exist. A staged CE result
+   followed by a phase-only flash is validation input at most; it is not CPE
+   admission evidence.
 
 The detailed stage-by-stage execution plan is in
 `docs/superpowers/specs/2026-05-26-m4-equilibrium-stage-by-stage-implementation-plan.md`. Keep this section short:
@@ -611,13 +619,24 @@ iteration-limit seed path are failed boundary evidence.
 
 `CE Chemical Equilibrium Placeholder`
 
-- keep as planning-only until homogeneous reaction/speciation equations,
-  standard-state conventions, and acceptance tests are written.
+- keep as planning-only until homogeneous single-phase reaction/speciation
+  equations, reaction-set schema, standard-state conventions, exact
+  chemical-potential derivatives, reaction-affinity certification, and
+  acceptance tests are written;
+- CE has no phase-discovery status because it has no phase split. Its closure
+  gates are the standard-state registry, equilibrium-constant convention,
+  reaction-affinity residuals, conservation basis, and derivative evidence.
 
 `CPE Combined Phase-Chemical Placeholder`
 
 - keep as planning-only until PE and CE proofs can be solved in one simultaneous
-  route with both transfer equilibrium and reaction affinity certification.
+  route with both transfer equilibrium and reaction affinity certification;
+- required PE inputs include phase-discovery, Stage III refinement, and
+  postsolve phase-set certification evidence. Required CE inputs include the
+  standard-state registry, reaction-affinity certification, exact
+  chemical-potential derivatives, and the standalone CE validation ladder;
+- do not count phase-only validation, CE-only validation, or sequential
+  speciation-plus-flash validation as simultaneous CPE evidence.
 
 ## Registry And Test Acceptance
 

@@ -85,7 +85,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `ready_to_close_after_314_merge` | Umbrella closeout is prepared once #314's retained public-admission checker passes on the merged branch. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `ready_to_close_after_314_merge` | Umbrella closeout is prepared once #314's retained public-admission checker passes on the merged branch. |
 | [#314](../../issues/2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) | `electrolyte` | `Ipopt` | `in_progress` | Final public electrolyte GFPE admission child after #313; this branch carries its implementation and proof oracle. |
 
 ## Queue Guard
