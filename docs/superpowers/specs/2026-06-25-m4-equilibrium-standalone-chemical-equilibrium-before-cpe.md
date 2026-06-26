@@ -1,9 +1,9 @@
 # M4 Standalone Chemical Equilibrium Before CPE
 
 Milestone: `M4 - Equilibrium`
-Issue: `<draft; GitHub issue set not created yet>`
+Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/321`
 Status: `draft`
-Last synced: `2026-06-25`
+Last synced: `2026-06-26`
 
 ## Summary
 
@@ -215,8 +215,8 @@ Child issues:
 
 ## Acceptance Gates
 
-- [ ] A GitHub tracking issue exists for standalone CE under `M4 - Equilibrium`.
-- [ ] Child issues are created with one milestone and package scope each.
+- [x] A GitHub tracking issue exists for standalone CE under `M4 - Equilibrium`.
+- [x] Child issues are created with one milestone and package scope each.
 - [ ] CE registry and docs say homogeneous CE is separate from CPE.
 - [ ] Standard-state conventions are explicit before any CE public route.
 - [ ] Cantera/Pope comparison harness scope is CE-only.
