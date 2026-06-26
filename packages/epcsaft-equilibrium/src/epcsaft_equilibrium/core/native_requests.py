@@ -167,6 +167,24 @@ def selector_request_payload(
     return request
 
 
+def chemical_equilibrium_schema_payload(compiled: Any) -> dict[str, Any]:
+    """Return the native-boundary schema payload for standalone CE preparation."""
+
+    return {
+        "species_labels": list(compiled.species_labels),
+        "reaction_labels": list(compiled.reaction_labels),
+        "conservation_labels": list(compiled.conservation_labels),
+        "conservation_matrix": np.asarray(compiled.conservation_matrix, dtype=float).tolist(),
+        "charge_vector": np.asarray(compiled.charge_vector, dtype=float).tolist(),
+        "stoichiometric_matrix": np.asarray(compiled.stoichiometric_matrix, dtype=float).tolist(),
+        "feed_amounts": np.asarray(compiled.feed_amounts, dtype=float).tolist(),
+        "conservation_totals": np.asarray(compiled.conservation_totals, dtype=float).tolist(),
+        "reaction_rank": int(compiled.reaction_rank),
+        "conservation_rank": int(compiled.conservation_rank),
+        "diagnostics": dict(compiled.diagnostics),
+    }
+
+
 def selector_route_solver_tolerances(options: Any) -> tuple[float, float, float, float]:
     material_tolerance = float(options.tolerance)
     return (
