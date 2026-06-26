@@ -21,6 +21,29 @@ expected:
       temperature_K: 353.6
       pressure_bar: 1.0
       K_a: 22.92
+  standard_state_registry:
+    system_1:
+      reaction_label: ascani_2023_system1_esterification
+      source_constant_label: K_a
+      constant_form: K
+      value: 43.99
+      units: dimensionless
+      temperature_K: 318.15
+      pressure_bar: 1.0
+      activity_convention: mole_fraction_activity
+      standard_state_label: ascani_mole_fraction_activity
+      conversion: retained_source_activity_constant_without_unit_conversion
+    system_2:
+      reaction_label: ascani_2023_system2_esterification
+      source_constant_label: K_a
+      constant_form: K
+      value: 22.92
+      units: dimensionless
+      temperature_K: 353.6
+      pressure_bar: 1.0
+      activity_convention: mole_fraction_activity
+      standard_state_label: ascani_mole_fraction_activity
+      conversion: retained_source_activity_constant_without_unit_conversion
   route_gate_accepted: true
   paper_match_accepted: false
   solver_backend: ipopt
