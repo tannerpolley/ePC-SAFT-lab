@@ -58,7 +58,7 @@ The collapsed plan has six visible family labels:
 | --- | --- | --- |
 | `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `planned_not_public` |
 | `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `source_backed_associating_lle_public_admitted` |
-| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `source_backed_electrolyte_lle_public_admitted` |
+| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `representative_public_admitted_blocked_by_khudaida_model_reproduction` |
 | `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `neutral_public_admitted` |
 | `CE Chemical Equilibrium Placeholder` | Homogeneous single-phase chemical/speciation equilibrium without phase split | `planned_not_public` |
 | `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium after PE and CE proof chains | `planned_not_public` |

@@ -1,0 +1,2 @@
+scope,series,temperature_K,salt_wtfrac,source_point_count,model_point_count,accepted_model_count,grand_aad,organic_aad_water,organic_aad_ethanol,organic_aad_isobutanol,organic_aad_nacl,aqueous_aad_water,aqueous_aad_ethanol,aqueous_aad_isobutanol,aqueous_aad_nacl,max_objective,normalized_plot_score,pass,score_basis
+figure,package_electrolyte_lle_vs_experimental,303.15,0.1,10,10,0,,,,,,,,,,,,False,formula-basis mean absolute phase-composition deviation against source tie-lines

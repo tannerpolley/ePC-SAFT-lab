@@ -1,0 +1,5 @@
+section,key,value,unit,notes
+provenance,paper,Khudaida 2026,,
+provenance,figure,figure_10,,
+provenance,source_image,source/figure_10.png,,
+basis,figure_role,sigma profile source retention,,not an electrolyte LLE solve

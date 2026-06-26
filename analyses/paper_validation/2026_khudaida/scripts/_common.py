@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import csv
+import json
 import math
 import os
 import platform
+import subprocess
 import sys
 
 
@@ -36,9 +38,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts._env import require_epcsaft_install
+from scripts.dev.native_runtime_env import apply_native_runtime_env
 from scripts.plot_outputs import analysis_data_path, analysis_plot_set_dir, paper_validation_output_path, save_plot_figure
 
 require_epcsaft_install()
+apply_native_runtime_env(os.environ)
 
 
 def _fast_machine() -> str:
@@ -47,13 +51,12 @@ def _fast_machine() -> str:
 
 platform.machine = _fast_machine
 
-import scripts._epcsaft_oop as pcs
 import epcsaft
-from epcsaft.parameters import get_prop_dict
+import epcsaft_equilibrium
 from scripts.data.paper_validation_parameters import paper_validation_parameter_path
 
 P_REF = 1.0e5
-MODEL_SOLVE_MAX_ITERATIONS = 30
+MODEL_SOLVE_MAX_ITERATIONS = 180
 PARAMETER_DATASET = paper_validation_parameter_path("2026_Khudaida")
 SPECIES = ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
 FORMULA_SPECIES = ["H2O", "Ethanol", "Isobutanol", "NaCl"]
@@ -71,32 +74,6 @@ LIGHT_GREEN = "#63c46b"
 WATER_COLOR = "#2f6fb3"
 ETHANOL_COLOR = "#c25a14"
 ISOBUTANOL_COLOR = "#5f8f1f"
-
-ORGANIC_SIDE_SCALED_RANGE_5WT = {
-    "water_min": 0.30,
-    "water_max": 0.50,
-    "ethanol_min": 0.00,
-    "ethanol_max": 0.20,
-    "isobutanol_min": 0.40,
-    "isobutanol_max": 0.60,
-}
-ORGANIC_SIDE_SCALED_RANGE_10WT = {
-    "water_min": 0.20,
-    "water_max": 0.40,
-    "ethanol_min": 0.00,
-    "ethanol_max": 0.20,
-    "isobutanol_min": 0.55,
-    "isobutanol_max": 0.75,
-}
-SCALED_FIGURE_OVERRIDES: dict[int, dict] = {
-    2: dict(ORGANIC_SIDE_SCALED_RANGE_5WT),
-    3: dict(ORGANIC_SIDE_SCALED_RANGE_5WT),
-    4: dict(ORGANIC_SIDE_SCALED_RANGE_5WT),
-    5: dict(ORGANIC_SIDE_SCALED_RANGE_10WT),
-    6: dict(ORGANIC_SIDE_SCALED_RANGE_10WT),
-    7: dict(ORGANIC_SIDE_SCALED_RANGE_10WT),
-}
-
 
 def explicit_to_formula(x_ion: np.ndarray) -> np.ndarray:
     return ion_to_formula_basis(x_ion)
@@ -127,6 +104,10 @@ def save_figure(fig: plt.Figure, path: Path) -> None:
     path = paper_validation_output_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     save_plot_figure(fig, path, dpi=300)
+    if path.parent.name == "results" and path.stem.startswith("figure_") and len(path.stem) == len("figure_00"):
+        artist_csv = path.with_suffix(".csv")
+        if artist_csv.exists():
+            artist_csv.unlink()
 
 
 def add_figure_caption(
@@ -146,10 +127,10 @@ def out_path(fig_dir: Path, filename: str) -> Path:
 
 
 def figure_root(figure_number: int) -> Path:
-    return ANALYSIS_ROOT / "figures" / f"figure_{figure_number}"
+    return ANALYSIS_ROOT / "figures" / figure_id_for_number(figure_number)
 
 
-NO_SALT_293_DIGITIZED = [
+NO_SALT_293_TRACE = [
     {"x_ethanol_aq": 0.0046, "distribution": 4.8, "separation": 9.2, "x_isobutanol_aq": 0.0020},
     {"x_ethanol_aq": 0.0069, "distribution": 4.4, "separation": 8.3, "x_isobutanol_aq": 0.0022},
     {"x_ethanol_aq": 0.0096, "distribution": 4.2, "separation": 7.7, "x_isobutanol_aq": 0.0025},
@@ -251,10 +232,121 @@ SUPPORTING_FIGURE_PANELS = {
         ("c", 7, 313.15, 0.10),
     ],
 }
+PHASE_COLUMNS = [
+    "tie_line",
+    "phase",
+    "temperature_K",
+    "salt_wtfrac",
+    "x_water",
+    "x_ethanol",
+    "x_isobutanol",
+    "x_nacl",
+    "source",
+]
+MODEL_COLUMNS = PHASE_COLUMNS[:-1] + ["beta", "residual_norm", "objective", "converged", "source"]
+FEED_COLUMNS = [
+    "tie_line",
+    "temperature_K",
+    "salt_wtfrac",
+    "x_water_total",
+    "x_ethanol_total",
+    "x_isobutanol_total",
+    "x_nacl_total",
+    "x_water_salt_free",
+    "x_ethanol_salt_free",
+    "x_isobutanol_salt_free",
+    "ethanol_total_feed_wtfrac",
+    "source",
+]
+PLOT_POINT_COLUMNS = [
+    "dataset",
+    "series",
+    "tie_line",
+    "phase",
+    "temperature_K",
+    "salt_wtfrac",
+    "x_water",
+    "x_ethanol",
+    "x_isobutanol",
+    "x_nacl",
+    "x_ternary",
+    "y_ternary",
+    "source",
+]
+FIT_STATISTICS_COLUMNS = [
+    "scope",
+    "series",
+    "temperature_K",
+    "salt_wtfrac",
+    "source_point_count",
+    "model_point_count",
+    "accepted_model_count",
+    "grand_aad",
+    "organic_aad_water",
+    "organic_aad_ethanol",
+    "organic_aad_isobutanol",
+    "organic_aad_nacl",
+    "aqueous_aad_water",
+    "aqueous_aad_ethanol",
+    "aqueous_aad_isobutanol",
+    "aqueous_aad_nacl",
+    "max_objective",
+    "normalized_plot_score",
+    "pass",
+    "score_basis",
+]
 
 
 def source_input_path(filename: str) -> Path:
     return SOURCE_INPUT_ROOT / filename
+
+
+def figure_id_for_number(figure_number: int) -> str:
+    return f"figure_{figure_number:02d}"
+
+
+def _figure_number_from_dir(fig_dir: Path) -> int:
+    figure_root = analysis_plot_set_dir(fig_dir).parent
+    return int(figure_root.name.split("_", maxsplit=1)[1])
+
+
+def result_path(fig_dir: Path, filename: str) -> Path:
+    return analysis_plot_set_dir(fig_dir) / filename
+
+
+def source_path(fig_dir: Path, filename: str) -> Path:
+    return analysis_data_path(fig_dir, filename, kind="source")
+
+
+def _source_label(value: str | None, fallback: str = "published_figure_trace") -> str:
+    return (value or fallback).strip()
+
+
+def _write_source_notes(fig_dir: Path, rows: list[dict]) -> None:
+    fields = ["section", "key", "value", "unit", "notes"]
+    write_csv_rows(source_path(fig_dir, "source_notes.csv"), fields, rows)
+
+
+def _write_source_points(fig_dir: Path, rows: list[dict]) -> None:
+    fields = [
+        "dataset",
+        "series",
+        "point_id",
+        "tie_line",
+        "phase",
+        "temperature_K",
+        "salt_wtfrac",
+        "x_water",
+        "x_ethanol",
+        "x_isobutanol",
+        "x_nacl",
+        "x_water_salt_free",
+        "x_ethanol_salt_free",
+        "x_isobutanol_salt_free",
+        "source_method",
+        "source_reference",
+    ]
+    write_csv_rows(source_path(fig_dir, "source_points.csv"), fields, rows)
 
 
 def source_experimental_cases() -> dict[tuple[float, float], list[tuple[int, tuple[float, ...], tuple[float, ...]]]]:
@@ -291,12 +383,12 @@ def _experimental_rows(salt_wt: float, temperature_k: float) -> list[dict]:
     return rows
 
 
-def _digitized_feed_rows_for_figure(figure_number: int, temperature_k: float, salt_wt: float) -> list[dict] | None:
-    source_path = analysis_data_path(figure_root(figure_number), "feed_compositions_digitized.csv", kind="source")
-    if not source_path.exists():
+def _source_feed_rows_for_figure(figure_number: int, temperature_k: float, salt_wt: float) -> list[dict] | None:
+    path = analysis_data_path(figure_root(figure_number), "feed_compositions.csv", kind="source")
+    if not path.exists():
         return None
     rows = []
-    with source_path.open("r", newline="", encoding="utf-8-sig") as handle:
+    with path.open("r", newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         for idx, raw in enumerate(reader, start=1):
             ethanol = float(raw["x_ethanol_salt_free"])
@@ -312,7 +404,7 @@ def _digitized_feed_rows_for_figure(figure_number: int, temperature_k: float, sa
                     "salt_wtfrac": float(salt_wt),
                     "feed_formula": feed_formula,
                     "ethanol_total_feed_wtfrac": "",
-                    "source": raw.get("source", "digitized_user_supplied") or "digitized_user_supplied",
+                    "source": _source_label(raw.get("source"), "user_supplied_figure_trace"),
                 }
             )
     return rows
@@ -359,66 +451,6 @@ def ternary_xy_from_formula(x_formula: np.ndarray) -> tuple[float, float]:
     x = float(salt_free[2] + 0.5 * salt_free[1])
     y = float(SQRT3_OVER_2 * salt_free[1])
     return x, y
-
-
-def _scaled_xy_from_formula(
-    x_formula: np.ndarray,
-    *,
-    ethanol_max: float,
-    isobutanol_max: float,
-) -> tuple[float, float]:
-    salt_free = salt_free_from_formula(x_formula)
-    ethanol = float(salt_free[1]) / ethanol_max
-    isobutanol = float(salt_free[2]) / isobutanol_max
-    x = isobutanol + 0.5 * ethanol
-    y = SQRT3_OVER_2 * ethanol
-    return x, y
-
-
-def _display_scaled_xy_from_formula(
-    x_formula: np.ndarray,
-    *,
-    water_min: float,
-    water_max: float,
-    ethanol_min: float,
-    ethanol_max: float,
-    isobutanol_min: float,
-    isobutanol_max: float,
-) -> tuple[float, float]:
-    salt_free = salt_free_from_formula(x_formula)
-    water = float(salt_free[0])
-    ethanol = float(salt_free[1])
-    isobutanol = float(salt_free[2])
-
-    def _scale(value: float, lower: float, upper: float) -> float:
-        if abs(upper - lower) < 1.0e-12:
-            return 0.5
-        return float(np.clip((value - lower) / (upper - lower), 0.0, 1.0))
-
-    scaled = np.asarray(
-        [
-            _scale(water, water_min, water_max),
-            _scale(ethanol, ethanol_min, ethanol_max),
-            _scale(isobutanol, isobutanol_min, isobutanol_max),
-        ],
-        dtype=float,
-    )
-    scaled = scaled / np.sum(scaled)
-    x = float(scaled[2] + 0.5 * scaled[1])
-    y = float(SQRT3_OVER_2 * scaled[1])
-    return x, y
-
-
-def _scaled_triangle_vertices(axis_scale: float) -> np.ndarray:
-    return np.asarray(
-        [
-            [0.0, 0.0],
-            [axis_scale, 0.0],
-            [0.5 * axis_scale, SQRT3_OVER_2 * axis_scale],
-            [0.0, 0.0],
-        ],
-        dtype=float,
-    )
 
 
 def _draw_ternary_axes(ax: plt.Axes) -> None:
@@ -499,342 +531,6 @@ def _draw_ternary_axes(ax: plt.Axes) -> None:
     ax.set_ylim(-0.08, SQRT3_OVER_2 + 0.06)
     ax.set_aspect("equal")
     ax.axis("off")
-
-
-def _draw_scaled_ternary_axes(
-    ax: plt.Axes,
-    *,
-    water_min: float,
-    ethanol_max: float,
-    isobutanol_max: float,
-    tick_format: str = ".1f",
-) -> None:
-    triangle = _scaled_triangle_vertices(1.0)
-    ax.plot(triangle[:, 0], triangle[:, 1], color="black", linewidth=1.2, zorder=2)
-    left_normal = np.asarray([-SQRT3_OVER_2, 0.5], dtype=float)
-    right_normal = np.asarray([SQRT3_OVER_2, 0.5], dtype=float)
-    for frac in np.linspace(0.05, 0.95, 19):
-        is_major = abs(frac * 10.0 - round(frac * 10.0)) < 1.0e-9
-        grid_linewidth = 0.6 if is_major else 0.35
-        grid_alpha = 0.55 if is_major else 0.28
-        ethanol = frac
-        ax.plot(
-            [0.5 * ethanol, 1.0 - 0.5 * ethanol],
-            [SQRT3_OVER_2 * ethanol, SQRT3_OVER_2 * ethanol],
-            color=ETHANOL_COLOR,
-            linewidth=grid_linewidth,
-            alpha=grid_alpha,
-            linestyle="--",
-            zorder=0,
-        )
-        isobutanol = frac
-        ax.plot(
-            [isobutanol, 0.5 + 0.5 * isobutanol],
-            [0.0, SQRT3_OVER_2 * (1.0 - isobutanol)],
-            color=ISOBUTANOL_COLOR,
-            linewidth=grid_linewidth,
-            alpha=grid_alpha,
-            linestyle="--",
-            zorder=0,
-        )
-        water_drop = frac
-        ax.plot(
-            [1.0 - water_drop, 0.5 * (1.0 - water_drop)],
-            [0.0, SQRT3_OVER_2 * (1.0 - water_drop)],
-            color=WATER_COLOR,
-            linewidth=grid_linewidth,
-            alpha=grid_alpha,
-            linestyle="--",
-            zorder=0,
-        )
-    ax.text(0.50, -0.085, r"$x$ Isobutanol", color=ISOBUTANOL_COLOR, ha="center", va="top", fontsize=10)
-    ax.text(-0.08, 0.52, r"$x$ Water", color=WATER_COLOR, rotation=60, ha="center", va="center", fontsize=10)
-    ax.text(1.08, 0.52, r"$x$ Ethanol", color=ETHANOL_COLOR, rotation=-60, ha="center", va="center", fontsize=10)
-    left_tick_offset = 0.018
-    right_tick_offset = 0.02
-    for frac in np.arange(0.0, 1.01, 0.1):
-        isobutanol = isobutanol_max * frac
-        ethanol = ethanol_max * frac
-        water = 1.0 - (1.0 - water_min) * frac
-        if frac < 1.0:
-            ax.text(
-                frac, -0.03, format(isobutanol, tick_format), color=ISOBUTANOL_COLOR, ha="center", va="top", fontsize=7
-            )
-        if 0.0 < frac < 1.0:
-            left_point = np.asarray([0.5 * frac, SQRT3_OVER_2 * frac], dtype=float) + left_tick_offset * left_normal
-            ax.text(
-                left_point[0],
-                left_point[1],
-                format(water, tick_format),
-                color=WATER_COLOR,
-                ha="right",
-                va="center",
-                fontsize=7,
-            )
-            right_point = (
-                np.asarray([1.0 - 0.5 * frac, SQRT3_OVER_2 * frac], dtype=float) + right_tick_offset * right_normal
-            )
-            ax.text(
-                right_point[0],
-                right_point[1],
-                format(ethanol, tick_format),
-                color=ETHANOL_COLOR,
-                ha="left",
-                va="center",
-                fontsize=7,
-            )
-    left_bottom = np.asarray([0.0, 0.0], dtype=float) + left_tick_offset * left_normal
-    left_top = np.asarray([0.5, SQRT3_OVER_2], dtype=float) + left_tick_offset * left_normal
-    right_bottom = np.asarray([1.0, 0.0], dtype=float) + right_tick_offset * right_normal
-    right_top = np.asarray([0.5, SQRT3_OVER_2], dtype=float) + right_tick_offset * right_normal
-    ax.text(
-        left_bottom[0], left_bottom[1], format(1.0, tick_format), color=WATER_COLOR, ha="right", va="center", fontsize=7
-    )
-    ax.text(
-        left_top[0], left_top[1], format(water_min, tick_format), color=WATER_COLOR, ha="right", va="center", fontsize=7
-    )
-    ax.text(
-        right_bottom[0],
-        right_bottom[1],
-        format(0.0, tick_format),
-        color=ETHANOL_COLOR,
-        ha="left",
-        va="center",
-        fontsize=7,
-    )
-    ax.text(
-        right_top[0],
-        right_top[1],
-        format(ethanol_max, tick_format),
-        color=ETHANOL_COLOR,
-        ha="left",
-        va="center",
-        fontsize=7,
-    )
-    ax.set_xlim(-0.12, 1.14)
-    ax.set_ylim(-0.10, SQRT3_OVER_2 + 0.08)
-    ax.set_aspect("equal")
-    ax.axis("off")
-
-
-def _draw_display_scaled_axes(
-    ax: plt.Axes,
-    *,
-    water_min: float,
-    water_max: float,
-    ethanol_min: float,
-    ethanol_max: float,
-    isobutanol_min: float,
-    isobutanol_max: float,
-    tick_format: str = ".3f",
-) -> None:
-    triangle = _scaled_triangle_vertices(1.0)
-    ax.plot(triangle[:, 0], triangle[:, 1], color="black", linewidth=1.2, zorder=2)
-    left_normal = np.asarray([-SQRT3_OVER_2, 0.5], dtype=float)
-    right_normal = np.asarray([SQRT3_OVER_2, 0.5], dtype=float)
-    for frac in np.linspace(0.05, 0.95, 19):
-        is_major = abs(frac * 10.0 - round(frac * 10.0)) < 1.0e-9
-        grid_linewidth = 0.6 if is_major else 0.35
-        grid_alpha = 0.55 if is_major else 0.28
-        ax.plot(
-            [0.5 * frac, 1.0 - 0.5 * frac],
-            [SQRT3_OVER_2 * frac, SQRT3_OVER_2 * frac],
-            color=ETHANOL_COLOR,
-            linewidth=grid_linewidth,
-            alpha=grid_alpha,
-            linestyle="--",
-            zorder=0,
-        )
-        ax.plot(
-            [frac, 0.5 + 0.5 * frac],
-            [0.0, SQRT3_OVER_2 * (1.0 - frac)],
-            color=ISOBUTANOL_COLOR,
-            linewidth=grid_linewidth,
-            alpha=grid_alpha,
-            linestyle="--",
-            zorder=0,
-        )
-        ax.plot(
-            [1.0 - frac, 0.5 * (1.0 - frac)],
-            [0.0, SQRT3_OVER_2 * (1.0 - frac)],
-            color=WATER_COLOR,
-            linewidth=grid_linewidth,
-            alpha=grid_alpha,
-            linestyle="--",
-            zorder=0,
-        )
-    ax.text(0.50, -0.085, r"$x$ Isobutanol", color=ISOBUTANOL_COLOR, ha="center", va="top", fontsize=10)
-    ax.text(-0.08, 0.52, r"$x$ Water", color=WATER_COLOR, rotation=60, ha="center", va="center", fontsize=10)
-    ax.text(1.08, 0.52, r"$x$ Ethanol", color=ETHANOL_COLOR, rotation=-60, ha="center", va="center", fontsize=10)
-    left_tick_offset = 0.018
-    right_tick_offset = 0.02
-    for frac in np.arange(0.0, 1.01, 0.2):
-        water = water_max + frac * (water_min - water_max)
-        ethanol = ethanol_min + frac * (ethanol_max - ethanol_min)
-        isobutanol = isobutanol_min + frac * (isobutanol_max - isobutanol_min)
-        if frac < 1.0:
-            ax.text(
-                frac, -0.03, format(isobutanol, tick_format), color=ISOBUTANOL_COLOR, ha="center", va="top", fontsize=7
-            )
-        if 0.0 < frac < 1.0:
-            left_point = np.asarray([0.5 * frac, SQRT3_OVER_2 * frac], dtype=float) + left_tick_offset * left_normal
-            ax.text(
-                left_point[0],
-                left_point[1],
-                format(water, tick_format),
-                color=WATER_COLOR,
-                ha="right",
-                va="center",
-                fontsize=7,
-            )
-            right_point = (
-                np.asarray([1.0 - 0.5 * frac, SQRT3_OVER_2 * frac], dtype=float) + right_tick_offset * right_normal
-            )
-            ax.text(
-                right_point[0],
-                right_point[1],
-                format(ethanol, tick_format),
-                color=ETHANOL_COLOR,
-                ha="left",
-                va="center",
-                fontsize=7,
-            )
-    left_bottom = np.asarray([0.0, 0.0], dtype=float) + left_tick_offset * left_normal
-    left_top = np.asarray([0.5, SQRT3_OVER_2], dtype=float) + left_tick_offset * left_normal
-    right_bottom = np.asarray([1.0, 0.0], dtype=float) + right_tick_offset * right_normal
-    right_top = np.asarray([0.5, SQRT3_OVER_2], dtype=float) + right_tick_offset * right_normal
-    ax.text(
-        left_bottom[0],
-        left_bottom[1],
-        format(water_max, tick_format),
-        color=WATER_COLOR,
-        ha="right",
-        va="center",
-        fontsize=7,
-    )
-    ax.text(
-        left_top[0], left_top[1], format(water_min, tick_format), color=WATER_COLOR, ha="right", va="center", fontsize=7
-    )
-    ax.text(
-        right_bottom[0],
-        right_bottom[1],
-        format(ethanol_min, tick_format),
-        color=ETHANOL_COLOR,
-        ha="left",
-        va="center",
-        fontsize=7,
-    )
-    ax.text(
-        right_top[0],
-        right_top[1],
-        format(ethanol_max, tick_format),
-        color=ETHANOL_COLOR,
-        ha="left",
-        va="center",
-        fontsize=7,
-    )
-    ax.set_xlim(-0.12, 1.14)
-    ax.set_ylim(-0.10, SQRT3_OVER_2 + 0.08)
-    ax.set_aspect("equal")
-    ax.axis("off")
-
-
-def _scaled_axis_scale_from_rows(exp_rows: list[dict], model_rows: list[dict], feed_rows: list[dict]) -> float:
-    ethanol_values = []
-    for row in exp_rows:
-        ethanol_values.extend(
-            [
-                float(salt_free_from_formula(row["organic_formula"])[1]),
-                float(salt_free_from_formula(row["aqueous_formula"])[1]),
-            ]
-        )
-    for row in model_rows:
-        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"])):
-            ethanol_values.extend(
-                [
-                    float(salt_free_from_formula(row["organic_formula"])[1]),
-                    float(salt_free_from_formula(row["aqueous_formula"])[1]),
-                ]
-            )
-    for row in feed_rows:
-        ethanol_values.append(float(salt_free_from_formula(row["feed_formula"])[1]))
-    max_ethanol = max(ethanol_values) if ethanol_values else 0.2
-    return max(0.1, min(1.0, math.ceil(max_ethanol * 10.0) / 10.0))
-
-
-def _scaled_water_min_from_rows(exp_rows: list[dict], model_rows: list[dict], feed_rows: list[dict]) -> float:
-    water_values = []
-    for row in exp_rows:
-        water_values.extend(
-            [
-                float(salt_free_from_formula(row["organic_formula"])[0]),
-                float(salt_free_from_formula(row["aqueous_formula"])[0]),
-            ]
-        )
-    for row in model_rows:
-        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"])):
-            water_values.extend(
-                [
-                    float(salt_free_from_formula(row["organic_formula"])[0]),
-                    float(salt_free_from_formula(row["aqueous_formula"])[0]),
-                ]
-            )
-    for row in feed_rows:
-        water_values.append(float(salt_free_from_formula(row["feed_formula"])[0]))
-    min_water = min(water_values) if water_values else 0.0
-    return max(0.0, min(0.9, math.floor(min_water * 10.0) / 10.0))
-
-
-def _display_scaled_ranges_from_rows(
-    exp_rows: list[dict], model_rows: list[dict], feed_rows: list[dict]
-) -> dict[str, float]:
-    water_values = []
-    ethanol_values = []
-    isobutanol_values = []
-
-    def _append_from_formula(x_formula: np.ndarray) -> None:
-        salt_free = salt_free_from_formula(x_formula)
-        water_values.append(float(salt_free[0]))
-        ethanol_values.append(float(salt_free[1]))
-        isobutanol_values.append(float(salt_free[2]))
-
-    for row in exp_rows:
-        _append_from_formula(row["organic_formula"])
-        _append_from_formula(row["aqueous_formula"])
-    for row in model_rows:
-        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"])):
-            _append_from_formula(row["organic_formula"])
-            _append_from_formula(row["aqueous_formula"])
-    for row in feed_rows:
-        _append_from_formula(row["feed_formula"])
-
-    return {
-        "water_min": min(water_values),
-        "water_max": max(water_values),
-        "ethanol_min": min(ethanol_values),
-        "ethanol_max": max(ethanol_values),
-        "isobutanol_min": min(isobutanol_values),
-        "isobutanol_max": max(isobutanol_values),
-    }
-
-
-def _rounded_display_ranges(ranges: dict[str, float]) -> dict[str, float]:
-    rounded = {
-        "water_min": max(0.0, math.floor(ranges["water_min"] * 10.0) / 10.0),
-        "water_max": min(1.0, math.ceil(ranges["water_max"] * 10.0) / 10.0),
-        "ethanol_min": max(0.0, math.floor(ranges["ethanol_min"] * 10.0) / 10.0),
-        "ethanol_max": min(1.0, math.ceil(ranges["ethanol_max"] * 10.0) / 10.0),
-        "isobutanol_min": max(0.0, math.floor(ranges["isobutanol_min"] * 10.0) / 10.0),
-        "isobutanol_max": min(1.0, math.ceil(ranges["isobutanol_max"] * 10.0) / 10.0),
-    }
-    for key_min, key_max in (
-        ("water_min", "water_max"),
-        ("ethanol_min", "ethanol_max"),
-        ("isobutanol_min", "isobutanol_max"),
-    ):
-        if rounded[key_max] <= rounded[key_min]:
-            rounded[key_max] = min(1.0, rounded[key_min] + 0.1)
-    return rounded
 
 
 def _plot_tie_lines(
@@ -928,15 +624,12 @@ def _plot_feed_points(
     markersize: float = 24.0,
     label: str | None = None,
     xy_transform=ternary_xy_from_formula,
-    display_ranges: dict[str, float] | None = None,
 ) -> None:
     if not rows:
         return
     xs = []
     ys = []
     for row in rows:
-        if display_ranges is not None and not _formula_in_display_scaled_ranges(row["feed_formula"], display_ranges):
-            continue
         x_coord, y_coord = xy_transform(row["feed_formula"])
         xs.append(x_coord)
         ys.append(y_coord)
@@ -954,8 +647,8 @@ def _plot_feed_points(
         )
 
 
-def _paper_epcsaft_digitized_rows(fig_dir: Path, temperature_k: float, salt_wt: float) -> list[dict]:
-    path = analysis_data_path(fig_dir, "paper_epcsaft_digitized.csv", kind="source")
+def _paper_epcsaft_source_rows(fig_dir: Path, temperature_k: float, salt_wt: float) -> list[dict]:
+    path = analysis_data_path(fig_dir, "paper_epcsaft_points.csv", kind="source")
     if not path.exists():
         return []
     rows = []
@@ -978,7 +671,7 @@ def _paper_epcsaft_digitized_rows(fig_dir: Path, temperature_k: float, salt_wt: 
                     "temperature_K": float(temperature_k),
                     "salt_wtfrac": float(salt_wt),
                     "organic_formula": formula,
-                    "source": raw.get("source", "digitized_user_supplied") or "digitized_user_supplied",
+                    "source": _source_label(raw.get("source"), "published_figure_trace"),
                 }
             )
     return rows
@@ -996,15 +689,12 @@ def _plot_formula_series(
     markersize: float = 18.0,
     linestyle: str = "-",
     xy_transform=ternary_xy_from_formula,
-    display_ranges: dict[str, float] | None = None,
 ) -> None:
     xs = []
     ys = []
     for row in rows:
         x_formula = row[key]
         if not np.all(np.isfinite(x_formula)):
-            continue
-        if display_ranges is not None and not _formula_in_display_scaled_ranges(x_formula, display_ranges):
             continue
         x_coord, y_coord = xy_transform(x_formula)
         xs.append(x_coord)
@@ -1028,71 +718,6 @@ def _plot_formula_series(
         label=scatter_label,
     )
 
-
-def _scaled_ranges_for_figure(
-    figure_number: int,
-    exp_rows: list[dict],
-    model_rows: list[dict],
-    feed_rows: list[dict],
-) -> dict[str, float]:
-    override = SCALED_FIGURE_OVERRIDES.get(figure_number)
-    if override is not None:
-        return dict(override)
-    return _rounded_display_ranges(_display_scaled_ranges_from_rows(exp_rows, model_rows, feed_rows))
-
-
-def _formula_in_display_scaled_ranges(
-    x_formula: np.ndarray, ranges: dict[str, float], *, tolerance: float = 0.005
-) -> bool:
-    salt_free = salt_free_from_formula(x_formula)
-    checks = (
-        ("water", float(salt_free[0])),
-        ("ethanol", float(salt_free[1])),
-        ("isobutanol", float(salt_free[2])),
-    )
-    return all(
-        ranges[f"{name}_min"] - tolerance <= value <= ranges[f"{name}_max"] + tolerance for name, value in checks
-    )
-
-
-def _plot_phase_points(
-    ax: plt.Axes,
-    rows: list[dict],
-    phase: str,
-    color: str,
-    marker: str,
-    *,
-    markersize: float = 22.0,
-    label: str | None = None,
-    xy_transform=ternary_xy_from_formula,
-    display_ranges: dict[str, float] | None = None,
-) -> None:
-    xs = []
-    ys = []
-    key = f"{phase}_formula"
-    for row in rows:
-        x_formula = row[key]
-        if not np.all(np.isfinite(x_formula)):
-            continue
-        if display_ranges is not None and not _formula_in_display_scaled_ranges(x_formula, display_ranges):
-            continue
-        x_coord, y_coord = xy_transform(x_formula)
-        xs.append(x_coord)
-        ys.append(y_coord)
-    if xs:
-        ax.scatter(
-            xs,
-            ys,
-            s=markersize,
-            marker=marker,
-            facecolors=color,
-            edgecolors=color,
-            linewidths=0.5,
-            zorder=4,
-            label=label,
-        )
-
-
 def _candidate_formula_feeds(exp_row: dict, target_feed_formula: np.ndarray | None = None) -> list[np.ndarray]:
     feeds = []
     if target_feed_formula is not None and np.all(np.isfinite(target_feed_formula)):
@@ -1106,47 +731,93 @@ def _candidate_formula_feeds(exp_row: dict, target_feed_formula: np.ndarray | No
     return unique
 
 
-def _solve_formula_feed(temperature_k: float, feed_formula: np.ndarray) -> dict | None:
+def _failed_solve_result(
+    z_feed: np.ndarray,
+    *,
+    message: str,
+    residual_norm: float = np.nan,
+    route_status: str | None = None,
+    solver_status: str | None = None,
+    application_status: str | None = None,
+) -> dict:
+    return {
+        "converged": False,
+        "status": None,
+        "message": message,
+        "residual_norm": residual_norm,
+        "route_status": route_status,
+        "solver_status": solver_status,
+        "application_status": application_status,
+        "feed_formula": ion_to_formula_basis(z_feed),
+        "organic_formula": np.full(4, np.nan),
+        "aqueous_formula": np.full(4, np.nan),
+        "beta_organic": np.nan,
+        "beta_aqueous": np.nan,
+        "split_norm": np.nan,
+        "objective": np.nan,
+        "source": "epcsaft_public_electrolyte_lle",
+    }
+
+
+def _solve_formula_feed_direct(temperature_k: float, feed_formula: np.ndarray) -> dict | None:
     z_feed = formula_to_ion_basis(feed_formula)
     if not np.all(np.isfinite(z_feed)):
         return None
 
-    mixture = epcsaft.ePCSAFTMixture.from_dataset(PARAMETER_DATASET, SPECIES, z_feed, temperature_k)
     try:
-        result = mixture.equilibrium(
-            kind="electrolyte_lle",
+        mixture = epcsaft.Mixture.from_folder(
+            PARAMETER_DATASET,
+            components=SPECIES,
+            reference_temperature=float(temperature_k),
+            reference_composition=z_feed,
+        )
+        result = epcsaft_equilibrium.Equilibrium(
+            mixture,
+            route="electrolyte_lle",
             T=float(temperature_k),
             P=P_REF,
             z=z_feed,
-            options=epcsaft.EquilibriumOptions(max_iterations=MODEL_SOLVE_MAX_ITERATIONS, tolerance=1.0e-8),
+        ).solve(
+            solver_options={
+                "max_iterations": MODEL_SOLVE_MAX_ITERATIONS,
+                "tolerance": 1.0e-6,
+                "hessian_mode": "auto",
+                "ipopt_iteration_history_limit": 8,
+                "ipopt_acceptable_tolerance": 1.0e-7,
+                "ipopt_constraint_violation_tolerance": 1.0e-8,
+                "ipopt_dual_infeasibility_tolerance": 1.0e-8,
+                "ipopt_complementarity_tolerance": 1.0e-8,
+            }
         )
-    except epcsaft.SolutionError as exc:
+    except (epcsaft.InputError, epcsaft.SolutionError, RuntimeError, ValueError) as exc:
         diagnostics = getattr(exc, "diagnostics", None) or (
             exc.args[1] if len(exc.args) > 1 and isinstance(exc.args[1], dict) else {}
         )
-        return {
-            "converged": False,
-            "status": None,
-            "message": str(exc.args[0] if exc.args else exc),
-            "residual_norm": float(diagnostics.get("solver_residual_norm", np.nan)),
-            "route_status": diagnostics.get("route_status"),
-            "solver_status": diagnostics.get("solver_status"),
-            "application_status": diagnostics.get("application_status"),
-            "feed_formula": ion_to_formula_basis(z_feed),
-            "organic_formula": np.full(4, np.nan),
-            "aqueous_formula": np.full(4, np.nan),
-            "beta_organic": np.nan,
-            "beta_aqueous": np.nan,
-            "split_norm": float(diagnostics.get("phase_distance", np.nan)),
-            "objective": np.nan,
-            "source": "epcsaft_native_v5",
-        }
+        failed = _failed_solve_result(
+            z_feed,
+            message=str(exc.args[0] if exc.args else exc),
+            residual_norm=float(diagnostics.get("solver_residual_norm", np.nan)),
+            route_status=diagnostics.get("route_status"),
+            solver_status=diagnostics.get("solver_status"),
+            application_status=diagnostics.get("application_status"),
+        )
+        failed["split_norm"] = float(diagnostics.get("phase_distance", np.nan))
+        return failed
 
-    phases = {phase.label: phase for phase in result.phases}
-    if "org" not in phases or "aq" not in phases:
+    phase_compositions = dict(result.phase_compositions)
+    if len(phase_compositions) != 2:
         return None
-    org_formula = explicit_to_formula(phases["org"].composition)
-    aq_formula = explicit_to_formula(phases["aq"].composition)
+    formula_phases = {
+        label: explicit_to_formula(np.asarray(composition, dtype=float))
+        for label, composition in phase_compositions.items()
+    }
+    organic_label = max(formula_phases, key=lambda label: float(formula_phases[label][IDX4["Isobutanol"]]))
+    aqueous_label = max(
+        (label for label in formula_phases if label != organic_label),
+        key=lambda label: float(formula_phases[label][IDX4["H2O"]] + formula_phases[label][IDX4["NaCl"]]),
+    )
+    org_formula = formula_phases[organic_label]
+    aq_formula = formula_phases[aqueous_label]
     residual_norm = float(result.diagnostics.get("solver_residual_norm", np.nan))
     return {
         "converged": True,
@@ -1159,12 +830,80 @@ def _solve_formula_feed(temperature_k: float, feed_formula: np.ndarray) -> dict 
         "feed_formula": ion_to_formula_basis(z_feed),
         "organic_formula": org_formula,
         "aqueous_formula": aq_formula,
-        "beta_organic": float(phases["org"].phase_fraction),
-        "beta_aqueous": float(phases["aq"].phase_fraction),
+        "beta_organic": float(result.phase_fractions[organic_label]),
+        "beta_aqueous": float(result.phase_fractions[aqueous_label]),
         "split_norm": float(result.diagnostics.get("phase_distance", np.max(np.abs(org_formula - aq_formula)))),
         "objective": np.nan,
-        "source": "epcsaft_native_v5",
+        "source": "epcsaft_public_electrolyte_lle",
     }
+
+
+def _json_ready_solve_result(row: dict | None) -> dict | None:
+    if row is None:
+        return None
+    out: dict = {}
+    for key, value in row.items():
+        if isinstance(value, np.ndarray):
+            out[key] = value.tolist()
+        elif isinstance(value, np.generic):
+            out[key] = value.item()
+        elif isinstance(value, float) and not math.isfinite(value):
+            out[key] = None
+        else:
+            out[key] = value
+    return out
+
+
+def _solve_result_from_json(row: dict | None) -> dict | None:
+    if row is None:
+        return None
+    out = dict(row)
+    for key in ("feed_formula", "organic_formula", "aqueous_formula"):
+        out[key] = np.asarray(out[key], dtype=float)
+    for key in ("residual_norm", "beta_organic", "beta_aqueous", "split_norm", "objective"):
+        if out.get(key) is None:
+            out[key] = np.nan
+    return out
+
+
+def _solve_formula_feed(temperature_k: float, feed_formula: np.ndarray) -> dict | None:
+    if os.environ.get("KHUDAIDA_SOLVE_IN_PROCESS", "").strip().lower() in {"1", "true", "yes", "on"}:
+        return _solve_formula_feed_direct(temperature_k, feed_formula)
+
+    z_feed = formula_to_ion_basis(feed_formula)
+    if not np.all(np.isfinite(z_feed)):
+        return None
+    helper = ROOT / "solve_electrolyte_feed.py"
+    payload = {
+        "temperature_K": float(temperature_k),
+        "feed_formula": [float(value) for value in np.asarray(feed_formula, dtype=float)],
+    }
+    env = os.environ.copy()
+    env["KHUDAIDA_SOLVE_IN_PROCESS"] = "1"
+    try:
+        completed = subprocess.run(
+            [sys.executable, str(helper)],
+            input=json.dumps(payload),
+            capture_output=True,
+            check=False,
+            encoding="utf-8",
+            env=env,
+            timeout=120,
+        )
+    except subprocess.TimeoutExpired:
+        return _failed_solve_result(z_feed, message="public electrolyte_lle solve timed out in isolated subprocess")
+
+    stdout_lines = [line for line in completed.stdout.splitlines() if line.strip()]
+    if completed.returncode != 0:
+        stderr_lines = [line for line in completed.stderr.splitlines() if line.strip()]
+        detail = stderr_lines[0] if stderr_lines else f"returncode={completed.returncode}"
+        return _failed_solve_result(
+            z_feed,
+            message=f"public electrolyte_lle isolated solve failed: {detail}",
+        )
+    if not stdout_lines:
+        return _failed_solve_result(z_feed, message="public electrolyte_lle isolated solve returned no JSON")
+    return _solve_result_from_json(json.loads(stdout_lines[-1]))
 
 
 def solve_model_rows(exp_rows: list[dict], feed_rows: list[dict] | None = None) -> list[dict]:
@@ -1324,7 +1063,7 @@ def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
                     "residual_norm": float(row["residual_norm"]) if np.isfinite(row["residual_norm"]) else "",
                     "objective": float(row["objective"]) if np.isfinite(row["objective"]) else "",
                     "converged": bool(row["converged"]),
-                    "source": str(row.get("source", "epcsaft_native_v5")),
+                    "source": str(row.get("source", "epcsaft_public_electrolyte_lle")),
                 }
             )
     return out
@@ -1359,52 +1098,288 @@ def _feed_rows_for_csv(rows: list[dict]) -> list[dict]:
     return out
 
 
-def write_case_data(fig_dir: Path, exp_rows: list[dict], model_rows: list[dict]) -> None:
-    fieldnames = [
-        "tie_line",
-        "phase",
-        "temperature_K",
-        "salt_wtfrac",
-        "x_water",
-        "x_ethanol",
-        "x_isobutanol",
-        "x_nacl",
-        "source",
+def _plot_point_row(
+    dataset: str,
+    series: str,
+    tie_line: int | str,
+    phase: str,
+    temperature_k: float,
+    salt_wt: float,
+    x_formula: np.ndarray,
+    source: str,
+) -> dict:
+    x_coord, y_coord = ternary_xy_from_formula(x_formula)
+    return {
+        "dataset": dataset,
+        "series": series,
+        "tie_line": tie_line,
+        "phase": phase,
+        "temperature_K": float(temperature_k),
+        "salt_wtfrac": float(salt_wt),
+        "x_water": float(x_formula[0]),
+        "x_ethanol": float(x_formula[1]),
+        "x_isobutanol": float(x_formula[2]),
+        "x_nacl": float(x_formula[3]),
+        "x_ternary": x_coord,
+        "y_ternary": y_coord,
+        "source": source,
+    }
+
+
+def _phase_plot_rows(dataset: str, series: str, rows: list[dict], source: str) -> list[dict]:
+    out: list[dict] = []
+    for row in rows:
+        for phase, key in (("organic", "organic_formula"), ("aqueous", "aqueous_formula")):
+            x_formula = row[key]
+            if np.all(np.isfinite(x_formula)):
+                out.append(
+                    _plot_point_row(
+                        dataset,
+                        series,
+                        row["tie_line"],
+                        phase,
+                        row["temperature_K"],
+                        row["salt_wtfrac"],
+                        x_formula,
+                        source,
+                    )
+                )
+    return out
+
+
+def _organic_series_plot_rows(dataset: str, series: str, rows: list[dict], source: str) -> list[dict]:
+    out: list[dict] = []
+    for row in rows:
+        x_formula = row["organic_formula"]
+        if np.all(np.isfinite(x_formula)):
+            out.append(
+                _plot_point_row(
+                    dataset,
+                    series,
+                    row["tie_line"],
+                    "organic",
+                    row["temperature_K"],
+                    row["salt_wtfrac"],
+                    x_formula,
+                    source,
+                )
+            )
+    return out
+
+
+def _feed_plot_rows(rows: list[dict]) -> list[dict]:
+    out: list[dict] = []
+    for row in rows:
+        out.append(
+            _plot_point_row(
+                "source",
+                "feed",
+                row["tie_line"],
+                "feed",
+                row["temperature_K"],
+                row["salt_wtfrac"],
+                row["feed_formula"],
+                row["source"],
+            )
+        )
+    return out
+
+
+def _score_from_aad(value: float) -> float | str:
+    if not np.isfinite(value):
+        return ""
+    return max(0.0, min(10.0, 10.0 - 50.0 * float(value)))
+
+
+def _fit_statistics_row(
+    scope: str,
+    series: str,
+    temperature_k: float | str,
+    salt_wt: float | str,
+    source_point_count: int,
+    model_point_count: int,
+    accepted_model_count: int,
+    summary: dict,
+    max_objective: float | str,
+    score_basis: str,
+) -> dict:
+    organic = summary.get("organic", ("", "", "", ""))
+    aqueous = summary.get("aqueous", ("", "", "", ""))
+    grand = summary.get("grand", "")
+    score = _score_from_aad(float(grand)) if grand != "" and np.isfinite(float(grand)) else ""
+    return {
+        "scope": scope,
+        "series": series,
+        "temperature_K": temperature_k,
+        "salt_wtfrac": salt_wt,
+        "source_point_count": source_point_count,
+        "model_point_count": model_point_count,
+        "accepted_model_count": accepted_model_count,
+        "grand_aad": grand,
+        "organic_aad_water": organic[0],
+        "organic_aad_ethanol": organic[1],
+        "organic_aad_isobutanol": organic[2],
+        "organic_aad_nacl": organic[3],
+        "aqueous_aad_water": aqueous[0],
+        "aqueous_aad_ethanol": aqueous[1],
+        "aqueous_aad_isobutanol": aqueous[2],
+        "aqueous_aad_nacl": aqueous[3],
+        "max_objective": max_objective,
+        "normalized_plot_score": score,
+        "pass": bool(score != "" and float(score) >= 8.0),
+        "score_basis": score_basis,
+    }
+
+
+def _source_rows_for_lle_figure(
+    exp_rows: list[dict], feed_rows: list[dict], paper_rows: list[dict], source_reference: str
+) -> list[dict]:
+    rows: list[dict] = []
+    for row in exp_rows:
+        for phase, x in (("organic", row["organic_formula"]), ("aqueous", row["aqueous_formula"])):
+            rows.append(
+                {
+                    "dataset": "experimental_tieline",
+                    "series": "experimental",
+                    "point_id": "",
+                    "tie_line": row["tie_line"],
+                    "phase": phase,
+                    "temperature_K": row["temperature_K"],
+                    "salt_wtfrac": row["salt_wtfrac"],
+                    "x_water": float(x[0]),
+                    "x_ethanol": float(x[1]),
+                    "x_isobutanol": float(x[2]),
+                    "x_nacl": float(x[3]),
+                    "x_water_salt_free": "",
+                    "x_ethanol_salt_free": "",
+                    "x_isobutanol_salt_free": "",
+                    "source_method": "source_table",
+                    "source_reference": "shared/source/table_3_4_experimental_tielines.csv",
+                }
+            )
+    for row in feed_rows:
+        x = row["feed_formula"]
+        salt_free = salt_free_from_formula(x)
+        rows.append(
+            {
+                "dataset": "feed",
+                "series": "feed",
+                "point_id": row["tie_line"],
+                "tie_line": row["tie_line"],
+                "phase": "feed",
+                "temperature_K": row["temperature_K"],
+                "salt_wtfrac": row["salt_wtfrac"],
+                "x_water": float(x[0]),
+                "x_ethanol": float(x[1]),
+                "x_isobutanol": float(x[2]),
+                "x_nacl": float(x[3]),
+                "x_water_salt_free": float(salt_free[0]),
+                "x_ethanol_salt_free": float(salt_free[1]),
+                "x_isobutanol_salt_free": float(salt_free[2]),
+                "source_method": row["source"],
+                "source_reference": source_reference,
+            }
+        )
+    for row in paper_rows:
+        x = row["organic_formula"]
+        salt_free = salt_free_from_formula(x)
+        rows.append(
+            {
+                "dataset": "paper_epcsaft",
+                "series": "paper_epcsaft_organic",
+                "point_id": row["tie_line"],
+                "tie_line": row["tie_line"],
+                "phase": "organic",
+                "temperature_K": row["temperature_K"],
+                "salt_wtfrac": row["salt_wtfrac"],
+                "x_water": float(x[0]),
+                "x_ethanol": float(x[1]),
+                "x_isobutanol": float(x[2]),
+                "x_nacl": float(x[3]),
+                "x_water_salt_free": float(salt_free[0]),
+                "x_ethanol_salt_free": float(salt_free[1]),
+                "x_isobutanol_salt_free": float(salt_free[2]),
+                "source_method": row["source"],
+                "source_reference": source_reference,
+            }
+        )
+    return rows
+
+
+def _write_lle_contract_outputs(
+    fig_dir: Path,
+    figure_number: int,
+    exp_rows: list[dict],
+    feed_rows: list[dict],
+    model_rows: list[dict],
+    paper_rows: list[dict],
+) -> None:
+    figure_id = figure_id_for_number(figure_number)
+    write_csv_rows(result_path(fig_dir, "model_curve.csv"), MODEL_COLUMNS, _model_rows_for_csv(model_rows))
+    plotted_rows = [
+        *_phase_plot_rows("source", "experimental_tielines", exp_rows, "paper_table"),
+        *_phase_plot_rows("model", "package_electrolyte_lle", model_rows, "epcsaft_public_electrolyte_lle"),
+        *_organic_series_plot_rows("source", "paper_epcsaft_organic", paper_rows, "published_figure_trace"),
+        *_feed_plot_rows(feed_rows),
     ]
-    write_csv_rows(
-        out_path(fig_dir, "experimental_tielines.csv"), fieldnames, _phase_rows_for_csv(exp_rows, "paper_table")
+    write_csv_rows(result_path(fig_dir, "plotted_data.csv"), PLOT_POINT_COLUMNS, plotted_rows)
+    source_reference = f"analyses/paper_validation/2026_khudaida/figures/{figure_id}/source/source_points.csv"
+    _write_source_points(fig_dir, _source_rows_for_lle_figure(exp_rows, feed_rows, paper_rows, source_reference))
+    _write_source_notes(
+        fig_dir,
+        [
+            {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
+            {"section": "provenance", "key": "figure", "value": figure_id, "unit": "", "notes": ""},
+            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
+            {"section": "basis", "key": "composition", "value": "salt-free ternary projection with NaCl retained in source/model CSV rows", "unit": "", "notes": ""},
+            {"section": "model", "key": "route", "value": "public electrolyte_lle", "unit": "", "notes": "package rows are retained from the latest public electrolyte_lle regeneration; set KHUDAIDA_FORCE_RECOMPUTE=1 to refresh"},
+        ],
     )
-    model_fieldnames = fieldnames[:-1] + ["beta", "residual_norm", "objective", "converged", "source"]
-    write_csv_rows(out_path(fig_dir, "model_tielines.csv"), model_fieldnames, _model_rows_for_csv(model_rows))
+    valid = [
+        row
+        for row in model_rows
+        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
+    ]
+    summary = _aad_summary(exp_rows, model_rows)
+    max_objective = max((float(row["objective"]) for row in valid if np.isfinite(row["objective"])), default="")
+    write_csv_rows(
+        result_path(fig_dir, "fit_statistics.csv"),
+        FIT_STATISTICS_COLUMNS,
+        [
+            _fit_statistics_row(
+                "figure",
+                "package_electrolyte_lle_vs_experimental",
+                exp_rows[0]["temperature_K"],
+                exp_rows[0]["salt_wtfrac"],
+                len(exp_rows) * 2,
+                len(model_rows) * 2,
+                len(valid) * 2,
+                summary,
+                max_objective,
+                "formula-basis mean absolute phase-composition deviation against source tie-lines",
+            )
+        ],
+    )
+
+
+def write_case_data(fig_dir: Path, exp_rows: list[dict], model_rows: list[dict]) -> None:
+    write_csv_rows(
+        out_path(fig_dir, "experimental_tielines.csv"), PHASE_COLUMNS, _phase_rows_for_csv(exp_rows, "paper_table")
+    )
+    write_csv_rows(out_path(fig_dir, "model_tielines.csv"), MODEL_COLUMNS, _model_rows_for_csv(model_rows))
 
 
 def plot_lle_figure(fig_dir: Path, figure_number: int, temperature_k: float, salt_wt: float) -> None:
     configure_style()
     exp_rows = _experimental_rows(salt_wt, temperature_k)
-    feed_rows = _digitized_feed_rows_for_figure(figure_number, temperature_k, salt_wt) or _derived_feed_rows(
+    feed_rows = _source_feed_rows_for_figure(figure_number, temperature_k, salt_wt) or _derived_feed_rows(
         salt_wt, temperature_k
     )
     force_recompute = os.environ.get("KHUDAIDA_FORCE_RECOMPUTE", "").strip().lower() in {"1", "true", "yes", "on"}
     model_rows = get_or_build_model_rows(fig_dir, exp_rows, feed_rows=feed_rows, force_recompute=force_recompute)
-    paper_rows = _paper_epcsaft_digitized_rows(fig_dir, temperature_k, salt_wt)
-    write_csv_rows(
-        out_path(fig_dir, "feed_compositions.csv"),
-        [
-            "tie_line",
-            "temperature_K",
-            "salt_wtfrac",
-            "x_water_total",
-            "x_ethanol_total",
-            "x_isobutanol_total",
-            "x_nacl_total",
-            "x_water_salt_free",
-            "x_ethanol_salt_free",
-            "x_isobutanol_salt_free",
-            "ethanol_total_feed_wtfrac",
-            "source",
-        ],
-        _feed_rows_for_csv(feed_rows),
-    )
+    paper_rows = _paper_epcsaft_source_rows(fig_dir, temperature_k, salt_wt)
+    write_csv_rows(out_path(fig_dir, "feed_compositions.csv"), FEED_COLUMNS, _feed_rows_for_csv(feed_rows))
+    _write_lle_contract_outputs(fig_dir, figure_number, exp_rows, feed_rows, model_rows, paper_rows)
 
     fig, ax = plt.subplots(figsize=(6.1, 5.9))
     fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.18)
@@ -1420,88 +1395,21 @@ def plot_lle_figure(fig_dir: Path, figure_number: int, temperature_k: float, sal
     _plot_feed_points(ax, feed_rows, label="Feed")
     ax.legend(loc="upper right", fontsize=8)
     if valid_model_rows:
-        model_caption = f"red dashed (accepted native ePC-SAFT, {len(valid_model_rows)}/{len(model_rows)} tie-lines)"
+        model_caption = f"red dashed (package public ePC-SAFT, {len(valid_model_rows)}/{len(model_rows)} tie-lines)"
     else:
-        model_caption = "native ePC-SAFT rejected all model tie-lines; no red model tie-lines are drawn"
-    paper_caption = f"blue squares (digitized paper ePC-SAFT organic branch, {len(paper_rows)} points)"
+        model_caption = "package public ePC-SAFT rejected all model tie-lines; no red model tie-lines are drawn"
+    paper_caption = f"blue squares (paper ePC-SAFT organic branch, {len(paper_rows)} points)"
     add_figure_caption(
         fig,
         f"Figure {figure_number}. LLE for the system water + ethanol + isobutanol + {int(round(salt_wt * 100))} wt % NaCl at {temperature_k:.2f} K and atmospheric pressure expressed as salt-free composition: black (exp), {model_caption}, {paper_caption}, and green (feed compositions).",
     )
-    save_figure(fig, fig_dir / f"figure_{figure_number}.png")
+    save_figure(fig, fig_dir / f"{figure_id_for_number(figure_number)}.png")
     plt.close(fig)
 
-    fig_scaled, ax_scaled = plt.subplots(figsize=(6.1, 5.9))
-    fig_scaled.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.18)
-    scaled_ranges = _scaled_ranges_for_figure(figure_number, exp_rows, valid_model_rows, feed_rows)
-    _draw_display_scaled_axes(
-        ax_scaled,
-        water_min=scaled_ranges["water_min"],
-        water_max=scaled_ranges["water_max"],
-        ethanol_min=scaled_ranges["ethanol_min"],
-        ethanol_max=scaled_ranges["ethanol_max"],
-        isobutanol_min=scaled_ranges["isobutanol_min"],
-        isobutanol_max=scaled_ranges["isobutanol_max"],
-        tick_format=".2f",
-    )
-    scaled_xy_transform = lambda x_formula, ranges=scaled_ranges: _display_scaled_xy_from_formula(
-        x_formula,
-        water_min=ranges["water_min"],
-        water_max=ranges["water_max"],
-        ethanol_min=ranges["ethanol_min"],
-        ethanol_max=ranges["ethanol_max"],
-        isobutanol_min=ranges["isobutanol_min"],
-        isobutanol_max=ranges["isobutanol_max"],
-    )
-    _plot_phase_points(
-        ax_scaled,
-        exp_rows,
-        "organic",
-        BLACK,
-        "o",
-        label="Exp. organic",
-        xy_transform=scaled_xy_transform,
-        display_ranges=scaled_ranges,
-    )
-    _plot_phase_points(
-        ax_scaled,
-        valid_model_rows,
-        "organic",
-        RED,
-        "o",
-        label="model ePC-SAFT organic",
-        xy_transform=scaled_xy_transform,
-        display_ranges=scaled_ranges,
-    )
-    _plot_phase_points(
-        ax_scaled,
-        paper_rows,
-        "organic",
-        BLUE,
-        "s",
-        label="paper ePC-SAFT organic",
-        xy_transform=scaled_xy_transform,
-        display_ranges=scaled_ranges,
-    )
-    _plot_feed_points(
-        ax_scaled,
-        feed_rows,
-        label="Feed",
-        xy_transform=scaled_xy_transform,
-        display_ranges=scaled_ranges,
-    )
-    ax_scaled.legend(loc="upper right", fontsize=8)
-    add_figure_caption(
-        fig_scaled,
-        f"Figure {figure_number} (scaled). Organic-phase LLE compositions for the system water + ethanol + isobutanol + {int(round(salt_wt * 100))} wt % NaCl at {temperature_k:.2f} K and atmospheric pressure expressed as salt-free composition, zoomed to water {scaled_ranges['water_min']:.2f}-{scaled_ranges['water_max']:.2f}, ethanol {scaled_ranges['ethanol_min']:.2f}-{scaled_ranges['ethanol_max']:.2f}, and isobutanol {scaled_ranges['isobutanol_min']:.2f}-{scaled_ranges['isobutanol_max']:.2f}: black (exp organic), red ({len(valid_model_rows)}/{len(model_rows)} accepted native ePC-SAFT organic compositions), blue (paper ePC-SAFT organic), and green (feed compositions).",
-    )
-    save_figure(fig_scaled, fig_dir / f"figure_{figure_number}_scaled.png")
-    plt.close(fig_scaled)
 
-
-def _no_salt_digitized_rows() -> list[dict]:
+def _no_salt_source_rows() -> list[dict]:
     rows = []
-    for idx, item in enumerate(NO_SALT_293_DIGITIZED, start=1):
+    for idx, item in enumerate(NO_SALT_293_TRACE, start=1):
         x2_aq = float(item["x_ethanol_aq"])
         x3_aq = float(item["x_isobutanol_aq"])
         x1_aq = 1.0 - x2_aq - x3_aq
@@ -1526,9 +1434,90 @@ def _no_salt_digitized_rows() -> list[dict]:
     return rows
 
 
+def _write_figure_1_contract_outputs(
+    fig_dir: Path, no_salt_rows: list[dict], five_rows: list[dict], ten_rows: list[dict]
+) -> None:
+    all_rows = [
+        ("without_nacl", no_salt_rows, "published_figure_trace"),
+        ("with_5wt_nacl", five_rows, "paper_table"),
+        ("with_10wt_nacl", ten_rows, "paper_table"),
+    ]
+    plotted_rows: list[dict] = []
+    source_rows: list[dict] = []
+    model_rows: list[dict] = []
+    for series, rows, source in all_rows:
+        plotted_rows.extend(_phase_plot_rows("source", series, rows, source))
+        model_rows.extend(_phase_rows_for_csv(rows, source))
+        for row in rows:
+            for phase, x in (("organic", row["organic_formula"]), ("aqueous", row["aqueous_formula"])):
+                source_rows.append(
+                    {
+                        "dataset": series,
+                        "series": series,
+                        "point_id": "",
+                        "tie_line": row["tie_line"],
+                        "phase": phase,
+                        "temperature_K": row["temperature_K"],
+                        "salt_wtfrac": row["salt_wtfrac"],
+                        "x_water": float(x[0]),
+                        "x_ethanol": float(x[1]),
+                        "x_isobutanol": float(x[2]),
+                        "x_nacl": float(x[3]),
+                        "x_water_salt_free": "",
+                        "x_ethanol_salt_free": "",
+                        "x_isobutanol_salt_free": "",
+                        "source_method": source,
+                        "source_reference": "shared/source/table_3_4_experimental_tielines.csv"
+                        if source == "paper_table"
+                        else "published Figure 1 trace retained in source_points.csv",
+                    }
+                )
+    write_csv_rows(result_path(fig_dir, "model_curve.csv"), PHASE_COLUMNS, model_rows)
+    write_csv_rows(result_path(fig_dir, "plotted_data.csv"), PLOT_POINT_COLUMNS, plotted_rows)
+    _write_source_points(fig_dir, source_rows)
+    _write_source_notes(
+        fig_dir,
+        [
+            {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
+            {"section": "provenance", "key": "figure", "value": "figure_01", "unit": "", "notes": ""},
+            {"section": "provenance", "key": "source_image", "value": "source/figure_01.png", "unit": "", "notes": ""},
+            {"section": "basis", "key": "composition", "value": "salt-free ternary projection", "unit": "", "notes": ""},
+            {"section": "model", "key": "route", "value": "source-data recreation", "unit": "", "notes": "Figure 1 is a source comparison of salt effects; no package equilibrium model curve is drawn."},
+        ],
+    )
+    write_csv_rows(
+        result_path(fig_dir, "fit_statistics.csv"),
+        FIT_STATISTICS_COLUMNS,
+        [
+            {
+                "scope": "figure",
+                "series": "source_recreation",
+                "temperature_K": 293.15,
+                "salt_wtfrac": "0,0.05,0.10",
+                "source_point_count": len(plotted_rows),
+                "model_point_count": 0,
+                "accepted_model_count": 0,
+                "grand_aad": "",
+                "organic_aad_water": "",
+                "organic_aad_ethanol": "",
+                "organic_aad_isobutanol": "",
+                "organic_aad_nacl": "",
+                "aqueous_aad_water": "",
+                "aqueous_aad_ethanol": "",
+                "aqueous_aad_isobutanol": "",
+                "aqueous_aad_nacl": "",
+                "max_objective": "",
+                "normalized_plot_score": "",
+                "pass": True,
+                "score_basis": "source-data figure recreation; package model fit is not the role of Figure 1",
+            }
+        ],
+    )
+
+
 def plot_figure_1(fig_dir: Path) -> None:
     configure_style()
-    no_salt_rows = _no_salt_digitized_rows()
+    no_salt_rows = _no_salt_source_rows()
     five_rows = _experimental_rows(0.05, 293.15)
     ten_rows = _experimental_rows(0.10, 293.15)
     fieldnames = [
@@ -1543,9 +1532,9 @@ def plot_figure_1(fig_dir: Path) -> None:
         "source",
     ]
     write_csv_rows(
-        out_path(fig_dir, "without_nacl_29315_digitized.csv"),
+        out_path(fig_dir, "without_nacl_29315.csv"),
         fieldnames,
-        _phase_rows_for_csv(no_salt_rows, "digitized_local_paper"),
+        _phase_rows_for_csv(no_salt_rows, "published_figure_trace"),
     )
     write_csv_rows(
         out_path(fig_dir, "with_5wt_nacl_29315.csv"), fieldnames, _phase_rows_for_csv(five_rows, "paper_table")
@@ -1553,6 +1542,7 @@ def plot_figure_1(fig_dir: Path) -> None:
     write_csv_rows(
         out_path(fig_dir, "with_10wt_nacl_29315.csv"), fieldnames, _phase_rows_for_csv(ten_rows, "paper_table")
     )
+    _write_figure_1_contract_outputs(fig_dir, no_salt_rows, five_rows, ten_rows)
 
     fig, ax = plt.subplots(figsize=(6.1, 5.9))
     fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.18)
@@ -1564,7 +1554,7 @@ def plot_figure_1(fig_dir: Path) -> None:
         fig,
         "Figure 1. LLE for the system water + ethanol + isobutanol without and with NaCl at 293.15 K and atmospheric pressure expressed as salt-free composition: black (without NaCl), red (5 wt % NaCl), and blue (10 wt % NaCl).",
     )
-    save_figure(fig, fig_dir / "figure_1.png")
+    save_figure(fig, fig_dir / "figure_01.png")
     plt.close(fig)
 
 
@@ -1587,7 +1577,7 @@ def _metric_dataset() -> list[dict]:
     for salt_wt, temperature_k in sorted(source_experimental_cases()):
         for exp_row in _experimental_rows(salt_wt, temperature_k):
             rows.append({**_metric_from_row(exp_row), "source": "paper_table"})
-    for item in NO_SALT_293_DIGITIZED:
+    for item in NO_SALT_293_TRACE:
         rows.append(
             {
                 "temperature_K": 293.15,
@@ -1595,7 +1585,7 @@ def _metric_dataset() -> list[dict]:
                 "x_ethanol_aq": float(item["x_ethanol_aq"]),
                 "distribution": float(item["distribution"]),
                 "separation": float(item["separation"]),
-                "source": "digitized_local_paper",
+                "source": "published_figure_trace",
             }
         )
     rows.sort(key=lambda item: (item["temperature_K"], item["salt_wtfrac"], item["x_ethanol_aq"]))
@@ -1618,14 +1608,84 @@ def _metric_marker(salt_wt: float) -> str:
     return "^"
 
 
+def _write_metric_contract_outputs(fig_dir: Path, figure_number: int, rows: list[dict], y_key: str) -> None:
+    figure_id = figure_id_for_number(figure_number)
+    fields = ["temperature_K", "salt_wtfrac", "x_ethanol_aq", "distribution", "separation", "source"]
+    source_rows = [
+        {
+            "dataset": "source_metric",
+            "series": y_key,
+            "point_id": idx,
+            "tie_line": "",
+            "phase": "aqueous",
+            "temperature_K": row["temperature_K"],
+            "salt_wtfrac": row["salt_wtfrac"],
+            "x_water": "",
+            "x_ethanol": "",
+            "x_isobutanol": "",
+            "x_nacl": "",
+            "x_water_salt_free": "",
+            "x_ethanol_salt_free": row["x_ethanol_aq"],
+            "x_isobutanol_salt_free": "",
+            "source_method": row["source"],
+            "source_reference": "shared/source/table_s1_s2_distribution_separation.csv"
+            if float(row["salt_wtfrac"]) > 0.0
+            else "published Figure 8/9 trace retained in source_points.csv",
+        }
+        for idx, row in enumerate(rows, start=1)
+    ]
+    write_csv_rows(result_path(fig_dir, "model_curve.csv"), fields, rows)
+    write_csv_rows(result_path(fig_dir, "plotted_data.csv"), fields, rows)
+    _write_source_points(fig_dir, source_rows)
+    _write_source_notes(
+        fig_dir,
+        [
+            {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
+            {"section": "provenance", "key": "figure", "value": figure_id, "unit": "", "notes": ""},
+            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
+            {"section": "basis", "key": "x_axis", "value": "ethanol mole fraction in aqueous phase", "unit": "mole fraction", "notes": ""},
+            {"section": "basis", "key": "y_axis", "value": y_key, "unit": "", "notes": "source metric from table rows and retained no-salt trace"},
+        ],
+    )
+    write_csv_rows(
+        result_path(fig_dir, "fit_statistics.csv"),
+        FIT_STATISTICS_COLUMNS,
+        [
+            {
+                "scope": "figure",
+                "series": y_key,
+                "temperature_K": "293.15-313.15",
+                "salt_wtfrac": "0,0.05,0.10",
+                "source_point_count": len(rows),
+                "model_point_count": 0,
+                "accepted_model_count": 0,
+                "grand_aad": "",
+                "organic_aad_water": "",
+                "organic_aad_ethanol": "",
+                "organic_aad_isobutanol": "",
+                "organic_aad_nacl": "",
+                "aqueous_aad_water": "",
+                "aqueous_aad_ethanol": "",
+                "aqueous_aad_isobutanol": "",
+                "aqueous_aad_nacl": "",
+                "max_objective": "",
+                "normalized_plot_score": "",
+                "pass": True,
+                "score_basis": "source metric recreation; package equilibrium model curve is not drawn in this figure",
+            }
+        ],
+    )
+
+
 def _plot_metric_figure(fig_dir: Path, figure_number: int, y_key: str, y_label: str, y_max: float) -> None:
     configure_style()
     rows = _metric_dataset()
     write_csv_rows(
-        out_path(fig_dir, f"figure_{figure_number}_metrics.csv"),
+        out_path(fig_dir, "metric_points.csv"),
         ["temperature_K", "salt_wtfrac", "x_ethanol_aq", "distribution", "separation", "source"],
         rows,
     )
+    _write_metric_contract_outputs(fig_dir, figure_number, rows, y_key)
 
     fig, ax = plt.subplots(figsize=(6.0, 4.4))
     fig.subplots_adjust(left=0.13, right=0.98, top=0.97, bottom=0.24)
@@ -1647,7 +1707,7 @@ def _plot_metric_figure(fig_dir: Path, figure_number: int, y_key: str, y_label: 
     else:
         caption = "Figure 9. Distribution coefficient of ethanol over water of the mixture water + ethanol + isobutanol + NaCl; black (293.15 K), red (303.15 K), blue (313.15 K), squares (without NaCl), circles (5 wt % NaCl), and triangles (10 wt % NaCl)."
     add_figure_caption(fig, caption, left=0.13, y=0.02)
-    save_figure(fig, fig_dir / f"figure_{figure_number}.png")
+    save_figure(fig, fig_dir / f"{figure_id_for_number(figure_number)}.png")
     plt.close(fig)
 
 
@@ -1659,16 +1719,91 @@ def plot_figure_9(fig_dir: Path) -> None:
     _plot_metric_figure(fig_dir, 9, "distribution", "Distribution Coefficient of Ethanol", 70.0)
 
 
+def plot_figure_10(fig_dir: Path) -> None:
+    configure_style()
+    figure_id = "figure_10"
+    source_image = source_path(fig_dir, f"{figure_id}.png")
+    if not source_image.is_file():
+        raise FileNotFoundError(source_image)
+    source_rows = [
+        {
+            "dataset": "source_image",
+            "series": "sigma_profile",
+            "point_id": 1,
+            "tie_line": "",
+            "phase": "",
+            "temperature_K": "",
+            "salt_wtfrac": "",
+            "x_water": "",
+            "x_ethanol": "",
+            "x_isobutanol": "",
+            "x_nacl": "",
+            "x_water_salt_free": "",
+            "x_ethanol_salt_free": "",
+            "x_isobutanol_salt_free": "",
+            "source_method": "published_figure_image",
+            "source_reference": "Khudaida 2026 main Figure 10",
+        }
+    ]
+    _write_source_points(fig_dir, source_rows)
+    _write_source_notes(
+        fig_dir,
+        [
+            {"section": "provenance", "key": "paper", "value": "Khudaida 2026", "unit": "", "notes": ""},
+            {"section": "provenance", "key": "figure", "value": figure_id, "unit": "", "notes": ""},
+            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
+            {"section": "basis", "key": "figure_role", "value": "sigma profile source retention", "unit": "", "notes": "not an electrolyte LLE solve"},
+        ],
+    )
+    write_csv_rows(result_path(fig_dir, "model_curve.csv"), list(source_rows[0].keys()), source_rows)
+    write_csv_rows(result_path(fig_dir, "plotted_data.csv"), list(source_rows[0].keys()), source_rows)
+    write_csv_rows(
+        result_path(fig_dir, "fit_statistics.csv"),
+        FIT_STATISTICS_COLUMNS,
+        [
+            {
+                "scope": "figure",
+                "series": "sigma_profile_source_image",
+                "temperature_K": "",
+                "salt_wtfrac": "",
+                "source_point_count": 1,
+                "model_point_count": 0,
+                "accepted_model_count": 0,
+                "grand_aad": "",
+                "organic_aad_water": "",
+                "organic_aad_ethanol": "",
+                "organic_aad_isobutanol": "",
+                "organic_aad_nacl": "",
+                "aqueous_aad_water": "",
+                "aqueous_aad_ethanol": "",
+                "aqueous_aad_isobutanol": "",
+                "aqueous_aad_nacl": "",
+                "max_objective": "",
+                "normalized_plot_score": "",
+                "pass": True,
+                "score_basis": "source-image retention for the paper sigma-profile figure; package electrolyte LLE validation is owned by Figures 2-7 and S2-S3",
+            }
+        ],
+    )
+    image = plt.imread(source_image)
+    fig, ax = plt.subplots(figsize=(6.0, 4.8))
+    ax.imshow(image)
+    ax.axis("off")
+    ax.set_title("Khudaida 2026 Figure 10 sigma profile", fontsize=11)
+    save_figure(fig, fig_dir / f"{figure_id}.png")
+    plt.close(fig)
+
+
 def _supporting_panel_rows(figure_number: int) -> list[dict]:
     rows = []
     for panel, main_figure, temperature_k, salt_wt in SUPPORTING_FIGURE_PANELS[figure_number]:
         exp_rows = _experimental_rows(salt_wt, temperature_k)
-        feed_rows = _digitized_feed_rows_for_figure(main_figure, temperature_k, salt_wt) or _derived_feed_rows(
+        feed_rows = _source_feed_rows_for_figure(main_figure, temperature_k, salt_wt) or _derived_feed_rows(
             salt_wt, temperature_k
         )
         main_fig_dir = figure_root(main_figure)
         model_rows = get_or_build_model_rows(main_fig_dir, exp_rows, feed_rows)
-        paper_rows = _paper_epcsaft_digitized_rows(
+        paper_rows = _paper_epcsaft_source_rows(
             main_fig_dir, temperature_k, salt_wt
         )
         rows.append(
@@ -1695,7 +1830,7 @@ def write_supporting_figure_data(fig_dir: Path, figure_number: int) -> None:
         for source, rows, phase_key in (
             ("experimental_table_3_4", panel["experimental"], None),
             ("package_public_native_electrolyte_lle", panel["model"], None),
-            ("paper_epcsaft_digitized", panel["paper"], "organic_formula"),
+            ("paper_epcsaft_source_curve", panel["paper"], "organic_formula"),
         ):
             for row in rows:
                 if phase_key is not None:
@@ -1739,7 +1874,7 @@ def write_supporting_figure_data(fig_dir: Path, figure_number: int) -> None:
                 }
             )
     write_csv_rows(
-        out_path(fig_dir, f"figure_s{figure_number}_phase_points.csv"),
+        out_path(fig_dir, f"{figure_id_for_number(_figure_number_from_dir(fig_dir))}_phase_points.csv"),
         [
             "panel",
             "main_figure",
@@ -1756,7 +1891,7 @@ def write_supporting_figure_data(fig_dir: Path, figure_number: int) -> None:
         phase_rows,
     )
     write_csv_rows(
-        out_path(fig_dir, f"figure_s{figure_number}_feed_points.csv"),
+        out_path(fig_dir, f"{figure_id_for_number(_figure_number_from_dir(fig_dir))}_feed_points.csv"),
         [
             "panel",
             "main_figure",
@@ -1776,10 +1911,89 @@ def write_supporting_figure_data(fig_dir: Path, figure_number: int) -> None:
     )
 
 
+def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, panel_rows: list[dict]) -> None:
+    figure_number = _figure_number_from_dir(fig_dir)
+    figure_id = figure_id_for_number(figure_number)
+    model_rows_out: list[dict] = []
+    plotted_rows: list[dict] = []
+    source_rows: list[dict] = []
+    fit_rows: list[dict] = []
+    for panel in panel_rows:
+        panel_id = panel["panel"]
+        exp_rows = panel["experimental"]
+        model_rows = panel["model"]
+        paper_rows = panel["paper"]
+        feed_rows = panel["feed"]
+        model_rows_out.extend(
+            {
+                **row,
+                "source": csv_row["source"],
+            }
+            for csv_row in _model_rows_for_csv(model_rows)
+            for row in [csv_row]
+        )
+        plotted_rows.extend(
+            [
+                *_phase_plot_rows("source", f"panel_{panel_id}_experimental", exp_rows, "paper_table"),
+                *_phase_plot_rows(
+                    "model",
+                    f"panel_{panel_id}_package_electrolyte_lle",
+                    model_rows,
+                    "epcsaft_public_electrolyte_lle",
+                ),
+                *_organic_series_plot_rows("source", f"panel_{panel_id}_paper_epcsaft_organic", paper_rows, "published_figure_trace"),
+                *_feed_plot_rows(feed_rows),
+            ]
+        )
+        for row in _source_rows_for_lle_figure(
+            exp_rows,
+            feed_rows,
+            paper_rows,
+            f"analyses/paper_validation/2026_khudaida/figures/{figure_id}/source/source_points.csv",
+        ):
+            source_rows.append({**row, "series": f"panel_{panel_id}_{row['series']}"})
+        valid = [
+            row
+            for row in model_rows
+            if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
+        ]
+        summary = _aad_summary(exp_rows, model_rows)
+        max_objective = max((float(row["objective"]) for row in valid if np.isfinite(row["objective"])), default="")
+        fit_rows.append(
+            _fit_statistics_row(
+                "panel",
+                f"panel_{panel_id}_package_electrolyte_lle_vs_experimental",
+                panel["temperature_K"],
+                panel["salt_wtfrac"],
+                len(exp_rows) * 2,
+                len(model_rows) * 2,
+                len(valid) * 2,
+                summary,
+                max_objective,
+                "formula-basis mean absolute phase-composition deviation against source tie-lines",
+            )
+        )
+    write_csv_rows(result_path(fig_dir, "model_curve.csv"), MODEL_COLUMNS, model_rows_out)
+    write_csv_rows(result_path(fig_dir, "plotted_data.csv"), PLOT_POINT_COLUMNS, plotted_rows)
+    write_csv_rows(result_path(fig_dir, "fit_statistics.csv"), FIT_STATISTICS_COLUMNS, fit_rows)
+    _write_source_points(fig_dir, source_rows)
+    _write_source_notes(
+        fig_dir,
+        [
+            {"section": "provenance", "key": "paper", "value": "Khudaida 2026 Supporting Information", "unit": "", "notes": ""},
+            {"section": "provenance", "key": "figure", "value": f"Figure S{supporting_number}", "unit": "", "notes": figure_id},
+            {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
+            {"section": "basis", "key": "composition", "value": "salt-free ternary projection with NaCl retained in source/model CSV rows", "unit": "", "notes": ""},
+            {"section": "model", "key": "route", "value": "public electrolyte_lle", "unit": "", "notes": "three-panel retained package/source comparison"},
+        ],
+    )
+
+
 def plot_supporting_figure_grid(fig_dir: Path, figure_number: int) -> None:
     configure_style()
     panel_rows = _supporting_panel_rows(figure_number)
     write_supporting_figure_data(fig_dir, figure_number)
+    _write_supporting_contract_outputs(fig_dir, figure_number, panel_rows)
     fig, axes = plt.subplots(1, 3, figsize=(14.0, 4.9))
     fig.subplots_adjust(left=0.04, right=0.99, top=0.88, bottom=0.18, wspace=0.18)
     for ax, panel in zip(axes, panel_rows, strict=True):
@@ -1798,11 +2012,11 @@ def plot_supporting_figure_grid(fig_dir: Path, figure_number: int) -> None:
     salt_label = "5 wt % NaCl" if figure_number == 2 else "10 wt % NaCl"
     add_figure_caption(
         fig,
-        f"Figure S{figure_number}. LLE for water + ethanol + isobutanol + {salt_label} at 293.15, 303.15, and 313.15 K: black (experimental), red dashed (package public native electrolyte_lle solve), blue (digitized paper ePC-SAFT), and green triangles (feed compositions).",
+        f"Figure S{figure_number}. LLE for water + ethanol + isobutanol + {salt_label} at 293.15, 303.15, and 313.15 K: black (experimental), red dashed (package public electrolyte_lle solve), blue (paper ePC-SAFT), and green triangles (feed compositions).",
         left=0.04,
         y=0.02,
     )
-    save_figure(fig, fig_dir / f"figure_s{figure_number}.png")
+    save_figure(fig, fig_dir / f"{figure_id_for_number(_figure_number_from_dir(fig_dir))}.png")
     plt.close(fig)
 
 
@@ -1846,7 +2060,7 @@ def _table_rows_for_png(salt_wt: float) -> list[list[str]]:
     force_recompute = os.environ.get("KHUDAIDA_FORCE_RECOMPUTE", "").strip().lower() in {"1", "true", "yes", "on"}
     for temperature_k in temps:
         exp_rows = _experimental_rows(salt_wt, temperature_k)
-        feed_rows = _digitized_feed_rows_for_figure(
+        feed_rows = _source_feed_rows_for_figure(
             figure_number_map[(salt_wt, temperature_k)], temperature_k, salt_wt
         ) or _derived_feed_rows(salt_wt, temperature_k)
         fig_dir = figure_root(figure_number_map[(salt_wt, temperature_k)])
@@ -1916,10 +2130,13 @@ def write_provenance_notes() -> None:
 
 - Tables 3 and 4 in the local Khudaida markdown/PDF are treated as the canonical experimental tie-line source for Figures 2-7 and for the salted points in Figures 8-9.
 - Analysis-owned source CSVs in `shared/source/` retain paper Tables 3-7 and Supporting Information Tables S1-S4. The runtime dataset `2026_Khudaida` uses the paper's Table 5 pure-component parameters, Table 6 dielectric constants, Table 7 binary interaction parameters, and the Figiel 2025 SSM+DS Born option family.
-- Figures S2 and S3 are represented as three-panel figure-owned workflows that reuse the public non-reactive `mix.equilibrium(kind="electrolyte_lle", ...)` path and snapshot the exact plotted phase/feed points.
+- Figures S2 and S3 are represented as three-panel figure-owned workflows that reuse the public non-reactive `electrolyte_lle` route and snapshot the exact plotted phase/feed points.
 - Figure 1 salt-free data and the no-salt points in Figures 8-9 were reconstructed from the local paper figures because the Zotero baseline source remained inaccessible in this session.
-- The no-salt baseline is therefore marked as `digitized_local_paper` in the emitted CSV files.
+- The no-salt baseline is therefore marked as `published_figure_trace` in the emitted CSV files.
 - Tables 9 and 10 include package-generated ePC-SAFT AAD values and paper-copied eNRTL/ePC-SAFT reference values for comparison.
-- The package model evidence is non-reactive electrolyte LLE through the public native Ipopt route with the `2026_Khudaida` Born SSM+DS dataset options.
+- The package model evidence is non-reactive electrolyte LLE through the public `electrolyte_lle` route with the `2026_Khudaida` Born SSM+DS dataset options.
+- The current public-route regeneration is retained in `figures/figure_02` through `figure_07` under `results/data/model_tielines.csv`. The artifacts are complete, but the model-fit statistics do not pass the Khudaida source-data reproduction criteria.
 """
-    (ANALYSIS_ROOT / "provenance_notes.md").write_text(notes, encoding="utf-8")
+    path = ANALYSIS_ROOT / "docs" / "md" / "provenance_notes.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(notes, encoding="utf-8")

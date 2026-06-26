@@ -7,20 +7,27 @@
 
 **Goal:** Resolve GitHub issue #191 by closing the electrolyte HELD2 child gates
 in order: counterion-pair phase discovery (#306), Stage III reduced-variable
-refinement (#312), postsolve certification (#313), and public route admission
-(#314).
+refinement (#312), postsolve certification (#313), representative public route
+admission (#314), and full Khudaida figure-level model reproduction plus
+broader HELD2 flash scenario validation (#320).
 
 **Architecture:** #191 is the electrolyte GFPE umbrella for
 `packages/epcsaft-equilibrium`. Existing children prove source data, reduced
 electroneutral variables, Born SSM/DS derivative receipts, charge-neutral TPD
-screening, and HELD2 counterion-pair phase discovery. The next child, #312,
-must consume the #306 candidate handoff and prove Stage III reduced-variable
-refinement. Public electrolyte admission stays closed until #313 proves
-postsolve certification and #314 proves public route admission.
+screening, HELD2 counterion-pair phase discovery, Stage III refinement,
+postsolve certification, and representative public route admission. The active
+child, #320, must prove full Khudaida model reproduction and broader HELD2
+flash behavior before #191 can close. #320 also must prove that accepted
+electrolyte rows use the shared native `NlpProblem`/Ipopt exact-Hessian
+production path with route-owned transforms/scaling, exact objective gradients,
+exact constraint Jacobians, exact Lagrangian Hessians, Born SSM+DS active-block
+exactness, projected electrochemical or modified mean-ionic residuals, and
+strict Stage III Ipopt success when Stage III evidence is counted.
 
-**Tech Stack:** C++ equilibrium native core, pybind11 bindings, Python
-validation checkers, pytest contracts through `run_pytest.py`, M4 issue
-mirrors, M4 registry evidence, GitHub dependency readiness.
+**Tech Stack:** C++ equilibrium native core, `NlpProblem`, Ipopt,
+`VariableTransform`, pybind11 bindings, Python validation checkers, pytest
+contracts through `run_pytest.py`, M4 issue mirrors, M4 registry evidence,
+GitHub dependency readiness.
 
 ---
 
@@ -29,8 +36,8 @@ mirrors, M4 registry evidence, GitHub dependency readiness.
 - Source Spec: `docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 - Source Issue: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 - Source Plan: `docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md`
-- Active Child: `https://github.com/ePC-SAFT/ePC-SAFT/issues/312`
-- Active Child Plan: `docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md`
+- Active Child: `https://github.com/ePC-SAFT/ePC-SAFT/issues/320`
+- Active Child Plan: `docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md`
 - Milestone: `M4 - Equilibrium`
 - AFK/HITL: `HITL`
 
@@ -38,32 +45,37 @@ mirrors, M4 registry evidence, GitHub dependency readiness.
 
 **Intent:** Keep #191 as the parent acceptance gate for electrolyte GFPE while
 forcing implementation through PR-sized child gates.
-**Current Behavior:** #269, #300, #302, and #306 are closed, but the current
-code only has source readiness, reduced-basis/Born exactness evidence,
-deterministic charge-neutral TPD screening, and HELD2 phase-discovery handoff
-evidence.
-**Expected Outcome:** #191 closes only after HELD2 counterion-pair phase
-discovery, Stage III electrolyte refinement, postsolve certification, and
-public route admission children all close with retained executable evidence.
-**Target Output:** `electrolyte_lle` remains closed until the final admission
-child; each intermediate child produces a retained checker with `complete: true`
-for its own gate and names the remaining electrolyte gates.
+**Current Behavior:** #269, #300, #302, #306, #312, #313, and #314 are closed,
+but #314 proved representative public route admission only. The Khudaida figure
+checker currently exposes failed model reproduction.
+**Expected Outcome:** #191 closes only after #320 proves full Khudaida
+figure-level model reproduction, broader HELD2 flash scenario behavior, and
+the shared `NlpProblem`/Ipopt exact-Hessian production route receipts.
+**Target Output:** `electrolyte_lle` remains scoped to the exact behavior proven
+by retained checkers; final closeout requires artifact-complete and
+model-reproduction-complete Khudaida evidence plus exact-Hessian route
+diagnostics.
 **Owner:** M4 equilibrium package owner.
 **Interface:** GitHub issue dependencies, local issue mirrors, M4 README,
 benchmark registry rows, validation checkers, and native diagnostics.
 **Cutover:** Direct #191 implementation is displaced by the child sequence
-continuing with #312, #313, and #314.
+continuing with #320.
 **Replaced Path:** The stale generic parent plan is replaced with explicit
 child-gate orchestration so workers do not treat readiness or TPD screening as
 production electrolyte support.
 **Evidence:** Closed child issue mirrors, checker JSON, targeted contract tests,
-registry evidence, dependency-readiness receipts, and PR merge records.
+`NlpProblem` sparse derivative receipts, Ipopt option/profile diagnostics, Born
+SSM+DS active-block exact-Hessian receipts, reduced-coordinate lift/back-lift
+diagnostics, registry evidence, dependency-readiness receipts, and PR merge
+records.
 **Acceptance Proof:** #191 acceptance is proven only when all electrolyte child
-gates are closed and the public electrolyte route admission checker passes with
-source-backed validation and postsolve certification.
+gates are closed, the public electrolyte route admission checker passes, the
+full Khudaida figure checker passes with model reproduction required, and #320
+proves the exact-Hessian production route path.
 **Stop Criteria:** Stop if a child attempts to admit public electrolyte routes
 before Stage III and postsolve evidence, compares charged species by raw
-single-ion chemical potentials, or uses downstream case-study metrics as
+single-ion chemical potentials, bypasses `NlpProblem`/Ipopt, lacks Born SSM+DS
+active-block exact-Hessian evidence, or uses downstream case-study metrics as
 upstream package validation.
 **Avoid:** Do not add reactive electrolyte routes, parameter-regression work,
 release claims, or public admission before the required proof gates.
@@ -79,7 +91,9 @@ refinement, certification, and admission separate.
 electrolyte route maps before the admission child, and provider EOS internals
 unless a child issue explicitly scopes provider receipt consumption.
 **Source Of Truth:** #191 source spec, M4 GFPE doctrine, Stage 14/15 electrolyte
-plan, local HELD2 paper markdown, and closed child issue mirrors #269/#300/#302.
+plan, Perdomo 2025 HELD2 paper markdown, Ascani 2022 electrolyte methodology,
+Khudaida 2026 retained source data, and closed child issue mirrors
+#269/#300/#302.
 **Read Path:** Read source fixture readiness through
 `check_electrolyte_gfpe_gate.py`, readiness through
 `check_electrolyte_held2_readiness.py`, TPD screening through
@@ -88,9 +102,10 @@ issue dependencies.
 **Write Path:** Update parent issue mirrors and M4 docs after each child issue
 is created or closed; write implementation code only inside the active child
 scope.
-**Integration Points:** Native phase-discovery diagnostics, checker CLIs,
-activation capability rows, benchmark registry rows, and GitHub dependency
-readiness automation.
+**Integration Points:** Native phase-discovery diagnostics, `NlpProblem` sparse
+derivative metadata, `VariableTransform` reduced-coordinate lift/back-lift,
+Ipopt exact-Hessian profile diagnostics, checker CLIs, activation capability
+rows, benchmark registry rows, and GitHub dependency readiness automation.
 **Migration Or Cutover:** As each child opens, #191 carries `status:blocked`;
 after a child closes, dependency readiness either exposes the next child or
 returns #191 to ready for planning.
@@ -117,29 +132,37 @@ focused tests, and tracker evidence:
 - #313 postsolve checkpoint: certify explicit-ion material reconstruction,
   per-phase charge balance, neutral transfer, mean-ionic transfer, pressure
   consistency, phase amounts, and domain margins.
-- #314 public admission checkpoint: consume all prior checkers and expose only the
-  certified electrolyte route surface.
+- #314 public admission checkpoint: consume all prior checkers and expose only
+  the certified representative electrolyte route surface.
+- #320 full reproduction checkpoint: make the full Khudaida figure checker pass
+  with model reproduction required, add broader HELD2 flash scenario tests, and
+  prove the shared native `NlpProblem`/Ipopt exact-Hessian route path.
 
 ## Acceptance Criteria
 
-- [ ] #312 or its successor child blocks #191 until the current electrolyte
-  gate is closed.
-- [ ] Parent #191 docs list closed children #269, #300, #302, and #306 as
+- [ ] #320 blocks #191 until full Khudaida figure-level model reproduction and
+  HELD2 flash scenario validation pass.
+- [ ] #320 blocks #191 until accepted rows prove the shared native
+  `NlpProblem`/Ipopt exact-Hessian route path, fixed sparse derivative receipts,
+  route-owned transforms/scaling, and Ipopt postsolve diagnostics.
+- [ ] #320 blocks #191 until Born SSM+DS active-block exact-Hessian evidence,
+  reduced electroneutral lift/back-lift, and projected electrochemical or
+  modified mean-ionic residuals are retained.
+- [ ] Parent #191 docs list closed children #269, #300, #302, #306, #312, #313,
+  and #314 as
   historical provenance only.
-- [ ] Parent #191 docs list open child #312 as the current Stage III
-  reduced-variable refinement gate.
-- [ ] #313 postsolve and #314 admission gates remain separate and blocked in
-  order.
+- [ ] Parent #191 docs list open child #320 as the current final validation
+  blocker.
 - [ ] The parent tracker keeps the HELD2 adoption checkpoint sequence current
   as each child opens or closes.
-- [ ] Public electrolyte route claims stay closed until the final admission
-  child closes.
+- [ ] Public electrolyte route claims stay narrowed until #320 proves the full
+  retained source-backed model-reproduction gate.
 
 ## Non-Goals
 
 - No direct implementation under #191.
-- No public `electrolyte_lle` admission from readiness, Born, TPD, or phase
-  discovery gates.
+- No final `electrolyte_lle` production closeout from representative route
+  admission alone.
 - No reactive, CE, CPE, regression, downstream, release, or publication claim.
 
 ## Tasks
@@ -162,7 +185,7 @@ focused tests, and tracker evidence:
 - [ ] Keep labels/readiness mirrored from GitHub.
 - [ ] Keep closed child evidence in provenance sections, not active blockers.
 
-### Task 2: Resolve The Active Child Gate
+### Task 2: Track The Active Child Gate
 
 **Use Cases:**
 - A worker needs one executable child plan with concrete files, proof oracle,

@@ -127,7 +127,10 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     admitted = {
         "PE-Generalized Multiphase": ("neutral_public_admitted", ["multiphase"]),
         "PE-Associating TP Flash": ("source_backed_associating_lle_public_admitted", ["lle"]),
-        "PE-Electrolyte LLE/TP Flash": ("source_backed_electrolyte_lle_public_admitted", ["electrolyte_lle"]),
+        "PE-Electrolyte LLE/TP Flash": (
+            "representative_public_admitted_blocked_by_khudaida_model_reproduction",
+            ["electrolyte_lle"],
+        ),
     }
     for row in _family_rows():
         assert "required_gates" in row, row["family_label"]
@@ -308,7 +311,10 @@ def test_electrolyte_family_records_public_admission_evidence() -> None:
 
     assert electrolyte["production_exposed"] is True
     assert electrolyte["existing_public_utility_routes"] == ["electrolyte_lle"]
-    assert electrolyte["phase_discovery_status"] == "held2_postsolve_certified_public_admission_complete"
+    assert (
+        electrolyte["phase_discovery_status"]
+        == "held2_postsolve_certified_representative_public_admission_complete_full_khudaida_model_reproduction_blocked_by_320"
+    )
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
     assert "electrolyte_postsolve_phase_set_certification" in electrolyte["required_gates"]
     assert "electrolyte_public_route_admission" in electrolyte["required_gates"]

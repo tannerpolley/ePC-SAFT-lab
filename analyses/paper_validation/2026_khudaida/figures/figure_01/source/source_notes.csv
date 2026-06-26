@@ -1,0 +1,6 @@
+section,key,value,unit,notes
+provenance,paper,Khudaida 2026,,
+provenance,figure,figure_01,,
+provenance,source_image,source/figure_01.png,,
+basis,composition,salt-free ternary projection,,
+model,route,source-data recreation,,Figure 1 is a source comparison of salt effects; no package equilibrium model curve is drawn.

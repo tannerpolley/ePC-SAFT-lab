@@ -1,0 +1,6 @@
+section,key,value,unit,notes
+provenance,paper,Khudaida 2026,,
+provenance,figure,figure_08,,
+provenance,source_image,source/figure_08.png,,
+basis,x_axis,ethanol mole fraction in aqueous phase,mole fraction,
+basis,y_axis,separation,,source metric from table rows and retained no-salt trace
