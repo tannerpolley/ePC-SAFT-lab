@@ -25,7 +25,7 @@ last_synced: "2026-06-26"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md
 **Classification:** AFK
-**Labels:** enhancement, native, solver, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, agent-ready, type:feature
 **Goal Command:** /goal Resolve issue 320 by making the Khudaida full-figure electrolyte LLE model-fit checker and HELD2 flash scenario gate pass.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -70,6 +70,7 @@ and reduced-coordinate scenarios.
 - [ ] Figures without model-comparable equilibrium data are explicitly recorded by the checker and cannot hide failed model rows.
 - [ ] Accepted electrolyte flashes report noncollapsed phase distance, positive phase amounts, per-phase charge residuals, neutral transfer residuals, mean-ionic transfer residuals, pressure consistency, exact reduced Hessian availability, and finite domain margins.
 - [ ] HELD2 flash tests cover neutral-limit parity with the HELD 1.0-style base, source-backed electrolyte LLE, common-ion or mixed-salt reduced coordinates, stable feeds, unstable feeds, boundary feeds, and phase-label permutations.
+- [ ] The HELD2 pytest proof collects and runs at least one electrolyte HELD2 flash scenario test; zero selected tests fails the gate.
 - [ ] Public capability and docs language is narrowed to the behavior proven by the full checker.
 - [ ] #191 remains open and blocked by #320 until all #320 proof commands pass.
 
@@ -94,6 +95,9 @@ uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electro
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
 
+The pytest proof must report the exact collected scenario tests when the selector
+changes; zero selected tests fails the issue gate.
+
 ## GitHub Body Text
 
 This issue reopens the #191 completion boundary by requiring full Khudaida
@@ -101,4 +105,3 @@ source-data model reproduction and multi-scenario HELD2 flash validation. #314
 remains representative route-admission evidence, but it is not sufficient
 evidence that electrolyte LLE model behavior matches the retained literature
 figures.
-

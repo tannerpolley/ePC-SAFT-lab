@@ -43,6 +43,9 @@ modeled figure or panel score at least `8.0`.
 fail when model curves collapse near the feed, miss the source tie-lines, lose
 electroneutrality, drop exact reduced-Hessian evidence, or regress the neutral
 HELD 1.0 base behavior.
+**Evidence:** Retained checker JSON, source/model CSVs, fit-statistics CSVs,
+figure SVG/PNG/PDF artifacts, public-admission JSON, and pytest output listing
+the executed electrolyte HELD2 flash scenario node ids.
 **Owner:** `packages/epcsaft-equilibrium` owns the solver behavior;
 `analyses/paper_validation/2026_khudaida` owns retained source/model plot
 artifacts.
@@ -121,6 +124,8 @@ output showing both artifact and model reproduction gates pass.
   base, source-backed electrolyte LLE, common-ion or mixed-salt reduced
   coordinates, stable feeds, unstable feeds, boundary feeds, and phase-label
   permutations.
+- [ ] The HELD2 pytest proof collects and runs at least one real electrolyte
+  HELD2 flash scenario test; zero selected tests fails the gate.
 - [ ] Public capability and docs language is narrowed to the behavior proven by
   the full checker.
 - [ ] #191 remains open and blocked by #320 until all #320 proof commands pass.
@@ -139,6 +144,8 @@ output showing both artifact and model reproduction gates pass.
 **Use Cases:**
 - A reviewer can see every retained Khudaida figure and the matching model
   curve or source-only rationale.
+- The retained source/model data and fit statistics become the acceptance
+  evidence for electrolyte LLE model reproduction.
 - A resolver can identify whether a figure failure is data, parameter, or
   equilibrium-method driven.
 - A regression test fails when a modeled figure drops below score `8.0`.
@@ -173,11 +180,15 @@ output showing both artifact and model reproduction gates pass.
 - [ ] Assert postsolve diagnostics, noncollapsed split metrics, and exact
   reduced-Hessian availability.
 - [ ] Include neutral-limit parity with the HELD 1.0-style base behavior.
+- [ ] Report exact pytest node ids or checker output proving non-empty scenario
+  test execution.
 
 ### Task 3: Align Capability Evidence And Parent State
 
 **Use Cases:**
 - #191 cannot be closed until #320 is merged.
+- The cutover from single-feed route admission to full figure-reproduction
+  evidence is explicit in #191 and #320.
 - Capability text does not overclaim unsupported electrolyte behavior.
 - M6 benchmark evidence receives a clean handoff only after M4 behavior works.
 
@@ -200,3 +211,5 @@ uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electro
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
 
+The pytest proof must report the exact collected scenario tests when the selector
+changes; zero selected tests fails the plan gate.
