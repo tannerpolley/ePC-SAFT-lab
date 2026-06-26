@@ -8,11 +8,12 @@ from types import MappingProxyType
 from typing import Any
 
 import numpy as np
-
 from epcsaft import InputError
 
-
 _BASIS_TOLERANCE = 1.0e-10
+GAS_CONSTANT_J_PER_MOL_K = 8.31446261815324
+_ACTIVITY_CONVENTIONS = frozenset({"mole_fraction_activity", "molality", "fugacity", "eos_x_phi"})
+_EQUILIBRIUM_CONSTANT_FORMS = frozenset({"K", "ln_K", "log_K", "log10_K", "delta_g_standard"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +67,165 @@ class ChemicalReaction:
 
 
 @dataclass(frozen=True, slots=True)
+class StandardStateRecord:
+    """Explicit standard-state convention for a standalone CE reaction constant."""
+
+    label: str
+    activity_convention: str
+    temperature_K: float
+    pressure_Pa: float
+    standard_molality_mol_kg: float | None = None
+    standard_fugacity_Pa: float | None = None
+    eos_reference_phase: str | None = None
+    metadata: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "label", _clean_label(self.label, "standard-state label"))
+        convention = _clean_label(self.activity_convention, "activity convention")
+        if convention not in _ACTIVITY_CONVENTIONS:
+            raise InputError(f"unsupported activity convention '{convention}'.")
+        object.__setattr__(self, "activity_convention", convention)
+        object.__setattr__(self, "temperature_K", _positive_finite_float(self.temperature_K, "temperature_K"))
+        object.__setattr__(self, "pressure_Pa", _positive_finite_float(self.pressure_Pa, "pressure_Pa"))
+
+        molality = _optional_positive_float(self.standard_molality_mol_kg, "standard molality")
+        fugacity = _optional_positive_float(self.standard_fugacity_Pa, "standard fugacity")
+        object.__setattr__(self, "standard_molality_mol_kg", molality)
+        object.__setattr__(self, "standard_fugacity_Pa", fugacity)
+
+        reference_phase = self.eos_reference_phase
+        if reference_phase is not None:
+            reference_phase = _clean_label(reference_phase, "EOS reference phase")
+        object.__setattr__(self, "eos_reference_phase", reference_phase)
+
+        if convention == "molality" and molality is None:
+            raise InputError("molality standard states require standard molality metadata.")
+        if convention == "fugacity" and fugacity is None:
+            raise InputError("fugacity standard states require standard fugacity metadata.")
+        if convention == "eos_x_phi" and reference_phase is None:
+            raise InputError("eos_x_phi standard states require an EOS reference phase.")
+
+        metadata = (
+            {} if self.metadata is None else {str(key): _json_scalar(value) for key, value in self.metadata.items()}
+        )
+        object.__setattr__(self, "metadata", MappingProxyType(metadata))
+
+    def to_payload(self) -> dict[str, Any]:
+        """Return a JSON-like standard-state payload."""
+
+        payload: dict[str, Any] = {
+            "label": self.label,
+            "activity_convention": self.activity_convention,
+            "temperature_K": float(self.temperature_K),
+            "pressure_Pa": float(self.pressure_Pa),
+        }
+        if self.standard_molality_mol_kg is not None:
+            payload["standard_molality_mol_kg"] = float(self.standard_molality_mol_kg)
+        if self.standard_fugacity_Pa is not None:
+            payload["standard_fugacity_Pa"] = float(self.standard_fugacity_Pa)
+        if self.eos_reference_phase is not None:
+            payload["eos_reference_phase"] = self.eos_reference_phase
+        if self.metadata:
+            payload["metadata"] = dict(self.metadata)
+        return payload
+
+
+@dataclass(frozen=True, slots=True)
+class EquilibriumConstantRecord:
+    """Equilibrium constant with explicit units and standard-state convention."""
+
+    reaction_label: str
+    value: float
+    form: str
+    units: str
+    standard_state: StandardStateRecord
+    source: str
+    source_constant_label: str
+    metadata: Mapping[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "reaction_label", _clean_label(self.reaction_label, "reaction label"))
+        object.__setattr__(self, "value", _finite_float(self.value, "equilibrium constant value"))
+        form = _clean_label(self.form, "equilibrium constant form")
+        if form not in _EQUILIBRIUM_CONSTANT_FORMS:
+            raise InputError(f"unsupported equilibrium constant form '{form}'.")
+        object.__setattr__(self, "form", form)
+        if form == "K" and self.value <= 0.0:
+            raise InputError("dimensionless equilibrium constants must be positive.")
+        units = _clean_label(self.units, "equilibrium constant units")
+        _require_units_for_form(form, units)
+        object.__setattr__(self, "units", units)
+        if not isinstance(self.standard_state, StandardStateRecord):
+            raise InputError("equilibrium constant records require a standard-state record.")
+        object.__setattr__(self, "source", _clean_label(self.source, "equilibrium constant source"))
+        object.__setattr__(
+            self,
+            "source_constant_label",
+            _clean_label(self.source_constant_label, "source constant label"),
+        )
+        metadata = (
+            {} if self.metadata is None else {str(key): _json_scalar(value) for key, value in self.metadata.items()}
+        )
+        object.__setattr__(self, "metadata", MappingProxyType(metadata))
+
+    def ln_equilibrium_constant(self) -> float:
+        """Convert the declared constant to natural-log form."""
+
+        if self.form == "K":
+            if self.value <= 0.0:
+                raise InputError("dimensionless equilibrium constants must be positive.")
+            return float(np.log(self.value))
+        if self.form == "ln_K":
+            return float(self.value)
+        if self.form in {"log_K", "log10_K"}:
+            return float(self.value * np.log(10.0))
+        if self.form == "delta_g_standard":
+            return float(-self.value / (GAS_CONSTANT_J_PER_MOL_K * self.standard_state.temperature_K))
+        raise InputError(f"unsupported equilibrium constant form '{self.form}'.")
+
+    def to_payload(self) -> dict[str, Any]:
+        """Return a JSON-like equilibrium-constant payload."""
+
+        payload: dict[str, Any] = {
+            "reaction_label": self.reaction_label,
+            "value": float(self.value),
+            "form": self.form,
+            "units": self.units,
+            "ln_equilibrium_constant": self.ln_equilibrium_constant(),
+            "standard_state": self.standard_state.to_payload(),
+            "source": self.source,
+            "source_constant_label": self.source_constant_label,
+        }
+        if self.metadata:
+            payload["metadata"] = dict(self.metadata)
+        return payload
+
+
+@dataclass(frozen=True, slots=True)
+class StandardStateRegistry:
+    """Ordered registry of reaction constants for standalone CE preparation."""
+
+    records: Mapping[str, EquilibriumConstantRecord]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "records", MappingProxyType(dict(self.records)))
+
+    @property
+    def reaction_labels(self) -> tuple[str, ...]:
+        """Return registry reaction labels in insertion order."""
+
+        return tuple(self.records)
+
+    def to_native_payload(self) -> dict[str, Any]:
+        """Return a JSON-like payload that can cross the native request boundary."""
+
+        return {
+            "reaction_labels": list(self.reaction_labels),
+            "records": [record.to_payload() for record in self.records.values()],
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class CompiledChemicalEquilibrium:
     """Solver-entry schema payload for homogeneous chemical equilibrium."""
 
@@ -82,7 +242,13 @@ class CompiledChemicalEquilibrium:
     diagnostics: Mapping[str, Any]
 
     def __post_init__(self) -> None:
-        for field in ("conservation_matrix", "charge_vector", "stoichiometric_matrix", "feed_amounts", "conservation_totals"):
+        for field in (
+            "conservation_matrix",
+            "charge_vector",
+            "stoichiometric_matrix",
+            "feed_amounts",
+            "conservation_totals",
+        ):
             array = np.array(getattr(self, field), dtype=float, copy=True)
             array.setflags(write=False)
             object.__setattr__(self, field, array)
@@ -161,9 +327,7 @@ def compile_reaction_set(
         "rank_deficient_reactions": dependent_reaction_count > 0,
         "dependent_reaction_count": dependent_reaction_count,
         "conservation_residual_max_abs": float(
-            np.max(np.abs(conservation_matrix @ stoichiometric_matrix.T))
-            if stoichiometric_matrix.size
-            else 0.0
+            np.max(np.abs(conservation_matrix @ stoichiometric_matrix.T)) if stoichiometric_matrix.size else 0.0
         ),
     }
     return CompiledChemicalEquilibrium(
@@ -179,6 +343,21 @@ def compile_reaction_set(
         conservation_rank=conservation_rank,
         diagnostics=diagnostics,
     )
+
+
+def build_standard_state_registry(records: Sequence[EquilibriumConstantRecord]) -> StandardStateRegistry:
+    """Build a deterministic registry keyed by reaction label."""
+
+    registry: dict[str, EquilibriumConstantRecord] = {}
+    for record in records:
+        if not isinstance(record, EquilibriumConstantRecord):
+            raise InputError("standard-state registry entries must be equilibrium constant records.")
+        if record.reaction_label in registry:
+            raise InputError(f"duplicate equilibrium constant for reaction '{record.reaction_label}'.")
+        registry[record.reaction_label] = record
+    if not registry:
+        raise InputError("standard-state registry requires at least one equilibrium constant record.")
+    return StandardStateRegistry(registry)
 
 
 def _clean_label(value: Any, label: str) -> str:
@@ -197,6 +376,43 @@ def _finite_float(value: Any, label: str) -> float:
     if not np.isfinite(out):
         raise InputError(f"{label} must be finite.")
     return out
+
+
+def _positive_finite_float(value: Any, label: str) -> float:
+    if value is None:
+        raise InputError(f"{label} metadata is required.")
+    out = _finite_float(value, label)
+    if out <= 0.0:
+        raise InputError(f"{label} must be positive.")
+    return out
+
+
+def _optional_positive_float(value: Any, label: str) -> float | None:
+    if value is None:
+        return None
+    out = _finite_float(value, label)
+    if out <= 0.0:
+        raise InputError(f"{label} must be positive.")
+    return out
+
+
+def _require_units_for_form(form: str, units: str) -> None:
+    if form in {"K", "ln_K", "log_K", "log10_K"} and units != "dimensionless":
+        raise InputError(f"{form} equilibrium constants require dimensionless units.")
+    if form == "delta_g_standard" and units != "J/mol":
+        raise InputError("delta_g_standard equilibrium constants require J/mol units.")
+
+
+def _json_scalar(value: Any) -> Any:
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, Mapping):
+        return {str(key): _json_scalar(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_scalar(item) for item in value]
+    return value
 
 
 def _require_unique(labels: Sequence[str], kind: str) -> None:

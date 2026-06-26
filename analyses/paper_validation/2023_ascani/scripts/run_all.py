@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 if str(REPO_ROOT) not in sys.path:
@@ -17,8 +18,10 @@ from scripts.dev.native_runtime_env import apply_to_current_process
 apply_to_current_process()
 
 import epcsaft
+from epcsaft_equilibrium import EquilibriumConstantRecord, StandardStateRecord, build_standard_state_registry
 
 ANALYSIS_DIR = REPO_ROOT / "analyses" / "paper_validation" / "2023_ascani"
+ANALYSIS_YAML = ANALYSIS_DIR / "analysis.yaml"
 SOURCE_MD = (
     REPO_ROOT
     / "docs"
@@ -79,6 +82,56 @@ def _status_from_public_route(result: epcsaft.EquilibriumResult) -> str:
     ):
         return "accepted_public_native_ipopt"
     return "failed_gate"
+
+
+def _pressure_bar_to_pa(value: Any) -> float:
+    return float(value) * 100000.0
+
+
+def _ascani_standard_state_registry() -> Any:
+    analysis = yaml.safe_load(ANALYSIS_YAML.read_text(encoding="utf-8"))
+    entries = analysis["expected"]["standard_state_registry"]
+    records: list[EquilibriumConstantRecord] = []
+    for entry_key, entry in entries.items():
+        standard_state = StandardStateRecord(
+            label=entry["standard_state_label"],
+            activity_convention=entry["activity_convention"],
+            temperature_K=float(entry["temperature_K"]),
+            pressure_Pa=_pressure_bar_to_pa(entry["pressure_bar"]),
+            metadata={
+                "analysis_entry": entry_key,
+                "pressure_bar": float(entry["pressure_bar"]),
+                "conversion": entry["conversion"],
+            },
+        )
+        records.append(
+            EquilibriumConstantRecord(
+                reaction_label=entry["reaction_label"],
+                value=float(entry["value"]),
+                form=entry["constant_form"],
+                units=entry["units"],
+                standard_state=standard_state,
+                source="Ascani 2023 Table 4",
+                source_constant_label=entry["source_constant_label"],
+                metadata={
+                    "analysis_entry": entry_key,
+                    "retained_source_constant": {
+                        "label": entry["source_constant_label"],
+                        "value": float(entry["value"]),
+                    },
+                    "conversion": entry["conversion"],
+                },
+            )
+        )
+    return build_standard_state_registry(records)
+
+
+def _ascani_standard_state_payload() -> dict[str, Any]:
+    return _ascani_standard_state_registry().to_native_payload()
+
+
+def _ascani_ln_equilibrium_constant(reaction_label: str) -> float:
+    return _ascani_standard_state_registry().records[reaction_label].ln_equilibrium_constant()
 
 
 def _hypothetical_mixture() -> epcsaft.ePCSAFTMixture:
@@ -321,6 +374,7 @@ def _system1_mixture() -> epcsaft.ePCSAFTMixture:
 
 def _run_system1_reactive_lle() -> dict[str, Any]:
     mix = _system1_mixture()
+    standard_state_registry = _ascani_standard_state_payload()
     feed = np.asarray([0.25, 0.25, 0.25, 0.25], dtype=float)
     balances = {
         "acetyl": {"Acetic acid": 1.0, "Pentyl Acetate": 1.0},
@@ -334,7 +388,7 @@ def _run_system1_reactive_lle() -> dict[str, Any]:
     }
     reaction = epcsaft.ReactionDefinition.from_literature_constant(
         {"Acetic acid": -1.0, "1-Pentanol": -1.0, "Pentyl Acetate": 1.0, "Water": 1.0},
-        log_equilibrium_constant=math.log(43.99),
+        log_equilibrium_constant=_ascani_ln_equilibrium_constant("ascani_2023_system1_esterification"),
         name="ascani_2023_system1_esterification",
         standard_state="mole_fraction_activity",
         source="Ascani 2023 Table 4",
@@ -364,6 +418,7 @@ def _run_system1_reactive_lle() -> dict[str, Any]:
             "exception_message": str(exc),
             "feed": feed.tolist(),
             "solver_options": _phase_options_summary(phase_options),
+            "standard_state_registry": standard_state_registry,
             "paper_match_status": "blocked_source_data",
         }
     return {
@@ -371,6 +426,7 @@ def _run_system1_reactive_lle() -> dict[str, Any]:
         "public_api": 'mix.equilibrium(kind="reactive_lle")',
         "feed": feed.tolist(),
         "solver_options": _phase_options_summary(phase_options),
+        "standard_state_registry": standard_state_registry,
         "phase_distance": result.diagnostics.get("phase_distance"),
         "reaction_stationarity_norm": result.diagnostics.get("reaction_stationarity_norm"),
         "phase_equilibrium_norm": result.diagnostics.get("phase_equilibrium_norm"),
@@ -407,6 +463,7 @@ def main() -> int:
     homogeneous = _run_hypothetical_homogeneous_ce()
     hypothetical_lle = _run_hypothetical_reactive_lle()
     system1 = _run_system1_reactive_lle()
+    standard_state_registry = _ascani_standard_state_payload()
     stage_d_status = _overall_status(str(homogeneous["status"]), str(hypothetical_lle["status"]))
     stage_e_status = str(system1["status"])
     route_status = _overall_status(stage_d_status, stage_e_status)
@@ -419,11 +476,14 @@ def main() -> int:
         "status_reason": (
             "source-backed public native Ipopt reactive LLE route attempt remains blocked by solver closure"
             if status == "blocked_solver"
-            else "public native Ipopt route gates accepted; Figure 8/9 and tie-line paper-match targets remain source-data blocked"
-            if status == "blocked_source_data"
-            else "strict route gates evaluated"
+            else (
+                "public native Ipopt route gates accepted; Figure 8/9 and tie-line paper-match targets remain source-data blocked"
+                if status == "blocked_source_data"
+                else "strict route gates evaluated"
+            )
         ),
         "source_records": [_rel(SOURCE_MD)],
+        "standard_state_registry": standard_state_registry,
         "source_markers_present": present_markers,
         "stage_d_reactive_foundation": {
             "status": stage_d_status,
@@ -439,6 +499,7 @@ def main() -> int:
                 "temperature_K": 318.15,
                 "pressure_bar": 1.013,
                 "K_a": 43.99,
+                "standard_state_record": standard_state_registry["records"][0],
                 "parameter_tables": ["Table 1", "Table 2", "Table 4"],
             },
             "paper_match_status": "blocked_source_data",
@@ -458,13 +519,15 @@ def main() -> int:
             for item in (
                 hypothetical_lle if hypothetical_lle["status"] != "accepted_public_native_ipopt" else None,
                 system1 if system1["status"] != "accepted_public_native_ipopt" else None,
-                {
-                    "status": "blocked_source_data",
-                    "reason": "Ascani 2023 Figure 8/9 and reactive tie-line paper-match target rows are not machine-readable in this worktree.",
-                    "paper_match_status": "blocked_source_data",
-                }
-                if status == "blocked_source_data"
-                else None,
+                (
+                    {
+                        "status": "blocked_source_data",
+                        "reason": "Ascani 2023 Figure 8/9 and reactive tie-line paper-match target rows are not machine-readable in this worktree.",
+                        "paper_match_status": "blocked_source_data",
+                    }
+                    if status == "blocked_source_data"
+                    else None
+                ),
             )
             if item is not None
         ],
