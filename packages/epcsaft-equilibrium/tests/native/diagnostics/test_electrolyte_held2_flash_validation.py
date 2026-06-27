@@ -114,7 +114,7 @@ def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase
     )
 
 
-def test_electrolyte_held2_flash_bubble_temperature_route_records_figiel_blocker() -> None:
+def test_electrolyte_held2_flash_bubble_temperature_route_accepts_figiel_boundary() -> None:
     _assert_figiel_parameter_snapshot()
     feed = _perdomo_table4_liquid_feed()
     mixture = epcsaft.Mixture.from_folder(
@@ -129,9 +129,9 @@ def test_electrolyte_held2_flash_bubble_temperature_route_records_figiel_blocker
         PRESSURE_PA,
         feed,
         CHARGES,
-        1,
+        80,
         1.0e-8,
-        8.0,
+        30.0,
         "exact",
         3,
         1.0e-8,
@@ -148,20 +148,23 @@ def test_electrolyte_held2_flash_bubble_temperature_route_records_figiel_blocker
     assert route["route_refinement_kind"] == "charge_constrained_projected_residual_temperature_boundary"
     assert route["problem_name"] == "electrolyte_bubble_t_eos"
     assert route["hessian_approximation"] == "exact"
-    assert route["hessian_backend"] == "cppad_phase_temperature_route_through_analytic_positive_log"
-    assert route["variable_model"] == "positive_log_amount_volume_temperature"
+    assert route["hessian_backend"] == "cppad_phase_temperature_reduced_residual_constraints"
+    assert route["variable_model"] == "reduced_electroneutral_logit_amount_volume_temperature"
     assert route["exact_hessian_available"] is True
+    assert route["residual_derivative_backend"] == "cppad_phase_temperature_reduced_residual_constraints"
     assert route["residual_exact_jacobian_available"] is True
     assert route["residual_exact_hessian_available"] is True
     assert route["public_route_admission"] == "focused_validation_binding"
     assert route["production_exposed"] is False
     assert route["last_callback_exception"] == ""
 
-    assert route["status"] == "solver_rejected"
-    assert route["solver_status"] == "max_iterations_exceeded"
-    assert route["application_status"] == "maximum_iterations_exceeded"
-    assert route["accepted"] is False
-    assert route["iteration_count"] == 1
+    assert route["status"] == "accepted"
+    assert route["solver_status"] == "success"
+    assert route["application_status"] == "solve_succeeded"
+    assert route["accepted"] is True
+    assert route["solver_accepted"] is True
+    assert route["seed_name"] == "canonical_phase_density_root"
+    assert route["iteration_count"] <= 12
 
     variables = np.asarray(route["variables"], dtype=float)
     species_count = len(SPECIES)
@@ -203,5 +206,27 @@ def test_electrolyte_held2_flash_bubble_temperature_route_records_figiel_blocker
     assert liquid.tolist() == pytest.approx(feed, rel=0.0, abs=1.0e-12)
     assert np.sum(vapor) == pytest.approx(1.0, rel=0.0, abs=1.0e-7)
     assert float(np.dot(vapor, CHARGES)) == pytest.approx(0.0, rel=0.0, abs=1.0e-12)
-    assert route["objective"] == pytest.approx(0.5 * float(projected_residuals @ projected_residuals), rel=1.0e-8)
-    assert np.max(np.abs(projected_residuals)) > 1.0
+    assert route["objective"] == pytest.approx(0.0, rel=0.0, abs=0.0)
+    assert np.max(np.abs(projected_residuals)) <= 1.0e-6
+    assert temperature == pytest.approx(351.90223321057, rel=0.0, abs=1.0e-7)
+    assert vapor.tolist() == pytest.approx(
+        [0.59580640799008, 0.32808099776732, 0.03805629712130, 0.03805629712130],
+        rel=0.0,
+        abs=1.0e-10,
+    )
+
+    probe = core._native_electrolyte_bubble_t_reduced_nlp_probe(
+        mixture.native._native,
+        PRESSURE_PA,
+        feed,
+        CHARGES,
+        variables.tolist(),
+        1.0e-10,
+    )
+    assert probe["problem_name"] == "electrolyte_bubble_t_eos"
+    assert probe["hessian_backend"] == "cppad_phase_temperature_reduced_residual_constraints"
+    assert probe["variable_model"] == "reduced_electroneutral_logit_amount_volume_temperature"
+    assert probe["variable_count"] == 5
+    assert probe["constraints"] == pytest.approx(projected_residuals.tolist(), rel=0.0, abs=1.0e-9)
+    assert np.all(np.isfinite(np.asarray(probe["jacobian_values"], dtype=float)))
+    assert np.all(np.isfinite(np.asarray(probe["hessian_values"], dtype=float)))

@@ -754,6 +754,29 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     return out;
 }
 
+py::dict electrolyte_reduced_nlp_probe_to_dict(
+    const epcsaft::native::equilibrium_nlp::ElectrolyteReducedNlpProbe& result
+) {
+    py::dict out;
+    out["problem_name"] = result.problem_name;
+    out["hessian_backend"] = result.hessian_backend;
+    out["variable_model"] = result.variable_model;
+    out["variable_count"] = result.variable_count;
+    out["physical_variable_count"] = result.physical_variable_count;
+    out["objective"] = result.objective;
+    out["solver_variables"] = result.solver_variables;
+    out["physical_variables"] = result.physical_variables;
+    out["gradient"] = result.gradient;
+    out["constraints"] = result.constraints;
+    out["jacobian_rows"] = result.jacobian_rows;
+    out["jacobian_cols"] = result.jacobian_cols;
+    out["jacobian_values"] = result.jacobian_values;
+    out["hessian_rows"] = result.hessian_rows;
+    out["hessian_cols"] = result.hessian_cols;
+    out["hessian_values"] = result.hessian_values;
+    return out;
+}
+
 std::string phase_kind_name(int phase_kind) {
     if (phase_kind == 0) {
         return "liquid";
@@ -2778,6 +2801,36 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("candidate_mass_balance_tolerance"),
         py::arg("continuous_tpd_required") = true
     );
+    m.def("_native_electrolyte_bubble_t_reduced_nlp_probe", [](
+        const py::object& mixture,
+        double target_pressure,
+        const std::vector<double>& liquid_composition,
+        const std::vector<double>& charges,
+        const std::vector<double>& physical_variables,
+        double charge_constraint_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(
+            mixture,
+            "Electrolyte bubble-temperature reduced NLP probe"
+        );
+        return electrolyte_reduced_nlp_probe_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_bubble_t_reduced_nlp_probe(
+                args,
+                target_pressure,
+                liquid_composition,
+                charges,
+                physical_variables,
+                charge_constraint_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("target_pressure"),
+        py::arg("liquid_composition"),
+        py::arg("charges"),
+        py::arg("physical_variables"),
+        py::arg("charge_constraint_tolerance") = 1.0e-10
+    );
     m.def("_native_electrolyte_bubble_t_route_result", [](
         const py::object& mixture,
         double target_pressure,
@@ -2825,7 +2878,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         out["route"] = "electrolyte_bubble_temperature";
         out["selector_family"] = "electrolyte_bubble_dew_boundary";
         out["route_refinement_kind"] = "charge_constrained_projected_residual_temperature_boundary";
-        out["residual_derivative_backend"] = "cppad_phase_temperature_route";
+        out["residual_derivative_backend"] = "cppad_phase_temperature_reduced_residual_constraints";
         out["residual_exact_jacobian_available"] = true;
         out["residual_exact_hessian_available"] = true;
         out["production_exposed"] = false;

@@ -316,19 +316,6 @@ bool fixed_temperature_pressure_flash_seed_satisfies_volume_bounds(
         && vapor_volume - liquid_volume >= kMinimumPhaseVolumeGap;
 }
 
-std::vector<double> log_positive_variables(
-    const std::vector<double>& physical_variables,
-    const std::string& label
-) {
-    std::vector<double> out;
-    out.reserve(physical_variables.size());
-    for (double value : physical_variables) {
-        require_positive_finite(value, label);
-        out.push_back(std::log(value));
-    }
-    return out;
-}
-
 std::vector<double> lower_dense_to_symmetric_matrix(
     const NlpHessianStructure& structure,
     const std::vector<double>& values,
@@ -351,207 +338,131 @@ std::vector<double> lower_dense_to_symmetric_matrix(
     return dense;
 }
 
-class PositiveLogNlpProblem final : public NlpProblem {
-public:
-    explicit PositiveLogNlpProblem(std::unique_ptr<NlpProblem> delegate)
-        : delegate_(std::move(delegate)) {
-        if (!delegate_) {
-            throw ValueError("positive-log NLP wrapper requires a delegate problem.");
-        }
-    }
-
-    std::string name() const override {
-        return delegate_->name();
-    }
-
-    int variable_count() const override {
-        return delegate_->variable_count();
-    }
-
-    int constraint_count() const override {
-        return delegate_->constraint_count();
-    }
-
-    int jacobian_nonzero_count() const override {
-        return delegate_->jacobian_nonzero_count();
-    }
-
-    NlpBounds bounds() const override {
-        NlpBounds physical = delegate_->bounds();
-        require_size(physical.variable_lower, static_cast<std::size_t>(variable_count()), name() + " lower bound");
-        require_size(physical.variable_upper, static_cast<std::size_t>(variable_count()), name() + " upper bound");
-        for (double& value : physical.variable_lower) {
-            require_positive_finite(value, name() + " positive-log lower bound");
-            value = std::log(value);
-        }
-        for (double& value : physical.variable_upper) {
-            require_positive_finite(value, name() + " positive-log upper bound");
-            value = std::log(value);
-        }
-        return physical;
-    }
-
-    std::vector<double> initial_point() const override {
-        return solver_variables_from_physical(delegate_->initial_point());
-    }
-
-    double objective(const std::vector<double>& variables) const override {
-        return delegate_->objective(physical_variables_from_solver(variables));
-    }
-
-    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
-        const std::vector<double> physical = physical_variables_from_solver(variables);
-        const std::vector<double> physical_gradient = delegate_->objective_gradient(physical);
-        require_size(
-            physical_gradient,
-            static_cast<std::size_t>(variable_count()),
-            name() + " physical objective gradient"
-        );
-        std::vector<double> out(static_cast<std::size_t>(variable_count()), 0.0);
-        for (int col = 0; col < variable_count(); ++col) {
-            out[static_cast<std::size_t>(col)] =
-                physical_gradient[static_cast<std::size_t>(col)] * physical[static_cast<std::size_t>(col)];
-        }
-        return out;
-    }
-
-    std::vector<double> constraints(const std::vector<double>& variables) const override {
-        return delegate_->constraints(physical_variables_from_solver(variables));
-    }
-
-    NlpJacobianStructure jacobian_structure() const override {
-        return delegate_->jacobian_structure();
-    }
-
-    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
-        const std::vector<double> physical = physical_variables_from_solver(variables);
-        const NlpJacobianStructure structure = delegate_->jacobian_structure();
-        std::vector<double> values = delegate_->jacobian_values(physical);
-        if (values.size() != structure.cols.size()) {
-            throw ValueError(name() + " positive-log Jacobian structure/value size mismatch.");
-        }
-        for (std::size_t index = 0; index < values.size(); ++index) {
-            const int col = structure.cols[index];
-            if (col < 0 || col >= variable_count()) {
-                throw ValueError(name() + " positive-log Jacobian column is out of range.");
-            }
-            values[index] *= physical[static_cast<std::size_t>(col)];
-        }
-        return values;
-    }
-
-    bool has_exact_hessian() const override {
-        return delegate_->has_exact_hessian();
-    }
-
-    int hessian_nonzero_count() const override {
-        return LagrangianHessianAssembler(variable_count()).nonzero_count();
-    }
-
-    NlpHessianStructure hessian_structure() const override {
-        return LagrangianHessianAssembler(variable_count()).structure();
-    }
-
-    std::vector<double> hessian_values(
-        const std::vector<double>& variables,
-        double objective_factor,
-        const std::vector<double>& constraint_multipliers
-    ) const override {
-        const std::vector<double> physical = physical_variables_from_solver(variables);
-        const std::vector<double> physical_hessian_values =
-            delegate_->hessian_values(physical, objective_factor, constraint_multipliers);
-        const std::vector<double> physical_hessian = lower_dense_to_symmetric_matrix(
-            delegate_->hessian_structure(),
-            physical_hessian_values,
-            variable_count(),
-            name() + " positive-log delegate"
-        );
-
-        std::vector<double> lagrangian_gradient = delegate_->objective_gradient(physical);
-        require_size(
-            lagrangian_gradient,
-            static_cast<std::size_t>(variable_count()),
-            name() + " physical Lagrangian objective gradient"
-        );
-        for (double& value : lagrangian_gradient) {
-            value *= objective_factor;
-        }
-
-        const NlpJacobianStructure jacobian_structure = delegate_->jacobian_structure();
-        const std::vector<double> jacobian = delegate_->jacobian_values(physical);
-        if (jacobian.size() != jacobian_structure.rows.size()
-            || jacobian.size() != jacobian_structure.cols.size()) {
-            throw ValueError(name() + " positive-log Lagrangian Jacobian structure/value size mismatch.");
-        }
-        require_size(
-            constraint_multipliers,
-            static_cast<std::size_t>(constraint_count()),
-            name() + " positive-log constraint multiplier"
-        );
-        for (std::size_t index = 0; index < jacobian.size(); ++index) {
-            const int row = jacobian_structure.rows[index];
-            const int col = jacobian_structure.cols[index];
-            if (row < 0 || row >= constraint_count() || col < 0 || col >= variable_count()) {
-                throw ValueError(name() + " positive-log Lagrangian Jacobian index is out of range.");
-            }
-            lagrangian_gradient[static_cast<std::size_t>(col)] +=
-                constraint_multipliers[static_cast<std::size_t>(row)] * jacobian[index];
-        }
-
-        const int n = variable_count();
-        std::vector<double> transformed(static_cast<std::size_t>(n * n), 0.0);
-        for (int first = 0; first < n; ++first) {
-            for (int second = 0; second < n; ++second) {
-                transformed[static_cast<std::size_t>(first * n + second)] =
-                    physical[static_cast<std::size_t>(first)]
-                    * physical_hessian[static_cast<std::size_t>(first * n + second)]
-                    * physical[static_cast<std::size_t>(second)];
-            }
-            transformed[static_cast<std::size_t>(first * n + first)] +=
-                lagrangian_gradient[static_cast<std::size_t>(first)]
-                * physical[static_cast<std::size_t>(first)];
-        }
-        symmetrize_local_square_matrix(transformed, n);
-        return lower_triangle_values(transformed, n);
-    }
-
-    std::string hessian_backend() const override {
-        return delegate_->hessian_backend() + "_through_analytic_positive_log";
-    }
-
-    NlpScaling scaling() const override {
-        NlpScaling out = delegate_->scaling();
-        out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
-        return out;
-    }
-
-    std::map<std::string, std::string> diagnostics() const override {
-        std::map<std::string, std::string> out = delegate_->diagnostics();
-        out["variable_transform"] = "positive_log_coordinates";
-        out["variable_model"] = "positive_log_amount_volume_temperature";
-        return out;
-    }
-
-    std::vector<double> physical_variables_from_solver(
-        const std::vector<double>& solver_variables
-    ) const {
-        return PositiveLogVariableTransform(variable_count()).solver_to_physical(solver_variables);
-    }
-
-    std::vector<double> solver_variables_from_physical(
-        const std::vector<double>& physical_variables
-    ) const {
-        return log_positive_variables(physical_variables, name() + " positive-log physical variable");
-    }
-
-private:
-    std::unique_ptr<NlpProblem> delegate_;
-};
-
 struct NamedInitialVariables {
     std::string seed_name;
     std::vector<double> variables;
 };
+
+struct ElectroneutralCompositionGroup {
+    std::vector<double> composition_basis;
+};
+
+std::vector<ElectroneutralCompositionGroup> electroneutral_composition_groups(
+    const std::vector<double>& fixed_composition,
+    const std::vector<double>& charges,
+    const std::string& problem_name
+) {
+    require_size(charges, fixed_composition.size(), problem_name + " charge vector");
+    const int species_count = static_cast<int>(fixed_composition.size());
+    std::vector<int> neutral_indices;
+    std::vector<int> cation_indices;
+    std::vector<int> anion_indices;
+    for (int species = 0; species < species_count; ++species) {
+        const double charge = charges[static_cast<std::size_t>(species)];
+        if (std::abs(charge) <= 1.0e-12) {
+            neutral_indices.push_back(species);
+        } else if (charge > 0.0) {
+            cation_indices.push_back(species);
+        } else {
+            anion_indices.push_back(species);
+        }
+    }
+    if (cation_indices.empty() || anion_indices.empty()) {
+        throw ValueError(problem_name + " reduced electrolyte coordinates require active cations and anions.");
+    }
+    auto sort_by_fixed_composition = [&](std::vector<int>& indices) {
+        std::sort(indices.begin(), indices.end(), [&](int first, int second) {
+            const double first_value = fixed_composition[static_cast<std::size_t>(first)];
+            const double second_value = fixed_composition[static_cast<std::size_t>(second)];
+            if (std::abs(first_value - second_value) > 1.0e-14) {
+                return first_value > second_value;
+            }
+            return first < second;
+        });
+    };
+    sort_by_fixed_composition(cation_indices);
+    sort_by_fixed_composition(anion_indices);
+
+    std::vector<ElectroneutralCompositionGroup> out;
+    out.reserve(fixed_composition.size());
+    for (int species : neutral_indices) {
+        ElectroneutralCompositionGroup group;
+        group.composition_basis.assign(fixed_composition.size(), 0.0);
+        group.composition_basis[static_cast<std::size_t>(species)] = 1.0;
+        out.push_back(std::move(group));
+    }
+
+    std::vector<int> charged_memberships(static_cast<std::size_t>(species_count), 0);
+    auto append_pair = [&](int cation, int anion) {
+        ElectroneutralCompositionGroup group;
+        group.composition_basis.assign(fixed_composition.size(), 0.0);
+        const double cation_stoichiometry = 1.0 / std::abs(charges[static_cast<std::size_t>(cation)]);
+        const double anion_stoichiometry = 1.0 / std::abs(charges[static_cast<std::size_t>(anion)]);
+        const double total_stoichiometry = cation_stoichiometry + anion_stoichiometry;
+        group.composition_basis[static_cast<std::size_t>(cation)] =
+            cation_stoichiometry / total_stoichiometry;
+        group.composition_basis[static_cast<std::size_t>(anion)] =
+            anion_stoichiometry / total_stoichiometry;
+        ++charged_memberships[static_cast<std::size_t>(cation)];
+        ++charged_memberships[static_cast<std::size_t>(anion)];
+        out.push_back(std::move(group));
+    };
+    if (cation_indices.size() <= anion_indices.size()) {
+        const int pivot_cation = cation_indices.front();
+        for (int anion : anion_indices) {
+            append_pair(pivot_cation, anion);
+        }
+        for (std::size_t cation = 1; cation < cation_indices.size(); ++cation) {
+            append_pair(cation_indices[cation], anion_indices[cation - 1]);
+        }
+    } else {
+        const int pivot_anion = anion_indices.front();
+        for (int cation : cation_indices) {
+            append_pair(cation, pivot_anion);
+        }
+        for (std::size_t anion = 1; anion < anion_indices.size(); ++anion) {
+            append_pair(cation_indices[anion - 1], anion_indices[anion]);
+        }
+    }
+    for (int species = 0; species < species_count; ++species) {
+        if (std::abs(charges[static_cast<std::size_t>(species)]) > 1.0e-12
+            && charged_memberships[static_cast<std::size_t>(species)] != 1) {
+            throw ValueError(
+                problem_name
+                + " reduced electrolyte coordinates require non-overlapping electroneutral ion groups."
+            );
+        }
+    }
+    if (out.empty()) {
+        throw ValueError(problem_name + " reduced electrolyte coordinates require at least one composition group.");
+    }
+    return out;
+}
+
+std::vector<double> softmax_with_reference_last(const std::vector<double>& logits) {
+    const int group_count = static_cast<int>(logits.size()) + 1;
+    std::vector<double> shifted(static_cast<std::size_t>(group_count), 0.0);
+    double maximum = 0.0;
+    for (double value : logits) {
+        if (!std::isfinite(value)) {
+            throw ValueError("electrolyte reduced composition logit must be finite.");
+        }
+        maximum = std::max(maximum, value);
+    }
+    double sum = 0.0;
+    for (int group = 0; group < group_count - 1; ++group) {
+        shifted[static_cast<std::size_t>(group)] =
+            std::exp(logits[static_cast<std::size_t>(group)] - maximum);
+        sum += shifted[static_cast<std::size_t>(group)];
+    }
+    shifted.back() = std::exp(-maximum);
+    sum += shifted.back();
+    require_positive_finite(sum, "electrolyte reduced composition denominator");
+    for (double& value : shifted) {
+        value /= sum;
+    }
+    return shifted;
+}
 
 std::vector<double> build_pressure_route_initial_variables(
     const add_args& args,
@@ -2808,6 +2719,15 @@ public:
         return 2;
     }
 
+    ResidualSecondOrderData electrolyte_boundary_residual_data(
+        const std::vector<double>& variables
+    ) const {
+        if (!electrolyte_boundary_mode()) {
+            throw ValueError(problem_name_ + " reduced residual data requires electrolyte boundary mode.");
+        }
+        return electrolyte_boundary_residual_second_order(variables);
+    }
+
 private:
     int local_variable_count() const {
         return species_count_ + 1;
@@ -3013,6 +2933,509 @@ private:
     std::vector<int> neutral_species_indices_;
     std::vector<std::vector<std::pair<int, double>>> transfer_weights_;
     mutable std::vector<std::vector<std::pair<int, double>>> neutral_transfer_weights_;
+    int species_count_ = 0;
+};
+
+class ElectrolyteReducedFixedPressureTemperatureProblem final : public NlpProblem {
+public:
+    ElectrolyteReducedFixedPressureTemperatureProblem(
+        add_args args,
+        double target_pressure,
+        std::vector<double> fixed_composition,
+        int fixed_phase_index,
+        std::string problem_name,
+        std::vector<double> charges,
+        double charge_constraint_tolerance
+    )
+        : physical_problem_(
+              args,
+              target_pressure,
+              fixed_composition,
+              fixed_phase_index,
+              problem_name,
+              charges,
+              charge_constraint_tolerance
+          ),
+          fixed_composition_(normalized_positive_values(fixed_composition, problem_name + " composition")),
+          fixed_phase_index_(fixed_phase_index),
+          problem_name_(std::move(problem_name)),
+          charges_(std::move(charges)),
+          groups_(electroneutral_composition_groups(fixed_composition_, charges_, problem_name_)) {
+        species_count_ = static_cast<int>(fixed_composition_.size());
+        if (fixed_phase_index_ < 0 || fixed_phase_index_ >= phase_count()) {
+            throw ValueError(problem_name_ + " fixed phase index is out of range.");
+        }
+    }
+
+    std::string name() const override {
+        return problem_name_;
+    }
+
+    int variable_count() const override {
+        return 3 + static_cast<int>(groups_.size()) - 1;
+    }
+
+    int constraint_count() const override {
+        return variable_count();
+    }
+
+    int jacobian_nonzero_count() const override {
+        return constraint_count() * variable_count();
+    }
+
+    NlpBounds bounds() const override {
+        NlpBounds out;
+        out.variable_lower.reserve(static_cast<std::size_t>(variable_count()));
+        out.variable_upper.reserve(static_cast<std::size_t>(variable_count()));
+        out.variable_lower.push_back(std::log(250.0));
+        out.variable_upper.push_back(std::log(650.0));
+        out.variable_lower.push_back(std::log(kMinimumLiquidVolume));
+        out.variable_upper.push_back(std::log(kMaximumLiquidVolume));
+        out.variable_lower.push_back(std::log(kMinimumVaporVolume));
+        out.variable_upper.push_back(std::log(kMaximumVaporVolume));
+        for (int group = 0; group < static_cast<int>(groups_.size()) - 1; ++group) {
+            out.variable_lower.push_back(-30.0);
+            out.variable_upper.push_back(30.0);
+        }
+        out.constraint_lower.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        out.constraint_upper.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        return out;
+    }
+
+    std::vector<double> initial_point() const override {
+        return solver_variables_from_physical(physical_problem_.initial_point());
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        require_size(variables, static_cast<std::size_t>(variable_count()), problem_name_ + " reduced variable");
+        return 0.0;
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        require_size(variables, static_cast<std::size_t>(variable_count()), problem_name_ + " reduced variable");
+        return std::vector<double>(static_cast<std::size_t>(variable_count()), 0.0);
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        return reduced_residual_data(variables).residuals;
+    }
+
+    NlpJacobianStructure jacobian_structure() const override {
+        NlpJacobianStructure out;
+        out.rows.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        out.cols.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        for (int row = 0; row < constraint_count(); ++row) {
+            for (int col = 0; col < variable_count(); ++col) {
+                out.rows.push_back(row);
+                out.cols.push_back(col);
+            }
+        }
+        return out;
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        return reduced_residual_data(variables).jacobian_row_major;
+    }
+
+    bool has_exact_hessian() const override {
+        return physical_problem_.has_exact_hessian();
+    }
+
+    int hessian_nonzero_count() const override {
+        return LagrangianHessianAssembler(variable_count()).nonzero_count();
+    }
+
+    NlpHessianStructure hessian_structure() const override {
+        return LagrangianHessianAssembler(variable_count()).structure();
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        if (!constraint_multipliers.empty()) {
+            require_size(
+                constraint_multipliers,
+                static_cast<std::size_t>(constraint_count()),
+                problem_name_ + " reduced electrolyte constraint multiplier"
+            );
+        }
+        (void)objective_factor;
+        const ResidualSecondOrderData residual_data = reduced_residual_data(variables);
+        const int reduced_count = variable_count();
+        std::vector<double> transformed(static_cast<std::size_t>(reduced_count * reduced_count), 0.0);
+        for (int residual = 0; residual < constraint_count(); ++residual) {
+            const double multiplier = constraint_multipliers.empty()
+                ? 0.0
+                : constraint_multipliers[static_cast<std::size_t>(residual)];
+            if (multiplier == 0.0) {
+                continue;
+            }
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    transformed[static_cast<std::size_t>(first * reduced_count + second)] +=
+                        multiplier
+                        * residual_data.residual_hessian_tensor_row_major[
+                            static_cast<std::size_t>(
+                                residual * reduced_count * reduced_count
+                                + first * reduced_count
+                                + second
+                            )
+                        ];
+                }
+            }
+        }
+        symmetrize_local_square_matrix(transformed, reduced_count);
+        return lower_triangle_values(transformed, reduced_count);
+    }
+
+    std::string hessian_backend() const override {
+        return "cppad_phase_temperature_reduced_residual_constraints";
+    }
+
+    NlpScaling scaling() const override {
+        NlpScaling out;
+        out.objective = 1.0;
+        out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
+        out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
+        return out;
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        std::map<std::string, std::string> out = physical_problem_.diagnostics();
+        out["variable_transform"] = "reduced_electroneutral_log_volume_temperature";
+        out["variable_model"] = "reduced_electroneutral_logit_amount_volume_temperature";
+        out["electroneutral_reduction"] = "active";
+        out["electroneutral_group_count"] = std::to_string(groups_.size());
+        return out;
+    }
+
+    std::vector<double> physical_variables_from_solver(const std::vector<double>& variables) const {
+        return evaluate_lift(variables).physical_variables;
+    }
+
+    std::vector<double> solver_variables_from_physical(const std::vector<double>& physical_variables) const {
+        require_size(
+            physical_variables,
+            static_cast<std::size_t>(physical_variable_count()),
+            problem_name_ + " reduced physical variable"
+        );
+        const int local_count = local_variable_count();
+        const int partner_phase = partner_phase_index();
+        const std::vector<double> partner_composition = normalized_positive_values(
+            std::vector<double>(
+                physical_variables.begin()
+                    + static_cast<std::ptrdiff_t>(partner_phase * local_count),
+                physical_variables.begin()
+                    + static_cast<std::ptrdiff_t>(partner_phase * local_count + species_count_)
+            ),
+            problem_name_ + " reduced partner composition"
+        );
+        const std::vector<double> group_fractions = group_fractions_from_composition(partner_composition);
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(variable_count()));
+        out.push_back(std::log(physical_variables.back()));
+        out.push_back(std::log(physical_variables[static_cast<std::size_t>(volume_col(0))]));
+        out.push_back(std::log(physical_variables[static_cast<std::size_t>(volume_col(1))]));
+        const double reference = group_fractions.back();
+        require_positive_finite(reference, problem_name_ + " reduced reference group fraction");
+        for (int group = 0; group < static_cast<int>(groups_.size()) - 1; ++group) {
+            const double value = group_fractions[static_cast<std::size_t>(group)];
+            require_positive_finite(value, problem_name_ + " reduced group fraction");
+            out.push_back(std::log(value / reference));
+        }
+        return out;
+    }
+
+private:
+    struct ReducedLift {
+        std::vector<double> physical_variables;
+        std::vector<double> jacobian_row_major;
+        std::vector<double> hessian_tensor_row_major;
+    };
+
+    int phase_count() const {
+        return 2;
+    }
+
+    int local_variable_count() const {
+        return species_count_ + 1;
+    }
+
+    int physical_variable_count() const {
+        return phase_count() * local_variable_count() + 1;
+    }
+
+    int volume_col(int phase) const {
+        return phase * local_variable_count() + species_count_;
+    }
+
+    int temperature_col() const {
+        return physical_variable_count() - 1;
+    }
+
+    int partner_phase_index() const {
+        return fixed_phase_index_ == 0 ? 1 : 0;
+    }
+
+    std::vector<double> group_fractions_from_composition(const std::vector<double>& composition) const {
+        require_size(composition, fixed_composition_.size(), problem_name_ + " reduced composition");
+        std::vector<double> fractions;
+        fractions.reserve(groups_.size());
+        for (const ElectroneutralCompositionGroup& group : groups_) {
+            double fraction = 0.0;
+            for (int species = 0; species < species_count_; ++species) {
+                if (group.composition_basis[static_cast<std::size_t>(species)] > 0.0) {
+                    fraction += composition[static_cast<std::size_t>(species)];
+                }
+            }
+            fractions.push_back(fraction);
+        }
+        return normalized_positive_values(fractions, problem_name_ + " reduced group fraction");
+    }
+
+    std::vector<double> composition_from_group_fractions(const std::vector<double>& group_fractions) const {
+        require_size(group_fractions, groups_.size(), problem_name_ + " reduced group fraction");
+        std::vector<double> composition(static_cast<std::size_t>(species_count_), 0.0);
+        for (int group_index = 0; group_index < static_cast<int>(groups_.size()); ++group_index) {
+            const ElectroneutralCompositionGroup& group = groups_[static_cast<std::size_t>(group_index)];
+            for (int species = 0; species < species_count_; ++species) {
+                composition[static_cast<std::size_t>(species)] +=
+                    group_fractions[static_cast<std::size_t>(group_index)]
+                    * group.composition_basis[static_cast<std::size_t>(species)];
+            }
+        }
+        return normalized_positive_values(composition, problem_name_ + " reduced partner composition");
+    }
+
+    ResidualSecondOrderData reduced_residual_data(const std::vector<double>& variables) const {
+        const ReducedLift lift = evaluate_lift(variables);
+        const ResidualSecondOrderData physical = physical_problem_.electrolyte_boundary_residual_data(
+            lift.physical_variables
+        );
+        const int reduced_count = variable_count();
+        const int physical_count = physical_variable_count();
+        if (physical.variable_count != physical_count || physical.residual_count != reduced_count) {
+            throw ValueError(problem_name_ + " reduced residual shape did not match the lifted variables.");
+        }
+        require_size(
+            physical.jacobian_row_major,
+            static_cast<std::size_t>(reduced_count * physical_count),
+            problem_name_ + " physical residual Jacobian"
+        );
+        require_size(
+            physical.residual_hessian_tensor_row_major,
+            static_cast<std::size_t>(reduced_count * physical_count * physical_count),
+            problem_name_ + " physical residual Hessian tensor"
+        );
+
+        ResidualSecondOrderData out;
+        out.residual_count = reduced_count;
+        out.variable_count = reduced_count;
+        out.backend = physical.backend + "_through_electroneutral_logit_reduction";
+        out.residuals = physical.residuals;
+        out.jacobian_row_major.assign(static_cast<std::size_t>(reduced_count * reduced_count), 0.0);
+        out.residual_hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(reduced_count * reduced_count * reduced_count),
+            0.0
+        );
+
+        for (int residual = 0; residual < reduced_count; ++residual) {
+            for (int reduced = 0; reduced < reduced_count; ++reduced) {
+                double value = 0.0;
+                for (int physical_col = 0; physical_col < physical_count; ++physical_col) {
+                    value += physical.jacobian_row_major[
+                            static_cast<std::size_t>(residual * physical_count + physical_col)
+                        ]
+                        * lift.jacobian_row_major[
+                            static_cast<std::size_t>(physical_col * reduced_count + reduced)
+                        ];
+                }
+                out.jacobian_row_major[static_cast<std::size_t>(residual * reduced_count + reduced)] = value;
+            }
+
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    double value = 0.0;
+                    for (int physical_row = 0; physical_row < physical_count; ++physical_row) {
+                        const double drow = lift.jacobian_row_major[
+                            static_cast<std::size_t>(physical_row * reduced_count + first)
+                        ];
+                        for (int physical_col = 0; physical_col < physical_count; ++physical_col) {
+                            const double dcol = lift.jacobian_row_major[
+                                static_cast<std::size_t>(physical_col * reduced_count + second)
+                            ];
+                            if (drow == 0.0 || dcol == 0.0) {
+                                continue;
+                            }
+                            value += drow
+                                * physical.residual_hessian_tensor_row_major[
+                                    static_cast<std::size_t>(
+                                        residual * physical_count * physical_count
+                                        + physical_row * physical_count
+                                        + physical_col
+                                    )
+                                ]
+                                * dcol;
+                        }
+                    }
+                    for (int physical_col = 0; physical_col < physical_count; ++physical_col) {
+                        value += physical.jacobian_row_major[
+                                static_cast<std::size_t>(residual * physical_count + physical_col)
+                            ]
+                            * lift.hessian_tensor_row_major[
+                                static_cast<std::size_t>(
+                                    physical_col * reduced_count * reduced_count
+                                    + first * reduced_count
+                                    + second
+                                )
+                            ];
+                    }
+                    out.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            residual * reduced_count * reduced_count
+                            + first * reduced_count
+                            + second
+                        )
+                    ] = value;
+                }
+            }
+            std::vector<double> local_hessian(static_cast<std::size_t>(reduced_count * reduced_count), 0.0);
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    local_hessian[static_cast<std::size_t>(first * reduced_count + second)] =
+                        out.residual_hessian_tensor_row_major[
+                            static_cast<std::size_t>(
+                                residual * reduced_count * reduced_count
+                                + first * reduced_count
+                                + second
+                            )
+                        ];
+                }
+            }
+            symmetrize_local_square_matrix(local_hessian, reduced_count);
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    out.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            residual * reduced_count * reduced_count
+                            + first * reduced_count
+                            + second
+                        )
+                    ] = local_hessian[static_cast<std::size_t>(first * reduced_count + second)];
+                }
+            }
+        }
+        return out;
+    }
+
+    ReducedLift evaluate_lift(const std::vector<double>& variables) const {
+        require_size(variables, static_cast<std::size_t>(variable_count()), problem_name_ + " reduced variable");
+        const int reduced_count = variable_count();
+        const int physical_count = physical_variable_count();
+        ReducedLift out;
+        out.physical_variables.assign(static_cast<std::size_t>(physical_count), 0.0);
+        out.jacobian_row_major.assign(static_cast<std::size_t>(physical_count * reduced_count), 0.0);
+        out.hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(physical_count * reduced_count * reduced_count),
+            0.0
+        );
+        auto jacobian = [&](int physical, int reduced) -> double& {
+            return out.jacobian_row_major[static_cast<std::size_t>(physical * reduced_count + reduced)];
+        };
+        auto hessian = [&](int physical, int first, int second) -> double& {
+            return out.hessian_tensor_row_major[
+                static_cast<std::size_t>(
+                    physical * reduced_count * reduced_count + first * reduced_count + second
+                )
+            ];
+        };
+
+        const double temperature = std::exp(variables[0]);
+        require_positive_finite(temperature, problem_name_ + " reduced temperature");
+        out.physical_variables[static_cast<std::size_t>(temperature_col())] = temperature;
+        jacobian(temperature_col(), 0) = temperature;
+        hessian(temperature_col(), 0, 0) = temperature;
+
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const int reduced_volume_col = 1 + phase;
+            const double volume = std::exp(variables[static_cast<std::size_t>(reduced_volume_col)]);
+            require_positive_finite(volume, problem_name_ + " reduced phase volume");
+            const int physical_volume_col = volume_col(phase);
+            out.physical_variables[static_cast<std::size_t>(physical_volume_col)] = volume;
+            jacobian(physical_volume_col, reduced_volume_col) = volume;
+            hessian(physical_volume_col, reduced_volume_col, reduced_volume_col) = volume;
+        }
+
+        std::vector<double> logits;
+        logits.reserve(groups_.size() - 1);
+        for (int index = 3; index < reduced_count; ++index) {
+            logits.push_back(variables[static_cast<std::size_t>(index)]);
+        }
+        const std::vector<double> group_fractions = softmax_with_reference_last(logits);
+        const std::vector<double> partner_composition = composition_from_group_fractions(group_fractions);
+        const int partner_phase = partner_phase_index();
+        const int fixed_offset = fixed_phase_index_ * local_variable_count();
+        const int partner_offset = partner_phase * local_variable_count();
+        for (int species = 0; species < species_count_; ++species) {
+            out.physical_variables[static_cast<std::size_t>(fixed_offset + species)] =
+                fixed_composition_[static_cast<std::size_t>(species)];
+            out.physical_variables[static_cast<std::size_t>(partner_offset + species)] =
+                partner_composition[static_cast<std::size_t>(species)];
+        }
+
+        const int logit_count = static_cast<int>(groups_.size()) - 1;
+        for (int group = 0; group < static_cast<int>(groups_.size()); ++group) {
+            for (int first_logit = 0; first_logit < logit_count; ++first_logit) {
+                const double group_first =
+                    group_fractions[static_cast<std::size_t>(group)]
+                    * ((group == first_logit ? 1.0 : 0.0)
+                       - group_fractions[static_cast<std::size_t>(first_logit)]);
+                const int first_reduced = 3 + first_logit;
+                for (int species = 0; species < species_count_; ++species) {
+                    jacobian(partner_offset + species, first_reduced) +=
+                        groups_[static_cast<std::size_t>(group)].composition_basis[
+                            static_cast<std::size_t>(species)
+                        ] * group_first;
+                }
+                for (int second_logit = 0; second_logit < logit_count; ++second_logit) {
+                    const double first_factor =
+                        (group == first_logit ? 1.0 : 0.0)
+                        - group_fractions[static_cast<std::size_t>(first_logit)];
+                    const double second_factor =
+                        (group == second_logit ? 1.0 : 0.0)
+                        - group_fractions[static_cast<std::size_t>(second_logit)];
+                    const double first_fraction =
+                        group_fractions[static_cast<std::size_t>(first_logit)];
+                    const double second_fraction =
+                        group_fractions[static_cast<std::size_t>(second_logit)];
+                    const double group_second =
+                        group_fractions[static_cast<std::size_t>(group)]
+                        * (
+                            first_factor * second_factor
+                            - first_fraction
+                                * ((first_logit == second_logit ? 1.0 : 0.0) - second_fraction)
+                        );
+                    const int second_reduced = 3 + second_logit;
+                    for (int species = 0; species < species_count_; ++species) {
+                        hessian(partner_offset + species, first_reduced, second_reduced) +=
+                            groups_[static_cast<std::size_t>(group)].composition_basis[
+                                static_cast<std::size_t>(species)
+                            ] * group_second;
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    NeutralFixedPressureTemperatureProblem physical_problem_;
+    std::vector<double> fixed_composition_;
+    int fixed_phase_index_ = 0;
+    std::string problem_name_;
+    std::vector<double> charges_;
+    std::vector<ElectroneutralCompositionGroup> groups_;
     int species_count_ = 0;
 };
 
@@ -3466,7 +3889,7 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
         pressure_tolerance,
         chemical_potential_tolerance,
         phase_distance_tolerance,
-        {},
+        charges,
         false,
         false,
         {},
@@ -3716,37 +4139,44 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
     attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
 
     auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
-        auto physical_problem = std::make_unique<NeutralFixedPressureTemperatureProblem>(
-            args,
-            target_pressure,
-            normalized_composition,
-            fixed_phase_index,
-            problem_name,
-            charges,
-            charge_tolerance
-        );
-        const int species_count = physical_problem->species_count();
-        const bool transformed_electrolyte_temperature_route = !charges.empty();
+        const int species_count = static_cast<int>(normalized_composition.size());
+        const bool reduced_electrolyte_temperature_route = !charges.empty();
         std::unique_ptr<NlpProblem> problem;
-        if (transformed_electrolyte_temperature_route) {
-            problem = std::make_unique<PositiveLogNlpProblem>(std::move(physical_problem));
+        ElectrolyteReducedFixedPressureTemperatureProblem* reduced_problem = nullptr;
+        if (reduced_electrolyte_temperature_route) {
+            auto typed_problem = std::make_unique<ElectrolyteReducedFixedPressureTemperatureProblem>(
+                args,
+                target_pressure,
+                normalized_composition,
+                fixed_phase_index,
+                problem_name,
+                charges,
+                charge_tolerance
+            );
+            reduced_problem = typed_problem.get();
+            problem = std::move(typed_problem);
         } else {
-            problem = std::move(physical_problem);
+            problem = std::make_unique<NeutralFixedPressureTemperatureProblem>(
+                args,
+                target_pressure,
+                normalized_composition,
+                fixed_phase_index,
+                problem_name,
+                charges,
+                charge_tolerance
+            );
         }
         validate_nlp_problem_shape(*problem);
         IpoptSolveOptions route_options = attempt_options;
-        if (transformed_electrolyte_temperature_route && !route_options.initial_variables.empty()) {
-            route_options.initial_variables = log_positive_variables(
-                route_options.initial_variables,
-                problem_name + " electrolyte temperature-route initial variable"
+        if (reduced_electrolyte_temperature_route && !route_options.initial_variables.empty()) {
+            route_options.initial_variables = reduced_problem->solver_variables_from_physical(
+                route_options.initial_variables
             );
         }
         IpoptSolveResult solve = solve_ipopt_nlp(*problem, route_options);
-        if (transformed_electrolyte_temperature_route
+        if (reduced_electrolyte_temperature_route
             && solve.variables.size() == static_cast<std::size_t>(problem->variable_count())) {
-            solve.variables = static_cast<PositiveLogNlpProblem&>(*problem).physical_variables_from_solver(
-                solve.variables
-            );
+            solve.variables = reduced_problem->physical_variables_from_solver(solve.variables);
         }
         NeutralTwoPhaseEosRouteResult result;
         result.compiled = adapter.compiled;
@@ -4211,6 +4641,50 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_dew_t_eos_nlp_contract(
         "neutral_dew_t_eos"
     );
     return make_contract(problem, problem.phase_count(), problem.species_count());
+}
+
+ElectrolyteReducedNlpProbe evaluate_electrolyte_bubble_t_reduced_nlp_probe(
+    const add_args& args,
+    double target_pressure,
+    const std::vector<double>& liquid_composition,
+    const std::vector<double>& charges,
+    const std::vector<double>& physical_variables,
+    double charge_constraint_tolerance
+) {
+    ElectrolyteReducedFixedPressureTemperatureProblem problem(
+        args,
+        target_pressure,
+        liquid_composition,
+        0,
+        "electrolyte_bubble_t_eos",
+        charges,
+        charge_constraint_tolerance
+    );
+    const std::vector<double> solver_variables = problem.solver_variables_from_physical(physical_variables);
+    ElectrolyteReducedNlpProbe out;
+    out.problem_name = problem.name();
+    out.variable_count = problem.variable_count();
+    out.physical_variable_count = static_cast<int>(physical_variables.size());
+    out.solver_variables = solver_variables;
+    out.physical_variables = problem.physical_variables_from_solver(solver_variables);
+    out.objective = problem.objective(solver_variables);
+    out.gradient = problem.objective_gradient(solver_variables);
+    out.constraints = problem.constraints(solver_variables);
+    const NlpJacobianStructure jacobian_structure = problem.jacobian_structure();
+    out.jacobian_rows = jacobian_structure.rows;
+    out.jacobian_cols = jacobian_structure.cols;
+    out.jacobian_values = problem.jacobian_values(solver_variables);
+    const NlpHessianStructure structure = problem.hessian_structure();
+    out.hessian_rows = structure.rows;
+    out.hessian_cols = structure.cols;
+    out.hessian_values = problem.hessian_values(solver_variables, 1.0, {});
+    out.hessian_backend = problem.hessian_backend();
+    const std::map<std::string, std::string> diagnostics = problem.diagnostics();
+    const auto variable_model = diagnostics.find("variable_model");
+    if (variable_model != diagnostics.end()) {
+        out.variable_model = variable_model->second;
+    }
+    return out;
 }
 
 NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
