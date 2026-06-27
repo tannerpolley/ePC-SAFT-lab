@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-
 source_plan: "docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0320-khudaida-held2-validation
-last_synced: "2026-06-26"
+last_synced: "2026-06-27"
 ---
 
 # M4: validate Perdomo HELD2 electrolyte flash with Figiel ePC-SAFT parameters
@@ -113,6 +113,15 @@ postsolve certification.
   Stage III projected-residual problem reaches exact-Hessian residual
   feasibility but collapses to a single phase, so the Perdomo two-phase result
   cannot be claimed as reproduced by #320.
+- Perdomo Table 4 is a bubble-temperature phase-boundary result with trace
+  vapor ions, not a finite-positive-phase TP flash row. The current electrolyte
+  public route surface exposes `electrolyte_lle`, but it does not expose an
+  electrolyte bubble/dew boundary route that can validate an incipient vapor
+  boundary without forcing a finite vapor phase amount.
+- Charge-neutral trace-ion starts are now evaluated by electrolyte TPD
+  discovery. Under the Figiel 2025 ePC-SAFT fugacity source, those trace-ion
+  vapor-like starts have positive projected TPD values for the retained
+  Perdomo Table 4 row, so they are not selected as the unstable phase set.
 
 ## Blocker Evidence
 
@@ -142,11 +151,28 @@ Observed route evidence:
 | Charge-balance norm | `4.765e-22` |
 | Phase distance | `2.353e-9` |
 | Postsolve status | rejected: `phase_distance` |
+| Electrolyte TPD candidates | `30` total, including `24` trace-ion candidates |
+| Trace-ion TPD range | `1.257001e-1` to `1.132025` |
 
 This proves the package route can drive the Perdomo/Figiel HELD2 residual
 system through the public native `NlpProblem`/Ipopt exact-Hessian path, but the
 computed phases are indistinguishable under the existing noncollapsed-phase
 gate. Do not close #320 or #191 as two-phase HELD2 validation on this evidence.
+
+## Implemented During Blocker Investigation
+
+- Electrolyte Stage III completion now requires the route postsolve result to
+  be accepted, not only Ipopt `success` / `solve_succeeded`. This prevents
+  diagnostic-only success from being counted as accepted electrolyte evidence.
+- Electrolyte pressure consistency now uses pressure-unit scaling
+  `max(abs(P) * residual_tolerance, residual_tolerance)`, matching the neutral
+  two-phase route tolerance contract. This keeps pressure residuals in Pa from
+  being compared to reduced transfer residual tolerances.
+- The retained representative `electrolyte_lle` public admission gate still
+  passes after the stricter route-accepted status gate. Current evidence:
+  public admission `accepted`, postsolve certification `complete`, Stage III
+  `complete`, pressure residual `4.6129005e-3 Pa`, pressure tolerance `10 Pa`,
+  phase distance `1.7075547e-8`, and route accepted `true`.
 
 ## Non-goals
 

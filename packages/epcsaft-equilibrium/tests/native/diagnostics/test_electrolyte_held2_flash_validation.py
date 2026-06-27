@@ -68,6 +68,13 @@ def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase
     solver = result["solver_diagnostics"]
     residual_system = result["reduced_residual_system"]
     derivatives = result["derivative_receipts"]
+    discovery = result["held2_phase_discovery"]["tpd_discovery"]
+    candidates = discovery["candidates"]
+    trace_ion_candidates = [
+        candidate
+        for candidate in candidates
+        if candidate["composition"][2] <= 1.0e-9 and candidate["composition"][3] <= 1.0e-9
+    ]
 
     assert result["status"] == "incomplete"
     assert route["status"] == "postsolve_rejected"
@@ -76,6 +83,9 @@ def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase
     assert solver["application_status"] == "solve_succeeded"
     assert solver["solver_accepted"] is True
     assert solver["route_accepted"] is False
+    assert discovery["tpd_candidate_count"] >= 30
+    assert any(candidate["phase_kind"] == 1 for candidate in trace_ion_candidates)
+    assert all(candidate["tpd"] > 0.0 for candidate in trace_ion_candidates)
 
     assert route["initial_point_strategy"] == "electrolyte_held2_candidate_set_replay"
     assert route["problem_name"] == "electrolyte_stage_iii_projected_residual_refinement"

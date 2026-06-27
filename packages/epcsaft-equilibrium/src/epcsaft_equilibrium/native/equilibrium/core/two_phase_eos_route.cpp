@@ -251,6 +251,18 @@ double positive_sum(const std::vector<double>& values, const std::string& label)
     return total;
 }
 
+double pressure_consistency_tolerance(
+    double target_pressure,
+    double residual_tolerance,
+    const std::string& label
+) {
+    require_positive_finite(residual_tolerance, label + " residual tolerance");
+    if (!std::isfinite(target_pressure)) {
+        throw ValueError(label + " target pressure must be finite.");
+    }
+    return std::max(std::abs(target_pressure) * residual_tolerance, residual_tolerance);
+}
+
 std::vector<double> normalized_positive_values(const std::vector<double>& values, const std::string& label) {
     const double total = positive_sum(values, label);
     std::vector<double> normalized;
@@ -570,6 +582,111 @@ void require_charge_neutral_composition(
     const double residual = charge_residual_abs(composition, charges);
     if (residual > charge_tolerance) {
         throw ValueError(label + " must be charge neutral.");
+    }
+}
+
+void append_electrolyte_trial_if_unique(
+    std::vector<std::vector<double>>& trials,
+    const std::vector<double>& composition,
+    const std::vector<double>& charges,
+    double charge_tolerance,
+    const std::string& label
+) {
+    std::vector<double> normalized = normalized_trial_composition(composition, label);
+    require_charge_neutral_composition(normalized, charges, label, charge_tolerance);
+    for (const std::vector<double>& existing : trials) {
+        if (composition_distance_inf_norm(existing, normalized) < kCandidateCompositionTolerance) {
+            return;
+        }
+    }
+    trials.push_back(std::move(normalized));
+}
+
+void append_trace_ion_electrolyte_trials(
+    std::vector<std::vector<double>>& trials,
+    const std::vector<double>& reference,
+    const std::vector<double>& charges,
+    double charge_tolerance
+) {
+    std::vector<int> charged_indices;
+    std::vector<int> neutral_indices;
+    double charged_sum = 0.0;
+    double neutral_sum = 0.0;
+    for (std::size_t index = 0; index < reference.size(); ++index) {
+        if (std::abs(charges[index]) > charge_tolerance) {
+            charged_indices.push_back(static_cast<int>(index));
+            charged_sum += reference[index];
+        } else {
+            neutral_indices.push_back(static_cast<int>(index));
+            neutral_sum += reference[index];
+        }
+    }
+    if (charged_indices.empty() || neutral_indices.empty() || charged_sum <= 0.0 || neutral_sum <= 0.0) {
+        return;
+    }
+
+    const double trace_charged_sum = std::min(
+        0.5 * charged_sum,
+        std::max(2.0 * charge_tolerance, 10.0 * kCompositionFloor * static_cast<double>(charged_indices.size()))
+    );
+    if (!(trace_charged_sum > kCompositionFloor * static_cast<double>(charged_indices.size()))) {
+        return;
+    }
+    const double charged_scale = trace_charged_sum / charged_sum;
+    const double neutral_total = 1.0 - trace_charged_sum;
+    if (!(neutral_total > kCompositionFloor * static_cast<double>(neutral_indices.size()))) {
+        return;
+    }
+
+    const auto build_from_neutral_weights = [&](const std::vector<double>& neutral_weights) {
+        require_size(neutral_weights, neutral_indices.size(), "Electrolyte trace-ion neutral trial weight");
+        std::vector<double> candidate(reference.size(), 0.0);
+        for (int charged_index : charged_indices) {
+            candidate[static_cast<std::size_t>(charged_index)] =
+                reference[static_cast<std::size_t>(charged_index)] * charged_scale;
+        }
+        for (std::size_t neutral = 0; neutral < neutral_indices.size(); ++neutral) {
+            candidate[static_cast<std::size_t>(neutral_indices[neutral])] =
+                neutral_total * neutral_weights[neutral];
+        }
+        append_electrolyte_trial_if_unique(
+            trials,
+            candidate,
+            charges,
+            charge_tolerance,
+            "Electrolyte TPD trace-ion trial composition"
+        );
+    };
+
+    std::vector<double> feed_neutral_weights;
+    feed_neutral_weights.reserve(neutral_indices.size());
+    for (int neutral_index : neutral_indices) {
+        feed_neutral_weights.push_back(reference[static_cast<std::size_t>(neutral_index)] / neutral_sum);
+    }
+    build_from_neutral_weights(feed_neutral_weights);
+
+    if (neutral_indices.size() == 2) {
+        for (double first_fraction : {
+                 1.0e-4,
+                 1.0e-3,
+                 1.0e-2,
+                 5.0e-2,
+                 1.0e-1,
+                 2.5e-1,
+                 5.0e-1,
+                 7.5e-1,
+                 9.0e-1,
+                 9.9e-1,
+                 9.99e-1}) {
+            build_from_neutral_weights({first_fraction, 1.0 - first_fraction});
+        }
+        return;
+    }
+
+    for (std::size_t rich = 0; rich < neutral_indices.size(); ++rich) {
+        std::vector<double> weights(neutral_indices.size(), kCompositionFloor);
+        weights[rich] = 1.0 - kCompositionFloor * static_cast<double>(neutral_indices.size() - 1);
+        build_from_neutral_weights(weights);
     }
 }
 
@@ -976,14 +1093,21 @@ std::vector<std::vector<double>> electrolyte_tpd_trial_compositions(
     std::vector<std::vector<double>> out;
     out.push_back(normalized);
     if (normalized.size() > 1) {
-        out.push_back(normalized_trial_composition(
+        append_electrolyte_trial_if_unique(
+            out,
             deterministic_composition_shift(normalized, charges, "Electrolyte TPD shifted composition", 1.0),
+            charges,
+            charge_tolerance,
             "Electrolyte TPD shifted composition"
-        ));
-        out.push_back(normalized_trial_composition(
+        );
+        append_electrolyte_trial_if_unique(
+            out,
             deterministic_composition_shift(normalized, charges, "Electrolyte TPD shifted composition", -1.0),
+            charges,
+            charge_tolerance,
             "Electrolyte TPD shifted composition"
-        ));
+        );
+        append_trace_ion_electrolyte_trials(out, normalized, charges, charge_tolerance);
     }
     for (const std::vector<double>& candidate : out) {
         require_charge_neutral_composition(candidate, charges, "Electrolyte TPD trial composition", charge_tolerance);
@@ -4967,21 +5091,23 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
                 "Electrolyte TPD feed reference",
                 charge_tolerance
             );
-            for (const std::vector<double>& trial : electrolyte_tpd_trial_compositions(
-                     reference.composition,
-                     charges,
-                     charge_tolerance
-                 )) {
+            const std::vector<std::vector<double>> trial_compositions =
+                electrolyte_tpd_trial_compositions(reference.composition, charges, charge_tolerance);
+            for (std::size_t trial_index = 0; trial_index < trial_compositions.size(); ++trial_index) {
                 try {
+                    const std::string source = "electrolyte_charge_neutral_phase_kind_"
+                        + std::to_string(phase_kind)
+                        + "_trial_"
+                        + std::to_string(trial_index);
                     const NeutralTpdCandidate candidate = evaluate_electrolyte_tpd_candidate(
                         args,
                         temperature,
                         target_pressure,
                         reference,
-                        trial,
+                        trial_compositions[trial_index],
                         charges,
                         phase_kind,
-                        "electrolyte_charge_neutral_phase_kind_" + std::to_string(phase_kind),
+                        source,
                         charge_tolerance
                     );
                     ++valid_candidate_count;
@@ -5254,6 +5380,11 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
     route_options.initial_bound_upper_multipliers.clear();
     route_options.initial_constraint_multipliers.clear();
 
+    const double pressure_tolerance = pressure_consistency_tolerance(
+        target_pressure,
+        residual_tolerance,
+        "Electrolyte Stage III"
+    );
     out.route_result = solve_electrolyte_two_phase_projected_residual_route(
         args,
         temperature,
@@ -5266,7 +5397,7 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
         out.held2_discovery.counterion_pair_matrix,
         route_options,
         residual_tolerance,
-        residual_tolerance,
+        pressure_tolerance,
         residual_tolerance,
         phase_distance_tolerance,
         charge_tolerance
@@ -5413,6 +5544,7 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
 
     const bool solver_success =
         out.route_result.solver_accepted
+        && out.route_result.accepted
         && out.route_result.solver_status == "success"
         && out.route_result.application_status == "solve_succeeded";
     const bool finite_compositions = !out.selected_phase_compositions.empty()
@@ -5469,7 +5601,11 @@ ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certifica
     out.total_charge_tolerance = charge_tolerance;
     out.neutral_transfer_tolerance = residual_tolerance;
     out.mean_ionic_transfer_tolerance = residual_tolerance;
-    out.pressure_tolerance = residual_tolerance;
+    out.pressure_tolerance = pressure_consistency_tolerance(
+        target_pressure,
+        residual_tolerance,
+        "Electrolyte postsolve"
+    );
     out.phase_distance_tolerance = phase_distance_tolerance;
     out.stage_iii_refinement = evaluate_electrolyte_stage_iii_refinement(
         args,
