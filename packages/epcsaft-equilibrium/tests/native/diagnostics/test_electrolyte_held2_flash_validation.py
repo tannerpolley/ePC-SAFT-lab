@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 
 import epcsaft
-from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium import _native_core as core
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
@@ -37,17 +36,6 @@ def _assert_figiel_parameter_snapshot() -> None:
     assert born_model["enabled"] is True
     assert born_model["solvation_shell_model"] is True
     assert born_model["dielectric_saturation"] is True
-
-
-def _figiel_route_mixture(mixture: epcsaft.Mixture) -> ePCSAFTMixture:
-    params = dict(mixture.native.parameters)
-    ncomp = len(SPECIES)
-    params["assoc_scheme"] = [None] * ncomp
-    params["e_assoc"] = np.zeros(ncomp, dtype=float)
-    params["vol_a"] = np.zeros(ncomp, dtype=float)
-    params.pop("assoc_num", None)
-    params.pop("assoc_matrix", None)
-    return ePCSAFTMixture.from_params(params, species=SPECIES)
 
 
 def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase_blocker() -> None:
@@ -135,39 +123,85 @@ def test_electrolyte_held2_flash_bubble_temperature_route_records_figiel_blocker
         reference_temperature=TEMPERATURE_K,
         reference_composition=feed,
     )
-    route_mixture = _figiel_route_mixture(mixture)
 
     route = core._native_electrolyte_bubble_t_route_result(
-        route_mixture._native,
+        mixture.native._native,
         PRESSURE_PA,
         feed,
         CHARGES,
-        8,
-        1.0e-6,
-        5.0,
-        "exact",
         1,
+        1.0e-8,
+        8.0,
+        "exact",
+        3,
         1.0e-8,
         1.0e-2,
         1.0e-10,
         1.0e-6,
         1.0e-8,
+        None,
+        bound_push=1.0e-10,
+        bound_frac=1.0e-10,
     )
 
     assert route["route"] == "electrolyte_bubble_temperature"
     assert route["route_refinement_kind"] == "charge_constrained_projected_residual_temperature_boundary"
     assert route["problem_name"] == "electrolyte_bubble_t_eos"
     assert route["hessian_approximation"] == "exact"
-    assert route["hessian_backend"] == "cppad_phase_temperature_route"
+    assert route["hessian_backend"] == "cppad_phase_temperature_route_through_analytic_positive_log"
+    assert route["variable_model"] == "positive_log_amount_volume_temperature"
     assert route["exact_hessian_available"] is True
     assert route["residual_exact_jacobian_available"] is True
     assert route["residual_exact_hessian_available"] is True
     assert route["public_route_admission"] == "focused_validation_binding"
     assert route["production_exposed"] is False
+    assert route["last_callback_exception"] == ""
 
     assert route["status"] == "solver_rejected"
     assert route["solver_status"] == "max_iterations_exceeded"
     assert route["application_status"] == "maximum_iterations_exceeded"
     assert route["accepted"] is False
-    assert route["iteration_count"] == 8
-    assert route["objective"] == pytest.approx(9.164078551642497, rel=1.0e-8, abs=1.0e-10)
+    assert route["iteration_count"] == 1
+
+    variables = np.asarray(route["variables"], dtype=float)
+    species_count = len(SPECIES)
+    liquid = variables[:species_count]
+    liquid_volume = float(variables[species_count])
+    vapor = variables[species_count + 1 : 2 * species_count + 1]
+    vapor_volume = float(variables[2 * species_count + 1])
+    temperature = float(variables[-1])
+
+    liquid_block = core._native_eos_phase_block(
+        mixture.native._native,
+        temperature,
+        PRESSURE_PA,
+        liquid.tolist(),
+        liquid_volume,
+    )
+    vapor_block = core._native_eos_phase_block(
+        mixture.native._native,
+        temperature,
+        PRESSURE_PA,
+        vapor.tolist(),
+        vapor_volume,
+    )
+    pressure_scale = 1.0 / max(1.0, 1.0e-3 * PRESSURE_PA)
+    projected_residuals = np.array(
+        [
+            pressure_scale * liquid_block["pressure_consistency_residual"],
+            pressure_scale * vapor_block["pressure_consistency_residual"],
+            liquid_block["gradient"][0] - vapor_block["gradient"][0],
+            liquid_block["gradient"][1] - vapor_block["gradient"][1],
+            liquid_block["gradient"][2]
+            + liquid_block["gradient"][3]
+            - vapor_block["gradient"][2]
+            - vapor_block["gradient"][3],
+        ],
+        dtype=float,
+    )
+
+    assert liquid.tolist() == pytest.approx(feed, rel=0.0, abs=1.0e-12)
+    assert np.sum(vapor) == pytest.approx(1.0, rel=0.0, abs=1.0e-7)
+    assert float(np.dot(vapor, CHARGES)) == pytest.approx(0.0, rel=0.0, abs=1.0e-12)
+    assert route["objective"] == pytest.approx(0.5 * float(projected_residuals @ projected_residuals), rel=1.0e-8)
+    assert np.max(np.abs(projected_residuals)) > 1.0

@@ -219,11 +219,11 @@ static vector<Scalar> association_site_fraction_composition_terms_scalar_cpp(
     return dXA_dx;
 }
 
-template <typename Scalar>
+template <typename Scalar, typename TemperatureScalar>
 static AssociationImplicitTermsScalar<Scalar> association_implicit_terms_scalar_cpp(
     const MixtureStateScalar<Scalar> &thermo,
     const HardChainStateScalar<Scalar> &hc_state,
-    double t,
+    const TemperatureScalar &t,
     const vector<Scalar> &x,
     const add_args &cppargs,
     const vector<Scalar> &XA,

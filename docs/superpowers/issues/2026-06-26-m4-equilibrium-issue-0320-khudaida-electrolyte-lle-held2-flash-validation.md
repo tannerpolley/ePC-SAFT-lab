@@ -114,9 +114,10 @@ postsolve certification.
   feasibility but collapses to a single phase, so the Perdomo two-phase result
   cannot be claimed as reproduced by #320.
 - Perdomo Table 4 is a bubble-temperature phase-boundary result with trace
-  vapor ions, not a finite-positive-phase TP flash row. A native
-  `electrolyte_bubble_temperature` validation binding now exercises a
-  charge-constrained fixed-pressure temperature boundary NLP, but the
+  vapor ions, not a finite-positive-phase TP flash row. The native
+  `electrolyte_bubble_temperature` validation binding now exercises active
+  Figiel association and a charge-constrained fixed-pressure temperature
+  boundary NLP in positive-log amount/volume/temperature coordinates, but the
   Figiel-parameter Perdomo row still does not converge to an accepted boundary
   under the exact-Hessian gate.
 - Charge-neutral trace-ion starts are now evaluated by electrolyte TPD
@@ -168,17 +169,35 @@ Additional boundary-route probe:
 | Route | `electrolyte_bubble_temperature` |
 | Refinement kind | `charge_constrained_projected_residual_temperature_boundary` |
 | Problem | `electrolyte_bubble_t_eos` |
-| Hessian path | exact, `cppad_phase_temperature_route` |
+| Variable model | `positive_log_amount_volume_temperature` |
+| Hessian path | exact, `cppad_phase_temperature_route_through_analytic_positive_log` |
 | Exact Hessian available | `true` |
-| Capped diagnostic status | rejected: `max_iterations_exceeded` |
-| Iterations in retained test | `8` |
-| Objective in retained test | `9.164078551642497` |
+| Active association path | `cppad_implicit_association` phase blocks retained |
+| Capped proof-test status | rejected: `max_iterations_exceeded` |
+| Iterations in retained test | `1` |
+| Objective in retained test | `12.029318365503133` |
+| Best bounded continuation objective | `1.3232973938180932` |
+| Best bounded continuation residual inf-norm | `1.623930583926887` |
+| Dominant residual | methanol reduced-potential transfer |
 | Public exposure | focused validation binding only; not production-exposed |
 
 This adds an electrolyte bubble-temperature boundary NLP with fixed liquid
 composition, phase-total constraints, incipient-phase charge balance, and a
-projected pressure plus neutral/mean-ionic residual objective. It is retained
-as blocker evidence only; it is not accepted Perdomo/Figiel validation.
+projected pressure plus neutral/mean-ionic residual objective. The route now
+uses the same active-association Figiel model rather than the earlier
+nonassociating surrogate and runs through an exact positive-log Hessian chain.
+It is retained as blocker evidence only; it is not accepted Perdomo/Figiel
+validation.
+
+Best bounded continuation residuals from the active Figiel route:
+
+| Residual | Value |
+| --- | ---: |
+| scaled liquid pressure | `1.3619176863343196e-2` |
+| scaled vapor pressure | `-1.4360747128036153e-3` |
+| methanol reduced transfer | `-1.623930583926887` |
+| water reduced transfer | `-9.41342228461155e-2` |
+| LiCl mean-ionic transfer | `-1.9885925254016e-2` |
 
 ## Implemented During Blocker Investigation
 
@@ -199,6 +218,14 @@ as blocker evidence only; it is not accepted Perdomo/Figiel validation.
   charge balance while minimizing exact pressure, neutral-transfer, and
   mean-ionic transfer residuals. The route currently records an exact-Hessian
   solver blocker rather than an accepted HELD2 boundary row.
+- Added active-association exact derivative support for fixed-pressure
+  temperature routes by differentiating the implicit association response with
+  respect to temperature, density, and composition instead of dropping solvent
+  association from the validation route.
+- Added a positive-log `NlpProblem` wrapper to the electrolyte bubble/dew
+  temperature route so trace-ion boundary phases are solved in HELD2-compatible
+  positive coordinates while thermodynamic evaluations and public diagnostics
+  remain in physical amount/volume/temperature variables.
 
 ## Non-goals
 

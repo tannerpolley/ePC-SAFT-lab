@@ -10,6 +10,7 @@
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
+#include "equilibrium/core/variable_transform.h"
 #include "equilibrium/core/variable_layout.h"
 #include "equilibrium/results/result_builder.h"
 
@@ -314,6 +315,238 @@ bool fixed_temperature_pressure_flash_seed_satisfies_volume_bounds(
         && vapor_volume <= kMaximumVaporVolume
         && vapor_volume - liquid_volume >= kMinimumPhaseVolumeGap;
 }
+
+std::vector<double> log_positive_variables(
+    const std::vector<double>& physical_variables,
+    const std::string& label
+) {
+    std::vector<double> out;
+    out.reserve(physical_variables.size());
+    for (double value : physical_variables) {
+        require_positive_finite(value, label);
+        out.push_back(std::log(value));
+    }
+    return out;
+}
+
+std::vector<double> lower_dense_to_symmetric_matrix(
+    const NlpHessianStructure& structure,
+    const std::vector<double>& values,
+    int variable_count,
+    const std::string& label
+) {
+    if (structure.rows.size() != values.size() || structure.cols.size() != values.size()) {
+        throw ValueError(label + " Hessian structure/value size mismatch.");
+    }
+    std::vector<double> dense(static_cast<std::size_t>(variable_count * variable_count), 0.0);
+    for (std::size_t index = 0; index < values.size(); ++index) {
+        const int row = structure.rows[index];
+        const int col = structure.cols[index];
+        if (row < 0 || row >= variable_count || col < 0 || col >= variable_count) {
+            throw ValueError(label + " Hessian structure index is out of range.");
+        }
+        dense[static_cast<std::size_t>(row * variable_count + col)] = values[index];
+        dense[static_cast<std::size_t>(col * variable_count + row)] = values[index];
+    }
+    return dense;
+}
+
+class PositiveLogNlpProblem final : public NlpProblem {
+public:
+    explicit PositiveLogNlpProblem(std::unique_ptr<NlpProblem> delegate)
+        : delegate_(std::move(delegate)) {
+        if (!delegate_) {
+            throw ValueError("positive-log NLP wrapper requires a delegate problem.");
+        }
+    }
+
+    std::string name() const override {
+        return delegate_->name();
+    }
+
+    int variable_count() const override {
+        return delegate_->variable_count();
+    }
+
+    int constraint_count() const override {
+        return delegate_->constraint_count();
+    }
+
+    int jacobian_nonzero_count() const override {
+        return delegate_->jacobian_nonzero_count();
+    }
+
+    NlpBounds bounds() const override {
+        NlpBounds physical = delegate_->bounds();
+        require_size(physical.variable_lower, static_cast<std::size_t>(variable_count()), name() + " lower bound");
+        require_size(physical.variable_upper, static_cast<std::size_t>(variable_count()), name() + " upper bound");
+        for (double& value : physical.variable_lower) {
+            require_positive_finite(value, name() + " positive-log lower bound");
+            value = std::log(value);
+        }
+        for (double& value : physical.variable_upper) {
+            require_positive_finite(value, name() + " positive-log upper bound");
+            value = std::log(value);
+        }
+        return physical;
+    }
+
+    std::vector<double> initial_point() const override {
+        return solver_variables_from_physical(delegate_->initial_point());
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        return delegate_->objective(physical_variables_from_solver(variables));
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        const std::vector<double> physical = physical_variables_from_solver(variables);
+        const std::vector<double> physical_gradient = delegate_->objective_gradient(physical);
+        require_size(
+            physical_gradient,
+            static_cast<std::size_t>(variable_count()),
+            name() + " physical objective gradient"
+        );
+        std::vector<double> out(static_cast<std::size_t>(variable_count()), 0.0);
+        for (int col = 0; col < variable_count(); ++col) {
+            out[static_cast<std::size_t>(col)] =
+                physical_gradient[static_cast<std::size_t>(col)] * physical[static_cast<std::size_t>(col)];
+        }
+        return out;
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        return delegate_->constraints(physical_variables_from_solver(variables));
+    }
+
+    NlpJacobianStructure jacobian_structure() const override {
+        return delegate_->jacobian_structure();
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        const std::vector<double> physical = physical_variables_from_solver(variables);
+        const NlpJacobianStructure structure = delegate_->jacobian_structure();
+        std::vector<double> values = delegate_->jacobian_values(physical);
+        if (values.size() != structure.cols.size()) {
+            throw ValueError(name() + " positive-log Jacobian structure/value size mismatch.");
+        }
+        for (std::size_t index = 0; index < values.size(); ++index) {
+            const int col = structure.cols[index];
+            if (col < 0 || col >= variable_count()) {
+                throw ValueError(name() + " positive-log Jacobian column is out of range.");
+            }
+            values[index] *= physical[static_cast<std::size_t>(col)];
+        }
+        return values;
+    }
+
+    bool has_exact_hessian() const override {
+        return delegate_->has_exact_hessian();
+    }
+
+    int hessian_nonzero_count() const override {
+        return LagrangianHessianAssembler(variable_count()).nonzero_count();
+    }
+
+    NlpHessianStructure hessian_structure() const override {
+        return LagrangianHessianAssembler(variable_count()).structure();
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        const std::vector<double> physical = physical_variables_from_solver(variables);
+        const std::vector<double> physical_hessian_values =
+            delegate_->hessian_values(physical, objective_factor, constraint_multipliers);
+        const std::vector<double> physical_hessian = lower_dense_to_symmetric_matrix(
+            delegate_->hessian_structure(),
+            physical_hessian_values,
+            variable_count(),
+            name() + " positive-log delegate"
+        );
+
+        std::vector<double> lagrangian_gradient = delegate_->objective_gradient(physical);
+        require_size(
+            lagrangian_gradient,
+            static_cast<std::size_t>(variable_count()),
+            name() + " physical Lagrangian objective gradient"
+        );
+        for (double& value : lagrangian_gradient) {
+            value *= objective_factor;
+        }
+
+        const NlpJacobianStructure jacobian_structure = delegate_->jacobian_structure();
+        const std::vector<double> jacobian = delegate_->jacobian_values(physical);
+        if (jacobian.size() != jacobian_structure.rows.size()
+            || jacobian.size() != jacobian_structure.cols.size()) {
+            throw ValueError(name() + " positive-log Lagrangian Jacobian structure/value size mismatch.");
+        }
+        require_size(
+            constraint_multipliers,
+            static_cast<std::size_t>(constraint_count()),
+            name() + " positive-log constraint multiplier"
+        );
+        for (std::size_t index = 0; index < jacobian.size(); ++index) {
+            const int row = jacobian_structure.rows[index];
+            const int col = jacobian_structure.cols[index];
+            if (row < 0 || row >= constraint_count() || col < 0 || col >= variable_count()) {
+                throw ValueError(name() + " positive-log Lagrangian Jacobian index is out of range.");
+            }
+            lagrangian_gradient[static_cast<std::size_t>(col)] +=
+                constraint_multipliers[static_cast<std::size_t>(row)] * jacobian[index];
+        }
+
+        const int n = variable_count();
+        std::vector<double> transformed(static_cast<std::size_t>(n * n), 0.0);
+        for (int first = 0; first < n; ++first) {
+            for (int second = 0; second < n; ++second) {
+                transformed[static_cast<std::size_t>(first * n + second)] =
+                    physical[static_cast<std::size_t>(first)]
+                    * physical_hessian[static_cast<std::size_t>(first * n + second)]
+                    * physical[static_cast<std::size_t>(second)];
+            }
+            transformed[static_cast<std::size_t>(first * n + first)] +=
+                lagrangian_gradient[static_cast<std::size_t>(first)]
+                * physical[static_cast<std::size_t>(first)];
+        }
+        symmetrize_local_square_matrix(transformed, n);
+        return lower_triangle_values(transformed, n);
+    }
+
+    std::string hessian_backend() const override {
+        return delegate_->hessian_backend() + "_through_analytic_positive_log";
+    }
+
+    NlpScaling scaling() const override {
+        NlpScaling out = delegate_->scaling();
+        out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
+        return out;
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        std::map<std::string, std::string> out = delegate_->diagnostics();
+        out["variable_transform"] = "positive_log_coordinates";
+        out["variable_model"] = "positive_log_amount_volume_temperature";
+        return out;
+    }
+
+    std::vector<double> physical_variables_from_solver(
+        const std::vector<double>& solver_variables
+    ) const {
+        return PositiveLogVariableTransform(variable_count()).solver_to_physical(solver_variables);
+    }
+
+    std::vector<double> solver_variables_from_physical(
+        const std::vector<double>& physical_variables
+    ) const {
+        return log_positive_variables(physical_variables, name() + " positive-log physical variable");
+    }
+
+private:
+    std::unique_ptr<NlpProblem> delegate_;
+};
 
 struct NamedInitialVariables {
     std::string seed_name;
@@ -3483,7 +3716,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
     attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
 
     auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
-        NeutralFixedPressureTemperatureProblem problem(
+        auto physical_problem = std::make_unique<NeutralFixedPressureTemperatureProblem>(
             args,
             target_pressure,
             normalized_composition,
@@ -3492,8 +3725,29 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
             charges,
             charge_tolerance
         );
-        validate_nlp_problem_shape(problem);
-        const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
+        const int species_count = physical_problem->species_count();
+        const bool transformed_electrolyte_temperature_route = !charges.empty();
+        std::unique_ptr<NlpProblem> problem;
+        if (transformed_electrolyte_temperature_route) {
+            problem = std::make_unique<PositiveLogNlpProblem>(std::move(physical_problem));
+        } else {
+            problem = std::move(physical_problem);
+        }
+        validate_nlp_problem_shape(*problem);
+        IpoptSolveOptions route_options = attempt_options;
+        if (transformed_electrolyte_temperature_route && !route_options.initial_variables.empty()) {
+            route_options.initial_variables = log_positive_variables(
+                route_options.initial_variables,
+                problem_name + " electrolyte temperature-route initial variable"
+            );
+        }
+        IpoptSolveResult solve = solve_ipopt_nlp(*problem, route_options);
+        if (transformed_electrolyte_temperature_route
+            && solve.variables.size() == static_cast<std::size_t>(problem->variable_count())) {
+            solve.variables = static_cast<PositiveLogNlpProblem&>(*problem).physical_variables_from_solver(
+                solve.variables
+            );
+        }
         NeutralTwoPhaseEosRouteResult result;
         result.compiled = adapter.compiled;
         result.adapter_available = adapter.adapter_available;
@@ -3513,7 +3767,6 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
             return result;
         }
 
-        const int species_count = problem.species_count();
         const double solved_temperature = solve.variables.back();
         result.phase_amounts = pressure_route_phase_amounts(solve.variables, species_count);
         result.phase_volumes = pressure_route_phase_volumes(solve.variables, species_count);

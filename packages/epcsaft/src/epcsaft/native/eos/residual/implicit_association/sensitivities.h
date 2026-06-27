@@ -13,4 +13,10 @@ ares_detail::AssociationPhaseStateResponse association_phase_state_response_cppa
     const vector<double> &x,
     const add_args &cppargs
 );
+ares_detail::AssociationPhaseStateResponse association_phase_state_temperature_response_cppad_cpp(
+    double t,
+    double rho,
+    const vector<double> &x,
+    const add_args &cppargs
+);
 }  // namespace residual_association_detail
