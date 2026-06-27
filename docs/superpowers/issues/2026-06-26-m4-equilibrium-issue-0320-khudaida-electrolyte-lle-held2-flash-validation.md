@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-
 source_plan: "docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0320-khudaida-electrolyte-lle-held2-flash-validation
-last_synced: "2026-06-26"
+last_synced: "2026-06-27"
 ---
 
 # M4: make Khudaida electrolyte LLE figure and HELD2 flash validation pass

@@ -86,7 +86,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves full Khudaida figure-level model reproduction, broader HELD2 flash scenario validation, and shared native `NlpProblem`/Ipopt exact-Hessian route receipts. |
-| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active final #191 blocker for full Khudaida model reproduction and HELD2 flash scenario proof. |
+| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `ready` | `Ipopt` | `ready` | Active final #191 blocker for full Khudaida model reproduction and HELD2 flash scenario proof. |
 
 ## Queue Guard
 
