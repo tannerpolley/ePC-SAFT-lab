@@ -41,12 +41,22 @@
 
 Create retained CE-only Cantera and Pope oracle records.
 
+## One-NLP Invariant
+
+Cantera and Pope records are reference oracles only. This issue must preserve
+the #326 standalone CE solve route as the only executable CE path: activation
+matrix, selector contract, native `NlpProblem`, Ipopt adapter, and the #325
+homogeneous CE block. Oracle fixtures may compare against that path, but must
+not introduce a checker-only binding, direct solver lane, VCS/element-potential
+execution path, or public algorithm selector.
+
 ## Acceptance Criteria
 
 - [ ] Implement the issue slice described in the source plan.
 - [ ] Add or update focused tests named in the source plan for this slice.
 - [ ] Update docs, registry, capability payloads, and retained validation artifacts when this slice owns them.
 - [ ] Run the slice proof oracle plus the plan validators before handoff.
+- [ ] Prove the retained oracle evidence is consumed by the #326 single NLP/Ipopt path, not by an alternate CE solve route.
 - [ ] Preserve CE, PE, and CPE capability boundaries in user-facing text and capability payloads.
 
 ## Blocked by
