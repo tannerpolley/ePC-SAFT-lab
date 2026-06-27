@@ -259,6 +259,7 @@ two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/327](https://github.com/ePC-SAFT/ePC-SAFT/issues/327) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/342](https://github.com/ePC-SAFT/ePC-SAFT/pull/342) on 2026-06-27T20:23:44Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/280](https://github.com/ePC-SAFT/ePC-SAFT/issues/280) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/289](https://github.com/ePC-SAFT/ePC-SAFT/pull/289) on 2026-06-20T00:15:28Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/290](https://github.com/ePC-SAFT/ePC-SAFT/issues/290) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/291](https://github.com/ePC-SAFT/ePC-SAFT/pull/291) on 2026-06-19T23:32:21Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/279](https://github.com/ePC-SAFT/ePC-SAFT/issues/279) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/288](https://github.com/ePC-SAFT/ePC-SAFT/pull/288) on 2026-06-19T20:03:07Z
