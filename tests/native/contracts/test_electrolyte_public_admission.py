@@ -107,7 +107,9 @@ def test_public_route_returns_certified_electrolyte_result() -> None:
     assert result.diagnostics["postsolve_certification"]["accepted"] is True
     assert result.diagnostics["exact_hessian_available"] is True
     assert result.diagnostics["hessian_approximation"] == "exact"
-    assert result.diagnostics["route_hessian_approximation"] == "limited-memory"
+    assert result.diagnostics["route_hessian_approximation"] == "exact"
+    assert result.diagnostics["option_profile"] == "held_refinement"
+    assert result.diagnostics["projected_residual_route"]["enforced_in_solver"] is True
     assert result.diagnostics["charge_balance"]["max_phase_charge_residual"] <= 1.0e-8
     assert result.diagnostics["pressure_consistency"]["pressure_consistency_norm"] <= 1.0e-6
     assert result.diagnostics["domain_margins"]["phase_distance"] > result.diagnostics["domain_margins"][

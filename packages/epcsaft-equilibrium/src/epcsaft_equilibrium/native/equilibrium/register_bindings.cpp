@@ -1391,11 +1391,31 @@ py::dict electrolyte_stage_iii_refinement_to_dict(
     derivatives["hessian_backend"] = result.derivative_backend;
     derivatives["route_hessian_approximation"] = result.route_result.hessian_approximation;
     derivatives["route_hessian_backend"] = result.route_result.hessian_backend;
+    derivatives["profile_exact_hessian_gate"] = result.route_result.profile_exact_hessian_gate;
+    derivatives["born_ssm_ds_active_block_exact_hessian"] =
+        result.route_result.exact_hessian_available
+        && result.route_result.hessian_backend.find("projected_electrolyte") != std::string::npos;
     derivatives["exact_reduced_jacobian_available"] = result.exact_reduced_jacobian_available;
     derivatives["exact_reduced_hessian_available"] = result.exact_reduced_hessian_available;
     derivatives["jacobian_nonzero_count"] = result.jacobian_nonzero_count;
     derivatives["hessian_nonzero_count"] = result.hessian_nonzero_count;
     out["derivative_receipts"] = derivatives;
+
+    py::dict projected_route;
+    projected_route["enforced_in_solver"] =
+        result.route_result.problem_name == "electrolyte_stage_iii_projected_residual_refinement";
+    projected_route["problem_name"] = result.route_result.problem_name;
+    projected_route["equation_families"] = std::vector<std::string>{
+        "material_balance",
+        "pressure_equality",
+        "neutral_transfer",
+        "mean_ionic_transfer",
+        "phase_charge_balance",
+        "phase_distance",
+    };
+    projected_route["projected_charged_transfer"] = "mean_ionic_counterion_pairs";
+    projected_route["equation_labels"] = result.equation_labels;
+    out["projected_residual_route"] = projected_route;
 
     py::dict solver;
     solver["solver_backend"] = result.route_result.backend;
@@ -1463,17 +1483,24 @@ py::dict electrolyte_postsolve_certification_to_dict(
     charge_balance["phase_charge_residuals"] = result.phase_charge_residuals;
     charge_balance["max_phase_charge_residual"] = result.max_phase_charge_residual;
     charge_balance["phase_charge_tolerance"] = result.phase_charge_tolerance;
+    charge_balance["tolerance"] = result.phase_charge_tolerance;
     charge_balance["total_charge_residual"] = result.total_charge_residual;
     charge_balance["total_charge_tolerance"] = result.total_charge_tolerance;
     out["charge_balance"] = charge_balance;
 
     py::dict neutral_transfer;
+    neutral_transfer["status"] = status_label(
+        result.neutral_transfer_max_abs_residual <= result.neutral_transfer_tolerance
+    );
     neutral_transfer["species_labels"] = result.neutral_species_labels;
     neutral_transfer["residual_values"] = result.neutral_transfer_residuals;
     neutral_transfer["max_abs_residual"] = result.neutral_transfer_max_abs_residual;
     neutral_transfer["tolerance"] = result.neutral_transfer_tolerance;
 
     py::dict mean_ionic_transfer;
+    mean_ionic_transfer["status"] = status_label(
+        result.mean_ionic_transfer_max_abs_residual <= result.mean_ionic_transfer_tolerance
+    );
     mean_ionic_transfer["pair_labels"] = result.mean_ionic_pair_labels;
     mean_ionic_transfer["residual_values"] = result.mean_ionic_transfer_residuals;
     mean_ionic_transfer["max_abs_residual"] = result.mean_ionic_transfer_max_abs_residual;
@@ -1489,6 +1516,7 @@ py::dict electrolyte_postsolve_certification_to_dict(
     pressure["status"] = status_label(result.pressure_consistency_accepted);
     pressure["pressure_consistency_norm"] = result.pressure_consistency_norm;
     pressure["pressure_tolerance"] = result.pressure_tolerance;
+    pressure["tolerance"] = result.pressure_tolerance;
     out["pressure_consistency"] = pressure;
 
     py::dict phase_set;

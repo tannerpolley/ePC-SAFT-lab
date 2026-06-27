@@ -1,6 +1,6 @@
 ---
 issue: 320
-title: "M4: make Khudaida electrolyte LLE figure and HELD2 flash validation pass"
+title: "M4: validate Perdomo HELD2 electrolyte flash with Figiel ePC-SAFT parameters"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/320"
 state: "open"
 milestone: "M4 - Equilibrium"
@@ -8,16 +8,16 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "ready"
+readiness: "blocked"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md"
 afk_hitl: "AFK"
-branch: codex/issue-0320-khudaida-electrolyte-lle-held2-flash-validation
+branch: codex/issue-0320-khudaida-held2-validation
 last_synced: "2026-06-26"
 ---
 
-# M4: make Khudaida electrolyte LLE figure and HELD2 flash validation pass
+# M4: validate Perdomo HELD2 electrolyte flash with Figiel ePC-SAFT parameters
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/320
 **GitHub Milestone:** M4 - Equilibrium
@@ -25,8 +25,8 @@ last_synced: "2026-06-26"
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md
 **Classification:** AFK
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, agent-ready, type:feature
-**Goal Command:** /goal Resolve issue 320 by making the Khudaida full-figure electrolyte LLE model-fit checker and HELD2 flash scenario gate pass.
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
+**Goal Command:** /goal Resolve issue 320 by validating the Perdomo 2025 HELD2.0 electrolyte flash algorithm through the Figiel 2025 ePC-SAFT parameter route.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -38,15 +38,15 @@ last_synced: "2026-06-26"
 ## Outcome Summary
 
 **Outcome Source:** docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md#outcome-proof
-**Intent:** Replace the premature #191 closeout boundary with a source-backed model-reproduction gate that proves electrolyte LLE behavior across the Khudaida figure set and exercises HELD2 flashing beyond one representative feed.
-**Target Output:** The Khudaida checker reports complete artifacts, complete model reproduction, zero blockers, every modeled figure or panel score at least `8.0`, and accepted model rows generated through the shared native `NlpProblem`/Ipopt exact-Hessian route path.
-**Owner:** `packages/epcsaft-equilibrium` owns solver behavior; `analyses/paper_validation/2026_khudaida` owns retained source/model plot artifacts.
-**Interface:** Public `Equilibrium(..., route="electrolyte_lle")`, native `NlpProblem` route metadata, `VariableTransform` lift/back-lift records, retained paper-validation scripts, figure fit-statistics CSVs, and pytest scenario contracts.
-**Cutover:** #191 cannot close on the #314 representative admission checker alone; it closes only after #320 passes and updates parent evidence.
-**Replaced Path:** Single-feed public admission as a proxy for electrolyte LLE model validity.
+**Intent:** Replace the premature #191 closeout boundary with a source-backed HELD2.0 algorithm gate that uses Perdomo 2025 equations/results as the algorithm reference and the latest retained Figiel 2025 ePC-SAFT parameter snapshot as the package fugacity source.
+**Target Output:** Accepted electrolyte flash rows are generated through the shared native `NlpProblem`/Ipopt exact-Hessian route path and retain per-row evidence for reduced electroneutral coordinates, projected neutral/mean-ionic residuals, Born SSM+DS active-block exactness, and noncollapsed phase certification.
+**Owner:** `packages/epcsaft-equilibrium` owns solver behavior; `analyses/paper_validation/2025_figiel/parameters` owns the retained ePC-SAFT parameter snapshot used by this check.
+**Interface:** Native HELD2 Stage III refinement diagnostics, public `Equilibrium(..., route="electrolyte_lle")` admission once the noncollapsed gate passes, `VariableTransform` lift/back-lift records, and pytest scenario contracts.
+**Cutover:** #191 cannot close on the #314 representative admission checker alone; it closes only after #320 has accepted noncollapsed HELD2 evidence and updates parent evidence.
+**Replaced Path:** Khudaida figure reproduction as the sole #320 acceptance source.
 **Acceptance Proof:** The proof oracle commands pass from the repo root, accepted route diagnostics prove the exact-Hessian path, and #191 names #320 as closed provenance after merge.
-**Stop Criteria:** Stop if source inputs, parameter provenance, species basis, charge balance, solver seeds, or plotted data cannot be verified against retained inputs before changing solver logic; also stop if the route bypasses `NlpProblem`/Ipopt, hides charge imbalance by clipping, compares raw single-ion chemical potentials, or lacks Born SSM+DS active-block exact-Hessian evidence.
-**Avoid:** Do not count collapsed near-feed splits, source-only figures, synthetic payloads, downstream metrics, or broad electrolyte/release claims as completion evidence.
+**Stop Criteria:** Stop if source inputs, parameter provenance, species basis, charge balance, solver seeds, or retained data cannot be verified against Perdomo/Figiel inputs before changing solver logic; also stop if the route bypasses `NlpProblem`/Ipopt, hides charge imbalance by clipping, compares raw single-ion chemical potentials, or lacks Born SSM+DS active-block exact-Hessian evidence.
+**Avoid:** Do not count collapsed near-feed splits, source-only tables, synthetic payloads, downstream metrics, or broad electrolyte/release claims as completion evidence.
 
 ## Project Merge
 
@@ -58,10 +58,9 @@ last_synced: "2026-06-26"
 
 ## What To Build
 
-Make the full Khudaida 2026 electrolyte LLE figure-reproduction checker pass
-and add a retained HELD2 flash scenario gate that proves electrolyte flashing
-across source-backed, neutral-limit, stable, unstable, boundary, phase-order,
-and reduced-coordinate scenarios. Accepted electrolyte rows must come from the
+Validate the Perdomo 2025 HELD2.0 electrolyte flash algorithm against retained
+Perdomo rows while using the latest local Figiel 2025 ePC-SAFT parameters as
+the package fugacity source. Accepted electrolyte rows must come from the
 shared pressure-transformed Helmholtz `NlpProblem`/Ipopt production path with
 route-owned transforms/scaling, exact objective gradients, exact constraint
 Jacobians, exact Lagrangian Hessians, Born SSM+DS active-block exactness, and
@@ -69,15 +68,15 @@ postsolve certification.
 
 ## Acceptance Criteria
 
-- [ ] The Khudaida checker returns `artifact_complete=true`, `model_reproduction_complete=true`, and zero artifact/model blockers.
-- [ ] Every modeled Khudaida figure or panel has retained source data, retained model data, retained fit statistics, and plot score `>= 8.0`.
-- [ ] Figures without model-comparable equilibrium data are explicitly recorded by the checker and cannot hide failed model rows.
+- [ ] The retained Perdomo 2025 HELD2.0 row inputs, species order, units, and phase labels are recorded before model comparison.
+- [ ] The validation uses `analyses/paper_validation/2025_figiel/parameters` directly and proves autodiff electrolyte derivatives, empirical permittivity, and Born SSM+DS options are active.
+- [ ] Perdomo/Figiel model rows that are counted as accepted have retained source data, retained model data, retained residual statistics, and explicit route diagnostics.
 - [ ] Accepted electrolyte flashes report noncollapsed phase distance, positive phase amounts, per-phase charge residuals, neutral transfer residuals, mean-ionic transfer residuals, pressure consistency, exact reduced Hessian availability, and finite domain margins.
 - [ ] Every accepted model row is generated through the shared native `NlpProblem`/Ipopt phase NLP with no residual-only or equation-only production bypass.
 - [ ] Accepted route diagnostics expose fixed sparse Jacobian/Hessian receipts, exact objective gradients, exact constraint Jacobians, exact Lagrangian Hessians, `profile_exact_hessian_gate`, Ipopt user scaling, Ipopt option profile, linear solver, and bound-barrier diagnostics.
 - [ ] Electrolyte coordinates prove per-phase reduced electroneutral lift/back-lift into true species amounts; hidden charge clipping fails the gate.
 - [ ] Charged transfer is certified by projected electrochemical or modified mean-ionic potential/fugacity residuals; raw single-ion chemical-potential equality is rejected as completion evidence.
-- [ ] Born SSM+DS active phase blocks have exact-Hessian evidence before Khudaida model rows are accepted.
+- [ ] Born SSM+DS active phase blocks have exact-Hessian evidence before Perdomo/Figiel model rows are accepted.
 - [ ] HELD2 flash tests cover neutral-limit parity with the HELD 1.0-style base, source-backed electrolyte LLE, common-ion or mixed-salt reduced coordinates, stable feeds, unstable feeds, boundary feeds, and phase-label permutations.
 - [ ] HELD2 Stage III refinement consumes the HELD2 candidate set and reports both Ipopt `success` and `solve_succeeded` when Stage III evidence is counted.
 - [ ] The HELD2 pytest proof collects and runs at least one electrolyte HELD2 flash scenario test; zero selected tests fails the gate.
@@ -99,15 +98,55 @@ postsolve certification.
   electroneutrality.
 - The Ascani 2022 electrolyte source requires electrolyte equilibrium through
   transformed variables and mean-ionic conditions, not raw single-ion equality.
-- The Khudaida 2026 source data supply experimental mixed-solvent NaCl LLE
-  tie-lines, pure-component parameters, dielectric constants, binary
-  interaction parameters, and AAD references; the retained Khudaida checker
-  currently states that public `electrolyte_lle` model rows do not yet reproduce
-  the salted tie-lines.
+- The Perdomo 2025 source paper supplies the HELD2.0 reduced-coordinate,
+  electroneutral flash algorithm and sample electrolyte flash results. The
+  reported numerical results use SAFT-gamma Mie GC electrolyte fugacities.
+- The Figiel 2025 local parameter snapshot supplies the ePC-SAFT fugacity source
+  for this package validation and enables autodiff electrolyte derivatives,
+  empirical permittivity, and Born SSM+DS options.
 
 ## Blocked by
 
-- None
+- Perdomo 2025 reports HELD2.0 results with the SAFT-gamma Mie GC electrolyte
+  EOS. The requested package check intentionally uses the latest local Figiel
+  2025 ePC-SAFT parameter snapshot instead. With that fugacity source, the
+  Stage III projected-residual problem reaches exact-Hessian residual
+  feasibility but collapses to a single phase, so the Perdomo two-phase result
+  cannot be claimed as reproduced by #320.
+
+## Blocker Evidence
+
+The focused package test uses:
+
+- HELD2.0 algorithm source: `docs/papers/md/Equilibrium/Perdomo et al. - 2025 - Phase stability criteria and fluid-phase equilibria in strong-electrolyte systems.md`.
+- Perdomo Table 4 row: methanol + water + LiCl, `P=101.325 kPa`, LiCl `4.0 molal`,
+  salt-free methanol mole fraction `0.300`, `T=351.25 K`, table species order
+  `(Li+, Cl-, methanol, water)`.
+- Figiel parameter source: `analyses/paper_validation/2025_figiel/parameters`,
+  including `user_options.json` with autodiff electrolyte derivatives,
+  empirical permittivity, and Born solvation-shell plus dielectric-saturation
+  enabled.
+- Package species order: `(Methanol, H2O, Li+, Cl-)`.
+- Normalized Perdomo liquid feed: `[0.29880119520, 0.61277245109,
+  0.04421317685, 0.04421317685]`.
+
+Observed route evidence:
+
+| Check | Result |
+| --- | ---: |
+| Ipopt backend status | `success` / `solve_succeeded` |
+| Route problem | `electrolyte_stage_iii_projected_residual_refinement` |
+| Hessian path | exact, `cppad_phase_system_projected_electrolyte...` |
+| Reduced residual infinity norm | `1.291596e-9` |
+| Pressure consistency norm | `2.507e-3 Pa` |
+| Charge-balance norm | `4.765e-22` |
+| Phase distance | `2.353e-9` |
+| Postsolve status | rejected: `phase_distance` |
+
+This proves the package route can drive the Perdomo/Figiel HELD2 residual
+system through the public native `NlpProblem`/Ipopt exact-Hessian path, but the
+computed phases are indistinguishable under the existing noncollapsed-phase
+gate. Do not close #320 or #191 as two-phase HELD2 validation on this evidence.
 
 ## Non-goals
 
@@ -119,10 +158,9 @@ postsolve certification.
 ## Proof Oracle
 
 ```powershell
-uv run --no-sync python analyses\paper_validation\2026_khudaida\scripts\run_all.py
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --json --require-complete --require-model-pass
-uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and flash"
+uv run --no-sync python -m pytest tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q
+uv run --no-sync python scripts\dev\validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
 
@@ -131,8 +169,9 @@ changes; zero selected tests fails the issue gate.
 
 ## GitHub Body Text
 
-This issue reopens the #191 completion boundary by requiring full Khudaida
-source-data model reproduction and multi-scenario HELD2 flash validation. #314
-remains representative route-admission evidence, but it is not sufficient
-evidence that electrolyte LLE model behavior matches the retained literature
-figures.
+This issue reopens the #191 completion boundary by requiring source-backed
+Perdomo HELD2.0 electrolyte flash validation through the package route using
+the latest retained Figiel 2025 ePC-SAFT parameter snapshot. #314 remains
+representative route-admission evidence, but it is not sufficient evidence that
+the HELD2 electrolyte flash algorithm has accepted noncollapsed validation
+rows.
