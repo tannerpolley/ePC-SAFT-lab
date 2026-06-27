@@ -2778,6 +2778,76 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("candidate_mass_balance_tolerance"),
         py::arg("continuous_tpd_required") = true
     );
+    m.def("_native_electrolyte_bubble_t_route_result", [](
+        const py::object& mixture,
+        double target_pressure,
+        const std::vector<double>& liquid_composition,
+        const std::vector<double>& charges,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double phase_total_tolerance,
+        double pressure_tolerance,
+        double charge_tolerance,
+        double ln_fugacity_tolerance,
+        double phase_distance_tolerance,
+        const py::object& continuation_state,
+        const py::kwargs& kwargs
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Electrolyte bubble-temperature route result");
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                "proof",
+                iteration_history_limit
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        apply_ipopt_continuation_state(options, continuation_state);
+        py::dict out = neutral_two_phase_eos_route_result_to_dict(
+            epcsaft::native::equilibrium_nlp::solve_electrolyte_bubble_t_eos_route(
+                args,
+                target_pressure,
+                liquid_composition,
+                charges,
+                options,
+                phase_total_tolerance,
+                pressure_tolerance,
+                charge_tolerance,
+                ln_fugacity_tolerance,
+                phase_distance_tolerance
+            )
+        );
+        out["route"] = "electrolyte_bubble_temperature";
+        out["selector_family"] = "electrolyte_bubble_dew_boundary";
+        out["route_refinement_kind"] = "charge_constrained_projected_residual_temperature_boundary";
+        out["residual_derivative_backend"] = "cppad_phase_temperature_route";
+        out["residual_exact_jacobian_available"] = true;
+        out["residual_exact_hessian_available"] = true;
+        out["production_exposed"] = false;
+        out["public_route_admission"] = "focused_validation_binding";
+        return out;
+    },
+        py::arg("mixture"),
+        py::arg("target_pressure"),
+        py::arg("liquid_composition"),
+        py::arg("charges"),
+        py::arg("max_iterations"),
+        py::arg("tolerance"),
+        py::arg("timeout_seconds"),
+        py::arg("hessian_mode"),
+        py::arg("iteration_history_limit"),
+        py::arg("phase_total_tolerance"),
+        py::arg("pressure_tolerance"),
+        py::arg("charge_tolerance"),
+        py::arg("ln_fugacity_tolerance"),
+        py::arg("phase_distance_tolerance"),
+        py::arg("continuation_state") = py::none()
+    );
     m.def("_native_electrolyte_tpd_phase_discovery", [](
         const py::object& mixture,
         double temperature,

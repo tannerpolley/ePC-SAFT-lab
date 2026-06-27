@@ -136,8 +136,8 @@ inline RouteMetadata fixed_temperature_pressure_route_metadata(bool has_charge_c
     return out;
 }
 
-inline RouteMetadata fixed_pressure_temperature_route_metadata() {
-    RouteMetadata out = fixed_temperature_pressure_route_metadata(false);
+inline RouteMetadata fixed_pressure_temperature_route_metadata(bool has_charge_constraints = false) {
+    RouteMetadata out = fixed_temperature_pressure_route_metadata(has_charge_constraints);
     return out;
 }
 

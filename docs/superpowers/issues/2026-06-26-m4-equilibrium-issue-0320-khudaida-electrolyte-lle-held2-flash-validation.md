@@ -114,10 +114,11 @@ postsolve certification.
   feasibility but collapses to a single phase, so the Perdomo two-phase result
   cannot be claimed as reproduced by #320.
 - Perdomo Table 4 is a bubble-temperature phase-boundary result with trace
-  vapor ions, not a finite-positive-phase TP flash row. The current electrolyte
-  public route surface exposes `electrolyte_lle`, but it does not expose an
-  electrolyte bubble/dew boundary route that can validate an incipient vapor
-  boundary without forcing a finite vapor phase amount.
+  vapor ions, not a finite-positive-phase TP flash row. A native
+  `electrolyte_bubble_temperature` validation binding now exercises a
+  charge-constrained fixed-pressure temperature boundary NLP, but the
+  Figiel-parameter Perdomo row still does not converge to an accepted boundary
+  under the exact-Hessian gate.
 - Charge-neutral trace-ion starts are now evaluated by electrolyte TPD
   discovery. Under the Figiel 2025 ePC-SAFT fugacity source, those trace-ion
   vapor-like starts have positive projected TPD values for the retained
@@ -159,6 +160,26 @@ system through the public native `NlpProblem`/Ipopt exact-Hessian path, but the
 computed phases are indistinguishable under the existing noncollapsed-phase
 gate. Do not close #320 or #191 as two-phase HELD2 validation on this evidence.
 
+Additional boundary-route probe:
+
+| Check | Result |
+| --- | ---: |
+| Native binding | `_native_electrolyte_bubble_t_route_result` |
+| Route | `electrolyte_bubble_temperature` |
+| Refinement kind | `charge_constrained_projected_residual_temperature_boundary` |
+| Problem | `electrolyte_bubble_t_eos` |
+| Hessian path | exact, `cppad_phase_temperature_route` |
+| Exact Hessian available | `true` |
+| Capped diagnostic status | rejected: `max_iterations_exceeded` |
+| Iterations in retained test | `8` |
+| Objective in retained test | `9.164078551642497` |
+| Public exposure | focused validation binding only; not production-exposed |
+
+This adds an electrolyte bubble-temperature boundary NLP with fixed liquid
+composition, phase-total constraints, incipient-phase charge balance, and a
+projected pressure plus neutral/mean-ionic residual objective. It is retained
+as blocker evidence only; it is not accepted Perdomo/Figiel validation.
+
 ## Implemented During Blocker Investigation
 
 - Electrolyte Stage III completion now requires the route postsolve result to
@@ -173,6 +194,11 @@ gate. Do not close #320 or #191 as two-phase HELD2 validation on this evidence.
   public admission `accepted`, postsolve certification `complete`, Stage III
   `complete`, pressure residual `4.6129005e-3 Pa`, pressure tolerance `10 Pa`,
   phase distance `1.7075547e-8`, and route accepted `true`.
+- Added a native electrolyte bubble-temperature validation route that keeps
+  hard constraints on fixed liquid composition, phase totals, and incipient
+  charge balance while minimizing exact pressure, neutral-transfer, and
+  mean-ionic transfer residuals. The route currently records an exact-Hessian
+  solver blocker rather than an accepted HELD2 boundary row.
 
 ## Non-goals
 
