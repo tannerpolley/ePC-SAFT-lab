@@ -1,0 +1,238 @@
+{
+  "cases": [
+    {
+      "affinities": {
+        "convention": "ln(x_B/x_A) - ln_K",
+        "reaction_affinities": [
+          0.0
+        ],
+        "reaction_labels": [
+          "a_to_b"
+        ],
+        "stationarity_inf_norm": 0.0
+      },
+      "balances": {
+        "balance_inf_norm": 0.0,
+        "balance_residuals": [
+          0.0
+        ],
+        "conservation_labels": [
+          "X"
+        ],
+        "conservation_totals": [
+          1.0
+        ]
+      },
+      "case_id": "cantera_compatible_ideal_a_to_b",
+      "ce_only": true,
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "expected": {
+        "amounts": [
+          0.25,
+          0.7500000000000001
+        ],
+        "mole_fractions": [
+          0.25,
+          0.7500000000000001
+        ]
+      },
+      "initial_amounts": [
+        0.5,
+        0.5
+      ],
+      "oracle_role": "reference_only",
+      "phase_scope": "homogeneous_single_phase",
+      "reaction_set": {
+        "feed_amounts": {
+          "A": 1.0,
+          "B": 0.0
+        },
+        "reactions": [
+          {
+            "label": "a_to_b",
+            "stoichiometry": {
+              "A": -1.0,
+              "B": 1.0
+            }
+          }
+        ],
+        "species": [
+          {
+            "charge": 0.0,
+            "elements": {
+              "X": 1.0
+            },
+            "label": "A"
+          },
+          {
+            "charge": 0.0,
+            "elements": {
+              "X": 1.0
+            },
+            "label": "B"
+          }
+        ]
+      },
+      "solver": {
+        "compared_runtime_path": "#326 activation-matrix native NLP/Ipopt path",
+        "method": "ideal mole-fraction mass-action solution",
+        "name": "closed_form_ideal_gibbs_minimization",
+        "runtime_dependency": "none"
+      },
+      "source": {
+        "label": "Cantera-compatible ideal equilibrium fixture",
+        "reference": "Cantera ideal chemical-equilibrium documentation pattern",
+        "scope_note": "Analytic two-species ideal fixture shaped for Cantera-style element-balance comparison; not a Cantera runtime output."
+      },
+      "species_order": [
+        "A",
+        "B"
+      ],
+      "standard_state_registry": {
+        "records": [
+          {
+            "form": "ln_K",
+            "reaction_label": "a_to_b",
+            "source": "Cantera-compatible ideal equilibrium fixture",
+            "source_constant_label": "ln_K_cantera_compatible_fixture",
+            "standard_state": {
+              "activity_convention": "mole_fraction_activity",
+              "label": "mole_fraction_standard_state",
+              "pressure_Pa": 101325.0,
+              "temperature_K": 298.15
+            },
+            "units": "dimensionless",
+            "value": 1.0986122886681098
+          }
+        ]
+      },
+      "tolerances": {
+        "affinity_abs": 1e-08,
+        "amount_abs": 1e-07,
+        "balance_abs": 1e-09,
+        "mole_fraction_abs": 1e-07
+      }
+    },
+    {
+      "affinities": {
+        "convention": "ln(x_B/x_A) - ln_K",
+        "reaction_affinities": [
+          0.0
+        ],
+        "reaction_labels": [
+          "a_to_b"
+        ],
+        "stationarity_inf_norm": 0.0
+      },
+      "balances": {
+        "balance_inf_norm": 0.0,
+        "balance_residuals": [
+          0.0
+        ],
+        "conservation_labels": [
+          "X"
+        ],
+        "conservation_totals": [
+          1.0
+        ]
+      },
+      "case_id": "pope_2004_tiny_species_ideal_a_to_b",
+      "ce_only": true,
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "expected": {
+        "amounts": [
+          0.9999990000010001,
+          9.999990000010005e-07
+        ],
+        "mole_fractions": [
+          0.9999990000010001,
+          9.999990000010005e-07
+        ]
+      },
+      "initial_amounts": [
+        0.999,
+        0.001
+      ],
+      "oracle_role": "reference_only",
+      "phase_scope": "homogeneous_single_phase",
+      "reaction_set": {
+        "feed_amounts": {
+          "A": 1.0,
+          "B": 0.0
+        },
+        "reactions": [
+          {
+            "label": "a_to_b",
+            "stoichiometry": {
+              "A": -1.0,
+              "B": 1.0
+            }
+          }
+        ],
+        "species": [
+          {
+            "charge": 0.0,
+            "elements": {
+              "X": 1.0
+            },
+            "label": "A"
+          },
+          {
+            "charge": 0.0,
+            "elements": {
+              "X": 1.0
+            },
+            "label": "B"
+          }
+        ]
+      },
+      "solver": {
+        "compared_runtime_path": "#326 activation-matrix native NLP/Ipopt path",
+        "method": "ideal mole-fraction mass-action solution",
+        "name": "closed_form_ideal_gibbs_minimization",
+        "runtime_dependency": "none"
+      },
+      "source": {
+        "label": "Pope 2004 Gibbs-continuation stress fixture",
+        "reference": "Pope 2004 constrained Gibbs chemical-equilibrium continuation method",
+        "scope_note": "Analytic ideal tiny-species fixture for continuation-style stress; not a Pope implementation or alternate solve path."
+      },
+      "species_order": [
+        "A",
+        "B"
+      ],
+      "standard_state_registry": {
+        "records": [
+          {
+            "form": "ln_K",
+            "reaction_label": "a_to_b",
+            "source": "Pope 2004 Gibbs-continuation stress fixture",
+            "source_constant_label": "ln_K_tiny_species_fixture",
+            "standard_state": {
+              "activity_convention": "mole_fraction_activity",
+              "label": "mole_fraction_standard_state",
+              "pressure_Pa": 101325.0,
+              "temperature_K": 298.15
+            },
+            "units": "dimensionless",
+            "value": -13.815510557964274
+          }
+        ]
+      },
+      "tolerances": {
+        "affinity_abs": 1e-05,
+        "amount_abs": 1e-07,
+        "balance_abs": 1e-09,
+        "mole_fraction_abs": 1e-07
+      }
+    }
+  ],
+  "generated_by": "analyses/reference_oracles/chemical_equilibrium/generate_reference_cases.py",
+  "runtime_dependencies": [],
+  "schema_version": "epcsaft.ce_reference_oracles.v1",
+  "scope": "standalone_chemical_equilibrium_only"
+}
