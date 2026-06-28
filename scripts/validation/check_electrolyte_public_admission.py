@@ -219,6 +219,8 @@ def _public_route_payload(case_dir: Path, checker_command: list[str] | None) -> 
             "transfer_residuals": diagnostics.get("transfer_residuals", {}),
             "pressure_consistency": diagnostics.get("pressure_consistency", {}),
             "domain_margins": diagnostics.get("domain_margins", {}),
+            "electrolyte_stage_iii_refinement": diagnostics.get("electrolyte_stage_iii_refinement", {}),
+            "held2_phase_discovery": diagnostics.get("held2_phase_discovery", {}),
             "hessian_approximation": diagnostics.get("hessian_approximation"),
             "route_hessian_approximation": diagnostics.get("route_hessian_approximation"),
             "exact_hessian_available": diagnostics.get("exact_hessian_available"),
@@ -279,6 +281,53 @@ def _validate_public_admission(public_admission: dict[str, Any]) -> list[str]:
     domain = public_admission.get("domain_margins", {})
     if float(domain.get("phase_distance", 0.0)) <= float(domain.get("phase_distance_tolerance", 1.0e-8)):
         blockers.append("public_admission_phase_distance_not_certified")
+    held2 = public_admission.get("held2_phase_discovery", {})
+    if not isinstance(held2, Mapping):
+        blockers.append("public_admission_held2_discovery_missing")
+    else:
+        blockers.extend(
+            f"public_admission_{blocker}" for blocker in _validate_held2_stage_ii(dict(held2))
+        )
+    stage_iii = public_admission.get("electrolyte_stage_iii_refinement", {})
+    if not isinstance(stage_iii, Mapping) or stage_iii.get("status") != "complete":
+        blockers.append("public_admission_stage_iii_missing")
+    else:
+        seed = stage_iii.get("seed_provenance", {})
+        if not isinstance(seed, Mapping) or seed.get("stage_ii_replay_ready") is not True:
+            blockers.append("public_admission_stage_ii_replay_not_consumed")
+    return blockers
+
+
+def _validate_held2_stage_ii(held2_phase_discovery: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    if not held2_phase_discovery:
+        return ["held2_stage_ii_missing"]
+    status = held2_phase_discovery.get("status")
+    if status is not None and status != "complete" and held2_phase_discovery.get("complete") is not True:
+        blockers.append("held2_phase_discovery_incomplete")
+    tpd = held2_phase_discovery.get("tpd_discovery", {})
+    if not isinstance(tpd, Mapping):
+        return blockers + ["held2_stage_ii_discovery_missing"]
+    if tpd.get("held_stage_ii_status") != "dual_loop_verified":
+        blockers.append("held2_stage_ii_incomplete")
+    if tpd.get("held_stage_ii_candidate_bound_audit_status") != "candidate_bound_gap_closed":
+        blockers.append("held2_stage_ii_bound_gap_open")
+    if tpd.get("held_stage_ii_dual_loop_status") != "verified":
+        blockers.append("held2_stage_ii_dual_loop_incomplete")
+    replay_fractions = list(tpd.get("held_stage_ii_replay_phase_fractions", []))
+    replay_kinds = list(tpd.get("held_stage_ii_replay_phase_kinds", []))
+    replay_compositions = list(tpd.get("held_stage_ii_replay_phase_compositions", []))
+    if (
+        tpd.get("held_stage_ii_replay_ready") is not True
+        or len(replay_fractions) < 2
+        or len(replay_kinds) != len(replay_fractions)
+        or len(replay_compositions) != len(replay_fractions)
+    ):
+        blockers.append("held2_stage_ii_replay_missing")
+    if tpd.get("held_stage_ii_replay_source") != "stage_ii_dual_loop_selected_candidates":
+        blockers.append("held2_stage_ii_replay_source_mismatch")
+    if tpd.get("held_stage_ii_replay_seed_name") != "held_stage_ii_dual_loop_candidate_pair":
+        blockers.append("held2_stage_ii_replay_seed_mismatch")
     return blockers
 
 
@@ -289,6 +338,7 @@ def evaluate_payload(
     require_readiness_gate: bool = False,
     require_tpd_gate: bool = False,
     require_held2_discovery: bool = False,
+    require_held2_stage_ii: bool = False,
     require_stage_iii: bool = False,
     require_postsolve_certification: bool = False,
     require_public_admission: bool = False,
@@ -305,6 +355,8 @@ def evaluate_payload(
         blockers.extend(
             _validate_gate(payload.get("held2_phase_discovery", {}), blocker="held2_phase_discovery_incomplete")
         )
+    if require_held2_stage_ii:
+        blockers.extend(_validate_held2_stage_ii(payload.get("held2_phase_discovery", {})))
     if require_stage_iii:
         blockers.extend(
             _validate_gate(
@@ -346,6 +398,7 @@ def evaluate_public_admission(
     require_readiness_gate: bool = False,
     require_tpd_gate: bool = False,
     require_held2_discovery: bool = False,
+    require_held2_stage_ii: bool = False,
     require_stage_iii: bool = False,
     require_postsolve_certification: bool = False,
     require_public_admission: bool = False,
@@ -387,6 +440,7 @@ def evaluate_public_admission(
         require_readiness_gate=require_readiness_gate,
         require_tpd_gate=require_tpd_gate,
         require_held2_discovery=require_held2_discovery,
+        require_held2_stage_ii=require_held2_stage_ii,
         require_stage_iii=require_stage_iii,
         require_postsolve_certification=require_postsolve_certification,
         require_public_admission=require_public_admission,
@@ -440,6 +494,8 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
                 "phase_distance": 0.02,
                 "phase_distance_tolerance": check_electrolyte_stage_iii_refinement.PHASE_DISTANCE_TOLERANCE,
             },
+            "held2_phase_discovery": held2,
+            "electrolyte_stage_iii_refinement": stage_iii,
             "hessian_approximation": "exact",
             "route_hessian_approximation": "limited-memory",
             "exact_hessian_available": True,
@@ -474,6 +530,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--require-readiness-gate", action="store_true")
     parser.add_argument("--require-tpd-gate", action="store_true")
     parser.add_argument("--require-held2-discovery", action="store_true")
+    parser.add_argument("--require-held2-stage-ii", action="store_true")
     parser.add_argument("--require-stage-iii", action="store_true")
     parser.add_argument("--require-postsolve-certification", action="store_true")
     parser.add_argument("--require-public-admission", action="store_true")
@@ -501,6 +558,7 @@ def main(argv: list[str] | None = None) -> int:
         require_readiness_gate=args.require_readiness_gate or args.require_complete,
         require_tpd_gate=args.require_tpd_gate or args.require_complete,
         require_held2_discovery=args.require_held2_discovery or args.require_complete,
+        require_held2_stage_ii=args.require_held2_stage_ii or args.require_complete,
         require_stage_iii=args.require_stage_iii or args.require_complete,
         require_postsolve_certification=args.require_postsolve_certification or args.require_complete,
         require_public_admission=args.require_public_admission or args.require_complete,

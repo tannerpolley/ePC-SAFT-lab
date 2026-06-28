@@ -1059,21 +1059,50 @@ ElectrolyteHeld2PhaseDiscoveryResult build_electrolyte_held2_diagnostic(
     return out;
 }
 
-std::vector<double> pair_residuals_from_reference_and_trial(
+std::vector<double> reduced_ln_fugacity_values(
+    const add_args& args,
+    const EosPhaseBlockResult& block,
+    std::size_t species_count
+);
+
+std::vector<double> pair_residuals_from_projected_reduced_ln_fugacity(
+    const add_args& args,
     const std::vector<std::vector<double>>& counterion_matrix,
     const std::vector<int>& charged_indices,
+    const std::vector<double>& charges,
     const EosPhaseBlockResult& reference,
     const EosPhaseBlockResult& trial
 ) {
+    const std::size_t species_count = reference.composition.size();
+    require_size(trial.composition, species_count, "Electrolyte projected mean-ionic trial composition");
+    require_size(charges, species_count, "Electrolyte projected mean-ionic charge");
+    const std::vector<double> reference_values = reduced_ln_fugacity_values(args, reference, species_count);
+    const std::vector<double> trial_values = reduced_ln_fugacity_values(args, trial, species_count);
+
+    double charge_square_norm = 0.0;
+    double charge_weighted_difference = 0.0;
+    std::vector<double> projected_difference(species_count, 0.0);
+    for (std::size_t species = 0; species < species_count; ++species) {
+        projected_difference[species] = trial_values[species] - reference_values[species];
+        charge_square_norm += charges[species] * charges[species];
+        charge_weighted_difference += charges[species] * projected_difference[species];
+    }
+    if (charge_square_norm <= 0.0) {
+        throw ValueError("Electrolyte projected mean-ionic residuals require at least one charged species.");
+    }
+    const double charge_shift = -charge_weighted_difference / charge_square_norm;
+    for (std::size_t species = 0; species < species_count; ++species) {
+        projected_difference[species] += charge_shift * charges[species];
+    }
+
     std::vector<double> residuals;
     residuals.reserve(counterion_matrix.size());
     for (const std::vector<double>& row : counterion_matrix) {
+        require_size(row, charged_indices.size(), "Electrolyte projected mean-ionic counterion row");
         double residual = 0.0;
         for (std::size_t charged = 0; charged < charged_indices.size(); ++charged) {
             const int global_index = charged_indices[charged];
-            residual += row[charged]
-                * (trial.gradient[static_cast<std::size_t>(global_index)]
-                   - reference.gradient[static_cast<std::size_t>(global_index)]);
+            residual += row[charged] * projected_difference[static_cast<std::size_t>(global_index)];
         }
         residuals.push_back(residual);
     }
@@ -4585,9 +4614,11 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
             reference_phase_kinds.front(),
             "Electrolyte HELD2 mean-ionic candidate"
         );
-        out.mean_ionic_residual_values = pair_residuals_from_reference_and_trial(
+        out.mean_ionic_residual_values = pair_residuals_from_projected_reduced_ln_fugacity(
+            args,
             out.counterion_pair_matrix,
             out.charged_species_indices,
+            charges,
             reference,
             trial
         );
@@ -4766,9 +4797,11 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
             phase_kinds[1],
             "Electrolyte Stage III phase 1"
         );
-        const std::vector<double> pair_residuals = pair_residuals_from_reference_and_trial(
+        const std::vector<double> pair_residuals = pair_residuals_from_projected_reduced_ln_fugacity(
+            args,
             out.held2_discovery.counterion_pair_matrix,
             out.held2_discovery.charged_species_indices,
+            charges,
             reference,
             trial
         );
@@ -4806,10 +4839,7 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
         out.route_result.exact_jacobian_required && out.route_result.jacobian_approximation == "exact";
     out.exact_reduced_hessian_available = !out.held2_discovery.counterion_pair_matrix.empty();
 
-    const bool solver_success =
-        out.route_result.solver_accepted
-        && out.route_result.solver_status == "success"
-        && out.route_result.application_status == "solve_succeeded";
+    const bool solver_success = out.route_result.solver_accepted && out.route_result.accepted;
     const bool finite_compositions = !out.selected_phase_compositions.empty()
         && std::all_of(
             out.selected_phase_compositions.begin(),
@@ -5416,8 +5446,25 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         problem_name,
         minimum_phase_distance
     );
-    if (!apply_neutral_route_solve_result(out, solve)) {
+    const bool strict_solver_acceptance = apply_neutral_route_solve_result(out, solve);
+    const bool certified_stage_iii_acceptable_point =
+        !strict_solver_acceptance
+        && problem_name == "electrolyte_stage_iii_reduced_variable_refinement"
+        && solve.acceptable
+        && solve.application_status == "solved_to_acceptable_level"
+        && !solve.variables.empty()
+        && solve_diagnostic_double(solve, "scaled_constraint_violation_inf_norm", std::numeric_limits<double>::infinity())
+            <= chemical_potential_tolerance
+        && solve_diagnostic_double(solve, "scaled_stationarity_inf_norm", std::numeric_limits<double>::infinity())
+            <= chemical_potential_tolerance
+        && solve_diagnostic_double(solve, "scaled_complementarity_inf_norm", std::numeric_limits<double>::infinity())
+            <= chemical_potential_tolerance;
+    if (!strict_solver_acceptance && !certified_stage_iii_acceptable_point) {
         return out;
+    }
+    if (certified_stage_iii_acceptable_point) {
+        out.solver_accepted = true;
+        out.rejection_reason.clear();
     }
 
     const std::size_t species_count = feed_amounts.size();
