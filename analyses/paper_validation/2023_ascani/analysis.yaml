@@ -47,6 +47,12 @@ expected:
   route_gate_accepted: true
   paper_match_accepted: false
   solver_backend: ipopt
+  standalone_ce_validation_ladder:
+    retained_by: analyses/paper_validation/standalone_ce/shared/results/summary.json
+    validation_family: ascani_2023
+    ce_only: true
+    phase_scope: homogeneous_single_phase
+    paper_match_status: blocked_source_data
 tolerances:
   material_balance_abs: 1.0e-8
   reaction_stationarity_abs: 1.0e-8

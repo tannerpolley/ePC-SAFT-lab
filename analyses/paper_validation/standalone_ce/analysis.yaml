@@ -1,0 +1,28 @@
+id: standalone_ce_validation_ladder
+title: Standalone homogeneous chemical equilibrium validation ladder
+status: complete
+summary: Retained CE-only validation ladder for analytic, charged, Ascani, MEA, Cantera, and Pope evidence families.
+source_plan: docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
+issue: 329
+scope:
+  equilibrium: standalone_chemical_equilibrium
+  phase_scope: homogeneous_single_phase
+  public_routes: []
+  closed_surfaces:
+    - reactive_lle
+    - reactive_electrolyte_lle
+    - cpe
+commands:
+  checker:
+    - uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete
+validation_families:
+  - analytic_ideal
+  - charged_conservation
+  - ascani_2023
+  - mea_speciation
+  - cantera_reference_oracle
+  - pope_reference_oracle
+outputs:
+  - path: analyses/paper_validation/standalone_ce/shared/results/summary.json
+    kind: retained_validation_ladder_summary
+claim_boundary: No reactive LLE, reactive electrolyte LLE, or CPE capability is proven by this standalone CE ladder.

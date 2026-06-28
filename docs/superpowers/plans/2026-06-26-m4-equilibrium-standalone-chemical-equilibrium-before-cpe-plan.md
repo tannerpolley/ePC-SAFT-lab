@@ -507,18 +507,18 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 
-- [ ] **Step 1: Write failing validation-checker tests.**
+- [x] **Step 1: Write failing validation-checker tests.**
   Cover missing analytic, charged, Ascani, MEA, Cantera, Pope, derivative, and
   capability evidence.
-- [ ] **Step 2: Run checker tests and verify failure.**
+- [x] **Step 2: Run checker tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py tests/native/contracts/test_standalone_ce_gate.py -q`.
-- [ ] **Step 3: Add retained validation records.**
+- [x] **Step 3: Add retained validation records.**
   Store JSON summaries with species order, units, residuals, tolerances, and
   source links.
-- [ ] **Step 4: Require complete checker mode.**
+- [x] **Step 4: Require complete checker mode.**
   Make `check_standalone_ce_gate.py --json --require-complete` consume every
   validation family.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit validation ladder and registry evidence updates.
 
 ### Task 10: Activate Standalone CE And Preserve CPE Closure

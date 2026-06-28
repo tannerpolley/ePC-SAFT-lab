@@ -16,6 +16,18 @@ if str(REPO_ROOT) not in sys.path:
 REFERENCE_ORACLE_PATH = (
     REPO_ROOT / "analyses" / "reference_oracles" / "chemical_equilibrium" / "cantera_pope_reference_cases.json"
 )
+VALIDATION_LADDER_PATH = (
+    REPO_ROOT / "analyses" / "paper_validation" / "standalone_ce" / "shared" / "results" / "summary.json"
+)
+REQUIRED_VALIDATION_FAMILIES = (
+    "analytic_ideal",
+    "charged_conservation",
+    "ascani_2023",
+    "mea_speciation",
+    "cantera_reference_oracle",
+    "pope_reference_oracle",
+)
+REQUIRED_CLOSED_SURFACES = ["reactive_lle", "reactive_electrolyte_lle", "cpe"]
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
 
@@ -289,7 +301,141 @@ def reference_oracle_evidence() -> dict[str, Any]:
     }
 
 
-def evaluate_standalone_ce_gate(*, require_single_nlp_path: bool, require_oracles: bool = False) -> dict[str, Any]:
+def _load_validation_ladder_payload(path: Path = VALIDATION_LADDER_PATH) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "schema_version": "",
+            "scope": "",
+            "validation_families": [],
+            "runtime_dependencies": [],
+            "public_routes": [],
+            "closed_surfaces": [],
+            "load_error": f"missing:{path.as_posix()}",
+        }
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    if payload.get("schema_version") != "epcsaft.standalone_ce.validation_ladder.v1":
+        blockers.append("validation_ladder_schema_version_mismatch")
+    if payload.get("scope") != "standalone_chemical_equilibrium_only":
+        blockers.append("validation_ladder_scope_mismatch")
+    if payload.get("claimed_equilibrium_scopes") != ["standalone_chemical_equilibrium"]:
+        blockers.append("validation_ladder_claims_non_ce_scope")
+    if payload.get("runtime_dependencies") != []:
+        blockers.append("validation_ladder_runtime_dependency_present")
+    if payload.get("public_routes") != []:
+        blockers.append("validation_ladder_public_routes_claimed")
+    if payload.get("closed_surfaces") != REQUIRED_CLOSED_SURFACES:
+        blockers.append("validation_ladder_closed_surfaces_mismatch")
+    if payload.get("load_error"):
+        blockers.append("validation_ladder_fixture_missing")
+
+    records = payload.get("validation_families")
+    if not isinstance(records, list) or not records:
+        blockers.append("validation_families_missing")
+        return sorted(set(blockers))
+
+    family_ids = [str(record.get("family_id") or "") for record in records if isinstance(record, dict)]
+    for family_id in REQUIRED_VALIDATION_FAMILIES:
+        if family_id not in family_ids:
+            blockers.append(f"validation_family_{family_id}_missing")
+    unexpected = sorted(set(family_ids) - set(REQUIRED_VALIDATION_FAMILIES))
+    blockers.extend(f"validation_family_{family_id}_unexpected" for family_id in unexpected)
+    duplicates = sorted({family_id for family_id in family_ids if family_ids.count(family_id) > 1})
+    blockers.extend(f"validation_family_{family_id}_duplicate" for family_id in duplicates)
+
+    required_record_fields = {
+        "family_id",
+        "label",
+        "status",
+        "source",
+        "source_path",
+        "evidence_role",
+        "species_order",
+        "units",
+        "residuals",
+        "tolerances",
+        "standard_state_metadata",
+    }
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            blockers.append(f"validation_family_{index}_malformed")
+            continue
+        family_id = str(record.get("family_id") or f"family_{index}")
+        missing = sorted(field for field in required_record_fields if field not in record)
+        blockers.extend(f"validation_family_{family_id}_missing_{field}" for field in missing)
+        if record.get("ce_only") is not True:
+            blockers.append(f"validation_family_{family_id}_not_ce_only")
+        if record.get("phase_scope") != "homogeneous_single_phase":
+            blockers.append(f"validation_family_{family_id}_phase_scope_mismatch")
+        if record.get("claimed_equilibrium_scopes") != ["standalone_chemical_equilibrium"]:
+            blockers.append(f"validation_family_{family_id}_claims_non_ce_scope")
+        if record.get("status") not in {"complete", "retained_source_blocker_disclosed"}:
+            blockers.append(f"validation_family_{family_id}_status_mismatch")
+        if not isinstance(record.get("species_order"), list) or not record.get("species_order"):
+            blockers.append(f"validation_family_{family_id}_species_order_missing")
+        if not isinstance(record.get("tolerances"), dict) or not record.get("tolerances"):
+            blockers.append(f"validation_family_{family_id}_tolerances_missing")
+        if not isinstance(record.get("residuals"), dict) or not record.get("residuals"):
+            blockers.append(f"validation_family_{family_id}_residuals_missing")
+
+    derivative = dict(payload.get("derivative_evidence") or {})
+    if derivative.get("status") != "complete":
+        blockers.append("derivative_evidence_status_mismatch")
+    if derivative.get("backend") != "analytic":
+        blockers.append("derivative_evidence_backend_mismatch")
+    for key, blocker in (
+        ("objective_gradient_exact", "derivative_evidence_objective_gradient_not_exact"),
+        ("constraint_jacobian_exact", "derivative_evidence_constraint_jacobian_not_exact"),
+        ("lagrangian_hessian_exact", "derivative_evidence_lagrangian_hessian_not_exact"),
+    ):
+        if derivative.get(key) is not True:
+            blockers.append(blocker)
+    if not derivative.get("source"):
+        blockers.append("derivative_evidence_source_missing")
+
+    capability = dict(payload.get("capability_evidence") or {})
+    if capability.get("status") != "closed_until_activation_gate":
+        blockers.append("capability_evidence_status_mismatch")
+    if capability.get("activation_gate") != "issue_0330":
+        blockers.append("capability_activation_gate_mismatch")
+    if capability.get("production") is not False:
+        blockers.append("capability_production_claimed")
+    if capability.get("public_routes") != []:
+        blockers.append("capability_public_routes_claimed")
+    if capability.get("closed_surfaces") != REQUIRED_CLOSED_SURFACES:
+        blockers.append("capability_closed_surfaces_mismatch")
+    return sorted(set(blockers))
+
+
+def validation_ladder_evidence() -> dict[str, Any]:
+    payload = _load_validation_ladder_payload()
+    blockers = validation_ladder_payload_blockers(payload)
+    records = payload.get("validation_families") if isinstance(payload.get("validation_families"), list) else []
+    families = [
+        str(record.get("family_id"))
+        for record in records
+        if isinstance(record, dict) and record.get("family_id")
+    ]
+    return {
+        "status": "complete" if not blockers else "blocked",
+        "blockers": blockers,
+        "artifact_path": VALIDATION_LADDER_PATH.relative_to(REPO_ROOT).as_posix(),
+        "family_count": len(families),
+        "families": families,
+        "derivative_evidence": dict(payload.get("derivative_evidence") or {}),
+        "capability_evidence": dict(payload.get("capability_evidence") or {}),
+    }
+
+
+def evaluate_standalone_ce_gate(
+    *,
+    require_single_nlp_path: bool,
+    require_oracles: bool = False,
+    require_complete: bool = False,
+) -> dict[str, Any]:
     core = extension_native_core()
     smoke = core._native_ipopt_smoke()
     if not smoke["compiled"]:
@@ -340,9 +486,17 @@ def evaluate_standalone_ce_gate(*, require_single_nlp_path: bool, require_oracle
         oracle_evidence = reference_oracle_evidence()
         report["oracle_evidence"] = oracle_evidence
         blockers.extend(str(blocker) for blocker in oracle_evidence["blockers"])
-    report["blockers"] = blockers
-    report["status"] = "complete" if not blockers else "blocked"
-    if require_single_nlp_path and blockers:
+    if require_complete:
+        if "oracle_evidence" not in report:
+            oracle_evidence = reference_oracle_evidence()
+            report["oracle_evidence"] = oracle_evidence
+            blockers.extend(str(blocker) for blocker in oracle_evidence["blockers"])
+        ladder_evidence = validation_ladder_evidence()
+        report["validation_ladder"] = ladder_evidence
+        blockers.extend(str(blocker) for blocker in ladder_evidence["blockers"])
+    report["blockers"] = sorted(set(blockers))
+    report["status"] = "complete" if not report["blockers"] else "blocked"
+    if require_single_nlp_path and report["blockers"]:
         report["status"] = "blocked"
     return report
 
@@ -352,11 +506,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="Print JSON evidence.")
     parser.add_argument("--require-single-nlp-path", action="store_true")
     parser.add_argument("--require-oracles", action="store_true")
+    parser.add_argument("--require-complete", action="store_true")
     args = parser.parse_args(argv)
 
     report = evaluate_standalone_ce_gate(
         require_single_nlp_path=args.require_single_nlp_path,
         require_oracles=args.require_oracles,
+        require_complete=args.require_complete,
     )
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
