@@ -29,6 +29,7 @@ last_synced: "2026-06-28"
 
 ## Outcome Summary
 
+**Outcome Source:** docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md#outcome-proof
 **Intent:** Convert continuous reduced-coordinate TPD output into a HELD2 Stage I stability certificate.
 **Target Output:** Stable, unstable, incomplete, and suspect-start classifications with retained residual and bound evidence.
 **Owner:** `packages/epcsaft-equilibrium`.
