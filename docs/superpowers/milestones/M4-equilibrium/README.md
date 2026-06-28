@@ -55,6 +55,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #312 electrolyte HELD2 Stage III refinement gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md) | `electrolyte` | Closed #191 child gate for consuming the #306 candidate set in local reduced-variable Stage III electrolyte refinement while keeping postsolve certification and public admission separate. |
 | [Issue #313 electrolyte postsolve phase-set certification gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md) | `electrolyte` | Closed #191 child gate for explicit-ion reconstruction, charge, transfer, pressure, amount, and domain-margin certification after #312. |
 | [Issue #314 electrolyte public route admission gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md) | `electrolyte` | Adds the final #191 child gate for source-backed public electrolyte GFPE route admission after Stage III and postsolve certification close. |
+| [Full HELD2 public-route phase discovery adoption plan](../../plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md) | `electrolyte` | Adds #343 through #350 for full HELD2-style public-route phase discovery: doctrine, continuous TPD, Stage I, Stage II, public route orchestration, scenario validation, and capability admission. |
 
 ## Retained Evidence
 
@@ -85,8 +86,16 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves full Khudaida figure-level model reproduction, broader HELD2 flash scenario validation, and shared native `NlpProblem`/Ipopt exact-Hessian route receipts. |
-| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `ready` | `Ipopt` | `ready` | Active final #191 blocker for full Khudaida model reproduction and HELD2 flash scenario proof. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320_343` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves Perdomo/Figiel HELD2 validation and #343 proves full HELD2-style public-route discovery through #344-#350. |
+| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active #191 validation blocker for Perdomo/Figiel HELD2 electrolyte flash evidence through the public package route. |
+| [#343](../../issues/2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) | `electrolyte` | `Ipopt` | `blocked_by_344_345_346_347_348_349_350` | Full HELD2-style public-route phase-discovery adoption tracker. |
+| [#344](../../issues/2026-06-27-m4-equilibrium-issue-0344-define-held2-public-route-doctrine-and-validation-matrix.md) | `electrolyte` | `Ipopt` | `ready` | Defines HELD2 public-route doctrine and validation matrix before runtime slices begin. |
+| [#345](../../issues/2026-06-27-m4-equilibrium-issue-0345-implement-electrolyte-continuous-tpd-minimizer-in-reduced-coordinates.md) | `electrolyte` | `Ipopt` | `blocked_by_344` | Implements continuous reduced-electroneutral TPD minimization. |
+| [#346](../../issues/2026-06-27-m4-equilibrium-issue-0346-add-held2-stage-i-electrolyte-stability-certificate.md) | `electrolyte` | `Ipopt` | `blocked_by_345` | Adds the HELD2 Stage I electrolyte stability certificate. |
+| [#347](../../issues/2026-06-27-m4-equilibrium-issue-0347-implement-held2-stage-ii-electrolyte-dual-phase-discovery.md) | `electrolyte` | `Ipopt` | `blocked_by_346` | Implements HELD2 Stage II dual/cutting-plane phase discovery. |
+| [#348](../../issues/2026-06-27-m4-equilibrium-issue-0348-integrate-held2-discovery-into-electrolyte-public-route-orchestration.md) | `electrolyte` | `Ipopt` | `blocked_by_347` | Integrates HELD2 discovery into the public electrolyte route before Stage III. |
+| [#349](../../issues/2026-06-27-m4-equilibrium-issue-0349-add-held2-public-route-scenario-validation-ladder.md) | `electrolyte` | `Ipopt` | `blocked_by_348` | Adds the public-route scenario validation ladder. |
+| [#350](../../issues/2026-06-27-m4-equilibrium-issue-0350-admit-held2-public-route-capability-evidence-after-full-validation.md) | `electrolyte` | `Ipopt` | `blocked_by_349` | Admits registry and docs capability evidence only after full validation. |
 
 ## Queue Guard
 
@@ -234,10 +243,14 @@ consumes #269/#300/#302/#306/#312/#313 and exposes only the source-backed
 Khudaida explicit-ion NaCl mixed-solvent `electrolyte_lle` route, but it is not
 full electrolyte LLE model reproduction.
 
-#320 is the active final #191 blocker. It must prove full Khudaida
-figure-level model reproduction, broader HELD2 flash scenario validation, and
-shared native `NlpProblem`/Ipopt exact-Hessian route receipts before #191 can
-close or hand off remaining GFPE evidence to M6 #192.
+#320 remains a #191 validation blocker for Perdomo/Figiel HELD2 electrolyte
+flash evidence through the public package route.
+
+#343 is the explicit full HELD2 public-route discovery implementation blocker
+for #191. It is blocked by #344 through #350 and covers doctrine, continuous
+reduced-electroneutral TPD minimization, Stage I stability certification, Stage
+II dual/cutting-plane discovery, public route orchestration, scenario
+validation, and registry/capability admission.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
