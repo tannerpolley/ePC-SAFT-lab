@@ -138,11 +138,11 @@
     },
     {
       "family_id": "mea_speciation",
-      "label": "MEA CO2 aqueous true-species source scaffold",
+      "label": "MEA CO2 H2O Smith-Missen loading sweep",
       "status": "complete",
-      "evidence_role": "source_reaction_and_charge_balance_contract",
-      "source": "Baygi 2015 MEA true-species reaction and charge-balance pattern",
-      "source_path": "analyses/paper_validation/2015_baygi/docs/md/source_01_baygi_2015.md",
+      "evidence_role": "executable_public_reactive_speciation_sweep",
+      "source": "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
+      "source_path": "packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py",
       "ce_only": true,
       "phase_scope": "homogeneous_single_phase",
       "claimed_equilibrium_scopes": [
@@ -150,35 +150,54 @@
       ],
       "species_order": [
         "CO2",
-        "H2O",
-        "H3O+",
-        "OH-",
-        "HCO3-",
-        "CO3--",
         "MEA",
+        "H2O",
         "MEAH+",
-        "MEACOO-"
+        "MEACOO-",
+        "HCO3-",
+        "CO3^2-",
+        "H3O+",
+        "OH-"
+      ],
+      "loading_grid": [
+        0.1,
+        0.4,
+        0.8
       ],
       "units": {
         "amounts": "mol",
+        "mole_fractions": "dimensionless",
         "charge": "elementary_charge",
-        "source_concentration_basis": "molality_or_liquid_concentration_as_reported"
+        "loading": "mol CO2 per mol MEA",
+        "temperature": "K",
+        "pressure": "Pa",
+        "equilibrium_constant": "dimensionless"
       },
       "standard_state_metadata": {
-        "activity_convention": "molality",
-        "standard_molality_mol_kg": 1.0,
-        "source_scope": "true-species aqueous speciation bookkeeping"
+        "label": "smith_missen_mole_fraction_standard_state",
+        "activity_convention": "mole_fraction_activity",
+        "temperature_K": 313.15,
+        "pressure_Pa": 101325.0,
+        "source_module": "MEA.smith_missen.ideal_speciation",
+        "water_per_amine_30wtpct": 7.909507954125047
       },
       "residuals": {
+        "loading_count": 3,
         "reaction_equation_count": 5,
-        "charge_balance_expression_retained": true,
-        "total_mea_balance_expression_retained": true,
-        "total_co2_loading_expression_retained": true
+        "max_balance_inf_norm": 1.4e-10,
+        "max_reaction_stationarity_inf_norm": 5.0e-8,
+        "max_mole_fraction_abs_error": 1.0e-11,
+        "max_loading_abs_error": 1.0e-12,
+        "max_charge_abs": 1.0e-12
       },
       "tolerances": {
-        "reaction_equation_count_min": 5,
+        "balance_abs": 1e-8,
+        "affinity_abs": 1e-6,
+        "mole_fraction_abs": 5e-10,
+        "loading_abs": 1e-8,
         "charge_balance_abs": 1e-8,
-        "species_order_required": 9
+        "species_order_required": 9,
+        "loading_count_min": 3
       }
     },
     {

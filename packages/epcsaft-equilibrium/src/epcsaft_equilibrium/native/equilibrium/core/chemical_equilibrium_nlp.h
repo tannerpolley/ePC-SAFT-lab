@@ -66,6 +66,12 @@ public:
     HomogeneousChemicalEquilibriumBlockResult evaluate_block(
         const std::vector<double>& variables
     ) const;
+    HomogeneousChemicalEquilibriumBlockResult evaluate_physical_block(
+        const std::vector<double>& amounts
+    ) const;
+    std::vector<double> physical_amounts_from_solver_variables(
+        const std::vector<double>& solver_variables
+    ) const;
 
     const ChemicalEquilibriumNlpInput& input() const;
     const epcsaft::native::equilibrium::ActivationPlan& plan() const;

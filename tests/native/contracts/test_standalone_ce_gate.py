@@ -89,6 +89,12 @@ def test_standalone_ce_validation_ladder_summary_retains_required_families_and_b
         "cantera_reference_oracle",
         "pope_reference_oracle",
     }
+    mea = next(record for record in payload["validation_families"] if record["family_id"] == "mea_speciation")
+    assert mea["evidence_role"] == "executable_public_reactive_speciation_sweep"
+    assert mea["source"] == "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture"
+    assert mea["standard_state_metadata"]["activity_convention"] == "mole_fraction_activity"
+    assert mea["loading_grid"] == [0.1, 0.4, 0.8]
+    assert mea["residuals"]["max_reaction_stationarity_inf_norm"] <= mea["tolerances"]["affinity_abs"]
     assert payload["derivative_evidence"] == {
         "status": "complete",
         "backend": "analytic",
@@ -150,3 +156,8 @@ def test_standalone_ce_gate_complete_mode_consumes_validation_ladder() -> None:
     ]
     assert ladder["derivative_evidence"]["lagrangian_hessian_exact"] is True
     assert ladder["capability_evidence"]["public_routes"] == ["reactive_speciation"]
+    mea = report["mea_speciation_evidence"]
+    assert mea["status"] == "complete"
+    assert mea["loading_grid"] == [0.1, 0.4, 0.8]
+    assert [row["loading_mol_co2_per_mol_mea"] for row in mea["rows"]] == [0.1, 0.4, 0.8]
+    assert max(row["reaction_stationarity_inf_norm"] for row in mea["rows"]) <= mea["tolerances"]["affinity_abs"]

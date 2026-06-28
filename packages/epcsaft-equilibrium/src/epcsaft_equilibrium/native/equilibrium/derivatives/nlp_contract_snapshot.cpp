@@ -127,8 +127,15 @@ NeutralTwoPhaseEosNlpContract make_neutral_two_phase_nlp_contract_snapshot(
     out.objective_scaling = scaling.objective;
     out.variable_scaling = scaling.variables;
     out.constraint_scaling = scaling.constraints;
-    const IdentityVariableTransform transform(problem.variable_count());
-    const VariableTransformEvaluation transform_evaluation = transform.evaluate(initial);
+    VariableTransformEvaluation transform_evaluation;
+    const auto transform_policy = diagnostics.find("transform_policy");
+    if (transform_policy != diagnostics.end() && transform_policy->second == "positive_log_coordinates") {
+        const PositiveLogVariableTransform transform(problem.variable_count());
+        transform_evaluation = transform.evaluate(initial);
+    } else {
+        const IdentityVariableTransform transform(problem.variable_count());
+        transform_evaluation = transform.evaluate(initial);
+    }
     out.transform_policy = transform_evaluation.transform_policy;
     out.transform_backend = transform_evaluation.backend;
     out.transform_input_variable_count = transform_evaluation.input_variable_count;
@@ -144,6 +151,31 @@ NeutralTwoPhaseEosNlpContract make_neutral_two_phase_nlp_contract_snapshot(
         constraints,
         species_count
     );
+    if (transform_evaluation.transform_policy == "positive_log_coordinates") {
+        out.initial_amount_lower_margin = std::numeric_limits<double>::infinity();
+        out.initial_volume_lower_margin = std::numeric_limits<double>::infinity();
+        for (int index = 0; index < problem.variable_count(); ++index) {
+            const std::size_t i = static_cast<std::size_t>(index);
+            const bool is_volume = species_count > 0 && (index % (species_count + 1)) == species_count;
+            if (is_volume) {
+                out.initial_volume_lower_margin = std::min(
+                    out.initial_volume_lower_margin,
+                    transform_evaluation.physical_variables[i]
+                );
+            } else {
+                out.initial_amount_lower_margin = std::min(
+                    out.initial_amount_lower_margin,
+                    transform_evaluation.physical_variables[i]
+                );
+            }
+        }
+        if (!std::isfinite(out.initial_amount_lower_margin)) {
+            out.initial_amount_lower_margin = 0.0;
+        }
+        if (!std::isfinite(out.initial_volume_lower_margin)) {
+            out.initial_volume_lower_margin = 0.0;
+        }
+    }
     return out;
 }
 

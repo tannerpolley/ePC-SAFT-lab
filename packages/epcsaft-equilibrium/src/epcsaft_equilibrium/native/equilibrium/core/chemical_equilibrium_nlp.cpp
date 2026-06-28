@@ -16,6 +16,8 @@ namespace epcsaft::native::equilibrium_nlp {
 
 namespace {
 
+constexpr double kMinimumPositiveLogAmount = 1.0e-22;
+
 void require_finite(double value, const std::string& label) {
     if (std::isfinite(value)) {
         return;
@@ -55,13 +57,150 @@ double amount_upper_bound(const std::vector<double>& totals, const std::vector<d
     return 10.0 * std::max(1.0, scale);
 }
 
+std::vector<double> solve_damped_linear_system(
+    std::vector<double> matrix,
+    std::vector<double> rhs,
+    int dimension
+) {
+    require_size(matrix.size(), static_cast<std::size_t>(dimension * dimension), "linear system matrix");
+    require_size(rhs.size(), static_cast<std::size_t>(dimension), "linear system rhs");
+    for (int pivot = 0; pivot < dimension; ++pivot) {
+        int pivot_row = pivot;
+        double pivot_abs = std::abs(matrix[static_cast<std::size_t>(pivot * dimension + pivot)]);
+        for (int row = pivot + 1; row < dimension; ++row) {
+            const double candidate = std::abs(matrix[static_cast<std::size_t>(row * dimension + pivot)]);
+            if (candidate > pivot_abs) {
+                pivot_abs = candidate;
+                pivot_row = row;
+            }
+        }
+        if (pivot_abs <= 0.0 || !std::isfinite(pivot_abs)) {
+            throw ValueError("chemical equilibrium multiplier warm start system is singular.");
+        }
+        if (pivot_row != pivot) {
+            for (int column = 0; column < dimension; ++column) {
+                std::swap(
+                    matrix[static_cast<std::size_t>(pivot * dimension + column)],
+                    matrix[static_cast<std::size_t>(pivot_row * dimension + column)]
+                );
+            }
+            std::swap(rhs[static_cast<std::size_t>(pivot)], rhs[static_cast<std::size_t>(pivot_row)]);
+        }
+        const double diagonal = matrix[static_cast<std::size_t>(pivot * dimension + pivot)];
+        for (int row = pivot + 1; row < dimension; ++row) {
+            const double factor = matrix[static_cast<std::size_t>(row * dimension + pivot)] / diagonal;
+            matrix[static_cast<std::size_t>(row * dimension + pivot)] = 0.0;
+            for (int column = pivot + 1; column < dimension; ++column) {
+                matrix[static_cast<std::size_t>(row * dimension + column)] -=
+                    factor * matrix[static_cast<std::size_t>(pivot * dimension + column)];
+            }
+            rhs[static_cast<std::size_t>(row)] -= factor * rhs[static_cast<std::size_t>(pivot)];
+        }
+    }
+
+    std::vector<double> solution(static_cast<std::size_t>(dimension), 0.0);
+    for (int row = dimension - 1; row >= 0; --row) {
+        double value = rhs[static_cast<std::size_t>(row)];
+        for (int column = row + 1; column < dimension; ++column) {
+            value -= matrix[static_cast<std::size_t>(row * dimension + column)]
+                * solution[static_cast<std::size_t>(column)];
+        }
+        const double diagonal = matrix[static_cast<std::size_t>(row * dimension + row)];
+        if (diagonal == 0.0 || !std::isfinite(diagonal)) {
+            throw ValueError("chemical equilibrium multiplier warm start system is singular.");
+        }
+        solution[static_cast<std::size_t>(row)] = value / diagonal;
+    }
+    return solution;
+}
+
+std::vector<double> estimate_constraint_multipliers(
+    const ChemicalEquilibriumNlpInput& input,
+    const std::vector<double>& physical_gradient,
+    double objective_scaling,
+    const std::vector<double>& balance_scaling
+) {
+    const int species_count = static_cast<int>(input.species_labels.size());
+    const int balance_count = static_cast<int>(input.conservation_labels.size());
+    require_size(
+        physical_gradient.size(),
+        static_cast<std::size_t>(species_count),
+        "chemical equilibrium physical gradient"
+    );
+    require_positive_finite(objective_scaling, "chemical equilibrium objective scaling");
+    require_size(
+        balance_scaling.size(),
+        static_cast<std::size_t>(balance_count),
+        "chemical equilibrium balance scaling"
+    );
+    std::vector<double> normal_matrix(static_cast<std::size_t>(balance_count * balance_count), 0.0);
+    std::vector<double> rhs(static_cast<std::size_t>(balance_count), 0.0);
+    double max_diagonal = 0.0;
+    for (int row = 0; row < balance_count; ++row) {
+        for (int species = 0; species < species_count; ++species) {
+            const double row_value =
+                input.conservation_matrix_row_major[static_cast<std::size_t>(row * species_count + species)];
+            rhs[static_cast<std::size_t>(row)] -=
+                row_value * objective_scaling * physical_gradient[static_cast<std::size_t>(species)];
+            for (int column = 0; column < balance_count; ++column) {
+                normal_matrix[static_cast<std::size_t>(row * balance_count + column)] +=
+                    row_value
+                    * input.conservation_matrix_row_major[
+                        static_cast<std::size_t>(column * species_count + species)
+                    ];
+            }
+        }
+        max_diagonal = std::max(
+            max_diagonal,
+            std::abs(normal_matrix[static_cast<std::size_t>(row * balance_count + row)])
+        );
+    }
+    const double ridge = std::max(1.0e-14, 1.0e-14 * max_diagonal);
+    for (int row = 0; row < balance_count; ++row) {
+        normal_matrix[static_cast<std::size_t>(row * balance_count + row)] += ridge;
+    }
+    std::vector<double> scaled_multipliers =
+        solve_damped_linear_system(std::move(normal_matrix), std::move(rhs), balance_count);
+    for (int row = 0; row < balance_count; ++row) {
+        const double scale = balance_scaling[static_cast<std::size_t>(row)];
+        require_positive_finite(scale, "chemical equilibrium balance scaling");
+        scaled_multipliers[static_cast<std::size_t>(row)] /= scale;
+    }
+    return scaled_multipliers;
+}
+
+std::vector<double> log_amounts_from_physical_amounts(const std::vector<double>& amounts) {
+    std::vector<double> out;
+    out.reserve(amounts.size());
+    for (double amount : amounts) {
+        require_positive_finite(amount, "chemical equilibrium positive-log initial amount");
+        if (amount < kMinimumPositiveLogAmount) {
+            throw ValueError("chemical equilibrium initial amount is below the positive-log lower bound.");
+        }
+        out.push_back(std::log(amount));
+    }
+    return out;
+}
+
+std::vector<double> physical_amounts_from_log_amounts(const std::vector<double>& solver_variables) {
+    std::vector<double> out;
+    out.reserve(solver_variables.size());
+    for (double value : solver_variables) {
+        require_finite(value, "chemical equilibrium positive-log solver variable");
+        const double amount = std::exp(value);
+        require_positive_finite(amount, "chemical equilibrium physical amount");
+        out.push_back(amount);
+    }
+    return out;
+}
+
 NlpBounds make_bounds(const ChemicalEquilibriumNlpInput& input) {
     const int species_count = static_cast<int>(input.species_labels.size());
     const int balance_count = static_cast<int>(input.conservation_labels.size());
     const double upper = amount_upper_bound(input.conservation_totals, input.initial_amounts);
     NlpBounds out;
-    out.variable_lower.assign(static_cast<std::size_t>(species_count), 1.0e-14);
-    out.variable_upper.assign(static_cast<std::size_t>(species_count), upper);
+    out.variable_lower.assign(static_cast<std::size_t>(species_count), std::log(kMinimumPositiveLogAmount));
+    out.variable_upper.assign(static_cast<std::size_t>(species_count), std::log(upper));
     out.constraint_lower.assign(static_cast<std::size_t>(balance_count), 0.0);
     out.constraint_upper.assign(static_cast<std::size_t>(balance_count), 0.0);
     return out;
@@ -158,6 +297,10 @@ void validate_plan_layout(
     if (layout.variable_model != "single_phase_species_amounts") {
         throw ValueError("chemical-equilibrium-nlp-ineligible: variable layout model mismatch.");
     }
+    if (layout.solver_coordinate_basis != "log_species_amounts"
+        || layout.transform_policy != "positive_log_coordinates") {
+        throw ValueError("chemical-equilibrium-nlp-ineligible: reactive_speciation must use positive log amount coordinates.");
+    }
     if (layout.variable_count != species_count) {
         throw ValueError("chemical-equilibrium-nlp-ineligible: variable count must match species count.");
     }
@@ -204,14 +347,20 @@ NlpBounds HomogeneousChemicalEquilibriumNlp::bounds() const {
 }
 
 std::vector<double> HomogeneousChemicalEquilibriumNlp::initial_point() const {
-    return input_.initial_amounts;
+    return log_amounts_from_physical_amounts(input_.initial_amounts);
 }
 
 HomogeneousChemicalEquilibriumBlockResult HomogeneousChemicalEquilibriumNlp::evaluate_block(
     const std::vector<double>& variables
 ) const {
+    return evaluate_physical_block(physical_amounts_from_solver_variables(variables));
+}
+
+HomogeneousChemicalEquilibriumBlockResult HomogeneousChemicalEquilibriumNlp::evaluate_physical_block(
+    const std::vector<double>& amounts
+) const {
     return evaluate_homogeneous_chemical_equilibrium_block(
-        variables,
+        amounts,
         static_cast<int>(input_.reaction_labels.size()),
         input_.stoichiometry_row_major,
         static_cast<int>(input_.conservation_labels.size()),
@@ -228,7 +377,14 @@ double HomogeneousChemicalEquilibriumNlp::objective(const std::vector<double>& v
 std::vector<double> HomogeneousChemicalEquilibriumNlp::objective_gradient(
     const std::vector<double>& variables
 ) const {
-    return evaluate_block(variables).objective_gradient;
+    const std::vector<double> amounts = physical_amounts_from_solver_variables(variables);
+    const HomogeneousChemicalEquilibriumBlockResult block = evaluate_physical_block(amounts);
+    std::vector<double> out;
+    out.reserve(amounts.size());
+    for (std::size_t index = 0; index < amounts.size(); ++index) {
+        out.push_back(block.objective_gradient[index] * amounts[index]);
+    }
+    return out;
 }
 
 std::vector<double> HomogeneousChemicalEquilibriumNlp::constraints(
@@ -244,8 +400,20 @@ NlpJacobianStructure HomogeneousChemicalEquilibriumNlp::jacobian_structure() con
 std::vector<double> HomogeneousChemicalEquilibriumNlp::jacobian_values(
     const std::vector<double>& variables
 ) const {
-    (void)variables;
-    return input_.conservation_matrix_row_major;
+    const std::vector<double> amounts = physical_amounts_from_solver_variables(variables);
+    std::vector<double> out;
+    out.reserve(input_.conservation_matrix_row_major.size());
+    const int species_count = variable_count();
+    const int balance_count = constraint_count();
+    for (int row = 0; row < balance_count; ++row) {
+        for (int column = 0; column < species_count; ++column) {
+            out.push_back(
+                input_.conservation_matrix_row_major[static_cast<std::size_t>(row * species_count + column)]
+                * amounts[static_cast<std::size_t>(column)]
+            );
+        }
+    }
+    return out;
 }
 
 bool HomogeneousChemicalEquilibriumNlp::has_exact_hessian() const {
@@ -265,18 +433,37 @@ std::vector<double> HomogeneousChemicalEquilibriumNlp::hessian_values(
     double objective_factor,
     const std::vector<double>& constraint_multipliers
 ) const {
-    (void)constraint_multipliers;
-    const HomogeneousChemicalEquilibriumBlockResult block = evaluate_block(variables);
+    require_size(
+        constraint_multipliers.size(),
+        static_cast<std::size_t>(constraint_count()),
+        "chemical equilibrium constraint multiplier vector"
+    );
+    const std::vector<double> amounts = physical_amounts_from_solver_variables(variables);
+    const HomogeneousChemicalEquilibriumBlockResult block = evaluate_physical_block(amounts);
     std::vector<double> out;
     out.reserve(hessian_structure_.rows.size());
     const int species_count = variable_count();
     for (int index = 0; index < hessian_nonzero_count(); ++index) {
         const int row = hessian_structure_.rows[static_cast<std::size_t>(index)];
         const int column = hessian_structure_.cols[static_cast<std::size_t>(index)];
-        out.push_back(
+        double value =
             objective_factor
             * block.hessian_row_major[static_cast<std::size_t>(row * species_count + column)]
-        );
+            * amounts[static_cast<std::size_t>(row)]
+            * amounts[static_cast<std::size_t>(column)];
+        if (row == column) {
+            value += objective_factor
+                * block.objective_gradient[static_cast<std::size_t>(row)]
+                * amounts[static_cast<std::size_t>(row)];
+            for (int balance = 0; balance < constraint_count(); ++balance) {
+                value += constraint_multipliers[static_cast<std::size_t>(balance)]
+                    * input_.conservation_matrix_row_major[
+                        static_cast<std::size_t>(balance * species_count + row)
+                    ]
+                    * amounts[static_cast<std::size_t>(row)];
+            }
+        }
+        out.push_back(value);
     }
     return out;
 }
@@ -286,10 +473,10 @@ std::string HomogeneousChemicalEquilibriumNlp::hessian_backend() const {
 }
 
 NlpScaling HomogeneousChemicalEquilibriumNlp::scaling() const {
-    const HomogeneousChemicalEquilibriumBlockResult block = evaluate_block(input_.initial_amounts);
+    const HomogeneousChemicalEquilibriumBlockResult block = evaluate_physical_block(input_.initial_amounts);
     NlpScaling out;
     out.objective = block.objective_scaling;
-    out.variables = block.variable_scaling;
+    out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
     out.constraints = block.balance_scaling;
     return out;
 }
@@ -303,8 +490,21 @@ std::map<std::string, std::string> HomogeneousChemicalEquilibriumNlp::diagnostic
     std::map<std::string, std::string> out = route_metadata_diagnostics(metadata);
     out["activation_compiler"] = "activation_plan";
     out["activation_family"] = plan_.family_key;
+    out["solver_coordinate_basis"] = "log_species_amounts";
+    out["transform_policy"] = "positive_log_coordinates";
     out["thermodynamic_block"] = "homogeneous_chemical_equilibrium";
     return out;
+}
+
+std::vector<double> HomogeneousChemicalEquilibriumNlp::physical_amounts_from_solver_variables(
+    const std::vector<double>& solver_variables
+) const {
+    require_size(
+        solver_variables.size(),
+        static_cast<std::size_t>(variable_count()),
+        "chemical equilibrium solver variable vector"
+    );
+    return physical_amounts_from_log_amounts(solver_variables);
 }
 
 const ChemicalEquilibriumNlpInput& HomogeneousChemicalEquilibriumNlp::input() const {
@@ -331,7 +531,7 @@ NeutralTwoPhaseEosNlpContract evaluate_activated_chemical_equilibrium_nlp_contra
         layout.species_count,
         NlpContractSnapshotDetail::FullDerivativeEvidence
     );
-    const HomogeneousChemicalEquilibriumBlockResult block = problem.evaluate_block(problem.initial_point());
+    const HomogeneousChemicalEquilibriumBlockResult block = problem.evaluate_physical_block(input.initial_amounts);
     out.balance_row_count = static_cast<int>(input.conservation_labels.size());
     out.reaction_count = static_cast<int>(input.reaction_labels.size());
     out.standard_mu_rt = block.standard_mu_rt;
@@ -348,13 +548,39 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
 ) {
     HomogeneousChemicalEquilibriumNlp problem(input, plan, layout);
     validate_nlp_problem_shape(problem);
+    IpoptSolveOptions solve_options = options;
+    if (solve_options.initial_constraint_multipliers.empty()) {
+        const HomogeneousChemicalEquilibriumBlockResult initial_block =
+            problem.evaluate_physical_block(input.initial_amounts);
+        solve_options.initial_constraint_multipliers = estimate_constraint_multipliers(
+            input,
+            initial_block.objective_gradient,
+            initial_block.objective_scaling,
+            initial_block.balance_scaling
+        );
+        solve_options.initial_bound_lower_multipliers.assign(
+            static_cast<std::size_t>(problem.variable_count()),
+            0.0
+        );
+        solve_options.initial_bound_upper_multipliers.assign(
+            static_cast<std::size_t>(problem.variable_count()),
+            0.0
+        );
+    }
+    if (solve_options.bound_push <= 0.0) {
+        solve_options.bound_push = 1.0e-12;
+    }
+    if (solve_options.bound_frac <= 0.0) {
+        solve_options.bound_frac = 1.0e-12;
+    }
     ChemicalEquilibriumNlpResult out;
     out.contract = evaluate_activated_chemical_equilibrium_nlp_contract(input, plan, layout);
-    out.solve = solve_ipopt_nlp(problem, options);
+    out.solve = solve_ipopt_nlp(problem, solve_options);
     const std::vector<double>& variables = out.solve.variables.empty()
-        ? input.initial_amounts
+        ? problem.initial_point()
         : out.solve.variables;
-    out.postsolve = problem.evaluate_block(variables);
+    const std::vector<double> amounts = problem.physical_amounts_from_solver_variables(variables);
+    out.postsolve = problem.evaluate_physical_block(amounts);
     out.balance_inf_norm = vector_inf_norm(out.postsolve.balance_residuals);
     out.reaction_stationarity_inf_norm = vector_inf_norm(out.postsolve.reaction_affinities);
     out.accepted = ipopt_solve_result_allows_postsolve(out.solve)

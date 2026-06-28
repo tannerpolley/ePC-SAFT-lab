@@ -6,6 +6,7 @@ import epcsaft_equilibrium
 import pytest
 from epcsaft import InputError, SolutionError
 from epcsaft_equilibrium import workflows
+from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.chemical_equilibrium import (
     ChemicalReaction,
     ChemicalSpecies,
@@ -38,6 +39,112 @@ def _constant() -> EquilibriumConstantRecord:
         source="API contract fixture",
         source_constant_label="ln_K",
     )
+
+
+def _mea_standard_state() -> StandardStateRecord:
+    return StandardStateRecord(
+        label="smith_missen_mole_fraction_standard_state",
+        activity_convention="mole_fraction_activity",
+        temperature_K=313.15,
+        pressure_Pa=101325.0,
+        metadata={
+            "source_project": "MEA-Thermodynamics",
+            "source_module": "MEA.smith_missen.ideal_speciation",
+            "temperature_label": "40 C",
+        },
+    )
+
+
+def _mea_species() -> list[ChemicalSpecies]:
+    return [
+        ChemicalSpecies("CO2", {"C": 1.0, "O": 2.0}),
+        ChemicalSpecies("MEA", {"C": 2.0, "H": 7.0, "N": 1.0, "O": 1.0}),
+        ChemicalSpecies("H2O", {"H": 2.0, "O": 1.0}),
+        ChemicalSpecies("MEAH+", {"C": 2.0, "H": 8.0, "N": 1.0, "O": 1.0}, charge=1.0),
+        ChemicalSpecies("MEACOO-", {"C": 3.0, "H": 6.0, "N": 1.0, "O": 3.0}, charge=-1.0),
+        ChemicalSpecies("HCO3-", {"H": 1.0, "C": 1.0, "O": 3.0}, charge=-1.0),
+        ChemicalSpecies("CO3^2-", {"C": 1.0, "O": 3.0}, charge=-2.0),
+        ChemicalSpecies("H3O+", {"H": 3.0, "O": 1.0}, charge=1.0),
+        ChemicalSpecies("OH-", {"H": 1.0, "O": 1.0}, charge=-1.0),
+    ]
+
+
+def _mea_reactions() -> list[ChemicalReaction]:
+    return [
+        ChemicalReaction("R1_water_autoionization", {"H2O": -2.0, "H3O+": 1.0, "OH-": 1.0}),
+        ChemicalReaction("R2_CO2_to_HCO3", {"CO2": -1.0, "H2O": -2.0, "HCO3-": 1.0, "H3O+": 1.0}),
+        ChemicalReaction("R3_HCO3_to_CO3", {"H2O": -1.0, "HCO3-": -1.0, "CO3^2-": 1.0, "H3O+": 1.0}),
+        ChemicalReaction("R4_MEACOO_hydrolysis", {"MEA": 1.0, "H2O": -1.0, "MEACOO-": -1.0, "HCO3-": 1.0}),
+        ChemicalReaction("R5_MEAH_dissociation", {"MEA": 1.0, "H2O": -1.0, "MEAH+": -1.0, "H3O+": 1.0}),
+    ]
+
+
+def _mea_constants() -> list[EquilibriumConstantRecord]:
+    standard_state = _mea_standard_state()
+    ln_k_by_reaction = {
+        "R1_water_autoionization": -39.20847211814555,
+        "R2_CO2_to_HCO3": -18.52157205941222,
+        "R3_HCO3_to_CO3": -27.55307337666852,
+        "R4_MEACOO_hydrolysis": -6.79989583266805,
+        "R5_MEAH_dissociation": -26.37413522909149,
+    }
+    return [
+        EquilibriumConstantRecord(
+            reaction_label=label,
+            value=ln_k,
+            form="ln_K",
+            units="dimensionless",
+            standard_state=standard_state,
+            source="MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
+            source_constant_label=label,
+            metadata={"basis": "mole fraction", "temperature_K": 313.15},
+        )
+        for label, ln_k in ln_k_by_reaction.items()
+    ]
+
+
+_MEA_WATER_PER_AMINE = 7.909507954125047
+_MEA_EXPECTED_MOLE_FRACTIONS = {
+    0.1: {
+        "CO2": 6.683924651954811e-09,
+        "MEA": 0.08989223566464728,
+        "H2O": 0.8873375669739914,
+        "MEAH+": 0.011527775080012528,
+        "MEACOO-": 0.010819632394452237,
+        "HCO3-": 0.00011896575214617932,
+        "CO3^2-": 0.00028535948338821623,
+        "H3O+": 3.999178474611162e-13,
+        "OH-": 1.845796703766678e-05,
+    },
+    0.4: {
+        "CO2": 1.4322412188376851e-06,
+        "MEA": 0.02419700925042081,
+        "H2O": 0.88572243609252,
+        "MEAH+": 0.04518349608467077,
+        "MEACOO-": 0.042858977799977424,
+        "HCO3-": 0.001747513447705002,
+        "CO3^2-": 0.000287869765126298,
+        "H3O+": 5.812652925262093e-12,
+        "OH-": 1.265312548334571e-06,
+    },
+    0.8: {
+        "CO2": 0.005192618263938971,
+        "MEA": 0.00043545843921396094,
+        "H2O": 0.8260154916473321,
+        "MEAH+": 0.08422357694784907,
+        "MEACOO-": 0.026997790877452618,
+        "HCO3-": 0.057044328501079176,
+        "CO3^2-": 9.072336914185697e-05,
+        "H3O+": 5.614793231095988e-10,
+        "OH-": 1.1392512989995421e-08,
+    },
+}
+
+
+def _mea_initial_amounts(mole_fractions: dict[str, float]) -> list[float]:
+    amine_fraction = mole_fractions["MEA"] + mole_fractions["MEAH+"] + mole_fractions["MEACOO-"]
+    scale = 1.0 / amine_fraction
+    return [mole_fractions[species.label] * scale for species in _mea_species()]
 
 
 def _native_payload() -> dict[str, object]:
@@ -207,3 +314,66 @@ def test_reactive_speciation_rejects_non_mole_fraction_activity_until_supported(
             ],
             initial_amounts=[0.5, 0.5],
         )
+
+
+def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_fixture() -> None:
+    core = extension_native_core()
+    if not core._native_ipopt_smoke()["compiled"]:
+        pytest.skip("native Ipopt is not compiled")
+
+    species = _mea_species()
+    reactions = _mea_reactions()
+    constants = _mea_constants()
+    solver_options = epcsaft_equilibrium.EquilibriumSolverOptions(max_iterations=300, tolerance=1.0e-6)
+    results = []
+
+    for loading, expected in _MEA_EXPECTED_MOLE_FRACTIONS.items():
+        result = epcsaft_equilibrium.reactive_speciation(
+            species=species,
+            reactions=reactions,
+            feed_amounts={"MEA": 1.0, "H2O": _MEA_WATER_PER_AMINE, "CO2": loading},
+            equilibrium_constants=constants,
+            initial_amounts=_mea_initial_amounts(expected),
+            solver_options=solver_options,
+        )
+        results.append(result)
+
+        assert result.route == "reactive_speciation"
+        assert result.problem_kind == "standalone_chemical_equilibrium"
+        assert result.phase_scope == "homogeneous"
+        assert result.coupling_scope == "chemical_equilibrium_only"
+        assert result.diagnostics["native_binding"] == "_native_chemical_equilibrium_nlp_activation"
+        assert result.diagnostics["solver_status"] == "success"
+        assert result.diagnostics["application_status"] == "solve_succeeded"
+        assert result.diagnostics["accepted"] is True
+        assert result.balances == pytest.approx({key: 0.0 for key in ("C", "O", "H", "N", "charge")}, abs=1.0e-8)
+        assert result.affinities == pytest.approx({reaction.label: 0.0 for reaction in reactions}, abs=1.0e-6)
+        assert result.mole_fractions.tolist() == pytest.approx(
+            [expected[label] for label in result.species_labels],
+            rel=2.0e-5,
+            abs=5.0e-10,
+        )
+
+        amounts = result.species_amounts
+        co2_loading = (
+            amounts["CO2"]
+            + amounts["MEACOO-"]
+            + amounts["HCO3-"]
+            + amounts["CO3^2-"]
+        ) / (amounts["MEA"] + amounts["MEAH+"] + amounts["MEACOO-"])
+        charge = (
+            amounts["MEAH+"]
+            + amounts["H3O+"]
+            - amounts["MEACOO-"]
+            - amounts["HCO3-"]
+            - 2.0 * amounts["CO3^2-"]
+            - amounts["OH-"]
+        )
+        assert co2_loading == pytest.approx(loading, abs=1.0e-8)
+        assert charge == pytest.approx(0.0, abs=1.0e-8)
+
+    assert [row.species_amounts["CO2"] for row in results] == sorted(row.species_amounts["CO2"] for row in results)
+    assert [row.species_amounts["MEA"] for row in results] == sorted(
+        (row.species_amounts["MEA"] for row in results),
+        reverse=True,
+    )

@@ -33,6 +33,7 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
+from epcsaft_equilibrium import EquilibriumSolverOptions, reactive_speciation
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.chemical_equilibrium import (
     ChemicalReaction,
@@ -74,6 +75,112 @@ def _ideal_ab_problem() -> tuple[Any, Any]:
         ]
     )
     return compiled, registry
+
+
+def _mea_standard_state() -> StandardStateRecord:
+    return StandardStateRecord(
+        label="smith_missen_mole_fraction_standard_state",
+        activity_convention="mole_fraction_activity",
+        temperature_K=313.15,
+        pressure_Pa=101325.0,
+        metadata={
+            "source_project": "MEA-Thermodynamics",
+            "source_module": "MEA.smith_missen.ideal_speciation",
+            "temperature_label": "40 C",
+        },
+    )
+
+
+def _mea_species() -> list[ChemicalSpecies]:
+    return [
+        ChemicalSpecies("CO2", {"C": 1.0, "O": 2.0}),
+        ChemicalSpecies("MEA", {"C": 2.0, "H": 7.0, "N": 1.0, "O": 1.0}),
+        ChemicalSpecies("H2O", {"H": 2.0, "O": 1.0}),
+        ChemicalSpecies("MEAH+", {"C": 2.0, "H": 8.0, "N": 1.0, "O": 1.0}, charge=1.0),
+        ChemicalSpecies("MEACOO-", {"C": 3.0, "H": 6.0, "N": 1.0, "O": 3.0}, charge=-1.0),
+        ChemicalSpecies("HCO3-", {"H": 1.0, "C": 1.0, "O": 3.0}, charge=-1.0),
+        ChemicalSpecies("CO3^2-", {"C": 1.0, "O": 3.0}, charge=-2.0),
+        ChemicalSpecies("H3O+", {"H": 3.0, "O": 1.0}, charge=1.0),
+        ChemicalSpecies("OH-", {"H": 1.0, "O": 1.0}, charge=-1.0),
+    ]
+
+
+def _mea_reactions() -> list[ChemicalReaction]:
+    return [
+        ChemicalReaction("R1_water_autoionization", {"H2O": -2.0, "H3O+": 1.0, "OH-": 1.0}),
+        ChemicalReaction("R2_CO2_to_HCO3", {"CO2": -1.0, "H2O": -2.0, "HCO3-": 1.0, "H3O+": 1.0}),
+        ChemicalReaction("R3_HCO3_to_CO3", {"H2O": -1.0, "HCO3-": -1.0, "CO3^2-": 1.0, "H3O+": 1.0}),
+        ChemicalReaction("R4_MEACOO_hydrolysis", {"MEA": 1.0, "H2O": -1.0, "MEACOO-": -1.0, "HCO3-": 1.0}),
+        ChemicalReaction("R5_MEAH_dissociation", {"MEA": 1.0, "H2O": -1.0, "MEAH+": -1.0, "H3O+": 1.0}),
+    ]
+
+
+def _mea_constants() -> list[EquilibriumConstantRecord]:
+    standard_state = _mea_standard_state()
+    ln_k_by_reaction = {
+        "R1_water_autoionization": -39.20847211814555,
+        "R2_CO2_to_HCO3": -18.52157205941222,
+        "R3_HCO3_to_CO3": -27.55307337666852,
+        "R4_MEACOO_hydrolysis": -6.79989583266805,
+        "R5_MEAH_dissociation": -26.37413522909149,
+    }
+    return [
+        EquilibriumConstantRecord(
+            reaction_label=label,
+            value=ln_k,
+            form="ln_K",
+            units="dimensionless",
+            standard_state=standard_state,
+            source="MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
+            source_constant_label=label,
+            metadata={"basis": "mole fraction", "temperature_K": 313.15},
+        )
+        for label, ln_k in ln_k_by_reaction.items()
+    ]
+
+
+_MEA_WATER_PER_AMINE = 7.909507954125047
+_MEA_EXPECTED_MOLE_FRACTIONS = {
+    0.1: {
+        "CO2": 6.683924651954811e-09,
+        "MEA": 0.08989223566464728,
+        "H2O": 0.8873375669739914,
+        "MEAH+": 0.011527775080012528,
+        "MEACOO-": 0.010819632394452237,
+        "HCO3-": 0.00011896575214617932,
+        "CO3^2-": 0.00028535948338821623,
+        "H3O+": 3.999178474611162e-13,
+        "OH-": 1.845796703766678e-05,
+    },
+    0.4: {
+        "CO2": 1.4322412188376851e-06,
+        "MEA": 0.02419700925042081,
+        "H2O": 0.88572243609252,
+        "MEAH+": 0.04518349608467077,
+        "MEACOO-": 0.042858977799977424,
+        "HCO3-": 0.001747513447705002,
+        "CO3^2-": 0.000287869765126298,
+        "H3O+": 5.812652925262093e-12,
+        "OH-": 1.265312548334571e-06,
+    },
+    0.8: {
+        "CO2": 0.005192618263938971,
+        "MEA": 0.00043545843921396094,
+        "H2O": 0.8260154916473321,
+        "MEAH+": 0.08422357694784907,
+        "MEACOO-": 0.026997790877452618,
+        "HCO3-": 0.057044328501079176,
+        "CO3^2-": 9.072336914185697e-05,
+        "H3O+": 5.614793231095988e-10,
+        "OH-": 1.1392512989995421e-08,
+    },
+}
+
+
+def _mea_initial_amounts(mole_fractions: dict[str, float]) -> list[float]:
+    amine_fraction = mole_fractions["MEA"] + mole_fractions["MEAH+"] + mole_fractions["MEACOO-"]
+    scale = 1.0 / amine_fraction
+    return [mole_fractions[species.label] * scale for species in _mea_species()]
 
 
 def _side_channel_bindings_absent() -> bool:
@@ -380,6 +487,14 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
             blockers.append(f"validation_family_{family_id}_tolerances_missing")
         if not isinstance(record.get("residuals"), dict) or not record.get("residuals"):
             blockers.append(f"validation_family_{family_id}_residuals_missing")
+        if family_id == "mea_speciation":
+            if record.get("evidence_role") != "executable_public_reactive_speciation_sweep":
+                blockers.append("validation_family_mea_speciation_evidence_role_mismatch")
+            if record.get("loading_grid") != [0.1, 0.4, 0.8]:
+                blockers.append("validation_family_mea_speciation_loading_grid_mismatch")
+            standard_state = dict(record.get("standard_state_metadata") or {})
+            if standard_state.get("activity_convention") != "mole_fraction_activity":
+                blockers.append("validation_family_mea_speciation_standard_state_mismatch")
 
     derivative = dict(payload.get("derivative_evidence") or {})
     if derivative.get("status") != "complete":
@@ -430,6 +545,83 @@ def validation_ladder_evidence() -> dict[str, Any]:
         "families": families,
         "derivative_evidence": dict(payload.get("derivative_evidence") or {}),
         "capability_evidence": dict(payload.get("capability_evidence") or {}),
+    }
+
+
+def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
+    species = _mea_species()
+    reactions = _mea_reactions()
+    constants = _mea_constants()
+    solver_options = EquilibriumSolverOptions(max_iterations=300, tolerance=1.0e-6)
+    tolerances = {
+        "balance_abs": 1.0e-8,
+        "affinity_abs": 1.0e-6,
+        "mole_fraction_abs": 5.0e-10,
+        "loading_abs": 1.0e-8,
+        "charge_abs": 1.0e-8,
+    }
+    blockers: list[str] = []
+    rows: list[dict[str, Any]] = []
+    for loading, expected in _MEA_EXPECTED_MOLE_FRACTIONS.items():
+        result = reactive_speciation(
+            species=species,
+            reactions=reactions,
+            feed_amounts={"MEA": 1.0, "H2O": _MEA_WATER_PER_AMINE, "CO2": loading},
+            equilibrium_constants=constants,
+            initial_amounts=_mea_initial_amounts(expected),
+            solver_options=solver_options,
+        )
+        amounts = result.species_amounts
+        reconstructed_loading = (
+            amounts["CO2"] + amounts["MEACOO-"] + amounts["HCO3-"] + amounts["CO3^2-"]
+        ) / (amounts["MEA"] + amounts["MEAH+"] + amounts["MEACOO-"])
+        charge = (
+            amounts["MEAH+"]
+            + amounts["H3O+"]
+            - amounts["MEACOO-"]
+            - amounts["HCO3-"]
+            - 2.0 * amounts["CO3^2-"]
+            - amounts["OH-"]
+        )
+        mole_fraction_errors = [
+            abs(float(actual) - float(expected[label]))
+            for actual, label in zip(result.mole_fractions.tolist(), result.species_labels)
+        ]
+        balance_inf_norm = max(abs(float(value)) for value in result.balances.values())
+        affinity_inf_norm = max(abs(float(value)) for value in result.affinities.values())
+        row = {
+            "loading_mol_co2_per_mol_mea": loading,
+            "max_mole_fraction_abs_error": max(mole_fraction_errors, default=0.0),
+            "balance_inf_norm": balance_inf_norm,
+            "reaction_stationarity_inf_norm": affinity_inf_norm,
+            "reconstructed_loading_abs_error": abs(reconstructed_loading - loading),
+            "charge_balance": charge,
+            "solver_status": str(result.diagnostics["solver_status"]),
+            "application_status": str(result.diagnostics["application_status"]),
+        }
+        rows.append(row)
+        if row["solver_status"] != "success":
+            blockers.append(f"mea_loading_{loading}_solver_status_mismatch")
+        if row["application_status"] != "solve_succeeded":
+            blockers.append(f"mea_loading_{loading}_application_status_mismatch")
+        if row["max_mole_fraction_abs_error"] > tolerances["mole_fraction_abs"]:
+            blockers.append(f"mea_loading_{loading}_mole_fraction_error_above_tolerance")
+        if row["balance_inf_norm"] > tolerances["balance_abs"]:
+            blockers.append(f"mea_loading_{loading}_balance_above_tolerance")
+        if row["reaction_stationarity_inf_norm"] > tolerances["affinity_abs"]:
+            blockers.append(f"mea_loading_{loading}_affinity_above_tolerance")
+        if row["reconstructed_loading_abs_error"] > tolerances["loading_abs"]:
+            blockers.append(f"mea_loading_{loading}_loading_above_tolerance")
+        if abs(charge) > tolerances["charge_abs"]:
+            blockers.append(f"mea_loading_{loading}_charge_above_tolerance")
+    return {
+        "status": "complete" if not blockers else "blocked",
+        "blockers": sorted(set(blockers)),
+        "source": "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
+        "public_route": "reactive_speciation",
+        "loading_grid": list(_MEA_EXPECTED_MOLE_FRACTIONS),
+        "tolerances": tolerances,
+        "rows": rows,
     }
 
 
@@ -497,6 +689,9 @@ def evaluate_standalone_ce_gate(
         ladder_evidence = validation_ladder_evidence()
         report["validation_ladder"] = ladder_evidence
         blockers.extend(str(blocker) for blocker in ladder_evidence["blockers"])
+        mea_evidence = mea_speciation_public_sweep_evidence()
+        report["mea_speciation_evidence"] = mea_evidence
+        blockers.extend(str(blocker) for blocker in mea_evidence["blockers"])
     report["blockers"] = sorted(set(blockers))
     report["status"] = "complete" if not report["blockers"] else "blocked"
     if require_single_nlp_path and report["blockers"]:
