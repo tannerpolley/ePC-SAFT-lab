@@ -131,6 +131,17 @@ Proof:
 uv run --no-sync python scripts\dev\validate_project.py docs
 ```
 
+Resolution record:
+
+- #344 writes the public-route doctrine in the source spec section
+  `Public-Route Doctrine`, including reduced electroneutral state equations,
+  charged and neutral transfer residual families, stage responsibilities,
+  candidate lifecycle states, acceptance residual floors, and the scenario
+  validation matrix.
+- The M4 milestone README separates open HELD2 phase-equilibrium issues from
+  CE/CPE issues so the full HELD2 phase-discovery path remains distinct from
+  standalone chemical-equilibrium work.
+
 ### Slice 2: Continuous Reduced-Electroneutral TPD Minimizer (#345)
 
 Title: `M4: implement electrolyte continuous TPD minimizer in reduced coordinates`

@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-rout
 source_plan: "docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0344-held2-public-route-doctrine-validation-matrix
-last_synced: "2026-06-27"
+last_synced: "2026-06-28"
 ---
 
 # M4: define HELD2 public-route doctrine and validation matrix
@@ -55,11 +55,30 @@ tolerances for full HELD2 public-route adoption.
 
 ## Acceptance Criteria
 
-- [ ] Doctrine names Stage I, Stage II, Stage III, postsolve, and public-route cutover responsibilities.
-- [ ] Validation matrix covers stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt scenarios.
-- [ ] Projected electrochemical and mean-ionic residuals are required for charged transfer evidence.
-- [ ] Raw single-ion equality, hidden charge clipping, residual-only success, and fallback solver flags are rejected as acceptance evidence.
-- [ ] Public-route capability remains closed until implementation slices pass.
+- [x] Doctrine names Stage I, Stage II, Stage III, postsolve, and public-route cutover responsibilities.
+- [x] Validation matrix covers stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt scenarios.
+- [x] Projected electrochemical and mean-ionic residuals are required for charged transfer evidence.
+- [x] Raw single-ion equality, hidden charge clipping, residual-only success, and fallback solver flags are rejected as acceptance evidence.
+- [x] Public-route capability remains closed until implementation slices pass.
+
+## Resolution Evidence
+
+- The source spec now defines the reduced electroneutral state, lift/back-lift
+  equations, projected electrochemical and mean-ionic charged-transfer
+  residual families, neutral transfer residuals, and explicit residual floors.
+- The stage doctrine now assigns responsibilities to Stage I stability,
+  Stage II dual/cutting-plane discovery, Stage III shared
+  `NlpProblem`/Ipopt refinement, postsolve certification, and public-route
+  cutover.
+- The candidate lifecycle now tracks seed, trial phase, Stage I certificate,
+  Stage II candidate, Stage III refined set, postsolve certified result,
+  public admission, and rejection states.
+- The validation matrix now covers stable, unstable, boundary,
+  phase-label-permutation, neutral-limit, common-ion, and mixed-salt or
+  asymmetric-electrolyte rows.
+- The M4 milestone README separates the open phase-equilibrium/HELD2 lane from
+  the CE/CPE lane so standalone chemical equilibrium work is visible without
+  mixing it into the HELD2 phase-discovery path.
 
 ## Blocked by
 

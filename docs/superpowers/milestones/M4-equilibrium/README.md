@@ -84,6 +84,12 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 ## Current Open Issues
 
+Open M4 work is split into phase-equilibrium/HELD2 and CE/CPE lanes so
+standalone chemical-equilibrium work stays visible without being treated as
+part of the HELD2 phase-discovery cutover.
+
+### Phase-Equilibrium / HELD2 Open Issues
+
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320_343` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves Perdomo/Figiel HELD2 validation and #343 proves full HELD2-style public-route discovery through #344-#350. |
@@ -96,6 +102,16 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [#348](../../issues/2026-06-27-m4-equilibrium-issue-0348-integrate-held2-discovery-into-electrolyte-public-route-orchestration.md) | `electrolyte` | `Ipopt` | `blocked_by_347` | Integrates HELD2 discovery into the public electrolyte route before Stage III. |
 | [#349](../../issues/2026-06-27-m4-equilibrium-issue-0349-add-held2-public-route-scenario-validation-ladder.md) | `electrolyte` | `Ipopt` | `blocked_by_348` | Adds the public-route scenario validation ladder. |
 | [#350](../../issues/2026-06-27-m4-equilibrium-issue-0350-admit-held2-public-route-capability-evidence-after-full-validation.md) | `electrolyte` | `Ipopt` | `blocked_by_349` | Admits registry and docs capability evidence only after full validation. |
+
+### CE / CPE Open Issues
+
+| Issue | Capability | Backend | Readiness | Summary |
+| --- | --- | --- | --- | --- |
+| [#321](../../issues/2026-06-26-m4-ce-issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe.md) | `ce` | `Ipopt` | `ready` | Standalone chemical/speciation equilibrium foundation before coupled CPE work. |
+| [#328](../../issues/2026-06-26-m4-ce-issue-0328-m4-ce-design-standalone-speciation-public-api-and-result-schema.md) | `ce` | `Ipopt` | `ready` | Design the standalone CE public API and result schema. |
+| [#329](../../issues/2026-06-26-m4-ce-issue-0329-m4-ce-build-standalone-validation-ladder.md) | `ce` | `Ipopt` | `ready` | Build the standalone CE validation ladder. |
+| [#330](../../issues/2026-06-26-m4-ce-issue-0330-m4-ce-activate-standalone-ce-only-after-gates-pass.md) | `ce` | `Ipopt` | `blocked` | Activate standalone CE only after the CE foundation, API, and validation gates pass. |
+| [#331](../../issues/2026-06-26-m4-ce-issue-0331-m4-cpe-define-simultaneous-phase-plus-chemistry-interface-contract.md) | `cpe` | `Ipopt` | `blocked` | Define the simultaneous phase-plus-chemistry interface contract after standalone CE is governed. |
 
 ## Queue Guard
 
