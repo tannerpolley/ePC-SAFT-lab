@@ -2083,7 +2083,10 @@ void evaluate_held_stage_ii_candidate_bounds(
         discovery.held_stage_ii_stopping_reason = "not_requested";
         return;
     }
-    if (discovery.continuous_tpd_status != "converged") {
+    const bool continuous_tpd_complete =
+        discovery.continuous_tpd_status == "converged"
+        || discovery.continuous_tpd_status == "complete_with_rejected_starts";
+    if (!continuous_tpd_complete) {
         discovery.held_stage_ii_status = "incomplete_stage_i_evidence";
         discovery.held_stage_ii_candidate_bound_audit_status = "incomplete_stage_i_evidence";
         discovery.held_stage_ii_dual_loop_status = "incomplete_stage_i_evidence";
@@ -4304,6 +4307,140 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_continuous_tpd_minimizer(
     return out;
 }
 
+bool stage_ii_material_balance_complement(
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& candidate_composition,
+    std::vector<double>& complement_composition
+) {
+    require_size(candidate_composition, feed_composition.size(), "Electrolyte HELD2 Stage II candidate");
+    double maximum_candidate_fraction = 1.0;
+    for (std::size_t species = 0; species < feed_composition.size(); ++species) {
+        const double feed_value = feed_composition[species];
+        const double candidate_value = candidate_composition[species];
+        if (!std::isfinite(feed_value) || !std::isfinite(candidate_value)) {
+            return false;
+        }
+        if (candidate_value > feed_value + 1.0e-14) {
+            maximum_candidate_fraction = std::min(maximum_candidate_fraction, feed_value / candidate_value);
+        }
+    }
+    if (!(maximum_candidate_fraction > 1.0e-8)) {
+        return false;
+    }
+
+    const double candidate_fraction = std::min(0.5, 0.5 * maximum_candidate_fraction);
+    if (!(candidate_fraction > 1.0e-10 && candidate_fraction < 1.0 - 1.0e-10)) {
+        return false;
+    }
+    complement_composition.assign(feed_composition.size(), 0.0);
+    const double complement_fraction = 1.0 - candidate_fraction;
+    double complement_sum = 0.0;
+    for (std::size_t species = 0; species < feed_composition.size(); ++species) {
+        const double value =
+            (feed_composition[species] - candidate_fraction * candidate_composition[species])
+            / complement_fraction;
+        if (!std::isfinite(value) || value <= kCompositionFloor) {
+            return false;
+        }
+        complement_composition[species] = value;
+        complement_sum += value;
+    }
+    if (!std::isfinite(complement_sum) || complement_sum <= 0.0) {
+        return false;
+    }
+    for (double& value : complement_composition) {
+        value /= complement_sum;
+    }
+    return true;
+}
+
+void append_electrolyte_stage_ii_complement_candidates(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    NeutralPhaseDiscoveryResult& discovery
+) {
+    if (phase_kinds.size() != 2) {
+        return;
+    }
+    const std::size_t original_count = discovery.candidates.size();
+    int appended_count = 0;
+    for (std::size_t index = 0; index < original_count; ++index) {
+        const NeutralTpdCandidate& source_candidate = discovery.candidates[index];
+        if (!source_candidate.valid || !std::isfinite(source_candidate.tpd)) {
+            continue;
+        }
+        if (source_candidate.tpd >= -tpd_tolerance || source_candidate.tpd_status != "converged") {
+            continue;
+        }
+
+        int complement_phase_kind = phase_kinds[1];
+        if (phase_kinds[0] != phase_kinds[1]) {
+            if (source_candidate.phase_kind == phase_kinds[0]) {
+                complement_phase_kind = phase_kinds[1];
+            } else if (source_candidate.phase_kind == phase_kinds[1]) {
+                complement_phase_kind = phase_kinds[0];
+            } else {
+                continue;
+            }
+        }
+
+        std::vector<double> complement;
+        if (!stage_ii_material_balance_complement(feed_composition, source_candidate.composition, complement)) {
+            continue;
+        }
+        try {
+            require_charge_neutral_composition(
+                complement,
+                charges,
+                "Electrolyte HELD2 Stage II material-balance complement",
+                charge_tolerance
+            );
+            const EosPhaseBlockResult reference = evaluate_unit_phase_block_at_pressure_root(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                complement_phase_kind,
+                "Electrolyte HELD2 Stage II complement reference"
+            );
+            const std::string source =
+                "electrolyte_held2_stage_ii_material_balance_complement_from_rank_"
+                + std::to_string(static_cast<int>(index));
+            NeutralTpdCandidate complement_candidate = evaluate_electrolyte_tpd_candidate(
+                args,
+                temperature,
+                target_pressure,
+                reference,
+                complement,
+                charges,
+                complement_phase_kind,
+                source,
+                charge_tolerance
+            );
+            complement_candidate.start_source = source_candidate.source;
+            complement_candidate.feasibility_status = "held2_stage_ii_material_balance_complement";
+            const std::size_t before_append = discovery.candidates.size();
+            append_unique_tpd_candidate(discovery.candidates, complement_candidate);
+            if (discovery.candidates.size() > before_append) {
+                ++appended_count;
+            }
+        } catch (const std::exception&) {
+            continue;
+        }
+    }
+    if (appended_count > 0) {
+        discovery.tpd_candidate_count += appended_count;
+        discovery.unique_candidate_count = static_cast<int>(discovery.candidates.size());
+        rank_tpd_candidates(discovery);
+    }
+}
+
 ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
     const add_args& args,
     double temperature,
@@ -4329,7 +4466,7 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
 
     ElectrolyteHeld2PhaseDiscoveryResult out =
         build_electrolyte_held2_diagnostic(feed, charges, species_labels, 1.0e-10);
-    out.tpd_discovery = evaluate_electrolyte_tpd_phase_discovery(
+    out.tpd_discovery = evaluate_electrolyte_continuous_tpd_minimizer(
         args,
         temperature,
         target_pressure,
@@ -4340,6 +4477,48 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
         tpd_tolerance,
         candidate_mass_balance_tolerance
     );
+    append_electrolyte_stage_ii_complement_candidates(
+        args,
+        temperature,
+        target_pressure,
+        feed,
+        charges,
+        phase_kinds,
+        charge_tolerance,
+        tpd_tolerance,
+        out.tpd_discovery
+    );
+    select_generalized_phase_candidate_set(
+        out.tpd_discovery,
+        feed,
+        phase_kinds,
+        candidate_mass_balance_tolerance
+    );
+    synchronize_continuous_tpd_start_records(
+        out.tpd_discovery,
+        "not_selected_by_held2_stage_ii_dual_loop_mass_balance_gate"
+    );
+    out.tpd_discovery.held_stage_i_min_tpd = out.tpd_discovery.continuous_tpd_min;
+    out.tpd_discovery.held_stage_i_negative_tpd_found =
+        out.tpd_discovery.continuous_tpd_solve_count > 0
+        && out.tpd_discovery.continuous_tpd_min < -tpd_tolerance;
+    out.tpd_discovery.held_stage_i_status = out.tpd_discovery.held_stage_i_negative_tpd_found
+        ? "stage_i_negative_tpd_certificate_consumed"
+        : "stage_i_no_negative_tpd_certificate_consumed";
+    evaluate_held_stage_ii_candidate_bounds(out.tpd_discovery, tpd_tolerance, true);
+    out.tpd_discovery.phase_discovery_backend =
+        "continuous_reduced_electroneutral_held2_stage_ii_dual_phase_discovery";
+    out.tpd_discovery.stability_certificate = "electrolyte_held2_stage_ii_dual_phase_discovery";
+    out.tpd_discovery.held_stage_iii_status = "pending_ipopt_refinement";
+    if (out.tpd_discovery.held_stage_ii_replay_ready) {
+        out.tpd_discovery.stability_accepted = true;
+        out.tpd_discovery.candidate_completeness_accepted = true;
+        out.tpd_discovery.phase_set_status = "held2_stage_ii_candidate_set_verified";
+    } else {
+        out.tpd_discovery.stability_accepted = false;
+        out.tpd_discovery.candidate_completeness_accepted = false;
+        out.tpd_discovery.phase_set_status = "held2_stage_ii_candidate_set_incomplete";
+    }
     out.reduced_start_count = out.tpd_discovery.tpd_candidate_count;
     out.converged_start_count = out.tpd_discovery.unique_candidate_count;
     out.selected_candidate_count = out.tpd_discovery.selected_candidate_count;
