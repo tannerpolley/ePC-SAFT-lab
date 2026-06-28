@@ -473,16 +473,16 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 
-- [ ] **Step 1: Write failing API tests.**
+- [x] **Step 1: Write failing API tests.**
   Cover CE request creation, result fields, diagnostics, errors, and closed
   reactive phase routes.
-- [ ] **Step 2: Run API tests and verify failure.**
+- [x] **Step 2: Run API tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`.
-- [ ] **Step 3: Implement CE API/result schema.**
+- [x] **Step 3: Implement CE API/result schema.**
   Expose only standalone speciation behavior and result diagnostics.
-- [ ] **Step 4: Update docs.**
+- [x] **Step 4: Update docs.**
   Add user-facing CE API notes without claiming CPE support.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit API/result schema and docs.
 
 ### Task 9: Build Standalone CE Validation Ladder

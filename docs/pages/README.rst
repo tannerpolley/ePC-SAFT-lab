@@ -212,8 +212,10 @@ Important boundaries:
   ``Equilibrium(..., route="electrolyte_lle")`` for the retained
   H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent LLE fixture and its
   source-backed parameter bundle. Generic electrolyte GFPE, reactive
-  speciation, reactive LLE, reactive electrolyte LLE, CE/CPE, parameter
-  regression, and release-wheel claims remain outside the admitted scope.
+  LLE, reactive electrolyte LLE, CPE, parameter regression, and release-wheel
+  claims remain outside the admitted scope. Standalone
+  ``reactive_speciation(...)`` is homogeneous CE only and does not claim phase
+  splitting or CPE evidence.
 - The GitHub release wheel is built without a local Ipopt runtime dependency.
   Ipopt-backed equilibrium routes require an Ipopt-enabled source or editable
   build.

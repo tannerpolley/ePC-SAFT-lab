@@ -148,6 +148,30 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["single_component_vle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["problem_objects"]["available"] is True
     assert capabilities["problem_objects"]["entrypoint"] == "Equilibrium(mixture, route=..., ...)"
+    assert capabilities["standalone_reactive_speciation"] == {
+        "available": capabilities["activation_matrix"]["ipopt_available"],
+        "production": False,
+        "entrypoint": "reactive_speciation(species=..., reactions=..., feed_amounts=..., equilibrium_constants=...)",
+        "route": "reactive_speciation",
+        "native_binding": "_native_chemical_equilibrium_nlp_activation",
+        "capability_scope": "standalone_ce_only",
+        "phase_scope": "homogeneous",
+        "coupling_scope": "chemical_equilibrium_only",
+        "public_routes": [],
+        "closed_surfaces": ["reactive_lle", "reactive_electrolyte_lle", "cpe"],
+        "activation_gate": "issue_0330",
+        "requires": ["cppad", "ipopt"],
+        "result_fields": [
+            "species_amounts",
+            "activities",
+            "reduced_chemical_potentials",
+            "reaction_extents",
+            "balances",
+            "affinities",
+            "standard_state_metadata",
+            "diagnostics",
+        ],
+    }
     assert {row["quantity"] for row in capabilities["route_derivative_evidence"]["rows"]} == {
         "bubble_dew_derived_routes",
         "neutral_tp_flash",
@@ -284,3 +308,6 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "reactive_stability",
     }
     assert deleted_route_keys.isdisjoint(capabilities)
+    assert set(capabilities["standalone_reactive_speciation"]["closed_surfaces"]).isdisjoint(
+        capabilities["public_routes"]
+    )

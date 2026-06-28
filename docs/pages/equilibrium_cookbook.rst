@@ -39,6 +39,61 @@ through the selector core and native Ipopt with exact Hessian callbacks:
 or degenerate results raise with diagnostics instead of being reported as a
 production flash solution.
 
+Standalone Reactive Speciation
+------------------------------
+
+Standalone chemical/speciation equilibrium uses ``reactive_speciation(...)``.
+It is a homogeneous CE call over true species, explicit reactions, feed amounts,
+and explicit equilibrium-constant standard states. The result reports species
+amounts, mole-fraction activities, reduced chemical potentials, reaction
+extents, balance residuals, affinities, standard-state metadata, and native
+diagnostics.
+
+.. code-block:: python
+
+   import math
+   from epcsaft_equilibrium import (
+       ChemicalReaction,
+       ChemicalSpecies,
+       EquilibriumConstantRecord,
+       StandardStateRecord,
+       reactive_speciation,
+   )
+
+   standard = StandardStateRecord(
+       label="mole_fraction_standard_state",
+       activity_convention="mole_fraction_activity",
+       temperature_K=298.15,
+       pressure_Pa=101325.0,
+   )
+
+   result = reactive_speciation(
+       species=[
+           ChemicalSpecies("A", {"X": 1.0}),
+           ChemicalSpecies("B", {"X": 1.0}),
+       ],
+       reactions=[ChemicalReaction("a_to_b", {"A": -1.0, "B": 1.0})],
+       feed_amounts={"A": 1.0, "B": 0.0},
+       equilibrium_constants=[
+           EquilibriumConstantRecord(
+               reaction_label="a_to_b",
+               value=math.log(3.0),
+               form="ln_K",
+               units="dimensionless",
+               standard_state=standard,
+               source="retained source",
+               source_constant_label="ln_K",
+           )
+       ],
+       initial_amounts=[0.5, 0.5],
+   )
+
+   print(result.species_amounts)
+   print(result.affinities)
+
+This API is not a phase-equilibrium route. It does not report phase labels,
+phase fractions, reactive LLE, reactive electrolyte LLE, or CPE evidence.
+
 Derivative Contract
 -------------------
 

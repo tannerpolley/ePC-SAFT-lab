@@ -7,7 +7,6 @@ from dataclasses import replace
 from typing import Any
 
 import numpy as np
-
 from epcsaft import SolutionError
 
 _ROUTE_STRING_DIAGNOSTIC_KEYS = (
@@ -140,6 +139,22 @@ _STABILITY_EVIDENCE_KEYS = (
     "physical_evidence",
 )
 
+_CHEMICAL_EQUILIBRIUM_TOP_LEVEL_DIAGNOSTIC_KEYS = (
+    "native_binding",
+    "route",
+    "activation_compiler",
+    "thermodynamic_block",
+    "accepted",
+    "balance_inf_norm",
+    "reaction_stationarity_inf_norm",
+    "selector_contract",
+    "activation",
+    "activation_plan",
+    "variable_layout",
+    "continuation_state",
+    "iteration_history",
+)
+
 
 def _approximation_is_exact(value: Any) -> bool:
     return str(value).strip().lower() == "exact"
@@ -190,6 +205,20 @@ def _diagnostics(payload: Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(diagnostics, Mapping):
         return dict(diagnostics)
     return {}
+
+
+def chemical_equilibrium_result_diagnostics(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Return public diagnostics from the standalone CE native activation payload."""
+
+    diagnostics = {
+        key: payload[key]
+        for key in _CHEMICAL_EQUILIBRIUM_TOP_LEVEL_DIAGNOSTIC_KEYS
+        if key in payload
+    }
+    solver = payload.get("solver_diagnostics", {})
+    if isinstance(solver, Mapping):
+        diagnostics.update(dict(solver))
+    return diagnostics
 
 
 def _route_physical_evidence(route: Mapping[str, Any]) -> dict[str, Any]:

@@ -8,6 +8,9 @@ The current reset public API is workflow-object based:
 
 * ``Equilibrium(mixture, route=..., ...).solve()`` for certified neutral
   nonassociating VLE, flash, and LLE route specs.
+* ``reactive_speciation(...)`` for standalone homogeneous chemical/speciation
+  equilibrium over true species, explicit reactions, feed amounts, and explicit
+  standard-state metadata.
 * Additional associating, electrolyte, reactive, and speciation families are
   declared in the native activation matrix as not exposed until they have
   production selector support, focused public tests, and capability evidence.
@@ -80,9 +83,11 @@ neutral LLE, the source-backed methanol/cyclohexane associating LLE fixture,
 and the source-backed Khudaida explicit-ion NaCl mixed-solvent electrolyte LLE
 fixture through the native selector core, Ipopt, and exact Hessian or exact
 reduced-derivative callbacks. Broader associating, generic electrolyte,
-reactive, CE/CPE, and speciation route families remain declared-not-exposed
-activation rows until they are ported behind the selector and reset
-``Equilibrium(mixture, route=..., ...)`` workflow.
+reactive phase, CPE, and coupled speciation route families remain
+declared-not-exposed activation rows until they are ported behind the selector
+and reset ``Equilibrium(mixture, route=..., ...)`` workflow. The standalone
+``reactive_speciation(...)`` API is homogeneous CE only; it is not a reactive
+LLE, electrolyte LLE, or simultaneous phase-plus-chemistry route.
 
 The convex Gibbs formulation is limited to homogeneous ideal reaction or
 speciation subkernels and validation tests. Full ePC-SAFT multiphase,
