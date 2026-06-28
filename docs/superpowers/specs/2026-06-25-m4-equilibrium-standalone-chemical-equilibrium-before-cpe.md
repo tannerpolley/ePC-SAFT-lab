@@ -21,8 +21,8 @@ electrolyte LLE, phase discovery, and HELD coupling depend on that CE proof.
 ## Source Map
 
 - Verified repo doctrine: `docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md`
-  keeps `CE Chemical Equilibrium Placeholder` separate from `CPE Combined
-  Phase-Chemical Placeholder`.
+  keeps `CE Standalone Reactive Speciation` separate from `CPE Simultaneous
+  Phase-Chemistry Contract`.
 - Verified registry contract: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
   defines CE as homogeneous chemical/speciation equilibrium and requires
   reaction-constant, standard-state, and reaction-affinity gates before exposure.
@@ -33,7 +33,8 @@ electrolyte LLE, phase discovery, and HELD coupling depend on that CE proof.
 - Verified code state: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/core/activation_matrix.h`
   and `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/equilibrium_activation.py`
   already declare `reactive_speciation`, `reactive_lle`, and
-  `reactive_electrolyte_lle`, but all three are closed to production exposure.
+  `reactive_electrolyte_lle`; `reactive_speciation` is the standalone CE
+  public surface, while reactive phase routes stay closed to production exposure.
 - Verified native seed: `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/blocks/reaction_block.cpp`
   contains an ideal reaction quotient, standard chemical-potential, and reaction
   extent block. This is a useful kernel, not the standalone CE family contract.

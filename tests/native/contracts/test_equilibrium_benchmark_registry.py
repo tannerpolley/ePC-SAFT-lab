@@ -18,6 +18,13 @@ REGISTRY_PATH = (
     / "registries"
     / "equilibrium-benchmark-registry.yaml"
 )
+CPE_INTERFACE_SPEC_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "superpowers"
+    / "specs"
+    / "2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
+)
 PEREIRA_SOURCE_AUDIT_PATH = (
     REPO_ROOT / "data" / "reference" / "equilibrium_benchmarks" / "neutral_tp_flash" / "ethane_carbon_dioxide"
 )
@@ -305,7 +312,7 @@ def test_current_runtime_route_keys_are_excluded_from_generalized_families() -> 
 def test_ce_and_cpe_registry_rows_have_explicit_gates() -> None:
     rows = {row["family_label"]: row for row in _registry()["family_rows"]}
     ce = rows["CE Standalone Reactive Speciation"]
-    cpe = rows["CPE Combined Phase-Chemical Placeholder"]
+    cpe = rows["CPE Simultaneous Phase-Chemistry Contract"]
 
     assert ce["activation_status"] == "standalone_ce_public_admitted"
     assert ce["production_exposed"] is True
@@ -330,3 +337,54 @@ def test_ce_and_cpe_registry_rows_have_explicit_gates() -> None:
         "exact_chemical_potential_derivatives",
     } <= set(dependencies["chemical_equilibrium"])
     assert "sequential_speciation_flash_as_simultaneous_cpe" in cpe["forbidden_shortcuts"]
+
+
+def test_cpe_interface_contract_names_variables_constraints_and_blockers() -> None:
+    cpe = {row["family_label"]: row for row in _registry()["family_rows"]}[
+        "CPE Simultaneous Phase-Chemistry Contract"
+    ]
+    contract = cpe["interface_contract"]
+
+    assert contract["spec_path"] == (
+        "docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
+    )
+    assert CPE_INTERFACE_SPEC_PATH.exists()
+    assert contract["status"] == "blocked_future_interface"
+    assert contract["public_routes"] == []
+    assert contract["must_solve_simultaneously"] is True
+    assert set(contract["variables"]) == {
+        "phase_species_amounts",
+        "phase_volumes",
+        "reaction_variables",
+    }
+    assert set(contract["constraints"]) >= {
+        "material_balance",
+        "phase_pressure_consistency",
+        "transferable_potential_equality",
+        "reaction_affinity",
+        "phase_charge_when_applicable",
+    }
+    assert set(contract["pe_blockers"]) >= {
+        "held_stage_i_stability",
+        "held_stage_ii_dual_phase_discovery",
+        "held_stage_iii_ipopt_refinement",
+        "postsolve_phase_set_certification",
+    }
+    assert set(contract["ce_blockers"]) >= {
+        "standard_state_registry",
+        "reaction_affinity_certification",
+        "exact_chemical_potential_derivatives",
+        "ce_validation_ladder",
+    }
+    assert set(contract["disallowed_evidence"]) >= {
+        "phase_only_validation",
+        "ce_only_validation",
+        "sequential_speciation_plus_flash",
+    }
+
+    text = CPE_INTERFACE_SPEC_PATH.read_text(encoding="utf-8")
+    assert "simultaneous phase-plus-chemistry" in text
+    assert "phase species amounts" in text
+    assert "phase volumes" in text
+    assert "reaction variables" in text
+    assert "not staged speciation followed by phase flash" in text

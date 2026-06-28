@@ -242,14 +242,14 @@ Substeps:
 5. Keep the six visible family labels descriptive:
    `PE-Neutral TP Flash`, `PE-Associating TP Flash`,
    `PE-Electrolyte LLE/TP Flash`, `PE-Generalized Multiphase`,
-   `CE Chemical Equilibrium Placeholder`, and
-   `CPE Combined Phase-Chemical Placeholder`.
+   `CE Standalone Reactive Speciation`, and
+   `CPE Simultaneous Phase-Chemistry Contract`.
 6. State that those labels are planning labels only in GFPE, the registry, and
    this plan.
 7. Keep public route strings out of the registry family-label namespace.
 8. Keep bubble, dew, cloud, and shadow under `derived_subworkflows`.
-9. Keep generalized family rows `planned_not_public` with
-   `production_exposed: false` until HELD and derivative gates pass.
+9. Keep generalized phase and CPE rows `planned_not_public` with
+   `production_exposed: false` until HELD/coupled gates and derivative gates pass.
 10. Remove stale narrow-plan references when they appear in registry-facing
     docs or tests.
 11. Keep raw AI-response notes uncited.

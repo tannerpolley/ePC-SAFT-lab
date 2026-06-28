@@ -403,7 +403,7 @@ family_rows:
     forbidden_shortcuts:
       - hidden_standard_state
 
-  - family_label: "CPE Combined Phase-Chemical Placeholder"
+  - family_label: "CPE Simultaneous Phase-Chemistry Contract"
     family_kind: combined_phase_chemical_equilibrium
     activation_status: planned_not_public
     production_exposed: false
@@ -437,12 +437,49 @@ family_rows:
         - reaction_affinity_certification
         - exact_chemical_potential_derivatives
         - ce_validation_ladder
+    interface_contract:
+      status: blocked_future_interface
+      spec_path: "docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
+      public_routes: []
+      must_solve_simultaneously: true
+      variables:
+        - phase_species_amounts
+        - phase_volumes
+        - reaction_variables
+      constraints:
+        - material_balance
+        - phase_pressure_consistency
+        - transferable_potential_equality
+        - reaction_affinity
+        - phase_charge_when_applicable
+      pe_blockers:
+        - held_stage_i_stability
+        - held_stage_ii_dual_phase_discovery
+        - held_stage_iii_ipopt_refinement
+        - postsolve_phase_set_certification
+      ce_blockers:
+        - standard_state_registry
+        - reaction_affinity_certification
+        - exact_chemical_potential_derivatives
+        - ce_validation_ladder
+      disallowed_evidence:
+        - phase_only_validation
+        - ce_only_validation
+        - sequential_speciation_plus_flash
     reference_cases:
-      - case_label: "Combined phase-chemical placeholder"
+      - case_label: "Simultaneous phase-chemistry interface contract"
         evidence_tier: T0
-        source: "docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md"
+        source: "docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
         fixture_status: source_data_needed
-        acceptance_checks: [phase_equilibrium, reaction_affinity, coupled_certification]
+        acceptance_checks:
+          - phase_species_amounts
+          - phase_volumes
+          - reaction_variables
+          - reaction_affinity
+          - transferable_potential_equality
+          - phase_charge_when_applicable
+          - pe_and_ce_blockers
+          - disallow_staged_speciation_flash
     forbidden_shortcuts:
       - phase_only_validation_as_cpe_validation
       - ce_only_validation_as_cpe_validation

@@ -579,18 +579,18 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Create: local issue mirror for the CPE interface child issue
 - Test: `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 
-- [ ] **Step 1: Write failing CPE contract tests.**
+- [x] **Step 1: Write failing CPE contract tests.**
   Assert CPE names phase species amounts, phase volumes, reaction variables,
   reaction affinity, transfer-potential equality, phase charge when applicable,
   and PE/CE blockers.
-- [ ] **Step 2: Run registry tests and verify failure.**
+- [x] **Step 2: Run registry tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q`.
-- [ ] **Step 3: Write the CPE interface spec.**
+- [x] **Step 3: Write the CPE interface spec.**
   Define variables, constraints, derivatives, validation blockers, and
   disallowed staged proof.
-- [ ] **Step 4: Update registry/docs.**
+- [x] **Step 4: Update registry/docs.**
   Link the CPE contract and keep production exposure closed.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit the future CPE contract and blocked issue mirror.
 
 ## Issue Creation Packet

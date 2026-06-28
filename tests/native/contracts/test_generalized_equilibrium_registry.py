@@ -38,7 +38,7 @@ EXPECTED_FAMILY_LABELS = {
     "PE-Electrolyte LLE/TP Flash",
     "PE-Generalized Multiphase",
     "CE Standalone Reactive Speciation",
-    "CPE Combined Phase-Chemical Placeholder",
+    "CPE Simultaneous Phase-Chemistry Contract",
 }
 DERIVED_LABELS = {"Bubble point", "Dew point", "Cloud point", "Shadow point"}
 FORBIDDEN_NUMERIC_ROW_RE = re.compile(r"\b(?:PE|CE|CPE)-\d{2}\b")
@@ -287,7 +287,7 @@ def test_ce_family_is_homogeneous_speciation_with_explicit_gates() -> None:
 
 
 def test_cpe_family_requires_simultaneous_phase_and_chemical_proof_chains() -> None:
-    cpe = _family_by_label()["CPE Combined Phase-Chemical Placeholder"]
+    cpe = _family_by_label()["CPE Simultaneous Phase-Chemistry Contract"]
     required_gates = set(cpe["required_gates"])
     dependencies = cpe["activation_dependencies"]
 

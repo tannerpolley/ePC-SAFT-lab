@@ -60,8 +60,8 @@ The collapsed plan has six visible family labels:
 | `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `source_backed_associating_lle_public_admitted` |
 | `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `representative_public_admitted_blocked_by_khudaida_model_reproduction` |
 | `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `neutral_public_admitted` |
-| `CE Chemical Equilibrium Placeholder` | Homogeneous single-phase chemical/speciation equilibrium without phase split | `planned_not_public` |
-| `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium after PE and CE proof chains | `planned_not_public` |
+| `CE Standalone Reactive Speciation` | Homogeneous single-phase chemical/speciation equilibrium without phase split | `standalone_ce_public_admitted` |
+| `CPE Simultaneous Phase-Chemistry Contract` | Simultaneous phase split and reaction/speciation equilibrium after PE and CE proof chains | `planned_not_public` |
 
 The family labels are deliberately descriptive. They replace the old numeric
 PE/CE/CPE row identifiers in the plan and registry. They are stable enough
@@ -617,17 +617,17 @@ iteration-limit seed path are failed boundary evidence.
   residual Stage III certification rather than only a thermodynamic-objective
   route, and source-backed representative cases for each additional family.
 
-`CE Chemical Equilibrium Placeholder`
+`CE Standalone Reactive Speciation`
 
-- keep as planning-only until homogeneous single-phase reaction/speciation
-  equations, reaction-set schema, standard-state conventions, exact
-  chemical-potential derivatives, reaction-affinity certification, and
-  acceptance tests are written;
+- admitted only for homogeneous single-phase reaction/speciation through
+  `reactive_speciation(...)` after reaction-set schema, standard-state
+  conventions, exact chemical-potential derivatives, reaction-affinity
+  certification, and standalone CE validation tests passed;
 - CE has no phase-discovery status because it has no phase split. Its closure
   gates are the standard-state registry, equilibrium-constant convention,
   reaction-affinity residuals, conservation basis, and derivative evidence.
 
-`CPE Combined Phase-Chemical Placeholder`
+`CPE Simultaneous Phase-Chemistry Contract`
 
 - keep as planning-only until PE and CE proofs can be solved in one simultaneous
   route with both transfer equilibrium and reaction affinity certification;
@@ -635,6 +635,11 @@ iteration-limit seed path are failed boundary evidence.
   postsolve phase-set certification evidence. Required CE inputs include the
   standard-state registry, reaction-affinity certification, exact
   chemical-potential derivatives, and the standalone CE validation ladder;
+- the future interface is defined in
+  `docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md`
+  and names phase species amounts, phase volumes, reaction variables,
+  transferable-potential equality, reaction affinity, phase charge when
+  applicable, and exact coupled derivative evidence;
 - do not count phase-only validation, CE-only validation, or sequential
   speciation-plus-flash validation as simultaneous CPE evidence.
 
