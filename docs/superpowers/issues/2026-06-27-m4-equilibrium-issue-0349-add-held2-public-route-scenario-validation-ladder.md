@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked_by_348"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md"
 source_plan: "docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0349-held2-public-route-scenario-validation-ladder
-last_synced: "2026-06-27"
+last_synced: "2026-06-28"
 ---
 
 # M4: add HELD2 public-route scenario validation ladder
@@ -24,8 +24,8 @@ last_synced: "2026-06-27"
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
 **Source Plan:** docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
-**Classification:** AFK after #348 closes
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Classification:** AFK
+**Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 
 ## Outcome Summary
 
@@ -41,12 +41,21 @@ last_synced: "2026-06-27"
 
 ## Acceptance Criteria
 
-- [ ] Scenario checker covers stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt cases.
-- [ ] Package-level pytest selectors collect and run real electrolyte HELD2 tests.
-- [ ] Scenario artifacts retain discovery, Stage III, postsolve, and residual diagnostics.
-- [ ] M5 regression blockers are created or referenced for fitted-model failures.
+- [x] Scenario checker covers stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt cases.
+- [x] Package-level pytest selectors collect and run real electrolyte HELD2 tests.
+- [x] Scenario artifacts retain discovery, Stage III, postsolve, and residual diagnostics.
+- [x] M5 regression blockers are created or referenced for fitted-model failures.
 
-## Blocked by
+## Acceptance Evidence
+
+- Checker: `check_electrolyte_held2_public_route_scenarios.py --json --require-complete` returns `complete=True`, no blockers, and 7 accepted scenarios.
+- Public electrolyte route scenarios: unstable, boundary, and phase-label cases use the source-backed Khudaida electrolyte LLE public route with Stage II `dual_loop_verified`, Stage III `complete`, postsolve `complete`, phase distance `3.0328142543445402e-06 > 1e-08`, charge residual `0.0`, and mean-ionic transfer residual `2.1991608690541398e-05`.
+- Stable and neutral-limit scenarios: binary neutral LLE public route retains `held_stage_i_status: no_negative_tpd_candidate_found`, `min_tpd: -8.806807572753356e-16`, phase distance `0.9888667362181911`, and no charged residual-family claim.
+- Common-ion scenario: Ascani 2022 NaCl/KCl basis fixture retains rank `2/2`, max charge residual `3.469446951953614e-18`, and round-trip residual `8.809142651444724e-19`.
+- Mixed/asymmetric scenario: Ascani multivalent counterion fixture retains rank `3/3`, max charge residual `0.0`, and round-trip residual `2.425902360936316e-18`.
+- Model-data regression boundary: fitted Khudaida figure reproduction remains referenced to M5 #338; this M4 gate does not hide new fitted parameters or treat model regression as scenario proof.
+
+## Closed blockers
 
 - #348
 
