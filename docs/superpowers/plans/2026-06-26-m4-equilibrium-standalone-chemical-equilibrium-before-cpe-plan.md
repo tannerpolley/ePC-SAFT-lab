@@ -213,18 +213,18 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   `docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md`
 - Test: `scripts/validate-issue-mirror.ps1`
 
-- [ ] **Step 1: Draft issue bodies from this plan.**
+- [x] **Step 1: Draft issue bodies from this plan.**
   Use the issue packet below for the tracking issue and ten child issues.
-- [ ] **Step 2: Publish issues in dependency order.**
+- [x] **Step 2: Publish issues in dependency order.**
   Run `gh issue create` for the tracking issue first, then child issues, all
   with milestone `M4 - Equilibrium`.
-- [ ] **Step 3: Create mirrors.**
+- [x] **Step 3: Create mirrors.**
   Save each mirror under `docs/superpowers/issues/<issue-number>-<slug>.md`
   with the full GitHub body and workflow metadata required by the create-issues
   skill.
-- [ ] **Step 4: Validate mirrors.**
+- [x] **Step 4: Validate mirrors.**
   Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile <mirror>`.
-- [ ] **Step 5: Commit issue artifacts.**
+- [x] **Step 5: Commit issue artifacts.**
   Commit only the plan and issue mirrors after mirror validation passes.
 
 ### Task 2: Write CE/CPE Boundary Doctrine And Registry Gate
