@@ -1493,6 +1493,11 @@ py::dict neutral_phase_discovery_to_dict(
         candidates.append(neutral_tpd_candidate_to_dict(candidate));
     }
     out["candidates"] = candidates;
+    py::list continuous_starts;
+    for (const auto& record : result.continuous_tpd_start_records) {
+        continuous_starts.append(neutral_tpd_candidate_to_dict(record));
+    }
+    out["continuous_tpd_start_records"] = continuous_starts;
     out["phase_set_records"] = phase_discovery_records_to_list(result);
     return out;
 }
@@ -3111,6 +3116,45 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const add_args args = native_args_from_mixture_object(mixture, "Electrolyte TPD phase discovery");
         return neutral_phase_discovery_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_electrolyte_tpd_phase_discovery(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                charges,
+                phase_kinds,
+                charge_tolerance,
+                tpd_tolerance,
+                candidate_mass_balance_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("charges"),
+        py::arg("phase_kinds"),
+        py::arg("charge_tolerance"),
+        py::arg("tpd_tolerance"),
+        py::arg("candidate_mass_balance_tolerance")
+    );
+    m.def("_native_electrolyte_held2_continuous_tpd_minimizer", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<double>& charges,
+        const std::vector<int>& phase_kinds,
+        double charge_tolerance,
+        double tpd_tolerance,
+        double candidate_mass_balance_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(
+            mixture,
+            "Electrolyte HELD2 continuous TPD minimizer"
+        );
+        return neutral_phase_discovery_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_continuous_tpd_minimizer(
                 args,
                 temperature,
                 target_pressure,
