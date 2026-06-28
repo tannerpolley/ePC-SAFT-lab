@@ -92,12 +92,10 @@ part of the HELD2 phase-discovery cutover.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320_343` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves Perdomo/Figiel HELD2 validation and #343 proves full HELD2-style public-route discovery through #344-#350. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320_343` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves Perdomo/Figiel HELD2 validation and #343 proves full HELD2-style public-route discovery through the remaining #346-#350 runtime and admission slices. |
 | [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active #191 validation blocker for Perdomo/Figiel HELD2 electrolyte flash evidence through the public package route. |
-| [#343](../../issues/2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) | `electrolyte` | `Ipopt` | `blocked_by_344_345_346_347_348_349_350` | Full HELD2-style public-route phase-discovery adoption tracker. |
-| [#344](../../issues/2026-06-27-m4-equilibrium-issue-0344-define-held2-public-route-doctrine-and-validation-matrix.md) | `electrolyte` | `Ipopt` | `ready` | Defines HELD2 public-route doctrine and validation matrix before runtime slices begin. |
-| [#345](../../issues/2026-06-27-m4-equilibrium-issue-0345-implement-electrolyte-continuous-tpd-minimizer-in-reduced-coordinates.md) | `ready` | `Ipopt` | `blocked_by_344` | Implements continuous reduced-electroneutral TPD minimization. |
-| [#346](../../issues/2026-06-27-m4-equilibrium-issue-0346-add-held2-stage-i-electrolyte-stability-certificate.md) | `electrolyte` | `Ipopt` | `blocked_by_345` | Adds the HELD2 Stage I electrolyte stability certificate. |
+| [#343](../../issues/2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) | `electrolyte` | `Ipopt` | `blocked_by_346_347_348_349_350` | Full HELD2-style public-route phase-discovery adoption tracker. |
+| [#346](../../issues/2026-06-27-m4-equilibrium-issue-0346-add-held2-stage-i-electrolyte-stability-certificate.md) | `electrolyte` | `Ipopt` | `ready` | Adds the HELD2 Stage I electrolyte stability certificate. |
 | [#347](../../issues/2026-06-27-m4-equilibrium-issue-0347-implement-held2-stage-ii-electrolyte-dual-phase-discovery.md) | `electrolyte` | `Ipopt` | `blocked_by_346` | Implements HELD2 Stage II dual/cutting-plane phase discovery. |
 | [#348](../../issues/2026-06-27-m4-equilibrium-issue-0348-integrate-held2-discovery-into-electrolyte-public-route-orchestration.md) | `electrolyte` | `Ipopt` | `blocked_by_347` | Integrates HELD2 discovery into the public electrolyte route before Stage III. |
 | [#349](../../issues/2026-06-27-m4-equilibrium-issue-0349-add-held2-public-route-scenario-validation-ladder.md) | `electrolyte` | `Ipopt` | `blocked_by_348` | Adds the public-route scenario validation ladder. |
@@ -263,10 +261,11 @@ full electrolyte LLE model reproduction.
 flash evidence through the public package route.
 
 #343 is the explicit full HELD2 public-route discovery implementation blocker
-for #191. It is blocked by #344 through #350 and covers doctrine, continuous
-reduced-electroneutral TPD minimization, Stage I stability certification, Stage
-II dual/cutting-plane discovery, public route orchestration, scenario
-validation, and registry/capability admission.
+for #191. Its remaining blockers are #346 through #350 after #344 and #345
+closed the doctrine and continuous reduced-electroneutral TPD substrate slices.
+The remaining work covers Stage I stability certification, Stage II
+dual/cutting-plane discovery, public route orchestration, scenario validation,
+and registry/capability admission.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
@@ -288,6 +287,8 @@ two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/345](https://github.com/ePC-SAFT/ePC-SAFT/issues/345) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/353](https://github.com/ePC-SAFT/ePC-SAFT/pull/353) on 2026-06-28T15:35:44Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/344](https://github.com/ePC-SAFT/ePC-SAFT/issues/344) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/352](https://github.com/ePC-SAFT/ePC-SAFT/pull/352) on 2026-06-28T04:20:05Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/327](https://github.com/ePC-SAFT/ePC-SAFT/issues/327) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/342](https://github.com/ePC-SAFT/ePC-SAFT/pull/342) on 2026-06-27T20:23:44Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/280](https://github.com/ePC-SAFT/ePC-SAFT/issues/280) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/289](https://github.com/ePC-SAFT/ePC-SAFT/pull/289) on 2026-06-20T00:15:28Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/290](https://github.com/ePC-SAFT/ePC-SAFT/issues/290) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/291](https://github.com/ePC-SAFT/ePC-SAFT/pull/291) on 2026-06-19T23:32:21Z
