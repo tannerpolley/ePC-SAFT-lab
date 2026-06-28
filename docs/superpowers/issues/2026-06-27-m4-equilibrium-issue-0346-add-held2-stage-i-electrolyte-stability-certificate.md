@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked_by_345"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md"
 source_plan: "docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0346-held2-stage-i-electrolyte-stability-certificate
-last_synced: "2026-06-27"
+last_synced: "2026-06-28"
 ---
 
 # M4: add HELD2 Stage I electrolyte stability certificate
@@ -24,8 +24,8 @@ last_synced: "2026-06-27"
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
 **Source Plan:** docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
-**Classification:** AFK after #345 closes
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Classification:** AFK
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 
 ## Outcome Summary
 
@@ -46,7 +46,7 @@ last_synced: "2026-06-27"
 - [ ] Incomplete minimization fails loudly with diagnostics.
 - [ ] Stage I certificates are replayable from retained payloads.
 
-## Blocked by
+## Closed prerequisite
 
 - #345
 
