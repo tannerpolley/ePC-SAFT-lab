@@ -325,8 +325,8 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
         blockers.append("validation_ladder_claims_non_ce_scope")
     if payload.get("runtime_dependencies") != []:
         blockers.append("validation_ladder_runtime_dependency_present")
-    if payload.get("public_routes") != []:
-        blockers.append("validation_ladder_public_routes_claimed")
+    if payload.get("public_routes") != ["reactive_speciation"]:
+        blockers.append("validation_ladder_public_routes_mismatch")
     if payload.get("closed_surfaces") != REQUIRED_CLOSED_SURFACES:
         blockers.append("validation_ladder_closed_surfaces_mismatch")
     if payload.get("load_error"):
@@ -397,14 +397,17 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
         blockers.append("derivative_evidence_source_missing")
 
     capability = dict(payload.get("capability_evidence") or {})
-    if capability.get("status") != "closed_until_activation_gate":
+    if capability.get("status") != "standalone_ce_open_cpe_closed":
         blockers.append("capability_evidence_status_mismatch")
-    if capability.get("activation_gate") != "issue_0330":
+    if capability.get("activation_gate") != "issue_0330_complete":
         blockers.append("capability_activation_gate_mismatch")
-    if capability.get("production") is not False:
-        blockers.append("capability_production_claimed")
-    if capability.get("public_routes") != []:
-        blockers.append("capability_public_routes_claimed")
+    if capability.get("production") is not True:
+        blockers.append("capability_production_missing")
+    public_routes = list(capability.get("public_routes") or [])
+    if public_routes != ["reactive_speciation"]:
+        blockers.append("capability_public_routes_mismatch")
+    if any(str(route) in REQUIRED_CLOSED_SURFACES for route in public_routes):
+        blockers.append("capability_reactive_phase_route_claimed")
     if capability.get("closed_surfaces") != REQUIRED_CLOSED_SURFACES:
         blockers.append("capability_closed_surfaces_mismatch")
     return sorted(set(blockers))

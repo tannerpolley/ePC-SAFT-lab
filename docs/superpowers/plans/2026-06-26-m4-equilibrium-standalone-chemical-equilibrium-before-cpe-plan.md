@@ -545,16 +545,16 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - Modify: `docs/pages/development_workflows.rst`
 
-- [ ] **Step 1: Write failing activation tests.**
+- [x] **Step 1: Write failing activation tests.**
   Assert CE opens only under complete checker evidence and CPE/reactive phase
   routes stay closed.
-- [ ] **Step 2: Run activation tests and verify failure.**
+- [x] **Step 2: Run activation tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_standalone_ce_gate.py -q`.
-- [ ] **Step 3: Implement activation cutover.**
+- [x] **Step 3: Implement activation cutover.**
   Update activation/capability payloads for standalone CE only.
-- [ ] **Step 4: Run complete proof oracle.**
+- [x] **Step 4: Run complete proof oracle.**
   Run the proof oracle commands below.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit standalone CE activation and capability evidence.
 
 ### Task 11: Define CPE Interface Contract For Later Issues

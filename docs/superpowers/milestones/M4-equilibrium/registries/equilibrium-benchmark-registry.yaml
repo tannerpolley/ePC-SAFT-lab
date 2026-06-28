@@ -22,6 +22,7 @@ activation_status_vocabulary:
   implemented_utility_not_generalized: "Existing public utility behavior may exist, but does not satisfy generalized admission gates."
   source_backed_associating_lle_public_admitted: "Source-backed associating LLE public admission for the retained methanol/cyclohexane fixture only."
   representative_public_admitted_blocked_by_khudaida_model_reproduction: "Representative source-backed electrolyte LLE public admission is retained for the explicit-ion Khudaida fixture, but full Khudaida model reproduction and broader HELD2 flash validation remain blocked by issue #320."
+  standalone_ce_public_admitted: "Standalone homogeneous reactive_speciation admission after the strict standalone CE checker passes; reactive phase and CPE surfaces remain closed."
   diagnostic_only: "Internal helper or diagnostic layer only."
   source_data_needed: "A source-backed target exists but local executable fixture data are missing."
 
@@ -358,11 +359,11 @@ family_rows:
       - selected_two_phase_only
       - per_phase_tpd_only
 
-  - family_label: "CE Chemical Equilibrium Placeholder"
+  - family_label: "CE Standalone Reactive Speciation"
     family_kind: chemical_equilibrium
-    activation_status: planned_not_public
-    production_exposed: false
-    existing_public_utility_routes: []
+    activation_status: standalone_ce_public_admitted
+    production_exposed: true
+    existing_public_utility_routes: [reactive_speciation]
     scope: "Homogeneous single-phase chemical and speciation equilibrium after standard-state conventions are explicit."
     primary_problem: "Chemical equilibrium without phase split."
     knowns: [T, P, feed_composition, reaction_set]
@@ -385,7 +386,7 @@ family_rows:
         command: "uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete"
         scope: "CE-only homogeneous reactive_speciation evidence using analytic ideal, charged conservation, Ascani 2023 constants, MEA true-species bookkeeping, and retained Cantera/Pope oracle fixtures."
         retained_evidence: "analyses/paper_validation/standalone_ce/shared/results/summary.json"
-        result_requirement: "Checker returns complete with no blockers; validation families include analytic_ideal, charged_conservation, ascani_2023, mea_speciation, cantera_reference_oracle, and pope_reference_oracle; public routes remain closed until issue #330."
+        result_requirement: "Checker returns complete with no blockers; validation families include analytic_ideal, charged_conservation, ascani_2023, mea_speciation, cantera_reference_oracle, and pope_reference_oracle; only standalone reactive_speciation is public while reactive LLE, reactive electrolyte LLE, and CPE remain closed."
     reference_cases:
       - case_label: "Standalone CE validation ladder"
         evidence_tier: T1
@@ -397,7 +398,8 @@ family_rows:
           - reaction_affinity
           - exact_chemical_potential_derivatives
           - ce_validation_ladder
-          - public_route_closed_until_activation_gate
+          - standalone_reactive_speciation_public
+          - reactive_phase_and_cpe_closed
     forbidden_shortcuts:
       - hidden_standard_state
 

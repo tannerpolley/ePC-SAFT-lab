@@ -302,11 +302,14 @@ def test_current_runtime_route_keys_are_excluded_from_generalized_families() -> 
         assert row["family_label"] not in excluded
 
 
-def test_ce_and_cpe_registry_placeholders_have_explicit_blocking_gates() -> None:
+def test_ce_and_cpe_registry_rows_have_explicit_gates() -> None:
     rows = {row["family_label"]: row for row in _registry()["family_rows"]}
-    ce = rows["CE Chemical Equilibrium Placeholder"]
+    ce = rows["CE Standalone Reactive Speciation"]
     cpe = rows["CPE Combined Phase-Chemical Placeholder"]
 
+    assert ce["activation_status"] == "standalone_ce_public_admitted"
+    assert ce["production_exposed"] is True
+    assert ce["existing_public_utility_routes"] == ["reactive_speciation"]
     assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
     assert {
         "homogeneous_single_phase_only",

@@ -7,7 +7,8 @@ issue: 329
 scope:
   equilibrium: standalone_chemical_equilibrium
   phase_scope: homogeneous_single_phase
-  public_routes: []
+  public_routes:
+    - reactive_speciation
   closed_surfaces:
     - reactive_lle
     - reactive_electrolyte_lle

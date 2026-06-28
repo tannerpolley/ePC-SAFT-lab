@@ -62,7 +62,7 @@ def _native_payload() -> dict[str, object]:
             "activation_compiler": "activation_plan",
             "problem_name": "reactive_speciation_ideal_gibbs_nlp",
         },
-        "activation": {"key": "reactive_speciation", "public_routes": []},
+        "activation": {"key": "reactive_speciation", "public_routes": ["reactive_speciation"]},
         "activation_plan": {
             "family_key": "reactive_speciation",
             "route": "reactive_speciation",
@@ -153,6 +153,24 @@ def test_reactive_speciation_rejects_alternate_native_or_route_evidence(monkeypa
     monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
 
     with pytest.raises(SolutionError, match="single activation-matrix NLP"):
+        epcsaft_equilibrium.reactive_speciation(
+            species=_species(),
+            reactions=_reaction(),
+            feed_amounts={"A": 1.0, "B": 0.0},
+            equilibrium_constants=[_constant()],
+            initial_amounts=[0.5, 0.5],
+        )
+
+
+def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_solve(*_args, **_kwargs):
+        payload = _native_payload()
+        payload["activation"] = {"key": "reactive_speciation", "public_routes": ["reactive_lle"]}
+        return payload
+
+    monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
+
+    with pytest.raises(SolutionError, match="reactive phase routes"):
         epcsaft_equilibrium.reactive_speciation(
             species=_species(),
             reactions=_reaction(),

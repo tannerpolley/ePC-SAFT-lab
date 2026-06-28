@@ -11,9 +11,9 @@ The current reset public API is workflow-object based:
 * ``reactive_speciation(...)`` for standalone homogeneous chemical/speciation
   equilibrium over true species, explicit reactions, feed amounts, and explicit
   standard-state metadata.
-* Additional associating, electrolyte, reactive, and speciation families are
-  declared in the native activation matrix as not exposed until they have
-  production selector support, focused public tests, and capability evidence.
+* Additional coupled reactive phase and CPE families are declared in the native
+  activation matrix as not exposed until they have production selector support,
+  focused public tests, and capability evidence.
 
 Old public mixture route methods such as ``mixture.bubble_p(...)`` and
 ``mixture.equilibrium(kind=...)`` are no longer part of the reset public
@@ -82,7 +82,9 @@ trusted public proof set is the hydrocarbon neutral VLE/flash route family,
 neutral LLE, the source-backed methanol/cyclohexane associating LLE fixture,
 and the source-backed Khudaida explicit-ion NaCl mixed-solvent electrolyte LLE
 fixture through the native selector core, Ipopt, and exact Hessian or exact
-reduced-derivative callbacks. Broader associating, generic electrolyte,
+reduced-derivative callbacks. Standalone ``reactive_speciation(...)`` is also
+admitted through the single activation-matrix NLP/Ipopt path after the
+standalone CE checker passes. Broader associating, generic electrolyte,
 reactive phase, CPE, and coupled speciation route families remain
 declared-not-exposed activation rows until they are ported behind the selector
 and reset ``Equilibrium(mixture, route=..., ...)`` workflow. The standalone

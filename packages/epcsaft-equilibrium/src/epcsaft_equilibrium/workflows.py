@@ -192,8 +192,10 @@ def _validate_reactive_speciation_payload(payload: Mapping[str, Any], diagnostic
     if not isinstance(selector, Mapping) or selector.get("selector_family") != "reactive_speciation":
         raise SolutionError("reactive_speciation native payload returned an invalid selector contract.", diagnostics)
     activation = payload.get("activation", {})
-    if isinstance(activation, Mapping) and list(activation.get("public_routes", [])):
-        raise SolutionError("reactive_speciation native payload must not open reactive phase routes.", diagnostics)
+    if isinstance(activation, Mapping):
+        public_routes = [str(route) for route in activation.get("public_routes", [])]
+        if any(route != "reactive_speciation" for route in public_routes):
+            raise SolutionError("reactive_speciation native payload must not open reactive phase routes.", diagnostics)
 
 
 def _required_float_vector(

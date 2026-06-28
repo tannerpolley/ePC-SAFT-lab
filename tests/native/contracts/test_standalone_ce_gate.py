@@ -78,7 +78,7 @@ def test_standalone_ce_validation_ladder_summary_retains_required_families_and_b
     assert payload["schema_version"] == "epcsaft.standalone_ce.validation_ladder.v1"
     assert payload["scope"] == "standalone_chemical_equilibrium_only"
     assert payload["claimed_equilibrium_scopes"] == ["standalone_chemical_equilibrium"]
-    assert payload["public_routes"] == []
+    assert payload["public_routes"] == ["reactive_speciation"]
     assert payload["closed_surfaces"] == ["reactive_lle", "reactive_electrolyte_lle", "cpe"]
     assert payload["runtime_dependencies"] == []
     assert {record["family_id"] for record in payload["validation_families"]} == {
@@ -98,10 +98,10 @@ def test_standalone_ce_validation_ladder_summary_retains_required_families_and_b
         "source": "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py",
     }
     assert payload["capability_evidence"] == {
-        "status": "closed_until_activation_gate",
-        "activation_gate": "issue_0330",
-        "production": False,
-        "public_routes": [],
+        "status": "standalone_ce_open_cpe_closed",
+        "activation_gate": "issue_0330_complete",
+        "production": True,
+        "public_routes": ["reactive_speciation"],
         "closed_surfaces": ["reactive_lle", "reactive_electrolyte_lle", "cpe"],
     }
 
@@ -114,13 +114,14 @@ def test_standalone_ce_gate_rejects_missing_validation_ladder_evidence() -> None
         record for record in bad_payload["validation_families"] if record["family_id"] != "mea_speciation"
     ]
     bad_payload["derivative_evidence"]["lagrangian_hessian_exact"] = False
-    bad_payload["capability_evidence"]["public_routes"] = ["reactive_speciation"]
+    bad_payload["capability_evidence"]["public_routes"] = ["reactive_lle"]
 
     blockers = checker.validation_ladder_payload_blockers(bad_payload)
 
     assert "validation_family_mea_speciation_missing" in blockers
     assert "derivative_evidence_lagrangian_hessian_not_exact" in blockers
-    assert "capability_public_routes_claimed" in blockers
+    assert "capability_public_routes_mismatch" in blockers
+    assert "capability_reactive_phase_route_claimed" in blockers
 
 
 def test_standalone_ce_gate_complete_mode_consumes_validation_ladder() -> None:
@@ -148,4 +149,4 @@ def test_standalone_ce_gate_complete_mode_consumes_validation_ladder() -> None:
         "pope_reference_oracle",
     ]
     assert ladder["derivative_evidence"]["lagrangian_hessian_exact"] is True
-    assert ladder["capability_evidence"]["public_routes"] == []
+    assert ladder["capability_evidence"]["public_routes"] == ["reactive_speciation"]

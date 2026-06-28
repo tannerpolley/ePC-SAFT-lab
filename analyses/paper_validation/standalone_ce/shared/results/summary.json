@@ -7,7 +7,9 @@
   "ce_only": true,
   "phase_scope": "homogeneous_single_phase",
   "runtime_dependencies": [],
-  "public_routes": [],
+  "public_routes": [
+    "reactive_speciation"
+  ],
   "closed_surfaces": [
     "reactive_lle",
     "reactive_electrolyte_lle",
@@ -261,10 +263,12 @@
     "source": "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py"
   },
   "capability_evidence": {
-    "status": "closed_until_activation_gate",
-    "activation_gate": "issue_0330",
-    "production": false,
-    "public_routes": [],
+    "status": "standalone_ce_open_cpe_closed",
+    "activation_gate": "issue_0330_complete",
+    "production": true,
+    "public_routes": [
+      "reactive_speciation"
+    ],
     "closed_surfaces": [
       "reactive_lle",
       "reactive_electrolyte_lle",
