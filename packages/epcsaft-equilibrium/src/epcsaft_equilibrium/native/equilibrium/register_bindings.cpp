@@ -1632,9 +1632,20 @@ py::dict electrolyte_stage_iii_refinement_to_dict(
     seed["native_binding"] = result.source_native_binding;
     seed["seed_name"] = result.seed_name;
     seed["selected_candidate_count"] = result.selected_candidate_count;
-    seed["selected_phase_kinds"] = result.selected_phase_kinds;
-    seed["selected_phase_fractions"] = result.selected_phase_fractions;
-    seed["selected_phase_compositions"] = result.selected_phase_compositions;
+    const auto& stage_ii = result.held2_discovery.tpd_discovery;
+    seed["selected_phase_kinds"] = stage_ii.held_stage_ii_replay_phase_kinds.empty()
+        ? result.selected_phase_kinds
+        : stage_ii.held_stage_ii_replay_phase_kinds;
+    seed["selected_phase_fractions"] = stage_ii.held_stage_ii_replay_phase_fractions.empty()
+        ? result.selected_phase_fractions
+        : stage_ii.held_stage_ii_replay_phase_fractions;
+    seed["selected_phase_compositions"] = stage_ii.held_stage_ii_replay_phase_compositions.empty()
+        ? result.selected_phase_compositions
+        : stage_ii.held_stage_ii_replay_phase_compositions;
+    seed["stage_ii_replay_ready"] = stage_ii.held_stage_ii_replay_ready;
+    seed["stage_ii_replay_source"] = stage_ii.held_stage_ii_replay_source;
+    seed["stage_ii_replay_seed_name"] = stage_ii.held_stage_ii_replay_seed_name;
+    seed["stage_ii_replay_candidate_ranks"] = stage_ii.held_stage_ii_replay_candidate_ranks;
     out["seed_provenance"] = seed;
 
     py::dict residual;

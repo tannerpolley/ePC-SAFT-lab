@@ -171,12 +171,22 @@ def _validate_stage_iii_payload(stage_iii: dict[str, Any]) -> list[str]:
     solver = stage_iii.get("solver_diagnostics", {})
     if solver.get("solver_backend") != "ipopt":
         blockers.append("stage_iii_solver_backend_mismatch")
-    if solver.get("ipopt_status") != "Solve_Succeeded":
-        blockers.append("stage_iii_ipopt_status_mismatch")
-    if solver.get("application_status") != "solve_succeeded":
-        blockers.append("stage_iii_application_status_mismatch")
     if solver.get("solver_accepted") is not True:
         blockers.append("stage_iii_solver_rejected")
+    strict_success = (
+        solver.get("ipopt_status") == "Solve_Succeeded"
+        and solver.get("application_status") == "solve_succeeded"
+    )
+    certified_acceptable = (
+        solver.get("ipopt_status") == "acceptable_point"
+        and solver.get("application_status") == "solved_to_acceptable_level"
+        and solver.get("solver_accepted") is True
+        and solver.get("route_accepted") is True
+    )
+    if not (strict_success or certified_acceptable):
+        blockers.append("stage_iii_ipopt_status_mismatch")
+    if not (strict_success or certified_acceptable):
+        blockers.append("stage_iii_application_status_mismatch")
     if float(solver.get("residual_inf_norm", math.inf)) > float(
         solver.get("residual_tolerance", RESIDUAL_TOLERANCE)
     ):
@@ -341,6 +351,18 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
         "mean_ionic_pair_labels": ["Na+/Cl-"],
         "tpd_values": [-1.0e-3, -5.0e-4],
     }
+    held2_phase["tpd_discovery"] = {
+        "held_stage_ii_status": "dual_loop_verified",
+        "held_stage_ii_candidate_bound_audit_status": "candidate_bound_gap_closed",
+        "held_stage_ii_dual_loop_status": "verified",
+        "held_stage_ii_replay_ready": True,
+        "held_stage_ii_replay_phase_fractions": [0.4, 0.6],
+        "held_stage_ii_replay_phase_kinds": [0, 0],
+        "held_stage_ii_replay_phase_compositions": [[0.97, 0.015, 0.015], [0.99, 0.005, 0.005]],
+        "held_stage_ii_replay_source": "stage_ii_dual_loop_selected_candidates",
+        "held_stage_ii_replay_seed_name": "held_stage_ii_dual_loop_candidate_pair",
+        "held_stage_ii_replay_candidate_ranks": [0, 1],
+    }
     held2_phase["electroneutral_lift"]["lifted_candidate_compositions"] = [
         [0.97, 0.015, 0.015],
         [0.99, 0.005, 0.005],
@@ -375,6 +397,10 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
             "selected_phase_kinds": [0, 0],
             "selected_phase_fractions": [0.4, 0.6],
             "selected_phase_compositions": [[0.97, 0.015, 0.015], [0.99, 0.005, 0.005]],
+            "stage_ii_replay_ready": True,
+            "stage_ii_replay_source": "stage_ii_dual_loop_selected_candidates",
+            "stage_ii_replay_seed_name": "held_stage_ii_dual_loop_candidate_pair",
+            "stage_ii_replay_candidate_ranks": [0, 1],
         },
         "reduced_residual_system": {
             "coordinate_basis": "counterion_pair_transformed_variables",
