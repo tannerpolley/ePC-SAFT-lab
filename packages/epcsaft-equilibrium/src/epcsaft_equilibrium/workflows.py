@@ -85,7 +85,7 @@ def reactive_speciation(
     reactions: Sequence[ChemicalReaction],
     feed_amounts: Mapping[str, float],
     equilibrium_constants: Sequence[EquilibriumConstantRecord],
-    initial_amounts: Sequence[float],
+    initial_amounts: Sequence[float] | None = None,
     solver_options: EquilibriumSolverOptions | Mapping[str, Any] | None = None,
 ) -> ReactiveSpeciationResult:
     """Solve standalone homogeneous chemical speciation through the CE NLP path."""
@@ -94,10 +94,11 @@ def reactive_speciation(
     standard_states = build_standard_state_registry(equilibrium_constants)
     _require_mole_fraction_standard_states(standard_states)
     options = _normalize_options(solver_options)
+    initial_seed = _optional_positive_initial_amounts(initial_amounts, compiled.species_count)
     payload = solve_chemical_equilibrium_nlp_activation(
         compiled,
         standard_states,
-        initial_amounts=initial_amounts,
+        initial_amounts=initial_seed,
         max_iterations=options.max_iterations,
         tolerance=options.tolerance,
         timeout_seconds=options.timeout_seconds,
@@ -109,6 +110,22 @@ def reactive_speciation(
         ipopt_linear_solver=options.ipopt_linear_solver,
     )
     return _reactive_speciation_result_from_payload(compiled, standard_states, payload)
+
+
+def _optional_positive_initial_amounts(
+    initial_amounts: Sequence[float] | None,
+    species_count: int,
+) -> list[float] | None:
+    if initial_amounts is None:
+        return None
+    values = np.asarray(initial_amounts, dtype=float)
+    if values.shape != (species_count,):
+        raise InputError(f"initial_amounts must contain exactly {species_count} values.")
+    if not np.all(np.isfinite(values)):
+        raise InputError("initial_amounts must be finite.")
+    if np.any(values <= 0.0):
+        raise InputError("initial_amounts must be strictly positive.")
+    return values.tolist()
 
 
 def _require_mole_fraction_standard_states(standard_states: StandardStateRegistry) -> None:

@@ -153,6 +153,8 @@ _CHEMICAL_EQUILIBRIUM_TOP_LEVEL_DIAGNOSTIC_KEYS = (
     "variable_layout",
     "continuation_state",
     "iteration_history",
+    "initialization",
+    "continuation",
 )
 
 

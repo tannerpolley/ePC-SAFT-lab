@@ -364,7 +364,7 @@ def solve_chemical_equilibrium_nlp_activation(
     compiled: CompiledChemicalEquilibrium,
     standard_states: StandardStateRegistry,
     *,
-    initial_amounts: Sequence[float],
+    initial_amounts: Sequence[float] | None = None,
     max_iterations: int = 100,
     tolerance: float = 1.0e-8,
     timeout_seconds: float | None = None,
@@ -395,7 +395,11 @@ def solve_chemical_equilibrium_nlp_activation(
     balance_tol = _positive_finite_float(balance_tolerance, "balance_tolerance")
     reaction_tol = _positive_finite_float(reaction_stationarity_tolerance, "reaction_stationarity_tolerance")
     timeout = 0.0 if timeout_seconds is None else _positive_finite_float(timeout_seconds, "timeout_seconds")
-    initial = _positive_amount_vector(initial_amounts, compiled.species_count, "initial_amounts")
+    initial = (
+        []
+        if initial_amounts is None
+        else _positive_amount_vector(initial_amounts, compiled.species_count, "initial_amounts").tolist()
+    )
 
     from ._native import extension_native_core
 
@@ -403,7 +407,7 @@ def solve_chemical_equilibrium_nlp_activation(
     return core._native_chemical_equilibrium_nlp_activation(
         compiled.to_native_payload(),
         standard_states.to_native_payload(),
-        initial.tolist(),
+        initial,
         iterations,
         solve_tolerance,
         timeout,

@@ -189,6 +189,24 @@ def _native_payload() -> dict[str, object]:
             "solver_accepted": True,
             "hessian_backend": "analytic",
         },
+        "initialization": {
+            "seed_source": "max_min_feasible_interior",
+            "source_oracle_initial_amounts": False,
+            "feasible_initialization": {"accepted": True, "margin": 0.5},
+        },
+        "continuation": {
+            "direct_final_proof_attempted": True,
+            "direct_final_proof_accepted": True,
+            "final_proof_status": "accepted",
+            "final_lambda": 1.0,
+            "lambda_values": [0.0, 0.5, 1.0],
+            "stage_count": 3,
+            "trace": [
+                {"stage_id": "lambda_0", "parameter_value": 0.0, "final_proof": False},
+                {"stage_id": "lambda_half", "parameter_value": 0.5, "final_proof": False},
+                {"stage_id": "lambda_1", "parameter_value": 1.0, "final_proof": True},
+            ],
+        },
     }
 
 
@@ -249,6 +267,95 @@ def test_reactive_speciation_public_api_returns_ce_only_result_schema(monkeypatc
     assert payload["phase_scope"] == "homogeneous"
     assert payload["closed_surfaces"] == ["reactive_lle", "reactive_electrolyte_lle", "cpe"]
     assert "phases" not in payload
+
+
+def test_reactive_speciation_initial_amounts_are_optional_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_solve(compiled, standard_states, **kwargs):
+        calls.append(
+            {
+                "species": compiled.species_labels,
+                "standard_states": standard_states.reaction_labels,
+                "initial_amounts": kwargs["initial_amounts"],
+            }
+        )
+        return _native_payload()
+
+    monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
+
+    result = epcsaft_equilibrium.reactive_speciation(
+        species=_species(),
+        reactions=_reaction(),
+        feed_amounts={"A": 1.0, "B": 0.0},
+        equilibrium_constants=[_constant()],
+    )
+
+    assert calls == [
+        {
+            "species": ("A", "B"),
+            "standard_states": ("a_to_b",),
+            "initial_amounts": None,
+        }
+    ]
+    assert result.diagnostics["initialization"]["seed_source"] == "max_min_feasible_interior"
+    assert result.diagnostics["initialization"]["source_oracle_initial_amounts"] is False
+    assert result.diagnostics["continuation"]["final_lambda"] == pytest.approx(1.0)
+    assert result.diagnostics["continuation"]["trace"][-1]["final_proof"] is True
+
+
+def test_reactive_speciation_explicit_seed_reports_source_oracle_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_solve(*_args, **_kwargs):
+        payload = _native_payload()
+        payload["initialization"] = {
+            "seed_source": "caller_initial_amounts",
+            "source_oracle_initial_amounts": True,
+            "feasible_initialization": {"accepted": False},
+        }
+        payload["continuation"] = {
+            "direct_final_proof_attempted": True,
+            "direct_final_proof_accepted": True,
+            "final_proof_status": "accepted",
+            "final_lambda": 1.0,
+            "lambda_values": [1.0],
+            "stage_count": 0,
+            "trace": [],
+        }
+        return payload
+
+    monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
+
+    result = epcsaft_equilibrium.reactive_speciation(
+        species=_species(),
+        reactions=_reaction(),
+        feed_amounts={"A": 1.0, "B": 0.0},
+        equilibrium_constants=[_constant()],
+        initial_amounts=[0.5, 0.5],
+    )
+
+    assert result.diagnostics["initialization"]["seed_source"] == "caller_initial_amounts"
+    assert result.diagnostics["initialization"]["source_oracle_initial_amounts"] is True
+    assert result.diagnostics["continuation"]["lambda_values"] == (1.0,)
+
+
+def test_reactive_speciation_rejects_invalid_explicit_seed_before_native(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail_solve(*_args, **_kwargs):
+        raise AssertionError("native solve should not be called for invalid explicit seed")
+
+    monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fail_solve)
+
+    with pytest.raises(InputError, match="initial_amounts"):
+        epcsaft_equilibrium.reactive_speciation(
+            species=_species(),
+            reactions=_reaction(),
+            feed_amounts={"A": 1.0, "B": 0.0},
+            equilibrium_constants=[_constant()],
+            initial_amounts=[0.0, 1.0],
+        )
 
 
 def test_reactive_speciation_rejects_alternate_native_or_route_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
