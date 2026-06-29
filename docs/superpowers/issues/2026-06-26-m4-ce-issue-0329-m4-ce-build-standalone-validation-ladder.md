@@ -29,6 +29,10 @@
 **Stop Criteria:** Stop if the slice requires implicit standard-state conventions, unproven derivative evidence, unsupported phase coupling, or capability claims beyond this issue.
 **Avoid:** Do not add downstream application metrics, regression work, release claims, or reactive phase route admission outside this issue scope.
 
+## Continuation Evidence Update
+
+The MEA validation-ladder proof is superseded by the no-oracle continuation evidence in `docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md`. The retained MEA record must point to the generated no-oracle summary artifact, report `uses_source_oracle_initial_amounts=false`, use the max-min feasible seed policy, and include continuation-trace and shuffled-subset proof gates. Three-point source-seeded MEA sweeps may remain diagnostic only; they do not prove unassisted standalone CE.
+
 ## Project Merge
 
 **Merge Owner:** Main thread orchestrator

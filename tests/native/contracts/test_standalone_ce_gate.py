@@ -13,6 +13,16 @@ CHECKER_PATH = REPO_ROOT / "scripts" / "validation" / "check_standalone_ce_gate.
 STANDALONE_CE_SUMMARY_PATH = (
     REPO_ROOT / "analyses" / "paper_validation" / "standalone_ce" / "shared" / "results" / "summary.json"
 )
+MEA_RETAINED_SUMMARY_PATH = (
+    REPO_ROOT
+    / "analyses"
+    / "paper_validation"
+    / "standalone_ce"
+    / "figures"
+    / "mea_reactive_speciation_oracle_comparison"
+    / "results"
+    / "mea_ce_oracle_speciation_comparison_summary.json"
+)
 
 pytestmark = pytest.mark.native_contract
 
@@ -74,6 +84,7 @@ def test_standalone_ce_gate_rejects_missing_single_nlp_evidence() -> None:
 
 def test_standalone_ce_validation_ladder_summary_retains_required_families_and_boundaries() -> None:
     payload = json.loads(STANDALONE_CE_SUMMARY_PATH.read_text(encoding="utf-8"))
+    retained_summary_path = MEA_RETAINED_SUMMARY_PATH.relative_to(REPO_ROOT).as_posix()
 
     assert payload["schema_version"] == "epcsaft.standalone_ce.validation_ladder.v1"
     assert payload["scope"] == "standalone_chemical_equilibrium_only"
@@ -81,6 +92,10 @@ def test_standalone_ce_validation_ladder_summary_retains_required_families_and_b
     assert payload["public_routes"] == ["reactive_speciation"]
     assert payload["closed_surfaces"] == ["reactive_lle", "reactive_electrolyte_lle", "cpe"]
     assert payload["runtime_dependencies"] == []
+    assert (
+        payload["source_plan"]
+        == "docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md"
+    )
     assert {record["family_id"] for record in payload["validation_families"]} == {
         "analytic_ideal",
         "charged_conservation",
@@ -90,11 +105,30 @@ def test_standalone_ce_validation_ladder_summary_retains_required_families_and_b
         "pope_reference_oracle",
     }
     mea = next(record for record in payload["validation_families"] if record["family_id"] == "mea_speciation")
-    assert mea["evidence_role"] == "executable_public_reactive_speciation_sweep"
+    assert mea["evidence_role"] == "retained_no_oracle_public_reactive_speciation_sweep"
     assert mea["source"] == "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture"
+    assert mea["source_path"] == retained_summary_path
     assert mea["standard_state_metadata"]["activity_convention"] == "mole_fraction_activity"
-    assert mea["loading_grid"] == [0.1, 0.4, 0.8]
+    assert mea["temperature_C"] == [20.0, 40.0]
+    assert mea["loading_count"] == 161
+    assert mea["seed_policy"] == "max_min_feasible_interior_no_oracle"
+    assert mea["uses_source_oracle_initial_amounts"] is False
+    assert mea["solver_options"] == {"max_iterations": 1000, "tolerance": 1e-8}
+    assert mea["residuals"]["state_point_count"] == 322
+    assert mea["residuals"]["species_row_count"] == 3220
+    assert mea["residuals"]["max_mole_fraction_abs_error"] <= 1.0e-8
+    assert mea["residuals"]["max_balance_inf_norm"] <= mea["tolerances"]["balance_abs"]
     assert mea["residuals"]["max_reaction_stationarity_inf_norm"] <= mea["tolerances"]["affinity_abs"]
+    continuation = mea["continuation_evidence"]
+    assert continuation["max_stage_count"] == 3
+    assert continuation["homotopy_point_count"] == 12
+    assert continuation["physical_proof_corrector_point_count"] == 322
+    assert continuation["all_final_lambda_one"] is True
+    assert continuation["all_final_proof_accepted"] is True
+    shuffled_subset = mea["shuffled_subset"]
+    assert shuffled_subset["attempt_count"] == 34
+    assert shuffled_subset["all_accepted"] is True
+    assert shuffled_subset["all_no_source_oracle_seed"] is True
     assert payload["derivative_evidence"] == {
         "status": "complete",
         "backend": "analytic",
@@ -130,6 +164,30 @@ def test_standalone_ce_gate_rejects_missing_validation_ladder_evidence() -> None
     assert "capability_reactive_phase_route_claimed" in blockers
 
 
+def test_standalone_ce_gate_rejects_source_seeded_or_weak_mea_validation_ladder_evidence() -> None:
+    checker = _checker_module()
+    payload = json.loads(STANDALONE_CE_SUMMARY_PATH.read_text(encoding="utf-8"))
+    bad_payload = copy.deepcopy(payload)
+    mea = next(record for record in bad_payload["validation_families"] if record["family_id"] == "mea_speciation")
+    mea["evidence_role"] = "executable_public_reactive_speciation_sweep"
+    mea["loading_count"] = 3
+    mea["uses_source_oracle_initial_amounts"] = True
+    mea["seed_policy"] = "source_oracle_mole_fraction_seed"
+    mea["residuals"]["max_mole_fraction_abs_error"] = 1.0e-5
+    mea["continuation_evidence"] = {}
+    mea["shuffled_subset"] = {"attempt_count": 0, "all_accepted": False, "all_no_source_oracle_seed": False}
+
+    blockers = checker.validation_ladder_payload_blockers(bad_payload)
+
+    assert "validation_family_mea_speciation_evidence_role_mismatch" in blockers
+    assert "validation_family_mea_speciation_source_oracle_seeded" in blockers
+    assert "validation_family_mea_speciation_seed_policy_mismatch" in blockers
+    assert "validation_family_mea_speciation_retained_loading_count_mismatch" in blockers
+    assert "validation_family_mea_speciation_strict_gates_missing" in blockers
+    assert "validation_family_mea_speciation_continuation_trace_missing" in blockers
+    assert "validation_family_mea_speciation_shuffled_subset_missing" in blockers
+
+
 def test_standalone_ce_gate_complete_mode_consumes_validation_ladder() -> None:
     if not extension_native_core()._native_ipopt_smoke()["compiled"]:
         pytest.skip("native Ipopt is not compiled")
@@ -159,5 +217,22 @@ def test_standalone_ce_gate_complete_mode_consumes_validation_ladder() -> None:
     mea = report["mea_speciation_evidence"]
     assert mea["status"] == "complete"
     assert mea["loading_grid"] == [0.1, 0.4, 0.8]
+    assert mea["seed_policy"] == "max_min_feasible_interior_no_oracle"
+    assert mea["uses_source_oracle_initial_amounts"] is False
     assert [row["loading_mol_co2_per_mol_mea"] for row in mea["rows"]] == [0.1, 0.4, 0.8]
+    assert {row["accepted"] for row in mea["rows"]} == {True}
+    assert {row["feasible_initialization_accepted"] for row in mea["rows"]} == {True}
+    assert {row["uses_source_oracle_initial_amounts"] for row in mea["rows"]} == {False}
+    assert {row["final_proof_status"] for row in mea["rows"]} == {"accepted"}
+    assert {row["final_lambda"] for row in mea["rows"]} == {1.0}
     assert max(row["reaction_stationarity_inf_norm"] for row in mea["rows"]) <= mea["tolerances"]["affinity_abs"]
+    retained = report["mea_retained_artifact_evidence"]
+    assert retained["status"] == "complete"
+    assert retained["artifact_path"] == MEA_RETAINED_SUMMARY_PATH.relative_to(REPO_ROOT).as_posix()
+    assert retained["loading_count"] == 161
+    assert retained["state_point_count"] == 322
+    assert retained["strict_gates_passed"] is True
+    assert retained["seed_policy"] == "max_min_feasible_interior_no_oracle"
+    assert retained["uses_source_oracle_initial_amounts"] is False
+    assert retained["continuation_evidence"]["all_final_lambda_one"] is True
+    assert retained["continuation_evidence"]["all_final_proof_accepted"] is True

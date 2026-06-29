@@ -5,7 +5,7 @@ import json
 import math
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +19,16 @@ REFERENCE_ORACLE_PATH = (
 VALIDATION_LADDER_PATH = (
     REPO_ROOT / "analyses" / "paper_validation" / "standalone_ce" / "shared" / "results" / "summary.json"
 )
+MEA_RETAINED_SUMMARY_PATH = (
+    REPO_ROOT
+    / "analyses"
+    / "paper_validation"
+    / "standalone_ce"
+    / "figures"
+    / "mea_reactive_speciation_oracle_comparison"
+    / "results"
+    / "mea_ce_oracle_speciation_comparison_summary.json"
+)
 REQUIRED_VALIDATION_FAMILIES = (
     "analytic_ideal",
     "charged_conservation",
@@ -28,6 +38,19 @@ REQUIRED_VALIDATION_FAMILIES = (
     "pope_reference_oracle",
 )
 REQUIRED_CLOSED_SURFACES = ["reactive_lle", "reactive_electrolyte_lle", "cpe"]
+REQUIRED_MEA_RETAINED_SUMMARY_PATH = MEA_RETAINED_SUMMARY_PATH.relative_to(REPO_ROOT).as_posix()
+REQUIRED_MEA_SEED_POLICY = "max_min_feasible_interior_no_oracle"
+REQUIRED_MEA_TEMPERATURES_C = [20.0, 40.0]
+REQUIRED_MEA_LOADING_COUNT = 161
+REQUIRED_MEA_STATE_POINT_COUNT = 322
+REQUIRED_MEA_SPECIES_ROW_COUNT = 3220
+MEA_STRICT_TOLERANCES = {
+    "balance_abs": 1.0e-8,
+    "affinity_abs": 1.0e-6,
+    "mole_fraction_abs": 1.0e-8,
+    "loading_abs": 1.0e-8,
+    "charge_abs": 1.0e-8,
+}
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
 
@@ -175,12 +198,6 @@ _MEA_EXPECTED_MOLE_FRACTIONS = {
         "OH-": 1.1392512989995421e-08,
     },
 }
-
-
-def _mea_initial_amounts(mole_fractions: dict[str, float]) -> list[float]:
-    amine_fraction = mole_fractions["MEA"] + mole_fractions["MEAH+"] + mole_fractions["MEACOO-"]
-    scale = 1.0 / amine_fraction
-    return [mole_fractions[species.label] * scale for species in _mea_species()]
 
 
 def _side_channel_bindings_absent() -> bool:
@@ -422,6 +439,133 @@ def _load_validation_ladder_payload(path: Path = VALIDATION_LADDER_PATH) -> dict
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _load_mea_retained_summary_payload(path: Path = MEA_RETAINED_SUMMARY_PATH) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "schema_version": "",
+            "public_route": "",
+            "temperature_C": [],
+            "loading_count": 0,
+            "pointwise_unassisted": {},
+            "ce_owned_continuation_trace": {},
+            "shuffled_subset": {},
+            "load_error": f"missing:{path.as_posix()}",
+        }
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _as_float(payload: Mapping[str, Any], key: str, default: float = math.inf) -> float:
+    try:
+        return float(payload.get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _mea_artifact_strict_gates_pass(payload: Mapping[str, Any]) -> bool:
+    pointwise = dict(payload.get("pointwise_unassisted") or {})
+    return (
+        payload.get("strict_gates_passed") is True
+        and payload.get("all_accepted") is True
+        and pointwise.get("all_accepted") is True
+        and pointwise.get("all_no_source_oracle_seed") is True
+        and pointwise.get("all_final_lambda_one") is True
+        and _as_float(payload, "max_abs_error") <= MEA_STRICT_TOLERANCES["mole_fraction_abs"]
+        and _as_float(payload, "max_balance_inf_norm") <= MEA_STRICT_TOLERANCES["balance_abs"]
+        and _as_float(payload, "max_reaction_stationarity_inf_norm") <= MEA_STRICT_TOLERANCES["affinity_abs"]
+    )
+
+
+def _mea_artifact_continuation_gates_pass(payload: Mapping[str, Any]) -> bool:
+    continuation = dict(payload.get("ce_owned_continuation_trace") or payload.get("continuation_evidence") or {})
+    return (
+        int(continuation.get("max_stage_count", -1)) == 3
+        and int(continuation.get("homotopy_point_count", -1)) == 12
+        and int(continuation.get("physical_proof_corrector_point_count", -1)) == REQUIRED_MEA_STATE_POINT_COUNT
+        and continuation.get("all_final_lambda_one") is True
+        and continuation.get("all_final_proof_accepted") is True
+    )
+
+
+def _mea_artifact_shuffled_subset_gates_pass(payload: Mapping[str, Any]) -> bool:
+    shuffled = dict(payload.get("shuffled_subset") or {})
+    return (
+        int(shuffled.get("attempt_count", -1)) >= 34
+        and shuffled.get("all_accepted") is True
+        and shuffled.get("all_no_source_oracle_seed") is True
+        and _as_float(shuffled, "max_abs_error") <= MEA_STRICT_TOLERANCES["mole_fraction_abs"]
+    )
+
+
+def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    if payload.get("schema_version") != "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2":
+        blockers.append("mea_retained_summary_schema_version_mismatch")
+    if payload.get("public_route") != "reactive_speciation":
+        blockers.append("mea_retained_summary_public_route_mismatch")
+    if payload.get("ce_workflow") != "epcsaft_equilibrium.reactive_speciation":
+        blockers.append("mea_retained_summary_workflow_mismatch")
+    if payload.get("temperature_C") != REQUIRED_MEA_TEMPERATURES_C:
+        blockers.append("mea_retained_summary_temperature_grid_mismatch")
+    if int(payload.get("loading_count", 0)) != REQUIRED_MEA_LOADING_COUNT:
+        blockers.append("mea_retained_summary_loading_count_mismatch")
+    pointwise = dict(payload.get("pointwise_unassisted") or {})
+    if int(pointwise.get("row_count", 0)) != REQUIRED_MEA_SPECIES_ROW_COUNT:
+        blockers.append("mea_retained_summary_species_row_count_mismatch")
+    if int(pointwise.get("loading_count", 0)) != REQUIRED_MEA_LOADING_COUNT:
+        blockers.append("mea_retained_summary_pointwise_loading_count_mismatch")
+    if payload.get("seed_policy") != REQUIRED_MEA_SEED_POLICY:
+        blockers.append("mea_retained_summary_seed_policy_mismatch")
+    if payload.get("uses_source_oracle_initial_amounts") is not False:
+        blockers.append("mea_retained_summary_source_oracle_seeded")
+    solver_options = dict(payload.get("solver_options") or {})
+    if solver_options.get("max_iterations") != 1000 or float(solver_options.get("tolerance", 1.0)) != 1.0e-8:
+        blockers.append("mea_retained_summary_solver_options_mismatch")
+    if not _mea_artifact_strict_gates_pass(payload):
+        blockers.append("mea_retained_summary_strict_gates_missing")
+    if not _mea_artifact_continuation_gates_pass(payload):
+        blockers.append("mea_retained_summary_continuation_trace_missing")
+    if not _mea_artifact_shuffled_subset_gates_pass(payload):
+        blockers.append("mea_retained_summary_shuffled_subset_missing")
+    if payload.get("load_error"):
+        blockers.append("mea_retained_summary_fixture_missing")
+    return sorted(set(blockers))
+
+
+def _mea_retained_artifact_evidence_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    pointwise = dict(payload.get("pointwise_unassisted") or {})
+    continuation = dict(payload.get("ce_owned_continuation_trace") or {})
+    shuffled_subset = dict(payload.get("shuffled_subset") or {})
+    temperature_count = len(payload.get("temperature_C") or [])
+    loading_count = int(payload.get("loading_count") or 0)
+    state_point_count = loading_count * temperature_count
+    blockers = mea_retained_summary_payload_blockers(payload)
+    return {
+        "status": "complete" if not blockers else "blocked",
+        "blockers": blockers,
+        "artifact_path": REQUIRED_MEA_RETAINED_SUMMARY_PATH,
+        "schema_version": payload.get("schema_version"),
+        "public_route": payload.get("public_route"),
+        "temperature_C": list(payload.get("temperature_C") or []),
+        "loading_count": loading_count,
+        "temperature_count": temperature_count,
+        "state_point_count": state_point_count,
+        "species_row_count": int(pointwise.get("row_count") or 0),
+        "strict_gates_passed": payload.get("strict_gates_passed") is True,
+        "seed_policy": payload.get("seed_policy"),
+        "uses_source_oracle_initial_amounts": payload.get("uses_source_oracle_initial_amounts"),
+        "max_mole_fraction_abs_error": payload.get("max_abs_error"),
+        "max_balance_inf_norm": payload.get("max_balance_inf_norm"),
+        "max_reaction_stationarity_inf_norm": payload.get("max_reaction_stationarity_inf_norm"),
+        "pointwise_unassisted": pointwise,
+        "continuation_evidence": continuation,
+        "shuffled_subset": shuffled_subset,
+    }
+
+
+def mea_retained_artifact_evidence() -> dict[str, Any]:
+    return _mea_retained_artifact_evidence_from_payload(_load_mea_retained_summary_payload())
+
+
 def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
     blockers: list[str] = []
     if payload.get("schema_version") != "epcsaft.standalone_ce.validation_ladder.v1":
@@ -488,13 +632,54 @@ def validation_ladder_payload_blockers(payload: dict[str, Any]) -> list[str]:
         if not isinstance(record.get("residuals"), dict) or not record.get("residuals"):
             blockers.append(f"validation_family_{family_id}_residuals_missing")
         if family_id == "mea_speciation":
-            if record.get("evidence_role") != "executable_public_reactive_speciation_sweep":
+            if record.get("evidence_role") != "retained_no_oracle_public_reactive_speciation_sweep":
                 blockers.append("validation_family_mea_speciation_evidence_role_mismatch")
-            if record.get("loading_grid") != [0.1, 0.4, 0.8]:
-                blockers.append("validation_family_mea_speciation_loading_grid_mismatch")
+            if record.get("source_path") != REQUIRED_MEA_RETAINED_SUMMARY_PATH:
+                blockers.append("validation_family_mea_speciation_source_path_mismatch")
+            if record.get("temperature_C") != REQUIRED_MEA_TEMPERATURES_C:
+                blockers.append("validation_family_mea_speciation_temperature_grid_mismatch")
+            if int(record.get("loading_count", 0)) != REQUIRED_MEA_LOADING_COUNT:
+                blockers.append("validation_family_mea_speciation_retained_loading_count_mismatch")
+            if record.get("seed_policy") != REQUIRED_MEA_SEED_POLICY:
+                blockers.append("validation_family_mea_speciation_seed_policy_mismatch")
+            if record.get("uses_source_oracle_initial_amounts") is not False:
+                blockers.append("validation_family_mea_speciation_source_oracle_seeded")
+            solver_options = dict(record.get("solver_options") or {})
+            if solver_options.get("max_iterations") != 1000 or float(solver_options.get("tolerance", 1.0)) != 1.0e-8:
+                blockers.append("validation_family_mea_speciation_solver_options_mismatch")
             standard_state = dict(record.get("standard_state_metadata") or {})
             if standard_state.get("activity_convention") != "mole_fraction_activity":
                 blockers.append("validation_family_mea_speciation_standard_state_mismatch")
+            residuals = dict(record.get("residuals") or {})
+            tolerances = dict(record.get("tolerances") or {})
+            strict_gates_pass = (
+                int(residuals.get("state_point_count", 0)) == REQUIRED_MEA_STATE_POINT_COUNT
+                and int(residuals.get("species_row_count", 0)) == REQUIRED_MEA_SPECIES_ROW_COUNT
+                and _as_float(residuals, "max_mole_fraction_abs_error") <= float(tolerances.get("mole_fraction_abs", 0.0))
+                and _as_float(residuals, "max_balance_inf_norm") <= float(tolerances.get("balance_abs", 0.0))
+                and _as_float(residuals, "max_reaction_stationarity_inf_norm")
+                <= float(tolerances.get("affinity_abs", 0.0))
+            )
+            if not strict_gates_pass:
+                blockers.append("validation_family_mea_speciation_strict_gates_missing")
+            continuation = dict(record.get("continuation_evidence") or {})
+            if not (
+                int(continuation.get("max_stage_count", -1)) == 3
+                and int(continuation.get("homotopy_point_count", -1)) == 12
+                and int(continuation.get("physical_proof_corrector_point_count", -1))
+                == REQUIRED_MEA_STATE_POINT_COUNT
+                and continuation.get("all_final_lambda_one") is True
+                and continuation.get("all_final_proof_accepted") is True
+            ):
+                blockers.append("validation_family_mea_speciation_continuation_trace_missing")
+            shuffled_subset = dict(record.get("shuffled_subset") or {})
+            if not (
+                int(shuffled_subset.get("attempt_count", -1)) >= 34
+                and shuffled_subset.get("all_accepted") is True
+                and shuffled_subset.get("all_no_source_oracle_seed") is True
+                and _as_float(shuffled_subset, "max_abs_error") <= float(tolerances.get("mole_fraction_abs", 0.0))
+            ):
+                blockers.append("validation_family_mea_speciation_shuffled_subset_missing")
 
     derivative = dict(payload.get("derivative_evidence") or {})
     if derivative.get("status") != "complete":
@@ -552,14 +737,8 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
     species = _mea_species()
     reactions = _mea_reactions()
     constants = _mea_constants()
-    solver_options = EquilibriumSolverOptions(max_iterations=300, tolerance=1.0e-6)
-    tolerances = {
-        "balance_abs": 1.0e-8,
-        "affinity_abs": 1.0e-6,
-        "mole_fraction_abs": 5.0e-10,
-        "loading_abs": 1.0e-8,
-        "charge_abs": 1.0e-8,
-    }
+    solver_options = EquilibriumSolverOptions(max_iterations=1000, tolerance=1.0e-8)
+    tolerances = dict(MEA_STRICT_TOLERANCES)
     blockers: list[str] = []
     rows: list[dict[str, Any]] = []
     for loading, expected in _MEA_EXPECTED_MOLE_FRACTIONS.items():
@@ -568,9 +747,14 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             reactions=reactions,
             feed_amounts={"MEA": 1.0, "H2O": _MEA_WATER_PER_AMINE, "CO2": loading},
             equilibrium_constants=constants,
-            initial_amounts=_mea_initial_amounts(expected),
+            initial_amounts=None,
             solver_options=solver_options,
         )
+        diagnostics = dict(result.diagnostics)
+        initialization = dict(diagnostics.get("initialization") or {})
+        feasible_initialization = dict(initialization.get("feasible_initialization") or {})
+        continuation = dict(diagnostics.get("continuation") or {})
+        physical_corrector = dict(continuation.get("physical_proof_corrector") or {})
         amounts = result.species_amounts
         reconstructed_loading = (
             amounts["CO2"] + amounts["MEACOO-"] + amounts["HCO3-"] + amounts["CO3^2-"]
@@ -598,12 +782,41 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             "charge_balance": charge,
             "solver_status": str(result.diagnostics["solver_status"]),
             "application_status": str(result.diagnostics["application_status"]),
+            "accepted": diagnostics.get("accepted") is True,
+            "seed_policy": REQUIRED_MEA_SEED_POLICY,
+            "seed_source": initialization.get("seed_source"),
+            "uses_source_oracle_initial_amounts": initialization.get("source_oracle_initial_amounts"),
+            "feasible_initialization_accepted": feasible_initialization.get("accepted") is True,
+            "feasible_initialization_margin": feasible_initialization.get("margin"),
+            "direct_final_proof_attempted": continuation.get("direct_final_proof_attempted") is True,
+            "direct_final_proof_accepted": continuation.get("direct_final_proof_accepted") is True,
+            "final_proof_status": continuation.get("final_proof_status"),
+            "final_stage_id": continuation.get("final_stage_id"),
+            "final_lambda": continuation.get("final_lambda"),
+            "stage_count": continuation.get("stage_count"),
+            "physical_proof_corrector_attempted": physical_corrector.get("attempted") is True,
+            "physical_proof_corrector_accepted": physical_corrector.get("accepted") is True,
+            "physical_proof_corrector_status": physical_corrector.get("status"),
         }
         rows.append(row)
         if row["solver_status"] != "success":
             blockers.append(f"mea_loading_{loading}_solver_status_mismatch")
         if row["application_status"] != "solve_succeeded":
             blockers.append(f"mea_loading_{loading}_application_status_mismatch")
+        if row["accepted"] is not True:
+            blockers.append(f"mea_loading_{loading}_not_accepted")
+        if row["uses_source_oracle_initial_amounts"] is not False:
+            blockers.append(f"mea_loading_{loading}_source_oracle_seeded")
+        if row["seed_source"] != "max_min_feasible_interior":
+            blockers.append(f"mea_loading_{loading}_seed_source_mismatch")
+        if row["feasible_initialization_accepted"] is not True:
+            blockers.append(f"mea_loading_{loading}_feasible_initialization_rejected")
+        if row["final_proof_status"] != "accepted":
+            blockers.append(f"mea_loading_{loading}_final_proof_status_mismatch")
+        if not math.isclose(float(row["final_lambda"] or 0.0), 1.0, rel_tol=0.0, abs_tol=1.0e-12):
+            blockers.append(f"mea_loading_{loading}_final_lambda_mismatch")
+        if row["physical_proof_corrector_attempted"] and row["physical_proof_corrector_accepted"] is not True:
+            blockers.append(f"mea_loading_{loading}_physical_proof_corrector_rejected")
         if row["max_mole_fraction_abs_error"] > tolerances["mole_fraction_abs"]:
             blockers.append(f"mea_loading_{loading}_mole_fraction_error_above_tolerance")
         if row["balance_inf_norm"] > tolerances["balance_abs"]:
@@ -620,6 +833,12 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
         "source": "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
         "public_route": "reactive_speciation",
         "loading_grid": list(_MEA_EXPECTED_MOLE_FRACTIONS),
+        "seed_policy": REQUIRED_MEA_SEED_POLICY,
+        "uses_source_oracle_initial_amounts": False,
+        "solver_options": {
+            "max_iterations": solver_options.max_iterations,
+            "tolerance": solver_options.tolerance,
+        },
         "tolerances": tolerances,
         "rows": rows,
     }
@@ -689,6 +908,9 @@ def evaluate_standalone_ce_gate(
         ladder_evidence = validation_ladder_evidence()
         report["validation_ladder"] = ladder_evidence
         blockers.extend(str(blocker) for blocker in ladder_evidence["blockers"])
+        retained_mea_evidence = mea_retained_artifact_evidence()
+        report["mea_retained_artifact_evidence"] = retained_mea_evidence
+        blockers.extend(str(blocker) for blocker in retained_mea_evidence["blockers"])
         mea_evidence = mea_speciation_public_sweep_evidence()
         report["mea_speciation_evidence"] = mea_evidence
         blockers.extend(str(blocker) for blocker in mea_evidence["blockers"])

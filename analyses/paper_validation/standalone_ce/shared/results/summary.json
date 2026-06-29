@@ -15,7 +15,7 @@
     "reactive_electrolyte_lle",
     "cpe"
   ],
-  "source_plan": "docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md",
+  "source_plan": "docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md",
   "source_issue": "docs/superpowers/issues/2026-06-26-m4-ce-issue-0329-m4-ce-build-standalone-validation-ladder.md",
   "checker_command": "uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete",
   "validation_families": [
@@ -138,11 +138,11 @@
     },
     {
       "family_id": "mea_speciation",
-      "label": "MEA CO2 H2O Smith-Missen loading sweep",
+      "label": "MEA CO2 H2O Smith-Missen no-oracle loading sweep",
       "status": "complete",
-      "evidence_role": "executable_public_reactive_speciation_sweep",
+      "evidence_role": "retained_no_oracle_public_reactive_speciation_sweep",
       "source": "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
-      "source_path": "packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py",
+      "source_path": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_oracle_speciation_comparison_summary.json",
       "ce_only": true,
       "phase_scope": "homogeneous_single_phase",
       "claimed_equilibrium_scopes": [
@@ -159,11 +159,18 @@
         "H3O+",
         "OH-"
       ],
-      "loading_grid": [
-        0.1,
-        0.4,
-        0.8
+      "temperature_C": [
+        20.0,
+        40.0
       ],
+      "loading_count": 161,
+      "initialization": "omitted initial_amounts; native max-min feasible initializer",
+      "seed_policy": "max_min_feasible_interior_no_oracle",
+      "uses_source_oracle_initial_amounts": false,
+      "solver_options": {
+        "max_iterations": 1000,
+        "tolerance": 1e-08
+      },
       "units": {
         "amounts": "mol",
         "mole_fractions": "dimensionless",
@@ -176,29 +183,57 @@
       "standard_state_metadata": {
         "label": "smith_missen_mole_fraction_standard_state",
         "activity_convention": "mole_fraction_activity",
-        "temperature_K": 313.15,
+        "temperature_C": [
+          20.0,
+          40.0
+        ],
         "pressure_Pa": 101325.0,
         "source_module": "MEA.smith_missen.ideal_speciation",
         "water_per_amine_30wtpct": 7.909507954125047
       },
       "residuals": {
-        "loading_count": 3,
+        "loading_count": 161,
+        "temperature_count": 2,
+        "state_point_count": 322,
+        "species_row_count": 3220,
         "reaction_equation_count": 5,
-        "max_balance_inf_norm": 1.4e-10,
-        "max_reaction_stationarity_inf_norm": 5.0e-8,
-        "max_mole_fraction_abs_error": 1.0e-11,
-        "max_loading_abs_error": 1.0e-12,
-        "max_charge_abs": 1.0e-12
+        "max_balance_inf_norm": 9.253685817611768e-09,
+        "max_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+        "max_mole_fraction_abs_error": 3.7471946379152854e-10,
+        "max_shuffled_subset_mole_fraction_abs_error": 1.9754442526220828e-10
       },
       "tolerances": {
         "balance_abs": 1e-8,
         "affinity_abs": 1e-6,
-        "mole_fraction_abs": 5e-10,
+        "mole_fraction_abs": 1e-8,
         "loading_abs": 1e-8,
         "charge_balance_abs": 1e-8,
         "species_order_required": 9,
-        "loading_count_min": 3
-      }
+        "loading_count_min": 161,
+        "temperature_count_min": 2,
+        "state_point_count_min": 322
+      },
+      "strict_gates_passed": true,
+      "continuation_evidence": {
+        "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv",
+        "max_stage_count": 3,
+        "homotopy_point_count": 12,
+        "physical_proof_corrector_point_count": 322,
+        "all_final_lambda_one": true,
+        "all_final_proof_accepted": true
+      },
+      "shuffled_subset": {
+        "attempt_count": 34,
+        "all_accepted": true,
+        "all_no_source_oracle_seed": true,
+        "max_abs_error": 1.9754442526220828e-10,
+        "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_shuffled_subset_audit.csv"
+      },
+      "retained_artifacts": [
+        "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/ce_reactive_speciation_curve.csv",
+        "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv",
+        "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_shuffled_subset_audit.csv"
+      ]
     },
     {
       "family_id": "cantera_reference_oracle",

@@ -374,10 +374,13 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   M4 equilibrium.
 - The #325 homogeneous CE residual/objective block must become the objective and
   residual source for that one NLP path, not a direct checker-only binding.
-- Direct extent, element-potential/VCS-style, and Pope-style continuation ideas
-  may appear only as non-executing reference notes. They must not become route
-  diagnostics, metadata choices, execution lanes, selector branches, native
-  bindings, public API fields, or checker gates.
+- Direct extent and element-potential/VCS-style ideas may appear only as
+  non-executing reference notes. Pope-style homotopy may appear only as
+  internal Ipopt solver-strategy evidence inside the admitted
+  `reactive_speciation` activation family, as specified by
+  `docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md`.
+  It must not become a public route, selector branch, native side binding,
+  public API field, or checker bypass.
 - CPE must later be able to compose phase and chemistry without migrating from a
   separate standalone CE solver architecture.
 
@@ -403,7 +406,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   Add activation-matrix/selector wiring and native NLP/Ipopt solve diagnostics
   that consume the #325 CE residual/objective block. Do not add
   `_native_chemical_equilibrium_algorithm_lanes`, direct extent, VCS-style, or
-  Pope-style side-route bindings.
+  Pope-style public/side-route bindings.
 - [ ] **Step 4: Add checker coverage.**
   Make `check_standalone_ce_gate.py --json --require-single-nlp-path` validate
   the activation matrix, selector, native NLP route, Ipopt adapter diagnostics,
