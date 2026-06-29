@@ -1,8 +1,8 @@
 id: standalone_ce_validation_ladder
 title: Standalone homogeneous chemical equilibrium validation ladder
 status: complete
-summary: Retained CE-only validation ladder for analytic, charged, Ascani, MEA, Cantera, and Pope evidence families.
-source_plan: docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
+summary: Retained CE-only validation ladder for analytic, charged, Ascani, unassisted MEA, Cantera, and Pope evidence families.
+source_plan: docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md
 issue: 329
 scope:
   equilibrium: standalone_chemical_equilibrium
@@ -34,7 +34,17 @@ outputs:
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_oracle_speciation_40C.svg
     kind: retained_ce_oracle_comparison_figure
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_oracle_speciation_error_summary.svg
-    kind: retained_ce_oracle_error_figure
+    kind: retained_unassisted_ce_oracle_error_figure
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_owned_continuation_speciation_20C.svg
+    kind: retained_ce_owned_continuation_comparison_figure
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_owned_continuation_speciation_40C.svg
+    kind: retained_ce_owned_continuation_comparison_figure
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_stage_diagnostics.svg
+    kind: retained_ce_continuation_stage_diagnostics
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv
     kind: retained_ce_seed_policy_audit
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv
+    kind: retained_ce_continuation_trace_summary
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_shuffled_subset_audit.csv
+    kind: retained_ce_shuffled_no_oracle_audit
 claim_boundary: No reactive LLE, reactive electrolyte LLE, or CPE capability is proven by this standalone CE ladder.

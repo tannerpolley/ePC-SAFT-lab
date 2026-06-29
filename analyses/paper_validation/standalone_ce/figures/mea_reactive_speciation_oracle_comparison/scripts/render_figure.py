@@ -12,6 +12,7 @@ RESULTS_DIR = FIGURE_DIR / "results"
 PLOT_DATA_PATH = RESULTS_DIR / "mea_ce_oracle_speciation_plot_data.csv"
 ERRORS_PATH = RESULTS_DIR / "mea_ce_oracle_speciation_errors.csv"
 SUMMARY_PATH = RESULTS_DIR / "mea_ce_oracle_speciation_error_summary.csv"
+TRACE_SUMMARY_PATH = RESULTS_DIR / "mea_ce_continuation_trace_summary.csv"
 DPI = 300
 FIGURE_CREATOR = "ePC-SAFT standalone CE validation"
 
@@ -101,7 +102,14 @@ def _apply_axes_style(ax: plt.Axes) -> None:
     ax.tick_params(axis="both", labelsize=10)
 
 
-def _plot_temperature_overlay(plot_data: pd.DataFrame, temperature_C: float) -> None:
+def _plot_temperature_overlay(
+    plot_data: pd.DataFrame,
+    temperature_C: float,
+    *,
+    title: str,
+    ce_label: str,
+    stem: str,
+) -> None:
     frame = plot_data[plot_data["temperature_C"] == temperature_C]
     if frame.empty:
         raise ValueError(f"no plot data rows found for {temperature_C:g} C")
@@ -120,7 +128,7 @@ def _plot_temperature_overlay(plot_data: pd.DataFrame, temperature_C: float) -> 
     for species in PLOT_SPECIES:
         color = SPECIES_COLORS[species]
         source = frame[(frame["role"] == "source_oracle") & (frame["species"] == species)].sort_values("CO2_loading")
-        ce = frame[(frame["role"] == "ce_reactive_speciation") & (frame["species"] == species)].sort_values("CO2_loading")
+        ce = frame[(frame["role"] == "ce_unassisted_pointwise") & (frame["species"] == species)].sort_values("CO2_loading")
         if source.empty or ce.empty:
             raise ValueError(f"missing source or CE rows for {species} at {temperature_C:g} C")
         ax.plot(
@@ -141,7 +149,7 @@ def _plot_temperature_overlay(plot_data: pd.DataFrame, temperature_C: float) -> 
             markersize=2.2,
             markevery=16,
         )
-    ax.set_title(f"Oracle-seeded CE reactive speciation vs Smith-Missen oracle, {temperature_C:g} C")
+    ax.set_title(title)
     ax.set_xlabel(r"$CO_2$ loading, mol $CO_2$/mol MEA")
     ax.set_ylabel("True-species mole fraction")
     ax.set_yscale("log")
@@ -162,7 +170,7 @@ def _plot_temperature_overlay(plot_data: pd.DataFrame, temperature_C: float) -> 
             marker="o",
             linewidth=1.2,
             markersize=3.0,
-            label="CE route (oracle-seeded)",
+            label=ce_label,
         ),
     ]
     role_legend = ax.legend(handles=role_handles, loc="lower left", frameon=True)
@@ -175,7 +183,7 @@ def _plot_temperature_overlay(plot_data: pd.DataFrame, temperature_C: float) -> 
         frameon=True,
     )
     fig.subplots_adjust(right=0.78)
-    _save_bundle(fig, f"mea_ce_oracle_speciation_{int(temperature_C)}C")
+    _save_bundle(fig, stem)
     plt.close(fig)
 
 
@@ -230,9 +238,61 @@ def _plot_error_summary(errors: pd.DataFrame, summary: pd.DataFrame) -> None:
     axes[1].legend(frameon=True)
     _apply_axes_style(axes[1])
 
-    fig.suptitle("Oracle-seeded CE reactive speciation oracle-match errors")
+    fig.suptitle("Unassisted CE reactive speciation oracle-match errors")
     fig.tight_layout()
     _save_bundle(fig, "mea_ce_oracle_speciation_error_summary")
+    plt.close(fig)
+
+
+def _plot_continuation_stage_diagnostics(trace: pd.DataFrame) -> None:
+    trace = trace.copy()
+    trace["corrector_flag"] = trace["physical_proof_corrector_accepted"].astype(bool)
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.8))
+    for temperature_C, color in ((20.0, "#245db5"), (40.0, "#d9232e")):
+        subset = trace[trace["temperature_C"] == temperature_C].sort_values("CO2_loading")
+        axes[0].plot(
+            subset["CO2_loading"],
+            subset["stage_count"],
+            color=color,
+            linewidth=1.5,
+            marker="o",
+            markersize=2.0,
+            markevery=16,
+            label=f"{temperature_C:g} C",
+        )
+    axes[0].set_title("Internal continuation stages")
+    axes[0].set_xlabel(r"$CO_2$ loading, mol $CO_2$/mol MEA")
+    axes[0].set_ylabel("retained stage count")
+    axes[0].set_xlim(0.0, 0.8)
+    axes[0].set_ylim(0.8, max(3.2, float(trace["stage_count"].max()) + 0.4))
+    axes[0].legend(frameon=True)
+    _apply_axes_style(axes[0])
+
+    grouped = (
+        trace.groupby(["temperature_C", "physical_proof_corrector_status"], sort=True)
+        .size()
+        .reset_index(name="count")
+    )
+    statuses = list(grouped["physical_proof_corrector_status"].drop_duplicates())
+    x_positions = range(len(statuses))
+    width = 0.38
+    for offset, (temperature_C, color) in zip((-width / 2.0, width / 2.0), ((20.0, "#245db5"), (40.0, "#d9232e"))):
+        values = []
+        for status in statuses:
+            row = grouped[(grouped["temperature_C"] == temperature_C) & (grouped["physical_proof_corrector_status"] == status)]
+            values.append(int(row["count"].iloc[0]) if not row.empty else 0)
+        axes[1].bar([x + offset for x in x_positions], values, width=width, color=color, label=f"{temperature_C:g} C")
+    axes[1].set_title("Physical proof corrector outcomes")
+    axes[1].set_xticks(list(x_positions))
+    axes[1].set_xticklabels(statuses, rotation=35, ha="right")
+    axes[1].set_ylabel("loading points")
+    axes[1].legend(frameon=True)
+    _apply_axes_style(axes[1])
+
+    fig.suptitle("CE-owned continuation and strict physical proof diagnostics")
+    fig.tight_layout()
+    _save_bundle(fig, "mea_ce_continuation_stage_diagnostics")
     plt.close(fig)
 
 
@@ -240,9 +300,24 @@ def render() -> None:
     plot_data = _require_csv(PLOT_DATA_PATH)
     errors = _require_csv(ERRORS_PATH)
     summary = _require_csv(SUMMARY_PATH)
+    trace = _require_csv(TRACE_SUMMARY_PATH)
     for temperature_C in (20.0, 40.0):
-        _plot_temperature_overlay(plot_data, temperature_C)
+        _plot_temperature_overlay(
+            plot_data,
+            temperature_C,
+            title=f"Unassisted CE reactive speciation vs Smith-Missen oracle, {temperature_C:g} C",
+            ce_label="CE route (no source seed)",
+            stem=f"mea_ce_oracle_speciation_{int(temperature_C)}C",
+        )
+        _plot_temperature_overlay(
+            plot_data,
+            temperature_C,
+            title=f"CE-owned continuation proof trace vs Smith-Missen oracle, {temperature_C:g} C",
+            ce_label="CE route (internal continuation proof)",
+            stem=f"mea_ce_owned_continuation_speciation_{int(temperature_C)}C",
+        )
     _plot_error_summary(errors, summary)
+    _plot_continuation_stage_diagnostics(trace)
 
 
 def main() -> int:

@@ -35,6 +35,19 @@ struct ChemicalEquilibriumNlpInput {
     std::string eos_activity_reference_phase;
 };
 
+struct PhysicalProofCorrectorResult {
+    bool attempted = false;
+    bool accepted = false;
+    std::string status;
+    int iteration_count = 0;
+    double residual_inf_norm = 0.0;
+    double balance_inf_norm = 0.0;
+    double reaction_stationarity_inf_norm = 0.0;
+    double step_inf_norm = 0.0;
+    std::vector<double> variables;
+    HomogeneousChemicalEquilibriumBlockResult postsolve;
+};
+
 struct ChemicalEquilibriumNlpResult {
     NeutralTwoPhaseEosNlpContract contract;
     IpoptSolveResult solve;
@@ -47,6 +60,7 @@ struct ChemicalEquilibriumNlpResult {
     FeasibleInitializationResult feasible_initialization;
     bool direct_final_proof_attempted = false;
     bool direct_final_proof_accepted = false;
+    PhysicalProofCorrectorResult proof_corrector;
     ContinuationTraceResult continuation;
     std::vector<double> continuation_lambdas;
 };

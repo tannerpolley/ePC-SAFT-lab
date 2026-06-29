@@ -548,6 +548,7 @@ py::dict continuation_stage_result_to_dict(const nlp::ContinuationStageResult& r
     out["parameter_value"] = result.parameter_value;
     out["final_proof"] = result.final_proof;
     out["accepted"] = result.accepted;
+    out["acceptance_status"] = result.acceptance_status;
     out["seeded_from_stage"] = result.seeded_from_stage;
     out["initial_state"] = continuation_state_to_dict(result.initial_state);
     out["status"] = result.solve.solver_status;
@@ -1179,6 +1180,23 @@ py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyAct
 py::dict activation_plan_to_dict(const epcsaft::native::equilibrium::ActivationPlan& plan);
 py::dict variable_layout_to_dict(const epcsaft::native::equilibrium::VariableLayout& layout);
 
+py::dict physical_proof_corrector_to_dict(
+    const epcsaft::native::equilibrium_nlp::PhysicalProofCorrectorResult& result
+) {
+    py::dict out;
+    out["corrector"] = "physical_residual_newton";
+    out["attempted"] = result.attempted;
+    out["accepted"] = result.accepted;
+    out["status"] = result.status;
+    out["iteration_count"] = result.iteration_count;
+    out["residual_inf_norm"] = result.residual_inf_norm;
+    out["balance_inf_norm"] = result.balance_inf_norm;
+    out["reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
+    out["step_inf_norm"] = result.step_inf_norm;
+    out["variables"] = result.variables;
+    return out;
+}
+
 py::dict chemical_equilibrium_nlp_result_to_dict(
     const epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpResult& result,
     const epcsaft::native::equilibrium::ProblemFamilyActivation& activation,
@@ -1239,6 +1257,7 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     py::dict continuation;
     continuation["direct_final_proof_attempted"] = result.direct_final_proof_attempted;
     continuation["direct_final_proof_accepted"] = result.direct_final_proof_accepted;
+    continuation["physical_proof_corrector"] = physical_proof_corrector_to_dict(result.proof_corrector);
     continuation["final_proof_status"] = result.continuation.final_proof_status;
     continuation["final_stage_id"] = result.continuation.final_stage_id;
     continuation["lambda_values"] = result.continuation_lambdas;

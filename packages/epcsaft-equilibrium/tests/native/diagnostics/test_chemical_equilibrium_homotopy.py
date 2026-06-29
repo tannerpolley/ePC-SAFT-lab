@@ -71,7 +71,7 @@ def _solve_without_seed(log_k: float) -> dict[str, object]:
     )
 
 
-def _assert_homotopy_trace(result: dict[str, object]) -> None:
+def _assert_no_oracle_final_proof(result: dict[str, object]) -> None:
     initialization = result["initialization"]
     continuation = result["continuation"]
 
@@ -81,12 +81,16 @@ def _assert_homotopy_trace(result: dict[str, object]) -> None:
     assert continuation["direct_final_proof_attempted"] is True
     assert continuation["final_proof_status"] == "accepted"
     assert continuation["final_lambda"] == pytest.approx(1.0)
-    assert continuation["lambda_values"][0] == pytest.approx(0.0)
     assert continuation["lambda_values"][-1] == pytest.approx(1.0)
     assert continuation["stage_count"] == len(continuation["trace"])
-    assert continuation["stage_count"] >= 3
-    assert continuation["trace"][-1]["final_proof"] is True
-    assert all(stage["final_proof"] is False for stage in continuation["trace"][:-1])
+    if continuation["direct_final_proof_accepted"]:
+        assert continuation["lambda_values"] == pytest.approx([1.0])
+        assert continuation["stage_count"] == 0
+    else:
+        assert continuation["lambda_values"][0] == pytest.approx(0.0)
+        assert continuation["stage_count"] >= 3
+        assert continuation["trace"][-1]["final_proof"] is True
+        assert all(stage["final_proof"] is False for stage in continuation["trace"][:-1])
 
 
 def test_ce_k_scaling_solves_ab_without_source_oracle_seed() -> None:
@@ -95,7 +99,7 @@ def test_ce_k_scaling_solves_ab_without_source_oracle_seed() -> None:
     result = _solve_without_seed(math.log(3.0))
 
     assert result["accepted"] is True
-    _assert_homotopy_trace(result)
+    _assert_no_oracle_final_proof(result)
     assert result["amounts"] == pytest.approx([0.25, 0.75], abs=1.0e-7)
     assert result["balance_inf_norm"] < 1.0e-9
     assert result["reaction_stationarity_inf_norm"] < 1.0e-8
@@ -107,7 +111,7 @@ def test_ce_k_scaling_solves_tiny_species_without_source_oracle_seed() -> None:
     result = _solve_without_seed(10.0)
 
     assert result["accepted"] is True
-    _assert_homotopy_trace(result)
+    _assert_no_oracle_final_proof(result)
     assert result["amounts"][0] < 1.0e-4
     assert result["amounts"][1] == pytest.approx(1.0, abs=1.0e-4)
     assert result["balance_inf_norm"] < 1.0e-9

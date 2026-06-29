@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import random
 import sys
 from pathlib import Path
 from typing import Any
@@ -36,7 +37,9 @@ WATER_PER_AMINE_30WT = 7.909507954125047
 MIN_EFFECTIVE_LOADING = 1.0e-6
 PRESSURE_PA = 101_325.0
 TEMPERATURES_C = (20.0, 40.0)
-UNASSISTED_AUDIT_LOADINGS = (0.0, 0.005, 0.1, 0.4, 0.8)
+SHUFFLED_SUBSET_COUNT_PER_TEMPERATURE = 17
+SHUFFLED_SUBSET_SEED = 20260629
+SOLVER_OPTIONS = EquilibriumSolverOptions(max_iterations=1000, tolerance=1.0e-8)
 
 SPECIES_ORDER = (
     "CO2",
@@ -147,57 +150,18 @@ def _equilibrium_constants(
     ]
 
 
-def _oracle_seeded_initial_amounts(
-    species: list[ChemicalSpecies],
-    source_mole_fractions: dict[str, float],
-) -> list[float]:
-    amine_fraction = (
-        source_mole_fractions["MEA"]
-        + source_mole_fractions["MEAH+"]
-        + source_mole_fractions["MEACOO-"]
-    )
-    if amine_fraction <= 0.0:
-        raise ValueError("source-oracle amine fraction is not positive")
-    scale = 1.0 / amine_fraction
-    return [source_mole_fractions[item.label] * scale for item in species]
-
-
-def _feed_stoichiometric_initial_amounts(
-    species: list[ChemicalSpecies],
-    effective_loading: float,
-) -> list[float]:
-    """Return a source-oracle-free positive seed that satisfies the feed conservation basis."""
-
-    tiny = 1.0e-10
-    loading = max(float(effective_loading), tiny)
-    carbonate = tiny
-    molecular_co2 = tiny
-    hydronium = tiny
-    hydroxide = tiny
-    carbamate = min(0.20 * loading, max(0.0, 0.95 * (1.0 - loading)))
-    bicarbonate = max(loading - carbamate - carbonate - molecular_co2, tiny)
-    protonated_amine = max(carbamate + bicarbonate + 2.0 * carbonate + hydroxide - hydronium, tiny)
-    free_amine = max(1.0 - protonated_amine - carbamate, tiny)
-    water = max(WATER_PER_AMINE_30WT - bicarbonate - carbonate - hydronium - hydroxide, tiny)
-    amounts = {label: tiny for label in SPECIES_ORDER}
-    amounts.update(
-        {
-            "CO2": molecular_co2,
-            "MEA": free_amine,
-            "H2O": water,
-            "MEAH+": protonated_amine,
-            "MEACOO-": carbamate,
-            "HCO3-": bicarbonate,
-            "CO3^2-": carbonate,
-            "H3O+": hydronium,
-            "OH-": hydroxide,
-        }
-    )
-    return [amounts[item.label] for item in species]
-
-
 def _max_abs(values: dict[str, float]) -> float:
     return max((abs(float(value)) for value in values.values()), default=0.0)
+
+
+def _json_list(values: Any) -> str:
+    return json.dumps(values, separators=(",", ":"))
+
+
+def _ce_mole_fractions(result: Any) -> dict[str, float]:
+    values = {label: float(value) for label, value in zip(result.species_labels, result.mole_fractions.tolist())}
+    values["MEA + MEAH+"] = values["MEA"] + values["MEAH+"]
+    return values
 
 
 def _rows_for_state(
@@ -226,62 +190,199 @@ def _rows_for_state(
     return rows
 
 
-def _unassisted_seed_audit_rows(
+def _ce_diagnostics(result: Any) -> dict[str, Any]:
+    diagnostics = dict(result.diagnostics)
+    initialization = dict(diagnostics.get("initialization", {}))
+    feasible = dict(initialization.get("feasible_initialization", {}))
+    continuation = dict(diagnostics.get("continuation", {}))
+    trace = list(continuation.get("trace", []))
+    corrector = dict(continuation.get("physical_proof_corrector", {}))
+    final_stage = dict(trace[-1]) if trace else {}
+    return {
+        "solver_status": str(diagnostics["solver_status"]),
+        "application_status": str(diagnostics["application_status"]),
+        "accepted": bool(diagnostics["accepted"]),
+        "balance_inf_norm": _max_abs(result.balances),
+        "reaction_stationarity_inf_norm": _max_abs(result.affinities),
+        "native_binding": str(diagnostics["native_binding"]),
+        "seed_policy": "max_min_feasible_interior_no_oracle",
+        "seed_source": str(initialization.get("seed_source", "")),
+        "uses_source_oracle_initial_amounts": bool(initialization.get("source_oracle_initial_amounts", False)),
+        "feasible_initialization_accepted": bool(feasible.get("accepted", False)),
+        "feasible_initialization_rejection_reason": str(feasible.get("rejection_reason", "")),
+        "feasible_initialization_margin": float(feasible.get("margin", math.nan)),
+        "feasible_initialization_minimum_amount": float(feasible.get("minimum_amount", math.nan)),
+        "feasible_initialization_balance_inf_norm": float(feasible.get("balance_inf_norm", math.nan)),
+        "direct_final_proof_attempted": bool(continuation.get("direct_final_proof_attempted", False)),
+        "direct_final_proof_accepted": bool(continuation.get("direct_final_proof_accepted", False)),
+        "final_proof_status": str(continuation.get("final_proof_status", "")),
+        "final_stage_id": str(continuation.get("final_stage_id", "")),
+        "final_lambda": float(continuation.get("final_lambda", math.nan)),
+        "stage_count": int(continuation.get("stage_count", 0)),
+        "lambda_values": _json_list(continuation.get("lambda_values", [])),
+        "final_stage_solver_status": str(final_stage.get("status", "")),
+        "final_stage_application_status": str(final_stage.get("application_status", "")),
+        "final_stage_acceptance_status": str(final_stage.get("acceptance_status", "")),
+        "physical_proof_corrector_attempted": bool(corrector.get("attempted", False)),
+        "physical_proof_corrector_accepted": bool(corrector.get("accepted", False)),
+        "physical_proof_corrector_status": str(corrector.get("status", "")),
+        "physical_proof_corrector_iteration_count": int(corrector.get("iteration_count", 0)),
+        "physical_proof_corrector_residual_inf_norm": float(corrector.get("residual_inf_norm", math.nan)),
+        "physical_proof_corrector_balance_inf_norm": float(corrector.get("balance_inf_norm", math.nan)),
+        "physical_proof_corrector_reaction_stationarity_inf_norm": float(
+            corrector.get("reaction_stationarity_inf_norm", math.nan)
+        ),
+    }
+
+
+def _source_diagnostics() -> dict[str, Any]:
+    return {
+        "solver_status": "source_oracle",
+        "application_status": "source_oracle",
+        "accepted": True,
+        "balance_inf_norm": math.nan,
+        "reaction_stationarity_inf_norm": math.nan,
+        "native_binding": "MEA.smith_missen.ideal_speciation",
+        "seed_policy": "source_oracle_comparison_curve",
+        "seed_source": "source_oracle",
+        "uses_source_oracle_initial_amounts": False,
+    }
+
+
+def _comparison_rows(
+    *,
+    role: str,
+    temperature_C: float,
+    loading: float,
+    effective_feed_loading: float,
+    source_mole_fractions: dict[str, float],
+    ce_mole_fractions: dict[str, float],
+    diagnostics: dict[str, Any],
+) -> list[dict[str, Any]]:
+    rows = []
+    for species_label in (*SPECIES_ORDER, *COMPOSITE_SPECIES):
+        source_value = float(source_mole_fractions[species_label])
+        ce_value = float(ce_mole_fractions[species_label])
+        rows.append(
+            {
+                "role": role,
+                "temperature_C": temperature_C,
+                "MEA_weight_fraction": MEA_WEIGHT_FRACTION,
+                "CO2_loading": loading,
+                "effective_feed_loading": effective_feed_loading,
+                "species": species_label,
+                "source_mole_fraction": source_value,
+                "ce_mole_fraction": ce_value,
+                "signed_error": ce_value - source_value,
+                "abs_error": abs(ce_value - source_value),
+                **diagnostics,
+            }
+        )
+    return rows
+
+
+def _trace_summary_row(
+    *,
+    role: str,
+    temperature_C: float,
+    loading: float,
+    effective_feed_loading: float,
+    diagnostics: dict[str, Any],
+) -> dict[str, Any]:
+    keys = (
+        "solver_status",
+        "application_status",
+        "accepted",
+        "balance_inf_norm",
+        "reaction_stationarity_inf_norm",
+        "seed_policy",
+        "seed_source",
+        "uses_source_oracle_initial_amounts",
+        "feasible_initialization_accepted",
+        "feasible_initialization_rejection_reason",
+        "feasible_initialization_margin",
+        "feasible_initialization_minimum_amount",
+        "feasible_initialization_balance_inf_norm",
+        "direct_final_proof_attempted",
+        "direct_final_proof_accepted",
+        "final_proof_status",
+        "final_stage_id",
+        "final_lambda",
+        "stage_count",
+        "lambda_values",
+        "final_stage_solver_status",
+        "final_stage_application_status",
+        "final_stage_acceptance_status",
+        "physical_proof_corrector_attempted",
+        "physical_proof_corrector_accepted",
+        "physical_proof_corrector_status",
+        "physical_proof_corrector_iteration_count",
+        "physical_proof_corrector_residual_inf_norm",
+        "physical_proof_corrector_balance_inf_norm",
+        "physical_proof_corrector_reaction_stationarity_inf_norm",
+    )
+    return {
+        "role": role,
+        "temperature_C": temperature_C,
+        "CO2_loading": loading,
+        "effective_feed_loading": effective_feed_loading,
+        **{key: diagnostics[key] for key in keys},
+    }
+
+
+def _solve_no_oracle(
     *,
     species: list[ChemicalSpecies],
     reactions: list[ChemicalReaction],
-    solver_options: EquilibriumSolverOptions,
-) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
+    temperature_C: float,
+    loading: float,
+) -> Any:
+    effective_feed_loading = max(float(loading), MIN_EFFECTIVE_LOADING)
+    return reactive_speciation(
+        species=species,
+        reactions=reactions,
+        feed_amounts={"MEA": 1.0, "H2O": WATER_PER_AMINE_30WT, "CO2": effective_feed_loading},
+        equilibrium_constants=_equilibrium_constants(reactions, temperature_C),
+        initial_amounts=None,
+        solver_options=SOLVER_OPTIONS,
+    )
+
+
+def _source_groups(source_curve: pd.DataFrame) -> list[tuple[float, float, pd.DataFrame]]:
+    frame = source_curve[
+        source_curve["temperature_C"].isin(TEMPERATURES_C)
+        & (source_curve["MEA_weight_fraction"].astype(float) == MEA_WEIGHT_FRACTION)
+    ]
+    return [
+        (float(temperature_C), float(loading), rows.copy())
+        for (temperature_C, loading), rows in frame.groupby(["temperature_C", "CO2_loading"], sort=True)
+    ]
+
+
+def _shuffled_subset_keys(groups: list[tuple[float, float, pd.DataFrame]]) -> list[tuple[float, float]]:
+    rng = random.Random(SHUFFLED_SUBSET_SEED)
+    keys: list[tuple[float, float]] = []
     for temperature_C in TEMPERATURES_C:
-        constants = _equilibrium_constants(reactions, temperature_C)
-        for loading in UNASSISTED_AUDIT_LOADINGS:
-            effective_feed_loading = max(float(loading), MIN_EFFECTIVE_LOADING)
-            diagnostics: dict[str, Any] = {}
-            exception_type = ""
-            exception_message = ""
-            try:
-                result = reactive_speciation(
-                    species=species,
-                    reactions=reactions,
-                    feed_amounts={
-                        "MEA": 1.0,
-                        "H2O": WATER_PER_AMINE_30WT,
-                        "CO2": effective_feed_loading,
-                    },
-                    equilibrium_constants=constants,
-                    initial_amounts=_feed_stoichiometric_initial_amounts(species, effective_feed_loading),
-                    solver_options=solver_options,
-                )
-                diagnostics = dict(result.diagnostics)
-                balance_inf_norm = _max_abs(result.balances)
-                reaction_stationarity_inf_norm = _max_abs(result.affinities)
-            except Exception as exc:
-                if len(exc.args) > 1 and isinstance(exc.args[1], dict):
-                    diagnostics = dict(exc.args[1])
-                exception_type = type(exc).__name__
-                exception_message = str(exc.args[0] if exc.args else exc)
-                balance_inf_norm = float(diagnostics.get("balance_inf_norm", math.nan))
-                reaction_stationarity_inf_norm = float(
-                    diagnostics.get("reaction_stationarity_inf_norm", math.nan)
-                )
-            rows.append(
-                {
-                    "temperature_C": temperature_C,
-                    "CO2_loading": loading,
-                    "effective_feed_loading": effective_feed_loading,
-                    "seed_policy": "feed_stoichiometric_no_oracle",
-                    "uses_source_oracle_initial_amounts": False,
-                    "solver_status": str(diagnostics.get("solver_status", "")),
-                    "application_status": str(diagnostics.get("application_status", "")),
-                    "accepted": bool(diagnostics.get("accepted", False)),
-                    "balance_inf_norm": balance_inf_norm,
-                    "reaction_stationarity_inf_norm": reaction_stationarity_inf_norm,
-                    "exception_type": exception_type,
-                    "exception_message": exception_message,
-                }
-            )
-    return rows
+        loadings = sorted(loading for temp, loading, _rows in groups if temp == temperature_C)
+        middle = loadings[1:-1]
+        rng.shuffle(middle)
+        selected = sorted({loadings[0], loadings[-1], *middle[: SHUFFLED_SUBSET_COUNT_PER_TEMPERATURE - 2]})
+        keys.extend((temperature_C, loading) for loading in selected)
+    rng.shuffle(keys)
+    return keys
+
+
+def _strict_summary(frame: pd.DataFrame) -> dict[str, Any]:
+    return {
+        "row_count": int(len(frame)),
+        "loading_count": int(frame["CO2_loading"].nunique()),
+        "all_accepted": bool(frame["accepted"].all()),
+        "all_no_source_oracle_seed": bool((frame["uses_source_oracle_initial_amounts"] == False).all()),  # noqa: E712
+        "all_final_lambda_one": bool((frame["final_lambda"] == 1.0).all()),
+        "max_abs_error": float(frame["abs_error"].max()),
+        "max_balance_inf_norm": float(frame["balance_inf_norm"].max()),
+        "max_reaction_stationarity_inf_norm": float(frame["reaction_stationarity_inf_norm"].max()),
+    }
 
 
 def generate() -> dict[str, Any]:
@@ -296,16 +397,20 @@ def generate() -> dict[str, Any]:
 
     species = _species()
     reactions = _reactions()
-    solver_options = EquilibriumSolverOptions(max_iterations=300, tolerance=1.0e-6)
+    groups = _source_groups(source_curve)
+    source_state_by_key = {
+        (temperature_C, loading): _source_state(rows)
+        for temperature_C, loading, rows in groups
+    }
 
     ce_rows: list[dict[str, Any]] = []
     source_rows: list[dict[str, Any]] = []
     comparison_rows: list[dict[str, Any]] = []
+    trace_summary_rows: list[dict[str, Any]] = []
     reaction_constant_rows: list[dict[str, Any]] = []
 
     for temperature_C in TEMPERATURES_C:
-        constants = _equilibrium_constants(reactions, temperature_C)
-        for record in constants:
+        for record in _equilibrium_constants(reactions, temperature_C):
             reaction_constant_rows.append(
                 {
                     "temperature_C": temperature_C,
@@ -317,59 +422,17 @@ def generate() -> dict[str, Any]:
                 }
             )
 
-    grouped = source_curve[
-        source_curve["temperature_C"].isin(TEMPERATURES_C)
-        & (source_curve["MEA_weight_fraction"].astype(float) == MEA_WEIGHT_FRACTION)
-    ].groupby(["temperature_C", "CO2_loading"], sort=True)
-
-    for (temperature_C, loading), rows in grouped:
-        temperature_C = float(temperature_C)
-        loading = float(loading)
-        source_mole_fractions = _source_state(rows)
+    for temperature_C, loading, _rows in groups:
+        source_mole_fractions = source_state_by_key[(temperature_C, loading)]
         effective_feed_loading = max(loading, MIN_EFFECTIVE_LOADING)
-        result = reactive_speciation(
+        result = _solve_no_oracle(
             species=species,
             reactions=reactions,
-            feed_amounts={"MEA": 1.0, "H2O": WATER_PER_AMINE_30WT, "CO2": effective_feed_loading},
-            equilibrium_constants=_equilibrium_constants(reactions, temperature_C),
-            initial_amounts=_oracle_seeded_initial_amounts(species, source_mole_fractions),
-            solver_options=solver_options,
+            temperature_C=temperature_C,
+            loading=loading,
         )
-        ce_mole_fractions = {
-            label: float(value)
-            for label, value in zip(result.species_labels, result.mole_fractions.tolist())
-        }
-        ce_mole_fractions["MEA + MEAH+"] = ce_mole_fractions["MEA"] + ce_mole_fractions["MEAH+"]
-        ce_diagnostics = {
-            "solver_status": str(result.diagnostics["solver_status"]),
-            "application_status": str(result.diagnostics["application_status"]),
-            "accepted": bool(result.diagnostics["accepted"]),
-            "balance_inf_norm": _max_abs(result.balances),
-            "reaction_stationarity_inf_norm": _max_abs(result.affinities),
-            "native_binding": str(result.diagnostics["native_binding"]),
-            "seed_policy": "source_oracle_mole_fractions_scaled_to_one_mol_total_amine",
-            "uses_source_oracle_initial_amounts": True,
-        }
-        source_diagnostics = {
-            "solver_status": "source_oracle",
-            "application_status": "source_oracle",
-            "accepted": True,
-            "balance_inf_norm": math.nan,
-            "reaction_stationarity_inf_norm": math.nan,
-            "native_binding": "MEA.smith_missen.ideal_speciation",
-            "seed_policy": "source_oracle",
-            "uses_source_oracle_initial_amounts": False,
-        }
-        ce_rows.extend(
-            _rows_for_state(
-                role="ce_reactive_speciation",
-                temperature_C=temperature_C,
-                loading=loading,
-                effective_feed_loading=effective_feed_loading,
-                mole_fractions=ce_mole_fractions,
-                diagnostics=ce_diagnostics,
-            )
-        )
+        ce_mole_fractions = _ce_mole_fractions(result)
+        ce_diagnostics = _ce_diagnostics(result)
         source_rows.extend(
             _rows_for_state(
                 role="source_oracle",
@@ -377,37 +440,79 @@ def generate() -> dict[str, Any]:
                 loading=loading,
                 effective_feed_loading=effective_feed_loading,
                 mole_fractions=source_mole_fractions,
-                diagnostics=source_diagnostics,
+                diagnostics=_source_diagnostics(),
             )
         )
-        for species_label in (*SPECIES_ORDER, *COMPOSITE_SPECIES):
-            source_value = float(source_mole_fractions[species_label])
-            ce_value = float(ce_mole_fractions[species_label])
-            comparison_rows.append(
-                {
-                    "temperature_C": temperature_C,
-                    "MEA_weight_fraction": MEA_WEIGHT_FRACTION,
-                    "CO2_loading": loading,
-                    "effective_feed_loading": effective_feed_loading,
-                    "species": species_label,
-                    "source_mole_fraction": source_value,
-                    "ce_mole_fraction": ce_value,
-                    "signed_error": ce_value - source_value,
-                    "abs_error": abs(ce_value - source_value),
-                    "balance_inf_norm": ce_diagnostics["balance_inf_norm"],
-                    "reaction_stationarity_inf_norm": ce_diagnostics["reaction_stationarity_inf_norm"],
-                    "solver_status": ce_diagnostics["solver_status"],
-                    "application_status": ce_diagnostics["application_status"],
-                    "accepted": ce_diagnostics["accepted"],
-                    "seed_policy": ce_diagnostics["seed_policy"],
-                    "uses_source_oracle_initial_amounts": ce_diagnostics["uses_source_oracle_initial_amounts"],
-                }
+        ce_rows.extend(
+            _rows_for_state(
+                role="ce_unassisted_pointwise",
+                temperature_C=temperature_C,
+                loading=loading,
+                effective_feed_loading=effective_feed_loading,
+                mole_fractions=ce_mole_fractions,
+                diagnostics=ce_diagnostics,
             )
+        )
+        comparison_rows.extend(
+            _comparison_rows(
+                role="ce_unassisted_pointwise",
+                temperature_C=temperature_C,
+                loading=loading,
+                effective_feed_loading=effective_feed_loading,
+                source_mole_fractions=source_mole_fractions,
+                ce_mole_fractions=ce_mole_fractions,
+                diagnostics=ce_diagnostics,
+            )
+        )
+        trace_summary_rows.append(
+            _trace_summary_row(
+                role="ce_unassisted_pointwise",
+                temperature_C=temperature_C,
+                loading=loading,
+                effective_feed_loading=effective_feed_loading,
+                diagnostics=ce_diagnostics,
+            )
+        )
+
+    shuffled_rows: list[dict[str, Any]] = []
+    for order_index, (temperature_C, loading) in enumerate(_shuffled_subset_keys(groups)):
+        source_mole_fractions = source_state_by_key[(temperature_C, loading)]
+        result = _solve_no_oracle(
+            species=species,
+            reactions=reactions,
+            temperature_C=temperature_C,
+            loading=loading,
+        )
+        ce_mole_fractions = _ce_mole_fractions(result)
+        diagnostics = _ce_diagnostics(result)
+        max_abs_error = max(
+            abs(ce_mole_fractions[species_label] - source_mole_fractions[species_label])
+            for species_label in (*SPECIES_ORDER, *COMPOSITE_SPECIES)
+        )
+        shuffled_rows.append(
+            {
+                "shuffle_seed": SHUFFLED_SUBSET_SEED,
+                "shuffle_order_index": order_index,
+                "temperature_C": temperature_C,
+                "CO2_loading": loading,
+                "effective_feed_loading": max(loading, MIN_EFFECTIVE_LOADING),
+                "max_abs_error": max_abs_error,
+                **_trace_summary_row(
+                    role="ce_unassisted_shuffled_subset",
+                    temperature_C=temperature_C,
+                    loading=loading,
+                    effective_feed_loading=max(loading, MIN_EFFECTIVE_LOADING),
+                    diagnostics=diagnostics,
+                ),
+            }
+        )
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     source_frame = pd.DataFrame(source_rows)
     ce_frame = pd.DataFrame(ce_rows)
     comparison_frame = pd.DataFrame(comparison_rows)
+    trace_summary_frame = pd.DataFrame(trace_summary_rows)
+    shuffled_audit = pd.DataFrame(shuffled_rows)
     overlay_plot_frame = pd.concat(
         [
             source_frame[source_frame["species"].isin(PLOT_SPECIES)],
@@ -416,22 +521,16 @@ def generate() -> dict[str, Any]:
         ignore_index=True,
     ).sort_values(["temperature_C", "species", "role", "CO2_loading"])
     summary_frame = (
-        comparison_frame.groupby(["temperature_C", "species"], sort=True)
+        comparison_frame.groupby(["role", "temperature_C", "species"], sort=True)
         .agg(
             loading_count=("CO2_loading", "nunique"),
             max_abs_error=("abs_error", "max"),
             mean_abs_error=("abs_error", "mean"),
             max_balance_inf_norm=("balance_inf_norm", "max"),
             max_reaction_stationarity_inf_norm=("reaction_stationarity_inf_norm", "max"),
+            max_stage_count=("stage_count", "max"),
         )
         .reset_index()
-    )
-    unassisted_seed_audit = pd.DataFrame(
-        _unassisted_seed_audit_rows(
-            species=species,
-            reactions=reactions,
-            solver_options=solver_options,
-        )
     )
 
     source_frame.to_csv(RESULTS_DIR / "source_oracle_speciation_curve.csv", index=False)
@@ -439,13 +538,26 @@ def generate() -> dict[str, Any]:
     overlay_plot_frame.to_csv(RESULTS_DIR / "mea_ce_oracle_speciation_plot_data.csv", index=False)
     comparison_frame.to_csv(RESULTS_DIR / "mea_ce_oracle_speciation_errors.csv", index=False)
     summary_frame.to_csv(RESULTS_DIR / "mea_ce_oracle_speciation_error_summary.csv", index=False)
-    unassisted_seed_audit.to_csv(RESULTS_DIR / "mea_ce_unassisted_seed_audit.csv", index=False)
+    trace_summary_frame.to_csv(RESULTS_DIR / "mea_ce_continuation_trace_summary.csv", index=False)
+    trace_summary_frame.to_csv(RESULTS_DIR / "mea_ce_unassisted_seed_audit.csv", index=False)
+    shuffled_audit.to_csv(RESULTS_DIR / "mea_ce_shuffled_subset_audit.csv", index=False)
     pd.DataFrame(reaction_constant_rows).to_csv(RESULTS_DIR / "smith_missen_reaction_constants.csv", index=False)
 
-    unassisted_accepted_count = int(unassisted_seed_audit["accepted"].sum())
-    unassisted_attempt_count = int(len(unassisted_seed_audit))
+    strict = _strict_summary(comparison_frame)
+    shuffled_strict = {
+        "attempt_count": int(len(shuffled_audit)),
+        "all_accepted": bool(shuffled_audit["accepted"].all()),
+        "all_no_source_oracle_seed": bool(
+            (shuffled_audit["uses_source_oracle_initial_amounts"] == False).all()  # noqa: E712
+        ),
+        "max_abs_error": float(shuffled_audit["max_abs_error"].max()),
+        "artifact": str((RESULTS_DIR / "mea_ce_shuffled_subset_audit.csv").relative_to(REPO_ROOT)).replace(
+            "\\",
+            "/",
+        ),
+    }
     report = {
-        "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v1",
+        "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2",
         "source_oracle": str(SOURCE_CURVE_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
         "public_route": "reactive_speciation",
         "ce_workflow": "epcsaft_equilibrium.reactive_speciation",
@@ -453,25 +565,49 @@ def generate() -> dict[str, Any]:
         "loading_count": int(comparison_frame["CO2_loading"].nunique()),
         "species": list(SPECIES_ORDER),
         "plot_species": list(PLOT_SPECIES),
-        "initialization": "source-oracle mole fractions scaled to one mole total amine for each loading",
-        "seed_policy": "source_oracle_mole_fractions_scaled_to_one_mol_total_amine",
-        "uses_source_oracle_initial_amounts": True,
+        "initialization": "omitted initial_amounts; native max-min feasible initializer",
+        "seed_policy": "max_min_feasible_interior_no_oracle",
+        "uses_source_oracle_initial_amounts": False,
+        "solver_options": {"max_iterations": SOLVER_OPTIONS.max_iterations, "tolerance": SOLVER_OPTIONS.tolerance},
         "zero_loading_note": "source-oracle loading 0.0 is solved with effective CE feed loading 1e-6 to match the Smith-Missen source solver's minimum loading convention",
-        "unassisted_seed_audit": {
-            "seed_policy": "feed_stoichiometric_no_oracle",
-            "attempt_count": unassisted_attempt_count,
-            "accepted_count": unassisted_accepted_count,
-            "status": "blocked" if unassisted_accepted_count < unassisted_attempt_count else "complete",
-            "artifact": str((RESULTS_DIR / "mea_ce_unassisted_seed_audit.csv").relative_to(REPO_ROOT)).replace(
-                "\\", "/"
+        "pointwise_unassisted": {
+            **strict,
+            "artifact": str((RESULTS_DIR / "ce_reactive_speciation_curve.csv").relative_to(REPO_ROOT)).replace(
+                "\\",
+                "/",
             ),
         },
-        "max_abs_error": float(comparison_frame["abs_error"].max()),
-        "max_balance_inf_norm": float(comparison_frame["balance_inf_norm"].max()),
-        "max_reaction_stationarity_inf_norm": float(comparison_frame["reaction_stationarity_inf_norm"].max()),
+        "ce_owned_continuation_trace": {
+            "artifact": str((RESULTS_DIR / "mea_ce_continuation_trace_summary.csv").relative_to(REPO_ROOT)).replace(
+                "\\",
+                "/",
+            ),
+            "max_stage_count": int(trace_summary_frame["stage_count"].max()),
+            "homotopy_point_count": int((trace_summary_frame["stage_count"] > 1).sum()),
+            "physical_proof_corrector_point_count": int(
+                (trace_summary_frame["physical_proof_corrector_accepted"] == True).sum()  # noqa: E712
+            ),
+            "all_final_lambda_one": bool((trace_summary_frame["final_lambda"] == 1.0).all()),
+            "all_final_proof_accepted": bool((trace_summary_frame["final_proof_status"] == "accepted").all()),
+        },
+        "shuffled_subset": shuffled_strict,
+        "max_abs_error": strict["max_abs_error"],
+        "max_balance_inf_norm": strict["max_balance_inf_norm"],
+        "max_reaction_stationarity_inf_norm": strict["max_reaction_stationarity_inf_norm"],
         "all_solver_status_success": bool((comparison_frame["solver_status"] == "success").all()),
         "all_application_status_succeeded": bool((comparison_frame["application_status"] == "solve_succeeded").all()),
-        "all_accepted": bool(comparison_frame["accepted"].all()),
+        "all_accepted": strict["all_accepted"],
+        "strict_gates_passed": bool(
+            strict["all_accepted"]
+            and strict["all_no_source_oracle_seed"]
+            and strict["all_final_lambda_one"]
+            and strict["max_abs_error"] <= 1.0e-8
+            and strict["max_balance_inf_norm"] <= 1.0e-8
+            and strict["max_reaction_stationarity_inf_norm"] <= 1.0e-6
+            and shuffled_strict["all_accepted"]
+            and shuffled_strict["all_no_source_oracle_seed"]
+            and shuffled_strict["max_abs_error"] <= 1.0e-8
+        ),
     }
     (RESULTS_DIR / "mea_ce_oracle_speciation_comparison_summary.json").write_text(
         json.dumps(report, indent=2) + "\n",

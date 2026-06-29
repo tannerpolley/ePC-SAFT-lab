@@ -61,12 +61,15 @@ double matrix_abs_max(const std::vector<double>& matrix) {
     return out;
 }
 
-int row_rank(
+std::vector<int> independent_row_indices(
     std::vector<double> matrix,
     int rows,
     int columns
 ) {
     const double tolerance = 1.0e-12 * std::max(1.0, matrix_abs_max(matrix));
+    std::vector<int> row_indices(static_cast<std::size_t>(rows), 0);
+    std::iota(row_indices.begin(), row_indices.end(), 0);
+    std::vector<int> independent;
     int rank = 0;
     for (int column = 0; column < columns && rank < rows; ++column) {
         int pivot_row = rank;
@@ -88,7 +91,9 @@ int row_rank(
                     matrix[static_cast<std::size_t>(pivot_row * columns + swap_column)]
                 );
             }
+            std::swap(row_indices[static_cast<std::size_t>(rank)], row_indices[static_cast<std::size_t>(pivot_row)]);
         }
+        independent.push_back(row_indices[static_cast<std::size_t>(rank)]);
         const double pivot = matrix[static_cast<std::size_t>(rank * columns + column)];
         for (int row = rank + 1; row < rows; ++row) {
             const double factor = matrix[static_cast<std::size_t>(row * columns + column)] / pivot;
@@ -100,7 +105,32 @@ int row_rank(
         }
         ++rank;
     }
-    return rank;
+    std::sort(independent.begin(), independent.end());
+    return independent;
+}
+
+FeasibleInitializationInput input_with_conservation_rows(
+    const FeasibleInitializationInput& input,
+    const std::vector<int>& rows
+) {
+    const int species_count = static_cast<int>(input.species_labels.size());
+    FeasibleInitializationInput out;
+    out.species_labels = input.species_labels;
+    out.amount_floor = input.amount_floor;
+    out.conservation_labels.reserve(rows.size());
+    out.conservation_totals.reserve(rows.size());
+    out.conservation_matrix_row_major.reserve(rows.size() * static_cast<std::size_t>(species_count));
+    for (int row : rows) {
+        out.conservation_labels.push_back(input.conservation_labels[static_cast<std::size_t>(row)]);
+        out.conservation_totals.push_back(input.conservation_totals[static_cast<std::size_t>(row)]);
+        const auto offset = static_cast<std::size_t>(row * species_count);
+        out.conservation_matrix_row_major.insert(
+            out.conservation_matrix_row_major.end(),
+            input.conservation_matrix_row_major.begin() + offset,
+            input.conservation_matrix_row_major.begin() + offset + species_count
+        );
+    }
+    return out;
 }
 
 std::vector<double> balance_residuals(
@@ -341,11 +371,20 @@ FeasibleInitializationResult solve_max_min_feasible_initialization(
     require_positive_finite(balance_tolerance, "feasible initialization balance tolerance");
     const int species_count = static_cast<int>(input.species_labels.size());
     const int balance_count = static_cast<int>(input.conservation_labels.size());
-    if (row_rank(input.conservation_matrix_row_major, balance_count, species_count) < balance_count) {
+    const std::vector<int> independent_rows = independent_row_indices(
+        input.conservation_matrix_row_major,
+        balance_count,
+        species_count
+    );
+    if (independent_rows.empty()) {
         return rejected_without_solve("rank_deficient_conservation_constraints");
     }
+    const FeasibleInitializationInput solve_input =
+        independent_rows.size() == static_cast<std::size_t>(balance_count)
+        ? input
+        : input_with_conservation_rows(input, independent_rows);
 
-    MaxMinFeasibleInitializationNlp problem(input);
+    MaxMinFeasibleInitializationNlp problem(solve_input);
     FeasibleInitializationResult out;
     out.solve = solve_ipopt_nlp(problem, options);
     out.solver_ran = out.solve.solver_ran;

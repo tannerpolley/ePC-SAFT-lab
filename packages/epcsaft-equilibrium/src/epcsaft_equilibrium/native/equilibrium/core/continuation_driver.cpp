@@ -2,7 +2,9 @@
 
 #include "model/native_types.h"
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <set>
 
 namespace epcsaft::native::equilibrium_nlp {
@@ -38,6 +40,61 @@ void validate_stage_spec(
     if (!stage.problem_factory) {
         throw ValueError("Continuation stage requires an NLP problem factory.");
     }
+}
+
+bool finite_non_empty_vector(const std::vector<double>& values) {
+    return !values.empty() && std::all_of(values.begin(), values.end(), [](double value) {
+        return std::isfinite(value);
+    });
+}
+
+bool solve_has_warm_start_residuals(
+    const IpoptSolveResult& solve,
+    const IpoptSolveOptions& options
+) {
+    if (
+        solve.solver_status != "max_iterations_exceeded"
+        || solve.application_status != "maximum_iterations_exceeded"
+        || !finite_non_empty_vector(solve.variables)
+        || !finite_non_empty_vector(solve.constraints)
+    ) {
+        return false;
+    }
+    const IpoptSolveOptions normalized_options =
+        ipopt_solve_options_for_profile(options, options.option_profile);
+    const double scaled_constraint_violation = solve_diagnostic_double(
+        solve,
+        "scaled_constraint_violation_inf_norm",
+        std::numeric_limits<double>::infinity()
+    );
+    const double scaled_stationarity = solve_diagnostic_double(
+        solve,
+        "scaled_stationarity_inf_norm",
+        std::numeric_limits<double>::infinity()
+    );
+    return std::isfinite(scaled_constraint_violation)
+        && std::isfinite(scaled_stationarity)
+        && scaled_constraint_violation <= normalized_options.constraint_violation_tolerance
+        && scaled_stationarity <= normalized_options.dual_infeasibility_tolerance;
+}
+
+std::string stage_acceptance_status(
+    const ContinuationStageSpec& stage,
+    const IpoptSolveResult& solve
+) {
+    if (stage.final_proof) {
+        return solve.accepted ? "final_proof_accepted" : "rejected";
+    }
+    if (solve.accepted) {
+        return "solver_accepted";
+    }
+    if (solve.acceptable) {
+        return "solver_acceptable";
+    }
+    if (solve_has_warm_start_residuals(solve, stage.options)) {
+        return "warm_start_residual_accepted";
+    }
+    return "rejected";
 }
 
 }  // namespace
@@ -85,7 +142,8 @@ ContinuationTraceResult run_continuation_plan(
         stage_result.seeded_from_stage = next_state_source;
         stage_result.initial_state = next_state;
         stage_result.solve = solve_ipopt_nlp(*problem, options);
-        stage_result.accepted = stage_result.solve.accepted;
+        stage_result.acceptance_status = stage_acceptance_status(stage, stage_result.solve);
+        stage_result.accepted = stage_result.acceptance_status != "rejected";
         stage_result.continuation_state = continuation_state_from_solve_result(stage_result.solve);
 
         result.trace.push_back(stage_result);

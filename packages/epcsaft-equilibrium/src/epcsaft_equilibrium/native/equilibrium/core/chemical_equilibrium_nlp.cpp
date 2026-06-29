@@ -51,12 +51,68 @@ double vector_inf_norm(const std::vector<double>& values) {
     return out;
 }
 
+double matrix_abs_max(const std::vector<double>& matrix) {
+    double out = 0.0;
+    for (double value : matrix) {
+        out = std::max(out, std::abs(value));
+    }
+    return out;
+}
+
 double amount_upper_bound(const std::vector<double>& totals, const std::vector<double>& initial) {
     double scale = std::accumulate(initial.begin(), initial.end(), 0.0);
     for (double value : totals) {
         scale = std::max(scale, std::abs(value));
     }
     return 10.0 * std::max(1.0, scale);
+}
+
+std::vector<int> independent_row_indices(
+    std::vector<double> matrix,
+    int rows,
+    int columns
+) {
+    const double tolerance = 1.0e-12 * std::max(1.0, matrix_abs_max(matrix));
+    std::vector<int> row_indices(static_cast<std::size_t>(rows), 0);
+    std::iota(row_indices.begin(), row_indices.end(), 0);
+    std::vector<int> independent;
+    int rank = 0;
+    for (int column = 0; column < columns && rank < rows; ++column) {
+        int pivot_row = rank;
+        double pivot_abs = std::abs(matrix[static_cast<std::size_t>(rank * columns + column)]);
+        for (int row = rank + 1; row < rows; ++row) {
+            const double candidate = std::abs(matrix[static_cast<std::size_t>(row * columns + column)]);
+            if (candidate > pivot_abs) {
+                pivot_abs = candidate;
+                pivot_row = row;
+            }
+        }
+        if (pivot_abs <= tolerance) {
+            continue;
+        }
+        if (pivot_row != rank) {
+            for (int swap_column = column; swap_column < columns; ++swap_column) {
+                std::swap(
+                    matrix[static_cast<std::size_t>(rank * columns + swap_column)],
+                    matrix[static_cast<std::size_t>(pivot_row * columns + swap_column)]
+                );
+            }
+            std::swap(row_indices[static_cast<std::size_t>(rank)], row_indices[static_cast<std::size_t>(pivot_row)]);
+        }
+        independent.push_back(row_indices[static_cast<std::size_t>(rank)]);
+        const double pivot = matrix[static_cast<std::size_t>(rank * columns + column)];
+        for (int row = rank + 1; row < rows; ++row) {
+            const double factor = matrix[static_cast<std::size_t>(row * columns + column)] / pivot;
+            matrix[static_cast<std::size_t>(row * columns + column)] = 0.0;
+            for (int eliminate_column = column + 1; eliminate_column < columns; ++eliminate_column) {
+                matrix[static_cast<std::size_t>(row * columns + eliminate_column)] -=
+                    factor * matrix[static_cast<std::size_t>(rank * columns + eliminate_column)];
+            }
+        }
+        ++rank;
+    }
+    std::sort(independent.begin(), independent.end());
+    return independent;
 }
 
 std::vector<double> solve_damped_linear_system(
@@ -616,6 +672,186 @@ ContinuationStageSpec ce_homotopy_stage(
     return stage;
 }
 
+struct PhysicalProofResidualSystem {
+    HomogeneousChemicalEquilibriumBlockResult block;
+    std::vector<double> residuals;
+    std::vector<double> jacobian_row_major;
+    double residual_inf_norm = 0.0;
+    double balance_inf_norm = 0.0;
+    double reaction_stationarity_inf_norm = 0.0;
+};
+
+bool physical_proof_passed(
+    const HomogeneousChemicalEquilibriumBlockResult& block,
+    double balance_tolerance,
+    double reaction_stationarity_tolerance
+) {
+    return vector_inf_norm(block.balance_residuals) <= balance_tolerance
+        && vector_inf_norm(block.reaction_affinities) <= reaction_stationarity_tolerance;
+}
+
+PhysicalProofResidualSystem evaluate_physical_proof_residual_system(
+    const HomogeneousChemicalEquilibriumNlp& problem,
+    const std::vector<double>& variables,
+    const std::vector<int>& independent_balance_rows,
+    double balance_tolerance,
+    double reaction_stationarity_tolerance
+) {
+    const int species_count = problem.variable_count();
+    const int reaction_count = static_cast<int>(problem.input().reaction_labels.size());
+    const std::vector<double> amounts = problem.physical_amounts_from_solver_variables(variables);
+    PhysicalProofResidualSystem out;
+    out.block = problem.evaluate_physical_block(amounts);
+    out.balance_inf_norm = vector_inf_norm(out.block.balance_residuals);
+    out.reaction_stationarity_inf_norm = vector_inf_norm(out.block.reaction_affinities);
+    const int equation_count = static_cast<int>(independent_balance_rows.size()) + reaction_count;
+    out.residuals.assign(static_cast<std::size_t>(equation_count), 0.0);
+    out.jacobian_row_major.assign(static_cast<std::size_t>(equation_count * species_count), 0.0);
+
+    int equation = 0;
+    for (int balance_row : independent_balance_rows) {
+        out.residuals[static_cast<std::size_t>(equation)] =
+            out.block.balance_residuals[static_cast<std::size_t>(balance_row)] / balance_tolerance;
+        for (int species = 0; species < species_count; ++species) {
+            out.jacobian_row_major[static_cast<std::size_t>(equation * species_count + species)] =
+                out.block.balance_jacobian_row_major[
+                    static_cast<std::size_t>(balance_row * species_count + species)
+                ] * amounts[static_cast<std::size_t>(species)] / balance_tolerance;
+        }
+        ++equation;
+    }
+    for (int reaction = 0; reaction < reaction_count; ++reaction) {
+        out.residuals[static_cast<std::size_t>(equation)] =
+            out.block.reaction_affinities[static_cast<std::size_t>(reaction)] / reaction_stationarity_tolerance;
+        for (int species = 0; species < species_count; ++species) {
+            out.jacobian_row_major[static_cast<std::size_t>(equation * species_count + species)] =
+                out.block.affinity_jacobian_row_major[
+                    static_cast<std::size_t>(reaction * species_count + species)
+                ] * amounts[static_cast<std::size_t>(species)] / reaction_stationarity_tolerance;
+        }
+        ++equation;
+    }
+    out.residual_inf_norm = vector_inf_norm(out.residuals);
+    return out;
+}
+
+PhysicalProofCorrectorResult run_physical_proof_corrector(
+    const ChemicalEquilibriumNlpInput& input,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout,
+    const std::vector<double>& initial_variables,
+    double balance_tolerance,
+    double reaction_stationarity_tolerance
+) {
+    constexpr int kMaxIterations = 24;
+    constexpr int kMaxLineSearchTrials = 16;
+    constexpr double kMinimumStepDecrease = 1.0e-12;
+
+    PhysicalProofCorrectorResult out;
+    out.attempted = true;
+    out.status = "started";
+    HomogeneousChemicalEquilibriumNlp problem(input, plan, layout);
+    const int species_count = problem.variable_count();
+    const int balance_count = problem.constraint_count();
+    require_size(
+        initial_variables.size(),
+        static_cast<std::size_t>(species_count),
+        "chemical equilibrium proof-corrector initial variables"
+    );
+    const std::vector<int> independent_balance_rows = independent_row_indices(
+        input.conservation_matrix_row_major,
+        balance_count,
+        species_count
+    );
+    if (independent_balance_rows.empty()) {
+        out.status = "rejected_no_independent_balance_rows";
+        return out;
+    }
+    const int equation_count =
+        static_cast<int>(independent_balance_rows.size()) + static_cast<int>(input.reaction_labels.size());
+    if (equation_count != species_count) {
+        out.status = "rejected_non_square_physical_proof_system";
+        return out;
+    }
+
+    std::vector<double> variables = initial_variables;
+    PhysicalProofResidualSystem system = evaluate_physical_proof_residual_system(
+        problem,
+        variables,
+        independent_balance_rows,
+        balance_tolerance,
+        reaction_stationarity_tolerance
+    );
+    for (int iteration = 0; iteration <= kMaxIterations; ++iteration) {
+        out.iteration_count = iteration;
+        out.residual_inf_norm = system.residual_inf_norm;
+        out.balance_inf_norm = system.balance_inf_norm;
+        out.reaction_stationarity_inf_norm = system.reaction_stationarity_inf_norm;
+        out.variables = variables;
+        out.postsolve = system.block;
+        if (physical_proof_passed(system.block, balance_tolerance, reaction_stationarity_tolerance)) {
+            out.accepted = true;
+            out.status = "accepted";
+            return out;
+        }
+        if (iteration == kMaxIterations) {
+            break;
+        }
+
+        std::vector<double> rhs = system.residuals;
+        for (double& value : rhs) {
+            value = -value;
+        }
+        std::vector<double> step;
+        try {
+            step = solve_damped_linear_system(system.jacobian_row_major, rhs, species_count);
+        } catch (const std::exception&) {
+            out.status = "rejected_singular_physical_proof_jacobian";
+            return out;
+        }
+        out.step_inf_norm = vector_inf_norm(step);
+        if (!(std::isfinite(out.step_inf_norm) && out.step_inf_norm > 0.0)) {
+            out.status = "rejected_invalid_physical_proof_step";
+            return out;
+        }
+
+        bool accepted_step = false;
+        double step_scale = 1.0;
+        if (out.step_inf_norm > 8.0) {
+            step_scale = 8.0 / out.step_inf_norm;
+        }
+        for (int trial = 0; trial < kMaxLineSearchTrials; ++trial) {
+            const double alpha = step_scale * std::pow(0.5, trial);
+            std::vector<double> trial_variables = variables;
+            for (int species = 0; species < species_count; ++species) {
+                trial_variables[static_cast<std::size_t>(species)] +=
+                    alpha * step[static_cast<std::size_t>(species)];
+            }
+            PhysicalProofResidualSystem trial_system = evaluate_physical_proof_residual_system(
+                problem,
+                trial_variables,
+                independent_balance_rows,
+                balance_tolerance,
+                reaction_stationarity_tolerance
+            );
+            if (physical_proof_passed(trial_system.block, balance_tolerance, reaction_stationarity_tolerance)
+                || trial_system.residual_inf_norm < system.residual_inf_norm * (1.0 - kMinimumStepDecrease)) {
+                variables = std::move(trial_variables);
+                system = std::move(trial_system);
+                accepted_step = true;
+                break;
+            }
+        }
+        if (!accepted_step) {
+            out.status = "rejected_no_decreasing_physical_proof_step";
+            return out;
+        }
+    }
+
+    out.status = "rejected_iteration_limit";
+    return out;
+}
+
 ChemicalEquilibriumNlpResult build_ce_result_from_solve(
     const ChemicalEquilibriumNlpInput& input,
     const epcsaft::native::equilibrium::ActivationPlan& plan,
@@ -758,6 +994,34 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             reaction_stationarity_tolerance
         );
     }
+    if (feasible.accepted && !direct.accepted && !direct.solve.variables.empty()) {
+        direct.proof_corrector = run_physical_proof_corrector(
+            true_input,
+            plan,
+            layout,
+            direct.solve.variables,
+            balance_tolerance,
+            reaction_stationarity_tolerance
+        );
+        if (direct.proof_corrector.accepted) {
+            direct.postsolve = direct.proof_corrector.postsolve;
+            direct.balance_inf_norm = direct.proof_corrector.balance_inf_norm;
+            direct.reaction_stationarity_inf_norm = direct.proof_corrector.reaction_stationarity_inf_norm;
+            direct.accepted = true;
+        }
+    }
+    if (feasible.accepted && direct.accepted) {
+        direct.source_oracle_initial_amounts = false;
+        direct.seed_source = "max_min_feasible_interior";
+        direct.feasible_initialization = feasible;
+        direct.direct_final_proof_attempted = true;
+        direct.direct_final_proof_accepted = true;
+        direct.continuation.final_proof_status = "accepted";
+        direct.continuation.final_stage_id = "lambda_1";
+        direct.continuation.accepted = true;
+        direct.continuation_lambdas = {1.0};
+        return direct;
+    }
 
     ContinuationTraceResult trace;
     std::vector<double> lambdas;
@@ -782,12 +1046,34 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             reaction_stationarity_tolerance
         )
         : ChemicalEquilibriumNlpResult{};
+    out.continuation = trace;
+    if (feasible.accepted
+        && !out.accepted
+        && !trace.trace.empty()
+        && trace.final_stage_id == "lambda_1"
+        && !trace.trace.back().solve.variables.empty()) {
+        out.proof_corrector = run_physical_proof_corrector(
+            true_input,
+            plan,
+            layout,
+            trace.trace.back().solve.variables,
+            balance_tolerance,
+            reaction_stationarity_tolerance
+        );
+        if (out.proof_corrector.accepted) {
+            out.postsolve = out.proof_corrector.postsolve;
+            out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
+            out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
+            out.accepted = true;
+            out.continuation.accepted = true;
+            out.continuation.final_proof_status = "accepted";
+        }
+    }
     out.source_oracle_initial_amounts = false;
     out.seed_source = "max_min_feasible_interior";
     out.feasible_initialization = feasible;
     out.direct_final_proof_attempted = feasible.accepted;
     out.direct_final_proof_accepted = feasible.accepted && direct.accepted;
-    out.continuation = trace;
     out.continuation_lambdas = lambdas;
     return out;
 }

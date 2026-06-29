@@ -511,8 +511,9 @@ def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_f
     species = _mea_species()
     reactions = _mea_reactions()
     constants = _mea_constants()
-    solver_options = epcsaft_equilibrium.EquilibriumSolverOptions(max_iterations=300, tolerance=1.0e-6)
+    solver_options = epcsaft_equilibrium.EquilibriumSolverOptions(max_iterations=600, tolerance=1.0e-8)
     results = []
+    max_mole_fraction_error = 0.0
 
     for loading, expected in _MEA_EXPECTED_MOLE_FRACTIONS.items():
         result = epcsaft_equilibrium.reactive_speciation(
@@ -520,7 +521,7 @@ def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_f
             reactions=reactions,
             feed_amounts={"MEA": 1.0, "H2O": _MEA_WATER_PER_AMINE, "CO2": loading},
             equilibrium_constants=constants,
-            initial_amounts=_mea_initial_amounts(expected),
+            initial_amounts=None,
             solver_options=solver_options,
         )
         results.append(result)
@@ -533,13 +534,29 @@ def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_f
         assert result.diagnostics["solver_status"] == "success"
         assert result.diagnostics["application_status"] == "solve_succeeded"
         assert result.diagnostics["accepted"] is True
+        assert result.diagnostics["initialization"]["source_oracle_initial_amounts"] is False
+        assert result.diagnostics["initialization"]["seed_source"] == "max_min_feasible_interior"
+        assert result.diagnostics["initialization"]["feasible_initialization"]["accepted"] is True
+        assert result.diagnostics["continuation"]["final_proof_status"] == "accepted"
+        assert result.diagnostics["continuation"]["final_lambda"] == pytest.approx(1.0)
+        if result.diagnostics["continuation"]["direct_final_proof_accepted"]:
+            assert result.diagnostics["continuation"]["stage_count"] == 0
+        else:
+            assert result.diagnostics["continuation"]["stage_count"] >= 3
+        corrector = result.diagnostics["continuation"]["physical_proof_corrector"]
+        assert corrector["corrector"] == "physical_residual_newton"
+        if corrector["attempted"]:
+            assert corrector["accepted"] is True
+            assert corrector["status"] == "accepted"
         assert result.balances == pytest.approx({key: 0.0 for key in ("C", "O", "H", "N", "charge")}, abs=1.0e-8)
         assert result.affinities == pytest.approx({reaction.label: 0.0 for reaction in reactions}, abs=1.0e-6)
-        assert result.mole_fractions.tolist() == pytest.approx(
-            [expected[label] for label in result.species_labels],
-            rel=2.0e-5,
-            abs=5.0e-10,
-        )
+        expected_mole_fractions = [expected[label] for label in result.species_labels]
+        point_errors = [
+            abs(actual - target)
+            for actual, target in zip(result.mole_fractions.tolist(), expected_mole_fractions)
+        ]
+        max_mole_fraction_error = max(max_mole_fraction_error, max(point_errors))
+        assert max(point_errors) <= 1.0e-8
 
         amounts = result.species_amounts
         co2_loading = (
@@ -564,3 +581,4 @@ def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_f
         (row.species_amounts["MEA"] for row in results),
         reverse=True,
     )
+    assert max_mole_fraction_error <= 1.0e-8

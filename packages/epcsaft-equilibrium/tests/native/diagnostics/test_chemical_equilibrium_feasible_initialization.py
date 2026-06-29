@@ -98,7 +98,7 @@ def test_feasible_initializer_rejects_infeasible_totals() -> None:
     assert result["balance_inf_norm"] > 1.0e-9
 
 
-def test_feasible_initializer_rejects_rank_broken_conservation_rows_before_solve() -> None:
+def test_feasible_initializer_accepts_consistent_redundant_conservation_rows() -> None:
     _require_ipopt()
 
     result = _core._native_ce_feasible_initialization(
@@ -111,6 +111,26 @@ def test_feasible_initializer_rejects_rank_broken_conservation_rows_before_solve
         )
     )
 
+    assert result["accepted"] is True
+    assert result["solver_ran"] is True
+    assert result["amounts"] == pytest.approx([0.5, 0.5], abs=1.0e-8)
+    assert result["balance_inf_norm"] <= 1.0e-9
+
+
+def test_feasible_initializer_rejects_inconsistent_dependent_conservation_rows() -> None:
+    _require_ipopt()
+
+    result = _core._native_ce_feasible_initialization(
+        _payload(
+            [
+                [1.0, 1.0],
+                [1.0, 1.0],
+            ],
+            [1.0, 2.0],
+        )
+    )
+
     assert result["accepted"] is False
-    assert result["solver_ran"] is False
-    assert result["rejection_reason"] == "rank_deficient_conservation_constraints"
+    assert result["solver_ran"] is True
+    assert result["rejection_reason"] == "initializer_solve_rejected"
+    assert result["balance_inf_norm"] > 1.0e-9

@@ -38,6 +38,7 @@ struct ContinuationStageResult {
     double parameter_value = 0.0;
     bool final_proof = false;
     bool accepted = false;
+    std::string acceptance_status = "rejected";
     std::string seeded_from_stage;
     ContinuationState initial_state;
     IpoptSolveResult solve;
