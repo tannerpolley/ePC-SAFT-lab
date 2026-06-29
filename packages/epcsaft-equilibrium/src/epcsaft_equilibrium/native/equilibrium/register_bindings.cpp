@@ -1115,6 +1115,26 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     out["reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
     out["continuation_state"] = ipopt_continuation_state_to_dict(result.solve);
     out["iteration_history"] = ipopt_iteration_history_to_list(result.solve.iteration_history);
+
+    py::dict initialization;
+    initialization["seed_source"] = result.seed_source;
+    initialization["source_oracle_initial_amounts"] = result.source_oracle_initial_amounts;
+    initialization["feasible_initialization"] =
+        feasible_initialization_result_to_dict(result.feasible_initialization);
+    out["initialization"] = initialization;
+
+    py::dict continuation;
+    continuation["direct_final_proof_attempted"] = result.direct_final_proof_attempted;
+    continuation["direct_final_proof_accepted"] = result.direct_final_proof_accepted;
+    continuation["final_proof_status"] = result.continuation.final_proof_status;
+    continuation["final_stage_id"] = result.continuation.final_stage_id;
+    continuation["lambda_values"] = result.continuation_lambdas;
+    continuation["final_lambda"] = result.continuation_lambdas.empty()
+        ? 0.0
+        : result.continuation_lambdas.back();
+    continuation["stage_count"] = static_cast<int>(result.continuation.trace.size());
+    continuation["trace"] = continuation_trace_to_list(result.continuation.trace);
+    out["continuation"] = continuation;
     return out;
 }
 

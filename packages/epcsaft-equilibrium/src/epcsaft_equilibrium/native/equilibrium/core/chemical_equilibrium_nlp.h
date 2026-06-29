@@ -2,6 +2,8 @@
 
 #include "equilibrium/blocks/chemical_equilibrium_block.h"
 #include "equilibrium/core/activation_plan.h"
+#include "equilibrium/core/continuation_driver.h"
+#include "equilibrium/core/feasible_initialization.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/two_phase_eos_route.h"
 #include "equilibrium/core/variable_layout.h"
@@ -20,6 +22,7 @@ struct ChemicalEquilibriumNlpInput {
     std::vector<double> conservation_matrix_row_major;
     std::vector<double> conservation_totals;
     std::vector<double> log_equilibrium_constants;
+    double log_equilibrium_constants_lambda = 1.0;
     std::vector<double> initial_amounts;
 };
 
@@ -30,6 +33,13 @@ struct ChemicalEquilibriumNlpResult {
     bool accepted = false;
     double balance_inf_norm = 0.0;
     double reaction_stationarity_inf_norm = 0.0;
+    bool source_oracle_initial_amounts = true;
+    std::string seed_source = "caller_initial_amounts";
+    FeasibleInitializationResult feasible_initialization;
+    bool direct_final_proof_attempted = false;
+    bool direct_final_proof_accepted = false;
+    ContinuationTraceResult continuation;
+    std::vector<double> continuation_lambdas;
 };
 
 class HomogeneousChemicalEquilibriumNlp final : public NlpProblem {
