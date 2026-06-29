@@ -3,10 +3,11 @@
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature
 **Source Spec:** docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md
-**Source Plan:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md
+**Source Plan:** docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
+**Branch:** codex/issue-0362-shared-production-route-certification
 **Classification:** AFK
 **Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
-**Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/362 using the local mirror and docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md. Complete proof oracle: issue acceptance criteria checked and PR merged.
+**Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/362 using the local mirror and docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md. Complete proof oracle: issue acceptance criteria checked and PR merged.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -16,7 +17,7 @@
 **Script Gate Mode:** Safety only
 
 ## Outcome Summary
-**Outcome Source:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md#outcome-proof
+**Outcome Source:** docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md#outcome-proof
 **Intent:** Implement the first executable shared contract that every production-exposed phase-equilibrium route must satisfy.
 **Target Output:** A package-level validator/test fails when a production-exposed PE route lacks shared certification fields or overclaims capability evidence.
 **Owner:** M4 equilibrium package owner.
@@ -25,7 +26,7 @@
 **Replaced Path:** Route-specific tests that can pass while omitting discovery, postsolve, residual, or capability evidence.
 **Acceptance Proof:** Focused package tests and registry/capability checks prove the shared contract over all production-exposed routes.
 **Stop Criteria:** Stop if the route inventory cannot distinguish production-exposed, private, diagnostic, and planned routes.
-**Avoid:** Do not force planned routes to pass production gates or add fallback flags.
+**Avoid:** Do not force planned routes to pass production gates or add solver dodge flags.
 
 ## Project Merge
 

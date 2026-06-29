@@ -171,6 +171,19 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     )
 
 
+def test_production_registry_rows_have_certification_evidence_commands() -> None:
+    for row in _family_rows():
+        if row["production_exposed"] is not True:
+            continue
+        assert row["existing_public_utility_routes"], row["family_label"]
+        evidence_rows = row.get("admission_evidence", [])
+        assert evidence_rows, row["family_label"]
+        for evidence in evidence_rows:
+            assert evidence["command"], evidence["evidence_label"]
+            assert evidence["scope"], evidence["evidence_label"]
+            assert evidence["result_requirement"], evidence["evidence_label"]
+
+
 def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> None:
     registry = _registry()
     family_labels = set(_family_by_label())
