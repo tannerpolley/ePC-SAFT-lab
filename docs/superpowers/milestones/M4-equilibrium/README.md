@@ -100,17 +100,17 @@ failures and shared contract gates are resolved.
 | [#362](../../issues/362-m4-pe-implement-shared-production-route-certification-contract.md) | `phase-equilibrium` | `Ipopt` | `ready` | First executable leaf: shared certification shape for production-exposed PE routes. |
 | [#363](../../issues/363-m4-pe-govern-lle-family-certification.md) | `lle` | `Ipopt` | `blocked` | Parent for LLE family certification. |
 | [#364](../../issues/364-m4-lle-govern-neutral-nonassociating-lle-certification.md) | `lle` | `Ipopt` | `blocked` | Parent for neutral nonassociating LLE certification. |
-| [#365](../../issues/365-m4-lle-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md) | `lle` | `Ipopt` | `blocked` | Fix the current neutral LLE Stage II replay-to-Stage III accepted-result receipt failure after #362. |
-| [#366](../../issues/366-m4-lle-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md) | `lle` | `Ipopt` | `blocked` | Connect source-backed neutral nonassociating LLE evidence to the shared contract after #362. |
+| [#365](../../issues/365-m4-lle-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md) | `ready` | `Ipopt` | `blocked` | Fix the current neutral LLE Stage II replay-to-Stage III accepted-result receipt failure after #362. |
+| [#366](../../issues/366-m4-lle-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md) | `ready` | `Ipopt` | `blocked` | Connect source-backed neutral nonassociating LLE evidence to the shared contract after #362. |
 | [#367](../../issues/367-m4-lle-govern-associating-lle-certification.md) | `lle`/`association` | `Ipopt` | `blocked` | Parent for associating LLE certification. |
-| [#368](../../issues/368-m4-lle-separate-associating-proof-applicability-from-global-route-metadata.md) | `lle`/`association` | `Ipopt` | `blocked` | Split request-specific proof applicability from global route-family proof metadata after #362. |
-| [#369](../../issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md) | `lle`/`association` | `Ipopt` | `blocked` | Connect Gross 2002 associating LLE evidence to the shared contract after #362. |
+| [#368](../../issues/368-m4-lle-separate-associating-proof-applicability-from-global-route-metadata.md) | `lle`/`association` | `ready` | `blocked` | Split request-specific proof applicability from global route-family proof metadata after #362. |
+| [#369](../../issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md) | `lle`/`association` | `ready` | `blocked` | Connect Gross 2002 associating LLE evidence to the shared contract after #362. |
 | [#370](../../issues/370-m4-lle-govern-electrolyte-lle-certification.md) | `electrolyte` | `Ipopt` | `blocked` | Parent for electrolyte LLE certification; #191 is now a native sub-issue here. |
-| [#371](../../issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `electrolyte` | `Ipopt` | `blocked` | Attach reduced-electroneutral electrolyte residual blocks to the shared contract after #362. |
+| [#371](../../issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `ready` | `Ipopt` | `blocked` | Attach reduced-electroneutral electrolyte residual blocks to the shared contract after #362. |
 | [#372](../../issues/372-m4-lle-govern-reactive-electrolyte-lle-certification-boundary.md) | `electrolyte`/`reactive` | `Ipopt` | `blocked` | Boundary parent for future reactive electrolyte LLE after CE/CPE prerequisites. |
-| [#373](../../issues/373-m4-pe-govern-vle-family-certification.md) | `vle` | `Ipopt` | `blocked` | Parent for VLE certification. |
-| [#374](../../issues/374-m4-pe-govern-flash-and-multiphase-certification.md) | `flash`/`multiphase` | `Ipopt` | `blocked` | Parent for flash and generalized multiphase certification. |
-| [#375](../../issues/375-m4-pe-govern-boundary-route-certification.md) | `boundary` | `Ipopt` | `blocked` | Parent for bubble, dew, cloud, shadow, and branch-traced boundary workflows. |
+| [#373](../../issues/373-m4-pe-govern-vle-family-certification.md) | `ready` | `Ipopt` | `blocked` | Parent for VLE certification. |
+| [#374](../../issues/374-m4-pe-govern-flash-and-multiphase-certification.md) | `flash`/`multiphase` | `ready` | `blocked` | Parent for flash and generalized multiphase certification. |
+| [#375](../../issues/375-m4-pe-govern-boundary-route-certification.md) | `ready` | `Ipopt` | `blocked` | Parent for bubble, dew, cloud, shadow, and branch-traced boundary workflows. |
 | [#376](../../issues/376-m4-pe-govern-reactive-and-coupled-phase-equilibrium-certification.md) | `cpe` | `Ipopt` | `blocked` | Parent for reactive/coupled PE certification; #331 is now a native sub-issue here. |
 
 ### Electrolyte HELD2 Closeout State
