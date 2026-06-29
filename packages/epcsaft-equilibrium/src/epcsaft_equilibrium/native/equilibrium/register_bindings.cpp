@@ -1798,6 +1798,10 @@ py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyAct
     out["public_routes"] = activation.public_routes;
     out["variable_model"] = activation.variable_model;
     out["density_backend"] = activation.density_backend;
+    out["solver_strategy"] = activation.solver_strategy;
+    out["initialization_strategy"] = activation.initialization_strategy;
+    out["continuation_strategy"] = activation.continuation_strategy;
+    out["final_proof_policy"] = activation.final_proof_policy;
     return out;
 }
 

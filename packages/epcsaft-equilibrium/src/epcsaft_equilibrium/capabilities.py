@@ -401,6 +401,9 @@ def capabilities() -> dict[str, object]:
     ipopt_route_available = bool(ipopt.get("available", False))
     activation = _activation_capabilities(ipopt_route_available=ipopt_route_available)
     public_routes_by_family = dict(activation["public_routes_by_family"])
+    reactive_activation = next(
+        row for row in activation["rows"] if row["key"] == "reactive_speciation"
+    )
     return {
         "package": "epcsaft-equilibrium",
         "owner": "equilibrium_extension",
@@ -520,6 +523,10 @@ def capabilities() -> dict[str, object]:
             "phase_scope": "homogeneous",
             "coupling_scope": "chemical_equilibrium_only",
             "public_routes": public_routes_by_family["reactive_speciation"],
+            "solver_strategy": reactive_activation["solver_strategy"],
+            "initialization_strategy": reactive_activation["initialization_strategy"],
+            "continuation_strategy": reactive_activation["continuation_strategy"],
+            "final_proof_policy": reactive_activation["final_proof_policy"],
             "closed_surfaces": ["reactive_lle", "reactive_electrolyte_lle", "cpe"],
             "activation_gate": "issue_0330_complete",
             "validation_evidence": "scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete",

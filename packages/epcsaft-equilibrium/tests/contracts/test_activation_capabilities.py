@@ -165,6 +165,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "phase_scope": "homogeneous",
         "coupling_scope": "chemical_equilibrium_only",
         "public_routes": ["reactive_speciation"],
+        "solver_strategy": "ipopt_nlp_with_internal_continuation",
+        "initialization_strategy": "max_min_feasible_interior",
+        "continuation_strategy": "adaptive_k_scaling_homotopy",
+        "final_proof_policy": "true_gibbs_lambda_1_only",
         "closed_surfaces": ["reactive_lle", "reactive_electrolyte_lle", "cpe"],
         "activation_gate": "issue_0330_complete",
         "validation_evidence": "scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete",
@@ -310,6 +314,15 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert reactive_activation["production_exposed"] is True
     assert reactive_activation["public_routes"] == ["reactive_speciation"]
     assert reactive_activation["exposure_status"] == "production_exposed"
+    assert reactive_activation["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
+    assert reactive_activation["initialization_strategy"] == "max_min_feasible_interior"
+    assert reactive_activation["continuation_strategy"] == "adaptive_k_scaling_homotopy"
+    assert reactive_activation["final_proof_policy"] == "true_gibbs_lambda_1_only"
+    standalone_ce = capabilities["standalone_reactive_speciation"]
+    assert standalone_ce["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
+    assert standalone_ce["initialization_strategy"] == "max_min_feasible_interior"
+    assert standalone_ce["continuation_strategy"] == "adaptive_k_scaling_homotopy"
+    assert standalone_ce["final_proof_policy"] == "true_gibbs_lambda_1_only"
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
     assert activation["public_route_family_map"]["electrolyte_lle"] == "electrolyte_lle"
     assert activation["public_route_family_map"]["reactive_speciation"] == "reactive_speciation"

@@ -58,6 +58,10 @@ def test_reactive_speciation_activation_matrix_declares_single_nlp_proof_only() 
     assert reactive["exposure_status"] == "production_exposed"
     assert reactive["proof_routes"] == ["reactive_speciation_single_nlp_ipopt_exact_hessian"]
     assert reactive["public_routes"] == ["reactive_speciation"]
+    assert reactive["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
+    assert reactive["initialization_strategy"] == "max_min_feasible_interior"
+    assert reactive["continuation_strategy"] == "adaptive_k_scaling_homotopy"
+    assert reactive["final_proof_policy"] == "true_gibbs_lambda_1_only"
     assert reactive["variable_model"] == "single_phase_species_amounts"
     assert reactive["density_backend"] == "homogeneous_standard_state_activity"
     assert reactive["constraint_families"] == ["conserved_balance"]
@@ -91,6 +95,10 @@ def test_frontend_standalone_ce_uses_single_activation_nlp_path() -> None:
     assert activation["key"] == "reactive_speciation"
     assert activation["public_routes"] == ["reactive_speciation"]
     assert activation["proof_routes"] == ["reactive_speciation_single_nlp_ipopt_exact_hessian"]
+    assert activation["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
+    assert activation["initialization_strategy"] == "max_min_feasible_interior"
+    assert activation["continuation_strategy"] == "adaptive_k_scaling_homotopy"
+    assert activation["final_proof_policy"] == "true_gibbs_lambda_1_only"
 
     plan = result["activation_plan"]
     assert plan["family_key"] == "reactive_speciation"

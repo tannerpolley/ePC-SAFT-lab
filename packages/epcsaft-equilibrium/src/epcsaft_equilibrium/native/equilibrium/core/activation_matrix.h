@@ -24,6 +24,10 @@ struct ProblemFamilyActivation {
     std::vector<std::string> public_routes;
     std::string variable_model;
     std::string density_backend;
+    std::string solver_strategy;
+    std::string initialization_strategy;
+    std::string continuation_strategy;
+    std::string final_proof_policy;
 };
 
 inline const std::vector<ProblemFamilyActivation>& problem_family_activation_matrix() {
@@ -170,6 +174,10 @@ inline const std::vector<ProblemFamilyActivation>& problem_family_activation_mat
             {"reactive_speciation"},
             "single_phase_species_amounts",
             "homogeneous_standard_state_activity",
+            "ipopt_nlp_with_internal_continuation",
+            "max_min_feasible_interior",
+            "adaptive_k_scaling_homotopy",
+            "true_gibbs_lambda_1_only",
         },
         {
             "reactive_lle",
