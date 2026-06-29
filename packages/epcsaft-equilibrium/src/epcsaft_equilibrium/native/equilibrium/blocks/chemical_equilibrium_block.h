@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 namespace epcsaft::native::equilibrium_nlp {
@@ -11,6 +12,8 @@ struct HomogeneousChemicalEquilibriumBlockResult {
     double objective_value = 0.0;
     std::vector<double> amounts;
     std::vector<double> mole_fractions;
+    std::vector<double> activities;
+    std::vector<double> ln_activity_coefficients;
     std::vector<double> standard_mu_rt;
     std::vector<double> objective_gradient;
     std::vector<double> hessian_row_major;
@@ -27,6 +30,13 @@ struct HomogeneousChemicalEquilibriumBlockResult {
     double minimum_amount = 0.0;
     double amount_lower_margin = 0.0;
     double total_amount = 0.0;
+    std::string activity_model = "mole_fraction_activity";
+    std::string activity_derivative_backend = "analytic";
+    double eos_temperature = 0.0;
+    double eos_pressure = 0.0;
+    double eos_density = 0.0;
+    int eos_phase_kind = -1;
+    std::string eos_reference_phase;
 };
 
 HomogeneousChemicalEquilibriumBlockResult evaluate_homogeneous_chemical_equilibrium_block(

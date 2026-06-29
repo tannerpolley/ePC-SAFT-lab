@@ -374,6 +374,7 @@ def solve_chemical_equilibrium_nlp_activation(
     reaction_stationarity_tolerance: float = 1.0e-8,
     continuation_state: Mapping[str, Any] | None = None,
     ipopt_linear_solver: str = "auto",
+    eos_mixture: Any | None = None,
 ) -> dict[str, Any]:
     """Solve standalone CE through the internal activation-matrix NLP/Ipopt path."""
 
@@ -416,6 +417,7 @@ def solve_chemical_equilibrium_nlp_activation(
         balance_tol,
         reaction_tol,
         continuation_state,
+        eos_mixture,
         linear_solver=str(ipopt_linear_solver),
     )
 

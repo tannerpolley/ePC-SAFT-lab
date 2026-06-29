@@ -155,6 +155,9 @@ _CHEMICAL_EQUILIBRIUM_TOP_LEVEL_DIAGNOSTIC_KEYS = (
     "iteration_history",
     "initialization",
     "continuation",
+    "activity_model",
+    "activity_derivative_backend",
+    "eos_activity_context",
 )
 
 

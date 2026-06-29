@@ -86,19 +86,21 @@ def reactive_speciation(
     feed_amounts: Mapping[str, float],
     equilibrium_constants: Sequence[EquilibriumConstantRecord],
     initial_amounts: Sequence[float] | None = None,
+    eos_mixture: Any | None = None,
     solver_options: EquilibriumSolverOptions | Mapping[str, Any] | None = None,
 ) -> ReactiveSpeciationResult:
     """Solve standalone homogeneous chemical speciation through the CE NLP path."""
 
     compiled = compile_reaction_set(species=species, reactions=reactions, feed_amounts=feed_amounts)
     standard_states = build_standard_state_registry(equilibrium_constants)
-    _require_mole_fraction_standard_states(standard_states)
+    native_eos_mixture = _reactive_speciation_eos_context(standard_states, eos_mixture)
     options = _normalize_options(solver_options)
     initial_seed = _optional_positive_initial_amounts(initial_amounts, compiled.species_count)
     payload = solve_chemical_equilibrium_nlp_activation(
         compiled,
         standard_states,
         initial_amounts=initial_seed,
+        eos_mixture=native_eos_mixture,
         max_iterations=options.max_iterations,
         tolerance=options.tolerance,
         timeout_seconds=options.timeout_seconds,
@@ -128,17 +130,40 @@ def _optional_positive_initial_amounts(
     return values.tolist()
 
 
-def _require_mole_fraction_standard_states(standard_states: StandardStateRegistry) -> None:
-    invalid = [
-        record.reaction_label
+def _reactive_speciation_eos_context(
+    standard_states: StandardStateRegistry,
+    eos_mixture: Any | None,
+) -> Any | None:
+    conventions = {
+        record.standard_state.activity_convention
         for record in standard_states.records.values()
-        if record.standard_state.activity_convention != "mole_fraction_activity"
-    ]
-    if invalid:
-        raise InputError(
-            "reactive_speciation requires mole_fraction_activity standard states for reaction(s): "
-            + ", ".join(invalid)
-        )
+    }
+    if len(conventions) != 1:
+        raise InputError("reactive_speciation requires a single activity convention.")
+    convention = next(iter(conventions))
+    if convention == "mole_fraction_activity":
+        if eos_mixture is not None:
+            raise InputError("reactive_speciation eos_mixture is only valid with eos_x_phi standard states.")
+        return None
+    if convention != "eos_x_phi":
+        raise InputError(f"reactive_speciation unsupported activity convention '{convention}'.")
+    if eos_mixture is None:
+        raise InputError("reactive_speciation eos_x_phi standard states require eos_mixture.")
+    _require_single_eos_activity_context(standard_states)
+    return getattr(eos_mixture, "native", eos_mixture)
+
+
+def _require_single_eos_activity_context(standard_states: StandardStateRegistry) -> None:
+    records = list(standard_states.records.values())
+    first = records[0].standard_state
+    for record in records[1:]:
+        state = record.standard_state
+        if (
+            state.eos_reference_phase != first.eos_reference_phase
+            or state.temperature_K != first.temperature_K
+            or state.pressure_Pa != first.pressure_Pa
+        ):
+            raise InputError("reactive_speciation eos_x_phi standard states require one shared EOS context.")
 
 
 def _reactive_speciation_result_from_payload(
@@ -151,10 +176,15 @@ def _reactive_speciation_result_from_payload(
 
     amounts = _required_float_vector(payload, "amounts", compiled.species_count, diagnostics)
     mole_fractions = _required_float_vector(payload, "mole_fractions", compiled.species_count, diagnostics)
+    activities = _optional_float_vector(payload, "activities", compiled.species_count, diagnostics)
+    if activities is None:
+        activities = mole_fractions
     standard_mu_rt = _required_float_vector(payload, "standard_mu_rt", compiled.species_count, diagnostics)
     if np.any(mole_fractions <= 0.0):
         raise SolutionError("reactive_speciation native payload returned nonpositive mole fractions.", diagnostics)
-    reduced_mu = standard_mu_rt + np.log(mole_fractions)
+    if np.any(activities <= 0.0):
+        raise SolutionError("reactive_speciation native payload returned nonpositive activities.", diagnostics)
+    reduced_mu = standard_mu_rt + np.log(activities)
 
     return ReactiveSpeciationResult(
         species_labels=compiled.species_labels,
@@ -162,7 +192,7 @@ def _reactive_speciation_result_from_payload(
         amounts=amounts,
         mole_fractions=mole_fractions,
         species_amounts=_labeled_float_map(compiled.species_labels, amounts, "amounts", diagnostics),
-        activities=_labeled_float_map(compiled.species_labels, mole_fractions, "mole_fractions", diagnostics),
+        activities=_labeled_float_map(compiled.species_labels, activities, "activities", diagnostics),
         reduced_chemical_potentials=_labeled_float_map(
             compiled.species_labels,
             reduced_mu,
@@ -232,6 +262,17 @@ def _required_float_vector(
     if not np.all(np.isfinite(values)):
         raise SolutionError(f"reactive_speciation native payload field {key} must be finite.", diagnostics)
     return values
+
+
+def _optional_float_vector(
+    payload: Mapping[str, Any],
+    key: str,
+    expected_size: int,
+    diagnostics: Mapping[str, Any],
+) -> np.ndarray | None:
+    if key not in payload:
+        return None
+    return _required_float_vector(payload, key, expected_size, diagnostics)
 
 
 def _labeled_float_map(

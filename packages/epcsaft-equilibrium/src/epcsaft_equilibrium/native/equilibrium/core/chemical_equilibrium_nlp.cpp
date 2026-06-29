@@ -285,6 +285,19 @@ void validate_input_shape(const ChemicalEquilibriumNlpInput& input) {
     for (double value : input.initial_amounts) {
         require_positive_finite(value, "chemical equilibrium initial amount");
     }
+    if (input.eos_activity_enabled) {
+        require_positive_finite(input.eos_activity_temperature, "chemical equilibrium eos_x_phi temperature");
+        require_positive_finite(input.eos_activity_pressure, "chemical equilibrium eos_x_phi pressure");
+        if (input.eos_activity_phase_kind != 0 && input.eos_activity_phase_kind != 1) {
+            throw ValueError("chemical equilibrium eos_x_phi phase kind must be liquid or vapor.");
+        }
+        if (!input.eos_activity_args) {
+            throw ValueError("chemical equilibrium eos_x_phi standard states require native EOS parameters.");
+        }
+        if (!input.eos_activity_args->m.empty() && input.eos_activity_args->m.size() != species_count) {
+            throw ValueError("chemical equilibrium eos_x_phi mixture component count must match species count.");
+        }
+    }
 }
 
 void validate_plan_layout(
@@ -331,6 +344,9 @@ HomogeneousChemicalEquilibriumNlp::HomogeneousChemicalEquilibriumNlp(
 }
 
 std::string HomogeneousChemicalEquilibriumNlp::name() const {
+    if (input_.eos_activity_enabled) {
+        return "reactive_speciation_eos_x_phi_gibbs_nlp";
+    }
     return "reactive_speciation_ideal_gibbs_nlp";
 }
 
@@ -465,6 +481,9 @@ std::vector<double> HomogeneousChemicalEquilibriumNlp::hessian_values(
 }
 
 std::string HomogeneousChemicalEquilibriumNlp::hessian_backend() const {
+    if (input_.eos_activity_enabled) {
+        return "cppad_phase_state_fugacity";
+    }
     return "analytic";
 }
 
@@ -480,7 +499,9 @@ NlpScaling HomogeneousChemicalEquilibriumNlp::scaling() const {
 std::map<std::string, std::string> HomogeneousChemicalEquilibriumNlp::diagnostics() const {
     RouteMetadata metadata;
     metadata.variable_model = "single_phase_species_amounts";
-    metadata.density_backend = "homogeneous_standard_state_activity";
+    metadata.density_backend = input_.eos_activity_enabled
+        ? "eos_pressure_root_activity"
+        : "homogeneous_standard_state_activity";
     metadata.residual_families = {"conserved_balance", "reaction_stationarity"};
     metadata.constraint_families = {"conserved_balance"};
     std::map<std::string, std::string> out = route_metadata_diagnostics(metadata);
@@ -489,6 +510,7 @@ std::map<std::string, std::string> HomogeneousChemicalEquilibriumNlp::diagnostic
     out["solver_coordinate_basis"] = "log_species_amounts";
     out["transform_policy"] = "positive_log_coordinates";
     out["thermodynamic_block"] = "homogeneous_chemical_equilibrium";
+    out["activity_model"] = input_.eos_activity_enabled ? "eos_x_phi" : "mole_fraction_activity";
     return out;
 }
 

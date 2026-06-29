@@ -123,6 +123,8 @@ HomogeneousChemicalEquilibriumBlockResult evaluate_homogeneous_chemical_equilibr
     out.objective_value = gibbs.value;
     out.amounts = amounts;
     out.mole_fractions = gibbs.mole_fractions;
+    out.activities = gibbs.mole_fractions;
+    out.ln_activity_coefficients.assign(amounts.size(), 0.0);
     out.standard_mu_rt = standard_mu_rt;
     out.objective_gradient = gibbs.gradient;
     out.hessian_row_major = gibbs.hessian_row_major;

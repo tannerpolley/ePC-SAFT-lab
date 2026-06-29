@@ -9,8 +9,11 @@
 #include "equilibrium/core/variable_layout.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
 
+#include <memory>
 #include <string>
 #include <vector>
+
+struct add_args;
 
 namespace epcsaft::native::equilibrium_nlp {
 
@@ -24,6 +27,12 @@ struct ChemicalEquilibriumNlpInput {
     std::vector<double> log_equilibrium_constants;
     double log_equilibrium_constants_lambda = 1.0;
     std::vector<double> initial_amounts;
+    bool eos_activity_enabled = false;
+    std::shared_ptr<add_args> eos_activity_args;
+    double eos_activity_temperature = 0.0;
+    double eos_activity_pressure = 0.0;
+    int eos_activity_phase_kind = -1;
+    std::string eos_activity_reference_phase;
 };
 
 struct ChemicalEquilibriumNlpResult {

@@ -8,7 +8,10 @@ from pathlib import Path
 import pytest
 import yaml
 from epcsaft import InputError
+from epcsaft_equilibrium import reactive_speciation
 from epcsaft_equilibrium.chemical_equilibrium import (
+    ChemicalReaction,
+    ChemicalSpecies,
     EquilibriumConstantRecord,
     StandardStateRecord,
     build_standard_state_registry,
@@ -142,6 +145,58 @@ def test_registry_rejects_missing_temperature_units_or_convention_metadata() -> 
             standard_state=state,
             source="contract fixture",
             source_constant_label="bad",
+        )
+
+
+def test_reactive_speciation_rejects_mixed_activity_contexts_before_native() -> None:
+    ideal = StandardStateRecord(
+        label="ideal_mole_fraction",
+        activity_convention="mole_fraction_activity",
+        temperature_K=298.15,
+        pressure_Pa=101325.0,
+    )
+    eos = StandardStateRecord(
+        label="liquid_eos_x_phi",
+        activity_convention="eos_x_phi",
+        temperature_K=298.15,
+        pressure_Pa=101325.0,
+        eos_reference_phase="liquid",
+    )
+    constants = [
+        EquilibriumConstantRecord(
+            reaction_label="a_to_b",
+            value=math.log(2.0),
+            form="ln_K",
+            units="dimensionless",
+            standard_state=ideal,
+            source="contract fixture",
+            source_constant_label="ln_K_ab",
+        ),
+        EquilibriumConstantRecord(
+            reaction_label="b_to_c",
+            value=math.log(3.0),
+            form="ln_K",
+            units="dimensionless",
+            standard_state=eos,
+            source="contract fixture",
+            source_constant_label="ln_K_bc",
+        ),
+    ]
+
+    with pytest.raises(InputError, match="single activity convention"):
+        reactive_speciation(
+            species=[
+                ChemicalSpecies("A", {"X": 1.0}),
+                ChemicalSpecies("B", {"X": 1.0}),
+                ChemicalSpecies("C", {"X": 1.0}),
+            ],
+            reactions=[
+                ChemicalReaction("a_to_b", {"A": -1.0, "B": 1.0}),
+                ChemicalReaction("b_to_c", {"B": -1.0, "C": 1.0}),
+            ],
+            feed_amounts={"A": 1.0, "B": 0.0, "C": 0.0},
+            equilibrium_constants=constants,
+            initial_amounts=[0.7, 0.2, 0.1],
         )
 
 

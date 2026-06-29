@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 
+import epcsaft
 import epcsaft_equilibrium
 import pytest
 from epcsaft import InputError, SolutionError
@@ -38,6 +39,38 @@ def _constant() -> EquilibriumConstantRecord:
         standard_state=standard_state,
         source="API contract fixture",
         source_constant_label="ln_K",
+    )
+
+
+def _eos_constant() -> EquilibriumConstantRecord:
+    standard_state = StandardStateRecord(
+        label="liquid_eos_x_phi_standard_state",
+        activity_convention="eos_x_phi",
+        temperature_K=233.15,
+        pressure_Pa=1_276_369.4735856401,
+        eos_reference_phase="liquid",
+    )
+    return EquilibriumConstantRecord(
+        reaction_label="a_to_b",
+        value=math.log(3.0),
+        form="ln_K",
+        units="dimensionless",
+        standard_state=standard_state,
+        source="API EOS activity contract fixture",
+        source_constant_label="ln_K",
+    )
+
+
+def _two_component_parameter_set() -> epcsaft.ParameterSet:
+    return epcsaft.ParameterSet.from_dict(
+        {
+            "m": [1.0, 1.6069],
+            "s": [3.7039, 3.5206],
+            "e": [150.03, 191.42],
+            "MW": [16.043e-3, 30.070e-3],
+            "k_ij": [[0.0, 3.0e-4], [3.0e-4, 0.0]],
+        },
+        species=("A", "B"),
     )
 
 
@@ -403,7 +436,7 @@ def test_reactive_speciation_rejects_non_mole_fraction_activity_until_supported(
         standard_fugacity_Pa=101325.0,
     )
 
-    with pytest.raises(InputError, match="mole_fraction_activity"):
+    with pytest.raises(InputError, match="unsupported activity convention"):
         epcsaft_equilibrium.reactive_speciation(
             species=_species(),
             reactions=_reaction(),
@@ -421,6 +454,53 @@ def test_reactive_speciation_rejects_non_mole_fraction_activity_until_supported(
             ],
             initial_amounts=[0.5, 0.5],
         )
+
+
+def test_reactive_speciation_rejects_eos_x_phi_without_eos_mixture() -> None:
+    with pytest.raises(InputError, match="eos_mixture"):
+        epcsaft_equilibrium.reactive_speciation(
+            species=_species(),
+            reactions=_reaction(),
+            feed_amounts={"A": 1.0, "B": 0.0},
+            equilibrium_constants=[_eos_constant()],
+            initial_amounts=[0.5, 0.5],
+        )
+
+
+def test_reactive_speciation_passes_eos_context_to_native(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_solve(compiled, standard_states, **kwargs):
+        captured["species"] = compiled.species_labels
+        captured["standard_states"] = standard_states.reaction_labels
+        captured["eos_mixture"] = kwargs["eos_mixture"]
+        payload = _native_payload()
+        payload["activity_model"] = "eos_x_phi"
+        payload["activity_derivative_backend"] = "cppad_implicit"
+        payload["ln_activity_coefficients"] = [0.01, -0.02]
+        payload["activities"] = [0.2525125417714178, 0.7351490043780079]
+        payload["solver_diagnostics"]["hessian_backend"] = "cppad_phase_state_fugacity"
+        return payload
+
+    monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
+    mixture = epcsaft.Mixture(_two_component_parameter_set())
+
+    result = epcsaft_equilibrium.reactive_speciation(
+        species=_species(),
+        reactions=_reaction(),
+        feed_amounts={"A": 1.0, "B": 0.0},
+        equilibrium_constants=[_eos_constant()],
+        initial_amounts=[0.5, 0.5],
+        eos_mixture=mixture,
+    )
+
+    assert captured["eos_mixture"] is mixture.native
+    assert result.activities == pytest.approx(
+        {"A": 0.2525125417714178, "B": 0.7351490043780079}
+    )
+    assert result.diagnostics["activity_model"] == "eos_x_phi"
+    assert result.diagnostics["activity_derivative_backend"] == "cppad_implicit"
+    assert result.diagnostics["hessian_backend"] == "cppad_phase_state_fugacity"
 
 
 def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_fixture() -> None:

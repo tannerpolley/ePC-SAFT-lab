@@ -111,6 +111,12 @@ add_args native_args_from_mixture_object(const py::object& mixture, const std::s
     if (py::hasattr(mixture, "_native_args_payload")) {
         return native_args_from_payload(py::cast<py::dict>(mixture.attr("_native_args_payload")()));
     }
+    if (py::hasattr(mixture, "_native")) {
+        const py::object local_native = mixture.attr("_native");
+        if (!local_native.is_none()) {
+            return native_args_from_mixture_object(local_native, context);
+        }
+    }
     try {
         const auto local = mixture.cast<std::shared_ptr<ePCSAFTMixtureNative>>();
         if (local) {
@@ -882,15 +888,42 @@ std::vector<double> flatten_row_major_matrix(
     return out;
 }
 
-std::vector<double> log_equilibrium_constants_from_registry(
+int phase_kind_from_standard_state_label(const std::string& label) {
+    if (label == "liquid" || label == "liq") {
+        return 0;
+    }
+    if (label == "vapor" || label == "vap" || label == "gas") {
+        return 1;
+    }
+    throw ValueError("chemical equilibrium eos_x_phi reference phase must be liquid or vapor.");
+}
+
+bool same_standard_state_scalar(double left, double right) {
+    const double scale = std::max({1.0, std::abs(left), std::abs(right)});
+    return std::abs(left - right) <= 1.0e-12 * scale;
+}
+
+struct ChemicalEquilibriumStandardStateContext {
+    std::vector<double> log_equilibrium_constants;
+    bool eos_activity_enabled = false;
+    double eos_temperature = 0.0;
+    double eos_pressure = 0.0;
+    int eos_phase_kind = -1;
+    std::string eos_reference_phase;
+};
+
+ChemicalEquilibriumStandardStateContext chemical_equilibrium_standard_state_context_from_registry(
     const std::vector<std::string>& reaction_labels,
     const py::dict& standard_state_payload
 ) {
     if (!standard_state_payload.contains("records")) {
         throw ValueError("chemical equilibrium standard-state payload missing field: records");
     }
-    std::vector<double> out(reaction_labels.size(), 0.0);
+    ChemicalEquilibriumStandardStateContext out;
+    out.log_equilibrium_constants.assign(reaction_labels.size(), 0.0);
     std::vector<bool> assigned(reaction_labels.size(), false);
+    std::string activity_convention;
+    bool eos_context_assigned = false;
     const py::sequence records = py::cast<py::sequence>(standard_state_payload["records"]);
     for (const py::handle record_handle : records) {
         const py::dict record = py::cast<py::dict>(record_handle);
@@ -915,8 +948,61 @@ std::vector<double> log_equilibrium_constants_from_registry(
         if (!std::isfinite(ln_k)) {
             throw ValueError("chemical equilibrium log equilibrium constants must be finite.");
         }
-        out[index] = ln_k;
+        out.log_equilibrium_constants[index] = ln_k;
         assigned[index] = true;
+
+        const py::dict standard_state = required_payload_field<py::dict>(
+            record,
+            "standard_state",
+            "chemical equilibrium standard-state record"
+        );
+        const std::string convention = required_payload_field<std::string>(
+            standard_state,
+            "activity_convention",
+            "chemical equilibrium standard-state"
+        );
+        if (activity_convention.empty()) {
+            activity_convention = convention;
+        } else if (activity_convention != convention) {
+            throw ValueError("chemical equilibrium standard-state records require a single activity convention.");
+        }
+        if (convention == "mole_fraction_activity") {
+            continue;
+        }
+        if (convention != "eos_x_phi") {
+            throw ValueError(
+                "chemical equilibrium native CE supports mole_fraction_activity or eos_x_phi standard states."
+            );
+        }
+        const double temperature = required_payload_field<double>(
+            standard_state,
+            "temperature_K",
+            "chemical equilibrium eos_x_phi standard-state"
+        );
+        const double pressure = required_payload_field<double>(
+            standard_state,
+            "pressure_Pa",
+            "chemical equilibrium eos_x_phi standard-state"
+        );
+        const std::string reference_phase = required_payload_field<std::string>(
+            standard_state,
+            "eos_reference_phase",
+            "chemical equilibrium eos_x_phi standard-state"
+        );
+        if (!eos_context_assigned) {
+            out.eos_activity_enabled = true;
+            out.eos_temperature = temperature;
+            out.eos_pressure = pressure;
+            out.eos_reference_phase = reference_phase;
+            out.eos_phase_kind = phase_kind_from_standard_state_label(reference_phase);
+            eos_context_assigned = true;
+        } else if (
+            !same_standard_state_scalar(out.eos_temperature, temperature)
+            || !same_standard_state_scalar(out.eos_pressure, pressure)
+            || out.eos_reference_phase != reference_phase
+        ) {
+            throw ValueError("chemical equilibrium eos_x_phi standard states require one shared EOS context.");
+        }
     }
     for (std::size_t index = 0; index < assigned.size(); ++index) {
         if (!assigned[index]) {
@@ -931,7 +1017,8 @@ std::vector<double> log_equilibrium_constants_from_registry(
 epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput chemical_equilibrium_input_from_payloads(
     const py::dict& schema_payload,
     const py::dict& standard_state_payload,
-    const std::vector<double>& initial_amounts
+    const std::vector<double>& initial_amounts,
+    const py::object& eos_mixture
 ) {
     epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput out;
     out.species_labels = required_payload_field<std::vector<std::string>>(
@@ -968,11 +1055,26 @@ epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput chemical_equilibri
         "conservation_totals",
         "chemical equilibrium schema payload"
     );
-    out.log_equilibrium_constants = log_equilibrium_constants_from_registry(
+    const ChemicalEquilibriumStandardStateContext standard_state_context =
+        chemical_equilibrium_standard_state_context_from_registry(
         out.reaction_labels,
         standard_state_payload
     );
+    out.log_equilibrium_constants = standard_state_context.log_equilibrium_constants;
     out.initial_amounts = initial_amounts;
+    if (standard_state_context.eos_activity_enabled) {
+        out.eos_activity_enabled = true;
+        out.eos_activity_temperature = standard_state_context.eos_temperature;
+        out.eos_activity_pressure = standard_state_context.eos_pressure;
+        out.eos_activity_phase_kind = standard_state_context.eos_phase_kind;
+        out.eos_activity_reference_phase = standard_state_context.eos_reference_phase;
+        out.eos_activity_args = std::make_shared<add_args>(native_args_from_mixture_object(
+            eos_mixture,
+            "chemical equilibrium eos_x_phi standard states"
+        ));
+    } else if (!eos_mixture.is_none()) {
+        throw ValueError("chemical equilibrium eos_mixture is only valid with eos_x_phi standard states.");
+    }
     return out;
 }
 
@@ -1106,6 +1208,17 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     out["solver_diagnostics"] = ce_solver_diagnostics_to_dict(result.solve);
     out["amounts"] = result.postsolve.amounts;
     out["mole_fractions"] = result.postsolve.mole_fractions;
+    out["activities"] = result.postsolve.activities;
+    out["ln_activity_coefficients"] = result.postsolve.ln_activity_coefficients;
+    out["activity_model"] = result.postsolve.activity_model;
+    out["activity_derivative_backend"] = result.postsolve.activity_derivative_backend;
+    py::dict eos_activity_context;
+    eos_activity_context["temperature_K"] = result.postsolve.eos_temperature;
+    eos_activity_context["pressure_Pa"] = result.postsolve.eos_pressure;
+    eos_activity_context["density_mol_m3"] = result.postsolve.eos_density;
+    eos_activity_context["reference_phase"] = result.postsolve.eos_reference_phase;
+    eos_activity_context["phase_kind"] = result.postsolve.eos_phase_kind;
+    out["eos_activity_context"] = eos_activity_context;
     out["standard_mu_rt"] = result.postsolve.standard_mu_rt;
     out["objective_value"] = result.postsolve.objective_value;
     out["balance_residuals"] = result.postsolve.balance_residuals;
@@ -3111,6 +3224,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         double balance_tolerance,
         double reaction_stationarity_tolerance,
         const py::object& continuation_state,
+        const py::object& eos_mixture,
         const py::kwargs& kwargs
     ) {
         epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
@@ -3127,7 +3241,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const auto input = chemical_equilibrium_input_from_payloads(
             schema_payload,
             standard_state_payload,
-            initial_amounts
+            initial_amounts,
+            eos_mixture
         );
         const auto plan = epcsaft::native::equilibrium::build_reactive_speciation_activation_plan(
             static_cast<int>(input.species_labels.size())
@@ -3161,7 +3276,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("iteration_history_limit") = 20,
         py::arg("balance_tolerance") = 1.0e-9,
         py::arg("reaction_stationarity_tolerance") = 1.0e-8,
-        py::arg("continuation_state") = py::none()
+        py::arg("continuation_state") = py::none(),
+        py::arg("eos_mixture") = py::none()
     );
     m.def("_native_eos_phase_block", [](
         const py::object& mixture,
