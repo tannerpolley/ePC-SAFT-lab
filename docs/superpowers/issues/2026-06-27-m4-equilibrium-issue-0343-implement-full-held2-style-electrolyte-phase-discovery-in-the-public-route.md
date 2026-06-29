@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked_by_350"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md"
 source_plan: "docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md"
@@ -25,7 +25,7 @@ last_synced: "2026-06-29"
 **Source Spec:** docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
 **Source Plan:** docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
 **Classification:** HITL
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Complete full HELD2-style electrolyte phase discovery in the public route after child slices close.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first

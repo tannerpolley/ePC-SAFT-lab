@@ -96,7 +96,7 @@ part of the HELD2 phase-discovery cutover.
 | --- | --- | --- | --- | --- |
 | [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320_343` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves Perdomo/Figiel HELD2 validation and #343 closes the full HELD2-style public-route discovery chain. |
 | [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active #191 validation blocker for Perdomo/Figiel HELD2 electrolyte flash evidence through the public package route. |
-| [#343](../../issues/2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) | `electrolyte` | `Ipopt` | `blocked_by_350` | Full HELD2-style public-route phase-discovery adoption tracker. #344 through #349 have retained proof; #350 is the final registry/capability admission slice. |
+| [#343](../../issues/2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) | `ready` | `Ipopt` | `blocked_by_350` | Full HELD2-style public-route phase-discovery adoption tracker. #344 through #349 have retained proof; #350 is the final registry/capability admission slice. |
 | [#350](../../issues/2026-06-27-m4-equilibrium-issue-0350-admit-held2-public-route-capability-evidence-after-full-validation.md) | `electrolyte` | `Ipopt` | `ready` | Admits registry and docs capability evidence only after full validation. |
 
 ### CE / CPE Open Issues
