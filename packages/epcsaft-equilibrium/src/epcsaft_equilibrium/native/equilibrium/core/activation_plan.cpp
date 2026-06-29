@@ -221,6 +221,25 @@ ActivationPlan build_neutral_multiphase_nonassoc_activation_plan(
     );
 }
 
+ActivationPlan build_reactive_speciation_activation_plan(int species_count) {
+    if (species_count <= 0) {
+        throw ValueError("activation-plan-ineligible: reactive_speciation requires at least one species.");
+    }
+    const ProblemFamilyActivation& activation = activation_row_for_key("reactive_speciation");
+    ActivationPlan out;
+    out.family_key = activation.key;
+    out.route = "reactive_speciation";
+    out.phase_keys = {"homogeneous"};
+    out.phase_kinds = {"homogeneous"};
+    out.variable_blocks = {"species_amounts"};
+    out.constraint_blocks = activation.constraint_families;
+    out.residual_blocks = activation.residual_families;
+    out.postsolve_blocks = {"conserved_balance", "reaction_stationarity"};
+    out.variable_model = activation.variable_model;
+    out.density_backend = activation.density_backend;
+    return out;
+}
+
 ActivationPlan build_activation_plan(
     const add_args& args,
     const SelectorRouteRequest& raw_request

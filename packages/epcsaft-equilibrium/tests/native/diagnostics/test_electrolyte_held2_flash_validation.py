@@ -85,7 +85,9 @@ def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase
     assert solver["route_accepted"] is False
     assert discovery["tpd_candidate_count"] >= 30
     assert any(candidate["phase_kind"] == 1 for candidate in trace_ion_candidates)
-    assert all(candidate["tpd"] > 0.0 for candidate in trace_ion_candidates)
+    trace_ion_tpd_values = [candidate["tpd"] for candidate in trace_ion_candidates]
+    assert any(value < 0.0 for value in trace_ion_tpd_values)
+    assert any(value > 0.0 for value in trace_ion_tpd_values)
 
     assert route["initial_point_strategy"] == "electrolyte_held2_candidate_set_replay"
     assert route["problem_name"] == "electrolyte_stage_iii_projected_residual_refinement"

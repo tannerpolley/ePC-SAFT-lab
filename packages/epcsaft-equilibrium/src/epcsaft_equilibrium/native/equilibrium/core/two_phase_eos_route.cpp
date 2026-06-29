@@ -690,6 +690,153 @@ void append_trace_ion_electrolyte_trials(
     }
 }
 
+std::vector<int> charged_species_indices(const std::vector<double>& charges) {
+    std::vector<int> indices;
+    for (std::size_t index = 0; index < charges.size(); ++index) {
+        if (std::abs(charges[index]) > 0.0) {
+            indices.push_back(static_cast<int>(index));
+        }
+    }
+    return indices;
+}
+
+int select_electroneutral_closure_species(const std::vector<double>& composition, const std::vector<double>& charges) {
+    require_size(charges, composition.size(), "Reduced-electroneutral closure charge");
+    int best_index = -1;
+    double best_value = -std::numeric_limits<double>::infinity();
+    for (std::size_t index = 0; index < composition.size(); ++index) {
+        if (std::abs(charges[index]) > 0.0) {
+            continue;
+        }
+        const double value = composition[index];
+        if (std::isfinite(value) && value > best_value) {
+            best_value = value;
+            best_index = static_cast<int>(index);
+        }
+    }
+    if (best_index < 0) {
+        throw ValueError("Reduced-electroneutral TPD requires at least one neutral closure species.");
+    }
+    return best_index;
+}
+
+int select_eliminated_charged_species(const std::vector<double>& composition, const std::vector<double>& charges) {
+    require_size(charges, composition.size(), "Reduced-electroneutral eliminated charge");
+    int best_index = -1;
+    double best_value = -std::numeric_limits<double>::infinity();
+    for (std::size_t index = 0; index < charges.size(); ++index) {
+        if (std::abs(charges[index]) <= 0.0) {
+            continue;
+        }
+        const double value = composition[index];
+        if (std::isfinite(value) && value > best_value) {
+            best_value = value;
+            best_index = static_cast<int>(index);
+        }
+    }
+    if (best_index < 0) {
+        throw ValueError("Reduced-electroneutral TPD requires at least one charged species.");
+    }
+    return best_index;
+}
+
+std::vector<int> reduced_electroneutral_coordinate_indices(
+    const std::vector<double>& charges,
+    int closure_species,
+    int eliminated_charged_species
+) {
+    std::vector<int> indices;
+    for (std::size_t index = 0; index < charges.size(); ++index) {
+        const int species = static_cast<int>(index);
+        if (species == closure_species || species == eliminated_charged_species) {
+            continue;
+        }
+        indices.push_back(species);
+    }
+    return indices;
+}
+
+std::vector<double> reduced_coordinates_from_composition(
+    const std::vector<double>& composition,
+    const std::vector<int>& coordinate_indices
+) {
+    std::vector<double> coordinates;
+    coordinates.reserve(coordinate_indices.size());
+    for (int species : coordinate_indices) {
+        const std::size_t index = static_cast<std::size_t>(species);
+        if (index >= composition.size()) {
+            throw ValueError("Reduced-electroneutral coordinate index exceeds composition dimension.");
+        }
+        coordinates.push_back(composition[index]);
+    }
+    return coordinates;
+}
+
+std::vector<double> lift_reduced_electroneutral_coordinates(
+    const std::vector<double>& coordinates,
+    const std::vector<double>& charges,
+    int closure_species,
+    int eliminated_charged_species,
+    const std::vector<int>& coordinate_indices,
+    double charge_tolerance,
+    const std::string& label
+) {
+    if (coordinate_indices.size() != coordinates.size()) {
+        throw ValueError(label + " reduced coordinate index size did not match coordinate size.");
+    }
+    const std::size_t species_count = charges.size();
+    const std::size_t closure_index = static_cast<std::size_t>(closure_species);
+    const std::size_t eliminated_index = static_cast<std::size_t>(eliminated_charged_species);
+    if (closure_index >= species_count || eliminated_index >= species_count) {
+        throw ValueError(label + " reduced-electroneutral basis index exceeds species count.");
+    }
+    if (std::abs(charges[eliminated_index]) <= 0.0) {
+        throw ValueError(label + " eliminated species must be charged.");
+    }
+    if (std::abs(charges[closure_index]) > 0.0) {
+        throw ValueError(label + " closure species must be neutral.");
+    }
+
+    std::vector<double> composition(species_count, 0.0);
+    double coordinate_sum = 0.0;
+    double charge_sum = 0.0;
+    for (std::size_t coord = 0; coord < coordinates.size(); ++coord) {
+        const double value = coordinates[coord];
+        if (!std::isfinite(value) || value <= kCompositionFloor) {
+            throw ValueError(label + " reduced coordinate left the positive domain.");
+        }
+        const std::size_t species = static_cast<std::size_t>(coordinate_indices[coord]);
+        if (species >= species_count || species == closure_index || species == eliminated_index) {
+            throw ValueError(label + " reduced coordinate basis is inconsistent.");
+        }
+        composition[species] = value;
+        coordinate_sum += value;
+        charge_sum += charges[species] * value;
+    }
+
+    composition[eliminated_index] = -charge_sum / charges[eliminated_index];
+    if (!std::isfinite(composition[eliminated_index]) || composition[eliminated_index] <= kCompositionFloor) {
+        throw ValueError(label + " eliminated charged species left the positive domain.");
+    }
+    composition[closure_index] = 1.0 - coordinate_sum - composition[eliminated_index];
+    if (!std::isfinite(composition[closure_index]) || composition[closure_index] <= kCompositionFloor) {
+        throw ValueError(label + " neutral closure species left the positive domain.");
+    }
+
+    double sum = 0.0;
+    for (double value : composition) {
+        if (!std::isfinite(value) || value <= kCompositionFloor) {
+            throw ValueError(label + " lifted composition left the positive domain.");
+        }
+        sum += value;
+    }
+    if (std::abs(sum - 1.0) > 1.0e-10) {
+        throw ValueError(label + " lifted composition failed normalization.");
+    }
+    require_charge_neutral_composition(composition, charges, label + " lifted composition", charge_tolerance);
+    return composition;
+}
+
 std::vector<int> indices_sorted_by_feed(
     const std::vector<int>& indices,
     const std::vector<double>& feed
@@ -1032,21 +1179,50 @@ ElectrolyteHeld2PhaseDiscoveryResult build_electrolyte_held2_diagnostic(
     return out;
 }
 
-std::vector<double> pair_residuals_from_reference_and_trial(
+std::vector<double> reduced_ln_fugacity_values(
+    const add_args& args,
+    const EosPhaseBlockResult& block,
+    std::size_t species_count
+);
+
+std::vector<double> pair_residuals_from_projected_reduced_ln_fugacity(
+    const add_args& args,
     const std::vector<std::vector<double>>& counterion_matrix,
     const std::vector<int>& charged_indices,
+    const std::vector<double>& charges,
     const EosPhaseBlockResult& reference,
     const EosPhaseBlockResult& trial
 ) {
+    const std::size_t species_count = reference.composition.size();
+    require_size(trial.composition, species_count, "Electrolyte projected mean-ionic trial composition");
+    require_size(charges, species_count, "Electrolyte projected mean-ionic charge");
+    const std::vector<double> reference_values = reduced_ln_fugacity_values(args, reference, species_count);
+    const std::vector<double> trial_values = reduced_ln_fugacity_values(args, trial, species_count);
+
+    double charge_square_norm = 0.0;
+    double charge_weighted_difference = 0.0;
+    std::vector<double> projected_difference(species_count, 0.0);
+    for (std::size_t species = 0; species < species_count; ++species) {
+        projected_difference[species] = trial_values[species] - reference_values[species];
+        charge_square_norm += charges[species] * charges[species];
+        charge_weighted_difference += charges[species] * projected_difference[species];
+    }
+    if (charge_square_norm <= 0.0) {
+        throw ValueError("Electrolyte projected mean-ionic residuals require at least one charged species.");
+    }
+    const double charge_shift = -charge_weighted_difference / charge_square_norm;
+    for (std::size_t species = 0; species < species_count; ++species) {
+        projected_difference[species] += charge_shift * charges[species];
+    }
+
     std::vector<double> residuals;
     residuals.reserve(counterion_matrix.size());
     for (const std::vector<double>& row : counterion_matrix) {
+        require_size(row, charged_indices.size(), "Electrolyte projected mean-ionic counterion row");
         double residual = 0.0;
         for (std::size_t charged = 0; charged < charged_indices.size(); ++charged) {
             const int global_index = charged_indices[charged];
-            residual += row[charged]
-                * (trial.gradient[static_cast<std::size_t>(global_index)]
-                   - reference.gradient[static_cast<std::size_t>(global_index)]);
+            residual += row[charged] * projected_difference[static_cast<std::size_t>(global_index)];
         }
         residuals.push_back(residual);
     }
@@ -1351,6 +1527,135 @@ NeutralTpdCandidate refine_neutral_tpd_candidate(
     return best;
 }
 
+NeutralTpdCandidate refine_electrolyte_reduced_tpd_candidate(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const EosPhaseBlockResult& reference,
+    const std::vector<double>& start_composition,
+    const std::vector<double>& charges,
+    int phase_kind,
+    const std::string& source,
+    const std::string& start_source,
+    double charge_tolerance
+) {
+    const std::vector<double> normalized =
+        normalized_trial_composition(start_composition, source + " start");
+    require_charge_neutral_composition(normalized, charges, source + " start", charge_tolerance);
+    const int closure_species = select_electroneutral_closure_species(normalized, charges);
+    const int eliminated_charged_species = select_eliminated_charged_species(normalized, charges);
+    const std::vector<int> coordinate_indices =
+        reduced_electroneutral_coordinate_indices(charges, closure_species, eliminated_charged_species);
+    std::vector<double> current =
+        reduced_coordinates_from_composition(normalized, coordinate_indices);
+
+    NeutralTpdCandidate best = evaluate_electrolyte_tpd_candidate(
+        args,
+        temperature,
+        target_pressure,
+        reference,
+        normalized,
+        charges,
+        phase_kind,
+        source,
+        charge_tolerance
+    );
+    best.tpd_backend = "continuous_reduced_electroneutral_coordinate_search";
+    best.tpd_status = "running";
+    best.start_source = start_source;
+
+    double step = 2.5e-1;
+    int iteration = 0;
+    constexpr int kMaxIterations = 48;
+    constexpr double kStepFloor = 1.0e-8;
+    trace_continuous_tpd_iteration(
+        "start",
+        source,
+        start_source,
+        phase_kind,
+        iteration,
+        step,
+        false,
+        best.tpd,
+        normalized
+    );
+    while (iteration < kMaxIterations && step > kStepFloor) {
+        bool improved = false;
+        for (std::size_t coord = 0; coord < current.size(); ++coord) {
+            for (double direction : {-1.0, 1.0}) {
+                std::vector<double> trial_coordinates = current;
+                trial_coordinates[coord] += direction * step;
+                try {
+                    const std::vector<double> trial_composition =
+                        lift_reduced_electroneutral_coordinates(
+                            trial_coordinates,
+                            charges,
+                            closure_species,
+                            eliminated_charged_species,
+                            coordinate_indices,
+                            charge_tolerance,
+                            source + " trial"
+                        );
+                    NeutralTpdCandidate trial = evaluate_electrolyte_tpd_candidate(
+                        args,
+                        temperature,
+                        target_pressure,
+                        reference,
+                        trial_composition,
+                        charges,
+                        phase_kind,
+                        source,
+                        charge_tolerance
+                    );
+                    trial.tpd_backend = "continuous_reduced_electroneutral_coordinate_search";
+                    trial.tpd_status = "running";
+                    trial.start_source = start_source;
+                    trial.tpd_iteration_count = iteration + 1;
+                    trial.tpd_step_final = step;
+                    if (trial.tpd + 1.0e-12 < best.tpd) {
+                        best = trial;
+                        current = reduced_coordinates_from_composition(trial.composition, coordinate_indices);
+                        improved = true;
+                    }
+                } catch (const std::exception&) {
+                    continue;
+                }
+            }
+        }
+        if (!improved) {
+            step *= 0.5;
+        }
+        const std::vector<double> lifted_current = lift_reduced_electroneutral_coordinates(
+            current,
+            charges,
+            closure_species,
+            eliminated_charged_species,
+            coordinate_indices,
+            charge_tolerance,
+            source + " current"
+        );
+        trace_continuous_tpd_iteration(
+            "iteration",
+            source,
+            start_source,
+            phase_kind,
+            iteration + 1,
+            step,
+            improved,
+            best.tpd,
+            lifted_current
+        );
+        ++iteration;
+    }
+    best.tpd_backend = "continuous_reduced_electroneutral_coordinate_search";
+    best.tpd_status = step <= kStepFloor ? "converged" : "iteration_limit";
+    best.start_source = start_source;
+    best.tpd_iteration_count = iteration;
+    best.tpd_step_final = step;
+    trace_continuous_tpd_finish(source, start_source, phase_kind, best);
+    return best;
+}
+
 void record_continuous_tpd_candidate(
     NeutralPhaseDiscoveryResult* discovery,
     const NeutralTpdCandidate& candidate
@@ -1358,6 +1663,7 @@ void record_continuous_tpd_candidate(
     if (discovery == nullptr || !candidate.valid) {
         return;
     }
+    discovery->continuous_tpd_start_records.push_back(candidate);
     ++discovery->continuous_tpd_solve_count;
     if (candidate.tpd_status == "converged") {
         ++discovery->continuous_tpd_converged_count;
@@ -1458,6 +1764,105 @@ void append_tpd_candidates_for_reference_block(
                 append_unique_tpd_candidate(candidates, refined);
             } catch (const std::exception&) {
                 continue;
+            }
+        }
+    }
+}
+
+void append_electrolyte_reduced_tpd_candidates_for_reference_block(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const EosPhaseBlockResult& reference,
+    const std::vector<double>& charges,
+    const std::vector<int>& trial_phase_kinds,
+    const std::string& source_prefix,
+    std::vector<NeutralTpdCandidate>& candidates,
+    int& valid_candidate_count,
+    NeutralPhaseDiscoveryResult* discovery,
+    double charge_tolerance
+) {
+    const std::vector<std::vector<double>> trial_compositions =
+        electrolyte_tpd_trial_compositions(reference.composition, charges, charge_tolerance);
+    for (std::size_t phase_role = 0; phase_role < trial_phase_kinds.size(); ++phase_role) {
+        const int phase_kind = trial_phase_kinds[phase_role];
+        std::size_t continuous_start_count = 0;
+        for (std::size_t index = 0; index < trial_compositions.size(); ++index) {
+            const std::string deterministic_source = source_prefix
+                + "_phase_role_" + std::to_string(phase_role)
+                + "_trial_" + std::to_string(index);
+            try {
+                NeutralTpdCandidate candidate = evaluate_electrolyte_tpd_candidate(
+                    args,
+                    temperature,
+                    target_pressure,
+                    reference,
+                    trial_compositions[index],
+                    charges,
+                    phase_kind,
+                    deterministic_source,
+                    charge_tolerance
+                );
+                candidate.tpd_backend = "charge_neutral_deterministic_seed_support";
+                candidate.tpd_status = "seed_candidate_generated";
+                candidate.start_source = deterministic_source;
+                if (discovery != nullptr) {
+                    ++discovery->deterministic_candidate_count;
+                }
+                ++valid_candidate_count;
+                append_unique_tpd_candidate(candidates, candidate);
+            } catch (const std::exception&) {
+                continue;
+            }
+            if (continuous_start_count >= kContinuousTpdMaxStartsPerPhaseKind) {
+                continue;
+            }
+            ++continuous_start_count;
+            if (discovery != nullptr) {
+                ++discovery->continuous_tpd_start_count;
+            }
+            const std::string continuous_source =
+                source_prefix
+                + "_phase_role_" + std::to_string(phase_role)
+                + "_continuous_reduced_tpd_" + std::to_string(index);
+            try {
+                NeutralTpdCandidate refined = refine_electrolyte_reduced_tpd_candidate(
+                    args,
+                    temperature,
+                    target_pressure,
+                    reference,
+                    trial_compositions[index],
+                    charges,
+                    phase_kind,
+                    continuous_source,
+                    deterministic_source,
+                    charge_tolerance
+                );
+                ++valid_candidate_count;
+                record_continuous_tpd_candidate(discovery, refined);
+                append_unique_tpd_candidate(candidates, refined);
+            } catch (const std::exception&) {
+                continue;
+            }
+        }
+    }
+}
+
+void synchronize_continuous_tpd_start_records(
+    NeutralPhaseDiscoveryResult& discovery,
+    const std::string& rejected_reason
+) {
+    for (NeutralTpdCandidate& record : discovery.continuous_tpd_start_records) {
+        record.selected = false;
+        record.feasibility_status = rejected_reason;
+        for (const NeutralTpdCandidate& candidate : discovery.candidates) {
+            if (!candidate.selected) {
+                continue;
+            }
+            if (duplicate_tpd_candidate(record, candidate)) {
+                record.selected = true;
+                record.feasibility_status = "selected_mass_balance_feasible";
+                break;
             }
         }
     }
@@ -1862,7 +2267,10 @@ void evaluate_held_stage_ii_candidate_bounds(
         discovery.held_stage_ii_stopping_reason = "not_requested";
         return;
     }
-    if (discovery.continuous_tpd_status != "converged") {
+    const bool continuous_tpd_complete =
+        discovery.continuous_tpd_status == "converged"
+        || discovery.continuous_tpd_status == "complete_with_rejected_starts";
+    if (!continuous_tpd_complete) {
         discovery.held_stage_ii_status = "incomplete_stage_i_evidence";
         discovery.held_stage_ii_candidate_bound_audit_status = "incomplete_stage_i_evidence";
         discovery.held_stage_ii_dual_loop_status = "incomplete_stage_i_evidence";
@@ -5155,6 +5563,265 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
     return out;
 }
 
+NeutralPhaseDiscoveryResult evaluate_electrolyte_continuous_tpd_minimizer(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+) {
+    require_positive_finite(charge_tolerance, "Electrolyte continuous TPD charge tolerance");
+    require_positive_finite(tpd_tolerance, "Electrolyte continuous TPD tolerance");
+    require_positive_finite(
+        candidate_mass_balance_tolerance,
+        "Electrolyte continuous TPD candidate mass-balance tolerance"
+    );
+    const std::vector<double> feed =
+        normalized_trial_composition(feed_composition, "Electrolyte continuous TPD feed composition");
+    require_size(charges, feed.size(), "Electrolyte continuous TPD charge");
+    require_charge_neutral_composition(feed, charges, "Electrolyte continuous TPD feed", charge_tolerance);
+    if (phase_kinds.empty()) {
+        throw ValueError("Electrolyte continuous TPD minimizer requires at least one phase kind.");
+    }
+    if (charged_species_indices(charges).size() < 2) {
+        throw ValueError("Electrolyte continuous TPD minimizer requires at least two charged species.");
+    }
+
+    std::vector<int> requested_phase_kinds;
+    std::vector<int> reference_phase_kinds;
+    for (int phase_kind : phase_kinds) {
+        if (phase_kind != 0 && phase_kind != 1) {
+            throw ValueError("Electrolyte continuous TPD phase kind must be 0/liquid or 1/vapor.");
+        }
+        requested_phase_kinds.push_back(phase_kind);
+        if (std::find(reference_phase_kinds.begin(), reference_phase_kinds.end(), phase_kind)
+            == reference_phase_kinds.end()) {
+            reference_phase_kinds.push_back(phase_kind);
+        }
+    }
+
+    NeutralPhaseDiscoveryResult out;
+    out.phase_discovery_backend = "continuous_reduced_electroneutral_tpd_minimization";
+    out.stability_certificate = "electrolyte_continuous_reduced_electroneutral_tpd_minimizer";
+    int valid_candidate_count = 0;
+    for (int phase_kind : reference_phase_kinds) {
+        try {
+            const EosPhaseBlockResult reference = evaluate_unit_phase_block_at_pressure_root(
+                args,
+                temperature,
+                target_pressure,
+                feed,
+                phase_kind,
+                "Electrolyte continuous TPD feed reference"
+            );
+            require_charge_neutral_composition(
+                reference.composition,
+                charges,
+                "Electrolyte continuous TPD feed reference",
+                charge_tolerance
+            );
+            append_electrolyte_reduced_tpd_candidates_for_reference_block(
+                args,
+                temperature,
+                target_pressure,
+                reference,
+                charges,
+                requested_phase_kinds,
+                "electrolyte_reduced_phase_kind_" + std::to_string(phase_kind),
+                out.candidates,
+                valid_candidate_count,
+                &out,
+                charge_tolerance
+            );
+        } catch (const std::exception&) {
+            continue;
+        }
+    }
+
+    out.tpd_candidate_count = valid_candidate_count;
+    out.unique_candidate_count = static_cast<int>(out.candidates.size());
+    rank_tpd_candidates(out);
+    out.stability_checked = out.unique_candidate_count > 0;
+    out.min_tpd = out.stability_checked ? std::numeric_limits<double>::infinity() : 0.0;
+    for (const NeutralTpdCandidate& candidate : out.candidates) {
+        out.min_tpd = std::min(out.min_tpd, candidate.tpd);
+    }
+    out.stability_accepted = out.stability_checked && out.min_tpd >= -tpd_tolerance;
+    select_generalized_phase_candidate_set(out, feed, requested_phase_kinds, candidate_mass_balance_tolerance);
+    synchronize_continuous_tpd_start_records(
+        out,
+        "not_selected_by_reduced_electroneutral_mass_balance_gate"
+    );
+    finalize_stage9_phase_discovery(out, tpd_tolerance, true);
+    out.phase_discovery_backend = "continuous_reduced_electroneutral_tpd_minimization";
+    out.stability_certificate = "electrolyte_continuous_reduced_electroneutral_tpd_minimizer";
+    out.continuous_tpd_backend = "continuous_reduced_electroneutral_coordinate_search";
+    const bool has_accepted_continuous_start = out.continuous_tpd_converged_count > 0;
+    const bool has_rejected_continuous_start =
+        out.continuous_tpd_converged_count < out.continuous_tpd_solve_count;
+    if (has_accepted_continuous_start && has_rejected_continuous_start) {
+        out.continuous_tpd_status = "complete_with_rejected_starts";
+    }
+    out.held_stage_i_status = "pending_stage_i_stability_certificate";
+    out.held_stage_ii_status = "pending_held2_stage_ii_discovery";
+    out.held_stage_ii_candidate_bound_audit_status = "pending_held2_stage_ii_discovery";
+    out.held_stage_ii_dual_loop_status = "pending_held2_stage_ii_discovery";
+    out.held_stage_ii_replay_ready = false;
+    out.held_stage_iii_status = "pending_electrolyte_stage_iii_refinement";
+    if (!out.stability_checked) {
+        out.phase_set_status = "stability_uncertified";
+        out.candidate_completeness_accepted = false;
+    } else if (!has_accepted_continuous_start) {
+        out.phase_set_status = "continuous_reduced_electroneutral_tpd_incomplete";
+        out.candidate_completeness_accepted = false;
+    } else if (has_rejected_continuous_start) {
+        out.phase_set_status = "continuous_reduced_electroneutral_tpd_complete_with_rejected_starts";
+        out.candidate_completeness_accepted = true;
+    } else {
+        out.phase_set_status = "continuous_reduced_electroneutral_tpd_complete";
+        out.candidate_completeness_accepted = true;
+    }
+    return out;
+}
+
+bool stage_ii_material_balance_complement(
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& candidate_composition,
+    std::vector<double>& complement_composition
+) {
+    require_size(candidate_composition, feed_composition.size(), "Electrolyte HELD2 Stage II candidate");
+    double maximum_candidate_fraction = 1.0;
+    for (std::size_t species = 0; species < feed_composition.size(); ++species) {
+        const double feed_value = feed_composition[species];
+        const double candidate_value = candidate_composition[species];
+        if (!std::isfinite(feed_value) || !std::isfinite(candidate_value)) {
+            return false;
+        }
+        if (candidate_value > feed_value + 1.0e-14) {
+            maximum_candidate_fraction = std::min(maximum_candidate_fraction, feed_value / candidate_value);
+        }
+    }
+    if (!(maximum_candidate_fraction > 1.0e-8)) {
+        return false;
+    }
+
+    const double candidate_fraction = std::min(0.5, 0.5 * maximum_candidate_fraction);
+    if (!(candidate_fraction > 1.0e-10 && candidate_fraction < 1.0 - 1.0e-10)) {
+        return false;
+    }
+    complement_composition.assign(feed_composition.size(), 0.0);
+    const double complement_fraction = 1.0 - candidate_fraction;
+    double complement_sum = 0.0;
+    for (std::size_t species = 0; species < feed_composition.size(); ++species) {
+        const double value =
+            (feed_composition[species] - candidate_fraction * candidate_composition[species])
+            / complement_fraction;
+        if (!std::isfinite(value) || value <= kCompositionFloor) {
+            return false;
+        }
+        complement_composition[species] = value;
+        complement_sum += value;
+    }
+    if (!std::isfinite(complement_sum) || complement_sum <= 0.0) {
+        return false;
+    }
+    for (double& value : complement_composition) {
+        value /= complement_sum;
+    }
+    return true;
+}
+
+void append_electrolyte_stage_ii_complement_candidates(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    NeutralPhaseDiscoveryResult& discovery
+) {
+    if (phase_kinds.size() != 2) {
+        return;
+    }
+    const std::size_t original_count = discovery.candidates.size();
+    int appended_count = 0;
+    for (std::size_t index = 0; index < original_count; ++index) {
+        const NeutralTpdCandidate& source_candidate = discovery.candidates[index];
+        if (!source_candidate.valid || !std::isfinite(source_candidate.tpd)) {
+            continue;
+        }
+        if (source_candidate.tpd >= -tpd_tolerance || source_candidate.tpd_status != "converged") {
+            continue;
+        }
+
+        int complement_phase_kind = phase_kinds[1];
+        if (phase_kinds[0] != phase_kinds[1]) {
+            if (source_candidate.phase_kind == phase_kinds[0]) {
+                complement_phase_kind = phase_kinds[1];
+            } else if (source_candidate.phase_kind == phase_kinds[1]) {
+                complement_phase_kind = phase_kinds[0];
+            } else {
+                continue;
+            }
+        }
+
+        std::vector<double> complement;
+        if (!stage_ii_material_balance_complement(feed_composition, source_candidate.composition, complement)) {
+            continue;
+        }
+        try {
+            require_charge_neutral_composition(
+                complement,
+                charges,
+                "Electrolyte HELD2 Stage II material-balance complement",
+                charge_tolerance
+            );
+            const EosPhaseBlockResult reference = evaluate_unit_phase_block_at_pressure_root(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                complement_phase_kind,
+                "Electrolyte HELD2 Stage II complement reference"
+            );
+            const std::string source =
+                "electrolyte_held2_stage_ii_material_balance_complement_from_rank_"
+                + std::to_string(static_cast<int>(index));
+            NeutralTpdCandidate complement_candidate = evaluate_electrolyte_tpd_candidate(
+                args,
+                temperature,
+                target_pressure,
+                reference,
+                complement,
+                charges,
+                complement_phase_kind,
+                source,
+                charge_tolerance
+            );
+            complement_candidate.start_source = source_candidate.source;
+            complement_candidate.feasibility_status = "held2_stage_ii_material_balance_complement";
+            const std::size_t before_append = discovery.candidates.size();
+            append_unique_tpd_candidate(discovery.candidates, complement_candidate);
+            if (discovery.candidates.size() > before_append) {
+                ++appended_count;
+            }
+        } catch (const std::exception&) {
+            continue;
+        }
+    }
+    if (appended_count > 0) {
+        discovery.tpd_candidate_count += appended_count;
+        discovery.unique_candidate_count = static_cast<int>(discovery.candidates.size());
+        rank_tpd_candidates(discovery);
+    }
+}
+
 ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
     const add_args& args,
     double temperature,
@@ -5180,7 +5847,7 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
 
     ElectrolyteHeld2PhaseDiscoveryResult out =
         build_electrolyte_held2_diagnostic(feed, charges, species_labels, 1.0e-10);
-    out.tpd_discovery = evaluate_electrolyte_tpd_phase_discovery(
+    out.tpd_discovery = evaluate_electrolyte_continuous_tpd_minimizer(
         args,
         temperature,
         target_pressure,
@@ -5191,6 +5858,48 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
         tpd_tolerance,
         candidate_mass_balance_tolerance
     );
+    append_electrolyte_stage_ii_complement_candidates(
+        args,
+        temperature,
+        target_pressure,
+        feed,
+        charges,
+        phase_kinds,
+        charge_tolerance,
+        tpd_tolerance,
+        out.tpd_discovery
+    );
+    select_generalized_phase_candidate_set(
+        out.tpd_discovery,
+        feed,
+        phase_kinds,
+        candidate_mass_balance_tolerance
+    );
+    synchronize_continuous_tpd_start_records(
+        out.tpd_discovery,
+        "not_selected_by_held2_stage_ii_dual_loop_mass_balance_gate"
+    );
+    out.tpd_discovery.held_stage_i_min_tpd = out.tpd_discovery.continuous_tpd_min;
+    out.tpd_discovery.held_stage_i_negative_tpd_found =
+        out.tpd_discovery.continuous_tpd_solve_count > 0
+        && out.tpd_discovery.continuous_tpd_min < -tpd_tolerance;
+    out.tpd_discovery.held_stage_i_status = out.tpd_discovery.held_stage_i_negative_tpd_found
+        ? "stage_i_negative_tpd_certificate_consumed"
+        : "stage_i_no_negative_tpd_certificate_consumed";
+    evaluate_held_stage_ii_candidate_bounds(out.tpd_discovery, tpd_tolerance, true);
+    out.tpd_discovery.phase_discovery_backend =
+        "continuous_reduced_electroneutral_held2_stage_ii_dual_phase_discovery";
+    out.tpd_discovery.stability_certificate = "electrolyte_held2_stage_ii_dual_phase_discovery";
+    out.tpd_discovery.held_stage_iii_status = "pending_ipopt_refinement";
+    if (out.tpd_discovery.held_stage_ii_replay_ready) {
+        out.tpd_discovery.stability_accepted = true;
+        out.tpd_discovery.candidate_completeness_accepted = true;
+        out.tpd_discovery.phase_set_status = "held2_stage_ii_candidate_set_verified";
+    } else {
+        out.tpd_discovery.stability_accepted = false;
+        out.tpd_discovery.candidate_completeness_accepted = false;
+        out.tpd_discovery.phase_set_status = "held2_stage_ii_candidate_set_incomplete";
+    }
     out.reduced_start_count = out.tpd_discovery.tpd_candidate_count;
     out.converged_start_count = out.tpd_discovery.unique_candidate_count;
     out.selected_candidate_count = out.tpd_discovery.selected_candidate_count;
@@ -5257,9 +5966,11 @@ ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
             reference_phase_kinds.front(),
             "Electrolyte HELD2 mean-ionic candidate"
         );
-        out.mean_ionic_residual_values = pair_residuals_from_reference_and_trial(
+        out.mean_ionic_residual_values = pair_residuals_from_projected_reduced_ln_fugacity(
+            args,
             out.counterion_pair_matrix,
             out.charged_species_indices,
+            charges,
             reference,
             trial
         );
@@ -6157,8 +6868,25 @@ NeutralTwoPhaseEosRouteResult solve_neutral_two_phase_eos_route(
         problem_name,
         minimum_phase_distance
     );
-    if (!apply_neutral_route_solve_result(out, solve)) {
+    const bool strict_solver_acceptance = apply_neutral_route_solve_result(out, solve);
+    const bool certified_stage_iii_acceptable_point =
+        !strict_solver_acceptance
+        && problem_name == "electrolyte_stage_iii_reduced_variable_refinement"
+        && solve.acceptable
+        && solve.application_status == "solved_to_acceptable_level"
+        && !solve.variables.empty()
+        && solve_diagnostic_double(solve, "scaled_constraint_violation_inf_norm", std::numeric_limits<double>::infinity())
+            <= chemical_potential_tolerance
+        && solve_diagnostic_double(solve, "scaled_stationarity_inf_norm", std::numeric_limits<double>::infinity())
+            <= chemical_potential_tolerance
+        && solve_diagnostic_double(solve, "scaled_complementarity_inf_norm", std::numeric_limits<double>::infinity())
+            <= chemical_potential_tolerance;
+    if (!strict_solver_acceptance && !certified_stage_iii_acceptable_point) {
         return out;
+    }
+    if (certified_stage_iii_acceptable_point) {
+        out.solver_accepted = true;
+        out.rejection_reason.clear();
     }
 
     const std::size_t species_count = feed_amounts.size();

@@ -24,6 +24,42 @@ VariableLayout build_variable_layout(
     const ActivationPlan& plan,
     int species_count
 ) {
+    if (plan.variable_model == "single_phase_species_amounts") {
+        if (plan.variable_blocks != std::vector<std::string>{"species_amounts"}) {
+            throw ValueError("activation-layout-ineligible: unsupported single-phase variable blocks.");
+        }
+        if (plan.phase_keys != std::vector<std::string>{"homogeneous"}
+            || plan.phase_kinds != std::vector<std::string>{"homogeneous"}
+            || species_count <= 0) {
+            throw ValueError("activation-layout-ineligible: reactive_speciation layout requires one homogeneous phase.");
+        }
+
+        VariableLayout out;
+        out.family_key = plan.family_key;
+        out.route = plan.route;
+        out.variable_model = plan.variable_model;
+        out.physical_basis = "true_species_amounts";
+        out.solver_coordinate_basis = "physical_species_amounts";
+        out.lift_policy = "identity_true_species_lift";
+        out.back_lift_policy = "single_phase_species_amount_back_lift";
+        out.transform_policy = "identity_physical_coordinates";
+        out.phase_count = 1;
+        out.species_count = species_count;
+        out.variable_count = species_count;
+        out.phase_keys = plan.phase_keys;
+        out.phase_kinds = plan.phase_kinds;
+        out.variable_blocks = {{"species_amounts", 0, species_count, 1}};
+        out.phase_amount_indices.assign(
+            1U,
+            std::vector<int>(static_cast<std::size_t>(species_count), 0)
+        );
+        for (int species = 0; species < species_count; ++species) {
+            out.phase_amount_indices[0][static_cast<std::size_t>(species)] = species;
+            out.physical_variable_order.push_back("n_species_" + std::to_string(species));
+        }
+        return out;
+    }
+
     if (plan.variable_model != "phase_species_amounts_plus_phase_volume") {
         throw ValueError("activation-layout-ineligible: unsupported variable model for activation layout.");
     }

@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-
 source_plan: "docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0320-khudaida-held2-validation
-last_synced: "2026-06-27"
+last_synced: "2026-06-29"
 ---
 
 # M4: validate Perdomo HELD2 electrolyte flash with Figiel ePC-SAFT parameters
@@ -223,12 +223,16 @@ uv run --no-sync python scripts\dev\validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
 
-Retained local proof from 2026-06-27:
+Retained local proof from 2026-06-29 after merging current `main`:
 
 - Build: completed, `epcsaft_equilibrium._native_core` linked and imported.
-- Focused pytest: `2 passed, 199 deselected`.
+- Focused pytest: `2 passed, 221 deselected`; selected node ids:
+  - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_flash_validation.py::test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase_blocker`
+  - `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_flash_validation.py::test_electrolyte_held2_flash_bubble_temperature_route_accepts_figiel_boundary`
 - Khudaida checker: `artifact_complete=True model_reproduction_complete=False blockers=0 model_blockers=12`.
 - Khudaida analysis: `[done] 2026 Khudaida analysis complete.`
+- Public electrolyte admission checker: `complete=true`, `blockers=[]`.
+- HELD2 public-route scenario checker: `complete=True`, `blockers=`.
 - Registry contracts: `28 passed`.
 - Docs: Sphinx build succeeded.
 

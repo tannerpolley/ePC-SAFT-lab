@@ -184,6 +184,7 @@ epcsaft_provider_sdk_add_provider_native(epcsaft_provider_native)
 set(EPCSAFT_EQUILIBRIUM_NATIVE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/epcsaft_equilibrium/native/equilibrium")
 set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/association_block.cpp"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/chemical_equilibrium_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/electrolyte_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/eos_phase_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/gibbs_blocks.cpp"
@@ -192,6 +193,7 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/blocks/saturation_block.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activated_equilibrium_nlp.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activation_plan.cpp"
+    "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/chemical_equilibrium_nlp.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/helpers.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/nlp_problem.cpp"
     "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/selector_core.cpp"

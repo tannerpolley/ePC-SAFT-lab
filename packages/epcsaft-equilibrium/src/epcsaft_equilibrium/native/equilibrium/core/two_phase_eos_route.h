@@ -278,6 +278,7 @@ struct NeutralPhaseDiscoveryResult {
     std::vector<double> selected_phase_fractions;
     std::vector<int> selected_phase_kinds;
     std::vector<std::vector<double>> selected_phase_compositions;
+    std::vector<NeutralTpdCandidate> continuous_tpd_start_records;
     std::vector<NeutralTpdCandidate> candidates;
 };
 
@@ -757,6 +758,18 @@ NeutralPhaseDiscoveryResult evaluate_neutral_tpd_phase_discovery(
 );
 
 NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+);
+
+NeutralPhaseDiscoveryResult evaluate_electrolyte_continuous_tpd_minimizer(
     const add_args& args,
     double temperature,
     double target_pressure,

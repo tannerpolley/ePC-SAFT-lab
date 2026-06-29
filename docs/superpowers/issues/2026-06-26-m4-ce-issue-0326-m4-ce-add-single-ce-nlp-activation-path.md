@@ -1,13 +1,13 @@
-# M4 CE: create Cantera and Pope reference-oracle harness
+# M4 CE: add single CE NLP activation path
 
-**GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/327
+**GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/326
 **GitHub Milestone:** M4 - Equilibrium
-**Issue Type:** task
+**Issue Type:** feature
 **Source Spec:** docs/superpowers/specs/2026-06-25-m4-equilibrium-standalone-chemical-equilibrium-before-cpe.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
 **Classification:** AFK
-**Labels:** enhancement,docs,validation,equilibrium,area:equilibrium,backend:ipopt,type:task,status:ready
-**Goal Command:** /goal Create retained CE-only Cantera/Pope oracle fixtures and tests.
+**Labels:** enhancement,docs,validation,equilibrium,area:equilibrium,backend:ipopt,type:feature,status:ready
+**Goal Command:** /goal Add the standalone CE route through the single activation-matrix NLP/Ipopt path, with no side-channel algorithm lanes.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -19,15 +19,15 @@
 ## Outcome Summary
 
 **Outcome Source:** docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md#outcome-proof
-**Intent:** Create retained CE-only Cantera and Pope oracle records.
-**Target Output:** Oracle tests prove retained records include source, solver, species order, balances, affinities, and CE-only scope.
+**Intent:** Add one standalone CE activation path that enters through the activation matrix, selector contract, native `NlpProblem`, and Ipopt adapter.
+**Target Output:** Tests and checker mode prove standalone CE uses the single NLP/Ipopt route and the #325 homogeneous CE residual/objective block, without direct, VCS-style, Pope-style, or checker-only bypass paths.
 **Owner:** M4 equilibrium package owner for packages/epcsaft-equilibrium.
 **Interface:** Source plan, issue mirror, route-specific tests, validation checker evidence, registry/capability payloads, and GitHub issue state.
 **Cutover:** Replace placeholder or broad closed-ticket state only for this issue's accepted slice; keep unsupported CE/CPE surfaces closed.
 **Replaced Path:** Prior prototype evidence, broad closed tickets, or placeholder-only docs cannot stand in for this issue's proof.
-**Acceptance Proof:** Oracle tests prove retained records include source, solver, species order, balances, affinities, and CE-only scope.
-**Stop Criteria:** Stop if the slice requires implicit standard-state conventions, unproven derivative evidence, unsupported phase coupling, or capability claims beyond this issue.
-**Avoid:** Do not add downstream application metrics, regression work, release claims, or reactive phase route admission outside this issue scope.
+**Acceptance Proof:** Activation-path tests and checker mode prove the standalone CE request is admitted only through the activation matrix and solved only through the native NLP/Ipopt path using the #325 CE residual contract.
+**Stop Criteria:** Stop if the slice creates side-channel direct extent, element-potential/VCS-style, Pope-style continuation, checker-only, or public API routes outside the activation matrix and Ipopt adapter.
+**Avoid:** Do not add downstream application metrics, regression work, release claims, side-channel CE solvers, or reactive phase route admission outside this issue scope.
 
 ## Project Merge
 
@@ -39,7 +39,7 @@
 
 ## What To Build
 
-Create retained CE-only Cantera and Pope oracle records.
+Add the standalone CE route through the single activation-matrix NLP/Ipopt path. Direct extent, element-potential/VCS-style, and Pope-style continuation ideas may appear only as non-executing reference notes; they must not become route diagnostics, metadata choices, execution lanes, selector branches, native bindings, public APIs, or checker bypasses.
 
 ## Acceptance Criteria
 
@@ -51,13 +51,15 @@ Create retained CE-only Cantera and Pope oracle records.
 
 ## Blocked by
 
-- https://github.com/ePC-SAFT/ePC-SAFT/issues/326
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/325
 
 ## Non-goals
 
 - Reactive LLE production support outside the standalone CE activation slice.
 - Reactive electrolyte LLE production support outside later CPE issue sets.
 - Downstream application metrics, parameter regression, or release publication.
+- Direct extent, element-potential/VCS-style, Pope-style continuation, or Cantera-like element-potential side solvers outside the activation matrix.
+- Native bindings such as `_native_chemical_equilibrium_algorithm_lanes` or checker modes that prove CE without exercising the activation-matrix NLP route.
 
 ## Proof Oracle
 

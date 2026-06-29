@@ -55,6 +55,7 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | [Issue #312 electrolyte HELD2 Stage III refinement gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md) | `electrolyte` | Closed #191 child gate for consuming the #306 candidate set in local reduced-variable Stage III electrolyte refinement while keeping postsolve certification and public admission separate. |
 | [Issue #313 electrolyte postsolve phase-set certification gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md) | `electrolyte` | Closed #191 child gate for explicit-ion reconstruction, charge, transfer, pressure, amount, and domain-margin certification after #312. |
 | [Issue #314 electrolyte public route admission gate plan](../../plans/2026-06-25-m4-equilibrium-issue-0314-electrolyte-public-route-admission-gate-plan.md) | `electrolyte` | Adds the final #191 child gate for source-backed public electrolyte GFPE route admission after Stage III and postsolve certification close. |
+| [Full HELD2 public-route phase discovery adoption plan](../../plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md) | `electrolyte` | Adds #343 through #350 for full HELD2-style public-route phase discovery: doctrine, continuous TPD, Stage I, Stage II, public route orchestration, scenario validation, and capability admission. |
 
 ## Retained Evidence
 
@@ -75,6 +76,8 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 | `scripts/validation/check_electrolyte_stage_iii_refinement.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-native-stage-iii --require-complete` | `electrolyte` | Stage III refinement gate for #312: consumes #269/#300/#302/#306, calls native `_native_electrolyte_stage_iii_refinement`, records #306 candidate-set seed provenance, reduced counterion-pair residual variables/equations/scaling/bounds, exact reduced Jacobian/Hessian receipts, strict Ipopt success, and finite local phase compositions. |
 | `scripts/validation/check_electrolyte_postsolve_certification.py --json --require-stage-iii --require-postsolve-certification --require-complete` | `electrolyte` | Postsolve phase-set certification gate for #313: consumes #312, calls native `_native_electrolyte_postsolve_certification`, and retains explicit-ion feed reconstruction, per-phase and total charge residuals, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, composition normalization, and domain margins. |
 | `scripts/validation/check_electrolyte_public_admission.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete` | `electrolyte` | Public electrolyte admission gate for #314: consumes #269/#300/#302/#306/#312/#313, proves `Equilibrium(..., route="electrolyte_lle")` maps to the source-backed Khudaida explicit-ion NaCl mixed-solvent LLE route, returns `liquid1` and `liquid2`, retains charge, pressure, transfer, phase-distance, exact reduced-derivative, and unsupported-surface evidence, and completes with no checker blockers. |
+| `scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete` | `electrolyte` | Public-route orchestration proof for #348: proves `Equilibrium(..., route="electrolyte_lle")` retains Stage I/II discovery provenance, Stage II `dual_loop_verified` replay, Stage III replay consumption, exact-Hessian receipts, and postsolve certification through the public route while unsupported surfaces remain closed. |
+| `scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete` | `electrolyte` | Scenario validation ladder for #349: accepts stable, unstable, boundary, phase-label permutation, neutral-limit parity, common-ion, and mixed-salt/asymmetric cases with retained Stage I/II, Stage III, postsolve, reduced-basis, charge, transfer, phase-distance, and no-charged-residual neutral-limit diagnostics. |
 | `scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-route-closed --require-complete` | `lle` | Internal exact-Hessian prerequisite proof for #145: retains Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE branch rows, Table 1 methanol 2B association parameters, the retained cyclohexane PC-SAFT row, Table 2 `k_ij = 0.051`, verifies bounded site fractions, low mass-action residuals, exact association first/second sensitivities, objective/pressure/mass-action/Lagrangian Hessian symmetry, and certifies the source-backed internal two-liquid pair consumed by #190. |
 | `scripts/validation/check_associating_gfpe_gate.py --json --require-source-data --require-public-admission --require-exact-association-hessian --require-complete` | `lle` | Public associating GFPE admission evidence for #190: consumes the #145 Gross/Sadowski 2002 proof, admits only `Equilibrium(..., route="lle")` for the source-backed methanol/cyclohexane two-phase neutral associating fixture, names `Gross2002 Figure8 methanol-cyclohexane`, `assoc_scheme=2B`, `k_ij=0.051`, and `cppad_implicit_association`, and keeps missing-proof, reactive, TP-flash, and generalized associating phase-set surfaces outside the admitted scope. |
 | `scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native` | `association` | Gross/Sadowski 2002 paper-validation acceptance campaign for #275: retains Figure 1 pure-association AAD sanity evidence, connects Figure 8 methanol/cyclohexane source rows and exact-Hessian proof to campaign summaries, adds Figure 10 water/1-pentanol cross-association stress evidence with `k_ij = 0.016` and `cppad_implicit_association`, records Figures 2-7 and 9 as source-requirement records with no completion credit, and keeps electrolyte/reactive/generalized associating claims outside this evidence. |
@@ -83,10 +86,28 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 ## Current Open Issues
 
+Open M4 work is split into phase-equilibrium/HELD2 and CE/CPE lanes so
+standalone chemical-equilibrium work stays visible without being treated as
+part of the HELD2 phase-discovery cutover.
+
+### Phase-Equilibrium / HELD2 Open Issues
+
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves full Khudaida figure-level model reproduction, broader HELD2 flash scenario validation, and shared native `NlpProblem`/Ipopt exact-Hessian route receipts. |
-| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active final #191 blocker for full Khudaida model reproduction and HELD2 flash scenario proof. |
+| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `electrolyte` | `Ipopt` | `blocked_by_320_343` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves Perdomo/Figiel HELD2 validation and #343 closes the full HELD2-style public-route discovery chain. |
+| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active #191 validation blocker for Perdomo/Figiel HELD2 electrolyte flash evidence through the public package route. |
+| [#343](../../issues/2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) | `electrolyte` | `Ipopt` | `blocked_by_350` | Full HELD2-style public-route phase-discovery adoption tracker. #344 through #349 have retained proof; #350 is the final registry/capability admission slice. |
+| [#350](../../issues/2026-06-27-m4-equilibrium-issue-0350-admit-held2-public-route-capability-evidence-after-full-validation.md) | `electrolyte` | `Ipopt` | `ready` | Admits registry and docs capability evidence only after full validation. |
+
+### CE / CPE Open Issues
+
+| Issue | Capability | Backend | Readiness | Summary |
+| --- | --- | --- | --- | --- |
+| [#321](../../issues/2026-06-26-m4-ce-issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe.md) | `ce` | `Ipopt` | `ready` | Standalone chemical/speciation equilibrium foundation before coupled CPE work. |
+| [#328](../../issues/2026-06-26-m4-ce-issue-0328-m4-ce-design-standalone-speciation-public-api-and-result-schema.md) | `ce` | `Ipopt` | `ready` | Design the standalone CE public API and result schema. |
+| [#329](../../issues/2026-06-26-m4-ce-issue-0329-m4-ce-build-standalone-validation-ladder.md) | `ce` | `Ipopt` | `ready` | Build the standalone CE validation ladder. |
+| [#330](../../issues/2026-06-26-m4-ce-issue-0330-m4-ce-activate-standalone-ce-only-after-gates-pass.md) | `ce` | `Ipopt` | `blocked` | Activate standalone CE only after the CE foundation, API, and validation gates pass. |
+| [#331](../../issues/2026-06-26-m4-ce-issue-0331-m4-cpe-define-simultaneous-phase-plus-chemistry-interface-contract.md) | `cpe` | `Ipopt` | `blocked` | Define the simultaneous phase-plus-chemistry interface contract after standalone CE is governed. |
 
 ## Queue Guard
 
@@ -234,10 +255,16 @@ consumes #269/#300/#302/#306/#312/#313 and exposes only the source-backed
 Khudaida explicit-ion NaCl mixed-solvent `electrolyte_lle` route, but it is not
 full electrolyte LLE model reproduction.
 
-#320 is the active final #191 blocker. It must prove full Khudaida
-figure-level model reproduction, broader HELD2 flash scenario validation, and
-shared native `NlpProblem`/Ipopt exact-Hessian route receipts before #191 can
-close or hand off remaining GFPE evidence to M6 #192.
+#320 remains a #191 validation blocker for Perdomo/Figiel HELD2 electrolyte
+flash evidence through the public package route.
+
+#343 is the explicit full HELD2 public-route discovery implementation blocker
+for #191. #344 through #349 now retain doctrine, continuous reduced-
+electroneutral TPD, Stage I stability, Stage II dual discovery, public-route
+orchestration, and scenario validation proof. #350 is the final registry and
+capability-admission slice. After #350 and #343 close, #191 must still remain
+blocked by #320 until Perdomo/Figiel HELD2 validation passes through the public
+package route.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
@@ -259,6 +286,9 @@ two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/345](https://github.com/ePC-SAFT/ePC-SAFT/issues/345) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/353](https://github.com/ePC-SAFT/ePC-SAFT/pull/353) on 2026-06-28T15:35:44Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/344](https://github.com/ePC-SAFT/ePC-SAFT/issues/344) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/352](https://github.com/ePC-SAFT/ePC-SAFT/pull/352) on 2026-06-28T04:20:05Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/327](https://github.com/ePC-SAFT/ePC-SAFT/issues/327) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/342](https://github.com/ePC-SAFT/ePC-SAFT/pull/342) on 2026-06-27T20:23:44Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/280](https://github.com/ePC-SAFT/ePC-SAFT/issues/280) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/289](https://github.com/ePC-SAFT/ePC-SAFT/pull/289) on 2026-06-20T00:15:28Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/290](https://github.com/ePC-SAFT/ePC-SAFT/issues/290) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/291](https://github.com/ePC-SAFT/ePC-SAFT/pull/291) on 2026-06-19T23:32:21Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/279](https://github.com/ePC-SAFT/ePC-SAFT/issues/279) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/288](https://github.com/ePC-SAFT/ePC-SAFT/pull/288) on 2026-06-19T20:03:07Z
