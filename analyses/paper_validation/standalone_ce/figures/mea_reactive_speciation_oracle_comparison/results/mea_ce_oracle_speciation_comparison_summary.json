@@ -31,7 +31,16 @@
     "MEA + MEAH+"
   ],
   "initialization": "source-oracle mole fractions scaled to one mole total amine for each loading",
+  "seed_policy": "source_oracle_mole_fractions_scaled_to_one_mol_total_amine",
+  "uses_source_oracle_initial_amounts": true,
   "zero_loading_note": "source-oracle loading 0.0 is solved with effective CE feed loading 1e-6 to match the Smith-Missen source solver's minimum loading convention",
+  "unassisted_seed_audit": {
+    "seed_policy": "feed_stoichiometric_no_oracle",
+    "attempt_count": 10,
+    "accepted_count": 0,
+    "status": "blocked",
+    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv"
+  },
   "max_abs_error": 4.240348350226242e-10,
   "max_balance_inf_norm": 1.3215029071034223e-10,
   "max_reaction_stationarity_inf_norm": 6.474248692711626e-07,

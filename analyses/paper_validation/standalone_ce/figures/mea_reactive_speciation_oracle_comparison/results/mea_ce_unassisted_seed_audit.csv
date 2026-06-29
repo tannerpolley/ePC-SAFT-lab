@@ -1,0 +1,11 @@
+temperature_C,CO2_loading,effective_feed_loading,seed_policy,uses_source_oracle_initial_amounts,solver_status,application_status,accepted,balance_inf_norm,reaction_stationarity_inf_norm,exception_type,exception_message
+20.0,0.0,1e-06,feed_stoichiometric_no_oracle,False,acceptable_point,solved_to_acceptable_level,False,6.871658797535929e-11,18.08342499649229,SolutionError,reactive_speciation native solve was not accepted.
+20.0,0.005,0.005,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,5.369196696136669e-07,9.851099258988398,SolutionError,reactive_speciation native solve was not accepted.
+20.0,0.1,0.1,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,5.565989447120501e-08,13.042768674963597,SolutionError,reactive_speciation native solve was not accepted.
+20.0,0.4,0.4,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,1.644799851874268e-10,15.735586865494003,SolutionError,reactive_speciation native solve was not accepted.
+20.0,0.8,0.8,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,1.3323617160665435e-06,19.61297611093938,SolutionError,reactive_speciation native solve was not accepted.
+40.0,0.0,1e-06,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,1.3033754342473003e-07,15.051788374598232,SolutionError,reactive_speciation native solve was not accepted.
+40.0,0.005,0.005,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,2.1802759953004625e-07,10.977967858249265,SolutionError,reactive_speciation native solve was not accepted.
+40.0,0.1,0.1,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,1.5918723157426484e-06,13.742366706225837,SolutionError,reactive_speciation native solve was not accepted.
+40.0,0.4,0.4,feed_stoichiometric_no_oracle,False,local_infeasibility,infeasible_problem_detected,False,0.39999999173390677,63.25366453317102,SolutionError,reactive_speciation native solve was not accepted.
+40.0,0.8,0.8,feed_stoichiometric_no_oracle,False,success,solve_succeeded,False,7.728219486580201e-08,19.98081421966292,SolutionError,reactive_speciation native solve was not accepted.

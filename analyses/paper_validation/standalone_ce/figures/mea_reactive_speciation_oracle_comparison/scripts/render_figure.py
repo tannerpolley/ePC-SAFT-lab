@@ -141,7 +141,7 @@ def _plot_temperature_overlay(plot_data: pd.DataFrame, temperature_C: float) -> 
             markersize=2.2,
             markevery=16,
         )
-    ax.set_title(f"CE reactive speciation vs Smith-Missen oracle, {temperature_C:g} C")
+    ax.set_title(f"Oracle-seeded CE reactive speciation vs Smith-Missen oracle, {temperature_C:g} C")
     ax.set_xlabel(r"$CO_2$ loading, mol $CO_2$/mol MEA")
     ax.set_ylabel("True-species mole fraction")
     ax.set_yscale("log")
@@ -154,7 +154,16 @@ def _plot_temperature_overlay(plot_data: pd.DataFrame, temperature_C: float) -> 
     ]
     role_handles = [
         Line2D([0], [0], color="#333333", linestyle=(0, (4, 2)), linewidth=1.8, label="Smith-Missen oracle"),
-        Line2D([0], [0], color="#333333", linestyle="-", marker="o", linewidth=1.2, markersize=3.0, label="CE route"),
+        Line2D(
+            [0],
+            [0],
+            color="#333333",
+            linestyle="-",
+            marker="o",
+            linewidth=1.2,
+            markersize=3.0,
+            label="CE route (oracle-seeded)",
+        ),
     ]
     role_legend = ax.legend(handles=role_handles, loc="lower left", frameon=True)
     ax.add_artist(role_legend)
@@ -221,7 +230,7 @@ def _plot_error_summary(errors: pd.DataFrame, summary: pd.DataFrame) -> None:
     axes[1].legend(frameon=True)
     _apply_axes_style(axes[1])
 
-    fig.suptitle("CE reactive speciation oracle-match errors")
+    fig.suptitle("Oracle-seeded CE reactive speciation oracle-match errors")
     fig.tight_layout()
     _save_bundle(fig, "mea_ce_oracle_speciation_error_summary")
     plt.close(fig)
