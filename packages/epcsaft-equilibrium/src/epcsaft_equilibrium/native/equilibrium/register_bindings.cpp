@@ -21,6 +21,7 @@
 #include "equilibrium/blocks/saturation_block.h"
 #include "equilibrium/core/activation_matrix.h"
 #include "equilibrium/core/chemical_equilibrium_nlp.h"
+#include "equilibrium/core/continuation_driver.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/selector_core.h"
@@ -216,6 +217,109 @@ private:
     std::string failure_mode_;
 };
 
+class ContinuationQuadraticSmokeProblem final : public nlp::NlpProblem {
+public:
+    explicit ContinuationQuadraticSmokeProblem(double parameter_value)
+        : parameter_value_(parameter_value) {}
+
+    std::string name() const override {
+        return "continuation_quadratic_smoke";
+    }
+
+    int variable_count() const override {
+        return 2;
+    }
+
+    int constraint_count() const override {
+        return 1;
+    }
+
+    int jacobian_nonzero_count() const override {
+        return 2;
+    }
+
+    nlp::NlpBounds bounds() const override {
+        return {{-10.0, -10.0}, {10.0, 10.0}, {3.0}, {3.0}};
+    }
+
+    std::vector<double> initial_point() const override {
+        return {0.5, 2.5};
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        const double dx = variables[0] - target_x();
+        const double dy = variables[1] - target_y();
+        return dx * dx + dy * dy;
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        return {2.0 * (variables[0] - target_x()), 2.0 * (variables[1] - target_y())};
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        return {variables[0] + variables[1]};
+    }
+
+    nlp::NlpJacobianStructure jacobian_structure() const override {
+        return {{0, 0}, {0, 1}};
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        (void)variables;
+        return {1.0, 1.0};
+    }
+
+    bool has_exact_hessian() const override {
+        return true;
+    }
+
+    int hessian_nonzero_count() const override {
+        return 3;
+    }
+
+    nlp::NlpHessianStructure hessian_structure() const override {
+        return {{0, 1, 1}, {0, 0, 1}};
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        (void)variables;
+        (void)constraint_multipliers;
+        return {2.0 * objective_factor, 0.0, 2.0 * objective_factor};
+    }
+
+    std::string hessian_backend() const override {
+        return "analytic";
+    }
+
+    nlp::NlpScaling scaling() const override {
+        return {1.0, {1.0, 1.0}, {1.0}};
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        return {
+            {"smoke_problem", "continuation_quadratic"},
+            {"gradient_backend", "analytic"},
+            {"jacobian_backend", "analytic"},
+            {"continuation_parameter", std::to_string(parameter_value_)},
+        };
+    }
+
+private:
+    double target_x() const {
+        return 1.0 + 0.5 * parameter_value_;
+    }
+
+    double target_y() const {
+        return 2.0 - 0.5 * parameter_value_;
+    }
+
+    double parameter_value_;
+};
+
 py::dict nlp_shape_validation_case(const std::string& failure_mode) {
     py::dict out;
     try {
@@ -365,6 +469,120 @@ void apply_ipopt_continuation_state(
         options.initial_constraint_multipliers =
             state["constraint_multipliers"].cast<std::vector<double>>();
     }
+}
+
+nlp::ContinuationState continuation_state_from_object(const py::object& continuation_state) {
+    nlp::ContinuationState out;
+    if (continuation_state.is_none()) {
+        return out;
+    }
+    const py::dict state = continuation_state.cast<py::dict>();
+    if (state.contains("variables")) {
+        out.variables = state["variables"].cast<std::vector<double>>();
+    }
+    if (state.contains("bound_lower_multipliers")) {
+        out.bound_lower_multipliers = state["bound_lower_multipliers"].cast<std::vector<double>>();
+    }
+    if (state.contains("bound_upper_multipliers")) {
+        out.bound_upper_multipliers = state["bound_upper_multipliers"].cast<std::vector<double>>();
+    }
+    if (state.contains("constraint_multipliers")) {
+        out.constraint_multipliers = state["constraint_multipliers"].cast<std::vector<double>>();
+    }
+    return out;
+}
+
+py::dict continuation_state_to_dict(const nlp::ContinuationState& state) {
+    py::dict out;
+    out["variables"] = state.variables;
+    out["bound_lower_multipliers"] = state.bound_lower_multipliers;
+    out["bound_upper_multipliers"] = state.bound_upper_multipliers;
+    out["constraint_multipliers"] = state.constraint_multipliers;
+    return out;
+}
+
+nlp::IpoptSolveOptions continuation_smoke_options(
+    const std::string& option_profile,
+    int max_iterations
+) {
+    nlp::IpoptSolveOptions options;
+    options.max_iterations = max_iterations;
+    options.tolerance = 1.0e-10;
+    options.acceptable_tolerance = 1.0e-8;
+    options.constraint_violation_tolerance = 1.0e-8;
+    options.dual_infeasibility_tolerance = 1.0e-8;
+    options.complementarity_tolerance = 1.0e-8;
+    options.hessian_mode = "exact";
+    options.option_profile = option_profile;
+    options.iteration_history_limit = 20;
+    return options;
+}
+
+nlp::ContinuationStageSpec continuation_quadratic_smoke_stage(
+    std::string stage_id,
+    double parameter_value,
+    bool final_proof,
+    int max_iterations
+) {
+    nlp::ContinuationStageSpec stage;
+    stage.stage_id = std::move(stage_id);
+    stage.parameter_value = parameter_value;
+    stage.final_proof = final_proof;
+    stage.options = continuation_smoke_options(final_proof ? "proof" : "continuation_trace", max_iterations);
+    stage.problem_factory = [parameter_value]() {
+        return std::make_unique<ContinuationQuadraticSmokeProblem>(parameter_value);
+    };
+    return stage;
+}
+
+py::dict continuation_stage_result_to_dict(const nlp::ContinuationStageResult& result) {
+    py::dict out;
+    out["stage_id"] = result.stage_id;
+    out["parameter_value"] = result.parameter_value;
+    out["final_proof"] = result.final_proof;
+    out["accepted"] = result.accepted;
+    out["seeded_from_stage"] = result.seeded_from_stage;
+    out["initial_state"] = continuation_state_to_dict(result.initial_state);
+    out["status"] = result.solve.solver_status;
+    out["application_status"] = result.solve.application_status;
+    out["objective"] = result.solve.objective;
+    out["variables"] = result.solve.variables;
+    out["constraints"] = result.solve.constraints;
+    out["continuation_state"] = continuation_state_to_dict(result.continuation_state);
+    out["iteration_count"] = diagnostic_int_or(result.solve, "iteration_count", 0);
+    out["iteration_history"] = ipopt_iteration_history_to_list(result.solve.iteration_history);
+    out["option_profile"] = diagnostic_string_or(result.solve, "option_profile", "");
+    out["warm_start_requested"] = diagnostic_bool_or(result.solve, "warm_start_requested", false);
+    out["warm_start_used"] = diagnostic_bool_or(result.solve, "warm_start_used", false);
+    out["scaled_constraint_violation_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_constraint_violation_inf_norm", 0.0);
+    out["scaled_stationarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_stationarity_inf_norm", 0.0);
+    out["scaled_complementarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_complementarity_inf_norm", 0.0);
+    out["bound_complementarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "bound_complementarity_inf_norm", 0.0);
+    return out;
+}
+
+py::list continuation_trace_to_list(const std::vector<nlp::ContinuationStageResult>& trace) {
+    py::list out;
+    for (const nlp::ContinuationStageResult& stage : trace) {
+        out.append(continuation_stage_result_to_dict(stage));
+    }
+    return out;
+}
+
+py::dict continuation_trace_result_to_dict(const nlp::ContinuationTraceResult& result) {
+    py::dict out;
+    out["driver"] = "generic_ipopt_continuation_driver";
+    out["accepted"] = result.accepted;
+    out["final_proof_status"] = result.final_proof_status;
+    out["final_stage_id"] = result.final_stage_id;
+    out["rejection_stage_id"] = result.rejection_stage_id;
+    out["continuation_state"] = continuation_state_to_dict(result.continuation_state);
+    out["trace"] = continuation_trace_to_list(result.trace);
+    return out;
 }
 
 py::dict eos_phase_block_to_dict(const epcsaft::native::equilibrium_nlp::EosPhaseBlockResult& result) {
@@ -2643,6 +2861,50 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("constraint_violation_tolerance") = 1.0e-10,
         py::arg("dual_infeasibility_tolerance") = 1.0e-10,
         py::arg("complementarity_tolerance") = 1.0e-10,
+        py::arg("continuation_state") = py::none()
+    );
+    m.def("_native_continuation_driver_smoke", [](
+        int final_proof_max_iterations,
+        const py::object& continuation_state
+    ) {
+        py::dict out;
+        const auto adapter = epcsaft::native::equilibrium_nlp::native_ipopt_adapter_info();
+        out["driver"] = "generic_ipopt_continuation_driver";
+        out["backend"] = "ipopt";
+        out["compiled"] = adapter.compiled;
+        out["adapter_available"] = adapter.adapter_available;
+        out["adapter_kind"] = adapter.adapter_kind;
+        out["accepted"] = false;
+        if (!adapter.compiled) {
+            out["status"] = "ipopt_dependency_required";
+            out["trace"] = py::list();
+            out["final_proof_status"] = "pending";
+            out["final_stage_id"] = "";
+            out["rejection_stage_id"] = "";
+            out["continuation_state"] = continuation_state_to_dict({});
+            return out;
+        }
+
+        std::vector<nlp::ContinuationStageSpec> stages;
+        stages.push_back(continuation_quadratic_smoke_stage("lambda_0", 0.0, false, 50));
+        stages.push_back(continuation_quadratic_smoke_stage("lambda_half", 0.5, false, 50));
+        stages.push_back(continuation_quadratic_smoke_stage(
+            "lambda_1",
+            1.0,
+            true,
+            final_proof_max_iterations
+        ));
+
+        const nlp::ContinuationTraceResult result =
+            nlp::run_continuation_plan(stages, continuation_state_from_object(continuation_state));
+        out = continuation_trace_result_to_dict(result);
+        out["backend"] = "ipopt";
+        out["compiled"] = adapter.compiled;
+        out["adapter_available"] = adapter.adapter_available;
+        out["adapter_kind"] = adapter.adapter_kind;
+        return out;
+    },
+        py::arg("final_proof_max_iterations") = 50,
         py::arg("continuation_state") = py::none()
     );
     m.def("_native_ideal_reaction_smoke", []() {
