@@ -99,7 +99,7 @@ part of the HELD2 phase-discovery cutover.
 | [#347](../../issues/2026-06-27-m4-equilibrium-issue-0347-implement-held2-stage-ii-electrolyte-dual-phase-discovery.md) | `electrolyte` | `Ipopt` | `ready` | Implements HELD2 Stage II dual/cutting-plane phase discovery. |
 | [#348](../../issues/2026-06-27-m4-equilibrium-issue-0348-integrate-held2-discovery-into-electrolyte-public-route-orchestration.md) | `ready` | `Ipopt` | `blocked_by_347` | Integrates HELD2 discovery into the public electrolyte route before Stage III. |
 | [#349](../../issues/2026-06-27-m4-equilibrium-issue-0349-add-held2-public-route-scenario-validation-ladder.md) | `ready` | `Ipopt` | `blocked_by_348` | Adds the public-route scenario validation ladder. |
-| [#350](../../issues/2026-06-27-m4-equilibrium-issue-0350-admit-held2-public-route-capability-evidence-after-full-validation.md) | `electrolyte` | `Ipopt` | `blocked_by_349` | Admits registry and docs capability evidence only after full validation. |
+| [#350](../../issues/2026-06-27-m4-equilibrium-issue-0350-admit-held2-public-route-capability-evidence-after-full-validation.md) | `ready` | `Ipopt` | `blocked_by_349` | Admits registry and docs capability evidence only after full validation. |
 
 ### CE / CPE Open Issues
 
