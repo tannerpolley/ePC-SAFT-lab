@@ -15,6 +15,10 @@ from .chemical_equilibrium import (
     compile_reaction_set,
 )
 from .equilibrium import Equilibrium
+from .phase_equilibrium_certification import (
+    phase_equilibrium_certification_contracts,
+    validate_phase_equilibrium_certification_contracts,
+)
 from .workflows import (
     EquilibriumPhase,
     EquilibriumResult,
@@ -42,5 +46,7 @@ __all__ = [
     "chemical_equilibrium_native_payload",
     "compile_chemical_equilibrium_schema",
     "compile_reaction_set",
+    "phase_equilibrium_certification_contracts",
     "provider_contract",
+    "validate_phase_equilibrium_certification_contracts",
 ]

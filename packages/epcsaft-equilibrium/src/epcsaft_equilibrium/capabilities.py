@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from ._native import native_ipopt_backend_info, provider_contract
 from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
+from .phase_equilibrium_certification import (
+    phase_equilibrium_certification_contracts,
+    validate_phase_equilibrium_certification_contracts,
+)
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES = (
     "EquilibriumProblem",
@@ -404,6 +408,25 @@ def capabilities() -> dict[str, object]:
     ipopt_route_available = bool(ipopt.get("available", False))
     activation = _activation_capabilities(ipopt_route_available=ipopt_route_available)
     public_routes_by_family = dict(activation["public_routes_by_family"])
+    route_derivative_rows = [_capability_value(row) for row in EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE]
+    route_derivative_evidence = {
+        "source": "epcsaft_equilibrium",
+        "implemented_capability_claims_only": False,
+        "production_rows_are_capability_safe": True,
+        "rows": route_derivative_rows,
+    }
+    phase_equilibrium_certification = phase_equilibrium_certification_contracts(
+        activation=activation,
+        route_derivative_evidence=route_derivative_evidence,
+    )
+    certification_blockers = validate_phase_equilibrium_certification_contracts(
+        phase_equilibrium_certification,
+    )
+    if certification_blockers:
+        raise RuntimeError(
+            "phase equilibrium certification contract failed: "
+            + ", ".join(certification_blockers)
+        )
     return {
         "package": "epcsaft-equilibrium",
         "owner": "equilibrium_extension",
@@ -439,12 +462,8 @@ def capabilities() -> dict[str, object]:
             ],
             "auto_policy": "public_frontend_forces_cppad_else_raise",
         },
-        "route_derivative_evidence": {
-            "source": "epcsaft_equilibrium",
-            "implemented_capability_claims_only": False,
-            "production_rows_are_capability_safe": True,
-            "rows": [_capability_value(row) for row in EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE],
-        },
+        "route_derivative_evidence": route_derivative_evidence,
+        "phase_equilibrium_certification": phase_equilibrium_certification,
         "bubble_dew_derived_routes": {
             "available": bool(activation["ipopt_available"]),
             "production": True,

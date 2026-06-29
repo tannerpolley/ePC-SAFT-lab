@@ -127,5 +127,5 @@ its closed children retained as historical implementation proof.
 - No release claim.
 - No downstream application metrics.
 - No broad capability text for planned routes.
-- No fallback solver flags or diagnostic-only success counted as production
+- No solver dodge flags or diagnostic-only success counted as production
   route acceptance.

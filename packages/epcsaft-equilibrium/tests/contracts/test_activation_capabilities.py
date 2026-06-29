@@ -75,6 +75,23 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     ]
     assert public_route_map == EXPECTED_PUBLIC_ROUTE_FAMILIES
     assert capabilities["public_routes"] == sorted(EXPECTED_PUBLIC_ROUTE_FAMILIES)
+    certification = capabilities["phase_equilibrium_certification"]
+    assert certification["schema_version"] == 1
+    assert certification["public_route_family_map"] == EXPECTED_PUBLIC_ROUTE_FAMILIES
+    assert certification["public_routes"] == sorted(EXPECTED_PUBLIC_ROUTE_FAMILIES)
+    assert [contract["selector_family"] for contract in certification["production_route_contracts"]] == [
+        "neutral_tp_flash",
+        "neutral_lle",
+        "single_component_vle",
+        "neutral_multiphase_nonassoc",
+        "electrolyte_lle",
+        "bubble_dew_derived_routes",
+    ]
+    assert {row["selector_family"] for row in certification["planned_route_families"]} == {
+        "reactive_speciation",
+        "reactive_lle",
+        "reactive_electrolyte_lle",
+    }
     assert activation["public_routes"] == [
         "bubble_pressure",
         "bubble_temperature",
