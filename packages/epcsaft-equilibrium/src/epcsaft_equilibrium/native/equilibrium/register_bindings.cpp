@@ -22,6 +22,7 @@
 #include "equilibrium/core/activation_matrix.h"
 #include "equilibrium/core/chemical_equilibrium_nlp.h"
 #include "equilibrium/core/continuation_driver.h"
+#include "equilibrium/core/feasible_initialization.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/selector_core.h"
@@ -975,6 +976,37 @@ epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput chemical_equilibri
     return out;
 }
 
+epcsaft::native::equilibrium_nlp::FeasibleInitializationInput feasible_initialization_input_from_payload(
+    const py::dict& payload,
+    double amount_floor
+) {
+    epcsaft::native::equilibrium_nlp::FeasibleInitializationInput out;
+    out.species_labels = required_payload_field<std::vector<std::string>>(
+        payload,
+        "species_labels",
+        "feasible initialization payload"
+    );
+    out.conservation_labels = required_payload_field<std::vector<std::string>>(
+        payload,
+        "conservation_labels",
+        "feasible initialization payload"
+    );
+    out.conservation_matrix_row_major = flatten_row_major_matrix(
+        payload,
+        "conservation_matrix",
+        out.conservation_labels.size(),
+        out.species_labels.size(),
+        "feasible initialization conservation_matrix"
+    );
+    out.conservation_totals = required_payload_field<std::vector<double>>(
+        payload,
+        "conservation_totals",
+        "feasible initialization payload"
+    );
+    out.amount_floor = amount_floor;
+    return out;
+}
+
 py::dict ce_solver_diagnostics_to_dict(
     const epcsaft::native::equilibrium_nlp::IpoptSolveResult& result
 ) {
@@ -1007,6 +1039,34 @@ py::dict ce_solver_diagnostics_to_dict(
         diagnostic_bool_or(result, "variable_scaling_quality_passed", false);
     out["constraint_scaling_quality_passed"] =
         diagnostic_bool_or(result, "constraint_scaling_quality_passed", false);
+    return out;
+}
+
+py::dict feasible_initialization_result_to_dict(
+    const epcsaft::native::equilibrium_nlp::FeasibleInitializationResult& result
+) {
+    py::dict out;
+    out["initializer"] = "max_min_feasible_interior";
+    out["accepted"] = result.accepted;
+    out["solver_ran"] = result.solver_ran;
+    out["rejection_reason"] = result.rejection_reason;
+    out["amounts"] = result.amounts;
+    out["margin"] = result.margin;
+    out["minimum_amount"] = result.minimum_amount;
+    out["balance_residuals"] = result.balance_residuals;
+    out["balance_inf_norm"] = result.balance_inf_norm;
+    out["active_margin_constraint_count"] = result.active_margin_constraint_count;
+    out["solver_status"] = result.solve.solver_status;
+    out["application_status"] = result.solve.application_status;
+    out["objective"] = result.solve.objective;
+    out["iteration_count"] = diagnostic_int_or(result.solve, "iteration_count", 0);
+    out["scaled_constraint_violation_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_constraint_violation_inf_norm", 0.0);
+    out["scaled_stationarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_stationarity_inf_norm", 0.0);
+    out["scaled_complementarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_complementarity_inf_norm", 0.0);
+    out["continuation_state"] = ipopt_continuation_state_to_dict(result.solve);
     return out;
 }
 
@@ -2975,6 +3035,50 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             )
         );
     });
+    m.def("_native_ce_feasible_initialization", [](
+        const py::dict& payload,
+        double amount_floor,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double balance_tolerance,
+        const py::kwargs& kwargs
+    ) {
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                "proof",
+                iteration_history_limit,
+                "auto",
+                0.0,
+                balance_tolerance,
+                tolerance,
+                tolerance
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        const auto input = feasible_initialization_input_from_payload(payload, amount_floor);
+        return feasible_initialization_result_to_dict(
+            epcsaft::native::equilibrium_nlp::solve_max_min_feasible_initialization(
+                input,
+                options,
+                balance_tolerance
+            )
+        );
+    },
+        py::arg("payload"),
+        py::arg("amount_floor") = 1.0e-30,
+        py::arg("max_iterations") = 100,
+        py::arg("tolerance") = 1.0e-10,
+        py::arg("timeout_seconds") = 0.0,
+        py::arg("hessian_mode") = "exact",
+        py::arg("iteration_history_limit") = 20,
+        py::arg("balance_tolerance") = 1.0e-9
+    );
     m.def("_native_chemical_equilibrium_nlp_activation", [](
         const py::dict& schema_payload,
         const py::dict& standard_state_payload,
