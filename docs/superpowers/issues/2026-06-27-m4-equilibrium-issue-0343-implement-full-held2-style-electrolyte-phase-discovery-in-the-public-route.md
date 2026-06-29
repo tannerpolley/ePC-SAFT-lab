@@ -8,13 +8,13 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked_by_344_345_346_347_348_349_350"
+readiness: "blocked_by_350"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md"
 source_plan: "docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md"
 afk_hitl: "HITL"
 branch: codex/held2-phase-discovery-issue-slices
-last_synced: "2026-06-27"
+last_synced: "2026-06-29"
 ---
 
 # M4: implement full HELD2-style electrolyte phase discovery in the public route
@@ -55,24 +55,28 @@ route capability through the seven child issue slices.
 
 ## Acceptance Criteria
 
-- [ ] #344 defines HELD2 public-route doctrine and validation matrix.
-- [ ] #345 implements continuous reduced-electroneutral TPD minimization.
-- [ ] #346 adds the HELD2 Stage I electrolyte stability certificate.
-- [ ] #347 implements HELD2 Stage II dual/cutting-plane discovery.
-- [ ] #348 integrates HELD2 discovery into the public route before Stage III.
-- [ ] #349 adds the public-route scenario validation ladder.
-- [ ] #350 admits registry/docs capability evidence after full validation.
+- [x] #344 defines HELD2 public-route doctrine and validation matrix.
+- [x] #345 implements continuous reduced-electroneutral TPD minimization.
+- [x] #346 adds the HELD2 Stage I electrolyte stability certificate.
+- [x] #347 implements HELD2 Stage II dual/cutting-plane discovery.
+- [x] #348 integrates HELD2 discovery into the public route before Stage III.
+- [x] #349 adds the public-route scenario validation ladder.
+- [x] #350 admits registry/docs capability evidence after full validation.
 - [ ] #191 remains open until #343, #350, and #320 close with retained evidence.
 
 ## Blocked by
 
-- #344
-- #345
-- #346
-- #347
-- #348
-- #349
 - #350
+
+## Child Evidence
+
+- #344 closed with the public-route doctrine and validation matrix.
+- #345 closed with the continuous reduced-electroneutral TPD substrate.
+- #346 closed with the Stage I stability certificate.
+- #347 closed with Stage II dual/cutting-plane discovery and replay evidence.
+- #348 closed with public `electrolyte_lle` orchestration through Stage I/II discovery, Stage III replay consumption, and postsolve certification.
+- #349 closed with the seven-scenario public-route validation ladder.
+- #350 records the registry, docs, and capability-admission evidence for the retained public `electrolyte_lle` scope and keeps #320, generic electrolyte, reactive, CE/CPE, regression, and release claims closed.
 
 ## Non-goals
 

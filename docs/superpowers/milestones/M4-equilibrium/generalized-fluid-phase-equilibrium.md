@@ -58,7 +58,7 @@ The collapsed plan has six visible family labels:
 | --- | --- | --- |
 | `PE-Neutral TP Flash` | Neutral, nonelectrolyte, nonreactive TP flash and neutral VLE/LLE validation ladder | `planned_not_public` |
 | `PE-Associating TP Flash` | Neutral associating TP flash/VLE/LLE after exact association derivatives | `source_backed_associating_lle_public_admitted` |
-| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `representative_public_admitted_blocked_by_khudaida_model_reproduction` |
+| `PE-Electrolyte LLE/TP Flash` | Strong-electrolyte LLE and TP flash with charge-neutral reduced variables | `held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation` |
 | `PE-Generalized Multiphase` | More-than-two-phase phase discovery and phase-set certification | `neutral_public_admitted` |
 | `CE Chemical Equilibrium Placeholder` | Homogeneous single-phase chemical/speciation equilibrium without phase split | `planned_not_public` |
 | `CPE Combined Phase-Chemical Placeholder` | Simultaneous phase split and reaction/speciation equilibrium after PE and CE proof chains | `planned_not_public` |
@@ -575,7 +575,7 @@ iteration-limit seed path are failed boundary evidence.
 `PE-Electrolyte LLE/TP Flash`
 
 - first validation target: Khudaida 2026 electrolyte LLE case;
-- current public admission proof: `uv run --no-sync python
+- representative public admission proof: `uv run --no-sync python
   scripts/validation/check_electrolyte_public_admission.py --json
   --require-source-gate --require-readiness-gate --require-tpd-gate
   --require-held2-discovery --require-stage-iii
@@ -583,7 +583,18 @@ iteration-limit seed path are failed boundary evidence.
   --require-complete` consumes #269/#300/#302/#306/#312/#313 and admits only
   `Equilibrium(..., route="electrolyte_lle")` for the source-backed explicit-ion
   H2O/Ethanol/Butanol/Na+/Cl- NaCl mixed-solvent LLE fixture;
-- follow-on: Held 2014 Figure 6, then Ascani/Sadowski/Held 2022;
+- full HELD2 public-route discovery proof: `uv run --no-sync python
+  scripts/validation/check_electrolyte_public_admission.py --json
+  --require-held2-stage-ii --require-stage-iii
+  --require-postsolve-certification --require-public-admission
+  --require-complete` plus `uv run --no-sync python
+  scripts/validation/check_electrolyte_held2_public_route_scenarios.py
+  --json --require-complete` admit only the same retained public
+  `electrolyte_lle` scope after Stage I/II discovery, Stage III replay
+  consumption, postsolve certification, and stable/unstable/boundary/
+  phase-label/neutral-limit/common-ion/mixed-salt scenario checks;
+- Perdomo/Figiel HELD2 validation remains tracked by #320, and fitted
+  Khudaida model reproduction remains M5 regression work;
 - required before broader exposure: additional source-backed electrolyte
   systems, generic salt/solvent coverage, reactive/speciation coupling, CE/CPE
   routes, regression evidence, and release documentation.

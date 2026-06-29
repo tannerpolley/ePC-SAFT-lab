@@ -103,8 +103,8 @@ multi-scenario validation, and registry/capability admission.
   closeout evidence.
 - #320 is open and blocks #191 until Perdomo/Figiel HELD2 validation evidence
   passes through the public package route.
-- #343 is open and blocks #191 until full HELD2-style public-route phase
-  discovery is implemented through #344 through #350.
+- #343 is open and blocks #191 until the #350 registry/capability admission
+  slice closes the full HELD2-style public-route phase-discovery chain.
 
 ## Child Issues
 
@@ -116,7 +116,7 @@ multi-scenario validation, and registry/capability admission.
 - [#313](2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) closes the postsolve certification child. It certifies explicit-ion material reconstruction, per-phase charge balance, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, and domain margins while keeping public route admission pending.
 - [#314](2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) closed representative public electrolyte GFPE route admission. It consumes every prior electrolyte checker and admits only the source-backed Khudaida explicit-ion `electrolyte_lle` route, but it did not prove figure-level model reproduction or robust HELD2 flashing across the Khudaida data set.
 - [#320](2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) is a remaining validation blocker for Perdomo/Figiel HELD2 electrolyte flash behavior through the public package route.
-- [#343](2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) parents the full HELD2-style public-route discovery implementation chain. It is blocked by #344, #345, #346, #347, #348, #349, and #350.
+- [#343](2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) parents the full HELD2-style public-route discovery implementation chain. #344 through #349 now retain doctrine, continuous TPD, Stage I, Stage II, public-route orchestration, and scenario validation proof; #350 is the final registry/capability admission slice.
 
 ## HELD2 Adoption Checkpoint Sequence
 
@@ -139,10 +139,10 @@ multi-scenario validation, and registry/capability admission.
   the certified representative electrolyte route surface.
 - #320 Perdomo/Figiel checkpoint: prove the retained HELD2 electrolyte flash
   validation scenario through the public package route.
-- #343 full-discovery checkpoint: implement continuous reduced-electroneutral
-  TPD minimization, Stage I stability certification, Stage II dual discovery,
-  Stage III/public-route orchestration, scenario validation, and registry
-  admission through #344 through #350.
+- #343 full-discovery checkpoint: #344 through #349 retain continuous
+  reduced-electroneutral TPD minimization, Stage I stability certification,
+  Stage II dual discovery, Stage III/public-route orchestration, and scenario
+  validation. #350 records the final registry/capability admission evidence.
 
 ## Closeout Evidence Required
 
@@ -199,10 +199,10 @@ claims stay closed.
 - [ ] #320 certifies charged transfer by projected electrochemical or modified
   mean-ionic residuals; raw single-ion chemical-potential equality is rejected.
 - [ ] #320 HELD2 flash scenario tests cover neutral-limit parity, source-backed electrolyte LLE, common-ion or mixed-salt reduced coordinates, stable feeds, unstable feeds, boundary feeds, and phase-label permutations.
-- [ ] #343 closes after #344 through #350 implement full HELD2-style public-route phase discovery.
-- [ ] #348 proves the public `electrolyte_lle` route consumes Stage II candidates before Stage III refinement.
-- [ ] #349 proves stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt public-route scenarios.
-- [ ] #350 updates registry and capability evidence only after the full validation ladder passes.
+- [ ] #343 closes after #350 merges the final registry/capability admission evidence.
+- [x] #348 proves the public `electrolyte_lle` route consumes Stage II candidates before Stage III refinement.
+- [x] #349 proves stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt public-route scenarios.
+- [x] #350 updates registry and capability evidence only after the full validation ladder passes.
 - [ ] Capability evidence distinguishes neutral, associating, electrolyte, and reactive support without broadening beyond the full retained evidence.
 - [ ] Docs state the exact source-backed electrolyte production scope and do not broaden into generic electrolyte, reactive, CE/CPE, regression, or release claims.
 

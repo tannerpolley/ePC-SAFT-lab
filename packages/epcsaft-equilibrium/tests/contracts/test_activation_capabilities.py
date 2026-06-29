@@ -264,6 +264,14 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert electrolyte_public["source_configuration"] == "Khudaida 2026 NaCl mixed-solvent electrolyte LLE"
     assert electrolyte_public["native_component_set"] == ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
     assert electrolyte_public["stage_status"] == "public_admission_complete"
+    assert (
+        electrolyte_public["phase_discovery_status"]
+        == "held2_public_route_phase_discovery_and_scenario_validation_admitted"
+    )
+    assert (
+        "scripts/validation/check_electrolyte_held2_public_route_scenarios.py"
+        in electrolyte_public["tests"]
+    )
     assert "electrolyte_lle" in activation["public_routes"]
     assert "electrolyte_lle" in activation["production_families"]
     electrolyte_activation = next(
@@ -274,6 +282,11 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert electrolyte_activation["proof_routes"] == ["electrolyte_held2_public_route_admission"]
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
     assert activation["public_route_family_map"]["electrolyte_lle"] == "electrolyte_lle"
+    assert (
+        capabilities["electrolyte_lle"]["phase_discovery_status"]
+        == "held2_public_route_phase_discovery_and_scenario_validation_admitted"
+    )
+    assert "mixed-salt scenario ladder" in capabilities["electrolyte_lle"]["validation_scope"]
 
     deleted_route_keys = {
         "neutral_lle_flash",

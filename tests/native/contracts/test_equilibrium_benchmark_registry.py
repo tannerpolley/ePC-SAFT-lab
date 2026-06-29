@@ -86,6 +86,11 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
         "PE-Associating TP Flash"
     ]
     assert benchmarks["Khudaida 2026 electrolyte LLE"]["priority_rank"] == 1
+    assert benchmarks["Khudaida 2026 electrolyte LLE"]["status"] == (
+        "held2_public_route_phase_discovery_admitted"
+    )
+    assert "Perdomo/Figiel validation" in benchmarks["Khudaida 2026 electrolyte LLE"]["todo"]
+    assert "CE/CPE" in benchmarks["Khudaida 2026 electrolyte LLE"]["todo"]
     assert benchmarks["Held 2014 Figure 6"]["priority_rank"] == 2
     assert benchmarks["Ascani/Sadowski/Held 2022 mixed-solvent LLE"]["priority_rank"] == 3
 

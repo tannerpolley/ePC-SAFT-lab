@@ -21,7 +21,7 @@ activation_status_vocabulary:
   planned_not_public: "Planning family with no generalized production exposure."
   implemented_utility_not_generalized: "Existing public utility behavior may exist, but does not satisfy generalized admission gates."
   source_backed_associating_lle_public_admitted: "Source-backed associating LLE public admission for the retained methanol/cyclohexane fixture only."
-  representative_public_admitted_blocked_by_khudaida_model_reproduction: "Representative source-backed electrolyte LLE public admission is retained for the explicit-ion Khudaida fixture, but full Khudaida model reproduction and broader HELD2 flash validation remain blocked by issue #320."
+  held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation: "Full HELD2-style public-route phase-discovery evidence is admitted for the retained electrolyte_lle scope after issue #350. Perdomo/Figiel HELD2 validation, generic electrolyte families, fitted-model regression, CE/CPE, reactive, and release claims remain closed until their own gates pass."
   diagnostic_only: "Internal helper or diagnostic layer only."
   source_data_needed: "A source-backed target exists but local executable fixture data are missing."
 
@@ -191,7 +191,7 @@ family_rows:
 
   - family_label: "PE-Electrolyte LLE/TP Flash"
     family_kind: phase_equilibrium
-    activation_status: representative_public_admitted_blocked_by_khudaida_model_reproduction
+    activation_status: held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation
     production_exposed: true
     existing_public_utility_routes: [electrolyte_lle]
     scope: "Strong-electrolyte LLE and TP flash with charge-neutral reduced variables."
@@ -201,10 +201,10 @@ family_rows:
     objective_family: pressure_transformed_helmholtz_electrolyte
     hard_constraints: [material_balance, charge_balance, phase_pressure_consistency, electrochemical_potential_equality]
     derivative_contract: born_ssm_ds_exact_hessian_required_before_electrolyte_validation
-    phase_discovery_status: held2_postsolve_certified_representative_public_admission_complete_full_khudaida_model_reproduction_blocked_by_320
+    phase_discovery_status: held2_public_route_phase_discovery_and_scenario_validation_admitted_perdomo_figiel_validation_blocked_by_320
     phase_discovery_contract:
-      completed_issue: 306
-      scope: "HELD2 counterion-pair phase discovery plus Stage III refinement, postsolve certification, and public route admission are retained as separate evidence gates."
+      completed_issue: 350
+      scope: "Full HELD2-style public-route phase discovery is admitted for the retained electrolyte_lle scope through #344-#350: doctrine, continuous TPD, Stage I, Stage II, public route orchestration, scenario validation, and registry/capability admission."
       required_payload_groups:
         - prerequisite_gate_receipts_269_300_302
         - charged_species_ordering_and_charges
@@ -212,8 +212,12 @@ family_rows:
         - reduced_coordinate_lift_back_lift_residuals
         - finite_reduced_tpd_candidate_metrics
         - pair_based_mean_ionic_residual_bookkeeping
+        - stage_i_stability_certificate
+        - stage_ii_dual_loop_bound_history_and_replay
         - stage_iii_reduced_variable_refinement
         - postsolve_explicit_ion_phase_set_certification
+        - public_route_stage_i_to_postsolve_orchestration
+        - seven_scenario_public_route_validation_ladder
         - stage_statuses_with_public_admission
       required_matrix_tests:
         - nacl_single_salt_rank_one
@@ -231,12 +235,16 @@ family_rows:
       - reduced_electroneutral_variable_basis
       - electrolyte_tpd
       - held2_counterion_pair_phase_discovery
+      - held2_stage_i_stability_certificate
+      - held2_stage_ii_dual_phase_discovery
       - held2_stage_iii_reduced_variable_refinement
       - electrolyte_postsolve_phase_set_certification
       - held2_stage_discovery
       - charge_and_electrochemical_certification
       - electrolyte_gfpe_closed_admission_source_gate
       - electrolyte_public_route_admission
+      - held2_public_route_scenario_validation
+      - held2_public_route_capability_admission
     admission_evidence:
       - evidence_label: "Khudaida electrolyte GFPE closed-admission gate"
         evidence_tier: T1
@@ -270,9 +278,19 @@ family_rows:
         result_requirement: "Checker returns complete with no blockers; explicit-ion feed reconstruction <= 1.0e-4; phase and total charge residuals <= 1.0e-8; neutral and mean-ionic transfer residuals <= 1.0e-4; pressure consistency <= 1.0e-4; phase distance exceeds 1.0e-8."
       - evidence_label: "Electrolyte public route admission gate"
         evidence_tier: T1
-        command: "uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete"
-        scope: "Public source-backed electrolyte LLE admission evidence: consumes #269/#300/#302/#306/#312/#313, calls `Equilibrium(..., route='electrolyte_lle')`, and exposes only the certified Khudaida 2026 H2O/Ethanol/Butanol/Na+/Cl- pre-association electrolyte LLE scope."
-        result_requirement: "Checker returns complete with no blockers; public route `electrolyte_lle` maps to selector family `electrolyte_lle`; phase labels are `liquid1` and `liquid2`; phase and total charge residuals are <= 1.0e-8; pressure consistency <= 1.0e-4; exact reduced Jacobian/Hessian receipts are retained; reactive, CE, CPE, regression, and release claims remain closed."
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete"
+        scope: "Public source-backed electrolyte LLE admission evidence after #348: calls `Equilibrium(..., route='electrolyte_lle')`, requires HELD2 Stage I/II discovery provenance, consumes the Stage II replay in Stage III, and exposes only the certified Khudaida 2026 H2O/Ethanol/Butanol/Na+/Cl- pre-association electrolyte LLE scope."
+        result_requirement: "Checker returns complete with no blockers; Stage II status is `dual_loop_verified`; Stage III consumes the Stage II replay payload; public route `electrolyte_lle` maps to selector family `electrolyte_lle`; phase labels are `liquid1` and `liquid2`; phase and total charge residuals are <= 1.0e-8; pressure consistency <= 1.0e-4; exact reduced Jacobian/Hessian receipts are retained; reactive, CE, CPE, regression, and release claims remain closed."
+      - evidence_label: "Electrolyte HELD2 public-route scenario validation ladder"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete"
+        scope: "Full HELD2 public-route scenario validation after #349: stable feed, unstable feed, boundary feed, phase-label permutation, neutral-limit parity, common-ion electrolyte, and mixed-salt/asymmetric electrolyte cases retain Stage I/II, Stage III, postsolve, reduced-basis, charge, transfer, and phase-distance diagnostics."
+        result_requirement: "Checker returns complete with no blockers and 7 accepted scenarios; unstable/boundary/phase-label rows use the public `electrolyte_lle` route with Stage II `dual_loop_verified`, Stage III `complete`, postsolve `complete`, positive phase distance, charge residual <= tolerance, and mean-ionic residual <= tolerance; neutral-limit rows make no charged residual-family claim; common-ion and mixed-salt rows retain full-rank reduced-basis evidence."
+      - evidence_label: "Electrolyte HELD2 capability admission registry contract"
+        evidence_tier: T1
+        command: "uv run --no-sync python -m pytest tests\\native\\contracts\\test_equilibrium_benchmark_registry.py tests\\native\\contracts\\test_generalized_equilibrium_registry.py -q"
+        scope: "Issue #350 registry and capability-doc admission: machine-checks that the electrolyte family row names the exact public-route proof commands, admits only the retained `electrolyte_lle` scope, and keeps #320 Perdomo/Figiel validation plus generic electrolyte, reactive, CE/CPE, regression, and release surfaces closed."
+        result_requirement: "Registry contract tests pass; docs validation passes separately; #191 remains blocked by #320 and #343 until their GitHub issues close with retained evidence."
     reference_cases:
       - case_label: "Khudaida 2026 electrolyte LLE"
         evidence_tier: T1
@@ -284,6 +302,8 @@ family_rows:
           - electrochemical_potential_equality
           - born_ssm_ds_exact_hessian
           - electrolyte_tpd_or_held2_certification
+          - held2_public_route_phase_discovery
+          - held2_public_route_scenario_validation
           - electrolyte_postsolve_phase_set_certification
           - electrolyte_public_route_admission
       - case_label: "Held 2014 Figure 6"
@@ -593,10 +613,10 @@ benchmark_cases:
   - case_label: "Khudaida 2026 electrolyte LLE"
     family_labels: ["PE-Electrolyte LLE/TP Flash"]
     priority_rank: 1
-    status: fixture_available_not_generalized_production
+    status: held2_public_route_phase_discovery_admitted
     fixture_status: available
     source_path: "data/reference/equilibrium_benchmarks/electrolyte_lle/water_ethanol_isobutanol_nacl"
-    todo: "Use as first electrolyte PE validation target after Born SSM+DS exact Hessian and HELD2 gates pass."
+    todo: "Retained as the admitted public electrolyte_lle HELD2 phase-discovery scope after #350. Do not treat it as Perdomo/Figiel validation, fitted Khudaida model reproduction, generic electrolyte flash coverage, CE/CPE, reactive, regression, or release evidence."
 
   - case_label: "Held 2014 Figure 6"
     family_labels: ["PE-Electrolyte LLE/TP Flash"]

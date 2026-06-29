@@ -317,15 +317,18 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "parameter_bundle": "analyses/paper_validation/2026_khudaida/parameters",
         "reduced_basis": "independent_counterion_pair_matrix",
         "stage_status": "public_admission_complete",
+        "phase_discovery_status": "held2_public_route_phase_discovery_and_scenario_validation_admitted",
         "route_hessian_mode": "limited_memory_charged_born_route_with_exact_reduced_derivative_receipts",
         "reason": (
-            "issue #314 admits only the source-backed Khudaida 2026 NaCl mixed-solvent "
-            "electrolyte LLE route after #269/#300/#302/#306/#312/#313 evidence proves "
-            "source fixture parsing, reduced charge-neutral variables, charge-neutral TPD, "
-            "HELD2 phase discovery, Stage III refinement, and postsolve phase-set certification."
+            "issue #350 admits only the source-backed Khudaida 2026 NaCl mixed-solvent "
+            "electrolyte LLE route after #269/#300/#302/#306/#312/#313/#314 and #344-#349 "
+            "evidence proves source fixture parsing, reduced charge-neutral variables, "
+            "continuous charge-neutral TPD, HELD2 Stage I/II discovery, Stage III replay "
+            "consumption, postsolve phase-set certification, and the retained scenario ladder."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_public_admission.py",
+            "scripts/validation/check_electrolyte_held2_public_route_scenarios.py",
             "tests/native/contracts/test_electrolyte_public_admission.py",
             "tests/native/contracts/test_electrolyte_postsolve_certification.py",
             "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
@@ -499,6 +502,12 @@ def capabilities() -> dict[str, object]:
             "input_scope": (
                 "source-backed Khudaida 2026 NaCl mixed-solvent LLE for explicit-ion "
                 "H2O/Ethanol/Butanol/Na+/Cl- feeds built from the retained parameter bundle"
+            ),
+            "phase_discovery_status": "held2_public_route_phase_discovery_and_scenario_validation_admitted",
+            "validation_scope": (
+                "retained HELD2 Stage I/II public-route discovery, Stage III replay consumption, "
+                "postsolve certification, and stable/unstable/boundary/phase-label/neutral-limit/"
+                "common-ion/mixed-salt scenario ladder for the admitted electrolyte_lle fixture only"
             ),
             "requires": ["cppad", "ipopt"],
             "unsupported_surfaces": [
