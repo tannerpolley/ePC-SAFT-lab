@@ -1,6 +1,7 @@
 # M4 CPE: define simultaneous phase-plus-chemistry interface contract
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/331
+**Parent Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/376
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-25-m4-equilibrium-standalone-chemical-equilibrium-before-cpe.md

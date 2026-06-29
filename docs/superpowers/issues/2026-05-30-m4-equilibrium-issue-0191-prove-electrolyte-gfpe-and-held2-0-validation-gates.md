@@ -13,6 +13,7 @@ release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
 afk_hitl: "HITL"
+parent_issue: "https://github.com/ePC-SAFT/ePC-SAFT/issues/370"
 branch: codex/issue-0191-electrolyte-closeout
 last_synced: "2026-06-29"
 ---
@@ -26,6 +27,7 @@ Branch: codex/issue-0191-electrolyte-closeout
 AFK/HITL: HITL
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/191
+**Parent Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/370
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
@@ -68,6 +70,12 @@ by retained evidence.
 admission, not full electrolyte LLE model reproduction. The #314 checker used a
 source-backed Khudaida explicit-ion feed and certified one public-route payload;
 that evidence is valid but too narrow for final M4 electrolyte LLE closeout.
+
+On 2026-06-29, #191 was reparented under #370 as part of the unified
+phase-equilibrium certification tree. #191 remains the electrolyte HELD2/GFPE
+closeout issue, but final closure now also has to respect the shared production
+phase-equilibrium certification contract owned by #361/#362 and the electrolyte
+LLE residual-block parent #370.
 
 #320 closed by PR #341 on 2026-06-29 with retained Perdomo/Figiel HELD2 flash
 and boundary evidence through the public package route. The Khudaida
