@@ -102,7 +102,7 @@ def test_electrolyte_held2_public_route_result_retains_stage_ii_to_stage_iii_pro
     )
     assert diagnostics["exact_hessian_available"] is True
     assert diagnostics["hessian_approximation"] == "exact"
-    assert diagnostics["route_hessian_approximation"] == "limited-memory"
+    assert diagnostics["route_hessian_approximation"] == "exact"
     assert diagnostics["charge_balance"]["max_phase_charge_residual"] <= 1.0e-8
     assert diagnostics["transfer_residuals"]["status"] == "accepted"
     assert np.max(np.abs(result.phases["liquid1"].composition - result.phases["liquid2"].composition)) > 1.0e-8

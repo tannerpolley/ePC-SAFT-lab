@@ -497,7 +497,7 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
             "held2_phase_discovery": held2,
             "electrolyte_stage_iii_refinement": stage_iii,
             "hessian_approximation": "exact",
-            "route_hessian_approximation": "limited-memory",
+            "route_hessian_approximation": "exact",
             "exact_hessian_available": True,
             "blockers": [],
         },

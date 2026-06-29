@@ -408,7 +408,7 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
         "mean_ionic_transfer_tolerance": 1.0e-4,
         "exact_hessian_available": True,
         "hessian_approximation": "exact",
-        "route_hessian_approximation": "limited-memory",
+        "route_hessian_approximation": "exact",
     }
     stable = {
         "status": "accepted",
