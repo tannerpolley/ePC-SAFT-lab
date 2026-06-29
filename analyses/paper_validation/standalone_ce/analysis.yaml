@@ -16,6 +16,9 @@ scope:
 commands:
   checker:
     - uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete
+  mea_ce_oracle_comparison:
+    - uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py
+    - uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py
 validation_families:
   - analytic_ideal
   - charged_conservation
@@ -26,4 +29,10 @@ validation_families:
 outputs:
   - path: analyses/paper_validation/standalone_ce/shared/results/summary.json
     kind: retained_validation_ladder_summary
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_oracle_speciation_20C.svg
+    kind: retained_ce_oracle_comparison_figure
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_oracle_speciation_40C.svg
+    kind: retained_ce_oracle_comparison_figure
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_oracle_speciation_error_summary.svg
+    kind: retained_ce_oracle_error_figure
 claim_boundary: No reactive LLE, reactive electrolyte LLE, or CPE capability is proven by this standalone CE ladder.

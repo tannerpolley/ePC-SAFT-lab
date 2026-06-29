@@ -1,0 +1,11 @@
+temperature_C,temperature_K,reaction_label,ln_K,source,source_constant_label
+20.0,293.15,R1_water_autoionization,-40.654410296305315,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R1_water_autoionization
+20.0,293.15,R2_CO2_to_HCO3,-18.728510900368832,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R2_CO2_to_HCO3
+20.0,293.15,R3_HCO3_to_CO3,-27.919776660055334,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R3_HCO3_to_CO3
+20.0,293.15,R4_MEACOO_hydrolysis,-7.136562783557905,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R4_MEACOO_hydrolysis
+20.0,293.15,R5_MEAH_dissociation,-28.008635384581275,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R5_MEAH_dissociation
+40.0,313.15,R1_water_autoionization,-39.20847211814555,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R1_water_autoionization
+40.0,313.15,R2_CO2_to_HCO3,-18.52157205941222,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R2_CO2_to_HCO3
+40.0,313.15,R3_HCO3_to_CO3,-27.55307337666852,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R3_HCO3_to_CO3
+40.0,313.15,R4_MEACOO_hydrolysis,-6.79989583266805,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R4_MEACOO_hydrolysis
+40.0,313.15,R5_MEAH_dissociation,-26.37413522909149,MEA-Thermodynamics Smith-Missen Phase 1 retained fixture,R5_MEAH_dissociation
