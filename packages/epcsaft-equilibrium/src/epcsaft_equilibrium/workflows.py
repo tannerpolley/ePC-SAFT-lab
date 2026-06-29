@@ -1027,6 +1027,7 @@ def _accepted_native_electrolyte_lle_result(
         "phase_set": certification_payload.get("phase_set", {}),
         "domain_margins": certification_payload.get("domain_margins", {}),
         "explicit_ion_reconstruction": certification_payload.get("explicit_ion_reconstruction", {}),
+        "projected_residual_route": stage_iii.get("projected_residual_route", {}),
         "electrolyte_stage_iii_refinement": stage_iii,
         "held2_phase_discovery": stage_iii.get("held2_phase_discovery", {}),
         "derivative_receipts": derivatives,

@@ -6,8 +6,10 @@
 #include "equilibrium/blocks/phase_equilibrium_residual_block.h"
 #include "eos/core_internal.h"
 #include "equilibrium/derivatives/nlp_contract_snapshot.h"
+#include "equilibrium/derivatives/route_second_order.h"
 #include "equilibrium/solvers/ipopt_adapter.h"
 #include "equilibrium/core/nlp_problem.h"
+#include "equilibrium/core/variable_transform.h"
 #include "equilibrium/blocks/reaction_block.h"
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
@@ -35,6 +37,7 @@ constexpr double kCompositionFloor = 1.0e-12;
 constexpr double kCandidateCompositionTolerance = 1.0e-6;
 constexpr double kCandidateLogVolumeTolerance = 1.0e-5;
 constexpr std::size_t kContinuousTpdMaxStartsPerPhaseKind = 2;
+constexpr double kProjectedResidualObjectiveRegularization = 1.0e-14;
 const std::string kHeldStageIIDualLoopSeedName = "held_stage_ii_dual_loop_candidate_pair";
 const std::string kHeldStageIIDualLoopCandidateSetName = "held_stage_ii_dual_loop_candidate_set";
 
@@ -246,6 +249,18 @@ double positive_sum(const std::vector<double>& values, const std::string& label)
     }
     require_positive_finite(total, label + " total");
     return total;
+}
+
+double pressure_consistency_tolerance(
+    double target_pressure,
+    double residual_tolerance,
+    const std::string& label
+) {
+    require_positive_finite(residual_tolerance, label + " residual tolerance");
+    if (!std::isfinite(target_pressure)) {
+        throw ValueError(label + " target pressure must be finite.");
+    }
+    return std::max(std::abs(target_pressure) * residual_tolerance, residual_tolerance);
 }
 
 std::vector<double> normalized_positive_values(const std::vector<double>& values, const std::string& label) {
@@ -567,6 +582,111 @@ void require_charge_neutral_composition(
     const double residual = charge_residual_abs(composition, charges);
     if (residual > charge_tolerance) {
         throw ValueError(label + " must be charge neutral.");
+    }
+}
+
+void append_electrolyte_trial_if_unique(
+    std::vector<std::vector<double>>& trials,
+    const std::vector<double>& composition,
+    const std::vector<double>& charges,
+    double charge_tolerance,
+    const std::string& label
+) {
+    std::vector<double> normalized = normalized_trial_composition(composition, label);
+    require_charge_neutral_composition(normalized, charges, label, charge_tolerance);
+    for (const std::vector<double>& existing : trials) {
+        if (composition_distance_inf_norm(existing, normalized) < kCandidateCompositionTolerance) {
+            return;
+        }
+    }
+    trials.push_back(std::move(normalized));
+}
+
+void append_trace_ion_electrolyte_trials(
+    std::vector<std::vector<double>>& trials,
+    const std::vector<double>& reference,
+    const std::vector<double>& charges,
+    double charge_tolerance
+) {
+    std::vector<int> charged_indices;
+    std::vector<int> neutral_indices;
+    double charged_sum = 0.0;
+    double neutral_sum = 0.0;
+    for (std::size_t index = 0; index < reference.size(); ++index) {
+        if (std::abs(charges[index]) > charge_tolerance) {
+            charged_indices.push_back(static_cast<int>(index));
+            charged_sum += reference[index];
+        } else {
+            neutral_indices.push_back(static_cast<int>(index));
+            neutral_sum += reference[index];
+        }
+    }
+    if (charged_indices.empty() || neutral_indices.empty() || charged_sum <= 0.0 || neutral_sum <= 0.0) {
+        return;
+    }
+
+    const double trace_charged_sum = std::min(
+        0.5 * charged_sum,
+        std::max(2.0 * charge_tolerance, 10.0 * kCompositionFloor * static_cast<double>(charged_indices.size()))
+    );
+    if (!(trace_charged_sum > kCompositionFloor * static_cast<double>(charged_indices.size()))) {
+        return;
+    }
+    const double charged_scale = trace_charged_sum / charged_sum;
+    const double neutral_total = 1.0 - trace_charged_sum;
+    if (!(neutral_total > kCompositionFloor * static_cast<double>(neutral_indices.size()))) {
+        return;
+    }
+
+    const auto build_from_neutral_weights = [&](const std::vector<double>& neutral_weights) {
+        require_size(neutral_weights, neutral_indices.size(), "Electrolyte trace-ion neutral trial weight");
+        std::vector<double> candidate(reference.size(), 0.0);
+        for (int charged_index : charged_indices) {
+            candidate[static_cast<std::size_t>(charged_index)] =
+                reference[static_cast<std::size_t>(charged_index)] * charged_scale;
+        }
+        for (std::size_t neutral = 0; neutral < neutral_indices.size(); ++neutral) {
+            candidate[static_cast<std::size_t>(neutral_indices[neutral])] =
+                neutral_total * neutral_weights[neutral];
+        }
+        append_electrolyte_trial_if_unique(
+            trials,
+            candidate,
+            charges,
+            charge_tolerance,
+            "Electrolyte TPD trace-ion trial composition"
+        );
+    };
+
+    std::vector<double> feed_neutral_weights;
+    feed_neutral_weights.reserve(neutral_indices.size());
+    for (int neutral_index : neutral_indices) {
+        feed_neutral_weights.push_back(reference[static_cast<std::size_t>(neutral_index)] / neutral_sum);
+    }
+    build_from_neutral_weights(feed_neutral_weights);
+
+    if (neutral_indices.size() == 2) {
+        for (double first_fraction : {
+                 1.0e-4,
+                 1.0e-3,
+                 1.0e-2,
+                 5.0e-2,
+                 1.0e-1,
+                 2.5e-1,
+                 5.0e-1,
+                 7.5e-1,
+                 9.0e-1,
+                 9.9e-1,
+                 9.99e-1}) {
+            build_from_neutral_weights({first_fraction, 1.0 - first_fraction});
+        }
+        return;
+    }
+
+    for (std::size_t rich = 0; rich < neutral_indices.size(); ++rich) {
+        std::vector<double> weights(neutral_indices.size(), kCompositionFloor);
+        weights[rich] = 1.0 - kCompositionFloor * static_cast<double>(neutral_indices.size() - 1);
+        build_from_neutral_weights(weights);
     }
 }
 
@@ -1109,6 +1229,34 @@ std::vector<double> pair_residuals_from_projected_reduced_ln_fugacity(
     return residuals;
 }
 
+std::vector<double> pair_residuals_from_reduced_residual_block(
+    const std::vector<std::vector<double>>& counterion_matrix,
+    const std::vector<int>& charged_indices,
+    const PhaseEquilibriumResidualBlockResult& residual_block
+) {
+    if (residual_block.phase_count != 2) {
+        throw ValueError("Electrolyte Stage III reduced residual diagnostics require exactly two phases.");
+    }
+    if (residual_block.residuals.size() < static_cast<std::size_t>(residual_block.species_count)) {
+        throw ValueError("Electrolyte Stage III reduced residual block is shorter than the species count.");
+    }
+    std::vector<double> residuals;
+    residuals.reserve(counterion_matrix.size());
+    for (const std::vector<double>& row : counterion_matrix) {
+        require_size(row, charged_indices.size(), "Electrolyte Stage III counterion-pair row");
+        double residual = 0.0;
+        for (std::size_t charged = 0; charged < charged_indices.size(); ++charged) {
+            const int global_index = charged_indices[charged];
+            if (global_index < 0 || global_index >= residual_block.species_count) {
+                throw ValueError("Electrolyte Stage III charged species index is out of residual-block range.");
+            }
+            residual += row[charged] * residual_block.residuals[static_cast<std::size_t>(global_index)];
+        }
+        residuals.push_back(residual);
+    }
+    return residuals;
+}
+
 std::vector<std::vector<double>> electrolyte_tpd_trial_compositions(
     const std::vector<double>& reference,
     const std::vector<double>& charges,
@@ -1121,14 +1269,21 @@ std::vector<std::vector<double>> electrolyte_tpd_trial_compositions(
     std::vector<std::vector<double>> out;
     out.push_back(normalized);
     if (normalized.size() > 1) {
-        out.push_back(normalized_trial_composition(
+        append_electrolyte_trial_if_unique(
+            out,
             deterministic_composition_shift(normalized, charges, "Electrolyte TPD shifted composition", 1.0),
+            charges,
+            charge_tolerance,
             "Electrolyte TPD shifted composition"
-        ));
-        out.push_back(normalized_trial_composition(
+        );
+        append_electrolyte_trial_if_unique(
+            out,
             deterministic_composition_shift(normalized, charges, "Electrolyte TPD shifted composition", -1.0),
+            charges,
+            charge_tolerance,
             "Electrolyte TPD shifted composition"
-        ));
+        );
+        append_trace_ion_electrolyte_trials(out, normalized, charges, charge_tolerance);
     }
     for (const std::vector<double>& candidate : out) {
         require_charge_neutral_composition(candidate, charges, "Electrolyte TPD trial composition", charge_tolerance);
@@ -4016,6 +4171,1201 @@ private:
     int species_count_ = 0;
 };
 
+class ElectrolyteTwoPhaseProjectedResidualProblem final : public NlpProblem {
+public:
+    ElectrolyteTwoPhaseProjectedResidualProblem(
+        add_args args,
+        double temperature,
+        double target_pressure,
+        std::vector<std::vector<double>> phase_amounts,
+        std::vector<double> volumes,
+        std::vector<double> feed_amounts,
+        std::vector<double> charges,
+        std::vector<int> charged_species_indices,
+        std::vector<std::vector<double>> counterion_pair_matrix,
+        double minimum_phase_distance
+    )
+        : args_(std::move(args)),
+          temperature_(temperature),
+          target_pressure_(target_pressure),
+          initial_phase_amounts_(std::move(phase_amounts)),
+          initial_volumes_(std::move(volumes)),
+          feed_amounts_(std::move(feed_amounts)),
+          charges_(std::move(charges)),
+          charged_species_indices_(std::move(charged_species_indices)),
+          counterion_pair_matrix_(std::move(counterion_pair_matrix)),
+          minimum_phase_distance_(minimum_phase_distance) {
+        phase_count_ = static_cast<int>(initial_phase_amounts_.size());
+        species_count_ = static_cast<int>(feed_amounts_.size());
+        if (phase_count_ != 2) {
+            throw ValueError("Electrolyte projected residual route requires exactly two phases.");
+        }
+        if (species_count_ <= 0) {
+            throw ValueError("Electrolyte projected residual route requires at least one species.");
+        }
+        if (!std::isfinite(temperature_) || temperature_ <= 0.0 || !std::isfinite(target_pressure_)) {
+            throw ValueError("Electrolyte projected residual route received invalid T/P specifications.");
+        }
+        require_size(charges_, static_cast<std::size_t>(species_count_), "Electrolyte projected residual charge");
+        require_size(initial_volumes_, initial_phase_amounts_.size(), "Electrolyte projected residual volume");
+        for (const auto& amounts : initial_phase_amounts_) {
+            require_size(amounts, static_cast<std::size_t>(species_count_), "Electrolyte projected residual phase amount");
+            for (double amount : amounts) {
+                require_positive_finite(amount, "Electrolyte projected residual phase amount");
+            }
+        }
+        for (double volume : initial_volumes_) {
+            require_positive_finite(volume, "Electrolyte projected residual phase volume");
+        }
+        for (double amount : feed_amounts_) {
+            if (!std::isfinite(amount) || amount < 0.0) {
+                throw ValueError("Electrolyte projected residual feed amounts must be finite and non-negative.");
+            }
+        }
+        for (int charged_index : charged_species_indices_) {
+            if (charged_index < 0 || charged_index >= species_count_) {
+                throw ValueError("Electrolyte projected residual charged species index is out of range.");
+            }
+        }
+        for (int species = 0; species < species_count_; ++species) {
+            const bool charged = std::find(
+                charged_species_indices_.begin(),
+                charged_species_indices_.end(),
+                species
+            ) != charged_species_indices_.end();
+            if (!charged) {
+                neutral_species_indices_.push_back(species);
+            }
+        }
+        if (charged_species_indices_.empty() || counterion_pair_matrix_.empty()) {
+            throw ValueError("Electrolyte projected residual route requires counterion-pair rows.");
+        }
+        for (const auto& row : counterion_pair_matrix_) {
+            require_size(
+                row,
+                charged_species_indices_.size(),
+                "Electrolyte projected residual counterion-pair row"
+            );
+        }
+        if (minimum_phase_distance_ > 0.0) {
+            const std::vector<double> first = phase_composition(
+                initial_phase_amounts_[0],
+                "Electrolyte projected residual first phase amount total"
+            );
+            const std::vector<double> second = phase_composition(
+                initial_phase_amounts_[1],
+                "Electrolyte projected residual second phase amount total"
+            );
+            double max_distance = 0.0;
+            for (int species = 0; species < species_count_; ++species) {
+                const double diff =
+                    first[static_cast<std::size_t>(species)] - second[static_cast<std::size_t>(species)];
+                if (std::abs(diff) > max_distance) {
+                    max_distance = std::abs(diff);
+                    separation_species_index_ = species;
+                    separation_sign_ = diff >= 0.0 ? 1.0 : -1.0;
+                }
+            }
+            if (max_distance <= 0.0) {
+                throw ValueError(
+                    "Electrolyte projected residual route requires distinct initial phases for phase-distance gating."
+                );
+            }
+        }
+    }
+
+    std::string name() const override {
+        return "electrolyte_stage_iii_projected_residual_refinement";
+    }
+
+    int variable_count() const override {
+        return phase_count() * local_variable_count();
+    }
+
+    int constraint_count() const override {
+        return species_count_ + 1 + separation_constraint_count();
+    }
+
+    int jacobian_nonzero_count() const override {
+        const int material_nonzeros = phase_count() * species_count_;
+        const int charge_nonzeros = species_count_;
+        const int separation_nonzeros =
+            separation_constraint_count() > 0 ? phase_count() * species_count_ : 0;
+        return material_nonzeros + charge_nonzeros + separation_nonzeros;
+    }
+
+    NlpBounds bounds() const override {
+        NlpBounds out;
+        const double total_feed = std::accumulate(feed_amounts_.begin(), feed_amounts_.end(), 0.0);
+        const double amount_upper = std::max(1.0, 10.0 * total_feed);
+        const double volume_upper = std::max(1.0, 1.0e6 * total_feed);
+        out.variable_lower.assign(static_cast<std::size_t>(variable_count()), std::log(1.0e-14));
+        out.variable_upper.reserve(static_cast<std::size_t>(variable_count()));
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            for (int species = 0; species < species_count_; ++species) {
+                out.variable_upper.push_back(std::log(amount_upper));
+            }
+            out.variable_upper.push_back(std::log(volume_upper));
+        }
+        out.constraint_lower.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        out.constraint_upper.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        if (separation_constraint_count() > 0) {
+            out.constraint_lower.back() = minimum_phase_distance_;
+            out.constraint_upper.back() = 1.0e12;
+        }
+        return out;
+    }
+
+    std::vector<double> initial_point() const override {
+        const std::vector<double> physical = physical_initial_point();
+        std::vector<double> out;
+        out.reserve(physical.size());
+        for (double value : physical) {
+            require_positive_finite(value, "Electrolyte projected residual physical initial point");
+            out.push_back(std::log(value));
+        }
+        return out;
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        require_size(
+            variables,
+            static_cast<std::size_t>(variable_count()),
+            "Electrolyte projected residual objective variable"
+        );
+        const VariableTransformEvaluation transform = transform_variables(variables);
+        const EosPhaseSystemResult system = phase_system_from_physical(transform.physical_variables);
+        const PhaseEquilibriumResidualBlockResult residuals = residual_block_from_physical(transform.physical_variables);
+        return transformed_objective_second_order(
+            variable_transform_second_order_data(transform),
+            projected_residual_objective(system, residuals, transform.physical_variables)
+        ).value;
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        require_size(
+            variables,
+            static_cast<std::size_t>(variable_count()),
+            "Electrolyte projected residual objective-gradient variable"
+        );
+        const VariableTransformEvaluation transform = transform_variables(variables);
+        const EosPhaseSystemResult system = phase_system_from_physical(transform.physical_variables);
+        const PhaseEquilibriumResidualBlockResult residuals = residual_block_from_physical(transform.physical_variables);
+        return transformed_objective_second_order(
+            variable_transform_second_order_data(transform),
+            projected_residual_objective(system, residuals, transform.physical_variables)
+        ).gradient;
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        const std::vector<double> physical = physical_variables_from_solver(variables);
+        const EosPhaseSystemResult system = phase_system_from_physical(physical);
+        require_system_constraint_values(system);
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(constraint_count()));
+        out.insert(out.end(), system.constraints.begin(), system.constraints.begin() + species_count_);
+        out.push_back(phase_charge_constraint(phase_amounts_from_physical_variables(physical).front()));
+        if (separation_constraint_count() > 0) {
+            out.push_back(phase_separation(phase_amounts_from_physical_variables(physical)));
+        }
+        return out;
+    }
+
+    NlpJacobianStructure jacobian_structure() const override {
+        NlpJacobianStructure out;
+        out.rows.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        out.cols.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                out.rows.push_back(species);
+                out.cols.push_back(phase * local_variable_count() + species);
+            }
+        }
+        const int charge_row = charge_constraint_row();
+        for (int species = 0; species < species_count_; ++species) {
+            out.rows.push_back(charge_row);
+            out.cols.push_back(species);
+        }
+        if (separation_constraint_count() > 0) {
+            const int row = constraint_count() - 1;
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const int phase_offset = phase * local_variable_count();
+                for (int species = 0; species < species_count_; ++species) {
+                    out.rows.push_back(row);
+                    out.cols.push_back(phase_offset + species);
+                }
+            }
+        }
+        return out;
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        const VariableTransformEvaluation transform = transform_variables(variables);
+        const EosPhaseSystemResult system = phase_system_from_physical(transform.physical_variables);
+        require_system_constraint_jacobian(system);
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        const int dense_cols = variable_count();
+        for (int species = 0; species < species_count_; ++species) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const int col = phase * local_variable_count() + species;
+                out.push_back(
+                    system.constraint_jacobian_row_major[
+                        static_cast<std::size_t>(species) * static_cast<std::size_t>(dense_cols)
+                        + static_cast<std::size_t>(col)
+                    ]
+                    * transform.physical_variables[static_cast<std::size_t>(col)]
+                );
+            }
+        }
+        for (int species = 0; species < species_count_; ++species) {
+            out.push_back(
+                charges_[static_cast<std::size_t>(species)]
+                * transform.physical_variables[static_cast<std::size_t>(species)]
+            );
+        }
+        if (separation_constraint_count() > 0) {
+            const std::vector<double> row =
+                phase_separation_jacobian(phase_amounts_from_physical_variables(transform.physical_variables));
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const int phase_offset = phase * local_variable_count();
+                for (int species = 0; species < species_count_; ++species) {
+                    const int col = phase_offset + species;
+                    out.push_back(
+                        row[static_cast<std::size_t>(col)]
+                        * transform.physical_variables[static_cast<std::size_t>(col)]
+                    );
+                }
+            }
+        }
+        return out;
+    }
+
+    bool has_exact_hessian() const override {
+        return true;
+    }
+
+    int hessian_nonzero_count() const override {
+        return LagrangianHessianAssembler(variable_count()).nonzero_count();
+    }
+
+    NlpHessianStructure hessian_structure() const override {
+        return LagrangianHessianAssembler(variable_count()).structure();
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        if (constraint_multipliers.size() != static_cast<std::size_t>(constraint_count())) {
+            throw ValueError("Electrolyte projected residual Hessian multiplier vector size does not match constraints.");
+        }
+        const VariableTransformEvaluation transform = transform_variables(variables);
+        const VariableTransformSecondOrderData transform_second_order =
+            variable_transform_second_order_data(transform);
+        const EosPhaseSystemResult system = phase_system_from_physical(transform.physical_variables);
+        const PhaseEquilibriumResidualBlockResult residuals =
+            residual_block_from_physical(transform.physical_variables);
+        if (!residuals.exact_hessian_available || !residuals.exact_jacobian_available) {
+            throw ValueError("Electrolyte projected residual route requires exact projected fugacity derivatives.");
+        }
+
+        const ObjectiveSecondOrderData physical_objective =
+            projected_residual_objective(system, residuals, transform.physical_variables);
+        ObjectiveSecondOrderData objective =
+            transformed_objective_second_order(transform_second_order, physical_objective);
+
+        ConstraintSecondOrderData physical_constraints;
+        physical_constraints.constraint_count = constraint_count();
+        physical_constraints.variable_count = variable_count();
+        physical_constraints.values = this->constraints(variables);
+        physical_constraints.jacobian_row_major.assign(
+            static_cast<std::size_t>(constraint_count() * variable_count()),
+            0.0
+        );
+        physical_constraints.hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(constraint_count() * variable_count() * variable_count()),
+            0.0
+        );
+        physical_constraints.has_hessian.assign(static_cast<std::size_t>(constraint_count()), false);
+        physical_constraints.backend = hessian_backend();
+
+        if (system.constraint_hessian_tensor_row_major.size()
+            != static_cast<std::size_t>(system.constraint_jacobian_rows * variable_count() * variable_count())) {
+            throw ValueError("Electrolyte projected residual pressure Hessian tensor shape did not match constraints.");
+        }
+        require_system_constraint_hessian(system);
+        require_projected_residual_hessian(residuals);
+        const int eos_constraint_count = species_count_;
+        for (int row = 0; row < eos_constraint_count; ++row) {
+            for (int col = 0; col < variable_count(); ++col) {
+                physical_constraints.jacobian_row_major[
+                    static_cast<std::size_t>(row * variable_count() + col)
+                ] = system.constraint_jacobian_row_major[
+                    static_cast<std::size_t>(row * variable_count() + col)
+                ];
+            }
+            physical_constraints.has_hessian[static_cast<std::size_t>(row)] =
+                row < static_cast<int>(system.constraint_has_hessian.size())
+                && system.constraint_has_hessian[static_cast<std::size_t>(row)];
+            const std::size_t offset = static_cast<std::size_t>(row * variable_count() * variable_count());
+            std::copy(
+                system.constraint_hessian_tensor_row_major.begin() + static_cast<std::ptrdiff_t>(offset),
+                system.constraint_hessian_tensor_row_major.begin()
+                    + static_cast<std::ptrdiff_t>(offset + variable_count() * variable_count()),
+                physical_constraints.hessian_tensor_row_major.begin() + static_cast<std::ptrdiff_t>(offset)
+            );
+        }
+        const int charge_row = charge_constraint_row();
+        for (int species = 0; species < species_count_; ++species) {
+            physical_constraints.jacobian_row_major[
+                static_cast<std::size_t>(charge_row * variable_count() + species)
+            ] = charges_[static_cast<std::size_t>(species)];
+        }
+        if (separation_constraint_count() > 0) {
+            physical_constraints.has_hessian.back() = true;
+            const std::vector<std::vector<double>> phase_amounts =
+                phase_amounts_from_physical_variables(transform.physical_variables);
+            const std::vector<double> row = phase_separation_jacobian(phase_amounts);
+            const std::vector<double> hessian = phase_separation_hessian(phase_amounts);
+            const int separation_row = constraint_count() - 1;
+            for (int col = 0; col < variable_count(); ++col) {
+                physical_constraints.jacobian_row_major[
+                    static_cast<std::size_t>(separation_row * variable_count() + col)
+                ] = row[static_cast<std::size_t>(col)];
+            }
+            const std::size_t offset = static_cast<std::size_t>(
+                separation_row * variable_count() * variable_count()
+            );
+            std::copy(
+                hessian.begin(),
+                hessian.end(),
+                physical_constraints.hessian_tensor_row_major.begin() + static_cast<std::ptrdiff_t>(offset)
+            );
+        }
+        ConstraintSecondOrderData constraints_data =
+            transformed_constraint_second_order(transform_second_order, physical_constraints);
+        const std::vector<double> values = LagrangianHessianAssembler(variable_count()).values(
+            objective_factor,
+            objective,
+            constraints_data,
+            constraint_multipliers
+        );
+        return values;
+    }
+
+    std::string hessian_backend() const override {
+        return "cppad_phase_system_projected_electrolyte_residuals";
+    }
+
+    NlpScaling scaling() const override {
+        const double total_feed = std::accumulate(feed_amounts_.begin(), feed_amounts_.end(), 0.0);
+        const double amount_scale = std::max(1.0, total_feed);
+        NlpScaling out;
+        out.objective = 1.0 / amount_scale;
+        out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
+        out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
+        for (int row = 0; row < species_count_; ++row) {
+            out.constraints[static_cast<std::size_t>(row)] = 1.0 / amount_scale;
+        }
+        out.constraints[static_cast<std::size_t>(charge_constraint_row())] = 1.0 / amount_scale;
+        return out;
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        RouteMetadata metadata = phase_amount_volume_route_metadata(true, false, true);
+        metadata.residual_families = {
+            "scaled_pressure_objective",
+            "neutral_transfer",
+            "mean_ionic_transfer",
+        };
+        metadata.constraint_families = {
+            "material_balance",
+            "phase_charge",
+        };
+        std::map<std::string, std::string> out = route_metadata_diagnostics(metadata);
+        out["residual_derivative_backend"] = "cppad_explicit_density_projected_counterion_pair";
+        out["residual_exact_jacobian"] = "true";
+        out["residual_exact_hessian"] = "true";
+        out["projected_charged_transfer"] = "mean_ionic_counterion_pairs";
+        return out;
+    }
+
+    int phase_count() const {
+        return phase_count_;
+    }
+
+    int species_count() const {
+        return species_count_;
+    }
+
+    std::vector<double> physical_variables_from_solver(
+        const std::vector<double>& solver_variables
+    ) const {
+        return transform_variables(solver_variables).physical_variables;
+    }
+
+private:
+    int local_variable_count() const {
+        return species_count_ + 1;
+    }
+
+    std::vector<double> physical_initial_point() const {
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(variable_count()));
+        for (std::size_t phase = 0; phase < initial_phase_amounts_.size(); ++phase) {
+            out.insert(out.end(), initial_phase_amounts_[phase].begin(), initial_phase_amounts_[phase].end());
+            out.push_back(initial_volumes_[phase]);
+        }
+        return out;
+    }
+
+    VariableTransformEvaluation transform_variables(
+        const std::vector<double>& solver_variables
+    ) const {
+        return PositiveLogVariableTransform(variable_count()).evaluate(solver_variables);
+    }
+
+    int transfer_constraint_count() const {
+        return static_cast<int>(neutral_species_indices_.size() + active_counterion_pair_count());
+    }
+
+    int active_counterion_pair_count() const {
+        return static_cast<int>(counterion_pair_matrix_.size());
+    }
+
+    int separation_constraint_count() const {
+        return minimum_phase_distance_ > 0.0 ? 1 : 0;
+    }
+
+    int charge_constraint_row() const {
+        return species_count_;
+    }
+
+    int system_constraint_count() const {
+        return species_count_ + phase_count();
+    }
+
+    void require_system_constraint_values(const EosPhaseSystemResult& system) const {
+        if (system.constraints.size() < static_cast<std::size_t>(system_constraint_count())) {
+            throw ValueError(
+                "Electrolyte projected residual route phase-system constraint values are shorter than the NLP contract."
+            );
+        }
+    }
+
+    void require_system_constraint_jacobian(const EosPhaseSystemResult& system) const {
+        require_system_constraint_values(system);
+        if (
+            system.constraint_jacobian_rows < system_constraint_count()
+            || system.constraint_jacobian_cols != variable_count()
+            || system.constraint_jacobian_row_major.size()
+                < static_cast<std::size_t>(system_constraint_count() * variable_count())
+        ) {
+            throw ValueError(
+                "Electrolyte projected residual route phase-system Jacobian is shorter than the NLP contract."
+            );
+        }
+    }
+
+    void require_system_constraint_hessian(const EosPhaseSystemResult& system) const {
+        require_system_constraint_jacobian(system);
+        const std::size_t required = static_cast<std::size_t>(
+            system_constraint_count() * variable_count() * variable_count()
+        );
+        if (system.constraint_hessian_tensor_row_major.size() < required) {
+            throw ValueError(
+                "Electrolyte projected residual route phase-system Hessian tensor is shorter than the NLP contract."
+            );
+        }
+    }
+
+    void require_projected_residual_jacobian(
+        const PhaseEquilibriumResidualBlockResult& residuals
+    ) const {
+        if (
+            residuals.residuals.size() < static_cast<std::size_t>(species_count_)
+            || residuals.jacobian_row_major.size()
+                < static_cast<std::size_t>(species_count_ * variable_count())
+        ) {
+            throw ValueError(
+                "Electrolyte projected residual route fugacity-residual Jacobian is shorter than the NLP contract."
+            );
+        }
+    }
+
+    void require_projected_residual_hessian(
+        const PhaseEquilibriumResidualBlockResult& residuals
+    ) const {
+        require_projected_residual_jacobian(residuals);
+        if (
+            residuals.hessian_tensor_row_major.size()
+            < static_cast<std::size_t>(species_count_ * variable_count() * variable_count())
+        ) {
+            throw ValueError(
+                "Electrolyte projected residual route fugacity-residual Hessian tensor is shorter than the NLP contract."
+            );
+        }
+    }
+
+    ResidualSecondOrderData projected_transfer_second_order(
+        const EosPhaseSystemResult& system,
+        const PhaseEquilibriumResidualBlockResult& residuals
+    ) const {
+        (void)system;
+        require_projected_residual_hessian(residuals);
+        ResidualSecondOrderData out;
+        out.residual_count = transfer_constraint_count();
+        out.variable_count = variable_count();
+        out.backend = "cppad_explicit_density_projected_counterion_pair";
+        out.residuals.reserve(static_cast<std::size_t>(transfer_constraint_count()));
+        out.jacobian_row_major.assign(
+            static_cast<std::size_t>(transfer_constraint_count() * variable_count()),
+            0.0
+        );
+        out.residual_hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(transfer_constraint_count() * variable_count() * variable_count()),
+            0.0
+        );
+        append_projected_transfer_residuals(out.residuals, system, residuals);
+        for (int transfer = 0; transfer < transfer_constraint_count(); ++transfer) {
+            for (int col = 0; col < variable_count(); ++col) {
+                out.jacobian_row_major[
+                    static_cast<std::size_t>(transfer * variable_count() + col)
+                ] = projected_transfer_jacobian_value(system, residuals, transfer, col);
+            }
+            for (int row = 0; row < variable_count(); ++row) {
+                for (int col = 0; col < variable_count(); ++col) {
+                    out.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            transfer * variable_count() * variable_count()
+                            + row * variable_count()
+                            + col
+                        )
+                    ] = projected_transfer_hessian_value(system, residuals, transfer, row, col);
+                }
+            }
+        }
+        return out;
+    }
+
+    ObjectiveSecondOrderData projected_residual_objective(
+        const EosPhaseSystemResult& system,
+        const PhaseEquilibriumResidualBlockResult& residuals,
+        const std::vector<double>& variables
+    ) const {
+        const ResidualSecondOrderData transfer = projected_transfer_second_order(system, residuals);
+        const int pressure_row_count = phase_count();
+        const int combined_count = transfer.residual_count + pressure_row_count;
+        ResidualSecondOrderData combined;
+        combined.residual_count = combined_count;
+        combined.variable_count = variable_count();
+        combined.backend = transfer.backend + "_with_scaled_pressure_residuals";
+        combined.residuals.assign(static_cast<std::size_t>(combined_count), 0.0);
+        combined.jacobian_row_major.assign(
+            static_cast<std::size_t>(combined_count * variable_count()),
+            0.0
+        );
+        combined.residual_hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(combined_count * variable_count() * variable_count()),
+            0.0
+        );
+        for (int row = 0; row < transfer.residual_count; ++row) {
+            combined.residuals[static_cast<std::size_t>(row)] =
+                transfer.residuals[static_cast<std::size_t>(row)];
+            for (int col = 0; col < variable_count(); ++col) {
+                combined.jacobian_row_major[
+                    static_cast<std::size_t>(row * variable_count() + col)
+                ] = transfer.jacobian_row_major[
+                    static_cast<std::size_t>(row * variable_count() + col)
+                ];
+            }
+            for (int first = 0; first < variable_count(); ++first) {
+                for (int second = 0; second < variable_count(); ++second) {
+                    combined.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            row * variable_count() * variable_count()
+                            + first * variable_count()
+                            + second
+                        )
+                    ] = transfer.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            row * variable_count() * variable_count()
+                            + first * variable_count()
+                            + second
+                        )
+                    ];
+                }
+            }
+        }
+        const double pressure_scale = 1.0 / std::max(1.0, std::abs(target_pressure_));
+        for (int phase = 0; phase < pressure_row_count; ++phase) {
+            const int target_row = transfer.residual_count + phase;
+            const int source_row = species_count_ + phase;
+            combined.residuals[static_cast<std::size_t>(target_row)] =
+                pressure_scale * system.constraints[static_cast<std::size_t>(source_row)];
+            for (int col = 0; col < variable_count(); ++col) {
+                combined.jacobian_row_major[
+                    static_cast<std::size_t>(target_row * variable_count() + col)
+                ] = pressure_scale * system.constraint_jacobian_row_major[
+                    static_cast<std::size_t>(source_row * variable_count() + col)
+                ];
+            }
+            for (int first = 0; first < variable_count(); ++first) {
+                for (int second = 0; second < variable_count(); ++second) {
+                    combined.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            target_row * variable_count() * variable_count()
+                            + first * variable_count()
+                            + second
+                        )
+                    ] = pressure_scale * system.constraint_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            source_row * variable_count() * variable_count()
+                            + first * variable_count()
+                            + second
+                        )
+                    ];
+                }
+            }
+        }
+
+        ObjectiveSecondOrderData out = residual_quadratic_objective_second_order(combined);
+        const ObjectiveSecondOrderData regularization = seed_regularization_objective(variables);
+        out.value += regularization.value;
+        for (int row = 0; row < variable_count(); ++row) {
+            out.gradient[static_cast<std::size_t>(row)] += regularization.gradient[static_cast<std::size_t>(row)];
+            for (int col = 0; col < variable_count(); ++col) {
+                out.hessian_row_major[static_cast<std::size_t>(row * variable_count() + col)]
+                    += regularization.hessian_row_major[static_cast<std::size_t>(row * variable_count() + col)];
+            }
+        }
+        out.backend += "_with_diagonal_seed_regularization";
+        return out;
+    }
+
+    ObjectiveSecondOrderData seed_regularization_objective(
+        const std::vector<double>& variables
+    ) const {
+        ObjectiveSecondOrderData out;
+        out.variable_count = variable_count();
+        out.value = 0.0;
+        out.gradient.assign(static_cast<std::size_t>(variable_count()), 0.0);
+        out.hessian_row_major.assign(
+            static_cast<std::size_t>(variable_count() * variable_count()),
+            0.0
+        );
+        const std::vector<double> seed = physical_initial_point();
+        for (int index = 0; index < variable_count(); ++index) {
+            const std::size_t position = static_cast<std::size_t>(index);
+            const double delta = variables[position] - seed[position];
+            out.value += 0.5 * kProjectedResidualObjectiveRegularization * delta * delta;
+            out.gradient[position] += kProjectedResidualObjectiveRegularization * delta;
+            out.hessian_row_major[
+                static_cast<std::size_t>(index * variable_count() + index)
+            ] += kProjectedResidualObjectiveRegularization;
+        }
+        out.backend = "diagonal_seed_regularization";
+        return out;
+    }
+
+    std::vector<double> phase_composition(
+        const std::vector<double>& amounts,
+        const std::string& total_label
+    ) const {
+        require_size(amounts, static_cast<std::size_t>(species_count_), "Electrolyte projected residual phase amount");
+        const double total = std::accumulate(amounts.begin(), amounts.end(), 0.0);
+        require_positive_finite(total, total_label);
+        std::vector<double> composition;
+        composition.reserve(amounts.size());
+        for (double amount : amounts) {
+            composition.push_back(amount / total);
+        }
+        return composition;
+    }
+
+    double phase_separation(const std::vector<std::vector<double>>& phase_amounts) const {
+        const std::vector<double> first = phase_composition(
+            phase_amounts[0],
+            "Electrolyte projected residual first phase amount total"
+        );
+        const std::vector<double> second = phase_composition(
+            phase_amounts[1],
+            "Electrolyte projected residual second phase amount total"
+        );
+        const std::size_t species = static_cast<std::size_t>(separation_species_index_);
+        return separation_sign_ * (first[species] - second[species]);
+    }
+
+    std::vector<double> phase_separation_jacobian(
+        const std::vector<std::vector<double>>& phase_amounts
+    ) const {
+        const std::vector<double> first = phase_composition(
+            phase_amounts[0],
+            "Electrolyte projected residual first phase amount total"
+        );
+        const std::vector<double> second = phase_composition(
+            phase_amounts[1],
+            "Electrolyte projected residual second phase amount total"
+        );
+        const double first_total = std::accumulate(phase_amounts[0].begin(), phase_amounts[0].end(), 0.0);
+        const double second_total = std::accumulate(phase_amounts[1].begin(), phase_amounts[1].end(), 0.0);
+        require_positive_finite(first_total, "Electrolyte projected residual first phase amount total");
+        require_positive_finite(second_total, "Electrolyte projected residual second phase amount total");
+
+        std::vector<double> row(static_cast<std::size_t>(variable_count()), 0.0);
+        const std::size_t selected = static_cast<std::size_t>(separation_species_index_);
+        for (int species = 0; species < species_count_; ++species) {
+            const std::size_t index = static_cast<std::size_t>(species);
+            const double first_indicator = index == selected ? 1.0 : 0.0;
+            row[index] = separation_sign_ * (first_indicator - first[selected]) / first_total;
+
+            const std::size_t second_offset = static_cast<std::size_t>(local_variable_count() + species);
+            const double second_indicator = index == selected ? 1.0 : 0.0;
+            row[second_offset] = -separation_sign_ * (second_indicator - second[selected]) / second_total;
+        }
+        return row;
+    }
+
+    std::vector<double> phase_separation_hessian(
+        const std::vector<std::vector<double>>& phase_amounts
+    ) const {
+        if (phase_amounts.size() != static_cast<std::size_t>(phase_count())) {
+            throw ValueError("Electrolyte projected residual phase amount phase count does not match the NLP model.");
+        }
+        std::vector<double> hessian(static_cast<std::size_t>(variable_count() * variable_count()), 0.0);
+        const std::size_t selected = static_cast<std::size_t>(separation_species_index_);
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const std::vector<double> composition = phase_composition(
+                phase_amounts[static_cast<std::size_t>(phase)],
+                "Electrolyte projected residual phase amount total"
+            );
+            const double total = std::accumulate(
+                phase_amounts[static_cast<std::size_t>(phase)].begin(),
+                phase_amounts[static_cast<std::size_t>(phase)].end(),
+                0.0
+            );
+            require_positive_finite(total, "Electrolyte projected residual phase amount total");
+            const double phase_sign = phase == 0 ? separation_sign_ : -separation_sign_;
+            const std::size_t phase_offset = static_cast<std::size_t>(phase * local_variable_count());
+            for (int first = 0; first < species_count_; ++first) {
+                for (int second = 0; second < species_count_; ++second) {
+                    const double first_indicator =
+                        static_cast<std::size_t>(first) == selected ? 1.0 : 0.0;
+                    const double second_indicator =
+                        static_cast<std::size_t>(second) == selected ? 1.0 : 0.0;
+                    const double value = phase_sign
+                        * (2.0 * composition[selected] - first_indicator - second_indicator)
+                        / (total * total);
+                    const std::size_t row = phase_offset + static_cast<std::size_t>(first);
+                    const std::size_t col = phase_offset + static_cast<std::size_t>(second);
+                    hessian[row * static_cast<std::size_t>(variable_count()) + col] = value;
+                }
+            }
+        }
+        return hessian;
+    }
+
+    std::vector<std::vector<double>> phase_amounts_from_physical_variables(
+        const std::vector<double>& physical_variables
+    ) const {
+        return neutral_phase_amounts_from_route_variables(
+            physical_variables,
+            static_cast<std::size_t>(species_count_)
+        );
+    }
+
+    std::vector<double> volumes_from_physical_variables(
+        const std::vector<double>& physical_variables
+    ) const {
+        return neutral_phase_volumes_from_route_variables(
+            physical_variables,
+            static_cast<std::size_t>(species_count_)
+        );
+    }
+
+    EosPhaseSystemResult phase_system_from_physical(
+        const std::vector<double>& physical_variables
+    ) const {
+        return evaluate_eos_phase_system(
+            args_,
+            temperature_,
+            target_pressure_,
+            phase_amounts_from_physical_variables(physical_variables),
+            volumes_from_physical_variables(physical_variables),
+            feed_amounts_,
+            charges_
+        );
+    }
+
+    PhaseEquilibriumResidualBlockResult residual_block_from_physical(
+        const std::vector<double>& physical_variables
+    ) const {
+        return evaluate_phase_equilibrium_residual_block(
+            args_,
+            temperature_,
+            target_pressure_,
+            phase_amounts_from_physical_variables(physical_variables),
+            volumes_from_physical_variables(physical_variables)
+        );
+    }
+
+    double phase_charge_constraint(const std::vector<double>& amounts) const {
+        require_size(amounts, static_cast<std::size_t>(species_count_), "Electrolyte projected residual charge row");
+        double charge = 0.0;
+        for (int species = 0; species < species_count_; ++species) {
+            charge += amounts[static_cast<std::size_t>(species)] * charges_[static_cast<std::size_t>(species)];
+        }
+        return charge;
+    }
+
+    void append_projected_transfer_residuals(
+        std::vector<double>& out,
+        const EosPhaseSystemResult& system,
+        const PhaseEquilibriumResidualBlockResult& residuals
+    ) const {
+        (void)system;
+        if (residuals.residuals.size() != static_cast<std::size_t>(species_count_)) {
+            throw ValueError("Electrolyte projected residual block shape does not match two-phase species count.");
+        }
+        for (int species : neutral_species_indices_) {
+            out.push_back(residuals.residuals[static_cast<std::size_t>(species)]);
+        }
+        for (int pair = 0; pair < active_counterion_pair_count(); ++pair) {
+            const std::vector<double>& row = counterion_pair_matrix_[static_cast<std::size_t>(pair)];
+            double value = 0.0;
+            for (std::size_t charged = 0; charged < charged_species_indices_.size(); ++charged) {
+                value += row[charged] * residuals.residuals[
+                    static_cast<std::size_t>(charged_species_indices_[charged])
+                ];
+            }
+            out.push_back(value);
+        }
+    }
+
+    double projected_transfer_jacobian_value(
+        const EosPhaseSystemResult& system,
+        const PhaseEquilibriumResidualBlockResult& residuals,
+        int transfer_index,
+        int col
+    ) const {
+        require_projected_residual_jacobian(residuals);
+        if (transfer_index < static_cast<int>(neutral_species_indices_.size())) {
+            const int species = neutral_species_indices_[static_cast<std::size_t>(transfer_index)];
+            return residuals.jacobian_row_major[
+                static_cast<std::size_t>(species * variable_count() + col)
+            ];
+        }
+        (void)system;
+        const std::size_t pair_index =
+            static_cast<std::size_t>(transfer_index - static_cast<int>(neutral_species_indices_.size()));
+        double value = 0.0;
+        for (std::size_t charged = 0; charged < charged_species_indices_.size(); ++charged) {
+            const int species = charged_species_indices_[charged];
+            value += counterion_pair_matrix_[pair_index][charged]
+                * residuals.jacobian_row_major[
+                    static_cast<std::size_t>(species * variable_count() + col)
+                ];
+        }
+        return value;
+    }
+
+    double projected_transfer_hessian_value(
+        const EosPhaseSystemResult& system,
+        const PhaseEquilibriumResidualBlockResult& residuals,
+        int transfer_index,
+        int row,
+        int col
+    ) const {
+        require_projected_residual_hessian(residuals);
+        if (transfer_index < static_cast<int>(neutral_species_indices_.size())) {
+            const int species = neutral_species_indices_[static_cast<std::size_t>(transfer_index)];
+            return residuals.hessian_tensor_row_major[
+                static_cast<std::size_t>(
+                    species * variable_count() * variable_count() + row * variable_count() + col
+                )
+            ];
+        }
+        (void)system;
+        const std::size_t pair_index =
+            static_cast<std::size_t>(transfer_index - static_cast<int>(neutral_species_indices_.size()));
+        double value = 0.0;
+        for (std::size_t charged = 0; charged < charged_species_indices_.size(); ++charged) {
+            const int species = charged_species_indices_[charged];
+            value += counterion_pair_matrix_[pair_index][charged]
+                * residuals.hessian_tensor_row_major[
+                    static_cast<std::size_t>(
+                        species * variable_count() * variable_count()
+                        + row * variable_count()
+                        + col
+                    )
+                ];
+        }
+        return value;
+    }
+
+    void append_projected_transfer_jacobian_values(
+        std::vector<double>& out,
+        const EosPhaseSystemResult& system,
+        const PhaseEquilibriumResidualBlockResult& residuals
+    ) const {
+        for (int transfer = 0; transfer < transfer_constraint_count(); ++transfer) {
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const int phase_offset = phase * local_variable_count();
+                for (int col = 0; col < local_variable_count(); ++col) {
+                    out.push_back(projected_transfer_jacobian_value(
+                        system,
+                        residuals,
+                        transfer,
+                        phase_offset + col
+                    ));
+                }
+            }
+        }
+    }
+
+    add_args args_;
+    double temperature_ = 0.0;
+    double target_pressure_ = 0.0;
+    std::vector<std::vector<double>> initial_phase_amounts_;
+    std::vector<double> initial_volumes_;
+    std::vector<double> feed_amounts_;
+    std::vector<double> charges_;
+    std::vector<int> charged_species_indices_;
+    std::vector<int> neutral_species_indices_;
+    std::vector<std::vector<double>> counterion_pair_matrix_;
+    double minimum_phase_distance_ = 0.0;
+    int separation_species_index_ = 0;
+    double separation_sign_ = 1.0;
+    int phase_count_ = 0;
+    int species_count_ = 0;
+};
+
+bool finite_vector_values(const std::vector<double>& values) {
+    return std::all_of(values.begin(), values.end(), [](double value) {
+        return std::isfinite(value);
+    });
+}
+
+void require_projected_problem_values_at_variables(
+    const NlpProblem& problem,
+    const std::vector<double>& variables
+) {
+    require_size(
+        variables,
+        static_cast<std::size_t>(problem.variable_count()),
+        "Electrolyte projected residual preflight variable"
+    );
+    if (!finite_vector_values(variables)) {
+        throw ValueError("Electrolyte projected residual preflight variables must be finite.");
+    }
+    const double objective = problem.objective(variables);
+    if (!std::isfinite(objective)) {
+        throw ValueError("Electrolyte projected residual preflight objective must be finite.");
+    }
+    const std::vector<double> gradient = problem.objective_gradient(variables);
+    require_size(
+        gradient,
+        static_cast<std::size_t>(problem.variable_count()),
+        "Electrolyte projected residual preflight objective gradient"
+    );
+    if (!finite_vector_values(gradient)) {
+        throw ValueError("Electrolyte projected residual preflight objective gradient must be finite.");
+    }
+    const std::vector<double> constraints = problem.constraints(variables);
+    require_size(
+        constraints,
+        static_cast<std::size_t>(problem.constraint_count()),
+        "Electrolyte projected residual preflight constraint"
+    );
+    if (!finite_vector_values(constraints)) {
+        throw ValueError("Electrolyte projected residual preflight constraints must be finite.");
+    }
+    const std::vector<double> jacobian = problem.jacobian_values(variables);
+    require_size(
+        jacobian,
+        static_cast<std::size_t>(problem.jacobian_nonzero_count()),
+        "Electrolyte projected residual preflight Jacobian"
+    );
+    if (!finite_vector_values(jacobian)) {
+        throw ValueError("Electrolyte projected residual preflight Jacobian must be finite.");
+    }
+    if (problem.has_exact_hessian()) {
+        const std::vector<double> hessian = problem.hessian_values(
+            variables,
+            1.0,
+            std::vector<double>(static_cast<std::size_t>(problem.constraint_count()), 0.0)
+        );
+        require_size(
+            hessian,
+            static_cast<std::size_t>(problem.hessian_nonzero_count()),
+            "Electrolyte projected residual preflight Hessian"
+        );
+        if (!finite_vector_values(hessian)) {
+            throw ValueError("Electrolyte projected residual preflight Hessian must be finite.");
+        }
+    }
+}
+
+void mark_projected_route_derivative_preflight_failed(
+    NeutralTwoPhaseEosRouteResult& out,
+    const NlpProblem& problem,
+    const std::string& message
+) {
+    out.ran = false;
+    out.solver_accepted = false;
+    out.solver_feasible_point = false;
+    out.postsolve_accepted = false;
+    out.accepted = false;
+    out.status = "solver_rejected";
+    out.rejection_reason = "derivative_preflight_failed";
+    out.solver_status = "preflight_failed";
+    out.application_status = "derivative_contract_failed";
+    out.last_callback_failure = "derivative_preflight_failed";
+    out.last_callback_exception = message;
+    out.hessian_approximation = "exact";
+    out.hessian_backend = problem.hessian_backend();
+    out.exact_hessian_available = false;
+}
+
+NeutralTwoPhaseEosRouteResult solve_electrolyte_two_phase_projected_residual_route(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<std::vector<double>>& phase_amounts,
+    const std::vector<double>& volumes,
+    const std::vector<double>& feed_amounts,
+    const std::vector<double>& charges,
+    const std::vector<int>& charged_species_indices,
+    const std::vector<std::vector<double>>& counterion_pair_matrix,
+    const IpoptSolveOptions& options,
+    double material_tolerance,
+    double pressure_tolerance,
+    double transfer_tolerance,
+    double phase_distance_tolerance,
+    double charge_tolerance
+) {
+    const std::string problem_name = "electrolyte_stage_iii_projected_residual_refinement";
+    require_positive_finite(charge_tolerance, problem_name + " charge tolerance");
+    const IpoptAdapterInfo adapter = native_ipopt_adapter_info();
+    NeutralTwoPhaseEosRouteResult out;
+    out.compiled = adapter.compiled;
+    out.adapter_available = adapter.adapter_available;
+    out.adapter_kind = adapter.adapter_kind;
+    out.exact_gradient_required = adapter.exact_gradient_required;
+    out.exact_jacobian_required = adapter.exact_jacobian_required;
+    out.problem_name = problem_name;
+    out.activation_compiler = "electrolyte_held2_candidate_set";
+    out.initial_point_strategy = "electrolyte_held2_candidate_set_replay";
+    out.seed_name = "electrolyte_held2_counterion_pair_candidate_set";
+    RouteMetadata metadata = phase_amount_volume_route_metadata(true, false, true);
+    metadata.residual_families = {
+        "scaled_pressure_objective",
+        "neutral_transfer",
+        "mean_ionic_transfer",
+    };
+    metadata.constraint_families = {
+        "material_balance",
+        "phase_charge",
+    };
+    apply_route_metadata(out, metadata);
+    if (!adapter.compiled) {
+        mark_neutral_route_ipopt_dependency_required(out);
+        return out;
+    }
+
+    IpoptSolveOptions route_options = ipopt_solve_options_for_profile(options, "held_refinement");
+    route_options.initial_bound_lower_multipliers.clear();
+    route_options.initial_bound_upper_multipliers.clear();
+    route_options.initial_constraint_multipliers.clear();
+
+    trace_route_seed_attempt_start(problem_name, out.seed_name, 1, 1, route_options);
+    ElectrolyteTwoPhaseProjectedResidualProblem problem(
+        args,
+        temperature,
+        target_pressure,
+        phase_amounts,
+        volumes,
+        feed_amounts,
+        charges,
+        charged_species_indices,
+        counterion_pair_matrix,
+        0.0
+    );
+    if (route_options.initial_variables.empty()) {
+        route_options.initial_variables = problem.initial_point();
+    }
+    try {
+        validate_nlp_problem_shape(problem);
+        require_projected_problem_values_at_variables(problem, route_options.initial_variables);
+    } catch (const std::exception& exc) {
+        mark_projected_route_derivative_preflight_failed(out, problem, exc.what());
+        out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+        trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+        return out;
+    } catch (...) {
+        mark_projected_route_derivative_preflight_failed(out, problem, "unknown preflight exception");
+        out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+        trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+        return out;
+    }
+    IpoptSolveResult solve;
+    try {
+        solve = solve_ipopt_nlp(problem, route_options);
+    } catch (const std::exception& exc) {
+        mark_projected_route_derivative_preflight_failed(out, problem, exc.what());
+        out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+        trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+        return out;
+    } catch (...) {
+        mark_projected_route_derivative_preflight_failed(out, problem, "unknown solve exception");
+        out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+        trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+        return out;
+    }
+    if (solve.variables.size() == static_cast<std::size_t>(problem.variable_count())) {
+        solve.variables = problem.physical_variables_from_solver(solve.variables);
+    }
+    const bool can_postsolve = apply_neutral_route_solve_result(out, solve);
+    if (!can_postsolve) {
+        out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+        trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+        return out;
+    }
+
+    const std::size_t species_count = feed_amounts.size();
+    out.phase_amounts = neutral_phase_amounts_from_route_variables(solve.variables, species_count);
+    out.phase_volumes = neutral_phase_volumes_from_route_variables(solve.variables, species_count);
+    NeutralTwoPhaseEosPostsolve postsolve = evaluate_neutral_two_phase_eos_postsolve(
+        args,
+        temperature,
+        target_pressure,
+        out.phase_amounts,
+        out.phase_volumes,
+        feed_amounts,
+        material_tolerance,
+        pressure_tolerance,
+        transfer_tolerance,
+        phase_distance_tolerance,
+        charges,
+        false
+    );
+    postsolve.charge_balance_norm = phase_charge_inf_norm(out.phase_amounts, charges);
+    postsolve.accepted = postsolve.accepted && postsolve.charge_balance_norm <= charge_tolerance;
+    if (postsolve.charge_balance_norm > charge_tolerance) {
+        postsolve.rejection_reason = "charge_balance";
+    }
+    if (postsolve.phase_distance <= phase_distance_tolerance) {
+        postsolve.accepted = false;
+        postsolve.rejection_reason = "phase_distance";
+    }
+    apply_neutral_route_postsolve(out, std::move(postsolve), NeutralRouteCertificationLevel::LocalPostsolve);
+    out.seed_attempts.push_back(neutral_seed_attempt_from_result(out));
+    trace_route_seed_attempt_finish(problem_name, out.seed_name, 1, 1, out);
+    return out;
+}
+
 }  // namespace
 
 // AlgID: neutral_deterministic_phase_candidate_screening
@@ -4149,21 +5499,23 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
                 "Electrolyte TPD feed reference",
                 charge_tolerance
             );
-            for (const std::vector<double>& trial : electrolyte_tpd_trial_compositions(
-                     reference.composition,
-                     charges,
-                     charge_tolerance
-                 )) {
+            const std::vector<std::vector<double>> trial_compositions =
+                electrolyte_tpd_trial_compositions(reference.composition, charges, charge_tolerance);
+            for (std::size_t trial_index = 0; trial_index < trial_compositions.size(); ++trial_index) {
                 try {
+                    const std::string source = "electrolyte_charge_neutral_phase_kind_"
+                        + std::to_string(phase_kind)
+                        + "_trial_"
+                        + std::to_string(trial_index);
                     const NeutralTpdCandidate candidate = evaluate_electrolyte_tpd_candidate(
                         args,
                         temperature,
                         target_pressure,
                         reference,
-                        trial,
+                        trial_compositions[trial_index],
                         charges,
                         phase_kind,
-                        "electrolyte_charge_neutral_phase_kind_" + std::to_string(phase_kind),
+                        source,
                         charge_tolerance
                     );
                     ++valid_candidate_count;
@@ -4717,13 +6069,13 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
         out.held2_discovery.tpd_discovery,
         temperature,
         target_pressure,
-        "electrolyte_stage_iii_reduced_variable_refinement",
+        "electrolyte_stage_iii_projected_residual_refinement",
         phase_kinds
     );
     IpoptSolveOptions base_options;
     base_options.max_iterations = 260;
     base_options.print_level = 0;
-    const double solve_tolerance = std::min(1.0e-8, 0.01 * residual_tolerance);
+    const double solve_tolerance = std::max(1.0e-8, 0.1 * residual_tolerance);
     base_options.tolerance = solve_tolerance;
     base_options.acceptable_tolerance = std::max(1.0e-10, 10.0 * solve_tolerance);
     base_options.constraint_violation_tolerance = solve_tolerance;
@@ -4731,34 +6083,99 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
     base_options.complementarity_tolerance = solve_tolerance;
     base_options.iteration_history_limit = 50;
     base_options.linear_solver = "auto";
-    base_options.hessian_mode = "limited-memory";
-    IpoptSolveOptions route_options = ipopt_solve_options_for_profile(base_options, "diagnostic");
+    base_options.hessian_mode = "auto";
+
+    IpoptSolveOptions route_options = ipopt_solve_options_for_profile(base_options, "held_refinement");
     route_options.initial_variables = neutral_two_phase_variables_from_initial(initial);
     route_options.initial_bound_lower_multipliers.clear();
     route_options.initial_bound_upper_multipliers.clear();
     route_options.initial_constraint_multipliers.clear();
 
-    out.route_result = solve_neutral_two_phase_eos_route(
+    const double pressure_tolerance = pressure_consistency_tolerance(
+        target_pressure,
+        residual_tolerance,
+        "Electrolyte Stage III"
+    );
+    out.route_result = solve_electrolyte_two_phase_projected_residual_route(
         args,
         temperature,
         target_pressure,
         initial.phase_amounts,
         initial.volumes,
         feed_amounts,
+        charges,
+        out.held2_discovery.charged_species_indices,
+        out.held2_discovery.counterion_pair_matrix,
         route_options,
         residual_tolerance,
-        residual_tolerance,
+        pressure_tolerance,
         residual_tolerance,
         phase_distance_tolerance,
-        phase_distance_tolerance,
-        charges,
-        "electrolyte_stage_iii_reduced_variable_refinement",
         charge_tolerance
     );
     out.route_result.initial_point_strategy = "electrolyte_held2_candidate_set_replay";
     out.route_result.seed_name = out.seed_name;
 
+    std::vector<std::vector<double>> diagnostic_phase_amounts = out.route_result.phase_amounts;
+    std::vector<double> diagnostic_phase_volumes = out.route_result.phase_volumes;
+    const auto diagnostic_state_is_valid = [&]() {
+        if (diagnostic_phase_amounts.size() != phase_count || diagnostic_phase_volumes.size() != phase_count) {
+            return false;
+        }
+        for (std::size_t phase = 0; phase < phase_count; ++phase) {
+            if (!std::isfinite(diagnostic_phase_volumes[phase]) || diagnostic_phase_volumes[phase] <= 0.0) {
+                return false;
+            }
+            if (diagnostic_phase_amounts[phase].size() != feed.size()) {
+                return false;
+            }
+            for (double amount : diagnostic_phase_amounts[phase]) {
+                if (!std::isfinite(amount) || amount <= 0.0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    };
+    if (!diagnostic_state_is_valid()
+        && out.route_result.variables.size() == phase_count * (feed.size() + 1)) {
+        try {
+            diagnostic_phase_amounts = neutral_phase_amounts_from_route_variables(
+                out.route_result.variables,
+                feed.size()
+            );
+            diagnostic_phase_volumes = neutral_phase_volumes_from_route_variables(
+                out.route_result.variables,
+                feed.size()
+            );
+            if (!diagnostic_state_is_valid()) {
+                diagnostic_phase_amounts.clear();
+                diagnostic_phase_volumes.clear();
+            }
+        } catch (const std::exception&) {
+            diagnostic_phase_amounts.clear();
+            diagnostic_phase_volumes.clear();
+        }
+    }
+
+    const auto composition_from_diagnostic_amounts = [&](const std::vector<double>& amounts) {
+        const double total = std::accumulate(amounts.begin(), amounts.end(), 0.0);
+        require_positive_finite(total, "Electrolyte Stage III diagnostic phase amount total");
+        std::vector<double> composition;
+        composition.reserve(amounts.size());
+        for (double amount : amounts) {
+            composition.push_back(amount / total);
+        }
+        return composition;
+    };
+
     std::vector<std::vector<double>> phase_compositions = out.route_result.postsolve.phase_compositions;
+    if (phase_compositions.empty() && diagnostic_state_is_valid()) {
+        phase_compositions.reserve(diagnostic_phase_amounts.size());
+        for (const std::vector<double>& amounts : diagnostic_phase_amounts) {
+            phase_compositions.push_back(composition_from_diagnostic_amounts(amounts));
+        }
+    }
     if (phase_compositions.empty()) {
         phase_compositions = out.selected_phase_compositions;
     }
@@ -4777,33 +6194,30 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
                 out.selected_phase_fractions.push_back(amount / total_amount);
             }
         }
+    } else if (diagnostic_state_is_valid()) {
+        const double total_amount = std::accumulate(feed_amounts.begin(), feed_amounts.end(), 0.0);
+        if (total_amount > 0.0) {
+            out.selected_phase_fractions.clear();
+            for (const std::vector<double>& amounts : diagnostic_phase_amounts) {
+                const double phase_total = std::accumulate(amounts.begin(), amounts.end(), 0.0);
+                out.selected_phase_fractions.push_back(phase_total / total_amount);
+            }
+        }
     }
     out.phase_distance = pairwise_phase_distance_inf_norm(out.selected_phase_compositions);
 
-    if (phase_compositions.size() >= 2 && pair_count > 0) {
-        const EosPhaseBlockResult reference = evaluate_unit_phase_block_at_pressure_root(
+    if (diagnostic_state_is_valid() && pair_count > 0) {
+        const PhaseEquilibriumResidualBlockResult residual_block = evaluate_phase_equilibrium_residual_block(
             args,
             temperature,
             target_pressure,
-            phase_compositions.front(),
-            phase_kinds.front(),
-            "Electrolyte Stage III phase 0"
+            diagnostic_phase_amounts,
+            diagnostic_phase_volumes
         );
-        const EosPhaseBlockResult trial = evaluate_unit_phase_block_at_pressure_root(
-            args,
-            temperature,
-            target_pressure,
-            phase_compositions[1],
-            phase_kinds[1],
-            "Electrolyte Stage III phase 1"
-        );
-        const std::vector<double> pair_residuals = pair_residuals_from_projected_reduced_ln_fugacity(
-            args,
+        const std::vector<double> pair_residuals = pair_residuals_from_reduced_residual_block(
             out.held2_discovery.counterion_pair_matrix,
             out.held2_discovery.charged_species_indices,
-            charges,
-            reference,
-            trial
+            residual_block
         );
         out.residual_values.insert(out.residual_values.end(), pair_residuals.begin(), pair_residuals.end());
     } else {
@@ -4839,7 +6253,11 @@ ElectrolyteStageIIIRefinementResult evaluate_electrolyte_stage_iii_refinement(
         out.route_result.exact_jacobian_required && out.route_result.jacobian_approximation == "exact";
     out.exact_reduced_hessian_available = !out.held2_discovery.counterion_pair_matrix.empty();
 
-    const bool solver_success = out.route_result.solver_accepted && out.route_result.accepted;
+    const bool solver_success =
+        out.route_result.solver_accepted
+        && out.route_result.accepted
+        && out.route_result.solver_status == "success"
+        && out.route_result.application_status == "solve_succeeded";
     const bool finite_compositions = !out.selected_phase_compositions.empty()
         && std::all_of(
             out.selected_phase_compositions.begin(),
@@ -4894,7 +6312,11 @@ ElectrolytePostsolveCertificationResult evaluate_electrolyte_postsolve_certifica
     out.total_charge_tolerance = charge_tolerance;
     out.neutral_transfer_tolerance = residual_tolerance;
     out.mean_ionic_transfer_tolerance = residual_tolerance;
-    out.pressure_tolerance = residual_tolerance;
+    out.pressure_tolerance = pressure_consistency_tolerance(
+        target_pressure,
+        residual_tolerance,
+        "Electrolyte postsolve"
+    );
     out.phase_distance_tolerance = phase_distance_tolerance;
     out.stage_iii_refinement = evaluate_electrolyte_stage_iii_refinement(
         args,
