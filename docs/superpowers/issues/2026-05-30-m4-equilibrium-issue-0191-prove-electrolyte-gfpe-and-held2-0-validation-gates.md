@@ -13,7 +13,7 @@ release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
 source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
 afk_hitl: "HITL"
-branch: codex/issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates
+branch: codex/issue-0191-electrolyte-closeout
 last_synced: "2026-06-29"
 ---
 
@@ -22,7 +22,7 @@ last_synced: "2026-06-29"
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 Source Plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md
-Branch: codex/issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates
+Branch: codex/issue-0191-electrolyte-closeout
 AFK/HITL: HITL
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/191
@@ -74,24 +74,25 @@ and boundary evidence through the public package route. The Khudaida
 parameter-regression blocker remains split to M5 #338 and is not part of M4
 closeout.
 
-#343 is now the remaining full HELD2 public-route phase-discovery closeout
-blocker for #191. It parents #344 through #350: doctrine, continuous
+#343 closed by PR #359 on 2026-06-29 with retained full HELD2 public-route
+phase-discovery proof. It parents #344 through #350: doctrine, continuous
 reduced-electroneutral TPD minimization, Stage I stability certification, Stage
 II dual/cutting-plane discovery, public-route orchestration through Stage III,
 multi-scenario validation, and registry/capability admission. #344 through #350
-are closed; #343 closes only through its proof/sync PR.
+are closed. #191 is now the final M4 electrolyte closeout issue and has no open
+native dependency blockers.
 
 ## Outcome Summary
 
 **Outcome Source:** docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md#outcome-proof
-**Intent:** Keep #191 as the parent acceptance gate for electrolyte GFPE and prevent final closeout until #343 closes after #320 and the full-discovery child chain pass with retained executable evidence.
-**Target Output:** Maintainers see #191 open and blocked by #343 until the #343 proof/sync PR closes the full HELD2-style public-route discovery gate after Perdomo/Figiel HELD2 validation and shared `NlpProblem`/Ipopt exact-Hessian route receipts have passed.
+**Intent:** Keep #191 as the parent acceptance gate for electrolyte GFPE and close it only after #320, #343, and #344 through #350 have retained executable evidence.
+**Target Output:** Maintainers see #191 close through a proof/sync PR after Perdomo/Figiel HELD2 validation, full HELD2-style public-route discovery, and shared `NlpProblem`/Ipopt exact-Hessian route receipts have passed.
 **Owner:** M4 equilibrium package owner.
 **Interface:** GitHub issue dependencies, local issue mirrors, M4 docs, validation checkers, and native diagnostics consumed by issue-resolution workflows.
 **Cutover:** Replace the #314-only closeout path with the closed #320 Perdomo/Figiel validation gate plus the #343 full HELD2 public-route discovery closeout.
 **Replaced Path:** Representative public route admission treated as final electrolyte LLE completion evidence.
-**Acceptance Proof:** #191 closes only after #343 closes with retained proof; #320 has already passed its proof oracle, accepted route diagnostics prove the exact-Hessian production path, and the parent mirror is updated with closed provenance.
-**Stop Criteria:** Do not close #191 while #343 is open, while HELD2 flash scenario tests are absent, while public route discovery bypasses HELD2 Stage I/II candidate generation, while accepted rows bypass `NlpProblem`/Ipopt, while Born SSM+DS active-block exact-Hessian evidence is absent, or while charged transfer is certified with raw single-ion chemical-potential equality.
+**Acceptance Proof:** #191 closes after this proof/sync PR re-runs the retained closeout oracle; #320 and #343 are closed, accepted route diagnostics prove the exact-Hessian production path, and the parent mirror is updated with closed provenance.
+**Stop Criteria:** Do not close #191 if the closeout oracle fails, if HELD2 flash scenario tests are absent, if public route discovery bypasses HELD2 Stage I/II candidate generation, if accepted rows bypass `NlpProblem`/Ipopt, if Born SSM+DS active-block exact-Hessian evidence is absent, or if charged transfer is certified with raw single-ion chemical-potential equality.
 **Avoid:** Do not count collapsed near-feed splits, synthetic payloads, source-only plots, downstream metrics, or broad release claims as completion evidence.
 
 ## Closed Prerequisites And Remaining Gates
@@ -107,8 +108,8 @@ are closed; #343 closes only through its proof/sync PR.
   evidence through the public package route.
 - #344, #345, #346, #347, #348, #349, and #350 are closed and retain the full
   HELD2-style public-route child chain evidence.
-- #343 is open and blocks #191 until the #343 proof/sync PR closes the parent
-  issue with the retained child-chain and public-route discovery proof.
+- #343 closed by PR #359 after retaining the full HELD2 public-route discovery
+  child-chain and parent proof. #191 has no open native dependency blockers.
 
 ## Child Issues
 
@@ -120,7 +121,7 @@ are closed; #343 closes only through its proof/sync PR.
 - [#313](2026-06-25-m4-equilibrium-issue-0313-add-electrolyte-postsolve-phase-set-certification-gate.md) closes the postsolve certification child. It certifies explicit-ion material reconstruction, per-phase charge balance, neutral and mean-ionic transfer residuals, pressure consistency, phase amounts, and domain margins while keeping public route admission pending.
 - [#314](2026-06-25-m4-equilibrium-issue-0314-admit-source-backed-public-electrolyte-gfpe-route.md) closed representative public electrolyte GFPE route admission. It consumes every prior electrolyte checker and admits only the source-backed Khudaida explicit-ion `electrolyte_lle` route, but it did not prove figure-level model reproduction or robust HELD2 flashing across the Khudaida data set.
 - [#320](2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) closed by PR #341 with Perdomo/Figiel HELD2 electrolyte flash behavior proven through the public package route.
-- [#343](2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) parents the full HELD2-style public-route discovery implementation chain. #344 through #350 now retain doctrine, continuous TPD, Stage I, Stage II, public-route orchestration, scenario validation, and registry/capability proof. #343 remains the only open blocker until its proof/sync PR closes.
+- [#343](2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) closed by PR #359 and parents the full HELD2-style public-route discovery implementation chain. #344 through #350 retain doctrine, continuous TPD, Stage I, Stage II, public-route orchestration, scenario validation, and registry/capability proof.
 
 ## HELD2 Adoption Checkpoint Sequence
 
@@ -146,15 +147,14 @@ are closed; #343 closes only through its proof/sync PR.
 - #343 full-discovery checkpoint: #344 through #350 retain continuous
   reduced-electroneutral TPD minimization, Stage I stability certification,
   Stage II dual discovery, Stage III/public-route orchestration, scenario
-  validation, and final registry/capability admission evidence. The #343
-  proof/sync PR records the parent oracle and closes #343 before #191 is
-  re-evaluated.
+  validation, and final registry/capability admission evidence. PR #359 closed
+  #343 with the parent oracle before this #191 final closeout.
 
 ## Closeout Evidence Required
 
 Do not close this umbrella on the #314 public-admission checker alone. Final
-#191 closeout now requires #343 to close after the #320 proof oracle and #343
-child-chain proof are retained:
+#191 closeout requires #320, #343, and #344 through #350 to be closed with
+retained proof, then re-runs the final public-route oracle:
 
 ```powershell
 uv run --no-sync python analyses\paper_validation\2025_figiel\scripts\validate_figure_data.py
@@ -206,7 +206,7 @@ claims stay closed.
 - [x] #320 certifies charged transfer by projected electrochemical or modified
   mean-ionic residuals; raw single-ion chemical-potential equality is rejected.
 - [x] #320 HELD2 flash scenario tests cover neutral-limit parity, source-backed electrolyte LLE, common-ion or mixed-salt reduced coordinates, stable feeds, unstable feeds, boundary feeds, and phase-label permutations.
-- [ ] #343 closes after #350 merges the final registry/capability admission evidence.
+- [x] #343 closes after #350 merges the final registry/capability admission evidence.
 - [x] #348 proves the public `electrolyte_lle` route consumes Stage II candidates before Stage III refinement.
 - [x] #349 proves stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt public-route scenarios.
 - [x] #350 updates registry and capability evidence only after the full validation ladder passes.
@@ -215,10 +215,13 @@ claims stay closed.
 
 ## Proof Oracle
 
-- Run the active child proof oracle for #320 and the #343 child chain.
-- Run focused electrolyte equilibrium tests when implemented by a child gate.
-- Run native contracts for changed native diagnostics.
-- Run docs validation.
+```powershell
+uv run --no-sync python analyses\paper_validation\2025_figiel\scripts\validate_figure_data.py
+uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
+uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete
+uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and flash"
+uv run --no-sync python scripts\dev\validate_project.py docs
+```
 
 ## Non-Goals And Boundaries
 
