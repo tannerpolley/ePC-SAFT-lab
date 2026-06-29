@@ -37,6 +37,7 @@ def test_runtime_capabilities_report_public_ipopt_routes() -> None:
         "flash": "neutral_tp_flash",
         "lle": "neutral_lle",
         "multiphase": "neutral_multiphase_nonassoc",
+        "reactive_speciation": "reactive_speciation",
         "single_component_vle": "single_component_vle",
     }
 
