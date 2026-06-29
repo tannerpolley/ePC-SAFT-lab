@@ -5,6 +5,7 @@ import csv
 import math
 import subprocess
 import sys
+from types import ModuleType
 
 
 from pathlib import Path
@@ -26,12 +27,16 @@ if str(ROOT) not in sys.path:
 if str(ROOT.parent) not in sys.path:
     sys.path.insert(0, str(ROOT.parent))
 
-from shared import figure_data
-
 PLOT_SCRIPTS = [
     ROOT.parent / "figures" / f"figure_{index:02d}" / "scripts" / f"plot_figure_{index}.py"
     for index in range(1, 10)
 ]
+
+
+def _load_figure_data() -> ModuleType:
+    from shared import figure_data
+
+    return figure_data
 
 
 def _validate_visual_qc_report() -> list[str]:
@@ -85,7 +90,7 @@ def _interp(x_grid: list[float], y_grid: list[float], x_value: float) -> float:
     return y0 + fraction * (y1 - y0)
 
 
-def _validate_model_fit_quality() -> list[str]:
+def _validate_model_fit_quality(figure_data: ModuleType) -> list[str]:
     gates = {
         "figure_5": {"rmse": 0.35, "max_abs": 1.25, "first_nonzero_max": 0.98},
         "figure_9": {"rmse": 0.12, "max_abs": 0.30, "first_nonzero_max": 0.98},
@@ -149,9 +154,10 @@ def main() -> None:
         _run([sys.executable, "scripts/dev/doctor.py"])
         _run([sys.executable, "run_pytest.py", "--runtime", "-q"])
 
+    figure_data = _load_figure_data()
     failures = figure_data.compare_all(rtol=args.rtol, atol=args.atol)
     failures.extend(_validate_visual_qc_report())
-    failures.extend(_validate_model_fit_quality())
+    failures.extend(_validate_model_fit_quality(figure_data))
     if failures:
         print("2025 Figiel figure-data validation failed:")
         for failure in failures[:40]:

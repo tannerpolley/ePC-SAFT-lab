@@ -86,18 +86,18 @@ discovery, and VLE/LLE/electrolyte/reactive equilibrium workflows.
 
 ## Current Open Issues
 
-Open M4 work is split into phase-equilibrium/HELD2 and CE/CPE lanes so
-standalone chemical-equilibrium work stays visible without being treated as
-part of the HELD2 phase-discovery cutover.
+Open M4 work is now separated into the remaining CE/CPE lane. The
+phase-equilibrium/HELD2 closeout lane has no open native dependency blockers:
+#320 closed by PR #341, #343 closed by PR #359 after #344 through #350 closed,
+and #191 closes through the final proof/sync PR after the retained public-route
+oracle passes.
 
-### Phase-Equilibrium / HELD2 Open Issues
+### Phase-Equilibrium / HELD2 Closeout State
 
-| Issue | Capability | Backend | Readiness | Summary |
-| --- | --- | --- | --- | --- |
-| [#191](../../issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md) | `ready` | `Ipopt` | `blocked_by_320_343` | Umbrella closeout remains open. #314 is retained representative public-route admission evidence only; #191 cannot close until #320 proves Perdomo/Figiel HELD2 validation and #343 closes the full HELD2-style public-route discovery chain. |
-| [#320](../../issues/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation.md) | `electrolyte` | `Ipopt` | `ready` | Active #191 validation blocker for Perdomo/Figiel HELD2 electrolyte flash evidence through the public package route. |
-| [#343](../../issues/2026-06-27-m4-equilibrium-issue-0343-implement-full-held2-style-electrolyte-phase-discovery-in-the-public-route.md) | `ready` | `Ipopt` | `blocked_by_350` | Full HELD2-style public-route phase-discovery adoption tracker. #344 through #349 have retained proof; #350 is the final registry/capability admission slice. |
-| [#350](../../issues/2026-06-27-m4-equilibrium-issue-0350-admit-held2-public-route-capability-evidence-after-full-validation.md) | `electrolyte` | `Ipopt` | `ready` | Admits registry and docs capability evidence only after full validation. |
+No open phase-equilibrium/HELD2 child issues remain for #191 closeout. #314 is
+retained representative admission evidence only; #320 retains Perdomo/Figiel
+validation, #343 retains full HELD2-style public-route discovery, and #191 owns
+only final proof/sync closure.
 
 ### CE / CPE Open Issues
 
@@ -255,16 +255,14 @@ consumes #269/#300/#302/#306/#312/#313 and exposes only the source-backed
 Khudaida explicit-ion NaCl mixed-solvent `electrolyte_lle` route, but it is not
 full electrolyte LLE model reproduction.
 
-#320 remains a #191 validation blocker for Perdomo/Figiel HELD2 electrolyte
-flash evidence through the public package route.
+#320 closed by PR #341 with Perdomo/Figiel HELD2 electrolyte flash evidence
+through the public package route.
 
-#343 is the explicit full HELD2 public-route discovery implementation blocker
-for #191. #344 through #349 now retain doctrine, continuous reduced-
-electroneutral TPD, Stage I stability, Stage II dual discovery, public-route
-orchestration, and scenario validation proof. #350 is the final registry and
-capability-admission slice. After #350 and #343 close, #191 must still remain
-blocked by #320 until Perdomo/Figiel HELD2 validation passes through the public
-package route.
+#343 closed by PR #359 with the full HELD2 public-route discovery parent proof
+for #191. #344 through #350 retain doctrine, continuous reduced-electroneutral
+TPD, Stage I stability, Stage II dual discovery, public-route orchestration,
+scenario validation, registry evidence, and capability admission. #191 final
+closeout now depends only on the retained proof oracle passing.
 
 #145 closed through #273 with its internal exact-Hessian proof gate:
 Gross/Sadowski 2002 Figure 8 methanol/cyclohexane LLE rows plus retained Table
@@ -286,8 +284,15 @@ two-associating-component, or generalized associating phase-set support.
 
 ## Closed Issues
 
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/343](https://github.com/ePC-SAFT/ePC-SAFT/issues/343) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/359](https://github.com/ePC-SAFT/ePC-SAFT/pull/359) on 2026-06-29T18:31:54Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/350](https://github.com/ePC-SAFT/ePC-SAFT/issues/350) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/358](https://github.com/ePC-SAFT/ePC-SAFT/pull/358) on 2026-06-29T16:32:47Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/349](https://github.com/ePC-SAFT/ePC-SAFT/issues/349) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/357](https://github.com/ePC-SAFT/ePC-SAFT/pull/357) on 2026-06-29T02:11:17Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/348](https://github.com/ePC-SAFT/ePC-SAFT/issues/348) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/356](https://github.com/ePC-SAFT/ePC-SAFT/pull/356) on 2026-06-28T22:06:29Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/347](https://github.com/ePC-SAFT/ePC-SAFT/issues/347) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/355](https://github.com/ePC-SAFT/ePC-SAFT/pull/355) on 2026-06-28T19:53:46Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/346](https://github.com/ePC-SAFT/ePC-SAFT/issues/346) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/354](https://github.com/ePC-SAFT/ePC-SAFT/pull/354) on 2026-06-28T18:23:18Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/345](https://github.com/ePC-SAFT/ePC-SAFT/issues/345) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/353](https://github.com/ePC-SAFT/ePC-SAFT/pull/353) on 2026-06-28T15:35:44Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/344](https://github.com/ePC-SAFT/ePC-SAFT/issues/344) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/352](https://github.com/ePC-SAFT/ePC-SAFT/pull/352) on 2026-06-28T04:20:05Z
+- [https://github.com/ePC-SAFT/ePC-SAFT/issues/320](https://github.com/ePC-SAFT/ePC-SAFT/issues/320) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/341](https://github.com/ePC-SAFT/ePC-SAFT/pull/341) on 2026-06-29T17:15:44Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/327](https://github.com/ePC-SAFT/ePC-SAFT/issues/327) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/342](https://github.com/ePC-SAFT/ePC-SAFT/pull/342) on 2026-06-27T20:23:44Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/280](https://github.com/ePC-SAFT/ePC-SAFT/issues/280) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/289](https://github.com/ePC-SAFT/ePC-SAFT/pull/289) on 2026-06-20T00:15:28Z
 - [https://github.com/ePC-SAFT/ePC-SAFT/issues/290](https://github.com/ePC-SAFT/ePC-SAFT/issues/290) closed by [https://github.com/ePC-SAFT/ePC-SAFT/pull/291](https://github.com/ePC-SAFT/ePC-SAFT/pull/291) on 2026-06-19T23:32:21Z
