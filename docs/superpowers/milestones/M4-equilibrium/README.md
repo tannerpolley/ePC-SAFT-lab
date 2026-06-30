@@ -102,7 +102,7 @@ failures and shared contract gates are resolved.
 | [#364](../../issues/364-m4-lle-govern-neutral-nonassociating-lle-certification.md) | `closed` | `Ipopt` | `complete` | Parent neutral nonassociating LLE certification closes after #365 and #366 by this proof/sync PR. |
 | [#365](../../issues/365-m4-lle-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md) | `closed` | `Ipopt` | `complete` | Fixed neutral LLE Stage II replay-to-Stage III accepted-result receipt by PR #379. |
 | [#366](../../issues/366-m4-lle-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md) | `closed` | `Ipopt` | `complete` | Connected source-backed neutral nonassociating LLE evidence to the shared contract by PR #380. |
-| [#367](../../issues/367-m4-lle-govern-associating-lle-certification.md) | `lle`/`association` | `Ipopt` | `blocked` | Parent for associating LLE certification. |
+| [#367](../../issues/367-m4-lle-govern-associating-lle-certification.md) | `lle`/`association` | `ready` | `blocked` | Parent for associating LLE certification. |
 | [#368](../../issues/368-m4-lle-separate-associating-proof-applicability-from-global-route-metadata.md) | `lle`/`association` | `closed` | `complete` | Split request-specific proof applicability from global route-family proof metadata by PR #379. |
 | [#369](../../issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md) | `lle`/`association` | `ready` | `blocked` | Connect Gross 2002 associating LLE evidence to the shared contract after #362. |
 | [#370](../../issues/370-m4-lle-govern-electrolyte-lle-certification.md) | `electrolyte` | `Ipopt` | `blocked` | Parent for electrolyte LLE certification; #191 is now a native sub-issue here. |
