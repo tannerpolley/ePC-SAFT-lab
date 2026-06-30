@@ -4,8 +4,9 @@
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md
 **Source Plan:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md
+**Branch:** codex/m4-vle-family-parent-closeout
 **Classification:** HITL
-**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 **Goal Command:** None; tracking parent issue.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -39,10 +40,21 @@
 
 Parent issue for VLE family certification.
 
+## VLE Residual Ownership
+
+This parent owns vapor-liquid transfer residuals, saturation consistency, exact-Hessian route receipts, and source-backed VLE data-tolerance evidence. Boundary-route tracing, including bubble and dew workflows, remains under #375. Generic TP flash and multiphase phase-set completeness remain under #374.
+
 ## Acceptance Criteria
 
-- [ ] VLE parent exists under the Phase Equilibrium parent.
-- [ ] Issue body defines VLE residual ownership and non-goals.
+- [x] VLE parent exists under the Phase Equilibrium parent.
+- [x] Issue body defines VLE residual ownership and non-goals.
+
+## Resolution Evidence
+
+- Branch: `codex/m4-vle-family-parent-closeout`
+- Parent proof: `gh issue view 373 --repo ePC-SAFT/ePC-SAFT --json parent,state,title` reports `state=OPEN`, parent `#361`, and title `M4 PE: unify phase-equilibrium certification contracts`.
+- Residual ownership proof: this mirror assigns vapor-liquid transfer, saturation consistency, exact-Hessian route receipts, and source-backed VLE data tolerance to #373 while keeping boundary tracing under #375 and flash/multiphase phase-set completeness under #374.
+- VLE proof boundary: this closeout creates no new VLE route admission, no release claim, and no M5 parameter-regression claim.
 
 ## Blocked by
 
