@@ -95,6 +95,25 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
     assert benchmarks["Ascani/Sadowski/Held 2022 mixed-solvent LLE"]["priority_rank"] == 3
 
 
+def test_neutral_lle_showcase_declares_shared_certification_and_tolerance_margins() -> None:
+    matsuda = next(
+        case
+        for row in _registry()["family_rows"]
+        for case in row.get("reference_cases", [])
+        if case["case_label"] == "Matsuda 2011 perfluorohexane + hexane neutral LLE"
+    )
+
+    assert matsuda["fixture_status"] == "available"
+    assert matsuda["route"] == "neutral_lle"
+    assert {
+        "source_backed_binodal_branch_rows",
+        "source_fitted_binary_interaction",
+        "current_lle_route_acceptance",
+        "shared_phase_equilibrium_certification",
+        "source_tolerance_margins",
+    } <= set(matsuda["acceptance_checks"])
+
+
 def test_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
     gate = _neutral_flash_gate()
 

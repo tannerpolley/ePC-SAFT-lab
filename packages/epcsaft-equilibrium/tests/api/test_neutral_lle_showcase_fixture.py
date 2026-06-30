@@ -12,6 +12,7 @@ import pytest
 import epcsaft
 import epcsaft_equilibrium as equilibrium_module
 from epcsaft_equilibrium._native import extension_native_core
+from scripts.validation import check_neutral_lle_showcase as checker
 
 _core = extension_native_core()
 
@@ -89,6 +90,40 @@ def test_equilibrium_lle_solves_source_backed_neutral_showcase_fixture() -> None
     )
     assert comparison["max_composition_abs_error"] <= thresholds["composition_abs"]
     assert comparison["max_phase_fraction_abs_error"] <= thresholds["phase_fraction_abs"]
+
+
+def test_neutral_lle_source_showcase_reports_shared_certification_contract() -> None:
+    _skip_without_ipopt()
+
+    payload = checker.evaluate_case_dir(CASE_DIR)
+
+    assert payload["complete"] is True
+    shared = payload["shared_certification"]
+    assert shared["status"] == "accepted"
+    assert shared["selector_family"] == "neutral_lle"
+    assert shared["family_residual_block"] == "lle"
+    assert shared["public_routes"] == ["lle"]
+    assert shared["validation_blockers"] == []
+    assert "neutral_lle" in shared["production_evidence_quantities"]
+    assert {
+        "capability_evidence",
+        "material_balance",
+        "phase_distance",
+        "phase_equilibrium",
+        "phase_pressure_consistency",
+        "postsolve_certification",
+        "public_route_mapping",
+    } <= set(shared["acceptance_diagnostics_required"])
+
+    margins = payload["tolerance_margins"]
+    assert margins["source_data"]["status"] == "source_backed"
+    assert margins["binary_interaction"]["status"] == "source_fitted"
+    assert margins["composition_abs"]["status"] == "accepted"
+    assert margins["phase_fraction_abs"]["status"] == "accepted"
+    assert margins["material_balance_abs"]["status"] == "accepted"
+    assert margins["pressure_abs_Pa"]["status"] == "accepted"
+    assert margins["ln_fugacity_abs"]["status"] == "accepted"
+    assert margins["phase_distance_min"]["status"] == "accepted"
 
 
 def _read_json(path: Path) -> dict[str, Any]:
