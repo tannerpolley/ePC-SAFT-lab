@@ -535,6 +535,23 @@ def test_reactive_speciation_passes_eos_gamma_context_to_native(monkeypatch: pyt
         payload["ln_activity_coefficients"] = [0.01, -0.02]
         payload["activities"] = [0.2525125417714178, 0.7351490043780079]
         payload["solver_diagnostics"]["hessian_backend"] = "cppad_phase_state_activity_coefficient"
+        payload["continuation"] = {
+            "direct_final_proof_attempted": False,
+            "direct_final_proof_accepted": False,
+            "parameter_name": "activity_lambda",
+            "final_proof_status": "accepted",
+            "final_stage_id": "activity_lambda_1",
+            "lambda_values": [0.0, 0.5, 1.0],
+            "final_lambda": 1.0,
+            "activity_lambda_values": [0.0, 0.5, 1.0],
+            "final_activity_lambda": 1.0,
+            "stage_count": 3,
+            "trace": [
+                {"stage_id": "activity_lambda_0", "parameter_value": 0.0, "final_proof": False},
+                {"stage_id": "activity_lambda_half", "parameter_value": 0.5, "final_proof": False},
+                {"stage_id": "activity_lambda_1", "parameter_value": 1.0, "final_proof": True},
+            ],
+        }
         return payload
 
     monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
@@ -556,6 +573,9 @@ def test_reactive_speciation_passes_eos_gamma_context_to_native(monkeypatch: pyt
     assert result.diagnostics["activity_model"] == "eos_x_gamma"
     assert result.diagnostics["activity_derivative_backend"] == "cppad_implicit_activity_coefficient"
     assert result.diagnostics["hessian_backend"] == "cppad_phase_state_activity_coefficient"
+    assert result.diagnostics["continuation"]["parameter_name"] == "activity_lambda"
+    assert result.diagnostics["continuation"]["activity_lambda_values"] == pytest.approx((0.0, 0.5, 1.0))
+    assert result.diagnostics["continuation"]["final_activity_lambda"] == pytest.approx(1.0)
 
 
 def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_fixture() -> None:

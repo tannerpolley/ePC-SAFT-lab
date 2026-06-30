@@ -25,6 +25,13 @@ void require_positive_finite(double value, const std::string& label) {
     throw ValueError(label + " must be positive and finite.");
 }
 
+void require_unit_interval(double value, const std::string& label) {
+    if (std::isfinite(value) && value >= 0.0 && value <= 1.0) {
+        return;
+    }
+    throw ValueError(label + " must be finite and between zero and one.");
+}
+
 void require_eos_activity_input_shape(
     const ChemicalEquilibriumNlpInput& input,
     std::size_t species_count
@@ -46,6 +53,7 @@ void require_eos_activity_input_shape(
     if (!input.eos_activity_args) {
         throw ValueError("chemical equilibrium EOS activity standard states require native EOS parameters.");
     }
+    require_unit_interval(input.eos_activity_lambda, "chemical equilibrium EOS activity continuation lambda");
     if (!input.eos_activity_args->m.empty() && input.eos_activity_args->m.size() != species_count) {
         throw ValueError("chemical equilibrium EOS activity mixture component count must match CE species count.");
     }
@@ -257,7 +265,7 @@ HomogeneousChemicalEquilibriumBlockResult evaluate_eos_activity_objective(
             "chemical equilibrium EOS activity ln activity coefficient"
         );
         log_activities[species] = std::log(out.mole_fractions[species])
-            + out.ln_activity_coefficients[species];
+            + input.eos_activity_lambda * out.ln_activity_coefficients[species];
         out.activities[species] = std::exp(log_activities[species]);
         out.objective_gradient[species] = out.standard_mu_rt[species] + log_activities[species];
         out.objective_value += amounts[species] * out.objective_gradient[species];
@@ -271,7 +279,8 @@ HomogeneousChemicalEquilibriumBlockResult evaluate_eos_activity_objective(
                 const double ideal_derivative =
                     row == component ? 1.0 / out.mole_fractions[row] : 0.0;
                 const double activity_derivative =
-                    sensitivity.jacobian_row_major[row * species_count + component];
+                    input.eos_activity_lambda
+                    * sensitivity.jacobian_row_major[row * species_count + component];
                 value += (ideal_derivative + activity_derivative)
                     * composition_amount_derivative(
                         out.mole_fractions,
@@ -338,6 +347,18 @@ ChemicalEquilibriumNlpInput chemical_equilibrium_input_with_log_k_lambda(
     for (double value : input.log_equilibrium_constants) {
         out.log_equilibrium_constants.push_back(log_equilibrium_constants_lambda * value);
     }
+    return out;
+}
+
+ChemicalEquilibriumNlpInput chemical_equilibrium_input_with_activity_lambda(
+    const ChemicalEquilibriumNlpInput& input,
+    double activity_lambda
+) {
+    if (!(std::isfinite(activity_lambda) && activity_lambda >= 0.0 && activity_lambda <= 1.0)) {
+        throw ValueError("chemical equilibrium EOS activity homotopy lambda must be finite and between zero and one.");
+    }
+    ChemicalEquilibriumNlpInput out = input;
+    out.eos_activity_lambda = activity_lambda;
     return out;
 }
 

@@ -32,6 +32,7 @@ struct ChemicalEquilibriumNlpInput {
     std::shared_ptr<add_args> eos_activity_args;
     double eos_activity_temperature = 0.0;
     double eos_activity_pressure = 0.0;
+    double eos_activity_lambda = 1.0;
     int eos_activity_phase_kind = -1;
     std::string eos_activity_reference_phase;
 };
@@ -66,7 +67,9 @@ struct ChemicalEquilibriumNlpResult {
     bool direct_final_proof_accepted = false;
     PhysicalProofCorrectorResult proof_corrector;
     ContinuationTraceResult continuation;
+    std::string continuation_parameter_name = "log_equilibrium_constants_lambda";
     std::vector<double> continuation_lambdas;
+    std::vector<double> activity_continuation_lambdas;
 };
 
 class HomogeneousChemicalEquilibriumNlp final : public NlpProblem {

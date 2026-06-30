@@ -221,6 +221,41 @@ def test_native_ce_eos_x_gamma_uses_cppad_activity_coefficient_objective() -> No
     assert result["reaction_stationarity_inf_norm"] < 1.0e-8
 
 
+def test_native_ce_eos_x_gamma_continues_from_ideal_to_full_activity() -> None:
+    _require_ipopt()
+
+    schema, standard_states, mixture, target_mole_fractions, target_activities = _eos_gamma_payload()
+    result = _core._native_chemical_equilibrium_nlp_activation(
+        schema,
+        standard_states,
+        target_mole_fractions.tolist(),
+        300,
+        1.0e-10,
+        0.0,
+        "auto",
+        20,
+        1.0e-9,
+        1.0e-8,
+        None,
+        eos_mixture=mixture,
+    )
+
+    continuation = result["continuation"]
+    assert continuation["parameter_name"] == "activity_lambda"
+    assert continuation["activity_lambda_values"] == pytest.approx([0.0, 0.5, 1.0])
+    assert continuation["final_activity_lambda"] == pytest.approx(1.0)
+    assert continuation["final_stage_id"] == "activity_lambda_1"
+    assert continuation["trace"][-1]["final_proof"] is True
+    assert all(stage["final_proof"] is False for stage in continuation["trace"][:-1])
+    assert result["accepted"] is True
+    assert result["activity_model"] == "eos_x_gamma"
+    assert result["activity_derivative_backend"] == "cppad_implicit_activity_coefficient"
+    assert result["solver_diagnostics"]["hessian_backend"] == "cppad_phase_state_activity_coefficient"
+    assert result["activities"] == pytest.approx(target_activities, rel=1.0e-8, abs=1.0e-12)
+    assert result["balance_inf_norm"] < 1.0e-9
+    assert result["reaction_stationarity_inf_norm"] < 1.0e-8
+
+
 def test_native_ce_eos_x_phi_requires_native_mixture_context() -> None:
     _require_ipopt()
 

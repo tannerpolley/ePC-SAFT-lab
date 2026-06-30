@@ -34,6 +34,13 @@ void require_positive_finite(double value, const std::string& label) {
     throw ValueError(label + " must be positive and finite.");
 }
 
+void require_unit_interval(double value, const std::string& label) {
+    if (std::isfinite(value) && value >= 0.0 && value <= 1.0) {
+        return;
+    }
+    throw ValueError(label + " must be finite and between zero and one.");
+}
+
 void require_size(std::size_t actual, std::size_t expected, const std::string& label) {
     if (actual == expected) {
         return;
@@ -359,6 +366,7 @@ void validate_input_shape(const ChemicalEquilibriumNlpInput& input) {
         if (!input.eos_activity_args) {
             throw ValueError("chemical equilibrium EOS activity standard states require native EOS parameters.");
         }
+        require_unit_interval(input.eos_activity_lambda, "chemical equilibrium EOS activity continuation lambda");
         if (!input.eos_activity_args->m.empty() && input.eos_activity_args->m.size() != species_count) {
             throw ValueError("chemical equilibrium EOS activity mixture component count must match species count.");
         }
@@ -686,6 +694,31 @@ ContinuationStageSpec ce_homotopy_stage(
     return stage;
 }
 
+ContinuationStageSpec ce_activity_homotopy_stage(
+    const ChemicalEquilibriumNlpInput& base_input,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout,
+    const IpoptSolveOptions& options,
+    const std::string& stage_id,
+    double lambda,
+    bool final_proof
+) {
+    ContinuationStageSpec stage;
+    stage.stage_id = stage_id;
+    stage.parameter_value = lambda;
+    stage.final_proof = final_proof;
+    stage.options = ce_stage_options(options, final_proof ? "proof" : "continuation_trace");
+    ChemicalEquilibriumNlpInput stage_input =
+        chemical_equilibrium_input_with_activity_lambda(
+            chemical_equilibrium_input_with_log_k_lambda(base_input, 1.0),
+            lambda
+        );
+    stage.problem_factory = [stage_input, plan, layout]() {
+        return std::make_unique<HomogeneousChemicalEquilibriumNlp>(stage_input, plan, layout);
+    };
+    return stage;
+}
+
 struct PhysicalProofResidualSystem {
     HomogeneousChemicalEquilibriumBlockResult block;
     std::vector<double> residuals;
@@ -959,6 +992,95 @@ ChemicalEquilibriumNlpResult result_from_homotopy_trace(
     return out;
 }
 
+bool trace_finished_final_lambda_one(const ContinuationTraceResult& trace) {
+    if (trace.trace.empty()) {
+        return false;
+    }
+    const ContinuationStageResult& final_stage = trace.trace.back();
+    return final_stage.final_proof
+        && std::abs(final_stage.parameter_value - 1.0) <= 1.0e-12
+        && !final_stage.solve.variables.empty();
+}
+
+ChemicalEquilibriumNlpResult solve_eos_activity_continuation_from_seed(
+    const ChemicalEquilibriumNlpInput& seeded_input,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout,
+    const IpoptSolveOptions& options,
+    double balance_tolerance,
+    double reaction_stationarity_tolerance
+) {
+    ChemicalEquilibriumNlpInput true_input =
+        chemical_equilibrium_input_with_activity_lambda(
+            chemical_equilibrium_input_with_log_k_lambda(seeded_input, 1.0),
+            1.0
+        );
+    const std::vector<double> activity_lambdas = {0.0, 0.5, 1.0};
+
+    std::vector<ContinuationStageSpec> stages;
+    stages.push_back(ce_activity_homotopy_stage(
+        seeded_input,
+        plan,
+        layout,
+        options,
+        "activity_lambda_0",
+        activity_lambdas[0],
+        false
+    ));
+    stages.push_back(ce_activity_homotopy_stage(
+        seeded_input,
+        plan,
+        layout,
+        options,
+        "activity_lambda_half",
+        activity_lambdas[1],
+        false
+    ));
+    stages.push_back(ce_activity_homotopy_stage(
+        seeded_input,
+        plan,
+        layout,
+        options,
+        "activity_lambda_1",
+        activity_lambdas[2],
+        true
+    ));
+
+    ContinuationState initial_state;
+    initial_state.variables = log_amounts_from_physical_amounts(seeded_input.initial_amounts);
+    ContinuationTraceResult trace = run_continuation_plan(stages, initial_state);
+    ChemicalEquilibriumNlpResult out = result_from_homotopy_trace(
+        true_input,
+        plan,
+        layout,
+        trace,
+        balance_tolerance,
+        reaction_stationarity_tolerance
+    );
+    out.continuation_parameter_name = "activity_lambda";
+    out.continuation_lambdas = activity_lambdas;
+    out.activity_continuation_lambdas = activity_lambdas;
+    if (!out.accepted && trace_finished_final_lambda_one(trace)) {
+        out.proof_corrector = run_physical_proof_corrector(
+            true_input,
+            plan,
+            layout,
+            trace.trace.back().solve.variables,
+            balance_tolerance,
+            reaction_stationarity_tolerance
+        );
+        if (out.proof_corrector.accepted) {
+            out.postsolve = out.proof_corrector.postsolve;
+            out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
+            out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
+            out.accepted = true;
+            out.continuation.accepted = true;
+            out.continuation.final_proof_status = "accepted";
+        }
+    }
+    return out;
+}
+
 }  // namespace
 
 ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
@@ -969,6 +1091,50 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
     double balance_tolerance,
     double reaction_stationarity_tolerance
 ) {
+    if (input.eos_activity_enabled) {
+        if (!input.initial_amounts.empty()) {
+            ChemicalEquilibriumNlpResult out = solve_eos_activity_continuation_from_seed(
+                input,
+                plan,
+                layout,
+                options,
+                balance_tolerance,
+                reaction_stationarity_tolerance
+            );
+            out.source_oracle_initial_amounts = true;
+            out.seed_source = "caller_initial_amounts";
+            out.direct_final_proof_attempted = false;
+            out.direct_final_proof_accepted = false;
+            if (out.accepted) {
+                return out;
+            }
+        }
+
+        FeasibleInitializationResult feasible = solve_max_min_feasible_initialization(
+            feasible_initialization_input_from_ce(input),
+            ce_stage_options(options, "proof"),
+            balance_tolerance
+        );
+        ChemicalEquilibriumNlpResult out;
+        if (feasible.accepted) {
+            ChemicalEquilibriumNlpInput seeded_input = input_with_initial_amounts(input, feasible.amounts);
+            out = solve_eos_activity_continuation_from_seed(
+                seeded_input,
+                plan,
+                layout,
+                options,
+                balance_tolerance,
+                reaction_stationarity_tolerance
+            );
+        }
+        out.source_oracle_initial_amounts = false;
+        out.seed_source = "max_min_feasible_interior";
+        out.feasible_initialization = feasible;
+        out.direct_final_proof_attempted = false;
+        out.direct_final_proof_accepted = false;
+        return out;
+    }
+
     if (!input.initial_amounts.empty()) {
         ChemicalEquilibriumNlpInput true_input =
             chemical_equilibrium_input_with_log_k_lambda(input, 1.0);

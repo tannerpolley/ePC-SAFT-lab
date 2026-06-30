@@ -49,6 +49,16 @@ Implement Task 3 from the source plan: nonideality continuation from ideal activ
 - [ ] Diagnostics include CppAD-backed derivative evidence for the nonideal objective.
 - [ ] Ideal CE behavior and diagnostics remain stable.
 
+## Resolution Evidence
+
+- Native EOS CE now stages `eos_x_phi` and `eos_x_gamma` solves with `activity_lambda` values `[0.0, 0.5, 1.0]` before final proof.
+- The final accepted nonideal result is reconstructed with `activity_lambda = 1.0`, reports `activity_model = eos_x_gamma`, and keeps `activity_derivative_backend = cppad_implicit_activity_coefficient` plus `hessian_backend = cppad_phase_state_activity_coefficient`.
+- Public `ReactiveSpeciationResult.diagnostics["continuation"]` preserves `parameter_name`, `activity_lambda_values`, and `final_activity_lambda`.
+- Fresh red proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py::test_native_ce_eos_x_gamma_continues_from_ideal_to_full_activity -q` failed on missing `continuation["parameter_name"]` before implementation.
+- Fresh proof: `uv run --no-sync python scripts/dev/build_epcsaft.py --build-only --parallel 10` passed.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_standard_state.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py -q` passed with 21 tests.
+- Fresh proof: `uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete` returned status `complete` with no blockers.
+
 ## Blocked by
 
 - None

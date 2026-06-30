@@ -1268,12 +1268,17 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     continuation["direct_final_proof_attempted"] = result.direct_final_proof_attempted;
     continuation["direct_final_proof_accepted"] = result.direct_final_proof_accepted;
     continuation["physical_proof_corrector"] = physical_proof_corrector_to_dict(result.proof_corrector);
+    continuation["parameter_name"] = result.continuation_parameter_name;
     continuation["final_proof_status"] = result.continuation.final_proof_status;
     continuation["final_stage_id"] = result.continuation.final_stage_id;
     continuation["lambda_values"] = result.continuation_lambdas;
     continuation["final_lambda"] = result.continuation_lambdas.empty()
         ? 0.0
         : result.continuation_lambdas.back();
+    continuation["activity_lambda_values"] = result.activity_continuation_lambdas;
+    continuation["final_activity_lambda"] = result.activity_continuation_lambdas.empty()
+        ? 0.0
+        : result.activity_continuation_lambdas.back();
     continuation["stage_count"] = static_cast<int>(result.continuation.trace.size());
     continuation["trace"] = continuation_trace_to_list(result.continuation.trace);
     out["continuation"] = continuation;

@@ -12,6 +12,11 @@ ChemicalEquilibriumNlpInput chemical_equilibrium_input_with_log_k_lambda(
     double log_equilibrium_constants_lambda
 );
 
+ChemicalEquilibriumNlpInput chemical_equilibrium_input_with_activity_lambda(
+    const ChemicalEquilibriumNlpInput& input,
+    double activity_lambda
+);
+
 HomogeneousChemicalEquilibriumBlockResult evaluate_chemical_equilibrium_objective(
     const ChemicalEquilibriumNlpInput& input,
     const std::vector<double>& amounts
