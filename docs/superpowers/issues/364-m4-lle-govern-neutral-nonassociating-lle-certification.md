@@ -4,8 +4,9 @@
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md
 **Source Plan:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md
+**Branch:** codex/m4-neutral-lle-parent-closeout
 **Classification:** HITL
-**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 **Goal Command:** None; tracking parent issue.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -41,8 +42,16 @@ Parent issue for neutral nonassociating LLE certification.
 
 ## Acceptance Criteria
 
-- [ ] Replay-receipt and source-backed tolerance leaves exist.
-- [ ] Neutral LLE proof avoids associating or electrolyte-specific residual assumptions.
+- [x] Replay-receipt and source-backed tolerance leaves exist.
+- [x] Neutral LLE proof avoids associating or electrolyte-specific residual assumptions.
+
+## Resolution Evidence
+
+- Branch: `codex/m4-neutral-lle-parent-closeout`
+- Sub-issue proof: `gh issue view 364 --repo ePC-SAFT/ePC-SAFT --json subIssues` reports exactly two sub-issues, #365 and #366, both `CLOSED`.
+- #365 closed by PR #379 with the neutral LLE Stage II replay-to-Stage III accepted-result receipt fixed, focused route-provenance oracle passing, and full `packages/epcsaft-equilibrium/tests` suite passing.
+- #366 closed by PR #380 with source-backed Matsuda neutral LLE tolerance margins retained, shared `neutral_lle` certification accepted, and checker/registry/package tests passing.
+- Neutral proof boundary: #365/#366 evidence stays scoped to neutral nonassociating LLE and does not rely on associating, electrolyte, reactive, or M5 parameter-regression assumptions.
 
 ## Blocked by
 
