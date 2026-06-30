@@ -4,8 +4,9 @@
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md
 **Source Plan:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md
+**Branch:** codex/m4-electrolyte-lle-parent-closeout
 **Classification:** HITL
-**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 **Goal Command:** None; tracking parent issue.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -41,9 +42,17 @@ Parent issue for electrolyte LLE certification and #191 subtree placement.
 
 ## Acceptance Criteria
 
-- [ ] #191 is a native sub-issue of this parent.
-- [ ] Electrolyte residual integration leaf exists.
-- [ ] Closed electrolyte evidence remains traceable.
+- [x] #191 is a native sub-issue of this parent.
+- [x] Electrolyte residual integration leaf exists.
+- [x] Closed electrolyte evidence remains traceable.
+
+## Resolution Evidence
+
+- Branch: `codex/m4-electrolyte-lle-parent-closeout`
+- Sub-issue proof: `gh issue view 370 --repo ePC-SAFT/ePC-SAFT --json subIssues` reports exactly two sub-issues, #191 and #371, both `CLOSED`.
+- Parent proof: `gh issue view 191 --repo ePC-SAFT/ePC-SAFT --json parent,state,closedAt` reports `state=CLOSED`, `parent=#370`, and `closedAt=2026-06-29T22:43:08Z`.
+- #371 closed by PR #391 with the retained public-route `electrolyte_lle` shared certification accepted, reduced-electroneutral basis `counterion_pair_transformed_variables`, lift/back-lift charge and round-trip residuals `0.0`, projected charged transfer `mean_ionic_counterion_pairs`, mean-ionic residual `4.104478534827649e-08 <= 1.0e-4`, and Born/SSM/DS exact-Hessian evidence retained.
+- Electrolyte proof boundary: #191 remains the historical electrolyte HELD2/GFPE closeout, while #371 supplies the shared-contract electrolyte residual block; no Khudaida/M5 parameter-regression, reactive electrolyte, CE/CPE, or release claim is added by this parent closeout.
 
 ## Blocked by
 

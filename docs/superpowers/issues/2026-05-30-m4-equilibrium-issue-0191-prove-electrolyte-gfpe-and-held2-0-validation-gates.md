@@ -2,7 +2,7 @@
 issue: 191
 title: "M4: prove electrolyte GFPE and HELD2.0 validation gates"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/191"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
@@ -15,7 +15,7 @@ source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-
 afk_hitl: "HITL"
 parent_issue: "https://github.com/ePC-SAFT/ePC-SAFT/issues/370"
 branch: codex/issue-0191-electrolyte-closeout
-last_synced: "2026-06-29"
+last_synced: "2026-06-30"
 ---
 
 # Prove electrolyte GFPE and HELD2.0 validation gates
@@ -89,6 +89,10 @@ II dual/cutting-plane discovery, public-route orchestration through Stage III,
 multi-scenario validation, and registry/capability admission. #344 through #350
 are closed. #191 is now the final M4 electrolyte closeout issue and has no open
 native dependency blockers.
+
+#371 closed by PR #391 on 2026-06-30 with the reduced-electroneutral
+electrolyte residual block integrated into the shared production-route
+certification contract under #370.
 
 ## Outcome Summary
 
