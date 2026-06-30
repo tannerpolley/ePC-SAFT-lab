@@ -66,6 +66,100 @@ double matrix_abs_max(const std::vector<double>& matrix) {
     return out;
 }
 
+ReactionProofScalingMetrics reaction_proof_scaling_metrics_for(
+    const ChemicalEquilibriumNlpInput& input,
+    const HomogeneousChemicalEquilibriumBlockResult& block,
+    double reaction_stationarity_tolerance
+) {
+    const int species_count = static_cast<int>(input.species_labels.size());
+    const int reaction_count = static_cast<int>(input.reaction_labels.size());
+    require_positive_finite(
+        reaction_stationarity_tolerance,
+        "chemical equilibrium reaction stationarity tolerance"
+    );
+    require_size(
+        input.stoichiometry_row_major.size(),
+        static_cast<std::size_t>(reaction_count * species_count),
+        "chemical equilibrium reaction stoichiometry"
+    );
+    require_size(
+        input.log_equilibrium_constants.size(),
+        static_cast<std::size_t>(reaction_count),
+        "chemical equilibrium log equilibrium constants"
+    );
+    require_size(
+        block.reaction_affinities.size(),
+        static_cast<std::size_t>(reaction_count),
+        "chemical equilibrium reaction affinity proof metrics"
+    );
+
+    ReactionProofScalingMetrics out;
+    out.reaction_scaling_factors.assign(static_cast<std::size_t>(reaction_count), 1.0);
+    out.reaction_row_norms.assign(static_cast<std::size_t>(reaction_count), 0.0);
+    out.reaction_scaling_min = reaction_count == 0 ? 1.0 : std::numeric_limits<double>::infinity();
+    out.reaction_scaling_max = reaction_count == 0 ? 1.0 : 0.0;
+
+    for (int reaction = 0; reaction < reaction_count; ++reaction) {
+        const std::size_t row_offset = static_cast<std::size_t>(reaction * species_count);
+        double row_l1_norm = 0.0;
+        double row_l2_norm_squared = 0.0;
+        for (int species = 0; species < species_count; ++species) {
+            const double coefficient =
+                input.stoichiometry_row_major[row_offset + static_cast<std::size_t>(species)];
+            row_l1_norm += std::abs(coefficient);
+            row_l2_norm_squared += coefficient * coefficient;
+        }
+        const double row_l2_norm = std::sqrt(row_l2_norm_squared);
+        out.reaction_row_norms[static_cast<std::size_t>(reaction)] = row_l2_norm;
+        const double denominator = std::max(
+            {1.0, row_l1_norm, std::abs(input.log_equilibrium_constants[static_cast<std::size_t>(reaction)])}
+        );
+        const double scale = 1.0 / denominator;
+        out.reaction_scaling_factors[static_cast<std::size_t>(reaction)] = scale;
+        out.reaction_scaling_min = std::min(out.reaction_scaling_min, scale);
+        out.reaction_scaling_max = std::max(out.reaction_scaling_max, scale);
+        out.scaled_reaction_stationarity_inf_norm = std::max(
+            out.scaled_reaction_stationarity_inf_norm,
+            scale
+                * std::abs(block.reaction_affinities[static_cast<std::size_t>(reaction)])
+                / reaction_stationarity_tolerance
+        );
+    }
+
+    double condition_estimate = 1.0;
+    for (int row = 0; row < reaction_count; ++row) {
+        const double row_norm = out.reaction_row_norms[static_cast<std::size_t>(row)];
+        if (!(row_norm > 0.0)) {
+            continue;
+        }
+        for (int column = row + 1; column < reaction_count; ++column) {
+            const double column_norm = out.reaction_row_norms[static_cast<std::size_t>(column)];
+            if (!(column_norm > 0.0)) {
+                continue;
+            }
+            double dot = 0.0;
+            for (int species = 0; species < species_count; ++species) {
+                dot += input.stoichiometry_row_major[
+                    static_cast<std::size_t>(row * species_count + species)
+                ] * input.stoichiometry_row_major[
+                    static_cast<std::size_t>(column * species_count + species)
+                ];
+            }
+            const double correlation = std::min(
+                1.0 - 1.0e-16,
+                std::abs(dot / (row_norm * column_norm))
+            );
+            condition_estimate = std::max(
+                condition_estimate,
+                std::sqrt((1.0 + correlation) / std::max(1.0e-16, 1.0 - correlation))
+            );
+        }
+    }
+    out.reaction_basis_condition_estimate = condition_estimate;
+    out.unscaled_reaction_stationarity_inf_norm = vector_inf_norm(block.reaction_affinities);
+    return out;
+}
+
 double amount_upper_bound(const std::vector<double>& totals, const std::vector<double>& initial) {
     double scale = std::accumulate(initial.begin(), initial.end(), 0.0);
     for (double value : totals) {
@@ -721,6 +815,7 @@ ContinuationStageSpec ce_activity_homotopy_stage(
 
 struct PhysicalProofResidualSystem {
     HomogeneousChemicalEquilibriumBlockResult block;
+    ReactionProofScalingMetrics proof_metrics;
     std::vector<double> residuals;
     std::vector<double> jacobian_row_major;
     double residual_inf_norm = 0.0;
@@ -751,6 +846,11 @@ PhysicalProofResidualSystem evaluate_physical_proof_residual_system(
     out.block = problem.evaluate_physical_block(amounts);
     out.balance_inf_norm = vector_inf_norm(out.block.balance_residuals);
     out.reaction_stationarity_inf_norm = vector_inf_norm(out.block.reaction_affinities);
+    out.proof_metrics = reaction_proof_scaling_metrics_for(
+        problem.input(),
+        out.block,
+        reaction_stationarity_tolerance
+    );
     const int equation_count = static_cast<int>(independent_balance_rows.size()) + reaction_count;
     out.residuals.assign(static_cast<std::size_t>(equation_count), 0.0);
     out.jacobian_row_major.assign(static_cast<std::size_t>(equation_count * species_count), 0.0);
@@ -768,10 +868,16 @@ PhysicalProofResidualSystem evaluate_physical_proof_residual_system(
         ++equation;
     }
     for (int reaction = 0; reaction < reaction_count; ++reaction) {
+        const double reaction_scale =
+            out.proof_metrics.reaction_scaling_factors[static_cast<std::size_t>(reaction)];
         out.residuals[static_cast<std::size_t>(equation)] =
-            out.block.reaction_affinities[static_cast<std::size_t>(reaction)] / reaction_stationarity_tolerance;
+            reaction_scale
+            * out.block.reaction_affinities[static_cast<std::size_t>(reaction)]
+            / reaction_stationarity_tolerance;
         for (int species = 0; species < species_count; ++species) {
             out.jacobian_row_major[static_cast<std::size_t>(equation * species_count + species)] =
+                reaction_scale
+                *
                 out.block.affinity_jacobian_row_major[
                     static_cast<std::size_t>(reaction * species_count + species)
                 ] * amounts[static_cast<std::size_t>(species)] / reaction_stationarity_tolerance;
@@ -832,11 +938,13 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
     out.initial_residual_inf_norm = system.residual_inf_norm;
     out.initial_balance_inf_norm = system.balance_inf_norm;
     out.initial_reaction_stationarity_inf_norm = system.reaction_stationarity_inf_norm;
+    out.proof_metrics = system.proof_metrics;
     for (int iteration = 0; iteration <= kMaxIterations; ++iteration) {
         out.iteration_count = iteration;
         out.residual_inf_norm = system.residual_inf_norm;
         out.balance_inf_norm = system.balance_inf_norm;
         out.reaction_stationarity_inf_norm = system.reaction_stationarity_inf_norm;
+        out.proof_metrics = system.proof_metrics;
         out.variables = variables;
         out.postsolve = system.block;
         if (physical_proof_passed(system.block, balance_tolerance, reaction_stationarity_tolerance)) {
@@ -921,6 +1029,11 @@ ChemicalEquilibriumNlpResult build_ce_result_from_solve(
     out.postsolve = problem.evaluate_physical_block(amounts);
     out.balance_inf_norm = vector_inf_norm(out.postsolve.balance_residuals);
     out.reaction_stationarity_inf_norm = vector_inf_norm(out.postsolve.reaction_affinities);
+    out.proof_metrics = reaction_proof_scaling_metrics_for(
+        input,
+        out.postsolve,
+        reaction_stationarity_tolerance
+    );
     out.accepted = ipopt_solve_result_allows_postsolve(out.solve)
         && out.balance_inf_norm <= balance_tolerance
         && out.reaction_stationarity_inf_norm <= reaction_stationarity_tolerance;
@@ -1073,6 +1186,7 @@ ChemicalEquilibriumNlpResult solve_eos_activity_continuation_from_seed(
             out.postsolve = out.proof_corrector.postsolve;
             out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
             out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
+            out.proof_metrics = out.proof_corrector.proof_metrics;
             out.accepted = true;
             out.continuation.accepted = true;
             out.continuation.final_proof_status = "accepted";
@@ -1190,6 +1304,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
                     out.postsolve = out.proof_corrector.postsolve;
                     out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
                     out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
+                    out.proof_metrics = out.proof_corrector.proof_metrics;
                     out.accepted = true;
                 }
             }
@@ -1245,6 +1360,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             direct.postsolve = direct.proof_corrector.postsolve;
             direct.balance_inf_norm = direct.proof_corrector.balance_inf_norm;
             direct.reaction_stationarity_inf_norm = direct.proof_corrector.reaction_stationarity_inf_norm;
+            direct.proof_metrics = direct.proof_corrector.proof_metrics;
             direct.accepted = true;
         }
     }
@@ -1308,6 +1424,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             out.postsolve = out.proof_corrector.postsolve;
             out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
             out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
+            out.proof_metrics = out.proof_corrector.proof_metrics;
             out.accepted = true;
             out.continuation.accepted = true;
             out.continuation.final_proof_status = "accepted";

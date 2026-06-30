@@ -147,6 +147,7 @@ _CHEMICAL_EQUILIBRIUM_TOP_LEVEL_DIAGNOSTIC_KEYS = (
     "accepted",
     "balance_inf_norm",
     "reaction_stationarity_inf_norm",
+    "proof_metrics",
     "selector_contract",
     "activation",
     "activation_plan",

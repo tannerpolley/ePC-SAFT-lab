@@ -54,8 +54,69 @@ def _ab_payload(log_k: float):
     return compiled.to_native_payload(), registry.to_native_payload()
 
 
+def _abc_near_dependent_payload(epsilon: float):
+    standard_state = StandardStateRecord(
+        label="mole_fraction_standard_state",
+        activity_convention="mole_fraction_activity",
+        temperature_K=298.15,
+        pressure_Pa=101325.0,
+    )
+    compiled = compile_reaction_set(
+        species=[
+            ChemicalSpecies("A", {"X": 1.0}),
+            ChemicalSpecies("B", {"X": 1.0}),
+            ChemicalSpecies("C", {"X": 1.0}),
+        ],
+        reactions=[
+            ChemicalReaction("a_to_b", {"A": -1.0, "B": 1.0}),
+            ChemicalReaction("almost_a_to_b", {"A": -1.0, "B": 1.0 - epsilon, "C": epsilon}),
+        ],
+        feed_amounts={"A": 1.0, "B": 0.0, "C": 0.0},
+    )
+    registry = build_standard_state_registry(
+        [
+            EquilibriumConstantRecord(
+                reaction_label="a_to_b",
+                value=0.0,
+                form="ln_K",
+                units="dimensionless",
+                standard_state=standard_state,
+                source="native scaling contract fixture",
+                source_constant_label="ln_K",
+            ),
+            EquilibriumConstantRecord(
+                reaction_label="almost_a_to_b",
+                value=0.0,
+                form="ln_K",
+                units="dimensionless",
+                standard_state=standard_state,
+                source="native scaling contract fixture",
+                source_constant_label="ln_K",
+            ),
+        ]
+    )
+    return compiled.to_native_payload(), registry.to_native_payload()
+
+
 def _solve_without_seed(log_k: float) -> dict[str, object]:
     schema, standard_states = _ab_payload(log_k)
+    return _core._native_chemical_equilibrium_nlp_activation(
+        schema,
+        standard_states,
+        [],
+        300,
+        1.0e-10,
+        0.0,
+        "auto",
+        20,
+        1.0e-9,
+        1.0e-8,
+        None,
+    )
+
+
+def _solve_near_dependent_without_seed(epsilon: float) -> dict[str, object]:
+    schema, standard_states = _abc_near_dependent_payload(epsilon)
     return _core._native_chemical_equilibrium_nlp_activation(
         schema,
         standard_states,
@@ -116,3 +177,40 @@ def test_ce_k_scaling_solves_tiny_species_without_source_oracle_seed() -> None:
     assert result["amounts"][1] == pytest.approx(1.0, abs=1.0e-4)
     assert result["balance_inf_norm"] < 1.0e-9
     assert result["reaction_stationarity_inf_norm"] < 1.0e-7
+
+
+def test_ce_proof_reports_reaction_scaling_for_large_log_k_tiny_species() -> None:
+    _require_ipopt()
+
+    result = _solve_without_seed(16.0)
+
+    assert result["accepted"] is True
+    assert min(result["amounts"]) < 1.0e-6
+    assert result["reaction_stationarity_inf_norm"] < 1.0e-8
+    metrics = result["proof_metrics"]
+    assert metrics["unscaled_reaction_stationarity_inf_norm"] == pytest.approx(
+        result["reaction_stationarity_inf_norm"]
+    )
+    assert metrics["scaled_reaction_stationarity_inf_norm"] <= (
+        result["reaction_stationarity_inf_norm"] / 1.0e-8
+    )
+    assert metrics["reaction_scaling_factors"][0] < 0.1
+    assert metrics["reaction_scaling_min"] == pytest.approx(min(metrics["reaction_scaling_factors"]))
+    assert metrics["reaction_scaling_max"] == pytest.approx(max(metrics["reaction_scaling_factors"]))
+    assert metrics["reaction_basis_condition_estimate"] >= 1.0
+
+
+def test_ce_proof_reports_near_dependent_reaction_basis_conditioning() -> None:
+    _require_ipopt()
+
+    result = _solve_near_dependent_without_seed(1.0e-8)
+
+    assert result["accepted"] is True
+    assert result["balance_inf_norm"] < 1.0e-9
+    assert result["reaction_stationarity_inf_norm"] < 1.0e-8
+    metrics = result["proof_metrics"]
+    assert len(metrics["reaction_scaling_factors"]) == 2
+    assert metrics["unscaled_reaction_stationarity_inf_norm"] == pytest.approx(
+        result["reaction_stationarity_inf_norm"]
+    )
+    assert metrics["reaction_basis_condition_estimate"] > 1.0e6

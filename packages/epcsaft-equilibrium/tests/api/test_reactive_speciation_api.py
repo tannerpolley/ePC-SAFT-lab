@@ -215,6 +215,16 @@ def _native_payload() -> dict[str, object]:
         "reaction_affinities": [0.0],
         "balance_inf_norm": 0.0,
         "reaction_stationarity_inf_norm": 0.0,
+        "proof_metrics": {
+            "reaction_scaling_factors": [0.5],
+            "reaction_row_norms": [math.sqrt(2.0)],
+            "reaction_scaling_min": 0.5,
+            "reaction_scaling_max": 0.5,
+            "reaction_basis_condition_estimate": 1.0,
+            "scaled_reaction_stationarity_inf_norm": 0.0,
+            "unscaled_reaction_stationarity_inf_norm": 0.0,
+            "proof_stationarity_norm": 0.0,
+        },
         "selector_contract": {
             "selector_family": "reactive_speciation",
             "route": "reactive_speciation",
@@ -312,6 +322,10 @@ def test_reactive_speciation_public_api_returns_ce_only_result_schema(monkeypatc
     assert result.standard_state_metadata["a_to_b"]["activity_convention"] == "mole_fraction_activity"
     assert result.diagnostics["native_binding"] == "_native_chemical_equilibrium_nlp_activation"
     assert result.diagnostics["solver_backend"] == "ipopt"
+    assert result.diagnostics["proof_metrics"]["reaction_scaling_factors"] == pytest.approx([0.5])
+    assert result.diagnostics["proof_metrics"]["unscaled_reaction_stationarity_inf_norm"] == pytest.approx(
+        result.diagnostics["reaction_stationarity_inf_norm"]
+    )
 
     payload = result.to_dict()
     assert payload["route"] == "reactive_speciation"

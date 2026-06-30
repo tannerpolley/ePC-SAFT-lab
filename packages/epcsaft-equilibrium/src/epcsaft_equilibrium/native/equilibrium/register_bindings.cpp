@@ -1183,6 +1183,21 @@ py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyAct
 py::dict activation_plan_to_dict(const epcsaft::native::equilibrium::ActivationPlan& plan);
 py::dict variable_layout_to_dict(const epcsaft::native::equilibrium::VariableLayout& layout);
 
+py::dict reaction_proof_scaling_metrics_to_dict(
+    const epcsaft::native::equilibrium_nlp::ReactionProofScalingMetrics& result
+) {
+    py::dict out;
+    out["reaction_scaling_factors"] = result.reaction_scaling_factors;
+    out["reaction_row_norms"] = result.reaction_row_norms;
+    out["reaction_scaling_min"] = result.reaction_scaling_min;
+    out["reaction_scaling_max"] = result.reaction_scaling_max;
+    out["reaction_basis_condition_estimate"] = result.reaction_basis_condition_estimate;
+    out["scaled_reaction_stationarity_inf_norm"] = result.scaled_reaction_stationarity_inf_norm;
+    out["unscaled_reaction_stationarity_inf_norm"] = result.unscaled_reaction_stationarity_inf_norm;
+    out["proof_stationarity_norm"] = result.unscaled_reaction_stationarity_inf_norm;
+    return out;
+}
+
 py::dict physical_proof_corrector_to_dict(
     const epcsaft::native::equilibrium_nlp::PhysicalProofCorrectorResult& result
 ) {
@@ -1203,6 +1218,7 @@ py::dict physical_proof_corrector_to_dict(
     out["final_balance_inf_norm"] = result.balance_inf_norm;
     out["final_reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
     out["step_inf_norm"] = result.step_inf_norm;
+    out["proof_metrics"] = reaction_proof_scaling_metrics_to_dict(result.proof_metrics);
     out["variables"] = result.variables;
     return out;
 }
@@ -1254,6 +1270,7 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     out["reaction_affinities"] = result.postsolve.reaction_affinities;
     out["balance_inf_norm"] = result.balance_inf_norm;
     out["reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
+    out["proof_metrics"] = reaction_proof_scaling_metrics_to_dict(result.proof_metrics);
     out["continuation_state"] = ipopt_continuation_state_to_dict(result.solve);
     out["iteration_history"] = ipopt_iteration_history_to_list(result.solve.iteration_history);
 

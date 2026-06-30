@@ -37,6 +37,16 @@ struct ChemicalEquilibriumNlpInput {
     std::string eos_activity_reference_phase;
 };
 
+struct ReactionProofScalingMetrics {
+    std::vector<double> reaction_scaling_factors;
+    std::vector<double> reaction_row_norms;
+    double reaction_scaling_min = 1.0;
+    double reaction_scaling_max = 1.0;
+    double reaction_basis_condition_estimate = 1.0;
+    double scaled_reaction_stationarity_inf_norm = 0.0;
+    double unscaled_reaction_stationarity_inf_norm = 0.0;
+};
+
 struct PhysicalProofCorrectorResult {
     bool attempted = false;
     bool accepted = false;
@@ -49,6 +59,7 @@ struct PhysicalProofCorrectorResult {
     double balance_inf_norm = 0.0;
     double reaction_stationarity_inf_norm = 0.0;
     double step_inf_norm = 0.0;
+    ReactionProofScalingMetrics proof_metrics;
     std::vector<double> variables;
     HomogeneousChemicalEquilibriumBlockResult postsolve;
 };
@@ -60,6 +71,7 @@ struct ChemicalEquilibriumNlpResult {
     bool accepted = false;
     double balance_inf_norm = 0.0;
     double reaction_stationarity_inf_norm = 0.0;
+    ReactionProofScalingMetrics proof_metrics;
     bool source_oracle_initial_amounts = true;
     std::string seed_source = "caller_initial_amounts";
     std::string accepted_seed_source;

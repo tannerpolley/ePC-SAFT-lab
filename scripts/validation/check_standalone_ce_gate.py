@@ -416,6 +416,7 @@ def reference_oracle_evidence() -> dict[str, Any]:
             "amount_error_inf_norm": amount_error,
             "balance_inf_norm": result["balance_inf_norm"],
             "reaction_stationarity_inf_norm": result["reaction_stationarity_inf_norm"],
+            "proof_metrics": dict(result.get("proof_metrics") or {}),
             "tolerances": tolerances,
         }
         case_evidence.append(evidence)
@@ -433,6 +434,16 @@ def reference_oracle_evidence() -> dict[str, Any]:
             blockers.append(f"{case['case_id']}_balance_norm_above_tolerance")
         if float(result["reaction_stationarity_inf_norm"]) > float(tolerances["affinity_abs"]):
             blockers.append(f"{case['case_id']}_affinity_norm_above_tolerance")
+        proof_metrics = dict(evidence["proof_metrics"])
+        if not proof_metrics:
+            blockers.append(f"{case['case_id']}_proof_metrics_missing")
+        if not math.isclose(
+            _as_float(proof_metrics, "unscaled_reaction_stationarity_inf_norm"),
+            float(result["reaction_stationarity_inf_norm"]),
+            rel_tol=0.0,
+            abs_tol=1.0e-14,
+        ):
+            blockers.append(f"{case['case_id']}_proof_metrics_unscaled_affinity_mismatch")
 
     unique_blockers = sorted(set(blockers))
     return {
@@ -807,6 +818,8 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
         feasible_initialization = dict(initialization.get("feasible_initialization") or {})
         continuation = dict(diagnostics.get("continuation") or {})
         physical_corrector = dict(continuation.get("physical_proof_corrector") or {})
+        proof_metrics = dict(diagnostics.get("proof_metrics") or {})
+        physical_corrector_metrics = dict(physical_corrector.get("proof_metrics") or {})
         amounts = result.species_amounts
         reconstructed_loading = (
             amounts["CO2"] + amounts["MEACOO-"] + amounts["HCO3-"] + amounts["CO3^2-"]
@@ -830,6 +843,15 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             "max_mole_fraction_abs_error": max(mole_fraction_errors, default=0.0),
             "balance_inf_norm": balance_inf_norm,
             "reaction_stationarity_inf_norm": affinity_inf_norm,
+            "reaction_scaling_min": _as_float(proof_metrics, "reaction_scaling_min"),
+            "reaction_scaling_max": _as_float(proof_metrics, "reaction_scaling_max"),
+            "reaction_basis_condition_estimate": _as_float(proof_metrics, "reaction_basis_condition_estimate"),
+            "scaled_reaction_stationarity_inf_norm": _as_float(
+                proof_metrics, "scaled_reaction_stationarity_inf_norm"
+            ),
+            "unscaled_reaction_stationarity_inf_norm": _as_float(
+                proof_metrics, "unscaled_reaction_stationarity_inf_norm"
+            ),
             "reconstructed_loading_abs_error": abs(reconstructed_loading - loading),
             "charge_balance": charge,
             "solver_status": str(result.diagnostics["solver_status"]),
@@ -855,6 +877,9 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             ),
             "physical_proof_corrector_final_reaction_stationarity_inf_norm": _as_float(
                 physical_corrector, "final_reaction_stationarity_inf_norm"
+            ),
+            "physical_proof_corrector_scaled_reaction_stationarity_inf_norm": _as_float(
+                physical_corrector_metrics, "scaled_reaction_stationarity_inf_norm"
             ),
             "physical_proof_corrector_final_balance_inf_norm": _as_float(
                 physical_corrector, "final_balance_inf_norm"
@@ -896,6 +921,17 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             blockers.append(f"mea_loading_{loading}_balance_above_tolerance")
         if row["reaction_stationarity_inf_norm"] > tolerances["affinity_abs"]:
             blockers.append(f"mea_loading_{loading}_affinity_above_tolerance")
+        if not proof_metrics:
+            blockers.append(f"mea_loading_{loading}_proof_metrics_missing")
+        if not math.isclose(
+            row["unscaled_reaction_stationarity_inf_norm"],
+            row["reaction_stationarity_inf_norm"],
+            rel_tol=0.0,
+            abs_tol=1.0e-14,
+        ):
+            blockers.append(f"mea_loading_{loading}_proof_metrics_unscaled_affinity_mismatch")
+        if not math.isfinite(row["scaled_reaction_stationarity_inf_norm"]):
+            blockers.append(f"mea_loading_{loading}_proof_metrics_scaled_affinity_missing")
         if row["reconstructed_loading_abs_error"] > tolerances["loading_abs"]:
             blockers.append(f"mea_loading_{loading}_loading_above_tolerance")
         if abs(charge) > tolerances["charge_abs"]:
@@ -966,6 +1002,7 @@ def evaluate_standalone_ce_gate(
             "mole_fractions": result["mole_fractions"],
             "balance_inf_norm": result["balance_inf_norm"],
             "reaction_stationarity_inf_norm": result["reaction_stationarity_inf_norm"],
+            "proof_metrics": dict(result.get("proof_metrics") or {}),
         },
     }
     blockers = single_nlp_path_blockers(report)

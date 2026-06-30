@@ -49,6 +49,18 @@ Implement Task 5 from the source plan: reaction scaling and proof metric diagnos
 - [ ] Accepted proof uses unchanged physical stationarity and balance thresholds.
 - [ ] Checker output stays strict and interpretable.
 
+## Resolution Evidence
+
+- Native CE results now expose `proof_metrics` with `reaction_scaling_factors`, `reaction_row_norms`, min/max scaling, `reaction_basis_condition_estimate`, `scaled_reaction_stationarity_inf_norm`, and `unscaled_reaction_stationarity_inf_norm`.
+- Physical proof-corrector rows are scaled with the same reaction factors for residuals and Jacobian rows, while accepted proof still gates on unchanged unscaled `reaction_stationarity_inf_norm` and `balance_inf_norm`.
+- Public `ReactiveSpeciationResult.diagnostics` preserves `proof_metrics` from the native payload.
+- The standalone CE checker now emits proof metrics in the single-solution, oracle, and MEA evidence JSON and rejects missing or mismatched unscaled stationarity metrics.
+- Focused red proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_homotopy.py::test_ce_proof_reports_reaction_scaling_for_large_log_k_tiny_species packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_homotopy.py::test_ce_proof_reports_near_dependent_reaction_basis_conditioning -q` failed on missing `proof_metrics` before implementation.
+- Fresh proof: `uv run --no-sync python scripts/dev/build_epcsaft.py --build-only --parallel 10` passed.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_homotopy.py -q` passed with 4 tests.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py -q` passed with 13 tests.
+- Fresh proof: `uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete` returned status `complete` with no blockers.
+
 ## Blocked by
 
 - None
