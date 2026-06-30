@@ -4,8 +4,9 @@
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md
 **Source Plan:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md
+**Branch:** codex/m4-flash-multiphase-parent-closeout
 **Classification:** HITL
-**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 **Goal Command:** None; tracking parent issue.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -39,10 +40,21 @@
 
 Parent issue for flash and multiphase certification.
 
+## Flash/Multiphase Residual Ownership
+
+This parent owns phase-set completeness, selected and rejected phase-candidate evidence, noncollapse checks, material reconstruction, phase amounts, pressure and transfer postsolve residuals, and solver route receipts for TP flash and generalized multiphase routes. LLE subtype evidence remains under #363 and its children. Boundary tracing, including bubble, dew, cloud, and shadow workflows, remains under #375.
+
 ## Acceptance Criteria
 
-- [ ] Flash/multiphase parent exists under the Phase Equilibrium parent.
-- [ ] Issue body identifies phase-set completeness and postsolve evidence as required.
+- [x] Flash/multiphase parent exists under the Phase Equilibrium parent.
+- [x] Issue body identifies phase-set completeness and postsolve evidence as required.
+
+## Resolution Evidence
+
+- Branch: `codex/m4-flash-multiphase-parent-closeout`
+- Parent proof: `gh issue view 374 --repo ePC-SAFT/ePC-SAFT --json parent,state,title` reports `state=OPEN`, parent `#361`, and title `M4 PE: unify phase-equilibrium certification contracts`.
+- Residual ownership proof: this mirror assigns phase-set completeness, selected/rejected candidate evidence, noncollapse checks, material reconstruction, phase amounts, pressure and transfer postsolve residuals, and solver route receipts to #374 while keeping LLE subtype evidence under #363 and boundary tracing under #375.
+- Flash/multiphase proof boundary: this closeout creates no new flash route admission, no release claim, and no M5 parameter-regression claim.
 
 ## Blocked by
 
