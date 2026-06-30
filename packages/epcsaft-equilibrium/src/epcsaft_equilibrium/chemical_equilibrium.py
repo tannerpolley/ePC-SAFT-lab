@@ -17,6 +17,14 @@ _EOS_ACTIVITY_CONVENTIONS = frozenset({"eos_x_phi", "eos_x_gamma"})
 _EQUILIBRIUM_CONSTANT_FORMS = frozenset({"K", "ln_K", "log_K", "log10_K", "delta_g_standard"})
 
 
+def _unsupported_standard_state_request_diagnostics(convention: str) -> dict[str, str]:
+    return {
+        "failure_class": "unsupported_standard_state_request",
+        "failure_gate": "standard_state",
+        "activity_convention": str(convention),
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class ChemicalSpecies:
     """True species entry for standalone homogeneous chemical equilibrium."""
@@ -84,7 +92,10 @@ class StandardStateRecord:
         object.__setattr__(self, "label", _clean_label(self.label, "standard-state label"))
         convention = _clean_label(self.activity_convention, "activity convention")
         if convention not in _ACTIVITY_CONVENTIONS:
-            raise InputError(f"unsupported activity convention '{convention}'.")
+            raise InputError(
+                f"unsupported activity convention '{convention}'.",
+                _unsupported_standard_state_request_diagnostics(convention),
+            )
         object.__setattr__(self, "activity_convention", convention)
         object.__setattr__(self, "temperature_K", _positive_finite_float(self.temperature_K, "temperature_K"))
         object.__setattr__(self, "pressure_Pa", _positive_finite_float(self.pressure_Pa, "pressure_Pa"))

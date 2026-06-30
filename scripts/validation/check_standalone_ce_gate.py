@@ -581,7 +581,10 @@ def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
             blockers.append("mea_retained_summary_robustness_fields_mismatch")
         if robustness.get("activity_model") != "mole_fraction_activity":
             blockers.append("mea_retained_summary_activity_model_mismatch")
-        if list(robustness.get("failure_classes") or []) != ["accepted"]:
+        failure_classes = list(robustness.get("failure_classes") or [])
+        if "unclassified_failure" in failure_classes:
+            blockers.append("mea_retained_summary_unclassified_failure_class")
+        if failure_classes != ["accepted"]:
             blockers.append("mea_retained_summary_failure_classes_mismatch")
         if int(robustness.get("state_point_count") or 0) != REQUIRED_MEA_STATE_POINT_COUNT:
             blockers.append("mea_retained_summary_robustness_state_point_count_mismatch")

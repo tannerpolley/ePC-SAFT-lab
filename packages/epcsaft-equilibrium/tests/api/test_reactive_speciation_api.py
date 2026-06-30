@@ -520,6 +520,121 @@ def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: 
         )
 
 
+@pytest.mark.parametrize(
+    ("payload_updates", "expected_failure_class"),
+    [
+        (
+            {
+                "initialization": {
+                    "seed_source": "max_min_feasible_interior",
+                    "source_oracle_initial_amounts": False,
+                    "feasible_initialization": {
+                        "accepted": False,
+                        "rejection_reason": "extent_nullspace_conservation_residual",
+                    },
+                },
+            },
+            "infeasible_conservation",
+        ),
+        (
+            {
+                "initialization": {
+                    "seed_source": "max_min_feasible_interior",
+                    "source_oracle_initial_amounts": False,
+                    "feasible_initialization": {
+                        "accepted": False,
+                        "rejection_reason": "initializer_solve_rejected",
+                    },
+                },
+            },
+            "initialization_failure",
+        ),
+        (
+            {
+                "solver_diagnostics": {
+                    "solver_backend": "ipopt",
+                    "solver_status": "restoration_failure",
+                    "application_status": "ipopt_application_status_-2",
+                    "solver_accepted": False,
+                    "hessian_backend": "analytic",
+                },
+            },
+            "ipopt_failure",
+        ),
+        (
+            {
+                "continuation": {
+                    "direct_final_proof_attempted": True,
+                    "direct_final_proof_accepted": False,
+                    "final_proof_status": "rejected",
+                    "final_lambda": 1.0,
+                    "lambda_values": [1.0],
+                    "stage_count": 0,
+                    "trace": [],
+                    "physical_proof_corrector": {
+                        "attempted": True,
+                        "accepted": False,
+                        "status": "rejected_iteration_limit",
+                        "rejection_reason": "rejected_iteration_limit",
+                    },
+                },
+            },
+            "proof_correction_failure",
+        ),
+        ({"reaction_stationarity_inf_norm": 1.0e-3}, "stationarity_failure"),
+        ({"balance_inf_norm": 1.0e-3, "balance_residuals": [1.0e-3]}, "balance_failure"),
+        (
+            {
+                "activity_model": "eos_x_gamma",
+                "activity_derivative_backend": "cppad_phase_state_activity_coefficient",
+                "solver_diagnostics": {
+                    "solver_backend": "ipopt",
+                    "solver_status": "restoration_failure",
+                    "application_status": "ipopt_application_status_-2",
+                    "solver_accepted": False,
+                    "hessian_backend": "cppad_phase_state_activity_coefficient",
+                },
+            },
+            "eos_activity_failure",
+        ),
+    ],
+)
+def test_reactive_speciation_classifies_native_failure_gate(
+    monkeypatch: pytest.MonkeyPatch,
+    payload_updates: dict[str, object],
+    expected_failure_class: str,
+) -> None:
+    def merge_payload(base: dict[str, object], updates: dict[str, object]) -> dict[str, object]:
+        for key, value in updates.items():
+            if isinstance(value, dict) and isinstance(base.get(key), dict):
+                merge_payload(base[key], value)  # type: ignore[arg-type]
+            else:
+                base[key] = value
+        return base
+
+    def fake_solve(*_args, **_kwargs):
+        payload = _native_payload()
+        payload["accepted"] = False
+        return merge_payload(payload, payload_updates)
+
+    monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
+
+    with pytest.raises(SolutionError) as exc_info:
+        epcsaft_equilibrium.reactive_speciation(
+            species=_species(),
+            reactions=_reaction(),
+            feed_amounts={"A": 1.0, "B": 0.0},
+            equilibrium_constants=[_constant()],
+            initial_amounts=[0.5, 0.5],
+        )
+
+    diagnostics = exc_info.value.diagnostics
+    payload = fake_solve()
+    assert diagnostics["failure_class"] == expected_failure_class
+    assert diagnostics["failure_gate"]
+    assert diagnostics["solver_status"] == payload["solver_diagnostics"]["solver_status"]
+
+
 def test_reactive_speciation_rejects_non_mole_fraction_activity_until_supported() -> None:
     fugacity = StandardStateRecord(
         label="fugacity_standard_state",
@@ -529,7 +644,7 @@ def test_reactive_speciation_rejects_non_mole_fraction_activity_until_supported(
         standard_fugacity_Pa=101325.0,
     )
 
-    with pytest.raises(InputError, match="unsupported activity convention"):
+    with pytest.raises(InputError, match="unsupported activity convention") as exc_info:
         epcsaft_equilibrium.reactive_speciation(
             species=_species(),
             reactions=_reaction(),
@@ -547,6 +662,7 @@ def test_reactive_speciation_rejects_non_mole_fraction_activity_until_supported(
             ],
             initial_amounts=[0.5, 0.5],
         )
+    assert exc_info.value.diagnostics["failure_class"] == "unsupported_standard_state_request"
 
 
 def test_reactive_speciation_rejects_eos_x_phi_without_eos_mixture() -> None:

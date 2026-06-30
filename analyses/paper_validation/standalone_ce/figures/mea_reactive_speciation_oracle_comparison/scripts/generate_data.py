@@ -351,7 +351,7 @@ def _trace_summary_row(
         "CO2_loading": loading,
         "effective_feed_loading": effective_feed_loading,
         "activity_model": str(diagnostics.get("activity_model", "mole_fraction_activity")),
-        "failure_class": "accepted" if bool(diagnostics["accepted"]) else "unclassified_failure",
+        "failure_class": str(diagnostics["failure_class"]),
         **{key: diagnostics[key] for key in keys},
     }
 
@@ -400,10 +400,10 @@ def _shuffled_subset_keys(groups: list[tuple[float, float, pd.DataFrame]]) -> li
 
 def _strict_summary(frame: pd.DataFrame) -> dict[str, Any]:
     return {
-        "row_count": int(len(frame)),
+        "row_count": len(frame),
         "loading_count": int(frame["CO2_loading"].nunique()),
         "all_accepted": bool(frame["accepted"].all()),
-        "all_no_source_oracle_seed": bool((frame["uses_source_oracle_initial_amounts"] == False).all()),  # noqa: E712
+        "all_no_source_oracle_seed": bool(frame["uses_source_oracle_initial_amounts"].eq(False).all()),
         "all_final_lambda_one": bool((frame["final_lambda"] == 1.0).all()),
         "max_abs_error": float(frame["abs_error"].max()),
         "max_balance_inf_norm": float(frame["balance_inf_norm"].max()),
@@ -571,10 +571,10 @@ def generate() -> dict[str, Any]:
 
     strict = _strict_summary(comparison_frame)
     shuffled_strict = {
-        "attempt_count": int(len(shuffled_audit)),
+        "attempt_count": len(shuffled_audit),
         "all_accepted": bool(shuffled_audit["accepted"].all()),
         "all_no_source_oracle_seed": bool(
-            (shuffled_audit["uses_source_oracle_initial_amounts"] == False).all()  # noqa: E712
+            shuffled_audit["uses_source_oracle_initial_amounts"].eq(False).all()
         ),
         "max_abs_error": float(shuffled_audit["max_abs_error"].max()),
         "artifact": str((RESULTS_DIR / "mea_ce_shuffled_subset_audit.csv").relative_to(REPO_ROOT)).replace(
@@ -609,10 +609,10 @@ def generate() -> dict[str, Any]:
         "activity_model": "mole_fraction_activity",
         "failure_classes": sorted(str(value) for value in trace_summary_frame["failure_class"].dropna().unique()),
         "accepted_state_point_count": int((trace_summary_frame["failure_class"] == "accepted").sum()),
-        "state_point_count": int(len(trace_summary_frame)),
+        "state_point_count": len(trace_summary_frame),
     }
     corrected_stationarity = trace_summary_frame[
-        (trace_summary_frame["physical_proof_corrector_attempted"] == True)  # noqa: E712
+        trace_summary_frame["physical_proof_corrector_attempted"].eq(True)
         & (
             trace_summary_frame["physical_proof_corrector_initial_reaction_stationarity_inf_norm"]
             > 1.0e-6
@@ -652,9 +652,9 @@ def generate() -> dict[str, Any]:
             "max_stage_count": int(trace_summary_frame["stage_count"].max()),
             "homotopy_point_count": int((trace_summary_frame["stage_count"] > 1).sum()),
             "physical_proof_corrector_point_count": int(
-                (trace_summary_frame["physical_proof_corrector_accepted"] == True).sum()  # noqa: E712
+                trace_summary_frame["physical_proof_corrector_accepted"].eq(True).sum()
             ),
-            "corrected_stationarity_point_count": int(len(corrected_stationarity)),
+            "corrected_stationarity_point_count": len(corrected_stationarity),
             "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm": float(
                 corrected_stationarity["physical_proof_corrector_initial_reaction_stationarity_inf_norm"].max()
             ),

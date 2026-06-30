@@ -261,6 +261,17 @@ def test_standalone_ce_gate_requires_retained_robustness_diagnostics() -> None:
     assert robustness["failure_classes"] == ["accepted"]
 
 
+def test_standalone_ce_gate_rejects_unclassified_retained_failures() -> None:
+    checker = _checker_module()
+    payload = json.loads(MEA_RETAINED_SUMMARY_PATH.read_text(encoding="utf-8"))
+    bad_payload = copy.deepcopy(payload)
+    bad_payload["robustness_diagnostics"]["failure_classes"] = ["accepted", "unclassified_failure"]
+
+    blockers = checker.mea_retained_summary_payload_blockers(bad_payload)
+
+    assert "mea_retained_summary_unclassified_failure_class" in blockers
+
+
 def test_standalone_ce_gate_requires_physical_corrector_repair_evidence() -> None:
     checker = _checker_module()
     payload = json.loads(MEA_RETAINED_SUMMARY_PATH.read_text(encoding="utf-8"))

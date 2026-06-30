@@ -161,6 +161,8 @@ _CHEMICAL_EQUILIBRIUM_TOP_LEVEL_DIAGNOSTIC_KEYS = (
     "eos_activity_context",
 )
 
+_CHEMICAL_EQUILIBRIUM_ACCEPTANCE_TOLERANCE = 1.0e-8
+
 
 def _approximation_is_exact(value: Any) -> bool:
     return str(value).strip().lower() == "exact"
@@ -213,6 +215,85 @@ def _diagnostics(payload: Mapping[str, Any]) -> dict[str, Any]:
     return {}
 
 
+def _diagnostic_float(diagnostics: Mapping[str, Any], key: str) -> float | None:
+    value = diagnostics.get(key)
+    if value is None:
+        return None
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    return out if np.isfinite(out) else None
+
+
+def _chemical_equilibrium_uses_eos_activity(diagnostics: Mapping[str, Any]) -> bool:
+    activity_model = str(diagnostics.get("activity_model", "")).lower()
+    derivative_backend = str(diagnostics.get("activity_derivative_backend", "")).lower()
+    hessian_backend = str(diagnostics.get("hessian_backend", "")).lower()
+    return (
+        activity_model.startswith("eos_")
+        or "eos" in activity_model
+        or "activity_coefficient" in derivative_backend
+        or "activity_coefficient" in hessian_backend
+    )
+
+
+def _chemical_equilibrium_initialization_rejection(diagnostics: Mapping[str, Any]) -> str:
+    initialization = diagnostics.get("initialization", {})
+    if not isinstance(initialization, Mapping):
+        return ""
+    feasible = initialization.get("feasible_initialization", {})
+    if not isinstance(feasible, Mapping) or feasible.get("accepted") is not False:
+        return ""
+    return str(feasible.get("rejection_reason", "")).strip()
+
+
+def _chemical_equilibrium_proof_corrector_rejected(diagnostics: Mapping[str, Any]) -> bool:
+    continuation = diagnostics.get("continuation", {})
+    if not isinstance(continuation, Mapping):
+        return False
+    corrector = continuation.get("physical_proof_corrector", {})
+    if isinstance(corrector, Mapping) and corrector.get("attempted") is True and corrector.get("accepted") is not True:
+        return True
+    if continuation.get("direct_final_proof_attempted") is True and continuation.get("direct_final_proof_accepted") is False:
+        return True
+    return False
+
+
+def _chemical_equilibrium_solver_rejected(diagnostics: Mapping[str, Any]) -> bool:
+    if diagnostics.get("solver_accepted") is False:
+        return True
+    solver_status = str(diagnostics.get("solver_status", "")).lower()
+    application_status = str(diagnostics.get("application_status", "")).lower()
+    rejected_status_tokens = ("failure", "failed", "restoration", "infeasible", "error", "invalid")
+    if any(token in solver_status for token in rejected_status_tokens):
+        return True
+    return any(token in application_status for token in rejected_status_tokens)
+
+
+def _chemical_equilibrium_failure_class(diagnostics: Mapping[str, Any]) -> tuple[str, str]:
+    if diagnostics.get("accepted") is True:
+        return "accepted", "accepted"
+    if _chemical_equilibrium_uses_eos_activity(diagnostics):
+        return "eos_activity_failure", "eos_activity"
+    initialization_rejection = _chemical_equilibrium_initialization_rejection(diagnostics)
+    if initialization_rejection:
+        if "conservation" in initialization_rejection or "rank" in initialization_rejection:
+            return "infeasible_conservation", "initialization"
+        return "initialization_failure", "initialization"
+    balance_norm = _diagnostic_float(diagnostics, "balance_inf_norm")
+    if balance_norm is not None and balance_norm > _CHEMICAL_EQUILIBRIUM_ACCEPTANCE_TOLERANCE:
+        return "balance_failure", "balance"
+    stationarity_norm = _diagnostic_float(diagnostics, "reaction_stationarity_inf_norm")
+    if stationarity_norm is not None and stationarity_norm > _CHEMICAL_EQUILIBRIUM_ACCEPTANCE_TOLERANCE:
+        return "stationarity_failure", "reaction_stationarity"
+    if _chemical_equilibrium_proof_corrector_rejected(diagnostics):
+        return "proof_correction_failure", "physical_proof_corrector"
+    if _chemical_equilibrium_solver_rejected(diagnostics):
+        return "ipopt_failure", "ipopt"
+    return "unclassified_failure", "unknown"
+
+
 def chemical_equilibrium_result_diagnostics(payload: Mapping[str, Any]) -> dict[str, Any]:
     """Return public diagnostics from the standalone CE native activation payload."""
 
@@ -224,6 +305,9 @@ def chemical_equilibrium_result_diagnostics(payload: Mapping[str, Any]) -> dict[
     solver = payload.get("solver_diagnostics", {})
     if isinstance(solver, Mapping):
         diagnostics.update(dict(solver))
+    failure_class, failure_gate = _chemical_equilibrium_failure_class(diagnostics)
+    diagnostics["failure_class"] = failure_class
+    diagnostics["failure_gate"] = failure_gate
     return diagnostics
 
 

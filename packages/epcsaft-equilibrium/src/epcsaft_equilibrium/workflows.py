@@ -19,6 +19,7 @@ from .chemical_equilibrium import (
     CompiledChemicalEquilibrium,
     EquilibriumConstantRecord,
     StandardStateRegistry,
+    _unsupported_standard_state_request_diagnostics,
     build_standard_state_registry,
     compile_reaction_set,
     solve_chemical_equilibrium_nlp_activation,
@@ -146,7 +147,10 @@ def _reactive_speciation_eos_context(
             raise InputError("reactive_speciation eos_mixture is only valid with EOS activity standard states.")
         return None
     if convention not in {"eos_x_phi", "eos_x_gamma"}:
-        raise InputError(f"reactive_speciation unsupported activity convention '{convention}'.")
+        raise InputError(
+            f"reactive_speciation unsupported activity convention '{convention}'.",
+            _unsupported_standard_state_request_diagnostics(convention),
+        )
     if eos_mixture is None:
         raise InputError(f"reactive_speciation {convention} standard states require eos_mixture.")
     _require_single_eos_activity_context(standard_states)
