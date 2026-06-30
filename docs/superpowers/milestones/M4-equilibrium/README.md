@@ -109,7 +109,7 @@ failures and shared contract gates are resolved.
 | [#371](../../issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `closed` | `Ipopt` | `complete` | Attached reduced-electroneutral electrolyte residual blocks to the shared contract for the retained public `electrolyte_lle` route. |
 | [#372](../../issues/372-m4-lle-govern-reactive-electrolyte-lle-certification-boundary.md) | `electrolyte`/`reactive` | `Ipopt` | `blocked` | Boundary parent for future reactive electrolyte LLE after CE/CPE prerequisites. |
 | [#373](../../issues/373-m4-pe-govern-vle-family-certification.md) | `closed` | `Ipopt` | `complete` | Parent VLE family certification closes after assigning VLE residual ownership under #361 by this proof/sync PR. |
-| [#374](../../issues/374-m4-pe-govern-flash-and-multiphase-certification.md) | `flash`/`multiphase` | `ready` | `blocked` | Parent for flash and generalized multiphase certification. |
+| [#374](../../issues/374-m4-pe-govern-flash-and-multiphase-certification.md) | `closed` | `Ipopt` | `complete` | Parent flash/multiphase certification closes after assigning phase-set and postsolve ownership under #361 by this proof/sync PR. |
 | [#375](../../issues/375-m4-pe-govern-boundary-route-certification.md) | `ready` | `Ipopt` | `blocked` | Parent for bubble, dew, cloud, shadow, and branch-traced boundary workflows. |
 | [#376](../../issues/376-m4-pe-govern-reactive-and-coupled-phase-equilibrium-certification.md) | `cpe` | `Ipopt` | `blocked` | Parent for reactive/coupled PE certification; #331 is now a native sub-issue here. |
 
