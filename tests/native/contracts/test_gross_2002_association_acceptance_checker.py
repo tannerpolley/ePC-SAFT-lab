@@ -6,6 +6,17 @@ from pathlib import Path
 from scripts.validation import check_gross_2002_association_acceptance as checker
 
 
+def _fit_statistics_text(*, normalized_plot_score: float = 8.0, pass_value: bool = True) -> str:
+    return "\n".join(
+        [
+            "scope,source_point_count,model_point_count,normalized_plot_score,branch_coverage_score,derivative_status,pass,matched_literature_points,skipped_literature_points,mae,max_abs,signed_bias,normalized_mae,y_unit",
+            f"figure,8,8,{normalized_plot_score},1.0,verified_exact,{pass_value},,,,,,,",
+            "literature_overlay,,,,,,,4,1,2.5,3.0,-2.5,0.2,degC",
+            "",
+        ]
+    )
+
+
 def _artifact_set(tmp_path: Path, figure_id: str) -> dict[str, str]:
     if figure_id == "figure_01":
         source_csv = tmp_path / f"{figure_id}_source_csv"
@@ -16,27 +27,15 @@ def _artifact_set(tmp_path: Path, figure_id: str) -> dict[str, str]:
     files = {}
     for suffix in ("source_csv", "model_csv", "plotted_csv", "fit_statistics_csv", "png", "svg", "pdf"):
         path = tmp_path / f"{figure_id}_{suffix}"
-        path.write_text("artifact\n", encoding="utf-8")
+        if suffix == "fit_statistics_csv":
+            path.write_text(_fit_statistics_text(), encoding="utf-8")
+        else:
+            path.write_text("artifact\n", encoding="utf-8")
         files[suffix] = str(path)
     return files
 
 
-def test_missing_manifest_reports_campaign_blockers(tmp_path: Path) -> None:
-    payload = checker.evaluate_campaign(
-        manifest_path=tmp_path / "missing_manifest.json",
-        require_complete=True,
-        require_exact_association_hessian=True,
-        require_fresh_native=True,
-    )
-
-    assert payload["complete"] is False
-    assert "gross_2002_campaign_manifest_missing" in payload["blockers"]
-    assert "gross_2002_figure_01_pure_association_statistics_missing" in payload["blockers"]
-    assert "gross_2002_figure_10_source_data_missing" in payload["blockers"]
-    assert "gross_2002_native_freshness_receipt_missing" in payload["blockers"]
-
-
-def test_evaluate_payload_accepts_completed_campaign(tmp_path: Path) -> None:
+def _completed_campaign_payload(tmp_path: Path) -> dict[str, object]:
     payload = {
         "figure_records": [
             {
@@ -54,6 +53,7 @@ def test_evaluate_payload_accepts_completed_campaign(tmp_path: Path) -> None:
                 "status": "accepted",
                 "counts_toward_completion": True,
                 "source_point_count": 16,
+                "thresholds": {"min_source_points": 16, "max_mass_action_residual": 1.0e-8},
                 "artifacts": _artifact_set(tmp_path, "figure_08"),
                 "exact_association_hessian": {
                     "status": "verified_exact",
@@ -66,6 +66,7 @@ def test_evaluate_payload_accepts_completed_campaign(tmp_path: Path) -> None:
                 "status": "accepted",
                 "counts_toward_completion": True,
                 "source_point_count": 8,
+                "thresholds": {"min_source_points": 8, "max_mass_action_residual": 1.0e-8},
                 "artifacts": _artifact_set(tmp_path, "figure_10"),
                 "exact_association_hessian": {
                     "status": "verified_exact",
@@ -104,6 +105,26 @@ def test_evaluate_payload_accepts_completed_campaign(tmp_path: Path) -> None:
     }
     for path in payload["summary_artifacts"].values():
         Path(path).write_text("summary\n", encoding="utf-8")
+    return payload
+
+
+def test_missing_manifest_reports_campaign_blockers(tmp_path: Path) -> None:
+    payload = checker.evaluate_campaign(
+        manifest_path=tmp_path / "missing_manifest.json",
+        require_complete=True,
+        require_exact_association_hessian=True,
+        require_fresh_native=True,
+    )
+
+    assert payload["complete"] is False
+    assert "gross_2002_campaign_manifest_missing" in payload["blockers"]
+    assert "gross_2002_figure_01_pure_association_statistics_missing" in payload["blockers"]
+    assert "gross_2002_figure_10_source_data_missing" in payload["blockers"]
+    assert "gross_2002_native_freshness_receipt_missing" in payload["blockers"]
+
+
+def test_evaluate_payload_accepts_completed_campaign(tmp_path: Path) -> None:
+    payload = _completed_campaign_payload(tmp_path)
 
     result = checker.evaluate_payload(
         payload,
@@ -124,6 +145,29 @@ def test_evaluate_payload_accepts_completed_campaign(tmp_path: Path) -> None:
         "figure_07",
         "figure_09",
     ]
+    assert result["shared_certification"]["status"] == "accepted"
+    for figure_id in ("figure_08", "figure_10"):
+        margins = result["source_tolerance_margins"][figure_id]
+        assert margins["normalized_plot_score"]["status"] == "accepted"
+        assert margins["mass_action_residual"]["status"] == "accepted"
+        assert margins["literature_overlay"]["counts_toward_completion"] is False
+
+
+def test_evaluate_payload_blocks_failed_source_tolerance_margin(tmp_path: Path) -> None:
+    payload = _completed_campaign_payload(tmp_path)
+    fit_statistics = Path(payload["figure_records"][1]["artifacts"]["fit_statistics_csv"])
+    fit_statistics.write_text(_fit_statistics_text(normalized_plot_score=6.0), encoding="utf-8")
+
+    result = checker.evaluate_payload(
+        payload,
+        require_complete=True,
+        require_exact_association_hessian=True,
+        require_fresh_native=True,
+    )
+
+    assert result["complete"] is False
+    assert result["source_tolerance_margins"]["figure_08"]["normalized_plot_score"]["status"] == "blocked"
+    assert "gross_2002_source_tolerance_blocked:figure_08:normalized_plot_score" in result["blockers"]
 
 
 def test_figure_two_source_requirement_does_not_count_as_accepted(tmp_path: Path) -> None:

@@ -179,6 +179,8 @@ family_rows:
           - association_mass_action
           - exact_hessian
           - phase_equilibrium_certification
+          - shared_phase_equilibrium_certification
+          - source_tolerance_margins
       - case_label: "Water/1-pentanol associating follow-on"
         evidence_tier: T0
         source: "source-backed associating follow-on target to be selected"

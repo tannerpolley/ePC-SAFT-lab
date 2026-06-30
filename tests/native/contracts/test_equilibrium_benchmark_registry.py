@@ -114,6 +114,29 @@ def test_neutral_lle_showcase_declares_shared_certification_and_tolerance_margin
     } <= set(matsuda["acceptance_checks"])
 
 
+def test_associating_lle_gross_2002_declares_shared_certification_and_tolerance_margins() -> None:
+    gross = next(
+        case
+        for row in _registry()["family_rows"]
+        for case in row.get("reference_cases", [])
+        if case["case_label"] == "Gross/Sadowski 2002 methanol/cyclohexane"
+    )
+
+    assert gross["fixture_status"] == "available"
+    assert gross["route"] == "associating_lle_internal_proof"
+    assert {
+        "source_digitized_figure_8_lle_rows",
+        "source_backed_parameters",
+        "source_backed_binary_interaction",
+        "public_associating_route_admitted",
+        "association_mass_action",
+        "exact_hessian",
+        "phase_equilibrium_certification",
+        "shared_phase_equilibrium_certification",
+        "source_tolerance_margins",
+    } <= set(gross["acceptance_checks"])
+
+
 def test_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:
     gate = _neutral_flash_gate()
 
