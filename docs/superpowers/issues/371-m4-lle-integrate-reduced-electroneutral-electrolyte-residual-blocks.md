@@ -14,6 +14,7 @@
 **Parallelization Plan:** None
 **Reviewer Role:** Main thread orchestrator
 **Script Gate Mode:** Safety only
+**Branch:** codex/m4-electrolyte-lle-reduced-residual-contract
 
 ## Outcome Summary
 **Outcome Source:** docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0371-electrolyte-reduced-electroneutral-residual-blocks-plan.md#outcome-proof
