@@ -3,10 +3,10 @@
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature
 **Source Spec:** docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md
-**Source Plan:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md
+**Source Plan:** docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0371-electrolyte-reduced-electroneutral-residual-blocks-plan.md
 **Classification:** AFK
-**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:feature
-**Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/371 using the local mirror and docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md. Complete proof oracle: issue acceptance criteria checked and PR merged.
+**Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
+**Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/371 using the local mirror and docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0371-electrolyte-reduced-electroneutral-residual-blocks-plan.md. Complete proof oracle: issue acceptance criteria checked and PR merged.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -16,7 +16,7 @@
 **Script Gate Mode:** Safety only
 
 ## Outcome Summary
-**Outcome Source:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md#outcome-proof
+**Outcome Source:** docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0371-electrolyte-reduced-electroneutral-residual-blocks-plan.md#outcome-proof
 **Intent:** Attach electrolyte reduced-electroneutral residual equations and retained diagnostics to the shared certification contract.
 **Target Output:** Public electrolyte LLE evidence reports the shared PE contract plus charge, lift/back-lift, projected transfer, mean-ionic, and active-block derivative diagnostics.
 **Owner:** M4 equilibrium package owner.
