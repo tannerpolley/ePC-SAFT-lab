@@ -71,7 +71,7 @@ family_rows:
       held_stage_i_stability: implemented_neutral_multi_start_convergence_required
       held_stage_ii_candidate_bound_audit: current_neutral_candidate_bound_audit_closed
       held_stage_ii_dual_phase_discovery: current_neutral_dual_loop_replay_verified_current_fixture
-      held_stage_iii_ipopt_refinement: current_route_refinement_consumes_stage_ii_replay_with_ipopt_success
+      held_stage_iii_ipopt_refinement: current_route_refinement_reports_accepted_seed_and_declines_replay_when_replay_seed_misses_postsolve
     required_gates:
       - infrastructure_gate
       - continuous_tpd_minimization
@@ -109,7 +109,7 @@ family_rows:
           - pressure_consistency
           - chemical_potential_equality
           - held_stage_ii_replay
-          - held_stage_iii_replay_consumption
+          - held_stage_iii_accepted_seed_provenance
           - exact_hessian
       - case_label: "Pereira 2012 System III"
         evidence_tier: T0

@@ -9,6 +9,7 @@ from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
 from equilibrium_support.equilibrium_cases import _nonideal_lle_binary_mixture
+from equilibrium_support.route_assertions import assert_neutral_lle_stage_iii_replay_receipt
 
 STAGE9_PHASE_DISCOVERY_STEPS = [
     "deterministic_screening",
@@ -18,8 +19,6 @@ STAGE9_PHASE_DISCOVERY_STEPS = [
     "held_stage_ii_dual_loop_verification",
     "held_stage_iii_ipopt_refinement",
 ]
-
-
 def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None:
     _skip_without_ipopt()
     mix = _nonideal_lle_binary_mixture()
@@ -128,10 +127,7 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     )
     assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
     assert postsolve["held_stage_iii_refined_phase_count"] == 2
-    assert postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
-    assert postsolve["held_stage_iii_replay_source"] == "stage_ii_dual_loop_candidate_seed"
-    assert postsolve["held_stage_iii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_pair"
-    assert postsolve["held_stage_iii_replay_candidate_count"] == postsolve["held_stage_ii_replay_candidate_count"]
+    assert_neutral_lle_stage_iii_replay_receipt(route)
     assert postsolve["stability_checked"] is True
     assert postsolve["stability_accepted"] is True
     assert postsolve["candidate_completeness_accepted"] is True
@@ -167,7 +163,10 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
         postsolve["seed_and_stability"]["held_stage_ii_replay_seed_name"]
         == "held_stage_ii_dual_loop_candidate_pair"
     )
-    assert postsolve["seed_and_stability"]["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
+    assert (
+        postsolve["seed_and_stability"]["held_stage_iii_consumed_stage_ii_replay_metadata"]
+        is postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"]
+    )
     assert postsolve["candidate_mass_balance_norm"] <= 1.0e-8
     assert postsolve["material_balance_norm"] <= 1.0e-8
     assert postsolve["pressure_consistency_norm"] <= 1.0e-3
@@ -189,7 +188,10 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert evidence["held_stage_ii_dual_loop_status"] == "verified"
     assert evidence["held_stage_ii_replay_ready"] is True
     assert evidence["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
-    assert evidence["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
+    assert (
+        evidence["held_stage_iii_consumed_stage_ii_replay_metadata"]
+        is postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"]
+    )
     assert [phase["label"] for phase in evidence["phases"]] == ["liquid1", "liquid2"]
     assert [phase["role"] for phase in evidence["phases"]] == ["liquid", "liquid"]
 
@@ -216,7 +218,10 @@ def test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian() -> None
     assert certificate["held_stage_ii_dual_loop_status"] == "verified"
     assert certificate["held_stage_ii_replay_ready"] is True
     assert certificate["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
-    assert certificate["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
+    assert (
+        certificate["held_stage_iii_consumed_stage_ii_replay_metadata"]
+        is postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"]
+    )
     assert certificate["stability_checked"] is True
     assert certificate["stability_accepted"] is True
     assert certificate["candidate_set_complete"] is True

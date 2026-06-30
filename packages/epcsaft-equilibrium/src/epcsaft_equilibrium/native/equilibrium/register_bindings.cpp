@@ -2021,6 +2021,7 @@ py::dict selector_contract_to_dict(const epcsaft::native::equilibrium::SelectorC
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
+    out["applicable_proof_routes"] = contract.applicable_proof_routes;
     if (contract.has_activation_plan) {
         out["activation_compiler"] = contract.nlp_contract.activation_compiler;
         out["activation_plan"] = activation_plan_to_dict(contract.activation_plan);
@@ -2049,6 +2050,7 @@ void apply_selector_metadata(
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
+    out["applicable_proof_routes"] = contract.applicable_proof_routes;
     if (contract.has_activation_plan) {
         out["activation_compiler"] = contract.nlp_contract.activation_compiler;
         out["activation_plan"] = activation_plan_to_dict(contract.activation_plan);
