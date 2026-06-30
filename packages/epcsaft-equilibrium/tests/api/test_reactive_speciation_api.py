@@ -392,6 +392,66 @@ def test_reactive_speciation_explicit_seed_reports_source_oracle_diagnostics(
     assert result.diagnostics["continuation"]["lambda_values"] == (1.0,)
 
 
+def test_reactive_speciation_good_caller_seed_reports_seed_attempt_order() -> None:
+    core = extension_native_core()
+    if not core._native_ipopt_smoke()["compiled"]:
+        pytest.skip("native Ipopt is not compiled")
+
+    result = epcsaft_equilibrium.reactive_speciation(
+        species=_species(),
+        reactions=_reaction(),
+        feed_amounts={"A": 1.0, "B": 0.0},
+        equilibrium_constants=[_constant()],
+        initial_amounts=[0.25, 0.75],
+    )
+
+    initialization = result.diagnostics["initialization"]
+    assert initialization["seed_attempt_order"] == ("caller_initial_amounts",)
+    assert initialization["accepted_seed_source"] == "caller_initial_amounts"
+    assert initialization["caller_seed_final_proof_attempted"] is True
+    assert initialization["caller_seed_final_proof_accepted"] is True
+    assert initialization["caller_seed_escalated"] is False
+
+
+def test_reactive_speciation_bad_positive_seed_escalates_to_ce_owned_initialization() -> None:
+    core = extension_native_core()
+    if not core._native_ipopt_smoke()["compiled"]:
+        pytest.skip("native Ipopt is not compiled")
+
+    poor_seed = [1.0e-300] * len(_mea_species())
+    result = epcsaft_equilibrium.reactive_speciation(
+        species=_mea_species(),
+        reactions=_mea_reactions(),
+        feed_amounts={
+            "CO2": 0.8,
+            "H2O": 6.0,
+            "MEA": 1.0,
+            "MEAH+": 1.0e-18,
+            "MEACOO-": 1.0e-18,
+            "HCO3-": 1.0e-18,
+            "CO3^2-": 1.0e-18,
+            "H3O+": 1.0e-18,
+            "OH-": 1.0e-18,
+        },
+        equilibrium_constants=_mea_constants(),
+        initial_amounts=poor_seed,
+        solver_options=epcsaft_equilibrium.EquilibriumSolverOptions(max_iterations=600, tolerance=1.0e-8),
+    )
+
+    initialization = result.diagnostics["initialization"]
+    assert initialization["seed_attempt_order"] == (
+        "caller_initial_amounts",
+        "max_min_feasible_interior",
+    )
+    assert initialization["accepted_seed_source"] == "max_min_feasible_interior"
+    assert initialization["caller_seed_final_proof_attempted"] is True
+    assert initialization["caller_seed_final_proof_accepted"] is False
+    assert initialization["caller_seed_escalated"] is True
+    assert initialization["source_oracle_initial_amounts"] is False
+    assert result.diagnostics["balance_inf_norm"] < 1.0e-8
+    assert result.diagnostics["reaction_stationarity_inf_norm"] < 1.0e-6
+
+
 def test_reactive_speciation_rejects_invalid_explicit_seed_before_native(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -1081,6 +1081,26 @@ ChemicalEquilibriumNlpResult solve_eos_activity_continuation_from_seed(
     return out;
 }
 
+void record_seed_attempt_diagnostics(
+    ChemicalEquilibriumNlpResult& result,
+    bool caller_seed_attempted,
+    bool caller_seed_final_proof_accepted,
+    bool caller_seed_escalated
+) {
+    result.caller_seed_attempted = caller_seed_attempted;
+    result.caller_seed_final_proof_attempted = caller_seed_attempted;
+    result.caller_seed_final_proof_accepted = caller_seed_attempted && caller_seed_final_proof_accepted;
+    result.caller_seed_escalated = caller_seed_attempted && caller_seed_escalated;
+    result.accepted_seed_source = result.accepted ? result.seed_source : "";
+    result.seed_attempt_order.clear();
+    if (caller_seed_attempted) {
+        result.seed_attempt_order.push_back("caller_initial_amounts");
+    }
+    if (!caller_seed_attempted || caller_seed_escalated) {
+        result.seed_attempt_order.push_back("max_min_feasible_interior");
+    }
+}
+
 }  // namespace
 
 ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
@@ -1093,20 +1113,25 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
 ) {
     if (input.eos_activity_enabled) {
         if (!input.initial_amounts.empty()) {
-            ChemicalEquilibriumNlpResult out = solve_eos_activity_continuation_from_seed(
-                input,
-                plan,
-                layout,
-                options,
-                balance_tolerance,
-                reaction_stationarity_tolerance
-            );
-            out.source_oracle_initial_amounts = true;
-            out.seed_source = "caller_initial_amounts";
-            out.direct_final_proof_attempted = false;
-            out.direct_final_proof_accepted = false;
-            if (out.accepted) {
-                return out;
+            try {
+                ChemicalEquilibriumNlpResult out = solve_eos_activity_continuation_from_seed(
+                    input,
+                    plan,
+                    layout,
+                    options,
+                    balance_tolerance,
+                    reaction_stationarity_tolerance
+                );
+                out.source_oracle_initial_amounts = true;
+                out.seed_source = "caller_initial_amounts";
+                out.direct_final_proof_attempted = false;
+                out.direct_final_proof_accepted = false;
+                if (out.accepted) {
+                    record_seed_attempt_diagnostics(out, true, true, false);
+                    return out;
+                }
+            } catch (const std::exception&) {
+                // A positive caller seed is only a hint; CE-owned initialization remains authoritative.
             }
         }
 
@@ -1132,47 +1157,57 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
         out.feasible_initialization = feasible;
         out.direct_final_proof_attempted = false;
         out.direct_final_proof_accepted = false;
+        record_seed_attempt_diagnostics(out, !input.initial_amounts.empty(), false, !input.initial_amounts.empty());
         return out;
     }
 
+    bool caller_seed_attempted = false;
+    bool caller_seed_final_proof_accepted = false;
     if (!input.initial_amounts.empty()) {
-        ChemicalEquilibriumNlpInput true_input =
-            chemical_equilibrium_input_with_log_k_lambda(input, 1.0);
-        ChemicalEquilibriumNlpResult out = solve_single_ce_proof(
-            true_input,
-            plan,
-            layout,
-            options,
-            balance_tolerance,
-            reaction_stationarity_tolerance
-        );
-        const bool direct_proof_accepted = out.accepted;
-        if (!out.accepted && !out.solve.variables.empty()) {
-            out.proof_corrector = run_physical_proof_corrector(
+        caller_seed_attempted = true;
+        try {
+            ChemicalEquilibriumNlpInput true_input =
+                chemical_equilibrium_input_with_log_k_lambda(input, 1.0);
+            ChemicalEquilibriumNlpResult out = solve_single_ce_proof(
                 true_input,
                 plan,
                 layout,
-                out.solve.variables,
+                options,
                 balance_tolerance,
                 reaction_stationarity_tolerance
             );
-            if (out.proof_corrector.accepted) {
-                out.postsolve = out.proof_corrector.postsolve;
-                out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
-                out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
-                out.accepted = true;
+            const bool direct_proof_accepted = out.accepted;
+            if (!out.accepted && !out.solve.variables.empty()) {
+                out.proof_corrector = run_physical_proof_corrector(
+                    true_input,
+                    plan,
+                    layout,
+                    out.solve.variables,
+                    balance_tolerance,
+                    reaction_stationarity_tolerance
+                );
+                if (out.proof_corrector.accepted) {
+                    out.postsolve = out.proof_corrector.postsolve;
+                    out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
+                    out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
+                    out.accepted = true;
+                }
             }
-        }
-        out.source_oracle_initial_amounts = true;
-        out.seed_source = "caller_initial_amounts";
-        out.direct_final_proof_attempted = true;
-        out.direct_final_proof_accepted = direct_proof_accepted;
-        out.continuation.final_proof_status = out.accepted ? "accepted" : "rejected";
-        out.continuation.final_stage_id = "lambda_1";
-        out.continuation.accepted = out.accepted;
-        out.continuation_lambdas = {1.0};
-        if (out.accepted) {
-            return out;
+            out.source_oracle_initial_amounts = true;
+            out.seed_source = "caller_initial_amounts";
+            out.direct_final_proof_attempted = true;
+            out.direct_final_proof_accepted = direct_proof_accepted;
+            out.continuation.final_proof_status = out.accepted ? "accepted" : "rejected";
+            out.continuation.final_stage_id = "lambda_1";
+            out.continuation.accepted = out.accepted;
+            out.continuation_lambdas = {1.0};
+            caller_seed_final_proof_accepted = out.accepted;
+            if (out.accepted) {
+                record_seed_attempt_diagnostics(out, true, true, false);
+                return out;
+            }
+        } catch (const std::exception&) {
+            caller_seed_final_proof_accepted = false;
         }
     }
 
@@ -1223,6 +1258,12 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
         direct.continuation.final_stage_id = "lambda_1";
         direct.continuation.accepted = true;
         direct.continuation_lambdas = {1.0};
+        record_seed_attempt_diagnostics(
+            direct,
+            caller_seed_attempted,
+            caller_seed_final_proof_accepted,
+            caller_seed_attempted && !caller_seed_final_proof_accepted
+        );
         return direct;
     }
 
@@ -1278,6 +1319,12 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
     out.direct_final_proof_attempted = feasible.accepted;
     out.direct_final_proof_accepted = direct_proof_accepted;
     out.continuation_lambdas = lambdas;
+    record_seed_attempt_diagnostics(
+        out,
+        caller_seed_attempted,
+        caller_seed_final_proof_accepted,
+        caller_seed_attempted && !caller_seed_final_proof_accepted
+    );
     return out;
 }
 

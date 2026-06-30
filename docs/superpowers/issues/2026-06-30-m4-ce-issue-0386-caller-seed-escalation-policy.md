@@ -49,6 +49,17 @@ Implement Task 4 from the source plan: caller seed validation, proof-first escal
 - [ ] Nonpositive or shape-invalid caller seeds fail before native solving.
 - [ ] Diagnostics identify attempted and accepted seed sources.
 
+## Resolution Evidence
+
+- Native CE initialization diagnostics now include `seed_attempt_order`, `accepted_seed_source`, `caller_seed_attempted`, `caller_seed_final_proof_attempted`, `caller_seed_final_proof_accepted`, and `caller_seed_escalated`.
+- Good caller seeds retain the caller path when strict final proof succeeds.
+- Strictly positive but unusable caller hints below the native positive-log floor are treated as failed caller proof attempts and escalated to CE-owned max-min feasible initialization.
+- Nonpositive and shape-invalid seeds still fail in Python validation before native solving.
+- Fresh red proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py::test_reactive_speciation_good_caller_seed_reports_seed_attempt_order packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py::test_reactive_speciation_bad_positive_seed_escalates_to_ce_owned_initialization -q` failed on missing `seed_attempt_order` before implementation.
+- Fresh proof: `uv run --no-sync python scripts/dev/build_epcsaft.py --build-only --parallel 10` passed.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py -q` passed with 13 tests.
+- Fresh proof: `uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete` returned status `complete` with no blockers.
+
 ## Blocked by
 
 - None

@@ -1259,6 +1259,12 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
 
     py::dict initialization;
     initialization["seed_source"] = result.seed_source;
+    initialization["accepted_seed_source"] = result.accepted_seed_source;
+    initialization["seed_attempt_order"] = result.seed_attempt_order;
+    initialization["caller_seed_attempted"] = result.caller_seed_attempted;
+    initialization["caller_seed_final_proof_attempted"] = result.caller_seed_final_proof_attempted;
+    initialization["caller_seed_final_proof_accepted"] = result.caller_seed_final_proof_accepted;
+    initialization["caller_seed_escalated"] = result.caller_seed_escalated;
     initialization["source_oracle_initial_amounts"] = result.source_oracle_initial_amounts;
     initialization["feasible_initialization"] =
         feasible_initialization_result_to_dict(result.feasible_initialization);

@@ -62,6 +62,12 @@ struct ChemicalEquilibriumNlpResult {
     double reaction_stationarity_inf_norm = 0.0;
     bool source_oracle_initial_amounts = true;
     std::string seed_source = "caller_initial_amounts";
+    std::string accepted_seed_source;
+    std::vector<std::string> seed_attempt_order;
+    bool caller_seed_attempted = false;
+    bool caller_seed_final_proof_attempted = false;
+    bool caller_seed_final_proof_accepted = false;
+    bool caller_seed_escalated = false;
     FeasibleInitializationResult feasible_initialization;
     bool direct_final_proof_attempted = false;
     bool direct_final_proof_accepted = false;
