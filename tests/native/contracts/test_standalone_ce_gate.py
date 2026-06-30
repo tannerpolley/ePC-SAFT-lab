@@ -236,3 +236,26 @@ def test_standalone_ce_gate_complete_mode_consumes_validation_ladder() -> None:
     assert retained["uses_source_oracle_initial_amounts"] is False
     assert retained["continuation_evidence"]["all_final_lambda_one"] is True
     assert retained["continuation_evidence"]["all_final_proof_accepted"] is True
+
+
+def test_standalone_ce_gate_requires_retained_robustness_diagnostics() -> None:
+    checker = _checker_module()
+    payload = json.loads(MEA_RETAINED_SUMMARY_PATH.read_text(encoding="utf-8"))
+    bad_payload = copy.deepcopy(payload)
+    bad_payload.pop("robustness_diagnostics", None)
+
+    blockers = checker.mea_retained_summary_payload_blockers(bad_payload)
+
+    assert "mea_retained_summary_robustness_diagnostics_missing" in blockers
+
+    evidence = checker._mea_retained_artifact_evidence_from_payload(payload)
+    robustness = evidence["robustness_diagnostics"]
+    assert robustness["activity_model"] == "mole_fraction_activity"
+    assert robustness["artifact"].endswith("mea_ce_unassisted_seed_audit.csv")
+    assert "reaction_stationarity_inf_norm" in robustness["required_fields"]
+    assert "balance_inf_norm" in robustness["required_fields"]
+    assert "seed_source" in robustness["required_fields"]
+    assert "stage_count" in robustness["required_fields"]
+    assert "final_proof_status" in robustness["required_fields"]
+    assert "failure_class" in robustness["required_fields"]
+    assert robustness["failure_classes"] == ["accepted"]

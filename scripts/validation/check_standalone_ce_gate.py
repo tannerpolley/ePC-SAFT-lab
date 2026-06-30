@@ -51,6 +51,19 @@ MEA_STRICT_TOLERANCES = {
     "loading_abs": 1.0e-8,
     "charge_abs": 1.0e-8,
 }
+REQUIRED_MEA_ROBUSTNESS_FIELDS = [
+    "activity_model",
+    "solver_status",
+    "application_status",
+    "accepted",
+    "failure_class",
+    "balance_inf_norm",
+    "reaction_stationarity_inf_norm",
+    "seed_source",
+    "uses_source_oracle_initial_amounts",
+    "stage_count",
+    "final_proof_status",
+]
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
 
@@ -526,6 +539,22 @@ def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
         blockers.append("mea_retained_summary_continuation_trace_missing")
     if not _mea_artifact_shuffled_subset_gates_pass(payload):
         blockers.append("mea_retained_summary_shuffled_subset_missing")
+    robustness = dict(payload.get("robustness_diagnostics") or {})
+    if not robustness:
+        blockers.append("mea_retained_summary_robustness_diagnostics_missing")
+    else:
+        if robustness.get("artifact") != "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv":
+            blockers.append("mea_retained_summary_robustness_artifact_mismatch")
+        if list(robustness.get("required_fields") or []) != REQUIRED_MEA_ROBUSTNESS_FIELDS:
+            blockers.append("mea_retained_summary_robustness_fields_mismatch")
+        if robustness.get("activity_model") != "mole_fraction_activity":
+            blockers.append("mea_retained_summary_activity_model_mismatch")
+        if list(robustness.get("failure_classes") or []) != ["accepted"]:
+            blockers.append("mea_retained_summary_failure_classes_mismatch")
+        if int(robustness.get("state_point_count") or 0) != REQUIRED_MEA_STATE_POINT_COUNT:
+            blockers.append("mea_retained_summary_robustness_state_point_count_mismatch")
+        if int(robustness.get("accepted_state_point_count") or 0) != REQUIRED_MEA_STATE_POINT_COUNT:
+            blockers.append("mea_retained_summary_robustness_accepted_count_mismatch")
     if payload.get("load_error"):
         blockers.append("mea_retained_summary_fixture_missing")
     return sorted(set(blockers))
@@ -535,6 +564,7 @@ def _mea_retained_artifact_evidence_from_payload(payload: dict[str, Any]) -> dic
     pointwise = dict(payload.get("pointwise_unassisted") or {})
     continuation = dict(payload.get("ce_owned_continuation_trace") or {})
     shuffled_subset = dict(payload.get("shuffled_subset") or {})
+    robustness = dict(payload.get("robustness_diagnostics") or {})
     temperature_count = len(payload.get("temperature_C") or [])
     loading_count = int(payload.get("loading_count") or 0)
     state_point_count = loading_count * temperature_count
@@ -558,6 +588,7 @@ def _mea_retained_artifact_evidence_from_payload(payload: dict[str, Any]) -> dic
         "max_reaction_stationarity_inf_norm": payload.get("max_reaction_stationarity_inf_norm"),
         "pointwise_unassisted": pointwise,
         "continuation_evidence": continuation,
+        "robustness_diagnostics": robustness,
         "shuffled_subset": shuffled_subset,
     }
 

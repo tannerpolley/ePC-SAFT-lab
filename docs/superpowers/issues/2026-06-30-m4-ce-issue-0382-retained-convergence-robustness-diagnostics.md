@@ -49,6 +49,13 @@ Implement Task 1 from the source plan: retained CE robustness diagnostics for ha
 - [ ] Standalone CE checker requires the retained diagnostics for completion.
 - [ ] The change does not add new plot artifacts unless the source plan is explicitly revised.
 
+## Resolution Evidence
+
+- Retained robustness rows are in `analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv`, `mea_ce_continuation_trace_summary.csv`, and `mea_ce_shuffled_subset_audit.csv`.
+- `mea_ce_oracle_speciation_comparison_summary.json` now records `robustness_diagnostics` with 322 state points, 322 accepted state points, activity model `mole_fraction_activity`, and failure classes `[accepted]`.
+- Fresh proof: `uv run --no-sync python run_pytest.py tests/native/contracts/test_standalone_ce_gate.py -q` passed with 7 tests.
+- Fresh proof: `uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete` returned status `complete` with no blockers.
+
 ## Blocked by
 
 - None

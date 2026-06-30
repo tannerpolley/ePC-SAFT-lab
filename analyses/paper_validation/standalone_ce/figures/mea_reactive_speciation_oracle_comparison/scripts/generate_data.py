@@ -326,6 +326,8 @@ def _trace_summary_row(
         "temperature_C": temperature_C,
         "CO2_loading": loading,
         "effective_feed_loading": effective_feed_loading,
+        "activity_model": str(diagnostics.get("activity_model", "mole_fraction_activity")),
+        "failure_class": "accepted" if bool(diagnostics["accepted"]) else "unclassified_failure",
         **{key: diagnostics[key] for key in keys},
     }
 
@@ -556,6 +558,30 @@ def generate() -> dict[str, Any]:
             "/",
         ),
     }
+    robustness_required_fields = [
+        "activity_model",
+        "solver_status",
+        "application_status",
+        "accepted",
+        "failure_class",
+        "balance_inf_norm",
+        "reaction_stationarity_inf_norm",
+        "seed_source",
+        "uses_source_oracle_initial_amounts",
+        "stage_count",
+        "final_proof_status",
+    ]
+    robustness_diagnostics = {
+        "artifact": str((RESULTS_DIR / "mea_ce_unassisted_seed_audit.csv").relative_to(REPO_ROOT)).replace(
+            "\\",
+            "/",
+        ),
+        "required_fields": robustness_required_fields,
+        "activity_model": "mole_fraction_activity",
+        "failure_classes": sorted(str(value) for value in trace_summary_frame["failure_class"].dropna().unique()),
+        "accepted_state_point_count": int((trace_summary_frame["failure_class"] == "accepted").sum()),
+        "state_point_count": int(len(trace_summary_frame)),
+    }
     report = {
         "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2",
         "source_oracle": str(SOURCE_CURVE_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
@@ -590,6 +616,7 @@ def generate() -> dict[str, Any]:
             "all_final_lambda_one": bool((trace_summary_frame["final_lambda"] == 1.0).all()),
             "all_final_proof_accepted": bool((trace_summary_frame["final_proof_status"] == "accepted").all()),
         },
+        "robustness_diagnostics": robustness_diagnostics,
         "shuffled_subset": shuffled_strict,
         "max_abs_error": strict["max_abs_error"],
         "max_balance_inf_norm": strict["max_balance_inf_norm"],
