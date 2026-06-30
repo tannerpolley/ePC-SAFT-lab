@@ -65,7 +65,7 @@ def test_equilibrium_constant_registry_accepts_log_k_and_delta_g() -> None:
     assert registry.records["acid_dissociation"].standard_state.standard_molality_mol_kg == 1.0
 
 
-def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
+def test_standard_state_records_cover_fugacity_and_eos_payloads() -> None:
     fugacity = StandardStateRecord(
         label="pure_vapor_fugacity",
         activity_convention="fugacity",
@@ -76,6 +76,13 @@ def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
     eos_x_phi = StandardStateRecord(
         label="liquid_x_phi",
         activity_convention="eos_x_phi",
+        temperature_K=318.15,
+        pressure_Pa=101300.0,
+        eos_reference_phase="liquid",
+    )
+    eos_x_gamma = StandardStateRecord(
+        label="liquid_x_gamma",
+        activity_convention="eos_x_gamma",
         temperature_K=318.15,
         pressure_Pa=101300.0,
         eos_reference_phase="liquid",
@@ -100,6 +107,15 @@ def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
                 source="Ascani 2023 Table 4",
                 source_constant_label="K_a",
             ),
+            EquilibriumConstantRecord(
+                reaction_label="liquid_association",
+                value=11.25,
+                form="K",
+                units="dimensionless",
+                standard_state=eos_x_gamma,
+                source="EOS activity coefficient fixture",
+                source_constant_label="K_gamma",
+            ),
         ]
     )
 
@@ -110,6 +126,9 @@ def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
     assert payload["records"][1]["standard_state"]["activity_convention"] == "eos_x_phi"
     assert payload["records"][1]["standard_state"]["eos_reference_phase"] == "liquid"
     assert payload["records"][1]["ln_equilibrium_constant"] == pytest.approx(math.log(43.99))
+    assert payload["records"][2]["standard_state"]["activity_convention"] == "eos_x_gamma"
+    assert payload["records"][2]["standard_state"]["eos_reference_phase"] == "liquid"
+    assert payload["records"][2]["ln_equilibrium_constant"] == pytest.approx(math.log(11.25))
     json.dumps(payload)
 
 
@@ -126,6 +145,14 @@ def test_registry_rejects_missing_temperature_units_or_convention_metadata() -> 
         StandardStateRecord(
             label="missing_molality",
             activity_convention="molality",
+            temperature_K=298.15,
+            pressure_Pa=101325.0,
+        )
+
+    with pytest.raises(InputError, match="EOS reference phase"):
+        StandardStateRecord(
+            label="missing_eos_reference_phase",
+            activity_convention="eos_x_gamma",
             temperature_K=298.15,
             pressure_Pa=101325.0,
         )

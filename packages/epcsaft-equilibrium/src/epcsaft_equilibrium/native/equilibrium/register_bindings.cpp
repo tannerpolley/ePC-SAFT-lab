@@ -896,7 +896,7 @@ int phase_kind_from_standard_state_label(const std::string& label) {
     if (label == "vapor" || label == "vap" || label == "gas") {
         return 1;
     }
-    throw ValueError("chemical equilibrium eos_x_phi reference phase must be liquid or vapor.");
+    throw ValueError("chemical equilibrium EOS activity reference phase must be liquid or vapor.");
 }
 
 bool same_standard_state_scalar(double left, double right) {
@@ -907,6 +907,7 @@ bool same_standard_state_scalar(double left, double right) {
 struct ChemicalEquilibriumStandardStateContext {
     std::vector<double> log_equilibrium_constants;
     bool eos_activity_enabled = false;
+    std::string eos_activity_convention = "mole_fraction_activity";
     double eos_temperature = 0.0;
     double eos_pressure = 0.0;
     int eos_phase_kind = -1;
@@ -970,28 +971,29 @@ ChemicalEquilibriumStandardStateContext chemical_equilibrium_standard_state_cont
         if (convention == "mole_fraction_activity") {
             continue;
         }
-        if (convention != "eos_x_phi") {
+        if (convention != "eos_x_phi" && convention != "eos_x_gamma") {
             throw ValueError(
-                "chemical equilibrium native CE supports mole_fraction_activity or eos_x_phi standard states."
+                "chemical equilibrium native CE supports mole_fraction_activity, eos_x_phi, or eos_x_gamma standard states."
             );
         }
         const double temperature = required_payload_field<double>(
             standard_state,
             "temperature_K",
-            "chemical equilibrium eos_x_phi standard-state"
+            "chemical equilibrium EOS activity standard-state"
         );
         const double pressure = required_payload_field<double>(
             standard_state,
             "pressure_Pa",
-            "chemical equilibrium eos_x_phi standard-state"
+            "chemical equilibrium EOS activity standard-state"
         );
         const std::string reference_phase = required_payload_field<std::string>(
             standard_state,
             "eos_reference_phase",
-            "chemical equilibrium eos_x_phi standard-state"
+            "chemical equilibrium EOS activity standard-state"
         );
         if (!eos_context_assigned) {
             out.eos_activity_enabled = true;
+            out.eos_activity_convention = convention;
             out.eos_temperature = temperature;
             out.eos_pressure = pressure;
             out.eos_reference_phase = reference_phase;
@@ -1002,7 +1004,7 @@ ChemicalEquilibriumStandardStateContext chemical_equilibrium_standard_state_cont
             || !same_standard_state_scalar(out.eos_pressure, pressure)
             || out.eos_reference_phase != reference_phase
         ) {
-            throw ValueError("chemical equilibrium eos_x_phi standard states require one shared EOS context.");
+            throw ValueError("chemical equilibrium EOS activity standard states require one shared EOS context.");
         }
     }
     for (std::size_t index = 0; index < assigned.size(); ++index) {
@@ -1065,16 +1067,17 @@ epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput chemical_equilibri
     out.initial_amounts = initial_amounts;
     if (standard_state_context.eos_activity_enabled) {
         out.eos_activity_enabled = true;
+        out.eos_activity_convention = standard_state_context.eos_activity_convention;
         out.eos_activity_temperature = standard_state_context.eos_temperature;
         out.eos_activity_pressure = standard_state_context.eos_pressure;
         out.eos_activity_phase_kind = standard_state_context.eos_phase_kind;
         out.eos_activity_reference_phase = standard_state_context.eos_reference_phase;
         out.eos_activity_args = std::make_shared<add_args>(native_args_from_mixture_object(
             eos_mixture,
-            "chemical equilibrium eos_x_phi standard states"
+            "chemical equilibrium " + out.eos_activity_convention + " standard states"
         ));
     } else if (!eos_mixture.is_none()) {
-        throw ValueError("chemical equilibrium eos_mixture is only valid with eos_x_phi standard states.");
+        throw ValueError("chemical equilibrium eos_mixture is only valid with EOS activity standard states.");
     }
     return out;
 }

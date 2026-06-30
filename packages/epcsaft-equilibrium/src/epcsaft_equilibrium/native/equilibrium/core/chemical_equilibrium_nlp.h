@@ -28,6 +28,7 @@ struct ChemicalEquilibriumNlpInput {
     double log_equilibrium_constants_lambda = 1.0;
     std::vector<double> initial_amounts;
     bool eos_activity_enabled = false;
+    std::string eos_activity_convention = "mole_fraction_activity";
     std::shared_ptr<add_args> eos_activity_args;
     double eos_activity_temperature = 0.0;
     double eos_activity_pressure = 0.0;

@@ -29,22 +29,32 @@ void require_eos_activity_input_shape(
     const ChemicalEquilibriumNlpInput& input,
     std::size_t species_count
 ) {
-    require_positive_finite(input.eos_activity_temperature, "chemical equilibrium eos_x_phi temperature");
-    require_positive_finite(input.eos_activity_pressure, "chemical equilibrium eos_x_phi pressure");
+    if (
+        input.eos_activity_convention != "eos_x_phi"
+        && input.eos_activity_convention != "eos_x_gamma"
+    ) {
+        throw ValueError("chemical equilibrium EOS activity convention must be eos_x_phi or eos_x_gamma.");
+    }
+    require_positive_finite(input.eos_activity_temperature, "chemical equilibrium EOS activity temperature");
+    require_positive_finite(input.eos_activity_pressure, "chemical equilibrium EOS activity pressure");
     if (input.eos_activity_phase_kind != 0 && input.eos_activity_phase_kind != 1) {
-        throw ValueError("chemical equilibrium eos_x_phi reference phase must be liquid or vapor.");
+        throw ValueError("chemical equilibrium EOS activity reference phase must be liquid or vapor.");
+    }
+    if (input.eos_activity_convention == "eos_x_gamma" && input.eos_activity_phase_kind != 0) {
+        throw ValueError("chemical equilibrium eos_x_gamma standard states require a liquid reference phase.");
     }
     if (!input.eos_activity_args) {
-        throw ValueError("chemical equilibrium eos_x_phi standard states require native EOS parameters.");
+        throw ValueError("chemical equilibrium EOS activity standard states require native EOS parameters.");
     }
     if (!input.eos_activity_args->m.empty() && input.eos_activity_args->m.size() != species_count) {
-        throw ValueError("chemical equilibrium eos_x_phi mixture component count must match CE species count.");
+        throw ValueError("chemical equilibrium EOS activity mixture component count must match CE species count.");
     }
 }
 
 void require_supported_sensitivity(
     const PhaseStateCompositionSensitivityResult& sensitivity,
-    std::size_t species_count
+    std::size_t species_count,
+    const std::string& activity_convention
 ) {
     if (sensitivity.supported
         && sensitivity.ln_fugacity.size() == species_count
@@ -54,7 +64,94 @@ void require_supported_sensitivity(
     const std::string message = sensitivity.message.empty()
         ? "missing CppAD phase-state fugacity composition sensitivity evidence"
         : sensitivity.message;
-    throw ValueError("chemical equilibrium eos_x_phi objective requires supported fugacity sensitivities: " + message);
+    throw ValueError(
+        "chemical equilibrium " + activity_convention
+        + " objective requires supported fugacity sensitivities: " + message
+    );
+}
+
+void require_eos_x_gamma_charge_groups(
+    const add_args& args,
+    const ChargeGroups& groups,
+    std::size_t species_count
+) {
+    if (args.z.size() != species_count) {
+        throw ValueError("chemical equilibrium eos_x_gamma requires charges aligned with CE species.");
+    }
+    if (args.mw.size() != species_count) {
+        throw ValueError("chemical equilibrium eos_x_gamma requires molecular weights aligned with CE species.");
+    }
+    if (groups.cations.empty() || groups.anions.empty()) {
+        throw ValueError("chemical equilibrium eos_x_gamma requires at least one cation and one anion.");
+    }
+    if (groups.solvents.empty()) {
+        throw ValueError("chemical equilibrium eos_x_gamma requires a neutral solvent reference.");
+    }
+}
+
+double solvent_fraction_sum(const std::vector<double>& mole_fractions, const ChargeGroups& groups) {
+    double solvent_sum = 0.0;
+    for (int solvent : groups.solvents) {
+        solvent_sum += mole_fractions[static_cast<std::size_t>(solvent)];
+    }
+    if (solvent_sum > 0.0) {
+        return solvent_sum;
+    }
+    throw ValueError("chemical equilibrium eos_x_gamma requires a positive solvent fraction.");
+}
+
+double reference_solvent_budget(const ChargeGroups& groups, std::size_t species_count, double eps) {
+    return std::max(
+        1.0 - eps * static_cast<double>(species_count - groups.solvents.size()),
+        eps * static_cast<double>(groups.solvents.size())
+    );
+}
+
+std::vector<double> build_eos_x_gamma_reference_composition(
+    const std::vector<double>& mole_fractions,
+    const ChargeGroups& groups,
+    double eps
+) {
+    const std::size_t species_count = mole_fractions.size();
+    const double solvent_sum = solvent_fraction_sum(mole_fractions, groups);
+    const double solvent_budget = reference_solvent_budget(groups, species_count, eps);
+    std::vector<double> reference(species_count, eps);
+    for (int solvent : groups.solvents) {
+        const std::size_t index = static_cast<std::size_t>(solvent);
+        reference[index] = mole_fractions[index] / solvent_sum * solvent_budget;
+    }
+    const double reference_sum = std::accumulate(reference.begin(), reference.end(), 0.0);
+    require_positive_finite(reference_sum, "chemical equilibrium eos_x_gamma reference composition sum");
+    for (double& value : reference) {
+        value /= reference_sum;
+    }
+    return reference;
+}
+
+std::vector<double> eos_x_gamma_reference_composition_jacobian(
+    const std::vector<double>& mole_fractions,
+    const ChargeGroups& groups,
+    double eps
+) {
+    const std::size_t species_count = mole_fractions.size();
+    const double solvent_sum = solvent_fraction_sum(mole_fractions, groups);
+    const double solvent_budget = reference_solvent_budget(groups, species_count, eps);
+    const double reference_sum =
+        solvent_budget + eps * static_cast<double>(species_count - groups.solvents.size());
+    require_positive_finite(reference_sum, "chemical equilibrium eos_x_gamma reference composition sum");
+
+    std::vector<double> jacobian(species_count * species_count, 0.0);
+    const double scale = solvent_budget / reference_sum;
+    const double denominator = solvent_sum * solvent_sum;
+    for (int row_index : groups.solvents) {
+        const std::size_t row = static_cast<std::size_t>(row_index);
+        for (int column_index : groups.solvents) {
+            const std::size_t column = static_cast<std::size_t>(column_index);
+            const double numerator = (row == column ? solvent_sum : 0.0) - mole_fractions[row];
+            jacobian[row * species_count + column] = scale * numerator / denominator;
+        }
+    }
+    return jacobian;
 }
 
 double composition_amount_derivative(
@@ -66,7 +163,61 @@ double composition_amount_derivative(
     return ((component == amount_index ? 1.0 : 0.0) - mole_fractions[component]) / total_amount;
 }
 
-HomogeneousChemicalEquilibriumBlockResult evaluate_eos_x_phi_objective(
+PhaseStateCompositionSensitivityResult evaluate_eos_activity_sensitivity(
+    const ChemicalEquilibriumNlpInput& input,
+    const std::vector<double>& mole_fractions
+) {
+    const std::size_t species_count = mole_fractions.size();
+    const PhaseStateCompositionSensitivityResult current =
+        phase_state_ln_fugacity_composition_sensitivity_cpp(
+            input.eos_activity_temperature,
+            input.eos_activity_pressure,
+            mole_fractions,
+            input.eos_activity_phase_kind,
+            *input.eos_activity_args
+        );
+    require_supported_sensitivity(current, species_count, input.eos_activity_convention);
+    if (input.eos_activity_convention == "eos_x_phi") {
+        return current;
+    }
+
+    const double reference_eps = 1.0e-12;
+    const ChargeGroups groups = collect_charge_groups(*input.eos_activity_args, species_count);
+    require_eos_x_gamma_charge_groups(*input.eos_activity_args, groups, species_count);
+    const std::vector<double> reference_composition =
+        build_eos_x_gamma_reference_composition(mole_fractions, groups, reference_eps);
+    const PhaseStateCompositionSensitivityResult reference =
+        phase_state_ln_fugacity_composition_sensitivity_cpp(
+            input.eos_activity_temperature,
+            input.eos_activity_pressure,
+            reference_composition,
+            0,
+            *input.eos_activity_args
+        );
+    require_supported_sensitivity(reference, species_count, input.eos_activity_convention);
+    const std::vector<double> reference_jacobian =
+        eos_x_gamma_reference_composition_jacobian(mole_fractions, groups, reference_eps);
+
+    PhaseStateCompositionSensitivityResult activity = current;
+    activity.backend = "cppad_implicit_activity_coefficient";
+    activity.ln_fugacity.assign(species_count, 0.0);
+    activity.jacobian_row_major.assign(species_count * species_count, 0.0);
+    for (std::size_t row = 0; row < species_count; ++row) {
+        activity.ln_fugacity[row] = current.ln_fugacity[row] - reference.ln_fugacity[row];
+        for (std::size_t column = 0; column < species_count; ++column) {
+            double reference_chain = 0.0;
+            for (std::size_t ref_component = 0; ref_component < species_count; ++ref_component) {
+                reference_chain += reference.jacobian_row_major[row * species_count + ref_component]
+                    * reference_jacobian[ref_component * species_count + column];
+            }
+            activity.jacobian_row_major[row * species_count + column] =
+                current.jacobian_row_major[row * species_count + column] - reference_chain;
+        }
+    }
+    return activity;
+}
+
+HomogeneousChemicalEquilibriumBlockResult evaluate_eos_activity_objective(
     const ChemicalEquilibriumNlpInput& input,
     const std::vector<double>& amounts
 ) {
@@ -82,19 +233,12 @@ HomogeneousChemicalEquilibriumBlockResult evaluate_eos_x_phi_objective(
     const std::size_t species_count = amounts.size();
     require_eos_activity_input_shape(input, species_count);
     const double total_amount = std::accumulate(amounts.begin(), amounts.end(), 0.0);
-    require_positive_finite(total_amount, "chemical equilibrium eos_x_phi total amount");
+    require_positive_finite(total_amount, "chemical equilibrium EOS activity total amount");
 
     const PhaseStateCompositionSensitivityResult sensitivity =
-        phase_state_ln_fugacity_composition_sensitivity_cpp(
-            input.eos_activity_temperature,
-            input.eos_activity_pressure,
-            out.mole_fractions,
-            input.eos_activity_phase_kind,
-            *input.eos_activity_args
-        );
-    require_supported_sensitivity(sensitivity, species_count);
+        evaluate_eos_activity_sensitivity(input, out.mole_fractions);
 
-    out.activity_model = "eos_x_phi";
+    out.activity_model = input.eos_activity_convention;
     out.activity_derivative_backend = sensitivity.backend;
     out.eos_temperature = input.eos_activity_temperature;
     out.eos_pressure = input.eos_activity_pressure;
@@ -107,10 +251,10 @@ HomogeneousChemicalEquilibriumBlockResult evaluate_eos_x_phi_objective(
     out.objective_value = 0.0;
     std::vector<double> log_activities(species_count, 0.0);
     for (std::size_t species = 0; species < species_count; ++species) {
-        require_positive_finite(out.mole_fractions[species], "chemical equilibrium eos_x_phi mole fraction");
+        require_positive_finite(out.mole_fractions[species], "chemical equilibrium EOS activity mole fraction");
         require_finite(
             out.ln_activity_coefficients[species],
-            "chemical equilibrium eos_x_phi ln activity coefficient"
+            "chemical equilibrium EOS activity ln activity coefficient"
         );
         log_activities[species] = std::log(out.mole_fractions[species])
             + out.ln_activity_coefficients[species];
@@ -126,9 +270,9 @@ HomogeneousChemicalEquilibriumBlockResult evaluate_eos_x_phi_objective(
             for (std::size_t component = 0; component < species_count; ++component) {
                 const double ideal_derivative =
                     row == component ? 1.0 / out.mole_fractions[row] : 0.0;
-                const double fugacity_derivative =
+                const double activity_derivative =
                     sensitivity.jacobian_row_major[row * species_count + component];
-                value += (ideal_derivative + fugacity_derivative)
+                value += (ideal_derivative + activity_derivative)
                     * composition_amount_derivative(
                         out.mole_fractions,
                         total_amount,
@@ -202,7 +346,7 @@ HomogeneousChemicalEquilibriumBlockResult evaluate_chemical_equilibrium_objectiv
     const std::vector<double>& amounts
 ) {
     if (input.eos_activity_enabled) {
-        return evaluate_eos_x_phi_objective(input, amounts);
+        return evaluate_eos_activity_objective(input, amounts);
     }
     return evaluate_homogeneous_chemical_equilibrium_block(
         amounts,

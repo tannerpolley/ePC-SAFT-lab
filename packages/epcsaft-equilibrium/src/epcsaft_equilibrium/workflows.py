@@ -143,12 +143,12 @@ def _reactive_speciation_eos_context(
     convention = next(iter(conventions))
     if convention == "mole_fraction_activity":
         if eos_mixture is not None:
-            raise InputError("reactive_speciation eos_mixture is only valid with eos_x_phi standard states.")
+            raise InputError("reactive_speciation eos_mixture is only valid with EOS activity standard states.")
         return None
-    if convention != "eos_x_phi":
+    if convention not in {"eos_x_phi", "eos_x_gamma"}:
         raise InputError(f"reactive_speciation unsupported activity convention '{convention}'.")
     if eos_mixture is None:
-        raise InputError("reactive_speciation eos_x_phi standard states require eos_mixture.")
+        raise InputError(f"reactive_speciation {convention} standard states require eos_mixture.")
     _require_single_eos_activity_context(standard_states)
     return getattr(eos_mixture, "native", eos_mixture)
 
@@ -163,7 +163,7 @@ def _require_single_eos_activity_context(standard_states: StandardStateRegistry)
             or state.temperature_K != first.temperature_K
             or state.pressure_Pa != first.pressure_Pa
         ):
-            raise InputError("reactive_speciation eos_x_phi standard states require one shared EOS context.")
+            raise InputError("reactive_speciation EOS activity standard states require one shared EOS context.")
 
 
 def _reactive_speciation_result_from_payload(

@@ -12,7 +12,8 @@ from epcsaft import InputError
 
 _BASIS_TOLERANCE = 1.0e-10
 GAS_CONSTANT_J_PER_MOL_K = 8.31446261815324
-_ACTIVITY_CONVENTIONS = frozenset({"mole_fraction_activity", "molality", "fugacity", "eos_x_phi"})
+_ACTIVITY_CONVENTIONS = frozenset({"mole_fraction_activity", "molality", "fugacity", "eos_x_phi", "eos_x_gamma"})
+_EOS_ACTIVITY_CONVENTIONS = frozenset({"eos_x_phi", "eos_x_gamma"})
 _EQUILIBRIUM_CONSTANT_FORMS = frozenset({"K", "ln_K", "log_K", "log10_K", "delta_g_standard"})
 
 
@@ -102,8 +103,8 @@ class StandardStateRecord:
             raise InputError("molality standard states require standard molality metadata.")
         if convention == "fugacity" and fugacity is None:
             raise InputError("fugacity standard states require standard fugacity metadata.")
-        if convention == "eos_x_phi" and reference_phase is None:
-            raise InputError("eos_x_phi standard states require an EOS reference phase.")
+        if convention in _EOS_ACTIVITY_CONVENTIONS and reference_phase is None:
+            raise InputError(f"{convention} standard states require an EOS reference phase.")
 
         metadata = (
             {} if self.metadata is None else {str(key): _json_scalar(value) for key, value in self.metadata.items()}

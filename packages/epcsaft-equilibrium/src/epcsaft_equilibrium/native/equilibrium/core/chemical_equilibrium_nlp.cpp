@@ -342,16 +342,25 @@ void validate_input_shape(const ChemicalEquilibriumNlpInput& input) {
         require_positive_finite(value, "chemical equilibrium initial amount");
     }
     if (input.eos_activity_enabled) {
-        require_positive_finite(input.eos_activity_temperature, "chemical equilibrium eos_x_phi temperature");
-        require_positive_finite(input.eos_activity_pressure, "chemical equilibrium eos_x_phi pressure");
+        if (
+            input.eos_activity_convention != "eos_x_phi"
+            && input.eos_activity_convention != "eos_x_gamma"
+        ) {
+            throw ValueError("chemical equilibrium EOS activity convention must be eos_x_phi or eos_x_gamma.");
+        }
+        require_positive_finite(input.eos_activity_temperature, "chemical equilibrium EOS activity temperature");
+        require_positive_finite(input.eos_activity_pressure, "chemical equilibrium EOS activity pressure");
         if (input.eos_activity_phase_kind != 0 && input.eos_activity_phase_kind != 1) {
-            throw ValueError("chemical equilibrium eos_x_phi phase kind must be liquid or vapor.");
+            throw ValueError("chemical equilibrium EOS activity phase kind must be liquid or vapor.");
+        }
+        if (input.eos_activity_convention == "eos_x_gamma" && input.eos_activity_phase_kind != 0) {
+            throw ValueError("chemical equilibrium eos_x_gamma standard states require a liquid reference phase.");
         }
         if (!input.eos_activity_args) {
-            throw ValueError("chemical equilibrium eos_x_phi standard states require native EOS parameters.");
+            throw ValueError("chemical equilibrium EOS activity standard states require native EOS parameters.");
         }
         if (!input.eos_activity_args->m.empty() && input.eos_activity_args->m.size() != species_count) {
-            throw ValueError("chemical equilibrium eos_x_phi mixture component count must match species count.");
+            throw ValueError("chemical equilibrium EOS activity mixture component count must match species count.");
         }
     }
 }
@@ -401,7 +410,7 @@ HomogeneousChemicalEquilibriumNlp::HomogeneousChemicalEquilibriumNlp(
 
 std::string HomogeneousChemicalEquilibriumNlp::name() const {
     if (input_.eos_activity_enabled) {
-        return "reactive_speciation_eos_x_phi_gibbs_nlp";
+        return "reactive_speciation_" + input_.eos_activity_convention + "_gibbs_nlp";
     }
     return "reactive_speciation_ideal_gibbs_nlp";
 }
@@ -538,6 +547,9 @@ std::vector<double> HomogeneousChemicalEquilibriumNlp::hessian_values(
 
 std::string HomogeneousChemicalEquilibriumNlp::hessian_backend() const {
     if (input_.eos_activity_enabled) {
+        if (input_.eos_activity_convention == "eos_x_gamma") {
+            return "cppad_phase_state_activity_coefficient";
+        }
         return "cppad_phase_state_fugacity";
     }
     return "analytic";
@@ -566,7 +578,9 @@ std::map<std::string, std::string> HomogeneousChemicalEquilibriumNlp::diagnostic
     out["solver_coordinate_basis"] = "log_species_amounts";
     out["transform_policy"] = "positive_log_coordinates";
     out["thermodynamic_block"] = "homogeneous_chemical_equilibrium";
-    out["activity_model"] = input_.eos_activity_enabled ? "eos_x_phi" : "mole_fraction_activity";
+    out["activity_model"] = input_.eos_activity_enabled
+        ? input_.eos_activity_convention
+        : "mole_fraction_activity";
     return out;
 }
 
@@ -963,6 +977,22 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             balance_tolerance,
             reaction_stationarity_tolerance
         );
+        if (!out.accepted && !out.solve.variables.empty()) {
+            out.proof_corrector = run_physical_proof_corrector(
+                true_input,
+                plan,
+                layout,
+                out.solve.variables,
+                balance_tolerance,
+                reaction_stationarity_tolerance
+            );
+            if (out.proof_corrector.accepted) {
+                out.postsolve = out.proof_corrector.postsolve;
+                out.balance_inf_norm = out.proof_corrector.balance_inf_norm;
+                out.reaction_stationarity_inf_norm = out.proof_corrector.reaction_stationarity_inf_norm;
+                out.accepted = true;
+            }
+        }
         out.source_oracle_initial_amounts = true;
         out.seed_source = "caller_initial_amounts";
         out.direct_final_proof_attempted = true;
@@ -971,7 +1001,9 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
         out.continuation.final_stage_id = "lambda_1";
         out.continuation.accepted = out.accepted;
         out.continuation_lambdas = {1.0};
-        return out;
+        if (out.accepted) {
+            return out;
+        }
     }
 
     FeasibleInitializationResult feasible = solve_max_min_feasible_initialization(
