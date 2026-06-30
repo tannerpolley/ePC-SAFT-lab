@@ -4,8 +4,9 @@
 **Issue Type:** Task
 **Source Spec:** docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md
 **Source Plan:** docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md
+**Branch:** codex/m4-associating-lle-parent-closeout
 **Classification:** HITL
-**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 **Goal Command:** None; tracking parent issue.
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
@@ -41,8 +42,16 @@ Parent issue for associating LLE certification.
 
 ## Acceptance Criteria
 
-- [ ] Associating metadata and Gross tolerance leaves exist.
-- [ ] Association derivative and data-tolerance evidence are required for associating claims.
+- [x] Associating metadata and Gross tolerance leaves exist.
+- [x] Association derivative and data-tolerance evidence are required for associating claims.
+
+## Resolution Evidence
+
+- Branch: `codex/m4-associating-lle-parent-closeout`
+- Sub-issue proof: `gh issue view 367 --repo ePC-SAFT/ePC-SAFT --json subIssues` reports exactly two sub-issues, #368 and #369, both `CLOSED`.
+- #368 closed by PR #379 with request-specific associating proof applicability separated from global route-family proof metadata.
+- #369 closed by PR #383 with Gross 2002 Figure 8 and Figure 10 source margins retained, shared `neutral_lle` certification accepted, exact association derivative receipts retained, and literature-overlay gaps marked outside M4 route acceptance.
+- Associating proof boundary: #368/#369 evidence stays scoped to retained Gross/Sadowski 2002 associating proof rows and does not broaden electrolyte, reactive, CE/CPE, generalized phase-set, or M5 regression claims.
 
 ## Blocked by
 
