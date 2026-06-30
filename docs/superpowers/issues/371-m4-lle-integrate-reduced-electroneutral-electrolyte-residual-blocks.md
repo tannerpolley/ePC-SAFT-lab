@@ -42,9 +42,23 @@ Add electrolyte residual-block assertions to the shared contract and public elec
 
 ## Acceptance Criteria
 
-- [ ] Reduced electroneutral basis and lift/back-lift residuals are retained.
-- [ ] Projected electrochemical or mean-ionic transfer residuals pass.
-- [ ] Born/SSM/DS active-block exactness is reported when enabled.
+- [x] Reduced electroneutral basis and lift/back-lift residuals are retained.
+- [x] Projected electrochemical or mean-ionic transfer residuals pass.
+- [x] Born/SSM/DS active-block exactness is reported when enabled.
+
+## Resolution Evidence
+
+- Branch: `codex/m4-electrolyte-lle-reduced-residual-contract`
+- Plan validators: `validate-plan-task-use-cases.ps1` -> `ok=true`, `task_count=3`; `validate-plan-outcome-proof.ps1` -> `ok=true`, `use_case_count=12`.
+- Focused #371 selector before implementation: `uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and residual" -q` -> `2 failed, 233 deselected`; both failures were expected `KeyError: 'shared_certification'`.
+- Focused #371 selector after implementation: `uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and residual" -q` -> `2 passed, 233 deselected in 135.53s`.
+- Public admission proof: `uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete` -> `complete=true`, `blockers=[]`, `shared_certification.status=accepted`, `shared_certification.validation_blockers=[]`.
+- Shared electrolyte residuals retained: reduced basis `counterion_pair_transformed_variables`, lift/back-lift charge residual `0.0`, lift/back-lift round-trip residual `0.0`, phase charge residual `0.0`, projected charged transfer `mean_ionic_counterion_pairs`, `raw_single_ion_equality_used=false`.
+- Projected/mean-ionic residual proof: `projected_transfer.enforced_in_solver=true`, equation families include `mean_ionic_transfer`, mean-ionic residual `4.104478534827649e-08 <= 1.0e-4`.
+- Active-block exactness proof: Born/SSM/DS exactness `accepted`, exact reduced Jacobian `true`, exact reduced Hessian `true`, route Hessian backend `cppad_phase_system_projected_electrolyte_residuals`.
+- Scenario proof: `uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete` -> `complete=true`, `blockers=[]`, `accepted_scenario_count=7`; public-route scenario rows carry accepted `shared_certification`.
+- Checker and registry contracts: `uv run --no-sync python -m pytest tests\native\contracts\test_electrolyte_public_admission.py tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q` -> `39 passed in 93.06s`.
+- Docs validation: `uv run --no-sync python scripts\dev\validate_project.py docs` -> `build succeeded`.
 
 ## Blocked by
 

@@ -126,6 +126,7 @@ def _neutral_limit_route_evidence() -> dict[str, Any]:
 
 def _public_route_artifact(public_payload: dict[str, Any]) -> dict[str, Any]:
     public = dict(public_payload.get("public_admission", {}))
+    shared = dict(public_payload.get("shared_certification", {}))
     stage_iii = dict(public_payload.get("electrolyte_stage_iii_refinement", {}))
     postsolve = dict(public_payload.get("electrolyte_postsolve_certification", {}))
     stage_ii = dict(public_payload.get("held2_phase_discovery", {})).get("tpd_discovery", {})
@@ -169,6 +170,7 @@ def _public_route_artifact(public_payload: dict[str, Any]) -> dict[str, Any]:
         "hessian_approximation": public.get("hessian_approximation"),
         "route_hessian_approximation": public.get("route_hessian_approximation"),
         "native_freshness_receipt": public.get("native_freshness_receipt", {}),
+        "shared_certification": shared,
     }
 
 
@@ -302,6 +304,9 @@ def _validate_public_route_artifact(key: str, artifact: Mapping[str, Any]) -> li
         blockers.append(f"{key}_domain_margin")
     if artifact.get("exact_hessian_available") is not True or artifact.get("hessian_approximation") != "exact":
         blockers.append(f"{key}_exact_hessian_missing")
+    shared = artifact.get("shared_certification")
+    shared_blockers = check_electrolyte_public_admission._validate_shared_certification(shared)
+    blockers.extend(f"{key}_{blocker}" for blocker in shared_blockers)
     return blockers
 
 
@@ -380,6 +385,7 @@ def evaluate_payload(payload: dict[str, Any], *, require_complete: bool = False)
 
 
 def minimal_complete_payload_for_tests() -> dict[str, Any]:
+    shared_certification = check_electrolyte_public_admission.minimal_complete_payload_for_tests()["shared_certification"]
     route = {
         "status": "accepted",
         "evidence_level": "electrolyte_public_route_solve",
@@ -409,6 +415,7 @@ def minimal_complete_payload_for_tests() -> dict[str, Any]:
         "exact_hessian_available": True,
         "hessian_approximation": "exact",
         "route_hessian_approximation": "exact",
+        "shared_certification": shared_certification,
     }
     stable = {
         "status": "accepted",

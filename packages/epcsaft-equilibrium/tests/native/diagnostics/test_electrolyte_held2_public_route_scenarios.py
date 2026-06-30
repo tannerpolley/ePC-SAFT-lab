@@ -26,6 +26,14 @@ def test_electrolyte_held2_public_route_scenario_checker_covers_required_matrix(
     assert boundary["charge_residual"] <= boundary["charge_tolerance"]
     assert boundary["mean_ionic_transfer_residual"] <= boundary["mean_ionic_transfer_tolerance"]
 
+    for key in checker.PUBLIC_ROUTE_SCENARIOS:
+        shared = matrix[key]["shared_certification"]
+        assert shared["status"] == "accepted"
+        assert shared["raw_single_ion_equality_used"] is False
+        assert shared["residual_blocks"]["reduced_electroneutral_basis"]["status"] == "accepted"
+        assert shared["residual_blocks"]["projected_transfer"]["status"] == "accepted"
+        assert shared["residual_blocks"]["mean_ionic_transfer"]["status"] == "accepted"
+
     neutral = matrix["neutral_limit_parity"]
     assert neutral["public_route"] == "lle"
     assert neutral["selector_family"] == "neutral_lle"

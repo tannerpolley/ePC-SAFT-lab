@@ -106,7 +106,7 @@ failures and shared contract gates are resolved.
 | [#368](../../issues/368-m4-lle-separate-associating-proof-applicability-from-global-route-metadata.md) | `lle`/`association` | `closed` | `complete` | Split request-specific proof applicability from global route-family proof metadata by PR #379. |
 | [#369](../../issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md) | `lle`/`association` | `closed` | `complete` | Connected Gross 2002 associating LLE evidence to the shared contract by PR #383. |
 | [#370](../../issues/370-m4-lle-govern-electrolyte-lle-certification.md) | `electrolyte` | `Ipopt` | `blocked` | Parent for electrolyte LLE certification; #191 is now a native sub-issue here. |
-| [#371](../../issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `ready` | `Ipopt` | `blocked` | Attach reduced-electroneutral electrolyte residual blocks to the shared contract after #362. |
+| [#371](../../issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `closed` | `Ipopt` | `complete` | Attached reduced-electroneutral electrolyte residual blocks to the shared contract for the retained public `electrolyte_lle` route. |
 | [#372](../../issues/372-m4-lle-govern-reactive-electrolyte-lle-certification-boundary.md) | `electrolyte`/`reactive` | `Ipopt` | `blocked` | Boundary parent for future reactive electrolyte LLE after CE/CPE prerequisites. |
 | [#373](../../issues/373-m4-pe-govern-vle-family-certification.md) | `ready` | `Ipopt` | `blocked` | Parent for VLE certification. |
 | [#374](../../issues/374-m4-pe-govern-flash-and-multiphase-certification.md) | `flash`/`multiphase` | `ready` | `blocked` | Parent for flash and generalized multiphase certification. |
