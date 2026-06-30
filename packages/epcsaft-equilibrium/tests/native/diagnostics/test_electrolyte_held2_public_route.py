@@ -61,6 +61,25 @@ def test_electrolyte_held2_public_route_checker_requires_stage_ii_replay() -> No
     assert "held2_stage_ii_replay_missing" in rejected["blockers"]
 
 
+def test_electrolyte_held2_public_route_checker_requires_reduced_residual_certification() -> None:
+    payload = checker.evaluate_public_admission(
+        require_held2_stage_ii=True,
+        require_stage_iii=True,
+        require_postsolve_certification=True,
+        require_public_admission=True,
+    )
+
+    shared = payload["shared_certification"]
+    residuals = shared["residual_blocks"]
+
+    assert payload["complete"] is True, payload["blockers"]
+    assert shared["status"] == "accepted"
+    assert shared["raw_single_ion_equality_used"] is False
+    assert residuals["projected_transfer"]["status"] == "accepted"
+    assert residuals["mean_ionic_transfer"]["status"] == "accepted"
+    assert residuals["active_electrolyte_blocks"]["born_ssm_ds_exactness"] == "accepted"
+
+
 def test_electrolyte_held2_public_route_result_retains_stage_ii_to_stage_iii_provenance() -> None:
     result = epcsaft_equilibrium.Equilibrium(
         _khudaida_public_mixture(),

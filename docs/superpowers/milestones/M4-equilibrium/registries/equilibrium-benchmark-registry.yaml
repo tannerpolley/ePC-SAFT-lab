@@ -221,6 +221,7 @@ family_rows:
         - stage_iii_reduced_variable_refinement
         - postsolve_explicit_ion_phase_set_certification
         - public_route_stage_i_to_postsolve_orchestration
+        - shared_phase_equilibrium_certification
         - seven_scenario_public_route_validation_ladder
         - stage_statuses_with_public_admission
       required_matrix_tests:
@@ -284,12 +285,12 @@ family_rows:
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete"
         scope: "Public source-backed electrolyte LLE admission evidence after #348: calls `Equilibrium(..., route='electrolyte_lle')`, requires HELD2 Stage I/II discovery provenance, consumes the Stage II replay in Stage III, and exposes only the certified Khudaida 2026 H2O/Ethanol/Butanol/Na+/Cl- pre-association electrolyte LLE scope."
-        result_requirement: "Checker returns complete with no blockers; Stage II status is `dual_loop_verified`; Stage III consumes the Stage II replay payload; public route `electrolyte_lle` maps to selector family `electrolyte_lle`; phase labels are `liquid1` and `liquid2`; phase and total charge residuals are <= 1.0e-8; pressure consistency <= 1.0e-4; exact reduced Jacobian/Hessian receipts are retained; reactive, CE, CPE, regression, and release claims remain closed."
+        result_requirement: "Checker returns complete with no blockers; Stage II status is `dual_loop_verified`; Stage III consumes the Stage II replay payload; public route `electrolyte_lle` maps to selector family `electrolyte_lle`; phase labels are `liquid1` and `liquid2`; `shared_certification.status=accepted`; raw single-ion equality is not used; reduced electroneutral lift/back-lift charge and round-trip residuals are 0.0; mean-ionic transfer residual `4.104478534827649e-08 <= 1.0e-4`; phase and total charge residuals are <= 1.0e-8; retained pressure consistency `0.004609477080521174 <= 10.0`; exact reduced Jacobian/Hessian and Born SSM/DS active-block receipts are retained; reactive, CE, CPE, regression, and release claims remain closed."
       - evidence_label: "Electrolyte HELD2 public-route scenario validation ladder"
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete"
-        scope: "Full HELD2 public-route scenario validation after #349: stable feed, unstable feed, boundary feed, phase-label permutation, neutral-limit parity, common-ion electrolyte, and mixed-salt/asymmetric electrolyte cases retain Stage I/II, Stage III, postsolve, reduced-basis, charge, transfer, and phase-distance diagnostics."
-        result_requirement: "Checker returns complete with no blockers and 7 accepted scenarios; unstable/boundary/phase-label rows use the public `electrolyte_lle` route with Stage II `dual_loop_verified`, Stage III `complete`, postsolve `complete`, positive phase distance, charge residual <= tolerance, and mean-ionic residual <= tolerance; neutral-limit rows make no charged residual-family claim; common-ion and mixed-salt rows retain full-rank reduced-basis evidence."
+        scope: "Full HELD2 public-route scenario validation after #349: stable feed, unstable feed, boundary feed, phase-label permutation, neutral-limit parity, common-ion electrolyte, and mixed-salt/asymmetric electrolyte cases retain Stage I/II, Stage III, postsolve, reduced-basis, charge, transfer, phase-distance, and shared electrolyte residual-block diagnostics."
+        result_requirement: "Checker returns complete with no blockers and 7 accepted scenarios; unstable/boundary/phase-label rows use the public `electrolyte_lle` route with Stage II `dual_loop_verified`, Stage III `complete`, postsolve `complete`, positive phase distance, charge residual <= tolerance, mean-ionic residual <= tolerance, and accepted shared certification; neutral-limit rows make no charged residual-family claim; common-ion and mixed-salt rows retain full-rank reduced-basis evidence."
       - evidence_label: "Electrolyte HELD2 capability admission registry contract"
         evidence_tier: T1
         command: "uv run --no-sync python -m pytest tests\\native\\contracts\\test_equilibrium_benchmark_registry.py tests\\native\\contracts\\test_generalized_equilibrium_registry.py -q"
@@ -304,6 +305,9 @@ family_rows:
           - source_backed_data
           - charge_balance
           - electrochemical_potential_equality
+          - shared_phase_equilibrium_certification
+          - reduced_electroneutral_lift_back_lift
+          - projected_mean_ionic_transfer_residual
           - born_ssm_ds_exact_hessian
           - electrolyte_tpd_or_held2_certification
           - held2_public_route_phase_discovery
