@@ -24,6 +24,12 @@ REQUIRED_ACCEPTED_FIGURES = ("figure_01", "figure_08", "figure_10")
 SOURCE_REQUIREMENT_FIGURES = ("figure_02", "figure_03", "figure_04", "figure_05", "figure_06", "figure_07", "figure_09")
 VISUAL_ARTIFACT_KEYS = ("source_csv", "model_csv", "plotted_csv", "fit_statistics_csv", "png", "svg", "pdf")
 FIGURE01_ARTIFACT_KEYS = ("source_csv", "fit_statistics_csv")
+ASSOCIATING_LLE_EVIDENCE_QUANTITIES = (
+    "associating_neutral_lle_gross_2002_public_exact_hessian",
+    "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
+)
+MIN_NORMALIZED_PLOT_SCORE = 7.0
+MIN_BRANCH_COVERAGE_SCORE = 1.0
 FIGURE_MISSING_BLOCKERS = {
     "figure_01": "gross_2002_figure_01_pure_association_statistics_missing",
     "figure_08": "gross_2002_figure_08_campaign_evidence_missing",
@@ -125,6 +131,190 @@ def _figure_record_by_id(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {str(record.get("figure_id", "")): record for record in records if isinstance(record, dict)}
 
 
+def _as_float(value: Any, *, default: float = math.nan) -> float:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return default
+    return result if math.isfinite(result) else default
+
+
+def _as_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes"}
+
+
+def _margin_payload(
+    *,
+    actual: Any,
+    threshold: Any,
+    minimum_required: bool = False,
+) -> dict[str, Any]:
+    actual_value = _as_float(actual)
+    threshold_value = _as_float(threshold)
+    if not math.isfinite(actual_value) or not math.isfinite(threshold_value):
+        return {"status": "blocked", "actual": actual, "threshold": threshold, "margin": None}
+    margin = actual_value - threshold_value if minimum_required else threshold_value - abs(actual_value)
+    return {
+        "status": "accepted" if margin >= 0.0 else "blocked",
+        "actual": actual_value,
+        "threshold": threshold_value,
+        "margin": margin,
+    }
+
+
+def _shared_certification_payload() -> dict[str, Any]:
+    import epcsaft_equilibrium
+    from epcsaft_equilibrium.phase_equilibrium_certification import (
+        validate_phase_equilibrium_certification_contracts,
+    )
+
+    certification = epcsaft_equilibrium.capabilities()["phase_equilibrium_certification"]
+    validation_blockers = list(validate_phase_equilibrium_certification_contracts(certification))
+    contract = next(
+        (
+            row
+            for row in certification["production_route_contracts"]
+            if row.get("selector_family") == "neutral_lle"
+        ),
+        {},
+    )
+    evidence_rows = [
+        row
+        for row in contract.get("evidence_rows", [])
+        if row.get("quantity") in ASSOCIATING_LLE_EVIDENCE_QUANTITIES
+    ]
+    evidence_by_quantity = {row.get("quantity"): row for row in evidence_rows}
+    blockers = list(validation_blockers)
+    for quantity in ASSOCIATING_LLE_EVIDENCE_QUANTITIES:
+        row = evidence_by_quantity.get(quantity)
+        if row is None:
+            blockers.append(f"gross_2002_shared_evidence_missing:{quantity}")
+            continue
+        if row.get("classification") != "production_supported":
+            blockers.append(f"gross_2002_shared_evidence_classification_rejected:{quantity}")
+        if row.get("public_admission_state") != "public_route_open":
+            blockers.append(f"gross_2002_shared_evidence_public_route_closed:{quantity}")
+        if row.get("public_route") != "lle":
+            blockers.append(f"gross_2002_shared_evidence_public_route_mismatch:{quantity}")
+        if row.get("backend") != "cppad_implicit_association":
+            blockers.append(f"gross_2002_shared_evidence_backend_rejected:{quantity}")
+        if row.get("selector_family") != "neutral_lle":
+            blockers.append(f"gross_2002_shared_evidence_selector_mismatch:{quantity}")
+
+    return {
+        "status": "accepted" if contract and not blockers else "blocked",
+        "selector_family": contract.get("selector_family", ""),
+        "family_residual_block": contract.get("family_residual_block", ""),
+        "public_routes": list(contract.get("public_routes", [])),
+        "proof_routes": list(contract.get("proof_routes", [])),
+        "residual_families": list(contract.get("residual_families", [])),
+        "constraint_families": list(contract.get("constraint_families", [])),
+        "variable_model": contract.get("variable_model", ""),
+        "density_backend": contract.get("density_backend", ""),
+        "derivative_requirement": contract.get("derivative_requirement", ""),
+        "stability_prelayer": contract.get("stability_prelayer", ""),
+        "postsolve_certification": contract.get("postsolve_certification", ""),
+        "acceptance_diagnostics_required": list(contract.get("acceptance_diagnostics_required", [])),
+        "production_evidence_quantities": list(contract.get("production_evidence_quantities", [])),
+        "required_associating_evidence_quantities": list(ASSOCIATING_LLE_EVIDENCE_QUANTITIES),
+        "associating_evidence_rows": [
+            {
+                "quantity": row.get("quantity", ""),
+                "backend": row.get("backend", ""),
+                "classification": row.get("classification", ""),
+                "public_admission_state": row.get("public_admission_state", ""),
+                "public_route": row.get("public_route", ""),
+                "selector_family": row.get("selector_family", ""),
+                "component_pair": list(row.get("component_pair", [])),
+                "k_ij": row.get("k_ij"),
+                "source_fixture": row.get("source_fixture", ""),
+            }
+            for row in evidence_rows
+        ],
+        "validation_blockers": blockers,
+    }
+
+
+def _figure_row(records: list[dict[str, str]], scope: str) -> dict[str, str]:
+    return next((row for row in records if row.get("scope") == scope), {})
+
+
+def _source_tolerance_margins(payload: dict[str, Any]) -> dict[str, Any]:
+    margins: dict[str, Any] = {}
+    for figure_id, record in sorted(_figure_record_by_id(payload).items()):
+        if figure_id not in {"figure_08", "figure_10"}:
+            continue
+        artifacts = record.get("artifacts", {})
+        fit_statistics_path = artifacts.get("fit_statistics_csv", "") if isinstance(artifacts, dict) else ""
+        fit_rows = _read_csv(_repo_path(fit_statistics_path)) if _path_exists(fit_statistics_path) else []
+        figure_row = _figure_row(fit_rows, "figure")
+        overlay_row = _figure_row(fit_rows, "literature_overlay")
+        thresholds = record.get("thresholds", {}) if isinstance(record.get("thresholds", {}), dict) else {}
+        hessian = record.get("exact_association_hessian", {})
+        mass_action_threshold = thresholds.get("max_mass_action_residual", 1.0e-8)
+        source_point_threshold = thresholds.get("min_source_points", 1)
+        margins[figure_id] = {
+            "source_point_count": _margin_payload(
+                actual=record.get("source_point_count"),
+                threshold=source_point_threshold,
+                minimum_required=True,
+            ),
+            "normalized_plot_score": _margin_payload(
+                actual=figure_row.get("normalized_plot_score"),
+                threshold=MIN_NORMALIZED_PLOT_SCORE,
+                minimum_required=True,
+            ),
+            "branch_coverage_score": _margin_payload(
+                actual=figure_row.get("branch_coverage_score"),
+                threshold=MIN_BRANCH_COVERAGE_SCORE,
+                minimum_required=True,
+            ),
+            "mass_action_residual": _margin_payload(
+                actual=hessian.get("max_mass_action_residual"),
+                threshold=mass_action_threshold,
+            ),
+            "fit_pass": {
+                "status": "accepted" if _as_bool(figure_row.get("pass")) else "blocked",
+                "actual": figure_row.get("pass"),
+                "required": True,
+            },
+            "derivative_status": {
+                "status": "accepted" if figure_row.get("derivative_status") == "verified_exact" else "blocked",
+                "actual": figure_row.get("derivative_status"),
+                "required": "verified_exact",
+            },
+            "score_basis": figure_row.get("score_basis", ""),
+            "literature_overlay": {
+                "status": "regression_followup_not_m4_acceptance" if overlay_row else "absent",
+                "counts_toward_completion": False,
+                "matched_literature_points": _as_float(overlay_row.get("matched_literature_points"), default=0.0),
+                "skipped_literature_points": _as_float(overlay_row.get("skipped_literature_points"), default=0.0),
+                "mae": _as_float(overlay_row.get("mae"), default=math.nan),
+                "max_abs": _as_float(overlay_row.get("max_abs"), default=math.nan),
+                "signed_bias": _as_float(overlay_row.get("signed_bias"), default=math.nan),
+                "normalized_mae": _as_float(overlay_row.get("normalized_mae"), default=math.nan),
+                "y_unit": overlay_row.get("y_unit", ""),
+            },
+        }
+    return margins
+
+
+def _source_tolerance_margin_blockers(margins: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    for figure_id, figure_margins in margins.items():
+        if not isinstance(figure_margins, dict):
+            blockers.append(f"gross_2002_source_tolerance_missing:{figure_id}")
+            continue
+        for key, payload in figure_margins.items():
+            if key in {"score_basis", "literature_overlay"}:
+                continue
+            if not isinstance(payload, dict) or payload.get("status") != "accepted":
+                blockers.append(f"gross_2002_source_tolerance_blocked:{figure_id}:{key}")
+    return blockers
+
+
 def evaluate_payload(
     payload: dict[str, Any],
     *,
@@ -199,8 +389,21 @@ def evaluate_payload(
         except Exception:
             blockers.append("gross_2002_native_freshness_receipt_missing")
 
+    shared_certification = _shared_certification_payload()
+    if shared_certification["status"] != "accepted":
+        blockers.extend(
+            f"gross_2002_shared_certification:{blocker}"
+            for blocker in shared_certification["validation_blockers"]
+        )
+        if not shared_certification["validation_blockers"]:
+            blockers.append("gross_2002_shared_certification_missing")
+    source_tolerance_margins = _source_tolerance_margins(payload)
+    blockers.extend(_source_tolerance_margin_blockers(source_tolerance_margins))
+
     unique_blockers = sorted(set(blockers))
     result = dict(payload)
+    result["shared_certification"] = shared_certification
+    result["source_tolerance_margins"] = source_tolerance_margins
     result["accepted_figures"] = sorted(set(accepted_figures))
     result["source_requirement_figures"] = sorted(set(source_requirement_figures))
     result["blockers"] = unique_blockers
@@ -278,6 +481,7 @@ def _figure08_record(row: dict[str, Any], *, require_exact: bool) -> dict[str, A
         "source_point_count": int(proof.get("fixture", {}).get("source_data", {}).get("paper_data_rows", 0) or 0),
         "source_image": row.get("source_image", ""),
         "route_family": row.get("route_family", ""),
+        "thresholds": dict(row.get("thresholds", {})),
         "artifacts": _artifact_paths("figure_08", source_csv),
         "exact_association_hessian": hessian,
         "existing_checker": "scripts/validation/check_associating_lle_gross_2002.py",
@@ -488,6 +692,7 @@ def _figure10_record(row: dict[str, Any], *, require_exact: bool) -> dict[str, A
         "source_point_count": len(source_rows),
         "source_image": row.get("source_image", ""),
         "route_family": row.get("route_family", ""),
+        "thresholds": dict(row.get("thresholds", {})),
         "artifacts": _artifact_paths("figure_10", source_csv),
         "exact_association_hessian": hessian,
         "cross_association_stress": {

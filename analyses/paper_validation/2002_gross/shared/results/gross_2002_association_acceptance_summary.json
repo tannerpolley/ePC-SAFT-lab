@@ -174,7 +174,11 @@
       "route_family": "associating_neutral_lle_vle",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_08/source/figure_08.png",
       "source_point_count": 16,
-      "status": "accepted"
+      "status": "accepted",
+      "thresholds": {
+        "max_mass_action_residual": 1e-08,
+        "min_source_points": 16
+      }
     },
     {
       "counts_toward_completion": false,
@@ -247,10 +251,91 @@
       "route_family": "cross_associating_vlle_lle_stress",
       "source_image": "analyses/paper_validation/2002_gross/figures/figure_10/source/figure_10.png",
       "source_point_count": 24,
-      "status": "accepted"
+      "status": "accepted",
+      "thresholds": {
+        "max_mass_action_residual": 1e-08,
+        "min_source_points": 8
+      }
     }
   ],
   "manifest": "analyses/paper_validation/2002_gross/shared/gross_2002_association_acceptance_manifest.json",
+  "shared_certification": {
+    "acceptance_diagnostics_required": [
+      "capability_evidence",
+      "material_balance",
+      "phase_distance",
+      "phase_equilibrium",
+      "phase_pressure_consistency",
+      "postsolve_certification",
+      "public_route_mapping"
+    ],
+    "associating_evidence_rows": [
+      {
+        "backend": "cppad_implicit_association",
+        "classification": "production_supported",
+        "component_pair": [
+          "methanol",
+          "cyclohexane"
+        ],
+        "k_ij": 0.051,
+        "public_admission_state": "public_route_open",
+        "public_route": "lle",
+        "quantity": "associating_neutral_lle_gross_2002_public_exact_hessian",
+        "selector_family": "neutral_lle",
+        "source_fixture": "data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane"
+      },
+      {
+        "backend": "cppad_implicit_association",
+        "classification": "production_supported",
+        "component_pair": [
+          "water",
+          "1-pentanol"
+        ],
+        "k_ij": 0.016,
+        "public_admission_state": "public_route_open",
+        "public_route": "lle",
+        "quantity": "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
+        "selector_family": "neutral_lle",
+        "source_fixture": "analyses/paper_validation/2002_gross/figures/figure_10"
+      }
+    ],
+    "constraint_families": [
+      "material_balance",
+      "phase_pressure_consistency",
+      "phase_distance"
+    ],
+    "density_backend": "explicit_phase_volume_pressure_constraint",
+    "derivative_requirement": "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes",
+    "family_residual_block": "lle",
+    "postsolve_certification": "tpd_postsolve",
+    "production_evidence_quantities": [
+      "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
+      "associating_neutral_lle_gross_2002_public_exact_hessian",
+      "neutral_lle"
+    ],
+    "proof_routes": [
+      "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
+      "associating_neutral_lle_gross_2002_public_exact_hessian"
+    ],
+    "public_routes": [
+      "lle"
+    ],
+    "required_associating_evidence_quantities": [
+      "associating_neutral_lle_gross_2002_public_exact_hessian",
+      "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian"
+    ],
+    "residual_families": [
+      "material_balance",
+      "phase_pressure_consistency",
+      "phase_equilibrium",
+      "phase_distance"
+    ],
+    "selector_family": "neutral_lle",
+    "stability_prelayer": "deterministic_tpd_candidate_screening",
+    "status": "accepted",
+    "validation_blockers": [],
+    "variable_model": "phase_species_amounts_plus_phase_volume"
+  },
   "source_requirement_figures": [
     "figure_02",
     "figure_03",
@@ -260,6 +345,104 @@
     "figure_07",
     "figure_09"
   ],
+  "source_tolerance_margins": {
+    "figure_08": {
+      "branch_coverage_score": {
+        "actual": 1.0,
+        "margin": 0.0,
+        "status": "accepted",
+        "threshold": 1.0
+      },
+      "derivative_status": {
+        "actual": "verified_exact",
+        "required": "verified_exact",
+        "status": "accepted"
+      },
+      "fit_pass": {
+        "actual": "True",
+        "required": true,
+        "status": "accepted"
+      },
+      "literature_overlay": {
+        "counts_toward_completion": false,
+        "mae": 1.5445127872855422,
+        "matched_literature_points": 23.0,
+        "max_abs": 2.1593113101738552,
+        "normalized_mae": 0.2743361966759399,
+        "signed_bias": -1.5445127872855422,
+        "skipped_literature_points": 11.0,
+        "status": "regression_followup_not_m4_acceptance",
+        "y_unit": "degC"
+      },
+      "mass_action_residual": {
+        "actual": 3.2862601528904634e-14,
+        "margin": 9.999967137398471e-09,
+        "status": "accepted",
+        "threshold": 1e-08
+      },
+      "normalized_plot_score": {
+        "actual": 9.9082422421564,
+        "margin": 2.9082422421563994,
+        "status": "accepted",
+        "threshold": 7.0
+      },
+      "score_basis": "temperature-coordinate RMSE against retained Figure 8 lower LLE source rows and calibrated upper PC-SAFT VLE curve source_capture",
+      "source_point_count": {
+        "actual": 16.0,
+        "margin": 0.0,
+        "status": "accepted",
+        "threshold": 16.0
+      }
+    },
+    "figure_10": {
+      "branch_coverage_score": {
+        "actual": 1.0,
+        "margin": 0.0,
+        "status": "accepted",
+        "threshold": 1.0
+      },
+      "derivative_status": {
+        "actual": "verified_exact",
+        "required": "verified_exact",
+        "status": "accepted"
+      },
+      "fit_pass": {
+        "actual": "True",
+        "required": true,
+        "status": "accepted"
+      },
+      "literature_overlay": {
+        "counts_toward_completion": false,
+        "mae": 24.450587207040886,
+        "matched_literature_points": 60.0,
+        "max_abs": 94.99954914129371,
+        "normalized_mae": 0.14382698357082874,
+        "signed_bias": -18.160020001945192,
+        "skipped_literature_points": 12.0,
+        "status": "regression_followup_not_m4_acceptance",
+        "y_unit": "degC"
+      },
+      "mass_action_residual": {
+        "actual": 2.220446049250313e-16,
+        "margin": 9.999999777955395e-09,
+        "status": "accepted",
+        "threshold": 1e-08
+      },
+      "normalized_plot_score": {
+        "actual": 10.0,
+        "margin": 3.0,
+        "status": "accepted",
+        "threshold": 7.0
+      },
+      "score_basis": "temperature-coordinate RMSE against calibrated Gross 2002 Figure 10 PC-SAFT solid curve trace; exact association Hessian diagnostic retained for water/1-pentanol",
+      "source_point_count": {
+        "actual": 24.0,
+        "margin": 16.0,
+        "status": "accepted",
+        "threshold": 8.0
+      }
+    }
+  },
   "status": "complete",
   "summary_artifacts": {
     "csv": "analyses/paper_validation/2002_gross/shared/results/gross_2002_association_acceptance_summary.csv",
