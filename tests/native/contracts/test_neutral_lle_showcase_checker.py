@@ -82,6 +82,22 @@ def test_neutral_lle_showcase_fixture_reports_source_backed_complete(
     assert payload["fixture"]["binary_interaction"]["status"] == "source_fitted"
     assert payload["comparison"]["max_composition_abs_error"] <= 0.02
     assert payload["comparison"]["max_phase_fraction_abs_error"] <= 0.03
+    shared = payload["shared_certification"]
+    assert shared["status"] == "accepted"
+    assert shared["selector_family"] == "neutral_lle"
+    assert shared["family_residual_block"] == "lle"
+    assert shared["public_routes"] == ["lle"]
+    assert shared["validation_blockers"] == []
+    assert "neutral_lle" in shared["production_evidence_quantities"]
+    margins = payload["tolerance_margins"]
+    assert margins["source_data"]["status"] == "source_backed"
+    assert margins["binary_interaction"]["status"] == "source_fitted"
+    assert margins["composition_abs"]["status"] == "accepted"
+    assert margins["phase_fraction_abs"]["status"] == "accepted"
+    assert margins["material_balance_abs"]["status"] == "accepted"
+    assert margins["pressure_abs_Pa"]["status"] == "accepted"
+    assert margins["ln_fugacity_abs"]["status"] == "accepted"
+    assert margins["phase_distance_min"]["status"] == "accepted"
 
 
 @pytest.mark.parametrize(
@@ -107,3 +123,15 @@ def test_neutral_lle_showcase_requires_held_stage_ii_and_iii_certification(
 
     assert payload["complete"] is False
     assert expected_blocker in payload["blockers"]
+
+
+def test_neutral_lle_showcase_blocks_failed_tolerance_margins(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _patch_route(monkeypatch, _route_payload(postsolve_updates={"pressure_consistency_norm": 0.1}))
+
+    payload = checker.evaluate_case_dir(CASE_DIR)
+
+    assert payload["complete"] is False
+    assert payload["tolerance_margins"]["pressure_abs_Pa"]["status"] == "blocked"
+    assert "neutral_lle_tolerance_margin_blocked:pressure_abs_Pa" in payload["blockers"]

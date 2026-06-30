@@ -110,6 +110,8 @@ family_rows:
           - chemical_potential_equality
           - held_stage_ii_replay
           - held_stage_iii_accepted_seed_provenance
+          - shared_phase_equilibrium_certification
+          - source_tolerance_margins
           - exact_hessian
       - case_label: "Pereira 2012 System III"
         evidence_tier: T0

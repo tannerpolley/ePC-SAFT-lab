@@ -25,7 +25,11 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 apply_native_runtime_env(os.environ)
 
 from epcsaft.state.native_adapter import ePCSAFTMixture
+import epcsaft_equilibrium
 from epcsaft_equilibrium._native import extension_native_core
+from epcsaft_equilibrium.phase_equilibrium_certification import (
+    validate_phase_equilibrium_certification_contracts,
+)
 from scripts.validation import equilibrium_validation_runtime as runtime
 from scripts.validation import native_freshness
 
@@ -489,6 +493,104 @@ def _route_certification_blockers(postsolve: dict[str, Any], *, expected_phase_c
     return blockers
 
 
+def _shared_certification_payload() -> dict[str, Any]:
+    certification = epcsaft_equilibrium.capabilities()["phase_equilibrium_certification"]
+    validation_blockers = list(validate_phase_equilibrium_certification_contracts(certification))
+    contract = next(
+        (
+            row
+            for row in certification["production_route_contracts"]
+            if row.get("selector_family") == "neutral_lle"
+        ),
+        {},
+    )
+    return {
+        "status": "accepted" if contract and not validation_blockers else "blocked",
+        "selector_family": contract.get("selector_family", ""),
+        "family_residual_block": contract.get("family_residual_block", ""),
+        "public_routes": list(contract.get("public_routes", [])),
+        "proof_routes": list(contract.get("proof_routes", [])),
+        "residual_families": list(contract.get("residual_families", [])),
+        "constraint_families": list(contract.get("constraint_families", [])),
+        "variable_model": contract.get("variable_model", ""),
+        "density_backend": contract.get("density_backend", ""),
+        "derivative_requirement": contract.get("derivative_requirement", ""),
+        "stability_prelayer": contract.get("stability_prelayer", ""),
+        "postsolve_certification": contract.get("postsolve_certification", ""),
+        "acceptance_diagnostics_required": list(contract.get("acceptance_diagnostics_required", [])),
+        "production_evidence_quantities": list(contract.get("production_evidence_quantities", [])),
+        "validation_blockers": validation_blockers,
+    }
+
+
+def _margin_payload(
+    *,
+    actual: Any,
+    threshold: Any,
+    minimum_required: bool = False,
+) -> dict[str, Any]:
+    if not _finite_float(actual) or not _positive_finite_float(threshold):
+        return {"status": "blocked", "actual": actual, "threshold": threshold, "margin": None}
+    actual_value = float(actual)
+    threshold_value = float(threshold)
+    margin = actual_value - threshold_value if minimum_required else threshold_value - abs(actual_value)
+    return {
+        "status": "accepted" if margin >= 0.0 else "blocked",
+        "actual": actual_value,
+        "threshold": threshold_value,
+        "margin": margin,
+    }
+
+
+def _tolerance_margins(
+    *,
+    fixture: dict[str, Any],
+    comparison: dict[str, Any] | None,
+    postsolve: dict[str, Any],
+    thresholds: dict[str, Any],
+) -> dict[str, Any]:
+    comparison = comparison or {}
+    return {
+        "source_data": dict(fixture["source_data"]),
+        "binary_interaction": dict(fixture["binary_interaction"]),
+        "composition_abs": _margin_payload(
+            actual=comparison.get("max_composition_abs_error"),
+            threshold=thresholds.get("composition_abs"),
+        ),
+        "phase_fraction_abs": _margin_payload(
+            actual=comparison.get("max_phase_fraction_abs_error"),
+            threshold=thresholds.get("phase_fraction_abs"),
+        ),
+        "material_balance_abs": _margin_payload(
+            actual=postsolve.get("material_balance_norm"),
+            threshold=thresholds.get("material_balance_abs"),
+        ),
+        "pressure_abs_Pa": _margin_payload(
+            actual=postsolve.get("pressure_consistency_norm"),
+            threshold=thresholds.get("pressure_abs_Pa"),
+        ),
+        "ln_fugacity_abs": _margin_payload(
+            actual=postsolve.get("ln_fugacity_consistency_norm"),
+            threshold=thresholds.get("ln_fugacity_abs"),
+        ),
+        "phase_distance_min": _margin_payload(
+            actual=postsolve.get("phase_distance"),
+            threshold=thresholds.get("phase_distance_min"),
+            minimum_required=True,
+        ),
+    }
+
+
+def _tolerance_margin_blockers(tolerance_margins: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    for key, payload in tolerance_margins.items():
+        if key in {"source_data", "binary_interaction"}:
+            continue
+        if not isinstance(payload, dict) or payload.get("status") != "accepted":
+            blockers.append(f"neutral_lle_tolerance_margin_blocked:{key}")
+    return blockers
+
+
 def evaluate_case_dir(
     case_dir: Path = DEFAULT_CASE_DIR,
     *,
@@ -504,6 +606,7 @@ def evaluate_case_dir(
     route_payload: dict[str, Any] | None = None
     comparison: dict[str, Any] | None = None
     route_accepted = False
+    postsolve: dict[str, Any] = {}
     if fixture["executable"]:
         route_payload = _run_route(
             case_dir,
@@ -513,8 +616,8 @@ def evaluate_case_dir(
             show_native_output=show_native_output,
             redirect_native_output_to_stderr=redirect_native_output_to_stderr,
         )
-        postsolve = route_payload.get("postsolve")
-        postsolve = postsolve if isinstance(postsolve, dict) else {}
+        route_postsolve = route_payload.get("postsolve")
+        postsolve = route_postsolve if isinstance(route_postsolve, dict) else {}
         actual_compositions = [list(map(float, row)) for row in postsolve.get("phase_compositions", [])]
         phase_totals = _phase_totals(route_payload)
         total_amount = sum(phase_totals)
@@ -563,6 +666,21 @@ def evaluate_case_dir(
                     blockers.append("neutral_lle_phase_fraction_error_exceeds_threshold")
             blockers.append("neutral_lle_route_validation_failed")
 
+    shared_certification = _shared_certification_payload()
+    if shared_certification["status"] != "accepted":
+        blockers.extend(
+            f"neutral_lle_shared_certification:{blocker}"
+            for blocker in shared_certification["validation_blockers"]
+        )
+        if not shared_certification["validation_blockers"]:
+            blockers.append("neutral_lle_shared_certification_missing")
+    tolerance_margins = _tolerance_margins(
+        fixture=fixture,
+        comparison=comparison,
+        postsolve=postsolve,
+        thresholds=thresholds,
+    )
+    blockers.extend(_tolerance_margin_blockers(tolerance_margins))
     complete = fixture["executable"] and route_accepted and not blockers
     route_summary = None
     if route_payload is not None:
@@ -592,6 +710,8 @@ def evaluate_case_dir(
         "complete": complete,
         "native_freshness_receipt": native_freshness.receipt_to_jsonable(receipt),
         "fixture": fixture,
+        "shared_certification": shared_certification,
+        "tolerance_margins": tolerance_margins,
         "route": route_summary,
         "comparison": comparison,
         "blockers": list(dict.fromkeys(blockers)),
