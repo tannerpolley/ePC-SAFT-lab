@@ -142,7 +142,7 @@ admission.
 #250 adds the first source-backed neutral nonassociating LLE showcase fixture:
 Matsuda/NIST perfluorohexane + hexane paired binodal branch rows, Tihic-derived
 pure parameters, a source-fitted binary interaction for the current route, a
-checker requiring HELD Stage II replay plus Stage III replay consumption, and
+checker requiring HELD Stage II replay plus Stage III accepted-seed provenance, and
 retained PNG/SVG figures. This closes the public source-backed neutral LLE
 showcase gap only.
 

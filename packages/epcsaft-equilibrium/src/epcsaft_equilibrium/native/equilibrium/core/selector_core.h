@@ -111,6 +111,7 @@ struct SelectorContract {
     SelectorParameterReadiness parameter_readiness;
     SelectorInputClassification input_classification;
     ProblemFamilyActivation activation;
+    std::vector<std::string> applicable_proof_routes;
     bool has_activation_plan = false;
     ActivationPlan activation_plan;
     VariableLayout variable_layout;

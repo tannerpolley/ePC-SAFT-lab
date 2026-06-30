@@ -167,7 +167,7 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     )
     assert (
         neutral["phase_discovery_gate_status"]["held_stage_iii_ipopt_refinement"]
-        == "current_route_refinement_consumes_stage_ii_replay_with_ipopt_success"
+        == "current_route_refinement_reports_accepted_seed_and_declines_replay_when_replay_seed_misses_postsolve"
     )
 
 

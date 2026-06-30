@@ -733,6 +733,23 @@ void require_parameter_readiness(const SelectorParameterReadiness& readiness) {
     throw ValueError(msg.str());
 }
 
+std::vector<std::string> request_applicable_proof_routes(
+    const ProblemFamilyActivation& activation,
+    const SelectorParameterReadiness& readiness,
+    const SelectorInputClassification& classification
+) {
+    if (activation.key != "neutral_lle") {
+        return activation.proof_routes;
+    }
+    if (classification.nonassociating) {
+        return {"neutral_lle_binary_nonassociating_ipopt_exact_hessian"};
+    }
+    if (!readiness.associating_admission_proof_route.empty()) {
+        return {readiness.associating_admission_proof_route};
+    }
+    return {};
+}
+
 void require_present(bool present, const std::string& label, const std::string& route) {
     if (present) {
         return;
@@ -1039,6 +1056,11 @@ SelectorContract evaluate_selector_contract(
     require_parameter_readiness(out.parameter_readiness);
     out.input_classification = classify_selector_input(args);
     require_eligible_input(args, request, out.input_classification);
+    out.applicable_proof_routes = request_applicable_proof_routes(
+        out.activation,
+        out.parameter_readiness,
+        out.input_classification
+    );
     out.production_exposed = out.activation.production_exposed;
     out.certification_required = out.activation.postsolve_certification == "on"
         || out.activation.postsolve_certification == "tpd_postsolve";

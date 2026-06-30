@@ -7,7 +7,14 @@ from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
-from equilibrium_support.equilibrium_cases import _neutral_binary_mixture, _nonideal_lle_binary_mixture
+from equilibrium_support.equilibrium_cases import (
+    GROSS_2002_LLE_FEED,
+    GROSS_2002_PRESSURE_PA,
+    GROSS_2002_TEMPERATURE_K,
+    _neutral_binary_mixture,
+    _nonideal_lle_binary_mixture,
+    gross_2002_associating_public_mixture,
+)
 
 pytestmark = pytest.mark.native_contract
 
@@ -117,7 +124,43 @@ def test_selector_contract_declares_neutral_lle_metadata_without_solving() -> No
     assert "phase_volume_gap" not in payload["constraint_families"]
     assert payload["activation"]["proof_routes"] == [
         "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
+        "associating_neutral_lle_gross_2002_public_exact_hessian",
     ]
+    assert payload["applicable_proof_routes"] == [
+        "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
+    ]
+    assert payload["input_classification"]["nonassociating"] is True
+    assert payload["input_classification"]["associating_species_indices"] == []
+    assert payload["activation_plan"]["phase_keys"] == ["liquid1", "liquid2"]
+    assert payload["activation_plan"]["phase_kinds"] == ["liquid", "liquid"]
+
+
+def test_selector_contract_declares_associating_lle_request_proof_without_losing_inventory() -> None:
+    mix = gross_2002_associating_public_mixture()
+
+    payload = _core._native_equilibrium_selector_contract(
+        mix._native,
+        {
+            "route": "neutral_lle",
+            "temperature": GROSS_2002_TEMPERATURE_K,
+            "pressure": GROSS_2002_PRESSURE_PA,
+            "composition": GROSS_2002_LLE_FEED,
+            "composition_role": "feed",
+        },
+    )
+
+    assert payload["activation"]["proof_routes"] == [
+        "neutral_lle_binary_nonassociating_ipopt_exact_hessian",
+        "associating_neutral_lle_gross_2002_public_exact_hessian",
+    ]
+    assert payload["applicable_proof_routes"] == [
+        "associating_neutral_lle_gross_2002_public_exact_hessian",
+    ]
+    assert payload["parameter_readiness"]["associating_admission_proof_route"] == (
+        "associating_neutral_lle_gross_2002_public_exact_hessian"
+    )
+    assert payload["input_classification"]["nonassociating"] is False
+    assert payload["input_classification"]["associating_species_indices"] == [0]
     assert payload["activation_plan"]["phase_keys"] == ["liquid1", "liquid2"]
     assert payload["activation_plan"]["phase_kinds"] == ["liquid", "liquid"]
 
