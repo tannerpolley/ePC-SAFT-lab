@@ -8,6 +8,7 @@
 **Classification:** AFK
 **Labels:** agent-ready,status:ready,type:task,area:equilibrium,equilibrium,solver,native,backend:ipopt,validation
 **Goal Command:** /goal Classify CE convergence failures by exact failing proof gate and preserve original diagnostics.
+**Branch:** codex/m4-ce-generic-pope-homotopy-continuation
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Current thread owns PR

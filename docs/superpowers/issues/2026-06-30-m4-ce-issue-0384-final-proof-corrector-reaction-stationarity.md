@@ -8,6 +8,7 @@
 **Classification:** AFK
 **Labels:** agent-ready,status:ready,type:task,area:equilibrium,equilibrium,solver,native,backend:ipopt,validation
 **Goal Command:** /goal Strengthen CE final proof correction so feasible hard points pass strict reaction-stationarity gates or fail with proof diagnostics.
+**Branch:** codex/m4-ce-generic-pope-homotopy-continuation
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Current thread owns PR

@@ -8,6 +8,7 @@
 **Classification:** AFK
 **Labels:** agent-ready,status:ready,type:task,area:equilibrium,equilibrium,solver,native,backend:ipopt,backend:cppad,validation
 **Goal Command:** /goal Add CE continuation from ideal mole-fraction activity to ePC-SAFT EOS-derived activity with final EOS proof.
+**Branch:** codex/m4-ce-generic-pope-homotopy-continuation
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Current thread owns PR

@@ -8,6 +8,7 @@
 **Classification:** AFK
 **Labels:** agent-ready,status:ready,type:task,area:equilibrium,equilibrium,solver,native,backend:ipopt,validation
 **Goal Command:** /goal Improve CE reaction scaling and diagnostics while preserving strict unscaled proof metrics.
+**Branch:** codex/m4-ce-generic-pope-homotopy-continuation
 **Execution Mode:** Ask at runtime
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Current thread owns PR
