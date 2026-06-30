@@ -63,6 +63,11 @@ REQUIRED_MEA_ROBUSTNESS_FIELDS = [
     "uses_source_oracle_initial_amounts",
     "stage_count",
     "final_proof_status",
+    "physical_proof_corrector_attempted",
+    "physical_proof_corrector_rejection_reason",
+    "physical_proof_corrector_initial_reaction_stationarity_inf_norm",
+    "physical_proof_corrector_final_reaction_stationarity_inf_norm",
+    "physical_proof_corrector_final_balance_inf_norm",
 ]
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
@@ -499,6 +504,20 @@ def _mea_artifact_continuation_gates_pass(payload: Mapping[str, Any]) -> bool:
     )
 
 
+def _mea_artifact_corrector_repair_gates_pass(payload: Mapping[str, Any]) -> bool:
+    continuation = dict(payload.get("ce_owned_continuation_trace") or payload.get("continuation_evidence") or {})
+    return (
+        int(continuation.get("corrected_stationarity_point_count", -1)) >= 1
+        and _as_float(continuation, "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm")
+        > MEA_STRICT_TOLERANCES["affinity_abs"]
+        and _as_float(continuation, "max_final_physical_proof_corrector_reaction_stationarity_inf_norm")
+        <= MEA_STRICT_TOLERANCES["affinity_abs"]
+        and _as_float(continuation, "max_final_physical_proof_corrector_balance_inf_norm")
+        <= MEA_STRICT_TOLERANCES["balance_abs"]
+        and continuation.get("all_physical_proof_corrector_rejection_reasons_empty") is True
+    )
+
+
 def _mea_artifact_shuffled_subset_gates_pass(payload: Mapping[str, Any]) -> bool:
     shuffled = dict(payload.get("shuffled_subset") or {})
     return (
@@ -537,6 +556,8 @@ def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
         blockers.append("mea_retained_summary_strict_gates_missing")
     if not _mea_artifact_continuation_gates_pass(payload):
         blockers.append("mea_retained_summary_continuation_trace_missing")
+    if not _mea_artifact_corrector_repair_gates_pass(payload):
+        blockers.append("mea_retained_summary_physical_corrector_repair_evidence_missing")
     if not _mea_artifact_shuffled_subset_gates_pass(payload):
         blockers.append("mea_retained_summary_shuffled_subset_missing")
     robustness = dict(payload.get("robustness_diagnostics") or {})
@@ -828,6 +849,16 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             "physical_proof_corrector_attempted": physical_corrector.get("attempted") is True,
             "physical_proof_corrector_accepted": physical_corrector.get("accepted") is True,
             "physical_proof_corrector_status": physical_corrector.get("status"),
+            "physical_proof_corrector_rejection_reason": physical_corrector.get("rejection_reason"),
+            "physical_proof_corrector_initial_reaction_stationarity_inf_norm": _as_float(
+                physical_corrector, "initial_reaction_stationarity_inf_norm"
+            ),
+            "physical_proof_corrector_final_reaction_stationarity_inf_norm": _as_float(
+                physical_corrector, "final_reaction_stationarity_inf_norm"
+            ),
+            "physical_proof_corrector_final_balance_inf_norm": _as_float(
+                physical_corrector, "final_balance_inf_norm"
+            ),
         }
         rows.append(row)
         if row["solver_status"] != "success":
@@ -846,8 +877,19 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             blockers.append(f"mea_loading_{loading}_final_proof_status_mismatch")
         if not math.isclose(float(row["final_lambda"] or 0.0), 1.0, rel_tol=0.0, abs_tol=1.0e-12):
             blockers.append(f"mea_loading_{loading}_final_lambda_mismatch")
+        if row["direct_final_proof_accepted"] and row["physical_proof_corrector_attempted"]:
+            blockers.append(f"mea_loading_{loading}_direct_proof_labeled_after_corrector")
         if row["physical_proof_corrector_attempted"] and row["physical_proof_corrector_accepted"] is not True:
             blockers.append(f"mea_loading_{loading}_physical_proof_corrector_rejected")
+        if row["physical_proof_corrector_attempted"]:
+            if row["physical_proof_corrector_rejection_reason"] not in ("", None):
+                blockers.append(f"mea_loading_{loading}_physical_proof_corrector_rejection_reason")
+            if row["physical_proof_corrector_initial_reaction_stationarity_inf_norm"] <= tolerances["affinity_abs"]:
+                blockers.append(f"mea_loading_{loading}_physical_proof_corrector_initial_affinity_not_hard")
+            if row["physical_proof_corrector_final_reaction_stationarity_inf_norm"] > tolerances["affinity_abs"]:
+                blockers.append(f"mea_loading_{loading}_physical_proof_corrector_final_affinity_above_tolerance")
+            if row["physical_proof_corrector_final_balance_inf_norm"] > tolerances["balance_abs"]:
+                blockers.append(f"mea_loading_{loading}_physical_proof_corrector_final_balance_above_tolerance")
         if row["max_mole_fraction_abs_error"] > tolerances["mole_fraction_abs"]:
             blockers.append(f"mea_loading_{loading}_mole_fraction_error_above_tolerance")
         if row["balance_inf_norm"] > tolerances["balance_abs"]:

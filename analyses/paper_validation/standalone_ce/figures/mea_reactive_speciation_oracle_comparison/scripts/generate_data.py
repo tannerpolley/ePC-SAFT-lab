@@ -226,11 +226,28 @@ def _ce_diagnostics(result: Any) -> dict[str, Any]:
         "physical_proof_corrector_attempted": bool(corrector.get("attempted", False)),
         "physical_proof_corrector_accepted": bool(corrector.get("accepted", False)),
         "physical_proof_corrector_status": str(corrector.get("status", "")),
+        "physical_proof_corrector_rejection_reason": str(corrector.get("rejection_reason", "")),
         "physical_proof_corrector_iteration_count": int(corrector.get("iteration_count", 0)),
+        "physical_proof_corrector_initial_residual_inf_norm": float(
+            corrector.get("initial_residual_inf_norm", math.nan)
+        ),
+        "physical_proof_corrector_initial_balance_inf_norm": float(
+            corrector.get("initial_balance_inf_norm", math.nan)
+        ),
+        "physical_proof_corrector_initial_reaction_stationarity_inf_norm": float(
+            corrector.get("initial_reaction_stationarity_inf_norm", math.nan)
+        ),
         "physical_proof_corrector_residual_inf_norm": float(corrector.get("residual_inf_norm", math.nan)),
         "physical_proof_corrector_balance_inf_norm": float(corrector.get("balance_inf_norm", math.nan)),
         "physical_proof_corrector_reaction_stationarity_inf_norm": float(
             corrector.get("reaction_stationarity_inf_norm", math.nan)
+        ),
+        "physical_proof_corrector_final_residual_inf_norm": float(
+            corrector.get("final_residual_inf_norm", math.nan)
+        ),
+        "physical_proof_corrector_final_balance_inf_norm": float(corrector.get("final_balance_inf_norm", math.nan)),
+        "physical_proof_corrector_final_reaction_stationarity_inf_norm": float(
+            corrector.get("final_reaction_stationarity_inf_norm", math.nan)
         ),
     }
 
@@ -316,10 +333,17 @@ def _trace_summary_row(
         "physical_proof_corrector_attempted",
         "physical_proof_corrector_accepted",
         "physical_proof_corrector_status",
+        "physical_proof_corrector_rejection_reason",
         "physical_proof_corrector_iteration_count",
+        "physical_proof_corrector_initial_residual_inf_norm",
+        "physical_proof_corrector_initial_balance_inf_norm",
+        "physical_proof_corrector_initial_reaction_stationarity_inf_norm",
         "physical_proof_corrector_residual_inf_norm",
         "physical_proof_corrector_balance_inf_norm",
         "physical_proof_corrector_reaction_stationarity_inf_norm",
+        "physical_proof_corrector_final_residual_inf_norm",
+        "physical_proof_corrector_final_balance_inf_norm",
+        "physical_proof_corrector_final_reaction_stationarity_inf_norm",
     )
     return {
         "role": role,
@@ -570,6 +594,11 @@ def generate() -> dict[str, Any]:
         "uses_source_oracle_initial_amounts",
         "stage_count",
         "final_proof_status",
+        "physical_proof_corrector_attempted",
+        "physical_proof_corrector_rejection_reason",
+        "physical_proof_corrector_initial_reaction_stationarity_inf_norm",
+        "physical_proof_corrector_final_reaction_stationarity_inf_norm",
+        "physical_proof_corrector_final_balance_inf_norm",
     ]
     robustness_diagnostics = {
         "artifact": str((RESULTS_DIR / "mea_ce_unassisted_seed_audit.csv").relative_to(REPO_ROOT)).replace(
@@ -582,6 +611,18 @@ def generate() -> dict[str, Any]:
         "accepted_state_point_count": int((trace_summary_frame["failure_class"] == "accepted").sum()),
         "state_point_count": int(len(trace_summary_frame)),
     }
+    corrected_stationarity = trace_summary_frame[
+        (trace_summary_frame["physical_proof_corrector_attempted"] == True)  # noqa: E712
+        & (
+            trace_summary_frame["physical_proof_corrector_initial_reaction_stationarity_inf_norm"]
+            > 1.0e-6
+        )
+        & (
+            trace_summary_frame["physical_proof_corrector_final_reaction_stationarity_inf_norm"]
+            <= 1.0e-6
+        )
+        & (trace_summary_frame["physical_proof_corrector_final_balance_inf_norm"] <= 1.0e-8)
+    ]
     report = {
         "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2",
         "source_oracle": str(SOURCE_CURVE_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
@@ -612,6 +653,19 @@ def generate() -> dict[str, Any]:
             "homotopy_point_count": int((trace_summary_frame["stage_count"] > 1).sum()),
             "physical_proof_corrector_point_count": int(
                 (trace_summary_frame["physical_proof_corrector_accepted"] == True).sum()  # noqa: E712
+            ),
+            "corrected_stationarity_point_count": int(len(corrected_stationarity)),
+            "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm": float(
+                corrected_stationarity["physical_proof_corrector_initial_reaction_stationarity_inf_norm"].max()
+            ),
+            "max_final_physical_proof_corrector_reaction_stationarity_inf_norm": float(
+                trace_summary_frame["physical_proof_corrector_final_reaction_stationarity_inf_norm"].max()
+            ),
+            "max_final_physical_proof_corrector_balance_inf_norm": float(
+                trace_summary_frame["physical_proof_corrector_final_balance_inf_norm"].max()
+            ),
+            "all_physical_proof_corrector_rejection_reasons_empty": bool(
+                (trace_summary_frame["physical_proof_corrector_rejection_reason"].fillna("") == "").all()
             ),
             "all_final_lambda_one": bool((trace_summary_frame["final_lambda"] == 1.0).all()),
             "all_final_proof_accepted": bool((trace_summary_frame["final_proof_status"] == "accepted").all()),

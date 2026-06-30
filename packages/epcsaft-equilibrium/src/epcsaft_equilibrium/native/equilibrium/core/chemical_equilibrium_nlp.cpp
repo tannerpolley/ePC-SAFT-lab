@@ -796,6 +796,9 @@ PhysicalProofCorrectorResult run_physical_proof_corrector(
         balance_tolerance,
         reaction_stationarity_tolerance
     );
+    out.initial_residual_inf_norm = system.residual_inf_norm;
+    out.initial_balance_inf_norm = system.balance_inf_norm;
+    out.initial_reaction_stationarity_inf_norm = system.reaction_stationarity_inf_norm;
     for (int iteration = 0; iteration <= kMaxIterations; ++iteration) {
         out.iteration_count = iteration;
         out.residual_inf_norm = system.residual_inf_norm;
@@ -977,6 +980,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             balance_tolerance,
             reaction_stationarity_tolerance
         );
+        const bool direct_proof_accepted = out.accepted;
         if (!out.accepted && !out.solve.variables.empty()) {
             out.proof_corrector = run_physical_proof_corrector(
                 true_input,
@@ -996,7 +1000,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
         out.source_oracle_initial_amounts = true;
         out.seed_source = "caller_initial_amounts";
         out.direct_final_proof_attempted = true;
-        out.direct_final_proof_accepted = out.accepted;
+        out.direct_final_proof_accepted = direct_proof_accepted;
         out.continuation.final_proof_status = out.accepted ? "accepted" : "rejected";
         out.continuation.final_stage_id = "lambda_1";
         out.continuation.accepted = out.accepted;
@@ -1026,6 +1030,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             reaction_stationarity_tolerance
         );
     }
+    const bool direct_proof_accepted = feasible.accepted && direct.accepted;
     if (feasible.accepted && !direct.accepted && !direct.solve.variables.empty()) {
         direct.proof_corrector = run_physical_proof_corrector(
             true_input,
@@ -1047,7 +1052,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
         direct.seed_source = "max_min_feasible_interior";
         direct.feasible_initialization = feasible;
         direct.direct_final_proof_attempted = true;
-        direct.direct_final_proof_accepted = true;
+        direct.direct_final_proof_accepted = direct_proof_accepted;
         direct.continuation.final_proof_status = "accepted";
         direct.continuation.final_stage_id = "lambda_1";
         direct.continuation.accepted = true;
@@ -1105,7 +1110,7 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
     out.seed_source = "max_min_feasible_interior";
     out.feasible_initialization = feasible;
     out.direct_final_proof_attempted = feasible.accepted;
-    out.direct_final_proof_accepted = feasible.accepted && direct.accepted;
+    out.direct_final_proof_accepted = direct_proof_accepted;
     out.continuation_lambdas = lambdas;
     return out;
 }

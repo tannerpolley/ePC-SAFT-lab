@@ -569,6 +569,7 @@ def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_f
     solver_options = epcsaft_equilibrium.EquilibriumSolverOptions(max_iterations=600, tolerance=1.0e-8)
     results = []
     max_mole_fraction_error = 0.0
+    corrected_stationarity_cases = []
 
     for loading, expected in _MEA_EXPECTED_MOLE_FRACTIONS.items():
         result = epcsaft_equilibrium.reactive_speciation(
@@ -594,15 +595,27 @@ def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_f
         assert result.diagnostics["initialization"]["feasible_initialization"]["accepted"] is True
         assert result.diagnostics["continuation"]["final_proof_status"] == "accepted"
         assert result.diagnostics["continuation"]["final_lambda"] == pytest.approx(1.0)
-        if result.diagnostics["continuation"]["direct_final_proof_accepted"]:
-            assert result.diagnostics["continuation"]["stage_count"] == 0
+        continuation = result.diagnostics["continuation"]
+        corrector = continuation["physical_proof_corrector"]
+        if continuation["direct_final_proof_accepted"]:
+            assert corrector["attempted"] is False
+            assert continuation["stage_count"] == 0
         else:
-            assert result.diagnostics["continuation"]["stage_count"] >= 3
-        corrector = result.diagnostics["continuation"]["physical_proof_corrector"]
+            assert corrector["attempted"] is True or continuation["stage_count"] >= 3
         assert corrector["corrector"] == "physical_residual_newton"
         if corrector["attempted"]:
             assert corrector["accepted"] is True
             assert corrector["status"] == "accepted"
+            assert corrector["rejection_reason"] == ""
+            assert corrector["initial_reaction_stationarity_inf_norm"] > corrector["reaction_stationarity_inf_norm"]
+            assert corrector["final_reaction_stationarity_inf_norm"] == pytest.approx(
+                corrector["reaction_stationarity_inf_norm"]
+            )
+            assert corrector["final_balance_inf_norm"] == pytest.approx(corrector["balance_inf_norm"])
+            assert corrector["initial_reaction_stationarity_inf_norm"] > 1.0e-6
+            assert corrector["final_reaction_stationarity_inf_norm"] <= 1.0e-6
+            assert corrector["final_balance_inf_norm"] <= 1.0e-8
+            corrected_stationarity_cases.append((loading, corrector))
         assert result.balances == pytest.approx({key: 0.0 for key in ("C", "O", "H", "N", "charge")}, abs=1.0e-8)
         assert result.affinities == pytest.approx({reaction.label: 0.0 for reaction in reactions}, abs=1.0e-6)
         expected_mole_fractions = [expected[label] for label in result.species_labels]
@@ -636,4 +649,5 @@ def test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_f
         (row.species_amounts["MEA"] for row in results),
         reverse=True,
     )
+    assert corrected_stationarity_cases
     assert max_mole_fraction_error <= 1.0e-8

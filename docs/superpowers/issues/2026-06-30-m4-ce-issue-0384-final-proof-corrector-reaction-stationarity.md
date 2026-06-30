@@ -49,6 +49,15 @@ Implement Task 2 from the source plan: a strict final proof corrector for reacti
 - [ ] Diagnostics include correction attempts, final stationarity, final balance, and rejection reason.
 - [ ] Strict stationarity and balance thresholds are not weakened.
 
+## Resolution Evidence
+
+- Native CE now preserves raw one-shot `direct_final_proof_accepted` before any physical proof corrector mutates accepted state.
+- `physical_proof_corrector` diagnostics now retain initial and final residual, balance, and reaction-stationarity norms plus an explicit `rejection_reason`.
+- Retained MEA diagnostics report 322 corrected stationarity points, max initial corrector stationarity `75.06626050447596`, max final stationarity `3.4620839528543e-10`, max final balance `9.253685817611768e-09`, and empty rejection reasons.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_homotopy.py -q` passed with 13 tests.
+- Fresh proof: `uv run --no-sync python run_pytest.py tests/native/contracts/test_standalone_ce_gate.py -q` passed with 8 tests.
+- Fresh proof: `uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete` returned status `complete` with no blockers.
+
 ## Blocked by
 
 - None

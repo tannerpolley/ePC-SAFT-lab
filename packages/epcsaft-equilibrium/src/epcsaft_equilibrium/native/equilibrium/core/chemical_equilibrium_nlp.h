@@ -41,6 +41,9 @@ struct PhysicalProofCorrectorResult {
     bool accepted = false;
     std::string status;
     int iteration_count = 0;
+    double initial_residual_inf_norm = 0.0;
+    double initial_balance_inf_norm = 0.0;
+    double initial_reaction_stationarity_inf_norm = 0.0;
     double residual_inf_norm = 0.0;
     double balance_inf_norm = 0.0;
     double reaction_stationarity_inf_norm = 0.0;

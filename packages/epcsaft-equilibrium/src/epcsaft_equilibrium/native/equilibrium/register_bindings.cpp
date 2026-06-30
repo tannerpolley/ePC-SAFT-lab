@@ -1191,10 +1191,17 @@ py::dict physical_proof_corrector_to_dict(
     out["attempted"] = result.attempted;
     out["accepted"] = result.accepted;
     out["status"] = result.status;
+    out["rejection_reason"] = result.accepted ? "" : result.status;
     out["iteration_count"] = result.iteration_count;
+    out["initial_residual_inf_norm"] = result.initial_residual_inf_norm;
+    out["initial_balance_inf_norm"] = result.initial_balance_inf_norm;
+    out["initial_reaction_stationarity_inf_norm"] = result.initial_reaction_stationarity_inf_norm;
     out["residual_inf_norm"] = result.residual_inf_norm;
     out["balance_inf_norm"] = result.balance_inf_norm;
     out["reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
+    out["final_residual_inf_norm"] = result.residual_inf_norm;
+    out["final_balance_inf_norm"] = result.balance_inf_norm;
+    out["final_reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
     out["step_inf_norm"] = result.step_inf_norm;
     out["variables"] = result.variables;
     return out;

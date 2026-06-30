@@ -54,6 +54,11 @@
     "max_stage_count": 3,
     "homotopy_point_count": 12,
     "physical_proof_corrector_point_count": 322,
+    "corrected_stationarity_point_count": 322,
+    "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm": 75.06626050447596,
+    "max_final_physical_proof_corrector_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+    "max_final_physical_proof_corrector_balance_inf_norm": 9.253685817611768e-09,
+    "all_physical_proof_corrector_rejection_reasons_empty": true,
     "all_final_lambda_one": true,
     "all_final_proof_accepted": true
   },
@@ -70,7 +75,12 @@
       "seed_source",
       "uses_source_oracle_initial_amounts",
       "stage_count",
-      "final_proof_status"
+      "final_proof_status",
+      "physical_proof_corrector_attempted",
+      "physical_proof_corrector_rejection_reason",
+      "physical_proof_corrector_initial_reaction_stationarity_inf_norm",
+      "physical_proof_corrector_final_reaction_stationarity_inf_norm",
+      "physical_proof_corrector_final_balance_inf_norm"
     ],
     "activity_model": "mole_fraction_activity",
     "failure_classes": [

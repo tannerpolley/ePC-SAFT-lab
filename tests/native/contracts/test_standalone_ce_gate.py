@@ -259,3 +259,22 @@ def test_standalone_ce_gate_requires_retained_robustness_diagnostics() -> None:
     assert "final_proof_status" in robustness["required_fields"]
     assert "failure_class" in robustness["required_fields"]
     assert robustness["failure_classes"] == ["accepted"]
+
+
+def test_standalone_ce_gate_requires_physical_corrector_repair_evidence() -> None:
+    checker = _checker_module()
+    payload = json.loads(MEA_RETAINED_SUMMARY_PATH.read_text(encoding="utf-8"))
+    bad_payload = copy.deepcopy(payload)
+    bad_payload["ce_owned_continuation_trace"].pop("corrected_stationarity_point_count", None)
+
+    blockers = checker.mea_retained_summary_payload_blockers(bad_payload)
+
+    assert "mea_retained_summary_physical_corrector_repair_evidence_missing" in blockers
+
+    evidence = checker._mea_retained_artifact_evidence_from_payload(payload)
+    continuation = evidence["continuation_evidence"]
+    assert continuation["corrected_stationarity_point_count"] >= 1
+    assert continuation["max_initial_physical_proof_corrector_reaction_stationarity_inf_norm"] > 1.0e-6
+    assert continuation["max_final_physical_proof_corrector_reaction_stationarity_inf_norm"] <= 1.0e-6
+    assert continuation["max_final_physical_proof_corrector_balance_inf_norm"] <= 1.0e-8
+    assert continuation["all_physical_proof_corrector_rejection_reasons_empty"] is True
