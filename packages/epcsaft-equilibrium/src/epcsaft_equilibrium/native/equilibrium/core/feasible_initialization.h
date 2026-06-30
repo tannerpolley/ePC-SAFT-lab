@@ -15,7 +15,29 @@ struct FeasibleInitializationInput {
     double amount_floor = 1.0e-30;
 };
 
+struct FeasibleInitializationAttempt {
+    std::string initializer;
+    bool accepted = false;
+    bool solver_ran = false;
+    std::string rejection_reason;
+    std::vector<double> amounts;
+    double margin = 0.0;
+    double minimum_amount = 0.0;
+    std::vector<double> balance_residuals;
+    double balance_inf_norm = 0.0;
+    int active_margin_constraint_count = 0;
+    int rank = 0;
+    int independent_row_count = 0;
+    std::string rank_status;
+    bool positive = false;
+    bool conservation_closed = false;
+};
+
 struct FeasibleInitializationResult {
+    std::string initializer = "max_min_feasible_interior";
+    std::string selected_initializer;
+    std::vector<std::string> attempt_order;
+    std::vector<FeasibleInitializationAttempt> attempts;
     bool accepted = false;
     bool solver_ran = false;
     std::string rejection_reason;

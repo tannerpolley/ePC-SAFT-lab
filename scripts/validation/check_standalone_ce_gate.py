@@ -816,6 +816,19 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
         diagnostics = dict(result.diagnostics)
         initialization = dict(diagnostics.get("initialization") or {})
         feasible_initialization = dict(initialization.get("feasible_initialization") or {})
+        feasible_attempts = [
+            dict(item)
+            for item in (feasible_initialization.get("attempts") or [])
+            if isinstance(item, Mapping)
+        ]
+        extent_attempt = next(
+            (
+                item
+                for item in feasible_attempts
+                if str(item.get("initializer")) == "extent_nullspace_feasible"
+            ),
+            {},
+        )
         continuation = dict(diagnostics.get("continuation") or {})
         physical_corrector = dict(continuation.get("physical_proof_corrector") or {})
         proof_metrics = dict(diagnostics.get("proof_metrics") or {})
@@ -862,6 +875,14 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             "uses_source_oracle_initial_amounts": initialization.get("source_oracle_initial_amounts"),
             "feasible_initialization_accepted": feasible_initialization.get("accepted") is True,
             "feasible_initialization_margin": feasible_initialization.get("margin"),
+            "feasible_selected_initializer": feasible_initialization.get("selected_initializer"),
+            "feasible_attempt_order": list(feasible_initialization.get("attempt_order") or []),
+            "extent_nullspace_attempted": bool(extent_attempt),
+            "extent_nullspace_accepted": extent_attempt.get("accepted") is True,
+            "extent_nullspace_rank_status": extent_attempt.get("rank_status"),
+            "extent_nullspace_rejection_reason": extent_attempt.get("rejection_reason"),
+            "extent_nullspace_conservation_closed": extent_attempt.get("conservation_closed") is True,
+            "extent_nullspace_positive": extent_attempt.get("positive") is True,
             "direct_final_proof_attempted": continuation.get("direct_final_proof_attempted") is True,
             "direct_final_proof_accepted": continuation.get("direct_final_proof_accepted") is True,
             "final_proof_status": continuation.get("final_proof_status"),
@@ -898,6 +919,14 @@ def mea_speciation_public_sweep_evidence() -> dict[str, Any]:
             blockers.append(f"mea_loading_{loading}_seed_source_mismatch")
         if row["feasible_initialization_accepted"] is not True:
             blockers.append(f"mea_loading_{loading}_feasible_initialization_rejected")
+        if row["feasible_selected_initializer"] != "max_min_feasible_interior":
+            blockers.append(f"mea_loading_{loading}_feasible_selected_initializer_mismatch")
+        if row["feasible_attempt_order"] != ["max_min_feasible_interior", "extent_nullspace_feasible"]:
+            blockers.append(f"mea_loading_{loading}_feasible_attempt_order_missing")
+        if row["extent_nullspace_attempted"] is not True:
+            blockers.append(f"mea_loading_{loading}_extent_nullspace_attempt_missing")
+        if not row["extent_nullspace_rank_status"]:
+            blockers.append(f"mea_loading_{loading}_extent_nullspace_rank_status_missing")
         if row["final_proof_status"] != "accepted":
             blockers.append(f"mea_loading_{loading}_final_proof_status_mismatch")
         if not math.isclose(float(row["final_lambda"] or 0.0), 1.0, rel_tol=0.0, abs_tol=1.0e-12):

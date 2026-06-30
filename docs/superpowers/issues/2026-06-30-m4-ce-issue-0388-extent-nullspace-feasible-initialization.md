@@ -49,6 +49,20 @@ Implement Task 6 from the source plan: extent/nullspace initialization and initi
 - [ ] The initializer ladder records each attempted initializer and selected seed.
 - [ ] Ambiguous or infeasible rank cases fail loudly with a classified reason.
 
+## Resolution Evidence
+
+- Native feasible initialization now reports a ranked initializer ladder with `attempt_order`, `selected_initializer`, and per-attempt diagnostics for `max_min_feasible_interior` and `extent_nullspace_feasible`.
+- The extent/nullspace attempt builds a deterministic positive candidate from independent conservation rows and pivot species, then proves full conservation closure before it can be accepted.
+- Attempt diagnostics include conservation rank, rank status, positivity, conservation-closure status, balance residuals, selected amounts, and classified rejection reasons.
+- Max-min remains the first selected initializer when it passes; the extent/nullspace path is available as an independent fallback and diagnostic attempt without exposing a public initializer route.
+- The standalone CE checker now emits MEA initializer-ladder evidence and rejects missing selected-initializer, attempt-order, or extent/nullspace rank-status diagnostics.
+- Focused red proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_feasible_initialization.py -q` failed on missing `attempt_order` before implementation.
+- Fresh proof: `uv run --no-sync python scripts/dev/build_epcsaft.py --build-only --parallel 10` passed.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_feasible_initialization.py -q` passed with 6 tests.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_homotopy.py -q` passed with 4 tests.
+- Fresh proof: `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py -q` passed with 13 tests.
+- Fresh proof: `uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete` returned status `complete` with no blockers.
+
 ## Blocked by
 
 - None

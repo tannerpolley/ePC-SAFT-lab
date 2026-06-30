@@ -1152,7 +1152,9 @@ py::dict feasible_initialization_result_to_dict(
     const epcsaft::native::equilibrium_nlp::FeasibleInitializationResult& result
 ) {
     py::dict out;
-    out["initializer"] = "max_min_feasible_interior";
+    out["initializer"] = result.initializer;
+    out["selected_initializer"] = result.selected_initializer;
+    out["attempt_order"] = result.attempt_order;
     out["accepted"] = result.accepted;
     out["solver_ran"] = result.solver_ran;
     out["rejection_reason"] = result.rejection_reason;
@@ -1173,6 +1175,27 @@ py::dict feasible_initialization_result_to_dict(
     out["scaled_complementarity_inf_norm"] =
         diagnostic_double_or(result.solve, "scaled_complementarity_inf_norm", 0.0);
     out["continuation_state"] = ipopt_continuation_state_to_dict(result.solve);
+    py::list attempts;
+    for (const auto& attempt : result.attempts) {
+        py::dict row;
+        row["initializer"] = attempt.initializer;
+        row["accepted"] = attempt.accepted;
+        row["solver_ran"] = attempt.solver_ran;
+        row["rejection_reason"] = attempt.rejection_reason;
+        row["amounts"] = attempt.amounts;
+        row["margin"] = attempt.margin;
+        row["minimum_amount"] = attempt.minimum_amount;
+        row["balance_residuals"] = attempt.balance_residuals;
+        row["balance_inf_norm"] = attempt.balance_inf_norm;
+        row["active_margin_constraint_count"] = attempt.active_margin_constraint_count;
+        row["rank"] = attempt.rank;
+        row["independent_row_count"] = attempt.independent_row_count;
+        row["rank_status"] = attempt.rank_status;
+        row["positive"] = attempt.positive;
+        row["conservation_closed"] = attempt.conservation_closed;
+        attempts.append(row);
+    }
+    out["attempts"] = attempts;
     return out;
 }
 

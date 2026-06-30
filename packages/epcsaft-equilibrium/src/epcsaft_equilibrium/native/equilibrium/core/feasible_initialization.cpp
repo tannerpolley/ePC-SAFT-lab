@@ -61,7 +61,12 @@ double matrix_abs_max(const std::vector<double>& matrix) {
     return out;
 }
 
-std::vector<int> independent_row_indices(
+struct ConservationRankProfile {
+    std::vector<int> independent_rows;
+    std::vector<int> pivot_columns;
+};
+
+ConservationRankProfile conservation_rank_profile(
     std::vector<double> matrix,
     int rows,
     int columns
@@ -69,7 +74,7 @@ std::vector<int> independent_row_indices(
     const double tolerance = 1.0e-12 * std::max(1.0, matrix_abs_max(matrix));
     std::vector<int> row_indices(static_cast<std::size_t>(rows), 0);
     std::iota(row_indices.begin(), row_indices.end(), 0);
-    std::vector<int> independent;
+    ConservationRankProfile profile;
     int rank = 0;
     for (int column = 0; column < columns && rank < rows; ++column) {
         int pivot_row = rank;
@@ -93,7 +98,8 @@ std::vector<int> independent_row_indices(
             }
             std::swap(row_indices[static_cast<std::size_t>(rank)], row_indices[static_cast<std::size_t>(pivot_row)]);
         }
-        independent.push_back(row_indices[static_cast<std::size_t>(rank)]);
+        profile.independent_rows.push_back(row_indices[static_cast<std::size_t>(rank)]);
+        profile.pivot_columns.push_back(column);
         const double pivot = matrix[static_cast<std::size_t>(rank * columns + column)];
         for (int row = rank + 1; row < rows; ++row) {
             const double factor = matrix[static_cast<std::size_t>(row * columns + column)] / pivot;
@@ -105,8 +111,62 @@ std::vector<int> independent_row_indices(
         }
         ++rank;
     }
-    std::sort(independent.begin(), independent.end());
-    return independent;
+    return profile;
+}
+
+std::vector<double> solve_square_linear_system(
+    std::vector<double> matrix,
+    std::vector<double> rhs,
+    int dimension
+) {
+    require_size(matrix.size(), static_cast<std::size_t>(dimension * dimension), "extent/nullspace matrix");
+    require_size(rhs.size(), static_cast<std::size_t>(dimension), "extent/nullspace right hand side");
+    const double tolerance = 1.0e-14 * std::max(1.0, matrix_abs_max(matrix));
+    for (int pivot = 0; pivot < dimension; ++pivot) {
+        int pivot_row = pivot;
+        double pivot_abs = std::abs(matrix[static_cast<std::size_t>(pivot * dimension + pivot)]);
+        for (int row = pivot + 1; row < dimension; ++row) {
+            const double candidate = std::abs(matrix[static_cast<std::size_t>(row * dimension + pivot)]);
+            if (candidate > pivot_abs) {
+                pivot_abs = candidate;
+                pivot_row = row;
+            }
+        }
+        if (pivot_abs <= tolerance) {
+            throw ValueError("extent/nullspace feasible initialization pivot matrix is singular.");
+        }
+        if (pivot_row != pivot) {
+            for (int column = pivot; column < dimension; ++column) {
+                std::swap(
+                    matrix[static_cast<std::size_t>(pivot * dimension + column)],
+                    matrix[static_cast<std::size_t>(pivot_row * dimension + column)]
+                );
+            }
+            std::swap(rhs[static_cast<std::size_t>(pivot)], rhs[static_cast<std::size_t>(pivot_row)]);
+        }
+        const double diagonal = matrix[static_cast<std::size_t>(pivot * dimension + pivot)];
+        for (int row = pivot + 1; row < dimension; ++row) {
+            const double factor = matrix[static_cast<std::size_t>(row * dimension + pivot)] / diagonal;
+            matrix[static_cast<std::size_t>(row * dimension + pivot)] = 0.0;
+            for (int column = pivot + 1; column < dimension; ++column) {
+                matrix[static_cast<std::size_t>(row * dimension + column)] -=
+                    factor * matrix[static_cast<std::size_t>(pivot * dimension + column)];
+            }
+            rhs[static_cast<std::size_t>(row)] -= factor * rhs[static_cast<std::size_t>(pivot)];
+        }
+    }
+
+    std::vector<double> solution(static_cast<std::size_t>(dimension), 0.0);
+    for (int row = dimension - 1; row >= 0; --row) {
+        double value = rhs[static_cast<std::size_t>(row)];
+        for (int column = row + 1; column < dimension; ++column) {
+            value -= matrix[static_cast<std::size_t>(row * dimension + column)]
+                * solution[static_cast<std::size_t>(column)];
+        }
+        solution[static_cast<std::size_t>(row)] =
+            value / matrix[static_cast<std::size_t>(row * dimension + row)];
+    }
+    return solution;
 }
 
 FeasibleInitializationInput input_with_conservation_rows(
@@ -360,6 +420,144 @@ FeasibleInitializationResult rejected_without_solve(const std::string& rejection
     return out;
 }
 
+double positive_nullspace_fill_amount(const FeasibleInitializationInput& input) {
+    double max_total = input.amount_floor;
+    double min_positive_total = std::numeric_limits<double>::infinity();
+    for (double total : input.conservation_totals) {
+        max_total = std::max(max_total, std::abs(total));
+        if (total > 0.0) {
+            min_positive_total = std::min(min_positive_total, total);
+        }
+    }
+    const double species_count = static_cast<double>(std::max<std::size_t>(1U, input.species_labels.size()));
+    const double interior_cap = std::max(input.amount_floor, max_total / (10.0 * species_count));
+    const double positive_scale = std::isfinite(min_positive_total)
+        ? min_positive_total
+        : 10.0 * input.amount_floor;
+    return std::max(10.0 * input.amount_floor, std::min(interior_cap, positive_scale));
+}
+
+std::string rank_status_for(
+    const ConservationRankProfile& profile,
+    int balance_count,
+    double balance_inf_norm,
+    double balance_tolerance
+) {
+    if (static_cast<int>(profile.independent_rows.size()) == balance_count) {
+        return "full_rank";
+    }
+    return balance_inf_norm <= balance_tolerance
+        ? "rank_deficient_consistent"
+        : "rank_deficient_inconsistent";
+}
+
+FeasibleInitializationAttempt attempt_from_result(
+    const FeasibleInitializationResult& result,
+    const ConservationRankProfile& profile,
+    int balance_count,
+    double amount_floor,
+    double balance_tolerance
+) {
+    FeasibleInitializationAttempt out;
+    out.initializer = "max_min_feasible_interior";
+    out.accepted = result.accepted;
+    out.solver_ran = result.solver_ran;
+    out.rejection_reason = result.rejection_reason;
+    out.amounts = result.amounts;
+    out.margin = result.margin;
+    out.minimum_amount = result.minimum_amount;
+    out.balance_residuals = result.balance_residuals;
+    out.balance_inf_norm = result.balance_inf_norm;
+    out.active_margin_constraint_count = result.active_margin_constraint_count;
+    out.rank = static_cast<int>(profile.independent_rows.size());
+    out.independent_row_count = out.rank;
+    out.rank_status = rank_status_for(profile, balance_count, result.balance_inf_norm, balance_tolerance);
+    out.positive = result.minimum_amount > amount_floor;
+    out.conservation_closed = result.balance_inf_norm <= balance_tolerance;
+    return out;
+}
+
+FeasibleInitializationAttempt solve_extent_nullspace_feasible_initialization(
+    const FeasibleInitializationInput& input,
+    const ConservationRankProfile& profile,
+    double balance_tolerance
+) {
+    const int species_count = static_cast<int>(input.species_labels.size());
+    const int balance_count = static_cast<int>(input.conservation_labels.size());
+    const int rank = static_cast<int>(profile.independent_rows.size());
+    FeasibleInitializationAttempt out;
+    out.initializer = "extent_nullspace_feasible";
+    out.rank = rank;
+    out.independent_row_count = rank;
+    if (rank == 0) {
+        out.rejection_reason = "extent_nullspace_rank_deficient_conservation_constraints";
+        out.rank_status = "rank_deficient_inconsistent";
+        return out;
+    }
+
+    out.amounts.assign(static_cast<std::size_t>(species_count), positive_nullspace_fill_amount(input));
+    std::vector<bool> pivot_species(static_cast<std::size_t>(species_count), false);
+    for (int column : profile.pivot_columns) {
+        pivot_species[static_cast<std::size_t>(column)] = true;
+    }
+
+    std::vector<double> pivot_matrix(static_cast<std::size_t>(rank * rank), 0.0);
+    std::vector<double> rhs(static_cast<std::size_t>(rank), 0.0);
+    for (int equation = 0; equation < rank; ++equation) {
+        const int row = profile.independent_rows[static_cast<std::size_t>(equation)];
+        rhs[static_cast<std::size_t>(equation)] = input.conservation_totals[static_cast<std::size_t>(row)];
+        for (int species = 0; species < species_count; ++species) {
+            const double coefficient =
+                input.conservation_matrix_row_major[static_cast<std::size_t>(row * species_count + species)];
+            if (pivot_species[static_cast<std::size_t>(species)]) {
+                continue;
+            }
+            rhs[static_cast<std::size_t>(equation)] -=
+                coefficient * out.amounts[static_cast<std::size_t>(species)];
+        }
+        for (int pivot = 0; pivot < rank; ++pivot) {
+            const int column = profile.pivot_columns[static_cast<std::size_t>(pivot)];
+            pivot_matrix[static_cast<std::size_t>(equation * rank + pivot)] =
+                input.conservation_matrix_row_major[static_cast<std::size_t>(row * species_count + column)];
+        }
+    }
+
+    try {
+        const std::vector<double> pivot_amounts =
+            solve_square_linear_system(std::move(pivot_matrix), std::move(rhs), rank);
+        for (int pivot = 0; pivot < rank; ++pivot) {
+            const int column = profile.pivot_columns[static_cast<std::size_t>(pivot)];
+            out.amounts[static_cast<std::size_t>(column)] = pivot_amounts[static_cast<std::size_t>(pivot)];
+        }
+    } catch (const std::exception&) {
+        out.rejection_reason = "extent_nullspace_singular_pivot_system";
+        out.balance_residuals = balance_residuals(input, out.amounts);
+        out.balance_inf_norm = vector_inf_norm(out.balance_residuals);
+        out.rank_status = rank_status_for(profile, balance_count, out.balance_inf_norm, balance_tolerance);
+        return out;
+    }
+
+    out.minimum_amount = *std::min_element(out.amounts.begin(), out.amounts.end());
+    out.margin = out.minimum_amount;
+    out.positive = std::all_of(out.amounts.begin(), out.amounts.end(), [amount_floor = input.amount_floor](double amount) {
+        return std::isfinite(amount) && amount > amount_floor;
+    });
+    out.balance_residuals = balance_residuals(input, out.amounts);
+    out.balance_inf_norm = vector_inf_norm(out.balance_residuals);
+    out.conservation_closed = out.balance_inf_norm <= balance_tolerance;
+    out.rank_status = rank_status_for(profile, balance_count, out.balance_inf_norm, balance_tolerance);
+    if (!out.positive) {
+        out.rejection_reason = "extent_nullspace_nonpositive_candidate";
+        return out;
+    }
+    if (!out.conservation_closed) {
+        out.rejection_reason = "extent_nullspace_conservation_residual";
+        return out;
+    }
+    out.accepted = true;
+    return out;
+}
+
 }  // namespace
 
 FeasibleInitializationResult solve_max_min_feasible_initialization(
@@ -371,13 +569,24 @@ FeasibleInitializationResult solve_max_min_feasible_initialization(
     require_positive_finite(balance_tolerance, "feasible initialization balance tolerance");
     const int species_count = static_cast<int>(input.species_labels.size());
     const int balance_count = static_cast<int>(input.conservation_labels.size());
-    const std::vector<int> independent_rows = independent_row_indices(
+    const ConservationRankProfile profile = conservation_rank_profile(
         input.conservation_matrix_row_major,
         balance_count,
         species_count
     );
+    std::vector<int> independent_rows = profile.independent_rows;
+    std::sort(independent_rows.begin(), independent_rows.end());
     if (independent_rows.empty()) {
-        return rejected_without_solve("rank_deficient_conservation_constraints");
+        FeasibleInitializationResult out =
+            rejected_without_solve("rank_deficient_conservation_constraints");
+        FeasibleInitializationAttempt max_attempt =
+            attempt_from_result(out, profile, balance_count, input.amount_floor, balance_tolerance);
+        FeasibleInitializationAttempt extent_attempt =
+            solve_extent_nullspace_feasible_initialization(input, profile, balance_tolerance);
+        out.attempt_order = {"max_min_feasible_interior", "extent_nullspace_feasible"};
+        out.attempts = {max_attempt, extent_attempt};
+        out.selected_initializer = "";
+        return out;
     }
     const FeasibleInitializationInput solve_input =
         independent_rows.size() == static_cast<std::size_t>(balance_count)
@@ -416,6 +625,33 @@ FeasibleInitializationResult solve_max_min_feasible_initialization(
         && positive_interior
         && out.balance_inf_norm <= balance_tolerance;
     out.rejection_reason = out.accepted ? "" : "initializer_solve_rejected";
+    FeasibleInitializationAttempt max_attempt =
+        attempt_from_result(out, profile, balance_count, input.amount_floor, balance_tolerance);
+    FeasibleInitializationAttempt extent_attempt =
+        solve_extent_nullspace_feasible_initialization(input, profile, balance_tolerance);
+    out.attempt_order = {"max_min_feasible_interior", "extent_nullspace_feasible"};
+    out.attempts = {max_attempt, extent_attempt};
+    if (out.accepted) {
+        out.initializer = "max_min_feasible_interior";
+        out.selected_initializer = "max_min_feasible_interior";
+        return out;
+    }
+    if (extent_attempt.accepted) {
+        out.initializer = "extent_nullspace_feasible";
+        out.selected_initializer = "extent_nullspace_feasible";
+        out.accepted = true;
+        out.solver_ran = false;
+        out.rejection_reason = "";
+        out.amounts = extent_attempt.amounts;
+        out.margin = extent_attempt.margin;
+        out.minimum_amount = extent_attempt.minimum_amount;
+        out.balance_residuals = extent_attempt.balance_residuals;
+        out.balance_inf_norm = extent_attempt.balance_inf_norm;
+        out.active_margin_constraint_count = 0;
+        out.solve = IpoptSolveResult{};
+        return out;
+    }
+    out.selected_initializer = "";
     return out;
 }
 
