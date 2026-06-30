@@ -117,8 +117,8 @@ failures and shared contract gates are resolved.
 
 #314 remains retained representative public-admission evidence only; #320
 retains Perdomo/Figiel validation, #343 retains full HELD2-style public-route
-discovery, and #191 remains open under #370 while the reopened closeout and
-shared-contract validation gaps are handled.
+discovery, #191 is closed under #370, and #371 retains the shared-contract
+electrolyte residual block required by the electrolyte LLE parent closeout.
 
 ### CE / CPE Open Issues
 
