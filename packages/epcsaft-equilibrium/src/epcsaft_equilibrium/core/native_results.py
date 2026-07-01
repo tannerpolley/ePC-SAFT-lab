@@ -274,8 +274,6 @@ def _chemical_equilibrium_solver_rejected(diagnostics: Mapping[str, Any]) -> boo
 def _chemical_equilibrium_failure_class(diagnostics: Mapping[str, Any]) -> tuple[str, str]:
     if diagnostics.get("accepted") is True:
         return "accepted", "accepted"
-    if _chemical_equilibrium_uses_eos_activity(diagnostics):
-        return "eos_activity_failure", "eos_activity"
     initialization_rejection = _chemical_equilibrium_initialization_rejection(diagnostics)
     if initialization_rejection:
         if "conservation" in initialization_rejection or "rank" in initialization_rejection:
@@ -291,7 +289,86 @@ def _chemical_equilibrium_failure_class(diagnostics: Mapping[str, Any]) -> tuple
         return "proof_correction_failure", "physical_proof_corrector"
     if _chemical_equilibrium_solver_rejected(diagnostics):
         return "ipopt_failure", "ipopt"
+    if _chemical_equilibrium_uses_eos_activity(diagnostics):
+        return "eos_activity_failure", "eos_activity"
     return "unclassified_failure", "unknown"
+
+
+def _chemical_equilibrium_assistance_summary(diagnostics: Mapping[str, Any]) -> dict[str, Any]:
+    initialization = diagnostics.get("initialization", {})
+    if not isinstance(initialization, Mapping):
+        initialization = {}
+    continuation = diagnostics.get("continuation", {})
+    if not isinstance(continuation, Mapping):
+        continuation = {}
+    corrector = continuation.get("physical_proof_corrector", {})
+    if not isinstance(corrector, Mapping):
+        corrector = {}
+
+    mechanisms: list[str] = []
+    uses_eos_activity = _chemical_equilibrium_uses_eos_activity(diagnostics)
+    caller_seed_escalated = bool(initialization.get("caller_seed_escalated", False))
+    direct_final_proof_accepted = continuation.get("direct_final_proof_accepted") is True
+    corrector_attempted = corrector.get("attempted") is True
+    corrector_accepted = corrector.get("accepted") is True
+    stage_count = int(continuation.get("stage_count") or 0)
+    activity_stage_count = len(_diagnostic_sequence(continuation.get("activity_lambda_values")))
+    homotopy_stage_count = 0 if uses_eos_activity else stage_count
+
+    if caller_seed_escalated:
+        mechanisms.append("caller_seed_escalation")
+        mechanisms.append("ce_owned_initialization")
+    if uses_eos_activity:
+        mechanisms.append("eos_activity_continuation")
+    elif not direct_final_proof_accepted and stage_count > 1:
+        mechanisms.append("homotopy_continuation")
+    if corrector_attempted:
+        mechanisms.append("physical_proof_corrector")
+    if direct_final_proof_accepted and not uses_eos_activity:
+        mechanisms.append("direct_final_proof")
+    if not mechanisms:
+        mechanisms.append("unassisted_final_proof" if diagnostics.get("accepted") is True else "unclassified_assistance")
+
+    if uses_eos_activity:
+        level = "eos_activity_assisted"
+    elif caller_seed_escalated:
+        level = "caller_seed_escalated"
+    elif corrector_accepted:
+        level = "proof_corrected"
+    elif not direct_final_proof_accepted and stage_count > 1:
+        level = "homotopy_assisted"
+    elif direct_final_proof_accepted:
+        level = "direct"
+    else:
+        level = "rejected"
+
+    if corrector_accepted:
+        final_proof_source = "physical_proof_corrector"
+    elif uses_eos_activity:
+        final_proof_source = "eos_activity_continuation_final_proof"
+    elif direct_final_proof_accepted:
+        final_proof_source = "direct_final_proof"
+    elif continuation.get("final_proof_status"):
+        final_proof_source = str(continuation["final_proof_status"])
+    else:
+        final_proof_source = "none"
+
+    return {
+        "level": level,
+        "mechanisms": tuple(mechanisms),
+        "seed_source": str(initialization.get("seed_source", diagnostics.get("seed_source", ""))),
+        "accepted_seed_source": str(initialization.get("accepted_seed_source", "")),
+        "final_proof_source": final_proof_source,
+        "stage_count": stage_count,
+        "homotopy_stage_count": homotopy_stage_count,
+        "activity_stage_count": activity_stage_count,
+        "physical_proof_corrector_attempted": corrector_attempted,
+        "physical_proof_corrector_accepted": corrector_accepted,
+        "caller_seed_attempted": bool(initialization.get("caller_seed_attempted", False)),
+        "caller_seed_escalated": caller_seed_escalated,
+        "activity_model": str(diagnostics.get("activity_model", "mole_fraction_activity")),
+        "activity_derivative_backend": str(diagnostics.get("activity_derivative_backend", "")),
+    }
 
 
 def chemical_equilibrium_result_diagnostics(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -308,6 +385,8 @@ def chemical_equilibrium_result_diagnostics(payload: Mapping[str, Any]) -> dict[
     failure_class, failure_gate = _chemical_equilibrium_failure_class(diagnostics)
     diagnostics["failure_class"] = failure_class
     diagnostics["failure_gate"] = failure_gate
+    diagnostics["failure_context"] = "eos_activity" if _chemical_equilibrium_uses_eos_activity(diagnostics) else ""
+    diagnostics["assistance_summary"] = _chemical_equilibrium_assistance_summary(diagnostics)
     return diagnostics
 
 

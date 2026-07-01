@@ -261,6 +261,30 @@ def test_standalone_ce_gate_requires_retained_robustness_diagnostics() -> None:
     assert robustness["failure_classes"] == ["accepted"]
 
 
+def test_standalone_ce_gate_reports_retained_artifact_review_digest() -> None:
+    checker = _checker_module()
+    payload = json.loads(MEA_RETAINED_SUMMARY_PATH.read_text(encoding="utf-8"))
+
+    evidence = checker._mea_retained_artifact_evidence_from_payload(payload)
+    digest = evidence["artifact_review_digest"]
+
+    assert digest["status"] == "complete"
+    assert digest["artifact_count"] >= 2
+    summary_digest = digest["artifacts"][MEA_RETAINED_SUMMARY_PATH.relative_to(REPO_ROOT).as_posix()]
+    assert summary_digest["kind"] == "json"
+    assert summary_digest["sha256"]
+    assert summary_digest["top_level_keys"] == sorted(payload)
+
+    robustness_artifact = payload["robustness_diagnostics"]["artifact"]
+    robustness_digest = digest["artifacts"][robustness_artifact]
+    assert robustness_digest["kind"] == "csv"
+    assert robustness_digest["row_count"] == payload["robustness_diagnostics"]["state_point_count"]
+    assert "failure_class" in robustness_digest["columns"]
+    assert "reaction_stationarity_inf_norm" in robustness_digest["numeric_extrema"]
+    stationarity = robustness_digest["numeric_extrema"]["reaction_stationarity_inf_norm"]
+    assert stationarity["max"] <= checker.MEA_STRICT_TOLERANCES["affinity_abs"]
+
+
 def test_standalone_ce_gate_rejects_unclassified_retained_failures() -> None:
     checker = _checker_module()
     payload = json.loads(MEA_RETAINED_SUMMARY_PATH.read_text(encoding="utf-8"))

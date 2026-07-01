@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
 import json
 import math
 import os
@@ -490,6 +492,85 @@ def _as_float(payload: Mapping[str, Any], key: str, default: float = math.inf) -
         return default
 
 
+def _repo_artifact_path(path_text: str) -> Path:
+    candidate = (REPO_ROOT / path_text).resolve()
+    if not candidate.is_relative_to(REPO_ROOT):
+        raise ValueError(f"artifact path escapes repo root: {path_text}")
+    return candidate
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _json_artifact_digest(path_text: str, payload: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    path = _repo_artifact_path(path_text)
+    data = dict(payload) if payload is not None else json.loads(path.read_text(encoding="utf-8"))
+    return {
+        "kind": "json",
+        "path": path_text,
+        "sha256": _sha256_file(path),
+        "top_level_keys": sorted(data),
+    }
+
+
+def _csv_artifact_digest(path_text: str) -> dict[str, Any]:
+    path = _repo_artifact_path(path_text)
+    row_count = 0
+    columns: list[str] = []
+    extrema: dict[str, dict[str, float]] = {}
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        columns = list(reader.fieldnames or [])
+        for row in reader:
+            row_count += 1
+            for key, value in row.items():
+                if value in (None, ""):
+                    continue
+                try:
+                    number = float(value)
+                except ValueError:
+                    continue
+                stats = extrema.setdefault(key, {"min": number, "max": number})
+                stats["min"] = min(stats["min"], number)
+                stats["max"] = max(stats["max"], number)
+    return {
+        "kind": "csv",
+        "path": path_text,
+        "sha256": _sha256_file(path),
+        "row_count": row_count,
+        "columns": columns,
+        "numeric_extrema": extrema,
+    }
+
+
+def _mea_retained_artifact_review_digest(payload: Mapping[str, Any]) -> dict[str, Any]:
+    artifacts: dict[str, dict[str, Any]] = {
+        REQUIRED_MEA_RETAINED_SUMMARY_PATH: _json_artifact_digest(REQUIRED_MEA_RETAINED_SUMMARY_PATH, payload)
+    }
+    for section_name in (
+        "pointwise_unassisted",
+        "ce_owned_continuation_trace",
+        "robustness_diagnostics",
+        "shuffled_subset",
+    ):
+        section = payload.get(section_name)
+        if not isinstance(section, Mapping):
+            continue
+        artifact = section.get("artifact")
+        if isinstance(artifact, str) and artifact:
+            artifacts[artifact] = _csv_artifact_digest(artifact)
+    return {
+        "status": "complete",
+        "artifact_count": len(artifacts),
+        "artifacts": artifacts,
+    }
+
+
 def _mea_artifact_strict_gates_pass(payload: Mapping[str, Any]) -> bool:
     pointwise = dict(payload.get("pointwise_unassisted") or {})
     return (
@@ -592,6 +673,12 @@ def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
             blockers.append("mea_retained_summary_robustness_accepted_count_mismatch")
     if payload.get("load_error"):
         blockers.append("mea_retained_summary_fixture_missing")
+    try:
+        digest = _mea_retained_artifact_review_digest(payload)
+    except (OSError, ValueError, json.JSONDecodeError):
+        digest = {"status": "blocked"}
+    if digest.get("status") != "complete" or int(digest.get("artifact_count") or 0) < 2:
+        blockers.append("mea_retained_summary_artifact_review_digest_missing")
     return sorted(set(blockers))
 
 
@@ -624,6 +711,7 @@ def _mea_retained_artifact_evidence_from_payload(payload: dict[str, Any]) -> dic
         "pointwise_unassisted": pointwise,
         "continuation_evidence": continuation,
         "robustness_diagnostics": robustness,
+        "artifact_review_digest": _mea_retained_artifact_review_digest(payload),
         "shuffled_subset": shuffled_subset,
     }
 

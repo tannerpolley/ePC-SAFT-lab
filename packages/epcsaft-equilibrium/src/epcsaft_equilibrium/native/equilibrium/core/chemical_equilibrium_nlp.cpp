@@ -1115,6 +1115,98 @@ bool trace_finished_final_lambda_one(const ContinuationTraceResult& trace) {
         && !final_stage.solve.variables.empty();
 }
 
+std::string activity_continuation_stage_id(double activity_lambda, int attempt_index) {
+    if (std::abs(activity_lambda) <= 1.0e-12) {
+        return "activity_lambda_0";
+    }
+    if (std::abs(activity_lambda - 0.5) <= 1.0e-12) {
+        return "activity_lambda_half";
+    }
+    if (std::abs(activity_lambda - 1.0) <= 1.0e-12) {
+        return "activity_lambda_1";
+    }
+    std::ostringstream stream;
+    stream << "activity_lambda_" << attempt_index;
+    return stream.str();
+}
+
+ContinuationTraceResult run_adaptive_eos_activity_continuation(
+    const ChemicalEquilibriumNlpInput& seeded_input,
+    const epcsaft::native::equilibrium::ActivationPlan& plan,
+    const epcsaft::native::equilibrium::VariableLayout& layout,
+    const IpoptSolveOptions& options,
+    double minimum_step,
+    int maximum_stage_count,
+    std::vector<double>& accepted_activity_steps,
+    std::vector<double>& rejected_activity_steps
+) {
+    ContinuationTraceResult trace;
+    ContinuationState current_state;
+    current_state.variables = log_amounts_from_physical_amounts(seeded_input.initial_amounts);
+    double current_lambda = 0.0;
+    double step = 0.5;
+    bool solved_initial_stage = false;
+
+    for (int attempt = 0; attempt < maximum_stage_count; ++attempt) {
+        const double target_lambda = solved_initial_stage
+            ? std::min(1.0, current_lambda + step)
+            : 0.0;
+        const bool final_proof = std::abs(target_lambda - 1.0) <= 1.0e-12;
+        ContinuationStageSpec stage = ce_activity_homotopy_stage(
+            seeded_input,
+            plan,
+            layout,
+            options,
+            activity_continuation_stage_id(target_lambda, attempt),
+            target_lambda,
+            final_proof
+        );
+        ContinuationTraceResult stage_trace = run_continuation_plan({stage}, current_state);
+        if (stage_trace.trace.empty()) {
+            trace.final_proof_status = "rejected";
+            trace.rejection_stage_id = stage.stage_id;
+            break;
+        }
+
+        const ContinuationStageResult& stage_result = stage_trace.trace.back();
+        trace.trace.push_back(stage_result);
+        if (stage_result.final_proof) {
+            trace.final_stage_id = stage_result.stage_id;
+            trace.final_proof_status = stage_result.accepted ? "accepted" : "rejected";
+        }
+
+        if (stage_result.accepted) {
+            accepted_activity_steps.push_back(target_lambda);
+            current_state = stage_result.continuation_state;
+            trace.continuation_state = current_state;
+            current_lambda = target_lambda;
+            solved_initial_stage = true;
+            trace.rejection_stage_id.clear();
+            if (final_proof) {
+                break;
+            }
+            continue;
+        }
+
+        rejected_activity_steps.push_back(target_lambda);
+        trace.rejection_stage_id = stage_result.stage_id;
+        if (!solved_initial_stage) {
+            break;
+        }
+        step *= 0.5;
+        if (step < minimum_step) {
+            break;
+        }
+        trace.rejection_stage_id.clear();
+    }
+
+    if (trace.final_proof_status == "pending") {
+        trace.final_proof_status = trace.rejection_stage_id.empty() ? "no_final_stage" : "rejected";
+    }
+    trace.accepted = trace.rejection_stage_id.empty() && trace.final_proof_status == "accepted";
+    return trace;
+}
+
 ChemicalEquilibriumNlpResult solve_eos_activity_continuation_from_seed(
     const ChemicalEquilibriumNlpInput& seeded_input,
     const epcsaft::native::equilibrium::ActivationPlan& plan,
@@ -1128,40 +1220,20 @@ ChemicalEquilibriumNlpResult solve_eos_activity_continuation_from_seed(
             chemical_equilibrium_input_with_log_k_lambda(seeded_input, 1.0),
             1.0
         );
-    const std::vector<double> activity_lambdas = {0.0, 0.5, 1.0};
-
-    std::vector<ContinuationStageSpec> stages;
-    stages.push_back(ce_activity_homotopy_stage(
+    constexpr double kActivityMinimumStep = 0.125;
+    constexpr int kActivityMaximumStageCount = 20;
+    std::vector<double> accepted_activity_steps;
+    std::vector<double> rejected_activity_steps;
+    ContinuationTraceResult trace = run_adaptive_eos_activity_continuation(
         seeded_input,
         plan,
         layout,
         options,
-        "activity_lambda_0",
-        activity_lambdas[0],
-        false
-    ));
-    stages.push_back(ce_activity_homotopy_stage(
-        seeded_input,
-        plan,
-        layout,
-        options,
-        "activity_lambda_half",
-        activity_lambdas[1],
-        false
-    ));
-    stages.push_back(ce_activity_homotopy_stage(
-        seeded_input,
-        plan,
-        layout,
-        options,
-        "activity_lambda_1",
-        activity_lambdas[2],
-        true
-    ));
-
-    ContinuationState initial_state;
-    initial_state.variables = log_amounts_from_physical_amounts(seeded_input.initial_amounts);
-    ContinuationTraceResult trace = run_continuation_plan(stages, initial_state);
+        kActivityMinimumStep,
+        kActivityMaximumStageCount,
+        accepted_activity_steps,
+        rejected_activity_steps
+    );
     ChemicalEquilibriumNlpResult out = result_from_homotopy_trace(
         true_input,
         plan,
@@ -1171,8 +1243,13 @@ ChemicalEquilibriumNlpResult solve_eos_activity_continuation_from_seed(
         reaction_stationarity_tolerance
     );
     out.continuation_parameter_name = "activity_lambda";
-    out.continuation_lambdas = activity_lambdas;
-    out.activity_continuation_lambdas = activity_lambdas;
+    out.continuation_lambdas = accepted_activity_steps;
+    out.activity_continuation_lambdas = accepted_activity_steps;
+    out.activity_continuation_mode = "adaptive_bisection";
+    out.activity_continuation_minimum_step = kActivityMinimumStep;
+    out.activity_continuation_maximum_stage_count = kActivityMaximumStageCount;
+    out.accepted_activity_steps = accepted_activity_steps;
+    out.rejected_activity_steps = rejected_activity_steps;
     if (!out.accepted && trace_finished_final_lambda_one(trace)) {
         out.proof_corrector = run_physical_proof_corrector(
             true_input,
@@ -1199,12 +1276,21 @@ void record_seed_attempt_diagnostics(
     ChemicalEquilibriumNlpResult& result,
     bool caller_seed_attempted,
     bool caller_seed_final_proof_accepted,
-    bool caller_seed_escalated
+    bool caller_seed_escalated,
+    const std::string& caller_seed_rejection_reason = "",
+    bool caller_seed_exception_observed = false,
+    const std::string& caller_seed_exception_message = ""
 ) {
     result.caller_seed_attempted = caller_seed_attempted;
     result.caller_seed_final_proof_attempted = caller_seed_attempted;
     result.caller_seed_final_proof_accepted = caller_seed_attempted && caller_seed_final_proof_accepted;
     result.caller_seed_escalated = caller_seed_attempted && caller_seed_escalated;
+    result.caller_seed_rejection_source = result.caller_seed_escalated ? "caller_initial_amounts" : "";
+    result.caller_seed_rejection_reason = result.caller_seed_escalated ? caller_seed_rejection_reason : "";
+    result.caller_seed_exception_observed = result.caller_seed_escalated && caller_seed_exception_observed;
+    result.caller_seed_exception_message = result.caller_seed_exception_observed
+        ? caller_seed_exception_message
+        : "";
     result.accepted_seed_source = result.accepted ? result.seed_source : "";
     result.seed_attempt_order.clear();
     if (caller_seed_attempted) {
@@ -1226,6 +1312,9 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
     double reaction_stationarity_tolerance
 ) {
     if (input.eos_activity_enabled) {
+        std::string caller_seed_rejection_reason;
+        bool caller_seed_exception_observed = false;
+        std::string caller_seed_exception_message;
         if (!input.initial_amounts.empty()) {
             try {
                 ChemicalEquilibriumNlpResult out = solve_eos_activity_continuation_from_seed(
@@ -1244,7 +1333,11 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
                     record_seed_attempt_diagnostics(out, true, true, false);
                     return out;
                 }
-            } catch (const std::exception&) {
+                caller_seed_rejection_reason = "final_proof_rejected";
+            } catch (const std::exception& exc) {
+                caller_seed_rejection_reason = "caller_seed_exception";
+                caller_seed_exception_observed = true;
+                caller_seed_exception_message = exc.what();
                 // A positive caller seed is only a hint; CE-owned initialization remains authoritative.
             }
         }
@@ -1271,12 +1364,23 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
         out.feasible_initialization = feasible;
         out.direct_final_proof_attempted = false;
         out.direct_final_proof_accepted = false;
-        record_seed_attempt_diagnostics(out, !input.initial_amounts.empty(), false, !input.initial_amounts.empty());
+        record_seed_attempt_diagnostics(
+            out,
+            !input.initial_amounts.empty(),
+            false,
+            !input.initial_amounts.empty(),
+            caller_seed_rejection_reason.empty() ? "final_proof_rejected" : caller_seed_rejection_reason,
+            caller_seed_exception_observed,
+            caller_seed_exception_message
+        );
         return out;
     }
 
     bool caller_seed_attempted = false;
     bool caller_seed_final_proof_accepted = false;
+    std::string caller_seed_rejection_reason;
+    bool caller_seed_exception_observed = false;
+    std::string caller_seed_exception_message;
     if (!input.initial_amounts.empty()) {
         caller_seed_attempted = true;
         try {
@@ -1321,8 +1425,12 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
                 record_seed_attempt_diagnostics(out, true, true, false);
                 return out;
             }
-        } catch (const std::exception&) {
+            caller_seed_rejection_reason = "final_proof_rejected";
+        } catch (const std::exception& exc) {
             caller_seed_final_proof_accepted = false;
+            caller_seed_rejection_reason = "caller_seed_exception";
+            caller_seed_exception_observed = true;
+            caller_seed_exception_message = exc.what();
         }
     }
 
@@ -1378,7 +1486,10 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
             direct,
             caller_seed_attempted,
             caller_seed_final_proof_accepted,
-            caller_seed_attempted && !caller_seed_final_proof_accepted
+            caller_seed_attempted && !caller_seed_final_proof_accepted,
+            caller_seed_rejection_reason.empty() ? "final_proof_rejected" : caller_seed_rejection_reason,
+            caller_seed_exception_observed,
+            caller_seed_exception_message
         );
         return direct;
     }
@@ -1440,7 +1551,10 @@ ChemicalEquilibriumNlpResult solve_activated_chemical_equilibrium_nlp(
         out,
         caller_seed_attempted,
         caller_seed_final_proof_accepted,
-        caller_seed_attempted && !caller_seed_final_proof_accepted
+        caller_seed_attempted && !caller_seed_final_proof_accepted,
+        caller_seed_rejection_reason.empty() ? "final_proof_rejected" : caller_seed_rejection_reason,
+        caller_seed_exception_observed,
+        caller_seed_exception_message
     );
     return out;
 }

@@ -80,6 +80,10 @@ struct ChemicalEquilibriumNlpResult {
     bool caller_seed_final_proof_attempted = false;
     bool caller_seed_final_proof_accepted = false;
     bool caller_seed_escalated = false;
+    std::string caller_seed_rejection_source;
+    std::string caller_seed_rejection_reason;
+    bool caller_seed_exception_observed = false;
+    std::string caller_seed_exception_message;
     FeasibleInitializationResult feasible_initialization;
     bool direct_final_proof_attempted = false;
     bool direct_final_proof_accepted = false;
@@ -88,6 +92,11 @@ struct ChemicalEquilibriumNlpResult {
     std::string continuation_parameter_name = "log_equilibrium_constants_lambda";
     std::vector<double> continuation_lambdas;
     std::vector<double> activity_continuation_lambdas;
+    std::string activity_continuation_mode;
+    double activity_continuation_minimum_step = 0.0;
+    int activity_continuation_maximum_stage_count = 0;
+    std::vector<double> accepted_activity_steps;
+    std::vector<double> rejected_activity_steps;
 };
 
 class HomogeneousChemicalEquilibriumNlp final : public NlpProblem {

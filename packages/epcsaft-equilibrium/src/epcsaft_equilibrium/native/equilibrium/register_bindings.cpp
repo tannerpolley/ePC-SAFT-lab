@@ -1305,6 +1305,10 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     initialization["caller_seed_final_proof_attempted"] = result.caller_seed_final_proof_attempted;
     initialization["caller_seed_final_proof_accepted"] = result.caller_seed_final_proof_accepted;
     initialization["caller_seed_escalated"] = result.caller_seed_escalated;
+    initialization["caller_seed_rejection_source"] = result.caller_seed_rejection_source;
+    initialization["caller_seed_rejection_reason"] = result.caller_seed_rejection_reason;
+    initialization["caller_seed_exception_observed"] = result.caller_seed_exception_observed;
+    initialization["caller_seed_exception_message"] = result.caller_seed_exception_message;
     initialization["source_oracle_initial_amounts"] = result.source_oracle_initial_amounts;
     initialization["feasible_initialization"] =
         feasible_initialization_result_to_dict(result.feasible_initialization);
@@ -1325,6 +1329,13 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     continuation["final_activity_lambda"] = result.activity_continuation_lambdas.empty()
         ? 0.0
         : result.activity_continuation_lambdas.back();
+    py::dict activity_continuation_policy;
+    activity_continuation_policy["mode"] = result.activity_continuation_mode;
+    activity_continuation_policy["minimum_step"] = result.activity_continuation_minimum_step;
+    activity_continuation_policy["maximum_stage_count"] = result.activity_continuation_maximum_stage_count;
+    continuation["activity_continuation_policy"] = activity_continuation_policy;
+    continuation["accepted_activity_steps"] = result.accepted_activity_steps;
+    continuation["rejected_activity_steps"] = result.rejected_activity_steps;
     continuation["stage_count"] = static_cast<int>(result.continuation.trace.size());
     continuation["trace"] = continuation_trace_to_list(result.continuation.trace);
     out["continuation"] = continuation;

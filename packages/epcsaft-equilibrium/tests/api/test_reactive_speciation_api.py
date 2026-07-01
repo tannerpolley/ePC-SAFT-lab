@@ -461,6 +461,10 @@ def test_reactive_speciation_bad_positive_seed_escalates_to_ce_owned_initializat
     assert initialization["caller_seed_final_proof_attempted"] is True
     assert initialization["caller_seed_final_proof_accepted"] is False
     assert initialization["caller_seed_escalated"] is True
+    assert initialization["caller_seed_rejection_source"] == "caller_initial_amounts"
+    assert initialization["caller_seed_rejection_reason"] == "caller_seed_exception"
+    assert initialization["caller_seed_exception_observed"] is True
+    assert initialization["caller_seed_exception_message"]
     assert initialization["source_oracle_initial_amounts"] is False
     assert result.diagnostics["balance_inf_norm"] < 1.0e-8
     assert result.diagnostics["reaction_stationarity_inf_norm"] < 1.0e-6
@@ -521,7 +525,7 @@ def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: 
 
 
 @pytest.mark.parametrize(
-    ("payload_updates", "expected_failure_class"),
+    ("payload_updates", "expected_failure_class", "expected_failure_gate"),
     [
         (
             {
@@ -535,6 +539,7 @@ def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: 
                 },
             },
             "infeasible_conservation",
+            "initialization",
         ),
         (
             {
@@ -548,6 +553,7 @@ def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: 
                 },
             },
             "initialization_failure",
+            "initialization",
         ),
         (
             {
@@ -560,6 +566,7 @@ def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: 
                 },
             },
             "ipopt_failure",
+            "ipopt",
         ),
         (
             {
@@ -580,9 +587,51 @@ def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: 
                 },
             },
             "proof_correction_failure",
+            "physical_proof_corrector",
         ),
-        ({"reaction_stationarity_inf_norm": 1.0e-3}, "stationarity_failure"),
-        ({"balance_inf_norm": 1.0e-3, "balance_residuals": [1.0e-3]}, "balance_failure"),
+        ({"reaction_stationarity_inf_norm": 1.0e-3}, "stationarity_failure", "reaction_stationarity"),
+        ({"balance_inf_norm": 1.0e-3, "balance_residuals": [1.0e-3]}, "balance_failure", "balance"),
+        (
+            {
+                "activity_model": "eos_x_gamma",
+                "activity_derivative_backend": "cppad_phase_state_activity_coefficient",
+                "reaction_stationarity_inf_norm": 1.0e-3,
+            },
+            "stationarity_failure",
+            "reaction_stationarity",
+        ),
+        (
+            {
+                "activity_model": "eos_x_phi",
+                "activity_derivative_backend": "cppad_phase_state_fugacity",
+                "balance_inf_norm": 1.0e-3,
+                "balance_residuals": [1.0e-3],
+            },
+            "balance_failure",
+            "balance",
+        ),
+        (
+            {
+                "activity_model": "eos_x_gamma",
+                "activity_derivative_backend": "cppad_phase_state_activity_coefficient",
+                "continuation": {
+                    "direct_final_proof_attempted": True,
+                    "direct_final_proof_accepted": False,
+                    "final_proof_status": "rejected",
+                    "final_lambda": 1.0,
+                    "lambda_values": [1.0],
+                    "stage_count": 0,
+                    "trace": [],
+                    "physical_proof_corrector": {
+                        "attempted": True,
+                        "accepted": False,
+                        "status": "rejected_iteration_limit",
+                    },
+                },
+            },
+            "proof_correction_failure",
+            "physical_proof_corrector",
+        ),
         (
             {
                 "activity_model": "eos_x_gamma",
@@ -595,7 +644,16 @@ def test_reactive_speciation_rejects_reactive_phase_route_evidence(monkeypatch: 
                     "hessian_backend": "cppad_phase_state_activity_coefficient",
                 },
             },
+            "ipopt_failure",
+            "ipopt",
+        ),
+        (
+            {
+                "activity_model": "eos_x_gamma",
+                "activity_derivative_backend": "cppad_phase_state_activity_coefficient",
+            },
             "eos_activity_failure",
+            "eos_activity",
         ),
     ],
 )
@@ -603,6 +661,7 @@ def test_reactive_speciation_classifies_native_failure_gate(
     monkeypatch: pytest.MonkeyPatch,
     payload_updates: dict[str, object],
     expected_failure_class: str,
+    expected_failure_gate: str,
 ) -> None:
     def merge_payload(base: dict[str, object], updates: dict[str, object]) -> dict[str, object]:
         for key, value in updates.items():
@@ -631,8 +690,114 @@ def test_reactive_speciation_classifies_native_failure_gate(
     diagnostics = exc_info.value.diagnostics
     payload = fake_solve()
     assert diagnostics["failure_class"] == expected_failure_class
-    assert diagnostics["failure_gate"]
+    assert diagnostics["failure_gate"] == expected_failure_gate
+    if str(payload.get("activity_model", "")).startswith("eos_"):
+        assert diagnostics["failure_context"] == "eos_activity"
     assert diagnostics["solver_status"] == payload["solver_diagnostics"]["solver_status"]
+
+
+@pytest.mark.parametrize(
+    ("payload_updates", "expected_level", "expected_mechanisms"),
+    [
+        ({}, "direct", ("direct_final_proof",)),
+        (
+            {
+                "initialization": {
+                    "seed_source": "max_min_feasible_interior",
+                    "accepted_seed_source": "max_min_feasible_interior",
+                    "seed_attempt_order": ["caller_initial_amounts", "max_min_feasible_interior"],
+                    "caller_seed_attempted": True,
+                    "caller_seed_final_proof_attempted": True,
+                    "caller_seed_final_proof_accepted": False,
+                    "caller_seed_escalated": True,
+                    "source_oracle_initial_amounts": False,
+                    "feasible_initialization": {"accepted": True, "margin": 0.5},
+                },
+            },
+            "caller_seed_escalated",
+            ("caller_seed_escalation", "ce_owned_initialization", "direct_final_proof"),
+        ),
+        (
+            {
+                "continuation": {
+                    "direct_final_proof_attempted": True,
+                    "direct_final_proof_accepted": False,
+                    "final_proof_status": "accepted",
+                    "final_lambda": 1.0,
+                    "lambda_values": [0.0, 0.5, 1.0],
+                    "stage_count": 3,
+                    "trace": [
+                        {"stage_id": "lambda_0", "parameter_value": 0.0, "final_proof": False},
+                        {"stage_id": "lambda_half", "parameter_value": 0.5, "final_proof": False},
+                        {"stage_id": "lambda_1", "parameter_value": 1.0, "final_proof": True},
+                    ],
+                    "physical_proof_corrector": {
+                        "attempted": True,
+                        "accepted": True,
+                        "status": "accepted",
+                    },
+                },
+            },
+            "proof_corrected",
+            ("homotopy_continuation", "physical_proof_corrector"),
+        ),
+        (
+            {
+                "activity_model": "eos_x_gamma",
+                "activity_derivative_backend": "cppad_phase_state_activity_coefficient",
+                "continuation": {
+                    "direct_final_proof_attempted": False,
+                    "direct_final_proof_accepted": False,
+                    "final_proof_status": "accepted",
+                    "final_lambda": 1.0,
+                    "activity_lambda_values": [0.0, 0.5, 1.0],
+                    "final_activity_lambda": 1.0,
+                    "stage_count": 3,
+                    "trace": [
+                        {"stage_id": "activity_lambda_0", "parameter_value": 0.0, "final_proof": False},
+                        {"stage_id": "activity_lambda_half", "parameter_value": 0.5, "final_proof": False},
+                        {"stage_id": "activity_lambda_1", "parameter_value": 1.0, "final_proof": True},
+                    ],
+                },
+            },
+            "eos_activity_assisted",
+            ("eos_activity_continuation",),
+        ),
+    ],
+)
+def test_reactive_speciation_reports_assistance_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    payload_updates: dict[str, object],
+    expected_level: str,
+    expected_mechanisms: tuple[str, ...],
+) -> None:
+    def merge_payload(base: dict[str, object], updates: dict[str, object]) -> dict[str, object]:
+        for key, value in updates.items():
+            if isinstance(value, dict) and isinstance(base.get(key), dict):
+                merge_payload(base[key], value)  # type: ignore[arg-type]
+            else:
+                base[key] = value
+        return base
+
+    def fake_solve(*_args, **_kwargs):
+        return merge_payload(_native_payload(), payload_updates)
+
+    monkeypatch.setattr(workflows, "solve_chemical_equilibrium_nlp_activation", fake_solve)
+
+    result = epcsaft_equilibrium.reactive_speciation(
+        species=_species(),
+        reactions=_reaction(),
+        feed_amounts={"A": 1.0, "B": 0.0},
+        equilibrium_constants=[_constant()],
+        initial_amounts=[0.5, 0.5],
+    )
+
+    summary = result.diagnostics["assistance_summary"]
+    assert summary["level"] == expected_level
+    assert tuple(summary["mechanisms"]) == expected_mechanisms
+    assert summary["seed_source"]
+    assert summary["final_proof_source"]
+    assert isinstance(summary["stage_count"], int)
 
 
 def test_reactive_speciation_rejects_non_mole_fraction_activity_until_supported() -> None:

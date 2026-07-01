@@ -5,6 +5,7 @@ import math
 import epcsaft
 import numpy as np
 import pytest
+from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.chemical_equilibrium import (
     ChemicalReaction,
@@ -14,7 +15,6 @@ from epcsaft_equilibrium.chemical_equilibrium import (
     build_standard_state_registry,
     compile_reaction_set,
 )
-from epcsaft.state.native_adapter import ePCSAFTMixture
 
 _core = extension_native_core()
 
@@ -244,6 +244,11 @@ def test_native_ce_eos_x_gamma_continues_from_ideal_to_full_activity() -> None:
     assert continuation["parameter_name"] == "activity_lambda"
     assert continuation["activity_lambda_values"] == pytest.approx([0.0, 0.5, 1.0])
     assert continuation["final_activity_lambda"] == pytest.approx(1.0)
+    assert continuation["activity_continuation_policy"]["mode"] == "adaptive_bisection"
+    assert continuation["activity_continuation_policy"]["minimum_step"] == pytest.approx(0.125)
+    assert continuation["activity_continuation_policy"]["maximum_stage_count"] == 20
+    assert continuation["accepted_activity_steps"] == pytest.approx([0.0, 0.5, 1.0])
+    assert continuation["rejected_activity_steps"] == []
     assert continuation["final_stage_id"] == "activity_lambda_1"
     assert continuation["trace"][-1]["final_proof"] is True
     assert all(stage["final_proof"] is False for stage in continuation["trace"][:-1])
