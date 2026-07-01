@@ -1518,6 +1518,29 @@ py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     return out;
 }
 
+py::dict electrolyte_reduced_nlp_probe_to_dict(
+    const epcsaft::native::equilibrium_nlp::ElectrolyteReducedNlpProbe& result
+) {
+    py::dict out;
+    out["problem_name"] = result.problem_name;
+    out["hessian_backend"] = result.hessian_backend;
+    out["variable_model"] = result.variable_model;
+    out["variable_count"] = result.variable_count;
+    out["physical_variable_count"] = result.physical_variable_count;
+    out["objective"] = result.objective;
+    out["solver_variables"] = result.solver_variables;
+    out["physical_variables"] = result.physical_variables;
+    out["gradient"] = result.gradient;
+    out["constraints"] = result.constraints;
+    out["jacobian_rows"] = result.jacobian_rows;
+    out["jacobian_cols"] = result.jacobian_cols;
+    out["jacobian_values"] = result.jacobian_values;
+    out["hessian_rows"] = result.hessian_rows;
+    out["hessian_cols"] = result.hessian_cols;
+    out["hessian_values"] = result.hessian_values;
+    return out;
+}
+
 std::string phase_kind_name(int phase_kind) {
     if (phase_kind == 0) {
         return "liquid";
@@ -1995,6 +2018,11 @@ py::dict neutral_phase_discovery_to_dict(
         candidates.append(neutral_tpd_candidate_to_dict(candidate));
     }
     out["candidates"] = candidates;
+    py::list continuous_starts;
+    for (const auto& record : result.continuous_tpd_start_records) {
+        continuous_starts.append(neutral_tpd_candidate_to_dict(record));
+    }
+    out["continuous_tpd_start_records"] = continuous_starts;
     out["phase_set_records"] = phase_discovery_records_to_list(result);
     return out;
 }
@@ -2129,9 +2157,20 @@ py::dict electrolyte_stage_iii_refinement_to_dict(
     seed["native_binding"] = result.source_native_binding;
     seed["seed_name"] = result.seed_name;
     seed["selected_candidate_count"] = result.selected_candidate_count;
-    seed["selected_phase_kinds"] = result.selected_phase_kinds;
-    seed["selected_phase_fractions"] = result.selected_phase_fractions;
-    seed["selected_phase_compositions"] = result.selected_phase_compositions;
+    const auto& stage_ii = result.held2_discovery.tpd_discovery;
+    seed["selected_phase_kinds"] = stage_ii.held_stage_ii_replay_phase_kinds.empty()
+        ? result.selected_phase_kinds
+        : stage_ii.held_stage_ii_replay_phase_kinds;
+    seed["selected_phase_fractions"] = stage_ii.held_stage_ii_replay_phase_fractions.empty()
+        ? result.selected_phase_fractions
+        : stage_ii.held_stage_ii_replay_phase_fractions;
+    seed["selected_phase_compositions"] = stage_ii.held_stage_ii_replay_phase_compositions.empty()
+        ? result.selected_phase_compositions
+        : stage_ii.held_stage_ii_replay_phase_compositions;
+    seed["stage_ii_replay_ready"] = stage_ii.held_stage_ii_replay_ready;
+    seed["stage_ii_replay_source"] = stage_ii.held_stage_ii_replay_source;
+    seed["stage_ii_replay_seed_name"] = stage_ii.held_stage_ii_replay_seed_name;
+    seed["stage_ii_replay_candidate_ranks"] = stage_ii.held_stage_ii_replay_candidate_ranks;
     out["seed_provenance"] = seed;
 
     py::dict residual;
@@ -2155,11 +2194,31 @@ py::dict electrolyte_stage_iii_refinement_to_dict(
     derivatives["hessian_backend"] = result.derivative_backend;
     derivatives["route_hessian_approximation"] = result.route_result.hessian_approximation;
     derivatives["route_hessian_backend"] = result.route_result.hessian_backend;
+    derivatives["profile_exact_hessian_gate"] = result.route_result.profile_exact_hessian_gate;
+    derivatives["born_ssm_ds_active_block_exact_hessian"] =
+        result.route_result.exact_hessian_available
+        && result.route_result.hessian_backend.find("projected_electrolyte") != std::string::npos;
     derivatives["exact_reduced_jacobian_available"] = result.exact_reduced_jacobian_available;
     derivatives["exact_reduced_hessian_available"] = result.exact_reduced_hessian_available;
     derivatives["jacobian_nonzero_count"] = result.jacobian_nonzero_count;
     derivatives["hessian_nonzero_count"] = result.hessian_nonzero_count;
     out["derivative_receipts"] = derivatives;
+
+    py::dict projected_route;
+    projected_route["enforced_in_solver"] =
+        result.route_result.problem_name == "electrolyte_stage_iii_projected_residual_refinement";
+    projected_route["problem_name"] = result.route_result.problem_name;
+    projected_route["equation_families"] = std::vector<std::string>{
+        "material_balance",
+        "pressure_equality",
+        "neutral_transfer",
+        "mean_ionic_transfer",
+        "phase_charge_balance",
+        "phase_distance",
+    };
+    projected_route["projected_charged_transfer"] = "mean_ionic_counterion_pairs";
+    projected_route["equation_labels"] = result.equation_labels;
+    out["projected_residual_route"] = projected_route;
 
     py::dict solver;
     solver["solver_backend"] = result.route_result.backend;
@@ -2227,17 +2286,24 @@ py::dict electrolyte_postsolve_certification_to_dict(
     charge_balance["phase_charge_residuals"] = result.phase_charge_residuals;
     charge_balance["max_phase_charge_residual"] = result.max_phase_charge_residual;
     charge_balance["phase_charge_tolerance"] = result.phase_charge_tolerance;
+    charge_balance["tolerance"] = result.phase_charge_tolerance;
     charge_balance["total_charge_residual"] = result.total_charge_residual;
     charge_balance["total_charge_tolerance"] = result.total_charge_tolerance;
     out["charge_balance"] = charge_balance;
 
     py::dict neutral_transfer;
+    neutral_transfer["status"] = status_label(
+        result.neutral_transfer_max_abs_residual <= result.neutral_transfer_tolerance
+    );
     neutral_transfer["species_labels"] = result.neutral_species_labels;
     neutral_transfer["residual_values"] = result.neutral_transfer_residuals;
     neutral_transfer["max_abs_residual"] = result.neutral_transfer_max_abs_residual;
     neutral_transfer["tolerance"] = result.neutral_transfer_tolerance;
 
     py::dict mean_ionic_transfer;
+    mean_ionic_transfer["status"] = status_label(
+        result.mean_ionic_transfer_max_abs_residual <= result.mean_ionic_transfer_tolerance
+    );
     mean_ionic_transfer["pair_labels"] = result.mean_ionic_pair_labels;
     mean_ionic_transfer["residual_values"] = result.mean_ionic_transfer_residuals;
     mean_ionic_transfer["max_abs_residual"] = result.mean_ionic_transfer_max_abs_residual;
@@ -2253,6 +2319,7 @@ py::dict electrolyte_postsolve_certification_to_dict(
     pressure["status"] = status_label(result.pressure_consistency_accepted);
     pressure["pressure_consistency_norm"] = result.pressure_consistency_norm;
     pressure["pressure_tolerance"] = result.pressure_tolerance;
+    pressure["tolerance"] = result.pressure_tolerance;
     out["pressure_consistency"] = pressure;
 
     py::dict phase_set;
@@ -2460,6 +2527,7 @@ py::dict selector_contract_to_dict(const epcsaft::native::equilibrium::SelectorC
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
+    out["applicable_proof_routes"] = contract.applicable_proof_routes;
     if (contract.has_activation_plan) {
         out["activation_compiler"] = contract.nlp_contract.activation_compiler;
         out["activation_plan"] = activation_plan_to_dict(contract.activation_plan);
@@ -2488,6 +2556,7 @@ void apply_selector_metadata(
     out["specified_temperature"] = contract.specified_temperature;
     out["specified_pressure"] = contract.specified_pressure;
     out["activation"] = activation_to_dict(contract.activation);
+    out["applicable_proof_routes"] = contract.applicable_proof_routes;
     if (contract.has_activation_plan) {
         out["activation_compiler"] = contract.nlp_contract.activation_compiler;
         out["activation_plan"] = activation_plan_to_dict(contract.activation_plan);
@@ -3694,6 +3763,106 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("candidate_mass_balance_tolerance"),
         py::arg("continuous_tpd_required") = true
     );
+    m.def("_native_electrolyte_bubble_t_reduced_nlp_probe", [](
+        const py::object& mixture,
+        double target_pressure,
+        const std::vector<double>& liquid_composition,
+        const std::vector<double>& charges,
+        const std::vector<double>& physical_variables,
+        double charge_constraint_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(
+            mixture,
+            "Electrolyte bubble-temperature reduced NLP probe"
+        );
+        return electrolyte_reduced_nlp_probe_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_bubble_t_reduced_nlp_probe(
+                args,
+                target_pressure,
+                liquid_composition,
+                charges,
+                physical_variables,
+                charge_constraint_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("target_pressure"),
+        py::arg("liquid_composition"),
+        py::arg("charges"),
+        py::arg("physical_variables"),
+        py::arg("charge_constraint_tolerance") = 1.0e-10
+    );
+    m.def("_native_electrolyte_bubble_t_route_result", [](
+        const py::object& mixture,
+        double target_pressure,
+        const std::vector<double>& liquid_composition,
+        const std::vector<double>& charges,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double phase_total_tolerance,
+        double pressure_tolerance,
+        double charge_tolerance,
+        double ln_fugacity_tolerance,
+        double phase_distance_tolerance,
+        const py::object& continuation_state,
+        const py::kwargs& kwargs
+    ) {
+        const add_args args = native_args_from_mixture_object(mixture, "Electrolyte bubble-temperature route result");
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                "proof",
+                iteration_history_limit
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        apply_ipopt_continuation_state(options, continuation_state);
+        py::dict out = neutral_two_phase_eos_route_result_to_dict(
+            epcsaft::native::equilibrium_nlp::solve_electrolyte_bubble_t_eos_route(
+                args,
+                target_pressure,
+                liquid_composition,
+                charges,
+                options,
+                phase_total_tolerance,
+                pressure_tolerance,
+                charge_tolerance,
+                ln_fugacity_tolerance,
+                phase_distance_tolerance
+            )
+        );
+        out["route"] = "electrolyte_bubble_temperature";
+        out["selector_family"] = "electrolyte_bubble_dew_boundary";
+        out["route_refinement_kind"] = "charge_constrained_projected_residual_temperature_boundary";
+        out["residual_derivative_backend"] = "cppad_phase_temperature_reduced_residual_constraints";
+        out["residual_exact_jacobian_available"] = true;
+        out["residual_exact_hessian_available"] = true;
+        out["production_exposed"] = false;
+        out["public_route_admission"] = "focused_validation_binding";
+        return out;
+    },
+        py::arg("mixture"),
+        py::arg("target_pressure"),
+        py::arg("liquid_composition"),
+        py::arg("charges"),
+        py::arg("max_iterations"),
+        py::arg("tolerance"),
+        py::arg("timeout_seconds"),
+        py::arg("hessian_mode"),
+        py::arg("iteration_history_limit"),
+        py::arg("phase_total_tolerance"),
+        py::arg("pressure_tolerance"),
+        py::arg("charge_tolerance"),
+        py::arg("ln_fugacity_tolerance"),
+        py::arg("phase_distance_tolerance"),
+        py::arg("continuation_state") = py::none()
+    );
     m.def("_native_electrolyte_tpd_phase_discovery", [](
         const py::object& mixture,
         double temperature,
@@ -3708,6 +3877,45 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const add_args args = native_args_from_mixture_object(mixture, "Electrolyte TPD phase discovery");
         return neutral_phase_discovery_to_dict(
             epcsaft::native::equilibrium_nlp::evaluate_electrolyte_tpd_phase_discovery(
+                args,
+                temperature,
+                target_pressure,
+                feed_composition,
+                charges,
+                phase_kinds,
+                charge_tolerance,
+                tpd_tolerance,
+                candidate_mass_balance_tolerance
+            )
+        );
+    },
+        py::arg("mixture"),
+        py::arg("temperature"),
+        py::arg("target_pressure"),
+        py::arg("feed_composition"),
+        py::arg("charges"),
+        py::arg("phase_kinds"),
+        py::arg("charge_tolerance"),
+        py::arg("tpd_tolerance"),
+        py::arg("candidate_mass_balance_tolerance")
+    );
+    m.def("_native_electrolyte_held2_continuous_tpd_minimizer", [](
+        const py::object& mixture,
+        double temperature,
+        double target_pressure,
+        const std::vector<double>& feed_composition,
+        const std::vector<double>& charges,
+        const std::vector<int>& phase_kinds,
+        double charge_tolerance,
+        double tpd_tolerance,
+        double candidate_mass_balance_tolerance
+    ) {
+        const add_args args = native_args_from_mixture_object(
+            mixture,
+            "Electrolyte HELD2 continuous TPD minimizer"
+        );
+        return neutral_phase_discovery_to_dict(
+            epcsaft::native::equilibrium_nlp::evaluate_electrolyte_continuous_tpd_minimizer(
                 args,
                 temperature,
                 target_pressure,

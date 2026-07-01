@@ -68,6 +68,25 @@ struct NeutralTwoPhaseEosNlpContract {
     std::string barrier_policy = "ipopt_internal_barrier_for_declared_bounds";
 };
 
+struct ElectrolyteReducedNlpProbe {
+    std::string problem_name;
+    std::string hessian_backend;
+    std::string variable_model;
+    int variable_count = 0;
+    int physical_variable_count = 0;
+    double objective = 0.0;
+    std::vector<double> solver_variables;
+    std::vector<double> physical_variables;
+    std::vector<double> gradient;
+    std::vector<double> constraints;
+    std::vector<int> jacobian_rows;
+    std::vector<int> jacobian_cols;
+    std::vector<double> jacobian_values;
+    std::vector<int> hessian_rows;
+    std::vector<int> hessian_cols;
+    std::vector<double> hessian_values;
+};
+
 struct NeutralTwoPhaseEosPostsolve {
     bool accepted = false;
     bool stability_checked = false;
@@ -259,6 +278,7 @@ struct NeutralPhaseDiscoveryResult {
     std::vector<double> selected_phase_fractions;
     std::vector<int> selected_phase_kinds;
     std::vector<std::vector<double>> selected_phase_compositions;
+    std::vector<NeutralTpdCandidate> continuous_tpd_start_records;
     std::vector<NeutralTpdCandidate> candidates;
 };
 
@@ -618,6 +638,15 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_dew_t_eos_nlp_contract(
     const std::vector<double>& vapor_composition
 );
 
+ElectrolyteReducedNlpProbe evaluate_electrolyte_bubble_t_reduced_nlp_probe(
+    const add_args& args,
+    double target_pressure,
+    const std::vector<double>& liquid_composition,
+    const std::vector<double>& charges,
+    const std::vector<double>& physical_variables,
+    double charge_constraint_tolerance
+);
+
 NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
     const add_args& args,
     double temperature,
@@ -740,6 +769,18 @@ NeutralPhaseDiscoveryResult evaluate_electrolyte_tpd_phase_discovery(
     double candidate_mass_balance_tolerance
 );
 
+NeutralPhaseDiscoveryResult evaluate_electrolyte_continuous_tpd_minimizer(
+    const add_args& args,
+    double temperature,
+    double target_pressure,
+    const std::vector<double>& feed_composition,
+    const std::vector<double>& charges,
+    const std::vector<int>& phase_kinds,
+    double charge_tolerance,
+    double tpd_tolerance,
+    double candidate_mass_balance_tolerance
+);
+
 ElectrolyteHeld2PhaseDiscoveryResult evaluate_electrolyte_held2_phase_discovery(
     const add_args& args,
     double temperature,
@@ -843,6 +884,19 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
     const IpoptSolveOptions& options,
     double phase_total_tolerance,
     double pressure_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+);
+
+NeutralTwoPhaseEosRouteResult solve_electrolyte_bubble_t_eos_route(
+    const add_args& args,
+    double target_pressure,
+    const std::vector<double>& liquid_composition,
+    const std::vector<double>& charges,
+    const IpoptSolveOptions& options,
+    double phase_total_tolerance,
+    double pressure_tolerance,
+    double charge_tolerance,
     double chemical_potential_tolerance,
     double phase_distance_tolerance
 );

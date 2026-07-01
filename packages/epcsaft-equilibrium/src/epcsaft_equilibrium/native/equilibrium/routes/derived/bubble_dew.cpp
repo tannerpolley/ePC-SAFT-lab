@@ -10,6 +10,7 @@
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/route_metadata.h"
 #include "equilibrium/core/second_order.h"
+#include "equilibrium/core/variable_transform.h"
 #include "equilibrium/core/variable_layout.h"
 #include "equilibrium/results/result_builder.h"
 
@@ -42,6 +43,18 @@ constexpr double kPureSaturationMinimumPressure = 1.0e-6;
 constexpr double kPureSaturationMinimumPhaseVolumeGap = 1.0e-6;
 constexpr double kPureSaturationMinimumReducedDensitySeparation = 1.0e-2;
 constexpr const char* kNeutralCloudTemperatureProblemName = "neutral_cloud_t_eos";
+
+void symmetrize_local_square_matrix(std::vector<double>& values, int dimension) {
+    for (int first = 0; first < dimension; ++first) {
+        for (int second = first + 1; second < dimension; ++second) {
+            const std::size_t first_index = static_cast<std::size_t>(first * dimension + second);
+            const std::size_t second_index = static_cast<std::size_t>(second * dimension + first);
+            const double symmetric_value = 0.5 * (values[first_index] + values[second_index]);
+            values[first_index] = symmetric_value;
+            values[second_index] = symmetric_value;
+        }
+    }
+}
 
 void apply_route_metadata(NeutralTwoPhaseEosPostsolve& out, const RouteMetadata& metadata) {
     out.density_backend = metadata.density_backend;
@@ -303,10 +316,153 @@ bool fixed_temperature_pressure_flash_seed_satisfies_volume_bounds(
         && vapor_volume - liquid_volume >= kMinimumPhaseVolumeGap;
 }
 
+std::vector<double> lower_dense_to_symmetric_matrix(
+    const NlpHessianStructure& structure,
+    const std::vector<double>& values,
+    int variable_count,
+    const std::string& label
+) {
+    if (structure.rows.size() != values.size() || structure.cols.size() != values.size()) {
+        throw ValueError(label + " Hessian structure/value size mismatch.");
+    }
+    std::vector<double> dense(static_cast<std::size_t>(variable_count * variable_count), 0.0);
+    for (std::size_t index = 0; index < values.size(); ++index) {
+        const int row = structure.rows[index];
+        const int col = structure.cols[index];
+        if (row < 0 || row >= variable_count || col < 0 || col >= variable_count) {
+            throw ValueError(label + " Hessian structure index is out of range.");
+        }
+        dense[static_cast<std::size_t>(row * variable_count + col)] = values[index];
+        dense[static_cast<std::size_t>(col * variable_count + row)] = values[index];
+    }
+    return dense;
+}
+
 struct NamedInitialVariables {
     std::string seed_name;
     std::vector<double> variables;
 };
+
+struct ElectroneutralCompositionGroup {
+    std::vector<double> composition_basis;
+};
+
+std::vector<ElectroneutralCompositionGroup> electroneutral_composition_groups(
+    const std::vector<double>& fixed_composition,
+    const std::vector<double>& charges,
+    const std::string& problem_name
+) {
+    require_size(charges, fixed_composition.size(), problem_name + " charge vector");
+    const int species_count = static_cast<int>(fixed_composition.size());
+    std::vector<int> neutral_indices;
+    std::vector<int> cation_indices;
+    std::vector<int> anion_indices;
+    for (int species = 0; species < species_count; ++species) {
+        const double charge = charges[static_cast<std::size_t>(species)];
+        if (std::abs(charge) <= 1.0e-12) {
+            neutral_indices.push_back(species);
+        } else if (charge > 0.0) {
+            cation_indices.push_back(species);
+        } else {
+            anion_indices.push_back(species);
+        }
+    }
+    if (cation_indices.empty() || anion_indices.empty()) {
+        throw ValueError(problem_name + " reduced electrolyte coordinates require active cations and anions.");
+    }
+    auto sort_by_fixed_composition = [&](std::vector<int>& indices) {
+        std::sort(indices.begin(), indices.end(), [&](int first, int second) {
+            const double first_value = fixed_composition[static_cast<std::size_t>(first)];
+            const double second_value = fixed_composition[static_cast<std::size_t>(second)];
+            if (std::abs(first_value - second_value) > 1.0e-14) {
+                return first_value > second_value;
+            }
+            return first < second;
+        });
+    };
+    sort_by_fixed_composition(cation_indices);
+    sort_by_fixed_composition(anion_indices);
+
+    std::vector<ElectroneutralCompositionGroup> out;
+    out.reserve(fixed_composition.size());
+    for (int species : neutral_indices) {
+        ElectroneutralCompositionGroup group;
+        group.composition_basis.assign(fixed_composition.size(), 0.0);
+        group.composition_basis[static_cast<std::size_t>(species)] = 1.0;
+        out.push_back(std::move(group));
+    }
+
+    std::vector<int> charged_memberships(static_cast<std::size_t>(species_count), 0);
+    auto append_pair = [&](int cation, int anion) {
+        ElectroneutralCompositionGroup group;
+        group.composition_basis.assign(fixed_composition.size(), 0.0);
+        const double cation_stoichiometry = 1.0 / std::abs(charges[static_cast<std::size_t>(cation)]);
+        const double anion_stoichiometry = 1.0 / std::abs(charges[static_cast<std::size_t>(anion)]);
+        const double total_stoichiometry = cation_stoichiometry + anion_stoichiometry;
+        group.composition_basis[static_cast<std::size_t>(cation)] =
+            cation_stoichiometry / total_stoichiometry;
+        group.composition_basis[static_cast<std::size_t>(anion)] =
+            anion_stoichiometry / total_stoichiometry;
+        ++charged_memberships[static_cast<std::size_t>(cation)];
+        ++charged_memberships[static_cast<std::size_t>(anion)];
+        out.push_back(std::move(group));
+    };
+    if (cation_indices.size() <= anion_indices.size()) {
+        const int pivot_cation = cation_indices.front();
+        for (int anion : anion_indices) {
+            append_pair(pivot_cation, anion);
+        }
+        for (std::size_t cation = 1; cation < cation_indices.size(); ++cation) {
+            append_pair(cation_indices[cation], anion_indices[cation - 1]);
+        }
+    } else {
+        const int pivot_anion = anion_indices.front();
+        for (int cation : cation_indices) {
+            append_pair(cation, pivot_anion);
+        }
+        for (std::size_t anion = 1; anion < anion_indices.size(); ++anion) {
+            append_pair(cation_indices[anion - 1], anion_indices[anion]);
+        }
+    }
+    for (int species = 0; species < species_count; ++species) {
+        if (std::abs(charges[static_cast<std::size_t>(species)]) > 1.0e-12
+            && charged_memberships[static_cast<std::size_t>(species)] != 1) {
+            throw ValueError(
+                problem_name
+                + " reduced electrolyte coordinates require non-overlapping electroneutral ion groups."
+            );
+        }
+    }
+    if (out.empty()) {
+        throw ValueError(problem_name + " reduced electrolyte coordinates require at least one composition group.");
+    }
+    return out;
+}
+
+std::vector<double> softmax_with_reference_last(const std::vector<double>& logits) {
+    const int group_count = static_cast<int>(logits.size()) + 1;
+    std::vector<double> shifted(static_cast<std::size_t>(group_count), 0.0);
+    double maximum = 0.0;
+    for (double value : logits) {
+        if (!std::isfinite(value)) {
+            throw ValueError("electrolyte reduced composition logit must be finite.");
+        }
+        maximum = std::max(maximum, value);
+    }
+    double sum = 0.0;
+    for (int group = 0; group < group_count - 1; ++group) {
+        shifted[static_cast<std::size_t>(group)] =
+            std::exp(logits[static_cast<std::size_t>(group)] - maximum);
+        sum += shifted[static_cast<std::size_t>(group)];
+    }
+    shifted.back() = std::exp(-maximum);
+    sum += shifted.back();
+    require_positive_finite(sum, "electrolyte reduced composition denominator");
+    for (double& value : shifted) {
+        value /= sum;
+    }
+    return shifted;
+}
 
 std::vector<double> build_pressure_route_initial_variables(
     const add_args& args,
@@ -347,11 +503,19 @@ std::vector<double> build_temperature_route_initial_variables(
     const std::vector<double>& fixed_composition,
     int fixed_phase_index,
     double target_pressure,
+    const std::vector<double>& charges,
     const std::string& problem_name,
     double shift_sign,
     DensitySeedMode density_seed_mode
 ) {
-    const std::vector<double> shifted = shifted_composition(fixed_composition, shift_sign);
+    const std::vector<double> shifted = charges.empty()
+        ? shifted_composition(fixed_composition, shift_sign)
+        : charge_neutral_shifted_composition(
+            fixed_composition,
+            charges,
+            problem_name + " shifted composition",
+            shift_sign
+        );
     std::vector<double> out;
     out.reserve(2 * (fixed_composition.size() + 1) + 1);
     for (int phase = 0; phase < 2; ++phase) {
@@ -791,6 +955,7 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
     const std::vector<double>& fixed_composition,
     int fixed_phase_index,
     double target_pressure,
+    const std::vector<double>& charges,
     const std::string& problem_name
 ) {
     std::vector<NamedInitialVariables> out;
@@ -817,6 +982,7 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
             fixed_composition,
             fixed_phase_index,
             target_pressure,
+            charges,
             problem_name,
             1.0,
             DensitySeedMode::PhasePressureRoot
@@ -829,30 +995,33 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
             fixed_composition,
             fixed_phase_index,
             target_pressure,
+            charges,
             problem_name,
             -1.0,
             DensitySeedMode::PhasePressureRoot
         )
     );
-    const std::vector<double> partner = boundary_partner_composition_from_k_values(
-        args,
-        fixed_composition,
-        fixed_phase_index,
-        problem_name,
-        kBoundaryVolatilityKAlpha
-    );
-    append_if_feasible(
-        "volatility_k_partner_density_root",
-        build_temperature_route_initial_variables_with_partner(
+    if (charges.empty()) {
+        const std::vector<double> partner = boundary_partner_composition_from_k_values(
             args,
             fixed_composition,
-            partner,
             fixed_phase_index,
-            target_pressure,
             problem_name,
-            DensitySeedMode::PhasePressureRoot
-        )
-    );
+            kBoundaryVolatilityKAlpha
+        );
+        append_if_feasible(
+            "volatility_k_partner_density_root",
+            build_temperature_route_initial_variables_with_partner(
+                args,
+                fixed_composition,
+                partner,
+                fixed_phase_index,
+                target_pressure,
+                problem_name,
+                DensitySeedMode::PhasePressureRoot
+            )
+        );
+    }
     out.push_back({
         "canonical_shifted_partner_phase",
         build_temperature_route_initial_variables(
@@ -860,6 +1029,7 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
             fixed_composition,
             fixed_phase_index,
             target_pressure,
+            charges,
             problem_name,
             1.0,
             DensitySeedMode::SeparatedPhaseRole
@@ -872,6 +1042,7 @@ std::vector<NamedInitialVariables> temperature_route_seed_candidates(
             fixed_composition,
             fixed_phase_index,
             target_pressure,
+            charges,
             problem_name,
             -1.0,
             DensitySeedMode::SeparatedPhaseRole
@@ -1347,6 +1518,9 @@ bool route_has_gross_2002_associating_vle_proof(const add_args& args) {
 }
 
 bool route_supports_exact_phase_derivatives(const add_args& args, const std::string& problem_name) {
+    if (problem_name == "electrolyte_bubble_t_eos") {
+        return true;
+    }
     if (!(args.z.empty() || args.born_model <= 1)) {
         return false;
     }
@@ -1937,14 +2111,21 @@ public:
         double target_pressure,
         std::vector<double> fixed_composition,
         int fixed_phase_index,
-        std::string problem_name
+        std::string problem_name,
+        std::vector<double> charges = {},
+        double charge_constraint_tolerance = 0.0
     )
         : args_(std::move(args)),
           target_pressure_(target_pressure),
           fixed_composition_(normalized_positive_values(fixed_composition, problem_name + " composition")),
           fixed_phase_index_(fixed_phase_index),
-          problem_name_(std::move(problem_name)) {
+          problem_name_(std::move(problem_name)),
+          charges_(std::move(charges)),
+          charge_constraint_tolerance_(charge_constraint_tolerance) {
         require_positive_finite(target_pressure_, problem_name_ + " pressure");
+        if (!std::isfinite(charge_constraint_tolerance_) || charge_constraint_tolerance_ < 0.0) {
+            throw ValueError(problem_name_ + " charge constraint tolerance must be finite and non-negative.");
+        }
         if (fixed_phase_index_ < 0 || fixed_phase_index_ >= phase_count()) {
             throw ValueError(problem_name_ + " fixed phase index is out of range.");
         }
@@ -1952,6 +2133,70 @@ public:
         maximum_vapor_volume_ = fixed_pressure_temperature_phase1_maximum_volume(problem_name_);
         minimum_phase_volume_gap_ = fixed_pressure_temperature_minimum_phase_volume_gap(problem_name_);
         species_count_ = static_cast<int>(fixed_composition_.size());
+        if (!charges_.empty()) {
+            minimum_temperature_ = 250.0;
+            maximum_temperature_ = 650.0;
+            require_size(charges_, fixed_composition_.size(), problem_name_ + " charge vector");
+            double fixed_charge = 0.0;
+            std::vector<int> cation_indices;
+            std::vector<int> anion_indices;
+            for (int species = 0; species < species_count_; ++species) {
+                fixed_charge += fixed_composition_[static_cast<std::size_t>(species)]
+                    * charges_[static_cast<std::size_t>(species)];
+                const double charge = charges_[static_cast<std::size_t>(species)];
+                if (std::abs(charge) <= 1.0e-12) {
+                    neutral_species_indices_.push_back(species);
+                } else if (charge > 0.0) {
+                    cation_indices.push_back(species);
+                } else {
+                    anion_indices.push_back(species);
+                }
+            }
+            if (std::abs(fixed_charge) > std::max(1.0e-14, charge_constraint_tolerance_)) {
+                throw ValueError(problem_name_ + " fixed composition must be charge neutral.");
+            }
+            if (cation_indices.empty() || anion_indices.empty()) {
+                throw ValueError(problem_name_ + " requires active cations and anions.");
+            }
+            auto sort_by_fixed_composition = [&](std::vector<int>& indices) {
+                std::sort(indices.begin(), indices.end(), [&](int first, int second) {
+                    const double first_value = fixed_composition_[static_cast<std::size_t>(first)];
+                    const double second_value = fixed_composition_[static_cast<std::size_t>(second)];
+                    if (std::abs(first_value - second_value) > 1.0e-14) {
+                        return first_value > second_value;
+                    }
+                    return first < second;
+                });
+            };
+            sort_by_fixed_composition(cation_indices);
+            sort_by_fixed_composition(anion_indices);
+            auto append_pair = [&](int cation, int anion) {
+                std::vector<std::pair<int, double>> row;
+                row.push_back({cation, 1.0 / std::abs(charges_[static_cast<std::size_t>(cation)])});
+                row.push_back({anion, 1.0 / std::abs(charges_[static_cast<std::size_t>(anion)])});
+                transfer_weights_.push_back(std::move(row));
+            };
+            for (int species : neutral_species_indices_) {
+                transfer_weights_.push_back({{species, 1.0}});
+            }
+            if (cation_indices.size() <= anion_indices.size()) {
+                const int pivot_cation = cation_indices.front();
+                for (int anion : anion_indices) {
+                    append_pair(pivot_cation, anion);
+                }
+                for (std::size_t cation = 1; cation < cation_indices.size(); ++cation) {
+                    append_pair(cation_indices[cation], anion_indices[cation - 1]);
+                }
+            } else {
+                const int pivot_anion = anion_indices.front();
+                for (int cation : cation_indices) {
+                    append_pair(cation, pivot_anion);
+                }
+                for (std::size_t anion = 1; anion < anion_indices.size(); ++anion) {
+                    append_pair(cation_indices[anion - 1], anion_indices[anion]);
+                }
+            }
+        }
     }
 
     std::string name() const override {
@@ -1963,16 +2208,39 @@ public:
     }
 
     int constraint_count() const override {
-        return composition_constraint_count() + 2 * phase_count() + species_count_ + 1;
+        if (electrolyte_boundary_mode()) {
+            return composition_constraint_count()
+                + phase_count()
+                + charge_constraint_count();
+        }
+        return composition_constraint_count()
+            + phase_count()
+            + charge_constraint_count()
+            + phase_count()
+            + transfer_constraint_count()
+            + 1;
     }
 
     int jacobian_nonzero_count() const override {
         const int composition_nonzeros = composition_constraint_count() * species_count_;
         const int phase_total_nonzeros = phase_count() * species_count_;
-        const int pressure_nonzeros = phase_count() * (local_variable_count() + 1);
-        const int chemical_nonzeros = species_count_ * (phase_count() * local_variable_count() + 1);
-        const int gap_nonzeros = 2;
-        return composition_nonzeros + phase_total_nonzeros + pressure_nonzeros + chemical_nonzeros + gap_nonzeros;
+        int charge_nonzeros = 0;
+        for (double charge : charges_) {
+            if (charge != 0.0) {
+                charge_nonzeros += charge_constraint_count();
+            }
+        }
+        const int pressure_nonzeros = electrolyte_boundary_mode() ? 0 : phase_count() * (local_variable_count() + 1);
+        const int chemical_nonzeros = electrolyte_boundary_mode()
+            ? 0
+            : transfer_constraint_count() * (phase_count() * local_variable_count() + 1);
+        const int gap_nonzeros = electrolyte_boundary_mode() ? 0 : 2;
+        return composition_nonzeros
+            + phase_total_nonzeros
+            + charge_nonzeros
+            + pressure_nonzeros
+            + chemical_nonzeros
+            + gap_nonzeros;
     }
 
     NlpBounds bounds() const override {
@@ -1998,8 +2266,10 @@ public:
         out.variable_upper.push_back(maximum_temperature_);
         out.constraint_lower.assign(static_cast<std::size_t>(constraint_count()), 0.0);
         out.constraint_upper.assign(static_cast<std::size_t>(constraint_count()), 0.0);
-        out.constraint_lower.back() = minimum_phase_volume_gap_;
-        out.constraint_upper.back() = 1.0e12;
+        if (!electrolyte_boundary_mode()) {
+            out.constraint_lower.back() = minimum_phase_volume_gap_;
+            out.constraint_upper.back() = 1.0e12;
+        }
         return out;
     }
 
@@ -2009,6 +2279,7 @@ public:
             fixed_composition_,
             fixed_phase_index_,
             target_pressure_,
+            charges_,
             problem_name_,
             1.0,
             DensitySeedMode::PhasePressureRoot
@@ -2029,6 +2300,7 @@ public:
             fixed_composition_,
             fixed_phase_index_,
             target_pressure_,
+            charges_,
             problem_name_,
             1.0,
             DensitySeedMode::SeparatedPhaseRole
@@ -2036,6 +2308,9 @@ public:
     }
 
     double objective(const std::vector<double>& variables) const override {
+        if (electrolyte_boundary_mode()) {
+            return electrolyte_boundary_objective_second_order(variables).value;
+        }
         double value = 0.0;
         for (const TemperatureRoutePhaseBlock& block : phase_blocks(variables)) {
             value += block.block.objective;
@@ -2044,6 +2319,9 @@ public:
     }
 
     std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        if (electrolyte_boundary_mode()) {
+            return electrolyte_boundary_objective_second_order(variables).gradient;
+        }
         std::vector<double> out;
         out.reserve(static_cast<std::size_t>(variable_count()));
         double temperature_derivative = 0.0;
@@ -2071,18 +2349,38 @@ public:
             out[static_cast<std::size_t>(row++)] =
                 std::accumulate(phase_amounts.begin(), phase_amounts.end(), 0.0) - 1.0;
         }
+        for (int row_index = 0; row_index < charge_constraint_count(); ++row_index) {
+            const auto& phase_amounts =
+                amounts[static_cast<std::size_t>(charge_constraint_phase_index(row_index))];
+            double phase_charge = 0.0;
+            for (int species = 0; species < species_count_; ++species) {
+                phase_charge += phase_amounts[static_cast<std::size_t>(species)]
+                    * charges_[static_cast<std::size_t>(species)];
+            }
+            out[static_cast<std::size_t>(row++)] = phase_charge;
+        }
+        if (electrolyte_boundary_mode()) {
+            return out;
+        }
         const auto blocks = phase_blocks(variables);
         for (const TemperatureRoutePhaseBlock& block : blocks) {
             out[static_cast<std::size_t>(row++)] = block.block.pressure_consistency_residual;
         }
-        for (int species = 0; species < species_count_; ++species) {
-            out[static_cast<std::size_t>(row++)] =
-                blocks[0].gradient[static_cast<std::size_t>(species)]
-                - blocks[1].gradient[static_cast<std::size_t>(species)];
+        for (const auto& weights : transfer_weights_for_route()) {
+            double residual = 0.0;
+            for (const auto& [species, weight] : weights) {
+                residual += weight * (
+                    blocks[0].gradient[static_cast<std::size_t>(species)]
+                    - blocks[1].gradient[static_cast<std::size_t>(species)]
+                );
+            }
+            out[static_cast<std::size_t>(row++)] = residual;
         }
-        out[static_cast<std::size_t>(row++)] =
-            variables[static_cast<std::size_t>(vapor_volume_col())]
-            - variables[static_cast<std::size_t>(liquid_volume_col())];
+        if (!electrolyte_boundary_mode()) {
+            out[static_cast<std::size_t>(row++)] =
+                variables[static_cast<std::size_t>(vapor_volume_col())]
+                - variables[static_cast<std::size_t>(liquid_volume_col())];
+        }
         return out;
     }
 
@@ -2106,6 +2404,20 @@ public:
             }
             ++row;
         }
+        for (int row_index = 0; row_index < charge_constraint_count(); ++row_index) {
+            const int offset = charge_constraint_phase_index(row_index) * local_variable_count();
+            for (int species = 0; species < species_count_; ++species) {
+                if (charges_[static_cast<std::size_t>(species)] == 0.0) {
+                    continue;
+                }
+                out.rows.push_back(row);
+                out.cols.push_back(offset + species);
+            }
+            ++row;
+        }
+        if (electrolyte_boundary_mode()) {
+            return out;
+        }
         for (int phase = 0; phase < phase_count(); ++phase) {
             const int offset = phase * local_variable_count();
             for (int col = 0; col < local_variable_count(); ++col) {
@@ -2116,7 +2428,7 @@ public:
             out.cols.push_back(temperature_col());
             ++row;
         }
-        for (int species = 0; species < species_count_; ++species) {
+        for (int transfer = 0; transfer < transfer_constraint_count(); ++transfer) {
             for (int phase = 0; phase < phase_count(); ++phase) {
                 const int offset = phase * local_variable_count();
                 for (int col = 0; col < local_variable_count(); ++col) {
@@ -2128,10 +2440,12 @@ public:
             out.cols.push_back(temperature_col());
             ++row;
         }
-        out.rows.push_back(row);
-        out.cols.push_back(liquid_volume_col());
-        out.rows.push_back(row);
-        out.cols.push_back(vapor_volume_col());
+        if (!electrolyte_boundary_mode()) {
+            out.rows.push_back(row);
+            out.cols.push_back(liquid_volume_col());
+            out.rows.push_back(row);
+            out.cols.push_back(vapor_volume_col());
+        }
         return out;
     }
 
@@ -2152,6 +2466,19 @@ public:
             }
             ++row;
         }
+        for (int row_index = 0; row_index < charge_constraint_count(); ++row_index) {
+            for (int species = 0; species < species_count_; ++species) {
+                const double charge = charges_[static_cast<std::size_t>(species)];
+                if (charge == 0.0) {
+                    continue;
+                }
+                out.push_back(charge);
+            }
+            ++row;
+        }
+        if (electrolyte_boundary_mode()) {
+            return out;
+        }
         for (int phase = 0; phase < phase_count(); ++phase) {
             const TemperatureRoutePhaseBlock& block = blocks[static_cast<std::size_t>(phase)];
             for (int col = 0; col < local_variable_count(); ++col) {
@@ -2160,26 +2487,34 @@ public:
             out.push_back(block.pressure_jacobian_row_major.back());
             ++row;
         }
-        for (int species = 0; species < species_count_; ++species) {
+        for (const auto& weights : transfer_weights_for_route()) {
             double temperature_value = 0.0;
             for (int phase = 0; phase < phase_count(); ++phase) {
                 const TemperatureRoutePhaseBlock& block = blocks[static_cast<std::size_t>(phase)];
                 const int block_variable_count = local_variable_count() + 1;
                 for (int col = 0; col < local_variable_count(); ++col) {
-                    out.push_back((phase == 0 ? 1.0 : -1.0) * block.objective_hessian_row_major[
-                            static_cast<std::size_t>(species * block_variable_count + col)
-                        ]);
+                    double value = 0.0;
+                    for (const auto& [species, weight] : weights) {
+                        value += weight * (phase == 0 ? 1.0 : -1.0) * block.objective_hessian_row_major[
+                                static_cast<std::size_t>(species * block_variable_count + col)
+                            ];
+                    }
+                    out.push_back(value);
                 }
-                temperature_value += (phase == 0 ? 1.0 : -1.0)
-                    * block.objective_hessian_row_major[
-                        static_cast<std::size_t>(species * block_variable_count + block_variable_count - 1)
-                    ];
+                for (const auto& [species, weight] : weights) {
+                    temperature_value += weight * (phase == 0 ? 1.0 : -1.0)
+                        * block.objective_hessian_row_major[
+                            static_cast<std::size_t>(species * block_variable_count + block_variable_count - 1)
+                        ];
+                }
             }
             out.push_back(temperature_value);
             ++row;
         }
-        out.push_back(-1.0);
-        out.push_back(1.0);
+        if (!electrolyte_boundary_mode()) {
+            out.push_back(-1.0);
+            out.push_back(1.0);
+        }
         return out;
     }
 
@@ -2210,6 +2545,26 @@ public:
         const auto blocks = phase_blocks(variables);
         const int n = variable_count();
         const int block_variable_count = local_variable_count() + 1;
+        if (electrolyte_boundary_mode()) {
+            const ObjectiveSecondOrderData boundary_objective =
+                electrolyte_boundary_objective_second_order(variables);
+            ConstraintSecondOrderData constraints_data;
+            constraints_data.constraint_count = constraint_count();
+            constraints_data.variable_count = n;
+            constraints_data.values = this->constraints(variables);
+            constraints_data.hessian_tensor_row_major.assign(
+                static_cast<std::size_t>(constraint_count() * n * n),
+                0.0
+            );
+            constraints_data.has_hessian.assign(static_cast<std::size_t>(constraint_count()), false);
+            constraints_data.backend = "linear_electrolyte_boundary_hard_constraints";
+            return LagrangianHessianAssembler(n).values(
+                objective_factor,
+                boundary_objective,
+                constraints_data,
+                constraint_multipliers
+            );
+        }
         ObjectiveSecondOrderData objective;
         objective.variable_count = n;
         objective.value = 0.0;
@@ -2244,7 +2599,6 @@ public:
                 problem_name_ + " objective Hessian block"
             );
         }
-
         ConstraintSecondOrderData constraints_data;
         constraints_data.constraint_count = constraint_count();
         constraints_data.variable_count = n;
@@ -2256,7 +2610,8 @@ public:
         constraints_data.has_hessian.assign(static_cast<std::size_t>(constraint_count()), false);
         constraints_data.backend = "cppad_phase_temperature_route";
 
-        const int pressure_row_start = composition_constraint_count() + phase_count();
+        const int pressure_row_start =
+            composition_constraint_count() + phase_count() + charge_constraint_count();
         for (int phase = 0; phase < phase_count(); ++phase) {
             const TemperatureRoutePhaseBlock& block = blocks[static_cast<std::size_t>(phase)];
             require_square_block(
@@ -2278,17 +2633,39 @@ public:
         }
 
         const int chemical_row_start = pressure_row_start + phase_count();
-        for (int species = 0; species < species_count_; ++species) {
-            const int constraint_row = chemical_row_start + species;
+        const auto transfer_weights = transfer_weights_for_route();
+        for (int transfer = 0; transfer < static_cast<int>(transfer_weights.size()); ++transfer) {
+            const int constraint_row = chemical_row_start + transfer;
             constraints_data.has_hessian[static_cast<std::size_t>(constraint_row)] = true;
             for (int phase = 0; phase < phase_count(); ++phase) {
                 const TemperatureRoutePhaseBlock& block = blocks[static_cast<std::size_t>(phase)];
-                const std::vector<double> chemical_hessian = third_derivative_slice(
-                    block.objective_third_derivative_tensor_row_major,
-                    species,
-                    block_variable_count,
-                    problem_name_ + " chemical-potential Hessian block"
+                std::vector<double> chemical_hessian(
+                    static_cast<std::size_t>(block_variable_count * block_variable_count),
+                    0.0
                 );
+                for (const auto& [species, weight] : transfer_weights[static_cast<std::size_t>(transfer)]) {
+                    const std::vector<double> slice = third_derivative_slice(
+                        block.objective_third_derivative_tensor_row_major,
+                        species,
+                        block_variable_count,
+                        problem_name_ + " chemical-potential Hessian block"
+                    );
+                    for (std::size_t index = 0; index < chemical_hessian.size(); ++index) {
+                        chemical_hessian[index] += weight * slice[index];
+                    }
+                }
+                for (int first = 0; first < block_variable_count; ++first) {
+                    for (int second = first + 1; second < block_variable_count; ++second) {
+                        const std::size_t first_index =
+                            static_cast<std::size_t>(first * block_variable_count + second);
+                        const std::size_t second_index =
+                            static_cast<std::size_t>(second * block_variable_count + first);
+                        const double symmetric_value =
+                            0.5 * (chemical_hessian[first_index] + chemical_hessian[second_index]);
+                        chemical_hessian[first_index] = symmetric_value;
+                        chemical_hessian[second_index] = symmetric_value;
+                    }
+                }
                 add_local_hessian_to_constraint_tensor(
                     constraints_data.hessian_tensor_row_major,
                     constraint_row,
@@ -2319,17 +2696,19 @@ public:
         out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
         out.variables.back() = 1.0e-2;
         out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
-        apply_pressure_constraint_scaling(
-            out,
-            composition_constraint_count() + phase_count(),
-            phase_count(),
-            target_pressure_
-        );
+        if (!electrolyte_boundary_mode()) {
+            apply_pressure_constraint_scaling(
+                out,
+                composition_constraint_count() + phase_count() + charge_constraint_count(),
+                phase_count(),
+                target_pressure_
+            );
+        }
         return out;
     }
 
     std::map<std::string, std::string> diagnostics() const override {
-        return route_metadata_diagnostics(fixed_pressure_temperature_route_metadata());
+        return route_metadata_diagnostics(fixed_pressure_temperature_route_metadata(!charges_.empty()));
     }
 
     int species_count() const {
@@ -2340,6 +2719,15 @@ public:
         return 2;
     }
 
+    ResidualSecondOrderData electrolyte_boundary_residual_data(
+        const std::vector<double>& variables
+    ) const {
+        if (!electrolyte_boundary_mode()) {
+            throw ValueError(problem_name_ + " reduced residual data requires electrolyte boundary mode.");
+        }
+        return electrolyte_boundary_residual_second_order(variables);
+    }
+
 private:
     int local_variable_count() const {
         return species_count_ + 1;
@@ -2347,6 +2735,10 @@ private:
 
     int composition_constraint_count() const {
         return std::max(0, species_count_ - 1);
+    }
+
+    int charge_constraint_count() const {
+        return charges_.empty() ? 0 : 1;
     }
 
     int fixed_col(int species) const {
@@ -2371,6 +2763,134 @@ private:
 
     int temperature_col() const {
         return variable_count() - 1;
+    }
+
+    bool electrolyte_boundary_mode() const {
+        return !charges_.empty();
+    }
+
+    int charge_constraint_phase_index(int row_index) const {
+        if (!electrolyte_boundary_mode() || row_index != 0) {
+            throw ValueError(problem_name_ + " charge constraint row is out of range.");
+        }
+        return fixed_phase_index_ == liquid_phase_index() ? vapor_phase_index() : liquid_phase_index();
+    }
+
+    int transfer_constraint_count() const {
+        return electrolyte_boundary_mode() ? static_cast<int>(transfer_weights_.size()) : species_count_;
+    }
+
+    const std::vector<std::vector<std::pair<int, double>>>& transfer_weights_for_route() const {
+        if (electrolyte_boundary_mode()) {
+            return transfer_weights_;
+        }
+        if (neutral_transfer_weights_.empty()) {
+            for (int species = 0; species < species_count_; ++species) {
+                neutral_transfer_weights_.push_back({{species, 1.0}});
+            }
+        }
+        return neutral_transfer_weights_;
+    }
+
+    ResidualSecondOrderData electrolyte_boundary_residual_second_order(
+        const std::vector<double>& variables
+    ) const {
+        const auto blocks = phase_blocks(variables);
+        const int n = variable_count();
+        const int block_variable_count = local_variable_count() + 1;
+        const auto transfer_weights = transfer_weights_for_route();
+        const int pressure_count = phase_count();
+        const int residual_count = pressure_count + static_cast<int>(transfer_weights.size());
+        ResidualSecondOrderData out;
+        out.residual_count = residual_count;
+        out.variable_count = n;
+        out.backend = "cppad_phase_temperature_projected_electrolyte_boundary";
+        out.residuals.assign(static_cast<std::size_t>(residual_count), 0.0);
+        out.jacobian_row_major.assign(static_cast<std::size_t>(residual_count * n), 0.0);
+        out.residual_hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(residual_count * n * n),
+            0.0
+        );
+
+        const double pressure_scale = 1.0 / std::max(1.0, 1.0e-3 * std::abs(target_pressure_));
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const TemperatureRoutePhaseBlock& block = blocks[static_cast<std::size_t>(phase)];
+            const std::vector<int> phase_indices =
+                fixed_pressure_global_indices(phase, local_variable_count(), temperature_col());
+            out.residuals[static_cast<std::size_t>(phase)] =
+                pressure_scale * block.block.pressure_consistency_residual;
+            for (int local = 0; local < block_variable_count; ++local) {
+                out.jacobian_row_major[
+                    static_cast<std::size_t>(phase * n + phase_indices[static_cast<std::size_t>(local)])
+                ] = pressure_scale * block.pressure_jacobian_row_major[static_cast<std::size_t>(local)];
+            }
+            std::vector<double> pressure_hessian = block.pressure_hessian_row_major;
+            symmetrize_local_square_matrix(pressure_hessian, block_variable_count);
+            add_local_hessian_to_constraint_tensor(
+                out.residual_hessian_tensor_row_major,
+                phase,
+                n,
+                phase_indices,
+                pressure_hessian,
+                pressure_scale,
+                problem_name_ + " pressure residual Hessian block"
+            );
+        }
+
+        for (int transfer = 0; transfer < static_cast<int>(transfer_weights.size()); ++transfer) {
+            const int row = pressure_count + transfer;
+            for (int phase = 0; phase < phase_count(); ++phase) {
+                const TemperatureRoutePhaseBlock& block = blocks[static_cast<std::size_t>(phase)];
+                const int phase_sign = phase == 0 ? 1 : -1;
+                const std::vector<int> phase_indices =
+                    fixed_pressure_global_indices(phase, local_variable_count(), temperature_col());
+                std::vector<double> transfer_hessian(
+                    static_cast<std::size_t>(block_variable_count * block_variable_count),
+                    0.0
+                );
+                for (const auto& [species, weight] : transfer_weights[static_cast<std::size_t>(transfer)]) {
+                    out.residuals[static_cast<std::size_t>(row)] += weight * static_cast<double>(phase_sign)
+                        * block.gradient[static_cast<std::size_t>(species)];
+                    for (int local = 0; local < block_variable_count; ++local) {
+                        out.jacobian_row_major[
+                            static_cast<std::size_t>(
+                                row * n + phase_indices[static_cast<std::size_t>(local)]
+                            )
+                        ] += weight * static_cast<double>(phase_sign) * block.objective_hessian_row_major[
+                            static_cast<std::size_t>(species * block_variable_count + local)
+                        ];
+                    }
+                    const std::vector<double> slice = third_derivative_slice(
+                        block.objective_third_derivative_tensor_row_major,
+                        species,
+                        block_variable_count,
+                        problem_name_ + " projected transfer Hessian block"
+                    );
+                    for (std::size_t index = 0; index < transfer_hessian.size(); ++index) {
+                        transfer_hessian[index] += weight * static_cast<double>(phase_sign) * slice[index];
+                    }
+                }
+                symmetrize_local_square_matrix(transfer_hessian, block_variable_count);
+                add_local_hessian_to_constraint_tensor(
+                    out.residual_hessian_tensor_row_major,
+                    row,
+                    n,
+                    phase_indices,
+                    transfer_hessian,
+                    1.0,
+                    problem_name_ + " projected transfer Hessian block"
+                );
+            }
+        }
+        return out;
+    }
+
+    ObjectiveSecondOrderData electrolyte_boundary_objective_second_order(
+        const std::vector<double>& variables
+    ) const {
+        return residual_quadratic_objective_second_order(
+            electrolyte_boundary_residual_second_order(variables)
+        );
     }
 
     std::vector<TemperatureRoutePhaseBlock> phase_blocks(const std::vector<double>& variables) const {
@@ -2408,6 +2928,514 @@ private:
     std::vector<double> fixed_composition_;
     int fixed_phase_index_ = 0;
     std::string problem_name_;
+    std::vector<double> charges_;
+    double charge_constraint_tolerance_ = 0.0;
+    std::vector<int> neutral_species_indices_;
+    std::vector<std::vector<std::pair<int, double>>> transfer_weights_;
+    mutable std::vector<std::vector<std::pair<int, double>>> neutral_transfer_weights_;
+    int species_count_ = 0;
+};
+
+class ElectrolyteReducedFixedPressureTemperatureProblem final : public NlpProblem {
+public:
+    ElectrolyteReducedFixedPressureTemperatureProblem(
+        add_args args,
+        double target_pressure,
+        std::vector<double> fixed_composition,
+        int fixed_phase_index,
+        std::string problem_name,
+        std::vector<double> charges,
+        double charge_constraint_tolerance
+    )
+        : physical_problem_(
+              args,
+              target_pressure,
+              fixed_composition,
+              fixed_phase_index,
+              problem_name,
+              charges,
+              charge_constraint_tolerance
+          ),
+          fixed_composition_(normalized_positive_values(fixed_composition, problem_name + " composition")),
+          fixed_phase_index_(fixed_phase_index),
+          problem_name_(std::move(problem_name)),
+          charges_(std::move(charges)),
+          groups_(electroneutral_composition_groups(fixed_composition_, charges_, problem_name_)) {
+        species_count_ = static_cast<int>(fixed_composition_.size());
+        if (fixed_phase_index_ < 0 || fixed_phase_index_ >= phase_count()) {
+            throw ValueError(problem_name_ + " fixed phase index is out of range.");
+        }
+    }
+
+    std::string name() const override {
+        return problem_name_;
+    }
+
+    int variable_count() const override {
+        return 3 + static_cast<int>(groups_.size()) - 1;
+    }
+
+    int constraint_count() const override {
+        return variable_count();
+    }
+
+    int jacobian_nonzero_count() const override {
+        return constraint_count() * variable_count();
+    }
+
+    NlpBounds bounds() const override {
+        NlpBounds out;
+        out.variable_lower.reserve(static_cast<std::size_t>(variable_count()));
+        out.variable_upper.reserve(static_cast<std::size_t>(variable_count()));
+        out.variable_lower.push_back(std::log(250.0));
+        out.variable_upper.push_back(std::log(650.0));
+        out.variable_lower.push_back(std::log(kMinimumLiquidVolume));
+        out.variable_upper.push_back(std::log(kMaximumLiquidVolume));
+        out.variable_lower.push_back(std::log(kMinimumVaporVolume));
+        out.variable_upper.push_back(std::log(kMaximumVaporVolume));
+        for (int group = 0; group < static_cast<int>(groups_.size()) - 1; ++group) {
+            out.variable_lower.push_back(-30.0);
+            out.variable_upper.push_back(30.0);
+        }
+        out.constraint_lower.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        out.constraint_upper.assign(static_cast<std::size_t>(constraint_count()), 0.0);
+        return out;
+    }
+
+    std::vector<double> initial_point() const override {
+        return solver_variables_from_physical(physical_problem_.initial_point());
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        require_size(variables, static_cast<std::size_t>(variable_count()), problem_name_ + " reduced variable");
+        return 0.0;
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        require_size(variables, static_cast<std::size_t>(variable_count()), problem_name_ + " reduced variable");
+        return std::vector<double>(static_cast<std::size_t>(variable_count()), 0.0);
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        return reduced_residual_data(variables).residuals;
+    }
+
+    NlpJacobianStructure jacobian_structure() const override {
+        NlpJacobianStructure out;
+        out.rows.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        out.cols.reserve(static_cast<std::size_t>(jacobian_nonzero_count()));
+        for (int row = 0; row < constraint_count(); ++row) {
+            for (int col = 0; col < variable_count(); ++col) {
+                out.rows.push_back(row);
+                out.cols.push_back(col);
+            }
+        }
+        return out;
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        return reduced_residual_data(variables).jacobian_row_major;
+    }
+
+    bool has_exact_hessian() const override {
+        return physical_problem_.has_exact_hessian();
+    }
+
+    int hessian_nonzero_count() const override {
+        return LagrangianHessianAssembler(variable_count()).nonzero_count();
+    }
+
+    NlpHessianStructure hessian_structure() const override {
+        return LagrangianHessianAssembler(variable_count()).structure();
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        if (!constraint_multipliers.empty()) {
+            require_size(
+                constraint_multipliers,
+                static_cast<std::size_t>(constraint_count()),
+                problem_name_ + " reduced electrolyte constraint multiplier"
+            );
+        }
+        (void)objective_factor;
+        const ResidualSecondOrderData residual_data = reduced_residual_data(variables);
+        const int reduced_count = variable_count();
+        std::vector<double> transformed(static_cast<std::size_t>(reduced_count * reduced_count), 0.0);
+        for (int residual = 0; residual < constraint_count(); ++residual) {
+            const double multiplier = constraint_multipliers.empty()
+                ? 0.0
+                : constraint_multipliers[static_cast<std::size_t>(residual)];
+            if (multiplier == 0.0) {
+                continue;
+            }
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    transformed[static_cast<std::size_t>(first * reduced_count + second)] +=
+                        multiplier
+                        * residual_data.residual_hessian_tensor_row_major[
+                            static_cast<std::size_t>(
+                                residual * reduced_count * reduced_count
+                                + first * reduced_count
+                                + second
+                            )
+                        ];
+                }
+            }
+        }
+        symmetrize_local_square_matrix(transformed, reduced_count);
+        return lower_triangle_values(transformed, reduced_count);
+    }
+
+    std::string hessian_backend() const override {
+        return "cppad_phase_temperature_reduced_residual_constraints";
+    }
+
+    NlpScaling scaling() const override {
+        NlpScaling out;
+        out.objective = 1.0;
+        out.variables.assign(static_cast<std::size_t>(variable_count()), 1.0);
+        out.constraints.assign(static_cast<std::size_t>(constraint_count()), 1.0);
+        return out;
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        std::map<std::string, std::string> out = physical_problem_.diagnostics();
+        out["variable_transform"] = "reduced_electroneutral_log_volume_temperature";
+        out["variable_model"] = "reduced_electroneutral_logit_amount_volume_temperature";
+        out["electroneutral_reduction"] = "active";
+        out["electroneutral_group_count"] = std::to_string(groups_.size());
+        return out;
+    }
+
+    std::vector<double> physical_variables_from_solver(const std::vector<double>& variables) const {
+        return evaluate_lift(variables).physical_variables;
+    }
+
+    std::vector<double> solver_variables_from_physical(const std::vector<double>& physical_variables) const {
+        require_size(
+            physical_variables,
+            static_cast<std::size_t>(physical_variable_count()),
+            problem_name_ + " reduced physical variable"
+        );
+        const int local_count = local_variable_count();
+        const int partner_phase = partner_phase_index();
+        const std::vector<double> partner_composition = normalized_positive_values(
+            std::vector<double>(
+                physical_variables.begin()
+                    + static_cast<std::ptrdiff_t>(partner_phase * local_count),
+                physical_variables.begin()
+                    + static_cast<std::ptrdiff_t>(partner_phase * local_count + species_count_)
+            ),
+            problem_name_ + " reduced partner composition"
+        );
+        const std::vector<double> group_fractions = group_fractions_from_composition(partner_composition);
+        std::vector<double> out;
+        out.reserve(static_cast<std::size_t>(variable_count()));
+        out.push_back(std::log(physical_variables.back()));
+        out.push_back(std::log(physical_variables[static_cast<std::size_t>(volume_col(0))]));
+        out.push_back(std::log(physical_variables[static_cast<std::size_t>(volume_col(1))]));
+        const double reference = group_fractions.back();
+        require_positive_finite(reference, problem_name_ + " reduced reference group fraction");
+        for (int group = 0; group < static_cast<int>(groups_.size()) - 1; ++group) {
+            const double value = group_fractions[static_cast<std::size_t>(group)];
+            require_positive_finite(value, problem_name_ + " reduced group fraction");
+            out.push_back(std::log(value / reference));
+        }
+        return out;
+    }
+
+private:
+    struct ReducedLift {
+        std::vector<double> physical_variables;
+        std::vector<double> jacobian_row_major;
+        std::vector<double> hessian_tensor_row_major;
+    };
+
+    int phase_count() const {
+        return 2;
+    }
+
+    int local_variable_count() const {
+        return species_count_ + 1;
+    }
+
+    int physical_variable_count() const {
+        return phase_count() * local_variable_count() + 1;
+    }
+
+    int volume_col(int phase) const {
+        return phase * local_variable_count() + species_count_;
+    }
+
+    int temperature_col() const {
+        return physical_variable_count() - 1;
+    }
+
+    int partner_phase_index() const {
+        return fixed_phase_index_ == 0 ? 1 : 0;
+    }
+
+    std::vector<double> group_fractions_from_composition(const std::vector<double>& composition) const {
+        require_size(composition, fixed_composition_.size(), problem_name_ + " reduced composition");
+        std::vector<double> fractions;
+        fractions.reserve(groups_.size());
+        for (const ElectroneutralCompositionGroup& group : groups_) {
+            double fraction = 0.0;
+            for (int species = 0; species < species_count_; ++species) {
+                if (group.composition_basis[static_cast<std::size_t>(species)] > 0.0) {
+                    fraction += composition[static_cast<std::size_t>(species)];
+                }
+            }
+            fractions.push_back(fraction);
+        }
+        return normalized_positive_values(fractions, problem_name_ + " reduced group fraction");
+    }
+
+    std::vector<double> composition_from_group_fractions(const std::vector<double>& group_fractions) const {
+        require_size(group_fractions, groups_.size(), problem_name_ + " reduced group fraction");
+        std::vector<double> composition(static_cast<std::size_t>(species_count_), 0.0);
+        for (int group_index = 0; group_index < static_cast<int>(groups_.size()); ++group_index) {
+            const ElectroneutralCompositionGroup& group = groups_[static_cast<std::size_t>(group_index)];
+            for (int species = 0; species < species_count_; ++species) {
+                composition[static_cast<std::size_t>(species)] +=
+                    group_fractions[static_cast<std::size_t>(group_index)]
+                    * group.composition_basis[static_cast<std::size_t>(species)];
+            }
+        }
+        return normalized_positive_values(composition, problem_name_ + " reduced partner composition");
+    }
+
+    ResidualSecondOrderData reduced_residual_data(const std::vector<double>& variables) const {
+        const ReducedLift lift = evaluate_lift(variables);
+        const ResidualSecondOrderData physical = physical_problem_.electrolyte_boundary_residual_data(
+            lift.physical_variables
+        );
+        const int reduced_count = variable_count();
+        const int physical_count = physical_variable_count();
+        if (physical.variable_count != physical_count || physical.residual_count != reduced_count) {
+            throw ValueError(problem_name_ + " reduced residual shape did not match the lifted variables.");
+        }
+        require_size(
+            physical.jacobian_row_major,
+            static_cast<std::size_t>(reduced_count * physical_count),
+            problem_name_ + " physical residual Jacobian"
+        );
+        require_size(
+            physical.residual_hessian_tensor_row_major,
+            static_cast<std::size_t>(reduced_count * physical_count * physical_count),
+            problem_name_ + " physical residual Hessian tensor"
+        );
+
+        ResidualSecondOrderData out;
+        out.residual_count = reduced_count;
+        out.variable_count = reduced_count;
+        out.backend = physical.backend + "_through_electroneutral_logit_reduction";
+        out.residuals = physical.residuals;
+        out.jacobian_row_major.assign(static_cast<std::size_t>(reduced_count * reduced_count), 0.0);
+        out.residual_hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(reduced_count * reduced_count * reduced_count),
+            0.0
+        );
+
+        for (int residual = 0; residual < reduced_count; ++residual) {
+            for (int reduced = 0; reduced < reduced_count; ++reduced) {
+                double value = 0.0;
+                for (int physical_col = 0; physical_col < physical_count; ++physical_col) {
+                    value += physical.jacobian_row_major[
+                            static_cast<std::size_t>(residual * physical_count + physical_col)
+                        ]
+                        * lift.jacobian_row_major[
+                            static_cast<std::size_t>(physical_col * reduced_count + reduced)
+                        ];
+                }
+                out.jacobian_row_major[static_cast<std::size_t>(residual * reduced_count + reduced)] = value;
+            }
+
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    double value = 0.0;
+                    for (int physical_row = 0; physical_row < physical_count; ++physical_row) {
+                        const double drow = lift.jacobian_row_major[
+                            static_cast<std::size_t>(physical_row * reduced_count + first)
+                        ];
+                        for (int physical_col = 0; physical_col < physical_count; ++physical_col) {
+                            const double dcol = lift.jacobian_row_major[
+                                static_cast<std::size_t>(physical_col * reduced_count + second)
+                            ];
+                            if (drow == 0.0 || dcol == 0.0) {
+                                continue;
+                            }
+                            value += drow
+                                * physical.residual_hessian_tensor_row_major[
+                                    static_cast<std::size_t>(
+                                        residual * physical_count * physical_count
+                                        + physical_row * physical_count
+                                        + physical_col
+                                    )
+                                ]
+                                * dcol;
+                        }
+                    }
+                    for (int physical_col = 0; physical_col < physical_count; ++physical_col) {
+                        value += physical.jacobian_row_major[
+                                static_cast<std::size_t>(residual * physical_count + physical_col)
+                            ]
+                            * lift.hessian_tensor_row_major[
+                                static_cast<std::size_t>(
+                                    physical_col * reduced_count * reduced_count
+                                    + first * reduced_count
+                                    + second
+                                )
+                            ];
+                    }
+                    out.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            residual * reduced_count * reduced_count
+                            + first * reduced_count
+                            + second
+                        )
+                    ] = value;
+                }
+            }
+            std::vector<double> local_hessian(static_cast<std::size_t>(reduced_count * reduced_count), 0.0);
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    local_hessian[static_cast<std::size_t>(first * reduced_count + second)] =
+                        out.residual_hessian_tensor_row_major[
+                            static_cast<std::size_t>(
+                                residual * reduced_count * reduced_count
+                                + first * reduced_count
+                                + second
+                            )
+                        ];
+                }
+            }
+            symmetrize_local_square_matrix(local_hessian, reduced_count);
+            for (int first = 0; first < reduced_count; ++first) {
+                for (int second = 0; second < reduced_count; ++second) {
+                    out.residual_hessian_tensor_row_major[
+                        static_cast<std::size_t>(
+                            residual * reduced_count * reduced_count
+                            + first * reduced_count
+                            + second
+                        )
+                    ] = local_hessian[static_cast<std::size_t>(first * reduced_count + second)];
+                }
+            }
+        }
+        return out;
+    }
+
+    ReducedLift evaluate_lift(const std::vector<double>& variables) const {
+        require_size(variables, static_cast<std::size_t>(variable_count()), problem_name_ + " reduced variable");
+        const int reduced_count = variable_count();
+        const int physical_count = physical_variable_count();
+        ReducedLift out;
+        out.physical_variables.assign(static_cast<std::size_t>(physical_count), 0.0);
+        out.jacobian_row_major.assign(static_cast<std::size_t>(physical_count * reduced_count), 0.0);
+        out.hessian_tensor_row_major.assign(
+            static_cast<std::size_t>(physical_count * reduced_count * reduced_count),
+            0.0
+        );
+        auto jacobian = [&](int physical, int reduced) -> double& {
+            return out.jacobian_row_major[static_cast<std::size_t>(physical * reduced_count + reduced)];
+        };
+        auto hessian = [&](int physical, int first, int second) -> double& {
+            return out.hessian_tensor_row_major[
+                static_cast<std::size_t>(
+                    physical * reduced_count * reduced_count + first * reduced_count + second
+                )
+            ];
+        };
+
+        const double temperature = std::exp(variables[0]);
+        require_positive_finite(temperature, problem_name_ + " reduced temperature");
+        out.physical_variables[static_cast<std::size_t>(temperature_col())] = temperature;
+        jacobian(temperature_col(), 0) = temperature;
+        hessian(temperature_col(), 0, 0) = temperature;
+
+        for (int phase = 0; phase < phase_count(); ++phase) {
+            const int reduced_volume_col = 1 + phase;
+            const double volume = std::exp(variables[static_cast<std::size_t>(reduced_volume_col)]);
+            require_positive_finite(volume, problem_name_ + " reduced phase volume");
+            const int physical_volume_col = volume_col(phase);
+            out.physical_variables[static_cast<std::size_t>(physical_volume_col)] = volume;
+            jacobian(physical_volume_col, reduced_volume_col) = volume;
+            hessian(physical_volume_col, reduced_volume_col, reduced_volume_col) = volume;
+        }
+
+        std::vector<double> logits;
+        logits.reserve(groups_.size() - 1);
+        for (int index = 3; index < reduced_count; ++index) {
+            logits.push_back(variables[static_cast<std::size_t>(index)]);
+        }
+        const std::vector<double> group_fractions = softmax_with_reference_last(logits);
+        const std::vector<double> partner_composition = composition_from_group_fractions(group_fractions);
+        const int partner_phase = partner_phase_index();
+        const int fixed_offset = fixed_phase_index_ * local_variable_count();
+        const int partner_offset = partner_phase * local_variable_count();
+        for (int species = 0; species < species_count_; ++species) {
+            out.physical_variables[static_cast<std::size_t>(fixed_offset + species)] =
+                fixed_composition_[static_cast<std::size_t>(species)];
+            out.physical_variables[static_cast<std::size_t>(partner_offset + species)] =
+                partner_composition[static_cast<std::size_t>(species)];
+        }
+
+        const int logit_count = static_cast<int>(groups_.size()) - 1;
+        for (int group = 0; group < static_cast<int>(groups_.size()); ++group) {
+            for (int first_logit = 0; first_logit < logit_count; ++first_logit) {
+                const double group_first =
+                    group_fractions[static_cast<std::size_t>(group)]
+                    * ((group == first_logit ? 1.0 : 0.0)
+                       - group_fractions[static_cast<std::size_t>(first_logit)]);
+                const int first_reduced = 3 + first_logit;
+                for (int species = 0; species < species_count_; ++species) {
+                    jacobian(partner_offset + species, first_reduced) +=
+                        groups_[static_cast<std::size_t>(group)].composition_basis[
+                            static_cast<std::size_t>(species)
+                        ] * group_first;
+                }
+                for (int second_logit = 0; second_logit < logit_count; ++second_logit) {
+                    const double first_factor =
+                        (group == first_logit ? 1.0 : 0.0)
+                        - group_fractions[static_cast<std::size_t>(first_logit)];
+                    const double second_factor =
+                        (group == second_logit ? 1.0 : 0.0)
+                        - group_fractions[static_cast<std::size_t>(second_logit)];
+                    const double first_fraction =
+                        group_fractions[static_cast<std::size_t>(first_logit)];
+                    const double second_fraction =
+                        group_fractions[static_cast<std::size_t>(second_logit)];
+                    const double group_second =
+                        group_fractions[static_cast<std::size_t>(group)]
+                        * (
+                            first_factor * second_factor
+                            - first_fraction
+                                * ((first_logit == second_logit ? 1.0 : 0.0) - second_fraction)
+                        );
+                    const int second_reduced = 3 + second_logit;
+                    for (int species = 0; species < species_count_; ++species) {
+                        hessian(partner_offset + species, first_reduced, second_reduced) +=
+                            groups_[static_cast<std::size_t>(group)].composition_basis[
+                                static_cast<std::size_t>(species)
+                            ] * group_second;
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    NeutralFixedPressureTemperatureProblem physical_problem_;
+    std::vector<double> fixed_composition_;
+    int fixed_phase_index_ = 0;
+    std::string problem_name_;
+    std::vector<double> charges_;
+    std::vector<ElectroneutralCompositionGroup> groups_;
     int species_count_ = 0;
 };
 
@@ -2861,7 +3889,7 @@ NeutralTwoPhaseEosPostsolve fixed_temperature_pressure_postsolve(
         pressure_tolerance,
         chemical_potential_tolerance,
         phase_distance_tolerance,
-        {},
+        charges,
         false,
         false,
         {},
@@ -3074,9 +4102,11 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
     const std::vector<double>& fixed_composition,
     int fixed_phase_index,
     const std::string& problem_name,
+    const std::vector<double>& charges,
     const IpoptSolveOptions& options,
     double phase_total_tolerance,
     double pressure_tolerance,
+    double charge_tolerance,
     double chemical_potential_tolerance,
     double phase_distance_tolerance
 ) {
@@ -3088,7 +4118,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
     best.exact_gradient_required = adapter.exact_gradient_required;
     best.exact_jacobian_required = adapter.exact_jacobian_required;
     best.problem_name = problem_name;
-    apply_route_metadata(best, fixed_pressure_temperature_route_metadata());
+    apply_route_metadata(best, fixed_pressure_temperature_route_metadata(!charges.empty()));
     if (!adapter.compiled) {
         mark_neutral_route_ipopt_dependency_required(best);
         return best;
@@ -3101,6 +4131,7 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
         normalized_composition,
         fixed_phase_index,
         target_pressure,
+        charges,
         problem_name
     );
     bool have_best = false;
@@ -3108,14 +4139,45 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
     attempts.reserve(seeds.size() + (options.initial_variables.empty() ? 0 : 1));
 
     auto run_attempt = [&](const std::string& seed_name, const IpoptSolveOptions& attempt_options) {
-        NeutralFixedPressureTemperatureProblem problem(
-            args,
-            target_pressure,
-            normalized_composition,
-            fixed_phase_index,
-            problem_name
-        );
-        const IpoptSolveResult solve = solve_ipopt_nlp(problem, attempt_options);
+        const int species_count = static_cast<int>(normalized_composition.size());
+        const bool reduced_electrolyte_temperature_route = !charges.empty();
+        std::unique_ptr<NlpProblem> problem;
+        ElectrolyteReducedFixedPressureTemperatureProblem* reduced_problem = nullptr;
+        if (reduced_electrolyte_temperature_route) {
+            auto typed_problem = std::make_unique<ElectrolyteReducedFixedPressureTemperatureProblem>(
+                args,
+                target_pressure,
+                normalized_composition,
+                fixed_phase_index,
+                problem_name,
+                charges,
+                charge_tolerance
+            );
+            reduced_problem = typed_problem.get();
+            problem = std::move(typed_problem);
+        } else {
+            problem = std::make_unique<NeutralFixedPressureTemperatureProblem>(
+                args,
+                target_pressure,
+                normalized_composition,
+                fixed_phase_index,
+                problem_name,
+                charges,
+                charge_tolerance
+            );
+        }
+        validate_nlp_problem_shape(*problem);
+        IpoptSolveOptions route_options = attempt_options;
+        if (reduced_electrolyte_temperature_route && !route_options.initial_variables.empty()) {
+            route_options.initial_variables = reduced_problem->solver_variables_from_physical(
+                route_options.initial_variables
+            );
+        }
+        IpoptSolveResult solve = solve_ipopt_nlp(*problem, route_options);
+        if (reduced_electrolyte_temperature_route
+            && solve.variables.size() == static_cast<std::size_t>(problem->variable_count())) {
+            solve.variables = reduced_problem->physical_variables_from_solver(solve.variables);
+        }
         NeutralTwoPhaseEosRouteResult result;
         result.compiled = adapter.compiled;
         result.adapter_available = adapter.adapter_available;
@@ -3135,7 +4197,6 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
             return result;
         }
 
-        const int species_count = problem.species_count();
         const double solved_temperature = solve.variables.back();
         result.phase_amounts = pressure_route_phase_amounts(solve.variables, species_count);
         result.phase_volumes = pressure_route_phase_volumes(solve.variables, species_count);
@@ -3147,10 +4208,10 @@ NeutralTwoPhaseEosRouteResult solve_temperature_route(
             result.phase_volumes,
             fixed_phase_index,
             normalized_composition,
-            {},
+            charges,
             phase_total_tolerance,
             pressure_tolerance,
-            0.0,
+            charge_tolerance,
             chemical_potential_tolerance,
             phase_distance_tolerance,
             problem_name
@@ -3582,6 +4643,50 @@ NeutralTwoPhaseEosNlpContract evaluate_neutral_dew_t_eos_nlp_contract(
     return make_contract(problem, problem.phase_count(), problem.species_count());
 }
 
+ElectrolyteReducedNlpProbe evaluate_electrolyte_bubble_t_reduced_nlp_probe(
+    const add_args& args,
+    double target_pressure,
+    const std::vector<double>& liquid_composition,
+    const std::vector<double>& charges,
+    const std::vector<double>& physical_variables,
+    double charge_constraint_tolerance
+) {
+    ElectrolyteReducedFixedPressureTemperatureProblem problem(
+        args,
+        target_pressure,
+        liquid_composition,
+        0,
+        "electrolyte_bubble_t_eos",
+        charges,
+        charge_constraint_tolerance
+    );
+    const std::vector<double> solver_variables = problem.solver_variables_from_physical(physical_variables);
+    ElectrolyteReducedNlpProbe out;
+    out.problem_name = problem.name();
+    out.variable_count = problem.variable_count();
+    out.physical_variable_count = static_cast<int>(physical_variables.size());
+    out.solver_variables = solver_variables;
+    out.physical_variables = problem.physical_variables_from_solver(solver_variables);
+    out.objective = problem.objective(solver_variables);
+    out.gradient = problem.objective_gradient(solver_variables);
+    out.constraints = problem.constraints(solver_variables);
+    const NlpJacobianStructure jacobian_structure = problem.jacobian_structure();
+    out.jacobian_rows = jacobian_structure.rows;
+    out.jacobian_cols = jacobian_structure.cols;
+    out.jacobian_values = problem.jacobian_values(solver_variables);
+    const NlpHessianStructure structure = problem.hessian_structure();
+    out.hessian_rows = structure.rows;
+    out.hessian_cols = structure.cols;
+    out.hessian_values = problem.hessian_values(solver_variables, 1.0, {});
+    out.hessian_backend = problem.hessian_backend();
+    const std::map<std::string, std::string> diagnostics = problem.diagnostics();
+    const auto variable_model = diagnostics.find("variable_model");
+    if (variable_model != diagnostics.end()) {
+        out.variable_model = variable_model->second;
+    }
+    return out;
+}
+
 NeutralTwoPhaseEosNlpContract evaluate_neutral_tp_flash_eos_nlp_contract(
     const add_args& args,
     double temperature,
@@ -3683,9 +4788,11 @@ NeutralTwoPhaseEosRouteResult solve_neutral_bubble_t_eos_route(
         liquid_composition,
         0,
         "neutral_bubble_t_eos",
+        {},
         options,
         phase_total_tolerance,
         pressure_tolerance,
+        0.0,
         chemical_potential_tolerance,
         phase_distance_tolerance
     );
@@ -3707,9 +4814,39 @@ NeutralTwoPhaseEosRouteResult solve_neutral_dew_t_eos_route(
         vapor_composition,
         1,
         "neutral_dew_t_eos",
+        {},
         options,
         phase_total_tolerance,
         pressure_tolerance,
+        0.0,
+        chemical_potential_tolerance,
+        phase_distance_tolerance
+    );
+}
+
+NeutralTwoPhaseEosRouteResult solve_electrolyte_bubble_t_eos_route(
+    const add_args& args,
+    double target_pressure,
+    const std::vector<double>& liquid_composition,
+    const std::vector<double>& charges,
+    const IpoptSolveOptions& options,
+    double phase_total_tolerance,
+    double pressure_tolerance,
+    double charge_tolerance,
+    double chemical_potential_tolerance,
+    double phase_distance_tolerance
+) {
+    return solve_temperature_route(
+        args,
+        target_pressure,
+        liquid_composition,
+        0,
+        "electrolyte_bubble_t_eos",
+        charges,
+        options,
+        phase_total_tolerance,
+        pressure_tolerance,
+        charge_tolerance,
         chemical_potential_tolerance,
         phase_distance_tolerance
     );
@@ -3731,9 +4868,11 @@ NeutralTwoPhaseEosRouteResult solve_neutral_cloud_t_eos_route(
         parent_liquid_composition,
         0,
         kNeutralCloudTemperatureProblemName,
+        {},
         options,
         phase_total_tolerance,
         pressure_tolerance,
+        0.0,
         chemical_potential_tolerance,
         phase_distance_tolerance
     );

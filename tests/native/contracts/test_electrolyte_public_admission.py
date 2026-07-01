@@ -78,6 +78,30 @@ def test_public_admission_requires_all_electrolyte_gates() -> None:
         assert blocker in result["blockers"]
 
 
+def test_public_admission_requires_shared_electrolyte_residual_certification() -> None:
+    checker = _load_checker()
+    payload = checker.minimal_complete_payload_for_tests()
+
+    accepted = checker.evaluate_payload(payload, require_public_admission=True)
+
+    assert accepted["complete"] is True, accepted["blockers"]
+    assert accepted["shared_certification"]["status"] == "accepted"
+
+    missing = copy.deepcopy(payload)
+    missing.pop("shared_certification")
+    missing_result = checker.evaluate_payload(missing, require_public_admission=True)
+
+    assert missing_result["complete"] is False
+    assert "electrolyte_shared_certification_missing" in missing_result["blockers"]
+
+    raw_single_ion = copy.deepcopy(payload)
+    raw_single_ion["shared_certification"]["raw_single_ion_equality_used"] = True
+    raw_single_ion_result = checker.evaluate_payload(raw_single_ion, require_public_admission=True)
+
+    assert raw_single_ion_result["complete"] is False
+    assert "electrolyte_shared_certification_raw_single_ion_equality_used" in raw_single_ion_result["blockers"]
+
+
 def test_public_route_returns_certified_electrolyte_result() -> None:
     result = epcsaft_equilibrium.Equilibrium(
         _khudaida_public_mixture(),
@@ -107,9 +131,12 @@ def test_public_route_returns_certified_electrolyte_result() -> None:
     assert result.diagnostics["postsolve_certification"]["accepted"] is True
     assert result.diagnostics["exact_hessian_available"] is True
     assert result.diagnostics["hessian_approximation"] == "exact"
-    assert result.diagnostics["route_hessian_approximation"] == "limited-memory"
+    assert result.diagnostics["route_hessian_approximation"] == "exact"
+    assert result.diagnostics["option_profile"] == "held_refinement"
+    assert result.diagnostics["projected_residual_route"]["enforced_in_solver"] is True
     assert result.diagnostics["charge_balance"]["max_phase_charge_residual"] <= 1.0e-8
-    assert result.diagnostics["pressure_consistency"]["pressure_consistency_norm"] <= 1.0e-6
+    pressure = result.diagnostics["pressure_consistency"]
+    assert pressure["pressure_consistency_norm"] <= pressure["pressure_tolerance"]
     assert result.diagnostics["domain_margins"]["phase_distance"] > result.diagnostics["domain_margins"][
         "phase_distance_tolerance"
     ]

@@ -86,7 +86,11 @@ source-backed Khudaida explicit-ion NaCl mixed-solvent fixture is admitted
 through ``route="electrolyte_lle"``. Broader associating, generic electrolyte,
 reactive, CE/CPE, and regression surfaces are not callable production
 diagnostics until matching activation-matrix proof exposes them through the
-selector core.
+selector core. The retained electrolyte admission includes HELD2-style Stage
+I/II public-route discovery, Stage III replay consumption, postsolve
+certification, and stable/unstable/boundary/phase-label/neutral-limit/
+common-ion/mixed-salt scenario checks for that fixture only; Perdomo/Figiel
+validation and fitted-model regression remain separate gates.
 
 Contribution Maps
 -----------------

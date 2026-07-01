@@ -93,8 +93,55 @@ def test_expected_pe_benchmark_ladder_is_declared() -> None:
         "PE-Associating TP Flash"
     ]
     assert benchmarks["Khudaida 2026 electrolyte LLE"]["priority_rank"] == 1
+    assert benchmarks["Khudaida 2026 electrolyte LLE"]["status"] == (
+        "held2_public_route_phase_discovery_admitted"
+    )
+    assert "Perdomo/Figiel validation" in benchmarks["Khudaida 2026 electrolyte LLE"]["todo"]
+    assert "CE/CPE" in benchmarks["Khudaida 2026 electrolyte LLE"]["todo"]
     assert benchmarks["Held 2014 Figure 6"]["priority_rank"] == 2
     assert benchmarks["Ascani/Sadowski/Held 2022 mixed-solvent LLE"]["priority_rank"] == 3
+
+
+def test_neutral_lle_showcase_declares_shared_certification_and_tolerance_margins() -> None:
+    matsuda = next(
+        case
+        for row in _registry()["family_rows"]
+        for case in row.get("reference_cases", [])
+        if case["case_label"] == "Matsuda 2011 perfluorohexane + hexane neutral LLE"
+    )
+
+    assert matsuda["fixture_status"] == "available"
+    assert matsuda["route"] == "neutral_lle"
+    assert {
+        "source_backed_binodal_branch_rows",
+        "source_fitted_binary_interaction",
+        "current_lle_route_acceptance",
+        "shared_phase_equilibrium_certification",
+        "source_tolerance_margins",
+    } <= set(matsuda["acceptance_checks"])
+
+
+def test_associating_lle_gross_2002_declares_shared_certification_and_tolerance_margins() -> None:
+    gross = next(
+        case
+        for row in _registry()["family_rows"]
+        for case in row.get("reference_cases", [])
+        if case["case_label"] == "Gross/Sadowski 2002 methanol/cyclohexane"
+    )
+
+    assert gross["fixture_status"] == "available"
+    assert gross["route"] == "associating_lle_internal_proof"
+    assert {
+        "source_digitized_figure_8_lle_rows",
+        "source_backed_parameters",
+        "source_backed_binary_interaction",
+        "public_associating_route_admitted",
+        "association_mass_action",
+        "exact_hessian",
+        "phase_equilibrium_certification",
+        "shared_phase_equilibrium_certification",
+        "source_tolerance_margins",
+    } <= set(gross["acceptance_checks"])
 
 
 def test_neutral_tp_flash_gate_defines_executable_fixture_contract() -> None:

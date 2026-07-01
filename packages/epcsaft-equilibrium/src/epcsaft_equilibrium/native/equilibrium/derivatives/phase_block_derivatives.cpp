@@ -321,6 +321,248 @@ TemperatureRoutePhaseBlock evaluate_temperature_route_phase_block(
     const std::vector<double>& amounts,
     double volume
 ) {
+    if (phase_block_derivatives_detail::has_active_association_sites(args)) {
+        const ::add_args non_associating_args = phase_block_derivatives_detail::without_solved_association(args);
+        TemperatureRoutePhaseBlock out = evaluate_temperature_route_phase_block(
+            non_associating_args,
+            temperature,
+            target_pressure,
+            amounts,
+            volume
+        );
+        out.block = evaluate_eos_phase_block(args, temperature, target_pressure, amounts, volume);
+
+        const int species_count = static_cast<int>(amounts.size());
+        const int local_variable_count = species_count + 2;
+        const int volume_col = species_count;
+        const int temperature_col = species_count + 1;
+        const int base_var_count = species_count + 2;  // [T, rho, x_0, ..., x_n]
+        if (out.gradient.size() != static_cast<std::size_t>(local_variable_count)
+            || out.objective_hessian_row_major.size()
+                != static_cast<std::size_t>(local_variable_count * local_variable_count)
+            || out.objective_third_derivative_tensor_row_major.size()
+                != static_cast<std::size_t>(local_variable_count * local_variable_count * local_variable_count)
+            || out.pressure_jacobian_row_major.size() != static_cast<std::size_t>(local_variable_count)
+            || out.pressure_hessian_row_major.size()
+                != static_cast<std::size_t>(local_variable_count * local_variable_count)
+            || out.block.gradient.size() != static_cast<std::size_t>(species_count + 1)) {
+            throw ::ValueError("fixed-pressure temperature associating route derivative shape did not match variables.");
+        }
+
+        double total_amount = 0.0;
+        for (double amount : amounts) {
+            total_amount += amount;
+        }
+        const double rho = total_amount / volume;
+        std::vector<double> composition(static_cast<std::size_t>(species_count), 0.0);
+        for (int component = 0; component < species_count; ++component) {
+            composition[static_cast<std::size_t>(component)] =
+                amounts[static_cast<std::size_t>(component)] / total_amount;
+        }
+
+        std::vector<double> q_first(static_cast<std::size_t>(base_var_count * local_variable_count), 0.0);
+        std::vector<double> q_second(
+            static_cast<std::size_t>(base_var_count * local_variable_count * local_variable_count),
+            0.0
+        );
+        const auto q1 = [&](int q, int y) -> double& {
+            return q_first[static_cast<std::size_t>(q * local_variable_count + y)];
+        };
+        const auto q2 = [&](int q, int y0, int y1) -> double& {
+            return q_second[
+                static_cast<std::size_t>(
+                    q * local_variable_count * local_variable_count
+                    + y0 * local_variable_count
+                    + y1
+                )
+            ];
+        };
+        const auto q1_value = [&](int q, int y) {
+            return q_first[static_cast<std::size_t>(q * local_variable_count + y)];
+        };
+        const auto q2_value = [&](int q, int y0, int y1) {
+            return q_second[
+                static_cast<std::size_t>(
+                    q * local_variable_count * local_variable_count
+                    + y0 * local_variable_count
+                    + y1
+                )
+            ];
+        };
+
+        q1(0, temperature_col) = 1.0;
+        for (int species = 0; species < species_count; ++species) {
+            q1(1, species) = 1.0 / volume;
+            q2(1, species, volume_col) = -1.0 / (volume * volume);
+            q2(1, volume_col, species) = -1.0 / (volume * volume);
+        }
+        q1(1, volume_col) = -rho / volume;
+        q2(1, volume_col, volume_col) = 2.0 * rho / (volume * volume);
+        for (int component = 0; component < species_count; ++component) {
+            const int q_index = 2 + component;
+            for (int species = 0; species < species_count; ++species) {
+                const double indicator = component == species ? 1.0 : 0.0;
+                q1(q_index, species) =
+                    (indicator - composition[static_cast<std::size_t>(component)]) / total_amount;
+            }
+            for (int first = 0; first < species_count; ++first) {
+                for (int second = 0; second < species_count; ++second) {
+                    const double first_indicator = component == first ? 1.0 : 0.0;
+                    const double second_indicator = component == second ? 1.0 : 0.0;
+                    q2(q_index, first, second) =
+                        (2.0 * composition[static_cast<std::size_t>(component)]
+                         - first_indicator
+                         - second_indicator)
+                        / (total_amount * total_amount);
+                }
+            }
+        }
+
+        const auto association_response =
+            residual_association_detail::association_phase_state_temperature_response_cppad_cpp(
+                temperature,
+                rho,
+                composition,
+                args
+            );
+        if (!association_response.active || association_response.base_var_count != base_var_count) {
+            throw ::ValueError("fixed-pressure temperature route association response was not available.");
+        }
+
+        for (int species = 0; species < species_count; ++species) {
+            out.gradient[static_cast<std::size_t>(species)] = out.block.gradient[static_cast<std::size_t>(species)];
+        }
+        out.gradient[static_cast<std::size_t>(volume_col)] =
+            out.block.gradient[static_cast<std::size_t>(species_count)];
+
+        const auto hessian_index = [local_variable_count](int row, int col) {
+            return static_cast<std::size_t>(row * local_variable_count + col);
+        };
+        const auto third_index = [local_variable_count](int first, int second, int third) {
+            return static_cast<std::size_t>(
+                first * local_variable_count * local_variable_count
+                + second * local_variable_count
+                + third
+            );
+        };
+        const auto mu_first = [&](int component, int q_index) {
+            return association_response.dmu_dvar_row_major[
+                static_cast<std::size_t>(component * base_var_count + q_index)
+            ];
+        };
+        const auto mu_second = [&](int component, int q0, int q1_index) {
+            return association_response.d2mu_dvar2_tensor_row_major[
+                static_cast<std::size_t>(
+                    component * base_var_count * base_var_count
+                    + q0 * base_var_count
+                    + q1_index
+                )
+            ];
+        };
+
+        for (int component = 0; component < species_count; ++component) {
+            for (int col = 0; col < local_variable_count; ++col) {
+                double value = 0.0;
+                for (int q = 0; q < base_var_count; ++q) {
+                    value += mu_first(component, q) * q1_value(q, col);
+                }
+                out.objective_hessian_row_major[hessian_index(component, col)] += value;
+            }
+            for (int row = 0; row < local_variable_count; ++row) {
+                for (int col = 0; col < local_variable_count; ++col) {
+                    double value = 0.0;
+                    for (int q = 0; q < base_var_count; ++q) {
+                        value += mu_first(component, q) * q2_value(q, row, col);
+                        for (int q_other = 0; q_other < base_var_count; ++q_other) {
+                            value += mu_second(component, q, q_other)
+                                * q1_value(q, row)
+                                * q1_value(q_other, col);
+                        }
+                    }
+                    out.objective_third_derivative_tensor_row_major[
+                        third_index(component, row, col)
+                    ] += value;
+                }
+            }
+            for (int row = 0; row < local_variable_count; ++row) {
+                for (int col = 0; col < row; ++col) {
+                    const std::size_t left = third_index(component, row, col);
+                    const std::size_t right = third_index(component, col, row);
+                    const double symmetric = 0.5 * (
+                        out.objective_third_derivative_tensor_row_major[left]
+                        + out.objective_third_derivative_tensor_row_major[right]
+                    );
+                    out.objective_third_derivative_tensor_row_major[left] = symmetric;
+                    out.objective_third_derivative_tensor_row_major[right] = symmetric;
+                }
+            }
+        }
+
+        const double gas_constant = kb * N_AV;
+        const auto z_first = [&](int q) {
+            return association_response.dzraw_dvar[static_cast<std::size_t>(q)];
+        };
+        const auto z_second = [&](int q0, int q1_index) {
+            return association_response.d2zraw_dvar2_row_major[
+                static_cast<std::size_t>(q0 * base_var_count + q1_index)
+            ];
+        };
+        const auto pressure_first_q = [&](int q) {
+            double value = temperature * rho * z_first(q);
+            if (q == 0) {
+                value += rho * association_response.zraw;
+            }
+            if (q == 1) {
+                value += temperature * association_response.zraw;
+            }
+            return gas_constant * value;
+        };
+        const auto pressure_second_q = [&](int q0, int q1_index) {
+            double value = temperature * rho * z_second(q0, q1_index);
+            if (q0 == 0) {
+                value += rho * z_first(q1_index);
+            }
+            if (q1_index == 0) {
+                value += rho * z_first(q0);
+            }
+            if (q0 == 1) {
+                value += temperature * z_first(q1_index);
+            }
+            if (q1_index == 1) {
+                value += temperature * z_first(q0);
+            }
+            if ((q0 == 0 && q1_index == 1) || (q0 == 1 && q1_index == 0)) {
+                value += association_response.zraw;
+            }
+            return gas_constant * value;
+        };
+
+        for (int col = 0; col < local_variable_count; ++col) {
+            double value = 0.0;
+            for (int q = 0; q < base_var_count; ++q) {
+                value += pressure_first_q(q) * q1_value(q, col);
+            }
+            out.pressure_jacobian_row_major[static_cast<std::size_t>(col)] += value;
+        }
+        for (int row = 0; row < local_variable_count; ++row) {
+            for (int col = 0; col < local_variable_count; ++col) {
+                double value = 0.0;
+                for (int q = 0; q < base_var_count; ++q) {
+                    value += pressure_first_q(q) * q2_value(q, row, col);
+                    for (int q_other = 0; q_other < base_var_count; ++q_other) {
+                        value += pressure_second_q(q, q_other)
+                            * q1_value(q, row)
+                            * q1_value(q_other, col);
+                    }
+                }
+                out.pressure_hessian_row_major[hessian_index(row, col)] += value;
+            }
+        }
+        symmetrize_square_block(out.pressure_hessian_row_major, local_variable_count);
+        out.block.derivative_backend = "analytic_cppad_implicit_association_temperature";
+        return out;
+    }
+
     TemperatureRoutePhaseBlock out;
     out.block = evaluate_eos_phase_block(args, temperature, target_pressure, amounts, volume);
     const EosLocalPhaseDerivativeBundle cppad_bundle = eos_local_phase_helmholtz_derivatives_cpp(

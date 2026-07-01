@@ -128,7 +128,7 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
         "PE-Generalized Multiphase": ("neutral_public_admitted", ["multiphase"]),
         "PE-Associating TP Flash": ("source_backed_associating_lle_public_admitted", ["lle"]),
         "PE-Electrolyte LLE/TP Flash": (
-            "representative_public_admitted_blocked_by_khudaida_model_reproduction",
+            "held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation",
             ["electrolyte_lle"],
         ),
         "CE Standalone Reactive Speciation": ("standalone_ce_public_admitted", ["reactive_speciation"]),
@@ -168,8 +168,21 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
     )
     assert (
         neutral["phase_discovery_gate_status"]["held_stage_iii_ipopt_refinement"]
-        == "current_route_refinement_consumes_stage_ii_replay_with_ipopt_success"
+        == "current_route_refinement_reports_accepted_seed_and_declines_replay_when_replay_seed_misses_postsolve"
     )
+
+
+def test_production_registry_rows_have_certification_evidence_commands() -> None:
+    for row in _family_rows():
+        if row["production_exposed"] is not True:
+            continue
+        assert row["existing_public_utility_routes"], row["family_label"]
+        evidence_rows = row.get("admission_evidence", [])
+        assert evidence_rows, row["family_label"]
+        for evidence in evidence_rows:
+            assert evidence["command"], evidence["evidence_label"]
+            assert evidence["scope"], evidence["evidence_label"]
+            assert evidence["result_requirement"], evidence["evidence_label"]
 
 
 def test_bubble_dew_cloud_shadow_are_derived_subworkflows_not_family_rows() -> None:
@@ -317,11 +330,13 @@ def test_electrolyte_family_records_public_admission_evidence() -> None:
     assert electrolyte["existing_public_utility_routes"] == ["electrolyte_lle"]
     assert (
         electrolyte["phase_discovery_status"]
-        == "held2_postsolve_certified_representative_public_admission_complete_full_khudaida_model_reproduction_blocked_by_320"
+        == "held2_public_route_phase_discovery_and_scenario_validation_admitted_perdomo_figiel_validation_blocked_by_320"
     )
     assert "electrolyte_gfpe_closed_admission_source_gate" in electrolyte["required_gates"]
     assert "electrolyte_postsolve_phase_set_certification" in electrolyte["required_gates"]
     assert "electrolyte_public_route_admission" in electrolyte["required_gates"]
+    assert "held2_public_route_scenario_validation" in electrolyte["required_gates"]
+    assert "held2_public_route_capability_admission" in electrolyte["required_gates"]
     assert gate["evidence_tier"] == "T1"
     assert gate["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_gfpe_gate.py "
@@ -381,13 +396,35 @@ def test_electrolyte_family_records_public_admission_evidence() -> None:
     assert public["evidence_tier"] == "T1"
     assert public["command"] == (
         "uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py "
-        "--json --require-source-gate --require-readiness-gate --require-tpd-gate "
-        "--require-held2-discovery --require-stage-iii --require-postsolve-certification "
-        "--require-public-admission --require-complete"
+        "--json --require-held2-stage-ii --require-stage-iii "
+        "--require-postsolve-certification --require-public-admission --require-complete"
     )
     assert "Equilibrium(..., route='electrolyte_lle')" in public["scope"]
+    assert "Stage II status is `dual_loop_verified`" in public["result_requirement"]
+    assert "Stage III consumes the Stage II replay payload" in public["result_requirement"]
     assert "public route `electrolyte_lle`" in public["result_requirement"]
     assert "reactive, CE, CPE, regression, and release claims remain closed" in public["result_requirement"]
+
+    scenario = evidence["Electrolyte HELD2 public-route scenario validation ladder"]
+    assert scenario["evidence_tier"] == "T1"
+    assert scenario["command"] == (
+        "uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py "
+        "--json --require-complete"
+    )
+    assert "stable feed" in scenario["scope"]
+    assert "mixed-salt/asymmetric electrolyte" in scenario["scope"]
+    assert "7 accepted scenarios" in scenario["result_requirement"]
+    assert "neutral-limit rows make no charged residual-family claim" in scenario["result_requirement"]
+
+    admission = evidence["Electrolyte HELD2 capability admission registry contract"]
+    assert admission["evidence_tier"] == "T1"
+    assert admission["command"] == (
+        "uv run --no-sync python -m pytest "
+        "tests\\native\\contracts\\test_equilibrium_benchmark_registry.py "
+        "tests\\native\\contracts\\test_generalized_equilibrium_registry.py -q"
+    )
+    assert "Issue #350 registry and capability-doc admission" in admission["scope"]
+    assert "#191 remains blocked by #320 and #343" in admission["result_requirement"]
 
 
 def test_generalized_multiphase_records_public_admission_evidence() -> None:

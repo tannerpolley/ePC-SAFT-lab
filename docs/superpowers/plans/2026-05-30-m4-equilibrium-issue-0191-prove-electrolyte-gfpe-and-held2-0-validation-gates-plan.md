@@ -9,20 +9,22 @@
 in order: counterion-pair phase discovery (#306), Stage III reduced-variable
 refinement (#312), postsolve certification (#313), representative public route
 admission (#314), and full Khudaida figure-level model reproduction plus
-broader HELD2 flash scenario validation (#320).
+broader HELD2 flash scenario validation (#320), followed by full HELD2-style
+public-route phase discovery and final registry/capability admission
+(#343 through #350).
 
 **Architecture:** #191 is the electrolyte GFPE umbrella for
 `packages/epcsaft-equilibrium`. Existing children prove source data, reduced
 electroneutral variables, Born SSM/DS derivative receipts, charge-neutral TPD
 screening, HELD2 counterion-pair phase discovery, Stage III refinement,
-postsolve certification, and representative public route admission. The active
-child, #320, must prove full Khudaida model reproduction and broader HELD2
-flash behavior before #191 can close. #320 also must prove that accepted
-electrolyte rows use the shared native `NlpProblem`/Ipopt exact-Hessian
-production path with route-owned transforms/scaling, exact objective gradients,
-exact constraint Jacobians, exact Lagrangian Hessians, Born SSM+DS active-block
-exactness, projected electrochemical or modified mean-ionic residuals, and
-strict Stage III Ipopt success when Stage III evidence is counted.
+postsolve certification, and representative public route admission. #320 proved
+Perdomo/Figiel HELD2 flash behavior through the public package route. #343
+then closed the full HELD2-style public-route phase-discovery tracker after
+#344 through #350 retained doctrine, continuous reduced-electroneutral TPD,
+Stage I stability, Stage II dual discovery, public-route orchestration,
+scenario validation, and registry/capability admission evidence. Final #191
+closeout re-runs the retained public-route oracle and closes the parent only if
+the evidence remains executable.
 
 **Tech Stack:** C++ equilibrium native core, `NlpProblem`, Ipopt,
 `VariableTransform`, pybind11 bindings, Python validation checkers, pytest
@@ -36,8 +38,9 @@ GitHub dependency readiness.
 - Source Spec: `docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 - Source Issue: `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`
 - Source Plan: `docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md`
-- Active Child: `https://github.com/ePC-SAFT/ePC-SAFT/issues/320`
-- Active Child Plan: `docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md`
+- Closed Validation Child: `https://github.com/ePC-SAFT/ePC-SAFT/issues/320`
+- Closed Full-Discovery Tracker: `https://github.com/ePC-SAFT/ePC-SAFT/issues/343`
+- Final Closeout Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/191`
 - Milestone: `M4 - Equilibrium`
 - AFK/HITL: `HITL`
 
@@ -45,38 +48,41 @@ GitHub dependency readiness.
 
 **Intent:** Keep #191 as the parent acceptance gate for electrolyte GFPE while
 forcing implementation through PR-sized child gates.
-**Current Behavior:** #269, #300, #302, #306, #312, #313, and #314 are closed,
-but #314 proved representative public route admission only. The Khudaida figure
-checker currently exposes failed model reproduction.
-**Expected Outcome:** #191 closes only after #320 proves full Khudaida
-figure-level model reproduction, broader HELD2 flash scenario behavior, and
-the shared `NlpProblem`/Ipopt exact-Hessian production route receipts.
+**Current Behavior:** #269, #300, #302, #306, #312, #313, #314, #320, #343, and
+#344 through #350 are closed. The remaining #191 work is proof/sync closeout:
+the full Figiel validator command must run as written on Windows and parent
+docs must no longer describe closed children as active blockers.
+**Expected Outcome:** #191 closes after the final proof/sync PR proves the
+Figiel validation command, the public electrolyte admission checker, the HELD2
+public-route scenario checker, focused package tests, and docs validation all
+pass from the public package route.
 **Target Output:** `electrolyte_lle` remains scoped to the exact behavior proven
-by retained checkers; final closeout requires artifact-complete and
-model-reproduction-complete Khudaida evidence plus exact-Hessian route
-diagnostics.
+by retained checkers; final closeout requires Perdomo/Figiel validation,
+full-discovery Stage I/II/III evidence, exact-Hessian route diagnostics, and
+closed #320/#343/#344-#350 provenance.
 **Owner:** M4 equilibrium package owner.
 **Interface:** GitHub issue dependencies, local issue mirrors, M4 README,
 benchmark registry rows, validation checkers, and native diagnostics.
-**Cutover:** Direct #191 implementation is displaced by the child sequence
-continuing with #320.
-**Replaced Path:** The stale generic parent plan is replaced with explicit
-child-gate orchestration so workers do not treat readiness or TPD screening as
-production electrolyte support.
+**Cutover:** Direct #191 implementation is displaced by the completed child
+sequence; this plan now owns only final closeout proof and tracker sync.
+**Replaced Path:** The stale parent plan text that named #320 or #343 as active
+blockers is replaced with closed-provenance closeout evidence so workers do not
+treat readiness, TPD screening, or representative admission alone as production
+electrolyte support.
 **Evidence:** Closed child issue mirrors, checker JSON, targeted contract tests,
 `NlpProblem` sparse derivative receipts, Ipopt option/profile diagnostics, Born
 SSM+DS active-block exact-Hessian receipts, reduced-coordinate lift/back-lift
 diagnostics, registry evidence, dependency-readiness receipts, and PR merge
 records.
-**Acceptance Proof:** #191 acceptance is proven only when all electrolyte child
-gates are closed, the public electrolyte route admission checker passes, the
-full Khudaida figure checker passes with model reproduction required, and #320
-proves the exact-Hessian production route path.
-**Stop Criteria:** Stop if a child attempts to admit public electrolyte routes
-before Stage III and postsolve evidence, compares charged species by raw
-single-ion chemical potentials, bypasses `NlpProblem`/Ipopt, lacks Born SSM+DS
-active-block exact-Hessian evidence, or uses downstream case-study metrics as
-upstream package validation.
+**Acceptance Proof:** #191 acceptance is proven when all electrolyte child gates
+are closed, the final public-route proof oracle passes, the Figiel validator
+does not self-lock the editable native extension on Windows, and parent
+docs/GitHub text show #320 and #343 as closed provenance.
+**Stop Criteria:** Stop if the final oracle fails, if a child admits public
+electrolyte routes before Stage III and postsolve evidence, compares charged
+species by raw single-ion chemical potentials, bypasses `NlpProblem`/Ipopt,
+lacks Born SSM+DS active-block exact-Hessian evidence, or uses downstream
+case-study metrics as upstream package validation.
 **Avoid:** Do not add reactive electrolyte routes, parameter-regression work,
 release claims, or public admission before the required proof gates.
 **Risk:** The existing #302 negative TPD candidate can be mistaken for full
@@ -85,8 +91,8 @@ refinement, certification, and admission separate.
 
 ## Implementation Boundaries
 
-**Files To Create:** Child plans and issue mirrors for unresolved #191 gates.
-**Files To Modify:** `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`, `docs/superpowers/milestones/M4-equilibrium/README.md`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, and child-owned native/checker/test files.
+**Files To Create:** Focused regression tests for the final closeout blocker, if needed.
+**Files To Modify:** `analyses/paper_validation/2025_figiel/scripts/validate_figure_data.py`, focused regression tests, `docs/superpowers/issues/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md`, `docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md`, and `docs/superpowers/milestones/M4-equilibrium/README.md`.
 **Files To Avoid:** Regression package files, downstream repositories, public
 electrolyte route maps before the admission child, and provider EOS internals
 unless a child issue explicitly scopes provider receipt consumption.
@@ -106,13 +112,12 @@ scope.
 derivative metadata, `VariableTransform` reduced-coordinate lift/back-lift,
 Ipopt exact-Hessian profile diagnostics, checker CLIs, activation capability
 rows, benchmark registry rows, and GitHub dependency readiness automation.
-**Migration Or Cutover:** As each child opens, #191 carries `status:blocked`;
-after a child closes, dependency readiness either exposes the next child or
-returns #191 to ready for planning.
-**Replaced Path Handling:** Remove direct #191 execution language and keep the
-active child plan as the executable entry point.
-**Acceptance Proof Gate:** Run the active child proof oracle and docs validation
-before merging any tracker or implementation PR.
+**Migration Or Cutover:** #191 is ready after dependency readiness confirms all
+native blockers are closed.
+**Replaced Path Handling:** Remove active-child wording and keep closed child
+proof as parent provenance.
+**Acceptance Proof Gate:** Run the final #191 proof oracle and docs validation
+before merging the closeout PR.
 
 ## HELD2 Adoption Checkpoint Sequence
 
@@ -134,28 +139,32 @@ focused tests, and tracker evidence:
   consistency, phase amounts, and domain margins.
 - #314 public admission checkpoint: consume all prior checkers and expose only
   the certified representative electrolyte route surface.
-- #320 full reproduction checkpoint: make the full Khudaida figure checker pass
-  with model reproduction required, add broader HELD2 flash scenario tests, and
-  prove the shared native `NlpProblem`/Ipopt exact-Hessian route path.
+- #320 Perdomo/Figiel checkpoint: closed by PR #341 with retained HELD2 flash
+  validation through the public package route.
+- #343 full-discovery checkpoint: closed by PR #359 after #344 through #350
+  retained doctrine, continuous reduced-electroneutral TPD, Stage I stability,
+  Stage II dual discovery, public-route orchestration, scenario validation, and
+  registry/capability proof.
 
 ## Acceptance Criteria
 
-- [ ] #320 blocks #191 until full Khudaida figure-level model reproduction and
-  HELD2 flash scenario validation pass.
-- [ ] #320 blocks #191 until accepted rows prove the shared native
-  `NlpProblem`/Ipopt exact-Hessian route path, fixed sparse derivative receipts,
-  route-owned transforms/scaling, and Ipopt postsolve diagnostics.
-- [ ] #320 blocks #191 until Born SSM+DS active-block exact-Hessian evidence,
-  reduced electroneutral lift/back-lift, and projected electrochemical or
-  modified mean-ionic residuals are retained.
-- [ ] Parent #191 docs list closed children #269, #300, #302, #306, #312, #313,
+- [x] #320 closed after Perdomo/Figiel HELD2 flash scenario validation passed.
+- [x] #320 accepted rows prove the shared native `NlpProblem`/Ipopt
+  exact-Hessian route path, fixed sparse derivative receipts, route-owned
+  transforms/scaling, and Ipopt postsolve diagnostics.
+- [x] #320 retains Born SSM+DS active-block exact-Hessian evidence, reduced
+  electroneutral lift/back-lift, and projected electrochemical or modified
+  mean-ionic residuals.
+- [x] #343 closed after #344 through #350 retained the full HELD2-style
+  public-route discovery chain and capability evidence.
+- [x] Parent #191 docs list closed children #269, #300, #302, #306, #312, #313,
   and #314 as
   historical provenance only.
-- [ ] Parent #191 docs list open child #320 as the current final validation
-  blocker.
-- [ ] The parent tracker keeps the HELD2 adoption checkpoint sequence current
+- [x] Parent #191 docs list closed #320 and #343 provenance instead of active
+  blockers.
+- [x] The parent tracker keeps the HELD2 adoption checkpoint sequence current
   as each child opens or closes.
-- [ ] Public electrolyte route claims stay narrowed until #320 proves the full
+- [x] Public electrolyte route claims stay narrowed until #320 proves the full
   retained source-backed model-reproduction gate.
 
 ## Non-Goals
@@ -185,24 +194,24 @@ focused tests, and tracker evidence:
 - [ ] Keep labels/readiness mirrored from GitHub.
 - [ ] Keep closed child evidence in provenance sections, not active blockers.
 
-### Task 2: Track The Active Child Gate
+### Task 2: Confirm The Closed Child Chain
 
 **Use Cases:**
-- A worker needs one executable child plan with concrete files, proof oracle,
-  and acceptance evidence.
-- The child must replace an unresolved parent phrase with native checker
-  evidence before #191 can progress.
-- The child must state the old path it displaces and the route surfaces it keeps
-  closed.
+- A resolver needs #320, #343, and #344 through #350 shown as closed provenance
+  before #191 can close.
+- The final closeout must replace unresolved parent phrases with native checker
+  evidence.
+- The parent must state the old path it displaces and the route surfaces it
+  keeps closed.
 
 **Files:**
-- Active child source plan.
-- Active child issue mirror.
-- Child-owned implementation files.
+- #191 source plan.
+- #191 issue mirror.
+- M4 README.
 
-- [ ] Start from the active child plan.
-- [ ] Run its proof oracle before PR creation.
-- [ ] Merge only after the child acceptance criteria pass.
+- [x] Confirm #320, #343, and #344 through #350 are closed.
+- [ ] Run the #191 final proof oracle before PR creation.
+- [ ] Merge only after the final acceptance criteria pass.
 
 ### Task 3: Reconcile Dependency Readiness After Each Merge
 
@@ -229,6 +238,10 @@ focused tests, and tracker evidence:
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md
 uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --reconcile --dry-run --json
+uv run --no-sync python analyses\paper_validation\2025_figiel\scripts\validate_figure_data.py
+uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
+uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete
+uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and flash"
 uv run --no-sync python scripts/dev/validate_project.py docs
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```

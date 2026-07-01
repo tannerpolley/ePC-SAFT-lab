@@ -742,6 +742,10 @@ public:
             record_callback_failure("eval_f", "dimension mismatch");
             return false;
         }
+        if (x == nullptr) {
+            record_callback_failure("eval_f", "null variable pointer");
+            return false;
+        }
         try {
             obj_value = problem_.objective(vector_from_raw(x, n));
             const bool valid = std::isfinite(obj_value);
@@ -767,6 +771,10 @@ public:
         (void)new_x;
         if (n != problem_.variable_count()) {
             record_callback_failure("eval_grad_f", "dimension mismatch");
+            return false;
+        }
+        if (x == nullptr || grad_f == nullptr) {
+            record_callback_failure("eval_grad_f", "null callback pointer");
             return false;
         }
         try {
@@ -796,6 +804,10 @@ public:
         (void)new_x;
         if (n != problem_.variable_count() || m != problem_.constraint_count()) {
             record_callback_failure("eval_g", "dimension mismatch");
+            return false;
+        }
+        if (x == nullptr || g == nullptr) {
+            record_callback_failure("eval_g", "null callback pointer");
             return false;
         }
         try {
@@ -832,6 +844,10 @@ public:
             return false;
         }
         if (values == nullptr) {
+            if (iRow == nullptr || jCol == nullptr) {
+                record_callback_failure("eval_jac_g", "null Jacobian structure pointer");
+                return false;
+            }
             if (jacobian_structure_.rows.size() != static_cast<std::size_t>(nele_jac)
                 || jacobian_structure_.cols.size() != static_cast<std::size_t>(nele_jac)) {
                 record_callback_failure("eval_jac_g", "invalid Jacobian structure shape");
@@ -842,6 +858,10 @@ public:
                 jCol[index] = jacobian_structure_.cols[index];
             }
             return true;
+        }
+        if (x == nullptr) {
+            record_callback_failure("eval_jac_g", "null variable pointer");
+            return false;
         }
         try {
             const std::vector<double> jacobian = problem_.jacobian_values(vector_from_raw(x, n));
@@ -881,6 +901,10 @@ public:
             return false;
         }
         if (values == nullptr) {
+            if (iRow == nullptr || jCol == nullptr) {
+                record_callback_failure("eval_h", "null Hessian structure pointer");
+                return false;
+            }
             if (hessian_structure_.rows.size() != static_cast<std::size_t>(nele_hess)
                 || hessian_structure_.cols.size() != static_cast<std::size_t>(nele_hess)) {
                 record_callback_failure("eval_h", "invalid Hessian structure shape");
@@ -891,6 +915,10 @@ public:
                 jCol[index] = hessian_structure_.cols[index];
             }
             return true;
+        }
+        if (x == nullptr || lambda == nullptr) {
+            record_callback_failure("eval_h", "null Hessian value pointer");
+            return false;
         }
         try {
             const std::vector<double> hessian = problem_.hessian_values(
@@ -1281,6 +1309,8 @@ IpoptSolveResult solve_ipopt_nlp(
     app->Options()->SetNumericValue("compl_inf_tol", normalized_options.complementarity_tolerance);
     app->Options()->SetStringValue("jacobian_approximation", "exact");
     app->Options()->SetStringValue("gradient_approximation", "exact");
+    app->Options()->SetNumericValue("bound_relax_factor", 0.0);
+    app->Options()->SetStringValue("honor_original_bounds", "yes");
     if (normalized_options.bound_push > 0.0) {
         app->Options()->SetNumericValue("bound_push", normalized_options.bound_push);
     }

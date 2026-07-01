@@ -80,6 +80,23 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     ]
     assert public_route_map == EXPECTED_PUBLIC_ROUTE_FAMILIES
     assert capabilities["public_routes"] == sorted(EXPECTED_PUBLIC_ROUTE_FAMILIES)
+    certification = capabilities["phase_equilibrium_certification"]
+    assert certification["schema_version"] == 1
+    assert certification["public_route_family_map"] == EXPECTED_PUBLIC_ROUTE_FAMILIES
+    assert certification["public_routes"] == sorted(EXPECTED_PUBLIC_ROUTE_FAMILIES)
+    assert [contract["selector_family"] for contract in certification["production_route_contracts"]] == [
+        "neutral_tp_flash",
+        "neutral_lle",
+        "single_component_vle",
+        "neutral_multiphase_nonassoc",
+        "electrolyte_lle",
+        "reactive_speciation",
+        "bubble_dew_derived_routes",
+    ]
+    assert {row["selector_family"] for row in certification["planned_route_families"]} == {
+        "reactive_lle",
+        "reactive_electrolyte_lle",
+    }
     assert activation["public_routes"] == [
         "bubble_pressure",
         "bubble_temperature",
@@ -191,9 +208,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "associating_neutral_lle_gross_2002_public_exact_hessian",
         "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
         "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian",
-        "neutral_multiphase_nonassoc",
-        "single_component_vle",
-        "electrolyte_held2_readiness_born_ssm_ds_exactness",
+            "neutral_multiphase_nonassoc",
+            "single_component_vle",
+            "reactive_speciation_standalone_ce_public_proof",
+            "electrolyte_held2_readiness_born_ssm_ds_exactness",
         "electrolyte_held2_counterion_pair_phase_discovery",
         "electrolyte_held2_stage_iii_reduced_variable_refinement",
         "electrolyte_held2_postsolve_phase_set_certification",
@@ -300,6 +318,14 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert electrolyte_public["source_configuration"] == "Khudaida 2026 NaCl mixed-solvent electrolyte LLE"
     assert electrolyte_public["native_component_set"] == ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
     assert electrolyte_public["stage_status"] == "public_admission_complete"
+    assert (
+        electrolyte_public["phase_discovery_status"]
+        == "held2_public_route_phase_discovery_and_scenario_validation_admitted"
+    )
+    assert (
+        "scripts/validation/check_electrolyte_held2_public_route_scenarios.py"
+        in electrolyte_public["tests"]
+    )
     assert "electrolyte_lle" in activation["public_routes"]
     assert "electrolyte_lle" in activation["production_families"]
     electrolyte_activation = next(
@@ -318,6 +344,15 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert reactive_activation["initialization_strategy"] == "max_min_feasible_interior"
     assert reactive_activation["continuation_strategy"] == "adaptive_k_scaling_homotopy"
     assert reactive_activation["final_proof_policy"] == "true_gibbs_lambda_1_only"
+    reactive_public = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "reactive_speciation_standalone_ce_public_proof"
+    )
+    assert reactive_public["classification"] == "production_supported"
+    assert reactive_public["public_admission_state"] == "public_route_open"
+    assert reactive_public["public_route"] == "reactive_speciation"
+    assert reactive_public["selector_family"] == "reactive_speciation"
     standalone_ce = capabilities["standalone_reactive_speciation"]
     assert standalone_ce["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
     assert standalone_ce["initialization_strategy"] == "max_min_feasible_interior"
@@ -326,6 +361,11 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
     assert activation["public_route_family_map"]["electrolyte_lle"] == "electrolyte_lle"
     assert activation["public_route_family_map"]["reactive_speciation"] == "reactive_speciation"
+    assert (
+        capabilities["electrolyte_lle"]["phase_discovery_status"]
+        == "held2_public_route_phase_discovery_and_scenario_validation_admitted"
+    )
+    assert "mixed-salt scenario ladder" in capabilities["electrolyte_lle"]["validation_scope"]
 
     deleted_route_keys = {
         "neutral_lle_flash",

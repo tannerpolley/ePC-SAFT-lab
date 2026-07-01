@@ -21,7 +21,7 @@ from equilibrium_support.equilibrium_cases import (
     _neutral_binary_mixture,
     _nonideal_lle_binary_mixture,
 )
-
+from equilibrium_support.route_assertions import assert_neutral_lle_stage_iii_replay_receipt
 
 def _skip_without_ipopt() -> None:
     if not _core._native_ipopt_smoke()["compiled"]:
@@ -579,11 +579,7 @@ def test_neutral_lle_stage_iii_route_refinement_records_stage_ii_replay_seed() -
     postsolve = route["postsolve"]
     assert postsolve["held_stage_ii_status"] == "dual_loop_verified"
     assert postsolve["held_stage_iii_status"] == "ipopt_refinement_completed_current_route"
-    assert postsolve["held_stage_iii_consumed_stage_ii_replay_metadata"] is True
-    assert postsolve["held_stage_iii_replay_source"] == "stage_ii_dual_loop_candidate_seed"
-    assert postsolve["held_stage_iii_replay_seed_name"] == "held_stage_ii_dual_loop_candidate_pair"
-    assert postsolve["held_stage_iii_replay_candidate_count"] == postsolve["held_stage_ii_replay_candidate_count"]
-    assert route["seed_attempts"][0]["seed_name"] == "held_stage_ii_dual_loop_candidate_pair"
+    assert_neutral_lle_stage_iii_replay_receipt(route)
 
 
 def test_neutral_tp_flash_activation_plan_contract_matches_matrix() -> None:

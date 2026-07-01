@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from ._native import native_ipopt_backend_info, provider_contract
 from .equilibrium_activation import EQUILIBRIUM_ACTIVATION_MATRIX
+from .phase_equilibrium_certification import (
+    phase_equilibrium_certification_contracts,
+    validate_phase_equilibrium_certification_contracts,
+)
 
 EQUILIBRIUM_PROBLEM_OBJECT_CLASSES = (
     "EquilibriumProblem",
@@ -157,6 +161,31 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
             "packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py",
             "packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py",
             "packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "quantity": "reactive_speciation_standalone_ce_public_proof",
+        "derivative": "standalone_ce_lagrangian_hessian_and_final_proof_diagnostics",
+        "backend": "analytic_ce_objective_with_cppad_eos_activity_extensions",
+        "supported": True,
+        "classification": "production_supported",
+        "public_admission_state": "public_route_open",
+        "public_route": "reactive_speciation",
+        "selector_family": "reactive_speciation",
+        "reason": (
+            "standalone homogeneous reactive_speciation is admitted through the strict standalone CE "
+            "checker, exact final proof diagnostics, retained MEA evidence, and EOS activity diagnostic "
+            "matrix while CPE and reactive phase routes remain closed"
+        ),
+        "tests": (
+            "packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py",
+            "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py",
+            "tests/native/contracts/test_standalone_ce_gate.py",
+            "tests/native/contracts/test_ce_robustness_followup_gate.py",
+            "scripts/validation/check_standalone_ce_gate.py",
+            "scripts/validation/check_ce_robustness_followup.py",
         ),
     },
     {
@@ -317,15 +346,18 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
         "parameter_bundle": "analyses/paper_validation/2026_khudaida/parameters",
         "reduced_basis": "independent_counterion_pair_matrix",
         "stage_status": "public_admission_complete",
+        "phase_discovery_status": "held2_public_route_phase_discovery_and_scenario_validation_admitted",
         "route_hessian_mode": "limited_memory_charged_born_route_with_exact_reduced_derivative_receipts",
         "reason": (
-            "issue #314 admits only the source-backed Khudaida 2026 NaCl mixed-solvent "
-            "electrolyte LLE route after #269/#300/#302/#306/#312/#313 evidence proves "
-            "source fixture parsing, reduced charge-neutral variables, charge-neutral TPD, "
-            "HELD2 phase discovery, Stage III refinement, and postsolve phase-set certification."
+            "issue #350 admits only the source-backed Khudaida 2026 NaCl mixed-solvent "
+            "electrolyte LLE route after #269/#300/#302/#306/#312/#313/#314 and #344-#349 "
+            "evidence proves source fixture parsing, reduced charge-neutral variables, "
+            "continuous charge-neutral TPD, HELD2 Stage I/II discovery, Stage III replay "
+            "consumption, postsolve phase-set certification, and the retained scenario ladder."
         ),
         "tests": (
             "scripts/validation/check_electrolyte_public_admission.py",
+            "scripts/validation/check_electrolyte_held2_public_route_scenarios.py",
             "tests/native/contracts/test_electrolyte_public_admission.py",
             "tests/native/contracts/test_electrolyte_postsolve_certification.py",
             "packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py",
@@ -404,6 +436,25 @@ def capabilities() -> dict[str, object]:
     reactive_activation = next(
         row for row in activation["rows"] if row["key"] == "reactive_speciation"
     )
+    route_derivative_rows = [_capability_value(row) for row in EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE]
+    route_derivative_evidence = {
+        "source": "epcsaft_equilibrium",
+        "implemented_capability_claims_only": False,
+        "production_rows_are_capability_safe": True,
+        "rows": route_derivative_rows,
+    }
+    phase_equilibrium_certification = phase_equilibrium_certification_contracts(
+        activation=activation,
+        route_derivative_evidence=route_derivative_evidence,
+    )
+    certification_blockers = validate_phase_equilibrium_certification_contracts(
+        phase_equilibrium_certification,
+    )
+    if certification_blockers:
+        raise RuntimeError(
+            "phase equilibrium certification contract failed: "
+            + ", ".join(certification_blockers)
+        )
     return {
         "package": "epcsaft-equilibrium",
         "owner": "equilibrium_extension",
@@ -439,12 +490,8 @@ def capabilities() -> dict[str, object]:
             ],
             "auto_policy": "public_frontend_forces_cppad_else_raise",
         },
-        "route_derivative_evidence": {
-            "source": "epcsaft_equilibrium",
-            "implemented_capability_claims_only": False,
-            "production_rows_are_capability_safe": True,
-            "rows": [_capability_value(row) for row in EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE],
-        },
+        "route_derivative_evidence": route_derivative_evidence,
+        "phase_equilibrium_certification": phase_equilibrium_certification,
         "bubble_dew_derived_routes": {
             "available": bool(activation["ipopt_available"]),
             "production": True,
@@ -502,6 +549,12 @@ def capabilities() -> dict[str, object]:
             "input_scope": (
                 "source-backed Khudaida 2026 NaCl mixed-solvent LLE for explicit-ion "
                 "H2O/Ethanol/Butanol/Na+/Cl- feeds built from the retained parameter bundle"
+            ),
+            "phase_discovery_status": "held2_public_route_phase_discovery_and_scenario_validation_admitted",
+            "validation_scope": (
+                "retained HELD2 Stage I/II public-route discovery, Stage III replay consumption, "
+                "postsolve certification, and stable/unstable/boundary/phase-label/neutral-limit/"
+                "common-ion/mixed-salt scenario ladder for the admitted electrolyte_lle fixture only"
             ),
             "requires": ["cppad", "ipopt"],
             "unsupported_surfaces": [
