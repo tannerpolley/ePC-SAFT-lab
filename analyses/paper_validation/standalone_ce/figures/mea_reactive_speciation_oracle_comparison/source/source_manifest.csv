@@ -1,0 +1,2 @@
+source_id,source_path,role,notes
+phase1_speciation_curve,source/phase1_speciation_curve.csv,source_oracle_snapshot,Snapshot copied from the MEA-Thermodynamics Phase 1 Smith-Missen ideal speciation curve and used as the CE comparison oracle.

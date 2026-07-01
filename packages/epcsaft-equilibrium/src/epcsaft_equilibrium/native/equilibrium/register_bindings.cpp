@@ -21,6 +21,8 @@
 #include "equilibrium/blocks/saturation_block.h"
 #include "equilibrium/core/activation_matrix.h"
 #include "equilibrium/core/chemical_equilibrium_nlp.h"
+#include "equilibrium/core/continuation_driver.h"
+#include "equilibrium/core/feasible_initialization.h"
 #include "equilibrium/core/nlp_problem.h"
 #include "equilibrium/core/second_order.h"
 #include "equilibrium/core/selector_core.h"
@@ -108,6 +110,12 @@ add_args native_args_from_mixture_object(const py::object& mixture, const std::s
     }
     if (py::hasattr(mixture, "_native_args_payload")) {
         return native_args_from_payload(py::cast<py::dict>(mixture.attr("_native_args_payload")()));
+    }
+    if (py::hasattr(mixture, "_native")) {
+        const py::object local_native = mixture.attr("_native");
+        if (!local_native.is_none()) {
+            return native_args_from_mixture_object(local_native, context);
+        }
     }
     try {
         const auto local = mixture.cast<std::shared_ptr<ePCSAFTMixtureNative>>();
@@ -214,6 +222,109 @@ public:
 
 private:
     std::string failure_mode_;
+};
+
+class ContinuationQuadraticSmokeProblem final : public nlp::NlpProblem {
+public:
+    explicit ContinuationQuadraticSmokeProblem(double parameter_value)
+        : parameter_value_(parameter_value) {}
+
+    std::string name() const override {
+        return "continuation_quadratic_smoke";
+    }
+
+    int variable_count() const override {
+        return 2;
+    }
+
+    int constraint_count() const override {
+        return 1;
+    }
+
+    int jacobian_nonzero_count() const override {
+        return 2;
+    }
+
+    nlp::NlpBounds bounds() const override {
+        return {{-10.0, -10.0}, {10.0, 10.0}, {3.0}, {3.0}};
+    }
+
+    std::vector<double> initial_point() const override {
+        return {0.5, 2.5};
+    }
+
+    double objective(const std::vector<double>& variables) const override {
+        const double dx = variables[0] - target_x();
+        const double dy = variables[1] - target_y();
+        return dx * dx + dy * dy;
+    }
+
+    std::vector<double> objective_gradient(const std::vector<double>& variables) const override {
+        return {2.0 * (variables[0] - target_x()), 2.0 * (variables[1] - target_y())};
+    }
+
+    std::vector<double> constraints(const std::vector<double>& variables) const override {
+        return {variables[0] + variables[1]};
+    }
+
+    nlp::NlpJacobianStructure jacobian_structure() const override {
+        return {{0, 0}, {0, 1}};
+    }
+
+    std::vector<double> jacobian_values(const std::vector<double>& variables) const override {
+        (void)variables;
+        return {1.0, 1.0};
+    }
+
+    bool has_exact_hessian() const override {
+        return true;
+    }
+
+    int hessian_nonzero_count() const override {
+        return 3;
+    }
+
+    nlp::NlpHessianStructure hessian_structure() const override {
+        return {{0, 1, 1}, {0, 0, 1}};
+    }
+
+    std::vector<double> hessian_values(
+        const std::vector<double>& variables,
+        double objective_factor,
+        const std::vector<double>& constraint_multipliers
+    ) const override {
+        (void)variables;
+        (void)constraint_multipliers;
+        return {2.0 * objective_factor, 0.0, 2.0 * objective_factor};
+    }
+
+    std::string hessian_backend() const override {
+        return "analytic";
+    }
+
+    nlp::NlpScaling scaling() const override {
+        return {1.0, {1.0, 1.0}, {1.0}};
+    }
+
+    std::map<std::string, std::string> diagnostics() const override {
+        return {
+            {"smoke_problem", "continuation_quadratic"},
+            {"gradient_backend", "analytic"},
+            {"jacobian_backend", "analytic"},
+            {"continuation_parameter", std::to_string(parameter_value_)},
+        };
+    }
+
+private:
+    double target_x() const {
+        return 1.0 + 0.5 * parameter_value_;
+    }
+
+    double target_y() const {
+        return 2.0 - 0.5 * parameter_value_;
+    }
+
+    double parameter_value_;
 };
 
 py::dict nlp_shape_validation_case(const std::string& failure_mode) {
@@ -365,6 +476,121 @@ void apply_ipopt_continuation_state(
         options.initial_constraint_multipliers =
             state["constraint_multipliers"].cast<std::vector<double>>();
     }
+}
+
+nlp::ContinuationState continuation_state_from_object(const py::object& continuation_state) {
+    nlp::ContinuationState out;
+    if (continuation_state.is_none()) {
+        return out;
+    }
+    const py::dict state = continuation_state.cast<py::dict>();
+    if (state.contains("variables")) {
+        out.variables = state["variables"].cast<std::vector<double>>();
+    }
+    if (state.contains("bound_lower_multipliers")) {
+        out.bound_lower_multipliers = state["bound_lower_multipliers"].cast<std::vector<double>>();
+    }
+    if (state.contains("bound_upper_multipliers")) {
+        out.bound_upper_multipliers = state["bound_upper_multipliers"].cast<std::vector<double>>();
+    }
+    if (state.contains("constraint_multipliers")) {
+        out.constraint_multipliers = state["constraint_multipliers"].cast<std::vector<double>>();
+    }
+    return out;
+}
+
+py::dict continuation_state_to_dict(const nlp::ContinuationState& state) {
+    py::dict out;
+    out["variables"] = state.variables;
+    out["bound_lower_multipliers"] = state.bound_lower_multipliers;
+    out["bound_upper_multipliers"] = state.bound_upper_multipliers;
+    out["constraint_multipliers"] = state.constraint_multipliers;
+    return out;
+}
+
+nlp::IpoptSolveOptions continuation_smoke_options(
+    const std::string& option_profile,
+    int max_iterations
+) {
+    nlp::IpoptSolveOptions options;
+    options.max_iterations = max_iterations;
+    options.tolerance = 1.0e-10;
+    options.acceptable_tolerance = 1.0e-8;
+    options.constraint_violation_tolerance = 1.0e-8;
+    options.dual_infeasibility_tolerance = 1.0e-8;
+    options.complementarity_tolerance = 1.0e-8;
+    options.hessian_mode = "exact";
+    options.option_profile = option_profile;
+    options.iteration_history_limit = 20;
+    return options;
+}
+
+nlp::ContinuationStageSpec continuation_quadratic_smoke_stage(
+    std::string stage_id,
+    double parameter_value,
+    bool final_proof,
+    int max_iterations
+) {
+    nlp::ContinuationStageSpec stage;
+    stage.stage_id = std::move(stage_id);
+    stage.parameter_value = parameter_value;
+    stage.final_proof = final_proof;
+    stage.options = continuation_smoke_options(final_proof ? "proof" : "continuation_trace", max_iterations);
+    stage.problem_factory = [parameter_value]() {
+        return std::make_unique<ContinuationQuadraticSmokeProblem>(parameter_value);
+    };
+    return stage;
+}
+
+py::dict continuation_stage_result_to_dict(const nlp::ContinuationStageResult& result) {
+    py::dict out;
+    out["stage_id"] = result.stage_id;
+    out["parameter_value"] = result.parameter_value;
+    out["final_proof"] = result.final_proof;
+    out["accepted"] = result.accepted;
+    out["acceptance_status"] = result.acceptance_status;
+    out["seeded_from_stage"] = result.seeded_from_stage;
+    out["initial_state"] = continuation_state_to_dict(result.initial_state);
+    out["status"] = result.solve.solver_status;
+    out["application_status"] = result.solve.application_status;
+    out["objective"] = result.solve.objective;
+    out["variables"] = result.solve.variables;
+    out["constraints"] = result.solve.constraints;
+    out["continuation_state"] = continuation_state_to_dict(result.continuation_state);
+    out["iteration_count"] = diagnostic_int_or(result.solve, "iteration_count", 0);
+    out["iteration_history"] = ipopt_iteration_history_to_list(result.solve.iteration_history);
+    out["option_profile"] = diagnostic_string_or(result.solve, "option_profile", "");
+    out["warm_start_requested"] = diagnostic_bool_or(result.solve, "warm_start_requested", false);
+    out["warm_start_used"] = diagnostic_bool_or(result.solve, "warm_start_used", false);
+    out["scaled_constraint_violation_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_constraint_violation_inf_norm", 0.0);
+    out["scaled_stationarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_stationarity_inf_norm", 0.0);
+    out["scaled_complementarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_complementarity_inf_norm", 0.0);
+    out["bound_complementarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "bound_complementarity_inf_norm", 0.0);
+    return out;
+}
+
+py::list continuation_trace_to_list(const std::vector<nlp::ContinuationStageResult>& trace) {
+    py::list out;
+    for (const nlp::ContinuationStageResult& stage : trace) {
+        out.append(continuation_stage_result_to_dict(stage));
+    }
+    return out;
+}
+
+py::dict continuation_trace_result_to_dict(const nlp::ContinuationTraceResult& result) {
+    py::dict out;
+    out["driver"] = "generic_ipopt_continuation_driver";
+    out["accepted"] = result.accepted;
+    out["final_proof_status"] = result.final_proof_status;
+    out["final_stage_id"] = result.final_stage_id;
+    out["rejection_stage_id"] = result.rejection_stage_id;
+    out["continuation_state"] = continuation_state_to_dict(result.continuation_state);
+    out["trace"] = continuation_trace_to_list(result.trace);
+    return out;
 }
 
 py::dict eos_phase_block_to_dict(const epcsaft::native::equilibrium_nlp::EosPhaseBlockResult& result) {
@@ -663,15 +889,43 @@ std::vector<double> flatten_row_major_matrix(
     return out;
 }
 
-std::vector<double> log_equilibrium_constants_from_registry(
+int phase_kind_from_standard_state_label(const std::string& label) {
+    if (label == "liquid" || label == "liq") {
+        return 0;
+    }
+    if (label == "vapor" || label == "vap" || label == "gas") {
+        return 1;
+    }
+    throw ValueError("chemical equilibrium EOS activity reference phase must be liquid or vapor.");
+}
+
+bool same_standard_state_scalar(double left, double right) {
+    const double scale = std::max({1.0, std::abs(left), std::abs(right)});
+    return std::abs(left - right) <= 1.0e-12 * scale;
+}
+
+struct ChemicalEquilibriumStandardStateContext {
+    std::vector<double> log_equilibrium_constants;
+    bool eos_activity_enabled = false;
+    std::string eos_activity_convention = "mole_fraction_activity";
+    double eos_temperature = 0.0;
+    double eos_pressure = 0.0;
+    int eos_phase_kind = -1;
+    std::string eos_reference_phase;
+};
+
+ChemicalEquilibriumStandardStateContext chemical_equilibrium_standard_state_context_from_registry(
     const std::vector<std::string>& reaction_labels,
     const py::dict& standard_state_payload
 ) {
     if (!standard_state_payload.contains("records")) {
         throw ValueError("chemical equilibrium standard-state payload missing field: records");
     }
-    std::vector<double> out(reaction_labels.size(), 0.0);
+    ChemicalEquilibriumStandardStateContext out;
+    out.log_equilibrium_constants.assign(reaction_labels.size(), 0.0);
     std::vector<bool> assigned(reaction_labels.size(), false);
+    std::string activity_convention;
+    bool eos_context_assigned = false;
     const py::sequence records = py::cast<py::sequence>(standard_state_payload["records"]);
     for (const py::handle record_handle : records) {
         const py::dict record = py::cast<py::dict>(record_handle);
@@ -696,8 +950,62 @@ std::vector<double> log_equilibrium_constants_from_registry(
         if (!std::isfinite(ln_k)) {
             throw ValueError("chemical equilibrium log equilibrium constants must be finite.");
         }
-        out[index] = ln_k;
+        out.log_equilibrium_constants[index] = ln_k;
         assigned[index] = true;
+
+        const py::dict standard_state = required_payload_field<py::dict>(
+            record,
+            "standard_state",
+            "chemical equilibrium standard-state record"
+        );
+        const std::string convention = required_payload_field<std::string>(
+            standard_state,
+            "activity_convention",
+            "chemical equilibrium standard-state"
+        );
+        if (activity_convention.empty()) {
+            activity_convention = convention;
+        } else if (activity_convention != convention) {
+            throw ValueError("chemical equilibrium standard-state records require a single activity convention.");
+        }
+        if (convention == "mole_fraction_activity") {
+            continue;
+        }
+        if (convention != "eos_x_phi" && convention != "eos_x_gamma") {
+            throw ValueError(
+                "chemical equilibrium native CE supports mole_fraction_activity, eos_x_phi, or eos_x_gamma standard states."
+            );
+        }
+        const double temperature = required_payload_field<double>(
+            standard_state,
+            "temperature_K",
+            "chemical equilibrium EOS activity standard-state"
+        );
+        const double pressure = required_payload_field<double>(
+            standard_state,
+            "pressure_Pa",
+            "chemical equilibrium EOS activity standard-state"
+        );
+        const std::string reference_phase = required_payload_field<std::string>(
+            standard_state,
+            "eos_reference_phase",
+            "chemical equilibrium EOS activity standard-state"
+        );
+        if (!eos_context_assigned) {
+            out.eos_activity_enabled = true;
+            out.eos_activity_convention = convention;
+            out.eos_temperature = temperature;
+            out.eos_pressure = pressure;
+            out.eos_reference_phase = reference_phase;
+            out.eos_phase_kind = phase_kind_from_standard_state_label(reference_phase);
+            eos_context_assigned = true;
+        } else if (
+            !same_standard_state_scalar(out.eos_temperature, temperature)
+            || !same_standard_state_scalar(out.eos_pressure, pressure)
+            || out.eos_reference_phase != reference_phase
+        ) {
+            throw ValueError("chemical equilibrium EOS activity standard states require one shared EOS context.");
+        }
     }
     for (std::size_t index = 0; index < assigned.size(); ++index) {
         if (!assigned[index]) {
@@ -712,7 +1020,8 @@ std::vector<double> log_equilibrium_constants_from_registry(
 epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput chemical_equilibrium_input_from_payloads(
     const py::dict& schema_payload,
     const py::dict& standard_state_payload,
-    const std::vector<double>& initial_amounts
+    const std::vector<double>& initial_amounts,
+    const py::object& eos_mixture
 ) {
     epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput out;
     out.species_labels = required_payload_field<std::vector<std::string>>(
@@ -749,11 +1058,58 @@ epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpInput chemical_equilibri
         "conservation_totals",
         "chemical equilibrium schema payload"
     );
-    out.log_equilibrium_constants = log_equilibrium_constants_from_registry(
+    const ChemicalEquilibriumStandardStateContext standard_state_context =
+        chemical_equilibrium_standard_state_context_from_registry(
         out.reaction_labels,
         standard_state_payload
     );
+    out.log_equilibrium_constants = standard_state_context.log_equilibrium_constants;
     out.initial_amounts = initial_amounts;
+    if (standard_state_context.eos_activity_enabled) {
+        out.eos_activity_enabled = true;
+        out.eos_activity_convention = standard_state_context.eos_activity_convention;
+        out.eos_activity_temperature = standard_state_context.eos_temperature;
+        out.eos_activity_pressure = standard_state_context.eos_pressure;
+        out.eos_activity_phase_kind = standard_state_context.eos_phase_kind;
+        out.eos_activity_reference_phase = standard_state_context.eos_reference_phase;
+        out.eos_activity_args = std::make_shared<add_args>(native_args_from_mixture_object(
+            eos_mixture,
+            "chemical equilibrium " + out.eos_activity_convention + " standard states"
+        ));
+    } else if (!eos_mixture.is_none()) {
+        throw ValueError("chemical equilibrium eos_mixture is only valid with EOS activity standard states.");
+    }
+    return out;
+}
+
+epcsaft::native::equilibrium_nlp::FeasibleInitializationInput feasible_initialization_input_from_payload(
+    const py::dict& payload,
+    double amount_floor
+) {
+    epcsaft::native::equilibrium_nlp::FeasibleInitializationInput out;
+    out.species_labels = required_payload_field<std::vector<std::string>>(
+        payload,
+        "species_labels",
+        "feasible initialization payload"
+    );
+    out.conservation_labels = required_payload_field<std::vector<std::string>>(
+        payload,
+        "conservation_labels",
+        "feasible initialization payload"
+    );
+    out.conservation_matrix_row_major = flatten_row_major_matrix(
+        payload,
+        "conservation_matrix",
+        out.conservation_labels.size(),
+        out.species_labels.size(),
+        "feasible initialization conservation_matrix"
+    );
+    out.conservation_totals = required_payload_field<std::vector<double>>(
+        payload,
+        "conservation_totals",
+        "feasible initialization payload"
+    );
+    out.amount_floor = amount_floor;
     return out;
 }
 
@@ -792,12 +1148,103 @@ py::dict ce_solver_diagnostics_to_dict(
     return out;
 }
 
+py::dict feasible_initialization_result_to_dict(
+    const epcsaft::native::equilibrium_nlp::FeasibleInitializationResult& result
+) {
+    py::dict out;
+    out["initializer"] = result.initializer;
+    out["selected_initializer"] = result.selected_initializer;
+    out["attempt_order"] = result.attempt_order;
+    out["accepted"] = result.accepted;
+    out["solver_ran"] = result.solver_ran;
+    out["rejection_reason"] = result.rejection_reason;
+    out["amounts"] = result.amounts;
+    out["margin"] = result.margin;
+    out["minimum_amount"] = result.minimum_amount;
+    out["balance_residuals"] = result.balance_residuals;
+    out["balance_inf_norm"] = result.balance_inf_norm;
+    out["active_margin_constraint_count"] = result.active_margin_constraint_count;
+    out["solver_status"] = result.solve.solver_status;
+    out["application_status"] = result.solve.application_status;
+    out["objective"] = result.solve.objective;
+    out["iteration_count"] = diagnostic_int_or(result.solve, "iteration_count", 0);
+    out["scaled_constraint_violation_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_constraint_violation_inf_norm", 0.0);
+    out["scaled_stationarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_stationarity_inf_norm", 0.0);
+    out["scaled_complementarity_inf_norm"] =
+        diagnostic_double_or(result.solve, "scaled_complementarity_inf_norm", 0.0);
+    out["continuation_state"] = ipopt_continuation_state_to_dict(result.solve);
+    py::list attempts;
+    for (const auto& attempt : result.attempts) {
+        py::dict row;
+        row["initializer"] = attempt.initializer;
+        row["accepted"] = attempt.accepted;
+        row["solver_ran"] = attempt.solver_ran;
+        row["rejection_reason"] = attempt.rejection_reason;
+        row["amounts"] = attempt.amounts;
+        row["margin"] = attempt.margin;
+        row["minimum_amount"] = attempt.minimum_amount;
+        row["balance_residuals"] = attempt.balance_residuals;
+        row["balance_inf_norm"] = attempt.balance_inf_norm;
+        row["active_margin_constraint_count"] = attempt.active_margin_constraint_count;
+        row["rank"] = attempt.rank;
+        row["independent_row_count"] = attempt.independent_row_count;
+        row["rank_status"] = attempt.rank_status;
+        row["positive"] = attempt.positive;
+        row["conservation_closed"] = attempt.conservation_closed;
+        attempts.append(row);
+    }
+    out["attempts"] = attempts;
+    return out;
+}
+
 py::dict neutral_two_phase_eos_nlp_contract_to_dict(
     const epcsaft::native::equilibrium_nlp::NeutralTwoPhaseEosNlpContract& result
 );
 py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyActivation& activation);
 py::dict activation_plan_to_dict(const epcsaft::native::equilibrium::ActivationPlan& plan);
 py::dict variable_layout_to_dict(const epcsaft::native::equilibrium::VariableLayout& layout);
+
+py::dict reaction_proof_scaling_metrics_to_dict(
+    const epcsaft::native::equilibrium_nlp::ReactionProofScalingMetrics& result
+) {
+    py::dict out;
+    out["reaction_scaling_factors"] = result.reaction_scaling_factors;
+    out["reaction_row_norms"] = result.reaction_row_norms;
+    out["reaction_scaling_min"] = result.reaction_scaling_min;
+    out["reaction_scaling_max"] = result.reaction_scaling_max;
+    out["reaction_basis_condition_estimate"] = result.reaction_basis_condition_estimate;
+    out["scaled_reaction_stationarity_inf_norm"] = result.scaled_reaction_stationarity_inf_norm;
+    out["unscaled_reaction_stationarity_inf_norm"] = result.unscaled_reaction_stationarity_inf_norm;
+    out["proof_stationarity_norm"] = result.unscaled_reaction_stationarity_inf_norm;
+    return out;
+}
+
+py::dict physical_proof_corrector_to_dict(
+    const epcsaft::native::equilibrium_nlp::PhysicalProofCorrectorResult& result
+) {
+    py::dict out;
+    out["corrector"] = "physical_residual_newton";
+    out["attempted"] = result.attempted;
+    out["accepted"] = result.accepted;
+    out["status"] = result.status;
+    out["rejection_reason"] = result.accepted ? "" : result.status;
+    out["iteration_count"] = result.iteration_count;
+    out["initial_residual_inf_norm"] = result.initial_residual_inf_norm;
+    out["initial_balance_inf_norm"] = result.initial_balance_inf_norm;
+    out["initial_reaction_stationarity_inf_norm"] = result.initial_reaction_stationarity_inf_norm;
+    out["residual_inf_norm"] = result.residual_inf_norm;
+    out["balance_inf_norm"] = result.balance_inf_norm;
+    out["reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
+    out["final_residual_inf_norm"] = result.residual_inf_norm;
+    out["final_balance_inf_norm"] = result.balance_inf_norm;
+    out["final_reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
+    out["step_inf_norm"] = result.step_inf_norm;
+    out["proof_metrics"] = reaction_proof_scaling_metrics_to_dict(result.proof_metrics);
+    out["variables"] = result.variables;
+    return out;
+}
 
 py::dict chemical_equilibrium_nlp_result_to_dict(
     const epcsaft::native::equilibrium_nlp::ChemicalEquilibriumNlpResult& result,
@@ -828,6 +1275,17 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     out["solver_diagnostics"] = ce_solver_diagnostics_to_dict(result.solve);
     out["amounts"] = result.postsolve.amounts;
     out["mole_fractions"] = result.postsolve.mole_fractions;
+    out["activities"] = result.postsolve.activities;
+    out["ln_activity_coefficients"] = result.postsolve.ln_activity_coefficients;
+    out["activity_model"] = result.postsolve.activity_model;
+    out["activity_derivative_backend"] = result.postsolve.activity_derivative_backend;
+    py::dict eos_activity_context;
+    eos_activity_context["temperature_K"] = result.postsolve.eos_temperature;
+    eos_activity_context["pressure_Pa"] = result.postsolve.eos_pressure;
+    eos_activity_context["density_mol_m3"] = result.postsolve.eos_density;
+    eos_activity_context["reference_phase"] = result.postsolve.eos_reference_phase;
+    eos_activity_context["phase_kind"] = result.postsolve.eos_phase_kind;
+    out["eos_activity_context"] = eos_activity_context;
     out["standard_mu_rt"] = result.postsolve.standard_mu_rt;
     out["objective_value"] = result.postsolve.objective_value;
     out["balance_residuals"] = result.postsolve.balance_residuals;
@@ -835,8 +1293,52 @@ py::dict chemical_equilibrium_nlp_result_to_dict(
     out["reaction_affinities"] = result.postsolve.reaction_affinities;
     out["balance_inf_norm"] = result.balance_inf_norm;
     out["reaction_stationarity_inf_norm"] = result.reaction_stationarity_inf_norm;
+    out["proof_metrics"] = reaction_proof_scaling_metrics_to_dict(result.proof_metrics);
     out["continuation_state"] = ipopt_continuation_state_to_dict(result.solve);
     out["iteration_history"] = ipopt_iteration_history_to_list(result.solve.iteration_history);
+
+    py::dict initialization;
+    initialization["seed_source"] = result.seed_source;
+    initialization["accepted_seed_source"] = result.accepted_seed_source;
+    initialization["seed_attempt_order"] = result.seed_attempt_order;
+    initialization["caller_seed_attempted"] = result.caller_seed_attempted;
+    initialization["caller_seed_final_proof_attempted"] = result.caller_seed_final_proof_attempted;
+    initialization["caller_seed_final_proof_accepted"] = result.caller_seed_final_proof_accepted;
+    initialization["caller_seed_escalated"] = result.caller_seed_escalated;
+    initialization["caller_seed_rejection_source"] = result.caller_seed_rejection_source;
+    initialization["caller_seed_rejection_reason"] = result.caller_seed_rejection_reason;
+    initialization["caller_seed_exception_observed"] = result.caller_seed_exception_observed;
+    initialization["caller_seed_exception_message"] = result.caller_seed_exception_message;
+    initialization["source_oracle_initial_amounts"] = result.source_oracle_initial_amounts;
+    initialization["feasible_initialization"] =
+        feasible_initialization_result_to_dict(result.feasible_initialization);
+    out["initialization"] = initialization;
+
+    py::dict continuation;
+    continuation["direct_final_proof_attempted"] = result.direct_final_proof_attempted;
+    continuation["direct_final_proof_accepted"] = result.direct_final_proof_accepted;
+    continuation["physical_proof_corrector"] = physical_proof_corrector_to_dict(result.proof_corrector);
+    continuation["parameter_name"] = result.continuation_parameter_name;
+    continuation["final_proof_status"] = result.continuation.final_proof_status;
+    continuation["final_stage_id"] = result.continuation.final_stage_id;
+    continuation["lambda_values"] = result.continuation_lambdas;
+    continuation["final_lambda"] = result.continuation_lambdas.empty()
+        ? 0.0
+        : result.continuation_lambdas.back();
+    continuation["activity_lambda_values"] = result.activity_continuation_lambdas;
+    continuation["final_activity_lambda"] = result.activity_continuation_lambdas.empty()
+        ? 0.0
+        : result.activity_continuation_lambdas.back();
+    py::dict activity_continuation_policy;
+    activity_continuation_policy["mode"] = result.activity_continuation_mode;
+    activity_continuation_policy["minimum_step"] = result.activity_continuation_minimum_step;
+    activity_continuation_policy["maximum_stage_count"] = result.activity_continuation_maximum_stage_count;
+    continuation["activity_continuation_policy"] = activity_continuation_policy;
+    continuation["accepted_activity_steps"] = result.accepted_activity_steps;
+    continuation["rejected_activity_steps"] = result.rejected_activity_steps;
+    continuation["stage_count"] = static_cast<int>(result.continuation.trace.size());
+    continuation["trace"] = continuation_trace_to_list(result.continuation.trace);
+    out["continuation"] = continuation;
     return out;
 }
 
@@ -1865,6 +2367,10 @@ py::dict activation_to_dict(const epcsaft::native::equilibrium::ProblemFamilyAct
     out["public_routes"] = activation.public_routes;
     out["variable_model"] = activation.variable_model;
     out["density_backend"] = activation.density_backend;
+    out["solver_strategy"] = activation.solver_strategy;
+    out["initialization_strategy"] = activation.initialization_strategy;
+    out["continuation_strategy"] = activation.continuation_strategy;
+    out["final_proof_policy"] = activation.final_proof_policy;
     return out;
 }
 
@@ -2710,6 +3216,50 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("complementarity_tolerance") = 1.0e-10,
         py::arg("continuation_state") = py::none()
     );
+    m.def("_native_continuation_driver_smoke", [](
+        int final_proof_max_iterations,
+        const py::object& continuation_state
+    ) {
+        py::dict out;
+        const auto adapter = epcsaft::native::equilibrium_nlp::native_ipopt_adapter_info();
+        out["driver"] = "generic_ipopt_continuation_driver";
+        out["backend"] = "ipopt";
+        out["compiled"] = adapter.compiled;
+        out["adapter_available"] = adapter.adapter_available;
+        out["adapter_kind"] = adapter.adapter_kind;
+        out["accepted"] = false;
+        if (!adapter.compiled) {
+            out["status"] = "ipopt_dependency_required";
+            out["trace"] = py::list();
+            out["final_proof_status"] = "pending";
+            out["final_stage_id"] = "";
+            out["rejection_stage_id"] = "";
+            out["continuation_state"] = continuation_state_to_dict({});
+            return out;
+        }
+
+        std::vector<nlp::ContinuationStageSpec> stages;
+        stages.push_back(continuation_quadratic_smoke_stage("lambda_0", 0.0, false, 50));
+        stages.push_back(continuation_quadratic_smoke_stage("lambda_half", 0.5, false, 50));
+        stages.push_back(continuation_quadratic_smoke_stage(
+            "lambda_1",
+            1.0,
+            true,
+            final_proof_max_iterations
+        ));
+
+        const nlp::ContinuationTraceResult result =
+            nlp::run_continuation_plan(stages, continuation_state_from_object(continuation_state));
+        out = continuation_trace_result_to_dict(result);
+        out["backend"] = "ipopt";
+        out["compiled"] = adapter.compiled;
+        out["adapter_available"] = adapter.adapter_available;
+        out["adapter_kind"] = adapter.adapter_kind;
+        return out;
+    },
+        py::arg("final_proof_max_iterations") = 50,
+        py::arg("continuation_state") = py::none()
+    );
     m.def("_native_ideal_reaction_smoke", []() {
         const double log_k = std::log(3.0);
         const std::vector<double> stoichiometry = {-1.0, 1.0};
@@ -2778,6 +3328,50 @@ void register_equilibrium_bindings(pybind11::module_& m) {
             )
         );
     });
+    m.def("_native_ce_feasible_initialization", [](
+        const py::dict& payload,
+        double amount_floor,
+        int max_iterations,
+        double tolerance,
+        double timeout_seconds,
+        const std::string& hessian_mode,
+        int iteration_history_limit,
+        double balance_tolerance,
+        const py::kwargs& kwargs
+    ) {
+        epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
+            ipopt_solve_options_from_scalars(
+                max_iterations,
+                tolerance,
+                timeout_seconds,
+                hessian_mode,
+                "proof",
+                iteration_history_limit,
+                "auto",
+                0.0,
+                balance_tolerance,
+                tolerance,
+                tolerance
+            );
+        apply_ipopt_control_kwargs(options, kwargs);
+        const auto input = feasible_initialization_input_from_payload(payload, amount_floor);
+        return feasible_initialization_result_to_dict(
+            epcsaft::native::equilibrium_nlp::solve_max_min_feasible_initialization(
+                input,
+                options,
+                balance_tolerance
+            )
+        );
+    },
+        py::arg("payload"),
+        py::arg("amount_floor") = 1.0e-30,
+        py::arg("max_iterations") = 100,
+        py::arg("tolerance") = 1.0e-10,
+        py::arg("timeout_seconds") = 0.0,
+        py::arg("hessian_mode") = "exact",
+        py::arg("iteration_history_limit") = 20,
+        py::arg("balance_tolerance") = 1.0e-9
+    );
     m.def("_native_chemical_equilibrium_nlp_activation", [](
         const py::dict& schema_payload,
         const py::dict& standard_state_payload,
@@ -2790,6 +3384,7 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         double balance_tolerance,
         double reaction_stationarity_tolerance,
         const py::object& continuation_state,
+        const py::object& eos_mixture,
         const py::kwargs& kwargs
     ) {
         epcsaft::native::equilibrium_nlp::IpoptSolveOptions options =
@@ -2806,7 +3401,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         const auto input = chemical_equilibrium_input_from_payloads(
             schema_payload,
             standard_state_payload,
-            initial_amounts
+            initial_amounts,
+            eos_mixture
         );
         const auto plan = epcsaft::native::equilibrium::build_reactive_speciation_activation_plan(
             static_cast<int>(input.species_labels.size())
@@ -2840,7 +3436,8 @@ void register_equilibrium_bindings(pybind11::module_& m) {
         py::arg("iteration_history_limit") = 20,
         py::arg("balance_tolerance") = 1.0e-9,
         py::arg("reaction_stationarity_tolerance") = 1.0e-8,
-        py::arg("continuation_state") = py::none()
+        py::arg("continuation_state") = py::none(),
+        py::arg("eos_mixture") = py::none()
     );
     m.def("_native_eos_phase_block", [](
         const py::object& mixture,

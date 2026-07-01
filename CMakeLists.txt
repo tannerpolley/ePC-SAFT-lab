@@ -368,6 +368,9 @@ set(EPCSAFT_NATIVE_EQUILIBRIUM_SOURCES
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activated_equilibrium_nlp.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/activation_plan.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/chemical_equilibrium_nlp.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/chemical_equilibrium_objective.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/continuation_driver.cpp
+    ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/feasible_initialization.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/helpers.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/nlp_problem.cpp
     ${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/core/selector_core.cpp

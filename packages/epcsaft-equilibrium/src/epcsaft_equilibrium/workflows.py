@@ -9,7 +9,6 @@ from types import MappingProxyType
 from typing import Any, Literal
 
 import numpy as np
-
 from epcsaft import InputError, SolutionError
 from epcsaft.runtime import RouteDiagnosticsView
 
@@ -18,7 +17,12 @@ from .chemical_equilibrium import (
     ChemicalReaction,
     ChemicalSpecies,
     CompiledChemicalEquilibrium,
+    EquilibriumConstantRecord,
+    StandardStateRegistry,
+    _unsupported_standard_state_request_diagnostics,
+    build_standard_state_registry,
     compile_reaction_set,
+    solve_chemical_equilibrium_nlp_activation,
 )
 from .core.native_requests import (
     EQUILIBRIUM_ROUTE_SPECS,
@@ -29,6 +33,7 @@ from .core.native_requests import (
     selector_route_solver_tolerances,
 )
 from .core.native_results import (
+    chemical_equilibrium_result_diagnostics,
     native_route_diagnostics,
     native_route_phase_labels,
     native_route_solved_pressure,
@@ -73,6 +78,232 @@ def chemical_equilibrium_native_payload(compiled: CompiledChemicalEquilibrium) -
     """Return the native-boundary payload for a compiled standalone CE schema."""
 
     return chemical_equilibrium_schema_payload(compiled)
+
+
+def reactive_speciation(
+    *,
+    species: Sequence[ChemicalSpecies],
+    reactions: Sequence[ChemicalReaction],
+    feed_amounts: Mapping[str, float],
+    equilibrium_constants: Sequence[EquilibriumConstantRecord],
+    initial_amounts: Sequence[float] | None = None,
+    eos_mixture: Any | None = None,
+    solver_options: EquilibriumSolverOptions | Mapping[str, Any] | None = None,
+) -> ReactiveSpeciationResult:
+    """Solve standalone homogeneous chemical speciation through the CE NLP path."""
+
+    compiled = compile_reaction_set(species=species, reactions=reactions, feed_amounts=feed_amounts)
+    standard_states = build_standard_state_registry(equilibrium_constants)
+    native_eos_mixture = _reactive_speciation_eos_context(standard_states, eos_mixture)
+    options = _normalize_options(solver_options)
+    initial_seed = _optional_positive_initial_amounts(initial_amounts, compiled.species_count)
+    payload = solve_chemical_equilibrium_nlp_activation(
+        compiled,
+        standard_states,
+        initial_amounts=initial_seed,
+        eos_mixture=native_eos_mixture,
+        max_iterations=options.max_iterations,
+        tolerance=options.tolerance,
+        timeout_seconds=options.timeout_seconds,
+        hessian_mode=options.hessian_mode,
+        ipopt_iteration_history_limit=options.ipopt_iteration_history_limit,
+        balance_tolerance=options.tolerance,
+        reaction_stationarity_tolerance=options.tolerance,
+        continuation_state=options.continuation_state,
+        ipopt_linear_solver=options.ipopt_linear_solver,
+    )
+    return _reactive_speciation_result_from_payload(compiled, standard_states, payload)
+
+
+def _optional_positive_initial_amounts(
+    initial_amounts: Sequence[float] | None,
+    species_count: int,
+) -> list[float] | None:
+    if initial_amounts is None:
+        return None
+    values = np.asarray(initial_amounts, dtype=float)
+    if values.shape != (species_count,):
+        raise InputError(f"initial_amounts must contain exactly {species_count} values.")
+    if not np.all(np.isfinite(values)):
+        raise InputError("initial_amounts must be finite.")
+    if np.any(values <= 0.0):
+        raise InputError("initial_amounts must be strictly positive.")
+    return values.tolist()
+
+
+def _reactive_speciation_eos_context(
+    standard_states: StandardStateRegistry,
+    eos_mixture: Any | None,
+) -> Any | None:
+    conventions = {
+        record.standard_state.activity_convention
+        for record in standard_states.records.values()
+    }
+    if len(conventions) != 1:
+        raise InputError("reactive_speciation requires a single activity convention.")
+    convention = next(iter(conventions))
+    if convention == "mole_fraction_activity":
+        if eos_mixture is not None:
+            raise InputError("reactive_speciation eos_mixture is only valid with EOS activity standard states.")
+        return None
+    if convention not in {"eos_x_phi", "eos_x_gamma"}:
+        raise InputError(
+            f"reactive_speciation unsupported activity convention '{convention}'.",
+            _unsupported_standard_state_request_diagnostics(convention),
+        )
+    if eos_mixture is None:
+        raise InputError(f"reactive_speciation {convention} standard states require eos_mixture.")
+    _require_single_eos_activity_context(standard_states)
+    return getattr(eos_mixture, "native", eos_mixture)
+
+
+def _require_single_eos_activity_context(standard_states: StandardStateRegistry) -> None:
+    records = list(standard_states.records.values())
+    first = records[0].standard_state
+    for record in records[1:]:
+        state = record.standard_state
+        if (
+            state.eos_reference_phase != first.eos_reference_phase
+            or state.temperature_K != first.temperature_K
+            or state.pressure_Pa != first.pressure_Pa
+        ):
+            raise InputError("reactive_speciation EOS activity standard states require one shared EOS context.")
+
+
+def _reactive_speciation_result_from_payload(
+    compiled: CompiledChemicalEquilibrium,
+    standard_states: StandardStateRegistry,
+    payload: Mapping[str, Any],
+) -> ReactiveSpeciationResult:
+    diagnostics = chemical_equilibrium_result_diagnostics(payload)
+    _validate_reactive_speciation_payload(payload, diagnostics)
+
+    amounts = _required_float_vector(payload, "amounts", compiled.species_count, diagnostics)
+    mole_fractions = _required_float_vector(payload, "mole_fractions", compiled.species_count, diagnostics)
+    activities = _optional_float_vector(payload, "activities", compiled.species_count, diagnostics)
+    if activities is None:
+        activities = mole_fractions
+    standard_mu_rt = _required_float_vector(payload, "standard_mu_rt", compiled.species_count, diagnostics)
+    if np.any(mole_fractions <= 0.0):
+        raise SolutionError("reactive_speciation native payload returned nonpositive mole fractions.", diagnostics)
+    if np.any(activities <= 0.0):
+        raise SolutionError("reactive_speciation native payload returned nonpositive activities.", diagnostics)
+    reduced_mu = standard_mu_rt + np.log(activities)
+
+    return ReactiveSpeciationResult(
+        species_labels=compiled.species_labels,
+        reaction_labels=compiled.reaction_labels,
+        amounts=amounts,
+        mole_fractions=mole_fractions,
+        species_amounts=_labeled_float_map(compiled.species_labels, amounts, "amounts", diagnostics),
+        activities=_labeled_float_map(compiled.species_labels, activities, "activities", diagnostics),
+        reduced_chemical_potentials=_labeled_float_map(
+            compiled.species_labels,
+            reduced_mu,
+            "reduced_chemical_potentials",
+            diagnostics,
+        ),
+        reaction_extents=_reaction_extent_map(compiled, amounts, diagnostics),
+        balances=_labeled_float_map(
+            compiled.conservation_labels,
+            _required_float_vector(payload, "balance_residuals", len(compiled.conservation_labels), diagnostics),
+            "balance_residuals",
+            diagnostics,
+        ),
+        affinities=_labeled_float_map(
+            compiled.reaction_labels,
+            _required_float_vector(payload, "reaction_affinities", compiled.reaction_count, diagnostics),
+            "reaction_affinities",
+            diagnostics,
+        ),
+        standard_state_metadata={
+            label: record.standard_state.to_payload()
+            for label, record in standard_states.records.items()
+        },
+        diagnostics=diagnostics,
+    )
+
+
+def _validate_reactive_speciation_payload(payload: Mapping[str, Any], diagnostics: Mapping[str, Any]) -> None:
+    expected = {
+        "native_binding": "_native_chemical_equilibrium_nlp_activation",
+        "route": "reactive_speciation",
+        "activation_compiler": "activation_plan",
+        "thermodynamic_block": "homogeneous_chemical_equilibrium",
+    }
+    for key, value in expected.items():
+        if payload.get(key) != value:
+            raise SolutionError(
+                "reactive_speciation requires the single activation-matrix NLP native evidence.",
+                diagnostics,
+            )
+    if payload.get("accepted") is not True:
+        raise SolutionError("reactive_speciation native solve was not accepted.", diagnostics)
+    selector = payload.get("selector_contract", {})
+    if not isinstance(selector, Mapping) or selector.get("selector_family") != "reactive_speciation":
+        raise SolutionError("reactive_speciation native payload returned an invalid selector contract.", diagnostics)
+    activation = payload.get("activation", {})
+    if isinstance(activation, Mapping):
+        public_routes = [str(route) for route in activation.get("public_routes", [])]
+        if any(route != "reactive_speciation" for route in public_routes):
+            raise SolutionError("reactive_speciation native payload must not open reactive phase routes.", diagnostics)
+
+
+def _required_float_vector(
+    payload: Mapping[str, Any],
+    key: str,
+    expected_size: int,
+    diagnostics: Mapping[str, Any],
+) -> np.ndarray:
+    if key not in payload:
+        raise SolutionError(f"reactive_speciation native payload missing {key}.", diagnostics)
+    values = _readonly_float_array(payload[key])
+    if values.shape != (expected_size,):
+        raise SolutionError(
+            f"reactive_speciation native payload field {key} has shape {values.shape}, expected {(expected_size,)}.",
+            diagnostics,
+        )
+    if not np.all(np.isfinite(values)):
+        raise SolutionError(f"reactive_speciation native payload field {key} must be finite.", diagnostics)
+    return values
+
+
+def _optional_float_vector(
+    payload: Mapping[str, Any],
+    key: str,
+    expected_size: int,
+    diagnostics: Mapping[str, Any],
+) -> np.ndarray | None:
+    if key not in payload:
+        return None
+    return _required_float_vector(payload, key, expected_size, diagnostics)
+
+
+def _labeled_float_map(
+    labels: Sequence[str],
+    values: Sequence[float],
+    field: str,
+    diagnostics: Mapping[str, Any],
+) -> dict[str, float]:
+    if len(labels) != len(values):
+        raise SolutionError(f"reactive_speciation cannot label {field}.", diagnostics)
+    return {str(label): float(value) for label, value in zip(labels, values)}
+
+
+def _reaction_extent_map(
+    compiled: CompiledChemicalEquilibrium,
+    amounts: np.ndarray,
+    diagnostics: Mapping[str, Any],
+) -> dict[str, float]:
+    if compiled.reaction_rank != compiled.reaction_count:
+        raise SolutionError("reactive_speciation reaction extents require an independent reaction set.", diagnostics)
+    delta = np.asarray(amounts, dtype=float) - np.asarray(compiled.feed_amounts, dtype=float)
+    stoichiometry_by_species = np.asarray(compiled.stoichiometric_matrix, dtype=float).T
+    extents, *_ = np.linalg.lstsq(stoichiometry_by_species, delta, rcond=None)
+    residual = stoichiometry_by_species @ extents - delta
+    if float(np.max(np.abs(residual))) > 1.0e-8:
+        raise SolutionError("reactive_speciation native amounts are inconsistent with reaction extents.", diagnostics)
+    return _labeled_float_map(compiled.reaction_labels, extents, "reaction_extents", diagnostics)
 
 
 def _readonly_float_array(value: Any) -> np.ndarray:
@@ -352,6 +583,85 @@ class EquilibriumResult:
                 "ln_fugacity_consistency_norm": float(self.diagnostics.get("ln_fugacity_consistency_norm", 0.0)),
             }
         return payload
+
+
+@dataclass(frozen=True, slots=True)
+class ReactiveSpeciationResult:
+    """Structured result returned by the standalone homogeneous CE route."""
+
+    species_labels: tuple[str, ...]
+    reaction_labels: tuple[str, ...]
+    amounts: Any
+    mole_fractions: Any
+    species_amounts: Mapping[str, float]
+    activities: Mapping[str, float]
+    reduced_chemical_potentials: Mapping[str, float]
+    reaction_extents: Mapping[str, float]
+    balances: Mapping[str, float]
+    affinities: Mapping[str, float]
+    standard_state_metadata: Mapping[str, Mapping[str, Any]]
+    diagnostics: Mapping[str, Any]
+    route: str = "reactive_speciation"
+    problem_kind: str = "standalone_chemical_equilibrium"
+    phase_scope: str = "homogeneous"
+    coupling_scope: str = "chemical_equilibrium_only"
+    capability_scope: str = "standalone_ce_only"
+    closed_surfaces: tuple[str, ...] = ("reactive_lle", "reactive_electrolyte_lle", "cpe")
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "species_labels", tuple(str(item) for item in self.species_labels))
+        object.__setattr__(self, "reaction_labels", tuple(str(item) for item in self.reaction_labels))
+        object.__setattr__(self, "amounts", _readonly_float_array(self.amounts))
+        object.__setattr__(self, "mole_fractions", _readonly_float_array(self.mole_fractions))
+        for name in (
+            "species_amounts",
+            "activities",
+            "reduced_chemical_potentials",
+            "reaction_extents",
+            "balances",
+            "affinities",
+        ):
+            object.__setattr__(
+                self,
+                name,
+                MappingProxyType({str(key): float(value) for key, value in getattr(self, name).items()}),
+            )
+        object.__setattr__(
+            self,
+            "standard_state_metadata",
+            MappingProxyType(
+                {
+                    str(key): MappingProxyType(dict(value))
+                    for key, value in self.standard_state_metadata.items()
+                }
+            ),
+        )
+        object.__setattr__(self, "diagnostics", _freeze_metadata_value(self.diagnostics))
+        object.__setattr__(self, "closed_surfaces", tuple(str(item) for item in self.closed_surfaces))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-like standalone CE payload."""
+
+        return {
+            "route": self.route,
+            "problem_kind": self.problem_kind,
+            "capability_scope": self.capability_scope,
+            "phase_scope": self.phase_scope,
+            "coupling_scope": self.coupling_scope,
+            "closed_surfaces": list(self.closed_surfaces),
+            "species_labels": list(self.species_labels),
+            "reaction_labels": list(self.reaction_labels),
+            "amounts": self.amounts.tolist(),
+            "mole_fractions": self.mole_fractions.tolist(),
+            "species_amounts": dict(self.species_amounts),
+            "activities": dict(self.activities),
+            "reduced_chemical_potentials": dict(self.reduced_chemical_potentials),
+            "reaction_extents": dict(self.reaction_extents),
+            "balances": dict(self.balances),
+            "affinities": dict(self.affinities),
+            "standard_state_metadata": _json_like(self.standard_state_metadata),
+            "diagnostics": _json_like(self.diagnostics),
+        }
 
 
 @dataclass(frozen=True, slots=True)

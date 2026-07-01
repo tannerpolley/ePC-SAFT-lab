@@ -94,6 +94,9 @@ Command matrix
    * - Equilibrium extension contracts
      - ``uv run python run_pytest.py --equilibrium-api -q``
      - Package-owned metadata/API check under ``packages/epcsaft-equilibrium/tests`` for neutral equilibrium route construction, solver-option validation, derivative-backend contracts, and capability reporting. This slice does not run the full route-solve file.
+   * - Standalone CE activation gate
+     - ``uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete`` then ``uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_standalone_ce_gate.py -q``
+     - Before claiming ``reactive_speciation(...)`` public standalone CE support. This gate does not admit reactive LLE, reactive electrolyte LLE, or CPE.
    * - Regression extension tests
      - ``uv run python run_pytest.py --regression -q`` or ``uv run python scripts/dev/validate_project.py regression``
      - Regression-extension Ceres tests routed through ``epcsaft_regression``.

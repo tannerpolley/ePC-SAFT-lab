@@ -21,6 +21,8 @@ activation_status_vocabulary:
   planned_not_public: "Planning family with no generalized production exposure."
   implemented_utility_not_generalized: "Existing public utility behavior may exist, but does not satisfy generalized admission gates."
   source_backed_associating_lle_public_admitted: "Source-backed associating LLE public admission for the retained methanol/cyclohexane fixture only."
+  representative_public_admitted_blocked_by_khudaida_model_reproduction: "Representative source-backed electrolyte LLE public admission is retained for the explicit-ion Khudaida fixture, but full Khudaida model reproduction and broader HELD2 flash validation remain blocked by issue #320."
+  standalone_ce_public_admitted: "Standalone homogeneous reactive_speciation admission after the strict standalone CE checker passes; reactive phase and CPE surfaces remain closed."
   held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation: "Full HELD2-style public-route phase-discovery evidence is admitted for the retained electrolyte_lle scope after issue #350. Perdomo/Figiel HELD2 validation, generic electrolyte families, fitted-model regression, CE/CPE, reactive, and release claims remain closed until their own gates pass."
   diagnostic_only: "Internal helper or diagnostic layer only."
   source_data_needed: "A source-backed target exists but local executable fixture data are missing."
@@ -386,11 +388,11 @@ family_rows:
       - selected_two_phase_only
       - per_phase_tpd_only
 
-  - family_label: "CE Chemical Equilibrium Placeholder"
+  - family_label: "CE Standalone Reactive Speciation"
     family_kind: chemical_equilibrium
-    activation_status: planned_not_public
-    production_exposed: false
-    existing_public_utility_routes: []
+    activation_status: standalone_ce_public_admitted
+    production_exposed: true
+    existing_public_utility_routes: [reactive_speciation]
     scope: "Homogeneous single-phase chemical and speciation equilibrium after standard-state conventions are explicit."
     primary_problem: "Chemical equilibrium without phase split."
     knowns: [T, P, feed_composition, reaction_set]
@@ -407,16 +409,30 @@ family_rows:
       - reaction_affinity_certification
       - exact_chemical_potential_derivatives
       - ce_validation_ladder
+    admission_evidence:
+      - evidence_label: "Standalone CE validation ladder"
+        evidence_tier: T1
+        command: "uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete"
+        scope: "CE-only homogeneous reactive_speciation evidence using analytic ideal, charged conservation, Ascani 2023 constants, MEA true-species bookkeeping, and retained Cantera/Pope oracle fixtures."
+        retained_evidence: "analyses/paper_validation/standalone_ce/shared/results/summary.json"
+        result_requirement: "Checker returns complete with no blockers; validation families include analytic_ideal, charged_conservation, ascani_2023, mea_speciation, cantera_reference_oracle, and pope_reference_oracle; only standalone reactive_speciation is public while reactive LLE, reactive electrolyte LLE, and CPE remain closed."
     reference_cases:
-      - case_label: "Chemical equilibrium placeholder"
-        evidence_tier: T0
-        source: "docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md"
-        fixture_status: source_data_needed
-        acceptance_checks: [standard_state_convention, reaction_affinity]
+      - case_label: "Standalone CE validation ladder"
+        evidence_tier: T1
+        source: "analyses/paper_validation/standalone_ce/shared/results/summary.json"
+        fixture_status: available
+        acceptance_checks:
+          - homogeneous_single_phase_only
+          - standard_state_convention
+          - reaction_affinity
+          - exact_chemical_potential_derivatives
+          - ce_validation_ladder
+          - standalone_reactive_speciation_public
+          - reactive_phase_and_cpe_closed
     forbidden_shortcuts:
       - hidden_standard_state
 
-  - family_label: "CPE Combined Phase-Chemical Placeholder"
+  - family_label: "CPE Simultaneous Phase-Chemistry Contract"
     family_kind: combined_phase_chemical_equilibrium
     activation_status: planned_not_public
     production_exposed: false
@@ -450,12 +466,49 @@ family_rows:
         - reaction_affinity_certification
         - exact_chemical_potential_derivatives
         - ce_validation_ladder
+    interface_contract:
+      status: blocked_future_interface
+      spec_path: "docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
+      public_routes: []
+      must_solve_simultaneously: true
+      variables:
+        - phase_species_amounts
+        - phase_volumes
+        - reaction_variables
+      constraints:
+        - material_balance
+        - phase_pressure_consistency
+        - transferable_potential_equality
+        - reaction_affinity
+        - phase_charge_when_applicable
+      pe_blockers:
+        - held_stage_i_stability
+        - held_stage_ii_dual_phase_discovery
+        - held_stage_iii_ipopt_refinement
+        - postsolve_phase_set_certification
+      ce_blockers:
+        - standard_state_registry
+        - reaction_affinity_certification
+        - exact_chemical_potential_derivatives
+        - ce_validation_ladder
+      disallowed_evidence:
+        - phase_only_validation
+        - ce_only_validation
+        - sequential_speciation_plus_flash
     reference_cases:
-      - case_label: "Combined phase-chemical placeholder"
+      - case_label: "Simultaneous phase-chemistry interface contract"
         evidence_tier: T0
-        source: "docs/superpowers/milestones/M4-equilibrium/generalized-fluid-phase-equilibrium.md"
+        source: "docs/superpowers/specs/2026-06-26-m4-equilibrium-cpe-interface-after-standalone-ce.md"
         fixture_status: source_data_needed
-        acceptance_checks: [phase_equilibrium, reaction_affinity, coupled_certification]
+        acceptance_checks:
+          - phase_species_amounts
+          - phase_volumes
+          - reaction_variables
+          - reaction_affinity
+          - transferable_potential_equality
+          - phase_charge_when_applicable
+          - pe_and_ce_blockers
+          - disallow_staged_speciation_flash
     forbidden_shortcuts:
       - phase_only_validation_as_cpe_validation
       - ce_only_validation_as_cpe_validation

@@ -1,0 +1,106 @@
+{
+  "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2",
+  "source_oracle": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase1_speciation_curve.csv",
+  "public_route": "reactive_speciation",
+  "ce_workflow": "epcsaft_equilibrium.reactive_speciation",
+  "temperature_C": [
+    20.0,
+    40.0
+  ],
+  "loading_count": 161,
+  "species": [
+    "CO2",
+    "MEA",
+    "H2O",
+    "MEAH+",
+    "MEACOO-",
+    "HCO3-",
+    "CO3^2-",
+    "H3O+",
+    "OH-"
+  ],
+  "plot_species": [
+    "CO2",
+    "MEA",
+    "MEAH+",
+    "MEACOO-",
+    "HCO3-",
+    "CO3^2-",
+    "H3O+",
+    "OH-",
+    "MEA + MEAH+"
+  ],
+  "initialization": "omitted initial_amounts; native max-min feasible initializer",
+  "seed_policy": "max_min_feasible_interior_no_oracle",
+  "uses_source_oracle_initial_amounts": false,
+  "solver_options": {
+    "max_iterations": 1000,
+    "tolerance": 1e-08
+  },
+  "zero_loading_note": "source-oracle loading 0.0 is solved with effective CE feed loading 1e-6 to match the Smith-Missen source solver's minimum loading convention",
+  "pointwise_unassisted": {
+    "row_count": 3220,
+    "loading_count": 161,
+    "all_accepted": true,
+    "all_no_source_oracle_seed": true,
+    "all_final_lambda_one": true,
+    "max_abs_error": 3.7471946379152854e-10,
+    "max_balance_inf_norm": 9.253685817611768e-09,
+    "max_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/ce_reactive_speciation_curve.csv"
+  },
+  "ce_owned_continuation_trace": {
+    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv",
+    "max_stage_count": 3,
+    "homotopy_point_count": 12,
+    "physical_proof_corrector_point_count": 322,
+    "corrected_stationarity_point_count": 322,
+    "max_initial_physical_proof_corrector_reaction_stationarity_inf_norm": 75.06626050447596,
+    "max_final_physical_proof_corrector_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+    "max_final_physical_proof_corrector_balance_inf_norm": 9.253685817611768e-09,
+    "all_physical_proof_corrector_rejection_reasons_empty": true,
+    "all_final_lambda_one": true,
+    "all_final_proof_accepted": true
+  },
+  "robustness_diagnostics": {
+    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv",
+    "required_fields": [
+      "activity_model",
+      "solver_status",
+      "application_status",
+      "accepted",
+      "failure_class",
+      "balance_inf_norm",
+      "reaction_stationarity_inf_norm",
+      "seed_source",
+      "uses_source_oracle_initial_amounts",
+      "stage_count",
+      "final_proof_status",
+      "physical_proof_corrector_attempted",
+      "physical_proof_corrector_rejection_reason",
+      "physical_proof_corrector_initial_reaction_stationarity_inf_norm",
+      "physical_proof_corrector_final_reaction_stationarity_inf_norm",
+      "physical_proof_corrector_final_balance_inf_norm"
+    ],
+    "activity_model": "mole_fraction_activity",
+    "failure_classes": [
+      "accepted"
+    ],
+    "accepted_state_point_count": 322,
+    "state_point_count": 322
+  },
+  "shuffled_subset": {
+    "attempt_count": 34,
+    "all_accepted": true,
+    "all_no_source_oracle_seed": true,
+    "max_abs_error": 1.9754442526220828e-10,
+    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_shuffled_subset_audit.csv"
+  },
+  "max_abs_error": 3.7471946379152854e-10,
+  "max_balance_inf_norm": 9.253685817611768e-09,
+  "max_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+  "all_solver_status_success": false,
+  "all_application_status_succeeded": false,
+  "all_accepted": true,
+  "strict_gates_passed": true
+}

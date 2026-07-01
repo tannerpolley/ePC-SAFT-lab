@@ -23,8 +23,10 @@ from .workflows import (
     EquilibriumPhase,
     EquilibriumResult,
     EquilibriumSolverOptions,
+    ReactiveSpeciationResult,
     chemical_equilibrium_native_payload,
     compile_chemical_equilibrium_schema,
+    reactive_speciation,
 )
 
 __version__ = "0.1.0"
@@ -38,6 +40,7 @@ __all__ = [
     "EquilibriumPhase",
     "EquilibriumResult",
     "EquilibriumSolverOptions",
+    "ReactiveSpeciationResult",
     "StandardStateRecord",
     "StandardStateRegistry",
     "__version__",
@@ -48,5 +51,6 @@ __all__ = [
     "compile_reaction_set",
     "phase_equilibrium_certification_contracts",
     "provider_contract",
+    "reactive_speciation",
     "validate_phase_equilibrium_certification_contracts",
 ]

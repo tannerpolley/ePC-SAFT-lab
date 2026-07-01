@@ -1,0 +1,8 @@
+figure:
+  title: mea_ce_continuation_stage_diagnostics
+  png: mea_ce_continuation_stage_diagnostics.png
+  svg: mea_ce_continuation_stage_diagnostics.svg
+  pdf: mea_ce_continuation_stage_diagnostics.pdf
+  dpi: 300
+style:
+  source: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py

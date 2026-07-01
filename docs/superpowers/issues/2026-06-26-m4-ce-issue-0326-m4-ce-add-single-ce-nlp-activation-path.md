@@ -20,13 +20,13 @@
 
 **Outcome Source:** docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md#outcome-proof
 **Intent:** Add one standalone CE activation path that enters through the activation matrix, selector contract, native `NlpProblem`, and Ipopt adapter.
-**Target Output:** Tests and checker mode prove standalone CE uses the single NLP/Ipopt route and the #325 homogeneous CE residual/objective block, without direct, VCS-style, Pope-style, or checker-only bypass paths.
+**Target Output:** Tests and checker mode prove standalone CE uses the single NLP/Ipopt route and the #325 homogeneous CE residual/objective block, without direct, VCS-style, Pope-style public bypass, or checker-only bypass paths.
 **Owner:** M4 equilibrium package owner for packages/epcsaft-equilibrium.
 **Interface:** Source plan, issue mirror, route-specific tests, validation checker evidence, registry/capability payloads, and GitHub issue state.
 **Cutover:** Replace placeholder or broad closed-ticket state only for this issue's accepted slice; keep unsupported CE/CPE surfaces closed.
 **Replaced Path:** Prior prototype evidence, broad closed tickets, or placeholder-only docs cannot stand in for this issue's proof.
 **Acceptance Proof:** Activation-path tests and checker mode prove the standalone CE request is admitted only through the activation matrix and solved only through the native NLP/Ipopt path using the #325 CE residual contract.
-**Stop Criteria:** Stop if the slice creates side-channel direct extent, element-potential/VCS-style, Pope-style continuation, checker-only, or public API routes outside the activation matrix and Ipopt adapter.
+**Stop Criteria:** Stop if the slice creates side-channel direct extent, element-potential/VCS-style, Pope-style public bypass, checker-only, or public API routes outside the activation matrix and Ipopt adapter.
 **Avoid:** Do not add downstream application metrics, regression work, release claims, side-channel CE solvers, or reactive phase route admission outside this issue scope.
 
 ## Project Merge
@@ -39,7 +39,7 @@
 
 ## What To Build
 
-Add the standalone CE route through the single activation-matrix NLP/Ipopt path. Direct extent, element-potential/VCS-style, and Pope-style continuation ideas may appear only as non-executing reference notes; they must not become route diagnostics, metadata choices, execution lanes, selector branches, native bindings, public APIs, or checker bypasses.
+Add the standalone CE route through the single activation-matrix NLP/Ipopt path. Direct extent and element-potential/VCS-style ideas may appear only as non-executing reference notes. Pope-style homotopy is allowed only as internal Ipopt solver-strategy evidence inside the admitted `reactive_speciation` activation family, as specified by `docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md`; it must not become a public route, selector branch, native side binding, public API, or checker bypass.
 
 ## Acceptance Criteria
 
@@ -58,7 +58,7 @@ Add the standalone CE route through the single activation-matrix NLP/Ipopt path.
 - Reactive LLE production support outside the standalone CE activation slice.
 - Reactive electrolyte LLE production support outside later CPE issue sets.
 - Downstream application metrics, parameter regression, or release publication.
-- Direct extent, element-potential/VCS-style, Pope-style continuation, or Cantera-like element-potential side solvers outside the activation matrix.
+- Direct extent, element-potential/VCS-style, Pope-style public bypass, or Cantera-like element-potential side solvers outside the activation matrix.
 - Native bindings such as `_native_chemical_equilibrium_algorithm_lanes` or checker modes that prove CE without exercising the activation-matrix NLP route.
 
 ## Proof Oracle

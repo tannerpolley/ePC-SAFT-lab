@@ -8,9 +8,13 @@ import numpy as np
 class InputError(Exception):
     """Exception raised for invalid user input."""
 
-    def __init__(self, message):
+    def __init__(self, message, diagnostics=None):
         self.message = message
-        super().__init__(message)
+        self.diagnostics = diagnostics
+        if diagnostics is None:
+            super().__init__(message)
+        else:
+            super().__init__(message, diagnostics)
 
 
 class SolutionError(Exception):

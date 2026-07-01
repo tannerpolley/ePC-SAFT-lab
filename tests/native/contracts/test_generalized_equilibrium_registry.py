@@ -37,8 +37,8 @@ EXPECTED_FAMILY_LABELS = {
     "PE-Associating TP Flash",
     "PE-Electrolyte LLE/TP Flash",
     "PE-Generalized Multiphase",
-    "CE Chemical Equilibrium Placeholder",
-    "CPE Combined Phase-Chemical Placeholder",
+    "CE Standalone Reactive Speciation",
+    "CPE Simultaneous Phase-Chemistry Contract",
 }
 DERIVED_LABELS = {"Bubble point", "Dew point", "Cloud point", "Shadow point"}
 FORBIDDEN_NUMERIC_ROW_RE = re.compile(r"\b(?:PE|CE|CPE)-\d{2}\b")
@@ -131,6 +131,7 @@ def test_public_admission_rows_are_explicitly_scoped() -> None:
             "held2_public_route_phase_discovery_admitted_blocked_by_perdomo_figiel_validation",
             ["electrolyte_lle"],
         ),
+        "CE Standalone Reactive Speciation": ("standalone_ce_public_admitted", ["reactive_speciation"]),
     }
     for row in _family_rows():
         assert "required_gates" in row, row["family_label"]
@@ -281,10 +282,13 @@ def test_charged_and_associating_families_declare_required_gates() -> None:
 
 
 def test_ce_family_is_homogeneous_speciation_with_explicit_gates() -> None:
-    ce = _family_by_label()["CE Chemical Equilibrium Placeholder"]
+    ce = _family_by_label()["CE Standalone Reactive Speciation"]
     required_gates = set(ce["required_gates"])
 
     assert ce["family_kind"] == "chemical_equilibrium"
+    assert ce["activation_status"] == "standalone_ce_public_admitted"
+    assert ce["production_exposed"] is True
+    assert ce["existing_public_utility_routes"] == ["reactive_speciation"]
     assert ce["phase_discovery_status"] == "not_applicable_homogeneous_single_phase"
     assert {
         "homogeneous_single_phase_only",
@@ -296,7 +300,7 @@ def test_ce_family_is_homogeneous_speciation_with_explicit_gates() -> None:
 
 
 def test_cpe_family_requires_simultaneous_phase_and_chemical_proof_chains() -> None:
-    cpe = _family_by_label()["CPE Combined Phase-Chemical Placeholder"]
+    cpe = _family_by_label()["CPE Simultaneous Phase-Chemistry Contract"]
     required_gates = set(cpe["required_gates"])
     dependencies = cpe["activation_dependencies"]
 

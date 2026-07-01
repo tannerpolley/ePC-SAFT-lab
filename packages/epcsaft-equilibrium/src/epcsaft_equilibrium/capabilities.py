@@ -165,6 +165,31 @@ EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE = (
     },
     {
         "row_family": "equilibrium",
+        "subsystem": "native_ipopt",
+        "quantity": "reactive_speciation_standalone_ce_public_proof",
+        "derivative": "standalone_ce_lagrangian_hessian_and_final_proof_diagnostics",
+        "backend": "analytic_ce_objective_with_cppad_eos_activity_extensions",
+        "supported": True,
+        "classification": "production_supported",
+        "public_admission_state": "public_route_open",
+        "public_route": "reactive_speciation",
+        "selector_family": "reactive_speciation",
+        "reason": (
+            "standalone homogeneous reactive_speciation is admitted through the strict standalone CE "
+            "checker, exact final proof diagnostics, retained MEA evidence, and EOS activity diagnostic "
+            "matrix while CPE and reactive phase routes remain closed"
+        ),
+        "tests": (
+            "packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py",
+            "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py",
+            "tests/native/contracts/test_standalone_ce_gate.py",
+            "tests/native/contracts/test_ce_robustness_followup_gate.py",
+            "scripts/validation/check_standalone_ce_gate.py",
+            "scripts/validation/check_ce_robustness_followup.py",
+        ),
+    },
+    {
+        "row_family": "equilibrium",
         "subsystem": "electrolyte_gfpe_readiness",
         "quantity": "electrolyte_held2_readiness_born_ssm_ds_exactness",
         "derivative": "born_ssm_ds_composition_fugacity_activity_and_parameter_receipts",
@@ -408,6 +433,9 @@ def capabilities() -> dict[str, object]:
     ipopt_route_available = bool(ipopt.get("available", False))
     activation = _activation_capabilities(ipopt_route_available=ipopt_route_available)
     public_routes_by_family = dict(activation["public_routes_by_family"])
+    reactive_activation = next(
+        row for row in activation["rows"] if row["key"] == "reactive_speciation"
+    )
     route_derivative_rows = [_capability_value(row) for row in EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE]
     route_derivative_evidence = {
         "source": "epcsaft_equilibrium",
@@ -536,6 +564,35 @@ def capabilities() -> dict[str, object]:
                 "ce",
                 "cpe",
                 "regression",
+            ],
+        },
+        "standalone_reactive_speciation": {
+            "available": bool(activation["ipopt_available"]),
+            "production": True,
+            "entrypoint": "reactive_speciation(species=..., reactions=..., feed_amounts=..., equilibrium_constants=...)",
+            "route": "reactive_speciation",
+            "native_binding": "_native_chemical_equilibrium_nlp_activation",
+            "capability_scope": "standalone_ce_only",
+            "phase_scope": "homogeneous",
+            "coupling_scope": "chemical_equilibrium_only",
+            "public_routes": public_routes_by_family["reactive_speciation"],
+            "solver_strategy": reactive_activation["solver_strategy"],
+            "initialization_strategy": reactive_activation["initialization_strategy"],
+            "continuation_strategy": reactive_activation["continuation_strategy"],
+            "final_proof_policy": reactive_activation["final_proof_policy"],
+            "closed_surfaces": ["reactive_lle", "reactive_electrolyte_lle", "cpe"],
+            "activation_gate": "issue_0330_complete",
+            "validation_evidence": "scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete",
+            "requires": ["cppad", "ipopt"],
+            "result_fields": [
+                "species_amounts",
+                "activities",
+                "reduced_chemical_potentials",
+                "reaction_extents",
+                "balances",
+                "affinities",
+                "standard_state_metadata",
+                "diagnostics",
             ],
         },
         "problem_objects": {

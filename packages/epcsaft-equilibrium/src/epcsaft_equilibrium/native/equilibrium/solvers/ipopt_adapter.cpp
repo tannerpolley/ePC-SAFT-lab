@@ -1330,6 +1330,14 @@ IpoptSolveResult solve_ipopt_nlp(
         || !normalized_options.initial_constraint_multipliers.empty()
     ) {
         app->Options()->SetStringValue("warm_start_init_point", "yes");
+        app->Options()->SetNumericValue("mu_init", std::min(normalized_options.tolerance, 1.0e-12));
+        if (normalized_options.bound_push > 0.0) {
+            app->Options()->SetNumericValue("warm_start_bound_push", normalized_options.bound_push);
+            app->Options()->SetNumericValue("warm_start_mult_bound_push", normalized_options.bound_push);
+        }
+        if (normalized_options.bound_frac > 0.0) {
+            app->Options()->SetNumericValue("warm_start_bound_frac", normalized_options.bound_frac);
+        }
     }
     if (normalized_options.max_wall_time_seconds > 0.0) {
         app->Options()->SetNumericValue("max_wall_time", normalized_options.max_wall_time_seconds);

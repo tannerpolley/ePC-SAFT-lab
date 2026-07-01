@@ -213,18 +213,18 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   `docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md`
 - Test: `scripts/validate-issue-mirror.ps1`
 
-- [ ] **Step 1: Draft issue bodies from this plan.**
+- [x] **Step 1: Draft issue bodies from this plan.**
   Use the issue packet below for the tracking issue and ten child issues.
-- [ ] **Step 2: Publish issues in dependency order.**
+- [x] **Step 2: Publish issues in dependency order.**
   Run `gh issue create` for the tracking issue first, then child issues, all
   with milestone `M4 - Equilibrium`.
-- [ ] **Step 3: Create mirrors.**
+- [x] **Step 3: Create mirrors.**
   Save each mirror under `docs/superpowers/issues/<issue-number>-<slug>.md`
   with the full GitHub body and workflow metadata required by the create-issues
   skill.
-- [ ] **Step 4: Validate mirrors.**
+- [x] **Step 4: Validate mirrors.**
   Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile <mirror>`.
-- [ ] **Step 5: Commit issue artifacts.**
+- [x] **Step 5: Commit issue artifacts.**
   Commit only the plan and issue mirrors after mirror validation passes.
 
 ### Task 2: Write CE/CPE Boundary Doctrine And Registry Gate
@@ -374,10 +374,13 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   M4 equilibrium.
 - The #325 homogeneous CE residual/objective block must become the objective and
   residual source for that one NLP path, not a direct checker-only binding.
-- Direct extent, element-potential/VCS-style, and Pope-style continuation ideas
-  may appear only as non-executing reference notes. They must not become route
-  diagnostics, metadata choices, execution lanes, selector branches, native
-  bindings, public API fields, or checker gates.
+- Direct extent and element-potential/VCS-style ideas may appear only as
+  non-executing reference notes. Pope-style homotopy may appear only as
+  internal Ipopt solver-strategy evidence inside the admitted
+  `reactive_speciation` activation family, as specified by
+  `docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md`.
+  It must not become a public route, selector branch, native side binding,
+  public API field, or checker bypass.
 - CPE must later be able to compose phase and chemistry without migrating from a
   separate standalone CE solver architecture.
 
@@ -403,7 +406,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   Add activation-matrix/selector wiring and native NLP/Ipopt solve diagnostics
   that consume the #325 CE residual/objective block. Do not add
   `_native_chemical_equilibrium_algorithm_lanes`, direct extent, VCS-style, or
-  Pope-style side-route bindings.
+  Pope-style public/side-route bindings.
 - [ ] **Step 4: Add checker coverage.**
   Make `check_standalone_ce_gate.py --json --require-single-nlp-path` validate
   the activation matrix, selector, native NLP route, Ipopt adapter diagnostics,
@@ -473,16 +476,16 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`
 
-- [ ] **Step 1: Write failing API tests.**
+- [x] **Step 1: Write failing API tests.**
   Cover CE request creation, result fields, diagnostics, errors, and closed
   reactive phase routes.
-- [ ] **Step 2: Run API tests and verify failure.**
+- [x] **Step 2: Run API tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`.
-- [ ] **Step 3: Implement CE API/result schema.**
+- [x] **Step 3: Implement CE API/result schema.**
   Expose only standalone speciation behavior and result diagnostics.
-- [ ] **Step 4: Update docs.**
+- [x] **Step 4: Update docs.**
   Add user-facing CE API notes without claiming CPE support.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit API/result schema and docs.
 
 ### Task 9: Build Standalone CE Validation Ladder
@@ -507,18 +510,18 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Modify:
   `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 
-- [ ] **Step 1: Write failing validation-checker tests.**
+- [x] **Step 1: Write failing validation-checker tests.**
   Cover missing analytic, charged, Ascani, MEA, Cantera, Pope, derivative, and
   capability evidence.
-- [ ] **Step 2: Run checker tests and verify failure.**
+- [x] **Step 2: Run checker tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py tests/native/contracts/test_standalone_ce_gate.py -q`.
-- [ ] **Step 3: Add retained validation records.**
+- [x] **Step 3: Add retained validation records.**
   Store JSON summaries with species order, units, residuals, tolerances, and
   source links.
-- [ ] **Step 4: Require complete checker mode.**
+- [x] **Step 4: Require complete checker mode.**
   Make `check_standalone_ce_gate.py --json --require-complete` consume every
   validation family.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit validation ladder and registry evidence updates.
 
 ### Task 10: Activate Standalone CE And Preserve CPE Closure
@@ -545,16 +548,16 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - Modify: `docs/pages/development_workflows.rst`
 
-- [ ] **Step 1: Write failing activation tests.**
+- [x] **Step 1: Write failing activation tests.**
   Assert CE opens only under complete checker evidence and CPE/reactive phase
   routes stay closed.
-- [ ] **Step 2: Run activation tests and verify failure.**
+- [x] **Step 2: Run activation tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_standalone_ce_gate.py -q`.
-- [ ] **Step 3: Implement activation cutover.**
+- [x] **Step 3: Implement activation cutover.**
   Update activation/capability payloads for standalone CE only.
-- [ ] **Step 4: Run complete proof oracle.**
+- [x] **Step 4: Run complete proof oracle.**
   Run the proof oracle commands below.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit standalone CE activation and capability evidence.
 
 ### Task 11: Define CPE Interface Contract For Later Issues
@@ -579,18 +582,18 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Create: local issue mirror for the CPE interface child issue
 - Test: `tests/native/contracts/test_equilibrium_benchmark_registry.py`
 
-- [ ] **Step 1: Write failing CPE contract tests.**
+- [x] **Step 1: Write failing CPE contract tests.**
   Assert CPE names phase species amounts, phase volumes, reaction variables,
   reaction affinity, transfer-potential equality, phase charge when applicable,
   and PE/CE blockers.
-- [ ] **Step 2: Run registry tests and verify failure.**
+- [x] **Step 2: Run registry tests and verify failure.**
   Run `uv run --no-sync python run_pytest.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q`.
-- [ ] **Step 3: Write the CPE interface spec.**
+- [x] **Step 3: Write the CPE interface spec.**
   Define variables, constraints, derivatives, validation blockers, and
   disallowed staged proof.
-- [ ] **Step 4: Update registry/docs.**
+- [x] **Step 4: Update registry/docs.**
   Link the CPE contract and keep production exposure closed.
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
   Commit the future CPE contract and blocked issue mirror.
 
 ## Issue Creation Packet

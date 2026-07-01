@@ -1,0 +1,333 @@
+{
+  "schema_version": "epcsaft.standalone_ce.validation_ladder.v1",
+  "scope": "standalone_chemical_equilibrium_only",
+  "claimed_equilibrium_scopes": [
+    "standalone_chemical_equilibrium"
+  ],
+  "ce_only": true,
+  "phase_scope": "homogeneous_single_phase",
+  "runtime_dependencies": [],
+  "public_routes": [
+    "reactive_speciation"
+  ],
+  "closed_surfaces": [
+    "reactive_lle",
+    "reactive_electrolyte_lle",
+    "cpe"
+  ],
+  "source_plan": "docs/superpowers/plans/2026-06-29-m4-ce-generic-pope-homotopy-continuation-plan.md",
+  "source_issue": "docs/superpowers/issues/2026-06-26-m4-ce-issue-0329-m4-ce-build-standalone-validation-ladder.md",
+  "checker_command": "uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete",
+  "validation_families": [
+    {
+      "family_id": "analytic_ideal",
+      "label": "Analytic ideal A to B",
+      "status": "complete",
+      "evidence_role": "executable_native_checker",
+      "source": "native analytic CE block fixture",
+      "source_path": "packages/epcsaft-equilibrium/tests/native/blocks/test_chemical_equilibrium_blocks.py",
+      "ce_only": true,
+      "phase_scope": "homogeneous_single_phase",
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "species_order": [
+        "A",
+        "B"
+      ],
+      "units": {
+        "amounts": "mol",
+        "temperature": "K",
+        "pressure": "Pa",
+        "equilibrium_constant": "dimensionless"
+      },
+      "standard_state_metadata": {
+        "label": "mole_fraction_standard_state",
+        "activity_convention": "mole_fraction_activity",
+        "temperature_K": 298.15,
+        "pressure_Pa": 101325.0
+      },
+      "residuals": {
+        "balance_inf_norm": 0.0,
+        "reaction_stationarity_inf_norm": 0.0
+      },
+      "tolerances": {
+        "balance_abs": 1e-9,
+        "affinity_abs": 1e-8,
+        "amount_abs": 1e-7
+      }
+    },
+    {
+      "family_id": "charged_conservation",
+      "label": "Charged conservation basis",
+      "status": "complete",
+      "evidence_role": "executable_native_checker",
+      "source": "native charged CE block fixture",
+      "source_path": "packages/epcsaft-equilibrium/tests/native/blocks/test_chemical_equilibrium_blocks.py",
+      "ce_only": true,
+      "phase_scope": "homogeneous_single_phase",
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "species_order": [
+        "H2O",
+        "H+",
+        "OH-"
+      ],
+      "units": {
+        "amounts": "mol",
+        "charge": "elementary_charge",
+        "equilibrium_constant": "dimensionless"
+      },
+      "standard_state_metadata": {
+        "label": "mole_fraction_standard_state",
+        "activity_convention": "mole_fraction_activity"
+      },
+      "residuals": {
+        "balance_inf_norm": 0.0,
+        "charge_balance": 0.0,
+        "reaction_stationarity_inf_norm": 0.0
+      },
+      "tolerances": {
+        "balance_abs": 1e-9,
+        "charge_abs": 1e-12,
+        "affinity_abs": 1e-8
+      }
+    },
+    {
+      "family_id": "ascani_2023",
+      "label": "Ascani 2023 esterification constants",
+      "status": "retained_source_blocker_disclosed",
+      "evidence_role": "source_constant_and_standard_state_registry",
+      "source": "Ascani 2023 esterification activity constants",
+      "source_path": "analyses/paper_validation/2023_ascani/analysis.yaml",
+      "ce_only": true,
+      "phase_scope": "homogeneous_single_phase",
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "species_order": [
+        "acid",
+        "alkanol",
+        "ester",
+        "water"
+      ],
+      "units": {
+        "temperature": "K",
+        "pressure": "bar",
+        "equilibrium_constant": "dimensionless"
+      },
+      "standard_state_metadata": {
+        "activity_convention": "mole_fraction_activity",
+        "standard_state_label": "ascani_mole_fraction_activity",
+        "source_constant_label": "K_a",
+        "system_1_K": 43.99,
+        "system_2_K": 22.92
+      },
+      "residuals": {
+        "standard_state_registry_record_count": 2,
+        "paper_match_rows_retained": 0
+      },
+      "tolerances": {
+        "registry_record_count_min": 2,
+        "paper_match_claim_allowed": 0
+      },
+      "source_data_blockers": [
+        "Ascani 2023 Figure 8/9 and reactive tie-line paper-match target rows are retained as blocked source data in analyses/paper_validation/2023_ascani/shared/results/reactive_phase_equilibrium/summary.json."
+      ]
+    },
+    {
+      "family_id": "mea_speciation",
+      "label": "MEA CO2 H2O Smith-Missen no-oracle loading sweep",
+      "status": "complete",
+      "evidence_role": "retained_no_oracle_public_reactive_speciation_sweep",
+      "source": "MEA-Thermodynamics Smith-Missen Phase 1 retained fixture",
+      "source_path": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_oracle_speciation_comparison_summary.json",
+      "ce_only": true,
+      "phase_scope": "homogeneous_single_phase",
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "species_order": [
+        "CO2",
+        "MEA",
+        "H2O",
+        "MEAH+",
+        "MEACOO-",
+        "HCO3-",
+        "CO3^2-",
+        "H3O+",
+        "OH-"
+      ],
+      "temperature_C": [
+        20.0,
+        40.0
+      ],
+      "loading_count": 161,
+      "initialization": "omitted initial_amounts; native max-min feasible initializer",
+      "seed_policy": "max_min_feasible_interior_no_oracle",
+      "uses_source_oracle_initial_amounts": false,
+      "solver_options": {
+        "max_iterations": 1000,
+        "tolerance": 1e-08
+      },
+      "units": {
+        "amounts": "mol",
+        "mole_fractions": "dimensionless",
+        "charge": "elementary_charge",
+        "loading": "mol CO2 per mol MEA",
+        "temperature": "K",
+        "pressure": "Pa",
+        "equilibrium_constant": "dimensionless"
+      },
+      "standard_state_metadata": {
+        "label": "smith_missen_mole_fraction_standard_state",
+        "activity_convention": "mole_fraction_activity",
+        "temperature_C": [
+          20.0,
+          40.0
+        ],
+        "pressure_Pa": 101325.0,
+        "source_module": "MEA.smith_missen.ideal_speciation",
+        "water_per_amine_30wtpct": 7.909507954125047
+      },
+      "residuals": {
+        "loading_count": 161,
+        "temperature_count": 2,
+        "state_point_count": 322,
+        "species_row_count": 3220,
+        "reaction_equation_count": 5,
+        "max_balance_inf_norm": 9.253685817611768e-09,
+        "max_reaction_stationarity_inf_norm": 3.4620839528543e-10,
+        "max_mole_fraction_abs_error": 3.7471946379152854e-10,
+        "max_shuffled_subset_mole_fraction_abs_error": 1.9754442526220828e-10
+      },
+      "tolerances": {
+        "balance_abs": 1e-8,
+        "affinity_abs": 1e-6,
+        "mole_fraction_abs": 1e-8,
+        "loading_abs": 1e-8,
+        "charge_balance_abs": 1e-8,
+        "species_order_required": 9,
+        "loading_count_min": 161,
+        "temperature_count_min": 2,
+        "state_point_count_min": 322
+      },
+      "strict_gates_passed": true,
+      "continuation_evidence": {
+        "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv",
+        "max_stage_count": 3,
+        "homotopy_point_count": 12,
+        "physical_proof_corrector_point_count": 322,
+        "all_final_lambda_one": true,
+        "all_final_proof_accepted": true
+      },
+      "shuffled_subset": {
+        "attempt_count": 34,
+        "all_accepted": true,
+        "all_no_source_oracle_seed": true,
+        "max_abs_error": 1.9754442526220828e-10,
+        "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_shuffled_subset_audit.csv"
+      },
+      "retained_artifacts": [
+        "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/ce_reactive_speciation_curve.csv",
+        "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv",
+        "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_shuffled_subset_audit.csv"
+      ]
+    },
+    {
+      "family_id": "cantera_reference_oracle",
+      "label": "Cantera-compatible ideal CE oracle",
+      "status": "complete",
+      "evidence_role": "retained_reference_oracle",
+      "source": "Cantera-compatible ideal equilibrium fixture",
+      "source_path": "analyses/reference_oracles/chemical_equilibrium/cantera_pope_reference_cases.json",
+      "ce_only": true,
+      "phase_scope": "homogeneous_single_phase",
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "species_order": [
+        "A",
+        "B"
+      ],
+      "units": {
+        "amounts": "mol",
+        "temperature": "K",
+        "pressure": "Pa",
+        "equilibrium_constant": "dimensionless"
+      },
+      "standard_state_metadata": {
+        "activity_convention": "mole_fraction_activity",
+        "oracle_case_id": "cantera_compatible_ideal_a_to_b"
+      },
+      "residuals": {
+        "balance_inf_norm": 0.0,
+        "reaction_stationarity_inf_norm": 0.0
+      },
+      "tolerances": {
+        "balance_abs": 1e-9,
+        "affinity_abs": 1e-8,
+        "amount_abs": 1e-7
+      }
+    },
+    {
+      "family_id": "pope_reference_oracle",
+      "label": "Pope 2004 tiny-species ideal CE oracle",
+      "status": "complete",
+      "evidence_role": "retained_reference_oracle",
+      "source": "Pope 2004 constrained Gibbs continuation stress fixture",
+      "source_path": "analyses/reference_oracles/chemical_equilibrium/cantera_pope_reference_cases.json",
+      "ce_only": true,
+      "phase_scope": "homogeneous_single_phase",
+      "claimed_equilibrium_scopes": [
+        "standalone_chemical_equilibrium"
+      ],
+      "species_order": [
+        "A",
+        "B"
+      ],
+      "units": {
+        "amounts": "mol",
+        "temperature": "K",
+        "pressure": "Pa",
+        "equilibrium_constant": "dimensionless"
+      },
+      "standard_state_metadata": {
+        "activity_convention": "mole_fraction_activity",
+        "oracle_case_id": "pope_2004_tiny_species_ideal_a_to_b"
+      },
+      "residuals": {
+        "balance_inf_norm": 0.0,
+        "reaction_stationarity_inf_norm": 0.0
+      },
+      "tolerances": {
+        "balance_abs": 1e-9,
+        "affinity_abs": 1e-8,
+        "amount_abs": 1e-7
+      }
+    }
+  ],
+  "derivative_evidence": {
+    "status": "complete",
+    "backend": "analytic",
+    "objective_gradient_exact": true,
+    "constraint_jacobian_exact": true,
+    "lagrangian_hessian_exact": true,
+    "source": "packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py"
+  },
+  "capability_evidence": {
+    "status": "standalone_ce_open_cpe_closed",
+    "activation_gate": "issue_0330_complete",
+    "production": true,
+    "public_routes": [
+      "reactive_speciation"
+    ],
+    "closed_surfaces": [
+      "reactive_lle",
+      "reactive_electrolyte_lle",
+      "cpe"
+    ]
+  },
+  "claim_boundary": "This retained ladder proves standalone homogeneous CE evidence only; it does not admit reactive LLE, reactive electrolyte LLE, or CPE."
+}

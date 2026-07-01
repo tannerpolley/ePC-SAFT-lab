@@ -12,8 +12,17 @@ from epcsaft import InputError
 
 _BASIS_TOLERANCE = 1.0e-10
 GAS_CONSTANT_J_PER_MOL_K = 8.31446261815324
-_ACTIVITY_CONVENTIONS = frozenset({"mole_fraction_activity", "molality", "fugacity", "eos_x_phi"})
+_ACTIVITY_CONVENTIONS = frozenset({"mole_fraction_activity", "molality", "fugacity", "eos_x_phi", "eos_x_gamma"})
+_EOS_ACTIVITY_CONVENTIONS = frozenset({"eos_x_phi", "eos_x_gamma"})
 _EQUILIBRIUM_CONSTANT_FORMS = frozenset({"K", "ln_K", "log_K", "log10_K", "delta_g_standard"})
+
+
+def _unsupported_standard_state_request_diagnostics(convention: str) -> dict[str, str]:
+    return {
+        "failure_class": "unsupported_standard_state_request",
+        "failure_gate": "standard_state",
+        "activity_convention": str(convention),
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,7 +92,10 @@ class StandardStateRecord:
         object.__setattr__(self, "label", _clean_label(self.label, "standard-state label"))
         convention = _clean_label(self.activity_convention, "activity convention")
         if convention not in _ACTIVITY_CONVENTIONS:
-            raise InputError(f"unsupported activity convention '{convention}'.")
+            raise InputError(
+                f"unsupported activity convention '{convention}'.",
+                _unsupported_standard_state_request_diagnostics(convention),
+            )
         object.__setattr__(self, "activity_convention", convention)
         object.__setattr__(self, "temperature_K", _positive_finite_float(self.temperature_K, "temperature_K"))
         object.__setattr__(self, "pressure_Pa", _positive_finite_float(self.pressure_Pa, "pressure_Pa"))
@@ -102,8 +114,8 @@ class StandardStateRecord:
             raise InputError("molality standard states require standard molality metadata.")
         if convention == "fugacity" and fugacity is None:
             raise InputError("fugacity standard states require standard fugacity metadata.")
-        if convention == "eos_x_phi" and reference_phase is None:
-            raise InputError("eos_x_phi standard states require an EOS reference phase.")
+        if convention in _EOS_ACTIVITY_CONVENTIONS and reference_phase is None:
+            raise InputError(f"{convention} standard states require an EOS reference phase.")
 
         metadata = (
             {} if self.metadata is None else {str(key): _json_scalar(value) for key, value in self.metadata.items()}
@@ -364,7 +376,7 @@ def solve_chemical_equilibrium_nlp_activation(
     compiled: CompiledChemicalEquilibrium,
     standard_states: StandardStateRegistry,
     *,
-    initial_amounts: Sequence[float],
+    initial_amounts: Sequence[float] | None = None,
     max_iterations: int = 100,
     tolerance: float = 1.0e-8,
     timeout_seconds: float | None = None,
@@ -374,6 +386,7 @@ def solve_chemical_equilibrium_nlp_activation(
     reaction_stationarity_tolerance: float = 1.0e-8,
     continuation_state: Mapping[str, Any] | None = None,
     ipopt_linear_solver: str = "auto",
+    eos_mixture: Any | None = None,
 ) -> dict[str, Any]:
     """Solve standalone CE through the internal activation-matrix NLP/Ipopt path."""
 
@@ -395,7 +408,11 @@ def solve_chemical_equilibrium_nlp_activation(
     balance_tol = _positive_finite_float(balance_tolerance, "balance_tolerance")
     reaction_tol = _positive_finite_float(reaction_stationarity_tolerance, "reaction_stationarity_tolerance")
     timeout = 0.0 if timeout_seconds is None else _positive_finite_float(timeout_seconds, "timeout_seconds")
-    initial = _positive_amount_vector(initial_amounts, compiled.species_count, "initial_amounts")
+    initial = (
+        []
+        if initial_amounts is None
+        else _positive_amount_vector(initial_amounts, compiled.species_count, "initial_amounts").tolist()
+    )
 
     from ._native import extension_native_core
 
@@ -403,7 +420,7 @@ def solve_chemical_equilibrium_nlp_activation(
     return core._native_chemical_equilibrium_nlp_activation(
         compiled.to_native_payload(),
         standard_states.to_native_payload(),
-        initial.tolist(),
+        initial,
         iterations,
         solve_tolerance,
         timeout,
@@ -412,6 +429,7 @@ def solve_chemical_equilibrium_nlp_activation(
         balance_tol,
         reaction_tol,
         continuation_state,
+        eos_mixture,
         linear_solver=str(ipopt_linear_solver),
     )
 

@@ -39,10 +39,10 @@ VariableLayout build_variable_layout(
         out.route = plan.route;
         out.variable_model = plan.variable_model;
         out.physical_basis = "true_species_amounts";
-        out.solver_coordinate_basis = "physical_species_amounts";
+        out.solver_coordinate_basis = "log_species_amounts";
         out.lift_policy = "identity_true_species_lift";
         out.back_lift_policy = "single_phase_species_amount_back_lift";
-        out.transform_policy = "identity_physical_coordinates";
+        out.transform_policy = "positive_log_coordinates";
         out.phase_count = 1;
         out.species_count = species_count;
         out.variable_count = species_count;

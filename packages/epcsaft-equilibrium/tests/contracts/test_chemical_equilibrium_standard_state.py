@@ -8,7 +8,10 @@ from pathlib import Path
 import pytest
 import yaml
 from epcsaft import InputError
+from epcsaft_equilibrium import reactive_speciation
 from epcsaft_equilibrium.chemical_equilibrium import (
+    ChemicalReaction,
+    ChemicalSpecies,
     EquilibriumConstantRecord,
     StandardStateRecord,
     build_standard_state_registry,
@@ -62,7 +65,7 @@ def test_equilibrium_constant_registry_accepts_log_k_and_delta_g() -> None:
     assert registry.records["acid_dissociation"].standard_state.standard_molality_mol_kg == 1.0
 
 
-def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
+def test_standard_state_records_cover_fugacity_and_eos_payloads() -> None:
     fugacity = StandardStateRecord(
         label="pure_vapor_fugacity",
         activity_convention="fugacity",
@@ -73,6 +76,13 @@ def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
     eos_x_phi = StandardStateRecord(
         label="liquid_x_phi",
         activity_convention="eos_x_phi",
+        temperature_K=318.15,
+        pressure_Pa=101300.0,
+        eos_reference_phase="liquid",
+    )
+    eos_x_gamma = StandardStateRecord(
+        label="liquid_x_gamma",
+        activity_convention="eos_x_gamma",
         temperature_K=318.15,
         pressure_Pa=101300.0,
         eos_reference_phase="liquid",
@@ -97,6 +107,15 @@ def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
                 source="Ascani 2023 Table 4",
                 source_constant_label="K_a",
             ),
+            EquilibriumConstantRecord(
+                reaction_label="liquid_association",
+                value=11.25,
+                form="K",
+                units="dimensionless",
+                standard_state=eos_x_gamma,
+                source="EOS activity coefficient fixture",
+                source_constant_label="K_gamma",
+            ),
         ]
     )
 
@@ -107,6 +126,9 @@ def test_standard_state_records_cover_fugacity_and_eos_x_phi_payloads() -> None:
     assert payload["records"][1]["standard_state"]["activity_convention"] == "eos_x_phi"
     assert payload["records"][1]["standard_state"]["eos_reference_phase"] == "liquid"
     assert payload["records"][1]["ln_equilibrium_constant"] == pytest.approx(math.log(43.99))
+    assert payload["records"][2]["standard_state"]["activity_convention"] == "eos_x_gamma"
+    assert payload["records"][2]["standard_state"]["eos_reference_phase"] == "liquid"
+    assert payload["records"][2]["ln_equilibrium_constant"] == pytest.approx(math.log(11.25))
     json.dumps(payload)
 
 
@@ -127,6 +149,14 @@ def test_registry_rejects_missing_temperature_units_or_convention_metadata() -> 
             pressure_Pa=101325.0,
         )
 
+    with pytest.raises(InputError, match="EOS reference phase"):
+        StandardStateRecord(
+            label="missing_eos_reference_phase",
+            activity_convention="eos_x_gamma",
+            temperature_K=298.15,
+            pressure_Pa=101325.0,
+        )
+
     state = StandardStateRecord(
         label="valid",
         activity_convention="mole_fraction_activity",
@@ -142,6 +172,58 @@ def test_registry_rejects_missing_temperature_units_or_convention_metadata() -> 
             standard_state=state,
             source="contract fixture",
             source_constant_label="bad",
+        )
+
+
+def test_reactive_speciation_rejects_mixed_activity_contexts_before_native() -> None:
+    ideal = StandardStateRecord(
+        label="ideal_mole_fraction",
+        activity_convention="mole_fraction_activity",
+        temperature_K=298.15,
+        pressure_Pa=101325.0,
+    )
+    eos = StandardStateRecord(
+        label="liquid_eos_x_phi",
+        activity_convention="eos_x_phi",
+        temperature_K=298.15,
+        pressure_Pa=101325.0,
+        eos_reference_phase="liquid",
+    )
+    constants = [
+        EquilibriumConstantRecord(
+            reaction_label="a_to_b",
+            value=math.log(2.0),
+            form="ln_K",
+            units="dimensionless",
+            standard_state=ideal,
+            source="contract fixture",
+            source_constant_label="ln_K_ab",
+        ),
+        EquilibriumConstantRecord(
+            reaction_label="b_to_c",
+            value=math.log(3.0),
+            form="ln_K",
+            units="dimensionless",
+            standard_state=eos,
+            source="contract fixture",
+            source_constant_label="ln_K_bc",
+        ),
+    ]
+
+    with pytest.raises(InputError, match="single activity convention"):
+        reactive_speciation(
+            species=[
+                ChemicalSpecies("A", {"X": 1.0}),
+                ChemicalSpecies("B", {"X": 1.0}),
+                ChemicalSpecies("C", {"X": 1.0}),
+            ],
+            reactions=[
+                ChemicalReaction("a_to_b", {"A": -1.0, "B": 1.0}),
+                ChemicalReaction("b_to_c", {"B": -1.0, "C": 1.0}),
+            ],
+            feed_amounts={"A": 1.0, "B": 0.0, "C": 0.0},
+            equilibrium_constants=constants,
+            initial_amounts=[0.7, 0.2, 0.1],
         )
 
 

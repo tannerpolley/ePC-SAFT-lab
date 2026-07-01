@@ -16,7 +16,11 @@ EXPECTED_PUBLIC_ROUTE_FAMILIES = {
     "flash": "neutral_tp_flash",
     "lle": "neutral_lle",
     "multiphase": "neutral_multiphase_nonassoc",
+    "reactive_speciation": "reactive_speciation",
     "single_component_vle": "single_component_vle",
+}
+EXPECTED_EQUILIBRIUM_ROUTE_FAMILIES = {
+    route: family for route, family in EXPECTED_PUBLIC_ROUTE_FAMILIES.items() if route != "reactive_speciation"
 }
 
 
@@ -58,10 +62,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "single_component_vle",
         "neutral_multiphase_nonassoc",
         "electrolyte_lle",
+        "reactive_speciation",
         "bubble_dew_derived_routes",
     ]
     assert activation["declared_not_exposed_families"] == [
-        "reactive_speciation",
         "reactive_lle",
         "reactive_electrolyte_lle",
     ]
@@ -71,6 +75,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "single_component_vle",
         "neutral_multiphase_nonassoc",
         "electrolyte_lle",
+        "reactive_speciation",
         "bubble_dew_derived_routes",
     ]
     assert public_route_map == EXPECTED_PUBLIC_ROUTE_FAMILIES
@@ -85,10 +90,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "single_component_vle",
         "neutral_multiphase_nonassoc",
         "electrolyte_lle",
+        "reactive_speciation",
         "bubble_dew_derived_routes",
     ]
     assert {row["selector_family"] for row in certification["planned_route_families"]} == {
-        "reactive_speciation",
         "reactive_lle",
         "reactive_electrolyte_lle",
     }
@@ -101,6 +106,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "flash",
         "lle",
         "multiphase",
+        "reactive_speciation",
         "single_component_vle",
     ]
     assert activation["public_route_family_map"] == EXPECTED_PUBLIC_ROUTE_FAMILIES
@@ -110,6 +116,7 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "single_component_vle": ["single_component_vle"],
         "neutral_multiphase_nonassoc": ["multiphase"],
         "electrolyte_lle": ["electrolyte_lle"],
+        "reactive_speciation": ["reactive_speciation"],
         "bubble_dew_derived_routes": [
             "bubble_pressure",
             "bubble_temperature",
@@ -117,9 +124,9 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
             "dew_temperature",
         ],
     }
-    assert {
-        route: spec.selector_family for route, spec in _EQUILIBRIUM_ROUTE_SPECS.items()
-    } == EXPECTED_PUBLIC_ROUTE_FAMILIES
+    assert {route: spec.selector_family for route, spec in _EQUILIBRIUM_ROUTE_SPECS.items()} == (
+        EXPECTED_EQUILIBRIUM_ROUTE_FAMILIES
+    )
     assert capabilities["bubble_dew_derived_routes"]["entrypoint"] == ("Equilibrium(mixture, route=..., ...).solve()")
     assert capabilities["bubble_dew_derived_routes"]["public_routes"] == [
         "bubble_pressure",
@@ -165,6 +172,35 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert capabilities["single_component_vle"]["available"] is capabilities["activation_matrix"]["ipopt_available"]
     assert capabilities["problem_objects"]["available"] is True
     assert capabilities["problem_objects"]["entrypoint"] == "Equilibrium(mixture, route=..., ...)"
+    assert capabilities["standalone_reactive_speciation"] == {
+        "available": capabilities["activation_matrix"]["ipopt_available"],
+        "production": True,
+        "entrypoint": "reactive_speciation(species=..., reactions=..., feed_amounts=..., equilibrium_constants=...)",
+        "route": "reactive_speciation",
+        "native_binding": "_native_chemical_equilibrium_nlp_activation",
+        "capability_scope": "standalone_ce_only",
+        "phase_scope": "homogeneous",
+        "coupling_scope": "chemical_equilibrium_only",
+        "public_routes": ["reactive_speciation"],
+        "solver_strategy": "ipopt_nlp_with_internal_continuation",
+        "initialization_strategy": "max_min_feasible_interior",
+        "continuation_strategy": "adaptive_k_scaling_homotopy",
+        "final_proof_policy": "true_gibbs_lambda_1_only",
+        "closed_surfaces": ["reactive_lle", "reactive_electrolyte_lle", "cpe"],
+        "activation_gate": "issue_0330_complete",
+        "validation_evidence": "scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete",
+        "requires": ["cppad", "ipopt"],
+        "result_fields": [
+            "species_amounts",
+            "activities",
+            "reduced_chemical_potentials",
+            "reaction_extents",
+            "balances",
+            "affinities",
+            "standard_state_metadata",
+            "diagnostics",
+        ],
+    }
     assert {row["quantity"] for row in capabilities["route_derivative_evidence"]["rows"]} == {
         "bubble_dew_derived_routes",
         "neutral_tp_flash",
@@ -172,9 +208,10 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "associating_neutral_lle_gross_2002_public_exact_hessian",
         "associating_neutral_lle_gross_2002_figure_10_public_exact_hessian",
         "associating_neutral_vle_gross_2002_figure_10_public_exact_hessian",
-        "neutral_multiphase_nonassoc",
-        "single_component_vle",
-        "electrolyte_held2_readiness_born_ssm_ds_exactness",
+            "neutral_multiphase_nonassoc",
+            "single_component_vle",
+            "reactive_speciation_standalone_ce_public_proof",
+            "electrolyte_held2_readiness_born_ssm_ds_exactness",
         "electrolyte_held2_counterion_pair_phase_discovery",
         "electrolyte_held2_stage_iii_reduced_variable_refinement",
         "electrolyte_held2_postsolve_phase_set_certification",
@@ -297,8 +334,33 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
     assert electrolyte_activation["production_exposed"] is True
     assert electrolyte_activation["public_routes"] == ["electrolyte_lle"]
     assert electrolyte_activation["proof_routes"] == ["electrolyte_held2_public_route_admission"]
+    reactive_activation = next(
+        row for row in capabilities["activation_matrix"]["rows"] if row["key"] == "reactive_speciation"
+    )
+    assert reactive_activation["production_exposed"] is True
+    assert reactive_activation["public_routes"] == ["reactive_speciation"]
+    assert reactive_activation["exposure_status"] == "production_exposed"
+    assert reactive_activation["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
+    assert reactive_activation["initialization_strategy"] == "max_min_feasible_interior"
+    assert reactive_activation["continuation_strategy"] == "adaptive_k_scaling_homotopy"
+    assert reactive_activation["final_proof_policy"] == "true_gibbs_lambda_1_only"
+    reactive_public = next(
+        row
+        for row in capabilities["route_derivative_evidence"]["rows"]
+        if row["quantity"] == "reactive_speciation_standalone_ce_public_proof"
+    )
+    assert reactive_public["classification"] == "production_supported"
+    assert reactive_public["public_admission_state"] == "public_route_open"
+    assert reactive_public["public_route"] == "reactive_speciation"
+    assert reactive_public["selector_family"] == "reactive_speciation"
+    standalone_ce = capabilities["standalone_reactive_speciation"]
+    assert standalone_ce["solver_strategy"] == "ipopt_nlp_with_internal_continuation"
+    assert standalone_ce["initialization_strategy"] == "max_min_feasible_interior"
+    assert standalone_ce["continuation_strategy"] == "adaptive_k_scaling_homotopy"
+    assert standalone_ce["final_proof_policy"] == "true_gibbs_lambda_1_only"
     assert activation["public_route_family_map"]["lle"] == "neutral_lle"
     assert activation["public_route_family_map"]["electrolyte_lle"] == "electrolyte_lle"
+    assert activation["public_route_family_map"]["reactive_speciation"] == "reactive_speciation"
     assert (
         capabilities["electrolyte_lle"]["phase_discovery_status"]
         == "held2_public_route_phase_discovery_and_scenario_validation_admitted"
@@ -314,3 +376,28 @@ def test_runtime_equilibrium_capabilities_are_activation_matrix_driven() -> None
         "reactive_stability",
     }
     assert deleted_route_keys.isdisjoint(capabilities)
+    assert set(capabilities["standalone_reactive_speciation"]["closed_surfaces"]).isdisjoint(
+        capabilities["public_routes"]
+    )
+
+
+def test_standalone_ce_activation_opens_only_reactive_speciation() -> None:
+    capabilities = epcsaft_equilibrium.capabilities()
+    rows = {row["key"]: row for row in capabilities["activation_matrix"]["rows"]}
+
+    assert rows["reactive_speciation"]["production_exposed"] is True
+    assert rows["reactive_speciation"]["public_routes"] == ["reactive_speciation"]
+    assert capabilities["standalone_reactive_speciation"]["production"] is True
+    assert capabilities["standalone_reactive_speciation"]["public_routes"] == ["reactive_speciation"]
+    assert capabilities["standalone_reactive_speciation"]["closed_surfaces"] == [
+        "reactive_lle",
+        "reactive_electrolyte_lle",
+        "cpe",
+    ]
+    assert rows["reactive_lle"]["production_exposed"] is False
+    assert rows["reactive_lle"]["public_routes"] == []
+    assert rows["reactive_electrolyte_lle"]["production_exposed"] is False
+    assert rows["reactive_electrolyte_lle"]["public_routes"] == []
+    assert {route for route in capabilities["public_routes"] if route.startswith("reactive_")} == {
+        "reactive_speciation"
+    }
