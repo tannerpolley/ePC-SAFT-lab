@@ -1482,7 +1482,27 @@ def _write_figure_1_contract_outputs(
             {"section": "provenance", "key": "figure", "value": "figure_01", "unit": "", "notes": ""},
             {"section": "provenance", "key": "source_image", "value": "source/figure_01.png", "unit": "", "notes": ""},
             {"section": "basis", "key": "composition", "value": "salt-free ternary projection", "unit": "", "notes": ""},
-            {"section": "model", "key": "route", "value": "source-data recreation", "unit": "", "notes": "Figure 1 is a source comparison of salt effects; no package equilibrium model curve is drawn."},
+            {
+                "section": "model",
+                "key": "route",
+                "value": "source-data recreation",
+                "unit": "",
+                "notes": "Figure 1 is a source comparison of salt effects; the paper caption has no ePC-SAFT model curve.",
+            },
+            {
+                "section": "model",
+                "key": "package_route_scope",
+                "value": "figures_02_07_and_s2_s3",
+                "unit": "",
+                "notes": "Public electrolyte_lle package-route evidence starts with the model-comparable Khudaida figures.",
+            },
+            {
+                "section": "parameters",
+                "key": "figiel_2025_snapshot",
+                "value": "out_of_scope_for_figure_01_source_recreation",
+                "unit": "",
+                "notes": "Figure 1 does not consume fitted ePC-SAFT parameters because it reproduces the experimental salt-effect comparison only.",
+            },
         ],
     )
     write_csv_rows(
@@ -1509,7 +1529,7 @@ def _write_figure_1_contract_outputs(
                 "max_objective": "",
                 "normalized_plot_score": "",
                 "pass": True,
-                "score_basis": "source-data figure recreation; package model fit is not the role of Figure 1",
+                "score_basis": "source-data figure recreation; the paper caption has no ePC-SAFT model curve",
             }
         ],
     )
