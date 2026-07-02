@@ -1,5 +1,11 @@
 # Khudaida Figure Replication With Figiel Parameters Plan
 
+> Superseded for active figure execution by
+> `docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md`.
+> This M4 plan remains historical context for closed issue #405. Active
+> Khudaida figure reproduction is M6 paper validation; M4 receives follow-up
+> issues only for solver/API defects exposed by that validation.
+
 **Goal:** Reopen Khudaida 2026 figure reproduction as a figure-by-figure M4
 equilibrium validation tranche that first proves the retained Figiel 2025
 ePC-SAFT parameter snapshot through the public package route before treating

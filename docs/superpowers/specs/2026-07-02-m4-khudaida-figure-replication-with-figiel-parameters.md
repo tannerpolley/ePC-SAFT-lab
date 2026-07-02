@@ -1,5 +1,11 @@
 # M4 Khudaida Figure Replication With Figiel Parameters
 
+> Superseded for active figure execution by
+> `docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md`.
+> This M4 spec remains historical context for closed issue #405. Active
+> Khudaida figure reproduction is M6 paper validation; M4 receives follow-up
+> issues only for solver/API defects exposed by that validation.
+
 ## Purpose
 
 Create a figure-by-figure M4 validation path for Khudaida 2026 using the

@@ -22,5 +22,7 @@ Milestone routing labels:
   the native GitHub issue types `Bug`, `Feature`, and `Task`.
 - Use `status:*` labels only for durable issue state that should remain visible
   outside the GitHub Project.
+- Current status labels are `status:triage`, `status:needs-design`,
+  `status:ready`, `status:blocked`, and `status:breaking-change`.
 - Use `release:blocker` only for work that blocks the issue's target milestone
   or release gate.
