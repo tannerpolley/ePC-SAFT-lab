@@ -1,0 +1,13 @@
+animation:
+  title: mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only
+  gif: mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only.gif
+  preview_png: mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only_preview.png
+  plotted_data: mea_ce_eos_x_gamma_speciation_temperature_sweep_animation_data.csv
+  frame_count: 81
+  fps: 8
+  temperature_range_C: [0, 80]
+  source_temperatures_C: [20, 40, 60, 80]
+  data_policy: model_only_no_literature_markers
+  interpolation: log_mole_fraction_linear_temperature_with_0_to_20C_extrapolation
+style:
+  source: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py

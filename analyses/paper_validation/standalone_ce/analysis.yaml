@@ -57,6 +57,12 @@ outputs:
     kind: retained_ce_activity_speciation_figure
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_trace_80C.svg
     kind: retained_ce_activity_speciation_figure
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only.gif
+    kind: retained_ce_activity_speciation_animation
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only_preview.png
+    kind: retained_ce_activity_speciation_animation_preview
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_animation_data.csv
+    kind: retained_ce_activity_speciation_animation_data
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv
     kind: retained_ce_seed_policy_audit
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv

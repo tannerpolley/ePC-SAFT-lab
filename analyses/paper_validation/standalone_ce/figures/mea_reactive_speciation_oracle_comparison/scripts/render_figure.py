@@ -4,7 +4,9 @@ import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+from matplotlib.animation import FuncAnimation, PillowWriter
 from matplotlib.lines import Line2D
 
 FIGURE_DIR = Path(__file__).resolve().parents[1]
@@ -14,8 +16,12 @@ ERRORS_PATH = RESULTS_DIR / "mea_ce_oracle_speciation_errors.csv"
 SUMMARY_PATH = RESULTS_DIR / "mea_ce_oracle_speciation_error_summary.csv"
 TRACE_SUMMARY_PATH = RESULTS_DIR / "mea_ce_continuation_trace_summary.csv"
 NONIDEAL_PLOT_DATA_PATH = RESULTS_DIR / "mea_ce_eos_x_gamma_speciation_plot_data.csv"
+NONIDEAL_ANIMATION_DATA_PATH = RESULTS_DIR / "mea_ce_eos_x_gamma_speciation_temperature_sweep_animation_data.csv"
 DPI = 300
 FIGURE_CREATOR = "ePC-SAFT standalone CE validation"
+ANIMATION_STEM = "mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only"
+ANIMATION_TEMPERATURES_C = tuple(float(value) for value in range(0, 81))
+ANIMATION_FPS = 8
 
 PLOT_SPECIES = (
     "CO2",
@@ -322,6 +328,167 @@ def _plot_nonideal_temperature_group(
     plt.close(fig)
 
 
+def _linear_interpolate_with_extrapolation(
+    x: np.ndarray,
+    xp: np.ndarray,
+    fp: np.ndarray,
+) -> np.ndarray:
+    if len(xp) < 2:
+        raise ValueError("at least two source points are required for interpolation and extrapolation")
+    values = np.interp(x, xp, fp)
+    below = x < xp[0]
+    if np.any(below):
+        slope = (fp[1] - fp[0]) / (xp[1] - xp[0])
+        values[below] = fp[0] + (x[below] - xp[0]) * slope
+    above = x > xp[-1]
+    if np.any(above):
+        slope = (fp[-1] - fp[-2]) / (xp[-1] - xp[-2])
+        values[above] = fp[-1] + (x[above] - xp[-1]) * slope
+    return values
+
+
+def _nonideal_animation_frame_data(plot_data: pd.DataFrame) -> pd.DataFrame:
+    activity = plot_data[plot_data["role"] == "eos_x_gamma_activity"].copy()
+    if activity.empty:
+        raise ValueError("nonideal activity plot data has no model rows for animation")
+    source_temperatures = sorted(float(value) for value in activity["temperature_C"].dropna().unique())
+    if source_temperatures != [20.0, 40.0, 60.0, 80.0]:
+        raise ValueError(f"unexpected source activity temperatures for animation: {source_temperatures}")
+    loading_min = max(
+        float(rows["CO2_loading"].min())
+        for _, rows in activity.groupby("temperature_C", sort=True)
+    )
+    loading_max = min(
+        float(rows["CO2_loading"].max())
+        for _, rows in activity.groupby("temperature_C", sort=True)
+    )
+    loading_grid = np.linspace(loading_min, loading_max, 161)
+    source_temperature_array = np.asarray(source_temperatures, dtype=float)
+
+    rows: list[dict[str, object]] = []
+    for species in PLOT_SPECIES:
+        species_rows = activity[activity["species"] == species]
+        if species_rows.empty:
+            raise ValueError(f"missing activity rows for animation species: {species}")
+        log_by_source_temperature: list[np.ndarray] = []
+        for source_temperature in source_temperatures:
+            source_rows = species_rows[species_rows["temperature_C"] == source_temperature].sort_values("CO2_loading")
+            if source_rows.empty:
+                raise ValueError(f"missing activity rows for {species} at {source_temperature:g} C")
+            log_by_source_temperature.append(
+                np.interp(
+                    loading_grid,
+                    source_rows["CO2_loading"].to_numpy(dtype=float),
+                    np.log(source_rows["mole_fraction"].clip(lower=1.0e-30).to_numpy(dtype=float)),
+                )
+            )
+        source_log_matrix = np.vstack(log_by_source_temperature)
+        for frame_temperature in ANIMATION_TEMPERATURES_C:
+            frame_temperature_array = np.full_like(loading_grid, frame_temperature, dtype=float)
+            interpolated_log_values = np.empty_like(loading_grid)
+            for index in range(len(loading_grid)):
+                interpolated_log_values[index] = _linear_interpolate_with_extrapolation(
+                    frame_temperature_array[index : index + 1],
+                    source_temperature_array,
+                    source_log_matrix[:, index],
+                )[0]
+            for loading, mole_fraction in zip(loading_grid, np.exp(interpolated_log_values)):
+                rows.append(
+                    {
+                        "role": "eos_x_gamma_activity_temperature_sweep",
+                        "activity_mode": "eos_x_gamma",
+                        "temperature_C": frame_temperature,
+                        "CO2_loading": float(loading),
+                        "species": species,
+                        "mole_fraction": float(mole_fraction),
+                    }
+                )
+    frame_data = pd.DataFrame(rows)
+    frame_data.to_csv(NONIDEAL_ANIMATION_DATA_PATH, index=False, float_format="%.12g")
+    return frame_data
+
+
+def _plot_nonideal_temperature_sweep_animation(plot_data: pd.DataFrame) -> None:
+    frame_data = _nonideal_animation_frame_data(plot_data)
+    plt.rcParams.update(
+        {
+            "font.family": "serif",
+            "mathtext.fontset": "dejavuserif",
+            "axes.labelsize": 11,
+            "axes.titlesize": 13,
+            "legend.fontsize": 9,
+        }
+    )
+    fig, axes = plt.subplots(1, 2, figsize=(12.6, 5.8), sharex=True)
+    line_by_species: dict[str, Line2D] = {}
+    for ax, group_key in zip(axes, ("concentrated", "trace")):
+        group = NONIDEAL_SPECIES_GROUPS[group_key]
+        ax.set_title(str(group["title_fragment"]).capitalize())
+        ax.set_xlabel(r"$CO_2$ loading, mol $CO_2$/mol MEA")
+        ax.set_ylabel("True-species mole fraction")
+        ax.set_yscale("log")
+        ax.set_xlim(0.0, 0.8)
+        ax.set_ylim(*group["ylim"])
+        _apply_axes_style(ax)
+        for species in group["species"]:
+            (line,) = ax.plot(
+                [],
+                [],
+                color=SPECIES_COLORS[species],
+                linestyle="--",
+                linewidth=1.8,
+                label=SPECIES_LABELS[species],
+            )
+            line_by_species[species] = line
+        ax.legend(title="Species", loc="lower left", frameon=True)
+    title = fig.suptitle("")
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.93))
+
+    def update(frame_index: int) -> list[object]:
+        temperature_C = ANIMATION_TEMPERATURES_C[frame_index]
+        frame = frame_data[frame_data["temperature_C"] == temperature_C]
+        title.set_text(
+            rf"Model-only nonideal ePC-SAFT activity speciation, $T={temperature_C:g}\ ^\circ C$"
+        )
+        artists: list[object] = [title]
+        for species, line in line_by_species.items():
+            source_rows = frame[frame["species"] == species].sort_values("CO2_loading")
+            if source_rows.empty:
+                raise ValueError(f"missing animation rows for {species} at {temperature_C:g} C")
+            line.set_data(
+                source_rows["CO2_loading"].to_numpy(dtype=float),
+                source_rows["mole_fraction"].clip(lower=1.0e-30).to_numpy(dtype=float),
+            )
+            artists.append(line)
+        return artists
+
+    animation = FuncAnimation(fig, update, frames=len(ANIMATION_TEMPERATURES_C), interval=1000 / ANIMATION_FPS)
+    gif_path = RESULTS_DIR / f"{ANIMATION_STEM}.gif"
+    animation.save(gif_path, writer=PillowWriter(fps=ANIMATION_FPS), dpi=180)
+    update(0)
+    fig.savefig(RESULTS_DIR / f"{ANIMATION_STEM}_preview.png", dpi=DPI, bbox_inches="tight")
+    sidecar = "\n".join(
+        [
+            "animation:",
+            f"  title: {ANIMATION_STEM}",
+            f"  gif: {ANIMATION_STEM}.gif",
+            f"  preview_png: {ANIMATION_STEM}_preview.png",
+            f"  plotted_data: {NONIDEAL_ANIMATION_DATA_PATH.name}",
+            f"  frame_count: {len(ANIMATION_TEMPERATURES_C)}",
+            f"  fps: {ANIMATION_FPS}",
+            "  temperature_range_C: [0, 80]",
+            "  source_temperatures_C: [20, 40, 60, 80]",
+            "  data_policy: model_only_no_literature_markers",
+            "  interpolation: log_mole_fraction_linear_temperature_with_0_to_20C_extrapolation",
+            "style:",
+            "  source: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py",
+            "",
+        ]
+    )
+    (RESULTS_DIR / f"{ANIMATION_STEM}.mpl.yaml").write_text(sidecar, encoding="utf-8")
+    plt.close(fig)
+
+
 def _plot_error_summary(errors: pd.DataFrame, summary: pd.DataFrame) -> None:
     errors = errors.copy()
     errors["abs_error_plot"] = errors["abs_error"].clip(lower=1.0e-16)
@@ -473,6 +640,7 @@ def render() -> None:
     for temperature_C in _nonideal_temperatures(nonideal_plot_data):
         for group_key in NONIDEAL_SPECIES_GROUPS:
             _plot_nonideal_temperature_group(nonideal_plot_data, temperature_C, group_key=group_key)
+    _plot_nonideal_temperature_sweep_animation(nonideal_plot_data)
     _plot_error_summary(errors, summary)
     _plot_continuation_stage_diagnostics(trace)
 
