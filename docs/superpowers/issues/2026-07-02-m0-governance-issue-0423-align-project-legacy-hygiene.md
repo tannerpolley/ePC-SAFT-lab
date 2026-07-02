@@ -2,13 +2,13 @@
 issue: 423
 title: "Normalize align-project closed mirror and milestone page hygiene"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/423"
-state: "open"
+state: "closed"
 milestone: "M0 - Governance"
 project: "ePC-SAFT Roadmap"
 package: "governance"
 capability: "workflow"
 backend: "none"
-readiness: "ready"
+readiness: "closed"
 release_target: "governance"
 source_spec: "none"
 source_plan: "docs/superpowers/plans/2026-07-02-m0-align-project-legacy-hygiene-plan.md"
@@ -25,6 +25,7 @@ last_synced: "2026-07-02"
 **Source Spec:** None
 **Source Plan:** docs/superpowers/plans/2026-07-02-m0-align-project-legacy-hygiene-plan.md
 **Classification:** AFK
+**Mirror Retention:** retain
 **Labels:** agent-ready, docs, area:docs, status:ready, type:task
 **Goal Command:** /goal Resolve issue #423 by normalizing align-project closed mirror lifecycle evidence and reconciling milestone-page discovery without changing product code.
 **Execution Mode:** Ask at runtime
