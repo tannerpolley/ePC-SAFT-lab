@@ -419,30 +419,32 @@ def _plot_nonideal_temperature_sweep_animation(plot_data: pd.DataFrame) -> None:
             "legend.fontsize": 9,
         }
     )
-    fig, axes = plt.subplots(1, 2, figsize=(12.6, 5.8), sharex=True)
+    fig, ax = plt.subplots(figsize=(10.0, 6.2))
     line_by_species: dict[str, Line2D] = {}
-    for ax, group_key in zip(axes, ("concentrated", "trace")):
-        group = NONIDEAL_SPECIES_GROUPS[group_key]
-        ax.set_title(str(group["title_fragment"]).capitalize())
-        ax.set_xlabel(r"$CO_2$ loading, mol $CO_2$/mol MEA")
-        ax.set_ylabel("True-species mole fraction")
-        ax.set_yscale("log")
-        ax.set_xlim(0.0, 0.8)
-        ax.set_ylim(*group["ylim"])
-        _apply_axes_style(ax)
-        for species in group["species"]:
-            (line,) = ax.plot(
-                [],
-                [],
-                color=SPECIES_COLORS[species],
-                linestyle="--",
-                linewidth=1.8,
-                label=SPECIES_LABELS[species],
-            )
-            line_by_species[species] = line
-        ax.legend(title="Species", loc="lower left", frameon=True)
+    for species in PLOT_SPECIES:
+        (line,) = ax.plot(
+            [],
+            [],
+            color=SPECIES_COLORS[species],
+            linestyle="--",
+            linewidth=1.8,
+            label=SPECIES_LABELS[species],
+        )
+        line_by_species[species] = line
+    ax.set_xlabel(r"$CO_2$ loading, mol $CO_2$/mol MEA")
+    ax.set_ylabel("True-species mole fraction")
+    ax.set_yscale("log")
+    ax.set_xlim(0.0, 0.8)
+    ax.set_ylim(1.0e-14, 3.0e-1)
+    _apply_axes_style(ax)
+    ax.legend(
+        title="Species",
+        loc="center left",
+        bbox_to_anchor=(1.01, 0.5),
+        frameon=True,
+    )
     title = fig.suptitle("")
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.93))
+    fig.subplots_adjust(right=0.78, top=0.88)
 
     def update(frame_index: int) -> list[object]:
         temperature_C = ANIMATION_TEMPERATURES_C[frame_index]
