@@ -46,6 +46,7 @@ WATER_PER_AMINE_30WT = 7.909507954125047
 MIN_EFFECTIVE_LOADING = 1.0e-6
 PRESSURE_PA = 101_325.0
 TEMPERATURES_C = (20.0, 40.0)
+NONIDEAL_TEMPERATURES_C = (20.0, 40.0, 60.0, 80.0)
 SHUFFLED_SUBSET_COUNT_PER_TEMPERATURE = 17
 SHUFFLED_SUBSET_SEED = 20260629
 SOLVER_OPTIONS = EquilibriumSolverOptions(max_iterations=1000, tolerance=1.0e-8)
@@ -539,20 +540,29 @@ def _nonideal_plot_rows(_source_curve: pd.DataFrame) -> pd.DataFrame:
         },
     )
     phase2_curve = phase2_curve[
-        phase2_curve["temperature_C"].isin(TEMPERATURES_C)
+        phase2_curve["temperature_C"].isin(NONIDEAL_TEMPERATURES_C)
         & phase2_curve["species"].isin(PLOT_SPECIES)
     ].copy()
     if phase2_curve.empty:
-        raise ValueError("Phase 2 nonideal activity curve has no retained 20 C or 40 C plot rows.")
+        raise ValueError("Phase 2 nonideal activity curve has no retained plot rows.")
 
     reference_points = reference_points[
-        reference_points["temperature_C"].isin(TEMPERATURES_C)
+        reference_points["temperature_C"].isin(NONIDEAL_TEMPERATURES_C)
         & (reference_points["MEA_weight_fraction"].astype(float) == MEA_WEIGHT_FRACTION)
         & reference_points["species"].isin(PLOT_SPECIES)
         & reference_points["target_role"].isin(("direct_positive", "aggregate_direct_positive"))
     ].copy()
     if reference_points.empty:
-        raise ValueError("Phase 2 reference snapshot has no direct measured 20 C or 40 C speciation points.")
+        raise ValueError("Phase 2 reference snapshot has no direct measured speciation points.")
+
+    comparable_temperatures = sorted(
+        set(float(value) for value in phase2_curve["temperature_C"].dropna().unique())
+        & set(float(value) for value in reference_points["temperature_C"].dropna().unique())
+    )
+    if not comparable_temperatures:
+        raise ValueError("Phase 2 nonideal activity curve and reference snapshots share no temperatures.")
+    phase2_curve = phase2_curve[phase2_curve["temperature_C"].isin(comparable_temperatures)].copy()
+    reference_points = reference_points[reference_points["temperature_C"].isin(comparable_temperatures)].copy()
 
     activity_rows = []
     for row in phase2_curve.itertuples(index=False):
@@ -635,7 +645,7 @@ def _reaction_constant_rows(
     source_by_reaction: dict[str, str],
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for temperature_C in TEMPERATURES_C:
+    for temperature_C in NONIDEAL_TEMPERATURES_C:
         for record in _phase2_equilibrium_constants(
             reactions,
             temperature_C,

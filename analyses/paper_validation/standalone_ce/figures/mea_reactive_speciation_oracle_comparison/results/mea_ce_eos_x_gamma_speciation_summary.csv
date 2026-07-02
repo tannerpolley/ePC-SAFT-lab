@@ -1,5 +1,9 @@
 role,activity_mode,temperature_C,loading_count,species_count,min_CO2_loading,max_CO2_loading,all_solver_success,min_mole_fraction,max_mole_fraction
 eos_x_gamma_activity,eos_x_gamma,20.0,161,9,0.02,0.795,True,1.3742994768046536e-14,0.1102447188837136
 eos_x_gamma_activity,eos_x_gamma,40.0,161,9,0.005,0.8,True,2.775047614413077e-14,0.111743596568983
+eos_x_gamma_activity,eos_x_gamma,60.0,161,9,0.001,0.8,True,6.859372021081708e-14,0.1121431968720127
+eos_x_gamma_activity,eos_x_gamma,80.0,161,9,0.001,0.8,True,2.0685882733675533e-13,0.1121398649931152
 real_speciation_data,measured_or_reported,20.0,38,7,0.075,0.99,True,9.384703560061698e-05,0.1556324619896553
 real_speciation_data,measured_or_reported,40.0,21,7,0.11,0.99,True,9.917752069152127e-05,0.1217066148934796
+real_speciation_data,measured_or_reported,60.0,8,3,0.131,0.766,True,0.0041999257344449,0.1186864579687951
+real_speciation_data,measured_or_reported,80.0,6,3,0.064,0.51,True,0.0046007148145318,0.1196236473712086

@@ -431,6 +431,24 @@ def _plot_continuation_stage_diagnostics(trace: pd.DataFrame) -> None:
     plt.close(fig)
 
 
+def _nonideal_temperatures(plot_data: pd.DataFrame) -> list[float]:
+    activity_temperatures = set(
+        float(value)
+        for value in plot_data.loc[
+            plot_data["role"] == "eos_x_gamma_activity",
+            "temperature_C",
+        ].dropna().unique()
+    )
+    data_temperatures = set(
+        float(value)
+        for value in plot_data.loc[
+            plot_data["role"] == "real_speciation_data",
+            "temperature_C",
+        ].dropna().unique()
+    )
+    return sorted(activity_temperatures & data_temperatures)
+
+
 def render() -> None:
     plot_data = _require_csv(PLOT_DATA_PATH)
     errors = _require_csv(ERRORS_PATH)
@@ -452,6 +470,7 @@ def render() -> None:
             ce_label="CE route (internal continuation proof)",
             stem=f"mea_ce_owned_continuation_speciation_{int(temperature_C)}C",
         )
+    for temperature_C in _nonideal_temperatures(nonideal_plot_data):
         for group_key in NONIDEAL_SPECIES_GROUPS:
             _plot_nonideal_temperature_group(nonideal_plot_data, temperature_C, group_key=group_key)
     _plot_error_summary(errors, summary)

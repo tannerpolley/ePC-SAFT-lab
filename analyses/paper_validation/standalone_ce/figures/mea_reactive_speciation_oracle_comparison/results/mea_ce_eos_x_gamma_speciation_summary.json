@@ -12,11 +12,15 @@
   "all_activity_curve_solver_success": true,
   "activity_curve_loading_count_by_temperature": {
     "20.0": 161,
-    "40.0": 161
+    "40.0": 161,
+    "60.0": 161,
+    "80.0": 161
   },
   "reference_point_count_by_temperature": {
     "20.0": 176,
-    "40.0": 82
+    "40.0": 82,
+    "60.0": 21,
+    "80.0": 14
   },
   "ce_probe": {
     "accepted": true,
@@ -24,7 +28,7 @@
     "CO2_loading": 0.3,
     "balance_inf_norm": 7.105427357601002e-15,
     "reaction_stationarity_inf_norm": 1.7165504573313228e-09,
-    "runtime_seconds": 27.284667300000365,
+    "runtime_seconds": 24.106196299999283,
     "initial_amount_source": "phase1_smith_missen_nearest_loading"
   }
 }
