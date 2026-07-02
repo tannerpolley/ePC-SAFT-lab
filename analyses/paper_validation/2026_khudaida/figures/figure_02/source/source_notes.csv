@@ -4,3 +4,5 @@ provenance,figure,figure_02,,
 provenance,source_image,source/figure_02.png,,
 basis,composition,salt-free ternary projection with NaCl retained in source/model CSV rows,,
 model,route,public electrolyte_lle,,package rows are retained from the latest public electrolyte_lle regeneration; set KHUDAIDA_FORCE_RECOMPUTE=1 to refresh
+parameters,parameter_dataset,analyses/paper_validation/2026_khudaida/parameters,,retained 2026_Khudaida Tables 5-7 parameter bundle for public-route validation
+parameters,figiel_2025_ssm_ds_born_options,retained_in_2026_Khudaida,,Figiel 2025 SSM+DS/Born option family is carried by the Khudaida parameter bundle

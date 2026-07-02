@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 
+from collections.abc import Mapping
 from pathlib import Path
 import sys as _bootstrap_sys
 from pathlib import Path as _BootstrapPath
@@ -243,7 +244,33 @@ PHASE_COLUMNS = [
     "x_nacl",
     "source",
 ]
-MODEL_COLUMNS = PHASE_COLUMNS[:-1] + ["beta", "residual_norm", "objective", "converged", "source"]
+MODEL_DIAGNOSTIC_COLUMNS = [
+    "feed_x_water",
+    "feed_x_ethanol",
+    "feed_x_isobutanol",
+    "feed_x_nacl",
+    "status",
+    "message",
+    "route_status",
+    "solver_status",
+    "application_status",
+    "postsolve_accepted",
+    "phase_distance",
+    "phase_distance_tolerance",
+    "pressure_consistency_norm",
+    "charge_balance_norm",
+    "neutral_transfer_residual",
+    "mean_ionic_transfer_residual",
+    "exact_hessian_available",
+    "hessian_approximation",
+    "route_hessian_approximation",
+]
+MODEL_COLUMNS = (
+    PHASE_COLUMNS[:-1]
+    + ["beta", "residual_norm", "objective", "converged"]
+    + MODEL_DIAGNOSTIC_COLUMNS
+    + ["source"]
+)
 FEED_COLUMNS = [
     "tie_line",
     "temperature_K",
@@ -291,6 +318,10 @@ FIT_STATISTICS_COLUMNS = [
     "aqueous_aad_isobutanol",
     "aqueous_aad_nacl",
     "max_objective",
+    "rmse",
+    "max_abs_error",
+    "failed_tie_lines",
+    "failure_reasons",
     "normalized_plot_score",
     "pass",
     "score_basis",
@@ -731,6 +762,42 @@ def _candidate_formula_feeds(exp_row: dict, target_feed_formula: np.ndarray | No
     return unique
 
 
+def _finite_float_or_nan(value) -> float:
+    if value in (None, ""):
+        return np.nan
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return np.nan
+    return parsed if math.isfinite(parsed) else np.nan
+
+
+def _diagnostic_mapping(value) -> dict:
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _route_diagnostic_summary(diagnostics: dict | None) -> dict:
+    diagnostics = _diagnostic_mapping(diagnostics)
+    domain = _diagnostic_mapping(diagnostics.get("domain_margins"))
+    pressure = _diagnostic_mapping(diagnostics.get("pressure_consistency"))
+    charge = _diagnostic_mapping(diagnostics.get("charge_balance"))
+    transfer = _diagnostic_mapping(diagnostics.get("transfer_residuals"))
+    neutral_transfer = _diagnostic_mapping(transfer.get("neutral_transfer"))
+    mean_ionic_transfer = _diagnostic_mapping(transfer.get("mean_ionic_transfer"))
+    return {
+        "postsolve_accepted": bool(diagnostics.get("postsolve_accepted", False)),
+        "phase_distance": _finite_float_or_nan(domain.get("phase_distance", diagnostics.get("phase_distance"))),
+        "phase_distance_tolerance": _finite_float_or_nan(domain.get("phase_distance_tolerance")),
+        "pressure_consistency_norm": _finite_float_or_nan(pressure.get("pressure_consistency_norm")),
+        "charge_balance_norm": _finite_float_or_nan(charge.get("max_phase_charge_residual")),
+        "neutral_transfer_residual": _finite_float_or_nan(neutral_transfer.get("max_abs_residual")),
+        "mean_ionic_transfer_residual": _finite_float_or_nan(mean_ionic_transfer.get("max_abs_residual")),
+        "exact_hessian_available": bool(diagnostics.get("exact_hessian_available", False)),
+        "hessian_approximation": str(diagnostics.get("hessian_approximation", "")),
+        "route_hessian_approximation": str(diagnostics.get("route_hessian_approximation", "")),
+    }
+
+
 def _failed_solve_result(
     z_feed: np.ndarray,
     *,
@@ -756,6 +823,14 @@ def _failed_solve_result(
         "split_norm": np.nan,
         "objective": np.nan,
         "source": "epcsaft_public_electrolyte_lle",
+        **_route_diagnostic_summary(
+            {
+                "route_status": route_status,
+                "solver_status": solver_status,
+                "application_status": application_status,
+                "postsolve_accepted": False,
+            }
+        ),
     }
 
 
@@ -818,23 +893,28 @@ def _solve_formula_feed_direct(temperature_k: float, feed_formula: np.ndarray) -
     )
     org_formula = formula_phases[organic_label]
     aq_formula = formula_phases[aqueous_label]
-    residual_norm = float(result.diagnostics.get("solver_residual_norm", np.nan))
+    diagnostics = result.diagnostics
+    diagnostic_summary = _route_diagnostic_summary(diagnostics)
+    if not np.isfinite(diagnostic_summary["phase_distance"]):
+        diagnostic_summary["phase_distance"] = float(np.max(np.abs(org_formula - aq_formula)))
+    residual_norm = float(diagnostics.get("solver_residual_norm", np.nan))
     return {
         "converged": True,
         "status": "accepted",
         "message": None,
         "residual_norm": residual_norm,
-        "route_status": result.diagnostics.get("route_status"),
-        "solver_status": result.diagnostics.get("solver_status"),
-        "application_status": result.diagnostics.get("application_status"),
+        "route_status": diagnostics.get("route_status"),
+        "solver_status": diagnostics.get("solver_status"),
+        "application_status": diagnostics.get("application_status"),
         "feed_formula": ion_to_formula_basis(z_feed),
         "organic_formula": org_formula,
         "aqueous_formula": aq_formula,
         "beta_organic": float(result.phase_fractions[organic_label]),
         "beta_aqueous": float(result.phase_fractions[aqueous_label]),
-        "split_norm": float(result.diagnostics.get("phase_distance", np.max(np.abs(org_formula - aq_formula)))),
+        "split_norm": float(diagnostic_summary["phase_distance"]),
         "objective": np.nan,
         "source": "epcsaft_public_electrolyte_lle",
+        **diagnostic_summary,
     }
 
 
@@ -860,7 +940,19 @@ def _solve_result_from_json(row: dict | None) -> dict | None:
     out = dict(row)
     for key in ("feed_formula", "organic_formula", "aqueous_formula"):
         out[key] = np.asarray(out[key], dtype=float)
-    for key in ("residual_norm", "beta_organic", "beta_aqueous", "split_norm", "objective"):
+    for key in (
+        "residual_norm",
+        "beta_organic",
+        "beta_aqueous",
+        "split_norm",
+        "objective",
+        "phase_distance",
+        "phase_distance_tolerance",
+        "pressure_consistency_norm",
+        "charge_balance_norm",
+        "neutral_transfer_residual",
+        "mean_ionic_transfer_residual",
+    ):
         if out.get(key) is None:
             out[key] = np.nan
     return out
@@ -955,6 +1047,15 @@ def _parse_float(value: str | float | int | None) -> float:
     return float(value)
 
 
+def _csv_float(value) -> float | str:
+    parsed = _finite_float_or_nan(value)
+    return float(parsed) if np.isfinite(parsed) else ""
+
+
+def _parse_bool(value) -> bool:
+    return str(value or "").strip().lower() in {"true", "1", "yes"}
+
+
 def _load_model_rows_from_csv(path: Path) -> list[dict]:
     grouped: dict[int, dict] = {}
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
@@ -978,8 +1079,33 @@ def _load_model_rows_from_csv(path: Path) -> list[dict]:
                     "status": None,
                     "message": None,
                     "split_norm": np.nan,
+                    "source": raw.get("source", "epcsaft_public_electrolyte_lle"),
+                    "route_status": raw.get("route_status", ""),
+                    "solver_status": raw.get("solver_status", ""),
+                    "application_status": raw.get("application_status", ""),
+                    "postsolve_accepted": _parse_bool(raw.get("postsolve_accepted")),
+                    "phase_distance": _parse_float(raw.get("phase_distance")),
+                    "phase_distance_tolerance": _parse_float(raw.get("phase_distance_tolerance")),
+                    "pressure_consistency_norm": _parse_float(raw.get("pressure_consistency_norm")),
+                    "charge_balance_norm": _parse_float(raw.get("charge_balance_norm")),
+                    "neutral_transfer_residual": _parse_float(raw.get("neutral_transfer_residual")),
+                    "mean_ionic_transfer_residual": _parse_float(raw.get("mean_ionic_transfer_residual")),
+                    "exact_hessian_available": _parse_bool(raw.get("exact_hessian_available")),
+                    "hessian_approximation": raw.get("hessian_approximation", ""),
+                    "route_hessian_approximation": raw.get("route_hessian_approximation", ""),
                 },
             )
+            feed_vec = np.asarray(
+                [
+                    _parse_float(raw.get("feed_x_water")),
+                    _parse_float(raw.get("feed_x_ethanol")),
+                    _parse_float(raw.get("feed_x_isobutanol")),
+                    _parse_float(raw.get("feed_x_nacl")),
+                ],
+                dtype=float,
+            )
+            if np.all(np.isfinite(feed_vec)):
+                entry["feed_formula"] = feed_vec
             phase_vec = np.asarray(
                 [
                     _parse_float(raw.get("x_water")),
@@ -998,8 +1124,10 @@ def _load_model_rows_from_csv(path: Path) -> list[dict]:
                 entry["beta_aqueous"] = _parse_float(raw.get("beta"))
             entry["residual_norm"] = _parse_float(raw.get("residual_norm"))
             entry["objective"] = _parse_float(raw.get("objective"))
-            converged_raw = str(raw.get("converged", "")).strip().lower()
-            entry["converged"] = converged_raw in {"true", "1", "yes"}
+            entry["converged"] = _parse_bool(raw.get("converged"))
+            entry["status"] = raw.get("status") or entry["status"]
+            entry["message"] = raw.get("message") or entry["message"]
+            entry["source"] = raw.get("source") or entry["source"]
     return [grouped[key] for key in sorted(grouped)]
 
 
@@ -1045,6 +1173,7 @@ def _phase_rows_for_csv(rows: list[dict], source: str) -> list[dict]:
 def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
     out = []
     for row in rows:
+        feed = np.asarray(row.get("feed_formula", np.full(4, np.nan)), dtype=float)
         for phase_name, x, beta in (
             ("organic", row["organic_formula"], row["beta_organic"]),
             ("aqueous", row["aqueous_formula"], row["beta_aqueous"]),
@@ -1060,9 +1189,28 @@ def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
                     "x_isobutanol": float(x[2]),
                     "x_nacl": float(x[3]),
                     "beta": float(beta),
-                    "residual_norm": float(row["residual_norm"]) if np.isfinite(row["residual_norm"]) else "",
-                    "objective": float(row["objective"]) if np.isfinite(row["objective"]) else "",
+                    "residual_norm": _csv_float(row["residual_norm"]),
+                    "objective": _csv_float(row["objective"]),
                     "converged": bool(row["converged"]),
+                    "feed_x_water": _csv_float(feed[0]),
+                    "feed_x_ethanol": _csv_float(feed[1]),
+                    "feed_x_isobutanol": _csv_float(feed[2]),
+                    "feed_x_nacl": _csv_float(feed[3]),
+                    "status": row.get("status", ""),
+                    "message": row.get("message", ""),
+                    "route_status": row.get("route_status", ""),
+                    "solver_status": row.get("solver_status", ""),
+                    "application_status": row.get("application_status", ""),
+                    "postsolve_accepted": bool(row.get("postsolve_accepted", False)),
+                    "phase_distance": _csv_float(row.get("phase_distance", row.get("split_norm"))),
+                    "phase_distance_tolerance": _csv_float(row.get("phase_distance_tolerance")),
+                    "pressure_consistency_norm": _csv_float(row.get("pressure_consistency_norm")),
+                    "charge_balance_norm": _csv_float(row.get("charge_balance_norm")),
+                    "neutral_transfer_residual": _csv_float(row.get("neutral_transfer_residual")),
+                    "mean_ionic_transfer_residual": _csv_float(row.get("mean_ionic_transfer_residual")),
+                    "exact_hessian_available": bool(row.get("exact_hessian_available", False)),
+                    "hessian_approximation": row.get("hessian_approximation", ""),
+                    "route_hessian_approximation": row.get("route_hessian_approximation", ""),
                     "source": str(row.get("source", "epcsaft_public_electrolyte_lle")),
                 }
             )
@@ -1191,6 +1339,58 @@ def _score_from_aad(value: float) -> float | str:
     return max(0.0, min(10.0, 10.0 - 50.0 * float(value)))
 
 
+def _summary_passes(summary: dict) -> bool:
+    grand = summary.get("grand", "")
+    if grand == "" or not np.isfinite(float(grand)):
+        return False
+    score = _score_from_aad(float(grand))
+    return bool(score != "" and float(score) >= 8.0)
+
+
+def _fit_error_metrics(exp_rows: list[dict], model_rows: list[dict]) -> dict[str, float | str]:
+    valid = [
+        row
+        for row in model_rows
+        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
+    ]
+    if not valid:
+        return {"rmse": "", "max_abs_error": ""}
+    exp_map = {row["tie_line"]: row for row in exp_rows}
+    deltas = []
+    for row in valid:
+        exp_row = exp_map[row["tie_line"]]
+        deltas.extend((row["organic_formula"] - exp_row["organic_formula"]).tolist())
+        deltas.extend((row["aqueous_formula"] - exp_row["aqueous_formula"]).tolist())
+    arr = np.asarray(deltas, dtype=float)
+    return {"rmse": float(np.sqrt(np.mean(arr * arr))), "max_abs_error": float(np.max(np.abs(arr)))}
+
+
+def _short_float(value) -> str:
+    parsed = _finite_float_or_nan(value)
+    return f"{parsed:.6g}" if np.isfinite(parsed) else ""
+
+
+def _model_failure_summary(model_rows: list[dict], *, include_objectives: bool) -> dict[str, str]:
+    failed_ties: list[str] = []
+    reasons: list[str] = []
+    for row in model_rows:
+        tie_line = str(row["tie_line"])
+        finite_phases = np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
+        reason = ""
+        if not bool(row.get("converged")):
+            reason = row.get("message") or "public electrolyte_lle route did not converge"
+        elif not finite_phases:
+            reason = row.get("message") or "public electrolyte_lle route produced no finite model phases"
+        elif include_objectives:
+            objective = _short_float(row.get("objective"))
+            phase_distance = _short_float(row.get("phase_distance", row.get("split_norm")))
+            reason = f"objective={objective};phase_distance={phase_distance}"
+        if reason:
+            failed_ties.append(tie_line)
+            reasons.append(f"{tie_line}:{reason}")
+    return {"failed_tie_lines": ",".join(failed_ties), "failure_reasons": " | ".join(reasons)}
+
+
 def _fit_statistics_row(
     scope: str,
     series: str,
@@ -1202,6 +1402,10 @@ def _fit_statistics_row(
     summary: dict,
     max_objective: float | str,
     score_basis: str,
+    rmse: float | str = "",
+    max_abs_error: float | str = "",
+    failed_tie_lines: str = "",
+    failure_reasons: str = "",
 ) -> dict:
     organic = summary.get("organic", ("", "", "", ""))
     aqueous = summary.get("aqueous", ("", "", "", ""))
@@ -1225,6 +1429,10 @@ def _fit_statistics_row(
         "aqueous_aad_isobutanol": aqueous[2],
         "aqueous_aad_nacl": aqueous[3],
         "max_objective": max_objective,
+        "rmse": rmse,
+        "max_abs_error": max_abs_error,
+        "failed_tie_lines": failed_tie_lines,
+        "failure_reasons": failure_reasons,
         "normalized_plot_score": score,
         "pass": bool(score != "" and float(score) >= 8.0),
         "score_basis": score_basis,
@@ -1333,6 +1541,20 @@ def _write_lle_contract_outputs(
             {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
             {"section": "basis", "key": "composition", "value": "salt-free ternary projection with NaCl retained in source/model CSV rows", "unit": "", "notes": ""},
             {"section": "model", "key": "route", "value": "public electrolyte_lle", "unit": "", "notes": "package rows are retained from the latest public electrolyte_lle regeneration; set KHUDAIDA_FORCE_RECOMPUTE=1 to refresh"},
+            {
+                "section": "parameters",
+                "key": "parameter_dataset",
+                "value": PARAMETER_DATASET.relative_to(REPO_ROOT).as_posix(),
+                "unit": "",
+                "notes": "retained 2026_Khudaida Tables 5-7 parameter bundle for public-route validation",
+            },
+            {
+                "section": "parameters",
+                "key": "figiel_2025_ssm_ds_born_options",
+                "value": "retained_in_2026_Khudaida",
+                "unit": "",
+                "notes": "Figiel 2025 SSM+DS/Born option family is carried by the Khudaida parameter bundle",
+            },
         ],
     )
     valid = [
@@ -1341,6 +1563,8 @@ def _write_lle_contract_outputs(
         if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
     ]
     summary = _aad_summary(exp_rows, model_rows)
+    metrics = _fit_error_metrics(exp_rows, model_rows)
+    failures = _model_failure_summary(model_rows, include_objectives=not _summary_passes(summary))
     max_objective = max((float(row["objective"]) for row in valid if np.isfinite(row["objective"])), default="")
     write_csv_rows(
         result_path(fig_dir, "fit_statistics.csv"),
@@ -1357,6 +1581,10 @@ def _write_lle_contract_outputs(
                 summary,
                 max_objective,
                 "formula-basis mean absolute phase-composition deviation against source tie-lines",
+                metrics["rmse"],
+                metrics["max_abs_error"],
+                failures["failed_tie_lines"],
+                failures["failure_reasons"],
             )
         ],
     )
@@ -1369,17 +1597,34 @@ def write_case_data(fig_dir: Path, exp_rows: list[dict], model_rows: list[dict])
     write_csv_rows(out_path(fig_dir, "model_tielines.csv"), MODEL_COLUMNS, _model_rows_for_csv(model_rows))
 
 
-def plot_lle_figure(fig_dir: Path, figure_number: int, temperature_k: float, salt_wt: float) -> None:
-    configure_style()
+def write_lle_figure_data(
+    fig_dir: Path,
+    figure_number: int,
+    temperature_k: float,
+    salt_wt: float,
+    *,
+    force_recompute: bool | None = None,
+) -> dict[str, list[dict]]:
     exp_rows = _experimental_rows(salt_wt, temperature_k)
     feed_rows = _source_feed_rows_for_figure(figure_number, temperature_k, salt_wt) or _derived_feed_rows(
         salt_wt, temperature_k
     )
-    force_recompute = os.environ.get("KHUDAIDA_FORCE_RECOMPUTE", "").strip().lower() in {"1", "true", "yes", "on"}
+    if force_recompute is None:
+        force_recompute = os.environ.get("KHUDAIDA_FORCE_RECOMPUTE", "").strip().lower() in {"1", "true", "yes", "on"}
     model_rows = get_or_build_model_rows(fig_dir, exp_rows, feed_rows=feed_rows, force_recompute=force_recompute)
     paper_rows = _paper_epcsaft_source_rows(fig_dir, temperature_k, salt_wt)
     write_csv_rows(out_path(fig_dir, "feed_compositions.csv"), FEED_COLUMNS, _feed_rows_for_csv(feed_rows))
     _write_lle_contract_outputs(fig_dir, figure_number, exp_rows, feed_rows, model_rows, paper_rows)
+    return {"experimental": exp_rows, "feed": feed_rows, "model": model_rows, "paper": paper_rows}
+
+
+def plot_lle_figure(fig_dir: Path, figure_number: int, temperature_k: float, salt_wt: float) -> None:
+    configure_style()
+    data = write_lle_figure_data(fig_dir, figure_number, temperature_k, salt_wt)
+    exp_rows = data["experimental"]
+    feed_rows = data["feed"]
+    model_rows = data["model"]
+    paper_rows = data["paper"]
 
     fig, ax = plt.subplots(figsize=(6.1, 5.9))
     fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.18)
@@ -1978,6 +2223,8 @@ def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, pa
             if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
         ]
         summary = _aad_summary(exp_rows, model_rows)
+        metrics = _fit_error_metrics(exp_rows, model_rows)
+        failures = _model_failure_summary(model_rows, include_objectives=not _summary_passes(summary))
         max_objective = max((float(row["objective"]) for row in valid if np.isfinite(row["objective"])), default="")
         fit_rows.append(
             _fit_statistics_row(
@@ -1991,6 +2238,10 @@ def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, pa
                 summary,
                 max_objective,
                 "formula-basis mean absolute phase-composition deviation against source tie-lines",
+                metrics["rmse"],
+                metrics["max_abs_error"],
+                failures["failed_tie_lines"],
+                failures["failure_reasons"],
             )
         )
     write_csv_rows(result_path(fig_dir, "model_curve.csv"), MODEL_COLUMNS, model_rows_out)
@@ -2005,6 +2256,20 @@ def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, pa
             {"section": "provenance", "key": "source_image", "value": f"source/{figure_id}.png", "unit": "", "notes": ""},
             {"section": "basis", "key": "composition", "value": "salt-free ternary projection with NaCl retained in source/model CSV rows", "unit": "", "notes": ""},
             {"section": "model", "key": "route", "value": "public electrolyte_lle", "unit": "", "notes": "three-panel retained package/source comparison"},
+            {
+                "section": "parameters",
+                "key": "parameter_dataset",
+                "value": PARAMETER_DATASET.relative_to(REPO_ROOT).as_posix(),
+                "unit": "",
+                "notes": "retained 2026_Khudaida Tables 5-7 parameter bundle for public-route validation",
+            },
+            {
+                "section": "parameters",
+                "key": "figiel_2025_ssm_ds_born_options",
+                "value": "retained_in_2026_Khudaida",
+                "unit": "",
+                "notes": "Figiel 2025 SSM+DS/Born option family is carried by the Khudaida parameter bundle",
+            },
         ],
     )
 

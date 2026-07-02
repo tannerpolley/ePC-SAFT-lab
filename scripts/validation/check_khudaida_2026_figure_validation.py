@@ -42,6 +42,43 @@ def _truthy(value: str | bool | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "pass", "passed"}
 
 
+def _model_row_failures(root: Path) -> list[dict[str, str]]:
+    model_path = root / "results" / "data" / "model_tielines.csv"
+    if not model_path.is_file():
+        return []
+    rows = _read_csv(model_path)
+    grouped: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        grouped.setdefault(row.get("tie_line", ""), []).append(row)
+
+    failures = []
+    for tie_line, tie_rows in sorted(grouped.items(), key=lambda item: int(item[0] or 0)):
+        phases = sorted(row.get("phase", "") for row in tie_rows)
+        converged = all(_truthy(row.get("converged")) for row in tie_rows)
+        finite_components = all(
+            row.get(component, "") not in {"", "nan", "NaN"}
+            for row in tie_rows
+            for component in ("x_water", "x_ethanol", "x_isobutanol", "x_nacl")
+        )
+        if converged and finite_components:
+            continue
+        first = tie_rows[0]
+        failures.append(
+            {
+                "tie_line": tie_line,
+                "phases": ",".join(phases),
+                "converged": str(converged),
+                "message": first.get("message", ""),
+                "route_status": first.get("route_status", ""),
+                "solver_status": first.get("solver_status", ""),
+                "application_status": first.get("application_status", ""),
+                "objective": first.get("objective", ""),
+                "phase_distance": first.get("phase_distance", ""),
+            }
+        )
+    return failures
+
+
 def _manifest_paths() -> set[str]:
     if not MANIFEST_PATH.is_file():
         return set()
@@ -69,6 +106,7 @@ def _figure_payload(figure_id: str, manifest_paths: set[str], contract_checker: 
 
     fit_path = root / "results" / "fit_statistics.csv"
     fit_rows = _read_csv(fit_path) if fit_path.is_file() else []
+    model_row_failures = _model_row_failures(root)
     model_fit_failures = []
     for row in fit_rows:
         series = row.get("series", "")
@@ -85,7 +123,12 @@ def _figure_payload(figure_id: str, manifest_paths: set[str], contract_checker: 
                     "model_point_count": row.get("model_point_count", ""),
                     "accepted_model_count": row.get("accepted_model_count", ""),
                     "grand_aad": row.get("grand_aad", ""),
+                    "rmse": row.get("rmse", ""),
+                    "max_abs_error": row.get("max_abs_error", ""),
                     "normalized_plot_score": row.get("normalized_plot_score", ""),
+                    "failed_tie_lines": row.get("failed_tie_lines", ""),
+                    "failure_reasons": row.get("failure_reasons", ""),
+                    "model_row_failures": model_row_failures,
                 }
             )
 
@@ -96,13 +139,14 @@ def _figure_payload(figure_id: str, manifest_paths: set[str], contract_checker: 
         "result_files": result_files,
         "fit_statistics": fit_rows,
         "model_fit_failures": model_fit_failures,
+        "model_row_failures": model_row_failures,
     }
 
 
-def evaluate() -> dict[str, Any]:
+def evaluate(selected_figures: tuple[str, ...] = EXPECTED_FIGURES) -> dict[str, Any]:
     contract_checker = _load_contract_checker()
     manifest_paths = _manifest_paths()
-    figures = [_figure_payload(figure_id, manifest_paths, contract_checker) for figure_id in EXPECTED_FIGURES]
+    figures = [_figure_payload(figure_id, manifest_paths, contract_checker) for figure_id in selected_figures]
     blockers = [blocker for figure in figures for blocker in figure["blockers"]]
     model_fit_failures = [failure for figure in figures for failure in figure["model_fit_failures"]]
     return {
@@ -119,12 +163,18 @@ def evaluate() -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate Khudaida 2026 paper-validation figure artifacts.")
+    parser.add_argument(
+        "--figure",
+        action="append",
+        choices=EXPECTED_FIGURES,
+        help="limit validation to one figure id; repeat to validate multiple figures",
+    )
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--require-complete", action="store_true", help="fail on missing or malformed artifacts")
     parser.add_argument("--require-model-pass", action="store_true", help="fail when package model fits do not pass")
     args = parser.parse_args(argv)
 
-    payload = evaluate()
+    payload = evaluate(tuple(args.figure) if args.figure else EXPECTED_FIGURES)
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))
     else:

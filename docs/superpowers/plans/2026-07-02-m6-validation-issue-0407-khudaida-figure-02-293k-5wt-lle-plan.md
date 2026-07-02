@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Reproduce Khudaida 2026 Figure 2 at 293.15 K and 5 wt% NaCl through the public electrolyte LLE route using the fixed Figiel 2025 parameter snapshot.
+**Goal:** Reproduce Khudaida 2026 Figure 2 at 293.15 K and 5 wt% NaCl through the public electrolyte LLE route using the retained `2026_Khudaida` Tables 5-7 parameter bundle and Figiel 2025 SSM+DS/Born option family.
 
 **Architecture:** Keep the figure-specific scripts as the public artifact entrypoints and make the shared Khudaida model-generation helper produce complete Figure 2 package-route evidence. Add a narrow package test that proves the retained Figure 2 CSVs, diagnostics, statistics, and checker output are consistent with the M6 paper-validation contract.
 
@@ -24,8 +24,8 @@ Figure 2 is complete only when the retained artifacts prove these values:
 
 - `source/source_points.csv` has 16 `experimental_tieline` rows, 8 `paper_epcsaft` rows, and 8 `feed` rows at 293.15 K and `salt_wtfrac=0.05`.
 - `results/data/model_tielines.csv` has 16 rows, two phases for each of the 8 tie lines, `source=epcsaft_public_electrolyte_lle`, finite phase compositions, and public-route diagnostics for every accepted row.
-- `results/fit_statistics.csv` has `series=package_electrolyte_lle_vs_experimental`, `model_point_count=16`, `accepted_model_count=16`, `pass=True`, and records AAD/RMSE/max-error style statistics or exact failed rows if the fixed Figiel path cannot pass.
-- `scripts/validation/check_khudaida_2026_figure_validation.py --require-complete --require-model-pass` has no Figure 2 artifact blockers or Figure 2 model blockers.
+- `results/fit_statistics.csv` has `series=package_electrolyte_lle_vs_experimental`, `model_point_count=16`, AAD/RMSE/max-error statistics, and either `accepted_model_count=16` with `pass=True` or exact failed rows routed to M5 #338 when the retained Khudaida/Figiel-option path cannot pass.
+- `scripts/validation/check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json` has no Figure 2 artifact blockers and reports any Figure 2 model blockers with retained row-level evidence.
 - The branch reports any unresolved fixed-parameter miss as an explicit M4 solver/API blocker or M5 parameter-regression blocker before #407 can close.
 
 ## Outcome Proof
@@ -34,7 +34,7 @@ Figure 2 is complete only when the retained artifacts prove these values:
 **Current Behavior:** The Figure 2 artifact folder exists and the checker can read it, but retained package-route statistics accept only 2 of 16 model rows and the #407 mirror previously pointed at the hierarchy cutover plan instead of an executable Figure 2 implementation plan.
 **Expected Outcome:** Figure 2 regenerates retained source/model CSVs, plots, fit statistics, and diagnostics through the public package route, or stops with exact row-level evidence and a routed M4/M5 blocker.
 **Target Output:** A #407 PR with Figure 2 retained artifacts, a Figure 2 package test, checker evidence, and issue mirror proof that closes only the Figure 2 leaf.
-**Owner:** M6 validation owns the retained paper-validation artifacts; M4 owns solver/API defects discovered by the validation; M5 owns parameter-regression defects discovered by fixed Figiel evidence.
+**Owner:** M6 validation owns the retained paper-validation artifacts; M4 owns solver/API defects discovered by the validation; M5 owns parameter-regression defects discovered by retained Khudaida/Figiel-option evidence.
 **Interface:** `analyses/paper_validation/2026_khudaida/figures/figure_02`, `analyses/paper_validation/2026_khudaida/scripts/_common.py`, `scripts/validation/check_khudaida_2026_figure_validation.py`, and `packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py`.
 **Cutover:** Replace the previous #407 execution contract that reused the M6 hierarchy cutover plan with this Figure 2 implementation plan and a structured #407 Outcome Summary.
 **Replaced Path:** Treating #407 as ready for direct execution while its mirror pointed at tracker-hierarchy work instead of Figure 2 artifact reproduction.
@@ -42,15 +42,15 @@ Figure 2 is complete only when the retained artifacts prove these values:
 **Acceptance Proof:** A reviewer can rerun the proof oracle and see complete Figure 2 source/model rows, public-route diagnostics, passing Figure 2 statistics or exact routed blockers, and no Figure 2 checker blockers.
 **Stop Criteria:** Stop before closing #407 if source rows are not traceable, the public route is not used, diagnostics are missing, accepted rows remain incomplete without an M4/M5 blocker, or validator output cannot prove the retained artifacts.
 **Avoid:** Do not fit hidden parameters in M6, use private-native-only evidence, count diagnostic-only success, broaden electrolyte capability claims, or edit unrelated Khudaida figures.
-**Risk:** A fixed Figiel parameter miss can look like a solver problem unless inputs, units, species ordering, phase labels, diagnostics, and parameter provenance are verified before changing code.
+**Risk:** A retained Khudaida/Figiel-option parameter miss can look like a solver problem unless inputs, units, species ordering, phase labels, diagnostics, and parameter provenance are verified before changing code.
 
 ## Implementation Boundaries
 
 **Files To Create:** `packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py`.
 **Files To Modify:** `analyses/paper_validation/2026_khudaida/scripts/_common.py`, `analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/generate_data.py`, `analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/render_figure.py`, `scripts/validation/check_khudaida_2026_figure_validation.py`, Figure 2 retained artifacts under `analyses/paper_validation/2026_khudaida/figures/figure_02/results`, and the #407 issue mirror when status evidence changes.
 **Files To Avoid:** `packages/epcsaft-regression/**`, unrelated provider/EOS code, unrelated Khudaida figure folders, downstream projects, release docs, and broad roadmap files.
-**Source Of Truth:** Khudaida 2026 Figure 2 retained source CSVs, `analyses/paper_validation/2025_figiel/parameters`, and the public `electrolyte_lle` route diagnostics.
-**Read Path:** Trace source rows, feed rows, Figiel parameter loading, explicit-ion/formula-basis conversion, public route solve inputs, phase labels, diagnostics, model CSV rows, fit statistics, and checker payload before changing solver behavior.
+**Source Of Truth:** Khudaida 2026 Figure 2 retained source CSVs, `analyses/paper_validation/2026_khudaida/parameters`, and the public `electrolyte_lle` route diagnostics.
+**Read Path:** Trace source rows, feed rows, `2026_Khudaida` parameter loading, Figiel 2025 SSM+DS/Born option provenance, explicit-ion/formula-basis conversion, public route solve inputs, phase labels, diagnostics, model CSV rows, fit statistics, and checker payload before changing solver behavior.
 **Write Path:** Add the failing Figure 2 acceptance test first, then change the smallest owner needed to regenerate the public-route Figure 2 artifacts and diagnostics.
 **Integration Points:** `Equilibrium(..., route="electrolyte_lle")`, Ipopt diagnostics, `solve_model_rows`, `get_or_build_model_rows`, `_fit_statistics_row`, `write_case_data`, `plot_lle_figure`, the Khudaida checker, and the retained plot artifact contract.
 **Migration Or Cutover:** Keep #406 closed and #408 blocked while #407 runs; move only #407's source plan and outcome proof to this executable plan.
@@ -63,18 +63,19 @@ Figure 2 is complete only when the retained artifacts prove these values:
 | --- | --- | --- | --- | --- | --- |
 | Execution scope | User Looping Mode revisit and issue #407 | Repair #407's execution contract and then resolve Figure 2 only. | Prevents the parent #421 and blocked #408 from entering implementation. | No | Main thread |
 | Milestone ownership | M6 Khudaida spec | Figure 2 artifact evidence stays in M6; M4/M5 receive blockers only when evidence proves their ownership. | Keeps validation work separate from solver/API and parameter-regression work. | No | M6 validation owner |
-| Parameter policy | #407 issue body and M6 spec | Use fixed Figiel 2025 parameters from `analyses/paper_validation/2025_figiel/parameters`. | Blocks hidden fitting inside the validation branch. | No | M6 validation owner |
-| Test-complete metrics | Current Figure 2 artifacts and #407 acceptance criteria | Require 16 source tie-line phase rows, 8 paper points, 8 feed rows, 16 public-route model rows, complete diagnostics, and passing Figure 2 checker evidence. | Gives reviewers numeric proof instead of a visual-only plot comparison. | No | Main thread |
+| Parameter policy | #407 issue body, M6 spec, and Khudaida analysis metadata | Use the retained `2026_Khudaida` Tables 5-7 bundle under `analyses/paper_validation/2026_khudaida/parameters`; the standalone `2025_figiel` bundle lacks Butanol and cannot run Figure 2. | Blocks hidden fitting inside the validation branch while keeping provenance honest. | No | M6 validation owner |
+| Test-complete metrics | Current Figure 2 artifacts and #407 acceptance criteria | Require 16 source tie-line phase rows, 8 paper points, 8 feed rows, 16 public-route model rows, complete diagnostics, and focused Figure 2 checker evidence. | Gives reviewers numeric proof instead of a visual-only plot comparison. | No | Main thread |
 | Branch strategy | #407 mirror | Use `codex/issue-0407-khudaida-fig02`. | Keeps plan repair and Figure 2 implementation on the issue branch. | No | Main thread |
 | Stop rule | Chemical-engineering input gate | Verify inputs and provenance before changing solver or parameter logic. | Prevents treating bad inputs as equation or optimizer defects. | No | Main thread |
+| Fixed-parameter blocker | Regenerated Figure 2 artifacts and open issue #338 | Route the remaining noncollapsed Khudaida reproduction miss to M5 #338 instead of fitting hidden parameters in M6. | Lets #407 close with retained evidence while keeping parameter regression owned by M5. | No | M5 regression owner |
 
 ## Acceptance Criteria
 
 - Figure 2 source/model CSVs and plot artifacts regenerate from the issue proof oracle.
 - Accepted rows use the public `electrolyte_lle` package route and retain material balance, pressure, phase charge, lift/back-lift, neutral transfer, mean-ionic transfer, phase distance, exact-Hessian, and Ipopt route receipts where the public route exposes them.
-- Fit statistics report row counts, tolerance basis, AAD/RMSE/max error, and exact failed rows when any row cannot pass with fixed Figiel parameters.
+- Fit statistics report row counts, tolerance basis, AAD/RMSE/max error, and exact failed rows routed to #338 when any row cannot pass with the retained Khudaida/Figiel-option path.
 - `packages/epcsaft-equilibrium` has a focused Figure 2 test that fails on the current retained `accepted_model_count=2` state and passes only after retained evidence is complete.
-- The PR either closes #407 with retained Figure 2 evidence or links a new/existing M4/M5 blocker with exact failed-row evidence.
+- The PR closes #407 with retained Figure 2 artifact evidence and links existing M5 blocker #338 for the noncollapsed fixed-parameter model miss.
 
 ## Non-Goals
 
@@ -97,7 +98,7 @@ Figure 2 is complete only when the retained artifacts prove these values:
 - Read: `packages/epcsaft-equilibrium/tests/api/test_khudaida_figure01_source_reproduction.py`
 - Test: `packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py`
 
-- [ ] **Step 1: Write the failing Figure 2 artifact test.** Read `source/source_points.csv`, `source/feed_compositions.csv`, `results/data/model_tielines.csv`, and `results/fit_statistics.csv`; assert the source row counts, 16 model rows, `source=epcsaft_public_electrolyte_lle`, no blank model compositions for accepted rows, `accepted_model_count == "16"`, and `pass == "True"`.
+- [ ] **Step 1: Write the failing Figure 2 artifact test.** Read `source/source_points.csv`, `source/feed_compositions.csv`, `results/data/model_tielines.csv`, and `results/fit_statistics.csv`; assert the source row counts, 16 model rows, `source=epcsaft_public_electrolyte_lle`, no blank model compositions for accepted rows, complete public-route diagnostics, and either full pass statistics or retained failed-row evidence linked to #338.
 - [ ] **Step 2: Run the focused test and verify the expected failure.** Run `uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_figure02_public_route_reproduction.py -q`; expected failure is the current retained `accepted_model_count` or `pass` assertion.
 - [ ] **Step 3: Keep the test focused on retained artifacts.** Do not call the solver directly from the test; generation scripts and the checker own solver execution so the test stays deterministic.
 - [ ] **Step 4: Commit after the failing test is proven.** Commit only the test when the expected failure is captured.
@@ -105,19 +106,19 @@ Figure 2 is complete only when the retained artifacts prove these values:
 ### Task 2: Verify Inputs, Parameters, And Diagnostics Before Solver Changes
 
 **Use Cases:**
-- Acceptance evidence proves Figure 2 inputs use 293.15 K, 5 wt% NaCl, 8 feed rows, 16 experimental phase rows, and fixed Figiel 2025 parameters.
+- Acceptance evidence proves Figure 2 inputs use 293.15 K, 5 wt% NaCl, 8 feed rows, 16 experimental phase rows, and the retained `2026_Khudaida` parameter bundle with Figiel 2025 SSM+DS/Born option provenance.
 - Failure evidence separates bad input/provenance from M4 solver/API behavior or M5 parameter adequacy.
 - Cutover evidence keeps #407 within M6 validation until a source-backed M4/M5 blocker is required.
 
 **Files:**
 - Read: `analyses/paper_validation/2026_khudaida/figures/figure_02/source/source_points.csv`
 - Read: `analyses/paper_validation/2026_khudaida/figures/figure_02/source/feed_compositions.csv`
-- Read: `analyses/paper_validation/2025_figiel/parameters/**`
+- Read: `analyses/paper_validation/2026_khudaida/parameters/**`
 - Modify: `analyses/paper_validation/2026_khudaida/scripts/_common.py`
 - Modify: `analyses/paper_validation/2026_khudaida/figures/figure_02/source/source_notes.csv`
 
 - [ ] **Step 1: Trace the run contract.** Verify species order, formula-basis versus explicit-ion conversion, salt mass fraction, temperature, pressure, feed normalization, and parameter path before changing code.
-- [ ] **Step 2: Snapshot provenance in source notes or retained diagnostics.** Ensure the Figure 2 artifact set names the Figiel parameter path and public `electrolyte_lle` route.
+- [ ] **Step 2: Snapshot provenance in source notes or retained diagnostics.** Ensure the Figure 2 artifact set names the `2026_Khudaida` parameter path, Figiel 2025 SSM+DS/Born option provenance, and public `electrolyte_lle` route.
 - [ ] **Step 3: Preserve failed-row evidence.** If any row remains incomplete after verified inputs, retain tie-line id, feed composition, route status, solver status, residual norm, phase distance, and objective.
 - [ ] **Step 4: Re-run the focused test.** Confirm it still fails until the public-route artifacts and diagnostics are complete.
 
@@ -126,7 +127,7 @@ Figure 2 is complete only when the retained artifacts prove these values:
 **Use Cases:**
 - Acceptance proof shows `generate_data.py`, `render_figure.py`, and the retained checker agree on the same Figure 2 data.
 - Validation evidence shows public-route rows are regenerated rather than manually patched.
-- Recovery evidence records exact failed rows and blocker ownership if fixed Figiel parameters cannot reproduce every row.
+- Recovery evidence records exact failed rows and blocker ownership if the retained Khudaida/Figiel-option path cannot reproduce every row.
 
 **Files:**
 - Modify: `analyses/paper_validation/2026_khudaida/scripts/_common.py`
@@ -166,9 +167,8 @@ Figure 2 is complete only when the retained artifacts prove these values:
 ```powershell
 uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\generate_data.py
 uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\render_figure.py
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --require-complete --require-model-pass
+uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_figure02_public_route_reproduction.py -q
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "khudaida and figure_02 and electrolyte" -q
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile docs\superpowers\issues\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle.md
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
