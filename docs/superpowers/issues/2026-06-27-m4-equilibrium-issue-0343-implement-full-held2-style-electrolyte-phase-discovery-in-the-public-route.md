@@ -19,6 +19,7 @@ last_synced: "2026-06-29"
 
 # M4: implement full HELD2-style electrolyte phase discovery in the public route
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/343
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** feature

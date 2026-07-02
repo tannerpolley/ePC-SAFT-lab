@@ -19,6 +19,7 @@ last_synced: "2026-06-24"
 
 # M4: add electrolyte HELD2 readiness and Born exactness gate
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/300
 **Pull Request:** https://github.com/ePC-SAFT/ePC-SAFT/pull/301
 **GitHub Milestone:** M4 - Equilibrium

@@ -1,4 +1,6 @@
 # M4 LLE: govern associating LLE certification
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/367
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

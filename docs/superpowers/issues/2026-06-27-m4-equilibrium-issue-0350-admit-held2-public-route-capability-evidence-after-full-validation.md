@@ -19,6 +19,7 @@ last_synced: "2026-06-29"
 
 # M4: admit HELD2 public-route capability evidence after full validation
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/350
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

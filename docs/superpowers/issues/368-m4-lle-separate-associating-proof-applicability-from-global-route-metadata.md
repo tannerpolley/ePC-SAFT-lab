@@ -1,4 +1,6 @@
 # M4 LLE: separate associating proof applicability from global route metadata
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/368
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

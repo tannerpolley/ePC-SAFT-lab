@@ -1,4 +1,6 @@
 # M4 LLE: integrate Gross 2002 associating LLE tolerance evidence
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/369
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

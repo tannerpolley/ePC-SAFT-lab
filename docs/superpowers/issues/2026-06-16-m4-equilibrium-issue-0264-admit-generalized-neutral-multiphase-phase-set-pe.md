@@ -19,7 +19,7 @@ last_synced: "2026-06-17"
 
 # M4: admit generalized neutral multiphase phase-set PE
 
-**Mirror Retention:** Keep
+**Mirror Retention:** retain
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/264
 **GitHub Milestone:** M4 - Equilibrium

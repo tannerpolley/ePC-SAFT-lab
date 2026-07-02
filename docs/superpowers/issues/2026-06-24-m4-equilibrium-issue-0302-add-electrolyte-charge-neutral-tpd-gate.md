@@ -19,6 +19,7 @@ last_synced: "2026-06-25"
 
 # M4: add electrolyte charge-neutral TPD gate
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/302
 **Pull Request:** https://github.com/ePC-SAFT/ePC-SAFT/pull/303
 **GitHub Milestone:** M4 - Equilibrium

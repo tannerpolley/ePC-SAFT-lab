@@ -19,7 +19,7 @@ last_synced: "2026-06-16"
 
 # M4: admit checker-gated native cloud/shadow isobaric route evidence
 
-**Mirror Retention:** Keep
+**Mirror Retention:** retain
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/260
 **GitHub Milestone:** M4 - Equilibrium

@@ -1,5 +1,6 @@
 # M4 CE: classify EOS activity failures by exact proof gate
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/396
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

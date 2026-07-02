@@ -1,4 +1,6 @@
 # M4 PE: govern flash and multiphase certification
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/374
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

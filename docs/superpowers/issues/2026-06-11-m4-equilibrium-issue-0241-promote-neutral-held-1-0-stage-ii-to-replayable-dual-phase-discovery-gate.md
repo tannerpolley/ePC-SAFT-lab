@@ -19,7 +19,7 @@ last_synced: "2026-06-11"
 
 # M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate
 
-**Mirror Retention:** Keep
+**Mirror Retention:** retain
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/241
 **GitHub Milestone:** M4 - Equilibrium

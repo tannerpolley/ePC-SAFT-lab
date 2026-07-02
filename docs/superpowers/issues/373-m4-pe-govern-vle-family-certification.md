@@ -1,4 +1,6 @@
 # M4 PE: govern VLE family certification
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/373
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

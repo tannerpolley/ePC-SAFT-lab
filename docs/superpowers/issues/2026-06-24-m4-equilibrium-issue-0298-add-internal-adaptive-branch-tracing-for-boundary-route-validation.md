@@ -19,6 +19,7 @@ last_synced: "2026-06-24"
 
 # M4: add internal adaptive branch tracing for boundary-route validation
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/298
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

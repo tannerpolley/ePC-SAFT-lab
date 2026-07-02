@@ -1,4 +1,6 @@
 # M4 LLE: govern neutral nonassociating LLE certification
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/364
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

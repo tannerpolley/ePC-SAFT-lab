@@ -19,7 +19,7 @@ last_synced: "2026-06-18"
 
 # M4: add electrolyte GFPE closed-admission source gate
 
-**Mirror Retention:** Keep
+**Mirror Retention:** retain
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/269
 **GitHub Milestone:** M4 - Equilibrium

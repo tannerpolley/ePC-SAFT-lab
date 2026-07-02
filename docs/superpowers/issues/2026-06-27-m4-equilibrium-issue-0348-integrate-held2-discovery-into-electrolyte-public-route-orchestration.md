@@ -19,6 +19,7 @@ last_synced: "2026-06-28"
 
 # M4: integrate HELD2 discovery into electrolyte public route orchestration
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/348
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

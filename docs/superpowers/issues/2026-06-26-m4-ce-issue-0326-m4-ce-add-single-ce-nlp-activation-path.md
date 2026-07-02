@@ -1,5 +1,6 @@
 # M4 CE: add single CE NLP activation path
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/326
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** feature

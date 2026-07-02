@@ -1,5 +1,6 @@
 # M4 CE: add CE robustness follow-up gate
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/401
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

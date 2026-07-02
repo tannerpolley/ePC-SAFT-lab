@@ -18,6 +18,7 @@ last_synced: "2026-06-20"
 ---
 # M4: complete Gross 2002 full figure replication campaign
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/286
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

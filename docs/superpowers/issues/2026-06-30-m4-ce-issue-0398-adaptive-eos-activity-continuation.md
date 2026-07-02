@@ -1,5 +1,6 @@
 # M4 CE: add adaptive EOS activity continuation
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/398
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

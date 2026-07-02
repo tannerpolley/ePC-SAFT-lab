@@ -17,4 +17,8 @@ docs/superpowers/issues/YYYY-MM-DD-m#-milestone-issue-####-<slug>.md
 
 Keep mirrors only for unresolved GitHub issues that need local handoff or
 execution context. Delete mirrors for closed issues unless a repo maintainer
-explicitly marks the file as archival documentation.
+explicitly marks the file as archival documentation with:
+
+```markdown
+**Mirror Retention:** retain
+```

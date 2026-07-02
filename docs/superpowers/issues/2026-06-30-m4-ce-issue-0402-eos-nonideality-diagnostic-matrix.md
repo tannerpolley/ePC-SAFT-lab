@@ -1,5 +1,6 @@
 # M4 CE: add EOS nonideality diagnostic matrix
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/402
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

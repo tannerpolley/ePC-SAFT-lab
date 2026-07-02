@@ -1,5 +1,6 @@
 # M4 CE: define standard-state and equilibrium-constant registry
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/324
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** feature
