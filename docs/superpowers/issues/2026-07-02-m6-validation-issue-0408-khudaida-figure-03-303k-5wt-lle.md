@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "benchmark"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "validation"
 source_spec: "docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md"
 source_plan: "docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md"
@@ -28,7 +28,7 @@ last_synced: "2026-07-02"
 **Source Spec:** docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
 **Source Plan:** docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 **Classification:** AFK
-**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, area:benchmark, backend:ipopt, status:blocked, type:task
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, area:benchmark, backend:ipopt, status:ready, type:task
 **Goal Command:** /goal Resolve issue #408 and reproduce Khudaida Figure 3 with Figiel 2025 parameters.
 **Execution Mode:** Auto, one child figure at a time under #421
 **Worktree Policy:** Native Codex worktree thread first
