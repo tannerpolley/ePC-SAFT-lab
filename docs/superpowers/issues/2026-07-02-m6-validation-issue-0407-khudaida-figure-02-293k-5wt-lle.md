@@ -11,7 +11,7 @@ backend: "Ipopt"
 readiness: "ready"
 release_target: "validation"
 source_spec: "docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md"
-source_plan: "docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md"
+source_plan: "docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md"
 afk_hitl: "AFK"
 branch: codex/issue-0407-khudaida-fig02
 last_synced: "2026-07-02"
@@ -23,13 +23,14 @@ last_synced: "2026-07-02"
 **GitHub Milestone:** M6 - Validation
 **Issue Type:** Task
 **Sub-Issue Role:** leaf
+**Executable:** true
 **Parent Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/421
 **Parent Mirror:** docs/superpowers/issues/2026-07-02-m6-validation-issue-0421-khudaida-2026-paper-validation-parent.md
 **Source Spec:** docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
-**Source Plan:** docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+**Source Plan:** docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
 **Classification:** AFK
 **Labels:** enhancement, agent-ready, docs, validation, equilibrium, area:equilibrium, area:benchmark, backend:ipopt, status:ready, type:task
-**Goal Command:** /goal Resolve issue #407 and reproduce Khudaida Figure 2 with Figiel 2025 parameters.
+**Goal Command:** /goal Resolve issue #407 using docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md and reproduce Khudaida Figure 2 with Figiel 2025 parameters.
 **Execution Mode:** Auto, one child figure at a time under #421
 **Worktree Policy:** Native Codex worktree thread first
 **Integration Policy:** Worker PR reviewed by main thread
@@ -40,12 +41,16 @@ last_synced: "2026-07-02"
 
 ## Outcome Summary
 
-This issue is a child of #421, the M6 Khudaida 2026 paper-validation parent. It owns retained figure evidence and opens or blocks on M4/M5 follow-up issues only when validation proves solver or parameter defects.
-
-Reproduce `figure_02` at 293.15 K and 5 wt% NaCl from 32 source points, 8 paper
-ePC-SAFT points, and 8 feed rows. Current retained evidence accepts only 2
-model rows, so this issue must close the figure-specific gap with Figiel 2025
-parameter provenance.
+**Outcome Source:** docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md#outcome-proof
+**Intent:** Reproduce Khudaida 2026 Figure 2 at 293.15 K and 5 wt% NaCl as retained M6 paper-validation evidence using fixed Figiel 2025 parameters.
+**Target Output:** Figure 2 source/model CSVs, plots, fit statistics, public-route diagnostics, focused package test, and checker evidence that can close only issue #407.
+**Owner:** M6 validation owns retained artifact evidence, with M4 solver/API and M5 parameter-regression blockers opened only when row-level evidence proves that ownership.
+**Interface:** `analyses/paper_validation/2026_khudaida/figures/figure_02`, `analyses/paper_validation/2026_khudaida/scripts/_common.py`, `scripts/validation/check_khudaida_2026_figure_validation.py`, and `packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py`.
+**Cutover:** Replace the previous #407 execution contract that pointed to the M6 hierarchy cutover plan with the Figure 2 implementation plan linked above.
+**Replaced Path:** Treating #407 as ready for direct execution while its source plan described tracker hierarchy hygiene instead of Figure 2 artifact reproduction.
+**Acceptance Proof:** The proof oracle regenerates Figure 2 artifacts, the focused Figure 2 test passes, the Khudaida checker reports no Figure 2 blockers, validators pass, and any remaining fixed-parameter miss links an exact M4/M5 blocker before closeout.
+**Stop Criteria:** Stop before closing #407 if source rows are not traceable, the public route is not used, diagnostics are missing, accepted rows remain incomplete without an M4/M5 blocker, or validators cannot prove the retained artifacts.
+**Avoid:** Do not fit hidden parameters in M6, use private-native-only evidence, count diagnostic-only success, broaden electrolyte capability claims, or edit unrelated Khudaida figures.
 
 ## Project Merge
 
