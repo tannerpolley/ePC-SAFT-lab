@@ -1,2 +1,2 @@
 role,temperature_C,CO2_loading,activity_mode,accepted,solver_status,application_status,balance_inf_norm,reaction_stationarity_inf_norm,initial_amount_source,initial_source_CO2_loading,runtime_seconds,max_iterations,tolerance,timeout_seconds
-ce_eos_x_gamma_source_seeded_probe,20.0,0.3,eos_x_gamma,True,success,solve_succeeded,7.105427357601002e-15,1.7165504573313228e-09,phase1_smith_missen_nearest_loading,0.3,23.44349349999993,300,1e-07,30.0
+ce_eos_x_gamma_source_seeded_probe,20.0,0.3,eos_x_gamma,True,success,solve_succeeded,7.105427357601002e-15,1.7165504573313228e-09,phase1_smith_missen_nearest_loading,0.3,27.284667300000365,300,1e-07,30.0

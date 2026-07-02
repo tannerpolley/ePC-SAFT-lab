@@ -74,6 +74,11 @@ def generate() -> dict[str, object]:
         "schema_version": "epcsaft.standalone_ce.mea_eos_x_gamma_speciation.v1",
         "activity_basis": "a_i = gamma_i x_i",
         "source_activity_curve": str(base.PHASE2_ACTIVITY_CURVE_PATH.relative_to(base.REPO_ROOT)).replace("\\", "/"),
+        "source_reference_points": str(base.PHASE2_REFERENCE_POINTS_PATH.relative_to(base.REPO_ROOT)).replace(
+            "\\",
+            "/",
+        ),
+        "source_target_roles": str(base.PHASE2_TARGET_ROLES_PATH.relative_to(base.REPO_ROOT)).replace("\\", "/"),
         "parameter_snapshot": str(base.PHASE2_PARAMETER_DATASET_DIR.relative_to(base.REPO_ROOT)).replace("\\", "/"),
         "reaction_constant_source": str(base.PHASE2_ACTIVITY_CONSTANTS_PATH.relative_to(base.REPO_ROOT)).replace(
             "\\",
@@ -86,6 +91,13 @@ def generate() -> dict[str, object]:
         "activity_curve_loading_count_by_temperature": {
             str(float(temperature_C)): int(group["CO2_loading"].nunique())
             for temperature_C, group in activity_rows.groupby("temperature_C", sort=True)
+        },
+        "reference_point_count_by_temperature": {
+            str(float(temperature_C)): len(group)
+            for temperature_C, group in plot_frame[plot_frame["role"] == "real_speciation_data"].groupby(
+                "temperature_C",
+                sort=True,
+            )
         },
         "ce_probe": {
             "accepted": bool(probe_summary_frame["accepted"].iloc[0]),

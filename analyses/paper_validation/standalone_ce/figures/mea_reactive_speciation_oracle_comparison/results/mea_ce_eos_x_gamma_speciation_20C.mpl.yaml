@@ -1,8 +1,0 @@
-figure:
-  title: mea_ce_eos_x_gamma_speciation_20C
-  png: mea_ce_eos_x_gamma_speciation_20C.png
-  svg: mea_ce_eos_x_gamma_speciation_20C.svg
-  pdf: mea_ce_eos_x_gamma_speciation_20C.pdf
-  dpi: 300
-style:
-  source: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py

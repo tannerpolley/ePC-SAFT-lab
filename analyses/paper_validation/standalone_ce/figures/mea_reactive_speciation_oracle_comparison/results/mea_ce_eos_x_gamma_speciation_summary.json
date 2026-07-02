@@ -2,6 +2,8 @@
   "schema_version": "epcsaft.standalone_ce.mea_eos_x_gamma_speciation.v1",
   "activity_basis": "a_i = gamma_i x_i",
   "source_activity_curve": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase2_speciation_activity_curves.csv",
+  "source_reference_points": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase2_speciation_reference_points.csv",
+  "source_target_roles": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase2_speciation_target_roles.csv",
   "parameter_snapshot": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/mea_thermodynamics_phase2_parameters",
   "reaction_constant_source": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase2_activity_constant_candidates.csv",
   "plot_data_artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_plot_data.csv",
@@ -12,13 +14,17 @@
     "20.0": 161,
     "40.0": 161
   },
+  "reference_point_count_by_temperature": {
+    "20.0": 176,
+    "40.0": 82
+  },
   "ce_probe": {
     "accepted": true,
     "temperature_C": 20.0,
     "CO2_loading": 0.3,
     "balance_inf_norm": 7.105427357601002e-15,
     "reaction_stationarity_inf_norm": 1.7165504573313228e-09,
-    "runtime_seconds": 23.44349349999993,
+    "runtime_seconds": 27.284667300000365,
     "initial_amount_source": "phase1_smith_missen_nearest_loading"
   }
 }

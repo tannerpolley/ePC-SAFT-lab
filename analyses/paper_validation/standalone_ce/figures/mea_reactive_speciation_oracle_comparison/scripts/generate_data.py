@@ -34,6 +34,8 @@ SOURCE_DIR = FIGURE_DIR / "source"
 RESULTS_DIR = FIGURE_DIR / "results"
 SOURCE_CURVE_PATH = SOURCE_DIR / "phase1_speciation_curve.csv"
 PHASE2_ACTIVITY_CURVE_PATH = SOURCE_DIR / "phase2_speciation_activity_curves.csv"
+PHASE2_REFERENCE_POINTS_PATH = SOURCE_DIR / "phase2_speciation_reference_points.csv"
+PHASE2_TARGET_ROLES_PATH = SOURCE_DIR / "phase2_speciation_target_roles.csv"
 PHASE2_PARAMETER_DATASET_DIR = SOURCE_DIR / "mea_thermodynamics_phase2_parameters"
 PHASE2_ACTIVITY_CONSTANTS_PATH = SOURCE_DIR / "phase2_activity_constant_candidates.csv"
 PHASE2_REACTION_BASIS_PATH = SOURCE_DIR / "phase2_reaction_constant_basis.csv"
@@ -510,7 +512,7 @@ def _solve_no_oracle(
     )
 
 
-def _nonideal_plot_rows(source_curve: pd.DataFrame) -> pd.DataFrame:
+def _nonideal_plot_rows(_source_curve: pd.DataFrame) -> pd.DataFrame:
     phase2_curve = _read_required_csv(
         PHASE2_ACTIVITY_CURVE_PATH,
         required_columns={
@@ -523,6 +525,19 @@ def _nonideal_plot_rows(source_curve: pd.DataFrame) -> pd.DataFrame:
             "solver_success",
         },
     )
+    reference_points = _read_required_csv(
+        PHASE2_REFERENCE_POINTS_PATH,
+        required_columns={
+            "source",
+            "temperature_C",
+            "MEA_weight_fraction",
+            "CO2_loading",
+            "species",
+            "mole_fraction",
+            "point_role",
+            "target_role",
+        },
+    )
     phase2_curve = phase2_curve[
         phase2_curve["temperature_C"].isin(TEMPERATURES_C)
         & phase2_curve["species"].isin(PLOT_SPECIES)
@@ -530,26 +545,14 @@ def _nonideal_plot_rows(source_curve: pd.DataFrame) -> pd.DataFrame:
     if phase2_curve.empty:
         raise ValueError("Phase 2 nonideal activity curve has no retained 20 C or 40 C plot rows.")
 
-    ideal_rows: list[dict[str, Any]] = []
-    for temperature_C, loading, rows in _source_groups(source_curve):
-        source_mole_fractions = _source_state(rows)
-        for species_label in PLOT_SPECIES:
-            ideal_rows.append(
-                {
-                    "role": "ideal_smith_missen_reference",
-                    "activity_mode": "mole_fraction_activity",
-                    "temperature_C": temperature_C,
-                    "MEA_weight_fraction": MEA_WEIGHT_FRACTION,
-                    "CO2_loading": loading,
-                    "effective_feed_loading": max(float(loading), MIN_EFFECTIVE_LOADING),
-                    "species": species_label,
-                    "mole_fraction": source_mole_fractions[species_label],
-                    "solver_success": True,
-                    "source_artifact": str(SOURCE_CURVE_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
-                    "parameter_source": "",
-                    "reaction_constant_source": "Smith-Missen Phase 1 retained fixture",
-                }
-            )
+    reference_points = reference_points[
+        reference_points["temperature_C"].isin(TEMPERATURES_C)
+        & (reference_points["MEA_weight_fraction"].astype(float) == MEA_WEIGHT_FRACTION)
+        & reference_points["species"].isin(PLOT_SPECIES)
+        & reference_points["target_role"].isin(("direct_positive", "aggregate_direct_positive"))
+    ].copy()
+    if reference_points.empty:
+        raise ValueError("Phase 2 reference snapshot has no direct measured 20 C or 40 C speciation points.")
 
     activity_rows = []
     for row in phase2_curve.itertuples(index=False):
@@ -573,8 +576,30 @@ def _nonideal_plot_rows(source_curve: pd.DataFrame) -> pd.DataFrame:
             }
         )
 
+    reference_rows = []
+    for row in reference_points.itertuples(index=False):
+        reference_rows.append(
+            {
+                "role": "real_speciation_data",
+                "activity_mode": "measured_or_reported",
+                "temperature_C": float(row.temperature_C),
+                "MEA_weight_fraction": float(row.MEA_weight_fraction),
+                "CO2_loading": float(row.CO2_loading),
+                "effective_feed_loading": float(row.CO2_loading),
+                "species": str(row.species),
+                "mole_fraction": float(row.mole_fraction),
+                "solver_success": True,
+                "source_artifact": str(PHASE2_REFERENCE_POINTS_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
+                "parameter_source": "",
+                "reaction_constant_source": "",
+                "data_source": str(row.source),
+                "target_role": str(row.target_role),
+                "point_role": str(row.point_role),
+            }
+        )
+
     return (
-        pd.DataFrame([*ideal_rows, *activity_rows])
+        pd.DataFrame([*activity_rows, *reference_rows])
         .sort_values(["temperature_C", "species", "role", "CO2_loading"])
         .reset_index(drop=True)
     )
@@ -1082,6 +1107,8 @@ def generate() -> dict[str, Any]:
         "nonideal_eos_x_gamma": {
             "activity_basis": "a_i = gamma_i x_i",
             "source_activity_curve": str(PHASE2_ACTIVITY_CURVE_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "source_reference_points": str(PHASE2_REFERENCE_POINTS_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
+            "source_target_roles": str(PHASE2_TARGET_ROLES_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
             "parameter_snapshot": str(PHASE2_PARAMETER_DATASET_DIR.relative_to(REPO_ROOT)).replace("\\", "/"),
             "reaction_constant_source": str(PHASE2_ACTIVITY_CONSTANTS_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
             "reaction_constant_source_verification": str(
@@ -1103,6 +1130,12 @@ def generate() -> dict[str, Any]:
                 str(float(temperature_C)): int(group["CO2_loading"].nunique())
                 for temperature_C, group in nonideal_plot_frame[
                     nonideal_plot_frame["role"] == "eos_x_gamma_activity"
+                ].groupby("temperature_C", sort=True)
+            },
+            "reference_point_count_by_temperature": {
+                str(float(temperature_C)): len(group)
+                for temperature_C, group in nonideal_plot_frame[
+                    nonideal_plot_frame["role"] == "real_speciation_data"
                 ].groupby("temperature_C", sort=True)
             },
             "ce_probe": {

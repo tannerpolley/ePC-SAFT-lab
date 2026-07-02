@@ -28,6 +28,18 @@ PLOT_SPECIES = (
     "OH-",
     "MEA + MEAH+",
 )
+NONIDEAL_SPECIES_GROUPS = {
+    "concentrated": {
+        "species": ("MEA", "MEAH+", "MEACOO-", "HCO3-", "MEA + MEAH+"),
+        "ylim": (1.0e-6, 3.0e-1),
+        "title_fragment": "concentrated species",
+    },
+    "trace": {
+        "species": ("CO2", "CO3^2-", "H3O+", "OH-"),
+        "ylim": (1.0e-14, 5.0e-2),
+        "title_fragment": "trace and minor species",
+    },
+}
 SPECIES_LABELS = {
     "CO2": r"$CO_2$",
     "MEA": r"$MEA$",
@@ -50,6 +62,11 @@ SPECIES_COLORS = {
     "H3O+": "#99584a",
     "OH-": "#7f7f7f",
     "MEA + MEAH+": "#df6bc4",
+}
+DATA_SOURCE_MARKERS = {
+    "Bottinger": "o",
+    "Jakobsen": "s",
+    "Matin": "^",
 }
 
 
@@ -188,13 +205,17 @@ def _plot_temperature_overlay(
     plt.close(fig)
 
 
-def _plot_nonideal_temperature_overlay(
+def _plot_nonideal_temperature_group(
     plot_data: pd.DataFrame,
     temperature_C: float,
+    *,
+    group_key: str,
 ) -> None:
     frame = plot_data[plot_data["temperature_C"] == temperature_C]
     if frame.empty:
         raise ValueError(f"no nonideal plot data rows found for {temperature_C:g} C")
+    group = NONIDEAL_SPECIES_GROUPS[group_key]
+    species_group = tuple(group["species"])
 
     plt.rcParams.update(
         {
@@ -207,67 +228,86 @@ def _plot_nonideal_temperature_overlay(
         }
     )
     fig, ax = plt.subplots(figsize=(10.0, 6.2))
-    for species in PLOT_SPECIES:
+    for species in species_group:
         color = SPECIES_COLORS[species]
-        ideal = frame[
-            (frame["role"] == "ideal_smith_missen_reference")
-            & (frame["species"] == species)
-        ].sort_values("CO2_loading")
         activity = frame[
             (frame["role"] == "eos_x_gamma_activity")
             & (frame["species"] == species)
         ].sort_values("CO2_loading")
-        if ideal.empty or activity.empty:
-            raise ValueError(f"missing ideal or eos_x_gamma rows for {species} at {temperature_C:g} C")
-        ax.plot(
-            ideal["CO2_loading"],
-            ideal["mole_fraction"].clip(lower=1.0e-30),
-            color=color,
-            linestyle=(0, (4, 2)),
-            linewidth=1.7,
-            alpha=0.65,
-        )
+        data = frame[
+            (frame["role"] == "real_speciation_data")
+            & (frame["species"] == species)
+        ].sort_values("CO2_loading")
+        if activity.empty:
+            raise ValueError(f"missing eos_x_gamma rows for {species} at {temperature_C:g} C")
         ax.plot(
             activity["CO2_loading"],
             activity["mole_fraction"].clip(lower=1.0e-30),
             color=color,
-            linestyle="-",
-            linewidth=1.35,
-            marker="o",
-            markersize=2.1,
-            markevery=16,
+            linestyle="--",
+            linewidth=1.8,
+            alpha=0.9,
         )
-    ax.set_title(f"Nonideal ePC-SAFT activity speciation, {temperature_C:g} C")
+        for source, source_rows in data.groupby("data_source", sort=True):
+            marker = DATA_SOURCE_MARKERS.get(str(source), "D")
+            ax.scatter(
+                source_rows["CO2_loading"],
+                source_rows["mole_fraction"].clip(lower=1.0e-30),
+                marker=marker,
+                s=38.0,
+                facecolors="white",
+                edgecolors=color,
+                linewidths=1.2,
+                zorder=4,
+            )
+    ax.set_title(f"Nonideal ePC-SAFT activity speciation, {group['title_fragment']}, {temperature_C:g} C")
     ax.set_xlabel(r"$CO_2$ loading, mol $CO_2$/mol MEA")
     ax.set_ylabel("True-species mole fraction")
     ax.set_yscale("log")
-    ax.set_xlim(0.0, 0.8)
-    ax.set_ylim(1.0e-14, 1.0)
+    max_loading = float(frame["CO2_loading"].max())
+    ax.set_xlim(0.0, min(1.0, math.ceil(max_loading * 20.0) / 20.0))
+    ax.set_ylim(*group["ylim"])
     _apply_axes_style(ax)
     species_handles = [
-        Line2D([0], [0], color=SPECIES_COLORS[species], linewidth=2.0, label=SPECIES_LABELS[species])
-        for species in PLOT_SPECIES
+        Line2D(
+            [0],
+            [0],
+            color=SPECIES_COLORS[species],
+            linestyle="--",
+            linewidth=2.0,
+            label=SPECIES_LABELS[species],
+        )
+        for species in species_group
     ]
     role_handles = [
         Line2D(
             [0],
             [0],
             color="#333333",
-            linestyle=(0, (4, 2)),
-            linewidth=1.7,
-            label="Smith-Missen ideal",
-        ),
-        Line2D(
-            [0],
-            [0],
-            color="#333333",
-            linestyle="-",
-            marker="o",
-            linewidth=1.35,
-            markersize=3.0,
-            label=r"ePC-SAFT $a_i=\gamma_i x_i$",
+            linestyle="--",
+            linewidth=1.8,
+            label=r"ePC-SAFT $a_i=\gamma_i x_i$ fit",
         ),
     ]
+    plotted_data = frame[
+        (frame["role"] == "real_speciation_data")
+        & frame["species"].isin(species_group)
+    ]
+    data_sources = sorted(str(item) for item in plotted_data["data_source"].dropna().unique())
+    for source in data_sources:
+        role_handles.append(
+            Line2D(
+                [0],
+                [0],
+                color="#333333",
+                marker=DATA_SOURCE_MARKERS.get(source, "D"),
+                linestyle="",
+                markerfacecolor="white",
+                markeredgewidth=1.2,
+                markersize=6.0,
+                label=source,
+            )
+        )
     role_legend = ax.legend(handles=role_handles, loc="lower left", frameon=True)
     ax.add_artist(role_legend)
     ax.legend(
@@ -278,7 +318,7 @@ def _plot_nonideal_temperature_overlay(
         frameon=True,
     )
     fig.subplots_adjust(right=0.78)
-    _save_bundle(fig, f"mea_ce_eos_x_gamma_speciation_{int(temperature_C)}C")
+    _save_bundle(fig, f"mea_ce_eos_x_gamma_speciation_{group_key}_{int(temperature_C)}C")
     plt.close(fig)
 
 
@@ -412,7 +452,8 @@ def render() -> None:
             ce_label="CE route (internal continuation proof)",
             stem=f"mea_ce_owned_continuation_speciation_{int(temperature_C)}C",
         )
-        _plot_nonideal_temperature_overlay(nonideal_plot_data, temperature_C)
+        for group_key in NONIDEAL_SPECIES_GROUPS:
+            _plot_nonideal_temperature_group(nonideal_plot_data, temperature_C, group_key=group_key)
     _plot_error_summary(errors, summary)
     _plot_continuation_stage_diagnostics(trace)
 

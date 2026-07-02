@@ -1,6 +1,8 @@
 source_id,source_path,role,notes
 phase1_speciation_curve,source/phase1_speciation_curve.csv,source_oracle_snapshot,Snapshot copied from the MEA-Thermodynamics Phase 1 Smith-Missen ideal speciation curve and used as the CE comparison oracle.
 phase2_speciation_activity_curves,source/phase2_speciation_activity_curves.csv,nonideal_activity_curve_snapshot,Snapshot copied from MEA-Thermodynamics Phase 2 activity ePC-SAFT results and used to render CE-side nonideal speciation plots.
+phase2_speciation_reference_points,source/phase2_speciation_reference_points.csv,real_speciation_data_snapshot,Direct measured/reference MEA speciation points copied from MEA-Thermodynamics Phase 2 and plotted as the nonideal figure data backend.
+phase2_speciation_target_roles,source/phase2_speciation_target_roles.csv,speciation_target_role_snapshot,Target-role table copied from MEA-Thermodynamics Phase 2 to distinguish direct measured points from balance-inferred context.
 phase2_activity_constant_candidates,source/phase2_activity_constant_candidates.csv,activity_reaction_constant_snapshot,Source-verified Nasrifar activity-basis reaction constants used for the nonideal activity calculation.
 phase2_reaction_constant_source_verification,source/phase2_reaction_constant_source_verification.csv,reaction_constant_source_verification,Repo-local verification table for the activity-basis reaction constants.
 phase2_reaction_constant_basis,source/phase2_reaction_constant_basis.csv,reaction_constant_basis_summary,Phase 2 generated reaction-constant basis table copied with the nonideal source snapshot.
