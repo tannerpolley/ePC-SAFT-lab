@@ -2,7 +2,7 @@
 issue: 405
 title: "M4 Khudaida: reproduce all figures one by one with Figiel 2025 parameters"
 url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/405"
-state: "open"
+state: "closed"
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
 package: "equilibrium"
@@ -25,6 +25,7 @@ last_synced: "2026-07-02"
 **Source Spec:** docs/superpowers/specs/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters.md
 **Source Plan:** docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md
 **Classification:** HITL
+**Mirror Retention:** retain
 **Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
 **Goal Command:** None; tracking parent issue.
 **Execution Mode:** Ask at runtime
@@ -37,10 +38,10 @@ last_synced: "2026-07-02"
 
 ## Outcome Summary
 
-Track the Khudaida 2026 figure-by-figure reproduction campaign as an M4
-equilibrium validation tranche. This tranche first proves the retained Figiel
-2025 ePC-SAFT parameters through the public route before treating M5 regression
-as a blocker.
+Historical M4 tracker retained after close. Active Khudaida paper-validation
+work moved to #420/#421 under M6 so figure reproduction owns retained validation
+evidence, while solver defects route to M4 and parameter-regression defects
+route to M5.
 
 ## Project Merge
 
