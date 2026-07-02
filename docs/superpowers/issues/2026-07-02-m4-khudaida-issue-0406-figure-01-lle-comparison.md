@@ -38,9 +38,9 @@ last_synced: "2026-07-02"
 ## Outcome Summary
 
 Reproduce `figure_01` at 293.15 K for salt-free, 5 wt% NaCl, and 10 wt% NaCl
-LLE comparison using the Figiel 2025 parameter snapshot. Salted rows must use
-the public electrolyte LLE route, and salt-free rows must retain neutral-route
-parity.
+LLE comparison as a source-only salt-effect figure. The source text/caption has
+no ePC-SAFT model curve for Figure 1; public electrolyte LLE route evidence
+starts with model-comparable Figures 2-7 and S2-S3.
 
 ## Project Merge
 
@@ -52,15 +52,17 @@ parity.
 
 ## What To Build
 
-Regenerate Figure 1 source/model artifacts and retained statistics through the
-Figiel 2025 parameter path.
+Regenerate Figure 1 source/recreation artifacts and retained statistics while
+recording the Figiel 2025 parameter boundary honestly for this source-only
+figure.
 
 ## Acceptance Criteria
 
 - [ ] `analyses/paper_validation/2026_khudaida/figures/figure_01` regenerates
   retained source/model CSVs and plot artifacts.
-- [ ] Source rows and accepted model rows are nonzero.
-- [ ] Figiel 2025 parameter provenance is retained.
+- [ ] Source rows and retained recreation rows are nonzero.
+- [ ] Figure 1 records that Figiel 2025 fitted-parameter use is outside this
+  source-only figure and starts with model-comparable figures.
 - [ ] Fit statistics include row counts, tolerance basis, errors, and exact
   failed rows if any.
 
@@ -78,6 +80,8 @@ Figiel 2025 parameter path.
 - No fitted parameters in M4.
 - No private-native-only proof.
 - No broad electrolyte capability claim beyond Figure 1 evidence.
+- No public-route model-fit claim for Figure 1, because the paper caption does
+  not contain an ePC-SAFT curve for that figure.
 
 ## Proof Oracle
 
