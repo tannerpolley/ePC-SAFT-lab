@@ -8,7 +8,7 @@ project: "ePC-SAFT Roadmap"
 package: "equilibrium"
 capability: "electrolyte"
 backend: "Ipopt"
-readiness: "blocked"
+readiness: "ready"
 release_target: "equilibrium-0.x"
 source_spec: "docs/superpowers/specs/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters.md"
 source_plan: "docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md"
@@ -25,7 +25,7 @@ last_synced: "2026-07-02"
 **Source Spec:** docs/superpowers/specs/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters.md
 **Source Plan:** docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md
 **Classification:** AFK
-**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:blocked, type:task
+**Labels:** enhancement, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 **Goal Command:** /goal Resolve issue #407 and reproduce Khudaida Figure 2 with Figiel 2025 parameters.
 **Execution Mode:** Auto after #406 closes
 **Worktree Policy:** Native Codex worktree thread first
