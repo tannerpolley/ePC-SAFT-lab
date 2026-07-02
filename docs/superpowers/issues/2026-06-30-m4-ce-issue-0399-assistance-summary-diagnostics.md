@@ -1,5 +1,6 @@
 # M4 CE: add assistance summary diagnostics
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/399
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

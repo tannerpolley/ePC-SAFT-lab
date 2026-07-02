@@ -19,6 +19,7 @@ last_synced: "2026-06-28"
 
 # M4: add HELD2 public-route scenario validation ladder
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/349
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

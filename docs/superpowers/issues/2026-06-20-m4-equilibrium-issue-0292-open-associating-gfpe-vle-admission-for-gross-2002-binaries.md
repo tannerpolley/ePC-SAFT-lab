@@ -18,6 +18,7 @@ last_synced: "2026-06-20"
 ---
 # M4: open associating GFPE VLE admission for Gross 2002 binaries
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/292
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

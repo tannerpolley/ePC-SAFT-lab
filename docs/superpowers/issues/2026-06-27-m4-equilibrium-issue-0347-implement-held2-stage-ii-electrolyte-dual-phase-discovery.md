@@ -19,6 +19,7 @@ last_synced: "2026-06-28"
 
 # M4: implement HELD2 Stage II electrolyte dual phase discovery
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/347
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

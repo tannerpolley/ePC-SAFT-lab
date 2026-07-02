@@ -18,6 +18,7 @@ last_synced: "2026-06-20"
 ---
 # M4: upgrade Gross 2002 Figure 8 to full LLE+VLE envelope replication
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/283
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

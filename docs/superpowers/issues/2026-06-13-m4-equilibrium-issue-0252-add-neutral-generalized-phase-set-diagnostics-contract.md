@@ -19,7 +19,7 @@ last_synced: "2026-06-13"
 
 # M4: add neutral generalized phase-set diagnostics contract
 
-**Mirror Retention:** Keep
+**Mirror Retention:** retain
 
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/252
 Parent Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189

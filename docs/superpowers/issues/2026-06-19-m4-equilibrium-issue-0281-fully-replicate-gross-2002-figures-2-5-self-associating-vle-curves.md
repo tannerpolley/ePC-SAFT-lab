@@ -18,6 +18,7 @@ last_synced: "2026-06-20"
 ---
 # M4: fully replicate Gross 2002 Figures 2-5 self-associating VLE curves
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/281
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

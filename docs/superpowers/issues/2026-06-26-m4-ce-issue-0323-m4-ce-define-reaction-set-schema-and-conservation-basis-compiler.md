@@ -1,5 +1,6 @@
 # M4 CE: define reaction-set schema and conservation-basis compiler
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/323
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** feature

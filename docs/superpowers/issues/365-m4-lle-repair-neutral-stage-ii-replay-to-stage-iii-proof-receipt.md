@@ -1,4 +1,6 @@
 # M4 LLE: repair neutral Stage II replay-to-Stage III proof receipt
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/365
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

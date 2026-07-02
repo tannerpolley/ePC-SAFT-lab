@@ -18,6 +18,7 @@ last_synced: "2026-06-20"
 ---
 # M4: fully replicate Gross 2002 Figures 6-7 supercritical-partner VLE curves
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/282
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

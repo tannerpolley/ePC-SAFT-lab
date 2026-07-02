@@ -1,5 +1,6 @@
 # M4 CE: create Cantera and Pope reference-oracle harness
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/327
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

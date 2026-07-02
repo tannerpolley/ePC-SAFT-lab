@@ -1,4 +1,6 @@
 # M4 LLE: govern electrolyte LLE certification
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/370
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

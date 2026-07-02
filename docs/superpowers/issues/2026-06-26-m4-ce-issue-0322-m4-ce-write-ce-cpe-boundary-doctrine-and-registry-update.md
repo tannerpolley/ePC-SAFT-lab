@@ -1,5 +1,6 @@
 # M4 CE: write CE/CPE boundary doctrine and registry update
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/322
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

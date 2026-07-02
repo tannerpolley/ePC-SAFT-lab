@@ -1,5 +1,6 @@
 # M4 CE: preserve caller seed rejection evidence
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/397
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

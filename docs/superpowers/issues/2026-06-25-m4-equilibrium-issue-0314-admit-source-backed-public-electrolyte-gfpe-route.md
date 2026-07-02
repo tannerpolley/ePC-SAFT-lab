@@ -19,6 +19,7 @@ last_synced: "2026-06-25"
 
 # M4: admit source-backed public electrolyte GFPE route
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/314
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

@@ -1,4 +1,6 @@
 # M4 PE: govern boundary-route certification
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/375
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

@@ -1,5 +1,6 @@
 # M4 CE: add retained artifact review digest
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/400
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task

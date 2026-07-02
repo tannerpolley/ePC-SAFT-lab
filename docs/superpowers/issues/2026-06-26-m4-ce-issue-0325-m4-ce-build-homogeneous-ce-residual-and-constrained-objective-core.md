@@ -1,5 +1,6 @@
 # M4 CE: build homogeneous CE residual and constrained objective core
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/325
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** feature

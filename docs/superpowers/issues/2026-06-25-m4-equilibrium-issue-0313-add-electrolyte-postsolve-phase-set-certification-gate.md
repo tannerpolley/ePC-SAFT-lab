@@ -19,6 +19,7 @@ last_synced: "2026-06-25"
 
 # M4: add electrolyte postsolve phase-set certification gate
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/313
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

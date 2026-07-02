@@ -1,4 +1,6 @@
 # M4 LLE: integrate reduced-electroneutral electrolyte residual blocks
+
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/371
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

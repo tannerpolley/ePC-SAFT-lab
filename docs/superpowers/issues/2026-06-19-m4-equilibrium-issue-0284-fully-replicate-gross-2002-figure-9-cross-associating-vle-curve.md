@@ -18,6 +18,7 @@ last_synced: "2026-06-20"
 ---
 # M4: fully replicate Gross 2002 Figure 9 cross-associating VLE curve
 
+**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/284
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

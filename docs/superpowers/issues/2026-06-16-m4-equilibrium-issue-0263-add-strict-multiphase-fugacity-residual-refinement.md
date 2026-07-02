@@ -19,7 +19,7 @@ last_synced: "2026-06-16"
 
 # M4: add strict multiphase fugacity residual refinement
 
-**Mirror Retention:** Keep
+**Mirror Retention:** retain
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/263
 **GitHub Milestone:** M4 - Equilibrium
