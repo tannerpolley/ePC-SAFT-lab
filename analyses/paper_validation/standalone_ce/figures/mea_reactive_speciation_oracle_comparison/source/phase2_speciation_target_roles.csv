@@ -21,7 +21,7 @@ cheq_0002,Jakobsen,20.0,0.3,0.11,CO2,balance_inferred,context_only,0.00149013986
 cheq_0002,Jakobsen,20.0,0.3,0.11,MEA,direct_positive,log_residual_target,0.1037539857046046
 cheq_0002,Jakobsen,20.0,0.3,0.11,MEAH+,direct_positive,log_residual_target,0.0081110610832105
 cheq_0002,Jakobsen,20.0,0.3,0.11,MEACOO-,direct_positive,log_residual_target,0.0104463638767211
-cheq_0002,Jakobsen,20.0,0.3,0.11,HCO3-,balance_inferred,context_only,0.0014267018301028
+cheq_0002,Jakobsen,20.0,0.3,0.11,HCO3-,direct_zero,absolute_upper_bound,1.2115987610778275e-06
 cheq_0002,Jakobsen,20.0,0.3,0.11,CO3^2-,direct_positive,log_residual_target,9.384703560061698e-05
 cheq_0002,Jakobsen,20.0,0.3,0.11,H3O+,balance_inferred,context_only,0.0039496986948146
 cheq_0002,Jakobsen,20.0,0.3,0.11,OH-,balance_inferred,context_only,9.999999999999998e-13
@@ -642,7 +642,7 @@ cheq_0071,Bottinger,80.0,0.3,0.336,CO2,balance_inferred,context_only,0.007265135
 cheq_0071,Bottinger,80.0,0.3,0.336,MEA,balance_inferred,context_only,0.0596852416800198
 cheq_0071,Bottinger,80.0,0.3,0.336,MEAH+,balance_inferred,context_only,0.0297312982544079
 cheq_0071,Bottinger,80.0,0.3,0.336,MEACOO-,direct_positive,log_residual_target,0.0337224982139986
-cheq_0071,Bottinger,80.0,0.3,0.336,HCO3-,direct_zero,absolute_upper_bound,1.1149175550751195e-07
+cheq_0071,Bottinger,80.0,0.3,0.336,HCO3-,direct_zero,absolute_upper_bound,1.1149175550751197e-07
 cheq_0071,Bottinger,80.0,0.3,0.336,CO3^2-,balance_inferred,context_only,0.0003864572643796
 cheq_0071,Bottinger,80.0,0.3,0.336,H3O+,balance_inferred,context_only,0.0047642259801055
 cheq_0071,Bottinger,80.0,0.3,0.336,OH-,balance_inferred,context_only,9.999999999999998e-13
