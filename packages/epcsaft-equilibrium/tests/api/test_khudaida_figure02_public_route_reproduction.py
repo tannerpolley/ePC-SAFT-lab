@@ -42,6 +42,7 @@ def test_khudaida_figure_02_public_route_artifacts_retain_model_or_blocker_evide
     model_by_tie: dict[str, set[str]] = {}
     converged_ties: set[str] = set()
     failed_ties: set[str] = set()
+    collapsed_ties: set[str] = set()
     for row in model_rows:
         model_by_tie.setdefault(row["tie_line"], set()).add(row["phase"])
         assert row["source"] == "epcsaft_public_electrolyte_lle"
@@ -71,6 +72,23 @@ def test_khudaida_figure_02_public_route_artifacts_retain_model_or_blocker_evide
         else:
             failed_ties.add(row["tie_line"])
             assert row["message"] != ""
+            if row["status"] == "collapsed_split":
+                collapsed_ties.add(row["tie_line"])
+                assert row["route_status"] == "production_accepted"
+                assert row["solver_status"] == "success"
+                assert row["application_status"] == "solve_succeeded"
+                assert row["postsolve_accepted"] == "True"
+                assert _finite(row["x_water"])
+                assert _finite(row["x_ethanol"])
+                assert _finite(row["x_isobutanol"])
+                assert _finite(row["x_nacl"])
+                assert _finite(row["beta"])
+                assert _finite(row["objective"])
+                assert _finite(row["phase_distance"])
+                assert (
+                    float(row["phase_distance"]) < KHUDAIDA_MIN_PHASE_DISTANCE
+                    or float(row["beta"]) < KHUDAIDA_MINOR_BETA_REVIEW
+                )
 
     assert model_by_tie == {str(tie): {"organic", "aqueous"} for tie in range(1, 9)}
 
@@ -81,8 +99,12 @@ def test_khudaida_figure_02_public_route_artifacts_retain_model_or_blocker_evide
     assert stat["source_point_count"] == "16"
     assert stat["model_point_count"] == "16"
     assert stat["accepted_model_count"] == str(2 * len(converged_ties))
-    assert _finite(stat["rmse"])
-    assert _finite(stat["max_abs_error"])
+    if stat["accepted_model_count"] == "0":
+        assert stat["rmse"] == ""
+        assert stat["max_abs_error"] == ""
+    else:
+        assert _finite(stat["rmse"])
+        assert _finite(stat["max_abs_error"])
     assert "formula-basis" in stat["score_basis"]
     if stat["pass"] == "True":
         assert stat["accepted_model_count"] == "16"
@@ -92,6 +114,14 @@ def test_khudaida_figure_02_public_route_artifacts_retain_model_or_blocker_evide
         assert stat["failed_tie_lines"] == ",".join(str(tie) for tie in range(1, 9))
         assert "objective=" in stat["failure_reasons"]
         assert "phase_distance=" in stat["failure_reasons"]
+        assert "collapsed_split" in stat["failure_reasons"]
+        assert "phase_distance_threshold=0.001" in stat["failure_reasons"]
+        assert "minor_beta_review_threshold=0.0001" in stat["failure_reasons"]
+        assert "root_cause=postsolve_acceptance" in stat["failure_reasons"]
+        assert "follow_up_issue=#338" in stat["failure_reasons"]
         assert failed_ties
-        for tie_line in failed_ties:
+        assert collapsed_ties == {"1", "2", "3", "4", "5", "8"}
+        for tie_line in collapsed_ties:
+            assert f"{tie_line}:collapsed_split;" in stat["failure_reasons"]
+        for tie_line in {"6", "7"}:
             assert f"{tie_line}:Native electrolyte LLE postsolve certification did not complete." in stat["failure_reasons"]
