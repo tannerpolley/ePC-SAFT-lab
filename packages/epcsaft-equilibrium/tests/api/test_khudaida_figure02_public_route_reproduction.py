@@ -7,6 +7,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 FIGURE_ROOT = REPO_ROOT / "analyses" / "paper_validation" / "2026_khudaida" / "figures" / "figure_02"
+KHUDAIDA_MIN_PHASE_DISTANCE = 1.0e-3
+KHUDAIDA_MINOR_BETA_REVIEW = 1.0e-4
 
 
 def _rows(path: Path) -> list[dict[str, str]]:
@@ -64,6 +66,8 @@ def test_khudaida_figure_02_public_route_artifacts_retain_model_or_blocker_evide
             assert _finite(row["beta"])
             assert _finite(row["objective"])
             assert _finite(row["phase_distance"])
+            assert float(row["phase_distance"]) >= KHUDAIDA_MIN_PHASE_DISTANCE
+            assert float(row["beta"]) >= KHUDAIDA_MINOR_BETA_REVIEW
         else:
             failed_ties.add(row["tie_line"])
             assert row["message"] != ""
