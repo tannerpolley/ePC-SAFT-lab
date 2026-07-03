@@ -14,7 +14,7 @@ source_spec: "docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-wit
 source_plan: "docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md"
 afk_hitl: "AFK"
 branch: codex/m6-khudaida-validation-reorg
-last_synced: "2026-07-02"
+last_synced: "2026-07-03"
 ---
 
 # M6 Khudaida 2026 paper validation with Figiel parameter provenance
@@ -66,7 +66,7 @@ the public package route; misses open or block on M4/M5 follow-up issues.
 
 ## Blocked By
 
-- None.
+- https://github.com/ePC-SAFT/ePC-SAFT/issues/428
 
 ## Blocking
 
