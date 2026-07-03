@@ -3,11 +3,10 @@ animation:
   gif: mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only.gif
   preview_png: mea_ce_eos_x_gamma_speciation_temperature_sweep_model_only_preview.png
   plotted_data: mea_ce_eos_x_gamma_speciation_temperature_sweep_animation_data.csv
-  frame_count: 81
+  frame_count: 5
   fps: 8
   temperature_range_C: [0, 80]
-  source_temperatures_C: [20, 40, 60, 80]
-  data_policy: model_only_no_literature_markers
-  interpolation: log_mole_fraction_linear_temperature_with_0_to_20C_extrapolation
+  data_policy: model_only_actual_ce_solves_no_literature_markers
+  temperature_policy: sparse_direct_reactive_speciation_solves_no_temperature_interpolation
 style:
   source: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py

@@ -1,0 +1,31 @@
+{
+  "schema_version": "epcsaft.standalone_ce.mea_eos_x_gamma_animation_solve.v1",
+  "activity_basis": "a_i = gamma_i x_i",
+  "temperature_count": 5,
+  "loading_count": 4,
+  "solve_count": 20,
+  "accepted_solve_count": 20,
+  "all_solves_accepted": true,
+  "animation_data_artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_animation_data.csv",
+  "solve_summary_artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_solve_summary.csv",
+  "temperature_grid_C": [
+    0.0,
+    20.0,
+    40.0,
+    60.0,
+    80.0
+  ],
+  "loading_grid": [
+    0.1,
+    0.3,
+    0.5,
+    0.7
+  ],
+  "max_attempt_count": 2,
+  "initialization_policy": "each plotted point is a direct reactive_speciation solve; the retained Phase 2 activity curve provides the first seed candidate, and a previous accepted direct CE solution at the same loading is tried only when available",
+  "solver_options": {
+    "max_iterations": 600,
+    "tolerance": 1e-07,
+    "timeout_seconds": 90.0
+  }
+}

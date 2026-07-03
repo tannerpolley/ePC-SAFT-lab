@@ -18,6 +18,7 @@ commands:
     - uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete
   mea_ce_oracle_comparison:
     - uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py
+    - uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_animation_solve_data.py
     - uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py
 validation_families:
   - analytic_ideal
@@ -63,6 +64,10 @@ outputs:
     kind: retained_ce_activity_speciation_animation_preview
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_animation_data.csv
     kind: retained_ce_activity_speciation_animation_data
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_solve_summary.csv
+    kind: retained_ce_activity_speciation_animation_solve_summary
+  - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_eos_x_gamma_speciation_temperature_sweep_solve_summary.json
+    kind: retained_ce_activity_speciation_animation_solve_report
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv
     kind: retained_ce_seed_policy_audit
   - path: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv
