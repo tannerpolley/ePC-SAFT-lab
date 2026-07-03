@@ -32,7 +32,8 @@ scripts/fits/
 scripts/paper_validation/
 docs/latex/out/
 docs/latex/references.bib
-.mplgallery/
+.mplgallery/*
+!.mplgallery/manifest.yaml
 graphify-out/
 **/graphify-out/
 data/MIAC/*/plot_fits/

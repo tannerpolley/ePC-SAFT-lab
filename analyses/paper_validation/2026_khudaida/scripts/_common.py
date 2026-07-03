@@ -58,6 +58,8 @@ from scripts.data.paper_validation_parameters import paper_validation_parameter_
 
 P_REF = 1.0e5
 MODEL_SOLVE_MAX_ITERATIONS = 180
+KHUDAIDA_MIN_PHASE_DISTANCE = 1.0e-3
+KHUDAIDA_MINOR_BETA_REVIEW = 1.0e-4
 PARAMETER_DATASET = paper_validation_parameter_path("2026_Khudaida")
 SPECIES = ["H2O", "Ethanol", "Butanol", "Na+", "Cl-"]
 FORMULA_SPECIES = ["H2O", "Ethanol", "Isobutanol", "NaCl"]
@@ -1056,6 +1058,64 @@ def _parse_bool(value) -> bool:
     return str(value or "").strip().lower() in {"true", "1", "yes"}
 
 
+def _finite_model_phases(row: dict) -> bool:
+    return np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
+
+
+def _formula_phase_distance(row: dict) -> float:
+    if not _finite_model_phases(row):
+        return np.nan
+    return float(np.max(np.abs(np.asarray(row["organic_formula"]) - np.asarray(row["aqueous_formula"]))))
+
+
+def _model_phase_distance(row: dict) -> float:
+    phase_distance = _finite_float_or_nan(row.get("phase_distance", row.get("split_norm")))
+    if np.isfinite(phase_distance):
+        return phase_distance
+    return _formula_phase_distance(row)
+
+
+def _minor_beta(row: dict) -> float:
+    beta_values = (_finite_float_or_nan(row.get("beta_organic")), _finite_float_or_nan(row.get("beta_aqueous")))
+    finite = [value for value in beta_values if np.isfinite(value)]
+    return min(finite) if finite else np.nan
+
+
+def _collapsed_split_failure(row: dict) -> dict[str, str | float] | None:
+    status = str(row.get("status") or "").strip().lower()
+    if status != "collapsed_split" and not bool(row.get("converged")):
+        return None
+    if not _finite_model_phases(row):
+        return None
+    phase_distance = _model_phase_distance(row)
+    formula_distance = _formula_phase_distance(row)
+    minor_beta = _minor_beta(row)
+    collapsed = np.isfinite(phase_distance) and phase_distance < KHUDAIDA_MIN_PHASE_DISTANCE
+    duplicate_formula = np.isfinite(formula_distance) and formula_distance < KHUDAIDA_MIN_PHASE_DISTANCE
+    trace_minor_phase = np.isfinite(minor_beta) and minor_beta < KHUDAIDA_MINOR_BETA_REVIEW
+    if status != "collapsed_split" and not (collapsed or duplicate_formula or trace_minor_phase):
+        return None
+    return {
+        "failure_kind": "collapsed_split",
+        "root_cause": "postsolve_acceptance",
+        "message": "Public electrolyte_lle returned a collapsed split under the Khudaida model-row contract.",
+        "phase_distance": phase_distance,
+        "formula_phase_distance": formula_distance,
+        "phase_distance_threshold": KHUDAIDA_MIN_PHASE_DISTANCE,
+        "minor_beta": minor_beta,
+        "minor_beta_review_threshold": KHUDAIDA_MINOR_BETA_REVIEW,
+        "follow_up_issue": "#338",
+    }
+
+
+def _accepted_model_rows(rows: list[dict]) -> list[dict]:
+    return [
+        row
+        for row in rows
+        if bool(row.get("converged")) and _finite_model_phases(row) and _collapsed_split_failure(row) is None
+    ]
+
+
 def _load_model_rows_from_csv(path: Path) -> list[dict]:
     grouped: dict[int, dict] = {}
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
@@ -1174,6 +1234,10 @@ def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
     out = []
     for row in rows:
         feed = np.asarray(row.get("feed_formula", np.full(4, np.nan)), dtype=float)
+        collapse = _collapsed_split_failure(row)
+        model_accepted = bool(row["converged"]) and collapse is None
+        status = "collapsed_split" if collapse is not None else row.get("status", "")
+        message = str(collapse["message"]) if collapse is not None else row.get("message", "")
         for phase_name, x, beta in (
             ("organic", row["organic_formula"], row["beta_organic"]),
             ("aqueous", row["aqueous_formula"], row["beta_aqueous"]),
@@ -1191,13 +1255,13 @@ def _model_rows_for_csv(rows: list[dict]) -> list[dict]:
                     "beta": float(beta),
                     "residual_norm": _csv_float(row["residual_norm"]),
                     "objective": _csv_float(row["objective"]),
-                    "converged": bool(row["converged"]),
+                    "converged": model_accepted,
                     "feed_x_water": _csv_float(feed[0]),
                     "feed_x_ethanol": _csv_float(feed[1]),
                     "feed_x_isobutanol": _csv_float(feed[2]),
                     "feed_x_nacl": _csv_float(feed[3]),
-                    "status": row.get("status", ""),
-                    "message": row.get("message", ""),
+                    "status": status,
+                    "message": message,
                     "route_status": row.get("route_status", ""),
                     "solver_status": row.get("solver_status", ""),
                     "application_status": row.get("application_status", ""),
@@ -1348,11 +1412,7 @@ def _summary_passes(summary: dict) -> bool:
 
 
 def _fit_error_metrics(exp_rows: list[dict], model_rows: list[dict]) -> dict[str, float | str]:
-    valid = [
-        row
-        for row in model_rows
-        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
-    ]
+    valid = _accepted_model_rows(model_rows)
     if not valid:
         return {"rmse": "", "max_abs_error": ""}
     exp_map = {row["tie_line"]: row for row in exp_rows}
@@ -1375,9 +1435,25 @@ def _model_failure_summary(model_rows: list[dict], *, include_objectives: bool) 
     reasons: list[str] = []
     for row in model_rows:
         tie_line = str(row["tie_line"])
-        finite_phases = np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
+        finite_phases = _finite_model_phases(row)
+        collapse = _collapsed_split_failure(row)
         reason = ""
-        if not bool(row.get("converged")):
+        if collapse is not None:
+            reason = (
+                "collapsed_split;"
+                f"phase_distance={_short_float(collapse['phase_distance'])};"
+                f"phase_distance_threshold={KHUDAIDA_MIN_PHASE_DISTANCE:.6g};"
+                f"minor_beta={_short_float(collapse['minor_beta'])};"
+                f"minor_beta_review_threshold={KHUDAIDA_MINOR_BETA_REVIEW:.6g};"
+                f"objective={_short_float(row.get('objective'))};"
+                f"route_status={row.get('route_status', '')};"
+                f"solver_status={row.get('solver_status', '')};"
+                f"application_status={row.get('application_status', '')};"
+                f"postsolve_accepted={bool(row.get('postsolve_accepted', False))};"
+                f"root_cause={collapse['root_cause']};"
+                f"follow_up_issue={collapse['follow_up_issue']}"
+            )
+        elif not bool(row.get("converged")):
             reason = row.get("message") or "public electrolyte_lle route did not converge"
         elif not finite_phases:
             reason = row.get("message") or "public electrolyte_lle route produced no finite model phases"
@@ -1542,6 +1618,13 @@ def _write_lle_contract_outputs(
             {"section": "basis", "key": "composition", "value": "salt-free ternary projection with NaCl retained in source/model CSV rows", "unit": "", "notes": ""},
             {"section": "model", "key": "route", "value": "public electrolyte_lle", "unit": "", "notes": "package rows are retained from the latest public electrolyte_lle regeneration; set KHUDAIDA_FORCE_RECOMPUTE=1 to refresh"},
             {
+                "section": "model",
+                "key": "collapsed_split_contract",
+                "value": "failed_model_row",
+                "unit": "",
+                "notes": "Rows below phase_distance 0.001 or minor beta 0.0001 are retained as diagnostics but excluded from accepted model counts; solver success with postsolve_accepted=True is classified as root_cause=postsolve_acceptance, with #338 retaining fitted-parameter/noncollapsed-branch follow-up ownership.",
+            },
+            {
                 "section": "parameters",
                 "key": "parameter_dataset",
                 "value": PARAMETER_DATASET.relative_to(REPO_ROOT).as_posix(),
@@ -1557,11 +1640,7 @@ def _write_lle_contract_outputs(
             },
         ],
     )
-    valid = [
-        row
-        for row in model_rows
-        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
-    ]
+    valid = _accepted_model_rows(model_rows)
     summary = _aad_summary(exp_rows, model_rows)
     metrics = _fit_error_metrics(exp_rows, model_rows)
     failures = _model_failure_summary(model_rows, include_objectives=not _summary_passes(summary))
@@ -1630,11 +1709,7 @@ def plot_lle_figure(fig_dir: Path, figure_number: int, temperature_k: float, sal
     fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.18)
     _draw_ternary_axes(ax)
     _plot_tie_lines(ax, exp_rows, BLACK, "o", "Exp.", linestyle="-")
-    valid_model_rows = [
-        row
-        for row in model_rows
-        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
-    ]
+    valid_model_rows = _accepted_model_rows(model_rows)
     _plot_tie_lines(ax, valid_model_rows, RED, "o", "model ePC-SAFT", linestyle="--")
     _plot_formula_series(ax, paper_rows, "organic_formula", BLUE, "s", "paper ePC-SAFT", linestyle="-")
     _plot_feed_points(ax, feed_rows, label="Feed")
@@ -2217,11 +2292,7 @@ def _write_supporting_contract_outputs(fig_dir: Path, supporting_number: int, pa
             f"analyses/paper_validation/2026_khudaida/figures/{figure_id}/source/source_points.csv",
         ):
             source_rows.append({**row, "series": f"panel_{panel_id}_{row['series']}"})
-        valid = [
-            row
-            for row in model_rows
-            if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
-        ]
+        valid = _accepted_model_rows(model_rows)
         summary = _aad_summary(exp_rows, model_rows)
         metrics = _fit_error_metrics(exp_rows, model_rows)
         failures = _model_failure_summary(model_rows, include_objectives=not _summary_passes(summary))
@@ -2289,7 +2360,7 @@ def plot_supporting_figure_grid(fig_dir: Path, figure_number: int) -> None:
             if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
         ]
         _plot_tie_lines(ax, panel["experimental"], BLACK, "o", "Exp.", linestyle="-")
-        _plot_tie_lines(ax, model_rows, RED, "o", "package ePC-SAFT", linestyle="--")
+        _plot_tie_lines(ax, _accepted_model_rows(model_rows), RED, "o", "package ePC-SAFT", linestyle="--")
         _plot_formula_series(ax, panel["paper"], "organic_formula", BLUE, "s", "paper ePC-SAFT", linestyle="-")
         _plot_feed_points(ax, panel["feed"], label="Feed", marker="^")
         ax.set_title(f"({panel['panel']}) {panel['temperature_K']:.2f} K", fontsize=10)
@@ -2306,11 +2377,7 @@ def plot_supporting_figure_grid(fig_dir: Path, figure_number: int) -> None:
 
 
 def _aad_summary(exp_rows: list[dict], model_rows: list[dict]) -> dict:
-    valid = [
-        row
-        for row in model_rows
-        if np.all(np.isfinite(row["organic_formula"])) and np.all(np.isfinite(row["aqueous_formula"]))
-    ]
+    valid = _accepted_model_rows(model_rows)
     if not valid:
         nan4 = (np.nan, np.nan, np.nan, np.nan)
         return {"organic": nan4, "aqueous": nan4, "grand": np.nan}

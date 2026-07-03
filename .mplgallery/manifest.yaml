@@ -1,0 +1,8 @@
+plots:
+  - id: khudaida_2026_figure_02
+    title: Khudaida 2026 Figure 2 293.15 K 5 wt% NaCl LLE
+    svg_path: analyses/paper_validation/2026_khudaida/figures/figure_02/results/figure_02.svg
+    png_path: analyses/paper_validation/2026_khudaida/figures/figure_02/results/figure_02.png
+    pdf_path: analyses/paper_validation/2026_khudaida/figures/figure_02/results/figure_02.pdf
+    plotted_data: analyses/paper_validation/2026_khudaida/figures/figure_02/results/plotted_data.csv
+    source_data: analyses/paper_validation/2026_khudaida/figures/figure_02/source/source_points.csv

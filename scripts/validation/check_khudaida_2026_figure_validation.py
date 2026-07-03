@@ -4,6 +4,7 @@ import argparse
 import csv
 import importlib.util
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIGURE_ROOT = REPO_ROOT / "analyses" / "paper_validation" / "2026_khudaida" / "figures"
 MANIFEST_PATH = REPO_ROOT / ".mplgallery" / "manifest.yaml"
 EXPECTED_FIGURES = tuple(f"figure_{idx:02d}" for idx in range(1, 13))
+FORMULA_COMPONENTS = ("x_water", "x_ethanol", "x_isobutanol", "x_nacl")
+KHUDAIDA_MIN_PHASE_DISTANCE = 1.0e-3
+KHUDAIDA_MINOR_BETA_REVIEW = 1.0e-4
 
 
 def _load_contract_checker():
@@ -42,6 +46,80 @@ def _truthy(value: str | bool | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "pass", "passed"}
 
 
+def _finite_float(value: str | None) -> float:
+    try:
+        parsed = float(str(value or "").strip())
+    except ValueError:
+        return math.nan
+    return parsed if math.isfinite(parsed) else math.nan
+
+
+def _short_float(value: float) -> str:
+    return f"{value:.6g}" if math.isfinite(value) else ""
+
+
+def _phase_rows(tie_rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
+    return {row.get("phase", ""): row for row in tie_rows}
+
+
+def _components_finite(tie_rows: list[dict[str, str]]) -> bool:
+    return all(
+        math.isfinite(_finite_float(row.get(component)))
+        for row in tie_rows
+        for component in FORMULA_COMPONENTS
+    )
+
+
+def _component_distance(tie_rows: list[dict[str, str]]) -> float:
+    phases = _phase_rows(tie_rows)
+    organic = phases.get("organic")
+    aqueous = phases.get("aqueous")
+    if organic is None or aqueous is None:
+        return math.nan
+    deltas = [
+        abs(_finite_float(organic.get(component)) - _finite_float(aqueous.get(component)))
+        for component in FORMULA_COMPONENTS
+    ]
+    return max(deltas) if all(math.isfinite(delta) for delta in deltas) else math.nan
+
+
+def _phase_distance(tie_rows: list[dict[str, str]]) -> float:
+    distances = [_finite_float(row.get("phase_distance")) for row in tie_rows]
+    finite = [distance for distance in distances if math.isfinite(distance)]
+    return min(finite) if finite else _component_distance(tie_rows)
+
+
+def _minor_beta(tie_rows: list[dict[str, str]]) -> float:
+    beta_values = [_finite_float(row.get("beta")) for row in tie_rows]
+    finite = [value for value in beta_values if math.isfinite(value)]
+    return min(finite) if finite else math.nan
+
+
+def _collapsed_split_failure(tie_rows: list[dict[str, str]]) -> dict[str, str] | None:
+    if not _components_finite(tie_rows):
+        return None
+    status_collapsed = any(str(row.get("status", "")).strip().lower() == "collapsed_split" for row in tie_rows)
+    converged = all(_truthy(row.get("converged")) for row in tie_rows)
+    phase_distance = _phase_distance(tie_rows)
+    component_distance = _component_distance(tie_rows)
+    minor_beta = _minor_beta(tie_rows)
+    collapsed = math.isfinite(phase_distance) and phase_distance < KHUDAIDA_MIN_PHASE_DISTANCE
+    duplicate_formula = math.isfinite(component_distance) and component_distance < KHUDAIDA_MIN_PHASE_DISTANCE
+    trace_minor_phase = math.isfinite(minor_beta) and minor_beta < KHUDAIDA_MINOR_BETA_REVIEW
+    if not status_collapsed and not (converged and (collapsed or duplicate_formula or trace_minor_phase)):
+        return None
+    return {
+        "failure_kind": "collapsed_split",
+        "root_cause": "postsolve_acceptance",
+        "phase_distance": _short_float(phase_distance),
+        "component_distance": _short_float(component_distance),
+        "phase_distance_threshold": f"{KHUDAIDA_MIN_PHASE_DISTANCE:.6g}",
+        "minor_beta": _short_float(minor_beta),
+        "minor_beta_review_threshold": f"{KHUDAIDA_MINOR_BETA_REVIEW:.6g}",
+        "follow_up_issue": "#338",
+    }
+
+
 def _model_row_failures(root: Path) -> list[dict[str, str]]:
     model_path = root / "results" / "data" / "model_tielines.csv"
     if not model_path.is_file():
@@ -55,25 +133,35 @@ def _model_row_failures(root: Path) -> list[dict[str, str]]:
     for tie_line, tie_rows in sorted(grouped.items(), key=lambda item: int(item[0] or 0)):
         phases = sorted(row.get("phase", "") for row in tie_rows)
         converged = all(_truthy(row.get("converged")) for row in tie_rows)
-        finite_components = all(
-            row.get(component, "") not in {"", "nan", "NaN"}
-            for row in tie_rows
-            for component in ("x_water", "x_ethanol", "x_isobutanol", "x_nacl")
-        )
-        if converged and finite_components:
+        finite_components = _components_finite(tie_rows)
+        collapsed = _collapsed_split_failure(tie_rows)
+        if converged and finite_components and collapsed is None:
             continue
         first = tie_rows[0]
+        failure_kind = "collapsed_split" if collapsed is not None else "solver_failure"
         failures.append(
             {
                 "tie_line": tie_line,
                 "phases": ",".join(phases),
                 "converged": str(converged),
+                "failure_kind": failure_kind,
+                "root_cause": collapsed.get("root_cause", "") if collapsed is not None else "",
                 "message": first.get("message", ""),
                 "route_status": first.get("route_status", ""),
                 "solver_status": first.get("solver_status", ""),
                 "application_status": first.get("application_status", ""),
                 "objective": first.get("objective", ""),
-                "phase_distance": first.get("phase_distance", ""),
+                "phase_distance": collapsed.get("phase_distance", first.get("phase_distance", ""))
+                if collapsed is not None
+                else first.get("phase_distance", ""),
+                "component_distance": collapsed.get("component_distance", "") if collapsed is not None else "",
+                "phase_distance_threshold": collapsed.get("phase_distance_threshold", "") if collapsed is not None else "",
+                "minor_beta": collapsed.get("minor_beta", "") if collapsed is not None else "",
+                "minor_beta_review_threshold": collapsed.get("minor_beta_review_threshold", "")
+                if collapsed is not None
+                else "",
+                "follow_up_issue": collapsed.get("follow_up_issue", "") if collapsed is not None else "",
+                "postsolve_accepted": first.get("postsolve_accepted", ""),
             }
         )
     return failures
