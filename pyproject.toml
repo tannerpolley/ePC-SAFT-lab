@@ -42,12 +42,18 @@ members = [
 ]
 
 [tool.pytest.ini_options]
+testpaths = [
+    "tests",
+    "packages/epcsaft/tests",
+    "packages/epcsaft-equilibrium/tests",
+    "packages/epcsaft-regression/tests",
+]
 pythonpath = [
     "packages/epcsaft/src",
     "packages/epcsaft-equilibrium/src",
     "packages/epcsaft-regression/src",
 ]
-addopts = "-ra -p no:cacheprovider"
+addopts = "-ra -p no:cacheprovider --import-mode=importlib"
 markers = [
     "native_contract: fast native metadata/result-contract tests that should not run broad solver route suites",
     "equilibrium_native_transition: equilibrium-extension native tests kept on the provider native bridge until native targets split",

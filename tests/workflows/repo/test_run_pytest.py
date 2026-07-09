@@ -96,6 +96,43 @@ def test_all_shortcut_is_the_explicit_exhaustive_pytest_route():
     ]
 
 
+def test_bare_pytest_collection_matches_all_wrapper_ordered_node_ids():
+    repo_root = Path(__file__).resolve().parents[3]
+
+    bare_collection = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    wrapper_collection = subprocess.run(
+        [sys.executable, "run_pytest.py", "--all", "--collect-only", "-q"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    def ordered_node_ids(output: str) -> list[str]:
+        return [
+            line.strip()
+            for line in output.splitlines()
+            if "::" in line and line.strip().split("::", 1)[0].endswith(".py")
+        ]
+
+    bare_node_ids = ordered_node_ids(bare_collection.stdout)
+    wrapper_node_ids = ordered_node_ids(wrapper_collection.stdout)
+
+    assert bare_collection.returncode == 0, bare_collection.stdout + bare_collection.stderr
+    assert wrapper_collection.returncode == 0, wrapper_collection.stdout + wrapper_collection.stderr
+    assert bare_node_ids
+    assert wrapper_node_ids
+    assert all(not node_id.startswith("analyses/") for node_id in bare_node_ids)
+    assert all(not node_id.startswith("analyses/") for node_id in wrapper_node_ids)
+    assert bare_node_ids == wrapper_node_ids
+
+
 def test_validate_project_modes_route_to_standard_validation_bundles():
     assert validate_project.CHECK_COMMANDS == {
         name: capability_evidence.validation_lane_commands(name) for name in capability_evidence.VALIDATION_LANES

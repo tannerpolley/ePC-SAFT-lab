@@ -37,7 +37,7 @@ python scripts/dev/validate_project.py confidence`` before release or broad
 runtime claims when extra native runtime contracts should be included.
 The current development and CI smoke baseline is Python 3.13, while ``pyproject.toml`` still declares package compatibility with Python ``>=3.9``.
 
-Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` also works, but the wrapper uses a per-run pytest temp directory that is safer for parallel local runs.
+Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` also works, but the wrapper uses a per-run pytest temp directory that is safer for parallel local runs. Bare root collection and ``run_pytest.py --all`` collect the same ordered test nodes from ``tests`` and the three package-owned test roots. Pytest uses importlib import mode so repeated test-module basenames remain package-local. Analysis tests under ``analyses/`` are deliberately outside that default collection universe and run only when explicitly targeted by their owning workflow.
 
 For a checkout copied from Windows, inspect ignored native/cache artifacts with
 ``scripts/dev/clean_transferred_artifacts.sh --dry-run`` before deleting them
