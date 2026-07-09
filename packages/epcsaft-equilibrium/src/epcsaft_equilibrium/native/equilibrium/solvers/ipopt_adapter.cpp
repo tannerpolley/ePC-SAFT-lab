@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cmath>
 #include <exception>
 #include <limits>
@@ -12,9 +13,13 @@
 #ifdef EPCSAFT_HAS_IPOPT
 #if __has_include(<coin-or/IpIpoptApplication.hpp>)
 #include <coin-or/IpIpoptApplication.hpp>
+#include <coin-or/IpIpoptCalculatedQuantities.hpp>
+#include <coin-or/IpIpoptData.hpp>
 #include <coin-or/IpTNLP.hpp>
 #elif __has_include(<IpIpoptApplication.hpp>)
 #include <IpIpoptApplication.hpp>
+#include <IpIpoptCalculatedQuantities.hpp>
+#include <IpIpoptData.hpp>
 #include <IpTNLP.hpp>
 #else
 #error "EPCSAFT_HAS_IPOPT is enabled, but Ipopt C++ headers were not found."
@@ -304,14 +309,6 @@ double vector_max_or_zero(const std::vector<double>& values) {
     return *std::max_element(values.begin(), values.end());
 }
 
-double vector_abs_max_or_zero(const std::vector<double>& values) {
-    double out = 0.0;
-    for (double value : values) {
-        out = std::max(out, std::abs(value));
-    }
-    return out;
-}
-
 double scale_at(const std::vector<double>& scaling, std::size_t index) {
     return scaling.empty() ? 1.0 : scaling[index];
 }
@@ -442,8 +439,6 @@ std::string solver_status_name(Ipopt::SolverReturn status) {
             return "max_iterations_exceeded";
         case Ipopt::CPUTIME_EXCEEDED:
             return "cpu_time_exceeded";
-        case Ipopt::WALLTIME_EXCEEDED:
-            return "wall_time_exceeded";
         case Ipopt::STOP_AT_TINY_STEP:
             return "tiny_step_detected";
         case Ipopt::STOP_AT_ACCEPTABLE_POINT:
@@ -497,8 +492,6 @@ std::string application_status_name(Ipopt::ApplicationReturnStatus status) {
             return "feasible_point_found";
         case Ipopt::Maximum_CpuTime_Exceeded:
             return "maximum_cpu_time_exceeded";
-        case Ipopt::Maximum_WallTime_Exceeded:
-            return "maximum_wall_time_exceeded";
         case Ipopt::Not_Enough_Degrees_Of_Freedom:
             return "not_enough_degrees_of_freedom";
         case Ipopt::Invalid_Problem_Definition:
@@ -588,6 +581,7 @@ public:
             ipopt_unscaled_constraint_violation_tolerance(options_, scaling_);
         result_.diagnostics_double["dual_infeasibility_tolerance"] = options_.dual_infeasibility_tolerance;
         result_.diagnostics_double["complementarity_tolerance"] = options_.complementarity_tolerance;
+        result_.diagnostics_double["max_wall_time_seconds"] = options_.max_wall_time_seconds;
         result_.diagnostics_double["bound_push"] = options_.bound_push;
         result_.diagnostics_double["bound_frac"] = options_.bound_frac;
         result_.diagnostics_double["variable_scaling_min"] = vector_min_or_zero(scaling_.variables);
@@ -959,6 +953,15 @@ public:
     ) override {
         (void)d_norm;
         capture_scaled_violations(ip_data, ip_cq);
+        const double elapsed_seconds = std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - solve_started_at_
+        ).count();
+        result_.diagnostics_double["wall_time_elapsed_seconds"] = elapsed_seconds;
+        if (options_.max_wall_time_seconds > 0.0 && elapsed_seconds >= options_.max_wall_time_seconds) {
+            wall_time_limit_reached_ = true;
+            result_.diagnostics_bool["wall_time_limit_reached"] = true;
+            return false;
+        }
         result_.diagnostics_int["iteration_count"] = static_cast<int>(iter);
         const int limit = std::max(0, options_.iteration_history_limit);
         if (limit > 0) {
@@ -994,10 +997,9 @@ public:
         const Ipopt::IpoptData* ip_data,
         Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
-        (void)ip_data;
-        (void)ip_cq;
+        capture_scaled_violations(ip_data, ip_cq);
         result_.solver_ran = true;
-        result_.solver_status = solver_status_name(status);
+        result_.solver_status = wall_time_limit_reached_ ? "wall_time_exceeded" : solver_status_name(status);
         result_.solved = status == Ipopt::SUCCESS;
         result_.acceptable = status == Ipopt::STOP_AT_ACCEPTABLE_POINT;
         result_.feasible_point = status == Ipopt::FEASIBLE_POINT_FOUND;
@@ -1103,41 +1105,9 @@ private:
         if (ip_data == nullptr || ip_cq == nullptr) {
             return;
         }
-        const int variable_count = problem_.variable_count();
-        const int constraint_count = problem_.constraint_count();
-        std::vector<double> lower_violation(static_cast<std::size_t>(variable_count), 0.0);
-        std::vector<double> upper_violation(static_cast<std::size_t>(variable_count), 0.0);
-        std::vector<double> lower_complementarity(static_cast<std::size_t>(variable_count), 0.0);
-        std::vector<double> upper_complementarity(static_cast<std::size_t>(variable_count), 0.0);
-        std::vector<double> lagrangian_gradient(static_cast<std::size_t>(variable_count), 0.0);
-        std::vector<double> constraint_violation(static_cast<std::size_t>(constraint_count), 0.0);
-        std::vector<double> constraint_complementarity(static_cast<std::size_t>(constraint_count), 0.0);
-        const bool ok = get_curr_violations(
-            ip_data,
-            ip_cq,
-            true,
-            variable_count,
-            lower_violation.data(),
-            upper_violation.data(),
-            lower_complementarity.data(),
-            upper_complementarity.data(),
-            lagrangian_gradient.data(),
-            constraint_count,
-            constraint_violation.data(),
-            constraint_complementarity.data()
-        );
-        if (!ok) {
-            return;
-        }
-        ipopt_scaled_constraint_violation_inf_norm_ = vector_abs_max_or_zero(constraint_violation);
-        ipopt_scaled_stationarity_inf_norm_ = vector_abs_max_or_zero(lagrangian_gradient);
-        ipopt_scaled_complementarity_inf_norm_ = std::max(
-            std::max(
-                vector_abs_max_or_zero(lower_complementarity),
-                vector_abs_max_or_zero(upper_complementarity)
-            ),
-            vector_abs_max_or_zero(constraint_complementarity)
-        );
+        ipopt_scaled_constraint_violation_inf_norm_ = ip_cq->curr_nlp_constraint_violation(Ipopt::NORM_MAX);
+        ipopt_scaled_stationarity_inf_norm_ = ip_cq->curr_dual_infeasibility(Ipopt::NORM_MAX);
+        ipopt_scaled_complementarity_inf_norm_ = ip_cq->curr_complementarity(0.0, Ipopt::NORM_MAX);
         scaled_violation_metrics_available_ = true;
     }
 
@@ -1185,6 +1155,8 @@ private:
     double ipopt_scaled_constraint_violation_inf_norm_ = 0.0;
     double ipopt_scaled_stationarity_inf_norm_ = 0.0;
     double ipopt_scaled_complementarity_inf_norm_ = 0.0;
+    std::chrono::steady_clock::time_point solve_started_at_ = std::chrono::steady_clock::now();
+    bool wall_time_limit_reached_ = false;
     IpoptSolveResult result_;
 };
 #endif
@@ -1291,56 +1263,90 @@ IpoptSolveResult solve_ipopt_nlp(
     throw SolutionError("Native Ipopt adapter requires a build configured with EPCSAFT_ENABLE_IPOPT=ON.");
 #else
     Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
-    app->Options()->SetIntegerValue("print_level", normalized_options.print_level);
-    app->Options()->SetStringValue("sb", "yes");
-    app->Options()->SetIntegerValue("max_iter", normalized_options.max_iterations);
-    app->Options()->SetNumericValue("tol", normalized_options.tolerance);
-    app->Options()->SetNumericValue("acceptable_tol", normalized_options.acceptable_tolerance);
-    app->Options()->SetIntegerValue(
-        "acceptable_iter",
-        profile_acceptable_iteration_limit(normalized_options.option_profile)
+    const auto require_option = [](bool accepted, const std::string& name) {
+        if (!accepted) {
+            throw SolutionError("Native Ipopt adapter requires unsupported option '" + name + "'.");
+        }
+    };
+    require_option(app->Options()->SetIntegerValue("print_level", normalized_options.print_level), "print_level");
+    require_option(app->Options()->SetStringValue("sb", "yes"), "sb");
+    require_option(app->Options()->SetIntegerValue("max_iter", normalized_options.max_iterations), "max_iter");
+    require_option(app->Options()->SetNumericValue("tol", normalized_options.tolerance), "tol");
+    require_option(
+        app->Options()->SetNumericValue("acceptable_tol", normalized_options.acceptable_tolerance),
+        "acceptable_tol"
+    );
+    require_option(
+        app->Options()->SetIntegerValue(
+            "acceptable_iter",
+            profile_acceptable_iteration_limit(normalized_options.option_profile)
+        ),
+        "acceptable_iter"
     );
     const NlpScaling problem_scaling = problem.scaling();
-    app->Options()->SetNumericValue(
-        "constr_viol_tol",
-        ipopt_unscaled_constraint_violation_tolerance(normalized_options, problem_scaling)
+    require_option(
+        app->Options()->SetNumericValue(
+            "constr_viol_tol",
+            ipopt_unscaled_constraint_violation_tolerance(normalized_options, problem_scaling)
+        ),
+        "constr_viol_tol"
     );
-    app->Options()->SetNumericValue("dual_inf_tol", normalized_options.dual_infeasibility_tolerance);
-    app->Options()->SetNumericValue("compl_inf_tol", normalized_options.complementarity_tolerance);
-    app->Options()->SetStringValue("jacobian_approximation", "exact");
-    app->Options()->SetStringValue("gradient_approximation", "exact");
-    app->Options()->SetNumericValue("bound_relax_factor", 0.0);
-    app->Options()->SetStringValue("honor_original_bounds", "yes");
+    require_option(
+        app->Options()->SetNumericValue("dual_inf_tol", normalized_options.dual_infeasibility_tolerance),
+        "dual_inf_tol"
+    );
+    require_option(
+        app->Options()->SetNumericValue("compl_inf_tol", normalized_options.complementarity_tolerance),
+        "compl_inf_tol"
+    );
+    require_option(app->Options()->SetStringValue("jacobian_approximation", "exact"), "jacobian_approximation");
+    require_option(app->Options()->SetNumericValue("bound_relax_factor", 0.0), "bound_relax_factor");
+    require_option(app->Options()->SetStringValue("honor_original_bounds", "yes"), "honor_original_bounds");
     if (normalized_options.bound_push > 0.0) {
-        app->Options()->SetNumericValue("bound_push", normalized_options.bound_push);
+        require_option(app->Options()->SetNumericValue("bound_push", normalized_options.bound_push), "bound_push");
     }
     if (normalized_options.bound_frac > 0.0) {
-        app->Options()->SetNumericValue("bound_frac", normalized_options.bound_frac);
+        require_option(app->Options()->SetNumericValue("bound_frac", normalized_options.bound_frac), "bound_frac");
     }
     if (selected_hessian_mode == "limited-memory") {
-        app->Options()->SetStringValue("hessian_approximation", "limited-memory");
+        require_option(
+            app->Options()->SetStringValue("hessian_approximation", "limited-memory"),
+            "hessian_approximation"
+        );
     }
     if (normalized_options.linear_solver != "auto") {
-        app->Options()->SetStringValue("linear_solver", normalized_options.linear_solver);
+        require_option(
+            app->Options()->SetStringValue("linear_solver", normalized_options.linear_solver),
+            "linear_solver"
+        );
     }
-    app->Options()->SetStringValue("nlp_scaling_method", "user-scaling");
+    require_option(app->Options()->SetStringValue("nlp_scaling_method", "user-scaling"), "nlp_scaling_method");
     if (
         !normalized_options.initial_bound_lower_multipliers.empty()
         || !normalized_options.initial_bound_upper_multipliers.empty()
         || !normalized_options.initial_constraint_multipliers.empty()
     ) {
-        app->Options()->SetStringValue("warm_start_init_point", "yes");
-        app->Options()->SetNumericValue("mu_init", std::min(normalized_options.tolerance, 1.0e-12));
+        require_option(app->Options()->SetStringValue("warm_start_init_point", "yes"), "warm_start_init_point");
+        require_option(
+            app->Options()->SetNumericValue("mu_init", std::min(normalized_options.tolerance, 1.0e-12)),
+            "mu_init"
+        );
         if (normalized_options.bound_push > 0.0) {
-            app->Options()->SetNumericValue("warm_start_bound_push", normalized_options.bound_push);
-            app->Options()->SetNumericValue("warm_start_mult_bound_push", normalized_options.bound_push);
+            require_option(
+                app->Options()->SetNumericValue("warm_start_bound_push", normalized_options.bound_push),
+                "warm_start_bound_push"
+            );
+            require_option(
+                app->Options()->SetNumericValue("warm_start_mult_bound_push", normalized_options.bound_push),
+                "warm_start_mult_bound_push"
+            );
         }
         if (normalized_options.bound_frac > 0.0) {
-            app->Options()->SetNumericValue("warm_start_bound_frac", normalized_options.bound_frac);
+            require_option(
+                app->Options()->SetNumericValue("warm_start_bound_frac", normalized_options.bound_frac),
+                "warm_start_bound_frac"
+            );
         }
-    }
-    if (normalized_options.max_wall_time_seconds > 0.0) {
-        app->Options()->SetNumericValue("max_wall_time", normalized_options.max_wall_time_seconds);
     }
 
     const Ipopt::ApplicationReturnStatus init_status = app->Initialize();
@@ -1359,7 +1365,9 @@ IpoptSolveResult solve_ipopt_nlp(
     Ipopt::SmartPtr<Ipopt::TNLP> tnlp = adapter;
     const Ipopt::ApplicationReturnStatus solve_status = app->OptimizeTNLP(tnlp);
     IpoptSolveResult result = adapter->result();
-    result.application_status = application_status_name(solve_status);
+    result.application_status = solve_diagnostic_bool(result, "wall_time_limit_reached", false)
+        ? "maximum_wall_time_exceeded"
+        : application_status_name(solve_status);
     result.diagnostics_int["application_status_code"] = static_cast<int>(solve_status);
     return result;
 #endif

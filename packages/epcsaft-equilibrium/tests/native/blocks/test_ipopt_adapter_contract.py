@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 import math
+import re
+from pathlib import Path
 
+import epcsaft_equilibrium
 import pytest
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
-import epcsaft_equilibrium
+
+
+IPOPT_ADAPTER_SOURCE = (
+    Path(__file__).resolve().parents[3]
+    / "src"
+    / "epcsaft_equilibrium"
+    / "native"
+    / "equilibrium"
+    / "solvers"
+    / "ipopt_adapter.cpp"
+)
 
 
 def test_native_ipopt_smoke_reports_generic_adapter_contract() -> None:
@@ -253,6 +266,28 @@ def test_native_ipopt_quadratic_reports_linear_solver_and_tolerance_controls() -
     assert smoke["ipopt_unscaled_constraint_violation_tolerance"] == pytest.approx(8.0e-8)
     assert smoke["dual_infeasibility_tolerance"] == pytest.approx(7.0e-8)
     assert smoke["complementarity_tolerance"] == pytest.approx(6.0e-8)
+
+
+def test_native_ipopt_rejects_an_unregistered_required_option_value() -> None:
+    if not _core._native_ipopt_smoke()["compiled"]:
+        return
+
+    with pytest.raises(Exception, match="requires unsupported option 'linear_solver'"):
+        _core._native_ipopt_quadratic_smoke(linear_solver="definitely_unknown")
+
+
+def test_old_ipopt_compatibility_uses_checked_supported_interfaces() -> None:
+    source = IPOPT_ADAPTER_SOURCE.read_text(encoding="utf-8")
+    option_setter = r"app->Options\(\)->Set(?:Integer|Numeric|String)Value\("
+    checked_option_setter = rf"require_option\(\s*{option_setter}"
+
+    assert len(re.findall(option_setter, source)) == len(re.findall(checked_option_setter, source))
+    assert 'SetStringValue("gradient_approximation"' not in source
+    assert 'SetNumericValue("max_wall_time"' not in source
+    assert "get_curr_violations(" not in source
+    assert "curr_nlp_constraint_violation(Ipopt::NORM_MAX)" in source
+    assert "curr_dual_infeasibility(Ipopt::NORM_MAX)" in source
+    assert "curr_complementarity(0.0, Ipopt::NORM_MAX)" in source
 
 
 def test_native_ipopt_quadratic_warm_start_round_trips_primal_and_multipliers() -> None:
