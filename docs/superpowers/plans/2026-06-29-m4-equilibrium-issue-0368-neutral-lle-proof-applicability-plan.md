@@ -14,7 +14,7 @@
 
 - GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/368`
 - Source Spec: `docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md`
-- Source Issue: `docs/superpowers/issues/368-m4-lle-separate-associating-proof-applicability-from-global-route-metadata.md`
+- Source Issue: `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0368-separate-associating-proof-applicability-from-global-route-metadata.md`
 - Source Plan: `docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md`
 - Parent Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/367`
 - Milestone: `M4 - Equilibrium`
@@ -141,7 +141,7 @@ Test complete for #368 means:
 - A future maintainer must be able to rerun the proof oracle from the issue mirror as acceptance evidence.
 
 **Files:**
-- Modify: `docs/superpowers/issues/368-m4-lle-separate-associating-proof-applicability-from-global-route-metadata.md`
+- Modify: `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0368-separate-associating-proof-applicability-from-global-route-metadata.md`
 - Modify: GitHub issue `https://github.com/ePC-SAFT/ePC-SAFT/issues/368`
 
 - [ ] **Step 1: Rebuild the native extension after the C++ change.**
@@ -165,8 +165,8 @@ Test complete for #368 means:
 - [ ] **Step 4: Validate the implementation plan.**
 
   ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
+  uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
+  uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
   ```
 
 - [ ] **Step 5: Update #368 mirror and GitHub body.**
@@ -176,8 +176,8 @@ Test complete for #368 means:
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0368-neutral-lle-proof-applicability-plan.md
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\native\diagnostics\test_route_metadata_contracts.py packages\epcsaft-equilibrium\tests\native\diagnostics\test_selector_core_contracts.py -q
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -q

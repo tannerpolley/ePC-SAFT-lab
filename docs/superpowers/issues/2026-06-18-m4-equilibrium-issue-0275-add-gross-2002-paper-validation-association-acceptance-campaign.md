@@ -1,25 +1,24 @@
 ---
 issue: 275
 title: "M4: add Gross 2002 paper-validation association acceptance campaign"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/275"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/275
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "association"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-18-m4-equilibrium-gross-2002-association-acceptance-pass.md"
-source_plan: "docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: association
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-18-m4-equilibrium-gross-2002-association-acceptance-pass.md
+source_plan: docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md
+afk_hitl: AFK
 branch: codex/issue-0275-gross-2002-association-acceptance-campaign
 last_synced: "2026-06-19"
 ---
 
 # M4: add Gross 2002 paper-validation association acceptance campaign
 
-**Mirror Retention:** retain
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/275
 **GitHub Milestone:** M4 - Equilibrium

@@ -1,19 +1,19 @@
 ---
 issue: 420
 title: "M6: Paper validation campaign parent"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/420"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/420
+state: open
 milestone: "M6 - Validation"
 project: "ePC-SAFT Roadmap"
-package: "benchmark"
-capability: "paper-validation"
+package: benchmark
+capability: paper-validation
 backend: Null
-readiness: "ready"
-release_target: "validation"
-source_spec: "docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md"
-source_plan: "docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md"
-afk_hitl: "AFK"
-branch: codex/m6-khudaida-validation-reorg
+readiness: ready
+release_target: validation
+source_spec: docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
+source_plan: docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+afk_hitl: AFK
+branch: codex/issue-0420-paper-validation-campaign-parent
 last_synced: "2026-07-02"
 ---
 
@@ -26,6 +26,7 @@ last_synced: "2026-07-02"
 **Child Issues:** https://github.com/ePC-SAFT/ePC-SAFT/issues/421
 **Source Spec:** docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
 **Source Plan:** docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** docs, validation, area:benchmark, status:ready, type:task
 **Goal Command:** /goal Maintain the M6 paper validation campaign hierarchy.
@@ -80,6 +81,6 @@ milestones.
 
 ```powershell
 gh issue view 420 --json number,title,milestone,subIssues
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 ```

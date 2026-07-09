@@ -26,7 +26,7 @@ Cantera/Pope reference fixtures, M4 registry/docs, pytest through
 - Source Spec:
   `docs/superpowers/specs/2026-06-25-m4-equilibrium-standalone-chemical-equilibrium-before-cpe.md`
 - Source Issue:
-  `docs/superpowers/issues/2026-06-26-m4-ce-issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe.md`
+  `docs/superpowers/issues/2026-06-26-m4-equilibrium-issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe.md`
 - Source Plan:
   `docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md`
 - GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/321`
@@ -211,7 +211,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 - Create: child issue mirrors under `docs/superpowers/issues/`
 - Modify:
   `docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md`
-- Test: `scripts/validate-issue-mirror.ps1`
+- Test: `scripts/validate_issue_mirror.py`
 
 - [x] **Step 1: Draft issue bodies from this plan.**
   Use the issue packet below for the tracking issue and ten child issues.
@@ -223,7 +223,7 @@ mirrors must pass before issue close, PR merge, and capability broadening.
   with the full GitHub body and workflow metadata required by the create-issues
   skill.
 - [x] **Step 4: Validate mirrors.**
-  Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile <mirror>`.
+  Run `uv run --no-sync python scripts/validate_issue_mirror.py --issue-file <mirror>`.
 - [x] **Step 5: Commit issue artifacts.**
   Commit only the plan and issue mirrors after mirror validation passes.
 
@@ -671,8 +671,8 @@ Create the issues in this dependency order:
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
 uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-schema --require-standard-state --require-core --require-single-nlp-path --require-oracles --require-api --require-validation --require-activation --require-complete
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_schema.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_standard_state.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py packages/epcsaft-equilibrium/tests/native/blocks/test_chemical_equilibrium_blocks.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py tests/native/contracts/test_standalone_ce_gate.py tests/native/contracts/test_chemical_equilibrium_reference_oracles.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs

@@ -1,18 +1,18 @@
 ---
 issue: 190
 title: "M4: admit associating GFPE through exact derivative proof gates"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/190"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/190
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "lle"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates-plan.md"
-afk_hitl: "HITL"
+package: equilibrium
+capability: lle
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates.md
+source_plan: docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates-plan.md
+afk_hitl: HITL
 branch: codex/issue-0190-admit-associating-gfpe-through-exact-derivative-proof-gates
 last_synced: "2026-06-18"
 ---

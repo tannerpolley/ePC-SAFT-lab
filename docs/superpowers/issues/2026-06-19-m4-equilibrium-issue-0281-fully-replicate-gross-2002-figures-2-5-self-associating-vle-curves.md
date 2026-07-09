@@ -1,24 +1,24 @@
 ---
 issue: 281
 title: "M4: fully replicate Gross 2002 Figures 2-5 self-associating VLE curves"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/281"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/281
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "association"
-backend: "Ipopt"
-readiness: "blocked"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: association
+backend: Ipopt
+readiness: blocked
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
+source_plan: docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md
+afk_hitl: AFK
 branch: codex/issue-0281-gross-2002-figures-2-5-vle-curves
 last_synced: "2026-06-20"
 ---
+
 # M4: fully replicate Gross 2002 Figures 2-5 self-associating VLE curves
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/281
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

@@ -1,18 +1,18 @@
 ---
 issue: 407
 title: "M6 Khudaida Fig. 2: reproduce 293.15 K 5 wt% NaCl LLE with Figiel parameters"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/407"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/407
+state: open
 milestone: "M6 - Validation"
 project: "ePC-SAFT Roadmap"
-package: "benchmark"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "validation"
-source_spec: "docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md"
-source_plan: "docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md"
-afk_hitl: "AFK"
+package: benchmark
+capability: electrolyte
+backend: Ipopt
+readiness: ready
+release_target: validation
+source_spec: docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
+source_plan: docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
+afk_hitl: AFK
 branch: codex/issue-0407-khudaida-fig02
 last_synced: "2026-07-02"
 ---
@@ -28,6 +28,7 @@ last_synced: "2026-07-02"
 **Parent Mirror:** docs/superpowers/issues/2026-07-02-m6-validation-issue-0421-khudaida-2026-paper-validation-parent.md
 **Source Spec:** docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
 **Source Plan:** docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** enhancement, agent-ready, docs, validation, equilibrium, area:equilibrium, area:benchmark, backend:ipopt, status:ready, type:task
 **Goal Command:** /goal Resolve issue #407 using docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md and reproduce Khudaida Figure 2 with the retained 2026_Khudaida parameter bundle and Figiel 2025 SSM+DS/Born option provenance.
@@ -78,7 +79,7 @@ parameter path and Figiel 2025 SSM+DS/Born option provenance.
 - [ ] Fit statistics include row counts, tolerance basis, AAD/RMSE/max error,
   and exact failed rows routed to #338.
 
-## Blocked By
+## Blocked by
 
 - #406
 
@@ -95,14 +96,14 @@ parameter path and Figiel 2025 SSM+DS/Born option provenance.
 
 ## Proof Oracle
 
-```powershell
-uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\generate_data.py
-uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\render_figure.py
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_figure02_public_route_reproduction.py -q
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile docs\superpowers\issues\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
-uv run --no-sync python scripts\dev\validate_project.py docs
+```bash
+uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/generate_data.py
+uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/render_figure.py
+uv run --no-sync python scripts/validation/check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py -q
+uv run --no-sync python scripts/validate_issue_mirror.py --issue-file docs/superpowers/issues/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
+uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
 ```

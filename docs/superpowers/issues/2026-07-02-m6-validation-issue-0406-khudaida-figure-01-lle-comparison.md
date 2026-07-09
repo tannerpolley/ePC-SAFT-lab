@@ -1,19 +1,19 @@
 ---
 issue: 406
 title: "M6 Khudaida Fig. 1: reproduce salt-free and salted LLE comparison with Figiel parameters"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/406"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/406
+state: closed
 milestone: "M6 - Validation"
 project: "ePC-SAFT Roadmap"
-package: "benchmark"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "validation"
-source_spec: "docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md"
-source_plan: "docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md"
-afk_hitl: "AFK"
-branch: codex/issue-0406-khudaida-fig01
+package: benchmark
+capability: electrolyte
+backend: Ipopt
+readiness: closed
+release_target: validation
+source_spec: null
+source_plan: null
+afk_hitl: AFK
+branch: null
 last_synced: "2026-07-02"
 ---
 
@@ -27,8 +27,9 @@ last_synced: "2026-07-02"
 **Parent Mirror:** docs/superpowers/issues/2026-07-02-m6-validation-issue-0421-khudaida-2026-paper-validation-parent.md
 **Source Spec:** docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md
 **Source Plan:** docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 **Labels:** enhancement, agent-ready, docs, validation, equilibrium, area:equilibrium, area:benchmark, backend:ipopt, status:ready, type:task
 **Goal Command:** /goal Resolve issue #406 and reproduce Khudaida Figure 1 with Figiel 2025 parameters.
 **Execution Mode:** Auto, one child figure at a time under #421
@@ -96,6 +97,6 @@ uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_0
 uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_01\scripts\render_figure.py
 uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "khudaida and figure_01 and electrolyte" -q
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 ```

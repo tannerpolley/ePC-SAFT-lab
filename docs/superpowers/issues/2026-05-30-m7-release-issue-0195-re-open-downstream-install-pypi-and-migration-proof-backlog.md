@@ -1,18 +1,18 @@
 ---
 issue: 195
 title: "M7: re-open downstream install, PyPI, and migration proof backlog"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/195"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/195
+state: open
 milestone: "M7 - Release"
 project: "ePC-SAFT Roadmap"
-package: "downstream"
+package: downstream
 capability: Null
 backend: Null
 readiness: "needs design"
-release_target: "future"
-source_spec: "docs/superpowers/specs/2026-05-29-m7-release-release-downstream-backlog.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m7-release-issue-0195-re-open-downstream-install-pypi-and-migration-proof-backlog-plan.md"
-afk_hitl: "HITL"
+release_target: future
+source_spec: docs/superpowers/specs/2026-05-29-m7-release-release-downstream-backlog.md
+source_plan: docs/superpowers/plans/2026-05-30-m7-release-issue-0195-re-open-downstream-install-pypi-and-migration-proof-backlog-plan.md
+afk_hitl: HITL
 branch: codex/issue-0195-re-open-downstream-install-pypi-and-migration-proof-backlog
 last_synced: "2026-06-02"
 ---

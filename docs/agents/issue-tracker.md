@@ -59,14 +59,14 @@ After a clean merge or direct issue close, inspect the workflow result. If the
 workflow could not push mirror changes, run the same check locally and commit
 the mirror/table sync:
 
-```powershell
+```bash
 uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --issue <closed-issue> --dry-run --json
 uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --issue <closed-issue> --apply --json
 ```
 
 For periodic drift repair:
 
-```powershell
+```bash
 uv run --no-sync python scripts/dev/update_issue_dependency_readiness.py --reconcile --dry-run --json
 ```
 

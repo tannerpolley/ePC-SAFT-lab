@@ -19,7 +19,7 @@
 - First validation target: `analyses/paper_validation/2002_gross/figures/figure_02`
 - Existing prerequisite context: `docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md`
 - Existing figure plan context: `docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0281-gross-2002-figures-2-5-vle-curves-plan.md`
-- Plan validation helper added during this route: `scripts/validate-plan-outcome-proof.ps1`
+- Plan validation helper added during this route: `scripts/validate_plan_outcome_proof.py`
 
 ## Outcome Proof
 
@@ -750,8 +750,8 @@ Initial numeric defaults for this implementation:
 Run the full oracle before issue or PR closeout:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
 uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_02/scripts/generate_data.py

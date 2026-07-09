@@ -370,7 +370,7 @@ equilibrium objective, target-pressure, or pressure-work semantics.
 In `docs/superpowers/milestones/M3-eos/README.md`, add this row at the top of `## Recently Closed`, directly after the #161 row added in Task 2:
 
 ```markdown
-| [#207](../../issues/2026-06-01-m3-eos-issue-0207-expose-objective-free-local-phase-eos-derivative-bundle.md) | [commit 58bcf830](https://github.com/ePC-SAFT/ePC-SAFT/commit/58bcf830) | `derivatives` | `CppAD` | Exposed the objective-free local phase EOS derivative bundle needed by #208. |
+| [#207](https://github.com/ePC-SAFT/ePC-SAFT/issues/207) | [commit 58bcf830](https://github.com/ePC-SAFT/ePC-SAFT/commit/58bcf830) | `derivatives` | `CppAD` | Exposed the objective-free local phase EOS derivative bundle needed by #208. |
 ```
 
 - [ ] **Step 3: Update #208 mirror readiness and dependency wording**
@@ -446,7 +446,7 @@ with:
 In `docs/superpowers/milestones/M4-equilibrium/README.md`, replace the #208 row with:
 
 ```markdown
-| [#208](../../issues/2026-06-01-m4-equilibrium-issue-0208-move-equilibrium-objective-assembly-onto-provider-derivative-bundles.md) | `derivatives` | `CppAD` | `ready` | Move equilibrium objective assembly onto the closed #207 provider derivative bundle contract. |
+| [#208](https://github.com/ePC-SAFT/ePC-SAFT/issues/208) | `derivatives` | `CppAD` | `ready` | Move equilibrium objective assembly onto the closed #207 provider derivative bundle contract. |
 ```
 
 - [ ] **Step 6: Update live GitHub #208 labels and comment**
@@ -621,7 +621,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 Expected:
 
 ```text
-No matching leftover Codex processes under: C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT
+No matching leftover development processes under the repository root.
 ```
 
 - [ ] **Step 4: Confirm final git status**

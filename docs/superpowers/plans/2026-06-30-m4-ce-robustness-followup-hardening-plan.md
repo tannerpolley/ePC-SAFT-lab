@@ -191,9 +191,9 @@ IntelliJ receipt: CE-scoped IntelliJ MCP was available through `mcp__intellij_in
 Plan and issue gates:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-30-m4-ce-robustness-followup-hardening-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs/superpowers/plans/2026-06-30-m4-ce-robustness-followup-hardening-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile <issue-mirror>
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-30-m4-ce-robustness-followup-hardening-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-30-m4-ce-robustness-followup-hardening-plan.md
+uv run --no-sync python scripts/validate_issue_mirror.py --issue-file <issue-mirror>
 ```
 
 Focused implementation gates:

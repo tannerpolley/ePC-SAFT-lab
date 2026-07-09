@@ -1132,12 +1132,12 @@ Expected result: no task-owned stale processes remain.
 The final implementation response must render these PNGs with absolute paths and include compact Markdown tables from retained plotted data:
 
 ```text
-C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\package_validation\explicit_association_toybox\figures\amortized_timing\output\amortized_timing.png
-C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\package_validation\explicit_association_toybox\figures\derivative_agreement\output\derivative_agreement.png
-C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\package_validation\explicit_association_toybox\figures\asymmetric_binary_closures\output\asymmetric_binary_closures.png
-C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\package_validation\explicit_association_toybox\figures\total_eos_impact\output\total_eos_impact.png
-C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\package_validation\explicit_association_toybox\figures\water_topology_fork\output\water_topology_fork.png
-C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT\analyses\package_validation\explicit_association_toybox\figures\equilibrium_style_objective_sensitivity\output\equilibrium_style_objective_sensitivity.png
+analyses/package_validation/explicit_association_toybox/figures/amortized_timing/output/amortized_timing.png
+analyses/package_validation/explicit_association_toybox/figures/derivative_agreement/output/derivative_agreement.png
+analyses/package_validation/explicit_association_toybox/figures/asymmetric_binary_closures/output/asymmetric_binary_closures.png
+analyses/package_validation/explicit_association_toybox/figures/total_eos_impact/output/total_eos_impact.png
+analyses/package_validation/explicit_association_toybox/figures/water_topology_fork/output/water_topology_fork.png
+analyses/package_validation/explicit_association_toybox/figures/equilibrium_style_objective_sensitivity/output/equilibrium_style_objective_sensitivity.png
 ```
 
 The summary must answer:

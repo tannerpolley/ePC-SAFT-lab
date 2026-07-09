@@ -1,18 +1,18 @@
 ---
 issue: 189
 title: "M4: derive boundary workflows and generalized phase-set PE from neutral GFPE"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/189"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/189
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "lle"
-backend: "Ipopt"
-readiness: "closed"
-release_target: "equilibrium-0.x"
+package: equilibrium
+capability: lle
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
 source_spec: null
 source_plan: null
-afk_hitl: "HITL"
+afk_hitl: HITL
 branch: null
 last_synced: "2026-06-17"
 ---

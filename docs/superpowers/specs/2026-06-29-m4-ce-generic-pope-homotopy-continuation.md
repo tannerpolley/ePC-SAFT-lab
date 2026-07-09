@@ -28,7 +28,7 @@ a separate merge plan after CE proves the path with retained numerical tests.
   pseudo-Gibbs continuation, separate continuation diagnostics, and final CE
   residual proof.
 - Verified narrow issue guardrail:
-  `docs/superpowers/issues/2026-06-26-m4-ce-issue-0326-m4-ce-add-single-ce-nlp-activation-path.md`
+  `docs/superpowers/issues/2026-06-26-m4-equilibrium-issue-0326-m4-ce-add-single-ce-nlp-activation-path.md`
   forbids Pope-style continuation as a side route for the original single-NLP
   activation slice.
 - Decision from this brainstorm: that guardrail is superseded for this new

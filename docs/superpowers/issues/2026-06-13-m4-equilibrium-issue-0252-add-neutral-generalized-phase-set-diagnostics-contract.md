@@ -1,25 +1,25 @@
 ---
 issue: 252
 title: "M4: add neutral generalized phase-set diagnostics contract"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/252"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/252
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "lle"
-backend: "Ipopt"
-readiness: "closed"
-release_target: "equilibrium-0.x"
+package: equilibrium
+capability: lle
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
 source_spec: null
 source_plan: null
-afk_hitl: "AFK"
+afk_hitl: AFK
 branch: null
 last_synced: "2026-06-13"
 ---
 
 # M4: add neutral generalized phase-set diagnostics contract
 
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/252
 Parent Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/189

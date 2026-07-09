@@ -1,18 +1,18 @@
 ---
 issue: 194
 title: "M6: re-open executable literature benchmark and capability evidence backlog"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/194"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/194
+state: open
 milestone: "M6 - Validation"
 project: "ePC-SAFT Roadmap"
-package: "benchmark"
+package: benchmark
 capability: Null
 backend: Null
 readiness: "needs design"
-release_target: "future"
-source_spec: "docs/superpowers/specs/2026-05-29-m6-validation-validation-benchmark-backlog.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m6-validation-issue-0194-re-open-executable-literature-benchmark-and-capability-evidence-backlog-plan.md"
-afk_hitl: "HITL"
+release_target: future
+source_spec: docs/superpowers/specs/2026-05-29-m6-validation-validation-benchmark-backlog.md
+source_plan: docs/superpowers/plans/2026-05-30-m6-validation-issue-0194-re-open-executable-literature-benchmark-and-capability-evidence-backlog-plan.md
+afk_hitl: HITL
 branch: codex/issue-0194-re-open-executable-literature-benchmark-and-capability-evidence-backlog
 last_synced: "2026-06-02"
 ---

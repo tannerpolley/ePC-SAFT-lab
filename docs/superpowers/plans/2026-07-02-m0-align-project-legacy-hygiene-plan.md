@@ -51,7 +51,7 @@ native build files, and plugin cache files.
 dimension, inspect representative closed mirrors, and inspect milestone layout.
 **Write Path:** Apply the smallest docs/tracker-mirror repair that makes the
 audit evidence match actual repo policy.
-**Integration Points:** `scripts/validate-issue-mirror.ps1`,
+**Integration Points:** `scripts/validate_issue_mirror.py`,
 `scripts/dev/validate_project.py docs`, `git diff --check`, and the cleanup
 hook.
 **Migration Or Cutover:** Keep existing valid milestone README pages; prefer a

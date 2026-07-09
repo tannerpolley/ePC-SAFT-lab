@@ -1,30 +1,30 @@
 ---
 issue: 346
 title: "M4: add HELD2 Stage I electrolyte stability certificate"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/346"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/346
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md"
-source_plan: "docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: electrolyte
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
+source_plan: docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
+afk_hitl: AFK
 branch: codex/issue-0346-held2-stage-i-electrolyte-stability-certificate
 last_synced: "2026-06-28"
 ---
 
 # M4: add HELD2 Stage I electrolyte stability certificate
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/346
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** task
 **Source Spec:** docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
 **Source Plan:** docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:task
 

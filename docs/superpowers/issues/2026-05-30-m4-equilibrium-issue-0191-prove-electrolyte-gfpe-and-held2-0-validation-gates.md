@@ -1,24 +1,26 @@
 ---
 issue: 191
 title: "M4: prove electrolyte GFPE and HELD2.0 validation gates"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/191"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates-plan.md"
-afk_hitl: "HITL"
-parent_issue: "https://github.com/ePC-SAFT/ePC-SAFT/issues/370"
-branch: codex/issue-0191-electrolyte-closeout
+package: equilibrium
+capability: electrolyte
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
+source_spec: null
+source_plan: null
+afk_hitl: HITL
+branch: null
 last_synced: "2026-06-30"
 ---
 
 # Prove electrolyte GFPE and HELD2.0 validation gates
+
+**Mirror Retention:** Keep this closed mirror as historical context for the
+electrolyte route validation gate.
 
 GitHub Issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/191
 Source Spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md

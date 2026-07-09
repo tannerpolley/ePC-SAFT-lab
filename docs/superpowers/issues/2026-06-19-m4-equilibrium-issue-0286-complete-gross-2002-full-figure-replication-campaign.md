@@ -1,24 +1,24 @@
 ---
 issue: 286
 title: "M4: complete Gross 2002 full figure replication campaign"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/286"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/286
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "association"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0286-gross-2002-full-figure-replication-campaign-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: association
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
+source_plan: docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0286-gross-2002-full-figure-replication-campaign-plan.md
+afk_hitl: AFK
 branch: codex/issue-0286-gross-2002-full-figure-replication-campaign
 last_synced: "2026-06-20"
 ---
+
 # M4: complete Gross 2002 full figure replication campaign
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/286
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature

@@ -92,7 +92,7 @@
 - [ ] **Step 1: Write #300 local mirror.**
 - [ ] **Step 2: Update #191 mirror to show #300 as the active blocker.**
 - [ ] **Step 3: Update the M4 README current plans, open queue, and queue guard.**
-- [ ] **Step 4: Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md`.**
+- [ ] **Step 4: Run `uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md`.**
 
 ### Task 2: Write The Failing Readiness Checker Contract
 
@@ -162,8 +162,8 @@
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md
 uv run --no-sync python scripts/validation/check_electrolyte_held2_readiness.py --json --require-source-gate --require-reduced-basis --require-born-ssm-ds --require-public-routes-closed --require-complete
 uv run --no-sync python run_pytest.py tests/native/contracts/test_electrolyte_held2_readiness_checker.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_generalized_equilibrium_registry.py packages/epcsaft/tests/native/state/test_born_parameter_derivatives.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs

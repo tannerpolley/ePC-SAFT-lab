@@ -25,7 +25,7 @@ material, a later M6 validation plan or issue can promote it.
 - `docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence.md`
   identifies fixed-state pressure residuals as useful warnings, not VLE
   validation.
-- `C:\Users\Tanner\.codex\instructions\PYTHON_ANALYSIS_AND_PLOTTING.md`
+- the repository Python analysis and plotting policy
   requires retained plotted data and figure-owned input/output/script layout.
 - Root repo instructions require new or updated plots to be rendered in chat
   with compact real-data tables when analysis work completes.

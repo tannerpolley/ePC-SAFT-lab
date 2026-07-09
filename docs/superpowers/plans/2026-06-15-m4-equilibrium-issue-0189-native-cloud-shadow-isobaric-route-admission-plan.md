@@ -29,7 +29,7 @@
 - Scope: source-backed isobaric `T-x` first. This child targets one cloud-temperature native proof route at `P = 101300 Pa` from the Matsuda/NIST fixture.
 - Exposure: checker-gated internal evidence. This child must not add public `Equilibrium(route="cloud_temperature")`, `Equilibrium(route="cloud_point")`, or `Equilibrium(route="shadow_point")` route strings.
 - Metrics: source fixture thresholds and route residual norms. Test-complete requires strict Ipopt convergence plus fixture threshold comparisons and retained source-data gate success.
-- IntelliJ receipt: `ide_index_status` for `C:\Users\Tanner\Documents\Workspaces\Engineering\ePC-SAFT` reported `isDumbMode: false` and `isIndexing: false`. Bundled symbol search was attached to the parent workspace, so exact planning anchors below were verified with narrow repo reads.
+- IntelliJ receipt: `ide_index_status` for the repository root reported `isDumbMode: false` and `isIndexing: false`. Bundled symbol search was attached to the parent workspace, so exact planning anchors below were verified with narrow repo reads.
 
 ## Verified Planning Facts
 

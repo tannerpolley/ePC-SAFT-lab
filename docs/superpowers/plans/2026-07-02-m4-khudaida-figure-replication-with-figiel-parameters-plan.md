@@ -145,8 +145,8 @@ commands before closeout.
   a prerequisite for the Figiel-parameter figure path.
 
 **Files:**
-- `docs/superpowers/issues/2026-07-02-m4-khudaida-issue-0405-figure-replication-with-figiel-parameters.md`
-- `docs/superpowers/issues/2026-07-02-m4-khudaida-issue-04*.md`
+- `docs/superpowers/issues/2026-07-02-m4-equilibrium-issue-0405-figure-replication-with-figiel-parameters.md`
+- `docs/superpowers/issues/2026-07-02-m4-equilibrium-issue-04*.md`
 
 ### Task 2: Resolve figure issues in dependency order
 
@@ -170,7 +170,7 @@ commands before closeout.
   substitutes for per-figure proof.
 
 **Files:**
-- `docs/superpowers/issues/2026-07-02-m4-khudaida-issue-0405-figure-replication-with-figiel-parameters.md`
+- `docs/superpowers/issues/2026-07-02-m4-equilibrium-issue-0405-figure-replication-with-figiel-parameters.md`
 - `docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md`
 
 ## Proof Oracle
@@ -179,7 +179,7 @@ commands before closeout.
 uv run --no-sync python analyses\paper_validation\2026_khudaida\scripts\run_all.py
 uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "khudaida and electrolyte and lle" -q
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m4-khudaida-figure-replication-with-figiel-parameters-plan.md
 uv run --no-sync python scripts\dev\validate_project.py docs
 ```

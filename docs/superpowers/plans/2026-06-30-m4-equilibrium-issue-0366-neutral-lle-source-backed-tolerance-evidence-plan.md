@@ -14,7 +14,7 @@
 
 - GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/366`
 - Source Spec: `docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md`
-- Source Issue: `docs/superpowers/issues/366-m4-lle-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`
+- Source Issue: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`
 - Source Plan: `docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0366-neutral-lle-source-backed-tolerance-evidence-plan.md`
 - Parent Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/364`
 - Milestone: `M4 - Equilibrium`
@@ -39,7 +39,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** This plan only.
-**Files To Modify:** `scripts/validation/check_neutral_lle_showcase.py`, `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`, `tests/native/contracts/test_neutral_lle_showcase_checker.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/366-m4-lle-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`.
+**Files To Modify:** `scripts/validation/check_neutral_lle_showcase.py`, `packages/epcsaft-equilibrium/tests/api/test_neutral_lle_showcase_fixture.py`, `tests/native/contracts/test_neutral_lle_showcase_checker.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`.
 **Files To Avoid:** EOS equation files, native solver code, source fixture parameter rows, M5 regression assets, associating LLE, electrolyte LLE, reactive routes, and release metadata.
 **Source Of Truth:** Matsuda/NIST fixture under `data/reference/equilibrium_benchmarks/neutral_lle/perfluorohexane_hexane`, shared PE certification contract, and current public `Equilibrium(..., route="lle")` behavior.
 **Read Path:** Read fixture metadata/thresholds, route postsolve diagnostics, `epcsaft_equilibrium.capabilities()["phase_equilibrium_certification"]`, and validator blockers from `validate_phase_equilibrium_certification_contracts`.
@@ -129,7 +129,7 @@ Test complete for #366 means:
 **Files:**
 - Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - Modify: `tests/native/contracts/test_equilibrium_benchmark_registry.py`
-- Modify: `docs/superpowers/issues/366-m4-lle-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`
+- Modify: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md`
 
 - [x] **Step 1: Add registry acceptance checks for shared certification and tolerance margins.**
 - [x] **Step 2: Validate the plan and docs.**
@@ -138,8 +138,8 @@ Test complete for #366 means:
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-30-m4-equilibrium-issue-0366-neutral-lle-source-backed-tolerance-evidence-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-30-m4-equilibrium-issue-0366-neutral-lle-source-backed-tolerance-evidence-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0366-neutral-lle-source-backed-tolerance-evidence-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0366-neutral-lle-source-backed-tolerance-evidence-plan.md
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "neutral and lle and source" -q
 uv run --no-sync python -m pytest tests\native\contracts\test_neutral_lle_showcase_checker.py tests\native\contracts\test_equilibrium_benchmark_registry.py -q
 uv run --no-sync python scripts\validation\check_neutral_lle_showcase.py --json --require-complete

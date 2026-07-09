@@ -1,19 +1,19 @@
 ---
 issue: 423
 title: "Normalize align-project closed mirror and milestone page hygiene"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/423"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/423
+state: closed
 milestone: "M0 - Governance"
 project: "ePC-SAFT Roadmap"
-package: "governance"
-capability: "workflow"
-backend: "none"
-readiness: "closed"
-release_target: "governance"
-source_spec: "none"
-source_plan: "docs/superpowers/plans/2026-07-02-m0-align-project-legacy-hygiene-plan.md"
-afk_hitl: "AFK"
-branch: codex/m0-align-project-legacy-hygiene
+package: governance
+capability: workflow
+backend: none
+readiness: closed
+release_target: governance
+source_spec: null
+source_plan: null
+afk_hitl: AFK
+branch: null
 last_synced: "2026-07-02"
 ---
 
@@ -24,8 +24,9 @@ last_synced: "2026-07-02"
 **Issue Type:** Task
 **Source Spec:** None
 **Source Plan:** docs/superpowers/plans/2026-07-02-m0-align-project-legacy-hygiene-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 **Labels:** agent-ready, docs, area:docs, status:ready, type:task
 **Goal Command:** /goal Resolve issue #423 by normalizing align-project closed mirror lifecycle evidence and reconciling milestone-page discovery without changing product code.
 **Execution Mode:** Ask at runtime
@@ -87,9 +88,9 @@ findings, while keeping the Khudaida M6 hierarchy unchanged.
 
 ```powershell
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <align-project>\scripts\align-project.ps1 -RepoRoot . -Mode GitHubAware
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile <changed mirror>
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m0-align-project-legacy-hygiene-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m0-align-project-legacy-hygiene-plan.md
+uv run --no-sync python scripts/validate_issue_mirror.py --issue-file <changed mirror>
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m0-align-project-legacy-hygiene-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m0-align-project-legacy-hygiene-plan.md
 uv run --no-sync python scripts\dev\validate_project.py docs
 git diff --check
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .

@@ -135,8 +135,8 @@ uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation
 uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --require-model-pass --json
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_collapsed_electrolyte_lle_rejection.py -q
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_figure02_public_route_reproduction.py -q
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-07-03-m4-equilibrium-khudaida-collapsed-electrolyte-lle-rejection-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-07-03-m4-equilibrium-khudaida-collapsed-electrolyte-lle-rejection-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-03-m4-equilibrium-khudaida-collapsed-electrolyte-lle-rejection-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-03-m4-equilibrium-khudaida-collapsed-electrolyte-lle-rejection-plan.md
 uv run --no-sync python scripts\dev\validate_project.py docs
 git diff --check
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .

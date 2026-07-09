@@ -20,5 +20,5 @@ execution context. Delete mirrors for closed issues unless a repo maintainer
 explicitly marks the file as archival documentation with:
 
 ```markdown
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 ```

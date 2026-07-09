@@ -1,25 +1,25 @@
 ---
 issue: 269
 title: "M4: add electrolyte GFPE closed-admission source gate"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/269"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/269
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "closed"
-release_target: "equilibrium-0.x"
+package: equilibrium
+capability: electrolyte
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
 source_spec: null
 source_plan: null
-afk_hitl: "AFK"
+afk_hitl: AFK
 branch: null
 last_synced: "2026-06-18"
 ---
 
 # M4: add electrolyte GFPE closed-admission source gate
 
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/269
 **GitHub Milestone:** M4 - Equilibrium

@@ -179,6 +179,19 @@ def test_workflow_listens_only_to_closeout_events() -> None:
     assert "unlabeled" not in workflow
 
 
+def test_workflow_serializes_all_sync_arguments_into_one_output_value() -> None:
+    workflow = (Path(__file__).resolve().parents[3] / ".github" / "workflows" / "sync-issue-readiness.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "printf -v script_args '%q ' \"${args[@]}\"" in workflow
+    assert "printf 'script_args=%s\\n' \"$script_args\" >> \"$GITHUB_OUTPUT\"" in workflow
+    assert "ISSUE_INPUT: ${{ inputs.issue }}" in workflow
+    assert '[[ ! "$ISSUE_INPUT" =~ ^[0-9]+$ ]]' in workflow
+    assert 'args+=(--issue "$ISSUE_INPUT")' in workflow
+    assert 'args+=(--issue "${{ inputs.issue }}")' not in workflow
+
+
 def test_apply_ready_result_updates_labels_and_mirrors_without_commenting(tmp_path: Path) -> None:
     issue_dir = tmp_path / "docs" / "superpowers" / "issues"
     issue_dir.mkdir(parents=True)

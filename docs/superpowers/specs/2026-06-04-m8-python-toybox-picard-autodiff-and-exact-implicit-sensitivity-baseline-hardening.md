@@ -31,8 +31,7 @@ package APIs, equilibrium routes, or production capability claims.
 - `docs/superpowers/specs/2026-06-03-m3-eos-explicit-association-derivative-property-propagation-evidence.md`
   already identifies derivative agreement as the missing evidence after
   smoothness-only diagnostics.
-- `C:\Users\Tanner\.codex\PROJECT_ARCHITECTURE.md` and
-  `C:\Users\Tanner\.codex\instructions\PYTHON_ANALYSIS_AND_PLOTTING.md`
+- the repository project-structure and Python analysis/plotting policies
   require analysis work to stay self-contained, reproducible, and separated
   from package code.
 

@@ -38,7 +38,7 @@ proposed.
 - `docs/superpowers/issues/2026-06-03-m3-eos-issue-0216-add-hc-and-dispersion-context-to-the-explicit-association-toybox.md`
   is the open narrow slice for hard-chain, dispersion, total `ares`, and timing
   context.
-- `C:\Users\Tanner\.codex\instructions\PYTHON_ANALYSIS_AND_PLOTTING.md`
+- the repository Python analysis and plotting policy
   requires figure-owned `figures/<figure_id>/input|output|scripts` workflows,
   retained plotted data, and rendered plot artifacts.
 - Root `AGENTS.md` now requires any new or updated plots to be shown in chat

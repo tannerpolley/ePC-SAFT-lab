@@ -96,22 +96,22 @@ failures and shared contract gates are resolved.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#361](../../issues/361-m4-pe-unify-phase-equilibrium-certification-contracts.md) | `phase-equilibrium` | `Ipopt` | `blocked` | Parent for one enforceable production-route certification contract across PE route families. |
-| [#362](../../issues/362-m4-pe-implement-shared-production-route-certification-contract.md) | `phase-equilibrium` | `Ipopt` | `ready` | First executable leaf: shared certification shape for production-exposed PE routes. |
-| [#363](../../issues/363-m4-pe-govern-lle-family-certification.md) | `lle` | `Ipopt` | `blocked` | Parent for LLE family certification. |
-| [#364](../../issues/364-m4-lle-govern-neutral-nonassociating-lle-certification.md) | `closed` | `Ipopt` | `complete` | Parent neutral nonassociating LLE certification closes after #365 and #366 by this proof/sync PR. |
-| [#365](../../issues/365-m4-lle-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md) | `closed` | `Ipopt` | `complete` | Fixed neutral LLE Stage II replay-to-Stage III accepted-result receipt by PR #379. |
-| [#366](../../issues/366-m4-lle-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md) | `closed` | `Ipopt` | `complete` | Connected source-backed neutral nonassociating LLE evidence to the shared contract by PR #380. |
-| [#367](../../issues/367-m4-lle-govern-associating-lle-certification.md) | `lle`/`association` | `closed` | `complete` | Parent associating LLE certification closes after #368 and #369 by this proof/sync PR. |
-| [#368](../../issues/368-m4-lle-separate-associating-proof-applicability-from-global-route-metadata.md) | `lle`/`association` | `closed` | `complete` | Split request-specific proof applicability from global route-family proof metadata by PR #379. |
-| [#369](../../issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md) | `lle`/`association` | `closed` | `complete` | Connected Gross 2002 associating LLE evidence to the shared contract by PR #383. |
-| [#370](../../issues/370-m4-lle-govern-electrolyte-lle-certification.md) | `closed` | `Ipopt` | `complete` | Parent electrolyte LLE certification closes after closed sub-issues #191 and #371 by this proof/sync PR. |
-| [#371](../../issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `closed` | `Ipopt` | `complete` | Attached reduced-electroneutral electrolyte residual blocks to the shared contract for the retained public `electrolyte_lle` route. |
-| [#372](../../issues/372-m4-lle-govern-reactive-electrolyte-lle-certification-boundary.md) | `electrolyte`/`reactive` | `Ipopt` | `blocked` | Boundary parent for future reactive electrolyte LLE after CE/CPE prerequisites. |
-| [#373](../../issues/373-m4-pe-govern-vle-family-certification.md) | `closed` | `Ipopt` | `complete` | Parent VLE family certification closes after assigning VLE residual ownership under #361 by this proof/sync PR. |
-| [#374](../../issues/374-m4-pe-govern-flash-and-multiphase-certification.md) | `closed` | `Ipopt` | `complete` | Parent flash/multiphase certification closes after assigning phase-set and postsolve ownership under #361 by this proof/sync PR. |
-| [#375](../../issues/375-m4-pe-govern-boundary-route-certification.md) | `closed` | `Ipopt` | `complete` | Parent boundary-route certification closes after assigning trace and boundary admission ownership under #361 by this proof/sync PR. |
-| [#376](../../issues/376-m4-pe-govern-reactive-and-coupled-phase-equilibrium-certification.md) | `cpe` | `Ipopt` | `blocked` | Parent for reactive/coupled PE certification; #331 is now a native sub-issue here. |
+| [#361](../../issues/2026-06-29-m4-equilibrium-issue-0361-unify-phase-equilibrium-certification-contracts.md) | `phase-equilibrium` | `Ipopt` | `blocked` | Parent for one enforceable production-route certification contract across PE route families. |
+| [#362](../../issues/2026-06-29-m4-equilibrium-issue-0362-implement-shared-production-route-certification-contract.md) | `phase-equilibrium` | `Ipopt` | `ready` | First executable leaf: shared certification shape for production-exposed PE routes. |
+| [#363](../../issues/2026-06-29-m4-equilibrium-issue-0363-govern-lle-family-certification.md) | `lle` | `Ipopt` | `blocked` | Parent for LLE family certification. |
+| [#364](../../issues/2026-06-29-m4-equilibrium-issue-0364-govern-neutral-nonassociating-lle-certification.md) | `closed` | `Ipopt` | `complete` | Parent neutral nonassociating LLE certification closes after #365 and #366 by this proof/sync PR. |
+| [#365](../../issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md) | `closed` | `Ipopt` | `complete` | Fixed neutral LLE Stage II replay-to-Stage III accepted-result receipt by PR #379. |
+| [#366](../../issues/2026-06-30-m4-equilibrium-issue-0366-integrate-neutral-nonassociating-source-backed-tolerance-evidence.md) | `closed` | `Ipopt` | `complete` | Connected source-backed neutral nonassociating LLE evidence to the shared contract by PR #380. |
+| [#367](../../issues/2026-06-29-m4-equilibrium-issue-0367-govern-associating-lle-certification.md) | `lle`/`association` | `closed` | `complete` | Parent associating LLE certification closes after #368 and #369 by this proof/sync PR. |
+| [#368](../../issues/2026-06-29-m4-equilibrium-issue-0368-separate-associating-proof-applicability-from-global-route-metadata.md) | `lle`/`association` | `closed` | `complete` | Split request-specific proof applicability from global route-family proof metadata by PR #379. |
+| [#369](../../issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md) | `lle`/`association` | `closed` | `complete` | Connected Gross 2002 associating LLE evidence to the shared contract by PR #383. |
+| [#370](../../issues/2026-06-29-m4-equilibrium-issue-0370-govern-electrolyte-lle-certification.md) | `closed` | `Ipopt` | `complete` | Parent electrolyte LLE certification closes after closed sub-issues #191 and #371 by this proof/sync PR. |
+| [#371](../../issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md) | `closed` | `Ipopt` | `complete` | Attached reduced-electroneutral electrolyte residual blocks to the shared contract for the retained public `electrolyte_lle` route. |
+| [#372](../../issues/2026-06-29-m4-equilibrium-issue-0372-govern-reactive-electrolyte-lle-certification-boundary.md) | `electrolyte`/`reactive` | `Ipopt` | `blocked` | Boundary parent for future reactive electrolyte LLE after CE/CPE prerequisites. |
+| [#373](../../issues/2026-06-29-m4-equilibrium-issue-0373-govern-vle-family-certification.md) | `closed` | `Ipopt` | `complete` | Parent VLE family certification closes after assigning VLE residual ownership under #361 by this proof/sync PR. |
+| [#374](../../issues/2026-06-29-m4-equilibrium-issue-0374-govern-flash-and-multiphase-certification.md) | `closed` | `Ipopt` | `complete` | Parent flash/multiphase certification closes after assigning phase-set and postsolve ownership under #361 by this proof/sync PR. |
+| [#375](../../issues/2026-06-29-m4-equilibrium-issue-0375-govern-boundary-route-certification.md) | `closed` | `Ipopt` | `complete` | Parent boundary-route certification closes after assigning trace and boundary admission ownership under #361 by this proof/sync PR. |
+| [#376](../../issues/2026-06-29-m4-equilibrium-issue-0376-govern-reactive-and-coupled-phase-equilibrium-certification.md) | `cpe` | `Ipopt` | `blocked` | Parent for reactive/coupled PE certification; #331 is now a native sub-issue here. |
 
 ### Electrolyte HELD2 Closeout State
 
@@ -124,11 +124,11 @@ electrolyte residual block required by the electrolyte LLE parent closeout.
 
 | Issue | Capability | Backend | Readiness | Summary |
 | --- | --- | --- | --- | --- |
-| [#321](../../issues/2026-06-26-m4-ce-issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe.md) | `ce` | `Ipopt` | `ready` | Standalone chemical/speciation equilibrium foundation before coupled CPE work. |
-| [#328](../../issues/2026-06-26-m4-ce-issue-0328-m4-ce-design-standalone-speciation-public-api-and-result-schema.md) | `ce` | `Ipopt` | `ready` | Design the standalone CE public API and result schema. |
-| [#329](../../issues/2026-06-26-m4-ce-issue-0329-m4-ce-build-standalone-validation-ladder.md) | `ce` | `Ipopt` | `ready` | Build the standalone CE validation ladder. |
-| [#330](../../issues/2026-06-26-m4-ce-issue-0330-m4-ce-activate-standalone-ce-only-after-gates-pass.md) | `ce` | `Ipopt` | `blocked` | Activate standalone CE only after the CE foundation, API, and validation gates pass. |
-| [#331](../../issues/2026-06-26-m4-ce-issue-0331-m4-cpe-define-simultaneous-phase-plus-chemistry-interface-contract.md) | `cpe` | `Ipopt` | `blocked` | Define the simultaneous phase-plus-chemistry interface contract after standalone CE is governed. |
+| [#321](../../issues/2026-06-26-m4-equilibrium-issue-0321-m4-ce-standalone-chemical-speciation-equilibrium-foundation-before-cpe.md) | `ce` | `Ipopt` | `ready` | Standalone chemical/speciation equilibrium foundation before coupled CPE work. |
+| [#328](../../issues/2026-06-26-m4-equilibrium-issue-0328-m4-ce-design-standalone-speciation-public-api-and-result-schema.md) | `ce` | `Ipopt` | `ready` | Design the standalone CE public API and result schema. |
+| [#329](../../issues/2026-06-26-m4-equilibrium-issue-0329-m4-ce-build-standalone-validation-ladder.md) | `ce` | `Ipopt` | `ready` | Build the standalone CE validation ladder. |
+| [#330](../../issues/2026-06-26-m4-equilibrium-issue-0330-m4-ce-activate-standalone-ce-only-after-gates-pass.md) | `ce` | `Ipopt` | `blocked` | Activate standalone CE only after the CE foundation, API, and validation gates pass. |
+| [#331](../../issues/2026-06-26-m4-equilibrium-issue-0331-m4-cpe-define-simultaneous-phase-plus-chemistry-interface-contract.md) | `cpe` | `Ipopt` | `blocked` | Define the simultaneous phase-plus-chemistry interface contract after standalone CE is governed. |
 
 ## Queue Guard
 

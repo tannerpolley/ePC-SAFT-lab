@@ -1,18 +1,18 @@
 ---
 issue: 193
 title: "M5: re-open regression production backlog around TargetDataset, Ceres, and capability evidence"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/193"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/193
+state: open
 milestone: "M5 - Regression"
 project: "ePC-SAFT Roadmap"
-package: "regression"
-capability: "regression"
-backend: "Ceres"
+package: regression
+capability: regression
+backend: Ceres
 readiness: "needs design"
-release_target: "regression-0.x"
-source_spec: "docs/superpowers/specs/2026-05-29-m5-regression-regression-production-backlog.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m5-regression-issue-0193-re-open-regression-production-backlog-around-targetdataset-ceres-and-capability-evidence-plan.md"
-afk_hitl: "HITL"
+release_target: regression-0.x
+source_spec: docs/superpowers/specs/2026-05-29-m5-regression-regression-production-backlog.md
+source_plan: docs/superpowers/plans/2026-05-30-m5-regression-issue-0193-re-open-regression-production-backlog-around-targetdataset-ceres-and-capability-evidence-plan.md
+afk_hitl: HITL
 branch: codex/issue-0193-re-open-regression-production-backlog-around-targetdataset-ceres-and-cap
 last_synced: "2026-06-02"
 ---

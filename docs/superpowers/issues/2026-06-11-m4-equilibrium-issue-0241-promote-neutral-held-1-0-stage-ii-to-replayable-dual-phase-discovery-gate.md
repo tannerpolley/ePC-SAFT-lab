@@ -1,25 +1,25 @@
 ---
 issue: 241
 title: "M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/241"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/241
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "lle"
-backend: "Ipopt"
-readiness: "closed"
-release_target: "equilibrium-0.x"
+package: equilibrium
+capability: lle
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
 source_spec: null
 source_plan: null
-afk_hitl: "AFK"
+afk_hitl: AFK
 branch: null
 last_synced: "2026-06-11"
 ---
 
 # M4: promote neutral HELD 1.0 Stage II to replayable dual phase-discovery gate
 
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/241
 **GitHub Milestone:** M4 - Equilibrium

@@ -1,25 +1,25 @@
 ---
 issue: 264
 title: "M4: admit generalized neutral multiphase phase-set PE"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/264"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/264
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "lle"
-backend: "Ipopt"
-readiness: "closed"
-release_target: "equilibrium-0.x"
+package: equilibrium
+capability: lle
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
 source_spec: null
 source_plan: null
-afk_hitl: "AFK"
+afk_hitl: AFK
 branch: null
 last_synced: "2026-06-17"
 ---
 
 # M4: admit generalized neutral multiphase phase-set PE
 
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/264
 **GitHub Milestone:** M4 - Equilibrium

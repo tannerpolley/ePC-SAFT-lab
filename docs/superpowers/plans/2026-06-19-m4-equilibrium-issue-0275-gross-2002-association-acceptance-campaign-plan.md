@@ -84,7 +84,7 @@ Numerical and structural pass metrics:
   Run:
 
   ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md
+  uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md
   ```
 
   Expected: exit code `0`, with every numbered task passing the use-case gate.

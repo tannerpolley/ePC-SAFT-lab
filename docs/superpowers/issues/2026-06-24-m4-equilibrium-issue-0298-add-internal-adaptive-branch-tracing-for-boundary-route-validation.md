@@ -1,25 +1,24 @@
 ---
 issue: 298
 title: "M4: add internal adaptive branch tracing for boundary-route validation"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/298"
-state: "resolved-pending-merge"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/298
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "association"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-24-m4-equilibrium-adaptive-branch-tracing-and-validation.md"
-source_plan: "docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md"
-afk_hitl: "AFK"
-branch: codex/fix-gross-2002-figure-02-bubble-line
+package: equilibrium
+capability: association
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-24-m4-equilibrium-adaptive-branch-tracing-and-validation.md
+source_plan: docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
+afk_hitl: AFK
+branch: codex/issue-0298-adaptive-branch-tracing
 last_synced: "2026-06-24"
 ---
 
 # M4: add internal adaptive branch tracing for boundary-route validation
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/298
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task
@@ -88,8 +87,8 @@ generation over to the shared tracer.
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
 uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_02/scripts/generate_data.py

@@ -184,9 +184,9 @@ AFK-ready slices.
 - `uv run --no-sync python run_pytest.py tests/native/contracts/test_standalone_ce_gate.py -q`
 - `uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete`
 - `uv run --no-sync python -m ruff check <changed-python-files>`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath <plan>`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath <plan>`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 <issue-mirror>`
+- `uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path <plan>`
+- `uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path <plan>`
+- `uv run --no-sync python scripts/validate_issue_mirror.py --issue-file <issue-mirror>`
 - `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`
 
 ## Open Questions

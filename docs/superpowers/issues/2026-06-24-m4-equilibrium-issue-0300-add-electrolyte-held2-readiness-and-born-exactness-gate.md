@@ -1,31 +1,32 @@
 ---
 issue: 300
 title: "M4: add electrolyte HELD2 readiness and Born exactness gate"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/300"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/300
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "closed"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
-source_plan: "docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: electrolyte
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
+source_spec: null
+source_plan: null
+afk_hitl: AFK
 branch: null
 last_synced: "2026-06-24"
 ---
 
 # M4: add electrolyte HELD2 readiness and Born exactness gate
 
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/300
 **Pull Request:** https://github.com/ePC-SAFT/ePC-SAFT/pull/301
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/300 using docs/superpowers/issues/2026-06-24-m4-equilibrium-issue-0300-add-electrolyte-held2-readiness-and-born-exactness-gate.md and docs/superpowers/plans/2026-06-24-m4-equilibrium-issue-0300-electrolyte-held2-readiness-born-exactness-gate-plan.md. Complete proof oracle: issue acceptance criteria checked and PR merged.

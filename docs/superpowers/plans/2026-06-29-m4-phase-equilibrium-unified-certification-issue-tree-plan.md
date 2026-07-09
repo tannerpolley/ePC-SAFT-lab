@@ -69,7 +69,7 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks
 Mirror validation:
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File <create-issues-skill>\scripts\validate-issue-mirror.ps1 -RepoRoot . -IssueFile <mirror> -MilestoneRequired
+uv run --no-sync python scripts/validate_issue_mirror.py --repo-root . --issue-file <mirror> --milestone-required
 ```
 
 ## Non-Goals

@@ -1,18 +1,18 @@
 ---
 issue: 207
 title: "Expose objective-free local phase EOS derivative bundle"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/207"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/207
+state: closed
 milestone: "M3 - EOS"
 project: "ePC-SAFT Roadmap"
-package: "core"
-capability: "derivatives"
-backend: "CppAD"
-readiness: "closed"
-release_target: "core-0.x"
+package: core
+capability: derivatives
+backend: CppAD
+readiness: closed
+release_target: core-0.x
 source_spec: null
 source_plan: null
-afk_hitl: "AFK"
+afk_hitl: AFK
 branch: null
 last_synced: "2026-06-08"
 ---

@@ -1,24 +1,24 @@
 ---
 issue: 292
 title: "M4: open associating GFPE VLE admission for Gross 2002 binaries"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/292"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/292
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "association"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: association
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
+source_plan: docs/superpowers/plans/2026-06-20-m4-equilibrium-associating-vle-gfpe-admission-prerequisite-plan.md
+afk_hitl: AFK
 branch: codex/issue-0292-open-associating-gfpe-vle-admission-for-gross-2002-binaries
 last_synced: "2026-06-20"
 ---
+
 # M4: open associating GFPE VLE admission for Gross 2002 binaries
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/292
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

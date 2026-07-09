@@ -12,7 +12,7 @@
 
 ## Source Evidence
 
-- Issue mirror: `docs/superpowers/issues/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle.md`.
+- GitHub issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/407`; no local mirror is retained.
 - Source spec: `docs/superpowers/specs/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters.md`.
 - Figure folder: `analyses/paper_validation/2026_khudaida/figures/figure_02`.
 - Shared model owner: `analyses/paper_validation/2026_khudaida/scripts/_common.py`.
@@ -142,41 +142,37 @@ Figure 2 is complete only when the retained artifacts prove these values:
 - [ ] **Step 4: Inspect retained statistics.** Confirm `fit_statistics.csv` reports row counts, tolerance basis, AAD/RMSE/max error fields where implemented, pass status, and exact failed rows when present.
 - [ ] **Step 5: Re-run the focused test.** Run the Figure 2 pytest command and keep iterating only within the Figure 2/shared-owner boundary until it passes or the stop criteria require an M4/M5 blocker.
 
-### Task 4: Validate, Update The Mirror, And Prepare PR Evidence
+### Task 4: Validate, Update GitHub, And Prepare PR Evidence
 
 **Use Cases:**
-- Acceptance evidence covers the proof oracle, issue mirror validator, source plan validators, docs validator, `git diff --check`, and cleanup hook.
-- Cutover evidence shows #407's local mirror points at this executable plan and #408 remains blocked until #407 closes.
+- Acceptance evidence covers the proof oracle, source plan validators, docs validator, `git diff --check`, and cleanup hook.
+- Cutover evidence keeps GitHub issue #407 authoritative and #408 blocked until #407 closes.
 - Reviewer evidence includes exact artifact paths, numeric statistics, and blocker ownership if closure depends on M4/M5 follow-up.
 
 **Files:**
-- Modify: `docs/superpowers/issues/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle.md`
-- Test: `scripts/validate-issue-mirror.ps1`
-- Test: `scripts/validate-plan-task-use-cases.ps1`
-- Test: `scripts/validate-plan-outcome-proof.ps1`
+- Test: `scripts/validate_plan_task_use_cases.py`
+- Test: `scripts/validate_plan_outcome_proof.py`
 - Test: `scripts/dev/validate_project.py`
 
-- [ ] **Step 1: Update the #407 mirror with final evidence.** Keep `Sub-Issue Role: leaf`, `Executable: true`, this source plan path, acceptance status, and exact artifact paths aligned.
-- [ ] **Step 2: Run the issue proof oracle.** Run the two Figure 2 scripts, the Khudaida checker, and the focused pytest command from the #407 mirror.
-- [ ] **Step 3: Run Superpowers validators.** Run the plan task-use-case validator, plan outcome-proof validator, issue mirror validator, docs validator, and `git diff --check`.
-- [ ] **Step 4: Run cleanup.** Run `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`.
+- [ ] **Step 1: Update GitHub issue #407 with final evidence.** Keep the source plan path, acceptance status, and exact artifact paths aligned.
+- [ ] **Step 2: Run the issue proof oracle.** Run the two Figure 2 scripts, the Khudaida checker, and the focused pytest command from this plan.
+- [ ] **Step 3: Run Superpowers validators.** Run the plan task-use-case validator, plan outcome-proof validator, docs validator, and `git diff --check`.
+- [ ] **Step 4: Run cleanup.** Run `bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .`.
 - [ ] **Step 5: Prepare PR evidence.** Summarize acceptance coverage, exact numeric statistics, changed artifacts, validation receipts, and the closing reference `Closes #407`.
 
 ## Proof Oracle
 
-```powershell
-uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\generate_data.py
-uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\render_figure.py
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_figure02_public_route_reproduction.py -q
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile docs\superpowers\issues\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
-uv run --no-sync python scripts\dev\validate_project.py docs
+```bash
+uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/generate_data.py
+uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/render_figure.py
+uv run --no-sync python scripts/validation/check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py -q
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-validation-issue-0407-khudaida-figure-02-293k-5wt-lle-plan.md
+uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
 ```
 
 Decision-ledger validation is represented by the `## Decision Ledger` table in
-this plan. This repo currently owns `scripts/validate-plan-task-use-cases.ps1`
-and `scripts/validate-plan-outcome-proof.ps1`, but it does not contain a
-repo-local `scripts/validate-decision-ledger.ps1` validator.
+this plan. The plan task-use-case and outcome-proof validators are the retained
+repo-local executable checks for this planning contract.

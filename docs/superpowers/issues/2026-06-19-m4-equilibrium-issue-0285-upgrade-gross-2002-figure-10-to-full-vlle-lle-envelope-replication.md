@@ -1,24 +1,24 @@
 ---
 issue: 285
 title: "M4: upgrade Gross 2002 Figure 10 to full VLLE/LLE envelope replication"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/285"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/285
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "association"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md"
-source_plan: "docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0285-gross-2002-figure-10-vlle-lle-envelope-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: association
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md
+source_plan: docs/superpowers/plans/2026-06-20-m4-equilibrium-issue-0285-gross-2002-figure-10-vlle-lle-envelope-plan.md
+afk_hitl: AFK
 branch: codex/issue-0285-gross-2002-figure-10-envelope-replication
 last_synced: "2026-06-20"
 ---
+
 # M4: upgrade Gross 2002 Figure 10 to full VLLE/LLE envelope replication
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/285
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Task

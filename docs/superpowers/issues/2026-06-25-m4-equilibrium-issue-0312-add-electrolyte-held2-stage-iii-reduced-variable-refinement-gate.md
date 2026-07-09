@@ -1,30 +1,30 @@
 ---
 issue: 312
 title: "M4: add electrolyte HELD2 Stage III reduced-variable refinement gate"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/312"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/312
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
-source_plan: "docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md"
-afk_hitl: "AFK"
+package: equilibrium
+capability: electrolyte
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
+source_plan: docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md
+afk_hitl: AFK
 branch: codex/issue-0312-electrolyte-stage-iii-refinement
 last_synced: "2026-06-25"
 ---
 
 # M4: add electrolyte HELD2 Stage III reduced-variable refinement gate
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/312
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** Feature
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
 **Labels:** enhancement, agent-ready, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve https://github.com/ePC-SAFT/ePC-SAFT/issues/312 using docs/superpowers/issues/2026-06-25-m4-equilibrium-issue-0312-add-electrolyte-held2-stage-iii-reduced-variable-refinement-gate.md and docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md. Complete proof oracle: issue acceptance criteria checked and PR merged.
@@ -104,8 +104,8 @@ admission are still separate.
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0312-electrolyte-held2-stage-iii-refinement-gate-plan.md
 uv run --no-sync python scripts/validation/check_electrolyte_stage_iii_refinement.py --json --require-source-gate --require-readiness-gate --require-tpd-gate --require-held2-discovery --require-native-stage-iii --require-public-routes-closed --require-complete
 uv run --no-sync python run_pytest.py tests/native/contracts/test_electrolyte_stage_iii_refinement.py tests/native/contracts/test_electrolyte_held2_phase_discovery.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs

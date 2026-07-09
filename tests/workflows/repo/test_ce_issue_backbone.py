@@ -1,12 +1,24 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
+
+from scripts import validate_issue_mirror
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ISSUE_DIR = REPO_ROOT / "docs" / "superpowers" / "issues"
 SOURCE_PLAN = "docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md"
-ISSUE_MIRROR_VALIDATOR = REPO_ROOT / "scripts" / "validate-issue-mirror.ps1"
+ISSUE_MIRROR_VALIDATOR = REPO_ROOT / "scripts" / "validate_issue_mirror.py"
+CURRENT_PLAN_VALIDATORS = (
+    "scripts/validate_plan_task_use_cases.py",
+    "scripts/validate_plan_outcome_proof.py",
+)
+RETIRED_PLAN_VALIDATORS = (
+    "validate-plan-task-use-cases.ps1",
+    "validate-plan-outcome-proof.ps1",
+)
+RETIRED_VALIDATORS = (*RETIRED_PLAN_VALIDATORS, "validate-issue-mirror.ps1")
 
 CE_BACKBONE_ISSUES = {
     321: "M4 CE: standalone chemical/speciation equilibrium foundation before CPE",
@@ -53,7 +65,7 @@ def test_ce_boundary_tracking_mirrors_link_plan_and_github_issues() -> None:
     for issue_number, title in CE_BACKBONE_ISSUES.items():
         text = _mirror_text(issue_number)
 
-        assert text.startswith(f"# {title}\n")
+        assert f"\n# {title}\n" in text
         assert f"**GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/{issue_number}" in text
         assert f"**Source Plan:** {SOURCE_PLAN}" in text
         assert "**GitHub Milestone:** M4 - Equilibrium" in text
@@ -81,15 +93,11 @@ def test_repo_issue_mirror_validator_accepts_ce_backbone_mirrors() -> None:
         mirror = _mirror_paths(issue_number)[0]
         result = subprocess.run(
             [
-                "pwsh.exe",
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
+                sys.executable,
                 str(ISSUE_MIRROR_VALIDATOR),
-                "-IssueFile",
+                "--issue-file",
                 str(mirror),
-                "-MilestoneRequired",
+                "--milestone-required",
             ],
             cwd=REPO_ROOT,
             text=True,
@@ -101,3 +109,47 @@ def test_repo_issue_mirror_validator_accepts_ce_backbone_mirrors() -> None:
             f"stdout:\n{result.stdout}\n"
             f"stderr:\n{result.stderr}"
         )
+
+
+def test_ce_mirrors_use_current_python_plan_validators() -> None:
+    for issue_number in CE_BACKBONE_ISSUES:
+        text = _mirror_text(issue_number)
+
+        for validator_path in CURRENT_PLAN_VALIDATORS:
+            assert validator_path in text
+        for retired_name in RETIRED_PLAN_VALIDATORS:
+            assert retired_name not in text
+
+
+def test_retained_issue_mirrors_do_not_call_retired_validators() -> None:
+    offenders = {
+        path.relative_to(REPO_ROOT).as_posix(): [name for name in RETIRED_VALIDATORS if name in path.read_text(encoding="utf-8")]
+        for path in sorted(ISSUE_DIR.glob("*.md"))
+        if any(name in path.read_text(encoding="utf-8") for name in RETIRED_VALIDATORS)
+    }
+
+    assert offenders == {}
+
+
+def test_issue_mirror_validator_rejects_retired_plan_validator_names(tmp_path: Path) -> None:
+    source = _mirror_paths(321)[0]
+    issue_file = tmp_path / "docs" / "superpowers" / "issues" / source.name
+    issue_file.parent.mkdir(parents=True)
+    text = source.read_text(encoding="utf-8")
+    for current_path, retired_name in zip(CURRENT_PLAN_VALIDATORS, RETIRED_PLAN_VALIDATORS, strict=True):
+        text = text.replace(current_path, f"scripts/{retired_name}")
+    current_validator_prose = ", ".join(CURRENT_PLAN_VALIDATORS)
+    text = text.replace(
+        "\n## Proof Oracle\n",
+        f"\nCurrent validator documentation: {current_validator_prose}\n\n## Proof Oracle\n",
+        1,
+    )
+    issue_file.write_text(text, encoding="utf-8")
+
+    result = validate_issue_mirror.validate(issue_file, tmp_path, milestone_required=True)
+
+    assert result["ok"] is False
+    assert result["errors"] == [
+        "Proof Oracle must include validate_plan_task_use_cases.py",
+        "Proof Oracle must include validate_plan_outcome_proof.py",
+    ]

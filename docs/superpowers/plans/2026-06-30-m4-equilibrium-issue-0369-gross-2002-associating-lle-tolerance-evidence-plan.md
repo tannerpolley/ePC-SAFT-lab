@@ -14,7 +14,7 @@
 
 - GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/369`
 - Source Spec: `docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md`
-- Source Issue: `docs/superpowers/issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md`
+- Source Issue: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md`
 - Source Plan: `docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0369-gross-2002-associating-lle-tolerance-evidence-plan.md`
 - Parent Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/367`
 - Milestone: `M4 - Equilibrium`
@@ -39,7 +39,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** This plan and `packages/epcsaft-equilibrium/tests/api/test_associating_lle_gross_2002_certification.py`.
-**Files To Modify:** `scripts/validation/check_gross_2002_association_acceptance.py`, `tests/native/contracts/test_gross_2002_association_acceptance_checker.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md`.
+**Files To Modify:** `scripts/validation/check_gross_2002_association_acceptance.py`, `tests/native/contracts/test_gross_2002_association_acceptance_checker.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_equilibrium_benchmark_registry.py`, and `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md`.
 **Files To Avoid:** EOS equation files, native solver code, Gross source artifacts, retained parameter rows, M5 regression assets, electrolyte LLE, reactive routes, and release metadata.
 **Source Of Truth:** Gross 2002 retained campaign artifacts under `analyses/paper_validation/2002_gross`, the methanol/cyclohexane fixture under `data/reference/equilibrium_benchmarks/associating_lle/methanol_cyclohexane`, and shared PE certification capabilities.
 **Read Path:** Read retained fit-stat CSV rows, association Hessian diagnostics, package `phase_equilibrium_certification`, and validator blockers from `validate_phase_equilibrium_certification_contracts`.
@@ -129,7 +129,7 @@ Test complete for #369 means:
 **Files:**
 - Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - Modify: `tests/native/contracts/test_equilibrium_benchmark_registry.py`
-- Modify: `docs/superpowers/issues/369-m4-lle-integrate-gross-2002-associating-lle-tolerance-evidence.md`
+- Modify: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0369-integrate-gross-2002-associating-lle-tolerance-evidence.md`
 
 - [x] **Step 1: Add registry acceptance checks for shared certification and source margins.**
 - [x] **Step 2: Validate the plan and docs.**
@@ -138,8 +138,8 @@ Test complete for #369 means:
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-30-m4-equilibrium-issue-0369-gross-2002-associating-lle-tolerance-evidence-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-30-m4-equilibrium-issue-0369-gross-2002-associating-lle-tolerance-evidence-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0369-gross-2002-associating-lle-tolerance-evidence-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-30-m4-equilibrium-issue-0369-gross-2002-associating-lle-tolerance-evidence-plan.md
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "associating and lle and certification" -q
 uv run --no-sync python -m pytest tests\native\contracts\test_gross_2002_association_acceptance_checker.py tests\native\contracts\test_equilibrium_benchmark_registry.py -q
 uv run --no-sync python scripts\validation\check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native

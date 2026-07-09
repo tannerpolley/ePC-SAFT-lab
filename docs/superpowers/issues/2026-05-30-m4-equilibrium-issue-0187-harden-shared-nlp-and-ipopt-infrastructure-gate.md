@@ -1,18 +1,18 @@
 ---
 issue: 187
 title: "M4: harden shared NLP and Ipopt infrastructure gate"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/187"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/187
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "lle"
-backend: "Ipopt"
-readiness: "closed"
-release_target: "equilibrium-0.x"
+package: equilibrium
+capability: lle
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
 source_spec: null
 source_plan: null
-afk_hitl: "HITL"
+afk_hitl: HITL
 branch: null
 last_synced: "2026-06-11"
 ---

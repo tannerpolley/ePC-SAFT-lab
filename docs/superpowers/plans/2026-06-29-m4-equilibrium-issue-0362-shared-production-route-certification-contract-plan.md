@@ -14,7 +14,7 @@
 
 - GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/362`
 - Source Spec: `docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md`
-- Source Issue: `docs/superpowers/issues/362-m4-pe-implement-shared-production-route-certification-contract.md`
+- Source Issue: `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0362-implement-shared-production-route-certification-contract.md`
 - Source Plan: `docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md`
 - Parent Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/361`
 - Milestone: `M4 - Equilibrium`
@@ -40,7 +40,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/phase_equilibrium_certification.py`, `packages/epcsaft-equilibrium/tests/contracts/test_phase_equilibrium_certification_contract.py`.
-**Files To Modify:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/__init__.py`, `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/362-m4-pe-implement-shared-production-route-certification-contract.md`.
+**Files To Modify:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/capabilities.py`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/__init__.py`, `packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0362-implement-shared-production-route-certification-contract.md`.
 **Files To Avoid:** Provider EOS internals, regression package files, downstream repositories, native solver equations, generated activation mirror except through its generator, and release metadata.
 **Source Of Truth:** Native activation matrix mirrored in `equilibrium_activation.py`, `EQUILIBRIUM_ROUTE_DERIVATIVE_EVIDENCE`, #362 source spec, and the M4 GFPE registry.
 **Read Path:** Read activation rows, public route family map, and derivative/capability evidence rows from `capabilities.py` data already used by the public package surface.
@@ -209,7 +209,7 @@ Numerical residual tolerances are enforced by existing route-family validators. 
 - Auto Mode closeout needs exact validation evidence before push, PR, merge, or issue closure.
 
 **Files:**
-- Modify: `docs/superpowers/issues/362-m4-pe-implement-shared-production-route-certification-contract.md`
+- Modify: `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0362-implement-shared-production-route-certification-contract.md`
 - Modify: GitHub issue `https://github.com/ePC-SAFT/ePC-SAFT/issues/362`
 
 - [ ] **Step 1: Update source plan pointers.**
@@ -221,8 +221,8 @@ Numerical residual tolerances are enforced by existing route-family validators. 
   Run:
 
   ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
+  uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
+  uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
   ```
 
 - [ ] **Step 3: Run the full #362 proof oracle and cleanup hook.**
@@ -232,8 +232,8 @@ Numerical residual tolerances are enforced by existing route-family validators. 
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0362-shared-production-route-certification-contract-plan.md
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "certification and phase and equilibrium" -q
 uv run --no-sync python -m pytest tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q
 uv run --no-sync python scripts\dev\validate_project.py docs

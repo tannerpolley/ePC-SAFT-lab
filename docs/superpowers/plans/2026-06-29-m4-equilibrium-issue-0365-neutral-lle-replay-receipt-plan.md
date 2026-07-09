@@ -14,7 +14,7 @@
 
 - GitHub Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/365`
 - Source Spec: `docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md`
-- Source Issue: `docs/superpowers/issues/365-m4-lle-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`
+- Source Issue: `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`
 - Source Plan: `docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md`
 - Parent Issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/364`
 - Milestone: `M4 - Equilibrium`
@@ -40,7 +40,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** `packages/epcsaft-equilibrium/tests/equilibrium_support/route_assertions.py`.
-**Files To Modify:** `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`, `packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/365-m4-lle-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`.
+**Files To Modify:** `packages/epcsaft-equilibrium/tests/native/diagnostics/test_selector_core_contracts.py`, `packages/epcsaft-equilibrium/tests/native/results/test_neutral_lle_reference_values.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `tests/native/contracts/test_generalized_equilibrium_registry.py`, `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`.
 **Files To Avoid:** ePC-SAFT EOS equation files, regression package files, M5 parameter snapshots, electrolyte LLE routes, associating LLE routes, downstream analyses, and public release metadata.
 **Source Of Truth:** #365 issue mirror, the shared phase-equilibrium certification spec, existing neutral LLE tests, and native route implementation in `two_phase_eos_route.cpp`.
 **Read Path:** Read the Stage II discovery payload from `evaluate_neutral_tpd_phase_discovery`, the Stage III route result from `solve_activated_neutral_lle_eos_route`, and pybind dictionaries from `register_bindings.cpp`.
@@ -166,7 +166,7 @@ Test complete for #365 means:
 **Files:**
 - Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - Modify: `tests/native/contracts/test_generalized_equilibrium_registry.py`
-- Modify: `docs/superpowers/issues/365-m4-lle-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`
+- Modify: `docs/superpowers/issues/2026-06-29-m4-equilibrium-issue-0365-repair-neutral-stage-ii-replay-to-stage-iii-proof-receipt.md`
 - Modify: GitHub issue `https://github.com/ePC-SAFT/ePC-SAFT/issues/365`
 
 - [ ] **Step 1: Update M4 registry wording.**
@@ -184,8 +184,8 @@ Test complete for #365 means:
 - [ ] **Step 3: Validate the implementation plan.**
 
   ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
+  uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
+  uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
   ```
 
 - [ ] **Step 4: Update #365 mirror and GitHub body.**
@@ -202,8 +202,8 @@ Test complete for #365 means:
 ## Proof Oracle
 
 ```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs\superpowers\plans\2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-29-m4-equilibrium-issue-0365-neutral-lle-replay-receipt-plan.md
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\native\diagnostics\test_selector_core_contracts.py::test_neutral_lle_stage_iii_route_refinement_records_stage_ii_replay_seed packages\epcsaft-equilibrium\tests\native\results\test_neutral_lle_reference_values.py::test_neutral_lle_synthetic_binary_accepts_split_with_exact_hessian -q
 uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -q
 uv run --no-sync python scripts\dev\validate_project.py docs

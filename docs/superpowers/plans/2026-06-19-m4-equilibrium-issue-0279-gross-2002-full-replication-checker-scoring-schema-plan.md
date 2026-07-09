@@ -13,7 +13,7 @@
 ## Intake
 
 - Source spec: `docs/superpowers/specs/2026-06-19-m4-equilibrium-gross-2002-full-figure-replication.md`
-- Issue mirror: `docs/superpowers/issues/2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md`
+- GitHub issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/279`; no local mirror is retained.
 - GitHub issue: `https://github.com/ePC-SAFT/ePC-SAFT/issues/279`
 - Milestone: `M4 - Equilibrium`
 - Package owner: `packages/epcsaft-equilibrium`
@@ -67,7 +67,6 @@ Numerical metrics are required by the schema even though #279 does not compute r
 - Create: `scripts/validation/check_gross_2002_full_replication.py`
 - Create: `tests/native/contracts/test_gross_2002_full_replication_checker.py`
 - Create: `analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json`
-- Modify: `docs/superpowers/issues/2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
 
 ### Task 1: Add Red Contract Tests For The Full-Replication Checker
@@ -668,9 +667,7 @@ Numerical metrics are required by the schema even though #279 does not compute r
 - GitHub issue body stays aligned with the local mirror after the plan correction.
 
 **Files:**
-- Modify: `docs/superpowers/issues/2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
-- Test: `docs/superpowers/issues/2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md`
 
 - [ ] **Step 1: Link the source plan in #279 mirror**
 
@@ -704,34 +701,27 @@ Numerical metrics are required by the schema even though #279 does not compute r
   | `scripts/validation/check_gross_2002_full_replication.py --json --require-foundation` | `association` | Gross/Sadowski 2002 full-replication foundation for #279: validates the Figure 1-10 manifest, required source/digitization artifacts, score schema, source metadata schema, and planned blocker readout. This is not full figure replication until #280-#286 close. |
   ```
 
-- [ ] **Step 4: Validate issue mirror and docs**
+- [ ] **Step 4: Validate docs**
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File C:\Users\Tanner\.codex\plugins\cache\tanner-local\project\0.2.0+codex.20260604172859\skills\create-issues\scripts\validate-issue-mirror.ps1 -RepoRoot . -IssueFile docs\superpowers\issues\2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md -MilestoneRequired
+  ```bash
   uv run --no-sync python scripts/dev/validate_project.py docs
   ```
 
-  Expected: issue mirror validator passes and docs build succeeds.
+  Expected: the docs build succeeds.
 
 - [ ] **Step 5: Sync GitHub issue body**
 
-  After local validation, update the GitHub body from the corrected local mirror content:
+  After local validation, update GitHub issue #279 directly with the validated
+  foundation-gate summary. GitHub is authoritative; no local mirror is retained.
 
-  ```powershell
-  $path = 'docs\superpowers\issues\2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md'
-  $text = Get-Content -LiteralPath $path -Raw
-  $body = [regex]::Replace($text, '(?s)^---\r?\n.*?\r?\n---\r?\n', '', 1)
-  $body | gh issue edit 279 --repo ePC-SAFT/ePC-SAFT --body-file -
-  ```
-
-- [ ] **Step 6: Commit checkpoint after docs and mirror updates**
+- [ ] **Step 6: Commit checkpoint after docs updates**
 
   Commit:
 
-  ```powershell
-  git add docs/superpowers/issues/2026-06-19-m4-equilibrium-issue-0279-add-gross-2002-full-replication-checker-and-scoring-schema.md docs/superpowers/milestones/M4-equilibrium/README.md
+  ```bash
+  git add docs/superpowers/milestones/M4-equilibrium/README.md
   git commit -m "Document Gross 2002 full replication foundation gate"
   ```
 

@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   sync-readiness:
-    runs-on: windows-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -47,21 +47,29 @@ jobs:
 
       - name: Build synchronizer arguments
         id: args
-        shell: pwsh
+        shell: bash
+        env:
+          ISSUE_INPUT: ${{ inputs.issue }}
         run: |
-          $args = @("--repo", "${{ github.repository }}")
-          if ("${{ github.event_name }}" -eq "schedule") {
-            $args += "--reconcile"
-          } elseif ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            if ("${{ inputs.issue }}" -ne "") {
-              $args += @("--issue", "${{ inputs.issue }}")
-            } else {
-              $args += "--reconcile"
-            }
-          } else {
-            $args += @("--event-path", "${{ github.event_path }}", "--event-name", "${{ github.event_name }}")
-          }
-          "script_args=$($args -join ' ')" >> $env:GITHUB_OUTPUT
+          set -euo pipefail
+          args=(--repo "${{ github.repository }}")
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            args+=(--reconcile)
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ -n "$ISSUE_INPUT" ]]; then
+              if [[ ! "$ISSUE_INPUT" =~ ^[0-9]+$ ]]; then
+                echo "issue input must contain digits only" >&2
+                exit 2
+              fi
+              args+=(--issue "$ISSUE_INPUT")
+            else
+              args+=(--reconcile)
+            fi
+          else
+            args+=(--event-path "${{ github.event_path }}" --event-name "${{ github.event_name }}")
+          fi
+          printf -v script_args '%q ' "${args[@]}"
+          printf 'script_args=%s\n' "$script_args" >> "$GITHUB_OUTPUT"
 
       - name: Dry-run readiness sync
         env:
@@ -80,17 +88,14 @@ jobs:
 
       - name: Commit mirror changes
         if: github.event_name != 'workflow_dispatch' || inputs.apply
-        shell: pwsh
+        shell: bash
         run: |
+          set -euo pipefail
           git add docs/superpowers docs/agents
-          git diff --cached --quiet -- docs/superpowers docs/agents
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "No mirror changes to commit."
+          if git diff --cached --quiet -- docs/superpowers docs/agents; then
+            echo "No mirror changes to commit."
             exit 0
-          }
-          if ($LASTEXITCODE -ne 1) {
-            exit $LASTEXITCODE
-          }
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Sync issue readiness mirrors"

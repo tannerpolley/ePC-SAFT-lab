@@ -1,18 +1,18 @@
 ---
 issue: 161
 title: "Design explicit PC-SAFT association-site closures for EOS evaluation"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/161"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/161
+state: open
 milestone: "M3 - EOS"
 project: "ePC-SAFT Roadmap"
-package: "core"
-capability: "eos"
-backend: "CppAD"
+package: core
+capability: eos
+backend: CppAD
 readiness: "needs direct CppAD proof"
-release_target: "future"
-source_spec: "docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md"
-source_plan: "docs/superpowers/plans/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation-plan.md"
-afk_hitl: "HITL"
+release_target: future
+source_spec: docs/superpowers/specs/2026-05-23-m3-eos-explicit-association-closure-for-pcsaft.md
+source_plan: docs/superpowers/plans/2026-05-29-m3-eos-issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation-plan.md
+afk_hitl: HITL
 branch: codex/issue-0161-design-explicit-pc-saft-association-site-closures-for-eos-evaluation
 last_synced: "2026-06-08"
 ---

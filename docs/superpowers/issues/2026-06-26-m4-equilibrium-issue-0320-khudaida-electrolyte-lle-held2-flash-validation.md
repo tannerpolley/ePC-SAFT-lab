@@ -1,19 +1,19 @@
 ---
 issue: 320
 title: "M4: validate Perdomo HELD2 electrolyte flash with Figiel ePC-SAFT parameters"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/320"
-state: "closed"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/320
+state: closed
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md"
-source_plan: "docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md"
-afk_hitl: "AFK"
-branch: codex/issue-0320-khudaida-held2-validation
+package: equilibrium
+capability: electrolyte
+backend: Ipopt
+readiness: closed
+release_target: equilibrium-0.x
+source_spec: null
+source_plan: null
+afk_hitl: AFK
+branch: null
 last_synced: "2026-07-02"
 ---
 
@@ -24,8 +24,9 @@ last_synced: "2026-07-02"
 **Issue Type:** feature
 **Source Spec:** docs/superpowers/specs/2026-05-30-m4-equilibrium-issue-0191-prove-electrolyte-gfpe-and-held2-0-validation-gates.md
 **Source Plan:** docs/superpowers/plans/2026-06-26-m4-equilibrium-issue-0320-khudaida-electrolyte-lle-held2-flash-validation-plan.md
+**AFK/HITL:** AFK
 **Classification:** AFK
-**Mirror Retention:** retain
+**Mirror Retention:** Keep
 **Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Resolve issue 320 by validating the Perdomo 2025 HELD2.0 electrolyte flash algorithm through the Figiel 2025 ePC-SAFT parameter route.
 **Execution Mode:** Ask at runtime

@@ -13,7 +13,7 @@
 ## Source
 
 - GitHub issue: https://github.com/ePC-SAFT/ePC-SAFT/issues/371
-- Issue mirror: `docs/superpowers/issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
+- Issue mirror: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
 - Source spec: `docs/superpowers/specs/2026-06-29-m4-phase-equilibrium-unified-certification-contract.md`
 - Parent plan: `docs/superpowers/plans/2026-06-29-m4-phase-equilibrium-unified-certification-issue-tree-plan.md`
 - Milestone/package: M4, `packages/epcsaft-equilibrium`
@@ -37,7 +37,7 @@
 ## Implementation Boundaries
 
 **Files To Create:** `packages/epcsaft-equilibrium/tests/api/test_electrolyte_lle_reduced_residual_certification.py`
-**Files To Modify:** `scripts/validation/check_electrolyte_public_admission.py`, `scripts/validation/check_electrolyte_held2_public_route_scenarios.py`, `tests/native/contracts/test_electrolyte_public_admission.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route_scenarios.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `docs/superpowers/milestones/M4-equilibrium/README.md`, `docs/superpowers/issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
+**Files To Modify:** `scripts/validation/check_electrolyte_public_admission.py`, `scripts/validation/check_electrolyte_held2_public_route_scenarios.py`, `tests/native/contracts/test_electrolyte_public_admission.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route.py`, `packages/epcsaft-equilibrium/tests/native/diagnostics/test_electrolyte_held2_public_route_scenarios.py`, `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`, `docs/superpowers/milestones/M4-equilibrium/README.md`, `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
 **Files To Avoid:** M5 regression package files, EOS parameter bundle files, native solver fall-through toggles, release docs, downstream application repos.
 **Source Of Truth:** #371 issue mirror, the unified PE certification spec, retained electrolyte public admission checker chain, and `Equilibrium(..., route="electrolyte_lle").solve()` diagnostics.
 **Read Path:** Public checker payloads read retained source fixture, Stage III/postsolve diagnostics, capability activation, and retained derivative receipts.
@@ -136,7 +136,7 @@
 **Files:**
 - Modify: `docs/superpowers/milestones/M4-equilibrium/registries/equilibrium-benchmark-registry.yaml`
 - Modify: `docs/superpowers/milestones/M4-equilibrium/README.md`
-- Modify: `docs/superpowers/issues/371-m4-lle-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
+- Modify: `docs/superpowers/issues/2026-06-30-m4-equilibrium-issue-0371-integrate-reduced-electroneutral-electrolyte-residual-blocks.md`
 
 - [ ] **Step 1: Update registry result requirements**
   - Add `shared_phase_equilibrium_certification`, reduced-basis lift/back-lift, projected/mean-ionic residual, raw-single-ion rejection, and active-block exactness to the electrolyte public admission row.

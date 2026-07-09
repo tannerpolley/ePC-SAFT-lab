@@ -34,15 +34,15 @@ REQUIRED_LABELS = {
 
 def _body(**overrides: str) -> str:
     values = {
-        "Downstream repo or path": "C:\\Users\\Tanner\\Documents\\git\\MEA-Thermodynamics",
+        "Downstream repo or path": "/path/to/downstream-project",
         "Task goal": "Run electrolyte VLE against epcsaft.",
-        "Failing command": "uv run python analysis\\run_case.py",
+        "Failing command": "uv run python analysis/run_case.py",
         "Error or bad result": "SolutionError: residual did not converge",
         "Minimal reproducer": "import epcsaft\nprint(epcsaft.__file__)",
-        "Imported epcsaft path": "C:\\Users\\Tanner\\Documents\\git\\ePC-SAFT\\src\\epcsaft\\__init__.py",
+        "Imported epcsaft path": "/path/to/ePC-SAFT/packages/epcsaft/src/epcsaft/__init__.py",
         "Expected behavior": "The public API should solve the case.",
         "Actual behavior": "The solver fails before returning diagnostics.",
-        "Downstream validation command after fix": "uv run python analysis\\run_case.py",
+        "Downstream validation command after fix": "uv run python analysis/run_case.py",
         "Temporary workaround": "None.",
     }
     values.update(overrides)
@@ -105,7 +105,7 @@ def test_complete_downstream_issue_returns_ready_triage() -> None:
     assert result.missing_fields == []
     assert result.classification == "solver"
     assert "uv run python scripts/dev/validate_project.py quick" in result.recommended_commands
-    assert result.fields["Imported epcsaft path"].endswith("epcsaft\\__init__.py")
+    assert result.fields["Imported epcsaft path"].endswith("epcsaft/__init__.py")
 
 
 def test_missing_minimal_reproducer_returns_needs_repro_recommendation() -> None:

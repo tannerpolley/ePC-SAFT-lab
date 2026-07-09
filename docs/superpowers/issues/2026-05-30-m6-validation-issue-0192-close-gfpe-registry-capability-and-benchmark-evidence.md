@@ -1,18 +1,18 @@
 ---
 issue: 192
 title: "M6: close GFPE registry, capability, and benchmark evidence"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/192"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/192
+state: open
 milestone: "M6 - Validation"
 project: "ePC-SAFT Roadmap"
-package: "benchmark"
-capability: "lle"
+package: benchmark
+capability: lle
 backend: Null
-readiness: "ready"
-release_target: "future"
-source_spec: "docs/superpowers/specs/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence.md"
-source_plan: "docs/superpowers/plans/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence-plan.md"
-afk_hitl: "HITL"
+readiness: ready
+release_target: future
+source_spec: docs/superpowers/specs/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence.md
+source_plan: docs/superpowers/plans/2026-05-30-m6-validation-issue-0192-close-gfpe-registry-capability-and-benchmark-evidence-plan.md
+afk_hitl: HITL
 branch: codex/issue-0192-close-gfpe-registry-capability-and-benchmark-evidence
 last_synced: "2026-06-25"
 ---

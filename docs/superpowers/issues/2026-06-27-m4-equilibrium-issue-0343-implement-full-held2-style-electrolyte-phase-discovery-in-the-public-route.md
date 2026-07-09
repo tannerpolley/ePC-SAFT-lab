@@ -1,30 +1,30 @@
 ---
 issue: 343
 title: "M4: implement full HELD2-style electrolyte phase discovery in the public route"
-url: "https://github.com/ePC-SAFT/ePC-SAFT/issues/343"
-state: "open"
+url: https://github.com/ePC-SAFT/ePC-SAFT/issues/343
+state: open
 milestone: "M4 - Equilibrium"
 project: "ePC-SAFT Roadmap"
-package: "equilibrium"
-capability: "electrolyte"
-backend: "Ipopt"
-readiness: "ready"
-release_target: "equilibrium-0.x"
-source_spec: "docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md"
-source_plan: "docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md"
-afk_hitl: "HITL"
+package: equilibrium
+capability: electrolyte
+backend: Ipopt
+readiness: ready
+release_target: equilibrium-0.x
+source_spec: docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
+source_plan: docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
+afk_hitl: HITL
 branch: codex/issue-0343-held2-parent-proof-sync
 last_synced: "2026-06-29"
 ---
 
 # M4: implement full HELD2-style electrolyte phase discovery in the public route
 
-**Mirror Retention:** retain
 **GitHub Issue:** https://github.com/ePC-SAFT/ePC-SAFT/issues/343
 **GitHub Milestone:** M4 - Equilibrium
 **Issue Type:** feature
 **Source Spec:** docs/superpowers/specs/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption.md
 **Source Plan:** docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
+**AFK/HITL:** HITL
 **Classification:** HITL
 **Labels:** enhancement, native, solver, docs, validation, equilibrium, area:equilibrium, backend:ipopt, status:ready, type:feature
 **Goal Command:** /goal Complete full HELD2-style electrolyte phase discovery in the public route after child slices close.

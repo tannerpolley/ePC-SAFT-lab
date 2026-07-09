@@ -114,9 +114,9 @@ changed mirrors, validation commands, and clean git state.
   hierarchy.
 
 **Files:**
-- `scripts/validate-issue-mirror.ps1`
-- `scripts/validate-plan-task-use-cases.ps1`
-- `scripts/validate-plan-outcome-proof.ps1`
+- `scripts/validate_issue_mirror.py`
+- `scripts/validate_plan_task_use_cases.py`
+- `scripts/validate_plan_outcome_proof.py`
 - `scripts/dev/validate_project.py`
 
 **Steps:**
@@ -129,8 +129,8 @@ changed mirrors, validation commands, and clean git state.
 ```powershell
 gh issue view 420 --json number,title,milestone,subIssues
 gh issue view 421 --json number,title,milestone,parent,subIssues
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-task-use-cases.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plan-outcome-proof.ps1 -PlanPath docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-issue-mirror.ps1 -IssueFile <mirror>
+uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
+uv run --no-sync python scripts/validate_issue_mirror.py --issue-file <mirror>
 uv run --no-sync python scripts\dev\validate_project.py docs
 ```
