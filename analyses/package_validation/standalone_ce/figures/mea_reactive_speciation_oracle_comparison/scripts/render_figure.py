@@ -73,7 +73,7 @@ def _save_bundle(fig: plt.Figure, stem: str) -> None:
             f"  pdf: {stem}.pdf",
             f"  dpi: {DPI}",
             "style:",
-            "  source: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py",
+            "  source: analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py",
             "",
         ]
     )

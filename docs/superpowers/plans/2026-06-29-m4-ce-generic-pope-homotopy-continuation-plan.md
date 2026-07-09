@@ -225,18 +225,18 @@ Test complete means all of the following are true:
 - Old oracle-seeded plots are labeled diagnostic if retained.
 
 **Files:**
-- Modify: `analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py`
-- Modify: `analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py`
-- Modify: `analyses/paper_validation/standalone_ce/analysis.yaml`
+- Modify: `analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py`
+- Modify: `analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py`
+- Modify: `analyses/package_validation/standalone_ce/analysis.yaml`
 - Modify: `packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py`
-- Create or update retained result CSV/JSON/SVG/PNG/PDF bundles under `analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/`
+- Create or update retained result CSV/JSON/SVG/PNG/PDF bundles under `analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/`
 
 - [ ] **Step 1: Write failing MEA API test.** Change the focused MEA pytest to call `reactive_speciation(initial_amounts=None, ...)` for representative loadings and assert strict metrics.
 - [ ] **Step 2: Run test and verify failure.** Run `uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py::test_reactive_speciation_solves_mea_co2_h2o_loading_sweep_against_retained_fixture -q`. Expected: current no-oracle path fails.
 - [ ] **Step 3: Update data generation.** Generate pointwise independent, CE-owned continuation, shuffled subset, seed audit, error summary, and trace summary tables.
 - [ ] **Step 4: Update plot rendering.** Render unassisted CE vs Smith-Missen oracle, CE-owned continuation vs oracle, max error, and stage-count diagnostics.
-- [ ] **Step 5: Run retained generation.** Run `uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py`.
-- [ ] **Step 6: Render retained plots.** Run `uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py`.
+- [ ] **Step 5: Run retained generation.** Run `uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py`.
+- [ ] **Step 6: Render retained plots.** Run `uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py`.
 - [ ] **Step 7: Verify strict metrics.** Confirm retained summary reports all accepted, seed flag false, max mole error <= `1e-8`, balance <= `1e-8`, and stationarity <= `1e-6`.
 - [ ] **Step 8: Commit.** Commit with `git commit -m "Add unassisted MEA CE validation plots"`.
 
@@ -251,7 +251,7 @@ Test complete means all of the following are true:
 **Files:**
 - Modify: `scripts/validation/check_standalone_ce_gate.py`
 - Modify: `tests/native/contracts/test_standalone_ce_gate.py`
-- Modify: `analyses/paper_validation/standalone_ce/shared/results/summary.json`
+- Modify: `analyses/package_validation/standalone_ce/shared/results/summary.json`
 - Modify: `docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md`
 - Modify: `docs/superpowers/issues/2026-06-26-m4-equilibrium-issue-0326-m4-ce-add-single-ce-nlp-activation-path.md`
 - Modify: `docs/superpowers/issues/2026-06-26-m4-equilibrium-issue-0329-m4-ce-build-standalone-validation-ladder.md`
@@ -291,8 +291,8 @@ Primary proof commands:
 ```powershell
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_continuation_driver.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_feasible_initialization.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_homotopy.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_chemical_equilibrium_reference_oracles.py tests/native/contracts/test_standalone_ce_gate.py -q
 uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete
-uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py
-uv run --no-sync python analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py
+uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/generate_data.py
+uv run --no-sync python analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py
 pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
 ```
 

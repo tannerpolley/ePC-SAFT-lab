@@ -29,7 +29,7 @@ from being sharply diagnosable and robust?
 - Public API tests: `packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py`
 - Native EOS activity tests: `packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_eos_activity.py`
 - Standalone CE checker: `scripts/validation/check_standalone_ce_gate.py`
-- Retained MEA artifacts under `analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/`
+- Retained MEA artifacts under `analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/`
 
 ## Findings
 

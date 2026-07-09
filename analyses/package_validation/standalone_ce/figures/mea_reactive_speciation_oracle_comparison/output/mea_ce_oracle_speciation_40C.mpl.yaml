@@ -5,4 +5,4 @@ figure:
   pdf: mea_ce_oracle_speciation_40C.pdf
   dpi: 300
 style:
-  source: analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py
+  source: analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/scripts/render_figure.py

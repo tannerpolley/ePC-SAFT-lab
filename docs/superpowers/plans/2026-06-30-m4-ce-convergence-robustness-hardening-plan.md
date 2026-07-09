@@ -34,7 +34,7 @@ IntelliJ receipt: CE-scoped IntelliJ MCP was available through `mcp__intellij_in
 
 ## Implementation Boundaries
 
-**Files To Create:** Focused CE diagnostics tests under `packages/epcsaft-equilibrium/tests/native/diagnostics/`, optional retained robustness artifacts under `analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/`, and issue-owned helper tests only when a slice needs them.
+**Files To Create:** Focused CE diagnostics tests under `packages/epcsaft-equilibrium/tests/native/diagnostics/`, optional retained robustness artifacts under `analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/`, and issue-owned helper tests only when a slice needs them.
 **Files To Modify:** `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/chemical_equilibrium.py`, `packages/epcsaft-equilibrium/src/epcsaft_equilibrium/workflows.py`, CE native objective/NLP/continuation files, CE native bindings, CE checker, and focused CE tests.
 **Files To Avoid:** Bubble/dew routes, HELD route code, CPE route admission, regression package code, provider public APIs beyond existing EOS derivative contracts, and downstream application repositories.
 **Source Of Truth:** This plan, the linked spec, the 2026-06-29 CE homotopy plan, current activation matrix, current CE standard-state contract, and the standalone CE checker.

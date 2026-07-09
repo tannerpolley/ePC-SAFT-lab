@@ -19,16 +19,16 @@ REFERENCE_ORACLE_PATH = (
     REPO_ROOT / "analyses" / "reference_oracles" / "chemical_equilibrium" / "cantera_pope_reference_cases.json"
 )
 VALIDATION_LADDER_PATH = (
-    REPO_ROOT / "analyses" / "paper_validation" / "standalone_ce" / "shared" / "results" / "summary.json"
+    REPO_ROOT / "analyses" / "package_validation" / "standalone_ce" / "shared" / "results" / "summary.json"
 )
 MEA_RETAINED_SUMMARY_PATH = (
     REPO_ROOT
     / "analyses"
-    / "paper_validation"
+    / "package_validation"
     / "standalone_ce"
     / "figures"
     / "mea_reactive_speciation_oracle_comparison"
-    / "results"
+    / "output"
     / "mea_ce_oracle_speciation_comparison_summary.json"
 )
 REQUIRED_VALIDATION_FAMILIES = (
@@ -656,7 +656,7 @@ def mea_retained_summary_payload_blockers(payload: dict[str, Any]) -> list[str]:
     if not robustness:
         blockers.append("mea_retained_summary_robustness_diagnostics_missing")
     else:
-        if robustness.get("artifact") != "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv":
+        if robustness.get("artifact") != "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_unassisted_seed_audit.csv":
             blockers.append("mea_retained_summary_robustness_artifact_mismatch")
         if list(robustness.get("required_fields") or []) != REQUIRED_MEA_ROBUSTNESS_FIELDS:
             blockers.append("mea_retained_summary_robustness_fields_mismatch")

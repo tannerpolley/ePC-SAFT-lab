@@ -1,6 +1,6 @@
 {
   "schema_version": "epcsaft.standalone_ce.mea_speciation_oracle_comparison.v2",
-  "source_oracle": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase1_speciation_curve.csv",
+  "source_oracle": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/source/phase1_speciation_curve.csv",
   "public_route": "reactive_speciation",
   "ce_workflow": "epcsaft_equilibrium.reactive_speciation",
   "temperature_C": [
@@ -47,10 +47,10 @@
     "max_abs_error": 3.7471946379152854e-10,
     "max_balance_inf_norm": 9.253685817611768e-09,
     "max_reaction_stationarity_inf_norm": 3.4620839528543e-10,
-    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/ce_reactive_speciation_curve.csv"
+    "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/ce_reactive_speciation_curve.csv"
   },
   "ce_owned_continuation_trace": {
-    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_continuation_trace_summary.csv",
+    "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_continuation_trace_summary.csv",
     "max_stage_count": 3,
     "homotopy_point_count": 12,
     "physical_proof_corrector_point_count": 322,
@@ -63,7 +63,7 @@
     "all_final_proof_accepted": true
   },
   "robustness_diagnostics": {
-    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_unassisted_seed_audit.csv",
+    "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_unassisted_seed_audit.csv",
     "required_fields": [
       "activity_model",
       "solver_status",
@@ -94,7 +94,7 @@
     "all_accepted": true,
     "all_no_source_oracle_seed": true,
     "max_abs_error": 1.9754442526220828e-10,
-    "artifact": "analyses/paper_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/results/mea_ce_shuffled_subset_audit.csv"
+    "artifact": "analyses/package_validation/standalone_ce/figures/mea_reactive_speciation_oracle_comparison/output/mea_ce_shuffled_subset_audit.csv"
   },
   "max_abs_error": 3.7471946379152854e-10,
   "max_balance_inf_norm": 9.253685817611768e-09,

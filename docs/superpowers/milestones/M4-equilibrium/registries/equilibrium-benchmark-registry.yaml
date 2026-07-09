@@ -414,12 +414,12 @@ family_rows:
         evidence_tier: T1
         command: "uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete"
         scope: "CE-only homogeneous reactive_speciation evidence using analytic ideal, charged conservation, Ascani 2023 constants, MEA true-species bookkeeping, and retained Cantera/Pope oracle fixtures."
-        retained_evidence: "analyses/paper_validation/standalone_ce/shared/results/summary.json"
+        retained_evidence: "analyses/package_validation/standalone_ce/shared/results/summary.json"
         result_requirement: "Checker returns complete with no blockers; validation families include analytic_ideal, charged_conservation, ascani_2023, mea_speciation, cantera_reference_oracle, and pope_reference_oracle; only standalone reactive_speciation is public while reactive LLE, reactive electrolyte LLE, and CPE remain closed."
     reference_cases:
       - case_label: "Standalone CE validation ladder"
         evidence_tier: T1
-        source: "analyses/paper_validation/standalone_ce/shared/results/summary.json"
+        source: "analyses/package_validation/standalone_ce/shared/results/summary.json"
         fixture_status: available
         acceptance_checks:
           - homogeneous_single_phase_only

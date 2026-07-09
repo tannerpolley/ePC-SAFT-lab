@@ -11,16 +11,16 @@ from epcsaft_equilibrium._native import extension_native_core
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CHECKER_PATH = REPO_ROOT / "scripts" / "validation" / "check_standalone_ce_gate.py"
 STANDALONE_CE_SUMMARY_PATH = (
-    REPO_ROOT / "analyses" / "paper_validation" / "standalone_ce" / "shared" / "results" / "summary.json"
+    REPO_ROOT / "analyses" / "package_validation" / "standalone_ce" / "shared" / "results" / "summary.json"
 )
 MEA_RETAINED_SUMMARY_PATH = (
     REPO_ROOT
     / "analyses"
-    / "paper_validation"
+    / "package_validation"
     / "standalone_ce"
     / "figures"
     / "mea_reactive_speciation_oracle_comparison"
-    / "results"
+    / "output"
     / "mea_ce_oracle_speciation_comparison_summary.json"
 )
 

@@ -502,9 +502,9 @@ mirrors must pass before issue close, PR merge, and capability broadening.
 
 - Modify: `scripts/validation/check_standalone_ce_gate.py`
 - Create:
-  `analyses/paper_validation/standalone_ce/analysis.yaml`
+  `analyses/package_validation/standalone_ce/analysis.yaml`
 - Create:
-  `analyses/paper_validation/standalone_ce/shared/results/summary.json`
+  `analyses/package_validation/standalone_ce/shared/results/summary.json`
 - Modify:
   `analyses/paper_validation/2023_ascani/analysis.yaml`
 - Modify:
