@@ -101,7 +101,23 @@ if(NOT EXISTS "${EPCSAFT_CPPAD_INCLUDE_DIR}/cppad/configure.hpp")
     set(cppad_stdvector 1)
     set(cppad_eigenvector 0)
     set(cppad_has_gettimeofday 0)
-    set(cppad_has_mkstemp 0)
+    include(CheckCXXSourceCompiles)
+    check_cxx_source_compiles([=[
+#include <stdlib.h>
+#include <unistd.h>
+
+int main()
+{
+    char pattern[] = "/tmp/fileXXXXXX";
+    int fd = mkstemp(pattern);
+    return fd < 0;
+}
+]=] EPCSAFT_CPPAD_HAS_MKSTEMP)
+    if(EPCSAFT_CPPAD_HAS_MKSTEMP)
+        set(cppad_has_mkstemp 1)
+    else()
+        set(cppad_has_mkstemp 0)
+    endif()
     set(cppad_has_tmpnam_s 0)
     set(cppad_c_compiler_cmd "${CMAKE_CXX_COMPILER}")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -109,11 +125,7 @@ if(NOT EXISTS "${EPCSAFT_CPPAD_INCLUDE_DIR}/cppad/configure.hpp")
     else()
         set(cppad_c_compiler_gnu_flags 0)
     endif()
-    if(MSVC)
-        set(cppad_c_compiler_msvc_flags 1)
-    else()
-        set(cppad_c_compiler_msvc_flags 0)
-    endif()
+    set(cppad_c_compiler_msvc_flags 0)
     set(cppad_is_same_unsigned_int_size_t 0)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(cppad_padding_block_t "")
@@ -146,6 +158,8 @@ if(EPCSAFT_IPOPT_ROOT)
     find_library(EPCSAFT_IPOPT_LIBRARY
         NAMES ipopt ipopt-3 libipopt
         PATHS "${EPCSAFT_IPOPT_ROOT_CMAKE}/lib"
+              "${EPCSAFT_IPOPT_ROOT_CMAKE}/lib64"
+              "${EPCSAFT_IPOPT_ROOT_CMAKE}/lib/x86_64-linux-gnu"
         NO_DEFAULT_PATH
     )
     if(NOT EPCSAFT_IPOPT_INCLUDE_DIR OR NOT EPCSAFT_IPOPT_LIBRARY)
@@ -155,6 +169,7 @@ if(EPCSAFT_IPOPT_ROOT)
     set_target_properties(EPCSAFT::Ipopt PROPERTIES
         IMPORTED_LOCATION "${EPCSAFT_IPOPT_LIBRARY}"
         INTERFACE_INCLUDE_DIRECTORIES "${EPCSAFT_IPOPT_INCLUDE_DIR}"
+        INTERFACE_COMPILE_DEFINITIONS HAVE_CSTDDEF
     )
     set(EPCSAFT_IPOPT_TARGET EPCSAFT::Ipopt)
 else()
@@ -266,12 +281,7 @@ foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
             EPCSAFT_CPPAD_STATUS="${EPCSAFT_CPPAD_STATUS}"
             EPCSAFT_IPOPT_STATUS="${EPCSAFT_IPOPT_STATUS}"
     )
-    if(MSVC)
-        target_compile_options(${target_name} PRIVATE /W4 /wd4551)
-        if(EPCSAFT_WARNINGS_AS_ERRORS)
-            target_compile_options(${target_name} PRIVATE /WX)
-        endif()
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
         if(EPCSAFT_WARNINGS_AS_ERRORS)
             target_compile_options(${target_name} PRIVATE -Werror)
@@ -283,49 +293,3 @@ install(TARGETS epcsaft_equilibrium_native_core
     LIBRARY DESTINATION epcsaft_equilibrium
     RUNTIME DESTINATION epcsaft_equilibrium
 )
-if(WIN32 AND EPCSAFT_IPOPT_ROOT)
-    file(TO_CMAKE_PATH "${EPCSAFT_IPOPT_ROOT}/bin" EPCSAFT_IPOPT_BIN_DIR)
-    if(NOT IS_DIRECTORY "${EPCSAFT_IPOPT_BIN_DIR}")
-        message(FATAL_ERROR "EPCSAFT_IPOPT_ROOT did not provide runtime DLLs under bin/: ${EPCSAFT_IPOPT_ROOT}")
-    endif()
-    install(CODE "
-        set(_epcsaft_module \"$<TARGET_FILE:epcsaft_equilibrium_native_core>\")
-        set(_epcsaft_ipopt_bin \"${EPCSAFT_IPOPT_BIN_DIR}\")
-        if(POLICY CMP0207)
-            cmake_policy(SET CMP0207 NEW)
-        endif()
-        file(GET_RUNTIME_DEPENDENCIES
-            MODULES \"\${_epcsaft_module}\"
-            DIRECTORIES \"\${_epcsaft_ipopt_bin}\"
-            RESOLVED_DEPENDENCIES_VAR _epcsaft_resolved_runtime_deps
-            UNRESOLVED_DEPENDENCIES_VAR _epcsaft_unresolved_runtime_deps
-            POST_EXCLUDE_REGEXES
-                [[.*[\\\\/]System32[\\\\/].*]]
-                [[.*[\\\\/]Windows[\\\\/].*]]
-                [[.*[\\\\/]python[0-9]+[.]dll$]]
-                [[.*[\\\\/]Python[0-9]+[.]dll$]]
-        )
-        if(_epcsaft_unresolved_runtime_deps)
-            list(FILTER _epcsaft_unresolved_runtime_deps EXCLUDE REGEX [[^[Pp]ython[0-9]+[.]dll$]])
-        endif()
-        if(_epcsaft_unresolved_runtime_deps)
-            message(FATAL_ERROR \"Unresolved epcsaft-equilibrium runtime dependencies: \${_epcsaft_unresolved_runtime_deps}\")
-        endif()
-        set(_epcsaft_runtime_payload \"\")
-        foreach(_dependency IN LISTS _epcsaft_resolved_runtime_deps)
-            get_filename_component(_dependency_dir \"\${_dependency}\" DIRECTORY)
-            file(TO_CMAKE_PATH \"\${_dependency_dir}\" _dependency_dir_cmake)
-            if(_dependency_dir_cmake STREQUAL _epcsaft_ipopt_bin)
-                list(APPEND _epcsaft_runtime_payload \"\${_dependency}\")
-            endif()
-        endforeach()
-        if(_epcsaft_runtime_payload)
-            list(REMOVE_DUPLICATES _epcsaft_runtime_payload)
-            file(INSTALL DESTINATION \"\${CMAKE_INSTALL_PREFIX}/epcsaft_equilibrium\" TYPE FILE FILES \${_epcsaft_runtime_payload})
-            list(LENGTH _epcsaft_runtime_payload _epcsaft_runtime_payload_count)
-            message(STATUS \"Installed audited Ipopt runtime dependency payload: \${_epcsaft_runtime_payload_count} DLLs\")
-        else()
-            message(STATUS \"No Ipopt runtime DLL payload was required from \${_epcsaft_ipopt_bin}\")
-        endif()
-    ")
-endif()

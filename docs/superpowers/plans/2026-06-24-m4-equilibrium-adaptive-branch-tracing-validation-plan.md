@@ -148,7 +148,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py -q
   ```
 
@@ -193,7 +193,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py -q
   ```
 
@@ -203,7 +203,7 @@ Initial numeric defaults for this implementation:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py
   git commit -m "Add branch trace data contract"
   ```
@@ -311,7 +311,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py -q
   ```
 
@@ -346,7 +346,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py -q
   ```
 
@@ -356,7 +356,7 @@ Initial numeric defaults for this implementation:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py
   git commit -m "Add adaptive branch trace refinement"
   ```
@@ -386,7 +386,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py -q
   ```
 
@@ -435,7 +435,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py -q
   ```
 
@@ -445,7 +445,7 @@ Initial numeric defaults for this implementation:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add packages/epcsaft-equilibrium/src/epcsaft_equilibrium/branch_tracing.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py
   git commit -m "Add equilibrium branch trace adapter"
   ```
@@ -502,7 +502,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
   ```
 
@@ -528,7 +528,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
   ```
 
@@ -538,7 +538,7 @@ Initial numeric defaults for this implementation:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add scripts/validation/check_gross_2002_full_replication.py tests/native/contracts/test_gross_2002_full_replication_checker.py
   git commit -m "Require branch trace evidence for accepted Figure 2"
   ```
@@ -633,7 +633,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_02/scripts/generate_data.py
   ```
 
@@ -643,7 +643,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python analyses/paper_validation/scripts/check_figure_contract.py analyses/paper_validation/2002_gross/figures/figure_02
   ```
 
@@ -653,7 +653,7 @@ Initial numeric defaults for this implementation:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_02/scripts/generate_data.py analyses/paper_validation/2002_gross/figures/figure_02/results analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json
   git commit -m "Use branch tracing for Gross 2002 Figure 2"
   ```
@@ -673,7 +673,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
   ```
 
@@ -683,7 +683,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_branch_tracing.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
   ```
 
@@ -693,7 +693,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native --write-summary
   ```
 
@@ -712,7 +712,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/dev/validate_project.py docs
   ```
 
@@ -722,7 +722,7 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
+  ```bash
   git diff --check
   ```
 
@@ -730,8 +730,8 @@ Initial numeric defaults for this implementation:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+  ```bash
+  bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
   ```
 
   Expected: exits `0` and reports no matching leftover Codex processes.
@@ -740,7 +740,7 @@ Initial numeric defaults for this implementation:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add docs/superpowers/milestones/M4-equilibrium/README.md analyses/paper_validation/2002_gross/shared/results
   git commit -m "Record branch tracing validation evidence"
   ```
@@ -749,7 +749,7 @@ Initial numeric defaults for this implementation:
 
 Run the full oracle before issue or PR closeout:
 
-```powershell
+```bash
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
@@ -759,7 +759,7 @@ uv run --no-sync python analyses/paper_validation/scripts/check_figure_contract.
 uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native --write-summary
 uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 ## Route Policy For Implementation

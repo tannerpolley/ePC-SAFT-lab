@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
 
 import pytest
+import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -71,7 +71,7 @@ def test_provider_package_owns_distribution_build_metadata() -> None:
     assert "src/epcsaft/**/*.json" in sdist_include
     assert "src/epcsaft/**/*.cpp" in sdist_include
     assert "src/epcsaft/**/*.h" in sdist_include
-    assert "src/epcsaft/*.pyd" in provider["tool"]["scikit-build"]["sdist"]["exclude"]
+    assert "src/epcsaft/*.so" in provider["tool"]["scikit-build"]["sdist"]["exclude"]
 
 
 def test_extension_package_manifests_depend_on_provider_workspace_source() -> None:

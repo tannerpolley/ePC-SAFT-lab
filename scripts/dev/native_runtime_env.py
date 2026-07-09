@@ -12,27 +12,25 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from package_paths import PROVIDER_BUILD_BACKEND_DIR
 
 sys.path.insert(0, str(PROVIDER_BUILD_BACKEND_DIR))
+from native_dependency_policy import DEFAULT_LINUX_IPOPT_ROOT_RELATIVE as _DEFAULT_LINUX_IPOPT_ROOT_RELATIVE
+from native_dependency_policy import default_linux_ipopt_root as _default_linux_ipopt_root
+from native_dependency_policy import linux_ipopt_library_dirs as _linux_ipopt_library_dirs
+from native_dependency_policy import linux_ipopt_root_candidates as _linux_ipopt_root_candidates
+from native_dependency_policy import resolve_default_linux_ipopt_root as _resolve_default_linux_ipopt_root
 from native_dependency_policy import (
-    DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE as _DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE,
+    resolve_default_linux_ipopt_root_with_source as _resolve_default_linux_ipopt_root_with_source,
 )
-from native_dependency_policy import default_windows_ipopt_sdk_root as _default_windows_ipopt_sdk_root
-from native_dependency_policy import ipopt_root_prefers_msvc as _ipopt_root_prefers_msvc
-from native_dependency_policy import (
-    resolve_default_windows_ipopt_sdk_root as _resolve_default_windows_ipopt_sdk_root,
-)
-from native_dependency_policy import (
-    resolve_default_windows_ipopt_sdk_root_with_source as _resolve_default_windows_ipopt_sdk_root_with_source,
-)
-from native_dependency_policy import windows_ipopt_sdk_candidates as _windows_ipopt_sdk_candidates
+from native_dependency_policy import validate_ipopt_root as _validate_ipopt_root
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEV_BUILD_CACHE = REPO_ROOT / "build" / "dev" / "CMakeCache.txt"
-DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE = _DEFAULT_WINDOWS_IPOPT_SDK_RELATIVE
-default_windows_ipopt_sdk_root = _default_windows_ipopt_sdk_root
-ipopt_root_prefers_msvc = _ipopt_root_prefers_msvc
-resolve_default_windows_ipopt_sdk_root = _resolve_default_windows_ipopt_sdk_root
-resolve_default_windows_ipopt_sdk_root_with_source = _resolve_default_windows_ipopt_sdk_root_with_source
-windows_ipopt_sdk_candidates = _windows_ipopt_sdk_candidates
+DEFAULT_LINUX_IPOPT_ROOT_RELATIVE = _DEFAULT_LINUX_IPOPT_ROOT_RELATIVE
+default_linux_ipopt_root = _default_linux_ipopt_root
+resolve_default_linux_ipopt_root = _resolve_default_linux_ipopt_root
+resolve_default_linux_ipopt_root_with_source = _resolve_default_linux_ipopt_root_with_source
+linux_ipopt_root_candidates = _linux_ipopt_root_candidates
+linux_ipopt_library_dirs = _linux_ipopt_library_dirs
+validate_ipopt_root = _validate_ipopt_root
 
 
 @dataclass(frozen=True)
@@ -74,12 +72,12 @@ def resolve_ipopt_root(
     if raw is None:
         if cmake_cache_value("Ipopt_DIR", cache_path):
             return None
-        return resolve_default_windows_ipopt_sdk_root()
+        return resolve_default_linux_ipopt_root()
     raw = raw.strip()
     if not raw or raw == "<unconfigured>":
         if cmake_cache_value("Ipopt_DIR", cache_path):
             return None
-        return resolve_default_windows_ipopt_sdk_root()
+        return resolve_default_linux_ipopt_root()
     return Path(raw).expanduser().resolve()
 
 
@@ -92,30 +90,29 @@ def resolve_ipopt_root_for_build(
     label: str = "Ipopt root",
 ) -> Path | None:
     if raw_path is None and enable_ipopt and ipopt_dir is None:
-        raw_path = default_root if default_root is not None else resolve_default_windows_ipopt_sdk_root()
+        raw_path = default_root if default_root is not None else resolve_default_linux_ipopt_root()
     if raw_path is None:
         return None
     path = Path(raw_path).expanduser().resolve()
-    if not path.is_dir():
-        raise FileNotFoundError(f"{label} does not exist or is not a directory: {path}")
-    return path
+    return _validate_ipopt_root(str(path), env_name=label)
 
 
 def prepend_ipopt_runtime_env(env: MutableMapping[str, str], ipopt_root: Path | str | None) -> Path | None:
     root = Path(ipopt_root).expanduser().resolve() if ipopt_root is not None else None
-    runtime_dir = ipopt_runtime_bin(root)
+    runtime_dir = ipopt_runtime_lib_dir(root)
     if runtime_dir is None:
         return None
-    _prepend_unique_path(env, "PATH", runtime_dir)
-    _prepend_unique_path(env, "EPCSAFT_RUNTIME_DLL_DIRS", runtime_dir)
+    _prepend_unique_path(env, "LD_LIBRARY_PATH", runtime_dir)
     return runtime_dir
 
 
-def ipopt_runtime_bin(ipopt_root: Path | None) -> Path | None:
+def ipopt_runtime_lib_dir(ipopt_root: Path | None) -> Path | None:
     if ipopt_root is None:
         return None
-    bin_dir = ipopt_root / "bin"
-    return bin_dir if bin_dir.is_dir() else None
+    for lib_dir in linux_ipopt_library_dirs(ipopt_root):
+        if any(path.is_file() for path in lib_dir.glob("libipopt.so*")):
+            return lib_dir.resolve()
+    return None
 
 
 def _prepend_unique_path(env: MutableMapping[str, str], name: str, path: Path) -> None:
@@ -140,7 +137,7 @@ def apply_native_runtime_env(
         configured = bool(ipopt_enabled)
 
     root = resolve_ipopt_root(cache_path=cache_path, explicit_root=ipopt_root, env=runtime_env)
-    runtime_dir = ipopt_runtime_bin(root)
+    runtime_dir = ipopt_runtime_lib_dir(root)
     applied = False
     if configured and runtime_dir is not None:
         applied = prepend_ipopt_runtime_env(runtime_env, root) is not None

@@ -84,11 +84,11 @@ Figiel 2025 parameter provenance.
 
 ## Proof Oracle
 
-```powershell
-uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_08\scripts\generate_data.py
-uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_08\scripts\render_figure.py
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "khudaida and figure_08 and electrolyte" -q
+```bash
+uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_08/scripts/generate_data.py
+uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_08/scripts/render_figure.py
+uv run --no-sync python scripts/validation/check_khudaida_2026_figure_validation.py
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "khudaida and figure_08 and electrolyte" -q
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 ```

@@ -6,6 +6,6 @@ Reusable input datasets are loaded from `data/reference/MIAC/**`. For new or reo
 
 The main validation entrypoint is:
 
-```powershell
-uv run python analyses\data_validation\miac_fits\scripts\validate_miac_fits.py
+```bash
+uv run python analyses/data_validation/miac_fits/scripts/validate_miac_fits.py
 ```

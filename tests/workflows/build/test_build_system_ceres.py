@@ -3,6 +3,8 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "dev" / "build_system_ceres.py"
 
@@ -25,53 +27,38 @@ def test_system_ceres_helper_uses_build_scoped_default_root() -> None:
     assert "-DCMAKE_CXX_EXTENSIONS=OFF" in script_text
 
 
-def test_system_ceres_helper_loads_msvc_env_for_default_windows_build(monkeypatch) -> None:
-    script = _load_script()
-    env = {"PATH": "C:\\old"}
-
-    monkeypatch.setattr(script.os, "name", "nt")
-    monkeypatch.setattr(script.shutil, "which", lambda name, path=None: None)
-    monkeypatch.setattr(script, "_find_vsdevcmd", lambda: Path("C:/vs/Common7/Tools/VsDevCmd.bat"))
-    monkeypatch.setattr(
-        script.subprocess,
-        "check_output",
-        lambda command, text=True, shell=True, env=None: "PATH=C:\\msvc\nINCLUDE=C:\\include\n",
-    )
-
-    script._load_msvc_env_if_available(env, generator="auto")
-
-    assert env["PATH"] == "C:\\msvc"
-    assert env["INCLUDE"] == "C:\\include"
-
-
-def test_system_ceres_helper_does_not_load_msvc_env_for_mingw(monkeypatch) -> None:
-    script = _load_script()
-    env = {"PATH": "C:\\old"}
-
-    monkeypatch.setattr(script.os, "name", "nt")
-    monkeypatch.setattr(script.shutil, "which", lambda name, path=None: None)
-    monkeypatch.setattr(script, "_find_vsdevcmd", lambda: Path("C:/vs/Common7/Tools/VsDevCmd.bat"))
-
-    script._load_msvc_env_if_available(env, generator="mingw")
-
-    assert env == {"PATH": "C:\\old"}
-
-
 def test_system_ceres_helper_pins_repo_local_ninja(monkeypatch) -> None:
     script = _load_script()
-    ninja = Path("C:/repo/.venv/Scripts/ninja.exe")
+    ninja = Path("/repo/.venv/bin/ninja")
 
     monkeypatch.setattr(script, "_repo_tool_path", lambda name: ninja if name == "ninja" else None)
-    monkeypatch.setattr(script.shutil, "which", lambda name, path=None: "C:/Strawberry/c/bin/ninja.exe")
 
-    assert script._generator_args({"PATH": "C:\\Strawberry\\c\\bin"}, "auto") == [
+    assert script._generator_args({"PATH": "/usr/bin"}, "auto") == [
         "-G",
         "Ninja",
         f"-DCMAKE_MAKE_PROGRAM={ninja.as_posix()}",
     ]
 
 
-def test_system_ceres_configure_adds_cstdint_workaround_only_for_gnu_windows(tmp_path, monkeypatch) -> None:
+def test_system_ceres_helper_fails_when_repo_local_cmake_is_missing(monkeypatch) -> None:
+    script = _load_script()
+
+    monkeypatch.setattr(script, "_repo_tool_path", lambda name: None)
+
+    with pytest.raises(FileNotFoundError, match="repo-local CMake"):
+        script._cmake_command()
+
+
+def test_system_ceres_helper_fails_when_repo_local_ninja_is_missing(monkeypatch) -> None:
+    script = _load_script()
+
+    monkeypatch.setattr(script, "_repo_tool_path", lambda name: None)
+
+    with pytest.raises(FileNotFoundError, match="repo-local Ninja"):
+        script._generator_args({"PATH": "/usr/bin"}, "auto")
+
+
+def test_system_ceres_configure_omits_legacy_cstdint_workaround(tmp_path, monkeypatch) -> None:
     script = _load_script()
     captured: list[list[str]] = []
     env = {"PATH": ""}
@@ -79,27 +66,11 @@ def test_system_ceres_configure_adds_cstdint_workaround_only_for_gnu_windows(tmp
     monkeypatch.setattr(script, "_write_eigen_config", lambda config_dir, build_env: None)
     monkeypatch.setattr(script, "_generator_args", lambda build_env, generator: [])
     monkeypatch.setattr(script, "_run", lambda cmd, env=None: captured.append(cmd))
-    monkeypatch.setattr(script.os, "name", "nt")
-    monkeypatch.setattr(script.shutil, "which", lambda name, path=None: None)
 
     script._configure_ceres(tmp_path, "auto", env)
 
     assert "-DCMAKE_CXX_FLAGS=-include cstdint" not in captured[0]
-
-
-def test_system_ceres_configure_keeps_cstdint_workaround_for_mingw(tmp_path, monkeypatch) -> None:
-    script = _load_script()
-    captured: list[list[str]] = []
-    env = {"PATH": ""}
-
-    monkeypatch.setattr(script, "_write_eigen_config", lambda config_dir, build_env: None)
-    monkeypatch.setattr(script, "_generator_args", lambda build_env, generator: ["-G", "MinGW Makefiles"])
-    monkeypatch.setattr(script, "_run", lambda cmd, env=None: captured.append(cmd))
-    monkeypatch.setattr(script.os, "name", "nt")
-
-    script._configure_ceres(tmp_path, "mingw", env)
-
-    assert "-DCMAKE_CXX_FLAGS=-include cstdint" in captured[0]
+    assert "_needs_gnu_cstdint_workaround" not in SCRIPT_PATH.read_text(encoding="utf-8")
 
 
 def test_system_ceres_config_dir_prefers_installed_cmake_package(tmp_path) -> None:
@@ -109,6 +80,15 @@ def test_system_ceres_config_dir_prefers_installed_cmake_package(tmp_path) -> No
     (config_dir / "CeresConfig.cmake").write_text("# test\n", encoding="utf-8")
 
     assert script._ceres_config_dir(tmp_path / "install") == config_dir
+
+
+def test_system_ceres_config_dir_rejects_install_without_cmake_package(tmp_path) -> None:
+    script = _load_script()
+    install_dir = tmp_path / "install"
+    install_dir.mkdir()
+
+    with pytest.raises(FileNotFoundError, match=r"CeresConfig\.cmake"):
+        script._ceres_config_dir(install_dir)
 
 
 def test_system_ceres_print_env_mentions_pep517_ceres_dir(tmp_path, capsys) -> None:

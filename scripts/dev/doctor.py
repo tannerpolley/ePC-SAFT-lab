@@ -30,14 +30,14 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
 if str(PROVIDER_BUILD_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(PROVIDER_BUILD_BACKEND_DIR))
 
-from native_dependency_policy import (  # noqa: E402
+from native_dependency_policy import (
     CERES_VERSION,
     default_system_ceres_config_dir,
     default_system_ceres_root,
+    linux_ipopt_root_candidates,
+    resolve_default_linux_ipopt_root,
+    resolve_default_linux_ipopt_root_with_source,
     resolve_default_system_ceres_config_dir,
-    resolve_default_windows_ipopt_sdk_root,
-    resolve_default_windows_ipopt_sdk_root_with_source,
-    windows_ipopt_sdk_candidates,
 )
 
 try:
@@ -199,7 +199,7 @@ def _ipopt_root_provenance() -> tuple[str, str, str, str]:
         return (
             str(Path(cache_root).expanduser().resolve()),
             "cmake-cache:EPCSAFT_IPOPT_ROOT",
-            '$env:EPCSAFT_IPOPT_ROOT = "C:\\path\\to\\ipopt-msvc"',
+            'export EPCSAFT_IPOPT_ROOT="/path/to/ipopt"',
             _ipopt_candidate_summary(),
         )
     env_root = os.environ.get("EPCSAFT_IPOPT_ROOT") or os.environ.get("EPCSAFT_PEP517_IPOPT_ROOT")
@@ -208,34 +208,34 @@ def _ipopt_root_provenance() -> tuple[str, str, str, str]:
         return (
             str(Path(env_root).expanduser().resolve()),
             f"env:{env_name}",
-            f'$env:{env_name} = "C:\\path\\to\\ipopt-msvc"',
+            f'export {env_name}="/path/to/ipopt"',
             _ipopt_candidate_summary(),
         )
     if _cmake_cache_value("Ipopt_DIR"):
         return (
             "<Ipopt_DIR>",
             "cmake-cache:Ipopt_DIR",
-            '$env:Ipopt_DIR = "C:\\path\\to\\Ipopt\\lib\\cmake\\Ipopt"',
+            'export Ipopt_DIR="/path/to/ipopt/lib/cmake/Ipopt"',
             _ipopt_candidate_summary(),
         )
-    resolution = resolve_default_windows_ipopt_sdk_root_with_source()
+    resolution = resolve_default_linux_ipopt_root_with_source()
     if resolution.root is not None:
         return (
             str(resolution.root),
             resolution.source,
-            '$env:EPCSAFT_IPOPT_ROOT = "C:\\path\\to\\ipopt-msvc"',
+            'export EPCSAFT_IPOPT_ROOT="/path/to/ipopt"',
             _ipopt_candidate_summary(),
         )
     return (
         "<missing>",
         "missing",
-        '$env:EPCSAFT_IPOPT_ROOT = "C:\\path\\to\\ipopt-msvc"',
+        'export EPCSAFT_IPOPT_ROOT="/path/to/ipopt"',
         _ipopt_candidate_summary(),
     )
 
 
 def _ipopt_candidate_summary() -> str:
-    candidates = windows_ipopt_sdk_candidates()
+    candidates = linux_ipopt_root_candidates()
     if not candidates:
         return "<none>"
     return json.dumps(
@@ -291,15 +291,14 @@ def _cmake_cache_value(name: str, cache_path: Path = DEV_BUILD_CACHE) -> str | N
 
 def _tool_path(name: str) -> str:
     if name in {"cmake", "ninja"}:
-        suffix = ".exe" if sys.platform.startswith("win") else ""
-        candidate = REPO_ROOT / ".venv" / ("Scripts" if sys.platform.startswith("win") else "bin") / f"{name}{suffix}"
+        candidate = REPO_ROOT / ".venv" / "bin" / name
         if candidate.is_file():
             return str(candidate)
     found = shutil.which(name)
     if found is not None:
         return found
-    if name == "uv" and sys.platform.startswith("win"):
-        local_uv = Path.home() / ".local" / "bin" / "uv.exe"
+    if name == "uv":
+        local_uv = Path.home() / ".local" / "bin" / "uv"
         if local_uv.is_file():
             return str(local_uv)
     return "<missing>"
@@ -315,8 +314,8 @@ def _cmake_generator(cache_path: Path = DEV_BUILD_CACHE) -> str | None:
 
 
 def _ninja_migration_recommendation(generator: str | None, ninja_path: str) -> str | None:
-    if generator == "MinGW Makefiles" and ninja_path != "<missing>":
-        return "uv run python scripts\\dev\\build_epcsaft.py --clean --generator ninja"
+    if generator and generator != "Ninja" and ninja_path != "<missing>":
+        return "uv run python scripts/dev/build_epcsaft.py --clean --generator ninja"
     return None
 
 
@@ -357,7 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     regression_native_state = _module_state("epcsaft_regression._native_core")
     provider_sdk, provider_sdk_error = _provider_sdk_state()
     provider_sdk_missing_paths = _provider_sdk_missing_paths(provider_sdk)
-    default_ipopt_sdk_root = resolve_default_windows_ipopt_sdk_root()
+    default_ipopt_root = resolve_default_linux_ipopt_root()
     ipopt_active_root, ipopt_active_root_source, ipopt_change_command, ipopt_candidates = _ipopt_root_provenance()
     ceres_root = default_system_ceres_root(REPO_ROOT)
     ceres_config_dir = default_system_ceres_config_dir(REPO_ROOT)
@@ -424,12 +423,12 @@ def main(argv: list[str] | None = None) -> int:
     print(f"ceres_status: {_ceres_status()}")
     print(f"ipopt_configured: {_cmake_cache_value('EPCSAFT_ENABLE_IPOPT') or '<unconfigured>'}")
     print(f"ipopt_root: {_cmake_cache_value('EPCSAFT_IPOPT_ROOT') or '<unconfigured>'}")
-    print(f"ipopt_default_sdk_root: {default_ipopt_sdk_root if default_ipopt_sdk_root else '<missing>'}")
-    print(f"ipopt_default_sdk_candidates: {ipopt_candidates}")
+    print(f"ipopt_default_root: {default_ipopt_root if default_ipopt_root else '<missing>'}")
+    print(f"ipopt_default_candidates: {ipopt_candidates}")
     print(f"ipopt_active_root: {ipopt_active_root}")
     print(f"ipopt_active_root_source: {ipopt_active_root_source}")
     print(f"ipopt_change_command: {ipopt_change_command}")
-    print(f"ipopt_runtime_dll_dir: {runtime_env.ipopt_runtime_dir if runtime_env.ipopt_runtime_dir else '<none>'}")
+    print(f"ipopt_runtime_lib_dir: {runtime_env.ipopt_runtime_dir if runtime_env.ipopt_runtime_dir else '<none>'}")
     print(f"ipopt_runtime_env_applied: {'true' if runtime_env.applied else 'false'}")
     print(f"ipopt_status: {_ipopt_status()}")
     print(f"stale_generated_reports: {_stale_report_state()}")
@@ -442,41 +441,41 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     if core_path is None:
         print("install_state: missing-core")
-        print("next_command: uv run python scripts\\dev\\build_epcsaft.py")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py")
         return 1
     if missing_core_error is not None:
         print("install_state: broken-core-import")
-        print("next_command: uv run python scripts\\dev\\build_epcsaft.py")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py")
         return 1
     if missing_core_symbols:
         print("install_state: stale-core")
-        print("next_command: uv run python scripts\\dev\\build_epcsaft.py")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py")
         return 1
     if args.require_provider_sdk and (provider_sdk_error is not None or provider_sdk_missing_paths):
         print("install_state: missing-provider-sdk")
-        print("next_command: uv run python scripts\\dev\\build_dist.py --parallel 1")
+        print("next_command: uv run python scripts/dev/build_dist.py --parallel 1")
         return 1
-    if args.require_provider_native and not _native_module_available({"path": str(core_path), "error": core_error or "<none>"}):
+    if args.require_provider_native and not _native_module_available(
+        {"path": str(core_path), "error": core_error or "<none>"}
+    ):
         print("install_state: missing-provider-native")
-        print("next_command: uv run python scripts\\dev\\build_epcsaft.py --profile provider")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py --profile provider")
         return 1
     if args.require_equilibrium_native and not _native_module_available(equilibrium_native_state):
         print("install_state: missing-equilibrium-native")
-        print("next_command: uv run python scripts\\dev\\build_epcsaft.py --profile equilibrium")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py --profile equilibrium")
         return 1
     if args.require_regression_native and not _native_module_available(regression_native_state):
         print("install_state: missing-regression-native")
-        print("next_command: uv run python scripts\\dev\\build_epcsaft.py --profile regression")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py --profile regression")
         return 1
     if args.require_extension_native and not _extension_native_modules_available():
         print("install_state: missing-extension-native")
-        print("next_command: uv run python scripts\\dev\\build_epcsaft.py")
+        print("next_command: uv run python scripts/dev/build_epcsaft.py")
         return 1
     if args.require_ipopt and not _ipopt_available():
         print("install_state: missing-ipopt")
-        print(
-            "next_command: uv run python scripts\\dev\\build_epcsaft.py --profile ipopt --ipopt-root <IpoptRoot>"
-        )
+        print("next_command: uv run python scripts/dev/build_epcsaft.py --profile ipopt --ipopt-root <IpoptRoot>")
         return 1
     print("install_state: current")
     print("next_command: none")

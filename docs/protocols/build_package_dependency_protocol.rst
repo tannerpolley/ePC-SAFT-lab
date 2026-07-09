@@ -29,7 +29,7 @@ production native equilibrium routes are Ipopt-backed NLP routes.
 
 The default source-checkout build command remains:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_epcsaft.py
 
@@ -41,7 +41,7 @@ be described as production equilibrium validation.
 
 The provider-only boundary proof now has an explicit direct-build profile:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_epcsaft.py --clean --profile provider
 
@@ -55,7 +55,7 @@ the provider-only flags pinned instead of falling back to transition defaults.
 
 Package-specific source-checkout lanes have explicit direct-build profiles:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_epcsaft.py --profile equilibrium
    uv run python scripts/dev/build_epcsaft.py --profile regression
@@ -70,19 +70,22 @@ cross-package native lane.
 
 Extension package build proof now has package-local entry points:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1
+   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1
 
 The monorepo mode consumes the sibling ``packages/epcsaft`` provider SDK
 source/CMake metadata. The installed-provider mode consumes the same SDK from
 an installed provider wheel. The equilibrium extension proof requires a real
 Ipopt SDK; disabling Ipopt is not production equilibrium package evidence.
+The helper uses the shared Linux Ipopt discovery policy when no root is
+supplied. To pin a specific audited install, run ``export
+EPCSAFT_IPOPT_ROOT=/path/to/ipopt`` before either command.
 
 Release/install proof from local artifacts is executable through:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/check_release_installs.py --dist-dir dist
 
@@ -143,10 +146,8 @@ Keep the CMake dependency contract explicit and loud:
   OFF.
 - Vendored Ipopt builds are not supported by the package CMake project.
 - System Ipopt is supplied through ``EPCSAFT_IPOPT_ROOT`` or ``Ipopt_DIR``.
-  On Windows, default discovery probes
-  ``%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc``,
-  ``%USERPROFILE%\.epcsaft\deps\ipopt-msvc``, and the legacy
-  ``%USERPROFILE%\Documents\deps\ipopt-msvc`` path, in that order.
+  On Linux, default discovery probes ``~/.local/opt/ipopt``,
+  ``/usr/local``, ``/usr``, and ``/opt/ipopt``.
 - Reusable local Ceres packages are preferred over repeated clean FetchContent
   Ceres builds when a workflow repeatedly rebuilds native code.
 - CppAD may use FetchContent or an installed include tree, but the package
@@ -215,7 +216,7 @@ CI lane names still separate different claims:
 ``release package boundary``
    Wheel and sdist validation. The normal release baseline may avoid local
    Ipopt runtime coupling so installable artifacts do not require user-local
-   Ipopt DLLs. This does not reduce the source/native requirement that
+   Ipopt shared libraries. This does not reduce the source/native requirement that
    production equilibrium validation prove Ipopt.
 
 ``extension package boundary``
@@ -235,17 +236,23 @@ CI lane names still separate different claims:
    path or artifact and must not substitute a no-Ipopt success path for
    production equilibrium package proof. Equilibrium wheels must install the
    audited runtime dependency closure for ``epcsaft_equilibrium._native_core``
-   and Ipopt, not a broad ``bin/*.dll`` payload from the SDK.
+   and Ipopt, not broad build-time dependency trees.
+
+   The current Ubuntu extension-package jobs install
+   ``coinor-libipopt-dev`` and pass ``/usr`` as the explicit SDK root. This is
+   honest link, wheel-install, and import evidence for the package boundary;
+   it is not production equilibrium solver evidence. Production Ipopt claims
+   still require the pinned SDK artifact and scientific validation lane below.
 
 No-Conda Ipopt policy
 ---------------------
 
 Conda or mamba must not be the normal Ipopt CI provisioning path. The accepted
-direction is a controlled non-Conda SDK artifact path based on the official
-COIN-OR build route. The Ipopt installation documentation describes Windows
-MSYS2/MinGW setup, BLAS/LAPACK, sparse symmetric indefinite linear solver
-requirements, and source builds. The coinbrew documentation describes a helper
-that fetches, builds, and installs COIN-OR projects and dependencies.
+direction is a controlled non-Conda install artifact path based on the official
+COIN-OR build route. The Ipopt installation documentation describes BLAS/LAPACK,
+sparse symmetric indefinite linear solver requirements, and source builds. The
+coinbrew documentation describes a helper that fetches, builds, and installs
+COIN-OR projects and dependencies.
 
 Option B is the accepted production Ipopt lane direction: the manual production
 Ipopt lane should fetch a pinned prebuilt non-Conda Ipopt SDK artifact, verify

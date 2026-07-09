@@ -130,7 +130,7 @@ Provider `epcsaft` owns:
 
 ## Proof Oracle Candidates For Later Planning
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/dev/cmake_preset.ps1 -Action Build -Target epcsaft_equilibrium_native_core -Parallel 10`
+- `bash scripts/dev/cmake_preset.sh --action build --target epcsaft_equilibrium_native_core --parallel 10`
 - `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py -q`
 - `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py -q`
 - `uv run python scripts/dev/validate_project.py quick`

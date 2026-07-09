@@ -66,6 +66,7 @@ ANALYSIS_ROOTS = {
     "osmotic_validation": REPO_ROOT / "analyses" / "data_validation" / "osmotic_validation",
     "explicit_association_toybox": REPO_ROOT / "analyses" / "package_validation" / "explicit_association_toybox",
     "package_plot_smokes": REPO_ROOT / "analyses" / "package_validation" / "package_plot_smokes",
+    "standalone_ce": REPO_ROOT / "analyses" / "package_validation" / "standalone_ce",
 }
 MIGRATED_ANALYSIS_IDS = set(ANALYSIS_ROOTS) - {"2025_figiel"}
 CATEGORY_ROOTS = {
@@ -226,9 +227,7 @@ SUPERPOWERS_SPEC_FILES = {
     "specs/2026-06-01-m4-equilibrium-move-equilibrium-objective-assembly-to-extension.md",
 }
 SUPERPOWERS_SPEC_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+\.md$")
-SUPERPOWERS_ISSUE_FILENAME_PATTERN = re.compile(
-    r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-issue-\d{4}-[a-z0-9-]+\.md$"
-)
+SUPERPOWERS_ISSUE_FILENAME_PATTERN = re.compile(r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-issue-\d{4}-[a-z0-9-]+\.md$")
 SUPERPOWERS_PLAN_FILENAME_PATTERN = re.compile(
     r"^20\d\d-\d\d-\d\d-m[0-8]-[a-z0-9-]+-(?:issue-\d{4}-)?[a-z0-9-]+-plan\.md$"
 )
@@ -270,11 +269,11 @@ PROJECT_ROADMAP_REQUIRED_FIELDS = {
 AGENTS_REQUIRED_DOC_LINKS = {
     "docs/superpowers/PROJECT_CONTEXT.md",
     "docs/agents/new-agent-start-here.md",
+    "docs/agents/agent-happy-path.md",
     "docs/pages/development_workflows.rst",
     "docs/protocols/build_package_dependency_protocol.rst",
     "CMAKE.md",
     "docs/agents/issue-tracker.md",
-    "docs/agents/INTELLIJ.md",
     "docs/pages/project_structure.rst",
 }
 AGENTS_BANNED_PHRASES = {
@@ -344,7 +343,11 @@ print(json.dumps(sorted(name for name in watchlist if name in sys.modules)))
         str(EQUILIBRIUM_PACKAGE_DIR / "src"),
         str(REGRESSION_PACKAGE_DIR / "src"),
     ]
-    env["PYTHONPATH"] = os.pathsep.join([*pythonpath_entries, env["PYTHONPATH"]]) if env.get("PYTHONPATH") else os.pathsep.join(pythonpath_entries)
+    env["PYTHONPATH"] = (
+        os.pathsep.join([*pythonpath_entries, env["PYTHONPATH"]])
+        if env.get("PYTHONPATH")
+        else os.pathsep.join(pythonpath_entries)
+    )
     result = subprocess.run(
         [sys.executable, "-c", probe],
         cwd=REPO_ROOT,
@@ -397,7 +400,9 @@ def _equilibrium_activation_rows() -> list[dict[str, object]]:
     for node in tree.body:
         if not isinstance(node, ast.Assign):
             continue
-        if any(isinstance(target, ast.Name) and target.id == "EQUILIBRIUM_ACTIVATION_MATRIX" for target in node.targets):
+        if any(
+            isinstance(target, ast.Name) and target.id == "EQUILIBRIUM_ACTIVATION_MATRIX" for target in node.targets
+        ):
             rows = ast.literal_eval(node.value)
             assert isinstance(rows, list)
             return rows
@@ -475,7 +480,7 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
         if normalized_relpath.startswith("docs/papers/"):
             continue
         if not relpath.endswith(".py"):
-            if Path(relpath).suffix.lower() not in {".md", ".rst", ".toml", ".yaml", ".yml", ".txt", ".ps1"}:
+            if Path(relpath).suffix.lower() not in {".md", ".rst", ".toml", ".yaml", ".yml", ".txt", ".sh"}:
                 continue
         path = REPO_ROOT / relpath
         if not path.exists():
@@ -502,15 +507,13 @@ def test_removed_numerics_stack_is_not_a_package_dev_test_or_analysis_runtime_de
     )
     assert not (REPO_ROOT / removed_fit_script).exists()
     assert not (PROVIDER_PACKAGE_ROOT / ("_optional" + "_backends")).exists()
-    removed_ipopt_helper = REPO_ROOT / "scripts" / "dev" / ("setup_windows_" + removed_python_ipopt_wrapper + "_uv.ps1")
+    removed_ipopt_helper = REPO_ROOT / "scripts" / "dev" / ("setup_" + removed_python_ipopt_wrapper + "_uv.py")
     assert not removed_ipopt_helper.exists()
 
 
 def test_root_package_contains_only_entry_python_files() -> None:
     root_files = {
-        path.name
-        for path in PROVIDER_PACKAGE_ROOT.iterdir()
-        if path.is_file() and path.suffix in {".py", ".pyi"}
+        path.name for path in PROVIDER_PACKAGE_ROOT.iterdir() if path.is_file() and path.suffix in {".py", ".pyi"}
     }
     assert root_files == ALLOWED_PROVIDER_PYTHON_ENTRY_FILES
     assert not (REPO_ROOT / "src" / "epcsaft").exists()
@@ -541,7 +544,7 @@ def test_active_workflows_do_not_require_retired_root_provider_paths() -> None:
         "'src/epcsaft'",
         "src/epcsaft/**/*.cpp",
         "src/epcsaft/**/*.h",
-        "src/epcsaft/*.pyd",
+        "src/epcsaft/*.so",
     )
 
     offenders: list[str] = []
@@ -555,7 +558,7 @@ def test_active_workflows_do_not_require_retired_root_provider_paths() -> None:
         if not path.is_file() or path.suffix.lower() not in {
             ".md",
             ".py",
-            ".ps1",
+            ".sh",
             ".rst",
             ".toml",
             ".txt",
@@ -605,7 +608,7 @@ def test_active_files_do_not_import_retired_extension_paths() -> None:
         if not path.is_file() or path.suffix.lower() not in {
             ".md",
             ".py",
-            ".ps1",
+            ".sh",
             ".rst",
             ".toml",
             ".txt",
@@ -656,7 +659,7 @@ def test_active_guidance_does_not_require_retired_sibling_extension_repos() -> N
         if not path.is_file() or path.suffix.lower() not in {
             ".md",
             ".py",
-            ".ps1",
+            ".sh",
             ".rst",
             ".toml",
             ".txt",
@@ -735,9 +738,7 @@ def test_native_include_paths_do_not_reference_deleted_legacy_topology() -> None
 
 def test_native_equilibrium_bindings_are_registered_through_selector_domain_units() -> None:
     provider_module = (PROVIDER_NATIVE_ROOT / "bindings" / "module.cpp").read_text(encoding="utf-8")
-    extension_module = (EQUILIBRIUM_NATIVE_ROOT / "module.cpp").read_text(
-        encoding="utf-8"
-    )
+    extension_module = (EQUILIBRIUM_NATIVE_ROOT / "module.cpp").read_text(encoding="utf-8")
     bindings_root = PROVIDER_NATIVE_ROOT / "bindings"
     forbidden_includes = (
         "equilibrium/blocks/",
@@ -782,13 +783,8 @@ def test_deleted_equilibrium_route_sources_and_bindings_are_absent() -> None:
         for path in sorted((PROVIDER_NATIVE_ROOT / "bindings").rglob("*"))
         if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}
     ]
-    binding_source_paths.append(
-        EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp"
-    )
-    binding_sources = "\n".join(
-        path.read_text(encoding="utf-8", errors="ignore")
-        for path in binding_source_paths
-    )
+    binding_source_paths.append(EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp")
+    binding_sources = "\n".join(path.read_text(encoding="utf-8", errors="ignore") for path in binding_source_paths)
     forbidden_bindings = (
         "_native_neutral_tp_flash_eos",
         "_native_neutral_lle_eos",
@@ -884,7 +880,9 @@ def test_equilibrium_activation_production_rows_must_enter_through_selector_rout
             continue
         assert row["exposure_status"] == "production_exposed", row["key"]
         assert row["postsolve_certification"] in {"on", "tpd_postsolve"}, row["key"]
-        assert row["derivative_requirement"] == "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes", row["key"]
+        assert row["derivative_requirement"] == "exact_gradient_jacobian_and_hessian_for_exposed_ipopt_routes", row[
+            "key"
+        ]
         assert row["residual_families"], row["key"]
         assert row["constraint_families"], row["key"]
         assert row["proof_routes"], row["key"]
@@ -915,7 +913,7 @@ def test_production_equilibrium_routes_delegate_ipopt_acceptance_to_adapter() ->
     assert "has_finite_complete_variables" not in combined
     assert "solve.accepted || solve.feasible_point" not in combined
     assert "result_.accepted = result_.solved || result_.acceptable" not in adapter
-    assert "solve.application_status == \"solve_succeeded\"" in adapter
+    assert 'solve.application_status == "solve_succeeded"' in adapter
     assert "success_status_and_scaled_kkt_required" in adapter
     assert "_resolved_ipopt_" not in workflow
 
@@ -936,7 +934,7 @@ def test_equilibrium_routes_delegate_result_acceptance_to_result_builder() -> No
         ".application_status = solve.application_status",
         ".accepted = result.postsolve.accepted",
         ".status = result.accepted ?",
-        ".status = \"solver_rejected\"",
+        '.status = "solver_rejected"',
         ".status = certified_postsolve_status",
         "certified_postsolve_status(",
         "apply_ipopt_solve_metadata(",
@@ -961,13 +959,13 @@ def test_native_equilibrium_python_diagnostics_bridge_stays_centralized() -> Non
     )
     bindings = (EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp").read_text(encoding="utf-8", errors="ignore")
 
-    assert "out[\"postsolve_accepted\"] = result.postsolve_accepted" in bridge
-    assert "out[\"rejection_reason\"] = result.rejection_reason" in bridge
+    assert 'out["postsolve_accepted"] = result.postsolve_accepted' in bridge
+    assert 'out["rejection_reason"] = result.rejection_reason' in bridge
     assert "neutral_route_stability_certificate_from_postsolve" in bridge
     assert "stability_checked = postsolve_dict" not in bindings
     assert "candidate_complete = postsolve_dict" not in bindings
     assert "route_physical_evidence_to_dict" in bridge
-    assert "out[\"physical_evidence\"]" in bindings
+    assert 'out["physical_evidence"]' in bindings
 
 
 def test_selector_request_pretreatment_and_phase_labels_stay_in_shared_bridges() -> None:
@@ -975,16 +973,14 @@ def test_selector_request_pretreatment_and_phase_labels_stay_in_shared_bridges()
         encoding="utf-8",
         errors="ignore",
     )
-    requests = (EQUILIBRIUM_PACKAGE_ROOT / "core" / "native_requests.py").read_text(
-        encoding="utf-8", errors="ignore"
-    )
+    requests = (EQUILIBRIUM_PACKAGE_ROOT / "core" / "native_requests.py").read_text(encoding="utf-8", errors="ignore")
     results = (EQUILIBRIUM_PACKAGE_ROOT / "core" / "native_results.py").read_text(encoding="utf-8", errors="ignore")
 
     forbidden_workflow_fragments = (
         "NativeSelectorRouteSpec(",
-        "composition_role=\"liquid\"",
-        "composition_role=\"vapor\"",
-        "composition_role=\"feed\"",
+        'composition_role="liquid"',
+        'composition_role="vapor"',
+        'composition_role="feed"',
         "route_tolerances = (",
         "phase_labels=expected_phase_keys",
     )
@@ -1006,9 +1002,7 @@ def test_activation_matrix_families_do_not_gain_direct_pybind_route_entrypoints(
         for path in sorted((PROVIDER_NATIVE_ROOT / "bindings").rglob("*"))
         if path.is_file() and path.suffix.lower() in {".cpp", ".h", ".hpp"}
     ]
-    binding_source_paths.append(
-        EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp"
-    )
+    binding_source_paths.append(EQUILIBRIUM_NATIVE_ROOT / "register_bindings.cpp")
 
     direct_binding_tokens = {f"_native_{key}" for key in activation_keys}
     binding_offenders: list[str] = []
@@ -1085,9 +1079,7 @@ def test_equilibrium_python_surface_has_one_public_solve_lane_and_no_route_helpe
     solve_calls = [
         node
         for node in ast.walk(equilibrium_class)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id.startswith("_solve_selector")
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id.startswith("_solve_selector")
     ]
     workflow_tree = ast.parse(
         (EQUILIBRIUM_PACKAGE_ROOT / "workflows.py").read_text(encoding="utf-8"),
@@ -1134,9 +1126,7 @@ def test_state_native_adapter_does_not_own_regression_native_wrappers() -> None:
         "_fit_generic_native_ceres",
         "_fit_pure_neutral_native_debug",
     }
-    defined_names = {
-        node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-    }
+    defined_names = {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
 
     assert regression_wrapper_names.isdisjoint(defined_names)
 
@@ -1213,7 +1203,9 @@ def test_python_equilibrium_package_exposes_only_production_selector_solve_suppo
     assert hasattr(equilibrium.Equilibrium, "solve")
     assert {name for name in route_specific_methods if hasattr(equilibrium.Equilibrium, name)} == set()
     assert {
-        name for name in {"bubble_p", "bubble_t", "dew_p", "dew_t", "tp_flash"} if hasattr(equilibrium.Equilibrium, name)
+        name
+        for name in {"bubble_p", "bubble_t", "dew_p", "dew_t", "tp_flash"}
+        if hasattr(equilibrium.Equilibrium, name)
     } == set()
 
     forbidden_exports = {
@@ -1286,9 +1278,7 @@ def test_public_python_solver_surfaces_do_not_own_optimizer_or_root_loops() -> N
 
 
 def test_public_equilibrium_workflows_dispatch_only_through_selector_binding() -> None:
-    workflows = (EQUILIBRIUM_PACKAGE_ROOT / "workflows.py").read_text(
-        encoding="utf-8"
-    )
+    workflows = (EQUILIBRIUM_PACKAGE_ROOT / "workflows.py").read_text(encoding="utf-8")
     activation_keys = {str(row["key"]) for row in _equilibrium_activation_rows()}
     selector_routes = {spec["selector_route"] for spec in _workflow_route_specs().values()}
     required_selector_calls = workflows.count("_native_equilibrium_selector_route_result")
@@ -1414,8 +1404,7 @@ def test_package_import_is_lazy_across_equilibrium_and_regression_extensions() -
 
 def test_frontend_import_does_not_load_solver_extensions() -> None:
     loaded = _probe_epcsaft_import_modules(
-        "from epcsaft import Mixture, ModelOptions, ParameterSet\n"
-        "_ = (Mixture, ModelOptions, ParameterSet)"
+        "from epcsaft import Mixture, ModelOptions, ParameterSet\n_ = (Mixture, ModelOptions, ParameterSet)"
     )
     assert {
         "epcsaft.frontend",
@@ -1491,7 +1480,9 @@ def test_paper_validation_parameter_bundles_are_complete_and_uniform() -> None:
             for row in rows:
                 assert row["component"].strip(), pure_file
                 assert row["source"].strip(), f"{pure_file}: {row['component']}"
-                assert "=" not in ",".join(row[column] for column in PAPER_VALIDATION_PARAMETER_REQUIRED_VALUE_COLUMNS), row
+                assert "=" not in ",".join(
+                    row[column] for column in PAPER_VALIDATION_PARAMETER_REQUIRED_VALUE_COLUMNS
+                ), row
                 for column in PAPER_VALIDATION_PARAMETER_REQUIRED_VALUE_COLUMNS:
                     assert row[column].strip() != "", f"{pure_file}: {row['component']} {column}"
 
@@ -1525,9 +1516,7 @@ def test_paper_validation_temperature_dependent_parameters_are_preserved() -> No
         [0.5, 0.5],
         temperature,
     )
-    expected_sigma = 2.7927 + 10.11 * math.exp(-0.01775 * temperature) - 1.417 * math.exp(
-        -0.01146 * temperature
-    )
+    expected_sigma = 2.7927 + 10.11 * math.exp(-0.01775 * temperature) - 1.417 * math.exp(-0.01146 * temperature)
     assert abs(float(ascani["s"][0]) - expected_sigma) < 1.0e-12
     assert abs(float(ascani["k_ij"][0, 1]) - (0.00016 * temperature - 0.0461)) < 1.0e-12
 
@@ -1547,11 +1536,7 @@ def test_analysis_category_roots_exist() -> None:
 
 def test_paper_validation_uses_flat_paper_roots() -> None:
     paper_root = REPO_ROOT / "analyses" / "paper_validation"
-    actual = {
-        path.relative_to(REPO_ROOT).as_posix()
-        for path in paper_root.iterdir()
-        if path.is_dir()
-    }
+    actual = {path.relative_to(REPO_ROOT).as_posix() for path in paper_root.iterdir() if path.is_dir()}
     assert actual == PAPER_VALIDATION_DOC_ROOTS | PAPER_VALIDATION_INFRA_ROOTS
     assert not (paper_root / "native").exists()
     assert not (paper_root / "application").exists()
@@ -1660,7 +1645,9 @@ def test_extension_owned_tests_are_package_local() -> None:
     forbidden_root_extension_tests = [
         *(_tracked_files("tests/native/equilibrium")),
         *(_tracked_files("tests/native/regression")),
-        "tests/api/frontend/test_regression.py" if (REPO_ROOT / "tests/api/frontend/test_regression.py").exists() else "",
+        "tests/api/frontend/test_regression.py"
+        if (REPO_ROOT / "tests/api/frontend/test_regression.py").exists()
+        else "",
         "tests/native/contracts/test_equilibrium_native_contracts.py"
         if (REPO_ROOT / "tests/native/contracts/test_equilibrium_native_contracts.py").exists()
         else "",
@@ -1724,9 +1711,7 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
     actual_folders = {path.name for path in milestone_root.iterdir() if path.is_dir()}
     assert actual_folders == set(MILESTONE_MIRROR_FOLDERS)
 
-    missing_templates = sorted(
-        path for path in SUPERPOWERS_TEMPLATE_FILES if not (project_root / path).is_file()
-    )
+    missing_templates = sorted(path for path in SUPERPOWERS_TEMPLATE_FILES if not (project_root / path).is_file())
     assert missing_templates == []
     issue_template_fields = _markdown_front_matter(project_root / "_templates" / "issue-mirror.md")
     assert set(issue_template_fields) == MILESTONE_FRONT_MATTER_FIELDS
@@ -1740,9 +1725,7 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
     plan_files = sorted(path.name for path in (project_root / "plans").glob("*.md") if path.name != "README.md")
     bad_plan_names = sorted(name for name in plan_files if not SUPERPOWERS_PLAN_FILENAME_PATTERN.fullmatch(name))
     assert bad_plan_names == []
-    missing_registries = sorted(
-        path for path in SUPERPOWERS_REGISTRY_FILES if not (project_root / path).is_file()
-    )
+    missing_registries = sorted(path for path in SUPERPOWERS_REGISTRY_FILES if not (project_root / path).is_file())
     assert missing_registries == []
 
     for folder, milestone in MILESTONE_MIRROR_FOLDERS.items():
@@ -1772,7 +1755,9 @@ def test_superpowers_project_layout_matches_local_contract() -> None:
             assert fields["state"] == "open"
         assert fields["project"] == "ePC-SAFT Roadmap"
         assert fields["milestone"] in set(MILESTONE_MIRROR_FOLDERS.values())
-        milestone_folder = next(folder for folder, title in MILESTONE_MIRROR_FOLDERS.items() if title == fields["milestone"])
+        milestone_folder = next(
+            folder for folder, title in MILESTONE_MIRROR_FOLDERS.items() if title == fields["milestone"]
+        )
         assert f"-{milestone_folder.lower()}-issue-" in path.name
         assert not str(fields["title"]).startswith("[Blocked]")
         if not retained_closed_mirror:
@@ -1820,9 +1805,7 @@ def test_project_roadmap_setup_contract_matches_github_tracker_shape() -> None:
     assert set(setup["issue_types"]) == {"bug", "feature", "task"}
     assert setup["issue_relationships"]["canonical_blocker_state"] == "github_issue_dependencies"
     assert setup["issue_relationships"]["blocked_title_prefix_forbidden"] is True
-    assert {"status:blocked", "Project Readiness=blocked"} <= set(
-        setup["issue_relationships"]["dashboard_mirrors"]
-    )
+    assert {"status:blocked", "Project Readiness=blocked"} <= set(setup["issue_relationships"]["dashboard_mirrors"])
     assert {"issue": 145, "blocked_by": 148} in setup["issue_relationships"]["audited_edges"]
     assert {"type:bug", "type:feature", "type:task", "status:triage", "status:ready", "status:blocked"}.issubset(
         setup["labels"]
@@ -1857,16 +1840,12 @@ def test_agents_md_stays_a_short_tracked_repo_router() -> None:
 
 
 def test_expected_nested_agents_files_are_present_and_scoped() -> None:
-    missing = sorted(
-        relpath for relpath in EXPECTED_NESTED_AGENT_FILES if not (REPO_ROOT / relpath).is_file()
-    )
+    missing = sorted(relpath for relpath in EXPECTED_NESTED_AGENT_FILES if not (REPO_ROOT / relpath).is_file())
     assert missing == []
 
     allowed = {"AGENTS.md", *EXPECTED_NESTED_AGENT_FILES}
     actual = {
-        path.relative_to(REPO_ROOT).as_posix()
-        for path in REPO_ROOT.rglob("AGENTS.md")
-        if ".git" not in path.parts
+        path.relative_to(REPO_ROOT).as_posix() for path in REPO_ROOT.rglob("AGENTS.md") if ".git" not in path.parts
     }
     unexpected = sorted(actual - allowed)
     assert unexpected == []
@@ -1963,9 +1942,9 @@ def test_migrated_analyses_use_complete_figure_owned_roots() -> None:
                 optional_roots = (figure_root / "source", figure_root / "results")
             else:
                 optional_roots = (figure_root / "input", figure_root / "output")
-            assert any(path.is_dir() for path in optional_roots) or any(
-                (figure_root / "scripts").glob("*.py")
-            ), figure_root
+            assert any(path.is_dir() for path in optional_roots) or any((figure_root / "scripts").glob("*.py")), (
+                figure_root
+            )
 
 
 def test_selected_figure_scripts_do_not_read_canonical_data_root_directly() -> None:

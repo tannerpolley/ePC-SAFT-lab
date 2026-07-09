@@ -63,7 +63,7 @@ def test_build_script_provider_profile_disables_extension_native_modules() -> No
 
 
 def test_build_script_package_lanes_ignore_ambient_ipopt_root(monkeypatch) -> None:
-    monkeypatch.setenv("EPCSAFT_IPOPT_ROOT", "C:/ipopt-msvc")
+    monkeypatch.setenv("EPCSAFT_IPOPT_ROOT", "/opt/ipopt")
 
     provider = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "provider"]))
     regression = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "regression"]))
@@ -73,14 +73,14 @@ def test_build_script_package_lanes_ignore_ambient_ipopt_root(monkeypatch) -> No
 
     with pytest.raises(ValueError, match="Ipopt cannot be enabled"):
         build_epcsaft._resolve_settings(
-            build_epcsaft._parser().parse_args(["--profile", "provider", "--ipopt-root", "C:/ipopt-msvc"])
+            build_epcsaft._parser().parse_args(["--profile", "provider", "--ipopt-root", "/opt/ipopt"])
         )
 
 
 def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
     captured: dict[str, list[str]] = {}
 
-    monkeypatch.setattr(build_epcsaft, "_capture", lambda cmd, env: "C:/pybind11")
+    monkeypatch.setattr(build_epcsaft, "_capture", lambda cmd, env: "/tmp/pybind11")
     monkeypatch.setattr(build_epcsaft, "_cmake_command", lambda: ["cmake"])
     monkeypatch.setattr(build_epcsaft, "_pyproject_version", lambda: "0.2.0")
     monkeypatch.setattr(build_epcsaft, "_generator_args", lambda env, configured_generator=None: [])
@@ -105,27 +105,58 @@ def test_build_script_passes_profile_to_cmake(monkeypatch) -> None:
     assert "-DEPCSAFT_BUILD_PROFILE=provider" in captured["cmd"]
 
 
+def test_cmake_command_pairs_venv_cmake_with_venv_python(monkeypatch, tmp_path) -> None:
+    repo_root = tmp_path / "repo"
+    venv_bin = repo_root / ".venv" / "bin"
+    uv_python_bin = tmp_path / "uv" / "python" / "bin"
+    venv_bin.mkdir(parents=True)
+    uv_python_bin.mkdir(parents=True)
+    for path in (
+        venv_bin / "cmake",
+        venv_bin / "python",
+        uv_python_bin / "python",
+        uv_python_bin / "python3.13",
+    ):
+        path.write_text("#!/usr/bin/env sh\n", encoding="utf-8")
+
+    venv_python3 = venv_bin / "python3"
+    venv_python3.symlink_to(uv_python_bin / "python3.13")
+
+    monkeypatch.setattr(build_epcsaft, "REPO_ROOT", repo_root)
+    monkeypatch.setattr(build_epcsaft.sys, "executable", str(venv_python3))
+
+    assert build_epcsaft._cmake_command() == [str(venv_bin / "python"), "-m", "cmake"]
+
+
 def test_build_script_rejects_solver_overrides_when_provider_profile_disables_their_native_modules() -> None:
     with pytest.raises(ValueError, match="Ipopt cannot be enabled"):
         build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "provider", "--enable-ipopt"]))
 
 
-def test_build_script_uses_local_windows_ipopt_sdk_default(monkeypatch, tmp_path) -> None:
-    ipopt_root = tmp_path / "Documents" / "deps" / "ipopt-msvc"
-    ipopt_root.mkdir(parents=True)
+def test_build_script_uses_local_linux_ipopt_default(monkeypatch, tmp_path) -> None:
+    ipopt_root = tmp_path / ".local" / "opt" / "ipopt"
+    include_dir = ipopt_root / "include" / "coin"
+    lib_dir = ipopt_root / "lib"
+    include_dir.mkdir(parents=True)
+    lib_dir.mkdir()
+    (include_dir / "IpIpoptApplication.hpp").write_text("// test\n", encoding="utf-8")
+    (lib_dir / "libipopt.so").write_text("", encoding="utf-8")
     monkeypatch.delenv("EPCSAFT_IPOPT_ROOT", raising=False)
     monkeypatch.delenv("EPCSAFT_PEP517_IPOPT_ROOT", raising=False)
 
     args = build_epcsaft._parser().parse_args([])
     settings = build_epcsaft._resolve_settings(args)
 
-    assert build_epcsaft.resolve_ipopt_root_for_build(
-        None,
-        enable_ipopt=settings.enable_ipopt,
-        ipopt_dir=args.ipopt_dir,
-        default_root=ipopt_root,
-        label="Ipopt root",
-    ) == ipopt_root.resolve()
+    assert (
+        build_epcsaft.resolve_ipopt_root_for_build(
+            None,
+            enable_ipopt=settings.enable_ipopt,
+            ipopt_dir=args.ipopt_dir,
+            default_root=ipopt_root,
+            label="Ipopt root",
+        )
+        == ipopt_root.resolve()
+    )
 
 
 def test_build_script_profiles_resolve_optional_native_dependency_state() -> None:
@@ -136,10 +167,10 @@ def test_build_script_profiles_resolve_optional_native_dependency_state() -> Non
     regression = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "regression"]))
     provider = build_epcsaft._resolve_settings(build_epcsaft._parser().parse_args(["--profile", "provider"]))
     system_ceres = build_epcsaft._resolve_settings(
-        build_epcsaft._parser().parse_args(["--ceres-dir", "C:/ceres/lib/cmake/Ceres"])
+        build_epcsaft._parser().parse_args(["--ceres-dir", "/opt/ceres/lib/cmake/Ceres"])
     )
     system_ipopt = build_epcsaft._resolve_settings(
-        build_epcsaft._parser().parse_args(["--ipopt-dir", "C:/ipopt/lib/cmake/Ipopt"])
+        build_epcsaft._parser().parse_args(["--ipopt-dir", "/opt/ipopt/lib/cmake/Ipopt"])
     )
 
     assert full.enable_ipopt is True
@@ -166,14 +197,15 @@ def test_build_script_profiles_resolve_optional_native_dependency_state() -> Non
 def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     cmake_text = (build_epcsaft.REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     root_pyproject_text = (build_epcsaft.REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    pyproject_text = (build_epcsaft.REPO_ROOT / "packages" / "epcsaft" / "pyproject.toml").read_text(
-        encoding="utf-8"
-    )
+    pyproject_text = (build_epcsaft.REPO_ROOT / "packages" / "epcsaft" / "pyproject.toml").read_text(encoding="utf-8")
     presets = json.loads((build_epcsaft.REPO_ROOT / "CMakePresets.json").read_text(encoding="utf-8"))
 
     assert 'option(EPCSAFT_ENABLE_CERES "Enable Ceres Solver support for native regression solves" ON)' in cmake_text
     assert 'option(EPCSAFT_ENABLE_CPPAD "Enable package-wide CppAD support" ON)' in cmake_text
-    assert 'option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)' in cmake_text
+    assert (
+        'option(EPCSAFT_ENABLE_IPOPT "Enable native Ipopt support for production equilibrium NLP solves" ON)'
+        in cmake_text
+    )
     assert "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE" in cmake_text
     assert "EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE" in cmake_text
     assert "EPCSAFT_BUILD_PROFILE" in cmake_text
@@ -182,6 +214,7 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "derivative-capable package builds require CppAD" in cmake_text
     assert 'set(EPCSAFT_CERES_VERSION "2.2.0")' in cmake_text
     assert "find_package(Ceres ${EPCSAFT_CERES_VERSION} CONFIG REQUIRED)" in cmake_text
+    assert "INTERFACE_COMPILE_DEFINITIONS HAVE_CSTDDEF" in cmake_text
     assert "GIT_SHALLOW TRUE" in cmake_text
     assert 'add_subdirectory("${ceres_solver_SOURCE_DIR}" "${ceres_solver_BINARY_DIR}" EXCLUDE_FROM_ALL)' in cmake_text
     assert "EPCSAFT_NATIVE_MODEL_SOURCES" in cmake_text
@@ -212,7 +245,10 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert "EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE" in cmake_text
     assert 'ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_equilibrium"' in cmake_text
     assert 'ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/epcsaft_regression"' in cmake_text
-    assert "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp" not in cmake_text
+    assert (
+        "packages/epcsaft-equilibrium/src/epcsaft_equilibrium/native/equilibrium/register_bindings.cpp"
+        not in cmake_text
+    )
     assert "unset(Ceres_BINARY_DIR CACHE)" in cmake_text
     assert "unset(Ceres_SOURCE_DIR CACHE)" in cmake_text
     assert "EPCSAFT_ENABLE_CERES" not in root_pyproject_text
@@ -240,7 +276,7 @@ def test_package_and_dev_defaults_require_ceres_and_cppad() -> None:
     assert dev_native["generator"] == "Ninja"
     assert dev_native["binaryDir"] == "${sourceDir}/build/dev"
     assert dev_native["cacheVariables"]["CMAKE_BUILD_TYPE"] == "Release"
-    assert dev_native["cacheVariables"]["CMAKE_MAKE_PROGRAM"] == "${sourceDir}/.venv/Scripts/ninja.exe"
+    assert dev_native["cacheVariables"]["CMAKE_MAKE_PROGRAM"] == "${sourceDir}/.venv/bin/ninja"
     assert dev_native["cacheVariables"]["EPCSAFT_ENABLE_CERES"] == "ON"
     assert dev_native["cacheVariables"]["EPCSAFT_ENABLE_CPPAD"] == "ON"
 
@@ -250,7 +286,7 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
     package_dir = tmp_path / "src" / "epcsaft"
     build_dir.mkdir(parents=True)
     package_dir.mkdir(parents=True)
-    (package_dir / "_core.cp313-win_amd64.pyd").write_bytes(b"native")
+    (package_dir / "_core.cpython-313-x86_64-linux-gnu.so").write_bytes(b"native")
     (build_dir / ".ninja_lock").write_text("", encoding="utf-8")
     (build_dir / ".ninja_log").write_text(
         "# ninja log v7\n1\t2\t3\tCMakeFiles/example.cpp.obj\tabc\n",
@@ -268,8 +304,8 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
                 "EPCSAFT_ENABLE_IPOPT:BOOL=OFF",
                 "EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE:BOOL=ON",
                 "EPCSAFT_USE_SYSTEM_IPOPT:BOOL=ON",
-                "Ipopt_DIR:PATH=C:/ipopt/lib/cmake/Ipopt",
-                "Ceres_DIR:PATH=C:/ceres/lib/cmake/Ceres",
+                "Ipopt_DIR:PATH=/opt/ipopt/lib/cmake/Ipopt",
+                "Ceres_DIR:PATH=/opt/ceres/lib/cmake/Ceres",
             ]
         ),
         encoding="utf-8",
@@ -287,12 +323,12 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
     assert "ceres_configured: ON" in lines
     assert "regression_native_module_configured: ON" in lines
     assert "system_ceres_configured: OFF" in lines
-    assert "ceres_dir: C:/ceres/lib/cmake/Ceres" in lines
+    assert "ceres_dir: /opt/ceres/lib/cmake/Ceres" in lines
     assert "cppad_configured: ON" in lines
     assert "ipopt_configured: OFF" in lines
     assert "equilibrium_native_module_configured: ON" in lines
     assert "system_ipopt_configured: ON" in lines
-    assert "ipopt_dir: C:/ipopt/lib/cmake/Ipopt" in lines
+    assert "ipopt_dir: /opt/ipopt/lib/cmake/Ipopt" in lines
     assert "profile_hint: fast/full-no-ipopt" in lines
     assert "ninja_lock: present" in lines
     assert "stale_ninja_lock: true" in lines
@@ -301,18 +337,20 @@ def test_build_status_reports_generator_core_optional_flags_and_stale_lock(tmp_p
 
 def test_source_checkout_build_syncs_editable_native_import_target(tmp_path, monkeypatch) -> None:
     source_package = tmp_path / "packages" / "epcsaft" / "src" / "epcsaft"
-    editable_site = tmp_path / "venv" / "Lib" / "site-packages"
+    editable_site = tmp_path / "venv" / "lib" / "python3.13" / "site-packages"
     editable_package = editable_site / "epcsaft"
     source_package.mkdir(parents=True)
     editable_package.mkdir(parents=True)
     (editable_site / "_epcsaft_editable.py").write_text("# editable marker\n", encoding="utf-8")
-    source_artifact = source_package / "_core.cp313-win_amd64.pyd"
+    source_artifact = source_package / "_core.cpython-313-x86_64-linux-gnu.so"
     source_artifact.write_bytes(b"source-build")
-    stale_artifact = editable_package / "_core.cp312-win_amd64.pyd"
+    stale_artifact = editable_package / "_core.cpython-312-x86_64-linux-gnu.so"
     stale_artifact.write_bytes(b"stale")
 
     monkeypatch.setattr(build_epcsaft, "PACKAGE_DIR", source_package)
-    monkeypatch.setattr(build_epcsaft.sysconfig, "get_path", lambda name: str(editable_site) if name == "purelib" else None)
+    monkeypatch.setattr(
+        build_epcsaft.sysconfig, "get_path", lambda name: str(editable_site) if name == "purelib" else None
+    )
 
     build_epcsaft._sync_editable_native_artifacts()
 

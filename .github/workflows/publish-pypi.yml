@@ -3,33 +3,53 @@ name: publish-to-pypi
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: "Git ref to publish, usually a tag such as v0.2.0"
+      tag:
+        description: "Release tag to resolve to one commit, such as v0.2.0"
         required: true
-        default: "v0.2.0"
         type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ inputs.ref }}
+  group: ${{ github.workflow }}-${{ inputs.tag }}
   cancel-in-progress: false
 
 jobs:
   pypi-preflight:
     name: PyPI trusted publisher preflight
     runs-on: ubuntu-latest
+    outputs:
+      release_commit: ${{ steps.resolve-release.outputs.release_commit }}
     permissions:
       contents: read
 
     steps:
       - uses: actions/checkout@v6.0.2
         with:
-          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: resolve-release
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "release tag must use the exact vMAJOR.MINOR.PATCH form" >&2
+            exit 1
+          fi
+          git show-ref --verify --quiet "refs/tags/${RELEASE_TAG}"
+          release_commit="$(git rev-list -n 1 "refs/tags/${RELEASE_TAG}")"
+          test -n "$release_commit"
+          printf 'release_commit=%s\n' "$release_commit" >> "$GITHUB_OUTPUT"
+          git checkout --detach "$release_commit"
 
       - name: Check PyPI project and release version
         shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -44,6 +64,9 @@ jobs:
           project = "epcsaft"
           repository = os.environ.get("GITHUB_REPOSITORY", "ePC-SAFT/ePC-SAFT")
           version = tomllib.loads(Path("packages/epcsaft/pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          release_tag = os.environ["RELEASE_TAG"]
+          if release_tag != f"v{version}":
+              raise SystemExit(f"release tag {release_tag!r} does not match provider package version {version!r}")
           url = f"https://pypi.org/pypi/{project}/json"
           try:
               with urllib.request.urlopen(url, timeout=30) as response:
@@ -70,13 +93,13 @@ jobs:
 
   build-sdist:
     name: build sdist
-    runs-on: windows-latest
+    runs-on: ubuntu-24.04
     needs: [pypi-preflight]
 
     steps:
       - uses: actions/checkout@v6.0.2
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ needs.pypi-preflight.outputs.release_commit }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -96,18 +119,18 @@ jobs:
           path: dist/*.tar.gz
 
   build-wheels:
-    name: build Windows wheel
+    name: build Linux wheel
     runs-on: ${{ matrix.os }}
     needs: [pypi-preflight]
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-24.04]
 
     steps:
       - uses: actions/checkout@v6.0.2
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ needs.pypi-preflight.outputs.release_commit }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -124,8 +147,8 @@ jobs:
         run: uv run --locked cibuildwheel packages/epcsaft --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp313-*"
-          CIBW_ARCHS_WINDOWS: "AMD64"
-          CIBW_SKIP: "*-win32 *-musllinux*"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_SKIP: "*-musllinux*"
           CIBW_TEST_REQUIRES: "numpy"
           CIBW_TEST_COMMAND: "python -c \"import numpy as np; from epcsaft import Mixture, ParameterSet, State; p=ParameterSet.from_dict({'MW': np.asarray([16.043e-3]), 'm': np.asarray([1.0]), 's': np.asarray([3.7039]), 'e': np.asarray([150.03])}, species=['Methane']); s=State(Mixture(p), T=300.0, x=np.asarray([1.0]), rho=100.0); print(s.z())\""
 

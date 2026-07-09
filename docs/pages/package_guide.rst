@@ -94,7 +94,7 @@ files for model, state, equilibrium, and regression workflow defaults:
    from epcsaft import create_input_template
 
    create_input_template(
-       r"C:\Users\Tanner\Documents\my_epcsaft_data\methane_case",
+       "/path/to/my_epcsaft_data/methane_case",
        components=["Methane"],
        workflows=("state", "equilibrium", "regression"),
    )

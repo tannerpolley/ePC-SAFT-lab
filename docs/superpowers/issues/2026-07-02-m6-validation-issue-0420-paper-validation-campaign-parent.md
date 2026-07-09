@@ -79,7 +79,7 @@ milestones.
 
 ## Proof Oracle
 
-```powershell
+```bash
 gh issue view 420 --json number,title,milestone,subIssues
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md

@@ -127,8 +127,8 @@ Build:
 
 Proof:
 
-```powershell
-uv run --no-sync python scripts\dev\validate_project.py docs
+```bash
+uv run --no-sync python scripts/dev/validate_project.py docs
 ```
 
 Resolution record:
@@ -157,9 +157,9 @@ Build:
 
 Proof:
 
-```powershell
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and continuous and tpd" -q
-uv run --no-sync python scripts\validation\check_electrolyte_held2_continuous_tpd.py --json --require-complete
+```bash
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2 and continuous and tpd" -q
+uv run --no-sync python scripts/validation/check_electrolyte_held2_continuous_tpd.py --json --require-complete
 ```
 
 ### Slice 3: Stage I Stability Certificate (#346)
@@ -178,9 +178,9 @@ Build:
 
 Proof:
 
-```powershell
-uv run --no-sync python scripts\validation\check_electrolyte_held2_stage_i.py --json --require-continuous-tpd --require-complete
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and stage_i" -q
+```bash
+uv run --no-sync python scripts/validation/check_electrolyte_held2_stage_i.py --json --require-continuous-tpd --require-complete
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2 and stage_i" -q
 ```
 
 ### Slice 4: Stage II Dual/Cutting-Plane Discovery (#347)
@@ -199,9 +199,9 @@ Build:
 
 Proof:
 
-```powershell
-uv run --no-sync python scripts\validation\check_electrolyte_held2_stage_ii.py --json --require-stage-i --require-bound-gap --require-replay --require-complete
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and stage_ii" -q
+```bash
+uv run --no-sync python scripts/validation/check_electrolyte_held2_stage_ii.py --json --require-stage-i --require-bound-gap --require-replay --require-complete
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2 and stage_ii" -q
 ```
 
 ### Slice 5: Public Route Orchestration Through Stage III (#348)
@@ -221,9 +221,9 @@ Build:
 
 Proof:
 
-```powershell
-uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and public and route" -q
+```bash
+uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2 and public and route" -q
 ```
 
 ### Slice 6: Multi-Scenario Validation Ladder (#349)
@@ -244,9 +244,9 @@ Build:
 
 Proof:
 
-```powershell
-uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and scenario" -q
+```bash
+uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2 and scenario" -q
 ```
 
 ### Slice 7: Registry, Docs, And Capability Admission (#350)
@@ -264,9 +264,9 @@ Build:
 
 Proof:
 
-```powershell
-uv run --no-sync python -m pytest tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q
-uv run --no-sync python scripts\dev\validate_project.py docs
+```bash
+uv run --no-sync python -m pytest tests/native/contracts/test_equilibrium_benchmark_registry.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
+uv run --no-sync python scripts/dev/validate_project.py docs
 ```
 
 ## Dependency Order
@@ -395,10 +395,10 @@ claims that require Khudaida parameter regression.
 
 ## Proof Oracle
 
-```powershell
+```bash
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-27-m4-equilibrium-held2-public-route-phase-discovery-full-adoption-plan.md
-uv run --no-sync python scripts\dev\validate_project.py docs
+uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```

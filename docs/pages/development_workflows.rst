@@ -10,15 +10,16 @@ Default source-checkout sequence
 
 Start every fresh source checkout with this sequence:
 
-.. code-block:: powershell
+.. code-block:: bash
 
+   scripts/dev/check_linux_prereqs.sh --check
    uv sync --no-install-workspace
    uv run --no-sync python scripts/dev/bootstrap.py
 
 The bootstrap entrypoint runs the current setup sequence and prints the next
 exact validation command:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv sync --no-install-workspace
    uv run --no-sync python scripts/dev/build_epcsaft.py
@@ -36,7 +37,11 @@ python scripts/dev/validate_project.py confidence`` before release or broad
 runtime claims when extra native runtime contracts should be included.
 The current development and CI smoke baseline is Python 3.13, while ``pyproject.toml`` still declares package compatibility with Python ``>=3.9``.
 
-Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` and JetBrains pytest runs also work because ``tests/conftest.py`` applies the native runtime DLL setup before test collection, but the wrapper uses a per-run pytest temp directory that is safer for Windows and parallel local runs.
+Use ``uv run python run_pytest.py ...`` for repo validation. Direct ``uv run python -m pytest ...`` also works, but the wrapper uses a per-run pytest temp directory that is safer for parallel local runs.
+
+For a checkout copied from Windows, inspect ignored native/cache artifacts with
+``scripts/dev/clean_transferred_artifacts.sh --dry-run`` before deleting them
+with ``--apply``. The cleanup helper removes only Git-ignored paths.
 
 PR gate policy
 --------------
@@ -132,7 +137,7 @@ Command matrix
      - The previous local benchmark scripts were removed as obsolete; current performance or literature-coverage claims need a newly owned benchmark or analysis workflow before being cited.
    * - Package boundary
      - ``uv run python scripts/dev/build_dist.py``
-     - Wheel/sdist and smoke-import validation. The default release baseline disables local Ipopt so wheels do not require Ipopt runtime DLLs. Isolated package builds default to serial native compilation to avoid Windows Ceres memory spikes; use ``--parallel N`` only when the machine has enough headroom.
+     - Wheel/sdist and smoke-import validation. The default release baseline disables local Ipopt so wheels do not require user-local Ipopt shared libraries. Isolated package builds default to serial native compilation for reproducible package proofs; use ``--parallel N`` only when the machine has enough headroom.
    * - Release install proof
      - ``uv run python scripts/dev/check_release_installs.py --dist-dir dist``
      - Local built-artifact install proof for ``epcsaft``, ``epcsaft-equilibrium``, ``epcsaft-regression``, and the combined install set. Run after provider and extension dist builds.
@@ -145,19 +150,18 @@ Build rules
 
 The canonical local native build command is:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   uv run python scripts/dev/build_epcsaft.py
+   uv run --no-sync python scripts/dev/build_epcsaft.py
 
 That command uses ``--profile fast`` by default: Ceres and CppAD are enabled,
-and Ipopt is enabled when a native install is available. On Windows, the script
+and Ipopt is enabled when a native install is available. On Linux, the script
 first honors explicit ``EPCSAFT_IPOPT_ROOT`` /
-``EPCSAFT_PEP517_IPOPT_ROOT`` values and otherwise probes
-``%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc``,
-``%USERPROFILE%\.epcsaft\deps\ipopt-msvc``, then the legacy
-``%USERPROFILE%\Documents\deps\ipopt-msvc`` SDK path. ``bootstrap.py`` and
-``doctor.py`` report the active Ipopt SDK root, its source, all default probe
-paths, and the exact environment assignment to change it. In this transition
+``EPCSAFT_PEP517_IPOPT_ROOT`` values and otherwise probes default install roots
+such as ``~/.local/opt/ipopt``, ``/usr/local``, ``/usr``, and
+``/opt/ipopt``. ``bootstrap.py`` and ``doctor.py`` report the active Ipopt root,
+its source, all default probe paths, and the exact ``export`` assignment to
+change it. In this transition
 checkout, Ceres is enabled by default for native regression builds, CppAD is
 required for derivative-capable provider builds, and Ipopt-enabled equilibrium
 routes require an Ipopt-enabled native build. ADR 0005 assigns final Ceres
@@ -167,16 +171,16 @@ Ceres or Ipopt to prove the future provider and extension dependency split.
 
 The provider-only boundary proof uses:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   uv run python scripts/dev/build_epcsaft.py --clean --profile provider
+   uv run --no-sync python scripts/dev/build_epcsaft.py --clean --profile provider
 
 That profile keeps CppAD ON while disabling Ceres, Ipopt, and the transition
 equilibrium/regression native registration surfaces.
 
 The package-specific source-checkout profiles are:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_epcsaft.py --profile equilibrium
    uv run python scripts/dev/build_epcsaft.py --profile regression
@@ -188,9 +192,7 @@ disabled. The ``regression`` profile builds provider ``_core`` plus
 disabled. The Codex app setup actions route through ``scripts/dev/bootstrap.py``
 so each package lane also runs the matching Doctor requirement.
 
-Root ``CMAKE.md`` is the source of truth for direct CMake preset operations. Direct CMake preset operations must use ``scripts/dev/cmake_preset.ps1`` or the matching JetBrains Services entries: ``CMake Configure dev-native``, ``CMake Build _core dev-native``, and ``CMake Build dev-native``. Do not call raw ``cmake --preset`` or ``cmake --build`` from ad hoc shells for this repo. The wrapper loads the Visual Studio developer environment, uses the repo-local ``.venv\Scripts\cmake.exe`` and ``.venv\Scripts\ninja.exe``, pins ``CMAKE_MAKE_PROGRAM`` for ``dev-native``, and refuses to run while ``build/dev/.ninja_lock`` exists.
-
-Strawberry may remain installed for unrelated tooling, but it is not the ePC-SAFT CMake standard. Do not select a Strawberry MinGW toolchain or rely on Strawberry's ``cmake.exe`` / ``ninja.exe`` for ``build/dev``.
+Root ``CMAKE.md`` is the source of truth for direct CMake preset operations. Direct CMake preset operations must use ``scripts/dev/cmake_preset.sh``. Do not call raw ``cmake --preset`` or ``cmake --build`` from ad hoc shells for this repo. The wrapper uses ``.venv/bin/python -m cmake``, ``.venv/bin/ninja``, pins ``CMAKE_MAKE_PROGRAM`` for ``dev-native``, and refuses to run while ``build/dev/.ninja_lock`` exists.
 
 Provider wheel/editable/path installs go through the package-local
 PEP 517/scikit-build backend in ``packages/epcsaft``. That backend builds the
@@ -204,16 +206,18 @@ metadata in ``packages/epcsaft-equilibrium`` and
 ``packages/epcsaft-regression``. Use the repository helper so both the monorepo
 provider SDK and installed-provider SDK paths are exercised:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_dist.py --parallel 1
-   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1
+   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1
 
 The extension helper fails if the provider SDK CMake metadata is missing.
 Equilibrium package builds require a real Ipopt SDK; regression package builds
-require Ceres through the package-local CMake configuration. The helper accepts
-``--ceres-dir`` or ``EPCSAFT_PEP517_CERES_DIR`` and otherwise auto-detects the
+require Ceres through the package-local CMake configuration. The helper uses
+the shared Linux Ipopt discovery policy by default; set
+``EPCSAFT_IPOPT_ROOT=/path/to/ipopt`` to pin a specific audited install. The
+helper accepts ``--ceres-dir`` or ``EPCSAFT_PEP517_CERES_DIR`` and otherwise auto-detects the
 repo-local reusable Ceres package built by
 ``uv run python scripts/dev/build_system_ceres.py``. If that cache is missing,
 only the regression package build uses Ceres ``FetchContent``; this is
@@ -222,7 +226,7 @@ build-time dependency work, not runtime wheel payload.
 After building provider and extension distributions, prove the install matrix
 from local artifacts without PyPI:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/check_release_installs.py --dist-dir dist
 
@@ -236,7 +240,7 @@ to PyPI.
 
    * - Profile
      - Native options
-     - Default Windows parallelism
+     - Default Linux parallelism
      - Use when
    * - ``fast``
      - Ceres ON, CppAD ON, Ipopt ON when available, extension-owned native modules ON
@@ -252,18 +256,18 @@ to PyPI.
      - Native Ipopt adapter development or validation with the local SDK or another native Ipopt package.
    * - ``equilibrium``
      - Ceres OFF, CppAD ON, Ipopt ON, equilibrium native module ON, regression native module OFF
-     - ``4``
+     - ``1``
      - Equilibrium package-native worktree lane.
    * - ``regression``
      - Ceres ON, CppAD ON, Ipopt OFF, regression native module ON, equilibrium native module OFF
-     - ``4``
+     - ``1``
      - Regression package-native worktree lane.
    * - ``provider``
      - Ceres OFF, CppAD ON, Ipopt OFF, extension-owned native modules OFF
-     - ``4``
+     - ``1``
      - Provider-only boundary proof for the future core package.
 
-Use ``--build-only --parallel 10`` only after the CMake tree already exists. ``--build-only`` does not reconfigure profile flags; it builds whatever ``build/dev/CMakeCache.txt`` already says. Use ``--configure-only`` when you need to refresh CMake configuration without compiling. For a new ``build/dev`` tree on Windows, ``scripts/dev/build_epcsaft.py`` now loads the repo-standard MSVC environment and prefers Ninja when ``ninja`` is available on ``PATH`` instead of inheriting Strawberry/MinGW from ``PATH``. Existing CMake trees keep their original generator and compiler family; doctor reports ``build_generator_recommendation`` when ``uv run python scripts/dev/build_epcsaft.py --clean --generator ninja`` is the appropriate one-time migration from an older MinGW tree.
+Use ``--build-only --parallel 10`` only after the CMake tree already exists. ``--build-only`` does not reconfigure profile flags; it builds whatever ``build/dev/CMakeCache.txt`` already says. Use ``--configure-only`` when you need to refresh CMake configuration without compiling. For a new ``build/dev`` tree, ``scripts/dev/build_epcsaft.py`` inherits the current Linux shell compiler environment and requires the uv-managed ``.venv/bin/cmake`` and ``.venv/bin/ninja`` tools. Existing non-Ninja CMake trees must be migrated once with ``uv run python scripts/dev/build_epcsaft.py --clean --generator ninja``; missing repo-local tools fail loudly instead of falling back to host executables.
 
 Every native build writes ``build/dev/build_epcsaft.log`` and finishes with an ``epcsaft._core`` import check when compilation runs. Source-checkout profiles also copy extension-owned ``_native_core`` modules into the package source trees when those modules are enabled. Use ``uv run python scripts/dev/build_epcsaft.py --status`` when you need a non-mutating check of the configured generator, named build profile, Ceres/CppAD flags, system-Ceres/Ceres_DIR state, importable ``_core`` artifacts, stale ``.ninja_lock`` state, last Ninja target, and live repo-owned build processes. This is the safest first check when an IDE run or interrupted terminal build appears hung. The provider profile persists ``EPCSAFT_BUILD_PROFILE=provider`` so CMake/Ninja regeneration keeps Ceres, Ipopt, and extension-native modules disabled.
 
@@ -275,11 +279,11 @@ For IDE run configurations, keep commands explicit instead of relying on one ove
 - Clean Ceres + CppAD proof: ``uv run python scripts/dev/build_epcsaft.py --clean --profile full --parallel 4``
 - Equilibrium package-native lane: ``uv run python scripts/dev/build_epcsaft.py --profile equilibrium``
 - Regression package-native lane: ``uv run python scripts/dev/build_epcsaft.py --profile regression``
-- Native Ipopt proof with the local SDK: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root $env:USERPROFILE\Documents\deps\ipopt-msvc``
-- Native Ipopt proof with another install root: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root C:\path\to\Ipopt``
-- Native Ipopt proof with an ``IpoptConfig.cmake`` directory: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-dir C:\path\to\lib\cmake\Ipopt``
+- Native Ipopt proof with the local install root: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root "$HOME/.local/opt/ipopt"``
+- Native Ipopt proof with another install root: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root /path/to/Ipopt``
+- Native Ipopt proof with an ``IpoptConfig.cmake`` directory: ``uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-dir /path/to/lib/cmake/Ipopt``
 
-Do not use ``--clean`` for routine validation. ``uv run python scripts/dev/build_epcsaft.py --clean`` is a repair action for stale CMake state or stale/locked ``_core`` artifacts. A clean dev build deletes the reusable CMake tree, so Ceres source/configuration/build work under ``build/dev/_deps`` may run again unless you use a prebuilt system Ceres package. If Windows reports that ``_core*.pyd`` is locked, stop Python REPLs, tests, IDE run configurations, or parallel workers that imported ``epcsaft._core`` before retrying. If ``--status`` reports a stale Ninja lock, inspect the listed process ids and stop only repo-owned build processes before retrying.
+Do not use ``--clean`` for routine validation. ``uv run python scripts/dev/build_epcsaft.py --clean`` is a repair action for stale CMake state or stale ``_core`` artifacts. A clean dev build deletes the reusable CMake tree, so Ceres source/configuration/build work under ``build/dev/_deps`` may run again unless you use a prebuilt system Ceres package. If a build reports ``Permission denied`` while writing ``_core*.so``, inspect the target directory ownership and permissions plus any concurrent process writing the same output. On Linux, a process importing the previous shared object does not lock the output path; it keeps the previous inode mapped. If ``--status`` reports a stale Ninja lock, inspect the listed process ids and stop only repo-owned build processes before retrying.
 
 If Ceres becomes part of a repeated local source-checkout workflow, build Ceres
 once outside ``build/dev`` and use the system-Ceres path instead of vendoring it
@@ -288,41 +292,37 @@ helper output can be used explicitly by the dev build and is auto-detected by
 ``scripts/dev/build_extension_dists.py`` for regression extension package
 proof:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   uv run python scripts/dev/build_system_ceres.py --parallel 2
-   uv run python scripts/dev/build_epcsaft.py --profile full --use-system-ceres --ceres-dir C:\path\to\lib\cmake\Ceres
-   uv run python scripts/dev/build_extension_dists.py --mode monorepo --ceres-dir C:\path\to\lib\cmake\Ceres --ipopt-root C:\path\to\ipopt-msvc
+   uv run --no-sync python scripts/dev/build_system_ceres.py --parallel 2
+   uv run --no-sync python scripts/dev/build_epcsaft.py --profile full --use-system-ceres --ceres-dir /path/to/lib/cmake/Ceres
+   uv run --no-sync python scripts/dev/build_extension_dists.py --mode monorepo --ceres-dir /path/to/lib/cmake/Ceres --ipopt-root /path/to/ipopt
 
 ``--ceres-dir`` should point at the directory containing ``CeresConfig.cmake``. Ceres' own CMake documentation supports consuming either an installed Ceres package or an exported Ceres build directory through ``find_package(Ceres)`` and ``Ceres::ceres``.
 
-On Windows, ``build_system_ceres.py`` prefers the MSVC build environment for
-the default reusable package. Request ``--generator mingw`` only when you
-intend to consume that Ceres package from a MinGW source-checkout build.
+``build_system_ceres.py`` inherits the current Linux shell compiler environment
+and requires the uv-managed repo-local CMake and Ninja executables.
 
 ``scripts/dev/build_dist.py`` builds the provider package from
 ``packages/epcsaft`` with the provider-only release baseline. It keeps its
 PEP 517 build state under ``build/pep517/provider-only`` for inspection and
 does not consume Ceres or Ipopt.
 
-LaTeX and Overleaf mirror
--------------------------
+LaTeX source and Linux builds
+-----------------------------
 
-``docs/latex`` is normal tracked repo content and is the source of truth for equation-heavy LaTeX files. It is not a Git submodule.
+``docs/latex`` is normal tracked repo content and is the source of truth for
+equation-heavy LaTeX files. It is not a Git submodule. Its tracked
+``.latexmkrc`` directs generated build artifacts to ``docs/latex/builds``.
 
-Use this once to create or validate the external Overleaf checkout:
+Build the current equation documents from the repository root with a system
+TeX installation that provides ``latexmk``:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   .\scripts\docs\setup_latex_mirror.ps1
-
-After LaTeX edits are committed or ready to publish, mirror the current ``docs/latex`` tree to Overleaf:
-
-.. code-block:: powershell
-
-   .\scripts\docs\sync_latex_mirror.ps1
-
-The mirror lives at ``C:\Users\Tanner\Documents\git\LaTeX-Projects\ePC-SAFT-LaTeX`` and owns the Overleaf Git remote. The sync script copies the current LaTeX source tree and intentional top-level artifacts; generated ``docs/latex/out`` build products remain ignored in this repo.
+   cd docs/latex
+   latexmk -pdf equations.tex
+   latexmk -pdf explicit_assocation.tex
 
 Parallel worker safety
 ----------------------
@@ -337,13 +337,13 @@ The dev build tree and generated outputs under ``build/`` are shared disposable 
 Project-local Git worktrees
 ---------------------------
 
-Use ``scripts/dev/create_dev_worktree.ps1`` from the primary checkout instead of raw ``git worktree add`` when a contributor needs a project-local worktree under ``.worktrees/``. The helper creates ``.worktrees/<name>`` and registers the new checkout path as a Git ``safe.directory`` so future Git commands inside that worktree do not fail on Windows when the checkout is accessed by tools running under different user contexts.
+Use ``scripts/dev/create_dev_worktree.sh`` from the primary checkout instead of raw ``git worktree add`` when a contributor needs a project-local worktree under ``.worktrees/``. The helper validates the worktree name, branch, and base ref before creating ``.worktrees/<name>``.
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   .\scripts\dev\create_dev_worktree.ps1 -Name equilibrium-v3 -Branch feature/equilibrium-v3
+   scripts/dev/create_dev_worktree.sh --name equilibrium-v3 --branch feature/equilibrium-v3
 
-``.worktrees/`` must stay ignored in ``.gitignore`` before using the helper. The ``safe.directory`` registration is intentionally path-specific and global to the current Windows user. Use ``-SkipSafeDirectory`` only when you plan to use per-command ``git -c safe.directory=<path> ...`` overrides instead.
+``.worktrees/`` must stay ignored in ``.gitignore`` before using the helper. A same-user worktree does not require a global ``safe.directory`` mutation.
 
 Test selection rules
 --------------------
@@ -415,7 +415,7 @@ freshness, generated artifact state, and the next recommended command. Use
 fresh worktree provider/core smoke checks. Use the package-specific native
 checks after the matching build lane:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-provider-native
    uv run --no-sync python scripts/dev/doctor.py --require-provider-sdk --require-equilibrium-native
@@ -426,4 +426,4 @@ The extension-native shorthand requires both equilibrium and regression native
 modules and should be used after full-native setup or when package-boundary
 proof needs both extension-owned native modules.
 
-If ``scripts/dev/build_epcsaft.py`` appears slow, run ``uv run python scripts/dev/build_epcsaft.py --status`` first. If the status output shows a stale Ninja lock and live repo-owned build processes, resolve those processes before retrying. If the status output is clean, check whether ``build/dev/CMakeCache.txt`` reports ``CMAKE_GENERATOR:INTERNAL=MinGW Makefiles``. A clean one-time switch to Ninja can materially reduce rebuild overhead on Windows systems where Ninja is already installed. Clean Ceres configure/builds can still take longer than incremental rebuilds; ``--build-only --parallel 10`` is the intended C++ edit loop after the tree is configured.
+If ``scripts/dev/build_epcsaft.py`` appears slow, run ``uv run python scripts/dev/build_epcsaft.py --status`` first. If the status output shows a stale Ninja lock and live repo-owned build processes, resolve those processes before retrying. If the status output is clean, check whether ``build/dev/CMakeCache.txt`` reports a non-Ninja generator. A clean one-time switch to Ninja can materially reduce rebuild overhead when Ninja is installed. Clean Ceres configure/builds can still take longer than incremental rebuilds; ``--build-only --parallel 10`` is the intended C++ edit loop after the tree is configured.

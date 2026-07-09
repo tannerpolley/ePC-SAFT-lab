@@ -118,9 +118,11 @@ def test_runtime_capabilities_are_separable_by_future_package_owner() -> None:
         "bubble_temperature",
         "dew_pressure",
         "dew_temperature",
+        "electrolyte_lle",
         "flash",
         "lle",
         "multiphase",
+        "reactive_speciation",
         "single_component_vle",
     ]
 

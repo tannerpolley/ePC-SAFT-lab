@@ -114,7 +114,7 @@ Required gates:
 - `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/api/test_equilibrium.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py packages/epcsaft-equilibrium/tests/native/results/test_associating_lle_reference_values.py tests/native/contracts/test_associating_gfpe_gate_checker.py -q`
 - `uv run python run_pytest.py packages/epcsaft/tests/native/contracts/test_association_implicit_derivative_contract.py packages/epcsaft/tests/native/state/test_phase_state_sensitivities.py packages/epcsaft/tests/native/state/test_fugacity_derivatives.py -q`
 - `uv run python scripts/dev/validate_project.py quick`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`
+- `bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .`
 
 ## Non-Goals And Boundaries
 

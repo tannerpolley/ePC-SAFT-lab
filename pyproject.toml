@@ -64,7 +64,6 @@ extend-exclude = '''
   ^/build/
   | ^/dist/
   | ^/docs/_build/
-  | ^/docs/latex/out/
   | ^/docs/papers/
   | /out/
   | /results/runs/
@@ -79,7 +78,6 @@ extend-exclude = [
     "build",
     "dist",
     "docs/_build",
-    "docs/latex/out",
     "docs/papers",
     "**/out",
     "**/results/runs",

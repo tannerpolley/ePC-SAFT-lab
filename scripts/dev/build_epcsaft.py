@@ -15,12 +15,11 @@ from typing import NamedTuple
 try:
     from scripts.dev.native_runtime_env import (
         apply_native_runtime_env,
-        ipopt_root_prefers_msvc,
         resolve_ipopt_root_for_build,
     )
     from scripts.dev.package_paths import PROVIDER_MODULE_DIR, PROVIDER_PYPROJECT
 except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from native_runtime_env import apply_native_runtime_env, ipopt_root_prefers_msvc, resolve_ipopt_root_for_build
+    from native_runtime_env import apply_native_runtime_env, resolve_ipopt_root_for_build
     from package_paths import PROVIDER_MODULE_DIR, PROVIDER_PYPROJECT
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -35,7 +34,7 @@ class BuildProfile(NamedTuple):
     build_equilibrium_native_module: bool
     build_regression_native_module: bool
     enable_ipopt: bool
-    windows_parallel: str
+    default_parallel: str
     description: str
 
 
@@ -53,7 +52,7 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         build_equilibrium_native_module=True,
         build_regression_native_module=True,
         enable_ipopt=True,
-        windows_parallel="4",
+        default_parallel="4",
         description="default source-checkout profile: provider _core plus extension-owned native modules",
     ),
     "full": BuildProfile(
@@ -61,7 +60,7 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         build_equilibrium_native_module=True,
         build_regression_native_module=True,
         enable_ipopt=True,
-        windows_parallel="4",
+        default_parallel="4",
         description="full source-checkout profile: provider _core plus extension-owned native modules",
     ),
     "ipopt": BuildProfile(
@@ -69,7 +68,7 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         build_equilibrium_native_module=True,
         build_regression_native_module=True,
         enable_ipopt=True,
-        windows_parallel="4",
+        default_parallel="4",
         description="native Ipopt source-checkout profile with extension-owned native modules",
     ),
     "equilibrium": BuildProfile(
@@ -77,7 +76,7 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         build_equilibrium_native_module=True,
         build_regression_native_module=False,
         enable_ipopt=True,
-        windows_parallel="1",
+        default_parallel="1",
         description=(
             "equilibrium native lane: provider _core plus epcsaft-equilibrium native module, "
             "Ceres/regression OFF, fresh-worktree parallelism bounded"
@@ -88,7 +87,7 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         build_equilibrium_native_module=False,
         build_regression_native_module=True,
         enable_ipopt=False,
-        windows_parallel="1",
+        default_parallel="1",
         description=(
             "regression native lane: provider _core plus epcsaft-regression native module, "
             "Ipopt/equilibrium OFF, fresh-worktree parallelism bounded"
@@ -99,7 +98,7 @@ BUILD_PROFILES: dict[str, BuildProfile] = {
         build_equilibrium_native_module=False,
         build_regression_native_module=False,
         enable_ipopt=False,
-        windows_parallel="1",
+        default_parallel="1",
         description=(
             "provider-only boundary profile: CppAD ON, Ceres OFF, Ipopt OFF, extension native modules OFF, "
             "fresh-worktree parallelism bounded"
@@ -149,32 +148,21 @@ def _append_log(text: str) -> None:
 
 
 def _repo_tool_path(name: str) -> Path | None:
-    suffix = ".exe" if os.name == "nt" and not name.lower().endswith(".exe") else ""
-    executable_name = f"{name}{suffix}"
-    candidates = [
-        Path(sys.executable).resolve().parent / executable_name,
-        REPO_ROOT / ".venv" / ("Scripts" if os.name == "nt" else "bin") / executable_name,
-    ]
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    return None
+    candidate = REPO_ROOT / ".venv" / "bin" / name
+    return candidate if candidate.is_file() else None
 
 
 def _cmake_command() -> list[str]:
     repo_cmake = _repo_tool_path("cmake")
-    if repo_cmake is not None:
-        repo_python = _repo_tool_path("python")
-        if repo_python is not None:
-            return [str(repo_python), "-m", "cmake"]
-        return [str(repo_cmake)]
-    resolved = shutil.which("cmake")
-    if resolved:
-        cmake_path = Path(resolved).resolve()
-        scripts_dir = Path(sys.executable).resolve().parent
-        if cmake_path.parent == scripts_dir:
-            return [sys.executable, "-m", "cmake"]
-    return ["cmake"]
+    if repo_cmake is None:
+        raise FileNotFoundError(
+            "The repo-local CMake executable is missing. Run `uv sync --no-install-workspace` "
+            "to restore .venv/bin/cmake before building."
+        )
+    repo_python = _repo_tool_path("python")
+    if repo_python is not None:
+        return [str(repo_python), "-m", "cmake"]
+    return [str(repo_cmake)]
 
 
 def _pyproject_version() -> str:
@@ -200,102 +188,8 @@ def _configured_cxx_compiler() -> str | None:
     return _cmake_cache_value("CMAKE_CXX_COMPILER")
 
 
-def _configured_compiler_is_msvc() -> bool:
-    compiler = _configured_cxx_compiler()
-    if not compiler:
-        return False
-    return Path(compiler).name.lower() == "cl.exe"
-
-
-def _find_vsdevcmd() -> Path:
-    explicit = os.environ.get("EPCSAFT_VSDEVCMD")
-    if explicit:
-        path = Path(explicit).expanduser().resolve()
-        if path.is_file():
-            return path
-    vswhere = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / (
-        "Microsoft Visual Studio/Installer/vswhere.exe"
-    )
-    if vswhere.is_file():
-        output = subprocess.check_output(
-            [
-                str(vswhere),
-                "-latest",
-                "-products",
-                "*",
-                "-requires",
-                "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
-                "-property",
-                "installationPath",
-            ],
-            text=True,
-        ).strip()
-        if output:
-            candidate = Path(output) / "Common7" / "Tools" / "VsDevCmd.bat"
-            if candidate.is_file():
-                return candidate
-    default_path = Path(r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat")
-    if default_path.is_file():
-        return default_path
-    raise FileNotFoundError("MSVC toolchain requested, but VsDevCmd.bat was not found.")
-
-
-def _load_msvc_env(env: dict[str, str]) -> dict[str, str]:
-    vsdevcmd = _find_vsdevcmd()
-    command = f'call "{vsdevcmd}" -arch=x64 -host_arch=x64 >nul && set'
-    output = subprocess.check_output(command, env=env, text=True, shell=True)
-    updated = env.copy()
-    for line in output.splitlines():
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        updated[key] = value
-    return updated
-
-
-def _apply_toolchain_env(
-    env: dict[str, str],
-    *,
-    toolchain: str,
-    enable_ipopt: bool,
-    ipopt_root: Path | None,
-) -> dict[str, str]:
-    if toolchain == "current" or os.name != "nt":
-        return env
-
-    configured = _configured_cxx_compiler()
-    configured_is_msvc = bool(configured) and Path(configured).name.lower() == "cl.exe"
-    requested_msvc_for_ipopt = enable_ipopt and ipopt_root_prefers_msvc(ipopt_root)
-
-    if toolchain == "msvc":
-        load_msvc = True
-    elif configured is None:
-        # Fresh Windows dev trees should use the repo-standard MSVC + Ninja toolchain
-        # instead of inheriting Strawberry/MinGW from PATH.
-        load_msvc = True
-    elif configured_is_msvc:
-        load_msvc = True
-    else:
-        load_msvc = False
-
-    if not load_msvc:
-        if requested_msvc_for_ipopt and configured and Path(configured).name.lower() != "cl.exe":
-            raise RuntimeError(
-                "build/dev is already configured with a non-MSVC compiler. "
-                "Use --clean before switching to the MSVC Ipopt toolchain."
-            )
-        return env
-    if configured and Path(configured).name.lower() != "cl.exe":
-        raise RuntimeError(
-            "build/dev is already configured with a non-MSVC compiler. "
-            "Use --clean before switching to the MSVC Ipopt toolchain."
-        )
-    return _load_msvc_env(env)
-
-
 def _clean() -> None:
-    # Remove the importable extension first. If Windows has it locked, fail
-    # before deleting the reusable CMake build tree.
+    # Remove importable extensions before deleting the reusable CMake build tree.
     for artifact in _native_artifacts():
         _remove_extension_artifact(artifact)
     for artifact in _editable_native_artifacts():
@@ -332,7 +226,7 @@ def _cmake_cache_value(name: str) -> str | None:
 
 
 def _native_artifacts() -> list[Path]:
-    return sorted([*PACKAGE_DIR.glob("_core*.pyd"), *PACKAGE_DIR.glob("_core*.so")])
+    return sorted(PACKAGE_DIR.glob("_core*.so"))
 
 
 def _editable_package_dir() -> Path | None:
@@ -350,7 +244,7 @@ def _editable_native_artifacts() -> list[Path]:
     package_dir = _editable_package_dir()
     if package_dir is None:
         return []
-    return sorted([*package_dir.glob("_core*.pyd"), *package_dir.glob("_core*.so")])
+    return sorted(package_dir.glob("_core*.so"))
 
 
 def _sync_editable_native_artifacts() -> None:
@@ -392,22 +286,10 @@ def _last_ninja_target() -> str | None:
 
 
 def _repo_build_processes() -> list[str]:
-    if os.name != "nt":
-        return []
-    root = str(REPO_ROOT).replace("'", "''")
     current_pid = os.getpid()
-    command = (
-        "$root = '" + root + "'; "
-        f"$currentPid = {current_pid}; "
-        "Get-CimInstance Win32_Process | "
-        "Where-Object { $_.Name -in @('python.exe','uv.exe','cmake.exe','ninja.exe') "
-        "-and $_.ProcessId -ne $currentPid "
-        '-and $_.CommandLine -like "*$root*" } | '
-        'ForEach-Object { "$($_.ProcessId) $($_.Name) $($_.CommandLine)" }'
-    )
     try:
         output = subprocess.check_output(
-            ["powershell.exe", "-NoProfile", "-Command", command],
+            ["ps", "-eo", "pid=,comm=,args="],
             cwd=str(REPO_ROOT),
             text=True,
             stderr=subprocess.DEVNULL,
@@ -416,12 +298,18 @@ def _repo_build_processes() -> list[str]:
     except (subprocess.SubprocessError, OSError):
         return []
     processes = []
+    root = str(REPO_ROOT)
     for line in output.splitlines():
         process = line.strip()
-        normalized = process.lower().replace("\\", "/")
+        if not process:
+            continue
+        parts = process.split(maxsplit=2)
+        if not parts or parts[0] == str(current_pid) or root not in process:
+            continue
+        normalized = process.lower()
         is_build_script = "scripts/dev/build_epcsaft.py" in normalized and "--status" not in normalized
         is_cmake_build = "cmake" in normalized and "--build" in normalized
-        is_ninja_build = "ninja.exe" in normalized
+        is_ninja_build = "ninja" in normalized
         if is_build_script or is_cmake_build or is_ninja_build:
             processes.append(process)
     return processes
@@ -471,7 +359,7 @@ def _status_lines(*, stale_lock_seconds: int = STALE_LOCK_SECONDS) -> list[str]:
         f"system_ipopt_configured: {system_ipopt}",
         f"ipopt_dir: {ipopt_dir}",
         f"ipopt_root: {ipopt_root}",
-        f"ipopt_runtime_dll_dir: {runtime_env.ipopt_runtime_dir if runtime_env.ipopt_runtime_dir else '<none>'}",
+        f"ipopt_runtime_lib_dir: {runtime_env.ipopt_runtime_dir if runtime_env.ipopt_runtime_dir else '<none>'}",
         f"ipopt_runtime_env_applied: {'true' if runtime_env.applied else 'false'}",
         f"profile_hint: {_profile_hint(ceres=ceres, cppad=cppad, ipopt=ipopt, equilibrium_native=equilibrium_native, regression_native=regression_native)}",
         f"native_core: {'present' if artifacts else 'missing'}",
@@ -530,38 +418,25 @@ def _generator_args(env: dict[str, str], configured_generator: str | None = None
     requested = env.get("EPCSAFT_CMAKE_GENERATOR", "").strip().lower()
     if requested == "auto":
         requested = ""
+    if requested not in {"", "ninja"}:
+        raise ValueError(f"Unsupported CMake generator {requested!r}; this repo requires Ninja.")
 
-    known = {
-        "ninja": "Ninja",
-        "mingw": "MinGW Makefiles",
-        "mingw makefiles": "MinGW Makefiles",
-    }
-    if configured_generator:
-        if not requested:
-            return []
-        target = known.get(requested)
-        if target and target == configured_generator:
-            return []
-        raise RuntimeError(
-            "build/dev is already configured with "
-            f"{configured_generator!r}. Use --clean before switching to {target or requested!r}."
+    repo_ninja = _repo_tool_path("ninja")
+    if repo_ninja is None:
+        raise FileNotFoundError(
+            "The repo-local Ninja executable is missing. Run `uv sync --no-install-workspace` "
+            "to restore .venv/bin/ninja before building."
         )
+    if configured_generator:
+        if configured_generator != "Ninja":
+            raise RuntimeError(
+                "build/dev is already configured with "
+                f"{configured_generator!r}. This repo requires 'Ninja'. "
+                "Use --clean before switching to 'Ninja'."
+            )
+        return [f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}"]
 
-    if requested in {"ninja", ""}:
-        repo_ninja = _repo_tool_path("ninja")
-        if repo_ninja is not None:
-            return ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}"]
-        if shutil.which("ninja", path=env.get("PATH")):
-            return ["-G", "Ninja"]
-    if (
-        requested in {"mingw", "mingw makefiles"}
-        and os.name == "nt"
-        and shutil.which("mingw32-make", path=env.get("PATH"))
-    ):
-        return ["-G", "MinGW Makefiles"]
-    if os.name == "nt" and shutil.which("mingw32-make", path=env.get("PATH")):
-        return ["-G", "MinGW Makefiles"]
-    return []
+    return ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}"]
 
 
 def _configure(
@@ -618,6 +493,17 @@ def _configure(
 
 
 def _build(env: dict[str, str], parallel: str | None) -> None:
+    configured_generator = _configured_generator()
+    if configured_generator != "Ninja":
+        raise RuntimeError(
+            "build/dev is not configured with the required Ninja generator. "
+            "Run `uv run --no-sync python scripts/dev/build_epcsaft.py --clean` first."
+        )
+    if _repo_tool_path("ninja") is None:
+        raise FileNotFoundError(
+            "The repo-local Ninja executable is missing. Run `uv sync --no-install-workspace` "
+            "to restore .venv/bin/ninja before building."
+        )
     cmd = [*_cmake_command(), "--build", str(BUILD_DIR)]
     if parallel:
         cmd.extend(["--parallel", parallel])
@@ -678,10 +564,7 @@ def _resolve_settings(args: argparse.Namespace) -> BuildSettings:
 
     parallel = args.parallel
     if parallel is None:
-        if os.name == "nt":
-            parallel = profile.windows_parallel
-        else:
-            parallel = BUILD_PROFILES["full"].windows_parallel
+        parallel = profile.default_parallel
     return BuildSettings(
         enable_ceres=enable_ceres,
         build_equilibrium_native_module=build_equilibrium_native_module,
@@ -720,18 +603,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--generator",
-        choices=("auto", "ninja", "mingw"),
+        choices=("auto", "ninja"),
         default="auto",
-        help="CMake generator for a new configure. Auto prefers Ninja when available.",
-    )
-    parser.add_argument(
-        "--toolchain",
-        choices=("auto", "current", "msvc"),
-        default="auto",
-        help=(
-            "Compiler environment for a new configure or build-only run. Auto uses the repo-standard "
-            "MSVC environment for fresh Windows trees and existing MSVC-configured trees."
-        ),
+        help="CMake generator for a new configure. The repo-local Ninja executable is required.",
     )
     parser.set_defaults(enable_ipopt=None)
     parser.add_argument(
@@ -753,7 +627,7 @@ def _parser() -> argparse.ArgumentParser:
         "--enable-ipopt",
         dest="enable_ipopt",
         action="store_true",
-        help="Enable native Ipopt support. Uses the local Windows SDK default when present unless another Ipopt path is supplied.",
+        help="Enable native Ipopt support. Uses explicit paths or Linux system discovery unless another Ipopt path is supplied.",
     )
     parser.add_argument(
         "--disable-ipopt",
@@ -819,12 +693,6 @@ def main() -> int:
     env = _env()
     if args.generator != "auto":
         env["EPCSAFT_CMAKE_GENERATOR"] = args.generator
-    env = _apply_toolchain_env(
-        env,
-        toolchain=args.toolchain,
-        enable_ipopt=settings.enable_ipopt,
-        ipopt_root=ipopt_root,
-    )
     runtime_env = apply_native_runtime_env(env, ipopt_root=ipopt_root, ipopt_enabled=settings.enable_ipopt)
     print(
         "Build profile: "
@@ -837,8 +705,7 @@ def main() -> int:
         f"Ipopt={'ON' if settings.enable_ipopt else 'OFF'}, "
         f"IpoptSource={('system' if use_system_ipopt else 'disabled') if settings.enable_ipopt else 'disabled'}, "
         f"IpoptRoot={ipopt_root if ipopt_root is not None else '<none>'}, "
-        f"IpoptRuntimeDllDir={runtime_env.ipopt_runtime_dir if runtime_env.ipopt_runtime_dir else '<none>'}, "
-        f"Toolchain={args.toolchain}, "
+        f"IpoptRuntimeLibDir={runtime_env.ipopt_runtime_dir if runtime_env.ipopt_runtime_dir else '<none>'}, "
         f"BuildType={args.build_type}, "
         f"parallel={settings.parallel or '<generator default>'}",
         flush=True,

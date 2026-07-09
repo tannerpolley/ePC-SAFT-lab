@@ -86,7 +86,7 @@ generation over to the shared tracer.
 
 ## Proof Oracle
 
-```powershell
+```bash
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-24-m4-equilibrium-adaptive-branch-tracing-validation-plan.md
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
@@ -96,7 +96,7 @@ uv run --no-sync python analyses/paper_validation/scripts/check_figure_contract.
 uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native --write-summary
 uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 ## GitHub Body

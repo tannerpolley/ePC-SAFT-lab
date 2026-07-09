@@ -43,7 +43,7 @@ issue, numerical/solver issue, or documentation ambiguity. Add a focused
 regression test when feasible, fix the package rather than patching downstream
 code, and validate with the smallest relevant ladder:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python run_pytest.py <focused-test-targets> -q
    uv run python scripts/dev/validate_project.py quick
@@ -64,7 +64,7 @@ Local triage helper
 
 Use the read-only helper to inspect one issue and choose the first command:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/support/triage_dependency_issue.py --issue 12
    uv run python scripts/support/triage_dependency_issue.py --issue https://github.com/<owner>/<repo>/issues/12 --json

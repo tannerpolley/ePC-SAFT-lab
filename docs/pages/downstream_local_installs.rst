@@ -10,14 +10,14 @@ Editable install
 Use an editable install when you are changing Python files in the ePC-SAFT
 checkout:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   cd C:\path\to\ePC-SAFT
+   cd /path/to/ePC-SAFT
    python -m pip install -e packages/epcsaft
 
 With ``uv``:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv pip install -e packages/epcsaft
 
@@ -35,7 +35,7 @@ checkout:
 .. code-block:: toml
 
    dependencies = [
-       "epcsaft @ file:///C:/Users/Tanner/Documents/git/ePC-SAFT/packages/epcsaft",
+       "epcsaft @ file:///home/user/workspaces/ePC-SAFT/packages/epcsaft",
    ]
 
 Recommended local dependency loop
@@ -44,9 +44,9 @@ Recommended local dependency loop
 Install or refresh the local package once, then prove the installed package and
 the downstream repo-local integration wrapper without implicit sync:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   $env:UV_CACHE_DIR = "$PWD\.uv-cache"
+   export UV_CACHE_DIR="$PWD/.uv-cache"
    uv sync --reinstall-package epcsaft
    uv run --no-sync python -m epcsaft
    uv run --no-sync python scripts/check_epcsaft_integration.py --mode dev
@@ -70,13 +70,13 @@ phase.
 Build directory behavior
 ------------------------
 
-PEP 517 wheel builds use an isolated temporary native build directory by default. This avoids repeated downstream path installs writing into the shared source checkout ``build/`` tree, which is the common source of Windows ``_core*.pyd`` lock races.
+PEP 517 wheel builds use an isolated temporary native build directory by default. This avoids repeated downstream path installs writing into the shared source checkout ``build/`` tree, which can cause stale ``_core*.so`` artifacts during parallel work.
 
 If you intentionally want a persistent build directory for a downstream reinstall, set:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   $env:EPCSAFT_PEP517_BUILD_DIR = "$PWD\.uv-cache\epcsaft-build"
+   export EPCSAFT_PEP517_BUILD_DIR="$PWD/.uv-cache/epcsaft-build"
    uv sync --reinstall-package epcsaft
 
 This keeps the package-install build tree around so repeated provider installs
@@ -90,34 +90,38 @@ When repeated source-checkout development builds need Ceres for the regression
 extension, build Ceres once in the ePC-SAFT checkout and pass the result to the
 dev build:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   cd C:\path\to\ePC-SAFT
-   uv run python scripts\dev\build_system_ceres.py --parallel 4
-   uv run python scripts\dev\build_epcsaft.py --use-system-ceres --ceres-dir C:\path\to\lib\cmake\Ceres
+   cd /path/to/ePC-SAFT
+   uv run python scripts/dev/build_system_ceres.py --parallel 4
+   uv run python scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir /path/to/lib/cmake/Ceres
 
 For normal ePC-SAFT source development, keep using the explicit in-place dev build:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   uv run python scripts\dev\build_epcsaft.py
-   uv run python scripts\dev\build_epcsaft.py --build-only --parallel 10
+   uv run python scripts/dev/build_epcsaft.py
+   uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10
 
 The default dev-script build is the required source-checkout native dependency
 profile: Ceres ON, CppAD ON, and Ipopt ON when ``EPCSAFT_IPOPT_ROOT``,
-``EPCSAFT_PEP517_IPOPT_ROOT``, ``--ipopt-dir``, or the Windows local SDK default
-``%USERPROFILE%\Documents\deps\ipopt-msvc`` provides a native Ipopt install.
+``EPCSAFT_PEP517_IPOPT_ROOT``, ``--ipopt-dir``, or Linux default Ipopt
+discovery provides a native Ipopt install.
 Editable, wheel, and downstream path installs of ``epcsaft`` remain
 provider-only; Ipopt-enabled native equilibrium routes require an explicit
 source-checkout build with Ipopt enabled. New dev build configurations prefer
 Ninja when available. Existing ``build/dev`` trees keep their configured
 generator until you run the coordinated repair command
-``uv run python scripts\dev\build_epcsaft.py --clean --generator ninja``.
+``uv run python scripts/dev/build_epcsaft.py --clean --generator ninja``.
 
-Windows ``_core`` lock failures
--------------------------------
+Linux ``_core`` lock failures
+-----------------------------
 
-If a build reports ``Permission denied`` while writing ``_core*.pyd``, a Python process is usually still importing the extension. Stop downstream tests, Python REPLs, IDE runs, and parallel workers that imported ``epcsaft._core``. Then run exactly one reinstall/build command before starting checks again.
+If a build reports ``Permission denied`` while writing ``_core*.so``, inspect
+the target directory ownership and permissions and stop any concurrent build
+that is writing the same output. A Linux process may keep the previous inode
+mapped after replacement, but it does not lock the ``.so`` path like a Windows
+``.pyd``. Run exactly one reinstall/build command before starting checks again.
 
 Runtime metadata
 ----------------
@@ -129,7 +133,7 @@ Downstream projects can confirm which package source they are using:
    import epcsaft
 
    print(epcsaft.__version__)
-   print(epcsaft.__git_commit__)
+   print(epcsaft.runtime_build_info()["source_git_commit"])
    print(epcsaft.runtime_build_info())
 
 ``runtime_build_info()`` reports package version, source path/commit when discoverable, native extension path, Python version, and platform information.
@@ -149,21 +153,31 @@ workflows:
    equilibrium_caps = epcsaft_equilibrium.capabilities()
    assert provider_caps["package"] == "epcsaft"
    assert provider_caps["owner"] == "core_provider"
-   assert equilibrium_caps["production_families"] == [
+   exported_families = set(equilibrium_caps["production_families"])
+   exported_routes = set(equilibrium_caps["public_routes"])
+   assert {
        "neutral_tp_flash",
        "neutral_lle",
        "bubble_dew_derived_routes",
-   ]
-   assert "bubble_pressure" in equilibrium_caps["public_routes"]
-   assert "flash" in equilibrium_caps["public_routes"]
+   } <= exported_families
+   assert "bubble_pressure" in exported_routes
+   assert "flash" in exported_routes
+   assert "reactive_speciation" in exported_routes
 
 Native EOS/property calls and native regression helpers are available. The
-production equilibrium public route list contains route names for
-constructor-configured ``Equilibrium(mixture, route=..., ...).solve()``
-workflows: selector-backed neutral VLE bubble/dew pressure and temperature
-specs, certified two-phase flash, and neutral nonassociating LLE. Electrolyte,
-reactive, and speciation families are declared in the native activation matrix
-without being advertised as callable routes.
+``production_families`` and ``public_routes`` fields describe the exported
+activation surface for the current build; that metadata does not prove
+validated production behavior. The exported route surface includes neutral
+bubble/dew, flash, LLE, single-component VLE, neutral multiphase,
+fixture-limited electrolyte LLE, and reactive speciation routes. Apply the
+route-specific proof gate before making a production claim.
+
+Reactive speciation remains exported, but its production evidence is withheld
+while the complete standalone CE gate fails:
+
+.. code-block:: bash
+
+   uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-single-nlp-path --require-oracles --require-complete
 
 For routing examples and the production/opt-in solver table, see
 :doc:`equilibrium_cookbook`.
@@ -199,8 +213,10 @@ Capability status summary
        ``route="electrolyte_lle"``; generic salt/solvent, reactive, CE/CPE,
        and regression claims remain downstream or future-gate work.
    * - Reactive speciation
-     - Explicit Ipopt ideal route
-     - Native Ipopt support covers homogeneous ``ideal_mole_fraction`` when compiled; activity and concentration residual diagnostics use exact CppAD-implicit phase-state derivatives, while production nonideal solves require the native Gibbs/activity NLP route builder.
+     - Exported Ipopt route; production proof withheld
+     - The activation surface exports homogeneous reactive speciation when
+       compiled, but production evidence is withheld while the complete
+       standalone CE gate fails.
    * - Electrolyte bubble pressure
      - Native Ipopt route when compiled
      - Fixed liquid composition with neutral vapor species; ions remain liquid-only.
@@ -239,6 +255,7 @@ is still one real recorded workflow run each in ``MEA-Thermodynamics``,
 ``Lithium_Extraction``, and ``MEA-Absorption-Column`` after the local install
 check has passed.
 
-The smoke tests also assert that the public derivative contract keeps finite
-difference route. Use ``analytic``, ``cppad``, ``analytic_implicit``, or
-``cppad_implicit`` derivative routes where derivatives are required.
+The smoke tests also assert that the public derivative contract exposes only
+exact derivative routes. Use ``analytic``, ``cppad``,
+``analytic_implicit``, or ``cppad_implicit`` derivative routes where
+derivatives are required.

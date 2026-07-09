@@ -2,11 +2,8 @@ from __future__ import annotations
 
 import argparse
 import importlib
-import os
 import sys
 from pathlib import Path
-
-_DLL_DIRECTORY_HANDLES: list[object] = []
 
 
 def _apply_source_checkout_runtime_env() -> None:
@@ -15,16 +12,6 @@ def _apply_source_checkout_runtime_env() -> None:
     except ModuleNotFoundError:
         return
     apply_to_current_process()
-
-
-def _add_runtime_dll_directories() -> None:
-    if os.name != "nt" or not hasattr(os, "add_dll_directory"):
-        return
-    raw_dirs = os.environ.get("EPCSAFT_RUNTIME_DLL_DIRS", "")
-    for raw_dir in raw_dirs.split(os.pathsep):
-        dll_dir = raw_dir.strip()
-        if dll_dir:
-            _DLL_DIRECTORY_HANDLES.append(os.add_dll_directory(dll_dir))
 
 
 def _failure_message(exc: BaseException) -> str:
@@ -40,7 +27,6 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Report epcsaft package and native extension status.")
     parser.parse_args(argv)
     _apply_source_checkout_runtime_env()
-    _add_runtime_dll_directories()
     try:
         package = importlib.import_module("epcsaft")
         core = importlib.import_module("epcsaft._core")

@@ -8,8 +8,8 @@ The hypothetical fixture uses the Table 3 PC-SAFT parameters, Figure 3 \(K_a=2.2
 
 Run from the repository root:
 
-```powershell
-uv run python analyses\paper_validation\2023_ascani\scripts\run_all.py
+```bash
+uv run python analyses/paper_validation/2023_ascani/scripts/run_all.py
 ```
 
 The script writes `results/reactive_phase_equilibrium/summary.json` and exits nonzero while source target rows are missing.

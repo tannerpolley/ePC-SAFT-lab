@@ -58,17 +58,17 @@ current CPE contract work is visible in the reactive/coupled PE subtree.
 
 ## Proof Oracle
 
-```powershell
+```bash
 gh api /repos/ePC-SAFT/ePC-SAFT/issues/361/sub_issues
 gh api /repos/ePC-SAFT/ePC-SAFT/issues/370/sub_issues
 gh issue view 191 --json parent
 gh issue view 331 --json parent
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 Mirror validation:
 
-```powershell
+```bash
 uv run --no-sync python scripts/validate_issue_mirror.py --repo-root . --issue-file <mirror> --milestone-required
 ```
 

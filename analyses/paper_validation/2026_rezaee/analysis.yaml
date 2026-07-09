@@ -12,7 +12,7 @@ boundary:
     - Claim direct published-constant closure when the source/reference-state diagnostics do not pass.
 epcsaft_dependency:
   required: true
-  package_source: C:\Users\Tanner\Documents\git\ePC-SAFT
+  package_source: .
   notes:
     - Uses Rezaee paper-reported DES/TOPO/RLi/RNa PC-SAFT parameters and binary interactions as source truth.
     - Uses epcsaft activity and fugacity coefficient APIs for the validation calculations.
@@ -58,7 +58,7 @@ outputs:
     kind: generated_package_vs_digitized_figure
 commands:
   paper_validation:
-    - uv run python analyses\paper_validation\2026_rezaee\scripts\run_all.py
+    - uv run python analyses/paper_validation/2026_rezaee/scripts/run_all.py
 expected:
   row_count: 26
   direct_published_constant_closure_supported: false

@@ -1,6 +1,6 @@
 {
   "target_repo": "ePC-SAFT/ePC-SAFT",
-  "target_repo_root": "C:/Users/Tanner/Documents/Workspaces/Engineering/ePC-SAFT",
+  "target_repo_root": ".",
   "source_docs": [
     "https://docs.github.com/en/rest/orgs/issue-types",
     "https://docs.github.com/en/rest/issues/issues",

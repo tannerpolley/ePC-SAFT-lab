@@ -179,18 +179,18 @@ if(EPCSAFT_ENABLE_IPOPT)
         find_library(EPCSAFT_IPOPT_LIBRARY
             NAMES ipopt ipopt-3 libipopt
             PATHS "${EPCSAFT_IPOPT_ROOT_CMAKE}/lib"
+                  "${EPCSAFT_IPOPT_ROOT_CMAKE}/lib64"
+                  "${EPCSAFT_IPOPT_ROOT_CMAKE}/lib/x86_64-linux-gnu"
             NO_DEFAULT_PATH
         )
         if(NOT EPCSAFT_IPOPT_INCLUDE_DIR OR NOT EPCSAFT_IPOPT_LIBRARY)
             message(FATAL_ERROR "EPCSAFT_IPOPT_ROOT must contain a usable Ipopt include/ and lib/ tree: ${EPCSAFT_IPOPT_ROOT}")
         endif()
-        if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND EPCSAFT_IPOPT_LIBRARY MATCHES "\\.lib$")
-            message(FATAL_ERROR "EPCSAFT_IPOPT_ROOT resolved to an MSVC import library, but the active compiler is GNU. Use an MSVC CMake toolchain or provide a MinGW-compatible Ipopt library.")
-        endif()
         add_library(EPCSAFT::Ipopt UNKNOWN IMPORTED)
         set_target_properties(EPCSAFT::Ipopt PROPERTIES
             IMPORTED_LOCATION "${EPCSAFT_IPOPT_LIBRARY}"
             INTERFACE_INCLUDE_DIRECTORIES "${EPCSAFT_IPOPT_INCLUDE_DIR}"
+            INTERFACE_COMPILE_DEFINITIONS HAVE_CSTDDEF
         )
         set(EPCSAFT_IPOPT_TARGET EPCSAFT::Ipopt)
     else()
@@ -267,7 +267,23 @@ if(EPCSAFT_ENABLE_CPPAD)
         set(cppad_is_same_tape_addr_type_size_t 0)
         set(cppad_tape_id_type "unsigned int")
         set(cppad_max_num_threads 48)
-        set(cppad_has_mkstemp 0)
+        include(CheckCXXSourceCompiles)
+        check_cxx_source_compiles([=[
+#include <stdlib.h>
+#include <unistd.h>
+
+int main()
+{
+    char pattern[] = "/tmp/fileXXXXXX";
+    int fd = mkstemp(pattern);
+    return fd < 0;
+}
+]=] EPCSAFT_CPPAD_HAS_MKSTEMP)
+        if(EPCSAFT_CPPAD_HAS_MKSTEMP)
+            set(cppad_has_mkstemp 1)
+        else()
+            set(cppad_has_mkstemp 0)
+        endif()
         set(cppad_has_tmpnam_s 0)
         set(cppad_c_compiler_cmd "${CMAKE_CXX_COMPILER}")
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -275,11 +291,7 @@ if(EPCSAFT_ENABLE_CPPAD)
         else()
             set(cppad_c_compiler_gnu_flags 0)
         endif()
-        if(MSVC)
-            set(cppad_c_compiler_msvc_flags 1)
-        else()
-            set(cppad_c_compiler_msvc_flags 0)
-        endif()
+        set(cppad_c_compiler_msvc_flags 0)
         set(cppad_is_same_unsigned_int_size_t 0)
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(cppad_padding_block_t "")
@@ -498,13 +510,6 @@ target_include_directories(_core
         "${EPCSAFT_EIGEN_INCLUDE}"
 )
 target_compile_features(_core PRIVATE cxx_std_17)
-if(MSVC)
-    set_source_files_properties(
-        ${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp
-        PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
-    )
-endif()
-
 set(EPCSAFT_NATIVE_TARGETS
     ${EPCSAFT_NATIVE_OBJECT_TARGETS}
     _core
@@ -541,13 +546,6 @@ if(EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE)
         target_compile_definitions(epcsaft_equilibrium_native_core PRIVATE EPCSAFT_HAS_IPOPT=1)
     endif()
     list(APPEND EPCSAFT_NATIVE_TARGETS epcsaft_equilibrium_native_core)
-    if(MSVC)
-        set_source_files_properties(
-            "${EPCSAFT_EQUILIBRIUM_NATIVE_ROOT}/module.cpp"
-            "${EPCSAFT_EQUILIBRIUM_REGISTER_BINDINGS_SOURCE}"
-            PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
-        )
-    endif()
 endif()
 
 if(EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE)
@@ -581,12 +579,6 @@ if(EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE)
         target_compile_definitions(epcsaft_regression_native_core PRIVATE EPCSAFT_HAS_CERES=1 EPCSAFT_HAS_REGRESSION_NATIVE=1)
     endif()
     list(APPEND EPCSAFT_NATIVE_TARGETS epcsaft_regression_native_core)
-    if(MSVC)
-        set_source_files_properties(
-            "${EPCSAFT_REGRESSION_NATIVE_ROOT}/module.cpp"
-            PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
-        )
-    endif()
 endif()
 
 foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
@@ -606,12 +598,7 @@ foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
 endforeach()
 
 foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
-    if(MSVC)
-        target_compile_options(${target_name} PRIVATE /W4 /wd4551)
-        if(EPCSAFT_WARNINGS_AS_ERRORS)
-            target_compile_options(${target_name} PRIVATE /WX)
-        endif()
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
         if(EPCSAFT_WARNINGS_AS_ERRORS)
             target_compile_options(${target_name} PRIVATE -Werror)
@@ -630,18 +617,6 @@ if(EPCSAFT_ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE MATCHES "Debug")
     if(EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE)
         target_link_options(epcsaft_regression_native_core PRIVATE -fsanitize=address,undefined)
     endif()
-endif()
-
-if(EPCSAFT_ENABLE_SANITIZERS AND MSVC)
-    message(WARNING "EPCSAFT_ENABLE_SANITIZERS is currently only configured for GNU/Clang debug builds.")
-endif()
-
-if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    foreach(target_name IN LISTS EPCSAFT_NATIVE_OBJECT_TARGETS)
-        target_compile_options(${target_name} PRIVATE -Wa,-mbig-obj)
-    endforeach()
-    target_compile_options(_core PRIVATE -Wa,-mbig-obj)
-    target_link_options(_core PRIVATE -static -static-libgcc -static-libstdc++)
 endif()
 
 install(TARGETS _core

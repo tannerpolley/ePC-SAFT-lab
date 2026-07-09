@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -30,71 +29,21 @@ def _capture(cmd: list[str], *, cwd: Path | None = None, env: dict[str, str] | N
 
 
 def _repo_tool_path(name: str) -> Path | None:
-    suffix = ".exe" if os.name == "nt" and not name.lower().endswith(".exe") else ""
-    executable_name = f"{name}{suffix}"
-    candidates = [
-        Path(sys.executable).resolve().parent / executable_name,
-        REPO_ROOT / ".venv" / ("Scripts" if os.name == "nt" else "bin") / executable_name,
-    ]
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    return None
+    candidate = REPO_ROOT / ".venv" / "bin" / name
+    return candidate if candidate.is_file() else None
 
 
 def _cmake_command() -> list[str]:
     repo_cmake = _repo_tool_path("cmake")
-    return [str(repo_cmake)] if repo_cmake is not None else ["cmake"]
-
-
-def _find_vsdevcmd() -> Path | None:
-    explicit = os.environ.get("EPCSAFT_VSDEVCMD")
-    if explicit:
-        path = Path(explicit).expanduser().resolve()
-        if path.is_file():
-            return path
-    vswhere = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / (
-        "Microsoft Visual Studio/Installer/vswhere.exe"
-    )
-    if vswhere.is_file():
-        try:
-            output = subprocess.check_output(
-                [
-                    str(vswhere),
-                    "-latest",
-                    "-products",
-                    "*",
-                    "-requires",
-                    "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
-                    "-property",
-                    "installationPath",
-                ],
-                text=True,
-                stderr=subprocess.DEVNULL,
-            ).strip()
-        except (subprocess.CalledProcessError, OSError):
-            output = ""
-        if output:
-            candidate = Path(output) / "Common7" / "Tools" / "VsDevCmd.bat"
-            if candidate.is_file():
-                return candidate
-    default_path = Path(r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat")
-    return default_path if default_path.is_file() else None
-
-
-def _load_msvc_env_if_available(env: dict[str, str], *, generator: str) -> None:
-    if os.name != "nt" or generator == "mingw" or env.get("CXX") or shutil.which("cl", path=env.get("PATH")):
-        return
-    vsdevcmd = _find_vsdevcmd()
-    if vsdevcmd is None:
-        return
-    command = f'call "{vsdevcmd}" -arch=x64 -host_arch=x64 >nul && set'
-    output = subprocess.check_output(command, text=True, shell=True, env=env)
-    for line in output.splitlines():
-        if "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        env[key] = value
+    if repo_cmake is None:
+        raise FileNotFoundError(
+            "The repo-local CMake executable is missing. Run `uv sync --no-install-workspace` "
+            "to restore .venv/bin/cmake before building Ceres."
+        )
+    repo_python = _repo_tool_path("python")
+    if repo_python is not None:
+        return [str(repo_python), "-m", "cmake"]
+    return [str(repo_cmake)]
 
 
 def _env(*, generator: str) -> dict[str, str]:
@@ -104,40 +53,17 @@ def _env(*, generator: str) -> dict[str, str]:
     env["TMP"] = str(temp_root.resolve())
     env["TEMP"] = str(temp_root.resolve())
     env["TMPDIR"] = str(temp_root.resolve())
-    _load_msvc_env_if_available(env, generator=generator)
     return env
 
 
-def _generator_args(env: dict[str, str], requested: str) -> list[str]:
+def _generator_args(_env: dict[str, str], _requested: str) -> list[str]:
     repo_ninja = _repo_tool_path("ninja")
-    if requested == "ninja":
-        args = ["-G", "Ninja"]
-        if repo_ninja is not None:
-            args.append(f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}")
-        return args
-    if requested == "mingw":
-        return ["-G", "MinGW Makefiles"]
-    if repo_ninja is not None:
-        return ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}"]
-    if shutil.which("ninja", path=env.get("PATH")):
-        return ["-G", "Ninja"]
-    if os.name == "nt" and shutil.which("mingw32-make", path=env.get("PATH")):
-        return ["-G", "MinGW Makefiles"]
-    return []
-
-
-def _needs_gnu_cstdint_workaround(generator_args: list[str], env: dict[str, str]) -> bool:
-    if os.name != "nt":
-        return False
-    generator_text = " ".join(generator_args).lower()
-    if "mingw" in generator_text or "msys" in generator_text:
-        return True
-    cxx = env.get("CXX", "")
-    if cxx and Path(cxx).name.lower() in {"c++", "g++", "g++.exe", "mingw32-g++.exe", "x86_64-w64-mingw32-g++.exe"}:
-        return True
-    if shutil.which("cl", path=env.get("PATH")):
-        return False
-    return bool(shutil.which("g++", path=env.get("PATH")) or shutil.which("c++", path=env.get("PATH")))
+    if repo_ninja is None:
+        raise FileNotFoundError(
+            "The repo-local Ninja executable is missing. Run `uv sync --no-install-workspace` "
+            "to restore .venv/bin/ninja before building Ceres."
+        )
+    return ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={repo_ninja.as_posix()}"]
 
 
 def _write_eigen_config(config_dir: Path, env: dict[str, str]) -> None:
@@ -198,7 +124,8 @@ def _ceres_config_dir(install_dir: Path) -> Path:
     for candidate in candidates:
         if (candidate / "CeresConfig.cmake").is_file():
             return candidate
-    return candidates[0]
+    searched = ", ".join(str(candidate / "CeresConfig.cmake") for candidate in candidates)
+    raise FileNotFoundError(f"Ceres installation did not produce CeresConfig.cmake; searched: {searched}")
 
 
 def _configure_ceres(root: Path, generator: str, env: dict[str, str]) -> None:
@@ -234,13 +161,16 @@ def _configure_ceres(root: Path, generator: str, env: dict[str, str]) -> None:
         "-DEXPORT_BUILD_DIR=ON",
     ]
     generator_args = _generator_args(env, generator)
-    if _needs_gnu_cstdint_workaround(generator_args, env):
-        cmd.append("-DCMAKE_CXX_FLAGS=-include cstdint")
     cmd.extend(generator_args)
     _run(cmd, env=env)
 
 
 def _build_and_install(root: Path, parallel: str, env: dict[str, str]) -> None:
+    if _repo_tool_path("ninja") is None:
+        raise FileNotFoundError(
+            "The repo-local Ninja executable is missing. Run `uv sync --no-install-workspace` "
+            "to restore .venv/bin/ninja before building Ceres."
+        )
     _run(
         [*_cmake_command(), "--build", str(root / "build"), "--target", "install", "--parallel", parallel],
         env=env,
@@ -253,9 +183,9 @@ def _print_usage(root: Path) -> None:
     print("Use this package with the source-checkout native build:")
     print(f"  uv run python scripts/dev/build_epcsaft.py --use-system-ceres --ceres-dir {config_dir}")
     print("Use this package with extension PEP 517 builds:")
-    print(f"  $env:EPCSAFT_PEP517_CERES_DIR = \"{config_dir}\"")
+    print(f'  export EPCSAFT_PEP517_CERES_DIR="{config_dir}"')
     print("Optional for external/checkout-specific reuse:")
-    print(f"  $env:EPCSAFT_PEP517_BUILD_DIR = \"{(REPO_ROOT / 'build' / 'pep517').resolve()}\"")
+    print(f'  export EPCSAFT_PEP517_BUILD_DIR="{(REPO_ROOT / "build" / "pep517").resolve()}"')
     print("Regression extension builds auto-detect this repo-local reusable Ceres package when it exists.")
 
 
@@ -263,7 +193,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build and install a reusable local Ceres package for ePC-SAFT.")
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="Reusable Ceres build/install root.")
     parser.add_argument("--parallel", default="4", help="CMake build parallelism.")
-    parser.add_argument("--generator", choices=("auto", "ninja", "mingw"), default="auto")
+    parser.add_argument("--generator", choices=("auto", "ninja"), default="auto")
     parser.add_argument("--configure-only", action="store_true")
     parser.add_argument("--build-only", action="store_true")
     parser.add_argument("--print-env", action="store_true", help="Print package-install environment variables.")

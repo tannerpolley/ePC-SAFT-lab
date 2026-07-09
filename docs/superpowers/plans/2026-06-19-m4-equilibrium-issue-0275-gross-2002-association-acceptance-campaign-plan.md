@@ -39,7 +39,7 @@ Test complete means all issue #275 acceptance criteria are covered by retained a
 - `uv run --no-sync python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-complete`
 - `uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q`
 - `uv run --no-sync python scripts/dev/validate_project.py docs`
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .`
+- `bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .`
 
 Numerical and structural pass metrics:
 
@@ -83,7 +83,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md
   ```
 
@@ -101,7 +101,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   git add docs/superpowers/plans/2026-06-19-m4-equilibrium-issue-0275-gross-2002-association-acceptance-campaign-plan.md docs/superpowers/issues/2026-06-18-m4-equilibrium-issue-0275-add-gross-2002-paper-validation-association-acceptance-campaign.md
   git commit -m "Plan Gross 2002 association acceptance campaign"
   ```
@@ -140,7 +140,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py -q
   ```
 
@@ -181,7 +181,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py -q
   ```
 
@@ -225,7 +225,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py -q
   ```
 
@@ -262,7 +262,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python -c "from scripts.validation import check_gross_2002_association_acceptance as c; c.render_figure('figure_01')"
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_08/scripts/render_gross_2002_figure_08_association_mirror.py
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_10/scripts/render_gross_2002_figure_10_association_mirror.py
@@ -274,7 +274,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
   ```
 
@@ -304,13 +304,13 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
   uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
   uv run --no-sync python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-complete
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q
   uv run --no-sync python scripts/dev/validate_project.py docs
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+  bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
   ```
 
   Expected: every command exits `0`.
@@ -319,7 +319,7 @@ Numerical and structural pass metrics:
 
   Run:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross docs/superpowers scripts/validation tests/native/contracts
   git commit -m "Add Gross 2002 association acceptance campaign"
   ```
@@ -330,13 +330,13 @@ Numerical and structural pass metrics:
 
 ## Proof Oracle
 
-```powershell
+```bash
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-complete
 uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 ## Non-Goals And Boundaries

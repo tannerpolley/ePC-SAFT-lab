@@ -9,6 +9,6 @@ retained.
 
 Entry point:
 
-```powershell
-uv run python analyses\paper_validation\2015_baygi\scripts\run_all.py
+```bash
+uv run python analyses/paper_validation/2015_baygi/scripts/run_all.py
 ```

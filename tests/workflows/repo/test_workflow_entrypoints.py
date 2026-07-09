@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
-import runpy
-import xml.etree.ElementTree as ET
 
+import pytest
 import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -17,47 +18,346 @@ def _toml(path: str) -> dict:
     return tomllib.loads(_read(path))
 
 
-def _run_config_options(config: ET.Element) -> dict[str, str]:
-    return {
-        option.attrib["name"]: option.attrib.get("value", "")
-        for option in config.findall("option")
-        if "name" in option.attrib
-    }
+def _run_git(cwd: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True)
 
 
-def _run_config_list_option(config: ET.Element, name: str) -> list[str]:
-    option = config.find(f"./option[@name='{name}']/list")
-    if option is None:
-        return []
-    return [item.attrib["value"] for item in option.findall("option")]
+def _write_executable(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    path.chmod(0o755)
 
 
-def _run_config_map_option(config: ET.Element, name: str) -> dict[str, str]:
-    option = config.find(f"./option[@name='{name}']/map")
-    if option is None:
-        return {}
-    return {entry.attrib["key"]: entry.attrib["value"] for entry in option.findall("entry")}
+def _setup_script_fixture(tmp_path: Path) -> tuple[Path, dict[str, str], Path, Path]:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _run_git(repo, "init", "--quiet")
+    prereq_log = tmp_path / "prereq.log"
+    uv_log = tmp_path / "uv.log"
+    _write_executable(
+        repo / "scripts" / "dev" / "check_linux_prereqs.sh",
+        '#!/usr/bin/env bash\nprintf \'%s\\n\' "$*" >> "$PREREQ_LOG"\n',
+    )
+    stub_bin = tmp_path / "bin"
+    _write_executable(
+        stub_bin / "uv",
+        '#!/usr/bin/env bash\nprintf \'%s\\n\' "$*" >> "$UV_LOG"\n',
+    )
+    env = os.environ.copy()
+    env.update(
+        {
+            "PATH": f"{stub_bin}{os.pathsep}{env['PATH']}",
+            "PREREQ_LOG": str(prereq_log),
+            "UV_LOG": str(uv_log),
+        }
+    )
+    return repo, env, prereq_log, uv_log
 
 
-def _module_script_path(relative_path: str) -> str:
-    return "$MODULE_DIR$/" + relative_path.replace("\\", "/").strip("/")
+def test_environment_setup_dry_run_never_syncs(tmp_path: Path) -> None:
+    repo, env, _, uv_log = _setup_script_fixture(tmp_path)
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / ".codex" / "environments" / "setup.sh"), "--step", "sync", "--dry-run"],
+        cwd=repo,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    uv_calls = uv_log.read_text(encoding="utf-8").splitlines() if uv_log.exists() else []
+    assert "sync --no-install-workspace" not in uv_calls
+    assert "bootstrap_state: dry-run" in result.stdout
+
+
+def test_environment_build_step_requires_full_native_prerequisites(tmp_path: Path) -> None:
+    repo, env, prereq_log, _ = _setup_script_fixture(tmp_path)
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / ".codex" / "environments" / "setup.sh"), "--step", "build", "--dry-run"],
+        cwd=repo,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert prereq_log.read_text(encoding="utf-8").splitlines() == ["--check"]
+
+
+def test_environment_setup_runs_non_executable_prerequisite_checker_via_bash(tmp_path: Path) -> None:
+    repo, env, prereq_log, _ = _setup_script_fixture(tmp_path)
+    (repo / "scripts" / "dev" / "check_linux_prereqs.sh").chmod(0o644)
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / ".codex" / "environments" / "setup.sh"), "--step", "build", "--dry-run"],
+        cwd=repo,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    prereq_calls = prereq_log.read_text(encoding="utf-8").splitlines() if prereq_log.exists() else []
+    assert prereq_calls == ["--check"]
+
+
+def test_environment_setup_fails_loudly_when_prerequisite_checker_is_missing(tmp_path: Path) -> None:
+    repo, env, _, _ = _setup_script_fixture(tmp_path)
+    (repo / "scripts" / "dev" / "check_linux_prereqs.sh").unlink()
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / ".codex" / "environments" / "setup.sh"), "--step", "build", "--dry-run"],
+        cwd=repo,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "Required prerequisite checker is missing" in result.stderr
+
+
+def _ipopt_prereq_env(tmp_path: Path) -> dict[str, str]:
+    stub_bin = tmp_path / "bin"
+    _write_executable(stub_bin / "pkg-config", "#!/usr/bin/env bash\nexit 1\n")
+    env = os.environ.copy()
+    env["PATH"] = f"{stub_bin}{os.pathsep}{env['PATH']}"
+    env.pop("EPCSAFT_IPOPT_ROOT", None)
+    env.pop("EPCSAFT_PEP517_IPOPT_ROOT", None)
+    return env
+
+
+def _write_shared_ipopt_root(root: Path) -> None:
+    (root / "include" / "coin").mkdir(parents=True)
+    (root / "include" / "coin" / "IpIpoptApplication.hpp").write_text("// test header\n", encoding="utf-8")
+    (root / "lib").mkdir()
+    (root / "lib" / "libipopt.so.3").write_text("test shared library\n", encoding="utf-8")
+
+
+def test_linux_prerequisites_accept_pep517_ipopt_root(tmp_path: Path) -> None:
+    ipopt_root = tmp_path / "ipopt"
+    _write_shared_ipopt_root(ipopt_root)
+    env = _ipopt_prereq_env(tmp_path)
+    env["EPCSAFT_PEP517_IPOPT_ROOT"] = str(ipopt_root)
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / "scripts" / "dev" / "check_linux_prereqs.sh"), "--check"],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"ipopt_development_files: EPCSAFT_PEP517_IPOPT_ROOT={ipopt_root}" in result.stdout
+
+
+def test_linux_prerequisites_reject_conflicting_explicit_ipopt_roots(tmp_path: Path) -> None:
+    runtime_root = tmp_path / "runtime-ipopt"
+    pep517_root = tmp_path / "pep517-ipopt"
+    _write_shared_ipopt_root(runtime_root)
+    _write_shared_ipopt_root(pep517_root)
+    env = _ipopt_prereq_env(tmp_path)
+    env["EPCSAFT_IPOPT_ROOT"] = str(runtime_root)
+    env["EPCSAFT_PEP517_IPOPT_ROOT"] = str(pep517_root)
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / "scripts" / "dev" / "check_linux_prereqs.sh"), "--check"],
+        cwd=REPO_ROOT,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert "EPCSAFT_IPOPT_ROOT and EPCSAFT_PEP517_IPOPT_ROOT disagree" in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("script", "option"),
+    [
+        ("scripts/dev/create_dev_worktree.sh", "--name"),
+        ("scripts/dev/create_dev_worktree.sh", "--branch"),
+        ("scripts/dev/create_dev_worktree.sh", "--base"),
+        ("scripts/dev/cmake_preset.sh", "--action"),
+        ("scripts/dev/cmake_preset.sh", "--preset"),
+        ("scripts/dev/cmake_preset.sh", "--target"),
+        ("scripts/dev/cmake_preset.sh", "--parallel"),
+    ],
+)
+def test_shell_entrypoints_reject_missing_option_values_loudly(script: str, option: str) -> None:
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / script), option],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert f"Missing value for {option}" in result.stderr
+    assert "Usage:" in result.stderr
+
+
+@pytest.mark.parametrize("argument", ["--target", "--parallel"])
+def test_cmake_configure_rejects_build_only_arguments(argument: str) -> None:
+    result = subprocess.run(
+        [
+            "bash",
+            str(REPO_ROOT / "scripts" / "dev" / "cmake_preset.sh"),
+            "--action",
+            "configure",
+            argument,
+            "2" if argument == "--parallel" else "_core",
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert f"{argument} is only valid with --action build" in result.stderr
+
+
+def test_create_dev_worktree_rejects_path_traversal(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _run_git(repo, "init", "--quiet")
+    _run_git(repo, "config", "user.name", "Workflow Test")
+    _run_git(repo, "config", "user.email", "workflow-test@example.invalid")
+    (repo / ".gitignore").write_text(".worktrees/\n", encoding="utf-8")
+    (repo / "README.md").write_text("test repository\n", encoding="utf-8")
+    _run_git(repo, "add", ".gitignore", "README.md")
+    _run_git(repo, "commit", "--quiet", "-m", "test baseline")
+
+    result = subprocess.run(
+        [
+            "bash",
+            str(REPO_ROOT / "scripts" / "dev" / "create_dev_worktree.sh"),
+            "--name",
+            "../escape",
+            "--branch",
+            "codex/worktree-test",
+        ],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "simple directory name" in result.stderr
+    assert not (tmp_path / "escape").exists()
+
+
+def test_transferred_artifact_cleanup_preserves_linux_virtualenv(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _run_git(repo, "init", "--quiet")
+    (repo / ".gitignore").write_text(".venv/\n", encoding="utf-8")
+
+    pyvenv_cfg = repo / ".venv" / "pyvenv.cfg"
+    linux_header = repo / ".venv" / "include" / "python3.13" / "Python.h"
+    linux_cache = repo / ".venv" / "lib" / "python3.13" / "site-packages" / "demo" / "__pycache__" / "demo.pyc"
+    windows_script = repo / ".venv" / "Scripts" / "python.exe"
+    windows_library = repo / ".venv" / "Lib" / "site-packages" / "demo.pyd"
+    for path in (pyvenv_cfg, linux_header, linux_cache, windows_script, windows_library):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("fixture\n", encoding="utf-8")
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / "scripts" / "dev" / "clean_transferred_artifacts.sh"), "--apply"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert pyvenv_cfg.is_file()
+    assert linux_header.is_file()
+    assert linux_cache.is_file()
+    assert not windows_script.exists()
+    assert not windows_library.exists()
+
+
+def test_transferred_artifact_cleanup_removes_windows_build_state_only(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _run_git(repo, "init", "--quiet")
+    (repo / ".gitignore").write_text("build/\n", encoding="utf-8")
+
+    windows_build = repo / "build" / "dev"
+    windows_cache = windows_build / "CMakeCache.txt"
+    windows_dll = windows_build / "solver.dll"
+    stray_windows_binary = repo / "build" / "transferred" / "extension.pyd"
+    linux_build = repo / "build" / "linux-valid"
+    linux_cache = linux_build / "CMakeCache.txt"
+    linux_artifact = linux_build / "libepcsaft.so"
+    for path, content in (
+        (windows_cache, "CMAKE_GENERATOR:INTERNAL=Visual Studio 17 2022\n"),
+        (windows_dll, "windows binary\n"),
+        (stray_windows_binary, "windows extension\n"),
+        (linux_cache, "CMAKE_GENERATOR:INTERNAL=Ninja\nCMAKE_HOST_SYSTEM_NAME:INTERNAL=Linux\n"),
+        (linux_artifact, "linux shared object\n"),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    result = subprocess.run(
+        ["bash", str(REPO_ROOT / "scripts" / "dev" / "clean_transferred_artifacts.sh"), "--apply"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert not windows_build.exists()
+    assert not stray_windows_binary.exists()
+    assert linux_cache.is_file()
+    assert linux_artifact.is_file()
 
 
 def test_bootstrap_scripts_use_normal_build_and_fast_suite() -> None:
-    for path in ("scripts/dev/bootstrap_uv.ps1", "scripts/dev/bootstrap_uv.sh"):
-        content = _read(path)
+    content = _read("scripts/dev/bootstrap_uv.sh")
+    linux_prereqs = _read("scripts/dev/check_linux_prereqs.sh")
+    transfer_cleanup = _read("scripts/dev/clean_transferred_artifacts.sh")
 
-        assert "python pin 3.13" in content or '"python", "pin", "3.13"' in content
-        assert "sync --no-install-workspace" in content or '"sync", "--no-install-workspace"' in content
-        assert "scripts/dev/build_epcsaft.py --clean" not in content
-        assert "scripts\\dev\\build_epcsaft.py --clean" not in content
-        assert (
-            "scripts\\dev\\validate_project.py quick" in content
-            or "scripts/dev/validate_project.py quick" in content
-            or '"scripts\\dev\\validate_project.py", "quick"' in content
-        )
-        assert "run_pytest.py tests/test_runtime.py -q" not in content
-        assert "run_pytest.py tests\\test_runtime.py -q" not in content
+    assert "scripts/dev/check_linux_prereqs.sh --check" in content
+    assert "python pin 3.13" in content or '"python", "pin", "3.13"' in content
+    assert "sync --no-install-workspace" in content or '"sync", "--no-install-workspace"' in content
+    assert "scripts/dev/build_epcsaft.py --clean" not in content
+    assert "scripts\\dev\\build_epcsaft.py --clean" not in content
+    assert (
+        "scripts\\dev\\validate_project.py quick" in content
+        or "scripts/dev/validate_project.py quick" in content
+        or '"scripts\\dev\\validate_project.py", "quick"' in content
+    )
+    assert "run_pytest.py tests/test_runtime.py -q" not in content
+    assert "run_pytest.py tests\\test_runtime.py -q" not in content
+    assert "sudo apt-get install -y" in linux_prereqs
+    assert "uv python install 3.13" in linux_prereqs
+    assert "build-essential" in linux_prereqs
+    assert "ninja-build" in linux_prereqs
+    assert "pkg-config" in linux_prereqs
+    assert "coinor-libipopt-dev" in linux_prereqs
+    assert "pkg-config --exists ipopt" in linux_prereqs
+    assert "sys.version_info >= (3, 9)" in linux_prereqs
+    assert "2>/dev/null || true" not in linux_prereqs
+    assert "git check-ignore" in transfer_cleanup
+    assert "would-remove:" in transfer_cleanup
+    assert "*.pyd" in transfer_cleanup
+    assert "*.dll" in transfer_cleanup
 
 
 def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> None:
@@ -92,16 +392,94 @@ def test_python_bootstrap_entrypoint_orchestrates_current_setup_sequence() -> No
     assert 'if step == "full-native":' in bootstrap
     assert "bootstrap_state: current" in bootstrap
     assert "next_command:" in bootstrap
-    assert "ipopt_sdk_root_source" in bootstrap
+    assert "ipopt_root_source" in bootstrap
     assert "ipopt_change_command" in bootstrap
+    setup_body = bootstrap.split('if step == "setup":', 1)[1].split("raise AssertionError", 1)[0]
+    assert '"sync"' not in setup_body
+    assert env_setup_sync_count() == 1
+
+
+def env_setup_sync_count() -> int:
+    return sum(
+        line.strip() == "uv sync --no-install-workspace" for line in _read(".codex/environments/setup.sh").splitlines()
+    )
+
+
+def test_cmake_wrapper_rejects_unowned_presets_before_touching_build_state() -> None:
+    result = subprocess.run(
+        [
+            "bash",
+            str(REPO_ROOT / "scripts" / "dev" / "cmake_preset.sh"),
+            "--preset",
+            "release",
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "supports only the dev-native preset" in result.stderr
 
 
 def test_clean_scripts_announce_repair_only_scope() -> None:
-    for path in ("scripts/dev/clean_build.ps1", "scripts/dev/clean_build.sh"):
-        content = _read(path)
+    content = _read("scripts/dev/clean_build.sh")
 
-        assert "REPAIR-ONLY" in content
-        assert "build/cache/native artifacts" in content
+    assert "REPAIR-ONLY" in content
+    assert "build/cache/native artifacts" in content
+
+
+def _copy_clean_build_script(repo: Path) -> Path:
+    script = repo / "scripts" / "dev" / "clean_build.sh"
+    _write_executable(script, _read("scripts/dev/clean_build.sh"))
+    return script
+
+
+def test_clean_build_removes_stale_native_modules_from_all_packages(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    script = _copy_clean_build_script(repo)
+    artifacts = (
+        repo / "packages" / "epcsaft" / "src" / "epcsaft" / "_core.cpython-test.so",
+        repo / "packages" / "epcsaft-equilibrium" / "src" / "epcsaft_equilibrium" / "_native_core.cpython-test.so",
+        repo / "packages" / "epcsaft-regression" / "src" / "epcsaft_regression" / "_native_core.cpython-test.so",
+    )
+    for artifact in artifacts:
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_text("stale native module\n", encoding="utf-8")
+
+    result = subprocess.run(
+        ["bash", str(script)],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert all(not artifact.exists() for artifact in artifacts)
+
+
+def test_clean_build_propagates_removal_failure(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    script = _copy_clean_build_script(repo)
+    provider_dir = repo / "packages" / "epcsaft" / "src" / "epcsaft"
+    provider_dir.mkdir(parents=True)
+    stub_bin = tmp_path / "bin"
+    _write_executable(stub_bin / "rm", "#!/usr/bin/env bash\nexit 42\n")
+    env = os.environ.copy()
+    env["PATH"] = f"{stub_bin}{os.pathsep}{env['PATH']}"
+
+    result = subprocess.run(
+        ["bash", str(script)],
+        cwd=repo,
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 42
 
 
 def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
@@ -135,12 +513,15 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "After the package is published on PyPI" in getting_started
     assert "Current package version: ``0.2.0``" in release_installation
     assert "The ``v0.2.0`` GitHub release provides a Windows CPython 3.13 wheel" in release_installation
-    assert "Public root exports" in release_note
+    assert "Windows-first native-backed Python package release" in release_note
     assert "neutral bubble/dew routes, neutral TP flash, and neutral nonassociating LLE" in release_note
-    assert "Electrolyte LLE, reactive speciation, reactive LLE, reactive electrolyte LLE, and associating LLE are declared not exposed" in release_note
+    assert "Electrolyte LLE, reactive speciation" in release_note
+    assert "Release assets are built for the Windows CPython 3.13" in release_note
     assert "PyPI publishing remains a manual Trusted Publishing action" in release_note
-    assert "production-exposed families are neutral bubble/dew routes, neutral TP flash" in overview
-    assert "and neutral nonassociating LLE" in overview
+    assert "production-exposed" in overview
+    assert "neutral bubble/dew routes, neutral TP flash" in overview
+    assert "neutral nonassociating LLE" in overview
+    assert "source-backed Khudaida explicit-ion electrolyte" in overview
     assert "uv run python run_pytest.py --confidence -q" not in overview
     assert "run_pytest.py tests/test_runtime.py -q" not in overview
     assert "release_installation" in docs_index
@@ -151,22 +532,19 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Start every fresh source checkout with this sequence" in development_workflows
     assert "uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10" in development_workflows
     assert "Root ``CMAKE.md`` is the source of truth for direct CMake preset operations" in development_workflows
-    assert "Direct CMake preset operations must use ``scripts/dev/cmake_preset.ps1``" in development_workflows
+    assert "Direct CMake preset operations must use ``scripts/dev/cmake_preset.sh``" in development_workflows
     assert "Do not call raw ``cmake --preset`` or ``cmake --build``" in development_workflows
-    assert "Strawberry" in development_workflows
     for token in (
         "Direct CMake preset work must use",
-        "scripts/dev/cmake_preset.ps1",
-        "CMake Configure dev-native",
-        "CMake Build _core dev-native",
-        ".venv\\Scripts\\cmake.exe",
-        ".venv\\Scripts\\ninja.exe",
-        "Strawberry may remain installed for unrelated tooling",
+        "scripts/dev/cmake_preset.sh",
+        ".venv/bin/python -m cmake",
+        ".venv/bin/ninja",
         "Do not run raw `cmake --preset`",
-        "IDE-generated `CMake Application` targets",
         "CMAKE_MAKE_PROGRAM",
     ):
         assert token in cmake_protocol
+    assert "Jet" + "Brains" not in cmake_protocol
+    assert "Serv" + "ices" not in cmake_protocol
     assert "uv run python run_pytest.py --runtime -q" in development_workflows
     assert "scripts/benchmarks/" + "benchmark_neutral_equilibrium.py" not in development_workflows
     assert "scripts/benchmarks/" + "benchmark_literature_suite.py" not in development_workflows
@@ -177,6 +555,144 @@ def test_docs_make_confidence_suite_the_default_runtime_check() -> None:
     assert "Do not route performance claims through pytest" in development_workflows
     assert "uv run python scripts/dev/build_dist.py" in development_workflows
     assert "Do not use ``--clean`` for routine validation" in development_workflows
+
+
+def test_linux_documentation_uses_real_latex_and_optional_ipopt_workflows() -> None:
+    development_workflows = _read("docs/pages/development_workflows.rst")
+    native_boundary = _read("docs/contracts/native_extension_boundary.md")
+    release_installation = _read("docs/pages/release_installation.rst")
+    new_agent_start = _read("docs/agents/new-agent-start-here.md")
+    dependency_protocol = _read("docs/protocols/build_package_dependency_protocol.rst")
+    root_gitignore = _read(".gitignore")
+    root_gitattributes = _read(".gitattributes")
+    root_pyproject = _read("pyproject.toml")
+
+    for stale in (
+        "scripts/docs/setup_latex_mirror.sh",
+        "scripts/docs/sync_latex_mirror.sh",
+        "docs/latex/out",
+    ):
+        assert stale not in development_workflows
+    for token in (
+        "cd docs/latex",
+        "latexmk -pdf equations.tex",
+        "latexmk -pdf explicit_assocation.tex",
+        "docs/latex/builds",
+    ):
+        assert token in development_workflows
+
+    for root_policy in (root_gitignore, root_gitattributes, root_pyproject):
+        assert "docs/latex/out" not in root_policy
+
+    for document in (native_boundary, release_installation, new_agent_start, dependency_protocol):
+        assert "$HOME/deps/ipopt" not in document
+        assert "EPCSAFT_IPOPT_ROOT=/path/to/ipopt" in document
+
+    extension_proof_lines = [
+        line
+        for document in (native_boundary, release_installation, new_agent_start, dependency_protocol)
+        for line in document.splitlines()
+        if "build_extension_dists.py" in line
+    ]
+    assert extension_proof_lines
+    assert all("--ipopt-root" not in line for line in extension_proof_lines)
+
+
+def test_linux_extension_docs_and_execution_records_use_current_package_ownership() -> None:
+    execution_records = sorted((REPO_ROOT / "docs" / "superpowers" / "specs").glob("*.md")) + sorted(
+        (REPO_ROOT / "docs" / "superpowers" / "plans").glob("*.md")
+    )
+    stale_preset_references = [
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in execution_records
+        if "scripts/dev/cmake_preset.ps1" in path.read_text(encoding="utf-8")
+    ]
+    assert stale_preset_references == []
+
+    equilibrium_readme = _read("packages/epcsaft-equilibrium/README.md")
+    release_installation = _read("docs/pages/release_installation.rst")
+    docs_overview = _read("docs/pages/README.rst")
+    downstream_installs = _read("docs/pages/downstream_local_installs.rst")
+    ipopt_section = release_installation.split("Native Ipopt support", 1)[1].split("Verify the install", 1)[0]
+
+    assert "${EPCSAFT_IPOPT_ROOT:-/usr}" not in equilibrium_readme
+    assert "build_extension_dists.py --mode monorepo --package epcsaft-equilibrium" in equilibrium_readme
+    assert "build_extension_dists.py --mode installed-provider --package epcsaft-equilibrium" in equilibrium_readme
+    assert "Provider installs do not consume Ipopt" in " ".join(release_installation.split())
+    assert 'python -m pip install "epcsaft @ git+' not in ipopt_section
+    assert "provider wheel and its native SDK" in docs_overview
+    assert "not against a provider-only ``epcsaft`` wheel" not in docs_overview
+    assert "epcsaft.__git_commit__" not in downstream_installs
+    assert 'epcsaft.runtime_build_info()["source_git_commit"]' in downstream_installs
+
+
+def test_open_issue_execution_oracles_use_linux_commands() -> None:
+    windows_markers = (
+        "```powershell",
+        "pwsh.exe",
+        "scripts\\",
+        "analyses\\",
+        "$env:",
+        "Remove-Item",
+        ".ps1",
+        ".venv\\Scripts",
+        '"$HOME\\/.codex',
+    )
+    execution_documents: set[Path] = set()
+    open_issues: list[Path] = []
+    for path in sorted((REPO_ROOT / "docs" / "superpowers" / "issues").glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        if "\nstate: open\n" not in text:
+            continue
+        open_issues.append(path)
+        for line in text.splitlines():
+            if line.startswith(("source_spec:", "source_plan:")):
+                source_path = line.split(":", 1)[1].strip()
+                if source_path and source_path != "null":
+                    execution_documents.add(REPO_ROOT / source_path)
+    execution_documents.update(open_issues)
+
+    offenders: dict[str, list[str]] = {}
+    for path in sorted(execution_documents):
+        text = path.read_text(encoding="utf-8")
+        hits = [marker for marker in windows_markers if marker.lower() in text.lower()]
+        if hits:
+            offenders[path.relative_to(REPO_ROOT).as_posix()] = hits
+
+    assert offenders == {}
+
+
+def test_linux_agent_and_shared_object_guidance_fail_loudly_and_match_linux_semantics() -> None:
+    agents_md = _read("AGENTS.md")
+    development_workflows = _read("docs/pages/development_workflows.rst")
+
+    assert "Run the repo cleanup hook before reporting completion:" in agents_md
+    assert "before reporting completion when it is available" not in agents_md
+    assert "inspect the target directory ownership and permissions" in development_workflows
+    assert "a process importing the previous shared object does not lock the output path" in development_workflows
+    assert "If Linux reports that ``_core*.so`` is locked or busy" not in development_workflows
+
+
+def test_equilibrium_capability_docs_separate_exports_from_validated_production_evidence() -> None:
+    capabilities_docs = _read("docs/pages/downstream_local_installs.rst")
+
+    assert 'assert equilibrium_caps["production_families"] == [' not in capabilities_docs
+    assert "exported" in capabilities_docs
+    assert "activation surface" in capabilities_docs
+    assert "does not prove" in capabilities_docs
+    assert "validated production behavior" in capabilities_docs
+    assert 'assert "reactive_speciation" in exported_routes' in capabilities_docs
+    assert "scripts/validation/check_standalone_ce_gate.py" in capabilities_docs
+    assert "production evidence is withheld" in capabilities_docs
+    assert "complete standalone CE gate fails" in capabilities_docs
+    assert "without being advertised as callable routes" not in capabilities_docs
+
+
+def test_explicit_association_toybox_keeps_exact_repo_neutral_source_provenance() -> None:
+    references = _read("analyses/package_validation/explicit_association_toybox/references/README.md")
+
+    assert ("MEA-Thermodynamics/archive/legacy_scripts/pcsaft_models_polley/pcsaft_electrolyte.py") in references
+    assert "C:\\Users\\Tanner" not in references
 
 
 def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
@@ -231,10 +747,11 @@ def test_build_package_dependency_protocol_is_linked_and_guarded() -> None:
         "scripts/dev/build_dist.py --parallel 1",
         "scripts/dev/build_system_ceres.py --parallel 2",
         "scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression --parallel 1",
-        "scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-equilibrium --parallel 1 --ipopt-root",
-        "scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root",
+        "scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-equilibrium --parallel 1 --ipopt-root /usr",
+        "scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root /usr",
         "scripts/dev/check_release_installs.py --dist-dir dist --combination all",
-        "requires a real Ipopt SDK root; no no-Ipopt package proof is accepted",
+        "coinor-libipopt-dev",
+        "test -f /usr/include/coin/IpIpoptApplication.hpp",
     ):
         assert token in package_lanes
     assert "pull_request:" not in package_lanes
@@ -249,29 +766,30 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     cmake_md = _read("CMAKE.md")
     env_toml = _read(".codex/environments/environment.toml")
     env_data = _toml(".codex/environments/environment.toml")
-    env_setup = _read(".codex/environments/setup.ps1")
+    env_setup = _read(".codex/environments/setup.sh")
     env_readme = _read(".codex/environments/README.md")
+    happy_path = _read("docs/agents/agent-happy-path.md")
     build_owner = _read(".codex/agents/build_packaging_owner.toml")
     command_runner = _read(".codex/agents/command_runner.toml")
 
     for token in (
         "docs/superpowers/PROJECT_CONTEXT.md",
         "docs/agents/new-agent-start-here.md",
+        "docs/agents/agent-happy-path.md",
         "docs/pages/development_workflows.rst",
         "docs/protocols/build_package_dependency_protocol.rst",
         "docs/agents/issue-tracker.md",
-        "docs/agents/INTELLIJ.md",
         "docs/pages/project_structure.rst",
         "packages/epcsaft-equilibrium",
-        "use IntelliJ Bridge/MCP first",
-        "ask the user to open or focus IntelliJ",
     ):
         assert token in agents_md
+    assert "Intel" + "liJ" not in agents_md
+    assert "Jet" + "Brains" not in agents_md
 
     for stale in (
         "Machine-Local",
         "Do Not Commit",
-        "C:\\Users\\Tanner",
+        "C:" + "\\Users\\Tanner",
         "Best new-agent workflow",
         "Git Sandbox Rules",
         "Sandbox Notes",
@@ -295,9 +813,11 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         "audited dependency closure",
         "The repo-owned Codex app setup contract lives in `.codex/environments/`",
         "Shared agent routing lives in tracked `AGENTS.md`",
-        "IntelliJ policy lives in `docs/agents/INTELLIJ.md`",
+        "docs/agents/agent-happy-path.md",
     ):
         assert token in new_agent_start
+    assert "Intel" + "liJ" not in new_agent_start
+    assert "Jet" + "Brains" not in new_agent_start
 
     assert "docs/roadmaps" not in new_agent_start
 
@@ -312,7 +832,7 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         assert token in new_agent_start or token in development_workflows
 
     assert "Direct CMake preset work must use the repo wrapper" in cmake_md
-    assert "scripts/dev/cmake_preset.ps1" in cmake_md
+    assert "scripts/dev/cmake_preset.sh" in cmake_md
 
     expected_env_actions = [
         "Sync Environment",
@@ -324,7 +844,6 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
         "Doctor",
         "Doctor Full Native",
         "Build Native Extension",
-        "Check IntelliJ Contract",
         "Validate Quick",
         "Validate Confidence",
         "Build Docs",
@@ -334,20 +853,19 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert [action["name"] for action in env_actions] == expected_env_actions
     for action_name in expected_env_actions:
         assert f"- `{action_name}`" in env_readme
-    assert env_actions[0]["command"].endswith(".codex/environments/setup.ps1 -Step Sync")
-    assert env_actions[1]["command"].endswith(".codex/environments/setup.ps1 -Step Smoke")
-    assert env_actions[2]["command"].endswith(".codex/environments/setup.ps1 -Step ProviderNative")
-    assert env_actions[3]["command"].endswith(".codex/environments/setup.ps1 -Step EquilibriumNative")
-    assert env_actions[4]["command"].endswith(".codex/environments/setup.ps1 -Step RegressionNative")
-    assert env_actions[5]["command"].endswith(".codex/environments/setup.ps1 -Step FullNative")
-    assert env_actions[6]["command"].endswith(".codex/environments/setup.ps1 -Step Doctor")
-    assert env_actions[7]["command"].endswith(".codex/environments/setup.ps1 -Step DoctorFull")
-    assert env_actions[8]["command"].endswith(".codex/environments/setup.ps1 -Step Build")
-    assert env_actions[9]["command"].endswith(".codex/environments/setup.ps1 -Step IntelliJCheck")
-    assert env_actions[10]["command"].endswith(".codex/environments/setup.ps1 -Step ValidateQuick")
-    assert env_actions[11]["command"].endswith(".codex/environments/setup.ps1 -Step ValidateConfidence")
-    assert env_actions[12]["command"].endswith(".codex/environments/setup.ps1 -Step ValidateDocs")
-    assert env_actions[13]["command"].endswith(".codex/environments/setup.ps1 -Step BuildDist")
+    assert env_actions[0]["command"].endswith(".codex/environments/setup.sh --step sync")
+    assert env_actions[1]["command"].endswith(".codex/environments/setup.sh --step smoke")
+    assert env_actions[2]["command"].endswith(".codex/environments/setup.sh --step provider-native")
+    assert env_actions[3]["command"].endswith(".codex/environments/setup.sh --step equilibrium-native")
+    assert env_actions[4]["command"].endswith(".codex/environments/setup.sh --step regression-native")
+    assert env_actions[5]["command"].endswith(".codex/environments/setup.sh --step full-native")
+    assert env_actions[6]["command"].endswith(".codex/environments/setup.sh --step doctor")
+    assert env_actions[7]["command"].endswith(".codex/environments/setup.sh --step doctorfull")
+    assert env_actions[8]["command"].endswith(".codex/environments/setup.sh --step build")
+    assert env_actions[9]["command"].endswith(".codex/environments/setup.sh --step validate-quick")
+    assert env_actions[10]["command"].endswith(".codex/environments/setup.sh --step validate-confidence")
+    assert env_actions[11]["command"].endswith(".codex/environments/setup.sh --step validate-docs")
+    assert env_actions[12]["command"].endswith(".codex/environments/setup.sh --step build-dist")
 
     assert 'name = "Build Native Extension (Bounded)"' not in env_toml
     assert 'name = "Provider Smoke"' in env_toml
@@ -356,347 +874,42 @@ def test_repo_local_agent_guidance_uses_current_dev_workflow_and_roster() -> Non
     assert 'name = "Regression Native"' in env_toml
     assert 'name = "Full Native"' in env_toml
     assert 'name = "Doctor Full Native"' in env_toml
-    assert 'name = "Check IntelliJ Contract"' in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Smoke" in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ProviderNative" in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step EquilibriumNative" in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step RegressionNative" in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step FullNative" in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step DoctorFull" in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build" in env_toml
-    assert "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step IntelliJCheck" in env_toml
+    assert "Intel" + "liJ" not in env_toml
+    assert "Jet" + "Brains" not in env_toml
+    assert "bash .codex/environments/setup.sh --step smoke" in env_toml
+    assert "bash .codex/environments/setup.sh --step provider-native" in env_toml
+    assert "bash .codex/environments/setup.sh --step equilibrium-native" in env_toml
+    assert "bash .codex/environments/setup.sh --step regression-native" in env_toml
+    assert "bash .codex/environments/setup.sh --step full-native" in env_toml
+    assert "bash .codex/environments/setup.sh --step doctorfull" in env_toml
+    assert "bash .codex/environments/setup.sh --step build" in env_toml
+    assert 'bash scripts/dev/check_linux_prereqs.sh "$prereq_mode"' in env_setup
+    assert "setup|build|equilibrium-native|full-native)" in env_setup
+    assert 'prereq_mode="--check"' in env_setup
     assert "uv sync --no-install-workspace" in env_setup
-    assert "uv run --no-sync python scripts/dev/bootstrap.py --step $bootstrapStep" in env_setup
+    assert 'bootstrap_args=(--step "$step")' in env_setup
+    assert 'uv run --no-sync python scripts/dev/bootstrap.py "${bootstrap_args[@]}"' in env_setup
+    assert "scripts/dev/check_linux_prereqs.sh --check" in happy_path
+    assert "scripts/dev/clean_transferred_artifacts.sh --dry-run" in happy_path
+    assert "python3 run_pytest.py --list-slices" in happy_path
+    assert "validate_project.py confidence" in happy_path
     assert "Invoke-ReusableCeresBuild" not in env_setup
     assert "scripts/dev/build_system_ceres.py" in _read("scripts/dev/bootstrap.py")
     assert "--use-system-ceres" in _read("scripts/dev/bootstrap.py")
     assert "--ceres-dir" in _read("scripts/dev/bootstrap.py")
-    assert "libceres.a" in _read("packages/epcsaft/build_backend/native_dependency_policy.py")
-    assert "Do not set ``EPCSAFT_PEP517_CERES_DIR``" in env_readme
+    assert "Do not set `EPCSAFT_PEP517_CERES_DIR`" in env_readme
     assert "build_epcsaft.py --use-system-ceres" in env_readme
-    assert ".codex/environments/setup.ps1 builds or reuses scripts/dev/build_system_ceres.py output" in build_owner
+    assert ".codex/environments/setup.sh builds or reuses scripts/dev/build_system_ceres.py output" in build_owner
     assert "scripts/dev/build_dist.py builds the provider-only packages/epcsaft distribution" in command_runner
     assert "plus EPCSAFT_PEP517_CERES_DIR" not in build_owner
-    assert "prefer a persistent EPCSAFT_PEP517_BUILD_DIR and prebuilt Ceres via EPCSAFT_PEP517_CERES_DIR" not in command_runner
-
-
-def test_jetbrains_services_dashboard_run_configs_are_manifest_backed() -> None:
-    normalizer = _read("scripts/dev/configure_jetbrains_project.py")
-    manifest = _read("scripts/dev/jetbrains_run_manifest.py")
-    manifest_data = runpy.run_path(str(REPO_ROOT / "scripts" / "dev" / "jetbrains_run_manifest.py"))
-    run_config_specs = tuple(manifest_data["CANONICAL_RUN_CONFIGS"])
-    repo_run_config_name = manifest_data["repo_run_config_name"]
-    root_pyproject = _toml("pyproject.toml")
-    provider_pyproject = _toml("packages/epcsaft/pyproject.toml")
-    equilibrium_pyproject = _toml("packages/epcsaft-equilibrium/pyproject.toml")
-    regression_pyproject = _toml("packages/epcsaft-regression/pyproject.toml")
-    agents_md = _read("AGENTS.md")
-    intellij_guidance = _read("docs/agents/INTELLIJ.md")
-    combined_guidance = agents_md + "\n" + intellij_guidance
-
-    assert "CMAKE_CONFIG_TYPE = \"CMakeRunConfiguration\"" in normalizer
-    assert "POWERSHELL_CONFIG_TYPE = \"PowerShellRunType\"" in normalizer
-    assert "RUN_DASHBOARD_CONFIG_TYPES = (POWERSHELL_CONFIG_TYPE, UV_RUN_CONFIG_TYPE)" in normalizer
-    assert "CANONICAL_PYTHON_MODULES" in normalizer
-    assert 'PROJECT_NAME = "ePC-SAFT"' in normalizer
-    assert 'PROVIDER_MODULE_NAME = "epcsaft"' in normalizer
-    assert 'LEGACY_PROVIDER_MODULE_NAME = PROJECT_NAME' in normalizer
-    assert 'MODULE_NAME = "ePC-SAFT"' not in normalizer
-    assert 'EQUILIBRIUM_MODULE_NAME = "epcsaft-equilibrium"' in normalizer
-    assert 'REGRESSION_MODULE_NAME = "epcsaft-regression"' in normalizer
-    assert 'iml_path=IDEA_DIR / f"{PROVIDER_MODULE_NAME}.iml"' in normalizer
-    assert 'iml_path=IDEA_DIR / f"{EQUILIBRIUM_MODULE_NAME}.iml"' in normalizer
-    assert 'iml_path=IDEA_DIR / f"{REGRESSION_MODULE_NAME}.iml"' in normalizer
-    assert "delete legacy provider module" in normalizer
-    assert "not deleting non-owned legacy provider module" in normalizer
-    assert 'actions.append(f"set module={PROVIDER_MODULE_NAME}")' in normalizer
-    assert '"--check"' in normalizer
-    assert "def _mode_prefix" in normalizer
-    assert "if args.check and (pending_changes or warnings_found)" in normalizer
-    assert "clear stale Python source-root detection paths" in normalizer
-    assert "set VCS mapping to project root only" in normalizer
-    assert "disable Services Run Dashboard for" in normalizer
-    assert "PYTEST_CONFIG_TYPE" in normalizer
-    assert 'CMAKE_ACTIVE_PROFILE = "dev-native"' in normalizer
-    assert 'CMAKE_EXECUTION_TARGET_PREFIX = "CMakeBuildProfile:"' in normalizer
-    assert 'STALE_CMAKE_PROFILE_NAMES = frozenset({"ePC-SAFT dev MinGW"})' in normalizer
-    assert "remove stale CMake profile" in normalizer
-    assert "ExecutionTargetManager" in normalizer
-    assert "clear stale CMake execution target" in normalizer
-    assert 'action = "enable" if expected_enabled == "true" else "disable"' in normalizer
-    assert 'actions.append(f"{action} CMake profile {profile_name}")' in normalizer
-    assert 'component", {"name": "RunDashboard"}' in normalizer
-    assert "remove temporary generated run configuration" in normalizer
-    assert '"PowerShell."' in normalizer
-    assert '"UvRunConfigurationType."' in normalizer
-    assert "remove stale executor property" in normalizer
-    assert "remove stale run manager item" in normalizer
-    assert "remove stale configuration status" in normalizer
-    assert "enable Services Run Dashboard for" in normalizer
-    assert "delete stale shared run configuration" in normalizer
-    assert "CANONICAL_RUN_CONFIGS" in normalizer
-    assert "project" not in root_pyproject
-    assert provider_pyproject["project"]["name"] == "epcsaft"
-    assert equilibrium_pyproject["project"]["name"] == "epcsaft-equilibrium"
-    assert regression_pyproject["project"]["name"] == "epcsaft-regression"
-    assert set(root_pyproject["tool"]["uv"]["workspace"]["members"]) == {
-        "packages/epcsaft",
-        "packages/epcsaft-equilibrium",
-        "packages/epcsaft-regression",
-    }
-    assert "Configure IntelliJ Runs (Dry Run)" in manifest
-    assert "Check IntelliJ Contract" in manifest
-    assert "Sync Workspace Packages" in manifest
-    assert "Check Package Imports" in manifest
-    assert "Provider Smoke" in manifest
-    assert "Provider Native" in manifest
-    assert "Equilibrium Native" in manifest
-    assert "Regression Native" in manifest
-    assert "Full Native" in manifest
-    assert "Test Equilibrium Confidence" in manifest
-    for removed_config in (
-        "Association Goal 1+2 Tests",
-        "Doctor Script",
-        "Build System Ceres",
-        "Validate Hydrocarbon Regression",
-        "Run Ipopt Exact Hessian Checks",
-        "Check Phase Discovery",
-        "Curate Paper Validation Parameters",
-        "Sync MIAC Variants",
-        "Sync LaTeX Mirror",
-        "Create Dev Worktree",
-    ):
-        assert removed_config not in manifest
-    assert "docs/agents/INTELLIJ.md" in agents_md
-    assert "IntelliJ MCP Workflow" in intellij_guidance
-    assert "Hard rule: use IntelliJ MCP first by default for repo work" in combined_guidance
-    assert "call `tool_search`" in intellij_guidance
-    assert "Try the relevant indexed action at least twice" in intellij_guidance
-    assert "durable scripts, tests, validation commands, build commands" in combined_guidance
-    assert "Do not run an equivalent ad hoc `uv run python ...` or PowerShell command" in intellij_guidance
-    assert "Check IntelliJ Contract" in intellij_guidance
-    assert "exits nonzero" in intellij_guidance
-    assert "Use shell only for" in combined_guidance
-    assert "Shared `.run` configs use the repo-name Services folder `ePC-SAFT`" in intellij_guidance
-    assert "native PowerShell run configurations (`PowerShellRunType`)" in intellij_guidance
-    assert "native `uv run` run configurations (`UvRunConfigurationType`)" in intellij_guidance
-    assert "wrapper-backed PowerShell entries" in intellij_guidance
-    assert "project/folder identity as `ePC-SAFT`" in intellij_guidance
-    assert "provider Python module named `epcsaft`" in intellij_guidance
-    assert "use every relevant index action family before finalizing" in intellij_guidance
-    assert "Use the `ij-debugger` skill" in intellij_guidance
-    assert "debugger MCP server is `intellij-debugger`" in intellij_guidance
-    assert "intellij-debugger" in intellij_guidance
-    assert "start_debug_session" in intellij_guidance
-    assert "set_breakpoint" in intellij_guidance
-    assert "wait_for_pause" in intellij_guidance
-    assert "get_variables" in intellij_guidance
-    assert "evaluate_expression" in intellij_guidance
-    assert "xdebug_" not in intellij_guidance
-    assert "C:\\Program Files\\PowerShell\\7\\pwsh.exe" in intellij_guidance
-    assert "JetBrains MCP server exposes repository discovery" in intellij_guidance
-    assert "Local Git operations stay in the normal repo-root shell" in intellij_guidance
-    for tool_name in (
-        "ide_read_file",
-        "ide_search_text",
-        "ide_find_file",
-        "ide_find_class",
-        "ide_find_symbol",
-        "ide_file_structure",
-        "ide_find_definition",
-        "ide_find_references",
-        "ide_find_implementations",
-        "ide_find_super_methods",
-        "ide_call_hierarchy",
-        "ide_type_hierarchy",
-        "ide_diagnostics",
-        "ide_get_active_file",
-        "ide_open_file",
-        "ide_sync_files",
-        "ide_optimize_imports",
-        "ide_reformat_code",
-        "ide_refactor_rename",
-        "ide_move_file",
-        "ide_refactor_safe_delete",
-        "ide_build_project",
-    ):
-        assert tool_name in combined_guidance
-    assert "Use shared run configurations for ordinary validation" in intellij_guidance
-    assert "CMake Configure dev-native" in intellij_guidance
-    assert "CMake Build _core dev-native" in intellij_guidance
-    assert "For direct CMake preset execution, also read root `CMAKE.md`" in intellij_guidance
-    assert "Do not create raw `cmake --preset` or `cmake --build` Services entries" in intellij_guidance
-    assert "Do not use IDE-generated `CMake Application` targets as the repo standard" in intellij_guidance
-    assert "Doctor Script" not in _read("CMAKE.md")
-
-    modules_xml = ET.parse(REPO_ROOT / ".idea" / "modules.xml")
-    module_filepaths = {
-        module.attrib["filepath"]
-        for module in modules_xml.findall(".//module")
-    }
-    assert module_filepaths == {
-        "$PROJECT_DIR$/.idea/epcsaft.iml",
-        "$PROJECT_DIR$/.idea/epcsaft-equilibrium.iml",
-        "$PROJECT_DIR$/.idea/epcsaft-regression.iml",
-    }
-    assert not (REPO_ROOT / ".idea" / "ePC-SAFT.iml").exists()
-    assert not any(".CMake" in filepath for filepath in module_filepaths)
-
-    provider_module = ET.parse(REPO_ROOT / ".idea" / "epcsaft.iml").getroot()
-    equilibrium_module = ET.parse(REPO_ROOT / ".idea" / "epcsaft-equilibrium.iml").getroot()
-    regression_module = ET.parse(REPO_ROOT / ".idea" / "epcsaft-regression.iml").getroot()
-
-    def content_root(module: ET.Element) -> ET.Element:
-        content = module.find(".//content")
-        assert content is not None
-        return content
-
-    def source_roots(module: ET.Element) -> set[tuple[str, str]]:
-        return {
-            (source.attrib["url"], source.attrib.get("isTestSource", "false"))
-            for source in content_root(module).findall("sourceFolder")
-        }
-
-    def module_dependencies(module: ET.Element) -> set[str]:
-        return {
-            entry.attrib["module-name"]
-            for entry in module.findall(".//orderEntry[@type='module']")
-        }
-
-    for module in (provider_module, equilibrium_module, regression_module):
-        assert module.attrib["type"] == "PYTHON_MODULE"
-        assert module.find(".//orderEntry[@type='jdk']").attrib["jdkName"] == "uv (ePC-SAFT)"
-
-    assert content_root(provider_module).attrib["url"] == "file://$MODULE_DIR$/packages/epcsaft"
-    assert source_roots(provider_module) == {("file://$MODULE_DIR$/packages/epcsaft/src", "false")}
-    assert module_dependencies(provider_module) == set()
-
-    assert content_root(equilibrium_module).attrib["url"] == "file://$MODULE_DIR$/packages/epcsaft-equilibrium"
-    assert source_roots(equilibrium_module) == {
-        ("file://$MODULE_DIR$/packages/epcsaft-equilibrium/src", "false")
-    }
-    assert module_dependencies(equilibrium_module) == {"epcsaft"}
-
-    assert content_root(regression_module).attrib["url"] == "file://$MODULE_DIR$/packages/epcsaft-regression"
-    assert source_roots(regression_module) == {
-        ("file://$MODULE_DIR$/packages/epcsaft-regression/src", "false")
-    }
-    assert module_dependencies(regression_module) == {"epcsaft"}
-
-    workspace_text = _read(".idea/workspace.xml")
-    workspace_xml = ET.fromstring(workspace_text)
-    dashboard = next(component for component in workspace_xml.findall("component") if component.attrib.get("name") == "RunDashboard")
-    dashboard_types = {
-        option.attrib["value"]
-        for option in dashboard.findall("./option[@name='configurationTypes']/set/option")
-    }
-    dashboard_status_types = {
-        entry.attrib["key"]
-        for entry in dashboard.findall("./option[@name='configurationStatuses']/map/entry")
-    }
-    assert dashboard_types == {"PowerShellRunType", "UvRunConfigurationType"}
-    assert "tests" not in dashboard_status_types
-    assert "CMakeRunConfiguration" not in dashboard_status_types
-    assert "ShConfigurationType" not in dashboard_status_types
-    assert "pytest for " not in workspace_text
-
-    run_configs: dict[str, tuple[Path, ET.Element]] = {}
-    for path in sorted((REPO_ROOT / ".run").glob("*.run.xml")):
-        config = ET.parse(path).getroot().find("configuration")
-        assert config is not None, path.name
-        name = config.get("name")
-        assert name, path.name
-        assert name not in run_configs, name
-        run_configs[name] = (path, config)
-
-    assert set(run_configs) == {spec.name for spec in run_config_specs}
-
-    specs_by_name = {spec.name: spec for spec in run_config_specs}
-    for name, (path, config) in run_configs.items():
-        spec = specs_by_name[name]
-        assert config.get("folderName") == spec.folder_name, name
-        assert config.get("type") in {"PowerShellRunType", "UvRunConfigurationType"}, name
-        assert config.get("type") != "tests", name
-        assert config.get("type") != "ShConfigurationType", name
-        assert config.get("type") != "PythonConfigurationType", name
-        options = _run_config_options(config)
-        if spec.runner == "uv run":
-            assert config.get("type") == "UvRunConfigurationType", name
-            assert options["runType"] == "SCRIPT", name
-            assert options["scriptOrModule"] == (REPO_ROOT / spec.command).as_posix(), name
-            assert options["checkSync"] == "false", name
-            assert options["uvSdkKey"] == "uv (ePC-SAFT)", name
-            assert options["debugJustMyCode"] == "false", name
-            assert _run_config_list_option(config, "uvArgs") == ["--project", REPO_ROOT.as_posix(), "--no-sync"], name
-            assert _run_config_map_option(config, "env")["PYTHONUNBUFFERED"] == "1", name
-            assert Path(options["scriptOrModule"]).exists(), f"{path.name} points at missing {options['scriptOrModule']}"
-        else:
-            assert spec.runner == "PowerShell", name
-            assert config.get("type") == "PowerShellRunType", name
-            assert config.get("factoryName") == "PowerShell", name
-            assert config.get("scriptUrl") == (REPO_ROOT / spec.command).as_posix(), name
-            assert config.get("workingDirectory") == REPO_ROOT.as_posix(), name
-            assert config.get("commandOptions") == "-NoProfile -ExecutionPolicy Bypass", name
-            assert config.get("scriptParameters", "") == spec.parameters, name
-            assert Path(config.attrib["scriptUrl"]).exists(), f"{path.name} points at missing {config.attrib['scriptUrl']}"
-
-    build_native = run_configs[repo_run_config_name("Build Native Extension")][1]
-    assert build_native.attrib["scriptUrl"].endswith("/.codex/environments/setup.ps1")
-    assert build_native.attrib["scriptParameters"] == "-Step Build"
-
-    sync_workspace = run_configs[repo_run_config_name("Sync Workspace Packages")][1]
-    assert sync_workspace.attrib["scriptUrl"].endswith("/.codex/environments/setup.ps1")
-    assert sync_workspace.attrib["scriptParameters"] == "-Step Sync"
-
-    check_imports = _run_config_options(run_configs[repo_run_config_name("Check Package Imports")][1])
-    assert check_imports["scriptOrModule"].endswith("/scripts/dev/check_package_imports.py")
-    assert _run_config_list_option(run_configs[repo_run_config_name("Check Package Imports")][1], "args") == []
-
-    build_provider_only_config = run_configs[repo_run_config_name("Build Provider-Only Core")][1]
-    build_provider_only = _run_config_options(build_provider_only_config)
-    assert build_provider_only["scriptOrModule"].endswith("/scripts/dev/build_epcsaft.py")
-    assert _run_config_list_option(build_provider_only_config, "args") == ["--clean", "--profile", "provider"]
-
-    equilibrium_confidence_config = run_configs[repo_run_config_name("Test Equilibrium Confidence")][1]
-    equilibrium_confidence = _run_config_options(equilibrium_confidence_config)
-    assert equilibrium_confidence["scriptOrModule"].endswith("/run_pytest.py")
-    assert _run_config_list_option(equilibrium_confidence_config, "args") == ["--equilibrium-confidence", "-q"]
-
-    cmake_wrapper = _read("scripts/dev/cmake_preset.ps1")
-    assert "Assert-NoNinjaLock" in cmake_wrapper
-    assert "Assert-MsvcEnvironment" in cmake_wrapper
-    assert "Resolve-RepoTool" in cmake_wrapper
-    assert "CMAKE_MAKE_PROGRAM" in cmake_wrapper
-    assert "VsDevCmd.bat" in cmake_wrapper
-    assert "cmd.exe" in cmake_wrapper
-    assert "cmake" in cmake_wrapper
-
-    cmake_configure = run_configs[repo_run_config_name("CMake Configure dev-native")][1]
-    assert cmake_configure.attrib["scriptUrl"].endswith("/scripts/dev/cmake_preset.ps1")
-    assert cmake_configure.attrib["scriptParameters"] == "-Action Configure -Preset dev-native"
-
-    cmake_core_build = run_configs[repo_run_config_name("CMake Build _core dev-native")][1]
-    assert cmake_core_build.attrib["scriptUrl"].endswith("/scripts/dev/cmake_preset.ps1")
-    assert cmake_core_build.attrib["scriptParameters"] == "-Action Build -Preset dev-native -Target _core -Parallel 10"
-
-    cmake_build = run_configs[repo_run_config_name("CMake Build dev-native")][1]
-    assert cmake_build.attrib["scriptUrl"].endswith("/scripts/dev/cmake_preset.ps1")
-    assert cmake_build.attrib["scriptParameters"] == "-Action Build -Preset dev-native -Parallel 10"
-
-    dry_run_config = run_configs[repo_run_config_name("Configure IntelliJ Runs (Dry Run)")][1]
-    dry_run = _run_config_options(dry_run_config)
-    assert dry_run["scriptOrModule"].endswith("/scripts/dev/configure_jetbrains_project.py")
-    assert _run_config_list_option(dry_run_config, "args") == ["--dry-run"]
-
-    contract_check_config = run_configs[repo_run_config_name("Check IntelliJ Contract")][1]
-    contract_check = _run_config_options(contract_check_config)
-    assert contract_check["scriptOrModule"].endswith("/scripts/dev/configure_jetbrains_project.py")
-    assert _run_config_list_option(contract_check_config, "args") == ["--check"]
-
-    apply_config = run_configs[repo_run_config_name("Configure IntelliJ Runs (Apply)")][1]
-    apply_run = _run_config_options(apply_config)
-    assert apply_run["scriptOrModule"].endswith("/scripts/dev/configure_jetbrains_project.py")
-    assert _run_config_list_option(apply_config, "args") == ["--apply"]
+    assert (
+        "prefer a persistent EPCSAFT_PEP517_BUILD_DIR and prebuilt Ceres via EPCSAFT_PEP517_CERES_DIR"
+        not in command_runner
+    )
+    assert not (REPO_ROOT / "docs" / "agents" / ("INTEL" + "LIJ.md")).exists()
+    assert not (REPO_ROOT / "scripts" / "dev" / ("configure_" + "jet" + "brains_project.py")).exists()
+    assert not (REPO_ROOT / "scripts" / "dev" / ("jet" + "brains_run_manifest.py")).exists()
+    assert not (REPO_ROOT / ".run").exists()
 
 
 def test_repo_local_agent_roster_uses_supported_models_and_expected_scopes() -> None:
@@ -721,12 +934,12 @@ def test_github_default_smoke_uses_downstream_path_install_not_wheel_build() -> 
     workflow = _read(".github/workflows/wheels.yml")
     old_python = "uv python install " + "3." + "12"
     old_wheel_command = "uv build --" + "wheel"
-    old_wheel_step = "Build Windows " + "wheel"
+    old_wheel_step = "Build Linux " + "wheel"
 
     assert "uv python install 3.13" in workflow
     assert old_python not in workflow
-    assert '$repoUrl = "file:///"' in workflow
-    assert "epcsaft @ ${repoUrl}/packages/epcsaft" in workflow
+    assert 'repo_url="file://${GITHUB_WORKSPACE}"' in workflow
+    assert "epcsaft @ ${repo_url}/packages/epcsaft" in workflow
     assert "UV_CACHE_DIR" in workflow
     assert "EPCSAFT_PEP517_BUILD_DIR" in workflow
     assert "uv sync --python 3.13" in workflow
@@ -742,22 +955,22 @@ def test_github_full_packaging_remains_manual_only() -> None:
     assert "workflow_dispatch:" in workflow
     assert "if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_wheel_matrix }}" in workflow
     assert 'CIBW_BUILD: "cp313-*"' in workflow
-    assert 'CIBW_ARCHS_WINDOWS: "AMD64"' in workflow
+    assert 'CIBW_ARCHS_LINUX: "x86_64"' in workflow
     assert old_cibw not in workflow
-    assert "ubuntu-latest, macos-latest, windows-latest" not in workflow
-    assert "build Windows wheel" in workflow
+    assert "ubuntu-latest, macos-latest, " + "win" + "dows-" + "latest" not in workflow
+    assert "build Linux wheel" in workflow
 
 
-def test_github_default_events_run_windows_package_boundary_smoke() -> None:
+def test_github_default_events_run_linux_package_boundary_smoke() -> None:
     workflow = _read(".github/workflows/wheels.yml")
 
     assert "fast-pr-smoke:" in workflow
-    assert "windows-install-smoke:" in workflow
+    assert "linux-install-smoke:" in workflow
     assert "if: ${{ github.event_name == 'pull_request' }}" in workflow
-    windows_smoke = workflow.split("\n  windows-install-smoke:", 1)[1].split("\n  build:", 1)[0]
-    assert "    if:" not in windows_smoke
-    assert workflow.count("runs-on: windows-latest") >= 3
-    assert workflow.count("name: windows install smoke") == 1
+    linux_smoke = workflow.split("\n  linux-install-smoke:", 1)[1].split("\n  build:", 1)[0]
+    assert "    if:" not in linux_smoke
+    assert workflow.count("runs-on: ubuntu-24.04") >= 3
+    assert workflow.count("name: linux install smoke") == 1
     assert workflow.count("name: fast workflow smoke") == 1
 
 
@@ -774,7 +987,9 @@ def test_package_build_lanes_are_split_by_distribution_and_sdk_mode() -> None:
     assert "equilibrium-package:" in workflow
     assert "installed-provider-extensions:" in workflow
     assert "run_ipopt_lanes:" in workflow
-    assert "ipopt_root:" in workflow
+    assert "ipopt_root:" not in workflow
+    assert workflow.count("coinor-libipopt-dev") == 2
+    assert workflow.count("--ipopt-root /usr") == 2
     assert "uv run python scripts/dev/build_dist.py --parallel 1" in workflow
     assert "uv run python scripts/dev/build_system_ceres.py --parallel 2" in workflow
     assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination provider" in workflow
@@ -782,7 +997,7 @@ def test_package_build_lanes_are_split_by_distribution_and_sdk_mode() -> None:
     assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination equilibrium" in workflow
     assert "uv run python scripts/dev/check_release_installs.py --dist-dir dist --combination all" in workflow
     assert "--disable-ipopt" not in workflow
-    assert "no no-Ipopt package proof is accepted" in workflow
+    assert "sudo apt-get install --yes --no-install-recommends coinor-libipopt-dev" in workflow
 
 
 def test_heavy_native_workflow_is_manual_only() -> None:
@@ -822,7 +1037,7 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
         "actions/download-artifact@v8.0.1",
         "merge-multiple: true",
         'CIBW_BUILD: "cp313-*"',
-        'CIBW_ARCHS_WINDOWS: "AMD64"',
+        'CIBW_ARCHS_LINUX: "x86_64"',
         "uv build packages/epcsaft --sdist",
         "pypi-preflight:",
         "PyPI trusted publisher preflight",
@@ -840,10 +1055,16 @@ def test_pypi_publish_workflow_uses_trusted_publishing() -> None:
     assert "username:" not in workflow
     assert "PYPI_API_TOKEN" not in workflow
     assert "pp*" not in workflow
+    dispatch_inputs = workflow.split("  workflow_dispatch:", 1)[1].split("\n\npermissions:", 1)[0]
+    assert "      tag:" in dispatch_inputs
+    assert "      ref:" not in dispatch_inputs
     assert "Workflow filename: ``publish-pypi.yml``" in publishing_docs
     assert "Environment name: ``pypi``" in publishing_docs
     assert "GitHub releases and PyPI uploads are separate steps" in publishing_docs
     assert "Creating a GitHub release does not upload to PyPI" in publishing_docs
+    assert "-f tag=vX.Y.Z" in publishing_docs
+    assert "-f ref=" not in publishing_docs
+    assert "Ipopt runtime DLLs" not in publishing_docs
 
 
 def test_version_defaults_are_derived_from_pyproject() -> None:

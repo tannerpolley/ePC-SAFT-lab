@@ -15,7 +15,7 @@ body:
     attributes:
       label: Downstream repo or path
       description: Repository name, local path, or app that depends on epcsaft.
-      placeholder: C:\Users\Tanner\Documents\git\MEA-Thermodynamics
+      placeholder: /path/to/downstream-project
     validations:
       required: true
   - type: input
@@ -46,7 +46,7 @@ body:
     attributes:
       label: Failing command
       description: Exact command that failed.
-      render: powershell
+      render: shell
     validations:
       required: true
   - type: textarea
@@ -92,7 +92,7 @@ body:
     attributes:
       label: Downstream validation command after fix
       description: Exact command the downstream agent should rerun after an upstream fix.
-      render: powershell
+      render: shell
     validations:
       required: true
   - type: textarea

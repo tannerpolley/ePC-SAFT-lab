@@ -99,7 +99,7 @@ Figure 2 is complete only when the retained artifacts prove these values:
 - Test: `packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py`
 
 - [ ] **Step 1: Write the failing Figure 2 artifact test.** Read `source/source_points.csv`, `source/feed_compositions.csv`, `results/data/model_tielines.csv`, and `results/fit_statistics.csv`; assert the source row counts, 16 model rows, `source=epcsaft_public_electrolyte_lle`, no blank model compositions for accepted rows, complete public-route diagnostics, and either full pass statistics or retained failed-row evidence linked to #338.
-- [ ] **Step 2: Run the focused test and verify the expected failure.** Run `uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_figure02_public_route_reproduction.py -q`; expected failure is the current retained `accepted_model_count` or `pass` assertion.
+- [ ] **Step 2: Run the focused test and verify the expected failure.** Run `uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py -q`; expected failure is the current retained `accepted_model_count` or `pass` assertion.
 - [ ] **Step 3: Keep the test focused on retained artifacts.** Do not call the solver directly from the test; generation scripts and the checker own solver execution so the test stays deterministic.
 - [ ] **Step 4: Commit after the failing test is proven.** Commit only the test when the expected failure is captured.
 
@@ -138,7 +138,7 @@ Figure 2 is complete only when the retained artifacts prove these values:
 
 - [ ] **Step 1: Make `generate_data.py` regenerate Figure 2 data.** Route it through the shared Figure 2 public-route generation path instead of leaving it as a no-op.
 - [ ] **Step 2: Update the shared helper only where Figure 2 evidence requires it.** Keep changes around `solve_model_rows`, `get_or_build_model_rows`, `_fit_statistics_row`, `write_case_data`, or `plot_lle_figure`.
-- [ ] **Step 3: Regenerate data and plots.** Run `uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\generate_data.py` and `uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\render_figure.py`.
+- [ ] **Step 3: Regenerate data and plots.** Run `uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/generate_data.py` and `uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/render_figure.py`.
 - [ ] **Step 4: Inspect retained statistics.** Confirm `fit_statistics.csv` reports row counts, tolerance basis, AAD/RMSE/max error fields where implemented, pass status, and exact failed rows when present.
 - [ ] **Step 5: Re-run the focused test.** Run the Figure 2 pytest command and keep iterating only within the Figure 2/shared-owner boundary until it passes or the stop criteria require an M4/M5 blocker.
 

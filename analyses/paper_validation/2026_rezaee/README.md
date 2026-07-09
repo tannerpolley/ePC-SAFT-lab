@@ -23,8 +23,8 @@ Machine-readable source inputs are in `analyses/paper_validation/2026_rezaee/sha
 
 Run these from the repository root:
 
-```powershell
-uv run python analyses\paper_validation\2026_rezaee\scripts\run_all.py
+```bash
+uv run python analyses/paper_validation/2026_rezaee/scripts/run_all.py
 ```
 
 Surrogate, downstream bridge, PrOMMiS/IDAES, and deck scripts are intentionally not included in this package-validation lane.

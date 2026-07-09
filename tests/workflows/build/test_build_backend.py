@@ -8,18 +8,20 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_PATH = REPO_ROOT / "packages" / "epcsaft" / "build_backend" / "epcsaft_build_backend.py"
 EQUILIBRIUM_BACKEND_PATH = (
-    REPO_ROOT
-    / "packages"
-    / "epcsaft-equilibrium"
-    / "build_backend"
-    / "epcsaft_equilibrium_build_backend.py"
+    REPO_ROOT / "packages" / "epcsaft-equilibrium" / "build_backend" / "epcsaft_equilibrium_build_backend.py"
 )
 REGRESSION_BACKEND_PATH = (
-    REPO_ROOT
-    / "packages"
-    / "epcsaft-regression"
-    / "build_backend"
-    / "epcsaft_regression_build_backend.py"
+    REPO_ROOT / "packages" / "epcsaft-regression" / "build_backend" / "epcsaft_regression_build_backend.py"
+)
+NATIVE_DEPENDENCY_POLICY_PATH = REPO_ROOT / "packages" / "epcsaft" / "build_backend" / "native_dependency_policy.py"
+PACKAGE_BUILD_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "package-build-lanes.yml"
+PUBLISH_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "publish-pypi.yml"
+EQUILIBRIUM_PYPROJECT_PATH = REPO_ROOT / "packages" / "epcsaft-equilibrium" / "pyproject.toml"
+CPPAD_CMAKE_PATHS = (
+    REPO_ROOT / "CMakeLists.txt",
+    REPO_ROOT / "packages" / "epcsaft" / "CMakeLists.txt",
+    REPO_ROOT / "packages" / "epcsaft-equilibrium" / "CMakeLists.txt",
+    REPO_ROOT / "packages" / "epcsaft-regression" / "CMakeLists.txt",
 )
 
 
@@ -212,6 +214,43 @@ def test_equilibrium_extension_editable_backend_does_not_require_ipopt(monkeypat
     assert "cmake.define.EPCSAFT_IPOPT_ROOT" not in captured["config_settings"]
 
 
+def test_equilibrium_extension_build_repairs_linux_wheel_before_returning(monkeypatch, tmp_path) -> None:
+    backend = _load_module(EQUILIBRIUM_BACKEND_PATH, "epcsaft_equilibrium_build_backend_for_test_repair")
+    wheel_dir = tmp_path / "wheelhouse"
+    wheel_dir.mkdir()
+    raw_name = "epcsaft_equilibrium-0.1.0-cp313-cp313-linux_x86_64.whl"
+    repaired_name = "epcsaft_equilibrium-0.1.0-cp313-cp313-manylinux_2_34_x86_64.whl"
+    captured: dict[str, Path] = {}
+
+    def fake_build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+        raw_dir = Path(wheel_directory)
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        raw_wheel = raw_dir / raw_name
+        raw_wheel.write_bytes(b"raw wheel")
+        captured["raw_dir"] = raw_dir
+        captured["raw_wheel"] = raw_wheel
+        return raw_name
+
+    def fake_repair_linux_wheel(raw_wheel: Path, output_dir: Path) -> str:
+        assert raw_wheel.read_bytes() == b"raw wheel"
+        assert output_dir == wheel_dir
+        (output_dir / repaired_name).write_bytes(b"repaired wheel")
+        captured["repair_input"] = raw_wheel
+        return repaired_name
+
+    monkeypatch.setattr(backend._scikit_build, "build_wheel", fake_build_wheel)
+    monkeypatch.setattr(backend, "_repair_linux_wheel", fake_repair_linux_wheel)
+
+    result = backend.build_wheel(str(wheel_dir), config_settings={"build-dir": str(tmp_path / "build")})
+
+    assert result == repaired_name
+    assert captured["raw_dir"] != wheel_dir
+    assert captured["repair_input"] == captured["raw_wheel"]
+    assert not captured["raw_dir"].exists()
+    assert not (wheel_dir / raw_name).exists()
+    assert (wheel_dir / repaired_name).is_file()
+
+
 def test_regression_extension_backend_defaults_to_ceres_and_provider_sdk(tmp_path) -> None:
     backend = _load_module(REGRESSION_BACKEND_PATH, "epcsaft_regression_build_backend_for_test")
 
@@ -274,13 +313,57 @@ def test_regression_extension_editable_backend_disables_native_build(monkeypatch
     assert "cmake.define.Ceres_DIR" not in captured["config_settings"]
 
 
-def test_equilibrium_cmake_installs_audited_ipopt_runtime_payload() -> None:
+def test_equilibrium_build_system_provisions_auditwheel_runtime_repair() -> None:
+    pyproject = EQUILIBRIUM_PYPROJECT_PATH.read_text(encoding="utf-8")
+
+    assert '"auditwheel' in pyproject
+    assert '"patchelf' in pyproject
+    assert pyproject.count("sys_platform == 'linux'") == 3
+
+
+def test_equilibrium_cmake_leaves_linux_runtime_closure_to_auditwheel() -> None:
     cmake = (REPO_ROOT / "packages" / "epcsaft-equilibrium" / "CMakeLists.txt").read_text(encoding="utf-8")
 
-    assert 'file(GLOB EPCSAFT_IPOPT_RUNTIME_DLLS "${EPCSAFT_IPOPT_ROOT}/bin/*.dll")' not in cmake
-    assert "file(GET_RUNTIME_DEPENDENCIES" in cmake
-    assert "MODULES" in cmake
-    assert "_epcsaft_module" in cmake
-    assert "cmake_policy(SET CMP0207 NEW)" in cmake
-    assert 'EXCLUDE REGEX [[^[Pp]ython[0-9]+[.]dll$]]' in cmake
-    assert "Installed audited Ipopt runtime dependency payload" in cmake
+    assert "file(GLOB EPCSAFT_IPOPT_RUNTIME_" + 'DLLS "${EPCSAFT_IPOPT_ROOT}/bin/*.' + 'dll")' not in cmake
+    assert "file(GET_RUNTIME_DEPENDENCIES" not in cmake
+    assert "bin/*." + "dll" not in cmake
+    assert "EPCSAFT_IPOPT_ROOT_CMAKE}/lib" in cmake
+    assert "EPCSAFT_IPOPT_ROOT_CMAKE}/lib/x86_64-linux-gnu" in cmake
+    assert "INTERFACE_COMPILE_DEFINITIONS HAVE_CSTDDEF" in cmake
+
+
+@pytest.mark.parametrize("cmake_path", CPPAD_CMAKE_PATHS, ids=lambda path: str(path.relative_to(REPO_ROOT)))
+def test_generated_cppad_config_detects_mkstemp(cmake_path: Path) -> None:
+    cmake = cmake_path.read_text(encoding="utf-8")
+
+    assert "check_cxx_source_compiles" in cmake
+    assert "mkstemp(pattern)" in cmake
+    assert "set(cppad_has_mkstemp 1)" in cmake
+    assert "set(cppad_has_mkstemp 0)" in cmake
+
+
+def test_native_dependency_policy_has_no_noop_ceres_compatibility_gate() -> None:
+    policy = NATIVE_DEPENDENCY_POLICY_PATH.read_text(encoding="utf-8")
+
+    assert "_default_system_ceres_config_is_compatible" not in policy
+
+
+def test_package_build_workflow_provisions_linux_ipopt() -> None:
+    workflow = PACKAGE_BUILD_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert "ipopt_root:" not in workflow
+    assert "coinor-libipopt-dev" in workflow
+    assert workflow.count("--ipopt-root /usr") == 2
+    assert "${{ inputs.ipopt_root }}" not in workflow
+
+
+def test_publish_workflow_resolves_version_tag_to_one_commit() -> None:
+    workflow = PUBLISH_WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert "tag:" in workflow
+    assert 'default: "v0.2.0"' not in workflow
+    assert "^v[0-9]+\\.[0-9]+\\.[0-9]+$" in workflow
+    assert 'f"v{version}"' in workflow
+    assert 'git checkout --detach "$release_commit"' in workflow
+    assert "release_commit:" in workflow
+    assert workflow.count("ref: ${{ needs.pypi-preflight.outputs.release_commit }}") == 2

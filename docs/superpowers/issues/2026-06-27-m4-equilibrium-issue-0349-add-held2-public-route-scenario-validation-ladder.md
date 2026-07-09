@@ -62,7 +62,7 @@ last_synced: "2026-06-28"
 
 ## Proof Oracle
 
-```powershell
-uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and scenario" -q
+```bash
+uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2 and scenario" -q
 ```

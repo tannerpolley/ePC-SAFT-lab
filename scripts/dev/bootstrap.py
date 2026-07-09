@@ -8,13 +8,20 @@ import sysconfig
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 PROVIDER_BUILD_BACKEND_DIR = REPO_ROOT / "packages" / "epcsaft" / "build_backend"
 if str(PROVIDER_BUILD_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(PROVIDER_BUILD_BACKEND_DIR))
 
-from native_dependency_policy import default_system_ceres_config_dir  # noqa: E402
-from native_dependency_policy import resolve_default_system_ceres_config_dir  # noqa: E402
-from native_dependency_policy import resolve_default_windows_ipopt_sdk_root_with_source  # noqa: E402
+from native_dependency_policy import (
+    default_system_ceres_config_dir,
+    resolve_default_linux_ipopt_root_with_source,
+    resolve_default_system_ceres_config_dir,
+    validate_ipopt_root,
+)
+
+from scripts.dev.native_runtime_env import ipopt_runtime_lib_dir
 
 Command = tuple[str, ...]
 SOURCE_DIRS = (
@@ -55,15 +62,12 @@ FULL_NATIVE_DOCTOR_COMMAND: Command = (
     "--require-provider-sdk",
     "--require-extension-native",
 )
-INTELLIJ_APPLY_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--apply")
-INTELLIJ_CHECK_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/configure_jetbrains_project.py", "--check")
-INTELLIJ_COMMANDS: tuple[Command, ...] = (INTELLIJ_APPLY_COMMAND, INTELLIJ_CHECK_COMMAND)
 VALIDATE_QUICK_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/validate_project.py", "quick")
 VALIDATE_CONFIDENCE_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/validate_project.py", "confidence")
 VALIDATE_DOCS_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/validate_project.py", "docs")
 BUILD_DIST_COMMAND: Command = (*UV_RUN_PYTHON, "scripts/dev/build_dist.py")
 NEXT_COMMAND = "uv run --no-sync python scripts/dev/validate_project.py quick"
-IPOPT_CHANGE_COMMAND = '$env:EPCSAFT_IPOPT_ROOT = "C:\\path\\to\\ipopt-msvc"'
+IPOPT_CHANGE_COMMAND = 'export EPCSAFT_IPOPT_ROOT="/path/to/ipopt"'
 BOOTSTRAP_CURRENT_STATE = "bootstrap_state: current"
 SETUP_COMMAND_SUMMARY = (
     "uv sync --no-install-workspace",
@@ -94,18 +98,27 @@ def _bootstrap_env() -> dict[str, str]:
     env = os.environ.copy()
     for src_dir in SOURCE_DIRS:
         _prepend_env_path(env, "PYTHONPATH", src_dir)
-    ipopt_resolution = resolve_default_windows_ipopt_sdk_root_with_source()
-    print(f"ipopt_sdk_root: {ipopt_resolution.root if ipopt_resolution.root else '<missing>'}", flush=True)
-    print(f"ipopt_sdk_root_source: {ipopt_resolution.source}", flush=True)
+    explicit_name = next(
+        (name for name in ("EPCSAFT_IPOPT_ROOT", "EPCSAFT_PEP517_IPOPT_ROOT") if env.get(name)),
+        None,
+    )
+    if explicit_name is not None:
+        ipopt_root = validate_ipopt_root(env[explicit_name], env_name=explicit_name)
+        ipopt_root_source = f"environment:{explicit_name}"
+    else:
+        ipopt_resolution = resolve_default_linux_ipopt_root_with_source()
+        ipopt_root = ipopt_resolution.root
+        ipopt_root_source = ipopt_resolution.source
+
+    print(f"ipopt_root: {ipopt_root if ipopt_root else '<missing>'}", flush=True)
+    print(f"ipopt_root_source: {ipopt_root_source}", flush=True)
     print(f"ipopt_change_command: {IPOPT_CHANGE_COMMAND}", flush=True)
-    ipopt_root = Path(env["EPCSAFT_IPOPT_ROOT"]).resolve() if env.get("EPCSAFT_IPOPT_ROOT") else ipopt_resolution.root
     if ipopt_root is not None:
-        env.setdefault("EPCSAFT_IPOPT_ROOT", str(ipopt_root))
-        ipopt_bin = ipopt_root / "bin"
-        if ipopt_bin.is_dir():
-            _prepend_env_path(env, "PATH", ipopt_bin)
-            _prepend_env_path(env, "EPCSAFT_RUNTIME_DLL_DIRS", ipopt_bin)
-            print(f"ipopt_runtime_bin: {ipopt_bin}", flush=True)
+        env["EPCSAFT_IPOPT_ROOT"] = str(ipopt_root)
+        ipopt_lib = ipopt_runtime_lib_dir(ipopt_root)
+        if ipopt_lib is not None:
+            _prepend_env_path(env, "LD_LIBRARY_PATH", ipopt_lib)
+            print(f"ipopt_runtime_lib_dir: {ipopt_lib}", flush=True)
     return env
 
 
@@ -197,9 +210,6 @@ def _run_commands(commands: tuple[Command, ...], *, dry_run: bool, env: dict[str
 
 
 def _run_build(*, dry_run: bool, env: dict[str, str]) -> int:
-    sync_exit_code = _run_commands((SYNC_COMMAND,), dry_run=dry_run, env=env)
-    if sync_exit_code != 0:
-        return sync_exit_code
     exit_code, ceres_dir = _ensure_ceres(dry_run=dry_run, env=env)
     if exit_code != 0:
         return exit_code
@@ -207,9 +217,6 @@ def _run_build(*, dry_run: bool, env: dict[str, str]) -> int:
 
 
 def _run_regression_native(*, dry_run: bool, env: dict[str, str]) -> int:
-    sync_exit_code = _run_commands((SYNC_COMMAND,), dry_run=dry_run, env=env)
-    if sync_exit_code != 0:
-        return sync_exit_code
     exit_code, ceres_dir = _ensure_ceres(dry_run=dry_run, env=env)
     if exit_code != 0:
         return exit_code
@@ -222,13 +229,9 @@ def _run_regression_native(*, dry_run: bool, env: dict[str, str]) -> int:
 
 def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
     if step == "smoke":
-        return _run_commands((SYNC_COMMAND, BASE_DOCTOR_COMMAND), dry_run=dry_run, env=env)
+        return _run_commands((BASE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
     if step == "sync":
         return _run_commands((SYNC_COMMAND,), dry_run=dry_run, env=env)
-    if step == "intellij":
-        return _run_commands(INTELLIJ_COMMANDS, dry_run=dry_run, env=env)
-    if step == "intellij-check":
-        return _run_commands((INTELLIJ_CHECK_COMMAND,), dry_run=dry_run, env=env)
     if step == "build":
         return _run_build(dry_run=dry_run, env=env)
     if step == "doctor":
@@ -243,13 +246,13 @@ def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
         return _run_commands((BUILD_DIST_COMMAND,), dry_run=dry_run, env=env)
     if step == "provider-native":
         return _run_commands(
-            (SYNC_COMMAND, _provider_native_build_command(), PROVIDER_NATIVE_DOCTOR_COMMAND),
+            (_provider_native_build_command(), PROVIDER_NATIVE_DOCTOR_COMMAND),
             dry_run=dry_run,
             env=env,
         )
     if step == "equilibrium-native":
         return _run_commands(
-            (SYNC_COMMAND, _profile_build_command("equilibrium"), EQUILIBRIUM_NATIVE_DOCTOR_COMMAND),
+            (_profile_build_command("equilibrium"), EQUILIBRIUM_NATIVE_DOCTOR_COMMAND),
             dry_run=dry_run,
             env=env,
         )
@@ -263,17 +266,13 @@ def _run_step(step: str, *, dry_run: bool, env: dict[str, str]) -> int:
     if step == "doctorfull":
         return _run_commands((FULL_NATIVE_DOCTOR_COMMAND,), dry_run=dry_run, env=env)
     if step == "setup":
-        for nested_step in ("sync", "intellij", "full-native"):
-            exit_code = _run_step(nested_step, dry_run=dry_run, env=env)
-            if exit_code != 0:
-                return exit_code
-        return 0
+        return _run_step("full-native", dry_run=dry_run, env=env)
     raise AssertionError(f"unknown bootstrap step: {step}")
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Bootstrap a source checkout through sync, IntelliJ metadata, native build, and doctor diagnostics.",
+        description="Bootstrap a source checkout through sync, native build, and doctor diagnostics.",
     )
     parser.add_argument(
         "--step",
@@ -281,8 +280,6 @@ def _parser() -> argparse.ArgumentParser:
             "setup",
             "smoke",
             "sync",
-            "intellij",
-            "intellij-check",
             "build",
             "doctor",
             "validate-quick",
@@ -298,7 +295,6 @@ def _parser() -> argparse.ArgumentParser:
             "regressionnative",
             "fullnative",
             "doctorfull",
-            "intellijcheck",
             "validatequick",
             "validateconfidence",
             "validatedocs",
@@ -323,7 +319,6 @@ def main(argv: list[str] | None = None) -> int:
         "equilibriumnative": "equilibrium-native",
         "regressionnative": "regression-native",
         "fullnative": "full-native",
-        "intellijcheck": "intellij-check",
         "validatequick": "validate-quick",
         "validateconfidence": "validate-confidence",
         "validatedocs": "validate-docs",

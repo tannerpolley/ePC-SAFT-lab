@@ -30,7 +30,6 @@ analyses/**/results/**/_draft/
 analyses/**/figures/**/output/_draft/
 scripts/fits/
 scripts/paper_validation/
-docs/latex/out/
 docs/latex/references.bib
 .mplgallery/*
 !.mplgallery/manifest.yaml

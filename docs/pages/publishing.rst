@@ -44,8 +44,8 @@ Publish a release
 2. Update ``CHANGELOG.md`` and add ``docs/releases/vX.Y.Z.md``.
 3. Commit and push ``main``.
 4. Run ``uv run python scripts/dev/build_dist.py``. The default release
-   baseline disables local Ipopt so the wheel does not require Ipopt runtime
-   DLLs.
+   baseline builds the provider-only artifact with Ipopt disabled, so the wheel
+   has no Ipopt runtime dependency.
 5. Create and push tag ``vX.Y.Z``.
 6. Create the GitHub release for ``vX.Y.Z`` with the files from ``dist/``.
 
@@ -59,11 +59,11 @@ Publish to PyPI
 After the PyPI pending publisher exists, run the publish workflow manually from
 GitHub Actions:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   gh workflow run publish-pypi.yml --repo ePC-SAFT/ePC-SAFT -f ref=vX.Y.Z
+   gh workflow run publish-pypi.yml --repo ePC-SAFT/ePC-SAFT -f tag=vX.Y.Z
 
-The workflow builds the sdist and Windows CPython 3.13 wheel from the requested
+The workflow builds the sdist and Linux CPython 3.13 wheel from the requested
 tag, then publishes the distributions to PyPI through
 ``pypa/gh-action-pypi-publish`` using OIDC. Use manual dispatch only for a tag
 that already points at the intended release commit.

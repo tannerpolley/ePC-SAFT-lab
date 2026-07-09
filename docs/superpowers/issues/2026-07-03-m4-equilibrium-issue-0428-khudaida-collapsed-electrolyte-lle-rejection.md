@@ -99,18 +99,18 @@ evidence and keep #338 as the M5 owner.
 
 ## Proof Oracle
 
-```powershell
-$env:KHUDAIDA_FORCE_RECOMPUTE='1'; uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\generate_data.py
-uv run --no-sync python analyses\paper_validation\2026_khudaida\figures\figure_02\scripts\render_figure.py
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --require-model-pass --json
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_collapsed_electrolyte_lle_rejection.py -q
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests\api\test_khudaida_figure02_public_route_reproduction.py -q
+```bash
+KHUDAIDA_FORCE_RECOMPUTE=1 uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/generate_data.py
+uv run --no-sync python analyses/paper_validation/2026_khudaida/figures/figure_02/scripts/render_figure.py
+uv run --no-sync python scripts/validation/check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --json
+uv run --no-sync python scripts/validation/check_khudaida_2026_figure_validation.py --figure figure_02 --require-complete --require-model-pass --json
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests/api/test_khudaida_collapsed_electrolyte_lle_rejection.py -q
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests/api/test_khudaida_figure02_public_route_reproduction.py -q
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-03-m4-equilibrium-khudaida-collapsed-electrolyte-lle-rejection-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-03-m4-equilibrium-khudaida-collapsed-electrolyte-lle-rejection-plan.md
-uv run --no-sync python scripts\dev\validate_project.py docs
+uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 The `--require-model-pass` command may fail after this issue only when its JSON

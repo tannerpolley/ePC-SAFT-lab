@@ -232,7 +232,7 @@ Child issues:
 
 Planning validation before creating issues:
 
-```powershell
+```bash
 gh issue list --state open --search "chemical equilibrium speciation reactive CPE CE in:title,body" --json number,title,labels,milestone,url
 ```
 

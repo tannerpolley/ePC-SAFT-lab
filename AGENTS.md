@@ -7,19 +7,15 @@ Durable workflow details belong in the referenced docs, not in this file.
 
 - Read `docs/superpowers/PROJECT_CONTEXT.md` before planning, coding, reviewing, or merging. It is the package-context and completion-standard document unless the user narrows scope.
 - For fresh setup and first commands, read `docs/agents/new-agent-start-here.md`.
+- For a compact migrated-Linux agent workflow, read `docs/agents/agent-happy-path.md`.
 - For test selection, validation, and routine development workflows, read `docs/pages/development_workflows.rst`.
 - For build, package, CMake, dependency, Ceres, CppAD, Ipopt, CI-lane, wheel, or sdist changes, read `docs/protocols/build_package_dependency_protocol.rst`.
 - For direct CMake preset work, read `CMAKE.md` and use the repo wrapper policy there.
 - For GitHub Issues, milestones, Projects, labels, issue types, dependencies, and PR policy, read `docs/agents/issue-tracker.md`.
-- For IntelliJ-backed work, read `docs/agents/INTELLIJ.md`.
 - For file and analysis layout, read `docs/pages/project_structure.rst`.
 
 ## Tooling Rules
 
-- IMPORTANT: Using intellij-index MCP tools for code navigation and refactoring.
-- For non-trivial code, build, native, test, refactor, debug, architecture, or validation work, use IntelliJ Bridge/MCP first. Before falling back to shell, run tool discovery for IntelliJ/JetBrains MCP tools and record a short receipt: `IntelliJ MCP available: yes/no`, `tools found: ...`, and `fallback approved by user: yes/no`.
-- If IntelliJ/JetBrains MCP tools are not exposed for a non-trivial task, stop and ask the user to open or focus IntelliJ on this repo. Do not continue with shell fallback unless the user explicitly approves fallback for that task.
-- Simple docs edits, issue checks, status checks, and small Q&A may use shell and `rg` directly but only after trying Intellij Tools.
 - Use the user-level `chemical-engineer` skill for thermodynamics, phase or chemical equilibrium, equation tracing, native seams, and scientific validation.
 
 ## Agent skills
@@ -75,6 +71,6 @@ Single-context repo; read root `CONTEXT.md`, `docs/superpowers/PROJECT_CONTEXT.m
 - Keep user-facing docs updated when public API behavior, install/build/test workflow, package layout, or capability claims change.
 - Before handoff, review `git status --short` and do not leave your own tracked changes unstaged or uncommitted unless the user requested that.
 - Run the repo cleanup hook before reporting completion:
-```powershell
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+```bash
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```

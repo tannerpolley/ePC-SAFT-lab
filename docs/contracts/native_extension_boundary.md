@@ -102,7 +102,12 @@ Before repository extraction:
 Current local proof commands:
 
 - provider dependency lane: ``uv run python scripts/dev/build_epcsaft.py --clean --profile provider`` or ``python -m build --wheel --config-setting=cmake.define.EPCSAFT_ENABLE_CERES=OFF --config-setting=cmake.define.EPCSAFT_ENABLE_IPOPT=OFF --config-setting=cmake.define.EPCSAFT_BUILD_EQUILIBRIUM_NATIVE_MODULE=OFF --config-setting=cmake.define.EPCSAFT_BUILD_REGRESSION_NATIVE_MODULE=OFF``;
-- equilibrium dependency lane: ``uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-equilibrium --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"``;
-- regression dependency lane: ``uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"``;
-- installed-provider extension lane: ``uv run python scripts/dev/build_extension_dists.py --mode installed-provider --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"``;
+- equilibrium dependency lane: ``uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-equilibrium``;
+- regression dependency lane: ``uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression``;
+- installed-provider extension lane: ``uv run python scripts/dev/build_extension_dists.py --mode installed-provider``;
 - integration lane: the normal native source build with Ceres, CppAD, and Ipopt enabled.
+
+The extension helper uses the shared Linux Ipopt discovery policy when no root
+is supplied. To pin a specific audited install, run ``export
+EPCSAFT_IPOPT_ROOT=/path/to/ipopt`` before the equilibrium or
+installed-provider lane.

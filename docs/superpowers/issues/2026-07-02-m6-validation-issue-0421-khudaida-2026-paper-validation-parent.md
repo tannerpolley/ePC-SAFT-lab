@@ -93,9 +93,9 @@ the public package route; misses open or block on M4/M5 follow-up issues.
 
 ## Proof Oracle
 
-```powershell
+```bash
 gh issue view 421 --json number,title,milestone,parent,subIssues
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py
+uv run --no-sync python scripts/validation/check_khudaida_2026_figure_validation.py
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 ```

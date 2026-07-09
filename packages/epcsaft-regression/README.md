@@ -10,9 +10,9 @@ longer exported by the provider `_core`.
 This package is not published to PyPI in the current tranche, but it owns its
 package-local build metadata and native module. Build proof is repository-owned:
 
-```powershell
-uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-uv run python scripts/dev/build_extension_dists.py --mode installed-provider --package epcsaft-regression --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+```bash
+uv run python scripts/dev/build_extension_dists.py --mode monorepo --package epcsaft-regression
+uv run python scripts/dev/build_extension_dists.py --mode installed-provider --package epcsaft-regression
 ```
 
 The monorepo mode consumes the sibling `packages/epcsaft` provider SDK. The

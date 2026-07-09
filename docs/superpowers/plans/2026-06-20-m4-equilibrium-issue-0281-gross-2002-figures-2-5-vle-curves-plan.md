@@ -117,7 +117,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py::test_figure_two_requires_resolved_source_identity -q
   ```
 
@@ -135,7 +135,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
   ```
 
@@ -145,7 +145,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add scripts/validation/check_gross_2002_full_replication.py tests/native/contracts/test_gross_2002_full_replication_checker.py analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_identity.json analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json
   git commit -m "Require resolved Gross 2002 Figure 2 identity"
   ```
@@ -172,7 +172,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py::test_accepted_vle_figures_require_all_series_scores -q
   ```
 
@@ -199,7 +199,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
   ```
 
@@ -209,7 +209,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add scripts/validation/check_gross_2002_full_replication.py tests/native/contracts/test_gross_2002_full_replication_checker.py analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json
   git commit -m "Require Gross 2002 VLE series scores"
   ```
@@ -248,7 +248,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python -c "import pandas as pd; f=pd.read_csv('analyses/paper_validation/2002_gross/figures/figure_02/source/gross_2002_figure_02_replication_source_points.csv'); print(f.groupby('series').size().to_string())"
   ```
 
@@ -258,7 +258,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_02/source
   git commit -m "Retain Gross 2002 Figure 2 VLE source points"
   ```
@@ -307,7 +307,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_02/scripts/generate_gross_2002_figure_02_replication.py
   ```
 
@@ -317,7 +317,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_02
   git commit -m "Replicate Gross 2002 Figure 2 VLE curve"
   ```
@@ -355,7 +355,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python -c "import pandas as pd; f=pd.read_csv('analyses/paper_validation/2002_gross/figures/figure_03/source/gross_2002_figure_03_replication_source_points.csv'); print(f.groupby('series').size().to_string())"
   ```
 
@@ -365,7 +365,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_03/source
   git commit -m "Retain Gross 2002 Figure 3 VLE source points"
   ```
@@ -410,7 +410,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_03/scripts/generate_gross_2002_figure_03_replication.py
   ```
 
@@ -420,7 +420,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_03
   git commit -m "Replicate Gross 2002 Figure 3 VLE curves"
   ```
@@ -458,7 +458,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python -c "import pandas as pd; f=pd.read_csv('analyses/paper_validation/2002_gross/figures/figure_04/source/gross_2002_figure_04_replication_source_points.csv'); print(len(f)); print(f.groupby('series').size().to_string())"
   ```
 
@@ -468,7 +468,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_04/source
   git commit -m "Retain Gross 2002 Figure 4 VLE source points"
   ```
@@ -513,7 +513,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_04/scripts/generate_gross_2002_figure_04_replication.py
   ```
 
@@ -523,7 +523,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_04
   git commit -m "Replicate Gross 2002 Figure 4 VLE curve"
   ```
@@ -561,7 +561,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python -c "import pandas as pd; f=pd.read_csv('analyses/paper_validation/2002_gross/figures/figure_05/source/gross_2002_figure_05_replication_source_points.csv'); print(f.groupby('system').size().to_string())"
   ```
 
@@ -571,7 +571,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_05/source
   git commit -m "Retain Gross 2002 Figure 5 VLE source points"
   ```
@@ -616,7 +616,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python analyses/paper_validation/2002_gross/figures/figure_05/scripts/generate_gross_2002_figure_05_replication.py
   ```
 
@@ -626,7 +626,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/figures/figure_05
   git commit -m "Replicate Gross 2002 Figure 5 VLE curves"
   ```
@@ -656,7 +656,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-foundation --write-summary
   ```
 
@@ -666,7 +666,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native
   ```
 
@@ -676,7 +676,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native
   ```
 
@@ -686,7 +686,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
   ```
 
@@ -704,7 +704,7 @@ Test complete for #281 means:
 
   Commit:
 
-  ```powershell
+  ```bash
   git add analyses/paper_validation/2002_gross/shared/gross_2002_full_replication_manifest.json analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.json analyses/paper_validation/2002_gross/shared/results/gross_2002_full_replication_summary.csv docs/superpowers/issues/2026-06-19-m4-equilibrium-issue-0281-fully-replicate-gross-2002-figures-2-5-self-associating-vle-curves.md docs/superpowers/milestones/M4-equilibrium/README.md
   git commit -m "Accept Gross 2002 Figures 2-5 replication evidence"
   ```
@@ -726,7 +726,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
   ```
 
@@ -734,7 +734,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
   ```
 
@@ -742,7 +742,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native
   uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
   ```
@@ -753,7 +753,7 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
+  ```bash
   uv run --no-sync python scripts/dev/validate_project.py docs
   git diff --check
   ```
@@ -762,8 +762,8 @@ Test complete for #281 means:
 
   Run:
 
-  ```powershell
-  pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+  ```bash
+  bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
   ```
 
 - [ ] **Step 6: Prepare PR handoff**
@@ -774,19 +774,19 @@ Test complete for #281 means:
 
 Required pass commands:
 
-```powershell
+```bash
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_full_replication_checker.py -q
 uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/dev/validate_project.py docs
 git diff --check
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 Required partial-campaign readout:
 
-```powershell
+```bash
 uv run --no-sync python scripts/validation/check_gross_2002_full_replication.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 ```
 

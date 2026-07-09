@@ -7,7 +7,24 @@ cd "${REPO_ROOT}"
 
 echo "REPAIR-ONLY: this removes build/cache/native artifacts. Use normal build and confidence tests for routine validation." >&2
 
-rm -rf build dist .pytest_cache .ruff_cache .mypy_cache 2>/dev/null || true
-find . \( -path "./build" -o -path "./dist" -o -path "./.git" -o -path "./.venv" \) -prune -o -type d -name "*.egg-info" -exec rm -rf {} +
-find . \( -path "./build" -o -path "./dist" -o -path "./.git" -o -path "./.venv" \) -prune -o -type d -name "__pycache__" -exec rm -rf {} +
-find packages/epcsaft/src/epcsaft -maxdepth 1 -type f \( -name "_core*.so" -o -name "_core*.pyd" \) -delete
+rm -rf build dist .pytest_cache .ruff_cache .mypy_cache
+
+remove_matching_directories() {
+    local directory_name="$1"
+    find . \
+        \( -path "./build" -o -path "./dist" -o -path "./.git" -o -path "./.venv" \) -prune \
+        -o -type d -name "${directory_name}" -prune -exec rm -rf -- {} +
+}
+
+remove_matching_directories "*.egg-info"
+remove_matching_directories "__pycache__"
+
+shopt -s nullglob
+native_artifacts=(
+    packages/epcsaft/src/epcsaft/_core*.so
+    packages/epcsaft-equilibrium/src/epcsaft_equilibrium/_native_core*.so
+    packages/epcsaft-regression/src/epcsaft_regression/_native_core*.so
+)
+if (( ${#native_artifacts[@]} > 0 )); then
+    rm -f -- "${native_artifacts[@]}"
+fi

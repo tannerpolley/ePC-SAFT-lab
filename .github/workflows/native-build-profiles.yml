@@ -10,7 +10,7 @@ concurrency:
 jobs:
   default-build:
     name: native no-Ipopt smoke
-    runs-on: windows-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -31,7 +31,7 @@ jobs:
 
   cppad-build:
     name: native CppAD derivative contract
-    runs-on: windows-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v6.0.2

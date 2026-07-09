@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import os
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
-for import_root in (REPO_ROOT, SRC_ROOT):
+CAPABILITY_EVIDENCE_PATH = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft" / "runtime" / "capability_evidence.py"
+for import_root in (REPO_ROOT,):
     import_path = str(import_root)
     if import_path not in sys.path:
         sys.path.insert(0, import_path)
@@ -17,7 +18,21 @@ from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft.runtime.capability_evidence import VALIDATION_LANES, validation_lane_commands
+
+def _load_capability_evidence():
+    spec = importlib.util.spec_from_file_location(
+        "epcsaft_capability_evidence_for_validate_project", CAPABILITY_EVIDENCE_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load capability evidence registry from {CAPABILITY_EVIDENCE_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_capability_evidence = _load_capability_evidence()
+VALIDATION_LANES = _capability_evidence.VALIDATION_LANES
+validation_lane_commands = _capability_evidence.validation_lane_commands
 
 CHECK_COMMANDS: dict[str, tuple[tuple[str, ...], ...]] = {
     name: validation_lane_commands(name) for name in VALIDATION_LANES

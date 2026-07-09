@@ -52,5 +52,5 @@ include = [
     "src/epcsaft_regression/native/**/*.h",
 ]
 exclude = [
-    "src/epcsaft_regression/*.pyd",
+    "src/epcsaft_regression/*.so",
 ]

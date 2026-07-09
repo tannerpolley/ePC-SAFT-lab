@@ -3,95 +3,88 @@ name = "ePC-SAFT"
 
 [setup]
 script = '''
-$ErrorActionPreference = "Stop"
-Set-StrictMode -Version Latest
+set -euo pipefail
 
-$repoRoot = (git rev-parse --show-toplevel).Trim()
-Set-Location $repoRoot
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
 
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File ".codex/environments/setup.ps1"
+bash ".codex/environments/setup.sh"
 '''
 
 [[actions]]
 name = "Sync Environment"
 icon = "download"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Sync"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step sync"
+platform = "linux"
 
 [[actions]]
 name = "Provider Smoke"
 icon = "inspect"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Smoke"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step smoke"
+platform = "linux"
 
 [[actions]]
 name = "Provider Native"
 icon = "run"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ProviderNative"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step provider-native"
+platform = "linux"
 
 [[actions]]
 name = "Equilibrium Native"
 icon = "run"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step EquilibriumNative"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step equilibrium-native"
+platform = "linux"
 
 [[actions]]
 name = "Regression Native"
 icon = "run"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step RegressionNative"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step regression-native"
+platform = "linux"
 
 [[actions]]
 name = "Full Native"
 icon = "run"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step FullNative"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step full-native"
+platform = "linux"
 
 [[actions]]
 name = "Doctor"
 icon = "inspect"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Doctor"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step doctor"
+platform = "linux"
 
 [[actions]]
 name = "Doctor Full Native"
 icon = "inspect"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step DoctorFull"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step doctorfull"
+platform = "linux"
 
 [[actions]]
 name = "Build Native Extension"
 icon = "run"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step Build"
-platform = "win32"
-
-[[actions]]
-name = "Check IntelliJ Contract"
-icon = "inspect"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step IntelliJCheck"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step build"
+platform = "linux"
 
 [[actions]]
 name = "Validate Quick"
 icon = "test"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ValidateQuick"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step validate-quick"
+platform = "linux"
 
 [[actions]]
 name = "Validate Confidence"
 icon = "test"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ValidateConfidence"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step validate-confidence"
+platform = "linux"
 
 [[actions]]
 name = "Build Docs"
 icon = "document"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step ValidateDocs"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step validate-docs"
+platform = "linux"
 
 [[actions]]
 name = "Build Distribution"
 icon = "package"
-command = "pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .codex/environments/setup.ps1 -Step BuildDist"
-platform = "win32"
+command = "bash .codex/environments/setup.sh --step build-dist"
+platform = "linux"

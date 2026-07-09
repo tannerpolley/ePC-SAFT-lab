@@ -34,7 +34,6 @@ def _env() -> dict[str, str]:
     env["TMP"] = str(temp_root.resolve())
     env["TEMP"] = str(temp_root.resolve())
     env["TMPDIR"] = str(temp_root.resolve())
-    env["EPCSAFT_SANDBOX_SAFE_TEMPFILE"] = "1"
     return env
 
 
@@ -74,7 +73,7 @@ import epcsaft
 sdk = epcsaft.provider_native_sdk()
 assert sdk["contract_id"] == "provider_native_sdk_v1"
 assert sdk["provider_only_core"] is True
-print("release install smoke ok: {' '.join(distributions)}")
+print("release install smoke ok: {" ".join(distributions)}")
 """
 
 

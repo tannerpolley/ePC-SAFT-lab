@@ -59,7 +59,7 @@ body:
     attributes:
       label: Required evidence
       description: Commands, artifacts, registry rows, docs, CI checks, or downstream runs required to close.
-      render: powershell
+      render: shell
     validations:
       required: true
   - type: textarea

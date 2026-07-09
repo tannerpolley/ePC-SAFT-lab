@@ -19,7 +19,7 @@ Example:
    from epcsaft import create_input_template
 
    root = create_input_template(
-       r"C:\path\to\case",
+       "/path/to/case",
        components=["Methane", "Ethane"],
        workflows=("state", "equilibrium", "regression"),
    )

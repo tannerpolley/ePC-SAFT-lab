@@ -8,8 +8,8 @@ This lane validates Ascani 2022 Case Study 2 through the public `epcsaft` API:
 
 Run from the repository root:
 
-```powershell
-uv run python analyses\paper_validation\2022_ascani\scripts\run_all.py
+```bash
+uv run python analyses/paper_validation/2022_ascani/scripts/run_all.py
 ```
 
 The script exits 0 only when the public native Ipopt liquid-root electrolyte LLE route is accepted and the hard TPDF stability certificate passes. Exact paper matching is recorded as comparison data, not claimed by default.

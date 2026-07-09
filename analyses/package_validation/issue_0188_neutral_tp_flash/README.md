@@ -20,7 +20,7 @@ The source fixture is
 
 ## Regeneration
 
-```powershell
+```bash
 uv run --no-sync python analyses/package_validation/issue_0188_neutral_tp_flash/scripts/generate_data.py
 uv run --no-sync python analyses/package_validation/issue_0188_neutral_tp_flash/scripts/render_figures.py
 ```

@@ -61,7 +61,7 @@ last_synced: "2026-06-28"
 
 ## Proof Oracle
 
-```powershell
-uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2 and public and route" -q
+```bash
+uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2 and public and route" -q
 ```

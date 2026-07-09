@@ -1,42 +1,12 @@
-"""PEP 517 backend wrapper for sandbox-safe Windows package builds."""
+"""PEP 517 backend wrapper for isolated Linux package builds."""
 
 from __future__ import annotations
 
-import errno
 import os
-import sys
 import tempfile
 from pathlib import Path
 
 from scikit_build_core import build as _scikit_build
-
-
-def _sandbox_safe_mkdtemp(suffix=None, prefix=None, dir=None):
-    prefix, suffix, dir, output_type = tempfile._sanitize_params(prefix, suffix, dir)
-
-    names = tempfile._get_candidate_names()
-    if output_type is bytes:
-        names = map(os.fsencode, names)
-
-    for _ in range(tempfile.TMP_MAX):
-        name = next(names)
-        path = os.path.join(dir, prefix + name + suffix)
-        sys.audit("tempfile.mkdtemp", path)
-        try:
-            os.mkdir(path, 0o777)
-        except FileExistsError:
-            continue
-        except PermissionError:
-            if os.name == "nt" and os.path.isdir(dir) and os.access(dir, os.W_OK):
-                continue
-            raise
-        return os.path.abspath(path)
-
-    raise FileExistsError(errno.EEXIST, "No usable temporary directory name found")
-
-
-if os.name == "nt":
-    tempfile.mkdtemp = _sandbox_safe_mkdtemp
 
 
 def _has_build_dir(config_settings) -> bool:
@@ -104,12 +74,7 @@ def _is_under(path: Path, root: Path) -> bool:
 
 def _external_temp_root() -> Path | None:
     source_root = _source_root()
-    candidates: list[Path] = []
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        candidates.append(Path(local_app_data) / "Temp")
-    if os.name != "nt":
-        candidates.append(Path("/tmp"))
+    candidates: list[Path] = [Path("/tmp")]
     candidates.append(Path(tempfile.gettempdir()))
 
     for candidate in candidates:

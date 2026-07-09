@@ -1,15 +1,16 @@
 Overview
 ========
 
-``epcsaft`` is a Windows-first Python package for PC-SAFT and electrolyte
+``epcsaft`` is a Linux-first Python package for PC-SAFT and electrolyte
 PC-SAFT thermodynamic calculations. The public interface is Python, while the
 equation-of-state runtime is implemented in native C++ through ``pybind11``.
 
 This release is still a monorepo transition build. Ipopt-backed equilibrium is
 owned by ``epcsaft-equilibrium``, and Ceres-backed regression is owned by
-``epcsaft-regression``. Those extension packages are workspace-transition
-packages in this tranche; install them from this checkout, not against a
-provider-only ``epcsaft`` wheel.
+``epcsaft-regression``. Each extension is a separate distribution that can
+consume an installed provider wheel and its native SDK. The monorepo checkout
+remains the development and release-proof source until those extension
+distributions are published.
 
 Current package version: ``0.2.0``
 
@@ -56,13 +57,13 @@ PyPI publishing is configured through GitHub Actions, but the first upload
 requires the PyPI pending publisher for this repository. When the project page
 is live at ``https://pypi.org/project/epcsaft/``, install with:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install epcsaft
 
 With ``uv``:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv add epcsaft
 
@@ -71,13 +72,13 @@ If PyPI returns 404 for ``epcsaft``, use the GitHub release wheel above.
 The ``v0.2.0`` tag supports source installs that build the native extension
 locally:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 With ``uv``:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
@@ -87,7 +88,7 @@ baseline.
 
 For a normal local source install:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
@@ -95,7 +96,7 @@ For a normal local source install:
 
 For an editable install while changing Python files:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install -e packages/epcsaft
 
@@ -186,7 +187,7 @@ Most users should create and own their parameter folders:
    from epcsaft import create_input_template
 
    template_root = create_input_template(
-       r"C:\path\to\my_epcsaft_data\water_salt_case",
+       "/path/to/my_epcsaft_data/water_salt_case",
        components=["H2O", "Na+", "Cl-"],
    )
 

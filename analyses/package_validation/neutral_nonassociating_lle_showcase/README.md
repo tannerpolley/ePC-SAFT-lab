@@ -21,12 +21,12 @@ cover associating, electrolyte, reactive, CE, or CPE behavior.
 
 Regenerate retained data:
 
-```powershell
+```bash
 uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/generate_data.py
 ```
 
 Render figures:
 
-```powershell
+```bash
 uv run --no-sync python analyses/package_validation/neutral_nonassociating_lle_showcase/scripts/render_figures.py
 ```

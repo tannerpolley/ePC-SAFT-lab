@@ -1,4 +1,5 @@
 import argparse
+import importlib.util
 import os
 import shutil
 import sys
@@ -6,15 +7,25 @@ import uuid
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
-SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
+CAPABILITY_EVIDENCE_PATH = REPO_ROOT / "packages" / "epcsaft" / "src" / "epcsaft" / "runtime" / "capability_evidence.py"
 
 from scripts.dev.native_runtime_env import apply_native_runtime_env
 
 apply_native_runtime_env(os.environ)
 
-from epcsaft.runtime.capability_evidence import TEST_SLICES, registry_targets
+
+def _load_capability_evidence():
+    spec = importlib.util.spec_from_file_location("epcsaft_capability_evidence_for_runner", CAPABILITY_EVIDENCE_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load capability evidence registry from {CAPABILITY_EVIDENCE_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_capability_evidence = _load_capability_evidence()
+TEST_SLICES = _capability_evidence.TEST_SLICES
+registry_targets = _capability_evidence.registry_targets
 
 GENERIC_TEST_TARGETS = registry_targets("generic")
 FAST_TEST_TARGETS = GENERIC_TEST_TARGETS
@@ -97,6 +108,40 @@ SLICE_SELECTION_NOTE = (
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parent
+
+
+def _package_src_roots(repo_root: Path) -> tuple[Path, ...]:
+    return (
+        repo_root / "packages" / "epcsaft" / "src",
+        repo_root / "packages" / "epcsaft-equilibrium" / "src",
+        repo_root / "packages" / "epcsaft-regression" / "src",
+    )
+
+
+def _merged_pythonpath_entries(
+    package_roots: tuple[Path, ...],
+    caller_pythonpath: str | None,
+) -> tuple[str, ...]:
+    candidates = [str(path) for path in package_roots]
+    if caller_pythonpath:
+        candidates.extend(part for part in caller_pythonpath.split(os.pathsep) if part)
+
+    entries: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        normalized = os.path.normcase(os.path.normpath(candidate))
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        entries.append(candidate)
+    return tuple(entries)
+
+
+def _prepend_package_roots_to_sys_path(package_roots: tuple[Path, ...]) -> None:
+    for package_root in reversed(package_roots):
+        entry = str(package_root)
+        sys.path[:] = [current for current in sys.path if current != entry]
+        sys.path.insert(0, entry)
 
 
 def _pytest_temp(repo_root: Path) -> Path:
@@ -327,9 +372,7 @@ def _normalize_equilibrium_debug_selection(
 
 def _validate_equilibrium_debug_targets(positional_targets: list[str]) -> None:
     if len(positional_targets) != 1:
-        raise SystemExit(
-            "--equilibrium-debug accepts exactly one explicit equilibrium test node."
-        )
+        raise SystemExit("--equilibrium-debug accepts exactly one explicit equilibrium test node.")
     target = positional_targets[0].replace("\\", "/")
     target_path = target.split("::", 1)[0].rstrip("/")
     if "::" not in target:
@@ -386,40 +429,9 @@ def _slice_listing_text() -> str:
     return "\n".join(lines)
 
 
-def _patch_windows_pytest_temp_acl() -> None:
-    if os.name != "nt":
-        return
-
-    original_mkdir = Path.mkdir
-
-    def sandbox_safe_mkdir(self, mode=0o777, parents=False, exist_ok=False):
-        return original_mkdir(self, mode=0o777, parents=parents, exist_ok=exist_ok)
-
-    Path.mkdir = sandbox_safe_mkdir
-
-
-def _patch_pytest_cleanup() -> None:
-    # Pytest's Windows cleanup hook can trip over restricted ACLs after
-    # tmp_path tests pass. Keep the per-run basetemp, but skip that hook.
-    try:
-        import _pytest.pathlib as pytest_pathlib
-        import _pytest.tmpdir as pytest_tmpdir
-
-        pytest_pathlib.cleanup_dead_symlinks = lambda root: None
-        pytest_tmpdir.cleanup_dead_symlinks = lambda root: None
-    except Exception:
-        pass
-
-
 def _failure_message(pytest_temp: Path) -> str:
     cleanup_path = str(pytest_temp.resolve())
-    return (
-        "Pytest failed; keeping temp directory for triage: "
-        f"{cleanup_path}\n"
-        "Cleanup with: "
-        f"Remove-Item -Recurse -Force '{cleanup_path}' (PowerShell)\n"
-        f"or rm -rf {cleanup_path} (POSIX shells)"
-    )
+    return f"Pytest failed; keeping temp directory for triage: {cleanup_path}\nCleanup with: rm -rf {cleanup_path}"
 
 
 def main() -> int:
@@ -498,14 +510,9 @@ def main() -> int:
     pytest_temp = _pytest_temp(repo_root)
     env = _pytest_env(pytest_temp)
     _apply_equilibrium_debug_env(env, args.equilibrium_debug)
-    import_roots = (
-        repo_root / "src",
-        repo_root / "packages" / "epcsaft-equilibrium" / "src",
-        repo_root / "packages" / "epcsaft-regression" / "src",
-    )
-    for import_root in import_roots:
-        sys.path.insert(0, str(import_root))
-    env["PYTHONPATH"] = os.pathsep.join(str(path) for path in import_roots)
+    import_roots = _package_src_roots(repo_root)
+    _prepend_package_roots_to_sys_path(import_roots)
+    env["PYTHONPATH"] = os.pathsep.join(_merged_pythonpath_entries(import_roots, env.get("PYTHONPATH")))
 
     cmd = _pytest_args(
         pytest_args,
@@ -528,9 +535,6 @@ def main() -> int:
     )
     print("Running:", f"{sys.executable} -m pytest", " ".join(cmd), flush=True)
     os.environ.update(env)
-
-    _patch_windows_pytest_temp_acl()
-    _patch_pytest_cleanup()
 
     import pytest
 

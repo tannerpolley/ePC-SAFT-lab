@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import errno
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -11,32 +11,9 @@ from pathlib import Path
 from scikit_build_core import build as _scikit_build
 
 PACKAGE_NAME = "epcsaft-equilibrium"
-PROVIDER_SDK_RELATIVE_CONFIG = Path("src") / "epcsaft" / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake"
-
-
-def _sandbox_safe_mkdtemp(suffix=None, prefix=None, dir=None):
-    prefix, suffix, dir, output_type = tempfile._sanitize_params(prefix, suffix, dir)
-    names = tempfile._get_candidate_names()
-    if output_type is bytes:
-        names = map(os.fsencode, names)
-    for _ in range(tempfile.TMP_MAX):
-        name = next(names)
-        path = os.path.join(dir, prefix + name + suffix)
-        sys.audit("tempfile.mkdtemp", path)
-        try:
-            os.mkdir(path, 0o777)
-        except FileExistsError:
-            continue
-        except PermissionError:
-            if os.name == "nt" and os.path.isdir(dir) and os.access(dir, os.W_OK):
-                continue
-            raise
-        return os.path.abspath(path)
-    raise FileExistsError(errno.EEXIST, "No usable temporary directory name found")
-
-
-if os.name == "nt":
-    tempfile.mkdtemp = _sandbox_safe_mkdtemp
+PROVIDER_SDK_RELATIVE_CONFIG = (
+    Path("src") / "epcsaft" / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake"
+)
 
 
 def _source_root() -> Path:
@@ -70,12 +47,7 @@ def _config_value(config: dict, key: str) -> str | None:
 
 def _external_temp_root() -> Path | None:
     source_root = _source_root()
-    candidates: list[Path] = []
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        candidates.append(Path(local_app_data) / "Temp")
-    if os.name != "nt":
-        candidates.append(Path("/tmp"))
+    candidates: list[Path] = [Path("/tmp")]
     candidates.append(Path(tempfile.gettempdir()))
     for candidate in candidates:
         try:
@@ -91,10 +63,14 @@ def _external_temp_root() -> Path | None:
 
 def _provider_sdk_mode(config: dict) -> str:
     return (
-        _config_value(config, "epcsaft.provider-sdk-mode")
-        or os.environ.get("EPCSAFT_PROVIDER_SDK_MODE")
-        or "monorepo"
-    ).strip().lower()
+        (
+            _config_value(config, "epcsaft.provider-sdk-mode")
+            or os.environ.get("EPCSAFT_PROVIDER_SDK_MODE")
+            or "monorepo"
+        )
+        .strip()
+        .lower()
+    )
 
 
 def _configured_provider_sdk(config: dict) -> Path | None:
@@ -156,12 +132,52 @@ def _apply_build_config(config_settings=None, *, native_required: bool = True) -
     return config
 
 
+def _repair_linux_wheel(raw_wheel: Path, wheel_directory: Path) -> str:
+    if sys.platform != "linux":
+        raise RuntimeError("epcsaft-equilibrium native wheels are built and repaired on Linux.")
+    if not raw_wheel.is_file():
+        raise FileNotFoundError(f"Scikit-build-core did not produce the expected wheel: {raw_wheel}")
+
+    wheel_directory.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="epcsaft-equilibrium-auditwheel-", dir=wheel_directory) as repair_temp:
+        repair_dir = Path(repair_temp)
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "auditwheel",
+                "repair",
+                "--wheel-dir",
+                str(repair_dir),
+                str(raw_wheel),
+            ],
+            check=True,
+        )
+        repaired_wheels = list(repair_dir.glob("*.whl"))
+        if len(repaired_wheels) != 1:
+            raise RuntimeError(
+                f"auditwheel must produce exactly one repaired wheel; found {len(repaired_wheels)} in {repair_dir}"
+            )
+        repaired_wheel = repaired_wheels[0]
+        final_wheel = wheel_directory / repaired_wheel.name
+        os.replace(repaired_wheel, final_wheel)
+    return final_wheel.name
+
+
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
-    return _scikit_build.build_wheel(
-        wheel_directory,
-        config_settings=_apply_build_config(config_settings),
-        metadata_directory=metadata_directory,
-    )
+    output_dir = Path(wheel_directory).expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix="epcsaft-equilibrium-raw-wheel-",
+        dir=_external_temp_root(),
+    ) as raw_temp:
+        raw_dir = Path(raw_temp)
+        raw_name = _scikit_build.build_wheel(
+            str(raw_dir),
+            config_settings=_apply_build_config(config_settings),
+            metadata_directory=metadata_directory,
+        )
+        return _repair_linux_wheel(raw_dir / raw_name, output_dir)
 
 
 def build_editable(wheel_directory, config_settings=None, metadata_directory=None):

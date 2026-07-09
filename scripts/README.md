@@ -11,8 +11,10 @@ Canonical rules:
 Current layout:
 
 - `scripts/_env.py`, `scripts/_epcsaft_oop.py`, `scripts/plot_outputs.py`: shared analysis helpers.
-- `scripts/sandbox_tempfile_site/`: shared support for sandbox-safe temporary directories during build/package workflows.
 - `scripts/dev/`: environment setup, native build, repair, validation, and packaging entrypoints.
+  Start migrated Linux checkouts with `scripts/dev/check_linux_prereqs.sh --check`.
+  Use `scripts/dev/clean_transferred_artifacts.sh --dry-run` to inspect ignored
+  Windows/native/cache artifacts before removing them with `--apply`.
 - Benchmark and profiling entrypoints are currently not retained; add a current owned workflow before making performance or literature-coverage claims.
 - `scripts/validation/`: opt-in specialty validation entrypoints.
 - `scripts/docs/`: documentation, equation-registry, and LaTeX-mirror maintenance entrypoints.

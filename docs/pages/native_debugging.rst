@@ -38,7 +38,7 @@ Validation commands
 
 Use the normal build path first:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_epcsaft.py
    uv run python scripts/dev/doctor.py
@@ -46,8 +46,8 @@ Use the normal build path first:
 
 The normal local dev build is the fast profile: Ceres ON, CppAD ON, and Ipopt
 ON when ``EPCSAFT_IPOPT_ROOT``, ``EPCSAFT_PEP517_IPOPT_ROOT``,
-``--ipopt-dir``, or the Windows local SDK default
-``%USERPROFILE%\Documents\deps\ipopt-msvc`` provides a native Ipopt install.
+``--ipopt-dir``, or Linux default Ipopt discovery provides a native Ipopt
+install.
 In this transition checkout, Ceres is enabled by default for the regression
 extension native module, CppAD is required for derivative-capable provider
 builds, and Ipopt-enabled builds own the equilibrium extension native routes.
@@ -60,7 +60,7 @@ regression coverage.
 
 For C++ iteration after the build tree is configured:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_epcsaft.py --build-only --parallel 10
    uv run python run_pytest.py --runtime -q
@@ -77,7 +77,7 @@ Equation traceability
 
 Native owner comments use ``// EqID: <id>`` near the implementing C++ function. When touching equation code, keep the EqID comment close to the function that owns the expression and run:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability
    uv run python run_pytest.py tests/native/contracts/test_equation_registry.py -q

@@ -106,11 +106,11 @@ composition/domain margins, and capability boundary state.
 
 ## Proof Oracle
 
-```powershell
+```bash
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-25-m4-equilibrium-issue-0313-electrolyte-postsolve-phase-set-certification-gate-plan.md
 uv run --no-sync python scripts/validation/check_electrolyte_postsolve_certification.py --json --require-stage-iii --require-postsolve-certification --require-public-routes-closed --require-complete
 uv run --no-sync python run_pytest.py tests/native/contracts/test_electrolyte_postsolve_certification.py tests/native/contracts/test_electrolyte_stage_iii_refinement.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```

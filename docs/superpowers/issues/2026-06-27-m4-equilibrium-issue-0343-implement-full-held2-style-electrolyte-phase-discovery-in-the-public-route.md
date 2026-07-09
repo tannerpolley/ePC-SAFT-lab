@@ -86,19 +86,19 @@ Retained on branch `codex/issue-0343-held2-parent-proof-sync` after the stale
 package diagnostic expectation was aligned to the implemented exact-Hessian
 public route:
 
-- `uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete`
+- `uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete`
   - `complete=True`, blockers empty, 7 accepted scenarios.
   - Public-route solve scenarios: unstable feed, boundary feed, phase-label permutation.
   - Reduced-basis prerequisite scenarios: common-ion electrolyte and mixed-salt asymmetric electrolyte.
   - Retained unstable-feed route Hessian: `exact`.
-- `uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete`
+- `uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete`
   - `complete=True`, blockers empty.
   - Public route: `electrolyte_lle`; selector family: `electrolyte_lle`; problem kind: `electrolyte_lle`.
   - Postsolve accepted: `True`; `exact_hessian_available=True`; `hessian_approximation=exact`; `route_hessian_approximation=exact`.
   - Charge residual `0 <= 1e-08`; neutral transfer residual `5.56798114281776e-08 <= 1e-04`; mean-ionic transfer residual `4.10447853482765e-08 <= 1e-04`.
-- `uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2" -q`
+- `uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2" -q`
   - `17 passed, 206 deselected`.
-- `uv run --no-sync python -m pytest tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q`
+- `uv run --no-sync python -m pytest tests/native/contracts/test_equilibrium_benchmark_registry.py tests/native/contracts/test_generalized_equilibrium_registry.py -q`
   - `28 passed`.
 
 This closes #343 through the proof/sync PR only. #191 remains open until #343 is
@@ -112,10 +112,10 @@ actually closed and then re-evaluated for final M4 electrolyte closeout.
 
 ## Proof Oracle
 
-```powershell
-uv run --no-sync python scripts\validation\check_electrolyte_held2_public_route_scenarios.py --json --require-complete
-uv run --no-sync python scripts\validation\check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
-uv run --no-sync python -m pytest packages\epcsaft-equilibrium\tests -k "electrolyte and held2" -q
-uv run --no-sync python -m pytest tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q
-uv run --no-sync python scripts\dev\validate_project.py docs
+```bash
+uv run --no-sync python scripts/validation/check_electrolyte_held2_public_route_scenarios.py --json --require-complete
+uv run --no-sync python scripts/validation/check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete
+uv run --no-sync python -m pytest packages/epcsaft-equilibrium/tests -k "electrolyte and held2" -q
+uv run --no-sync python -m pytest tests/native/contracts/test_equilibrium_benchmark_registry.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
+uv run --no-sync python scripts/dev/validate_project.py docs
 ```

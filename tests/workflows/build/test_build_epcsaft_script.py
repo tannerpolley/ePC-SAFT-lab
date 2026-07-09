@@ -18,81 +18,71 @@ def _load_script():
     return module
 
 
-def test_build_script_preserves_existing_generator_for_auto() -> None:
+def test_build_script_rejects_existing_non_ninja_generator_for_auto(monkeypatch) -> None:
     build = _load_script()
+    ninja = Path("/repo/.venv/bin/ninja")
+    monkeypatch.setattr(build, "_repo_tool_path", lambda name: ninja if name == "ninja" else None)
 
-    args = build._generator_args({"EPCSAFT_CMAKE_GENERATOR": ""}, configured_generator="MinGW Makefiles")
-
-    assert args == []
+    with pytest.raises(RuntimeError, match="Use --clean before switching to 'Ninja'"):
+        build._generator_args({"EPCSAFT_CMAKE_GENERATOR": ""}, configured_generator="Unix Makefiles")
 
 
 def test_build_script_rejects_explicit_generator_switch_without_clean() -> None:
     build = _load_script()
 
     with pytest.raises(RuntimeError, match="Use --clean before switching"):
-        build._generator_args({"EPCSAFT_CMAKE_GENERATOR": "ninja"}, configured_generator="MinGW Makefiles")
+        build._generator_args({"EPCSAFT_CMAKE_GENERATOR": "ninja"}, configured_generator="Unix Makefiles")
 
 
 def test_build_script_prefers_repo_local_cmake(monkeypatch) -> None:
     build = _load_script()
-    cmake = Path("C:/repo/.venv/Scripts/cmake.exe")
+    cmake = Path("/repo/.venv/bin/cmake")
 
     monkeypatch.setattr(build, "_repo_tool_path", lambda name: cmake if name == "cmake" else None)
 
     assert build._cmake_command() == [str(cmake)]
 
 
+def test_build_script_fails_when_repo_local_cmake_is_missing(monkeypatch) -> None:
+    build = _load_script()
+
+    monkeypatch.setattr(build, "_repo_tool_path", lambda name: None)
+
+    with pytest.raises(FileNotFoundError, match="repo-local CMake"):
+        build._cmake_command()
+
+
 def test_build_script_pins_repo_local_ninja_for_new_tree(monkeypatch) -> None:
     build = _load_script()
-    ninja = Path("C:/repo/.venv/Scripts/ninja.exe")
+    ninja = Path("/repo/.venv/bin/ninja")
 
     monkeypatch.setattr(build, "_repo_tool_path", lambda name: ninja if name == "ninja" else None)
-    monkeypatch.setattr(build.shutil, "which", lambda name, path=None: "C:/Strawberry/c/bin/ninja.exe")
+    monkeypatch.setattr(build.shutil, "which", lambda name, path=None: "/usr/bin/ninja")
 
     args = build._generator_args({"EPCSAFT_CMAKE_GENERATOR": ""}, configured_generator=None)
 
     assert args == ["-G", "Ninja", f"-DCMAKE_MAKE_PROGRAM={ninja.as_posix()}"]
 
 
-def test_build_script_auto_prefers_ninja_for_new_build_tree(monkeypatch) -> None:
+def test_build_script_fails_when_repo_local_ninja_is_missing(monkeypatch) -> None:
     build = _load_script()
 
     monkeypatch.setattr(build, "_repo_tool_path", lambda name: None)
-    monkeypatch.setattr(build.shutil, "which", lambda name, path=None: "ninja.exe" if name == "ninja" else None)
+    monkeypatch.setattr(build.shutil, "which", lambda name, path=None: "/usr/bin/ninja" if name == "ninja" else None)
 
-    args = build._generator_args({"EPCSAFT_CMAKE_GENERATOR": ""}, configured_generator=None)
+    with pytest.raises(FileNotFoundError, match="repo-local Ninja"):
+        build._generator_args({"EPCSAFT_CMAKE_GENERATOR": ""}, configured_generator=None)
 
-    assert args == ["-G", "Ninja"]
 
-
-def test_build_script_auto_loads_msvc_for_new_windows_tree(monkeypatch) -> None:
+def test_build_script_rejects_removed_toolchain_option() -> None:
     build = _load_script()
-    env = {"PATH": "C:/repo/.venv/Scripts"}
-    loaded = {"PATH": "C:/repo/.venv/Scripts", "VSCMD_VER": "17.0"}
 
-    monkeypatch.setattr(build.os, "name", "nt")
-    monkeypatch.setattr(build, "_configured_cxx_compiler", lambda: None)
-    monkeypatch.setattr(build, "_load_msvc_env", lambda build_env: loaded)
-
-    result = build._apply_toolchain_env(env, toolchain="auto", enable_ipopt=False, ipopt_root=None)
-
-    assert result == loaded
-
-
-def test_build_script_auto_preserves_existing_non_msvc_windows_tree_without_clean(monkeypatch) -> None:
-    build = _load_script()
-    env = {"PATH": "C:/Strawberry/c/bin"}
-
-    monkeypatch.setattr(build.os, "name", "nt")
-    monkeypatch.setattr(build, "_configured_cxx_compiler", lambda: "C:/Strawberry/c/bin/c++.exe")
-
-    result = build._apply_toolchain_env(env, toolchain="auto", enable_ipopt=False, ipopt_root=None)
-
-    assert result == env
+    with pytest.raises(SystemExit):
+        build._parser().parse_args(["--toolchain", "auto"])
 
 
 def test_build_script_reads_version_from_pyproject() -> None:
     build = _load_script()
-    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    pyproject = tomllib.loads(build.PROVIDER_PYPROJECT.read_text(encoding="utf-8"))
 
     assert build._pyproject_version() == pyproject["project"]["version"]

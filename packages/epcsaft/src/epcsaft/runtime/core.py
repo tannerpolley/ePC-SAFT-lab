@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import platform
 import re
 import subprocess
@@ -112,14 +111,10 @@ def _native_extension_path() -> Path | None:
 
 
 def _platform_label() -> str:
-    if os.name == "nt":
-        return sys.platform
     return platform.platform()
 
 
 def _machine_label() -> str:
-    if os.name == "nt":
-        return os.environ.get("PROCESSOR_ARCHITECTURE", "unknown")
     return platform.machine()
 
 

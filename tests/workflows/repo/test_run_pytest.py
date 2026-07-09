@@ -1,11 +1,12 @@
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import epcsaft.runtime.capability_evidence as capability_evidence
 import pytest
 
-import epcsaft.runtime.capability_evidence as capability_evidence
 import run_pytest
 from scripts.dev import doctor, validate_project
 
@@ -97,8 +98,7 @@ def test_all_shortcut_is_the_explicit_exhaustive_pytest_route():
 
 def test_validate_project_modes_route_to_standard_validation_bundles():
     assert validate_project.CHECK_COMMANDS == {
-        name: capability_evidence.validation_lane_commands(name)
-        for name in capability_evidence.VALIDATION_LANES
+        name: capability_evidence.validation_lane_commands(name) for name in capability_evidence.VALIDATION_LANES
     }
     assert validate_project.CHECK_COMMANDS["quick"] == (
         ("scripts/dev/doctor.py",),
@@ -170,10 +170,58 @@ def test_validate_project_script_runs_when_invoked_by_path():
     assert "standard validation modes" in result.stdout
 
 
+def test_list_slices_does_not_import_scientific_runtime_packages():
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        [sys.executable, "-S", "run_pytest.py", "--list-slices"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Available slices:" in result.stdout
+    assert "provider-api:" in result.stdout
+    assert "equilibrium-api:" in result.stdout
+
+
+def test_bootstrap_dry_run_works_before_uv_environment_exists():
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        [sys.executable, "-S", "scripts/dev/bootstrap.py", "--dry-run", "--step", "sync"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Running: uv sync --no-install-workspace" in result.stdout
+    assert "bootstrap_state: dry-run" in result.stdout
+
+
+def test_bootstrap_setup_does_not_repeat_environment_sync():
+    repo_root = Path(__file__).resolve().parents[3]
+
+    result = subprocess.run(
+        [sys.executable, "-S", "scripts/dev/bootstrap.py", "--dry-run", "--step", "setup"],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Running: uv sync --no-install-workspace" not in result.stdout
+    assert "scripts/dev/build_epcsaft.py" in result.stdout
+
+
 def test_pytest_slices_are_adapted_from_capability_evidence_registry():
     assert run_pytest.SLICE_TARGETS == {
-        name: capability_evidence.registry_targets(name)
-        for name in capability_evidence.TEST_SLICES
+        name: capability_evidence.registry_targets(name) for name in capability_evidence.TEST_SLICES
     }
     assert run_pytest.GENERIC_TEST_TARGETS == capability_evidence.registry_targets("generic")
     assert run_pytest.CONFIDENCE_TEST_TARGETS == capability_evidence.registry_targets("confidence")
@@ -228,17 +276,20 @@ def test_doctor_exposes_provider_sdk_and_extension_native_requirements():
         "epcsaft_equilibrium_native_core",
         "epcsaft_regression_native_core",
         "ceres_reusable_config_found",
-        "ipopt_default_sdk_root",
-        "ipopt_default_sdk_candidates",
+        "ipopt_default_root",
+        "ipopt_default_candidates",
         "ipopt_active_root_source",
         "ipopt_change_command",
+        "ipopt_runtime_lib_dir",
         "artifact_freshness",
     ):
         assert token in source
 
 
 def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():
-    source = Path("packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp").read_text(encoding="utf-8")
+    source = Path(
+        "packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp"
+    ).read_text(encoding="utf-8")
 
     blocked_terms = (
         "unsupported/Eigen/" + "Levenberg" + "Marquardt",
@@ -252,7 +303,10 @@ def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():
 def test_native_ceres_sources_have_no_ceres_nonexact_derivative_route():
     source = "\n".join(
         path.read_text(encoding="utf-8")
-        for root in (Path("packages/epcsaft/src/epcsaft/native"), Path("packages/epcsaft-regression/src/epcsaft_regression/native"))
+        for root in (
+            Path("packages/epcsaft/src/epcsaft/native"),
+            Path("packages/epcsaft-regression/src/epcsaft_regression/native"),
+        )
         for path in sorted(root.rglob("*"))
         if path.suffix in {".cpp", ".h", ".hpp"}
     )
@@ -270,14 +324,14 @@ def test_native_ceres_sources_have_no_ceres_nonexact_derivative_route():
         assert term.lower() not in source_lower
 
 
-def test_doctor_recommends_ninja_migration_for_mingw_build_tree():
-    command = doctor._ninja_migration_recommendation("MinGW Makefiles", "C:/tools/ninja.exe")
+def test_doctor_recommends_ninja_migration_for_non_ninja_build_tree():
+    command = doctor._ninja_migration_recommendation("Unix Makefiles", "/usr/bin/ninja")
 
-    assert command == "uv run python scripts\\dev\\build_epcsaft.py --clean --generator ninja"
+    assert command == "uv run python scripts/dev/build_epcsaft.py --clean --generator ninja"
 
 
 def test_doctor_does_not_recommend_ninja_migration_when_already_ninja():
-    command = doctor._ninja_migration_recommendation("Ninja", "C:/tools/ninja.exe")
+    command = doctor._ninja_migration_recommendation("Ninja", "/usr/bin/ninja")
 
     assert command is None
 
@@ -301,9 +355,7 @@ def test_named_shortcuts_expand_to_expected_targets_and_keep_pytest_arg_ordering
     assert native_contract_args[: len(run_pytest.NATIVE_CONTRACT_TEST_TARGETS)] == list(
         run_pytest.NATIVE_CONTRACT_TEST_TARGETS
     )
-    assert provider_api_args[: len(run_pytest.PROVIDER_API_TEST_TARGETS)] == list(
-        run_pytest.PROVIDER_API_TEST_TARGETS
-    )
+    assert provider_api_args[: len(run_pytest.PROVIDER_API_TEST_TARGETS)] == list(run_pytest.PROVIDER_API_TEST_TARGETS)
     assert regression_args[: len(run_pytest.REGRESSION_TEST_TARGETS)] == list(run_pytest.REGRESSION_TEST_TARGETS)
     assert integration_args[: len(run_pytest.INTEGRATION_TEST_TARGETS)] == list(run_pytest.INTEGRATION_TEST_TARGETS)
     assert equilibrium_confidence_args[: len(run_pytest.EQUILIBRIUM_CONFIDENCE_TEST_TARGETS)] == list(
@@ -405,8 +457,9 @@ def test_slice_targets_use_grouped_test_subpackages():
     assert "tests/native/contracts/test_equation_registry.py::test_equation_registry_outputs_are_synced" in (
         run_pytest.GENERIC_TEST_TARGETS
     )
-    assert "packages/epcsaft/tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives" in (
-        run_pytest.RUNTIME_TEST_TARGETS
+    assert (
+        "packages/epcsaft/tests/api/frontend/test_state_properties.py::test_cppad_state_proves_hydrocarbon_values_and_derivatives"
+        in (run_pytest.RUNTIME_TEST_TARGETS)
     )
     assert "tests/workflows/repo/test_run_pytest.py" not in run_pytest.GENERIC_TEST_TARGETS
 
@@ -479,8 +532,7 @@ def test_broad_native_route_builder_targets_require_explicit_opt_in():
     )
     single_node = run_pytest._pytest_args(
         [
-            f"{EQUILIBRIUM_SELECTOR_CONTRACT_TEST}::"
-            "test_selector_core_contract_owns_production_vle_metadata",
+            f"{EQUILIBRIUM_SELECTOR_CONTRACT_TEST}::test_selector_core_contract_owns_production_vle_metadata",
             "-q",
         ],
         pytest_temp,
@@ -632,8 +684,7 @@ def test_equilibrium_debug_rejects_confidence_slice_sweeps():
 def test_equilibrium_debug_accepts_exactly_one_equilibrium_test_node():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
     target = (
-        f"{EQUILIBRIUM_NATIVE_LLE_RESULTS_TEST}::"
-        "test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary"
+        f"{EQUILIBRIUM_NATIVE_LLE_RESULTS_TEST}::test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary"
     )
 
     args = run_pytest._pytest_args([target, "-q", "-s"], pytest_temp, equilibrium_debug=True)
@@ -645,8 +696,7 @@ def test_equilibrium_debug_accepts_exactly_one_equilibrium_test_node():
 def test_equilibrium_debug_rejects_sweeps_and_non_equilibrium_targets():
     pytest_temp = Path("build") / "pytest-temp" / "run-test"
     first = (
-        f"{EQUILIBRIUM_NATIVE_LLE_RESULTS_TEST}::"
-        "test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary"
+        f"{EQUILIBRIUM_NATIVE_LLE_RESULTS_TEST}::test_neutral_tpd_phase_discovery_reports_candidate_set_for_lle_binary"
     )
     second = (
         "packages/epcsaft-equilibrium/tests/api/test_equilibrium.py::"
@@ -665,7 +715,10 @@ def test_equilibrium_debug_rejects_sweeps_and_non_equilibrium_targets():
 
     with pytest.raises(SystemExit, match="must be equilibrium tests"):
         run_pytest._pytest_args(
-            ["packages/epcsaft/tests/api/frontend/test_state_properties.py::test_state_properties_use_molar_units", "-q"],
+            [
+                "packages/epcsaft/tests/api/frontend/test_state_properties.py::test_state_properties_use_molar_units",
+                "-q",
+            ],
             pytest_temp,
             equilibrium_debug=True,
         )
@@ -756,6 +809,27 @@ def test_pytest_env_preserves_existing_perf_flags(monkeypatch):
     assert normal_env.get("EPCSAFT_RUN_PERF", normal_env.get("ePCSAFT_RUN_PERF")) == "0"
     if sys.platform != "win32":
         assert normal_env["ePCSAFT_RUN_PERF"] == "0"
+
+
+def test_pytest_runner_uses_all_package_roots_and_preserves_caller_pythonpath(tmp_path):
+    repo_root = tmp_path / "repo"
+    package_roots = run_pytest._package_src_roots(repo_root)
+    caller_root = tmp_path / "caller-src"
+    caller_pythonpath = os.pathsep.join((str(caller_root), str(package_roots[1])))
+
+    entries = run_pytest._merged_pythonpath_entries(package_roots, caller_pythonpath)
+
+    assert package_roots == (
+        repo_root / "packages" / "epcsaft" / "src",
+        repo_root / "packages" / "epcsaft-equilibrium" / "src",
+        repo_root / "packages" / "epcsaft-regression" / "src",
+    )
+    assert entries == (
+        str(package_roots[0]),
+        str(package_roots[1]),
+        str(package_roots[2]),
+        str(caller_root),
+    )
 
 
 def test_slice_listing_text_names_all_targets():

@@ -25,7 +25,7 @@ Documentation-only audit
 
 Documentation-only EqIDs are exempt from strict C++ owner enforcement, but they should still be easy to understand. Use this command when reviewing theory/docs traceability:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability --docs-only-audit
 
@@ -43,7 +43,7 @@ Validate
 
 For equation work, run:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/docs/sync_equation_registry.py
    uv run python scripts/docs/sync_equation_registry.py --check --strict-traceability
@@ -51,7 +51,7 @@ For equation work, run:
 
 Before handoff after native/equation changes, also run:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python run_pytest.py --native -q
    uv run python run_pytest.py --runtime -q

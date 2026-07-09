@@ -93,13 +93,13 @@ campaign summaries attached to the existing paper-validation tree.
 
 ## Proof Oracle
 
-```powershell
+```bash
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-complete
 uv run --no-sync python run_pytest.py tests/native/contracts/test_gross_2002_association_acceptance_checker.py tests/native/contracts/test_associating_lle_gross_2002_checker.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 ## GitHub Body

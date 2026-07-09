@@ -52,7 +52,7 @@ last_synced: "2026-06-29"
 - #349 is closed with scenario evidence: `check_electrolyte_held2_public_route_scenarios.py --json --require-complete` returns `complete=True`, no blockers, and 7 accepted scenarios covering stable, unstable, boundary, phase-label, neutral-limit, common-ion, and mixed-salt/asymmetric cases.
 - Registry admission row now names the full public-route proof: `check_electrolyte_public_admission.py --json --require-held2-stage-ii --require-stage-iii --require-postsolve-certification --require-public-admission --require-complete`.
 - Registry admission row now names the scenario ladder proof: `check_electrolyte_held2_public_route_scenarios.py --json --require-complete`.
-- Registry contract row now names the #350 proof oracle: `uv run --no-sync python -m pytest tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q`.
+- Registry contract row now names the #350 proof oracle: `uv run --no-sync python -m pytest tests/native/contracts/test_equilibrium_benchmark_registry.py tests/native/contracts/test_generalized_equilibrium_registry.py -q`.
 - Capability docs state that #314 remains representative public-route admission, #348/#349 provide full HELD2-style public-route discovery and scenario validation for the retained `electrolyte_lle` scope, and #320 remains the Perdomo/Figiel validation blocker.
 - Unsupported generic electrolyte, reactive, CE/CPE, regression, fitted-model, and release surfaces remain closed in registry/docs evidence.
 
@@ -62,7 +62,7 @@ last_synced: "2026-06-29"
 
 ## Proof Oracle
 
-```powershell
-uv run --no-sync python -m pytest tests\native\contracts\test_equilibrium_benchmark_registry.py tests\native\contracts\test_generalized_equilibrium_registry.py -q
-uv run --no-sync python scripts\dev\validate_project.py docs
+```bash
+uv run --no-sync python -m pytest tests/native/contracts/test_equilibrium_benchmark_registry.py tests/native/contracts/test_generalized_equilibrium_registry.py -q
+uv run --no-sync python scripts/dev/validate_project.py docs
 ```

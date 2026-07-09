@@ -2,43 +2,18 @@
 
 from __future__ import annotations
 
-import errno
 import os
-import sys
 import tempfile
 from pathlib import Path
 
 from scikit_build_core import build as _scikit_build
 
 PACKAGE_NAME = "epcsaft-regression"
-PROVIDER_SDK_RELATIVE_CONFIG = Path("src") / "epcsaft" / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake"
+PROVIDER_SDK_RELATIVE_CONFIG = (
+    Path("src") / "epcsaft" / "native_sdk" / "provider_native_sdk_v1" / "epcsaft_provider_sdk.cmake"
+)
 CERES_VERSION = "2.2.0"
 DEFAULT_SYSTEM_CERES_RELATIVE = Path("build") / "system-ceres" / CERES_VERSION
-
-
-def _sandbox_safe_mkdtemp(suffix=None, prefix=None, dir=None):
-    prefix, suffix, dir, output_type = tempfile._sanitize_params(prefix, suffix, dir)
-    names = tempfile._get_candidate_names()
-    if output_type is bytes:
-        names = map(os.fsencode, names)
-    for _ in range(tempfile.TMP_MAX):
-        name = next(names)
-        path = os.path.join(dir, prefix + name + suffix)
-        sys.audit("tempfile.mkdtemp", path)
-        try:
-            os.mkdir(path, 0o777)
-        except FileExistsError:
-            continue
-        except PermissionError:
-            if os.name == "nt" and os.path.isdir(dir) and os.access(dir, os.W_OK):
-                continue
-            raise
-        return os.path.abspath(path)
-    raise FileExistsError(errno.EEXIST, "No usable temporary directory name found")
-
-
-if os.name == "nt":
-    tempfile.mkdtemp = _sandbox_safe_mkdtemp
 
 
 def _source_root() -> Path:
@@ -88,12 +63,7 @@ def _config_value(config: dict, key: str) -> str | None:
 
 def _external_temp_root() -> Path | None:
     source_root = _source_root()
-    candidates: list[Path] = []
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        candidates.append(Path(local_app_data) / "Temp")
-    if os.name != "nt":
-        candidates.append(Path("/tmp"))
+    candidates: list[Path] = [Path("/tmp")]
     candidates.append(Path(tempfile.gettempdir()))
     for candidate in candidates:
         try:
@@ -109,10 +79,14 @@ def _external_temp_root() -> Path | None:
 
 def _provider_sdk_mode(config: dict) -> str:
     return (
-        _config_value(config, "epcsaft.provider-sdk-mode")
-        or os.environ.get("EPCSAFT_PROVIDER_SDK_MODE")
-        or "monorepo"
-    ).strip().lower()
+        (
+            _config_value(config, "epcsaft.provider-sdk-mode")
+            or os.environ.get("EPCSAFT_PROVIDER_SDK_MODE")
+            or "monorepo"
+        )
+        .strip()
+        .lower()
+    )
 
 
 def _configured_provider_sdk(config: dict) -> Path | None:
@@ -149,7 +123,9 @@ def _apply_build_config(config_settings=None, *, native_required: bool = True) -
             build_dir = Path(persistent).expanduser().resolve() / PACKAGE_NAME
             build_dir.mkdir(parents=True, exist_ok=True)
         else:
-            build_dir = Path(tempfile.mkdtemp(prefix="epcsaft-regression-pep517-build-", dir=_external_temp_root())).resolve()
+            build_dir = Path(
+                tempfile.mkdtemp(prefix="epcsaft-regression-pep517-build-", dir=_external_temp_root())
+            ).resolve()
         config["build-dir"] = str(build_dir)
 
     if not native_required:
@@ -163,7 +139,9 @@ def _apply_build_config(config_settings=None, *, native_required: bool = True) -
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_CPPAD", "ON")
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_CERES", "ON")
     _set_config_default(config, "cmake.define.EPCSAFT_ENABLE_IPOPT", "OFF")
-    ceres_dir = os.environ.get("EPCSAFT_PEP517_CERES_DIR") or os.environ.get("Ceres_DIR") or _repo_local_ceres_config_dir()
+    ceres_dir = (
+        os.environ.get("EPCSAFT_PEP517_CERES_DIR") or os.environ.get("Ceres_DIR") or _repo_local_ceres_config_dir()
+    )
     if ceres_dir:
         _set_config_default(config, "cmake.define.EPCSAFT_USE_SYSTEM_CERES", "ON")
         _set_config_default(config, "cmake.define.Ceres_DIR", str(Path(ceres_dir).expanduser().resolve()))

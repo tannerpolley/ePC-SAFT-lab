@@ -10,7 +10,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DIST_ROOT = REPO_ROOT / "dist"
-TEMPFILE_SITE = REPO_ROOT / "scripts" / "sandbox_tempfile_site"
 
 try:
     from scripts.dev.package_paths import PROVIDER_PACKAGE_DIR
@@ -18,9 +17,9 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
     from package_paths import PROVIDER_PACKAGE_DIR
 
 try:
-    from native_runtime_env import resolve_default_windows_ipopt_sdk_root
+    from native_runtime_env import ipopt_runtime_lib_dir, resolve_default_linux_ipopt_root
 except ImportError:  # pragma: no cover - supports importing this module as scripts.dev.build_dist
-    from scripts.dev.native_runtime_env import resolve_default_windows_ipopt_sdk_root
+    from scripts.dev.native_runtime_env import ipopt_runtime_lib_dir, resolve_default_linux_ipopt_root
 
 
 def _run(cmd: list[str], *, env: dict[str, str] | None = None) -> None:
@@ -31,30 +30,30 @@ def _run(cmd: list[str], *, env: dict[str, str] | None = None) -> None:
 def _remove_path_entry(raw: str, entry: Path) -> str:
     normalized_entry = os.path.normcase(os.path.normpath(str(entry.resolve())))
     return os.pathsep.join(
-        part
-        for part in raw.split(os.pathsep)
-        if part and os.path.normcase(os.path.normpath(part)) != normalized_entry
+        part for part in raw.split(os.pathsep) if part and os.path.normcase(os.path.normpath(part)) != normalized_entry
     )
 
 
 def _strip_ipopt_env(env: dict[str, str]) -> None:
+    ipopt_roots = [
+        Path(raw).expanduser() for name in ("EPCSAFT_IPOPT_ROOT", "EPCSAFT_PEP517_IPOPT_ROOT") if (raw := env.get(name))
+    ]
     for name in (
         "EPCSAFT_IPOPT_ROOT",
         "EPCSAFT_PEP517_IPOPT_ROOT",
         "EPCSAFT_PEP517_IPOPT_DIR",
         "EPCSAFT_PEP517_ENABLE_IPOPT",
         "EPCSAFT_PEP517_USE_SYSTEM_IPOPT",
-        "EPCSAFT_RUNTIME_DLL_DIRS",
         "Ipopt_DIR",
     ):
         env.pop(name, None)
-    default_ipopt = resolve_default_windows_ipopt_sdk_root()
-    if default_ipopt is None:
-        return
-    bin_dir = default_ipopt / "bin"
-    if not bin_dir.is_dir():
-        return
-    env["PATH"] = _remove_path_entry(env.get("PATH", ""), bin_dir)
+    default_ipopt = resolve_default_linux_ipopt_root()
+    if default_ipopt is not None:
+        ipopt_roots.append(default_ipopt)
+    for ipopt_root in ipopt_roots:
+        lib_dir = ipopt_runtime_lib_dir(ipopt_root)
+        if lib_dir is not None:
+            env["LD_LIBRARY_PATH"] = _remove_path_entry(env.get("LD_LIBRARY_PATH", ""), lib_dir)
 
 
 def _apply_persistent_pep517_build_dir(env: dict[str, str]) -> None:
@@ -75,10 +74,6 @@ def _env(parallel: str | None = None) -> dict[str, str]:
     env["TMP"] = str(temp_root.resolve())
     env["TEMP"] = str(temp_root.resolve())
     env["TMPDIR"] = str(temp_root.resolve())
-    env["EPCSAFT_SANDBOX_SAFE_TEMPFILE"] = "1"
-    existing_pythonpath = env.get("PYTHONPATH")
-    site_path = str(TEMPFILE_SITE.resolve())
-    env["PYTHONPATH"] = site_path if not existing_pythonpath else os.pathsep.join([site_path, existing_pythonpath])
     _strip_ipopt_env(env)
     _apply_persistent_pep517_build_dir(env)
     if parallel:
@@ -127,9 +122,7 @@ def _assert_wheel_has_no_solver_dev_artifacts(wheel: Path) -> None:
     )
     with zipfile.ZipFile(wheel) as archive:
         offenders = [
-            name
-            for name in archive.namelist()
-            if any(fragment in f"/{name}".lower() for fragment in blocked_fragments)
+            name for name in archive.namelist() if any(fragment in f"/{name}".lower() for fragment in blocked_fragments)
         ]
     if offenders:
         sample = "\n".join(f"  - {name}" for name in offenders[:20])
@@ -191,7 +184,7 @@ def main() -> int:
     parser.add_argument(
         "--parallel",
         default=os.environ.get("EPCSAFT_BUILD_DIST_PARALLEL", "1"),
-        help="CMake build parallelism for isolated PEP 517 builds. Defaults to 1 to avoid Windows Ceres OOMs.",
+        help="CMake build parallelism for isolated PEP 517 builds. Defaults to 1 for reproducible package proofs.",
     )
     args = parser.parse_args()
 

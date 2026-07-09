@@ -31,13 +31,13 @@ PyPI publishing is configured through GitHub Actions, but the first upload
 requires the PyPI pending publisher for this repository. When the project page
 is live at ``https://pypi.org/project/epcsaft/``, install with:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install epcsaft
 
 With ``uv``:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv add epcsaft
 
@@ -49,13 +49,13 @@ Install from tagged source
 The ``v0.2.0`` tag supports source installs that build the native extension
 locally:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 With ``uv``:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv add "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
@@ -74,9 +74,9 @@ Install from a local source archive
 
 Download the release source archive, extract it, then run:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   cd C:\path\to\ePC-SAFT-0.2.0
+   cd /path/to/ePC-SAFT-0.2.0
    python -m pip install packages/epcsaft
 
 Editable source install
@@ -85,7 +85,7 @@ Editable source install
 Use an editable install when you are changing Python files and want imports to
 come directly from the checkout:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
@@ -93,7 +93,7 @@ come directly from the checkout:
 
 With ``uv``:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv pip install -e packages/epcsaft
 
@@ -106,17 +106,21 @@ Equilibrium and regression workflows live in monorepo workspace packages under
 ``packages/``. Their local distribution artifacts can be built and installed
 from ``dist/`` alongside the provider artifact before PyPI publication:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv run python scripts/dev/build_dist.py --parallel 1
-   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1 --ipopt-root "$env:USERPROFILE\Documents\deps\ipopt-msvc"
+   uv run python scripts/dev/build_extension_dists.py --mode monorepo --parallel 1
+   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --parallel 1
    uv run python scripts/dev/check_release_installs.py --dist-dir dist
+
+The extension helper uses the shared Linux Ipopt discovery policy when no root
+is supplied. To pin a specific audited install, run ``export
+EPCSAFT_IPOPT_ROOT=/path/to/ipopt`` before the extension build commands.
 
 The release install proof covers these package combinations from local
 artifacts:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install epcsaft
    python -m pip install epcsaft epcsaft-equilibrium
@@ -140,56 +144,51 @@ For a project that depends on a local checkout, use a path dependency:
 .. code-block:: toml
 
    dependencies = [
-       "epcsaft @ file:///C:/path/to/ePC-SAFT/packages/epcsaft",
+       "epcsaft @ file:///path/to/ePC-SAFT/packages/epcsaft",
    ]
 
 After package changes, refresh the installed dependency:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    uv sync --reinstall-package epcsaft
 
 Use ``uv run --no-sync ...`` for follow-up downstream commands when you do not
 want an implicit sync to rebuild the package again.
 
-Native IPOPT SDK support
-------------------------
+Native Ipopt support
+--------------------
 
-IPOPT support is a native build dependency for constrained-NLP equilibrium
-routes in the current transition build, not a Python extra. Long term, Ipopt
-belongs to the ``epcsaft-equilibrium`` extension package. On Windows, the
-supported default SDK probes are
-``%LOCALAPPDATA%\ePC-SAFT\deps\ipopt-msvc``,
-``%USERPROFILE%\.epcsaft\deps\ipopt-msvc``, and the legacy
-``%USERPROFILE%\Documents\deps\ipopt-msvc`` path. Explicit
-``EPCSAFT_IPOPT_ROOT`` / ``EPCSAFT_PEP517_IPOPT_ROOT`` values take precedence
-and are preferred for reproducible release proof. Source and editable installs
-use a discovered SDK automatically when the directory exists; otherwise point
-the build backend at an Ipopt install root explicitly:
+Ipopt is a native build dependency of ``epcsaft-equilibrium`` constrained-NLP
+routes, not a Python extra or provider dependency. Provider installs do not
+consume Ipopt configuration. On Linux, equilibrium builds probe
+``~/.local/opt/ipopt``, ``/usr/local``, ``/usr``, and ``/opt/ipopt`` for a
+shared Ipopt installation. Explicit ``EPCSAFT_IPOPT_ROOT`` or
+``EPCSAFT_PEP517_IPOPT_ROOT`` values take precedence and are useful for a
+reproducible extension build:
 
-.. code-block:: powershell
+.. code-block:: bash
 
-   $env:EPCSAFT_PEP517_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-   python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0"
+   export EPCSAFT_PEP517_IPOPT_ROOT="$HOME/.local/opt/ipopt"
+   uv run python scripts/dev/build_extension_dists.py --mode installed-provider --package epcsaft-equilibrium --parallel 1
 
 Use ``EPCSAFT_PEP517_IPOPT_DIR`` instead when the install provides an
 ``IpoptConfig.cmake`` directory.
-Runtime processes that execute Ipopt on Windows must expose the SDK ``bin``
-directory through both ``PATH`` and ``EPCSAFT_RUNTIME_DLL_DIRS``; repo build
-scripts do this automatically for the local SDK.
+Runtime processes that execute Ipopt must be able to load the Ipopt shared
+library. Repo build scripts prepend the detected Ipopt ``lib``, ``lib64``, or
+``lib/x86_64-linux-gnu`` directory to ``LD_LIBRARY_PATH`` for source-checkout
+commands.
 
 ``epcsaft-equilibrium`` wheels must package only the audited runtime dependency
-closure for ``epcsaft_equilibrium._native_core`` and Ipopt. The package CMake
-install step uses runtime dependency inspection and does not blindly copy every
-DLL in the SDK ``bin`` directory. Large build-time source trees such as Ceres
-``FetchContent`` checkouts are not release payload; use
+closure for ``epcsaft_equilibrium._native_core`` and Ipopt. Build-time source
+trees such as Ceres ``FetchContent`` checkouts are not release payload; use
 ``scripts/dev/build_system_ceres.py`` or ``EPCSAFT_PEP517_CERES_DIR`` to reuse
 the local Ceres package for repeated regression extension builds.
 
-When Ipopt is compiled, import ``Equilibrium`` from ``epcsaft_equilibrium`` and
-use the certified route specs and ordinary solver tolerances for native
-constrained-NLP behavior. The public equilibrium API does not expose a
-solver-backend selector or claim unvalidated Ipopt coverage.
+When the Ipopt-backed extension is installed, import ``Equilibrium`` from
+``epcsaft_equilibrium`` and use the certified route specs and ordinary solver
+tolerances for native constrained-NLP behavior. The public equilibrium API
+does not expose a solver-backend selector or claim unvalidated Ipopt coverage.
 
 Verify the install
 ------------------
@@ -204,6 +203,6 @@ Verify the install
    print(epcsaft.capabilities())
    print(epcsaft_equilibrium.capabilities())
 
-If import fails after a source build on Windows, make sure no Python process is
-holding an old ``epcsaft._core`` extension open and reinstall from a clean
-environment.
+If import fails after a Linux source build, inspect the extension with ``ldd``
+and confirm that any non-system native dependency directory is present in
+``LD_LIBRARY_PATH`` before reinstalling from a clean environment.

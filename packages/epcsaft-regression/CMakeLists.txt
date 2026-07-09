@@ -158,7 +158,23 @@ if(NOT EXISTS "${EPCSAFT_CPPAD_INCLUDE_DIR}/cppad/configure.hpp")
     set(cppad_stdvector 1)
     set(cppad_eigenvector 0)
     set(cppad_has_gettimeofday 0)
-    set(cppad_has_mkstemp 0)
+    include(CheckCXXSourceCompiles)
+    check_cxx_source_compiles([=[
+#include <stdlib.h>
+#include <unistd.h>
+
+int main()
+{
+    char pattern[] = "/tmp/fileXXXXXX";
+    int fd = mkstemp(pattern);
+    return fd < 0;
+}
+]=] EPCSAFT_CPPAD_HAS_MKSTEMP)
+    if(EPCSAFT_CPPAD_HAS_MKSTEMP)
+        set(cppad_has_mkstemp 1)
+    else()
+        set(cppad_has_mkstemp 0)
+    endif()
     set(cppad_has_tmpnam_s 0)
     set(cppad_c_compiler_cmd "${CMAKE_CXX_COMPILER}")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -166,11 +182,7 @@ if(NOT EXISTS "${EPCSAFT_CPPAD_INCLUDE_DIR}/cppad/configure.hpp")
     else()
         set(cppad_c_compiler_gnu_flags 0)
     endif()
-    if(MSVC)
-        set(cppad_c_compiler_msvc_flags 1)
-    else()
-        set(cppad_c_compiler_msvc_flags 0)
-    endif()
+    set(cppad_c_compiler_msvc_flags 0)
     set(cppad_is_same_unsigned_int_size_t 0)
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(cppad_padding_block_t "")
@@ -241,12 +253,7 @@ foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
             EPCSAFT_CPPAD_STATUS="${EPCSAFT_CPPAD_STATUS}"
             EPCSAFT_IPOPT_STATUS="${EPCSAFT_IPOPT_STATUS}"
     )
-    if(MSVC)
-        target_compile_options(${target_name} PRIVATE /W4 /wd4551)
-        if(EPCSAFT_WARNINGS_AS_ERRORS)
-            target_compile_options(${target_name} PRIVATE /WX)
-        endif()
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
         if(EPCSAFT_WARNINGS_AS_ERRORS)
             target_compile_options(${target_name} PRIVATE -Werror)

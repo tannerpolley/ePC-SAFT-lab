@@ -670,11 +670,11 @@ Create the issues in this dependency order:
 
 ## Proof Oracle
 
-```powershell
+```bash
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-06-26-m4-equilibrium-standalone-chemical-equilibrium-before-cpe-plan.md
 uv run --no-sync python scripts/validation/check_standalone_ce_gate.py --json --require-schema --require-standard-state --require-core --require-single-nlp-path --require-oracles --require-api --require-validation --require-activation --require-complete
 uv run --no-sync python run_pytest.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_schema.py packages/epcsaft-equilibrium/tests/contracts/test_chemical_equilibrium_standard_state.py packages/epcsaft-equilibrium/tests/api/test_reactive_speciation_api.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py packages/epcsaft-equilibrium/tests/native/blocks/test_chemical_equilibrium_blocks.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_chemical_equilibrium_nlp_activation.py tests/native/contracts/test_standalone_ce_gate.py tests/native/contracts/test_chemical_equilibrium_reference_oracles.py tests/native/contracts/test_equilibrium_benchmark_registry.py -q
 uv run --no-sync python scripts/dev/validate_project.py docs
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```

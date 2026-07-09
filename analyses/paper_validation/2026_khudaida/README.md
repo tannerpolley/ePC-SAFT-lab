@@ -12,24 +12,23 @@ Scope:
 
 Entry point:
 
-```powershell
-uv run python analyses\paper_validation\2026_khudaida\scripts\run_all.py
+```bash
+uv run python analyses/paper_validation/2026_khudaida/scripts/run_all.py
 ```
 
 Generated figure assets are written under each `figures/<figure_id>/results/` folder. The retained CSVs snapshot the exact plotted/source data used by each figure workflow.
 
 Validation:
 
-```powershell
-uv run --no-sync python scripts\validation\check_khudaida_2026_figure_validation.py --require-complete
+```bash
+uv run --no-sync python scripts/validation/check_khudaida_2026_figure_validation.py --require-complete
 ```
 
 To refresh the package model rows instead of reusing the retained
 `results/data/model_tielines.csv` files:
 
-```powershell
-$env:KHUDAIDA_FORCE_RECOMPUTE = "1"
-uv run --no-sync python analyses\paper_validation\2026_khudaida\scripts\run_all.py
+```bash
+KHUDAIDA_FORCE_RECOMPUTE=1 uv run --no-sync python analyses/paper_validation/2026_khudaida/scripts/run_all.py
 ```
 
 Figures 2-7 and Supporting Information Figures S2-S3 now call the public

@@ -60,7 +60,7 @@ body:
     attributes:
       label: Reproducer
       description: Smallest command, test, or Python snippet that reproduces the bug.
-      render: powershell
+      render: shell
     validations:
       required: true
   - type: textarea
@@ -82,6 +82,6 @@ body:
     attributes:
       label: Proof oracle
       description: Commands, docs checks, audits, or issue/Project updates required before closing.
-      render: powershell
+      render: shell
     validations:
       required: true

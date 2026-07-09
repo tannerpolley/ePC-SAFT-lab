@@ -11,7 +11,7 @@
 
 ## Validation
 
-```powershell
+```bash
 
 ```
 

@@ -126,11 +126,11 @@ changed mirrors, validation commands, and clean git state.
 
 ## Proof Oracle
 
-```powershell
+```bash
 gh issue view 420 --json number,title,milestone,subIssues
 gh issue view 421 --json number,title,milestone,parent,subIssues
 uv run --no-sync python scripts/validate_plan_task_use_cases.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 uv run --no-sync python scripts/validate_plan_outcome_proof.py --plan-path docs/superpowers/plans/2026-07-02-m6-khudaida-paper-validation-with-figiel-parameters-plan.md
 uv run --no-sync python scripts/validate_issue_mirror.py --issue-file <mirror>
-uv run --no-sync python scripts\dev\validate_project.py docs
+uv run --no-sync python scripts/dev/validate_project.py docs
 ```

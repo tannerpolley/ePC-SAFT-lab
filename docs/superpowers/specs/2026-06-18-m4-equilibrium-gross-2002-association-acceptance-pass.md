@@ -182,7 +182,7 @@ scripts/validation/check_gross_2002_association_acceptance.py
 
 The checker should support:
 
-```powershell
+```bash
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete
 ```
 
@@ -307,7 +307,7 @@ Issue acceptance:
 
 Proof candidates:
 
-```powershell
+```bash
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-complete --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/validation/check_associating_lle_gross_2002.py --json --require-source-data --require-exact-association-hessian --require-complete

@@ -85,6 +85,6 @@ body:
     attributes:
       label: Validation commands
       description: Focused tests, docs checks, native checks, or path audits required for this slice.
-      render: powershell
+      render: shell
     validations:
       required: true

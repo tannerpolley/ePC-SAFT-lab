@@ -8,6 +8,6 @@ should read figure-local inputs or figure-owned outputs only.
 
 Entry point:
 
-```powershell
-uv run python analyses\paper_validation\2020_bulow\scripts\run_all.py
+```bash
+uv run python analyses/paper_validation/2020_bulow/scripts/run_all.py
 ```

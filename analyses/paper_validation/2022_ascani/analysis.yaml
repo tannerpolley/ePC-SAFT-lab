@@ -11,13 +11,12 @@ source_assets:
     kind: source_backed_case2_comparison
 commands:
   ipopt_setup:
-    - $env:EPCSAFT_IPOPT_ROOT = "$env:USERPROFILE\Documents\deps\ipopt-msvc"
-    - $env:PATH = "$env:EPCSAFT_IPOPT_ROOT\bin;$env:PATH"
-    - $env:EPCSAFT_RUNTIME_DLL_DIRS = "$env:EPCSAFT_IPOPT_ROOT\bin"
-    - uv run python scripts/dev/build_epcsaft.py --clean --profile ipopt --ipopt-root $env:EPCSAFT_IPOPT_ROOT --parallel 4
-    - uv run python scripts/dev/doctor.py --require-ipopt
+    - scripts/dev/check_linux_prereqs.sh --check
+    - uv sync --no-install-workspace
+    - uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --parallel 4
+    - uv run --no-sync python scripts/dev/doctor.py --require-equilibrium-native
   paper_validation:
-    - uv run python analyses\paper_validation\2022_ascani\scripts\run_all.py
+    - uv run --no-sync python analyses/paper_validation/2022_ascani/scripts/run_all.py
 expected:
   status: accepted_public_native_ipopt
   feed_species: [H2O, Butanol, Na+, K+, Cl-]

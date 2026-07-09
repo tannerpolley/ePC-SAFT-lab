@@ -82,7 +82,7 @@ than duplicating provider equations in equilibrium.
 - [ ] **Step 4: Build and run the block tests**
 
 Run:
-`pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/dev/cmake_preset.ps1 -Action Build -Target epcsaft_equilibrium_native_core -Parallel 10`
+`bash scripts/dev/cmake_preset.sh --action build --target epcsaft_equilibrium_native_core --parallel 10`
 
 Then:
 `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py -q`
@@ -122,7 +122,7 @@ root, invalid one-component payload, and near-critical degeneracy.
 - [ ] **Step 4: Build and run tests**
 
 Run:
-`pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/dev/cmake_preset.ps1 -Action Build -Target epcsaft_equilibrium_native_core -Parallel 10`
+`bash scripts/dev/cmake_preset.sh --action build --target epcsaft_equilibrium_native_core --parallel 10`
 
 Then rerun the route/result tests.
 
@@ -168,6 +168,6 @@ Stage only API/capability files and tests. Commit with:
 
 ## Proof Oracle
 
-- `pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/dev/cmake_preset.ps1 -Action Build -Target epcsaft_equilibrium_native_core -Parallel 10`
+- `bash scripts/dev/cmake_preset.sh --action build --target epcsaft_equilibrium_native_core --parallel 10`
 - `uv run python run_pytest.py packages/epcsaft-equilibrium/tests/native/blocks/test_single_component_vle_block.py packages/epcsaft-equilibrium/tests/native/diagnostics/test_route_metadata_contracts.py packages/epcsaft-equilibrium/tests/native/results/test_result_builder.py packages/epcsaft-equilibrium/tests/api/test_single_component_vle.py packages/epcsaft-equilibrium/tests/contracts/test_activation_capabilities.py -q`
 - `uv run python scripts/dev/validate_project.py quick`

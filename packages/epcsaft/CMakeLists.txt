@@ -106,7 +106,23 @@ if(EPCSAFT_ENABLE_CPPAD)
         set(cppad_stdvector 1)
         set(cppad_eigenvector 0)
         set(cppad_has_gettimeofday 0)
-        set(cppad_has_mkstemp 0)
+        include(CheckCXXSourceCompiles)
+        check_cxx_source_compiles([=[
+#include <stdlib.h>
+#include <unistd.h>
+
+int main()
+{
+    char pattern[] = "/tmp/fileXXXXXX";
+    int fd = mkstemp(pattern);
+    return fd < 0;
+}
+]=] EPCSAFT_CPPAD_HAS_MKSTEMP)
+        if(EPCSAFT_CPPAD_HAS_MKSTEMP)
+            set(cppad_has_mkstemp 1)
+        else()
+            set(cppad_has_mkstemp 0)
+        endif()
         set(cppad_has_tmpnam_s 0)
         set(cppad_c_compiler_cmd "${CMAKE_CXX_COMPILER}")
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -114,11 +130,7 @@ if(EPCSAFT_ENABLE_CPPAD)
         else()
             set(cppad_c_compiler_gnu_flags 0)
         endif()
-        if(MSVC)
-            set(cppad_c_compiler_msvc_flags 1)
-        else()
-            set(cppad_c_compiler_msvc_flags 0)
-        endif()
+        set(cppad_c_compiler_msvc_flags 0)
         set(cppad_is_same_unsigned_int_size_t 0)
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(cppad_padding_block_t "")
@@ -204,13 +216,6 @@ target_include_directories(_core
         "${EPCSAFT_EIGEN_INCLUDE}"
 )
 target_compile_features(_core PRIVATE cxx_std_17)
-if(MSVC)
-    set_source_files_properties(
-        "${EPCSAFT_PROVIDER_NATIVE_ROOT}/bindings/module.cpp"
-        PROPERTIES COMPILE_OPTIONS "/Od;/Ob0"
-    )
-endif()
-
 set(EPCSAFT_NATIVE_TARGETS epcsaft_provider_native _core)
 foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
     target_compile_definitions(
@@ -226,24 +231,13 @@ foreach(target_name IN LISTS EPCSAFT_NATIVE_TARGETS)
         target_include_directories(${target_name} SYSTEM PRIVATE "${EPCSAFT_CPPAD_INCLUDE_DIR}")
         target_compile_definitions(${target_name} PRIVATE EPCSAFT_HAS_CPPAD=1)
     endif()
-    if(MSVC)
-        target_compile_options(${target_name} PRIVATE /W4 /wd4551)
-        if(EPCSAFT_WARNINGS_AS_ERRORS)
-            target_compile_options(${target_name} PRIVATE /WX)
-        endif()
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
         if(EPCSAFT_WARNINGS_AS_ERRORS)
             target_compile_options(${target_name} PRIVATE -Werror)
         endif()
     endif()
 endforeach()
-
-if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(epcsaft_provider_native PRIVATE -Wa,-mbig-obj)
-    target_compile_options(_core PRIVATE -Wa,-mbig-obj)
-    target_link_options(_core PRIVATE -static -static-libgcc -static-libstdc++)
-endif()
 
 install(TARGETS _core
     LIBRARY DESTINATION epcsaft

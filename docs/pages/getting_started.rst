@@ -15,20 +15,20 @@ The GitHub URLs below point at the current organization-owned source location.
 The ``v0.2.0`` tag also supports source installs that build the native
 extension locally:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install "epcsaft @ git+https://github.com/ePC-SAFT/ePC-SAFT.git@v0.2.0#subdirectory=packages/epcsaft"
 
 After the package is published on PyPI, use the standard package-manager
 command:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    python -m pip install epcsaft
 
 For a local editable checkout:
 
-.. code-block:: powershell
+.. code-block:: bash
 
    git clone https://github.com/ePC-SAFT/ePC-SAFT.git
    cd ePC-SAFT
@@ -108,7 +108,7 @@ For real systems, keep your parameter data in a folder you control:
    from epcsaft import create_input_template
 
    template_root = create_input_template(
-       r"C:\path\to\my_epcsaft_data\water_salt_case",
+       "/path/to/my_epcsaft_data/water_salt_case",
        components=["H2O", "Na+", "Cl-"],
    )
 

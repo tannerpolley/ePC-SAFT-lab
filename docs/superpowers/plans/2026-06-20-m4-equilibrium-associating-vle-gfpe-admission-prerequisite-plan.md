@@ -126,12 +126,12 @@ Test complete for this prerequisite means:
 
 ## Proof Oracle
 
-```powershell
+```bash
 uv run --no-sync python scripts/dev/build_epcsaft.py --profile equilibrium --build-only --parallel 4
 uv run --no-sync python run_pytest.py <focused-associating-vle-route-test> -q
 uv run --no-sync python scripts/validation/check_gross_2002_association_acceptance.py --json --require-exact-association-hessian --require-fresh-native
 uv run --no-sync python scripts/dev/validate_project.py docs
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "$env:USERPROFILE\.codex\hooks\codex-cleanup.ps1" -RepoRoot .
+bash "$HOME/.codex/hooks/codex-cleanup.sh" --repo-root .
 ```
 
 ## Non-Goals
