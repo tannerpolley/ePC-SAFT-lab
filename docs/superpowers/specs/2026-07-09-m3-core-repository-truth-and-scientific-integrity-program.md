@@ -134,6 +134,27 @@ The software must distinguish three states: explicit measured/fitted value,
 explicit model-defined structural zero, and missing value. Only the first two
 may reach a native calculation.
 
+Further trace found that the defect spans `parameters.py`, `datasets.py`,
+`frontend/mixture.py` and `state/native_payload.py`, not one loader:
+
+- named dataset discovery points at a nonexistent package path and returns an
+  empty catalog;
+- unknown legacy keys can become runtime options, and Held 2012 currently
+  parses successfully before crashing when derived receipt fields are treated
+  as user options;
+- `get_prop_dict()` preserves directed interaction cells while
+  `ParameterSet.from_dataset()` reads one triangle and symmetrizes it; the 2019
+  Bülow matrix therefore produces loader-dependent values;
+- temperature-dependent water diameter, dielectric and `k_ij` correlations,
+  plus composition-dependent mixed-solvent rules, are resolved once during
+  mixture construction even though later states may use different conditions;
+- the documentation assigns the Held-2012 hydrogen-bond correction to
+  association energy while the source-consistent native equation applies it to
+  association volume.
+
+The target architecture must carry typed constants/correlations to state
+construction and create one condition-resolved native payload and receipt.
+
 ### P0: regression accepts controls that do not control the solve
 
 The public regression surface accepts weights, loss selection, fixed
@@ -142,11 +163,25 @@ after the native solve rather than passed into it. This is an API correctness
 defect: returned annotations imply a problem different from the one solved.
 Target rows also lack a complete finite-value, units and source contract.
 
+Runtime probes confirmed that extreme changes to public pure and binary
+weights, loss and iteration controls leave fitted parameters, objective and
+evaluation count identical while the returned receipt changes. Pure target
+subsets raise mapping errors and reordered targets can return a successful but
+misassigned parameter map. The native layer always uses a quadratic loss,
+hard-codes several pure controls and permits a non-improving termination to be
+reported as success. The target dataset type is disconnected from the public
+fit path and accepts non-finite observations, missing provenance, invalid
+composition totals and duplicates.
+
 ### P1: evidence breadth is narrower than capability breadth
 
-- Pure-neutral regression has traceable real-data evidence.
-- Some binary/electrolyte regression tests are synthetic or generated from the
-  same model and cannot independently admit a production claim.
+- Pure-neutral has traceable data elsewhere in the repository but no retained
+  public-fit proof joining observations, predictions and the native receipt.
+- Binary `k_ij` has independent Susial 2021 VLE rows available, but current
+  native admission tests are synthetic and the retained plot shows parameters
+  rather than literature observations against predictions.
+- Pure-ion and liquid-electrolyte regressions are synthetic or self-recovery
+  tests and cannot independently admit a production claim.
 - Reactive speciation has component tests but fails its required end-to-end
   thermodynamic proof.
 - Provider derivative and representative equilibrium proofs pass, but route

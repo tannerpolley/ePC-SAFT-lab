@@ -529,15 +529,26 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - Modify: `packages/epcsaft/src/epcsaft/model/datasets.py`
 - Modify: `packages/epcsaft/src/epcsaft/model/parameters.py`
+- Modify: `packages/epcsaft/src/epcsaft/model/validation.py`
+- Modify: `packages/epcsaft/src/epcsaft/model/templates.py`
+- Modify: `packages/epcsaft/src/epcsaft/model/sources.py`
+- Modify: `packages/epcsaft/src/epcsaft/frontend/mixture.py`
 - Create: `packages/epcsaft/tests/api/frontend/test_parameter_input_integrity.py`
-- Modify: `docs/pages/parameter_schema.rst`
+- Modify provider input/API docs that currently teach legacy arrays or inferred
+  dataset behavior.
 
-- [ ] Add tests proving missing ionic/association/Born/dielectric inputs fail
-      with component and field names.
-- [ ] Add characterization tests for source-backed supported records.
-- [ ] Remove deterministic species-name inference and embedded scientific
-      substitutions.
-- [ ] Reject unknown keys and non-finite values.
+- [ ] Add tests proving missing charge/topology/required association,
+      dielectric, Born and solvation inputs fail with component and field names.
+- [ ] Reject unknown keys, every non-finite scalar, suffix-based charge
+      inference and loose expression parsing.
+- [ ] Characterize source-backed Gross 2001, Gross 2002, Held 2008 and Held
+      2012 records before cutover.
+- [ ] Make `ParameterSet.from_dict()` accept only the versioned canonical
+      schema; migrate callers and hard-reject parallel-array payloads.
+- [ ] Remove embedded component defaults, name-based scientific inference,
+      blank-to-number handling and the dead named-dataset catalog.
+- [ ] Prove Held 2012 parsing no longer leaks derived receipt keys into user
+      options.
 - [ ] Run provider API/native state tests.
 - [ ] Commit: `fix(provider): reject missing scientific parameters`
 
@@ -556,13 +567,26 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - Modify: `packages/epcsaft/src/epcsaft/model/datasets.py`
 - Modify: `packages/epcsaft/src/epcsaft/model/parameters.py`
+- Modify: `packages/epcsaft/src/epcsaft/model/templates.py`
 - Create: `packages/epcsaft/tests/api/frontend/test_interaction_provenance.py`
 - Modify source-owned parameter manifests under the existing
   `analyses/**/parameters` and package-data layout only when traceable.
+- Correct: `docs/latex/equations.tex`, generated equation views and equation
+  registry evidence for the source-consistent association-volume correction.
 
-- [ ] Add red tests for blank/absent `k_ij`, `l_ij`, and association matrices.
-- [ ] Define explicit structural-zero records with model reason and source.
-- [ ] Migrate supported data; leave unresolved records as loud boundary errors.
+- [ ] Add red tests for absent/blank/non-finite interaction families, zero
+      without provenance, duplicate/reversed pairs, invalid dimensions and
+      asymmetric matrices.
+- [ ] Replace scalar-defaulted binary records with family-specific value or
+      correlation records whose provenance distinguishes literature, fitted and
+      equation/model structural zero.
+- [ ] Generate diagonal identity and named topology zeros from equation policy;
+      never serialize missing interactions as zero.
+- [ ] Make catalog loading and canonical serialization use the same typed owner.
+- [ ] Reject the asymmetric 2019 Bülow matrix until an authoritative cell choice
+      is approved; do not average or choose a triangle silently.
+- [ ] Migrate supported data; leave unresolved wildcard-zero records as loud
+      boundary errors pending an approved versioned combining-rule policy.
 - [ ] Verify existing neutral/associating/electrolyte characterization cases.
 - [ ] Commit: `refactor(provider): make interaction provenance explicit`
 
@@ -580,12 +604,26 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - Modify: `packages/epcsaft/src/epcsaft/model/options.py`
 - Modify: `packages/epcsaft/src/epcsaft/model/parameters.py`
+- Modify: `packages/epcsaft/src/epcsaft/frontend/mixture.py`
+- Modify: `packages/epcsaft/src/epcsaft/frontend/state.py`
+- Modify: `packages/epcsaft/src/epcsaft/state/native_payload.py`
+- Modify: `packages/epcsaft/src/epcsaft/state/native_adapter.py`
 - Modify: `packages/epcsaft/src/epcsaft/runtime/core.py`
 - Create: `packages/epcsaft/tests/api/frontend/test_model_configuration_receipt.py`
 
 - [ ] Reject unknown/conflicting option keys.
-- [ ] Record equation-defined presets in a serializable configuration receipt.
-- [ ] Ensure runtime/capability metadata names the active model policy.
+- [ ] Require a versioned source-specific preset or every active formulation
+      choice; remove the generic modern-electrolyte defaults.
+- [ ] Carry supported water-diameter, dielectric and interaction correlations as
+      typed expressions and resolve them for each state temperature and relevant
+      solvent composition.
+- [ ] Introduce one resolved model-input object as the sole native serializer;
+      delete payload-side default insertion and duplicate serialization.
+- [ ] Record schema/preset version, sources, resolution conditions, evaluated
+      correlations, structural zeros and native mappings in a reproducible
+      mixture/state configuration receipt.
+- [ ] Ensure global capabilities list supported schemas/presets while the
+      instance receipt alone reports the active policy.
 - [ ] Run provider derivative and package tests.
 - [ ] Commit: `feat(provider): expose exact model configuration receipts`
 
@@ -605,17 +643,31 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 **Files:**
 
 - Modify: `packages/epcsaft-regression/src/epcsaft_regression/core.py`
-- Modify native regression binding/solver files selected by the failing tests.
-- Modify: `packages/epcsaft-regression/tests/api/test_regression.py`
+- Modify: `packages/epcsaft-regression/src/epcsaft_regression/options.py`
+- Modify: `packages/epcsaft-regression/src/epcsaft_regression/native_adapter.py`
+- Modify: `packages/epcsaft-regression/src/epcsaft_regression/_native_core.pyi`
+- Modify: `packages/epcsaft-regression/src/epcsaft_regression/workflow.py`
+- Modify: `packages/epcsaft-regression/src/epcsaft_regression/native/regression/module.cpp`
+- Modify: `packages/epcsaft-regression/src/epcsaft_regression/native/regression/ceres_regression.cpp`
+- Create: `packages/epcsaft-regression/tests/api/test_optimization_contract.py`
 - Modify: `packages/epcsaft-regression/tests/native/test_pure.py`
 - Modify: `packages/epcsaft-regression/tests/native/test_binary.py`
 - Modify: `packages/epcsaft-regression/tests/native/test_liquid_electrolyte.py`
 
-- [ ] Add tests that distinguish weighted/unweighted, robust/quadratic and
-      fixed/free problems at the submitted native receipt.
-- [ ] Prove accepted controls are currently ignored.
-- [ ] Extend typed native payloads or reject unsupported controls before solve.
-- [ ] Generate returned problem metadata from the submitted payload.
+- [ ] Prove pure/binary controls currently leave native outputs byte-identical
+      while post-hoc receipts differ; prove target subset/order corruption and
+      permissive success classification.
+- [ ] Define strict typed iteration/tolerance/loss options; reject unknown keys
+      and unsupported fixed/target combinations before native dispatch.
+- [ ] Pass every accepted start, bound, weight, row-level robust loss, fixed
+      payload, tolerance, iteration limit, target ordering and source-row ID to
+      Ceres.
+- [ ] Return a native-authored resolved problem receipt and build `FitProblem`
+      only from it; delete `_annotate_contract_problem`.
+- [ ] Replace cost-nondegradation success shortcuts with explicit Ceres
+      termination and solution-usability semantics.
+- [ ] Make `Regression(mixture)` consume its configured mixture and remove
+      contradictory root free-function exports per ADR 0002.
 - [ ] Commit: `fix(regression): honor public optimization controls`
 
 ### Task 11: Add Strict Target Data Contracts
@@ -633,13 +685,17 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 
 - Extract from `packages/epcsaft-regression/src/epcsaft_regression/core.py` to
   `packages/epcsaft-regression/src/epcsaft_regression/targets.py`
-- Create: `packages/epcsaft-regression/tests/api/test_target_contracts.py`
+- Create: `packages/epcsaft-regression/tests/api/test_target_dataset_contract.py`
 - Modify: `docs/pages/parameter_regression.rst`
 
-- [ ] Require finite observable values and independent variables.
-- [ ] Require units, composition basis, observable definition and source.
-- [ ] Reject invalid normalization and duplicate/conflicting rows.
-- [ ] Keep target parsing separate from solver orchestration.
+- [ ] Make every public fit accept `TargetDataset`; raw mappings/CSV must cross
+      an explicit strict constructor and cannot bypass it.
+- [ ] Require unique row IDs, canonical units, observable schema, finite target
+      and conditions, explicit species fractions/composition basis, source ID,
+      citation metadata, residual scale and positive row weight.
+- [ ] Reject inferred missing fractions, implicit normalization, duplicates and
+      conflicting observations.
+- [ ] Carry row/source IDs into native records, diagnostics and receipts.
 - [ ] Commit: `feat(regression): require traceable target contracts`
 
 ### Task 12: Rebuild Regression Admission Around Real Data
@@ -660,12 +716,20 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 - Modify relevant `analyses/package_validation/**` regression lanes.
 - Create focused capability-evidence tests.
 
-- [ ] Classify synthetic recovery tests as component evidence only.
-- [ ] Register pure-neutral and supported binary literature datasets with exact
-      source/provenance.
-- [ ] Add or regenerate retained literature-versus-model plots and plotted-data
-      CSVs for each admitted family.
-- [ ] Remove any family whose independent real-data proof is absent.
+- [ ] Begin with no production regression family; classify all synthetic and
+      self-recovery tests as component evidence only.
+- [ ] Add complete evidence records with owner, public/native entry points,
+      proof nodes/checker, independent source, retained artifact and acceptance
+      metrics; reject incomplete production rows in contract tests.
+- [ ] Re-admit pure-neutral through the public `Regression` API using traceable
+      NIST observations and Gross-Sadowski reference context.
+- [ ] Re-admit binary `k_ij` using the Susial 2021 VLE dataset and a package-owned
+      prediction oracle; an M4 full-equilibrium plot requires explicit
+      cross-milestone ownership.
+- [ ] Retain exact source/model tables, native receipt, metrics and plots that
+      show observations and predictions, not parameter bars.
+- [ ] Keep pure-ion and liquid-electrolyte regression closed until independent
+      cited data and public-fit proof exist.
 - [ ] Commit: `fix(regression): align capabilities with real-data evidence`
 
 ## Phase 4: Equilibrium Scientific Admission
