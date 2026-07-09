@@ -691,8 +691,9 @@ package proof, relevant docs/static checks, diff review and cleanup pass.
 - [ ] Reproduce the final continuation failure deterministically.
 - [ ] Retain primal, constraints, balance, activity, Jacobian, gradient,
       stationarity, scaling and multiplier data at every continuation step.
-- [ ] Add independent finite-difference/analytic consistency tests around the
-      failing point without replacing CppAD production derivatives.
+- [ ] Add independent numerical-perturbation and analytic-derivative
+      consistency tests around the failing point without replacing CppAD
+      production derivatives.
 - [ ] Commit: `test(equilibrium): retain CE failure diagnostics`
 
 ### Task 14: Repair The Canonical Chemical-Equilibrium Formulation

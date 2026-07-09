@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
+from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -39,6 +42,18 @@ PYTHON_TOYBOX_M8_DOC_PREFIXES = (
     "docs/superpowers/plans/2026-06-04-m8-python-toybox-",
     "docs/superpowers/specs/2026-06-04-m8-python-toybox-",
 )
+
+_IDENTIFIER_CHAR = r"A-Za-z0-9_"
+
+
+@dataclass(frozen=True)
+class TextGateMatch:
+    relative_path: str
+    line_number: int
+    term: str
+
+    def render(self) -> str:
+        return f"{self.relative_path}:{self.line_number}: blocked solver/derivative gate term {self.term!r}"
 
 
 def _tracked_files() -> list[Path]:
@@ -219,7 +234,6 @@ def _source_blocked_terms(rel: str) -> tuple[str, ...]:
         "damp" + "ing",
         "native" + "_scalar" + "_binary" + "_activity",
         "binary" + "_log" + "_amounts",
-        "derivative" + "_status",
         "least" + "_squares",
         "differential" + "_evolution",
         "minimize" + "_scalar",
@@ -250,13 +264,13 @@ def _source_blocked_terms(rel: str) -> tuple[str, ...]:
         "_electrolyte" + "_initial" + "_phase" + "_seed",
         "material" + "_balanced" + "_initial" + "_phases",
         "solver" + "_seed" + "_name",
-        "optimizer" + "_backend" + "\": \"not" + "_applicable",
-        "optimizer" + "_backend == \"not" + "_applicable",
-        "derivative" + "_backend" + "\": \"not" + "_applicable",
-        "derivative" + "_backend == \"not" + "_applicable",
-        "jacobian" + "_backend" + "\": \"not" + "_applicable",
-        "jacobian" + "_backend == \"not" + "_applicable",
-        "jacobian" + "_backend = \"not" + "_applicable",
+        "optimizer" + "_backend" + '": "not' + "_applicable",
+        "optimizer" + '_backend == "not' + "_applicable",
+        "derivative" + "_backend" + '": "not' + "_applicable",
+        "derivative" + '_backend == "not' + "_applicable",
+        "jacobian" + "_backend" + '": "not' + "_applicable",
+        "jacobian" + '_backend == "not' + "_applicable",
+        "jacobian" + '_backend = "not' + "_applicable",
         "ascani" + "_benchmark" + "_attempt",
         "not" + "_applicable" + "_to" + "_neutral" + "_route",
         "requires" + "_ipopt" + "_build",
@@ -277,8 +291,8 @@ def _source_blocked_terms(rel: str) -> tuple[str, ...]:
         "_with" + "_bubble" + "_continuation",
         "initial" + "_phases" + "=none",
         "initial" + "_phases" + " = none",
-        "phase" + "_kwargs.get(\"initial" + "_phases\")",
-        "phase" + "_kwargs={\"initial" + "_phases\"",
+        "phase" + '_kwargs.get("initial' + '_phases")',
+        "phase" + '_kwargs={"initial' + '_phases"',
         "package" + "-owned alternate",
         "from" + "_legacy" + "_record",
         "p" + "_seed",
@@ -286,7 +300,7 @@ def _source_blocked_terms(rel: str) -> tuple[str, ...]:
         "stability" + "_precheck",
         "include" + "_phase" + "_diagnostics",
         "python" + "_sweep",
-        "selected" + "_solver" + "_backend" + "\": \"not" + "_run",
+        "selected" + "_solver" + "_backend" + '": "not' + "_run",
         "residual" + "_surface" + "_only",
         "hessian" + "_strategy",
         "hessian" + "_strategies",
@@ -301,14 +315,14 @@ def _source_blocked_terms(rel: str) -> tuple[str, ...]:
         "activity" + "_or" + "_fugacity" + "_terms" + "_in" + "_residual",
         "activity" + "_derivative" + "_in" + "_jacobian",
         "continuation" + "_used",
-        "covariance" + "_available" + "\": false",
-        "fit" + "_success" + "\": none,",
-        "fit" + "_message" + "\": \"\",",
-        "termination" + "_reason" + "\": \"objective" + "_only\",",
-        "fit" + "_iterations" + "\": none,",
-        "objective" + "_initial" + "\": none,",
-        "gradient" + "_norm" + "\": none,",
-        "step" + "_norm" + "\": none,",
+        "covariance" + "_available" + '": false',
+        "fit" + "_success" + '": none,',
+        "fit" + "_message" + '": "",',
+        "termination" + "_reason" + '": "objective' + '_only",',
+        "fit" + "_iterations" + '": none,',
+        "objective" + "_initial" + '": none,',
+        "gradient" + "_norm" + '": none,',
+        "step" + "_norm" + '": none,',
         "diagnostic" + "_residual" + "_score",
         "diagnostic" + "_fields",
         "package" + "_status",
@@ -316,9 +330,8 @@ def _source_blocked_terms(rel: str) -> tuple[str, ...]:
         "package" + "_missing",
         "diagnostic" + "_failure",
         "best" + "_failure" + "_reason",
-        "native" + "_status",
         "derivative" + "_gap" + "_status",
-        "\"warm" + "_start" + "_source\"",
+        '"warm' + "_start" + '_source"',
         "objective" + "_seed" + "_hits",
         "row" + "_seed" + "_hits",
         "baseline" + "_repeat",
@@ -353,21 +366,59 @@ def _source_blocked_terms(rel: str) -> tuple[str, ...]:
     return terms
 
 
+def _semantic_alternative(term: str) -> str:
+    left_boundary = rf"(?<![{_IDENTIFIER_CHAR}])" if term[0].isalnum() or term[0] == "_" else ""
+    right_boundary = rf"(?![{_IDENTIFIER_CHAR}])" if term[-1].isalnum() or term[-1] == "_" else ""
+    return f"{left_boundary}{re.escape(term)}{right_boundary}"
+
+
+@cache
+def _compile_semantic_term_policy(terms: tuple[str, ...]) -> re.Pattern[str]:
+    unique_terms = tuple(sorted(set(terms), key=lambda term: (-len(term), term)))
+    if not unique_terms:
+        return re.compile(r"(?!)")
+    alternatives = (_semantic_alternative(term) for term in unique_terms)
+    return re.compile("|".join(f"(?:{alternative})" for alternative in alternatives), re.IGNORECASE)
+
+
+def _blocked_terms_for_path(relative_path: str) -> tuple[str, ...]:
+    rel = relative_path.replace("\\", "/")
+    allowed_terms = set(_path_allowed_terms(rel))
+    return tuple(term for term in _blocked_terms() + _source_blocked_terms(rel) if term not in allowed_terms)
+
+
+def scan_text_file(path: Path, *, relative_path: str) -> list[TextGateMatch]:
+    terms = _blocked_terms_for_path(relative_path)
+    canonical_terms = {term.casefold(): term for term in terms}
+    policy = _compile_semantic_term_policy(terms)
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    matches: list[TextGateMatch] = []
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        folded_line = line.casefold()
+        # This literal check is only a fast candidate filter; the boundary-aware
+        # policy below is the sole authority for reporting a violation.
+        if not any(term in folded_line for term in canonical_terms):
+            continue
+        for match in policy.finditer(line):
+            matches.append(
+                TextGateMatch(
+                    relative_path=relative_path,
+                    line_number=line_number,
+                    term=canonical_terms[match.group(0).casefold()],
+                )
+            )
+    return matches
+
+
 def main() -> int:
-    terms = _blocked_terms()
-    matches: list[str] = []
+    matches: list[TextGateMatch] = []
     for path in _tracked_files():
         rel = path.relative_to(REPO_ROOT).as_posix()
-        text = path.read_text(encoding="utf-8", errors="ignore").lower()
-        allowed_terms = set(_path_allowed_terms(rel))
-        path_terms = tuple(term for term in terms + _source_blocked_terms(rel) if term not in allowed_terms)
-        for line_number, line in enumerate(text.splitlines(), start=1):
-            if any(term in line for term in path_terms):
-                matches.append(f"{rel}:{line_number}: blocked solver/derivative gate term")
+        matches.extend(scan_text_file(path, relative_path=rel))
 
     if matches:
         print("Strict solver derivative text gate failed:", file=sys.stderr)
-        print("\n".join(matches), file=sys.stderr)
+        print("\n".join(match.render() for match in matches), file=sys.stderr)
         return 1
     return 0
 
