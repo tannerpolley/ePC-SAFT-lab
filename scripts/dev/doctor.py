@@ -10,6 +10,9 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 SRC_ROOT = REPO_ROOT / "packages" / "epcsaft" / "src"
 DEV_BUILD_CACHE = REPO_ROOT / "build" / "dev" / "CMakeCache.txt"
 EXTENSION_NATIVE_MODULES = (
@@ -22,10 +25,7 @@ REQUIRED_CORE_SYMBOLS = (
     "NativeSolutionError",
 )
 
-try:
-    from scripts.dev.package_paths import PROVIDER_BUILD_BACKEND_DIR
-except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from package_paths import PROVIDER_BUILD_BACKEND_DIR
+from scripts.dev.package_paths import PROVIDER_BUILD_BACKEND_DIR
 
 if str(PROVIDER_BUILD_BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(PROVIDER_BUILD_BACKEND_DIR))
@@ -40,10 +40,7 @@ from native_dependency_policy import (
     resolve_default_system_ceres_config_dir,
 )
 
-try:
-    from scripts.dev.native_runtime_env import apply_to_current_process
-except ModuleNotFoundError:  # pragma: no cover - direct script execution
-    from native_runtime_env import apply_to_current_process
+from scripts.dev.native_runtime_env import apply_to_current_process
 
 
 def _git_output(*args: str) -> str | None:

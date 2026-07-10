@@ -7,6 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import epcsaft_equilibrium
+import epcsaft_equilibrium.workflows as equilibrium_workflows
 import pytest
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.capability_evidence import (
@@ -17,6 +18,9 @@ from epcsaft_equilibrium.capability_evidence import (
     production_capability_evidence,
     validate_proof_collection,
     validate_repo_evidence_targets,
+)
+from epcsaft_equilibrium.equilibrium_activation import (
+    EQUILIBRIUM_PROOF_EXECUTION_RECEIPTS,
 )
 from epcsaft_equilibrium.workflows import _EQUILIBRIUM_ROUTE_SPECS
 
@@ -130,6 +134,27 @@ def test_production_families_are_exactly_complete_evidence_families() -> None:
         assert record["acceptance_metrics"]
 
 
+def test_production_evidence_requires_passing_generated_checker_receipts() -> None:
+    production_proof_ids = {
+        proof_id
+        for record in CAPABILITY_EVIDENCE_BY_FAMILY.values()
+        for proof_id in record["proof_ids"]
+    }
+    assert set(EQUILIBRIUM_PROOF_EXECUTION_RECEIPTS) == production_proof_ids
+    for proof_id in production_proof_ids:
+        receipt = EQUILIBRIUM_PROOF_EXECUTION_RECEIPTS[proof_id]
+        assert receipt["status"] == "passed"
+        assert receipt["strict_checkers"] == list(PROOF_EVIDENCE_BY_ID[proof_id]["strict_checkers"])
+        assert receipt["checker_receipts"]
+        assert len(receipt["evidence_digest"]) == 64
+
+    mutated = deepcopy(EQUILIBRIUM_PROOF_EXECUTION_RECEIPTS)
+    proof_id = next(iter(production_proof_ids))
+    mutated[proof_id]["status"] = "failed"
+    with pytest.raises(RuntimeError, match="passing strict-checker execution receipt"):
+        complete_evidence_families(execution_receipts=mutated)
+
+
 def test_proof_ids_map_to_collected_nodes_and_complete_evidence() -> None:
     proof_nodes = {
         str(node)
@@ -213,6 +238,11 @@ def test_development_evidence_stays_visible_without_production_admission() -> No
         "global_phase_set_certified": False,
         "source_comparison_disposition": "validation_findings_only",
     }
+
+
+def test_public_workflows_retain_no_associating_lle_admission_seam() -> None:
+    assert not hasattr(equilibrium_workflows, "_has_gross_2002_associating_lle_proof")
+    assert not hasattr(equilibrium_workflows, "_has_gross_2002_figure10_associating_lle_proof")
 
 
 def test_single_component_vle_nist_artifact_is_an_exact_source_join() -> None:

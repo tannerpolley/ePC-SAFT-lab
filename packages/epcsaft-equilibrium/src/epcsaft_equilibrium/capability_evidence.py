@@ -406,10 +406,76 @@ def validate_repo_evidence_targets(
         raise RuntimeError("missing repository evidence target(s): " + ", ".join(sorted(missing)))
 
 
-def complete_evidence_families() -> set[str]:
+def _generated_execution_receipts() -> Mapping[str, Mapping[str, object]]:
+    from epcsaft_equilibrium.equilibrium_activation import (
+        EQUILIBRIUM_PROOF_EXECUTION_RECEIPTS,
+    )
+
+    return EQUILIBRIUM_PROOF_EXECUTION_RECEIPTS
+
+
+def _validate_execution_receipts(
+    execution_receipts: Mapping[str, Mapping[str, object]],
+) -> None:
+    production_proof_ids = {
+        str(proof_id)
+        for record in CAPABILITY_EVIDENCE_BY_FAMILY.values()
+        for proof_id in record["proof_ids"]
+    }
+    if set(execution_receipts) != production_proof_ids:
+        raise RuntimeError(
+            "Production equilibrium evidence requires one passing strict-checker execution "
+            "receipt for every admitted proof."
+        )
+    for proof_id in sorted(production_proof_ids):
+        proof = PROOF_EVIDENCE_BY_ID[proof_id]
+        receipt = execution_receipts[proof_id]
+        expected_commands = [str(command) for command in proof["strict_checkers"]]
+        checker_receipts = receipt.get("checker_receipts")
+        digest = str(receipt.get("evidence_digest", ""))
+        valid_digest = len(digest) == 64 and all(character in "0123456789abcdef" for character in digest)
+        valid_checkers = (
+            isinstance(checker_receipts, Sequence)
+            and not isinstance(checker_receipts, str | bytes)
+            and len(checker_receipts) == len(expected_commands)
+        )
+        if valid_checkers:
+            for command, checker_receipt in zip(expected_commands, checker_receipts, strict=True):
+                if not isinstance(checker_receipt, Mapping) or not (
+                    checker_receipt.get("command") == command
+                    and checker_receipt.get("complete") is True
+                    and checker_receipt.get("status") == "passed"
+                    and checker_receipt.get("blockers") == []
+                    and checker_receipt.get("freshness_mode") == "embedded_source_identity"
+                    and checker_receipt.get("source_identity_matches") is True
+                    and str(checker_receipt.get("current_source_identity", ""))
+                    == str(checker_receipt.get("embedded_source_identity", ""))
+                    and bool(str(checker_receipt.get("current_source_identity", "")))
+                ):
+                    valid_checkers = False
+                    break
+        if not (
+            receipt.get("status") == "passed"
+            and receipt.get("strict_checkers") == expected_commands
+            and valid_checkers
+            and valid_digest
+        ):
+            raise RuntimeError(
+                "Production equilibrium evidence requires a passing strict-checker execution "
+                f"receipt for proof '{proof_id}'."
+            )
+
+
+def complete_evidence_families(
+    *,
+    execution_receipts: Mapping[str, Mapping[str, object]] | None = None,
+) -> set[str]:
     """Return families satisfying the complete production evidence contract."""
 
     _validate_registry()
+    _validate_execution_receipts(
+        _generated_execution_receipts() if execution_receipts is None else execution_receipts
+    )
     return set(CAPABILITY_EVIDENCE_BY_FAMILY)
 
 

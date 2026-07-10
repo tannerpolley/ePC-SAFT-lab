@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import importlib.util
 import math
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,10 @@ from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.workflows import (
     EquilibriumSolverOptions,
     _electrolyte_lle_validation_result,
+)
+
+from scripts.validation.khudaida_parameter_provenance import (
+    evaluate_khudaida_parameter_provenance,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -35,6 +40,22 @@ INTERNAL_SOURCE = "epcsaft_internal_electrolyte_lle_validation"
 def _rows(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8-sig") as handle:
         return list(csv.DictReader(handle))
+
+
+def _copy_khudaida_parameter_evidence(tmp_path: Path) -> Path:
+    source_root = REPO_ROOT / "analyses" / "paper_validation" / "2026_khudaida"
+    copied_root = tmp_path / "2026_khudaida"
+    shutil.copytree(source_root / "parameters", copied_root / "parameters")
+    (copied_root / "shared").mkdir()
+    shutil.copytree(source_root / "shared" / "source", copied_root / "shared" / "source")
+    return copied_root
+
+
+def _rewrite_rows(path: Path, rows: list[dict[str, str]]) -> None:
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def _plain(value):
@@ -196,6 +217,47 @@ def test_checker_reports_partial_khudaida_binary_source_coverage() -> None:
     assert {failure["failure_kind"] for failure in payload["figures"][0]["model_row_failures"]} == {
         "parameter_provenance"
     }
+
+
+def test_khudaida_provenance_value_joins_manifest_to_literature_rows(tmp_path: Path) -> None:
+    analysis_root = _copy_khudaida_parameter_evidence(tmp_path)
+    manifest_path = analysis_root / "parameters" / "mixed" / "binary_interaction" / "source_manifest.csv"
+    rows = _rows(manifest_path)
+    row = next(item for item in rows if item["component_i"] == "Ethanol" and item["component_j"] == "H2O")
+    row["value"] = "-0.2"
+    _rewrite_rows(manifest_path, rows)
+
+    receipt = evaluate_khudaida_parameter_provenance(analysis_root)
+
+    assert "parameter_provenance:source_manifest_value_mismatch:H2O/Ethanol" in receipt["blockers"]
+
+
+def test_khudaida_provenance_value_joins_executable_matrix_to_manifest(tmp_path: Path) -> None:
+    analysis_root = _copy_khudaida_parameter_evidence(tmp_path)
+    matrix_path = analysis_root / "parameters" / "mixed" / "binary_interaction" / "k_ij.csv"
+    rows = _rows(matrix_path)
+    row = next(item for item in rows if item["component"] == "H2O")
+    row["Ethanol"] = "-0.2"
+    _rewrite_rows(matrix_path, rows)
+
+    receipt = evaluate_khudaida_parameter_provenance(analysis_root)
+
+    assert "parameter_provenance:asymmetric_executable_matrix:H2O/Ethanol" in receipt["blockers"]
+    assert "parameter_provenance:matrix_manifest_value_mismatch:H2O/Ethanol" in receipt["blockers"]
+
+
+def test_khudaida_provenance_value_joins_literature_rows_to_executable_matrix(tmp_path: Path) -> None:
+    analysis_root = _copy_khudaida_parameter_evidence(tmp_path)
+    source_path = analysis_root / "shared" / "source" / "table_7_epcsaft_kij.csv"
+    rows = _rows(source_path)
+    row = next(item for item in rows if item["component_i"] == "Ethanol" and item["component_j"] == "H2O")
+    row["k_ij"] = "-0.2"
+    _rewrite_rows(source_path, rows)
+
+    receipt = evaluate_khudaida_parameter_provenance(analysis_root)
+
+    assert "parameter_provenance:source_manifest_value_mismatch:H2O/Ethanol" in receipt["blockers"]
+    assert "parameter_provenance:matrix_source_value_mismatch:H2O/Ethanol" in receipt["blockers"]
 
 
 def test_khudaida_runner_forces_data_generation_but_not_rendering(monkeypatch: pytest.MonkeyPatch) -> None:

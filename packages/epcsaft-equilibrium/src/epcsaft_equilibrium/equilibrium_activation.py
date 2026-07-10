@@ -280,3 +280,88 @@ EQUILIBRIUM_SELECTOR_ROUTE_CONTRACTS = [{'selector_route': 'bubble_pressure',
   'selector_family': 'single_component_vle',
   'production_exposed': True,
   'proof_routes': ['single_component_vle_hydrocarbon_nist_saturation_exact_hessian']}]
+
+EQUILIBRIUM_PROOF_EXECUTION_RECEIPTS = {'associating_neutral_vle_gross_2002_bubble_pressure_figures_2_9_public_exact_hessian': {'status': 'passed',
+                                                                                         'strict_checkers': ['uv '
+                                                                                                             'run '
+                                                                                                             '--no-sync '
+                                                                                                             'python '
+                                                                                                             'scripts/validation/check_gross_2002_full_replication.py '
+                                                                                                             '--json '
+                                                                                                             '--require-complete '
+                                                                                                             '--require-exact-association-hessian '
+                                                                                                             '--require-fresh-native'],
+                                                                                         'checker_receipts': [{'command': 'uv '
+                                                                                                                          'run '
+                                                                                                                          '--no-sync '
+                                                                                                                          'python '
+                                                                                                                          'scripts/validation/check_gross_2002_full_replication.py '
+                                                                                                                          '--json '
+                                                                                                                          '--require-complete '
+                                                                                                                          '--require-exact-association-hessian '
+                                                                                                                          '--require-fresh-native',
+                                                                                                               'checker': 'gross_2002_full_replication',
+                                                                                                               'complete': True,
+                                                                                                               'status': 'passed',
+                                                                                                               'reported_status': 'complete',
+                                                                                                               'blockers': [],
+                                                                                                               'freshness_mode': 'embedded_source_identity',
+                                                                                                               'source_identity_matches': True,
+                                                                                                               'current_source_identity': '2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94',
+                                                                                                               'embedded_source_identity': '2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94'}],
+                                                                                         'evidence_digest': '90b880710b99fad52b09a65b7e195d7f2e8cf7986b97ddd8fbcd378e0b8741e8'},
+ 'associating_neutral_vle_gross_2002_dew_pressure_figures_2_9_public_exact_hessian': {'status': 'passed',
+                                                                                      'strict_checkers': ['uv '
+                                                                                                          'run '
+                                                                                                          '--no-sync '
+                                                                                                          'python '
+                                                                                                          'scripts/validation/check_gross_2002_full_replication.py '
+                                                                                                          '--json '
+                                                                                                          '--require-complete '
+                                                                                                          '--require-exact-association-hessian '
+                                                                                                          '--require-fresh-native'],
+                                                                                      'checker_receipts': [{'command': 'uv '
+                                                                                                                       'run '
+                                                                                                                       '--no-sync '
+                                                                                                                       'python '
+                                                                                                                       'scripts/validation/check_gross_2002_full_replication.py '
+                                                                                                                       '--json '
+                                                                                                                       '--require-complete '
+                                                                                                                       '--require-exact-association-hessian '
+                                                                                                                       '--require-fresh-native',
+                                                                                                            'checker': 'gross_2002_full_replication',
+                                                                                                            'complete': True,
+                                                                                                            'status': 'passed',
+                                                                                                            'reported_status': 'complete',
+                                                                                                            'blockers': [],
+                                                                                                            'freshness_mode': 'embedded_source_identity',
+                                                                                                            'source_identity_matches': True,
+                                                                                                            'current_source_identity': '2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94',
+                                                                                                            'embedded_source_identity': '2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94'}],
+                                                                                      'evidence_digest': '138d7da916b1e463bd6444cbdaa382646ec4463d6cfaa4c51a4cfa6ba2696e16'},
+ 'single_component_vle_hydrocarbon_nist_saturation_exact_hessian': {'status': 'passed',
+                                                                    'strict_checkers': ['uv run '
+                                                                                        '--no-sync '
+                                                                                        'python '
+                                                                                        'scripts/validation/check_single_component_vle_nist_saturation.py '
+                                                                                        '--json '
+                                                                                        '--require-complete '
+                                                                                        '--require-fresh-native'],
+                                                                    'checker_receipts': [{'command': 'uv '
+                                                                                                     'run '
+                                                                                                     '--no-sync '
+                                                                                                     'python '
+                                                                                                     'scripts/validation/check_single_component_vle_nist_saturation.py '
+                                                                                                     '--json '
+                                                                                                     '--require-complete '
+                                                                                                     '--require-fresh-native',
+                                                                                          'checker': 'single_component_vle_nist_saturation',
+                                                                                          'complete': True,
+                                                                                          'status': 'passed',
+                                                                                          'reported_status': None,
+                                                                                          'blockers': [],
+                                                                                          'freshness_mode': 'embedded_source_identity',
+                                                                                          'source_identity_matches': True,
+                                                                                          'current_source_identity': '2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94',
+                                                                                          'embedded_source_identity': '2f900fc241d61f443d8859cf99a5edfcf60a8464f54228936c63a570a09d9f94'}],
+                                                                    'evidence_digest': 'f9395552ba8a76f96791f8d1327b7e9e847d49daf9fe721ac65ed2d345a2fd18'}}

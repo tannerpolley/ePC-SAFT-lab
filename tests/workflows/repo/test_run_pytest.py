@@ -218,7 +218,21 @@ def test_validate_project_modes_route_to_standard_validation_bundles():
     )
     assert validate_project.CHECK_COMMANDS["equilibrium-confidence"] == (
         ("scripts/dev/doctor.py",),
+        ("scripts/dev/generate_equilibrium_activation.py", "--check"),
         ("run_pytest.py", "--equilibrium-confidence", "-q", "-s"),
+        (
+            "scripts/validation/check_gross_2002_full_replication.py",
+            "--json",
+            "--require-complete",
+            "--require-exact-association-hessian",
+            "--require-fresh-native",
+        ),
+        (
+            "scripts/validation/check_single_component_vle_nist_saturation.py",
+            "--json",
+            "--require-complete",
+            "--require-fresh-native",
+        ),
     )
     assert validate_project.CHECK_COMMANDS["equilibrium-debug"] == (
         ("scripts/dev/doctor.py",),
@@ -418,6 +432,20 @@ def test_doctor_exposes_provider_sdk_and_extension_native_requirements():
         "artifact_freshness",
     ):
         assert token in source
+
+
+def test_doctor_direct_script_resolves_current_equilibrium_native_identity():
+    completed = subprocess.run(
+        [sys.executable, "scripts/dev/doctor.py", "--require-equilibrium-native"],
+        cwd=Path(__file__).resolve().parents[3],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "epcsaft_equilibrium_native_source_identity_freshness: current" in completed.stdout
+    assert "epcsaft_equilibrium_native_source_identity_error: <none>" in completed.stdout
 
 
 def test_native_regression_source_has_no_eigen_nonlinear_optimizer_route():

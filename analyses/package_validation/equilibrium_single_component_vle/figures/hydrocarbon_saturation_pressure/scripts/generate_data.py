@@ -32,6 +32,7 @@ apply_to_current_process()
 
 import epcsaft
 import epcsaft_equilibrium
+from epcsaft.model.parameters import PureRecord
 
 FIGURE_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = FIGURE_ROOT / "results"
@@ -59,14 +60,27 @@ def _load_pcsaft_parameters() -> dict[str, dict[str, float]]:
 
 def _mixture_for_species(species: str, parameters: dict[str, dict[str, float]]) -> Any:
     values = parameters[species]
-    parameter_set = epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([MOLECULAR_WEIGHTS_KG_PER_MOL[species]], dtype=float),
-            "m": np.asarray([values["m"]], dtype=float),
-            "s": np.asarray([values["s"]], dtype=float),
-            "e": np.asarray([values["e"]], dtype=float),
+    parameter_set = epcsaft.ParameterSet.from_records(
+        (
+            PureRecord(
+                component=species,
+                molar_mass=MOLECULAR_WEIGHTS_KG_PER_MOL[species],
+                m=values["m"],
+                sigma=values["s"],
+                epsilon_k=values["e"],
+                charge=0.0,
+                epsilon_k_ab=0.0,
+                kappa_ab=0.0,
+                association_scheme=None,
+                relative_permittivity=1.0,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+        ),
+        metadata={
+            "source": str(PARAMETER_REFERENCE.relative_to(REPO_ROOT)),
+            "source_backed": True,
         },
-        species=[species],
     )
     return epcsaft.Mixture(parameter_set)
 

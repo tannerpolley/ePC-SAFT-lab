@@ -191,9 +191,29 @@ VALIDATION_LANES: Final[dict[str, dict[str, object]]] = {
         "evidence": "Ceres and CppAD build profile plus focused native regression tests",
     },
     "equilibrium-confidence": {
-        "commands": (("scripts/dev/doctor.py",), ("run_pytest.py", "--equilibrium-confidence", "-q", "-s")),
+        "commands": (
+            ("scripts/dev/doctor.py",),
+            ("scripts/dev/generate_equilibrium_activation.py", "--check"),
+            ("run_pytest.py", "--equilibrium-confidence", "-q", "-s"),
+            (
+                "scripts/validation/check_gross_2002_full_replication.py",
+                "--json",
+                "--require-complete",
+                "--require-exact-association-hessian",
+                "--require-fresh-native",
+            ),
+            (
+                "scripts/validation/check_single_component_vle_nist_saturation.py",
+                "--json",
+                "--require-complete",
+                "--require-fresh-native",
+            ),
+        ),
         "cheap_by_default": False,
-        "evidence": "doctor plus one focused convergence target for each selector-admitted equilibrium family",
+        "evidence": (
+            "doctor, focused selector convergence targets, and every strict checker backing "
+            "a production equilibrium proof"
+        ),
     },
     "equilibrium-debug": {
         "commands": (
