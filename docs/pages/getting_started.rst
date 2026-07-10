@@ -61,12 +61,32 @@ For a one-component example, create a ``ParameterSet`` and pass it to
 
    parameters = ParameterSet.from_dict(
        {
-           "MW": np.asarray([92.1405e-3]),
-           "m": np.asarray([2.8149]),
-           "s": np.asarray([3.7169]),
-           "e": np.asarray([285.69]),
-       },
-       species=["Toluene"],
+           "schema": "epcsaft.parameter-set",
+           "schema_version": 1,
+           "components": ["Toluene"],
+           "pure_records": [{
+               "component": "Toluene",
+               "molar_mass": 92.1405e-3,
+               "molar_mass_units": "kg/mol",
+               "m": 2.8149,
+               "sigma": 3.7169,
+               "epsilon_k": 285.69,
+               "charge": 0.0,
+               "epsilon_k_ab": 0.0,
+               "kappa_ab": 0.0,
+               "association_scheme": None,
+               "association_sites": [],
+               "relative_permittivity": 1.0,
+               "born_diameter": 0.0,
+               "solvation_factor": 1.0,
+           }],
+           "binary_records": [],
+           "metadata": {
+               "source": "Gross and Sadowski (2001), Table 2",
+               "source_backed": True,
+               "auxiliary_neutral_fields": "equation_structural_neutral_inactive",
+           },
+       }
    )
    mixture = Mixture(parameters)
 
@@ -112,8 +132,9 @@ For real systems, keep your parameter data in a folder you control:
        components=["H2O", "Na+", "Cl-"],
    )
 
-Fill in the generated parameter CSV files and workflow option JSON files, then
-construct a ``ParameterSet`` for the case you want to run.
+Fill every null scientific field in ``parameter_set.json`` with a traceable
+value, then load the ``ParameterSet`` for the case you want to run. Missing
+values fail with the component and field name.
 
 Next steps
 ----------

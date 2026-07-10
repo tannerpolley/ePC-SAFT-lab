@@ -5,6 +5,7 @@ import math
 import epcsaft
 import numpy as np
 import pytest
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.chemical_equilibrium import (
@@ -28,15 +29,42 @@ def _require_ipopt() -> None:
 
 def _mixture() -> epcsaft.Mixture:
     return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            {
-                "m": [1.0, 1.6069],
-                "s": [3.7039, 3.5206],
-                "e": [150.03, 191.42],
-                "MW": [16.043e-3, 30.070e-3],
-                "k_ij": [[0.0, 3.0e-4], [3.0e-4, 0.0]],
+        epcsaft.ParameterSet.from_records(
+            [
+                PureRecord(
+                    component="A",
+                    molar_mass=16.043e-3,
+                    m=1.0,
+                    sigma=3.7039,
+                    epsilon_k=150.03,
+                    charge=0.0,
+                    epsilon_k_ab=0.0,
+                    kappa_ab=0.0,
+                    association_scheme=None,
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+                PureRecord(
+                    component="B",
+                    molar_mass=30.070e-3,
+                    m=1.6069,
+                    sigma=3.5206,
+                    epsilon_k=191.42,
+                    charge=0.0,
+                    epsilon_k_ab=0.0,
+                    kappa_ab=0.0,
+                    association_scheme=None,
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+            ],
+            [BinaryRecord(("A", "B"), k_ij=3.0e-4)],
+            metadata={
+                "source": "Gross and Sadowski 2001 hydrocarbon parameters",
+                "source_backed": True,
             },
-            species=("A", "B"),
         )
     )
 

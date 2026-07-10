@@ -41,11 +41,10 @@ def _assert_figiel_parameter_snapshot() -> None:
 def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase_blocker() -> None:
     _assert_figiel_parameter_snapshot()
     feed = _perdomo_table4_liquid_feed()
-    mixture = epcsaft.Mixture.from_folder(
-        FIGIEL_PARAMETERS,
+    mixture = epcsaft.Mixture(
+        epcsaft.ParameterSet.from_dataset(FIGIEL_PARAMETERS, SPECIES, x=feed, T=TEMPERATURE_K),
+        model_options=FIGIEL_PARAMETERS,
         components=SPECIES,
-        reference_temperature=TEMPERATURE_K,
-        reference_composition=feed,
     )
 
     result = core._native_electrolyte_stage_iii_refinement(
@@ -107,11 +106,10 @@ def test_electrolyte_held2_flash_uses_figiel_parameters_and_records_single_phase
 def test_electrolyte_held2_flash_bubble_temperature_route_accepts_figiel_boundary() -> None:
     _assert_figiel_parameter_snapshot()
     feed = _perdomo_table4_liquid_feed()
-    mixture = epcsaft.Mixture.from_folder(
-        FIGIEL_PARAMETERS,
+    mixture = epcsaft.Mixture(
+        epcsaft.ParameterSet.from_dataset(FIGIEL_PARAMETERS, SPECIES, x=feed, T=TEMPERATURE_K),
+        model_options=FIGIEL_PARAMETERS,
         components=SPECIES,
-        reference_temperature=TEMPERATURE_K,
-        reference_composition=feed,
     )
 
     route = core._native_electrolyte_bubble_t_route_result(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 from epcsaft import Mixture
-from epcsaft.model.parameters import ParameterSet
+from epcsaft.model.parameters import BinaryRecord, ParameterSet, PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from equilibrium_support.runtime_cases import _ionic_params
 
@@ -67,20 +67,38 @@ def gross_2002_associating_parameter_set(
         ),
         "source_backed": source_backed,
     }
-    return ParameterSet.from_dict(
-        {
-            "MW": np.asarray([32.042e-3, 84.147e-3]),
-            "m": np.asarray([1.5255, 2.5303]),
-            "s": np.asarray([3.2300, 3.8499]),
-            "e": np.asarray([188.90, 278.11]),
-            "e_assoc": np.asarray([2899.5, 0.0]),
-            "vol_a": np.asarray([0.035176, 0.0]),
-            "assoc_scheme": ["2B", None],
-            "k_ij": np.asarray([[0.0, k_ij], [k_ij, 0.0]]),
-            "z": np.asarray([0.0, 0.0]),
-            "dielc": np.asarray([33.05, 2.02]),
-        },
-        species=["Methanol", "Cyclohexane"],
+    return ParameterSet.from_records(
+        (
+            PureRecord(
+                component="Methanol",
+                molar_mass=32.042e-3,
+                m=1.5255,
+                sigma=3.2300,
+                epsilon_k=188.90,
+                charge=0.0,
+                epsilon_k_ab=2899.5,
+                kappa_ab=0.035176,
+                association_scheme="2B",
+                relative_permittivity=33.05,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+            PureRecord(
+                component="Cyclohexane",
+                molar_mass=84.147e-3,
+                m=2.5303,
+                sigma=3.8499,
+                epsilon_k=278.11,
+                charge=0.0,
+                epsilon_k_ab=0.0,
+                kappa_ab=0.0,
+                association_scheme=None,
+                relative_permittivity=2.02,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+        ),
+        (BinaryRecord(("Methanol", "Cyclohexane"), k_ij=k_ij),),
         metadata=metadata,
     )
 
@@ -98,20 +116,38 @@ def gross_2002_figure10_parameter_set(*, source_backed: bool = True) -> Paramete
         "source_path": "analyses/paper_validation/2002_gross/figures/figure_10",
         "source_backed": source_backed,
     }
-    return ParameterSet.from_dict(
-        {
-            "MW": np.asarray([18.015e-3, 88.15e-3]),
-            "m": np.asarray([1.0656, 3.6260]),
-            "s": np.asarray([3.0007, 3.4508]),
-            "e": np.asarray([366.51, 247.28]),
-            "e_assoc": np.asarray([2500.7, 2252.1]),
-            "vol_a": np.asarray([0.034868, 0.010319]),
-            "assoc_scheme": ["2B", "2B"],
-            "k_ij": np.asarray([[0.0, 0.016], [0.016, 0.0]]),
-            "z": np.asarray([0.0, 0.0]),
-            "dielc": np.asarray([78.4, 15.1]),
-        },
-        species=["Water", "1-Pentanol"],
+    return ParameterSet.from_records(
+        (
+            PureRecord(
+                component="Water",
+                molar_mass=18.015e-3,
+                m=1.0656,
+                sigma=3.0007,
+                epsilon_k=366.51,
+                charge=0.0,
+                epsilon_k_ab=2500.7,
+                kappa_ab=0.034868,
+                association_scheme="2B",
+                relative_permittivity=78.4,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+            PureRecord(
+                component="1-Pentanol",
+                molar_mass=88.15e-3,
+                m=3.6260,
+                sigma=3.4508,
+                epsilon_k=247.28,
+                charge=0.0,
+                epsilon_k_ab=2252.1,
+                kappa_ab=0.010319,
+                association_scheme="2B",
+                relative_permittivity=15.1,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+        ),
+        (BinaryRecord(("Water", "1-Pentanol"), k_ij=0.016),),
         metadata=metadata,
     )
 

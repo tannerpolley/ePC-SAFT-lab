@@ -8,7 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from .datasets import get_prop_dict
+from .._types import InputError
+from .parameters import ParameterSet
 
 
 def validate_dataset_bundle(
@@ -20,43 +21,62 @@ def validate_dataset_bundle(
     reactions: Sequence[Any] | None = None,
     user_options: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Return a structured validation report for an external parameter bundle."""
+    """Return a structured validation report for a canonical parameter bundle."""
 
     labels = [str(item) for item in species]
-    params = _load_params(dataset, labels, x=x, T=T, user_options=user_options)
     errors: list[str] = []
     warnings: list[str] = []
+    provenance = {
+        "dataset": str(dataset) if not isinstance(dataset, Mapping) else "canonical_mapping",
+        "temperature": float(T),
+    }
+    try:
+        parameter_set = _load_parameter_set(dataset, labels, x=x, T=T, user_options=user_options)
+        params = parameter_set.to_runtime_dict()
+    except (InputError, FileNotFoundError, KeyError, TypeError, ValueError) as exc:
+        errors.append(str(exc))
+        return _validation_report(labels, errors, warnings, provenance)
+
+    params["z"] = np.asarray([record.charge for record in parameter_set.pure_records], dtype=float)
     _check_vector_lengths(params, labels, errors)
-    charges = _check_charges(params, labels, errors, warnings)
-    _check_born(params, labels, charges, errors, warnings)
+    charges = _check_charges(params, labels, errors)
+    _check_born(params, labels, charges, errors)
     _check_binary_matrices(params, labels, errors, warnings)
     _check_reactions(labels, reactions or (), errors)
-    report = {
+    provenance["parameter_metadata"] = dict(parameter_set.metadata)
+    return _validation_report(labels, errors, warnings, provenance)
+
+
+def _validation_report(
+    labels: list[str],
+    errors: list[str],
+    warnings: list[str],
+    provenance: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
         "valid": not errors,
         "species": labels,
         "component_count": len(labels),
         "errors": errors,
         "warnings": warnings,
-        "provenance": {
-            "dataset": str(dataset) if not isinstance(dataset, Mapping) else "mapping",
-            "temperature": float(T),
-        },
+        "provenance": dict(provenance),
     }
-    return report
 
 
-def _load_params(
+def _load_parameter_set(
     dataset: Mapping[str, Any] | str | Path,
     species: list[str],
     *,
     x: Any | None,
     T: float,
     user_options: Mapping[str, Any] | None,
-) -> Mapping[str, Any]:
+) -> ParameterSet:
     if isinstance(dataset, Mapping):
-        return dataset
+        if user_options:
+            raise InputError("Canonical mapping validation does not accept separate user_options.")
+        return ParameterSet.from_dict(dataset, species=species)
     composition = np.full(len(species), 1.0 / max(len(species), 1), dtype=float) if x is None else x
-    return get_prop_dict(dataset, species, composition, T, user_options=user_options)
+    return ParameterSet.from_dataset(dataset, species, composition, T, user_options=user_options)
 
 
 def _check_vector_lengths(params: Mapping[str, Any], species: list[str], errors: list[str]) -> None:
@@ -76,19 +96,16 @@ def _check_charges(
     params: Mapping[str, Any],
     species: list[str],
     errors: list[str],
-    warnings: list[str],
 ) -> np.ndarray:
     if "z" not in params or np.asarray(params.get("z"), dtype=float).size == 0:
-        warnings.append("charge vector 'z' is missing or empty; treating all species as neutral")
+        errors.append("missing required charge vector 'z'")
         return np.zeros(len(species), dtype=float)
     charges = np.asarray(params["z"], dtype=float).flatten()
     if charges.size != len(species):
         errors.append(f"charge vector 'z' length {charges.size} does not match species length {len(species)}")
         return np.zeros(len(species), dtype=float)
-    for label, charge in zip(species, charges):
-        expected = _charge_hint(label)
-        if expected is not None and np.sign(charge) != np.sign(expected):
-            errors.append(f"charge sign mismatch for {label}: expected {expected:+.0f}, got {charge:+g}")
+    if np.any(~np.isfinite(charges)):
+        errors.append("charge vector 'z' contains non-finite values")
     return charges
 
 
@@ -97,20 +114,19 @@ def _check_born(
     species: list[str],
     charges: np.ndarray,
     errors: list[str],
-    warnings: list[str],
 ) -> None:
     if not np.any(np.abs(charges) > 1.0e-12):
         return
     if "d_born" not in params:
-        warnings.append("charged species present but d_born vector is missing")
+        errors.append("charged species present but d_born vector is missing")
         return
     values = np.asarray(params["d_born"], dtype=float).flatten()
     if values.size != len(species):
         errors.append(f"d_born length {values.size} does not match species length {len(species)}")
         return
     for label, charge, value in zip(species, charges, values):
-        if abs(charge) > 1.0e-12 and not np.isfinite(value):
-            errors.append(f"non-finite d_born for charged species {label}")
+        if abs(charge) > 1.0e-12 and (not np.isfinite(value) or value <= 0.0):
+            errors.append(f"d_born for charged species {label} must be finite and positive")
 
 
 def _check_binary_matrices(
@@ -139,12 +155,3 @@ def _check_reactions(species: list[str], reactions: Sequence[Any], errors: list[
         for label in stoich:
             if str(label) not in species_set:
                 errors.append(f"Unknown species '{label}' in reaction stoichiometry")
-
-
-def _charge_hint(label: str) -> float | None:
-    token = label.strip()
-    if token.endswith("+"):
-        return 1.0
-    if token.endswith("-"):
-        return -1.0
-    return None

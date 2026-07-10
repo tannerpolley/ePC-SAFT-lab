@@ -1,8 +1,7 @@
-"""Canonical parameter records with legacy native-payload conversion."""
+"""Strict canonical parameter records and native-payload serialization."""
 
 from __future__ import annotations
 
-import csv
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
@@ -84,6 +83,48 @@ _NATIVE_RUNTIME_PASSTHROUGH_KEYS = {
     "mixed_ion_dispersion_sources",
 }
 
+PARAMETER_SET_SCHEMA = "epcsaft.parameter-set"
+PARAMETER_SET_SCHEMA_VERSION = 1
+_CANONICAL_TOP_LEVEL_KEYS = {
+    "schema",
+    "schema_version",
+    "components",
+    "pure_records",
+    "binary_records",
+    "metadata",
+    "runtime_options",
+}
+_CANONICAL_PURE_RECORD_KEYS = {
+    "component",
+    "molar_mass",
+    "molar_mass_units",
+    "m",
+    "sigma",
+    "epsilon_k",
+    "charge",
+    "epsilon_k_ab",
+    "kappa_ab",
+    "association_scheme",
+    "association_sites",
+    "relative_permittivity",
+    "born_diameter",
+    "solvation_factor",
+}
+_REQUIRED_PURE_SCIENTIFIC_FIELDS = {
+    "molar_mass",
+    "molar_mass_units",
+    "m",
+    "sigma",
+    "epsilon_k",
+    "charge",
+    "epsilon_k_ab",
+    "kappa_ab",
+    "association_scheme",
+    "relative_permittivity",
+    "born_diameter",
+    "solvation_factor",
+}
+
 
 @dataclass(frozen=True, slots=True)
 class ComponentIdentifier:
@@ -93,8 +134,12 @@ class ComponentIdentifier:
     aliases: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "name", str(self.name))
-        object.__setattr__(self, "aliases", tuple(str(alias) for alias in self.aliases))
+        object.__setattr__(self, "name", _nonblank_identity(self.name, "component name"))
+        object.__setattr__(
+            self,
+            "aliases",
+            tuple(_nonblank_identity(alias, "component alias") for alias in self.aliases),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,18 +147,18 @@ class AssociationSite:
     """One named association site on a component."""
 
     label: str
-    kind: str = "generic"
+    kind: str
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "label", str(self.label))
-        object.__setattr__(self, "kind", str(self.kind))
+        object.__setattr__(self, "label", _nonblank_identity(self.label, "association_sites.label"))
+        object.__setattr__(self, "kind", _nonblank_identity(self.kind, "association_sites.kind"))
 
 
 @dataclass(frozen=True, slots=True)
 class PureRecord:
     """Canonical pure-component ePC-SAFT parameters.
 
-    ``molar_mass`` is stored in kg/mol to match the legacy native ``MW`` payload.
+    ``molar_mass`` is stored in kg/mol to match the native ``MW`` input.
     Use :meth:`from_g_per_mol` when source tables report g/mol.
     """
 
@@ -122,19 +167,25 @@ class PureRecord:
     m: float
     sigma: float
     epsilon_k: float
-    charge: float = 0.0
-    epsilon_k_ab: float = 0.0
-    kappa_ab: float = 0.0
-    association_scheme: str | None = None
+    charge: float
+    epsilon_k_ab: float
+    kappa_ab: float
+    association_scheme: str | None
+    relative_permittivity: float
+    born_diameter: float
+    solvation_factor: float
     association_sites: tuple[AssociationSite, ...] = ()
-    relative_permittivity: float = 1.0
-    born_diameter: float = 0.0
-    solvation_factor: float = 1.0
 
     def __post_init__(self) -> None:
-        component = self.component.name if isinstance(self.component, ComponentIdentifier) else str(self.component)
+        component = (
+            self.component.name
+            if isinstance(self.component, ComponentIdentifier)
+            else _nonblank_identity(self.component, "component")
+        )
         object.__setattr__(self, "component", component)
         object.__setattr__(self, "association_sites", tuple(self.association_sites))
+        scheme = None if self.association_scheme is None else str(self.association_scheme).strip()
+        object.__setattr__(self, "association_scheme", scheme or None)
         for field_name in (
             "molar_mass",
             "m",
@@ -155,6 +206,30 @@ class PureRecord:
                 f"PureRecord.molar_mass is interpreted as kg/mol. Got {float(self.molar_mass)} for {component}. "
                 "Use a kg/mol value such as 18.01528e-3, or use PureRecord.from_g_per_mol(...)."
             )
+        for field_name in ("m", "sigma", "epsilon_k", "relative_permittivity", "solvation_factor"):
+            value = float(getattr(self, field_name))
+            if not np.isfinite(value) or value <= 0.0:
+                raise InputError(f"{component}.{field_name} must be finite and positive.")
+        if not np.isfinite(float(self.charge)):
+            raise InputError(f"{component}.charge must be finite.")
+        for field_name in ("epsilon_k_ab", "kappa_ab", "born_diameter"):
+            value = float(getattr(self, field_name))
+            if not np.isfinite(value) or value < 0.0:
+                raise InputError(f"{component}.{field_name} must be finite and non-negative.")
+        association_active = self.association_scheme is not None
+        if association_active and (float(self.epsilon_k_ab) <= 0.0 or float(self.kappa_ab) <= 0.0):
+            raise InputError(
+                f"{component} association parameters epsilon_k_ab and kappa_ab must be finite and positive "
+                "when association_scheme is active."
+            )
+        if not association_active and (float(self.epsilon_k_ab) != 0.0 or float(self.kappa_ab) != 0.0):
+            raise InputError(
+                f"{component}.association_scheme must identify the topology when association parameters are nonzero."
+            )
+        if not association_active and self.association_sites:
+            raise InputError(f"{component}.association_sites require an active association_scheme.")
+        if abs(float(self.charge)) > 0.0 and float(self.born_diameter) <= 0.0:
+            raise InputError(f"{component}.born_diameter must be finite and positive for a charged component.")
 
     @classmethod
     def from_g_per_mol(
@@ -165,14 +240,14 @@ class PureRecord:
         m: float,
         sigma: float,
         epsilon_k: float,
-        charge: float = 0.0,
-        epsilon_k_ab: float = 0.0,
-        kappa_ab: float = 0.0,
-        association_scheme: str | None = None,
+        charge: float,
+        epsilon_k_ab: float,
+        kappa_ab: float,
+        association_scheme: str | None,
+        relative_permittivity: float,
+        born_diameter: float,
+        solvation_factor: float,
         association_sites: Sequence[AssociationSite] = (),
-        relative_permittivity: float = 1.0,
-        born_diameter: float = 0.0,
-        solvation_factor: float = 1.0,
     ) -> PureRecord:
         """Construct a pure record from a source molar mass reported in g/mol."""
         value = float(molar_mass_g_per_mol)
@@ -192,23 +267,6 @@ class PureRecord:
             relative_permittivity=relative_permittivity,
             born_diameter=born_diameter,
             solvation_factor=solvation_factor,
-        )
-
-    @classmethod
-    def from_legacy(cls, component: str, payload: Mapping[str, Any]) -> PureRecord:
-        return cls(
-            component=component,
-            molar_mass=_legacy_float(payload, "MW", "molar_mass", default=0.0),
-            m=_legacy_float(payload, "m", default=1.0),
-            sigma=_legacy_float(payload, "s", "sigma", default=0.0),
-            epsilon_k=_legacy_float(payload, "e", "epsilon_k", default=0.0),
-            charge=_legacy_float(payload, "z", "charge", default=0.0),
-            epsilon_k_ab=_legacy_float(payload, "e_assoc", "epsilon_k_ab", default=0.0),
-            kappa_ab=_legacy_float(payload, "vol_a", "kappa_ab", default=0.0),
-            association_scheme=payload.get("assoc_scheme", payload.get("association_scheme")),
-            relative_permittivity=_legacy_float(payload, "dielc", "relative_permittivity", default=1.0),
-            born_diameter=_legacy_float(payload, "d_born", "born_diameter", default=0.0),
-            solvation_factor=_legacy_float(payload, "f_solv", "solvation_factor", default=1.0),
         )
 
 
@@ -244,7 +302,7 @@ class PermittivityRecord:
 
 @dataclass(frozen=True, slots=True)
 class ParameterSet:
-    """Canonical parameter set that can emit the legacy native payload."""
+    """Canonical parameter set with one native-payload serializer."""
 
     components: tuple[str, ...]
     pure_records: tuple[PureRecord, ...]
@@ -287,58 +345,21 @@ class ParameterSet:
         species: Sequence[str] | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
-        arrays = {str(key): value for key, value in payload.items()}
-        if "pure_records" in arrays:
-            return cls._from_canonical_payload(arrays, species=species, metadata=metadata)
-        if species is None:
-            if "components" in arrays:
-                species = [str(item) for item in arrays["components"]]
-            else:
-                ncomp = int(np.asarray(arrays["m"], dtype=float).size)
-                species = [str(idx) for idx in range(ncomp)]
-        labels = tuple(str(item) for item in species)
-        pure_records = []
-        for idx, label in enumerate(labels):
-            pure_records.append(
-                PureRecord.from_legacy(
-                    label,
-                    {
-                        key: _array_value(value, idx, default=None)
-                        for key, value in arrays.items()
-                        if key
-                        in {
-                            "MW",
-                            "molar_mass",
-                            "m",
-                            "s",
-                            "sigma",
-                            "e",
-                            "epsilon_k",
-                            "z",
-                            "charge",
-                            "e_assoc",
-                            "epsilon_k_ab",
-                            "vol_a",
-                            "kappa_ab",
-                            "assoc_scheme",
-                            "association_scheme",
-                            "dielc",
-                            "relative_permittivity",
-                            "d_born",
-                            "born_diameter",
-                            "f_solv",
-                            "solvation_factor",
-                        }
-                    },
-                )
+        if not isinstance(payload, Mapping):
+            raise InputError("ParameterSet.from_dict requires a mapping in the versioned canonical schema.")
+        canonical = {str(key): value for key, value in payload.items()}
+        schema_version = canonical.get("schema_version")
+        if (
+            canonical.get("schema") != PARAMETER_SET_SCHEMA
+            or type(schema_version) is not int
+            or schema_version != PARAMETER_SET_SCHEMA_VERSION
+        ):
+            raise InputError(
+                "ParameterSet.from_dict accepts only the versioned canonical schema "
+                "'epcsaft.parameter-set' with schema_version 1; "
+                "parallel-array and unversioned payloads are rejected."
             )
-        binary_records = _binary_records_from_legacy(labels, arrays)
-        return cls.from_records(
-            pure_records,
-            binary_records,
-            metadata=metadata,
-            runtime_options=_runtime_options_from_payload(arrays),
-        )
+        return cls._from_canonical_payload(canonical, species=species, metadata=metadata)
 
     @classmethod
     def _from_canonical_payload(
@@ -348,22 +369,38 @@ class ParameterSet:
         species: Sequence[str] | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
-        pure_payloads = list(payload.get("pure_records", ()))
+        unknown = sorted(set(payload) - _CANONICAL_TOP_LEVEL_KEYS)
+        if unknown:
+            raise InputError(f"canonical parameter payload contains unsupported key(s): {', '.join(unknown)}.")
+        payload_components_raw = _canonical_array(payload, "components")
+        pure_payloads = _canonical_array(payload, "pure_records")
+        binary_payloads = _canonical_array(payload, "binary_records")
         if not pure_payloads:
             raise InputError("canonical parameter payload must include pure_records.")
-        payload_components = tuple(str(item) for item in payload.get("components", ()))
-        if not payload_components:
-            payload_components = tuple(str(item.get("component")) for item in pure_payloads)
+        if not payload_components_raw:
+            raise InputError("canonical parameter payload components must contain at least one component label.")
+        payload_components = tuple(
+            _nonblank_identity(item, f"components[{index}]")
+            for index, item in enumerate(payload_components_raw)
+        )
         if species is not None and tuple(str(item) for item in species) != payload_components:
             raise InputError("canonical parameter dataset species must match payload components in order.")
-        payload_metadata = _copy_payload_mapping(payload.get("metadata", {}))
+        payload_metadata_raw = payload.get("metadata", {})
+        runtime_options_raw = payload.get("runtime_options", {})
+        if not isinstance(payload_metadata_raw, Mapping):
+            raise InputError("canonical parameter payload metadata must be a JSON object.")
+        if not isinstance(runtime_options_raw, Mapping):
+            raise InputError("canonical parameter payload runtime_options must be a JSON object.")
+        if metadata is not None and not isinstance(metadata, Mapping):
+            raise InputError("ParameterSet.from_dict metadata override must be a mapping.")
+        payload_metadata = _copy_payload_mapping(payload_metadata_raw)
         payload_metadata.update(_copy_payload_mapping(metadata))
         return cls(
             components=payload_components,
             pure_records=tuple(_pure_record_from_canonical(item) for item in pure_payloads),
-            binary_records=tuple(_binary_record_from_canonical(item) for item in payload.get("binary_records", ())),
+            binary_records=tuple(_binary_record_from_canonical(item) for item in binary_payloads),
             metadata=payload_metadata,
-            runtime_options=_copy_payload_mapping(payload.get("runtime_options", {})),
+            runtime_options=_copy_payload_mapping(runtime_options_raw),
         )
 
     @classmethod
@@ -392,7 +429,7 @@ class ParameterSet:
         T: float = 298.15,
         user_options: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
-        from .datasets import get_prop_dict
+        from .datasets import load_parameter_set
 
         dataset_path = Path(dataset_name).expanduser()
         canonical_path = dataset_path / "parameter_set.json"
@@ -416,8 +453,7 @@ class ParameterSet:
             )
 
         composition = x if x is not None else [1.0 / len(species)] * len(species)
-        payload = get_prop_dict(dataset_name, species, composition, T, user_options=user_options)
-        return cls.from_dict(payload, species=species, metadata={"dataset": str(dataset_name), "T": float(T)})
+        return load_parameter_set(dataset_name, species, composition, T, user_options=user_options)
 
     @classmethod
     def from_folder(
@@ -425,79 +461,23 @@ class ParameterSet:
         path: str | Path,
         *,
         components: Sequence[str] | None = None,
-        x: Sequence[float] | None = None,
-        T: float = 298.15,
         user_options: Mapping[str, Any] | None = None,
     ) -> ParameterSet:
-        """Load parameters from a canonical, reset-template, or catalog folder."""
+        """Load parameters from a canonical parameter-set folder."""
 
         root = Path(path).expanduser()
         if not root.is_dir():
             raise InputError(f"Parameter folder '{root}' does not exist.")
-        if (root / "parameter_set.json").exists():
-            params = cls.from_json(root / "parameter_set.json", species=components)
-            if user_options:
-                return _parameter_set_with_runtime_options(params, user_options)
-            return params
-        if (root / "pure_parameters.csv").exists():
-            return cls._from_input_template_folder(root, components=components, user_options=user_options)
-        if components is None:
-            raise InputError("components must be provided for catalog-style parameter folders.")
-        return cls.from_dataset(root, components, x=x, T=T, user_options=user_options)
-
-    @classmethod
-    def _from_input_template_folder(
-        cls,
-        root: Path,
-        *,
-        components: Sequence[str] | None,
-        user_options: Mapping[str, Any] | None,
-    ) -> ParameterSet:
-        pure_rows = _read_csv_rows(root / "pure_parameters.csv")
-        if not pure_rows:
-            raise InputError(f"Input template '{root / 'pure_parameters.csv'}' must contain parameter rows.")
-        row_by_component = {str(row.get("component", "")).strip(): row for row in pure_rows}
-        labels = tuple(str(item).strip() for item in (components or row_by_component.keys()) if str(item).strip())
-        if not labels:
-            raise InputError("Input template folder must define at least one component.")
-        missing = [label for label in labels if label not in row_by_component]
-        if missing:
-            raise InputError(f"Input template folder is missing pure parameter rows for: {', '.join(missing)}.")
-
-        permittivity = _input_template_permittivity(root / "permittivity_parameters.csv")
-        pure_records = []
-        for label in labels:
-            row = row_by_component[label]
-            eps_value = _optional_csv_float(row, "relative_permittivity", 1.0)
-            if label in permittivity:
-                eps_value = permittivity[label]
-            pure_records.append(
-                PureRecord(
-                    component=label,
-                    molar_mass=_required_csv_float(row, "molar_mass_kg_per_mol", label),
-                    m=_required_csv_float(row, "m", label),
-                    sigma=_required_csv_float(row, "sigma", label),
-                    epsilon_k=_required_csv_float(row, "epsilon_k", label),
-                    charge=_optional_csv_float(row, "charge", 0.0),
-                    epsilon_k_ab=_optional_csv_float(row, "epsilon_k_ab", 0.0),
-                    kappa_ab=_optional_csv_float(row, "kappa_ab", 0.0),
-                    association_scheme=_optional_csv_text(row, "association_scheme"),
-                    relative_permittivity=eps_value,
-                    born_diameter=_optional_csv_float(row, "born_diameter", 0.0),
-                    solvation_factor=_optional_csv_float(row, "solvation_factor", 1.0),
-                )
-            )
-
-        binary_records = _input_template_binary_records(root / "binary_parameters.csv", labels)
-        return cls.from_records(
-            pure_records,
-            binary_records,
-            metadata={"source": str(root), "schema": "reset_input_template"},
-            runtime_options=user_options or {},
-        )
+        canonical_path = root / "parameter_set.json"
+        if not canonical_path.is_file():
+            raise InputError(f"Parameter folder '{root}' must contain parameter_set.json.")
+        params = cls.from_json(canonical_path, species=components)
+        return _parameter_set_with_runtime_options(params, user_options)
 
     def validate(self) -> dict[str, Any]:
         errors: list[str] = []
+        if len(set(self.components)) != len(self.components):
+            errors.append("ParameterSet components must be unique.")
         seen = set()
         for record in self.pure_records:
             label = str(record.component)
@@ -512,6 +492,9 @@ class ParameterSet:
         if missing:
             errors.append(f"Missing pure records for components: {', '.join(missing)}.")
         known = set(self.components)
+        undeclared = sorted(seen - known)
+        if undeclared:
+            errors.append(f"ParameterSet contains pure records for undeclared components: {', '.join(undeclared)}.")
         for record in self.binary_records:
             for label in record.components:
                 if label not in known:
@@ -519,6 +502,11 @@ class ParameterSet:
         reserved = sorted(set(self.runtime_options) & _PARAMETER_PAYLOAD_KEYS)
         if reserved:
             errors.append(f"runtime_options cannot override parameter payload keys: {', '.join(reserved)}.")
+        source_backed = self.metadata.get("source_backed", False)
+        if "source_backed" in self.metadata and type(source_backed) is not bool:
+            errors.append("metadata.source_backed must be a boolean.")
+        elif source_backed and not _provenance_metadata_fields(self.metadata):
+            errors.append("source_backed parameter metadata requires a nonblank source identity.")
         if errors:
             raise InputError("; ".join(errors))
         return {
@@ -569,13 +557,12 @@ class ParameterSet:
         payload.update(_runtime_parameter_provenance_payload(self.metadata, bool(self.binary_records)))
         return payload
 
-    def to_legacy_dict(self) -> dict[str, Any]:
-        return self.to_runtime_dict()
-
     def to_json(self, path: str | Path | None = None) -> str:
         payload = {
+            "schema": PARAMETER_SET_SCHEMA,
+            "schema_version": PARAMETER_SET_SCHEMA_VERSION,
             "components": list(self.components),
-            "pure_records": [asdict(record) for record in self.pure_records],
+            "pure_records": [_pure_record_json(record) for record in self.pure_records],
             "binary_records": [asdict(record) for record in self.binary_records],
             "metadata": _json_ready(self.metadata),
             "runtime_options": _json_ready(self.runtime_options),
@@ -644,49 +631,55 @@ class ParameterSource:
         return self.to_parameter_set(species=species, x=x, T=T, user_options=user_options).to_runtime_dict()
 
 
-def _legacy_float(payload: Mapping[str, Any], *keys: str, default: float) -> float:
-    for key in keys:
-        value = payload.get(key)
-        if value not in (None, ""):
-            return float(value)
-    return float(default)
-
-
 def _pure_record_from_canonical(payload: Mapping[str, Any]) -> PureRecord:
+    if not isinstance(payload, Mapping):
+        raise InputError("canonical pure_records entries must be mappings.")
     component = str(payload.get("component", "")).strip()
     if not component:
         raise InputError("canonical pure record requires component.")
+    unknown = sorted(set(payload) - _CANONICAL_PURE_RECORD_KEYS)
+    if unknown:
+        raise InputError(f"{component} canonical pure record contains unsupported key(s): {', '.join(unknown)}.")
+    missing = sorted(field_name for field_name in _REQUIRED_PURE_SCIENTIFIC_FIELDS if field_name not in payload)
+    if missing:
+        raise InputError("; ".join(f"{component}.{field_name} must be explicit in canonical parameter data." for field_name in missing))
     molar_mass = _required_float(payload, "molar_mass", component)
-    units = str(payload.get("molar_mass_units", "kg/mol")).strip().lower()
+    units = str(payload["molar_mass_units"]).strip().lower()
     if units in {"g/mol", "g per mol", "g mol^-1"}:
         molar_mass *= 1.0e-3
     elif units not in {"kg/mol", "kg per mol", "kg mol^-1"}:
         raise InputError(f"{component}.molar_mass_units must be 'kg/mol' or 'g/mol'.")
-    association_sites = tuple(_association_site_from_canonical(item) for item in payload.get("association_sites", ()))
+    association_sites_raw = payload.get("association_sites", [])
+    if not isinstance(association_sites_raw, list):
+        raise InputError(f"{component}.association_sites must be a JSON array.")
+    association_sites = tuple(_association_site_from_canonical(item) for item in association_sites_raw)
     return PureRecord(
         component=component,
         molar_mass=molar_mass,
         m=_required_float(payload, "m", component),
         sigma=_required_float(payload, "sigma", component),
         epsilon_k=_required_float(payload, "epsilon_k", component),
-        charge=_optional_float(payload, "charge", 0.0),
-        epsilon_k_ab=_optional_float(payload, "epsilon_k_ab", 0.0),
-        kappa_ab=_optional_float(payload, "kappa_ab", 0.0),
-        association_scheme=payload.get("association_scheme"),
+        charge=_required_float(payload, "charge", component),
+        epsilon_k_ab=_required_float(payload, "epsilon_k_ab", component),
+        kappa_ab=_required_float(payload, "kappa_ab", component),
+        association_scheme=_required_nullable_text(payload, "association_scheme", component),
         association_sites=association_sites,
-        relative_permittivity=_optional_float(payload, "relative_permittivity", 1.0),
-        born_diameter=_optional_float(payload, "born_diameter", 0.0),
-        solvation_factor=_optional_float(payload, "solvation_factor", 1.0),
+        relative_permittivity=_required_float(payload, "relative_permittivity", component),
+        born_diameter=_required_float(payload, "born_diameter", component),
+        solvation_factor=_required_float(payload, "solvation_factor", component),
     )
 
 
 def _association_site_from_canonical(payload: Any) -> AssociationSite:
-    if isinstance(payload, Mapping):
-        return AssociationSite(
-            label=str(payload.get("label", "")),
-            kind=str(payload.get("kind", "generic")),
-        )
-    return AssociationSite(label=str(payload))
+    if not isinstance(payload, Mapping):
+        raise InputError("association_sites entries must be mappings with explicit label and kind fields.")
+    unknown = sorted(set(payload) - {"label", "kind"})
+    if unknown:
+        raise InputError(f"association_sites entry contains unsupported key(s): {', '.join(unknown)}.")
+    missing = sorted({"label", "kind"} - set(payload))
+    if missing:
+        raise InputError(f"association_sites entry requires explicit field(s): {', '.join(missing)}.")
+    return AssociationSite(label=payload["label"], kind=payload["kind"])
 
 
 def _binary_record_from_canonical(payload: Mapping[str, Any]) -> BinaryRecord:
@@ -702,7 +695,27 @@ def _required_float(payload: Mapping[str, Any], key: str, component: str) -> flo
     value = payload.get(key)
     if value in (None, ""):
         raise InputError(f"{component}.{key} must be filled in canonical parameter data.")
-    return float(value)
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise InputError(f"{component}.{key} must be a finite number.") from exc
+    if not np.isfinite(parsed):
+        raise InputError(f"{component}.{key} must be finite.")
+    return parsed
+
+
+def _required_nullable_text(payload: Mapping[str, Any], key: str, component: str) -> str | None:
+    if key not in payload:
+        raise InputError(f"{component}.{key} must be explicit in canonical parameter data.")
+    value = payload[key]
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise InputError(f"{component}.{key} must be a string or null.")
+    text = value.strip()
+    if not text:
+        raise InputError(f"{component}.{key} must use null for a nonassociating component, not blank text.")
+    return text
 
 
 def _optional_float(payload: Mapping[str, Any], key: str, default: float) -> float:
@@ -710,67 +723,6 @@ def _optional_float(payload: Mapping[str, Any], key: str, default: float) -> flo
     if value in (None, ""):
         return float(default)
     return float(value)
-
-
-def _read_csv_rows(path: Path) -> list[dict[str, str]]:
-    if not path.exists():
-        return []
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return [{str(key): str(value or "").strip() for key, value in row.items()} for row in csv.DictReader(handle)]
-
-
-def _required_csv_float(row: Mapping[str, str], key: str, component: str) -> float:
-    value = row.get(key, "")
-    if value in (None, ""):
-        raise InputError(f"{component}.{key} must be filled in input template data.")
-    return float(value)
-
-
-def _optional_csv_float(row: Mapping[str, str], key: str, default: float) -> float:
-    value = row.get(key, "")
-    if value in (None, ""):
-        return float(default)
-    return float(value)
-
-
-def _optional_csv_text(row: Mapping[str, str], key: str) -> str | None:
-    value = str(row.get(key, "")).strip()
-    return value or None
-
-
-def _input_template_permittivity(path: Path) -> dict[str, float]:
-    values: dict[str, float] = {}
-    for row in _read_csv_rows(path):
-        component = str(row.get("component", "")).strip()
-        if not component:
-            continue
-        model = str(row.get("epsilon_i_model", "constant")).strip().lower()
-        if model != "constant":
-            raise InputError("permittivity_parameters.csv currently supports only constant epsilon_i_model values.")
-        value = row.get("epsilon_i_value", "")
-        if value not in (None, ""):
-            values[component] = float(value)
-    return values
-
-
-def _input_template_binary_records(path: Path, components: Sequence[str]) -> tuple[BinaryRecord, ...]:
-    known = set(components)
-    records: list[BinaryRecord] = []
-    for row in _read_csv_rows(path):
-        left = str(row.get("component_i", "")).strip()
-        right = str(row.get("component_j", "")).strip()
-        if not left and not right:
-            continue
-        if left not in known or right not in known:
-            raise InputError(f"binary_parameters.csv references unknown pair {left!r}, {right!r}.")
-        record = BinaryRecord(
-            (left, right),
-            k_ij=_optional_csv_float(row, "k_ij", 0.0),
-            l_ij=_optional_csv_float(row, "l_ij", 0.0),
-            k_hb_ij=_optional_csv_float(row, "k_hb_ij", 0.0),
-        )
-        records.append(record)
-    return tuple(records)
 
 
 def _resolve_parameter_source_species(
@@ -813,14 +765,6 @@ def _parameter_set_with_runtime_options(
     )
 
 
-def _runtime_options_from_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
-    return {
-        str(key): _copy_payload_value(value)
-        for key, value in payload.items()
-        if str(key) not in _PARAMETER_PAYLOAD_KEYS
-    }
-
-
 def _normalize_runtime_user_options(runtime_options: Mapping[str, Any]) -> dict[str, Any]:
     if not runtime_options:
         return {}
@@ -859,7 +803,7 @@ def _normalize_runtime_user_options(runtime_options: Mapping[str, Any]) -> dict[
 
 
 def _runtime_parameter_provenance_payload(metadata: Mapping[str, Any], has_binary_records: bool) -> dict[str, Any]:
-    fields = [key for key in _PROVENANCE_METADATA_KEYS if metadata.get(key) not in (None, "")]
+    fields = _provenance_metadata_fields(metadata)
     source_label = next((str(metadata[key]) for key in fields if key in {"source", "dataset", "paper"}), "ParameterSet")
     source_backed = bool(metadata.get("source_backed", False))
     if fields and source_backed:
@@ -878,6 +822,14 @@ def _runtime_parameter_provenance_payload(metadata: Mapping[str, Any], has_binar
     }
 
 
+def _provenance_metadata_fields(metadata: Mapping[str, Any]) -> list[str]:
+    return [
+        key
+        for key in _PROVENANCE_METADATA_KEYS
+        if isinstance(metadata.get(key), str) and bool(str(metadata[key]).strip())
+    ]
+
+
 def _json_ready(value: Any) -> Any:
     if isinstance(value, np.ndarray):
         return _json_ready(value.tolist())
@@ -890,39 +842,27 @@ def _json_ready(value: Any) -> Any:
     return value
 
 
-def _array_value(value: Any, idx: int, *, default: Any) -> Any:
-    if value is None:
-        return default
-    if isinstance(value, (str, bytes)):
-        return value
-    array = np.asarray(value, dtype=object)
-    if array.ndim == 0:
-        return array.item()
-    if array.size <= idx:
-        return default
-    item = array.reshape(-1)[idx]
-    return item.item() if hasattr(item, "item") else item
+def _pure_record_json(record: PureRecord) -> dict[str, Any]:
+    payload = asdict(record)
+    payload["molar_mass_units"] = "kg/mol"
+    return payload
 
 
-def _binary_records_from_legacy(labels: Sequence[str], payload: Mapping[str, Any]) -> tuple[BinaryRecord, ...]:
-    out: list[BinaryRecord] = []
-    for i, left in enumerate(labels):
-        for j in range(i + 1, len(labels)):
-            right = labels[j]
-            values = {
-                "k_ij": _matrix_value(payload.get("k_ij"), i, j),
-                "l_ij": _matrix_value(payload.get("l_ij"), i, j),
-                "k_hb_ij": _matrix_value(payload.get("k_hb_ij", payload.get("k_hb")), i, j),
-            }
-            if any(abs(value) > 0.0 for value in values.values()):
-                out.append(BinaryRecord((left, right), **values))
-    return tuple(out)
+def _canonical_array(payload: Mapping[str, Any], key: str) -> list[Any]:
+    if key not in payload:
+        raise InputError(f"canonical parameter payload requires {key} as a JSON array.")
+    value = payload[key]
+    if not isinstance(value, list):
+        raise InputError(f"canonical parameter payload {key} must be a JSON array.")
+    return value
 
 
-def _matrix_value(value: Any, i: int, j: int) -> float:
-    if value is None:
-        return 0.0
-    matrix = np.asarray(value, dtype=float)
-    if matrix.ndim != 2 or matrix.shape[0] <= i or matrix.shape[1] <= j:
-        return 0.0
-    return float(matrix[i, j])
+def _nonblank_identity(value: Any, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise InputError(f"{field_name} must be a nonblank string.")
+    text = value.strip()
+    if not text:
+        raise InputError(f"{field_name} must be a nonblank string.")
+    if text != value:
+        raise InputError(f"{field_name} must not contain surrounding whitespace.")
+    return text

@@ -169,11 +169,15 @@ def _public_route_payload(case_dir: Path, checker_command: list[str] | None) -> 
     parameter_dir = paper_validation_parameter_path(str(metadata.get("parameter_dataset", "2026_Khudaida")))
 
     try:
-        mixture = epcsaft.Mixture.from_folder(
-            parameter_dir,
+        mixture = epcsaft.Mixture(
+            epcsaft.ParameterSet.from_dataset(
+                parameter_dir,
+                species,
+                x=feed,
+                T=temperature,
+            ),
+            model_options=parameter_dir,
             components=species,
-            reference_temperature=temperature,
-            reference_composition=feed,
         )
         result = epcsaft_equilibrium.Equilibrium(
             mixture,

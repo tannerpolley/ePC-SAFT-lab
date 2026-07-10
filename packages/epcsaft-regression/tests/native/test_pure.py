@@ -3,10 +3,61 @@ from __future__ import annotations
 import json
 
 import epcsaft
+import epcsaft_regression.core as regression_core
 import pytest
+from epcsaft._types import InputError
 from epcsaft_regression import fit_pure_ion, fit_pure_neutral
 from epcsaft_regression.native_adapter import native_ceres_backend_info
 from regression_support.regression_cases import _methane_like_records, _minimal_neutral_metadata
+
+
+def test_pure_neutral_rejects_missing_nonfit_scientific_inputs() -> None:
+    with pytest.raises(InputError, match=r"Methane.*MW"):
+        fit_pure_neutral(
+            _methane_like_records(),
+            "Methane",
+            assoc_scheme="",
+            fixed_parameters={},
+            initial_guess={"m": 1.08, "s": 3.55, "e": 155.0},
+            bounds={"m": (0.5, 3.5), "s": (2.0, 5.0), "e": (50.0, 400.0)},
+        )
+
+
+def test_molality_conversion_resolves_explicit_dataset_charge_and_mass_data(tmp_path) -> None:
+    dataset = tmp_path / "explicit_conversion_dataset"
+    pure_dir = dataset / "pure"
+    pure_dir.mkdir(parents=True)
+    (pure_dir / "any_solvent.csv").write_text(
+        "\n".join(
+            [
+                "component,MW,m,s,e,e_assoc,vol_a,assoc_scheme,z,dielc,d_born,f_solv,source",
+                "Solv,0.018,1.0,3.7,150,0,0,,0,78,0,1,Test source",
+                "Cat+,0.023,1,2.8,100,0,0,,1,8,3.4,1,Test source",
+                "An-,0.035,1,2.7,100,0,0,,-1,8,4.1,1,Test source",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    species = ("Solv", "Cat+", "An-")
+
+    charges, molar_masses = regression_core._molality_component_data(dataset, species, 298.15)
+    composition = regression_core._ion_composition_from_record(
+        {"molality": 1.0},
+        species,
+        "Solv",
+        charges=charges,
+        molar_masses=molar_masses,
+    )
+
+    expected_solvent_moles = 1.0 / 0.018
+    assert composition == pytest.approx(
+        [
+            expected_solvent_moles / (expected_solvent_moles + 2.0),
+            1.0 / (expected_solvent_moles + 2.0),
+            1.0 / (expected_solvent_moles + 2.0),
+        ]
+    )
 
 
 def test_ceres_pure_neutral_regression_owns_optimizer_loop() -> None:

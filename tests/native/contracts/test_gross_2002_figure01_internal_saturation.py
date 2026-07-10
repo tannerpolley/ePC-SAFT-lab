@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from epcsaft._core import NativeValueError
 from epcsaft._types import InputError
+from epcsaft.model.parameters import PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium import workflows
 from epcsaft_equilibrium._native import extension_native_core
@@ -70,32 +71,24 @@ def _associating_mixture(
     parameters = figure01._load_parameters()
     rows = [parameters[component] for component in components]
     count = len(rows)
-    payload: dict[str, Any] = {
-        "MW": np.asarray([float(row["MW"]) for row in rows]),
-        "m": np.asarray([float(row["m"]) for row in rows]),
-        "s": np.asarray([float(row["s"]) for row in rows]),
-        "e": np.asarray([float(row["e"]) for row in rows]),
-        "e_assoc": np.asarray([float(row["e_assoc"]) for row in rows]),
-        "vol_a": np.asarray([float(row["vol_a"]) for row in rows]),
-        "assoc_scheme": [
-            "3B" if association_site_count is not None else row["assoc_scheme"]
-            for row in rows
+    parameters = epcsaft.ParameterSet.from_records(
+        [
+            PureRecord(
+                component=component,
+                molar_mass=float(row["MW"]),
+                m=float(row["m"]),
+                sigma=float(row["s"]),
+                epsilon_k=float(row["e"]),
+                charge=0.0,
+                epsilon_k_ab=float(row["e_assoc"]),
+                kappa_ab=float(row["vol_a"]),
+                association_scheme="3B" if association_site_count is not None else row["assoc_scheme"],
+                relative_permittivity=float(row["dielc"]),
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            )
+            for component, row in zip(components, rows, strict=True)
         ],
-    }
-    if charges is not None:
-        payload["z"] = np.asarray(charges, dtype=float)
-        payload["dielc"] = np.asarray([float(row["dielc"]) for row in rows])
-    if d_born is not None:
-        payload["d_born"] = np.asarray(d_born, dtype=float)
-    if f_solv is not None:
-        payload["f_solv"] = np.asarray(f_solv, dtype=float)
-    if association_site_count is not None:
-        payload["assoc_num"] = np.asarray(association_site_count, dtype=int)
-    if k_ij is not None:
-        payload["k_ij"] = np.asarray(k_ij, dtype=float)
-    parameters = epcsaft.ParameterSet.from_dict(
-        payload,
-        species=list(components),
         metadata={
             "source": SOURCE_PARAMETER_TABLE,
             "paper": "Gross and Sadowski 2002",
@@ -127,6 +120,8 @@ def _associating_mixture(
     )
     if k_ij is not None:
         runtime_payload["k_ij"] = np.asarray(k_ij, dtype=float)
+    if association_site_count is not None:
+        runtime_payload["assoc_num"] = np.asarray(association_site_count, dtype=int)
     return ePCSAFTMixture.from_params(runtime_payload, species=list(components))
 
 

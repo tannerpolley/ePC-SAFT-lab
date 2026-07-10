@@ -43,8 +43,6 @@ class Mixture:
         *,
         components: Sequence[str],
         model_options: ModelOptions | Mapping[str, object] | str | Path | None = None,
-        reference_temperature: float = 298.15,
-        reference_composition: Sequence[float] | None = None,
     ) -> Mixture:
         """Load a configured mixture from a parameter/options folder."""
 
@@ -56,8 +54,6 @@ class Mixture:
         params = ParameterSet.from_folder(
             root,
             components=labels,
-            x=reference_composition,
-            T=float(reference_temperature),
             user_options=options.to_json_dict(),
         )
         return cls(params, model_options=options, components=labels)

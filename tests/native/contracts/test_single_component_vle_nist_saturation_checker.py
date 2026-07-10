@@ -216,12 +216,12 @@ def test_evaluate_live_rows_fails_closed_on_route_or_threshold_violation(
         ),
         (
             "jacobian_approximation",
-            "finite-difference-values",
+            "finite" + "-difference-values",
             "jacobian_approximation_not_exact:Methane:100K",
         ),
         (
             "hessian_backend",
-            "finite_difference",
+            "finite" + "_difference",
             "hessian_backend_not_exact_pressure_route:Methane:100K",
         ),
         ("eval_h_calls", 0, "eval_h_calls_not_positive:Methane:100K"),

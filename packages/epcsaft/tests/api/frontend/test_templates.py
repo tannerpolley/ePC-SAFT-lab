@@ -4,11 +4,12 @@ import csv
 import json
 
 import epcsaft
-from epcsaft.model.templates import create_parameter_template
+import pytest
+from epcsaft._types import InputError
 from epcsaft.model.validation import validate_dataset_bundle
 
 
-def test_create_input_template_writes_parameters_and_workflow_options(tmp_path) -> None:
+def test_create_input_template_writes_versioned_parameter_set_and_workflow_options(tmp_path) -> None:
     root = epcsaft.create_input_template(
         tmp_path / "case",
         components=("Methane", "Ethane"),
@@ -16,57 +17,51 @@ def test_create_input_template_writes_parameters_and_workflow_options(tmp_path) 
     )
 
     expected_files = {
-        "pure_parameters.csv",
-        "binary_parameters.csv",
-        "permittivity_parameters.csv",
+        "parameter_set.json",
         "model_options.json",
         "state_options.json",
         "equilibrium_options.json",
         "regression_options.json",
     }
     assert {path.name for path in root.iterdir()} == expected_files
-    assert (root / "pure_parameters.csv").read_text(encoding="utf-8").splitlines()[0].startswith("component,")
+    parameter_set = json.loads((root / "parameter_set.json").read_text(encoding="utf-8"))
+    assert parameter_set["schema"] == "epcsaft.parameter-set"
+    assert parameter_set["schema_version"] == 1
+    assert parameter_set["components"] == ["Methane", "Ethane"]
+    assert parameter_set["binary_records"] == []
+    assert parameter_set["metadata"] == {"source": None, "source_backed": False}
+    unresolved_fields = {
+        "molar_mass",
+        "m",
+        "sigma",
+        "epsilon_k",
+        "charge",
+        "epsilon_k_ab",
+        "kappa_ab",
+        "association_scheme",
+        "relative_permittivity",
+        "born_diameter",
+        "solvation_factor",
+    }
+    for record, component in zip(parameter_set["pure_records"], ("Methane", "Ethane")):
+        assert record["component"] == component
+        assert record["molar_mass_units"] == "kg/mol"
+        assert record["association_sites"] == []
+        assert {field for field in unresolved_fields if record[field] is None} == unresolved_fields
     model_options = json.loads((root / "model_options.json").read_text(encoding="utf-8"))
     assert model_options["differential_mode"] == "autodiff"
     assert model_options["relative_permittivity_rule"] == "component_linear"
     assert model_options["born_model"]["enabled"] is True
-    assert "Methane" in (root / "pure_parameters.csv").read_text(encoding="utf-8")
 
 
-def test_create_parameter_template_writes_source_metadata_and_zero_binary_matrices(tmp_path) -> None:
-    root = create_parameter_template(tmp_path, "dataset", species=("H2O", "Na+", "Cl-"))
+def test_created_input_template_fails_loudly_until_scientific_values_are_filled(tmp_path) -> None:
+    root = epcsaft.create_input_template(tmp_path / "case", components=("Methane",), workflows=("state",))
 
-    pure_file = next((root / "pure").glob("*.csv"))
-    pure_header = pure_file.read_text(encoding="utf-8").splitlines()[0].split(",")
-    assert pure_header == [
-        "component",
-        "m",
-        "s",
-        "e",
-        "e_assoc",
-        "vol_a",
-        "assoc_scheme",
-        "z",
-        "dielc",
-        "d_born",
-        "f_solv",
-        "MW",
-        "source",
-    ]
-
-    for filename in ("k_ij.csv", "l_ij.csv", "k_hb_ij.csv"):
-        with (root / "mixed" / "binary_interaction" / filename).open(encoding="utf-8", newline="") as handle:
-            rows = list(csv.DictReader(handle))
-        assert rows
-        for row in rows:
-            assert {key: row[key] for key in ("H2O", "Na+", "Cl-")} == {
-                "H2O": "0.0",
-                "Na+": "0.0",
-                "Cl-": "0.0",
-            }
+    with pytest.raises(InputError, match=r"Methane\.molar_mass"):
+        epcsaft.ParameterSet.from_folder(root, components=("Methane",))
 
 
-def test_legacy_parameter_loader_ignores_source_metadata_column(tmp_path) -> None:
+def test_source_dataset_loader_preserves_source_metadata_column(tmp_path) -> None:
     root = tmp_path / "dataset"
     (root / "pure").mkdir(parents=True)
     (root / "mixed" / "binary_interaction").mkdir(parents=True)

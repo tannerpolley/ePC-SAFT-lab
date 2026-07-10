@@ -34,7 +34,7 @@ The main user objects are:
   ``epcsaft_equilibrium``.
 - ``Regression``: configured workflow object imported from
   ``epcsaft_regression``.
-- ``create_input_template(...)``: creates reset CSV/JSON input scaffolds.
+- ``create_input_template(...)``: creates a versioned parameter document and workflow-option scaffolds.
 - ``capabilities()``: reports available runtime and solver paths.
 
 Install
@@ -137,12 +137,32 @@ Quick example
 
    parameters = ParameterSet.from_dict(
        {
-           "MW": np.asarray([92.1405e-3]),
-           "m": np.asarray([2.8149]),
-           "s": np.asarray([3.7169]),
-           "e": np.asarray([285.69]),
-       },
-       species=["Toluene"],
+           "schema": "epcsaft.parameter-set",
+           "schema_version": 1,
+           "components": ["Toluene"],
+           "pure_records": [{
+               "component": "Toluene",
+               "molar_mass": 92.1405e-3,
+               "molar_mass_units": "kg/mol",
+               "m": 2.8149,
+               "sigma": 3.7169,
+               "epsilon_k": 285.69,
+               "charge": 0.0,
+               "epsilon_k_ab": 0.0,
+               "kappa_ab": 0.0,
+               "association_scheme": None,
+               "association_sites": [],
+               "relative_permittivity": 1.0,
+               "born_diameter": 0.0,
+               "solvation_factor": 1.0,
+           }],
+           "binary_records": [],
+           "metadata": {
+               "source": "Gross and Sadowski (2001), Table 2",
+               "source_backed": True,
+               "auxiliary_neutral_fields": "equation_structural_neutral_inactive",
+           },
+       }
    )
    mixture = Mixture(parameters)
 
@@ -191,10 +211,11 @@ Most users should create and own their parameter folders:
        components=["H2O", "Na+", "Cl-"],
    )
 
-After filling in the generated files, construct a ``ParameterSet`` from the
-parameter data and pass thermodynamic conditions to ``State(...)`` or workflow
-defaults to ``Equilibrium(...)`` from ``epcsaft_equilibrium`` and
-``Regression(...)`` from ``epcsaft_regression``.
+The generated ``parameter_set.json`` contains null scientific fields rather
+than guessed values. Fill each value and source before loading the
+``ParameterSet``; then pass thermodynamic conditions to ``State(...)`` or use
+``Equilibrium(...)`` from ``epcsaft_equilibrium`` and ``Regression(...)`` from
+``epcsaft_regression``.
 
 Equilibrium
 -----------

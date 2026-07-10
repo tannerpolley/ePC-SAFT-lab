@@ -4,57 +4,100 @@ import epcsaft
 import epcsaft_equilibrium
 import numpy as np
 import pytest
+from epcsaft.model.parameters import BinaryRecord, PureRecord
+
+
+def _parameter_set(
+    components: tuple[str, ...],
+    *,
+    molar_mass: tuple[float, ...],
+    m: tuple[float, ...],
+    sigma: tuple[float, ...],
+    epsilon_k: tuple[float, ...],
+    epsilon_k_ab: tuple[float, ...] | None = None,
+    kappa_ab: tuple[float, ...] | None = None,
+    association_scheme: tuple[str | None, ...] | None = None,
+    k_ij: float | None = None,
+) -> epcsaft.ParameterSet:
+    epsilon_k_ab = epsilon_k_ab or tuple(0.0 for _ in components)
+    kappa_ab = kappa_ab or tuple(0.0 for _ in components)
+    association_scheme = association_scheme or tuple(None for _ in components)
+    pure = tuple(
+        PureRecord(
+            component=component,
+            molar_mass=molar_mass_i,
+            m=m_i,
+            sigma=sigma_i,
+            epsilon_k=epsilon_k_i,
+            charge=0.0,
+            epsilon_k_ab=epsilon_k_ab_i,
+            kappa_ab=kappa_ab_i,
+            association_scheme=scheme_i,
+            relative_permittivity=1.0,
+            born_diameter=0.0,
+            solvation_factor=1.0,
+        )
+        for component, molar_mass_i, m_i, sigma_i, epsilon_k_i, epsilon_k_ab_i, kappa_ab_i, scheme_i in zip(
+            components,
+            molar_mass,
+            m,
+            sigma,
+            epsilon_k,
+            epsilon_k_ab,
+            kappa_ab,
+            association_scheme,
+            strict=True,
+        )
+    )
+    binary = () if k_ij is None else (BinaryRecord((components[0], components[1]), k_ij=k_ij),)
+    return epcsaft.ParameterSet.from_records(
+        pure,
+        binary,
+        metadata={"source": "Gross and Sadowski reference parameters", "source_backed": True},
+    )
 
 
 def _pure_ethane_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([30.070e-3]),
-            "m": np.asarray([1.6069]),
-            "s": np.asarray([3.5206]),
-            "e": np.asarray([191.42]),
-        },
-        species=["Ethane"],
+    return _parameter_set(
+        ("Ethane",),
+        molar_mass=(30.070e-3,),
+        m=(1.6069,),
+        sigma=(3.5206,),
+        epsilon_k=(191.42,),
     )
 
 
 def _binary_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([16.043e-3, 30.070e-3]),
-            "m": np.asarray([1.0, 1.6069]),
-            "s": np.asarray([3.7039, 3.5206]),
-            "e": np.asarray([150.03, 191.42]),
-            "k_ij": np.asarray([[0.0, 3.0e-4], [3.0e-4, 0.0]]),
-        },
-        species=["Methane", "Ethane"],
+    return _parameter_set(
+        ("Methane", "Ethane"),
+        molar_mass=(16.043e-3, 30.070e-3),
+        m=(1.0, 1.6069),
+        sigma=(3.7039, 3.5206),
+        epsilon_k=(150.03, 191.42),
+        k_ij=3.0e-4,
     )
 
 
 def _unproven_pure_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([20.180e-3]),
-            "m": np.asarray([1.2]),
-            "s": np.asarray([3.1]),
-            "e": np.asarray([120.0]),
-        },
-        species=["UnprovenPureComponent"],
+    return _parameter_set(
+        ("UnprovenPureComponent",),
+        molar_mass=(20.180e-3,),
+        m=(1.2,),
+        sigma=(3.1,),
+        epsilon_k=(120.0,),
     )
 
 
 def _pure_associating_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([32.042e-3]),
-            "m": np.asarray([1.5255]),
-            "s": np.asarray([3.2300]),
-            "e": np.asarray([188.90]),
-            "e_assoc": np.asarray([2899.5]),
-            "vol_a": np.asarray([0.035176]),
-            "assoc_scheme": ["2B"],
-        },
-        species=["Methanol"],
+    return _parameter_set(
+        ("Methanol",),
+        molar_mass=(32.042e-3,),
+        m=(1.5255,),
+        sigma=(3.2300,),
+        epsilon_k=(188.90,),
+        epsilon_k_ab=(2899.5,),
+        kappa_ab=(0.035176,),
+        association_scheme=("2B",),
     )
 
 

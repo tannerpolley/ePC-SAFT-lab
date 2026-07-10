@@ -7,6 +7,7 @@ import epcsaft
 import epcsaft_equilibrium as equilibrium_module
 import numpy as np
 import pytest
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 
 from scripts.validation import check_boundary_workflows as checker
 
@@ -30,15 +31,42 @@ PUBLIC_TEST_COMPOSITION = [0.1, 0.9]
 
 
 def _neutral_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "m": np.asarray([1.0, 1.6069]),
-            "s": np.asarray([3.7039, 3.5206]),
-            "e": np.asarray([150.03, 191.42]),
-            "MW": np.asarray([16.043e-3, 30.070e-3]),
-            "k_ij": np.zeros((2, 2)),
+    return epcsaft.ParameterSet.from_records(
+        [
+            PureRecord(
+                component="methane",
+                molar_mass=16.043e-3,
+                m=1.0,
+                sigma=3.7039,
+                epsilon_k=150.03,
+                charge=0.0,
+                epsilon_k_ab=0.0,
+                kappa_ab=0.0,
+                association_scheme=None,
+                relative_permittivity=1.0,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+            PureRecord(
+                component="ethane",
+                molar_mass=30.070e-3,
+                m=1.6069,
+                sigma=3.5206,
+                epsilon_k=191.42,
+                charge=0.0,
+                epsilon_k_ab=0.0,
+                kappa_ab=0.0,
+                association_scheme=None,
+                relative_permittivity=1.0,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+        ],
+        [BinaryRecord(("methane", "ethane"), k_ij=3.0e-4)],
+        metadata={
+            "source": "Gross and Sadowski 2001 hydrocarbon parameters",
+            "source_backed": True,
         },
-        species=("methane", "ethane"),
     )
 
 

@@ -7,6 +7,7 @@ from types import MappingProxyType
 import epcsaft
 import numpy as np
 import pytest
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft_equilibrium._native import extension_native_core
 
 _core = extension_native_core()
@@ -627,56 +628,127 @@ def _skip_without_ipopt() -> None:
         pytest.skip("native Ipopt is not compiled")
 
 
+def _parameter_set_from_records(
+    *,
+    species: list[str],
+    mw: list[float],
+    m: list[float],
+    sigma: list[float],
+    epsilon_k: list[float],
+    charge: list[float],
+    epsilon_k_ab: list[float],
+    kappa_ab: list[float],
+    association_scheme: list[str | None],
+    relative_permittivity: list[float],
+    born_diameter: list[float],
+    solvation_factor: list[float],
+    k_ij: float | None = None,
+    metadata: dict[str, object] | None = None,
+) -> epcsaft.ParameterSet:
+    pure_records = tuple(
+        PureRecord(
+            component=component,
+            molar_mass=mw_i,
+            m=m_i,
+            sigma=sigma_i,
+            epsilon_k=epsilon_k_i,
+            charge=charge_i,
+            epsilon_k_ab=epsilon_k_ab_i,
+            kappa_ab=kappa_ab_i,
+            association_scheme=scheme_i,
+            relative_permittivity=relative_permittivity_i,
+            born_diameter=born_diameter_i,
+            solvation_factor=solvation_factor_i,
+        )
+        for (
+            component,
+            mw_i,
+            m_i,
+            sigma_i,
+            epsilon_k_i,
+            charge_i,
+            epsilon_k_ab_i,
+            kappa_ab_i,
+            scheme_i,
+            relative_permittivity_i,
+            born_diameter_i,
+            solvation_factor_i,
+        ) in zip(
+            species,
+            mw,
+            m,
+            sigma,
+            epsilon_k,
+            charge,
+            epsilon_k_ab,
+            kappa_ab,
+            association_scheme,
+            relative_permittivity,
+            born_diameter,
+            solvation_factor,
+            strict=True,
+        )
+    )
+    binary_records = () if k_ij is None else (BinaryRecord((species[0], species[1]), k_ij=k_ij),)
+    return epcsaft.ParameterSet.from_records(
+        pure_records,
+        binary_records,
+        metadata=metadata,
+    )
+
+
 def _associating_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([32.042e-3, 84.147e-3]),
-            "m": np.asarray([1.5255, 2.5303]),
-            "s": np.asarray([3.2300, 3.8499]),
-            "e": np.asarray([188.90, 278.11]),
-            "e_assoc": np.asarray([2899.5, 0.0]),
-            "vol_a": np.asarray([0.035176, 0.0]),
-            "assoc_scheme": ["2B", None],
-            "k_ij": np.asarray([[0.0, 0.051], [0.051, 0.0]]),
-            "z": np.asarray([0.0, 0.0]),
-            "dielc": np.asarray([33.05, 2.02]),
-        },
+    return _parameter_set_from_records(
         species=["Methanol", "Cyclohexane"],
+        mw=[32.042e-3, 84.147e-3],
+        m=[1.5255, 2.5303],
+        sigma=[3.2300, 3.8499],
+        epsilon_k=[188.90, 278.11],
+        charge=[0.0, 0.0],
+        epsilon_k_ab=[2899.5, 0.0],
+        kappa_ab=[0.035176, 0.0],
+        association_scheme=["2B", None],
+        relative_permittivity=[33.05, 2.02],
+        born_diameter=[0.0, 0.0],
+        solvation_factor=[1.0, 1.0],
+        k_ij=0.051,
+        metadata={"source": "Gross and Sadowski 2002 Figure 8", "source_backed": True},
     )
 
 
 def _ionic_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([18.01528e-3, 22.98e-3, 35.45e-3]),
-            "m": np.asarray([1.2047, 1.0, 1.0]),
-            "s": np.asarray([2.7927, 2.8232, 2.7560]),
-            "e": np.asarray([353.95, 230.0, 170.0]),
-            "z": np.asarray([0.0, 1.0, -1.0]),
-            "dielc": np.asarray([78.09, 8.0, 8.0]),
-            "d_born": np.asarray([0.0, 3.445, 4.1]),
-            "f_solv": np.asarray([1.5, 1.0, 1.0]),
-        },
+    return _parameter_set_from_records(
         species=["H2O", "Na+", "Cl-"],
+        mw=[18.01528e-3, 22.98e-3, 35.45e-3],
+        m=[1.2047, 1.0, 1.0],
+        sigma=[2.7927, 2.8232, 2.7560],
+        epsilon_k=[353.95, 230.0, 170.0],
+        charge=[0.0, 1.0, -1.0],
+        epsilon_k_ab=[0.0, 0.0, 0.0],
+        kappa_ab=[0.0, 0.0, 0.0],
+        association_scheme=[None, None, None],
+        relative_permittivity=[78.09, 8.0, 8.0],
+        born_diameter=[0.0, 3.445, 4.1],
+        solvation_factor=[1.5, 1.0, 1.0],
+        metadata={"source": "ionic route component fixture"},
     )
 
 
 def _ionic_associating_parameter_set() -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([18.01528e-3, 22.98e-3, 35.45e-3]),
-            "m": np.asarray([1.2047, 1.0, 1.0]),
-            "s": np.asarray([2.7927, 2.8232, 2.7560]),
-            "e": np.asarray([353.95, 230.0, 170.0]),
-            "e_assoc": np.asarray([2425.7, 0.0, 0.0]),
-            "vol_a": np.asarray([0.04509, 0.0, 0.0]),
-            "assoc_scheme": ["2B", None, None],
-            "z": np.asarray([0.0, 1.0, -1.0]),
-            "dielc": np.asarray([78.09, 8.0, 8.0]),
-            "d_born": np.asarray([0.0, 3.445, 4.1]),
-            "f_solv": np.asarray([1.5, 1.0, 1.0]),
-        },
+    return _parameter_set_from_records(
         species=["H2O", "Na+", "Cl-"],
+        mw=[18.01528e-3, 22.98e-3, 35.45e-3],
+        m=[1.2047, 1.0, 1.0],
+        sigma=[2.7927, 2.8232, 2.7560],
+        epsilon_k=[353.95, 230.0, 170.0],
+        charge=[0.0, 1.0, -1.0],
+        epsilon_k_ab=[2425.7, 0.0, 0.0],
+        kappa_ab=[0.04509, 0.0, 0.0],
+        association_scheme=["2B", None, None],
+        relative_permittivity=[78.09, 8.0, 8.0],
+        born_diameter=[0.0, 3.445, 4.1],
+        solvation_factor=[1.5, 1.0, 1.0],
+        metadata={"source": "ionic association route component fixture"},
     )
 
 
@@ -837,20 +909,20 @@ def _gross_2002_associating_vle_parameter_set(
     source_backed: bool,
     assoc_scheme: list[str | None] | None = None,
 ) -> epcsaft.ParameterSet:
-    return epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray(mw),
-            "m": np.asarray(m),
-            "s": np.asarray(s),
-            "e": np.asarray(e),
-            "e_assoc": np.asarray(e_assoc),
-            "vol_a": np.asarray(vol_a),
-            "assoc_scheme": assoc_scheme or ["2B", None],
-            "k_ij": np.asarray([[0.0, kij], [kij, 0.0]]),
-            "z": np.asarray([0.0, 0.0]),
-            "dielc": np.asarray([1.0, 1.0]),
-        },
+    return _parameter_set_from_records(
         species=species,
+        mw=mw,
+        m=m,
+        sigma=s,
+        epsilon_k=e,
+        charge=[0.0, 0.0],
+        epsilon_k_ab=e_assoc,
+        kappa_ab=vol_a,
+        association_scheme=assoc_scheme or ["2B", None],
+        relative_permittivity=[1.0, 1.0],
+        born_diameter=[0.0, 0.0],
+        solvation_factor=[1.0, 1.0],
+        k_ij=kij,
         metadata={
             "source": source,
             "paper": "Gross and Sadowski 2002",

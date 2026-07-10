@@ -29,6 +29,7 @@ matplotlib.use("Agg")
 import epcsaft
 import matplotlib.pyplot as plt
 import numpy as np
+from epcsaft.model.parameters import PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.workflows import _run_associating_single_component_vle_validation
@@ -278,26 +279,38 @@ def _load_parameters() -> dict[str, dict[str, str]]:
 
 def _mixture(component: str, parameters: dict[str, dict[str, str]]) -> ePCSAFTMixture:
     row = parameters[component]
-    payload = {
-        "MW": np.asarray([float(row["MW"])]),
-        "m": np.asarray([float(row["m"])]),
-        "s": np.asarray([float(row["s"])]),
-        "e": np.asarray([float(row["e"])]),
-        "e_assoc": np.asarray([float(row["e_assoc"])]),
-        "vol_a": np.asarray([float(row["vol_a"])]),
-        "assoc_scheme": [row["assoc_scheme"]],
-    }
-    parameter_set = epcsaft.ParameterSet.from_dict(
-        payload,
-        species=[component],
+    parameter_set = epcsaft.ParameterSet.from_records(
+        (
+            PureRecord(
+                component=component,
+                molar_mass=float(row["MW"]),
+                m=float(row["m"]),
+                sigma=float(row["s"]),
+                epsilon_k=float(row["e"]),
+                charge=float(row["z"]),
+                epsilon_k_ab=float(row["e_assoc"]),
+                kappa_ab=float(row["vol_a"]),
+                association_scheme=row["assoc_scheme"],
+                relative_permittivity=float(row["dielc"]),
+                born_diameter=float(row["d_born"]),
+                solvation_factor=float(row["f_solv"]),
+            ),
+        ),
         metadata={
             "source_backed": True,
             "source": row["source"],
             "paper": "Gross and Sadowski 2002",
             "table": "Table 1",
             "figure": "Figure 1",
-                "source_path": _relative(PARAMETER_CSV),
-                "source_fingerprint": _sha256(SOURCE_IMAGE),
+            "source_path": _relative(PARAMETER_CSV),
+            "source_fingerprint": _sha256(SOURCE_IMAGE),
+            "neutral_only_fields": {
+                "charge": 0.0,
+                "relative_permittivity": 1.0,
+                "born_diameter": 0.0,
+                "solvation_factor": 1.0,
+                "basis": "legacy neutral payload values; ionic and Born terms are inactive",
+            },
         },
     )
     model_options = epcsaft.ModelOptions(

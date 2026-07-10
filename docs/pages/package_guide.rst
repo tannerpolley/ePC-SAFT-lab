@@ -21,12 +21,32 @@ Build a ``ParameterSet`` from ePC-SAFT parameter data, then attach
 
    parameters = ParameterSet.from_dict(
        {
-           "MW": np.asarray([16.043e-3]),
-           "m": np.asarray([1.0]),
-           "s": np.asarray([3.7039]),
-           "e": np.asarray([150.03]),
-       },
-       species=["Methane"],
+           "schema": "epcsaft.parameter-set",
+           "schema_version": 1,
+           "components": ["Methane"],
+           "pure_records": [{
+               "component": "Methane",
+               "molar_mass": 16.043e-3,
+               "molar_mass_units": "kg/mol",
+               "m": 1.0,
+               "sigma": 3.7039,
+               "epsilon_k": 150.03,
+               "charge": 0.0,
+               "epsilon_k_ab": 0.0,
+               "kappa_ab": 0.0,
+               "association_scheme": None,
+               "association_sites": [],
+               "relative_permittivity": 1.0,
+               "born_diameter": 0.0,
+               "solvation_factor": 1.0,
+           }],
+           "binary_records": [],
+           "metadata": {
+               "source": "Gross and Sadowski (2001), Table 2",
+               "source_backed": True,
+               "auxiliary_neutral_fields": "equation_structural_neutral_inactive",
+           },
+       }
    )
    mixture = Mixture(
        parameters,
@@ -86,8 +106,10 @@ is pure-neutral hydrocarbon regression through the CppAD/Ceres route:
 Input Templates
 ---------------
 
-``create_input_template(...)`` creates CSV parameter tables plus JSON option
-files for model, state, equilibrium, and regression workflow defaults:
+``create_input_template(...)`` creates one versioned ``parameter_set.json``
+plus JSON option files for model, state, equilibrium, and regression. Every
+scientific parameter in the generated parameter set is null and must be
+replaced with a traceable value before the file can load:
 
 .. code-block:: python
 

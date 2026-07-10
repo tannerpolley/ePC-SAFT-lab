@@ -1,7 +1,5 @@
 component,m,s,e,e_assoc,vol_a,assoc_scheme,z,dielc,d_born,f_solv,MW,source
 H2O,1.204659,2.7927,353.9449,2425.6714,0.0450989,2B,0,78.09,0,1.5,0.01801528,2008_Held reference dataset
-Methanol,1.5255,3.2300,188.90,2899.5,0.035176,2B,0,33.05,0,1.4,0.032042,2008_Held reference dataset; Gross2002 Table1 default fill
-Ethanol,2.3827,3.1771,198.24,2653.4,0.032384,2B,0,24.88,0,1.6,0.046069,2008_Held reference dataset; Gross2002 Table1 default fill
 Li+,1,1.8177,2697.2795,0,0,,1,8,2.784,1,0.00694,2008_Held reference dataset
 Na+,1,2.4122,646.0504,0,0,,1,8,3.445,1,0.02298,2008_Held reference dataset
 K+,1,2.9698,271.0518,0,0,,1,8,4.15,1,0.0391,2008_Held reference dataset

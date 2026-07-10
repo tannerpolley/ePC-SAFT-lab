@@ -145,16 +145,24 @@ import numpy as np
 import epcsaft
 import epcsaft._core
 from epcsaft import Mixture, ParameterSet, State
+from epcsaft.model.parameters import PureRecord
 sdk = epcsaft.provider_native_sdk()
-mixture = Mixture(ParameterSet.from_dict(
-    {{
-        "m": np.asarray([1.0]),
-        "s": np.asarray([3.7039]),
-        "e": np.asarray([150.03]),
-        "MW": np.asarray([16.043e-3]),
-    }},
-    species=["Methane"],
-))
+mixture = Mixture(ParameterSet.from_records([
+    PureRecord(
+        component="Methane",
+        molar_mass=16.043e-3,
+        m=1.0,
+        sigma=3.7039,
+        epsilon_k=150.03,
+        charge=0.0,
+        epsilon_k_ab=0.0,
+        kappa_ab=0.0,
+        association_scheme=None,
+        relative_permittivity=1.0,
+        born_diameter=0.0,
+        solvation_factor=1.0,
+    ),
+]))
 state = State(mixture, T=300.0, x=np.asarray([1.0]), rho=100.0)
 assert sdk["provider_only_core"] is True
 assert sdk["equilibrium_native_enabled"] is False

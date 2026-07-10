@@ -11,7 +11,7 @@ from support.hydrocarbon_cases import (
     HYDROCARBON_T,
     hydrocarbon_parameter_set,
 )
-from support.runtime_cases import _ionic_params
+from support.runtime_cases import ionic_parameter_set
 
 
 def test_mixture_owns_only_components_parameters_and_model_options() -> None:
@@ -89,8 +89,7 @@ def test_state_exposes_residual_property_aliases_and_contributions() -> None:
 
 
 def test_active_association_model_options_emit_implicit_assoc_mode() -> None:
-    species = ("water", "Na+", "Cl-")
-    assoc_parameters = epcsaft.ParameterSet.from_dict(_ionic_params(), species=species)
+    assoc_parameters = ionic_parameter_set()
     assoc_options = epcsaft.ModelOptions().to_runtime_options(assoc_parameters)
 
     assert assoc_options["elec_model"]["assoc_model"]["dadx_differential_mode"] == "auto"
@@ -103,12 +102,7 @@ def test_active_association_model_options_emit_implicit_assoc_mode() -> None:
 
 
 def test_nonassociating_model_options_preserve_explicit_cppad_assoc_mode() -> None:
-    species = ("water", "Na+", "Cl-")
-    payload = _ionic_params()
-    payload["e_assoc"] = np.zeros(3)
-    payload["vol_a"] = np.zeros(3)
-    payload["assoc_scheme"] = [None, None, None]
-    parameters = epcsaft.ParameterSet.from_dict(payload, species=species)
+    parameters = ionic_parameter_set(association=False)
     options = epcsaft.ModelOptions().to_runtime_options(parameters)
 
     assert options["elec_model"]["assoc_model"]["dadx_differential_mode"] == "cppad"

@@ -28,6 +28,7 @@ import epcsaft
 import epcsaft_equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft_equilibrium._native import extension_native_core
 from PIL import Image, ImageDraw
 
@@ -335,20 +336,38 @@ def _write_source_artifacts() -> list[dict[str, Any]]:
 
 def _mixture() -> epcsaft.Mixture:
     return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            {
-                "MW": np.asarray([32.042e-3, 130.23e-3]),
-                "m": np.asarray([1.5255, 4.3555]),
-                "s": np.asarray([3.2300, 3.7145]),
-                "e": np.asarray([188.90, 262.74]),
-                "e_assoc": np.asarray([2899.5, 2754.8]),
-                "vol_a": np.asarray([0.035176, 0.002197]),
-                "assoc_scheme": ["2B", "2B"],
-                "k_ij": np.asarray([[0.0, 0.020], [0.020, 0.0]]),
-                "z": np.asarray([0.0, 0.0]),
-                "dielc": np.asarray([1.0, 1.0]),
-            },
-            species=["Methanol", "1-Octanol"],
+        epcsaft.ParameterSet.from_records(
+            (
+                PureRecord(
+                    component="Methanol",
+                    molar_mass=32.042e-3,
+                    m=1.5255,
+                    sigma=3.2300,
+                    epsilon_k=188.90,
+                    charge=0.0,
+                    epsilon_k_ab=2899.5,
+                    kappa_ab=0.035176,
+                    association_scheme="2B",
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+                PureRecord(
+                    component="1-Octanol",
+                    molar_mass=130.23e-3,
+                    m=4.3555,
+                    sigma=3.7145,
+                    epsilon_k=262.74,
+                    charge=0.0,
+                    epsilon_k_ab=2754.8,
+                    kappa_ab=0.002197,
+                    association_scheme="2B",
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+            ),
+            (BinaryRecord(("Methanol", "1-Octanol"), k_ij=0.020),),
             metadata={
                 "source": "Gross/Sadowski 2002 Figure 9",
                 "paper": "Gross and Sadowski 2002",
@@ -357,6 +376,13 @@ def _mixture() -> epcsaft.Mixture:
                 "source_path": "analyses/paper_validation/2002_gross",
                 "source_backed": True,
                 "reference_system": "methanol-1-octanol",
+                "neutral_only_fields": {
+                    "charge": 0.0,
+                    "relative_permittivity": 1.0,
+                    "born_diameter": 0.0,
+                    "solvation_factor": 1.0,
+                    "basis": "legacy neutral payload values; ionic and Born terms are inactive",
+                },
             },
         )
     )

@@ -28,6 +28,7 @@ matplotlib.use("Agg")
 import epcsaft
 import matplotlib.pyplot as plt
 import numpy as np
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft_equilibrium import Equilibrium
 from epcsaft_equilibrium._native import extension_native_core
 from epcsaft_equilibrium.branch_tracing import (
@@ -118,6 +119,13 @@ MIXTURE_METADATA = {
     "caption_system": "methanol-isobutane",
     "table_002_conflict": "methanol-isobutanol",
     "parameter_snapshot_resolution": "Use methanol from Gross2002 Table1, isobutane from Gross2001 Table2, and k_ij=0.05 from the retained Figure 2 caption because the local binary snapshot currently mislabels the pair.",
+    "neutral_only_fields": {
+        "charge": 0.0,
+        "relative_permittivity": 1.0,
+        "born_diameter": 0.0,
+        "solvation_factor": 1.0,
+        "basis": "legacy neutral payload values; ionic and Born terms are inactive",
+    },
 }
 SOURCE_PROVENANCE = {
     "paper": "Gross and Sadowski 2002",
@@ -282,20 +290,38 @@ def _write_overlay(source_rows: list[dict[str, Any]]) -> None:
 
 
 def _mixture() -> epcsaft.Mixture:
-    parameter_set = epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([METHANOL_PARAMS["MW"], ISOBUTANE_PARAMS["MW"]]),
-            "m": np.asarray([METHANOL_PARAMS["m"], ISOBUTANE_PARAMS["m"]]),
-            "s": np.asarray([METHANOL_PARAMS["s"], ISOBUTANE_PARAMS["s"]]),
-            "e": np.asarray([METHANOL_PARAMS["e"], ISOBUTANE_PARAMS["e"]]),
-            "e_assoc": np.asarray([METHANOL_PARAMS["e_assoc"], ISOBUTANE_PARAMS["e_assoc"]]),
-            "vol_a": np.asarray([METHANOL_PARAMS["vol_a"], ISOBUTANE_PARAMS["vol_a"]]),
-            "assoc_scheme": [METHANOL_PARAMS["assoc_scheme"], ISOBUTANE_PARAMS["assoc_scheme"]],
-            "k_ij": np.asarray([[0.0, 0.05], [0.05, 0.0]]),
-            "z": np.asarray([0.0, 0.0]),
-            "dielc": np.asarray([1.0, 1.0]),
-        },
-        species=MIXTURE_SPECIES,
+    parameter_set = epcsaft.ParameterSet.from_records(
+        (
+            PureRecord(
+                component=MIXTURE_SPECIES[0],
+                molar_mass=METHANOL_PARAMS["MW"],
+                m=METHANOL_PARAMS["m"],
+                sigma=METHANOL_PARAMS["s"],
+                epsilon_k=METHANOL_PARAMS["e"],
+                charge=0.0,
+                epsilon_k_ab=METHANOL_PARAMS["e_assoc"],
+                kappa_ab=METHANOL_PARAMS["vol_a"],
+                association_scheme=METHANOL_PARAMS["assoc_scheme"],
+                relative_permittivity=1.0,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+            PureRecord(
+                component=MIXTURE_SPECIES[1],
+                molar_mass=ISOBUTANE_PARAMS["MW"],
+                m=ISOBUTANE_PARAMS["m"],
+                sigma=ISOBUTANE_PARAMS["s"],
+                epsilon_k=ISOBUTANE_PARAMS["e"],
+                charge=0.0,
+                epsilon_k_ab=ISOBUTANE_PARAMS["e_assoc"],
+                kappa_ab=ISOBUTANE_PARAMS["vol_a"],
+                association_scheme=ISOBUTANE_PARAMS["assoc_scheme"],
+                relative_permittivity=1.0,
+                born_diameter=0.0,
+                solvation_factor=1.0,
+            ),
+        ),
+        (BinaryRecord(tuple(MIXTURE_SPECIES), k_ij=0.05),),
         metadata=MIXTURE_METADATA,
     )
     return epcsaft.Mixture(parameter_set)

@@ -1,7 +1,7 @@
 component,m,s,e,e_assoc,vol_a,assoc_scheme,z,dielc,d_born,f_solv,MW,source
 H2O,1.2047,2.7927,353.94,2425.7,0.045099,2B,0.0,78.09,0.0,1.5,0.01801528,2012_Held reference dataset
 Methanol,1.5255,3.23,188.9,2899.5,0.035176,2B,0.0,-53.398ln(T)+336.170,0.0,1.4,0.03204,2012_Held reference dataset
-Ethanol,2.3827,3.1771,198.24,2653.4,0.032384,2B,0.0,-0.132,0.0,1.6,0.046068,2012_Held reference dataset
+Ethanol,2.3827,3.1771,198.24,2653.4,0.032384,2B,0.0,-0.132*T+64.072,0.0,1.6,0.046068,2012_Held reference dataset
 Li+,1.0,3.6,1000.0,0.0,0.0,,1.0,8.0,2.784,1.0,0.00694,2012_Held reference dataset
 Na+,1.0,4.0,400.0,0.0,0.0,,1.0,8.0,3.445,1.0,0.02298,2012_Held reference dataset
 K+,1.0,4.5,150.0,0.0,0.0,,1.0,8.0,4.15,1.0,0.0391,2012_Held reference dataset

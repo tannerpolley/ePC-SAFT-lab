@@ -28,6 +28,7 @@ import epcsaft
 import epcsaft_equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_03"
@@ -185,20 +186,38 @@ def _load_source_rows() -> list[dict[str, Any]]:
 
 def _mixture() -> epcsaft.Mixture:
     return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            {
-                "MW": np.asarray([60.096e-3, 106.167e-3]),
-                "m": np.asarray([2.9997, 3.0799]),
-                "s": np.asarray([3.2522, 3.7974]),
-                "e": np.asarray([233.40, 287.35]),
-                "e_assoc": np.asarray([2276.8, 0.0]),
-                "vol_a": np.asarray([0.015268, 0.0]),
-                "assoc_scheme": ["2B", None],
-                "k_ij": np.asarray([[0.0, 0.023], [0.023, 0.0]]),
-                "z": np.asarray([0.0, 0.0]),
-                "dielc": np.asarray([1.0, 1.0]),
-            },
-            species=["1-Propanol", "Ethylbenzene"],
+        epcsaft.ParameterSet.from_records(
+            (
+                PureRecord(
+                    component="1-Propanol",
+                    molar_mass=60.096e-3,
+                    m=2.9997,
+                    sigma=3.2522,
+                    epsilon_k=233.40,
+                    charge=0.0,
+                    epsilon_k_ab=2276.8,
+                    kappa_ab=0.015268,
+                    association_scheme="2B",
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+                PureRecord(
+                    component="Ethylbenzene",
+                    molar_mass=106.167e-3,
+                    m=3.0799,
+                    sigma=3.7974,
+                    epsilon_k=287.35,
+                    charge=0.0,
+                    epsilon_k_ab=0.0,
+                    kappa_ab=0.0,
+                    association_scheme=None,
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+            ),
+            (BinaryRecord(("1-Propanol", "Ethylbenzene"), k_ij=0.023),),
             metadata={
                 "source": "Gross/Sadowski 2002 Figure 3",
                 "paper": "Gross and Sadowski 2002",
@@ -207,6 +226,13 @@ def _mixture() -> epcsaft.Mixture:
                 "source_path": "analyses/paper_validation/2002_gross",
                 "source_backed": True,
                 "reference_system": "1-propanol-ethylbenzene",
+                "neutral_only_fields": {
+                    "charge": 0.0,
+                    "relative_permittivity": 1.0,
+                    "born_diameter": 0.0,
+                    "solvation_factor": 1.0,
+                    "basis": "legacy neutral payload values; ionic and Born terms are inactive",
+                },
             },
         )
     )

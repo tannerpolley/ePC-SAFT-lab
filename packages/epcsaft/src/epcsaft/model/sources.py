@@ -45,29 +45,25 @@ def deep_update_parameter_mapping(
 
 
 def load_canonical_user_options(dataset_dir: str | Path) -> dict[str, Any]:
-    """Load and sanitize dataset-owned canonical user options."""
+    """Load the dataset-owned model configuration object."""
 
     path = Path(dataset_dir) / "user_options.json"
     if not path.exists():
         return {}
     payload = json.loads(path.read_text(encoding="utf-8"))
-    if isinstance(payload, Mapping) and "canonical_user_options" in payload:
-        canonical = payload.get("canonical_user_options", {})
-    else:
-        canonical = payload
-    if not isinstance(canonical, Mapping):
-        return {}
+    if not isinstance(payload, Mapping):
+        raise ValueError(f"Dataset '{path}' model configuration must be a JSON object.")
+    if "canonical_user_options" in payload:
+        raise ValueError(
+            f"Dataset '{path}' must contain the top-level model configuration object directly; "
+            "the legacy canonical_user_options envelope is rejected."
+        )
 
-    elec_model = canonical.get("elec_model", {})
+    elec_model = payload.get("elec_model", {})
     if isinstance(elec_model, Mapping) and "polar_model" in elec_model:
         raise ValueError(
             f"Dataset '{Path(dataset_dir)}' canonical_user_options still contains removed key "
             "'elec_model.polar_model'."
         )
 
-    cleaned = copy_parameter_mapping(canonical)
-    elec = cleaned.get("elec_model")
-    if isinstance(elec, Mapping):
-        elec.pop("preset", None)
-        elec.pop("base", None)
-    return cleaned
+    return copy_parameter_mapping(payload)

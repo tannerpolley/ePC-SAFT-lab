@@ -1,12 +1,11 @@
 User Input Templates
 ====================
 
-Use ``create_input_template(...)`` to create a reset input scaffold. The
-scaffold separates ePC-SAFT parameter tables from workflow/model options:
+Use ``create_input_template(...)`` to create a strict input scaffold. The
+scaffold separates one versioned parameter document from workflow/model
+options:
 
-- ``pure_parameters.csv``
-- ``binary_parameters.csv``
-- ``permittivity_parameters.csv``
+- ``parameter_set.json``
 - ``model_options.json``
 - ``state_options.json``
 - ``equilibrium_options.json``
@@ -24,8 +23,12 @@ Example:
        workflows=("state", "equilibrium", "regression"),
    )
 
-``ParameterSet`` owns the values from the parameter tables. ``ModelOptions``
-owns formulation choices such as the relative-permittivity mixture rule and
-Born-family variant selection. State, equilibrium, and regression workflow
-defaults stay in their own JSON files and are passed to the matching
-``Mixture`` workflow factory.
+Every generated scientific field in ``parameter_set.json`` is null. The file
+cannot load until each field is replaced by a finite, traceable value and the
+metadata identifies its source. The template does not infer charge from a
+component name and does not prefill missing binary interactions with zeros.
+
+``ParameterSet`` owns the parameter values. ``ModelOptions`` owns formulation
+choices such as the relative-permittivity mixture rule and Born-family variant
+selection. State, equilibrium, and regression options stay in their own JSON
+files and are passed to their owning workflow objects.

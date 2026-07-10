@@ -7,7 +7,6 @@ tree is now a pointer-only location; full paper-validation bundles live under
 
 Public API:
     - get_prop_dict(dataset_name, species, x, T, user_options=None)
-    - available_datasets()
     - default_user_options()
     - minimize_user_options(user_options)
     - _resolve_runtime_options(user_options)
@@ -21,7 +20,7 @@ import copy
 import csv
 import math
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import numpy as np
@@ -32,8 +31,6 @@ from .sources import (
 from .sources import (
     load_canonical_user_options as _load_canonical_user_options,
 )
-
-DATASET_ROOT = Path(__file__).resolve().parents[3] / "data" / "reference" / "epcsaft_parameters"
 
 BASE_KEYS = ["MW", "m", "s", "e", "e_assoc", "vol_a", "assoc_scheme", "z", "dielc"]
 OPTIONAL_KEYS = ["d_born", "f_solv"]
@@ -68,162 +65,6 @@ PURE_SET_KEY_ALIASES = {
     "any_solvent": "any_solvent",
 }
 
-_COMPONENT_DEFAULTS = {
-    "H+": {"MW": 1.008e-3, "z": 1.0, "d_born": 1.0},
-    "Li+": {"MW": 6.94e-3, "z": 1.0, "d_born": 2.784},
-    "Na+": {"MW": 22.98e-3, "z": 1.0, "d_born": 3.445},
-    "K+": {"MW": 39.10e-3, "z": 1.0, "d_born": 4.150},
-    "NH4+": {"MW": 18.038e-3, "m": 1.0, "s": 3.5740, "e": 230.0, "z": 1.0, "d_born": 3.0},
-    "F-": {"MW": 18.998e-3, "m": 1.0, "s": 1.7712, "e": 275.0, "z": -1.0, "d_born": 3.52},
-    "Cl-": {"MW": 35.45e-3, "z": -1.0, "d_born": 4.100},
-    "Br-": {"MW": 79.90e-3, "z": -1.0, "d_born": 4.480},
-    "I-": {"MW": 126.90e-3, "z": -1.0, "d_born": 4.985},
-    "Ac-": {"MW": 59.044e-3, "m": 1.0, "s": 4.3000, "e": 300.0, "z": -1.0, "d_born": 4.30},
-    "H2O": {
-        "MW": 18.01528e-3,
-        "m": 1.2047,
-        "s": lambda T: 2.7927 + 10.11 * np.exp(-0.01775 * T) - 1.417 * np.exp(-0.01146 * T),
-        "e": 353.95,
-        "e_assoc": 2425.7,
-        "vol_a": 0.04509,
-        "assoc_scheme": "2B",
-        "z": 0.0,
-        "dielc": 78.09,
-        "d_born": 0.0,
-        "f_solv": 1.5,
-    },
-    "Methanol": {
-        "MW": 32.04e-3,
-        "m": 1.5255,
-        "s": 3.2300,
-        "e": 188.90,
-        "e_assoc": 2899.5,
-        "vol_a": 0.03518,
-        "assoc_scheme": "2B",
-        "z": 0.0,
-        "dielc": 33.05,
-        "d_born": 0.0,
-        "f_solv": 1.4,
-    },
-    "Ethanol": {
-        "MW": 46.068e-3,
-        "m": 2.3827,
-        "s": 3.1771,
-        "e": 198.24,
-        "e_assoc": 2653.4,
-        "vol_a": 0.03238,
-        "assoc_scheme": "2B",
-        "z": 0.0,
-        "dielc": 24.88,
-        "d_born": 0.0,
-        "f_solv": 1.6,
-    },
-    "Propanol": {
-        "MW": 60.095e-3,
-        "m": 3.0,
-        "s": 3.2522,
-        "e": 233.40,
-        "e_assoc": 2276.78,
-        "vol_a": 0.01527,
-        "assoc_scheme": "2B",
-        "z": 0.0,
-        "dielc": 20.47,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-    "Butanol": {
-        "MW": 74.1216e-3,
-        "m": 2.7515,
-        "s": 3.6139,
-        "e": 259.59,
-        "e_assoc": 2544.56,
-        "vol_a": 0.00669,
-        "assoc_scheme": "2B",
-        "z": 0.0,
-        "dielc": 17.51,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-    "Benzene": {
-        "MW": 78.1118e-3,
-        "m": 2.4653,
-        "s": 3.6478,
-        "e": 287.35,
-        "e_assoc": 0.0,
-        "vol_a": 0.0,
-        "assoc_scheme": "",
-        "z": 0.0,
-        "dielc": 2.28,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-    "Toluene": {
-        "MW": 92.1405e-3,
-        "m": 2.8149,
-        "s": 3.7169,
-        "e": 285.69,
-        "e_assoc": 0.0,
-        "vol_a": 0.0,
-        "assoc_scheme": "",
-        "z": 0.0,
-        "dielc": 2.38,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-    "Glycine": {
-        "MW": 75.067e-3,
-        "m": 4.8507,
-        "s": 2.3270,
-        "e": 216.96,
-        "e_assoc": 2598.1,
-        "vol_a": 0.0393,
-        "assoc_scheme": "2B",
-        "z": 0.0,
-        "dielc": 8.0,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-    "Alanine": {
-        "MW": 89.094e-3,
-        "m": 5.4647,
-        "s": 2.5222,
-        "e": 287.59,
-        "e_assoc": 3176.6,
-        "vol_a": 0.0819,
-        "assoc_scheme": "2B",
-        "z": 0.0,
-        "dielc": 8.0,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-    "Hexane": {
-        "MW": 86.178e-3,
-        "m": 3.0578,
-        "s": 3.7983,
-        "e": 236.77,
-        "e_assoc": 0.0,
-        "vol_a": 0.0,
-        "assoc_scheme": "",
-        "z": 0.0,
-        "dielc": 2.0,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-    "Dodecane": {
-        "MW": 170.334e-3,
-        "m": 5.3060,
-        "s": 3.8959,
-        "e": 249.21,
-        "e_assoc": 0.0,
-        "vol_a": 0.0,
-        "assoc_scheme": "",
-        "z": 0.0,
-        "dielc": 2.0,
-        "d_born": 0.0,
-        "f_solv": 1.0,
-    },
-}
-
 _LINEAR_T_RE = re.compile(
     r"^\s*([+\-]?\d*\.?\d+(?:[eE][+\-]?\d+)?(?:\*10\^[+\-]?\d+)?)\s*\*?\s*T(?:\s*/\s*K)?\s*([+\-]\s*\d*\.?\d+(?:[eE][+\-]?\d+)?)\s*$",
     flags=re.IGNORECASE,
@@ -232,7 +73,6 @@ _LOG_T_RE = re.compile(
     r"^\s*([+\-]?\d*\.?\d+(?:[eE][+\-]?\d+)?)\s*\*?\s*ln\s*\(\s*T\s*\)\s*([+\-]\s*\d*\.?\d+(?:[eE][+\-]?\d+)?)\s*$",
     flags=re.IGNORECASE,
 )
-_FLOAT_RE = re.compile(r"[+\-]?\d*\.?\d+(?:[eE][+\-]?\d+)?")
 
 _REL_PERM_RULE_ALIASES = {
     "constant": 0,
@@ -275,7 +115,6 @@ SOLVENT_COMPONENT_TO_TOKEN = {
     "Butanol": "butanol",
 }
 
-SOLVENT_TOKEN_TO_COMPONENT = {token: comp for comp, token in SOLVENT_COMPONENT_TO_TOKEN.items()}
 SOLVENT_TOKEN_ORDER = {"water": 0, "methanol": 1, "ethanol": 2, "propanol": 3, "butanol": 4}
 _DIFF_MODE_ALIASES = {
     "auto": 3,
@@ -359,10 +198,6 @@ _DATASET_CACHE: dict[str, dict] = {}
 _MISSING = object()
 
 
-def _looks_like_path_spec(text: str) -> bool:
-    return any(sep in text for sep in ("\\", "/", ":")) or text.startswith(".") or text.startswith("~")
-
-
 def _coerce_bool(value) -> bool:
     if isinstance(value, bool):
         return value
@@ -416,34 +251,12 @@ def _normalize_component(name: str) -> str:
     return COMPONENT_ALIASES.get(name, name)
 
 
-def available_datasets() -> list[str]:
-    """Return the repository-owned dataset names available to the runtime loader."""
-    if not DATASET_ROOT.exists():
-        return []
-    return sorted(p.name for p in DATASET_ROOT.iterdir() if p.is_dir())
-
-
 def _resolve_dataset_dir(dataset_name_or_path) -> tuple[str, Path]:
-    if isinstance(dataset_name_or_path, Path):
-        path = dataset_name_or_path.expanduser()
-        if not path.exists():
-            raise FileNotFoundError(f"Dataset path '{path}' does not exist.")
-        resolved = path.resolve()
-        return f"path::{resolved}", resolved
-
-    dataset_text = str(dataset_name_or_path)
-    if dataset_text in available_datasets() and not _looks_like_path_spec(dataset_text):
-        return f"package::{dataset_text}", (DATASET_ROOT / dataset_text).resolve()
-
-    path = Path(dataset_text).expanduser()
-    if path.exists():
-        resolved = path.resolve()
-        return f"path::{resolved}", resolved
-
-    if _looks_like_path_spec(dataset_text):
+    path = Path(dataset_name_or_path).expanduser()
+    if not path.exists():
         raise FileNotFoundError(f"Dataset path '{path}' does not exist.")
-
-    raise FileNotFoundError(f"Unknown dataset '{dataset_text}'. Available datasets: {available_datasets()}")
+    resolved = path.resolve()
+    return f"path::{resolved}", resolved
 
 
 def _normalize_pure_set_key(name: str) -> str:
@@ -482,35 +295,6 @@ def _solvent_fraction_aliases(token: str, basis: str) -> tuple[str, ...]:
     return tuple(aliases)
 
 
-def _mixture_molecular_weight_from_token_fractions(x_map: dict[str, float]) -> float | None:
-    total = 0.0
-    for token, frac in x_map.items():
-        component = SOLVENT_TOKEN_TO_COMPONENT.get(token)
-        if component is None:
-            return None
-        mw = _deterministic_default(component, "MW", 298.15)
-        if mw is _MISSING:
-            return None
-        total += float(frac) * float(mw)
-    return total if total > 0.0 else None
-
-
-def _convert_weight_to_mole_fractions(weights: dict[str, float]) -> dict[str, float] | None:
-    numerators: dict[str, float] = {}
-    for token, weight in weights.items():
-        component = SOLVENT_TOKEN_TO_COMPONENT.get(token)
-        if component is None:
-            return None
-        mw = _deterministic_default(component, "MW", 298.15)
-        if mw is _MISSING or float(mw) <= 0.0:
-            return None
-        numerators[token] = float(weight) / float(mw)
-    total = float(sum(numerators.values()))
-    if total <= 0.0:
-        return None
-    return {token: value / total for token, value in numerators.items()}
-
-
 def _read_csv(path: Path) -> list[dict]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle))
@@ -531,10 +315,12 @@ def _load_component_rows(path: Path) -> dict[str, dict[str, str]]:
         if unknown_columns:
             raise ValueError(f"Dataset file '{path}' contains unsupported column(s): {unknown_columns}.")
     mapping: dict[str, dict[str, str]] = {}
-    for row in rows:
+    for row_number, row in enumerate(rows, start=2):
         comp = _normalize_component(str(row.get("component", "")).strip())
         if not comp:
-            continue
+            raise ValueError(f"Dataset file '{path}' row {row_number} has a blank component identifier.")
+        if comp in mapping:
+            raise ValueError(f"Dataset file '{path}' contains duplicate component row '{comp}'.")
         mapping[comp] = {k: str(v or "").strip() for k, v in row.items()}
     return mapping
 
@@ -551,14 +337,23 @@ def _load_pure_sets(pure_dir: Path) -> dict[str, dict[str, dict[str, str]]]:
     return pure_sets
 
 
-def _select_default_pure_set_key(pure_sets: dict[str, dict[str, dict[str, str]]]) -> str | None:
-    if "any_solvent" in pure_sets:
-        return "any_solvent"
+def _sole_pure_set_key(pure_sets: dict[str, dict[str, dict[str, str]]]) -> str | None:
     if len(pure_sets) == 1:
         return next(iter(pure_sets))
-    if "water" in pure_sets:
-        return "water"
     return None
+
+
+def _ion_pure_set_key(dataset: dict, solvent: str) -> str:
+    pure_sets = dataset.get("pure_sets", {})
+    requested_key = _normalize_pure_set_key(solvent)
+    if requested_key in pure_sets:
+        return requested_key
+    if dataset.get("sole_pure_set_key") == "any_solvent":
+        return "any_solvent"
+    raise KeyError(
+        f"Dataset '{dataset['dataset_name']}' has no explicit ion parameter set for solvent "
+        f"'{solvent}' and no sole pure/any_solvent.csv set."
+    )
 
 
 def _load_matrix(path: Path) -> dict[tuple[str, str], str]:
@@ -634,12 +429,7 @@ def _load_specific_mixed_dielc_table(path: Path) -> list[dict]:
                 w_map[token] = float(w_val)
 
         if len(x_map) != len(solvent_tokens):
-            if len(w_map) != len(solvent_tokens):
-                continue
-            converted = _convert_weight_to_mole_fractions(w_map)
-            if converted is None:
-                continue
-            x_map = converted
+            raise ValueError(f"Mixed-permittivity table '{path}' requires explicit mole fractions for every solvent.")
 
         x_total = float(sum(x_map.values()))
         if x_total <= 0.0:
@@ -647,14 +437,9 @@ def _load_specific_mixed_dielc_table(path: Path) -> list[dict]:
         x_norm = {token: value / x_total for token, value in x_map.items()}
 
         if len(w_map) != len(solvent_tokens):
-            mw_mix = _mixture_molecular_weight_from_token_fractions(x_norm)
-            if mw_mix is None:
-                continue
-            w_map = {}
-            for token, frac in x_norm.items():
-                component = SOLVENT_TOKEN_TO_COMPONENT[token]
-                mw = float(_deterministic_default(component, "MW", 298.15))
-                w_map[token] = frac * mw / mw_mix
+            raise ValueError(
+                f"Mixed-permittivity table '{path}' requires explicit mass fractions for every solvent."
+            )
 
         w_total = float(sum(w_map.values()))
         if w_total <= 0.0:
@@ -696,10 +481,10 @@ def _load_dataset(dataset_name_or_path) -> dict:
     pure_dir = dataset_dir / "pure"
     pure_sets = _load_pure_sets(pure_dir)
 
-    pure_default_key = _select_default_pure_set_key(pure_sets)
+    sole_pure_set_key = _sole_pure_set_key(pure_sets)
     pure_map: dict[str, dict[str, str]] = {}
-    if pure_default_key is not None:
-        pure_map = pure_sets[pure_default_key]
+    if sole_pure_set_key is not None:
+        pure_map = pure_sets[sole_pure_set_key]
 
     if not pure_map and not pure_sets:
         raise FileNotFoundError(f"Dataset '{dataset_name}' must include pure/*.csv component-parameter files.")
@@ -713,7 +498,7 @@ def _load_dataset(dataset_name_or_path) -> dict:
         "dataset_dir": dataset_dir,
         "pure": pure_map,
         "pure_sets": pure_sets,
-        "pure_default_key": pure_default_key,
+        "sole_pure_set_key": sole_pure_set_key,
         "k_ij": _load_matrix(bi_dir / "k_ij.csv"),
         "l_ij": _load_matrix(bi_dir / "l_ij.csv"),
         "k_hb": _load_matrix(bi_dir / "k_hb_ij.csv") or _load_matrix(bi_dir / "khb_ij.csv"),
@@ -735,14 +520,20 @@ def _maybe_float(raw) -> float | None:
         return None
     if isinstance(raw, (float, int, np.floating, np.integer)):
         value = float(raw)
-        return value if math.isfinite(value) else None
+        if not math.isfinite(value):
+            raise ValueError(f"Non-finite numeric value '{raw}'.")
+        return value
     text = str(raw).strip()
-    if not text or text.lower() in {"nan", "none", "null"}:
+    if not text:
         return None
     try:
         value = float(text)
-        return value if math.isfinite(value) else None
-    except ValueError:
+        if not math.isfinite(value):
+            raise ValueError(f"Non-finite numeric value '{text}'.")
+        return value
+    except ValueError as exc:
+        if text.lower() in {"nan", "+nan", "-nan", "inf", "+inf", "-inf", "infinity", "+infinity", "-infinity"}:
+            raise ValueError(f"Non-finite numeric value '{text}'.") from exc
         return None
 
 
@@ -775,111 +566,54 @@ def _parse_log_t_expression(raw: str, T: float) -> float | None:
     return coeff * np.log(T) + intercept
 
 
-def _parse_water_sigma_expression(raw: str, T: float) -> float | None:
-    text = raw.replace(" ", "").lower()
-    if "2.7927" in text and "10.11" in text and "1.417" in text:
-        return 2.7927 + 10.11 * np.exp(-0.01775 * T) - 1.417 * np.exp(-0.01146 * T)
-    return None
-
-
 def _parse_association_scheme(raw: str) -> str | None:
     text = str(raw or "").strip()
-    if not text or text.lower() in {"nan", "none", "null"}:
+    if not text:
         return None
+    if text.lower() in {"nan", "none", "null"}:
+        raise ValueError("Association topology must use a concrete scheme or a blank cell.")
     return text
-
-
-def _deterministic_default(component: str, prop: str, T: float):
-    entry = _COMPONENT_DEFAULTS.get(component)
-    if entry is not None and prop in entry:
-        value = entry[prop]
-        return value(T) if callable(value) else value
-
-    is_ion = component.endswith("+") or component.endswith("-")
-    if is_ion:
-        if prop == "z":
-            return 1.0 if component.endswith("+") else -1.0
-        if prop == "m":
-            return 1.0
-        if prop in {"e_assoc", "vol_a", "d_born"}:
-            return 0.0
-        if prop == "assoc_scheme":
-            return None
-        if prop == "dielc":
-            return 8.0
-        if prop == "f_solv":
-            return 1.0
-
-    if prop == "assoc_scheme":
-        return None
-
-    # Generic charge inference for unknown ions.
-    if prop == "z":
-        if component.endswith("+"):
-            return 1.0
-        if component.endswith("-"):
-            return -1.0
-    return _MISSING
 
 
 def _parse_cell_value(raw, *, dataset: str, component: str, field: str, T: float):
     if field == "assoc_scheme":
         return _parse_association_scheme(raw)
 
-    numeric = _maybe_float(raw)
+    try:
+        numeric = _maybe_float(raw)
+    except ValueError as exc:
+        raise ValueError(
+            f"Dataset '{dataset}', component '{component}', field '{field}' must be finite."
+        ) from exc
     if numeric is not None:
         return numeric
 
     text = str(raw or "").strip()
-    if not text or text.lower() in {"nan", "none", "null"}:
+    if not text:
         return None
 
-    if field == "s" and component == "H2O":
-        parsed = _parse_water_sigma_expression(text, T)
-        if parsed is not None:
-            return parsed
-
-    log_t = _parse_log_t_expression(text, T)
-    if log_t is not None:
-        return log_t
-
-    linear = _parse_linear_t_expression(text, T)
-    if linear is not None:
-        return linear
-
-    if "=" in text:
-        rhs = text.split("=")[-1].strip()
-        rhs_numeric = _maybe_float(rhs)
-        if rhs_numeric is not None:
-            return rhs_numeric
-
-    numbers = _FLOAT_RE.findall(text)
-    if len(numbers) == 1:
-        return float(numbers[0])
+    if field == "dielc":
+        log_t = _parse_log_t_expression(text, T)
+        if log_t is not None:
+            return log_t
+        linear = _parse_linear_t_expression(text, T)
+        if linear is not None:
+            return linear
 
     raise ValueError(f"Unsupported value in dataset '{dataset}', component '{component}', field '{field}': '{text}'.")
 
 
 def _resolve_component_field(dataset: dict, component: str, field: str, T: float, pure_set_key: str | None = None):
-    row = None
-    if pure_set_key:
-        row = dataset.get("pure_sets", {}).get(_normalize_pure_set_key(pure_set_key), {}).get(component)
+    selected_key = _normalize_pure_set_key(pure_set_key) if pure_set_key else dataset.get("sole_pure_set_key")
+    if selected_key is None:
+        raise ValueError(
+            f"Dataset '{dataset['dataset_name']}' contains multiple pure parameter sets and requires "
+            "an explicit versioned model configuration."
+        )
+    row = dataset.get("pure_sets", {}).get(selected_key, {}).get(component)
     if row is None:
-        component_pure_key = _solvent_token_for_component(component)
-        if component_pure_key is not None:
-            row = dataset.get("pure_sets", {}).get(component_pure_key, {}).get(component)
-    if row is None:
-        default_key = dataset.get("pure_default_key")
-        if default_key:
-            row = dataset.get("pure_sets", {}).get(default_key, {}).get(component)
-    if row is None:
-        row = dataset["pure"].get(component)
-    if row is None:
-        deterministic_value = _deterministic_default(component, field, T)
-        if deterministic_value is not _MISSING:
-            return deterministic_value
         raise KeyError(
-            f"Component '{component}' is missing in dataset '{dataset['dataset_name']}' pure parameter files."
+            f"Component '{component}' is missing in dataset '{dataset['dataset_name']}' pure set '{selected_key}'."
         )
 
     parsed = _parse_cell_value(
@@ -889,12 +623,8 @@ def _resolve_component_field(dataset: dict, component: str, field: str, T: float
         field=field,
         T=T,
     )
-    if parsed is not None:
+    if field == "assoc_scheme" or parsed is not None:
         return parsed
-
-    deterministic_value = _deterministic_default(component, field, T)
-    if deterministic_value is not _MISSING:
-        return deterministic_value
 
     raise KeyError(
         f"Missing required value in dataset '{dataset['dataset_name']}', component '{component}', field '{field}'."
@@ -908,41 +638,8 @@ def _resolve_component_field_with_source(
     T: float,
     pure_set_key: str | None = None,
 ):
-    requested_key = _normalize_pure_set_key(pure_set_key) if pure_set_key else None
-    pure_sets = dataset.get("pure_sets", {})
-
-    source_key = None
-    row = None
-    if requested_key:
-        row = pure_sets.get(requested_key, {}).get(component)
-        if row is not None:
-            source_key = requested_key
-    if row is None:
-        component_pure_key = _solvent_token_for_component(component)
-        if component_pure_key is not None:
-            row = pure_sets.get(component_pure_key, {}).get(component)
-            if row is not None:
-                source_key = component_pure_key
-    if row is None:
-        default_key = dataset.get("pure_default_key")
-        if default_key:
-            row = pure_sets.get(default_key, {}).get(component)
-            if row is not None:
-                source_key = default_key
-    if row is None:
-        row = dataset["pure"].get(component)
-        if row is not None and dataset.get("pure_default_key"):
-            source_key = dataset["pure_default_key"]
-
-    if row is None:
-        deterministic_value = _deterministic_default(component, field, T)
-        if deterministic_value is not _MISSING:
-            return deterministic_value, source_key
-        raise KeyError(
-            f"Component '{component}' is missing in dataset '{dataset['dataset_name']}' pure parameter files."
-        )
-
-    value = _resolve_component_field(dataset, component, field, T, pure_set_key=pure_set_key)
+    source_key = _normalize_pure_set_key(pure_set_key) if pure_set_key else dataset.get("sole_pure_set_key")
+    value = _resolve_component_field(dataset, component, field, T, pure_set_key=source_key)
     return value, source_key
 
 
@@ -1267,24 +964,6 @@ def _resolve_runtime_options(user_options=None) -> dict:
     }
 
 
-def _default_species_entry(species_name: str) -> dict:
-    comp = _normalize_component(species_name)
-    entry = _COMPONENT_DEFAULTS.get(comp)
-    if entry is None:
-        raise KeyError(f"No default data for species '{species_name}'.")
-    resolved = {}
-    for key, value in entry.items():
-        resolved[key] = value(298.15) if callable(value) else value
-    return resolved
-
-
-def _infer_pure_set_key(components: Iterable[str]) -> str | None:
-    neutrals = [comp for comp in components if not comp.endswith("+") and not comp.endswith("-")]
-    if len(neutrals) != 1:
-        return None
-    return _normalize_pure_set_key(neutrals[0])
-
-
 def _as_composition_array(x, size: int) -> np.ndarray:
     x_arr = np.asarray(x, dtype=float)
     if x_arr.ndim != 1 or x_arr.size != size:
@@ -1514,7 +1193,7 @@ def _apply_mixed_solvent_ion_sigma(
         sigma_mix = 0.0
         for idx, frac in zip(neutral_idx, neutral_sf):
             solvent = components[int(idx)]
-            pure_key = _normalize_pure_set_key(solvent)
+            pure_key = _ion_pure_set_key(dataset, solvent)
             sigma_value, source_key = _resolve_component_field_with_source(dataset, comp, "s", T, pure_set_key=pure_key)
             sigma_mix += float(frac) * float(sigma_value)
             resolved_key = source_key or pure_key
@@ -1560,7 +1239,7 @@ def _apply_mixed_solvent_ion_dispersion(
         e_mix = 0.0
         for idx, frac in zip(neutral_idx, neutral_sf):
             solvent = components[int(idx)]
-            pure_key = _normalize_pure_set_key(solvent)
+            pure_key = _ion_pure_set_key(dataset, solvent)
             e_value, source_key = _resolve_component_field_with_source(dataset, comp, "e", T, pure_set_key=pure_key)
             e_mix += float(frac) * float(e_value)
             resolved_key = source_key or pure_key
@@ -1576,87 +1255,111 @@ def _apply_mixed_solvent_ion_dispersion(
         prop_dic["mixed_ion_dispersion_sources"] = source_weights
 
 
-def molality_to_molefraction(molality, species=None, solvent=None, basis_mass_kg=1.0):
-    """Convert salt molality (mol/kg solvent) to species mole-fraction vector."""
-    if species is None:
-        raise ValueError("species must be provided.")
+def _explicit_component_values(
+    species: tuple[str, ...],
+    values: Mapping[str, float],
+    *,
+    field: str,
+    positive: bool,
+) -> dict[str, float]:
+    if not isinstance(values, Mapping):
+        raise TypeError(f"{field} must be a component-to-value mapping.")
+    missing = [label for label in species if label not in values]
+    if missing:
+        raise ValueError(f"{field} is missing explicit values for: {', '.join(missing)}.")
+    parsed = {label: float(values[label]) for label in species}
+    invalid = [
+        label
+        for label, value in parsed.items()
+        if not math.isfinite(value) or (positive and value <= 0.0)
+    ]
+    if invalid:
+        condition = "finite and positive" if positive else "finite"
+        raise ValueError(f"{field} must be {condition} for: {', '.join(invalid)}.")
+    return parsed
 
-    species = list(species)
-    molality = float(molality)
-    basis_mass_kg = float(basis_mass_kg)
 
-    cations = [sp for sp in species if sp.endswith("+")]
-    anions = [sp for sp in species if sp.endswith("-")]
+def _electrolyte_stoichiometry(charges: Mapping[str, float]) -> tuple[str, str, int, int]:
+    cations = [label for label, charge in charges.items() if charge > 0.0]
+    anions = [label for label, charge in charges.items() if charge < 0.0]
     if len(cations) != 1 or len(anions) != 1:
-        cations = [sp for sp in species if _default_species_entry(sp).get("z", 0.0) > 0.0]
-        anions = [sp for sp in species if _default_species_entry(sp).get("z", 0.0) < 0.0]
-    if len(cations) != 1 or len(anions) != 1:
-        raise ValueError("Expected exactly one cation and one anion in species list.")
-
-    cation = cations[0]
-    anion = anions[0]
-
-    if solvent is None:
-        neutrals = [sp for sp in species if _default_species_entry(sp).get("z", 0.0) == 0.0]
-        if len(neutrals) != 1:
-            raise ValueError("Expected exactly one neutral solvent species when solvent is not specified.")
-        solvent = neutrals[0]
-    elif solvent not in species:
-        raise ValueError(f"Solvent '{solvent}' is not present in species list.")
-
-    z_cat = float(_default_species_entry(cation).get("z", 0.0))
-    z_an = float(_default_species_entry(anion).get("z", 0.0))
-    if z_cat <= 0.0 or z_an >= 0.0:
-        raise ValueError("Invalid cation/anion charges in species list.")
-
-    z_cat_abs = round(abs(z_cat))
-    z_an_abs = round(abs(z_an))
-    gcd_z = math.gcd(z_cat_abs, z_an_abs)
-    v_cat = z_an_abs // gcd_z
-    v_an = z_cat_abs // gcd_z
-
-    mw_solvent = float(_default_species_entry(solvent).get("MW", np.nan))
-    if not np.isfinite(mw_solvent) or mw_solvent <= 0.0:
-        raise ValueError(f"Invalid MW for solvent '{solvent}'.")
-
-    n_solvent = basis_mass_kg / mw_solvent
-    n_cation = molality * basis_mass_kg * v_cat
-    n_anion = molality * basis_mass_kg * v_an
-
-    n_totals = {sp: 0.0 for sp in species}
-    n_totals[solvent] += n_solvent
-    n_totals[cation] += n_cation
-    n_totals[anion] += n_anion
-
-    total = sum(n_totals.values())
-    if total <= 0.0:
-        raise ValueError("Computed total moles is non-positive.")
-
-    return np.array([n_totals[sp] / total for sp in species], dtype=float)
+        raise ValueError("Explicit charges must identify exactly one cation and one anion.")
+    cation, anion = cations[0], anions[0]
+    z_cat = abs(charges[cation])
+    z_an = abs(charges[anion])
+    z_cat_integer = round(z_cat)
+    z_an_integer = round(z_an)
+    if z_cat_integer <= 0 or z_an_integer <= 0 or not (
+        math.isclose(z_cat, z_cat_integer, rel_tol=0.0, abs_tol=1.0e-12)
+        and math.isclose(z_an, z_an_integer, rel_tol=0.0, abs_tol=1.0e-12)
+    ):
+        raise ValueError("Electrolyte stoichiometry requires nonzero integer component charges.")
+    common = math.gcd(z_cat_integer, z_an_integer)
+    return cation, anion, z_an_integer // common, z_cat_integer // common
 
 
-def molefraction_to_molality(x, species):
-    """Convert mole fractions to molality for 1:1 salt systems."""
-    x_arr = np.asarray(x, dtype=float)
-    if x_arr.ndim != 1:
-        raise ValueError("x must be a 1D array-like vector.")
-    if len(species) != x_arr.size:
-        raise ValueError("species and x length mismatch.")
+def molality_to_molefraction(
+    molality,
+    *,
+    species: Iterable[str],
+    solvent: str,
+    charges: Mapping[str, float],
+    molar_masses: Mapping[str, float],
+    basis_mass_kg: float = 1.0,
+):
+    """Convert molality using explicit component charges and molar masses."""
 
-    charges = np.asarray([float(_default_species_entry(sp).get("z", 0.0)) for sp in species], dtype=float)
-    cation_idx = [i for i, z in enumerate(charges) if z > 0.0]
-    solvent_idx = [i for i, z in enumerate(charges) if abs(z) < 1e-12]
-    if not cation_idx or not solvent_idx:
-        raise ValueError("Need at least one cation and one solvent component.")
+    labels = tuple(str(label) for label in species)
+    if len(set(labels)) != len(labels):
+        raise ValueError("species must contain unique component labels.")
+    if solvent not in labels:
+        raise ValueError(f"Solvent '{solvent}' is not present in species.")
+    charge_values = _explicit_component_values(labels, charges, field="charges", positive=False)
+    mass_values = _explicit_component_values(labels, molar_masses, field="molar_masses", positive=True)
+    if charge_values[solvent] != 0.0:
+        raise ValueError(f"Solvent '{solvent}' must have explicit zero charge.")
+    cation, anion, cation_count, anion_count = _electrolyte_stoichiometry(charge_values)
+    molality_value = float(molality)
+    basis_value = float(basis_mass_kg)
+    if not math.isfinite(molality_value) or molality_value < 0.0:
+        raise ValueError("molality must be finite and non-negative.")
+    if not math.isfinite(basis_value) or basis_value <= 0.0:
+        raise ValueError("basis_mass_kg must be finite and positive.")
 
-    solvent_i = solvent_idx[-1]
-    mw_solvent = float(_default_species_entry(species[solvent_i]).get("MW", np.nan))
-    if not np.isfinite(mw_solvent) or mw_solvent <= 0.0:
-        raise ValueError("Could not resolve solvent MW.")
-    if x_arr[solvent_i] <= 0.0:
-        raise ValueError("Solvent mole fraction must be > 0 to compute molality.")
+    amounts = {label: 0.0 for label in labels}
+    amounts[solvent] = basis_value / mass_values[solvent]
+    amounts[cation] = molality_value * basis_value * cation_count
+    amounts[anion] = molality_value * basis_value * anion_count
+    total = sum(amounts.values())
+    return np.asarray([amounts[label] / total for label in labels], dtype=float)
 
-    return float(x_arr[cation_idx[0]] / (x_arr[solvent_i] * mw_solvent))
+
+def molefraction_to_molality(
+    x,
+    *,
+    species: Iterable[str],
+    solvent: str,
+    charges: Mapping[str, float],
+    molar_masses: Mapping[str, float],
+):
+    """Convert mole fractions to molality using explicit component data."""
+
+    labels = tuple(str(label) for label in species)
+    charge_values = _explicit_component_values(labels, charges, field="charges", positive=False)
+    mass_values = _explicit_component_values(labels, molar_masses, field="molar_masses", positive=True)
+    if solvent not in labels:
+        raise ValueError(f"Solvent '{solvent}' is not present in species.")
+    if charge_values[solvent] != 0.0:
+        raise ValueError(f"Solvent '{solvent}' must have explicit zero charge.")
+    cation, _anion, cation_count, _anion_count = _electrolyte_stoichiometry(charge_values)
+    fractions = _as_composition_array(x, len(labels))
+    if np.any(fractions < 0.0):
+        raise ValueError("x must contain non-negative mole fractions.")
+    solvent_fraction = float(fractions[labels.index(solvent)])
+    if solvent_fraction <= 0.0:
+        raise ValueError("Solvent mole fraction must be positive to compute molality.")
+    cation_fraction = float(fractions[labels.index(cation)])
+    return cation_fraction / (cation_count * solvent_fraction * mass_values[solvent])
 
 
 def get_prop_dict(
@@ -1667,7 +1370,7 @@ def get_prop_dict(
     species = list(species)
     components = [_normalize_component(s) for s in species]
     x_arr = _as_composition_array(x, len(components))
-    pure_set_key = _infer_pure_set_key(components)
+    pure_set_key = dataset.get("sole_pure_set_key")
 
     merged_options = _deep_update(dataset["canonical_user_options"], user_options or {})
     resolved = _resolve_runtime_options(merged_options)
@@ -1682,12 +1385,7 @@ def get_prop_dict(
             prop_dic[field] = np.asarray(values, dtype=float)
 
     for field in OPTIONAL_KEYS:
-        values = []
-        for comp in components:
-            try:
-                values.append(_resolve_component_field(dataset, comp, field, T, pure_set_key=pure_set_key))
-            except KeyError:
-                values.append(0.0)
+        values = [_resolve_component_field(dataset, comp, field, T, pure_set_key=pure_set_key) for comp in components]
         prop_dic[field] = np.asarray(values, dtype=float)
 
     n = len(species)
@@ -1755,3 +1453,81 @@ def get_prop_dict(
     prop_dic["solvated_ion_diameter_mixing_rule"] = bool(runtime["solvated_ion_diameter_mixing_rule"])
     prop_dic["ion_dispersion_mixing_rule"] = bool(runtime["ion_dispersion_mixing_rule"])
     return prop_dic
+
+
+def load_parameter_set(
+    dataset_name: str | Path,
+    species: Iterable[str],
+    x,
+    T: float,
+    user_options: dict | None = None,
+):
+    """Resolve an explicit dataset path into canonical parameter records."""
+
+    from .parameters import BinaryRecord, ParameterSet, PureRecord
+
+    labels = tuple(str(label) for label in species)
+    payload = get_prop_dict(dataset_name, labels, x, T, user_options=user_options)
+    schemes = list(payload["assoc_scheme"])
+    pure_records = tuple(
+        PureRecord(
+            component=label,
+            molar_mass=float(payload["MW"][index]),
+            m=float(payload["m"][index]),
+            sigma=float(payload["s"][index]),
+            epsilon_k=float(payload["e"][index]),
+            charge=(float(payload["z"][index]) if np.asarray(payload["z"]).size else 0.0),
+            epsilon_k_ab=float(payload["e_assoc"][index]),
+            kappa_ab=float(payload["vol_a"][index]),
+            association_scheme=schemes[index],
+            relative_permittivity=float(payload["dielc"][index]),
+            born_diameter=float(payload["d_born"][index]),
+            solvation_factor=float(payload["f_solv"][index]),
+        )
+        for index, label in enumerate(labels)
+    )
+    binary_records = []
+    for left_index, left in enumerate(labels):
+        for right_index in range(left_index + 1, len(labels)):
+            right = labels[right_index]
+            values = {
+                "k_ij": float(payload["k_ij"][left_index, right_index]),
+                "l_ij": float(payload["l_ij"][left_index, right_index]),
+                "k_hb_ij": float(payload["k_hb"][left_index, right_index]),
+            }
+            if any(value != 0.0 for value in values.values()):
+                binary_records.append(BinaryRecord((left, right), **values))
+
+    parameter_keys = {
+        "MW",
+        "m",
+        "s",
+        "e",
+        "e_assoc",
+        "vol_a",
+        "assoc_scheme",
+        "z",
+        "dielc",
+        "d_born",
+        "f_solv",
+        "k_ij",
+        "l_ij",
+        "k_hb",
+    }
+    runtime_options = {key: value for key, value in payload.items() if key not in parameter_keys}
+    dataset = _load_dataset(dataset_name)
+    source_key = dataset.get("sole_pure_set_key")
+    rows = dataset.get("pure_sets", {}).get(source_key, {}) if source_key else {}
+    sources = [str(rows[label].get("source", "")).strip() for label in labels if label in rows]
+    metadata = {
+        "dataset": str(dataset_name),
+        "source": "; ".join(dict.fromkeys(source for source in sources if source)),
+        "source_backed": len(sources) == len(labels) and all(sources),
+        "T": float(T),
+    }
+    return ParameterSet.from_records(
+        pure_records,
+        binary_records,
+        metadata=metadata,
+        runtime_options=runtime_options,
+    )

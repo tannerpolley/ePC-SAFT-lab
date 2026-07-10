@@ -120,12 +120,34 @@ from epcsaft import Mixture, ParameterSet, State
 
 parameters = ParameterSet.from_dict(
     {
-        "MW": np.asarray([92.1405e-3]),
-        "m": np.asarray([2.8149]),
-        "s": np.asarray([3.7169]),
-        "e": np.asarray([285.69]),
-    },
-    species=["Toluene"],
+        "schema": "epcsaft.parameter-set",
+        "schema_version": 1,
+        "components": ["Toluene"],
+        "pure_records": [
+            {
+                "component": "Toluene",
+                "molar_mass": 92.1405e-3,
+                "molar_mass_units": "kg/mol",
+                "m": 2.8149,
+                "sigma": 3.7169,
+                "epsilon_k": 285.69,
+                "charge": 0.0,
+                "epsilon_k_ab": 0.0,
+                "kappa_ab": 0.0,
+                "association_scheme": None,
+                "association_sites": [],
+                "relative_permittivity": 1.0,
+                "born_diameter": 0.0,
+                "solvation_factor": 1.0,
+            }
+        ],
+        "binary_records": [],
+        "metadata": {
+            "source": "Gross and Sadowski (2001), Table 2",
+            "source_backed": True,
+            "auxiliary_neutral_fields": "equation_structural_neutral_inactive",
+        },
+    }
 )
 mixture = Mixture(parameters)
 
@@ -179,7 +201,9 @@ template_root = create_input_template(
 )
 ```
 
-After filling in the generated files, load the tables in your workflow and construct a `ParameterSet`, then pass it to `Mixture`:
+The generated `parameter_set.json` contains no scientific numbers. Fill every
+required value and its source before loading it; missing values fail with the
+component and field name. Then pass the loaded `ParameterSet` to `Mixture`:
 
 ```python
 import numpy as np
@@ -194,7 +218,7 @@ mixture = Mixture(parameters, components=species)
 state = State(mixture, T=298.15, P=101325.0, x=np.asarray([0.9998, 1e-4, 1e-4]))
 ```
 
-Full paper-validation parameter snapshots live under `analyses/paper_validation/<paper_id>/parameters/`. The old `data/reference/epcsaft_parameters/` path is retained only as a pointer for agents or users looking for the retired shared dataset tree.
+Full paper-validation parameter snapshots live under `analyses/paper_validation/<paper_id>/parameters/`.
 
 ## Optional Ipopt Support
 

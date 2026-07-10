@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import numpy as np
+from epcsaft import ParameterSet
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft.state.native_adapter import ePCSAFTMixture
 
 
@@ -48,6 +50,37 @@ def _ionic_params():
         "l_ij": np.zeros((3, 3)),
         "k_hb": np.zeros((3, 3)),
     }
+
+
+def ionic_parameter_set(*, association: bool = True) -> ParameterSet:
+    params = _ionic_params()
+    species = ("water", "Na+", "Cl-")
+    pure_records = tuple(
+        PureRecord(
+            component=component,
+            molar_mass=float(params["MW"][index]),
+            m=float(params["m"][index]),
+            sigma=float(params["s"][index]),
+            epsilon_k=float(params["e"][index]),
+            charge=float(params["z"][index]),
+            epsilon_k_ab=float(params["e_assoc"][index]) if association else 0.0,
+            kappa_ab=float(params["vol_a"][index]) if association else 0.0,
+            association_scheme=params["assoc_scheme"][index] if association else None,
+            relative_permittivity=float(params["dielc"][index]),
+            born_diameter=float(params["d_born"][index]),
+            solvation_factor=float(params["f_solv"][index]),
+        )
+        for index, component in enumerate(species)
+    )
+    return ParameterSet.from_records(
+        pure_records,
+        (
+            BinaryRecord(("water", "Na+"), k_ij=0.0045),
+            BinaryRecord(("water", "Cl-"), k_ij=-0.25),
+            BinaryRecord(("Na+", "Cl-"), k_ij=0.317),
+        ),
+        metadata={"source": "provider ionic contract fixture"},
+    )
 
 
 def _ionic_state():

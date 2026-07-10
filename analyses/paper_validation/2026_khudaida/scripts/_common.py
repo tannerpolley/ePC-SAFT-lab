@@ -862,11 +862,15 @@ def _solve_formula_feed_direct(temperature_k: float, feed_formula: np.ndarray) -
         )
 
     try:
-        mixture = epcsaft.Mixture.from_folder(
-            PARAMETER_DATASET,
+        mixture = epcsaft.Mixture(
+            epcsaft.ParameterSet.from_dataset(
+                PARAMETER_DATASET,
+                SPECIES,
+                x=z_feed,
+                T=float(temperature_k),
+            ),
+            model_options=PARAMETER_DATASET,
             components=SPECIES,
-            reference_temperature=float(temperature_k),
-            reference_composition=z_feed,
         )
         result = _run_electrolyte_lle_validation(
             mixture.native,

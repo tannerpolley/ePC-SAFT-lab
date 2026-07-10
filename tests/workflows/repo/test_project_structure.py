@@ -10,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -539,6 +540,9 @@ def test_active_workflows_do_not_require_retired_root_provider_paths() -> None:
     )
     allowed_contexts = (
         "packages/epcsaft/src/epcsaft",
+        "packages/epcsaft-equilibrium/src/epcsaft_equilibrium",
+        "packages/epcsaft-regression/src/epcsaft_regression",
+        "src/epcsaft_equilibrium/native/equilibrium",
         "${EPCSAFT_PROVIDER_PACKAGE_ROOT}/src/epcsaft",
         '"src/epcsaft"',
         "'src/epcsaft'",
@@ -1681,27 +1685,25 @@ def test_paper_validation_parameter_bundles_are_complete_and_uniform() -> None:
                 assert all(cell.strip() != "" for cell in row[1:]), matrix_file
 
 
-def test_paper_validation_temperature_dependent_parameters_are_preserved() -> None:
+def test_untyped_paper_parameter_expressions_fail_loudly() -> None:
     from epcsaft.model.datasets import get_prop_dict
 
     temperature = 298.15
-    ascani = get_prop_dict(
-        REPO_ROOT / "analyses" / "paper_validation" / "2023_ascani" / "parameters",
-        ["H2O", "1-Pentanol"],
-        [0.5, 0.5],
-        temperature,
-    )
-    expected_sigma = 2.7927 + 10.11 * math.exp(-0.01775 * temperature) - 1.417 * math.exp(-0.01146 * temperature)
-    assert abs(float(ascani["s"][0]) - expected_sigma) < 1.0e-12
-    assert abs(float(ascani["k_ij"][0, 1]) - (0.00016 * temperature - 0.0461)) < 1.0e-12
+    with pytest.raises(ValueError, match=r"component 'H2O'.*field 's'"):
+        get_prop_dict(
+            REPO_ROOT / "analyses" / "paper_validation" / "2023_ascani" / "parameters",
+            ["H2O", "1-Pentanol"],
+            [0.5, 0.5],
+            temperature,
+        )
 
-    held = get_prop_dict(
-        REPO_ROOT / "analyses" / "paper_validation" / "2012_held" / "parameters",
-        ["Methanol"],
-        [1.0],
-        temperature,
-    )
-    assert abs(float(held["dielc"][0]) - (-53.398 * math.log(temperature) + 336.170)) < 1.0e-12
+    with pytest.raises(ValueError, match=r"multiple pure parameter sets.*versioned model configuration"):
+        get_prop_dict(
+            REPO_ROOT / "analyses" / "paper_validation" / "2012_held" / "parameters",
+            ["Methanol"],
+            [1.0],
+            temperature,
+        )
 
 
 def test_analysis_category_roots_exist() -> None:

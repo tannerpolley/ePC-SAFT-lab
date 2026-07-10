@@ -29,6 +29,7 @@ import epcsaft
 import epcsaft_equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_04"
@@ -208,20 +209,38 @@ def _sorted_source_series(source_rows: list[dict[str, Any]]) -> dict[str, list[d
 
 def _mixture() -> epcsaft.Mixture:
     return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            {
-                "MW": np.asarray([0.08815, 0.078114]),
-                "m": np.asarray([3.6260, 2.4653]),
-                "s": np.asarray([3.4508, 3.6478]),
-                "e": np.asarray([247.28, 287.35]),
-                "e_assoc": np.asarray([2252.1, 0.0]),
-                "vol_a": np.asarray([0.010319, 0.0]),
-                "assoc_scheme": ["2B", None],
-                "k_ij": np.asarray([[0.0, 0.0135], [0.0135, 0.0]]),
-                "z": np.asarray([0.0, 0.0]),
-                "dielc": np.asarray([1.0, 1.0]),
-            },
-            species=COMPONENT_ORDER,
+        epcsaft.ParameterSet.from_records(
+            (
+                PureRecord(
+                    component="1-Pentanol",
+                    molar_mass=0.08815,
+                    m=3.6260,
+                    sigma=3.4508,
+                    epsilon_k=247.28,
+                    charge=0.0,
+                    epsilon_k_ab=2252.1,
+                    kappa_ab=0.010319,
+                    association_scheme="2B",
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+                PureRecord(
+                    component="Benzene",
+                    molar_mass=0.078114,
+                    m=2.4653,
+                    sigma=3.6478,
+                    epsilon_k=287.35,
+                    charge=0.0,
+                    epsilon_k_ab=0.0,
+                    kappa_ab=0.0,
+                    association_scheme=None,
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+            ),
+            (BinaryRecord(tuple(COMPONENT_ORDER), k_ij=0.0135),),
             metadata={
                 "source": "Gross/Sadowski 2002 Figure 4",
                 "paper": "Gross and Sadowski 2002",
@@ -230,6 +249,13 @@ def _mixture() -> epcsaft.Mixture:
                 "source_path": "analyses/paper_validation/2002_gross",
                 "source_backed": True,
                 "reference_system": "1-pentanol-benzene",
+                "neutral_only_fields": {
+                    "charge": 0.0,
+                    "relative_permittivity": 1.0,
+                    "born_diameter": 0.0,
+                    "solvation_factor": 1.0,
+                    "basis": "legacy neutral payload values; ionic and Born terms are inactive",
+                },
             },
         )
     )

@@ -29,6 +29,7 @@ import epcsaft
 import epcsaft_equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_06"
@@ -189,20 +190,38 @@ def _load_source_rows() -> list[dict[str, Any]]:
 
 def _mixture() -> epcsaft.Mixture:
     return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            {
-                "MW": np.asarray([74.123e-3, 58.123e-3]),
-                "m": np.asarray([2.7515, 2.3316]),
-                "s": np.asarray([3.6139, 3.7086]),
-                "e": np.asarray([259.59, 222.88]),
-                "e_assoc": np.asarray([2544.6, 0.0]),
-                "vol_a": np.asarray([0.006692, 0.0]),
-                "assoc_scheme": ["2B", None],
-                "k_ij": np.asarray([[0.0, 0.015], [0.015, 0.0]]),
-                "z": np.asarray([0.0, 0.0]),
-                "dielc": np.asarray([1.0, 1.0]),
-            },
-            species=["1-Butanol", "Butane"],
+        epcsaft.ParameterSet.from_records(
+            (
+                PureRecord(
+                    component="1-Butanol",
+                    molar_mass=74.123e-3,
+                    m=2.7515,
+                    sigma=3.6139,
+                    epsilon_k=259.59,
+                    charge=0.0,
+                    epsilon_k_ab=2544.6,
+                    kappa_ab=0.006692,
+                    association_scheme="2B",
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+                PureRecord(
+                    component="Butane",
+                    molar_mass=58.123e-3,
+                    m=2.3316,
+                    sigma=3.7086,
+                    epsilon_k=222.88,
+                    charge=0.0,
+                    epsilon_k_ab=0.0,
+                    kappa_ab=0.0,
+                    association_scheme=None,
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                ),
+            ),
+            (BinaryRecord(("1-Butanol", "Butane"), k_ij=0.015),),
             metadata={
                 "source": "Gross/Sadowski 2002 Figure 6",
                 "paper": "Gross and Sadowski 2002",
@@ -212,6 +231,13 @@ def _mixture() -> epcsaft.Mixture:
                 "source_backed": True,
                 "reference_system": "1-butanol-n-butane",
                 "temperature_series_C": [60.0, 100.0, 160.0, 200.0],
+                "neutral_only_fields": {
+                    "charge": 0.0,
+                    "relative_permittivity": 1.0,
+                    "born_diameter": 0.0,
+                    "solvation_factor": 1.0,
+                    "basis": "legacy neutral payload values; ionic and Born terms are inactive",
+                },
             },
         )
     )

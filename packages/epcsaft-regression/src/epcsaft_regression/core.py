@@ -12,8 +12,6 @@ from typing import Any
 import numpy as np
 from epcsaft._types import InputError, phase_to_int, vector_to_array
 from epcsaft.model.datasets import (
-    _MISSING,
-    _deterministic_default,
     _invalidate_dataset_cache,
     _load_dataset,
     _matrix_value,
@@ -22,7 +20,6 @@ from epcsaft.model.datasets import (
     molality_to_molefraction,
 )
 from epcsaft.model.parameters import ParameterSet, ParameterSource
-from epcsaft.model.templates import _infer_pure_template_name
 from epcsaft.state.native_adapter import check_association, create_struct
 
 from .native_adapter import (
@@ -1272,17 +1269,7 @@ def _pure_seed_payload(
             payload[field] = value
             if source_key is None and source is not None:
                 source_key = source
-    for field in PURE_REQUIRED_FIELDS:
-        if field in payload and payload[field] not in (None, ""):
-            continue
-        default = _deterministic_default(component, field, T_ref)
-        if default is not None and default is not _MISSING:
-            payload[field] = default
-    payload.setdefault("assoc_scheme", assoc_scheme)
-    payload.setdefault("z", 0.0)
-    payload.setdefault("dielc", 8.0)
-    payload.setdefault("d_born", 0.0)
-    payload.setdefault("f_solv", 1.0)
+    payload["assoc_scheme"] = assoc_scheme
     return payload, source_key
 
 
@@ -1439,23 +1426,18 @@ def _native_pure_neutral_solver_payload(
     fixed_payload = seed_payload.copy()
     fixed_payload.update(_copy_mapping(fixed_parameters))
     fixed_payload["assoc_scheme"] = str(assoc_scheme or fixed_payload.get("assoc_scheme", ""))
-    if "MW" not in fixed_payload or fixed_payload["MW"] in (None, ""):
-        raise InputError(
-            "pure_neutral regression requires a fixed MW value, either from the dataset or fixed_parameters."
-        )
-    if "z" not in fixed_payload or fixed_payload["z"] in (None, ""):
-        fixed_payload["z"] = 0.0
-
     initial = _copy_mapping(initial_guess)
     initial_map = {target: _seed_value(target, initial, fixed_payload) for target in normalized_fit_targets}
     optimization_names = _optimization_parameter_names(PURE_NEUTRAL_MODE, normalized_fit_targets, "constant")
-    for name in ("m", "s", "e"):
-        if name in initial_map:
-            fixed_payload[name] = float(initial_map[name])
+    fixed_payload.update({name: float(value) for name, value in initial_map.items()})
+    missing = [field for field in PURE_REQUIRED_FIELDS if fixed_payload.get(field) in (None, "")]
+    if missing:
+        raise InputError(
+            f"{normalized_component} pure_neutral regression requires explicit scientific inputs for: "
+            f"{', '.join(missing)}."
+        )
     terms = _build_pure_neutral_terms(normalized_records)
-    pure_file_hint = (
-        f"{source_key}.csv" if source_key is not None else _infer_pure_template_name([normalized_component])
-    )
+    pure_file_hint = f"{source_key}.csv" if source_key is not None else None
     return (
         _ensure_native_vector_payload(fixed_payload),
         initial_map,
@@ -1565,7 +1547,30 @@ def _binary_species_from_records(
     return normalized
 
 
-def _ion_composition_from_record(record: Mapping[str, Any], species: Sequence[str], solvent: str | None) -> np.ndarray:
+def _molality_component_data(
+    dataset: str | Path,
+    species: Sequence[str],
+    temperature: float,
+) -> tuple[dict[str, float], dict[str, float]]:
+    dataset_obj = _load_dataset(dataset)
+    charges: dict[str, float] = {}
+    molar_masses: dict[str, float] = {}
+    for component in species:
+        charge, _ = _resolve_component_field_with_source(dataset_obj, component, "z", temperature)
+        molar_mass, _ = _resolve_component_field_with_source(dataset_obj, component, "MW", temperature)
+        charges[component] = float(charge)
+        molar_masses[component] = float(molar_mass)
+    return charges, molar_masses
+
+
+def _ion_composition_from_record(
+    record: Mapping[str, Any],
+    species: Sequence[str],
+    solvent: str | None,
+    *,
+    charges: Mapping[str, float],
+    molar_masses: Mapping[str, float],
+) -> np.ndarray:
     if _prefixed_species_values(record, "x_"):
         return _composition_from_record(record, "x_", species)
     molality = _float_from_record(record, "molality", "m_salt", "salt_molality", required=False)
@@ -1574,7 +1579,16 @@ def _ion_composition_from_record(record: Mapping[str, Any], species: Sequence[st
     if solvent is None:
         raise InputError("molality-driven pure_ion records require a solvent argument.")
     try:
-        return np.asarray(molality_to_molefraction(molality, species=species, solvent=solvent), dtype=float)
+        return np.asarray(
+            molality_to_molefraction(
+                molality,
+                species=species,
+                solvent=solvent,
+                charges=charges,
+                molar_masses=molar_masses,
+            ),
+            dtype=float,
+        )
     except ValueError as exc:
         raise InputError(str(exc)) from exc
 
@@ -1924,6 +1938,7 @@ def _fit_pure_ion_internal(
     )
     T_ref = float(np.mean([_float_from_record(record, "T", required=True) for record in normalized_records]))
     seed_payload, source_key = _pure_seed_payload(normalized_component, T_ref, "", dataset, None)
+    charges, molar_masses = _molality_component_data(dataset, normalized_species, T_ref)
     initial = _copy_mapping(initial_guess)
     initial_map = {target: _seed_value(target, initial, seed_payload) for target in normalized_fit_targets}
     optimization_names = _optimization_parameter_names(PURE_ION_MODE, normalized_fit_targets, "constant")
@@ -1941,9 +1956,7 @@ def _fit_pure_ion_internal(
         fixed_parameters=seed_payload,
         initial_guess=initial_map,
         terms=terms,
-        pure_file_hint=(
-            f"{source_key}.csv" if source_key is not None else _infer_pure_template_name([normalized_component])
-        ),
+        pure_file_hint=(f"{source_key}.csv" if source_key is not None else None),
     )
     native_records: list[dict[str, Any]] = []
     fixed_payloads: list[dict[str, Any]] = []
@@ -1953,7 +1966,13 @@ def _fit_pure_ion_internal(
             T = _float_from_record(record, "T", required=True)
             P = _float_from_record(record, "P", required=True)
             assert T is not None and P is not None
-            x = _ion_composition_from_record(record, normalized_species, normalized_solvent)
+            x = _ion_composition_from_record(
+                record,
+                normalized_species,
+                normalized_solvent,
+                charges=charges,
+                molar_masses=molar_masses,
+            )
             if term.term_type == TERM_DENSITY:
                 native_record = _native_density_record(term.term_type, record, x, scale)
                 if native_record is None:
@@ -2445,13 +2464,12 @@ def _associating_pure_payload(
         if field in initial:
             payload[field] = initial[field]
     payload["assoc_scheme"] = assoc_scheme
-    payload.setdefault("z", 0.0)
-    payload.setdefault("dielc", 8.0)
-    payload.setdefault("d_born", 0.0)
-    payload.setdefault("f_solv", 1.0)
     missing = [field for field in PURE_REQUIRED_FIELDS if field not in payload or payload[field] in (None, "")]
     if missing:
-        raise InputError(f"Associating pure-neutral regression is missing fixed values for: {', '.join(missing)}.")
+        raise InputError(
+            f"{component} associating pure-neutral regression requires explicit scientific inputs for: "
+            f"{', '.join(missing)}."
+        )
     return payload
 
 
@@ -2543,7 +2561,7 @@ def _fit_pure_neutral_associating_native(
         initial_guess=initial_map,
         assoc_scheme=str(assoc_scheme),
         terms=tuple(terms),
-        pure_file_hint=_infer_pure_template_name([normalized_component]),
+        pure_file_hint=None,
     )
     return FitResult(
         problem=problem,
@@ -3192,9 +3210,6 @@ def _choose_pure_file(problem: FitProblem, dataset_root: Path, pure_file: str | 
         hinted = pure_dir / problem.pure_file_hint
         if hinted.exists():
             return hinted
-    inferred = pure_dir / _infer_pure_template_name([str(problem.component)])
-    if inferred.exists():
-        return inferred
     raise InputError("Could not determine which pure parameter CSV should receive the fitted values.")
 
 

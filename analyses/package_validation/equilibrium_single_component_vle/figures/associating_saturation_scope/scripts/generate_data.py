@@ -25,6 +25,7 @@ apply_to_current_process()
 
 import epcsaft
 import epcsaft_equilibrium
+from epcsaft.model.parameters import PureRecord
 
 FIGURE_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = FIGURE_ROOT / "results"
@@ -51,17 +52,27 @@ def _load_parameter_row(component: str) -> dict[str, str]:
 
 def _mixture_for_component(component: str) -> tuple[Any, dict[str, str]]:
     row = _load_parameter_row(component)
-    parameter_set = epcsaft.ParameterSet.from_dict(
-        {
-            "MW": np.asarray([float(row["MW"])], dtype=float),
-            "m": np.asarray([float(row["m"])], dtype=float),
-            "s": np.asarray([float(row["s"])], dtype=float),
-            "e": np.asarray([float(row["e"])], dtype=float),
-            "e_assoc": np.asarray([float(row["e_assoc"])], dtype=float),
-            "vol_a": np.asarray([float(row["vol_a"])], dtype=float),
-            "assoc_scheme": [row["assoc_scheme"]],
+    parameter_set = epcsaft.ParameterSet.from_records(
+        [
+            PureRecord(
+                component=COMPONENT_LABELS[component],
+                molar_mass=float(row["MW"]),
+                m=float(row["m"]),
+                sigma=float(row["s"]),
+                epsilon_k=float(row["e"]),
+                charge=float(row["z"]),
+                epsilon_k_ab=float(row["e_assoc"]),
+                kappa_ab=float(row["vol_a"]),
+                association_scheme=row["assoc_scheme"],
+                relative_permittivity=float(row["dielc"]),
+                born_diameter=float(row["d_born"]),
+                solvation_factor=float(row["f_solv"]),
+            )
+        ],
+        metadata={
+            "source": row["source"],
+            "source_backed": True,
         },
-        species=[COMPONENT_LABELS[component]],
     )
     return epcsaft.Mixture(parameter_set), row
 

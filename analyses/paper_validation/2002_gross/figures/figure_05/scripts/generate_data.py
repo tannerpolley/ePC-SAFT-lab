@@ -29,6 +29,7 @@ import epcsaft
 import epcsaft_equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
+from epcsaft.model.parameters import BinaryRecord, PureRecord
 from epcsaft_equilibrium._native import extension_native_core
 
 FIGURE_ID = "figure_05"
@@ -211,20 +212,36 @@ def _load_source_rows() -> list[dict[str, Any]]:
 def _mixture(series: str) -> epcsaft.Mixture:
     config = SYSTEM_CONFIG[series]
     return epcsaft.Mixture(
-        epcsaft.ParameterSet.from_dict(
-            {
-                "MW": np.asarray(config["MW"]),
-                "m": np.asarray(config["m"]),
-                "s": np.asarray(config["s"]),
-                "e": np.asarray(config["e"]),
-                "e_assoc": np.asarray(config["e_assoc"]),
-                "vol_a": np.asarray(config["vol_a"]),
-                "assoc_scheme": ["2B", None],
-                "k_ij": np.asarray([[0.0, config["k_ij"]], [config["k_ij"], 0.0]]),
-                "z": np.asarray([0.0, 0.0]),
-                "dielc": np.asarray([1.0, 1.0]),
-            },
-            species=config["species"],
+        epcsaft.ParameterSet.from_records(
+            tuple(
+                PureRecord(
+                    component=component,
+                    molar_mass=molar_mass,
+                    m=m,
+                    sigma=sigma,
+                    epsilon_k=epsilon_k,
+                    charge=0.0,
+                    epsilon_k_ab=epsilon_k_ab,
+                    kappa_ab=kappa_ab,
+                    association_scheme="2B" if index == 0 else None,
+                    relative_permittivity=1.0,
+                    born_diameter=0.0,
+                    solvation_factor=1.0,
+                )
+                for index, (component, molar_mass, m, sigma, epsilon_k, epsilon_k_ab, kappa_ab) in enumerate(
+                    zip(
+                        config["species"],
+                        config["MW"],
+                        config["m"],
+                        config["s"],
+                        config["e"],
+                        config["e_assoc"],
+                        config["vol_a"],
+                        strict=True,
+                    )
+                )
+            ),
+            (BinaryRecord(tuple(config["species"]), k_ij=config["k_ij"]),),
             metadata={
                 "source": "Gross/Sadowski 2002 Figure 5",
                 "paper": "Gross and Sadowski 2002",
@@ -233,6 +250,13 @@ def _mixture(series: str) -> epcsaft.Mixture:
                 "source_path": "analyses/paper_validation/2002_gross",
                 "source_backed": True,
                 "reference_system": config["system"],
+                "neutral_only_fields": {
+                    "charge": 0.0,
+                    "relative_permittivity": 1.0,
+                    "born_diameter": 0.0,
+                    "solvation_factor": 1.0,
+                    "basis": "legacy neutral payload values; ionic and Born terms are inactive",
+                },
             },
         )
     )
